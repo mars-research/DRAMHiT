@@ -6,4 +6,4 @@ all:
 	$(CC)  main.cpp -o $(TARGET) $(CFLAGS) kmer_class.cpp city.cc
 
 clean:
-	rm -f ./$(TARGET) *.o
+	rm -f $(TARGET) *.o
