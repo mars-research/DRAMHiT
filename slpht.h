@@ -1,4 +1,5 @@
 #include "data_types.h"
+#include "city.h"
 
 #define KMER_DATA_LENGTH 50 /* 50 bytes from kmer_struct */
 #define KMER_COUNT_LENGTH (CACHE_LINE_SIZE - KMER_DATA_LENGTH) /*14 bytes */
