@@ -4,12 +4,6 @@
 #include <string.h>
 #include "kmer_struct.h"
 
-uint64_t KMER_SMALL_POOL_COUNT = 10* 1000000;
-uint64_t KMER_BIG_POOL_COUNT = 20 * 1000000;
-
-Kmer_s *kmer_big_pool;
-Kmer_s *kmer_small_pool;
-
 void insert_kmer_to_small_pool(char* s, size_t i)
 {
 	memcpy(kmer_small_pool[i].data, s, LENGTH);
