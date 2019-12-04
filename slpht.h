@@ -1,8 +1,16 @@
+#ifndef _SLPHT_H
+#define _SLPHT_H
+
 #include "data_types.h"
 #include "city.h"
+#include "kmer_struct.h"
 
-#define KMER_DATA_LENGTH 50 /* 50 bytes from kmer_struct */
-#define KMER_COUNT_LENGTH (CACHE_LINE_SIZE - KMER_DATA_LENGTH) /*14 bytes */
+/* 
+4 bits per nucleotide, k=100 => 400 bits (~50 bytes)
+3 bits per nucleotide, k=100 => 300 bits (~38 bytes) 
+*/
+#define KMER_DATA_LENGTH 50 
+#define KMER_COUNT_LENGTH 4
 
 // Assumed PAGE SIZE from getconf PAGE_SIZE
 #define PAGE_SIZE 4096
@@ -10,16 +18,18 @@
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 
-
 /* 
 Kmer record in the hash table
+Each record spills over a cache line for now, cache-align later
 */
+#pragma pack(2)
 struct Kmer_r {
 	char kmer_data[KMER_DATA_LENGTH];
-	uint128_t kmer_count : KMER_COUNT_LENGTH * 8;
+	uint32_t kmer_count;
 }; 
-// TODO cache_align
 // TODO use char and bit manipulation instead of bit fields in Kmer_r: https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
+// TODO how long should be the count variable?
+// TODO should we pack the struct?
 
 typedef struct Kmer_r Kmer_r; 
 
@@ -28,9 +38,9 @@ class SimpleLinearProbingHashTable {
 private:
 	Kmer_r* table;
 	uint64_t capacity;
+	Kmer_r empty_kmer_r; // for comparison for empty slot
 
 	size_t __hash(const base_4bit_t* k){
-		// TODO cityhash128?
 		uint64_t cityhash =  CityHash64((const char*)k, KMER_DATA_LENGTH);
 		return (cityhash % this->capacity);
 	}
@@ -39,17 +49,17 @@ public:
 
 	SimpleLinearProbingHashTable(uint64_t c){
 		// TODO static cast
-		// TODO remove /1000
 		// TODO power of 2 table size for ease of mod operations
-		this->capacity = c / 1000;
+		this->capacity = c;
 		table = (Kmer_r*)(aligned_alloc(PAGE_SIZE, capacity*sizeof(Kmer_r)));
-		memset(table, 0, capacity);
+		memset(table, 0, capacity*sizeof(Kmer_r));
+		memset(&this->empty_kmer_r, 0, sizeof(Kmer_r));
 	}
 
-	// TODO Linear Probing for now, quadratic later
 	/*
 	insert and increment if exists
 	*/
+	// TODO Linear Probing for now, quadratic later
 	bool insert(const base_4bit_t* kmer_data) {
 
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data, KMER_DATA_LENGTH);
@@ -58,41 +68,56 @@ public:
 		size_t probe_idx;
 		int terminate = 0;
 
-		// TODO do strcmp? strlen is incorrect
-		if(!strlen(table[kmer_idx].kmer_data)){
+		/* Compare with empty kmer to check if bucket is empty.
+		   if yes, insert with a count of 1*/
+		// TODO memcmp compare SIMD?
+		if(memcmp(&table[kmer_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH) == 0){
 			memcpy(&table[kmer_idx], kmer_data, KMER_DATA_LENGTH);
 			table[kmer_idx].kmer_count++;
 			terminate = 1;
+		/* If bucket is occpuied, check if it is occupied by the kmer 
+		   we want to insert. If yes, just increment count.*/
+		} else if (memcmp(&table[kmer_idx], kmer_data, KMER_DATA_LENGTH) == 0) {
+			table[kmer_idx].kmer_count++;
+			terminate = 1;
+		/* If bucket is occupied, but not by the kmer we want to insert, 
+		   reprobe  */
 		} else {
-			cityhash_ex = CityHash64((const char*)&table[kmer_idx], KMER_DATA_LENGTH);
-			if (cityhash_ex == cityhash_new){
-				table[kmer_idx].kmer_count++;
-				terminate = 1;
-			} else {
-				probe_idx = kmer_idx + 1;
-				if (probe_idx == this->capacity-1) {probe_idx = 0;}
+			probe_idx = kmer_idx + 1;
+			if (probe_idx == this->capacity-1) {
+				probe_idx = 0;
 			}
 		}
 
-		// TODO while compare to what?
+		/* reprobe */
 		while((!terminate) && (probe_idx != kmer_idx)){
-			// TODO do strcmp? strlen is incorrect
-			if(!strlen(table[probe_idx].kmer_data)){
+			if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH) == 0){
 				memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
 				table[probe_idx].kmer_count++;
 				terminate = 1;
+			} else if (memcmp(&table[probe_idx], kmer_data, KMER_DATA_LENGTH) == 0) {
+				table[probe_idx].kmer_count++;
+				terminate = 1;
 			} else {
-				cityhash_ex = CityHash64((const char*)&table[probe_idx], KMER_DATA_LENGTH);
-				if (cityhash_ex == cityhash_new){
-					table[probe_idx].kmer_count++;
-					terminate = 1;
-				} else {
-					probe_idx++;
-					if (probe_idx == this->capacity) {probe_idx = 0;}
+				probe_idx++;
+				if (probe_idx == this->capacity) {
+					probe_idx = 0;
 				}
 			}
 		}
 		return (terminate == 0);
 	}
 
+
+	void display(){
+		for (int i = 0; i<this->capacity; i++){
+			printf("%d: %u\n", i, table[i].kmer_count);
+		}
+	}
+
 };
+
+
+// TODO bloom filters for high frequency kmers?
+
+#endif /* _SLPHT_H_ */

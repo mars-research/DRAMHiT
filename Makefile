@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-g -std=c++17 #-Wall 
+CFLAGS=-g -std=c++17 -Wall 
 TARGET=./bin/lpht
 
 all:
