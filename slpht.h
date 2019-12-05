@@ -2,7 +2,7 @@
 #define _SLPHT_H
 
 #include "data_types.h"
-#include "city.h"
+#include "city/city.h"
 #include "kmer_struct.h"
 
 /* 
@@ -15,23 +15,21 @@
 // Assumed PAGE SIZE from getconf PAGE_SIZE
 #define PAGE_SIZE 4096
 
-typedef __int128 int128_t;
-typedef unsigned __int128 uint128_t;
+// typedef __int128 int128_t;
+// typedef unsigned __int128 uint128_t;
 
 /* 
 Kmer record in the hash table
 Each record spills over a cache line for now, cache-align later
 */
-#pragma pack(2)
-struct Kmer_r {
+
+typedef struct {
 	char kmer_data[KMER_DATA_LENGTH];
 	uint32_t kmer_count;
-}; 
+} __attribute__((packed)) Kmer_r; 
 // TODO use char and bit manipulation instead of bit fields in Kmer_r: https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
-
-typedef struct Kmer_r Kmer_r; 
 
 class SimpleLinearProbingHashTable {
 
@@ -63,7 +61,6 @@ public:
 	bool insert(const base_4bit_t* kmer_data) {
 
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data, KMER_DATA_LENGTH);
-		uint64_t cityhash_ex;
 		size_t kmer_idx = cityhash_new % this->capacity;
 		size_t probe_idx;
 		int terminate = 0;
@@ -108,12 +105,29 @@ public:
 		return (terminate == 0);
 	}
 
-
-	void display(){
-		for (int i = 0; i<this->capacity; i++){
-			printf("%d: %u\n", i, table[i].kmer_count);
+	void print_c(char* s){
+		for(int i = 0; i<LENGTH; i++){
+			printf("%c", s[i]);
 		}
 	}
+
+	void display(){
+		for (size_t i = 0; i<this->capacity; i++){
+			for(size_t k = 0; k<LENGTH; k++){
+				printf("%c", table[i].kmer_data[k]);
+			}	
+			printf(": %u\n", table[i].kmer_count);
+		}
+	}
+
+	size_t count() {
+		size_t count = 0;
+		for (size_t i = 0; i<this->capacity; i++){
+			count += table[i].kmer_count;
+		}
+		return count;
+	}
+
 
 };
 
