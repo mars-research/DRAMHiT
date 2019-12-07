@@ -15,9 +15,6 @@
 // Assumed PAGE SIZE from getconf PAGE_SIZE
 #define PAGE_SIZE 4096
 
-// typedef __int128 int128_t;
-// typedef unsigned __int128 uint128_t;
-
 /* 
 Kmer record in the hash table
 Each record spills over a cache line for now, cache-align later
