@@ -2,7 +2,7 @@
 #define _KMER_CLASS_H_
 
 #include <cstring>
-#include "city.h"
+#include "city/city.h"
 #include "tbb/scalable_allocator.h"
 #include "tbb/tbb_allocator.h"
 #include "data_types.h"

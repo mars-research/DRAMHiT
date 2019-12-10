@@ -2,7 +2,7 @@
 #include <ctime>
 
 class timestamp {
-	// TODO change CPU freq
+	// TODO change period
 	typedef std::ratio<1, 2401000000> period;
 	public:
 		timestamp(unsigned long transactions, std::string type)
