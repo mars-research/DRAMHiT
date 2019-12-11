@@ -63,6 +63,7 @@ public:
 		size_t kmer_idx = cityhash_new % this->capacity;
 		size_t probe_idx = kmer_idx;
 		int terminate = 0;
+		size_t i = 1; /* For counting reprobes in quadratic reprobing */
 
 		/* Compare with empty kmer to check if bucket is empty.
 		   if yes, insert with a count of 1*/
@@ -76,24 +77,27 @@ public:
 			/* If bucket is occpuied, check if it is occupied by the kmer 
 			   we want to insert. If yes, just increment count.*/				
 			} else if (memcmp(&table[probe_idx], kmer_data, 
-				KMER_DATA_LENGTH) == 0) {
+				KMER_DATA_LENGTH) == 0) {	
 					table[probe_idx].kmer_count++;
 					terminate = 1;
 			/* If bucket is occupied, but not by the kmer we want to insert, 
 		   		reprobe  */
-			} else {
+			} else 
+#ifndef QUADRATIC_REPROBING /* Linear reprobe*/
+			{
 				probe_idx++;
-				if (probe_idx == this->capacity-1) {
-					probe_idx = 0;
-				}
+				probe_idx = probe_idx % this->capacity;
 			}
-		/*	Note: if terminate is still == 0 after first run, probe_idx has 
-			already been incremented once, so loop will not terminate until 
-			we reprobe
-		*/
 		} while(!terminate && probe_idx != kmer_idx);
+#else /* Quadratic reprobe */
+			{
+				i += 1;
+				probe_idx = (probe_idx + i*i) % this->capacity;
+			}
+		} while(!terminate && i < MAX_REPROBES);
+#endif
 
-		return (terminate == 0);
+		return terminate;
 	}
 
 	void print_c(char* s){

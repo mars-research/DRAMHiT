@@ -19,7 +19,7 @@
 */
 
 /* Number of threads to spawn to create shards, and in turn create data */
-// #define NUM_THREADS 1
+#define NUM_THREADS 1
 
 /*
 Related to kmer data creation
@@ -29,5 +29,10 @@ Related to kmer data creation
 #define KMER_CREATE_DATA_UNIQ	1000000
 
 // #define ALPHANUM_KMERS
+
+
+/* for hash table */
+#define QUADRATIC_REPROBING 
+#define MAX_REPROBES 62 /*from jellyfish*/
 
 #endif  //_TEST_CONFIG_H_

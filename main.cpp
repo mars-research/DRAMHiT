@@ -31,7 +31,7 @@ uint64_t base = 100000;
 uint64_t multiplier =2;
 uint64_t uniq_cnt = 100000;
 
-
+ 	
 typedef SimpleLinearProbingHashTable slpht_map;
 
 void* create_shards(void *arg) {
@@ -58,7 +58,10 @@ void* create_shards(void *arg) {
 	fipc_test_mfence();
 
 	for (size_t i = 0; i < HT_SIZE; i++) {
-		slpht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
+		bool res = slpht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
+		if (!res){
+			printf("FAIL\n");
+		}
 	}
 
 	return NULL;
