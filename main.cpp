@@ -129,6 +129,9 @@ int spawn_shard_threads(uint32_t num_shards) {
 int main(void) {
 
 	uint32_t num_threads = nodes[0].num_cpus;
+#ifdef NUM_THREADS
+	num_threads = NUM_THREADS;
+#endif	
 	spawn_shard_threads(num_threads);
 
 }

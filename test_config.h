@@ -18,6 +18,9 @@
 #endif
 */
 
+/* Number of threads to spawn to create shards, and in turn create data */
+// #define NUM_THREADS 1
+
 /*
 Related to kmer data creation
 */

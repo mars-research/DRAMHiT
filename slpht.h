@@ -24,7 +24,8 @@ typedef struct {
 	char kmer_data[KMER_DATA_LENGTH];
 	uint32_t kmer_count;
 } __attribute__((packed)) Kmer_r; 
-// TODO use char and bit manipulation instead of bit fields in Kmer_r: https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
+// TODO use char and bit manipulation instead of bit fields in Kmer_r: 
+// https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
@@ -57,48 +58,41 @@ public:
 	// TODO Linear Probing for now, quadratic later
 	bool insert(const base_4bit_t* kmer_data) {
 
-		uint64_t cityhash_new = CityHash64((const char*)kmer_data, KMER_DATA_LENGTH);
+		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
+			KMER_DATA_LENGTH);
 		size_t kmer_idx = cityhash_new % this->capacity;
-		size_t probe_idx;
+		size_t probe_idx = kmer_idx;
 		int terminate = 0;
 
 		/* Compare with empty kmer to check if bucket is empty.
 		   if yes, insert with a count of 1*/
 		// TODO memcmp compare SIMD?
-		if(memcmp(&table[kmer_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH) == 0){
-			memcpy(&table[kmer_idx], kmer_data, KMER_DATA_LENGTH);
-			table[kmer_idx].kmer_count++;
-			terminate = 1;
-		/* If bucket is occpuied, check if it is occupied by the kmer 
-		   we want to insert. If yes, just increment count.*/
-		} else if (memcmp(&table[kmer_idx], kmer_data, KMER_DATA_LENGTH) == 0) {
-			table[kmer_idx].kmer_count++;
-			terminate = 1;
-		/* If bucket is occupied, but not by the kmer we want to insert, 
-		   reprobe  */
-		} else {
-			probe_idx = kmer_idx + 1;
-			if (probe_idx == this->capacity-1) {
-				probe_idx = 0;
-			}
-		}
-
-		/* reprobe */
-		while((!terminate) && (probe_idx != kmer_idx)){
-			if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH) == 0){
-				memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
-				table[probe_idx].kmer_count++;
-				terminate = 1;
-			} else if (memcmp(&table[probe_idx], kmer_data, KMER_DATA_LENGTH) == 0) {
-				table[probe_idx].kmer_count++;
-				terminate = 1;
+		do {
+			if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, 
+				KMER_DATA_LENGTH) == 0){
+					memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
+					table[probe_idx].kmer_count++;
+					terminate = 1;
+			/* If bucket is occpuied, check if it is occupied by the kmer 
+			   we want to insert. If yes, just increment count.*/				
+			} else if (memcmp(&table[probe_idx], kmer_data, 
+				KMER_DATA_LENGTH) == 0) {
+					table[probe_idx].kmer_count++;
+					terminate = 1;
+			/* If bucket is occupied, but not by the kmer we want to insert, 
+		   		reprobe  */
 			} else {
 				probe_idx++;
-				if (probe_idx == this->capacity) {
+				if (probe_idx == this->capacity-1) {
 					probe_idx = 0;
 				}
 			}
-		}
+		/*	Note: if terminate is still == 0 after first run, probe_idx has 
+			already been incremented once, so loop will not terminate until 
+			we reprobe
+		*/
+		} while(!terminate && probe_idx != kmer_idx);
+
 		return (terminate == 0);
 	}
 
