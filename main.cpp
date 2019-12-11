@@ -2,6 +2,7 @@
 #include "slpht.h"
 #include "timestamp.h"
 #include "numa.hpp"
+#include "test_config.h"
 #include "shard.h"
 #include <pthread.h>
 #include <errno.h>
@@ -36,9 +37,9 @@ typedef SimpleLinearProbingHashTable slpht_map;
 void* create_shards(void *arg) {
 
 	thread_data* td = (thread_data*) arg;
-
+#ifndef NDEBUG
 	printf("[INFO] Thread %u. Creating new shard\n", td->thread_idx);
-
+#endif
 	Shard* s = (Shard*)memalign(CACHE_LINE_SIZE, sizeof(Shard));
 	td->shard = s;
 	td->shard->shard_idx = td->thread_idx;
@@ -79,9 +80,9 @@ int spawn_shard_threads(uint32_t num_shards) {
 		thread_data *td = (thread_data*) memalign(CACHE_LINE_SIZE, 
 			sizeof(thread_data));
 		td->thread_idx = i;
-		td->base = base/num_shards;
-		td->multiplier = multiplier;
-		td->uniq_cnt = uniq_cnt/num_shards;
+		td->base = KMER_CREATE_DATA_BASE / num_shards;
+		td->multiplier = KMER_CREATE_DATA_MULT;
+		td->uniq_cnt = KMER_CREATE_DATA_UNIQ / num_shards;
 
 		s = pthread_create(&threads[i], NULL, create_shards, (void*)td);
   		if (s != 0){
@@ -90,7 +91,9 @@ int spawn_shard_threads(uint32_t num_shards) {
 			exit(-1);
   		}
 		CPU_ZERO(&cpuset);
+#ifndef NDEBUG
 		printf("[INFO] thread: %lu, affinity: %u,\n", i, nodes[0].cpu_list[i]);
+#endif
 		CPU_SET(nodes[0].cpu_list[i], &cpuset);
 		pthread_setaffinity_np(threads[i], sizeof(cpu_set_t), &cpuset);
 	}
@@ -107,13 +110,16 @@ int spawn_shard_threads(uint32_t num_shards) {
 
 	fipc_test_mfence();
 	{
-		timestamp t(base*multiplier, "simple_linear_probing_hash_table");	
+		timestamp t(KMER_CREATE_DATA_BASE * KMER_CREATE_DATA_MULT, 
+			"simple_linear_probing_hash_table");	
 		ready =1;
 
 		for (i = 0; i < num_shards; i++)
 		{
 			pthread_join(threads[i], NULL);
+#ifndef NDEBUG
 			printf("[INFO] %s, joined thread %lu\n", __func__, i);
+#endif
 		}
 
 	}

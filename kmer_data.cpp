@@ -6,14 +6,14 @@
 #include "kmer_struct.h"
 #include <unordered_map>
 #include "shard.h"
+#include "test_config.h"
 
-uint64_t KMER_SMALL_POOL_COUNT = 10* 1000000;
-uint64_t KMER_BIG_POOL_COUNT = 20 * 1000000;
 
-#ifdef ALPHANUM_KMERS
 /* for hash table debug*/
-typedef std::unordered_map<std::string, int> std_umap;
-std_umap stdu_kmer_ht;
+#ifdef ALPHANUM_KMERS
+
+/* TODO: map to hold all generated alphanum kmers and their count*/
+/* map should thread-local */
 
 std::string random_alphanum_string( size_t length ) {
     auto randchar = []() -> char
@@ -39,22 +39,17 @@ std::string convertToString(char* a, int size) {
     return s;
 }
 
-void print_pool() {
-	for(auto k : stdu_kmer_ht){
-		std::cout << k.first << ":" << k.second << std::endl;
-	}
-}
-
 #endif
 
-void generate_random_data_small_pool(Shard* sh) {
+void generate_random_data_small_pool(Shard* sh, uint64_t* small_pool_count) {
+	
 	std::string s(LENGTH, 0);
-
 	std::srand(0);
 
+#ifndef NDEBUG
 	printf("[INFO] Shard %u, Populating SMALL POOL\n", sh->shard_idx);
-
-	for (size_t i = 0; i < KMER_SMALL_POOL_COUNT; i++) {
+#endif 
+	for (size_t i = 0; i < *small_pool_count; i++) {
 		std::generate_n(s.begin(), LENGTH, std::rand);
 #ifdef ALPHANUM_KMERS
 		s = random_alphanum_string(LENGTH);
@@ -63,20 +58,24 @@ void generate_random_data_small_pool(Shard* sh) {
 	}
 }
 
-void populate_big_kmer_pool(Shard* sh) {
+void populate_big_kmer_pool(Shard* sh, const uint64_t* small_pool_count, 
+	const uint64_t* big_pool_count) 
+{
+	
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_int_distribution<int> udist(0, KMER_SMALL_POOL_COUNT - 1);
+	std::uniform_int_distribution<int> udist(0, *small_pool_count - 1);
 
+#ifndef NDEBUG
 	printf("[INFO] Shard %u, Populating kmer BIG POOL of %lu elements\n", 
-		sh->shard_idx, KMER_BIG_POOL_COUNT);
+		sh->shard_idx, *big_pool_count);
+#endif 
 
-	for (size_t i = 0; i < KMER_BIG_POOL_COUNT; i++) {
+	for (size_t i = 0; i < *big_pool_count; i++) {
 #ifdef ALPHANUM_KMERS
 		size_t idx = udist(gen);
 		std::string s = convertToString(sh->kmer_small_pool[idx].data, 
 			LENGTH);
-		++stdu_kmer_ht[s];
 		memcpy(sh->kmer_big_pool[i].data, sh->kmer_small_pool[idx].data, 
 			LENGTH);		
 #else 
@@ -87,19 +86,21 @@ void populate_big_kmer_pool(Shard* sh) {
 }
 
 void create_data(uint64_t base, uint32_t multiplier, uint32_t uniq_cnt, 
-	Shard* sh) {
+	Shard* sh) 
+{
 
 	/*
 	The small pool and big pool is there to carefully control the ratio of 
 	total k-mers to unique k-mers.
  	*/
 
-	KMER_BIG_POOL_COUNT = base * multiplier;
-	KMER_SMALL_POOL_COUNT = uniq_cnt;
+	uint64_t KMER_BIG_POOL_COUNT = base * multiplier;
+	uint64_t KMER_SMALL_POOL_COUNT = uniq_cnt;
 
+#ifndef NDEBUG
 	printf("[INFO] Shard %u, Creating kmer SMALL POOL of %lu elements\n", 
 		sh->shard_idx, KMER_SMALL_POOL_COUNT);
-
+#endif
 	sh->kmer_small_pool = (Kmer_s*) memalign(CACHE_LINE_SIZE, 
 		sizeof(Kmer_s) * KMER_SMALL_POOL_COUNT);
 	
@@ -107,10 +108,10 @@ void create_data(uint64_t base, uint32_t multiplier, uint32_t uniq_cnt,
 		printf("[ERROR] Shard %u, Cannot allocate memory for SMALL POOL\n", 
 			sh->shard_idx);
 	}
-
+#ifndef NDEBUG
 	printf("[INFO] Shard %u Creating kmer BIG POOL of %lu elements\n", 
 		sh->shard_idx, KMER_BIG_POOL_COUNT);
-	
+#endif
 	sh->kmer_big_pool = (Kmer_s*) memalign(CACHE_LINE_SIZE, 
 		sizeof(Kmer_s) * KMER_BIG_POOL_COUNT);
 	
@@ -119,20 +120,13 @@ void create_data(uint64_t base, uint32_t multiplier, uint32_t uniq_cnt,
 			sh->shard_idx);
 	}
 
-#ifdef ALPHANUM_KMERS
-	stdu_kmer_ht.reserve(KMER_BIG_POOL_COUNT);
-#endif
-	
-	generate_random_data_small_pool(sh);
+	generate_random_data_small_pool(sh, &KMER_SMALL_POOL_COUNT);
 
-	populate_big_kmer_pool(sh);
+	populate_big_kmer_pool(sh, &KMER_SMALL_POOL_COUNT, &KMER_BIG_POOL_COUNT);
 
 	/* We are done with small pool. From now on, only big pool matters */
 	free(sh->kmer_small_pool);
 
-#ifdef ALPHANUM_KMERS
-	//	print_pool();
-#endif
 }
 
 

@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-g -std=c++17 -Wall -O2  -lnuma -lpthread
+CFLAGS=-g -std=c++17 -Wall -O2  -lnuma -lpthread -DNDEBUG
 TARGET=./bin/lpht
 
 all:
