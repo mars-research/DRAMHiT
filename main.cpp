@@ -1,5 +1,5 @@
 #include "kmer_data.cpp"
-#include "slpht.h"
+#include "skht.h"
 #include "timestamp.h"
 #include "numa.hpp"
 #include "test_config.h"
@@ -48,7 +48,7 @@ void* create_shards(void *arg) {
 	size_t HT_SIZE = td->base * td->multiplier;
 
 	/* Create hash table */
-	skht_map slpht_ht(HT_SIZE);
+	skht_map skht_ht(HT_SIZE);
 	
 	fipc_test_FAI(ready_threads);
 
@@ -58,7 +58,7 @@ void* create_shards(void *arg) {
 	fipc_test_mfence();
 
 	for (size_t i = 0; i < HT_SIZE; i++) {
-		bool res = slpht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
+		bool res = skht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
 		if (!res){
 			printf("FAIL\n");
 		}
