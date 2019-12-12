@@ -30,6 +30,8 @@ Related to kmer data creation
 
 // #define ALPHANUM_KMERS
 
+#define CALC_CITYHASH
+
 
 /* for hash table */
 #define QUADRATIC_REPROBING 

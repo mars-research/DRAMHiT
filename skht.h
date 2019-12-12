@@ -60,6 +60,9 @@ public:
 
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
 			KMER_DATA_LENGTH);
+#ifdef CALC_CITYHASH
+		return 1;
+#endif
 		size_t kmer_idx = cityhash_new % this->capacity;
 #ifdef DO_PREFETCH
 		__builtin_prefetch(&table[kmer_idx], 0, 1);

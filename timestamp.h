@@ -3,7 +3,7 @@
 
 class timestamp {
 	// TODO change period
-	typedef std::ratio<1, 2401000000> period;
+	typedef std::ratio<1, 2500000000> period;
 	public:
 		timestamp(unsigned long transactions, std::string type)
 			: start(std::chrono::high_resolution_clock::now()),
