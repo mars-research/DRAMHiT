@@ -1,5 +1,5 @@
-#ifndef _SLPHT_H
-#define _SLPHT_H
+#ifndef _SKHT_H
+#define _SKHT_H
 
 #include "data_types.h"
 #include "city/city.h"
@@ -29,7 +29,7 @@ typedef struct {
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
-class SimpleLinearProbingHashTable {
+class SimpleKmerHashTable {
 
 private:
 	Kmer_r* table;
@@ -43,7 +43,7 @@ private:
 
 public: 
 
-	SimpleLinearProbingHashTable(uint64_t c){
+	SimpleKmerHashTable(uint64_t c){
 		// TODO static cast
 		// TODO power of 2 table size for ease of mod operations
 		this->capacity = c;
@@ -61,6 +61,9 @@ public:
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
 			KMER_DATA_LENGTH);
 		size_t kmer_idx = cityhash_new % this->capacity;
+#ifdef DO_PREFETCH
+		__builtin_prefetch(&table[kmer_idx], 0, 1);
+#endif 
 		size_t probe_idx = kmer_idx;
 		int terminate = 0;
 		size_t i = 1; /* For counting reprobes in quadratic reprobing */
@@ -129,4 +132,4 @@ public:
 
 // TODO bloom filters for high frequency kmers?
 
-#endif /* _SLPHT_H_ */
+#endif /* _SKHT_H_ */

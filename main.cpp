@@ -32,7 +32,7 @@ uint64_t multiplier =2;
 uint64_t uniq_cnt = 100000;
 
  	
-typedef SimpleLinearProbingHashTable slpht_map;
+typedef SimpleKmerHashTable skht_map;
 
 void* create_shards(void *arg) {
 
@@ -48,7 +48,7 @@ void* create_shards(void *arg) {
 	size_t HT_SIZE = td->base * td->multiplier;
 
 	/* Create hash table */
-	slpht_map slpht_ht(HT_SIZE);
+	skht_map slpht_ht(HT_SIZE);
 	
 	fipc_test_FAI(ready_threads);
 
@@ -136,6 +136,8 @@ int main(void) {
 	num_threads = NUM_THREADS;
 #endif	
 	spawn_shard_threads(num_threads);
+
+
 
 }
 
