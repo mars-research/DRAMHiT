@@ -6,8 +6,14 @@
 #include "shard.h"
 #include <pthread.h>
 #include <errno.h>
+#include "libfipc_test_time.h"
+
+// TODO Where do you get this from?
+#define CPUFREQ_HZ				(2500.0 * 1000000)
+static const float one_cycle_ns = ((float)1000000 / CPUFREQ_HZ);
 
 #define fipc_test_FAI(X)       __sync_fetch_and_add( &X, 1 )
+#define fipc_test_FAD(X)       __sync_fetch_and_add( &X, -1 )
 #define fipc_test_mfence()   asm volatile ( "mfence" : : )
 #define fipc_test_pause()    asm volatile ( "pause\n": : :"memory" );
 static uint64_t ready = 0;
@@ -24,19 +30,15 @@ typedef struct{
 	uint64_t multiplier; // set before calling create_shards
 	uint64_t uniq_cnt; // set before calling create_shards
 	Shard* shard; // to be set by create_shards
+	uint64_t insertion_cycles; //to be set by create_shards
 } thread_data;
 
-/*hardcoded TODO move to a testconfig file */
-uint64_t base = 100000;
-uint64_t multiplier =2;
-uint64_t uniq_cnt = 100000;
-
- 	
 typedef SimpleKmerHashTable skht_map;
 
 void* create_shards(void *arg) {
 
 	thread_data* td = (thread_data*) arg;
+	uint64_t start, end;
 #ifndef NDEBUG
 	printf("[INFO] Thread %u. Creating new shard\n", td->thread_idx);
 #endif
@@ -55,7 +57,9 @@ void* create_shards(void *arg) {
 	while(!ready)
 		fipc_test_pause();
 
-	fipc_test_mfence();
+	// fipc_test_mfence();
+
+	start = RDTSC_START();
 
 	for (size_t i = 0; i < HT_SIZE; i++) {
 		bool res = skht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
@@ -64,24 +68,36 @@ void* create_shards(void *arg) {
 		}
 	}
 
+	end = RDTSCP();
+	td->insertion_cycles = (end - start);
+	fipc_test_FAD(ready_threads);
+
 	return NULL;
 }	
 
 int spawn_shard_threads(uint32_t num_shards) {
 	
-	pthread_t* threads;
 	cpu_set_t cpuset; 
 	int s;
 	size_t i;
 
 	// TODO malloc vs. memalign?
-	threads = (pthread_t*) malloc(sizeof(pthread_t*) * num_shards);
+	// threads = (pthread_t*) malloc(sizeof(pthread_t*) * num_shards);
 
+	pthread_t* threads = (pthread_t*) memalign(CACHE_LINE_SIZE, 
+			sizeof(pthread_t) * num_shards);
+	// thread_data all_td[num_shards] = {{0}};
+	thread_data* all_td = (thread_data*) memalign(CACHE_LINE_SIZE, 
+			sizeof(thread_data)*num_shards);
+
+	memset(all_td, 0, sizeof(thread_data*)*num_shards);
+	
 	for (i = 0; i < num_shards; i++){
 
 		// TODO memalign vs malloc?
-		thread_data *td = (thread_data*) memalign(CACHE_LINE_SIZE, 
-			sizeof(thread_data));
+		// thread_data *td = (thread_data*) memalign(CACHE_LINE_SIZE, 
+		// 	sizeof(thread_data));
+		thread_data *td = &all_td[i];
 		td->thread_idx = i;
 		td->base = KMER_CREATE_DATA_BASE / num_shards;
 		td->multiplier = KMER_CREATE_DATA_MULT;
@@ -111,21 +127,58 @@ int spawn_shard_threads(uint32_t num_shards) {
 	while(ready_threads < num_shards)
 		fipc_test_pause();
 
-	fipc_test_mfence();
-	{
-		timestamp t(KMER_CREATE_DATA_BASE * KMER_CREATE_DATA_MULT, 
-			"simple_linear_probing_hash_table");	
-		ready =1;
+	// fipc_test_mfence();
+	ready = 1;
 
-		for (i = 0; i < num_shards; i++)
-		{
-			pthread_join(threads[i], NULL);
-#ifndef NDEBUG
-			printf("[INFO] %s, joined thread %lu\n", __func__, i);
-#endif
-		}
+	/* TODO thread join vs sync on atomic variable*/
+	while(ready_threads)
+		fipc_test_pause();
 
+	uint64_t all_total_cycles = 0;
+	double all_total_time_ns = 0;
+	uint64_t kmer_big_pool_size_per_shard = (KMER_CREATE_DATA_BASE*KMER_CREATE_DATA_MULT)/num_shards;
+
+	for (size_t k = 0; k < num_shards; k++) {
+		printf("Thread %u: %lu cycles (%f ns) for %lu insertions (%lu cycles per insertion)\n", 
+			all_td[k].thread_idx, 
+			all_td[k].insertion_cycles,
+			(double) all_td[k].insertion_cycles * one_cycle_ns,
+			all_td[k].base*all_td[k].multiplier,
+			all_td[k].insertion_cycles / (all_td[k].base*all_td[k].multiplier));
+		all_total_cycles += all_td[k].insertion_cycles;
+		all_total_time_ns += (double)all_td[k].insertion_cycles * one_cycle_ns;
 	}
+	printf("===============================================================\n");
+	printf("Total threads: %u\n", num_shards); 
+	printf("Total cycles: %lu\n", all_total_cycles);
+	printf("Total time (ns): %f\n", all_total_time_ns);
+	printf("Average cycles per thread for %lu insertions: %ld\n", kmer_big_pool_size_per_shard, (all_total_cycles / num_shards));
+	printf("Average time per thread: %f (ns)\n", all_total_time_ns /num_shards);
+	// printf("Average cycles per insertion per thread: %lu\n", all_total_cycles/(KMER_CREATE_DATA_BASE*KMER_CREATE_DATA_MULT)/num_shards);
+	// printf("Average time per insertion per thread: %lu\n", all_total_time_ns/(KMER_CREATE_DATA_BASE*KMER_CREATE_DATA_MULT)/num_shards);
+	// printf("Average time per insertion: %f (ms)\n", all_total_cycles/KMER_CREATE_DATA_BASE*KMER_CREATE_DATA_MULT);
+	printf("===============================================================\n");
+	// cout << "Cycles for " << total_threads << " threads to finish insertion : " << g_total_cycles / total_threads
+	// 		<< "(" << g_total_time / total_threads << " seconds)" << endl;
+	// cout << "time taken for single insertion " << g_insertion_nsecs / total_threads << " ns "<< endl;
+
+// 	{
+// 		timestamp t(KMER_CREATE_DATA_BASE * KMER_CREATE_DATA_MULT, 
+// 			"simple_linear_probing_hash_table");	
+// 		ready =1;
+
+// 		for (i = 0; i < num_shards; i++)
+// 		{
+// 			pthread_join(threads[i], NULL);
+// #ifndef NDEBUG
+// 			printf("[INFO] %s, joined thread %lu\n", __func__, i);
+// #endif
+// 		}
+
+// 	}
+// 	while(ready_threads)
+// 		fipc_test_pause();
+
 	return 0;
 }
 
