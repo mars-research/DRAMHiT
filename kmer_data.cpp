@@ -85,8 +85,7 @@ void populate_big_kmer_pool(Shard* sh, const uint64_t* small_pool_count,
 	}
 }
 
-void create_data(uint64_t base, uint32_t multiplier, uint32_t uniq_cnt, 
-	Shard* sh) 
+void create_data(Shard* sh) 
 {
 
 	/*
@@ -94,8 +93,8 @@ void create_data(uint64_t base, uint32_t multiplier, uint32_t uniq_cnt,
 	total k-mers to unique k-mers.
  	*/
 
-	uint64_t KMER_BIG_POOL_COUNT = base * multiplier;
-	uint64_t KMER_SMALL_POOL_COUNT = uniq_cnt;
+	uint64_t KMER_BIG_POOL_COUNT = KMER_CREATE_DATA_BASE * KMER_CREATE_DATA_MULT;
+	uint64_t KMER_SMALL_POOL_COUNT = KMER_CREATE_DATA_UNIQ;
 
 #ifndef NDEBUG
 	printf("[INFO] Shard %u, Creating kmer SMALL POOL of %lu elements\n", 

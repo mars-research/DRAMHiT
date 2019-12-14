@@ -19,11 +19,13 @@
 */
 
 /* Number of threads to spawn to create shards, and in turn create data */
-// #define NUM_THREADS 1
+// #define NUM_THREADS 1 // TODO have in an argv
 
 /*
 Related to kmer data creation
 */
+
+// per thread
 #define KMER_CREATE_DATA_BASE	1000000
 #define KMER_CREATE_DATA_MULT	2  
 #define KMER_CREATE_DATA_UNIQ	1000000
