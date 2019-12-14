@@ -15,6 +15,8 @@
 // Assumed PAGE SIZE from getconf PAGE_SIZE
 #define PAGE_SIZE 4096
 
+#define PREFETCH_CACHE_SIZE 20
+
 /* 
 Kmer record in the hash table
 Each record spills over a cache line for now, cache-align later
@@ -29,81 +31,107 @@ typedef struct {
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
+typedef struct {
+	const base_4bit_t* kmer_data_ptr;
+	uint64_t kmer_idx;
+} Kmer_cache_r; // TODO packed/aligned?
+
 class SimpleKmerHashTable {
 
 private:
 	Kmer_r* table;
 	uint64_t capacity;
-	Kmer_r empty_kmer_r; // for comparison for empty slot
+	Kmer_r empty_kmer_r; /* for comparison for empty slot */
+	Kmer_cache_r* cache; // TODO prefetch this?
+	uint32_t cache_count;
 
 	size_t __hash(const base_4bit_t* k){
 		uint64_t cityhash =  CityHash64((const char*)k, KMER_DATA_LENGTH);
 		return (cityhash % this->capacity);
 	}
 
+	bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx){
+	size_t probe_idx = kmer_idx;
+	int terminate = 0;
+	size_t i = 1; /* For counting reprobes in quadratic reprobing */
+
+	/* Compare with empty kmer to check if bucket is empty.
+	   if yes, insert with a count of 1*/
+	// TODO memcmp compare SIMD?
+	do {
+		if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, 
+			KMER_DATA_LENGTH) == 0){
+				memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
+				table[probe_idx].kmer_count++;
+				terminate = 1;
+		/* If bucket is occpuied, check if it is occupied by the kmer 
+		   we want to insert. If yes, just increment count.*/				
+		} else if (memcmp(&table[probe_idx], kmer_data, 
+			KMER_DATA_LENGTH) == 0) {	
+				table[probe_idx].kmer_count++;
+				terminate = 1;
+		/* If bucket is occupied, but not by the kmer we want to insert, 
+	   		reprobe  */
+		} else 
+#ifndef QUADRATIC_REPROBING /* Linear reprobe*/
+		{
+			probe_idx++;
+			probe_idx = probe_idx % this->capacity;
+		}
+	} while(!terminate && probe_idx != kmer_idx);
+#else /* Quadratic reprobe */
+		{
+			i += 1;
+			probe_idx = (probe_idx + i*i) % this->capacity;
+		}
+	} while(!terminate && i < MAX_REPROBES);
+#endif
+
+	return terminate;
+} 
+
 public: 
 
-	SimpleKmerHashTable(uint64_t c){
+	SimpleKmerHashTable(uint64_t c) {
 		// TODO static cast
 		// TODO power of 2 table size for ease of mod operations
 		this->capacity = c;
 		table = (Kmer_r*)(aligned_alloc(PAGE_SIZE, capacity*sizeof(Kmer_r)));
 		memset(table, 0, capacity*sizeof(Kmer_r));
 		memset(&this->empty_kmer_r, 0, sizeof(Kmer_r));
+
+		cache = (Kmer_cache_r*)(aligned_alloc(PAGE_SIZE, 
+				PREFETCH_CACHE_SIZE*sizeof(Kmer_cache_r)));
+		cache_count = 0;
 	}
 
-	/*
-	insert and increment if exists
-	*/
-	// TODO Linear Probing for now, quadratic later
+		/* insert and increment if exists */
 	bool insert(const base_4bit_t* kmer_data) {
 
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
 			KMER_DATA_LENGTH);
-#ifdef CALC_CITYHASH
-		return 1;
-#endif
-		size_t kmer_idx = cityhash_new % this->capacity;
+		size_t __kmer_idx = cityhash_new % this->capacity;
+
 #ifdef DO_PREFETCH
-		__builtin_prefetch(&table[kmer_idx], 0, 1);
-#endif 
-		size_t probe_idx = kmer_idx;
-		int terminate = 0;
-		size_t i = 1; /* For counting reprobes in quadratic reprobing */
+		/* prefetch buckets and store kmer_data pointers in cache */
+		// TODO how much to prefetch?
+		// TODO if we do prefetch: what to return? API breaks
+		__builtin_prefetch(&table[__kmer_idx], 0, 1);
+		cache[cache_count].kmer_data_ptr = kmer_data; 
+		cache[cache_count].kmer_idx = __kmer_idx;
+		cache_count++;
 
-		/* Compare with empty kmer to check if bucket is empty.
-		   if yes, insert with a count of 1*/
-		// TODO memcmp compare SIMD?
-		do {
-			if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, 
-				KMER_DATA_LENGTH) == 0){
-					memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
-					table[probe_idx].kmer_count++;
-					terminate = 1;
-			/* If bucket is occpuied, check if it is occupied by the kmer 
-			   we want to insert. If yes, just increment count.*/				
-			} else if (memcmp(&table[probe_idx], kmer_data, 
-				KMER_DATA_LENGTH) == 0) {	
-					table[probe_idx].kmer_count++;
-					terminate = 1;
-			/* If bucket is occupied, but not by the kmer we want to insert, 
-		   		reprobe  */
-			} else 
-#ifndef QUADRATIC_REPROBING /* Linear reprobe*/
-			{
-				probe_idx++;
-				probe_idx = probe_idx % this->capacity;
+		/* if cache is full, actually insert */
+		if (cache_count == PREFETCH_CACHE_SIZE) {
+			for (size_t i =0; i<cache_count; i++){
+				__insert(cache[i].kmer_data_ptr, cache[i].kmer_idx);
 			}
-		} while(!terminate && probe_idx != kmer_idx);
-#else /* Quadratic reprobe */
-			{
-				i += 1;
-				probe_idx = (probe_idx + i*i) % this->capacity;
-			}
-		} while(!terminate && i < MAX_REPROBES);
+			cache_count = 0;
+		}
+		return true;
+#else
+		return __insert(kmer_data, __kmer_idx); 
 #endif
-
-		return terminate;
 	}
 
 	void print_c(char* s){
