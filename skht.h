@@ -53,59 +53,56 @@ private:
 
 	bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx)
 	{
-	size_t probe_idx = kmer_idx;
-	int terminate = 0;
-	size_t i = 1; /* For counting reprobes in quadratic reprobing */
+		size_t probe_idx = kmer_idx;
+		int terminate = 0;
+		size_t i = 1; /* For counting reprobes in quadratic reprobing */
 
-	/* Compare with empty kmer to check if bucket is empty.
-	   if yes, insert with a count of 1*/
-	// TODO memcmp compare SIMD?
 #ifdef ONLY_MEMCMP
-	do 
-	{
-		if((memcmp(&table[probe_idx], &empty_kmer_r.kmer_data,
-			KMER_DATA_LENGTH) == 0) || 1 )
-		{
-			memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
-			table[probe_idx].kmer_count++;
-			terminate = 1;
-		}
-	} while(!terminate);
+		/* always memcmp the same bucket, and insert at the same bucket 
+		*/
+		probe_idx = 0;	// bucket 0
+		memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH)
+		memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
+		table[probe_idx].kmer_count++;
+		terminate = 1;
 	
 #endif
-	do 
-	{
-		// TODO have a occupied field instead of memcmp
-		if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, 
-			KMER_DATA_LENGTH) == 0)
+		do 
 		{
-				memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
-				table[probe_idx].kmer_count++;
-				terminate = 1;
-		/* If bucket is occpuied, check if it is occupied by the kmer 
-		   we want to insert. If yes, just increment count.*/				
-		} else if (memcmp(&table[probe_idx], kmer_data, 
-			KMER_DATA_LENGTH) == 0) {	
-				table[probe_idx].kmer_count++;
-				terminate = 1;
-		/* If bucket is occupied, but not by the kmer we want to insert, 
-	   		reprobe  */
-		} else 
+			/* Compare with empty kmer to check if bucket is empty.
+			   if yes, insert with a count of 1*/
+			// TODO memcmp compare SIMD?
+			// TODO have a occupied field instead of memcmp
+			if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, 
+				KMER_DATA_LENGTH) == 0)
+			{
+					memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
+					table[probe_idx].kmer_count++;
+					terminate = 1;
+			/* If bucket is occpuied, check if it is occupied by the kmer 
+			   we want to insert. If yes, just increment count.*/				
+			} else if (memcmp(&table[probe_idx], kmer_data, 
+				KMER_DATA_LENGTH) == 0) {	
+					table[probe_idx].kmer_count++;
+					terminate = 1;
+			/* If bucket is occupied, but not by the kmer we want to insert, 
+		   		reprobe  */
+			} else 
 #ifndef QUADRATIC_REPROBING /* Linear reprobe*/
-		{
-			probe_idx++;
-			probe_idx = probe_idx % this->capacity;
-		}
-	} while(!terminate && probe_idx != kmer_idx);
+			{
+				probe_idx++;
+				probe_idx = probe_idx % this->capacity;
+			}
+		} while(!terminate && probe_idx != kmer_idx);
 #else /* Quadratic reprobe */
-		{
-			i += 1;
-			probe_idx = (probe_idx + i*i) % this->capacity;
-		}
-	} while(!terminate && i < MAX_REPROBES);
+			{
+				i += 1;
+				probe_idx = (probe_idx + i*i) % this->capacity;
+			}
+		} while(!terminate && i < MAX_REPROBES);
 #endif
 
-	return terminate;
+		return terminate;
 } 
 
 public: 
