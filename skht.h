@@ -61,7 +61,7 @@ private:
 		/* always memcmp the same bucket, and insert at the same bucket 
 		*/
 		probe_idx = 0;	// bucket 0
-		memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH)
+		memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH);
 		memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
 		table[probe_idx].kmer_count++;
 		terminate = 1;

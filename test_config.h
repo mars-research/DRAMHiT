@@ -31,7 +31,7 @@ create kmer data (per thread)
 // #define QUADRATIC_REPROBING 
 // #define MAX_REPROBES 62 /*from jellyfish*/
 // #define ONLY_CITYHASH
-// #define NO_INSERT
+// #define NO_INSERTS
 // #define ONLY_MEMCMP
 // #define DO_PREFETCH
 // #define NUM_THREADS 1 // TODO have in an argv
