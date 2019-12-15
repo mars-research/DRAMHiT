@@ -59,10 +59,12 @@ void* create_shards(void *arg) {
 	start = RDTSC_START();
 
 	for (size_t i = 0; i < HT_SIZE; i++) {
+#ifndef NO_INSERTS
 		bool res = skht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
 		if (!res){
 			printf("FAIL\n");
 		}
+#endif 
 	}
 
 	end = RDTSCP();

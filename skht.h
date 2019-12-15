@@ -45,12 +45,14 @@ private:
 	Kmer_cache_r* cache; // TODO prefetch this?
 	uint32_t cache_count;
 
-	size_t __hash(const base_4bit_t* k){
+	size_t __hash(const base_4bit_t* k)
+	{
 		uint64_t cityhash =  CityHash64((const char*)k, KMER_DATA_LENGTH);
 		return (cityhash % this->capacity);
 	}
 
-	bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx){
+	bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx)
+	{
 	size_t probe_idx = kmer_idx;
 	int terminate = 0;
 	size_t i = 1; /* For counting reprobes in quadratic reprobing */
@@ -58,9 +60,25 @@ private:
 	/* Compare with empty kmer to check if bucket is empty.
 	   if yes, insert with a count of 1*/
 	// TODO memcmp compare SIMD?
-	do {
+#ifdef ONLY_MEMCMP
+	do 
+	{
+		if((memcmp(&table[probe_idx], &empty_kmer_r.kmer_data,
+			KMER_DATA_LENGTH) == 0) || 1 )
+		{
+			memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
+			table[probe_idx].kmer_count++;
+			terminate = 1;
+		}
+	} while(!terminate);
+	
+#endif
+	do 
+	{
+		// TODO have a occupied field instead of memcmp
 		if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, 
-			KMER_DATA_LENGTH) == 0){
+			KMER_DATA_LENGTH) == 0)
+		{
 				memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
 				table[probe_idx].kmer_count++;
 				terminate = 1;
@@ -92,7 +110,8 @@ private:
 
 public: 
 
-	SimpleKmerHashTable(uint64_t c) {
+	SimpleKmerHashTable(uint64_t c) 
+	{
 		// TODO static cast
 		// TODO power of 2 table size for ease of mod operations
 		this->capacity = c;
@@ -105,14 +124,19 @@ public:
 		cache_count = 0;
 	}
 
-		/* insert and increment if exists */
-	bool insert(const base_4bit_t* kmer_data) {
+	/* insert and increment if exists */
+	bool insert(const base_4bit_t* kmer_data) 
+	{
 
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
 			KMER_DATA_LENGTH);
 		size_t __kmer_idx = cityhash_new % this->capacity;
 
-#ifdef DO_PREFETCH
+#ifdef ONLY_CITYHASH
+		return true;
+#endif
+
+#if defined DO_PREFETCH
 		/* prefetch buckets and store kmer_data pointers in cache */
 		// TODO how much to prefetch?
 		// TODO if we do prefetch: what to return? API breaks
@@ -122,8 +146,10 @@ public:
 		cache_count++;
 
 		/* if cache is full, actually insert */
-		if (cache_count == PREFETCH_CACHE_SIZE) {
-			for (size_t i =0; i<cache_count; i++){
+		if (cache_count == PREFETCH_CACHE_SIZE) 
+		{
+			for (size_t i =0; i<cache_count; i++)
+			{
 				__insert(cache[i].kmer_data_ptr, cache[i].kmer_idx);
 			}
 			cache_count = 0;
@@ -134,24 +160,30 @@ public:
 #endif
 	}
 
-	void print_c(char* s){
-		for(int i = 0; i<LENGTH; i++){
+	void print_c(char* s)
+	{
+		for(int i = 0; i<LENGTH; i++)
+		{
 			printf("%c", s[i]);
 		}
 	}
 
 	void display(){
-		for (size_t i = 0; i<this->capacity; i++){
-			for(size_t k = 0; k<LENGTH; k++){
+		for (size_t i = 0; i<this->capacity; i++)
+		{
+			for(size_t k = 0; k<LENGTH; k++)
+			{
 				printf("%c", table[i].kmer_data[k]);
 			}	
 			printf(": %u\n", table[i].kmer_count);
 		}
 	}
 
-	size_t count() {
+	size_t count() 
+	{
 		size_t count = 0;
-		for (size_t i = 0; i<this->capacity; i++){
+		for (size_t i = 0; i<this->capacity; i++)
+		{
 			count += table[i].kmer_count;
 		}
 		return count;

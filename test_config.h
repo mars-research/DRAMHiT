@@ -18,26 +18,22 @@
 #endif
 */
 
-/* Number of threads to spawn to create shards, and in turn create data */
-// #define NUM_THREADS 1 // TODO have in an argv
-
 /*
-Related to kmer data creation
+create kmer data (per thread)
 */
-
-// per thread
 #define KMER_CREATE_DATA_BASE	1000000
 #define KMER_CREATE_DATA_MULT	2  
 #define KMER_CREATE_DATA_UNIQ	1000000
 
 // #define ALPHANUM_KMERS
 
-// #define CALC_CITYHASH
-
-
 /* for hash table */
-#define QUADRATIC_REPROBING 
-#define MAX_REPROBES 62 /*from jellyfish*/
-#define DO_PREFETCH
+// #define QUADRATIC_REPROBING 
+// #define MAX_REPROBES 62 /*from jellyfish*/
+// #define ONLY_CITYHASH
+// #define NO_INSERT
+// #define ONLY_MEMCMP
+// #define DO_PREFETCH
+// #define NUM_THREADS 1 // TODO have in an argv
 
 #endif  //_TEST_CONFIG_H_
