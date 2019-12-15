@@ -25,6 +25,7 @@ Each record spills over a cache line for now, cache-align later
 typedef struct {
 	char kmer_data[KMER_DATA_LENGTH];
 	uint32_t kmer_count;
+	bool occupied;
 } __attribute__((packed)) Kmer_r; 
 // TODO use char and bit manipulation instead of bit fields in Kmer_r: 
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
@@ -61,8 +62,9 @@ private:
 		/* always memcmp the same bucket, and insert at the same bucket 
 		*/
 		probe_idx = 0;	// bucket 0
-		memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, KMER_DATA_LENGTH);
-		memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
+		memcmp(&table[probe_idx].kmer_data, &empty_kmer_r.kmer_data, 
+			KMER_DATA_LENGTH);
+		memcpy(&table[probe_idx].kmer_data, kmer_data, KMER_DATA_LENGTH);
 		table[probe_idx].kmer_count++;
 		terminate = 1;
 	
@@ -73,16 +75,18 @@ private:
 			   if yes, insert with a count of 1*/
 			// TODO memcmp compare SIMD?
 			// TODO have a occupied field instead of memcmp
-			if(memcmp(&table[probe_idx], &empty_kmer_r.kmer_data, 
-				KMER_DATA_LENGTH) == 0)
+			if (!table[probe_idx].occupied)
 			{
-					memcpy(&table[probe_idx], kmer_data, KMER_DATA_LENGTH);
+					memcpy(&table[probe_idx].kmer_data, kmer_data, 
+						KMER_DATA_LENGTH);
 					table[probe_idx].kmer_count++;
+					table[probe_idx].occupied = true;
 					terminate = 1;
 			/* If bucket is occpuied, check if it is occupied by the kmer 
 			   we want to insert. If yes, just increment count.*/				
-			} else if (memcmp(&table[probe_idx], kmer_data, 
-				KMER_DATA_LENGTH) == 0) {	
+			} else if (memcmp(&table[probe_idx].kmer_data, kmer_data, 
+				KMER_DATA_LENGTH) == 0) 
+			{	
 					table[probe_idx].kmer_count++;
 					terminate = 1;
 			/* If bucket is occupied, but not by the kmer we want to insert, 
