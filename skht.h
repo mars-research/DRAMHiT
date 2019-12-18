@@ -5,13 +5,6 @@
 #include "city/city.h"
 #include "kmer_struct.h"
 
-/* 
-4 bits per nucleotide, k=100 => 400 bits (~50 bytes)
-3 bits per nucleotide, k=100 => 300 bits (~38 bytes) 
-*/
-#define KMER_DATA_LENGTH 50 
-#define KMER_COUNT_LENGTH 4
-
 // Assumed PAGE SIZE from getconf PAGE_SIZE
 #define PAGE_SIZE 4096
 
@@ -24,7 +17,7 @@ Each record spills over a cache line for now, cache-align later
 
 typedef struct {
 	char kmer_data[KMER_DATA_LENGTH];
-	uint32_t kmer_count;
+	uint32_t kmer_count; // TODO seems too long
 	bool occupied;
 } __attribute__((packed)) Kmer_r; 
 // TODO use char and bit manipulation instead of bit fields in Kmer_r: 
@@ -45,6 +38,7 @@ private:
 	Kmer_r empty_kmer_r; /* for comparison for empty slot */
 	Kmer_cache_r* cache; // TODO prefetch this?
 	uint32_t cache_count;
+	uint64_t num_reprobes;
 
 	size_t __hash(const base_4bit_t* k)
 	{
@@ -58,15 +52,16 @@ private:
 		int terminate = 0;
 		size_t i = 1; /* For counting reprobes in quadratic reprobing */
 
-#ifdef ONLY_MEMCMP
-		/* always memcmp the same bucket, and insert at the same bucket 
+#ifdef ONLY_MEMCPY
+		/* always insert into the same bucket (table[0]), 
+			and increment the kmer_count.
 		*/
 		probe_idx = 0;	// bucket 0
-		memcmp(&table[probe_idx].kmer_data, &empty_kmer_r.kmer_data, 
-			KMER_DATA_LENGTH);
+		if (!table[probe_idx].occupied) {;}
 		memcpy(&table[probe_idx].kmer_data, kmer_data, KMER_DATA_LENGTH);
 		table[probe_idx].kmer_count++;
 		terminate = 1;
+		return terminate;
 	
 #endif
 		do 
@@ -96,12 +91,18 @@ private:
 			{
 				probe_idx++;
 				probe_idx = probe_idx % this->capacity;
+#ifdef CALC_AVG_REPROBES
+				this->num_reprobes++;
+#endif
 			}
 		} while(!terminate && probe_idx != kmer_idx);
 #else /* Quadratic reprobe */
 			{
 				i += 1;
 				probe_idx = (probe_idx + i*i) % this->capacity;
+#ifdef CALC_AVG_REPROBES
+				this->num_reprobes++;
+#endif
 			}
 		} while(!terminate && i < MAX_REPROBES);
 #endif
@@ -123,6 +124,12 @@ public:
 		cache = (Kmer_cache_r*)(aligned_alloc(PAGE_SIZE, 
 				PREFETCH_CACHE_SIZE*sizeof(Kmer_cache_r)));
 		cache_count = 0;
+		num_reprobes = 0;
+	}
+
+	~SimpleKmerHashTable(){
+		free(table);
+		free(cache);
 	}
 
 	/* insert and increment if exists */
@@ -137,7 +144,7 @@ public:
 		return true;
 #endif
 
-#if defined DO_PREFETCH
+#ifdef DO_PREFETCH
 		/* prefetch buckets and store kmer_data pointers in cache */
 		// TODO how much to prefetch?
 		// TODO if we do prefetch: what to return? API breaks
@@ -163,16 +170,17 @@ public:
 
 	void print_c(char* s)
 	{
-		for(int i = 0; i<LENGTH; i++)
+		for(int i = 0; i<KMER_DATA_LENGTH; i++)
 		{
 			printf("%c", s[i]);
 		}
 	}
 
 	void display(){
+		uint32_t max = 0;
 		for (size_t i = 0; i<this->capacity; i++)
 		{
-			for(size_t k = 0; k<LENGTH; k++)
+			for(size_t k = 0; k<KMER_DATA_LENGTH; k++)
 			{
 				printf("%c", table[i].kmer_data[k]);
 			}	
@@ -188,6 +196,11 @@ public:
 			count += table[i].kmer_count;
 		}
 		return count;
+	}
+
+	uint64_t get_num_reprobes()
+	{
+		return this->num_reprobes;
 	}
 
 

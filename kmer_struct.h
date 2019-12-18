@@ -1,12 +1,15 @@
 #ifndef _KMER_STRUCT_H
 #define _KMER_STRUCT_H
 
-#define LENGTH					50
-#define CACHE_LINE_SIZE			64
+#define KMER_DATA_LENGTH		50
 
+/* 
+4 bits per nucleotide, k=100 => 400 bits (~50 bytes)
+3 bits per nucleotide, k=100 => 300 bits (~38 bytes) 
+*/
 // kmer (key)
 struct 	Kmer_s {
-		char data[LENGTH];
+		char data[KMER_DATA_LENGTH];
 };
 
 typedef struct Kmer_s Kmer_s;

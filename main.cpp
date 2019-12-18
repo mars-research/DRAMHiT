@@ -28,6 +28,7 @@ typedef struct{
 	uint32_t thread_idx; // set before calling create_shards
 	Shard* shard; // to be set by create_shards
 	uint64_t insertion_cycles; //to be set by create_shards
+	uint64_t num_reprobes;
 } thread_data;
 
 typedef SimpleKmerHashTable skht_map;
@@ -39,7 +40,7 @@ void* create_shards(void *arg) {
 #ifndef NDEBUG
 	printf("[INFO] Thread %u. Creating new shard\n", td->thread_idx);
 #endif
-	Shard* s = (Shard*)memalign(CACHE_LINE_SIZE, sizeof(Shard));
+	Shard* s = (Shard*)memalign(FIPC_CACHE_LINE_SIZE, sizeof(Shard));
 	td->shard = s;
 	td->shard->shard_idx = td->thread_idx;
 	create_data(td->shard);
@@ -69,6 +70,8 @@ void* create_shards(void *arg) {
 
 	end = RDTSCP();
 	td->insertion_cycles = (end - start);
+	td->num_reprobes =  skht_ht.get_num_reprobes();
+	//skht_ht.display();
 	fipc_test_FAD(ready_threads);
 
 	return NULL;
@@ -82,17 +85,17 @@ int spawn_shard_threads(uint32_t num_shards) {
 
 	// threads = (pthread_t*) malloc(sizeof(pthread_t*) * num_shards);
 
-	pthread_t* threads = (pthread_t*) memalign(CACHE_LINE_SIZE, 
+	pthread_t* threads = (pthread_t*) memalign(FIPC_CACHE_LINE_SIZE, 
 			sizeof(pthread_t) * num_shards);
 	// thread_data all_td[num_shards] = {{0}};
-	thread_data* all_td = (thread_data*) memalign(CACHE_LINE_SIZE, 
+	thread_data* all_td = (thread_data*) memalign(FIPC_CACHE_LINE_SIZE, 
 			sizeof(thread_data)*num_shards);
 
 	memset(all_td, 0, sizeof(thread_data*)*num_shards);
 
 	for (i = 0; i < num_shards; i++){
 
-		// thread_data *td = (thread_data*) memalign(CACHE_LINE_SIZE, 
+		// thread_data *td = (thread_data*) memalign(FIPC_CACHE_LINE_SIZE, 
 		// 	sizeof(thread_data));
 		thread_data *td = &all_td[i];
 		td->thread_idx = i;
@@ -137,23 +140,27 @@ int spawn_shard_threads(uint32_t num_shards) {
 
 	uint64_t all_total_cycles = 0;
 	double all_total_time_ns = 0;
+	uint64_t all_total_reprobes = 0;
 
 	for (size_t k = 0; k < num_shards; k++) {
-		printf("Thread %2d: %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion)\n", 
+		printf("Thread %2d: %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion), number of reprobes: %lu\n", 
 			all_td[k].thread_idx, 
 			all_td[k].insertion_cycles,
 			(double) all_td[k].insertion_cycles * one_cycle_ns / 1000,
 			kmer_big_pool_size_per_shard,
-			all_td[k].insertion_cycles / kmer_big_pool_size_per_shard);
+			all_td[k].insertion_cycles / kmer_big_pool_size_per_shard,
+			all_td[k].num_reprobes);
 		all_total_cycles += all_td[k].insertion_cycles;
 		all_total_time_ns += (double)all_td[k].insertion_cycles * one_cycle_ns;
+		all_total_reprobes += all_td[k].num_reprobes;
 	}
 	printf("===============================================================\n");
-		printf("Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion)\n", 
+		printf("Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion), number of reprobes: %lu\n", 
 			all_total_cycles / num_shards, 
 			(double) all_total_time_ns * one_cycle_ns / 1000,
 			kmer_big_pool_size_per_shard,
-			all_total_cycles / num_shards / kmer_big_pool_size_per_shard);
+			all_total_cycles / num_shards / kmer_big_pool_size_per_shard,
+			all_total_reprobes / num_shards);
 	printf("===============================================================\n");
 	printf("Total cumulative cycles for %u threads: %lu\n", num_shards, 
 		all_total_cycles);
