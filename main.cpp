@@ -29,6 +29,9 @@ typedef struct{
 	Shard* shard; // to be set by create_shards
 	uint64_t insertion_cycles; //to be set by create_shards
 	uint64_t num_reprobes;
+	uint64_t num_memcpys;
+	uint64_t num_memcmps;
+	uint64_t num_queue_flushes;
 } thread_data;
 
 typedef SimpleKmerHashTable skht_map;
@@ -61,17 +64,24 @@ void* create_shards(void *arg) {
 
 	for (size_t i = 0; i < HT_SIZE; i++) {
 #ifndef NO_INSERTS
+		// printf("%lu: ", i);
 		bool res = skht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
 		if (!res){
 			printf("FAIL\n");
 		}
 #endif 
 	}
+	skht_ht.flush_queue();
 
 	end = RDTSCP();
 	td->insertion_cycles = (end - start);
-	td->num_reprobes =  skht_ht.get_num_reprobes();
-	//skht_ht.display();
+#ifdef CALC_STATS
+	td->num_reprobes = skht_ht.num_reprobes;
+	td->num_memcmps = skht_ht.num_memcmps;
+	td->num_memcpys = skht_ht.num_memcpys;
+	td->num_queue_flushes = skht_ht.num_queue_flushes;
+#endif
+
 	fipc_test_FAD(ready_threads);
 
 	return NULL;
@@ -93,7 +103,8 @@ int spawn_shard_threads(uint32_t num_shards) {
 
 	memset(all_td, 0, sizeof(thread_data*)*num_shards);
 
-	for (i = 0; i < num_shards; i++){
+	for (i = 0; i < num_shards; i++)
+	{
 
 		// thread_data *td = (thread_data*) memalign(FIPC_CACHE_LINE_SIZE, 
 		// 	sizeof(thread_data));
@@ -101,11 +112,14 @@ int spawn_shard_threads(uint32_t num_shards) {
 		td->thread_idx = i;
 
 		s = pthread_create(&threads[i], NULL, create_shards, (void*)td);
-  		if (s != 0){
+  		if (s != 0)
+  		{
   			printf("[ERROR] pthread_create: Could not create create_shard \
   				thread");
 			exit(-1);
   		}
+		
+		// pin this (controller) thread to last cpu of last numa
 		CPU_ZERO(&cpuset);
 #ifndef NDEBUG
 		printf("[INFO] thread: %lu, affinity: %u,\n", i, nodes[0].cpu_list[i]);
@@ -140,27 +154,31 @@ int spawn_shard_threads(uint32_t num_shards) {
 
 	uint64_t all_total_cycles = 0;
 	double all_total_time_ns = 0;
-	uint64_t all_total_reprobes = 0;
+	// uint64_t all_total_reprobes = 0;
 
 	for (size_t k = 0; k < num_shards; k++) {
-		printf("Thread %2d: %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion), number of reprobes: %lu\n", 
+		printf("Thread %2d: %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion)"
+			" [num_reprobes: %lu, num_memcmps: %lu, num_memcpys: %lu, num_queue_flushes: %lu]\n", 
 			all_td[k].thread_idx, 
 			all_td[k].insertion_cycles,
 			(double) all_td[k].insertion_cycles * one_cycle_ns / 1000,
 			kmer_big_pool_size_per_shard,
 			all_td[k].insertion_cycles / kmer_big_pool_size_per_shard,
-			all_td[k].num_reprobes);
+			all_td[k].num_reprobes,
+			all_td[k].num_memcmps, 
+			all_td[k].num_memcpys, 
+			all_td[k].num_queue_flushes 
+			);
 		all_total_cycles += all_td[k].insertion_cycles;
 		all_total_time_ns += (double)all_td[k].insertion_cycles * one_cycle_ns;
-		all_total_reprobes += all_td[k].num_reprobes;
+		// all_total_reprobes += all_td[k].num_reprobes;
 	}
 	printf("===============================================================\n");
-		printf("Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion), number of reprobes: %lu\n", 
+		printf("Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion)\n", 
 			all_total_cycles / num_shards, 
 			(double) all_total_time_ns * one_cycle_ns / 1000,
 			kmer_big_pool_size_per_shard,
-			all_total_cycles / num_shards / kmer_big_pool_size_per_shard,
-			all_total_reprobes / num_shards);
+			all_total_cycles / num_shards / kmer_big_pool_size_per_shard);
 	printf("===============================================================\n");
 	printf("Total cumulative cycles for %u threads: %lu\n", num_shards, 
 		all_total_cycles);
@@ -170,17 +188,25 @@ int spawn_shard_threads(uint32_t num_shards) {
 		all_total_cycles/total_kmer_big_pool_size/num_shards);
 	printf("===============================================================\n");
 
+	free(threads);
+	free(all_td);
 
 	return 0;
 }
 
 int main(void) {
-
+printf("PREFETCH_QUEUE_SIZE: %d\n", PREFETCH_QUEUE_SIZE);
+#ifndef DYNAMIC_QUEUE
+	printf("STATIC_QUEUE\n");
+#else
+ 	printf("DYNAMIC_QUEUE\n");
+#endif
 	uint32_t num_threads = nodes[0].num_cpus;
 #ifdef NUM_THREADS
 	num_threads = NUM_THREADS;
 #endif	
 	spawn_shard_threads(num_threads);
+
 
 
 

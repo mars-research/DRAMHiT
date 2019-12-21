@@ -87,13 +87,15 @@ void populate_big_kmer_pool(Shard* sh, const uint64_t* small_pool_count,
 	}
 }
 
-void write_data(Shard* sh, const char* filename, const char* data){
+void write_data(Shard* sh, const char* filename, const char* data, 
+	uint64_t* KMER_BIG_POOL_COUNT)
+{
 	FILE* fp;
 	fp = fopen(filename, "wb");
-	int res = fwrite(data, 50, 2000000, fp);
+	int res = fwrite(data, KMER_DATA_LENGTH, *KMER_BIG_POOL_COUNT, fp);
 	if (res){
-		printf("[INFO] Shard %u, Wrote %d items into big pool\n", 
-			sh->shard_idx, res);
+		printf("[INFO] Shard %u, Wrote %d items to file: %s\n", 
+			sh->shard_idx, res, filename);
 	} else{
 		printf("[ERROR] Shard %u, cannot read data into big pool\n",
 			sh->shard_idx);
@@ -101,13 +103,15 @@ void write_data(Shard* sh, const char* filename, const char* data){
 	fclose(fp);
 }
 
-void read_data(Shard* sh, const char* filename, char* data_ptr){
+void read_data(Shard* sh, const char* filename, char* data_ptr,
+	uint64_t* KMER_BIG_POOL_COUNT)
+{
 	FILE* fp;
 	fp = fopen(filename, "rb");
-	int res = fread(data_ptr, 50, 2000000, fp);
+	int res = fread(data_ptr, KMER_DATA_LENGTH, *KMER_BIG_POOL_COUNT, fp);
 	if (res){
-		printf("[INFO] Shard %u, Loaded %d items into big pool\n", 
-			sh->shard_idx, res);
+		printf("[INFO] Shard %u, Loaded %d items into big pool from file: %s\n", 
+			sh->shard_idx, res, filename);
 	} else{
 		printf("[ERROR] Shard %u, cannot read data into big pool\n",
 			sh->shard_idx);
@@ -151,10 +155,9 @@ void create_data(Shard* sh)
 
 	char pool_filename[strlen(POOL_FILE_FORMAT)];
 	sprintf(pool_filename, POOL_FILE_FORMAT, sh->shard_idx);
-	printf("%s\n", pool_filename);
 
 #ifdef READ_KMERS_FROM_DISK
-	read_data(sh, pool_filename, sh->kmer_big_pool->data);
+	read_data(sh, pool_filename, sh->kmer_big_pool->data, &KMER_BIG_POOL_COUNT);
 #else
 	generate_random_data_small_pool(sh, &KMER_SMALL_POOL_COUNT);
 	
@@ -163,12 +166,12 @@ void create_data(Shard* sh)
 
 
 #ifdef WRITE_KMERS_TO_DISK
-		write_data(sh, pool_filename, (const char*) sh->kmer_big_pool->data);
+		write_data(sh, pool_filename, (const char*) sh->kmer_big_pool->data,
+			&KMER_BIG_POOL_COUNT);
 #endif
 
 	/* We are done with small pool. From now on, only big pool matters */
 	free(sh->kmer_small_pool);
-
 }
 
 
