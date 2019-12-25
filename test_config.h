@@ -39,7 +39,7 @@ create kmer data (per thread)
 // #define NUM_THREADS 1 // TODO have in an argv
 #define READ_KMERS_FROM_DISK
 //#define WRITE_KMERS_TO_DISK
-#define CALC_STATS
+//#define CALC_STATS
 ////
 
 #endif  //_TEST_CONFIG_H_
