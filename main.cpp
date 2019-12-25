@@ -32,6 +32,7 @@ typedef struct{
 	uint64_t num_memcpys;
 	uint64_t num_memcmps;
 	uint64_t num_queue_flushes;
+	uint64_t max_distance_from_bucket;
 } thread_data;
 
 typedef SimpleKmerHashTable skht_map;
@@ -72,14 +73,19 @@ void* create_shards(void *arg) {
 #endif 
 	}
 	skht_ht.flush_queue();
-
 	end = RDTSCP();
+	printf("[INFO] Thread %u. HT fill: %lu of %lu (%f %) \n", 
+		td->thread_idx, skht_ht.get_fill(), skht_ht.get_capacity(),
+		(double) skht_ht.get_fill() / skht_ht.get_capacity() * 100 );
+	printf("[INFO] Thread %u. HT max_kmer_count: %lu\n", td->thread_idx, 
+		skht_ht.get_max_count());
 	td->insertion_cycles = (end - start);
 #ifdef CALC_STATS
 	td->num_reprobes = skht_ht.num_reprobes;
 	td->num_memcmps = skht_ht.num_memcmps;
 	td->num_memcpys = skht_ht.num_memcpys;
 	td->num_queue_flushes = skht_ht.num_queue_flushes;
+	td->max_distance_from_bucket = skht_ht.max_distance_from_bucket;
 #endif
 
 	fipc_test_FAD(ready_threads);
@@ -158,7 +164,8 @@ int spawn_shard_threads(uint32_t num_shards) {
 
 	for (size_t k = 0; k < num_shards; k++) {
 		printf("Thread %2d: %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion)"
-			" [num_reprobes: %lu, num_memcmps: %lu, num_memcpys: %lu, num_queue_flushes: %lu]\n", 
+			" [num_reprobes: %lu, num_memcmps: %lu, num_memcpys: %lu," 
+			" num_queue_flushes: %lu, max_distance_from_bucket: %lu]\n", 
 			all_td[k].thread_idx, 
 			all_td[k].insertion_cycles,
 			(double) all_td[k].insertion_cycles * one_cycle_ns / 1000,
@@ -167,7 +174,8 @@ int spawn_shard_threads(uint32_t num_shards) {
 			all_td[k].num_reprobes,
 			all_td[k].num_memcmps, 
 			all_td[k].num_memcpys, 
-			all_td[k].num_queue_flushes 
+			all_td[k].num_queue_flushes,
+			all_td[k].max_distance_from_bucket
 			);
 		all_total_cycles += all_td[k].insertion_cycles;
 		all_total_time_ns += (double)all_td[k].insertion_cycles * one_cycle_ns;

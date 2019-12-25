@@ -15,11 +15,13 @@ Kmer cache_record in the hash hashtable
 Each cache_record spills over a queue line for now, queue-align later
 */
 
+//2^21
+
 typedef struct {
-	char kmer_data[KMER_DATA_LENGTH];
-	uint32_t kmer_count; // TODO seems too long
-	bool occupied;
-	char padding[9]; // TODO remove hardcode
+	char kmer_data[KMER_DATA_LENGTH]; // 50 bytes
+	uint16_t kmer_count; // 2 bytes // TODO seems too long, max count is ~14
+	bool occupied; // 1 bytes
+	char padding[11]; // 11 bytes // TODO remove hardcode
 } __attribute__((packed)) Kmer_r; 
 // TODO use char and bit manipulation instead of bit fields in Kmer_r: 
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
@@ -64,9 +66,12 @@ private:
 			}
 	}
 
+	/* Insert using prefetch: using a dynamic prefetch queue.
+		If bucket is occupied, add to queue again to reprobe.
+	*/
 	bool __insert(Kmer_queue_r* cache_record)
 	{
-		size_t probe_idx = cache_record->kmer_idx;;
+		size_t probe_idx = cache_record->kmer_idx;
 
 		/* Compare with empty kmer to check if bucket is empty.
 		   if yes, insert with a count of 1*/
@@ -107,11 +112,19 @@ private:
 		return (this->queue_idx == PREFETCH_QUEUE_SIZE);
 	} 
 
+	/* Insert using prefetch: using a static prefetch queue.
+		If bucket is occupied, reprobe till you find an empty bucket. 
+	*/
 	bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx)
 	{
 		size_t probe_idx = kmer_idx;
 		int terminate = 0;
 		size_t q = 1; /* For counting reprobes in quadratic reprobing */
+
+#ifdef CALC_STATS
+		/* to calculate no. of reprobes for this insert */
+		uint64_t reprobe_num = 0; 
+#endif
 
 #ifdef ONLY_MEMCPY
 		/* always insert into the same bucket (hashtable[0]), 
@@ -162,6 +175,7 @@ private:
 				probe_idx = probe_idx & (this->capacity-1); //modulo
 #ifdef CALC_STATS
 				this->num_reprobes++;
+				reprobe_num++;
 #endif
 			}
 		} while(!terminate && probe_idx != kmer_idx);
@@ -177,10 +191,15 @@ private:
 		} while(!terminate && q < MAX_REPROBES);
 #endif
 
+#ifdef CALC_STATS
+		if (reprobe_num > this->max_distance_from_bucket){
+			this->max_distance_from_bucket = reprobe_num;
+		} 
+#endif
 		return terminate;
 	} 
 
-	uint64_t upper_power_of_two(uint64_t v)
+	uint64_t __upper_power_of_two(uint64_t v)
 	{
 	    v--;
 	    v |= v >> 1;
@@ -199,13 +218,14 @@ public:
 	uint64_t num_memcmps = 0;
 	uint64_t num_memcpys = 0;
 	uint64_t num_queue_flushes = 0;	
+	uint64_t max_distance_from_bucket = 0;
 #endif
 
 	SimpleKmerHashTable(uint64_t c) 
 	{
 		// TODO static cast
 		// TODO power of 2 hashtable size for ease of mod operations
-		this->capacity = this->upper_power_of_two(c);
+		this->capacity = this->__upper_power_of_two(c);
 		this->hashtable = (Kmer_r*)(aligned_alloc(PAGE_SIZE, capacity*sizeof(Kmer_r)));
 		memset(hashtable, 0, capacity*sizeof(Kmer_r));
 		memset(&this->empty_kmer_r, 0, sizeof(Kmer_r));
@@ -237,6 +257,11 @@ public:
 		/* prefetch buckets and store kmer_data pointers in queue */
 		// TODO how much to prefetch?
 		// TODO if we do prefetch: what to return? API breaks
+#ifndef DO_PREFETCH
+	//bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx)
+	__insert(kmer_data, __kmer_idx);
+#else
+
 		__builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
 		//printf("inserting into queue at %u\n", this->queue_idx);
 		queue[this->queue_idx].kmer_data_ptr = kmer_data; 
@@ -256,7 +281,7 @@ public:
 		// {
 		// 	this->flush_queue();			
 		// }
-
+#endif
 		return true;
 	}
 
@@ -286,15 +311,35 @@ public:
 		}
 	}
 
-	size_t get_count() 
+	size_t get_fill() 
 	{
 		size_t count = 0;
 		for (size_t i = 0; i<this->capacity; i++)
 		{
-			count += hashtable[i].kmer_count;
+			if (hashtable[i].occupied)
+			{
+				count++;
+			}
 		}
 		return count;
 	}
+
+	size_t get_capacity(){
+		return this->capacity;
+	}
+
+	size_t get_max_count()
+	{
+		size_t count = 0;
+		for (size_t i = 0; i<this->capacity; i++)
+		{
+			if (hashtable[i].kmer_count > count)
+			{
+				count = hashtable[i].kmer_count;
+			}
+		}
+		return count;
+	}		
 
 };
 
