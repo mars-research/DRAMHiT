@@ -83,10 +83,12 @@ void* create_shards(void *arg) {
 		f.open( outfile + std::to_string(td->thread_idx));
 		Kmer_r* ht = skht_ht.hashtable;
 
-		for (size_t i=0; i<HT_SIZE; i++)
+		for (size_t i=0; i<skht_ht.get_capacity(); i++)
 		{
 			if (ht[i].kmer_count > 0)
+			{
 				f << ht[i] << std::endl;
+			}
 		}
 	}
 
