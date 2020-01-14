@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include "libfipc_test_time.h"
+#include <fstream>
 
 // TODO Where do you get this from? /proc/cpuinfo
 #define CPUFREQ_MHZ				(2200.0)
@@ -36,6 +37,7 @@ typedef struct{
 } thread_data;
 
 typedef SimpleKmerHashTable skht_map;
+std::string outfile;
 
 void* create_shards(void *arg) {
 
@@ -74,6 +76,20 @@ void* create_shards(void *arg) {
 	}
 	skht_ht.flush_queue();
 	end = RDTSCP();
+
+	if (!outfile.empty()) 
+	{
+		ofstream f;
+		f.open( outfile + std::to_string(td->thread_idx));
+		Kmer_r* ht = skht_ht.hashtable;
+
+		for (size_t i=0; i<HT_SIZE; i++)
+		{
+			if (ht[i].kmer_count > 0)
+				f << ht[i] << std::endl;
+		}
+	}
+
 	printf("[INFO] Thread %u. HT fill: %lu of %lu (%f %) \n", 
 		td->thread_idx, skht_ht.get_fill(), skht_ht.get_capacity(),
 		(double) skht_ht.get_fill() / skht_ht.get_capacity() * 100 );
@@ -124,7 +140,6 @@ int spawn_shard_threads(uint32_t num_shards) {
   				thread");
 			exit(-1);
   		}
-		
 		// pin this (controller) thread to last cpu of last numa
 		CPU_ZERO(&cpuset);
 #ifndef NDEBUG
@@ -202,7 +217,12 @@ int spawn_shard_threads(uint32_t num_shards) {
 	return 0;
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
+if (argc == 2){
+	outfile = std::string(argv[1]);
+	std::cout << "outfile: " << outfile <<std::endl;
+}
+
 printf("PREFETCH_QUEUE_SIZE: %d\n", PREFETCH_QUEUE_SIZE);
 #ifndef DYNAMIC_QUEUE
 	printf("STATIC_QUEUE\n");

@@ -38,7 +38,6 @@ typedef struct {
 class SimpleKmerHashTable {
 
 private:
-	Kmer_r* hashtable;
 	uint64_t capacity;
 	Kmer_r empty_kmer_r; /* for comparison for empty slot */
 	Kmer_queue_r* queue; // TODO prefetch this?
@@ -220,6 +219,7 @@ public:
 	uint64_t num_queue_flushes = 0;	
 	uint64_t max_distance_from_bucket = 0;
 #endif
+	Kmer_r* hashtable;
 
 	SimpleKmerHashTable(uint64_t c) 
 	{
@@ -342,6 +342,12 @@ public:
 	}		
 
 };
+
+
+std::ostream& operator<<(std::ostream &strm, const Kmer_r &k) {
+    	return strm << std::string(k.kmer_data, KMER_DATA_LENGTH) << " : " << k.kmer_count;
+}
+
 
 
 // TODO bloom filters for high frequency kmers?
