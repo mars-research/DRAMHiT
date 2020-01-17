@@ -33,12 +33,7 @@ std::string random_alphanum_string( size_t length ) {
 }
 
 std::string convertToString(char* a, int size) { 
-    int i; 
-    std::string s = ""; 
-    for (i = 0; i < size; i++) { 
-        s = s + a[i]; 
-    } 
-    return s;
+    return std::string(a, size);
 }
 
 #endif
