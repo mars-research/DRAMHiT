@@ -9,7 +9,7 @@
 #include "test_config.h"
 #include <stdio.h>
 
-const char* POOL_FILE_FORMAT = "/users/hvishwan/bak/pools/alphanum/one-million/%02u.bin";;
+const char* POOL_FILE_FORMAT = "/users/hvishwan/pools/alphanum/10e6/%02u.bin";;
 
 /* for hash table debug*/
 #ifdef ALPHANUM_KMERS

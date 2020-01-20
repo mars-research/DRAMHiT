@@ -21,7 +21,8 @@ typedef struct {
 	char kmer_data[KMER_DATA_LENGTH]; // 50 bytes
 	uint16_t kmer_count; // 2 bytes // TODO seems too long, max count is ~14
 	bool occupied; // 1 bytes
-	char padding[11]; // 11 bytes // TODO remove hardcode
+	uint64_t kmer_cityhash; // 8 bytes
+	char padding[3]; // 3 bytes // TODO remove hardcode
 } __attribute__((packed)) Kmer_r; 
 // TODO use char and bit manipulation instead of bit fields in Kmer_r: 
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
@@ -31,7 +32,7 @@ typedef struct {
 typedef struct {
 	const base_4bit_t* kmer_data_ptr;
 	uint32_t kmer_idx; // TODO reduce size, TODO decided by hashtable size?
-	char padding[4]; // TODO remove hardcode
+	uint64_t kmer_cityhash; // 8 bytes
 } __attribute__((packed)) Kmer_queue_r;
 
 
@@ -78,14 +79,18 @@ private:
 		{
 			memcpy(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, 
 				KMER_DATA_LENGTH);
-				hashtable[probe_idx].kmer_count++;
-				hashtable[probe_idx].occupied = true;
+			hashtable[probe_idx].kmer_count++;
+			hashtable[probe_idx].occupied = true;
+			hashtable[probe_idx].kmer_cityhash = cache_record->kmer_cityhash;
+
 #ifdef CALC_STATS
 				this->num_memcpys++;
 #endif
-		// TODO replace memcmp with hash?		
-		} else if (memcmp(&hashtable[probe_idx].kmer_data, 
-			cache_record->kmer_data_ptr, KMER_DATA_LENGTH) == 0) 
+		// TODO replace memcmp with hash? done
+		} else if ( (hashtable[probe_idx].kmer_cityhash == 
+			cache_record->kmer_cityhash) && 
+			(memcmp(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, 
+				KMER_DATA_LENGTH) == 0)) 
 		{	
 				hashtable[probe_idx].kmer_count++;
 #ifdef CALC_STATS
@@ -100,8 +105,10 @@ private:
 			probe_idx = probe_idx & (this->capacity -1); // modulo 
 			__builtin_prefetch(&hashtable[probe_idx], 1, 3);
 			cache_record->kmer_idx = probe_idx;
-			queue[this->queue_idx].kmer_data_ptr = cache_record->kmer_data_ptr; 	
-			queue[this->queue_idx].kmer_idx = cache_record->kmer_idx;
+
+			queue[this->queue_idx] = *cache_record;
+			// queue[this->queue_idx].kmer_data_ptr = cache_record->kmer_data_ptr; 	
+			// queue[this->queue_idx].kmer_idx = cache_record->kmer_idx;
 			this->queue_idx++;
 #ifdef CALC_STATS
 			this->num_reprobes++;
@@ -266,6 +273,7 @@ public:
 		//printf("inserting into queue at %u\n", this->queue_idx);
 		queue[this->queue_idx].kmer_data_ptr = kmer_data; 
 		queue[this->queue_idx].kmer_idx = __kmer_idx;
+		queue[this->queue_idx].kmer_cityhash = cityhash_new; 
 		this->queue_idx++;
 
 		/* if queue is full, actually insert */
