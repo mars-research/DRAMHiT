@@ -58,11 +58,7 @@ private:
 			this->queue_idx = 0; // start again
 			for (size_t i =0; i < queue_sz; i++)
 			{
-#ifndef DYNAMIC_QUEUE
-				__insert(queue[i].kmer_data_ptr, queue[i].kmer_idx);
-#else
 				__insert(&queue[i]);
-#endif
 			}
 	}
 
@@ -118,93 +114,6 @@ private:
 		return (this->queue_idx == PREFETCH_QUEUE_SIZE);
 	} 
 
-	/* Insert using prefetch: using a static prefetch queue.
-		If bucket is occupied, reprobe till you find an empty bucket. 
-	*/
-	bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx)
-	{
-		size_t probe_idx = kmer_idx;
-		int terminate = 0;
-		size_t q = 1; /* For counting reprobes in quadratic reprobing */
-
-#ifdef CALC_STATS
-		/* to calculate no. of reprobes for this insert */
-		uint64_t reprobe_num = 0; 
-#endif
-
-#ifdef ONLY_MEMCPY
-		/* always insert into the same bucket (hashtable[0]), 
-			and increment the kmer_count.
-		*/
-		probe_idx = 0;	// bucket 0
-		if (!hashtable[probe_idx].occupied) {;}
-		memcpy(&hashtable[probe_idx].kmer_data, kmer_data, KMER_DATA_LENGTH);
-		hashtable[probe_idx].kmer_count++;
-		terminate = 1;
-		return terminate;
-	
-#endif
-		do 
-		{
-			/* Compare with empty kmer to check if bucket is empty.
-			   if yes, insert with a count of 1*/
-			// TODO memcmp compare SIMD?
-			// TODO have a occupied field instead of memcmp
-			if (!hashtable[probe_idx].occupied)
-			{
-				memcpy(&hashtable[probe_idx].kmer_data, kmer_data, 
-					KMER_DATA_LENGTH);
-					hashtable[probe_idx].kmer_count++;
-					hashtable[probe_idx].occupied = true;
-					terminate = 1;
-#ifdef CALC_STATS
-				this->num_memcpys++;
-#endif
-
-			/* If bucket is occpuied, check if it is occupied by the kmer 
-			   we want to insert. If yes, just increment count.*/				
-			// TODO replace memcmp with hash?		
-			} else if (memcmp(&hashtable[probe_idx].kmer_data, kmer_data, 
-				KMER_DATA_LENGTH) == 0) 
-			{	
-					hashtable[probe_idx].kmer_count++;
-					terminate = 1;
-#ifdef CALC_STATS
-				this->num_memcmps++;
-#endif
-			/* If bucket is occupied, but not by the kmer we want to insert, 
-		   		reprobe  */
-			} else 
-#ifndef QUADRATIC_REPROBING /* Linear reprobe*/
-			{
-				probe_idx++;
-				probe_idx = probe_idx & (this->capacity-1); //modulo
-#ifdef CALC_STATS
-				this->num_reprobes++;
-				reprobe_num++;
-#endif
-			}
-		} while(!terminate && probe_idx != kmer_idx);
-#else /* Quadratic reprobe */
-			{
-				q += 1;
-				probe_idx += q*q;
-				probe_idx = probe_idx & (this->capacity -1); //modulo
-#ifdef CALC_STATS
-				this->num_reprobes++;
-#endif
-			}
-		} while(!terminate && q < MAX_REPROBES);
-#endif
-
-#ifdef CALC_STATS
-		if (reprobe_num > this->max_distance_from_bucket){
-			this->max_distance_from_bucket = reprobe_num;
-		} 
-#endif
-		return terminate;
-	} 
-
 	uint64_t __upper_power_of_two(uint64_t v)
 	{
 	    v--;
@@ -257,17 +166,9 @@ public:
 		size_t __kmer_idx = cityhash_new & (this->capacity -1 ); // modulo 
 		//size_t __kmer_idx = cityhash_new % (this->capacity); 
 
-#ifdef ONLY_CITYHASH
-		return true;
-#endif
-
 		/* prefetch buckets and store kmer_data pointers in queue */
 		// TODO how much to prefetch?
 		// TODO if we do prefetch: what to return? API breaks
-#ifndef DO_PREFETCH
-	//bool __insert(const base_4bit_t* kmer_data, size_t kmer_idx)
-	__insert(kmer_data, __kmer_idx);
-#else
 
 		__builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
 		//printf("inserting into queue at %u\n", this->queue_idx);
@@ -289,7 +190,6 @@ public:
 		// {
 		// 	this->flush_queue();			
 		// }
-#endif
 		return true;
 	}
 

@@ -25,18 +25,12 @@ create kmer data (per thread)
 #define KMER_CREATE_DATA_BASE	1000000
 #define KMER_CREATE_DATA_MULT	2  
 #define KMER_CREATE_DATA_UNIQ	1000000
-#define DYNAMIC_QUEUE
 
 // #define ALPHANUM_KMERS
 
 /* for hash table */
-// #define QUADRATIC_REPROBING 
 // #define MAX_REPROBES 62 /*from jellyfish*/
-//#define ONLY_CITYHASH
-// #define NO_INSERTS
-// #define ONLY_MEMCPY
-#define DO_PREFETCH
-// #define NUM_THREADS 1 // TODO have in an argv
+//#define NUM_THREADS 1 // TODO have in an argv
 #define READ_KMERS_FROM_DISK
 //#define WRITE_KMERS_TO_DISK
 #define CALC_STATS
