@@ -65,17 +65,30 @@ void* create_shards(void *arg) {
 
 	start = RDTSC_START();
 
-	for (size_t i = 0; i < HT_SIZE; i++) {
-#ifndef NO_INSERTS
+	/*	Begin insert loop	*/
+	for (size_t i = 0; i < HT_SIZE; i++) 
+	{
 		// printf("%lu: ", i);
 		bool res = skht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
-		if (!res){
+		if (!res)
+		{
 			printf("FAIL\n");
 		}
-#endif 
 	}
 	skht_ht.flush_queue();
 	end = RDTSCP();
+	std::cout << "[INFO] Thread " << td->thread_idx << ". Inserts complete" << std::endl;
+	/*	End insert loop	*/
+
+
+	/*	Begin find loop	*/
+	for (size_t i = 0; i <HT_SIZE; i++)
+	{
+		Kmer_r* k = skht_ht.find((base_4bit_t*)&td->shard->kmer_big_pool[i]);
+		//std::cout << *k << std::endl;
+	}
+	std::cout << "[INFO] Thread " << td->thread_idx << ". Finds complete" << std::endl;
+	/*	End find loop	*/
 
 	if (!outfile.empty()) 
 	{
@@ -225,12 +238,8 @@ if (argc == 2){
 	std::cout << "outfile: " << outfile <<std::endl;
 }
 
-printf("PREFETCH_QUEUE_SIZE: %d\n", PREFETCH_QUEUE_SIZE);
-#ifndef DYNAMIC_QUEUE
-	printf("STATIC_QUEUE\n");
-#else
- 	printf("DYNAMIC_QUEUE\n");
-#endif
+	printf("PREFETCH_QUEUE_SIZE: %d\n", PREFETCH_QUEUE_SIZE);
+
 	uint32_t num_threads = nodes[0].num_cpus;
 #ifdef NUM_THREADS
 	num_threads = NUM_THREADS;

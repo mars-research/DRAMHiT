@@ -205,6 +205,35 @@ public:
 #endif
 	}
 
+	Kmer_r* find(const base_4bit_t * kmer_data)
+	{
+#ifdef CALC_STATS
+		uint64_t distance_from_bucket = 0;
+#endif
+		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
+			KMER_DATA_LENGTH);
+		size_t idx = cityhash_new & (this->capacity -1 ); // modulo
+
+		int memcmp_res = memcmp(&hashtable[idx].kmer_data, kmer_data,
+			KMER_DATA_LENGTH);
+
+		while(memcmp_res != 0)
+		{
+			idx++;
+			idx = idx & (this->capacity -1);
+			memcmp_res = memcmp(&hashtable[idx].kmer_data, kmer_data, 
+				KMER_DATA_LENGTH);
+			distance_from_bucket++;
+		}
+
+#ifdef CALC_STATS
+		if (distance_from_bucket > this->max_distance_from_bucket)
+			this->max_distance_from_bucket = distance_from_bucket;
+#endif
+
+		return &hashtable[idx];
+	}
+
 	void display(){
 		uint32_t max = 0;
 		for (size_t i = 0; i<this->capacity; i++)
