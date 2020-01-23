@@ -78,7 +78,7 @@ private:
 	/* Insert using prefetch: using a dynamic prefetch queue.
 		If bucket is is_occupied, add to queue again to reprobe.
 	*/
-
+	// TODO inline
 	bool __swap(__Kmer_r* table_kmer, __Kmer_r* queue_kmer, uint32_t idx){
 
 		__Kmer_r temp = *table_kmer;
@@ -93,7 +93,7 @@ private:
 		return true;
 	}
 
-	bool __insert(Kmer_queue_r* cache_record)
+	void __insert(Kmer_queue_r* cache_record)
 	{
 		uint32_t i = cache_record->insert_bucket_idx;
 
@@ -101,26 +101,38 @@ private:
 		if (!hashtable[i].kmer.is_occupied)
 		{
 			hashtable[i].kmer = cache_record->kmer;
+			return;
 
-		} else if (memcmp(&hashtable[i].kmer.kmer_data, 
-						cache_record->kmer.kmer_data, KMER_DATA_LENGTH) == 0) 
+		} 
+
+		if (memcmp(&hashtable[i].kmer.kmer_data, cache_record->kmer.kmer_data, KMER_DATA_LENGTH) == 0) 
 		{
-				hashtable[i].kmer.kmer_count++;
+			hashtable[i].kmer.kmer_count++;
+			return;
 
-		} else if ( 
-			__distance_to_bucket(hashtable[i].kmer.original_bucket_idx, i) <
+		} 
+
+		if ( __distance_to_bucket(hashtable[i].kmer.original_bucket_idx, i) <
 			__distance_to_bucket(cache_record->kmer.original_bucket_idx, i))
 		{
-				__swap(&hashtable[i].kmer, &cache_record->kmer, i);
+			__swap(&hashtable[i].kmer, &cache_record->kmer, i);
+#ifdef CALC_STATS
+			this->num_swaps++;
+#endif
+			return;
+		} 
 
-		} else {
+		{
 			cache_record->insert_bucket_idx = (i + 1) & (this->capacity - 1); 
 			__builtin_prefetch(&hashtable[cache_record->insert_bucket_idx], 1, 3);
 			queue[this->queue_idx] = *cache_record;
 			this->queue_idx++;
+#ifdef CALC_STATS
+			this->num_reprobes++;
+#endif
+			return;
 		}
 	
-		return true;
 	} 
 
 	uint64_t __upper_power_of_two(uint64_t v)
@@ -136,7 +148,16 @@ private:
     	return v;
 	}
 
-public: 
+public:
+#ifdef CALC_STATS
+	uint64_t num_reprobes = 0;
+	uint64_t num_memcmps = 0;
+	uint64_t num_memcpys = 0;
+	uint64_t num_queue_flushes = 0;	
+	uint64_t sum_distance_from_bucket = 0;
+	uint64_t num_swaps = 0;
+#endif
+	
 	Kmer_r* hashtable;
 
 	SimpleKmerHashTable(uint64_t c) 
@@ -194,6 +215,35 @@ public:
 			curr_queue_sz = this->queue_idx;
 		}
 	}
+
+	__Kmer_r* find(const base_4bit_t * kmer_data)
+	{
+#ifdef CALC_STATS
+		uint64_t distance_from_bucket = 0;
+#endif
+		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
+			KMER_DATA_LENGTH);
+		size_t idx = cityhash_new & (this->capacity -1 ); // modulo
+
+		int memcmp_res = memcmp(&hashtable[idx].kmer.kmer_data, kmer_data,
+			KMER_DATA_LENGTH);
+
+		while(memcmp_res != 0)
+		{
+			idx++;
+			idx = idx & (this->capacity -1);
+			memcmp_res = memcmp(&hashtable[idx].kmer.kmer_data, kmer_data, 
+				KMER_DATA_LENGTH);
+#ifdef CALC_STATS
+			distance_from_bucket++;
+#endif
+		}
+#ifdef CALC_STATS
+		this->sum_distance_from_bucket += distance_from_bucket;
+#endif
+		return &hashtable[idx].kmer;
+	}
+
 
 	void display(){
 		uint32_t max = 0;
