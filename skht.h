@@ -65,7 +65,7 @@ private:
 	/* Insert using prefetch: using a dynamic prefetch queue.
 		If bucket is occupied, add to queue again to reprobe.
 	*/
-	bool __insert(Kmer_queue_r* cache_record)
+	void __insert(Kmer_queue_r* cache_record)
 	{
 		size_t probe_idx = cache_record->kmer_idx;
 
@@ -78,25 +78,32 @@ private:
 			hashtable[probe_idx].kmer_count++;
 			hashtable[probe_idx].occupied = true;
 			hashtable[probe_idx].kmer_cityhash = cache_record->kmer_cityhash;
+			return;
+		}
 
 #ifdef CALC_STATS
-				this->num_memcpys++;
+		this->num_hashcmps++;
 #endif
-		// TODO replace memcmp with hash? done
-		} else if ( (hashtable[probe_idx].kmer_cityhash == 
-			cache_record->kmer_cityhash) && 
-			(memcmp(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, 
-				KMER_DATA_LENGTH) == 0)) 
-		{	
-				hashtable[probe_idx].kmer_count++;
-#ifdef CALC_STATS
-				this->num_memcmps++;
-#endif
-		} else 
+
+		if  (hashtable[probe_idx].kmer_cityhash == cache_record->kmer_cityhash) 
 		{
-			// insert back into queue
-			// prefetch next bucket
-			// next bucket will be probed in the next run
+
+#ifdef CALC_STATS
+		this->num_memcmps++;
+#endif
+
+			if (memcmp(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, 
+					KMER_DATA_LENGTH) == 0) 
+			{
+				hashtable[probe_idx].kmer_count++;
+				return;
+			}			
+		}
+
+		{
+			/* insert back into queue, and prefetch next bucket.
+			next bucket will be probed in the next run 
+			*/
 			probe_idx++;
 			probe_idx = probe_idx & (this->capacity -1); // modulo 
 			__builtin_prefetch(&hashtable[probe_idx], 1, 3);
@@ -106,12 +113,12 @@ private:
 			// queue[this->queue_idx].kmer_data_ptr = cache_record->kmer_data_ptr; 	
 			// queue[this->queue_idx].kmer_idx = cache_record->kmer_idx;
 			this->queue_idx++;
+
 #ifdef CALC_STATS
 			this->num_reprobes++;
 #endif
+			return;
 		}
-
-		return (this->queue_idx == PREFETCH_QUEUE_SIZE);
 	} 
 
 	uint64_t __upper_power_of_two(uint64_t v)
@@ -132,6 +139,7 @@ public:
 	uint64_t num_reprobes = 0;
 	uint64_t num_memcmps = 0;
 	uint64_t num_memcpys = 0;
+	uint64_t num_hashcmps = 0;
 	uint64_t num_queue_flushes = 0;	
 	uint64_t max_distance_from_bucket = 0;
 #endif
@@ -223,7 +231,9 @@ public:
 			idx = idx & (this->capacity -1);
 			memcmp_res = memcmp(&hashtable[idx].kmer_data, kmer_data, 
 				KMER_DATA_LENGTH);
+#ifdef CALC_STATS
 			distance_from_bucket++;
+#endif
 		}
 
 #ifdef CALC_STATS

@@ -29,9 +29,11 @@ typedef struct{
 	uint32_t thread_idx; // set before calling create_shards
 	Shard* shard; // to be set by create_shards
 	uint64_t insertion_cycles; //to be set by create_shards
+	uint64_t find_cycles;
 	uint64_t num_reprobes;
 	uint64_t num_memcpys;
 	uint64_t num_memcmps;
+	uint64_t num_hashcmps;
 	uint64_t num_queue_flushes;
 	uint64_t max_distance_from_bucket;
 } thread_data;
@@ -77,17 +79,23 @@ void* create_shards(void *arg) {
 	}
 	skht_ht.flush_queue();
 	end = RDTSCP();
+	td->insertion_cycles = (end -start);
 	std::cout << "[INFO] Thread " << td->thread_idx << ". Inserts complete" << std::endl;
 	/*	End insert loop	*/
 
 
 	/*	Begin find loop	*/
+	start = RDTSC_START();
+
 	for (size_t i = 0; i <HT_SIZE; i++)
 	{
 		Kmer_r* k = skht_ht.find((base_4bit_t*)&td->shard->kmer_big_pool[i]);
 		//std::cout << *k << std::endl;
 	}
 	std::cout << "[INFO] Thread " << td->thread_idx << ". Finds complete" << std::endl;
+	end = RDTSCP();
+
+	td->find_cycles = (end - start);
 	/*	End find loop	*/
 
 	if (!outfile.empty()) 
@@ -110,13 +118,13 @@ void* create_shards(void *arg) {
 		(double) skht_ht.get_fill() / skht_ht.get_capacity() * 100 );
 	printf("[INFO] Thread %u. HT max_kmer_count: %lu\n", td->thread_idx, 
 		skht_ht.get_max_count());
-	td->insertion_cycles = (end - start);
 #ifdef CALC_STATS
 	td->num_reprobes = skht_ht.num_reprobes;
 	td->num_memcmps = skht_ht.num_memcmps;
 	td->num_memcpys = skht_ht.num_memcpys;
 	td->num_queue_flushes = skht_ht.num_queue_flushes;
 	td->max_distance_from_bucket = skht_ht.max_distance_from_bucket;
+	td->num_hashcmps = skht_ht.num_hashcmps;
 #endif
 
 	fipc_test_FAD(ready_threads);
@@ -193,18 +201,23 @@ int spawn_shard_threads(uint32_t num_shards) {
 	// uint64_t all_total_reprobes = 0;
 
 	for (size_t k = 0; k < num_shards; k++) {
-		printf("Thread %2d: %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion)"
-			" [num_reprobes: %lu, num_memcmps: %lu, num_memcpys: %lu," 
-			" num_queue_flushes: %lu, max_distance_from_bucket: %lu]\n", 
+		printf("Thread %2d: " 
+			"%lu cycles per insertion, "
+			"%lu cycles per find"
+			" [num_reprobes: %lu, "
+			"num_memcmps: %lu, " 
+			"num_memcpys: %lu, " 
+			"num_queue_flushes: %lu, "
+			"num_hashcmps: %lu, "
+			"max_distance_from_bucket: %lu]\n", 
 			all_td[k].thread_idx, 
-			all_td[k].insertion_cycles,
-			(double) all_td[k].insertion_cycles * one_cycle_ns / 1000,
-			kmer_big_pool_size_per_shard,
 			all_td[k].insertion_cycles / kmer_big_pool_size_per_shard,
+			all_td[k].find_cycles / kmer_big_pool_size_per_shard,
 			all_td[k].num_reprobes,
 			all_td[k].num_memcmps, 
 			all_td[k].num_memcpys, 
 			all_td[k].num_queue_flushes,
+			all_td[k].num_hashcmps,
 			all_td[k].max_distance_from_bucket
 			);
 		all_total_cycles += all_td[k].insertion_cycles;
