@@ -89,8 +89,8 @@ void* create_shards(void *arg) {
 
 	for (size_t i = 0; i <HT_SIZE; i++)
 	{
-		Kmer_r* k = skht_ht.find((base_4bit_t*)&td->shard->kmer_big_pool[i]);
-		//std::cout << *k << std::endl;
+		Kmer_ht_r* k = skht_ht.find((base_4bit_t*)&td->shard->kmer_big_pool[i]);
+		// std::cout << "FIND " << i << ": " << *k << std::endl;
 	}
 	std::cout << "[INFO] Thread " << td->thread_idx << ". Finds complete" << std::endl;
 	end = RDTSCP();
@@ -102,7 +102,7 @@ void* create_shards(void *arg) {
 	{
 		ofstream f;
 		f.open( outfile + std::to_string(td->thread_idx));
-		Kmer_r* ht = skht_ht.hashtable;
+		Kmer_ht_r* ht = skht_ht.hashtable;
 
 		for (size_t i=0; i<skht_ht.get_capacity(); i++)
 		{
