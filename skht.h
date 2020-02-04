@@ -8,7 +8,7 @@
 // Assumed PAGE SIZE from getconf PAGE_SIZE
 #define PAGE_SIZE 4096
 
-#define PREFETCH_QUEUE_SIZE 5
+#define PREFETCH_QUEUE_SIZE 20
 #define PREFETCH_HT_SIZE 20
 /* 
 Kmer q in the hash hashtable
@@ -107,22 +107,24 @@ private:
 		if (!pointertable[pidx].occupied)
 		{
 
-			//hashtable
-			memcpy(&hashtable[hidx].kmer_data, q->ptr_to_pool, 
-				KMER_DATA_LENGTH);
-
 			if (q->swap)
-				hashtable[hidx].kmer_count = q->ptr_to_ht->kmer_count;
+			{
+				pointertable[pidx].ptr_to_ht = q->ptr_to_ht;
+				// hashtable[hidx].kmer_count = q->ptr_to_ht->kmer_count;
+				// std::cout << "INS points to prev ht locn"<< std::endl;
+			}	
 			else
+			{
+				memcpy(&hashtable[hidx].kmer_data, q->ptr_to_pool, 
+					KMER_DATA_LENGTH);
 				hashtable[hidx].kmer_count = 1;
+				pointertable[pidx].ptr_to_ht = &hashtable[hidx];
+				this->ht_idx++;
+				// std::cout << "INS at ht[" <<hidx << "]"<< std::endl;
+			}
 
 			pointertable[pidx].occupied = true;
-			pointertable[pidx].ptr_to_ht = &hashtable[hidx];
 			pointertable[pidx].org_idx = q->org_idx;
-
-
-			// std::cout << "INS at ht[" <<hidx << "]"<< std::endl;
-			this->ht_idx++;
 
 			return;
 		}
@@ -177,25 +179,31 @@ private:
 	void __insert_and_swap( Kmer_queue_r* q){
 
 		uint32_t pidx = q->insert_idx;		// pointertable location at which pointer is to be inserted.
-		uint32_t hidx = this->ht_idx;		// hashtable location at which data is to be copied (if needed)
+		uint32_t hidx 	= this->ht_idx;		// hashtable location at which data is to be copied (if needed)
 
-		//insert into ht		
-		memcpy(&hashtable[hidx].kmer_data, q->ptr_to_pool, KMER_DATA_LENGTH);
-		hashtable[hidx].kmer_count = 1;
-
-		Kmer_ht_r* temp_h = pointertable[pidx].ptr_to_ht;	// temp pointer to where pointertable[] points to 
+		Kmer_ht_r* temp_h = pointertable[pidx].ptr_to_ht;
 		uint32_t temp_o = pointertable[pidx].org_idx;
 
-		// pointer
-		pointertable[pidx].ptr_to_ht = &hashtable[hidx];
-		pointertable[pidx].org_idx = q->org_idx;
-		// pointertable[q->insert_idx].occupied = true; // not needed
+		// if this queue element is already a swap victim
+		// it is now being swapped in
+		if (q->swap)
+		{
+			pointertable[pidx].ptr_to_ht = q->ptr_to_ht;
+			pointertable[pidx].org_idx = q->org_idx;
+		} else 
+		{
+			memcpy(&hashtable[hidx].kmer_data, q->ptr_to_pool, KMER_DATA_LENGTH);
+			hashtable[hidx].kmer_count = 1;
+			this->ht_idx++;
+			pointertable[pidx].ptr_to_ht = &hashtable[hidx];
+			pointertable[pidx].org_idx = q->org_idx;
+		}
 
-		this->ht_idx++;
+		// pointertable[q->insert_idx].occupied = true; // not needed
 
 		q->ptr_to_ht = temp_h;
 		q->org_idx = temp_o;
-		q->insert_idx = pidx +1;
+		q->insert_idx = pidx + 1;
 		q->swap = true;
 		queue[this->queue_idx] = *q;
 
