@@ -35,6 +35,7 @@ typedef struct{
 	uint64_t num_memcmps;
 	uint64_t num_hashcmps;
 	uint64_t num_queue_flushes;
+	uint64_t avg_distance_from_bucket;
 	uint64_t max_distance_from_bucket;
 } thread_data;
 
@@ -118,13 +119,15 @@ void* create_shards(void *arg) {
 		(double) skht_ht.get_fill() / skht_ht.get_capacity() * 100 );
 	printf("[INFO] Thread %u. HT max_kmer_count: %lu\n", td->thread_idx, 
 		skht_ht.get_max_count());
+
 #ifdef CALC_STATS
 	td->num_reprobes = skht_ht.num_reprobes;
 	td->num_memcmps = skht_ht.num_memcmps;
 	td->num_memcpys = skht_ht.num_memcpys;
 	td->num_queue_flushes = skht_ht.num_queue_flushes;
-	td->max_distance_from_bucket = skht_ht.max_distance_from_bucket;
 	td->num_hashcmps = skht_ht.num_hashcmps;
+	td->avg_distance_from_bucket = skht_ht.sum_distance_from_bucket / HT_SIZE;
+	td->max_distance_from_bucket = skht_ht.max_distance_from_bucket;
 #endif
 
 	fipc_test_FAD(ready_threads);
@@ -209,7 +212,8 @@ int spawn_shard_threads(uint32_t num_shards) {
 			"num_memcpys: %lu, " 
 			"num_queue_flushes: %lu, "
 			"num_hashcmps: %lu, "
-			"max_distance_from_bucket: %lu]\n", 
+			"max_distance_from_bucket: %lu, "
+			"avg_distance_from_bucket: %lu]\n", 
 			all_td[k].thread_idx, 
 			all_td[k].insertion_cycles / kmer_big_pool_size_per_shard,
 			all_td[k].find_cycles / kmer_big_pool_size_per_shard,
@@ -218,7 +222,8 @@ int spawn_shard_threads(uint32_t num_shards) {
 			all_td[k].num_memcpys, 
 			all_td[k].num_queue_flushes,
 			all_td[k].num_hashcmps,
-			all_td[k].max_distance_from_bucket
+			all_td[k].max_distance_from_bucket,
+			all_td[k].avg_distance_from_bucket
 			);
 		all_total_cycles += all_td[k].insertion_cycles;
 		all_total_time_ns += (double)all_td[k].insertion_cycles * one_cycle_ns;

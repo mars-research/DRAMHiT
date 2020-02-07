@@ -29,6 +29,7 @@ typedef struct {
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
+// TODO store org kmer idx, to check if we have wrappd around after reprobe
 typedef struct {
 	const base_4bit_t* kmer_data_ptr;
 	uint32_t kmer_idx; // TODO reduce size, TODO decided by hashtable size?
@@ -73,8 +74,7 @@ private:
 		   if yes, insert with a count of 1*/
 		if (!hashtable[probe_idx].occupied)
 		{
-			memcpy(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, 
-				KMER_DATA_LENGTH);
+			memcpy(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, KMER_DATA_LENGTH);
 			hashtable[probe_idx].kmer_count++;
 			hashtable[probe_idx].occupied = true;
 			hashtable[probe_idx].kmer_cityhash = cache_record->kmer_cityhash;
@@ -82,6 +82,7 @@ private:
 		}
 
 #ifdef CALC_STATS
+		this->num_memcpys++;
 		this->num_hashcmps++;
 #endif
 
@@ -141,6 +142,7 @@ public:
 	uint64_t num_memcpys = 0;
 	uint64_t num_hashcmps = 0;
 	uint64_t num_queue_flushes = 0;	
+	uint64_t sum_distance_from_bucket = 0;
 	uint64_t max_distance_from_bucket = 0;
 #endif
 	Kmer_r* hashtable;
@@ -237,8 +239,11 @@ public:
 		}
 
 #ifdef CALC_STATS
-		if (distance_from_bucket > this->max_distance_from_bucket)
-			this->max_distance_from_bucket = distance_from_bucket;
+			if (distance_from_bucket > this->max_distance_from_bucket){
+				this->max_distance_from_bucket = distance_from_bucket;				
+			}
+		this->sum_distance_from_bucket += distance_from_bucket + 1;
+
 #endif
 
 		return &hashtable[idx];
