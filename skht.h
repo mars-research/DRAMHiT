@@ -74,6 +74,9 @@ private:
 		   if yes, insert with a count of 1*/
 		if (!hashtable[probe_idx].occupied)
 		{
+#ifdef CALC_STATS
+		this->num_memcpys++;
+#endif
 			memcpy(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, KMER_DATA_LENGTH);
 			hashtable[probe_idx].kmer_count++;
 			hashtable[probe_idx].occupied = true;
@@ -82,7 +85,6 @@ private:
 		}
 
 #ifdef CALC_STATS
-		this->num_memcpys++;
 		this->num_hashcmps++;
 #endif
 
@@ -222,10 +224,12 @@ public:
 #endif
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
 			KMER_DATA_LENGTH);
+
 		size_t idx = cityhash_new & (this->capacity -1 ); // modulo
 
 		int memcmp_res = memcmp(&hashtable[idx].kmer_data, kmer_data,
 			KMER_DATA_LENGTH);
+
 
 		while(memcmp_res != 0)
 		{
@@ -239,13 +243,12 @@ public:
 		}
 
 #ifdef CALC_STATS
-			if (distance_from_bucket > this->max_distance_from_bucket){
+			if (distance_from_bucket > this->max_distance_from_bucket)
+			{
 				this->max_distance_from_bucket = distance_from_bucket;				
 			}
-		this->sum_distance_from_bucket += distance_from_bucket + 1;
-
+		this->sum_distance_from_bucket += distance_from_bucket;
 #endif
-
 		return &hashtable[idx];
 	}
 

@@ -87,16 +87,15 @@ void* create_shards(void *arg) {
 
 	/*	Begin find loop	*/
 	start = RDTSC_START();
-
 	for (size_t i = 0; i <HT_SIZE; i++)
 	{
 		Kmer_r* k = skht_ht.find((base_4bit_t*)&td->shard->kmer_big_pool[i]);
 		//std::cout << *k << std::endl;
 	}
-	std::cout << "[INFO] Thread " << td->thread_idx << ". Finds complete" << std::endl;
 	end = RDTSCP();
-
 	td->find_cycles = (end - start);
+	std::cout << "[INFO] Thread " << td->thread_idx << ". Finds complete" << std::endl;
+
 	/*	End find loop	*/
 
 	if (!outfile.empty()) 
@@ -203,6 +202,9 @@ int spawn_shard_threads(uint32_t num_shards) {
 	double all_total_time_ns = 0;
 	// uint64_t all_total_reprobes = 0;
 
+	uint64_t all_total_find_cycles = 0;
+	double all_total_find_time_ns = 0;
+
 	for (size_t k = 0; k < num_shards; k++) {
 		printf("Thread %2d: " 
 			"%lu cycles per insertion, "
@@ -228,6 +230,8 @@ int spawn_shard_threads(uint32_t num_shards) {
 		all_total_cycles += all_td[k].insertion_cycles;
 		all_total_time_ns += (double)all_td[k].insertion_cycles * one_cycle_ns;
 		// all_total_reprobes += all_td[k].num_reprobes;
+		all_total_find_cycles += all_td[k].find_cycles;
+		all_total_find_time_ns = (double) all_td[k].find_cycles * one_cycle_ns;
 	}
 	printf("===============================================================\n");
 		printf("Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles per insertion)\n", 
@@ -235,14 +239,19 @@ int spawn_shard_threads(uint32_t num_shards) {
 			(double) all_total_time_ns * one_cycle_ns / 1000,
 			kmer_big_pool_size_per_shard,
 			all_total_cycles / num_shards / kmer_big_pool_size_per_shard);
+		printf("Average  : %lu cycles (%f ms) for %lu finds (%lu cycles per find)\n", 
+			all_total_find_cycles / num_shards, 
+			(double) all_total_find_time_ns * one_cycle_ns / 1000,
+			kmer_big_pool_size_per_shard,
+			all_total_find_cycles / num_shards / kmer_big_pool_size_per_shard);
 	printf("===============================================================\n");
-	printf("Total cumulative cycles for %u threads: %lu\n", num_shards, 
-		all_total_cycles);
-	printf("Total cumulative time (ns) for %u threads: %f\n", num_shards, 
-		all_total_time_ns);
-	printf("Average cycles per insertion per thread: %lu\n", 
-		all_total_cycles/total_kmer_big_pool_size/num_shards);
-	printf("===============================================================\n");
+	// printf("Total cumulative cycles for %u threads: %lu\n", num_shards, 
+	// 	all_total_cycles);
+	// printf("Total cumulative time (ns) for %u threads: %f\n", num_shards, 
+	// 	all_total_time_ns);
+	// printf("Average cycles per insertion per thread: %lu\n", 
+	// 	all_total_cycles/total_kmer_big_pool_size/num_shards);
+	// printf("===============================================================\n");
 
 	free(threads);
 	free(all_td);
