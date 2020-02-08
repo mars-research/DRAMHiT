@@ -11,8 +11,8 @@
 #define PREFETCH_QUEUE_SIZE 20
 
 /* 
-Kmer cache_record in the hash hashtable
-Each cache_record spills over a queue line for now, queue-align later
+Kmer q in the hash hashtable
+Each q spills over a queue line for now, queue-align later
 */
 
 //2^21
@@ -53,6 +53,25 @@ private:
 		return (cityhash & (this->capacity -1 )); // modulo
 	}
 
+	void __insert_into_queue(const base_4bit_t* kmer_data)
+	{
+		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
+			KMER_DATA_LENGTH);
+		size_t __kmer_idx = cityhash_new & (this->capacity -1 ); // modulo 
+		//size_t __kmer_idx = cityhash_new % (this->capacity); 
+
+		/* prefetch buckets and store kmer_data pointers in queue */
+		// TODO how much to prefetch?
+		// TODO if we do prefetch: what to return? API breaks
+
+		__builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
+		//printf("inserting into queue at %u\n", this->queue_idx);
+		queue[this->queue_idx].kmer_data_ptr = kmer_data; 
+		queue[this->queue_idx].kmer_idx = __kmer_idx;
+		queue[this->queue_idx].kmer_cityhash = cityhash_new; 
+		this->queue_idx++;
+	}
+
 	/* Insert items from queue into hash table, interpreting "queue" 
 	as an array of size queue_sz*/
 	void __insert_from_queue(size_t queue_sz) {
@@ -66,21 +85,20 @@ private:
 	/* Insert using prefetch: using a dynamic prefetch queue.
 		If bucket is occupied, add to queue again to reprobe.
 	*/
-	void __insert(Kmer_queue_r* cache_record)
+	void __insert(Kmer_queue_r* q)
 	{
-		size_t probe_idx = cache_record->kmer_idx;
+		size_t pidx = q->kmer_idx; /* hashtable location at which data is to be inserted */
 
-		/* Compare with empty kmer to check if bucket is empty.
-		   if yes, insert with a count of 1*/
-		if (!hashtable[probe_idx].occupied)
+		/* Compare with empty kmer to check if bucket is empty, and insert. */
+		if (!hashtable[pidx].occupied)
 		{
 #ifdef CALC_STATS
 		this->num_memcpys++;
 #endif
-			memcpy(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, KMER_DATA_LENGTH);
-			hashtable[probe_idx].kmer_count++;
-			hashtable[probe_idx].occupied = true;
-			hashtable[probe_idx].kmer_cityhash = cache_record->kmer_cityhash;
+			memcpy(&hashtable[pidx].kmer_data, q->kmer_data_ptr, KMER_DATA_LENGTH);
+			hashtable[pidx].kmer_count++;
+			hashtable[pidx].occupied = true;
+			hashtable[pidx].kmer_cityhash = q->kmer_cityhash;
 			return;
 		}
 
@@ -88,17 +106,17 @@ private:
 		this->num_hashcmps++;
 #endif
 
-		if  (hashtable[probe_idx].kmer_cityhash == cache_record->kmer_cityhash) 
+		if  (hashtable[pidx].kmer_cityhash == q->kmer_cityhash) 
 		{
 
 #ifdef CALC_STATS
 		this->num_memcmps++;
 #endif
 
-			if (memcmp(&hashtable[probe_idx].kmer_data, cache_record->kmer_data_ptr, 
+			if (memcmp(&hashtable[pidx].kmer_data, q->kmer_data_ptr, 
 					KMER_DATA_LENGTH) == 0) 
 			{
-				hashtable[probe_idx].kmer_count++;
+				hashtable[pidx].kmer_count++;
 				return;
 			}			
 		}
@@ -107,14 +125,14 @@ private:
 			/* insert back into queue, and prefetch next bucket.
 			next bucket will be probed in the next run 
 			*/
-			probe_idx++;
-			probe_idx = probe_idx & (this->capacity -1); // modulo 
-			__builtin_prefetch(&hashtable[probe_idx], 1, 3);
-			cache_record->kmer_idx = probe_idx;
+			pidx++;
+			pidx = pidx & (this->capacity -1); // modulo 
+			__builtin_prefetch(&hashtable[pidx], 1, 3);
+			q->kmer_idx = pidx;
 
-			queue[this->queue_idx] = *cache_record;
-			// queue[this->queue_idx].kmer_data_ptr = cache_record->kmer_data_ptr; 	
-			// queue[this->queue_idx].kmer_idx = cache_record->kmer_idx;
+			queue[this->queue_idx] = *q;
+			// queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr; 	
+			// queue[this->queue_idx].kmer_idx = q->kmer_idx;
 			this->queue_idx++;
 
 #ifdef CALC_STATS
@@ -172,22 +190,7 @@ public:
 	/* insert and increment if exists */
 	bool insert(const base_4bit_t* kmer_data) 
 	{
-
-		uint64_t cityhash_new = CityHash64((const char*)kmer_data, 
-			KMER_DATA_LENGTH);
-		size_t __kmer_idx = cityhash_new & (this->capacity -1 ); // modulo 
-		//size_t __kmer_idx = cityhash_new % (this->capacity); 
-
-		/* prefetch buckets and store kmer_data pointers in queue */
-		// TODO how much to prefetch?
-		// TODO if we do prefetch: what to return? API breaks
-
-		__builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
-		//printf("inserting into queue at %u\n", this->queue_idx);
-		queue[this->queue_idx].kmer_data_ptr = kmer_data; 
-		queue[this->queue_idx].kmer_idx = __kmer_idx;
-		queue[this->queue_idx].kmer_cityhash = cityhash_new; 
-		this->queue_idx++;
+		__insert_into_queue(kmer_data);
 
 		/* if queue is full, actually insert */
 		// now queue_idx = 20
