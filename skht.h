@@ -212,7 +212,7 @@ private:
 
 		q->ptr_to_ht = temp_h;
 		q->org_idx = temp_o;
-		q->cityhash - temp_c;
+		q->cityhash = temp_c;
 		q->insert_idx = (pidx + 1) & (this->capacity -1);
 		q->swap = true;
 		queue[this->queue_idx] = *q;
