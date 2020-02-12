@@ -15,17 +15,17 @@ Kmer q in the hash hashtable
 Each q spills over a queue line for now, queue-align later
 */
 typedef struct {
-	char kmer_data[KMER_DATA_LENGTH]; 	// 50
-	uint16_t kmer_count; 				// 2 
-	char padding[12]; 
+	char kmer_data[KMER_DATA_LENGTH];	// 50
+	uint16_t kmer_count;				// 2 
+	char padding[12];					// 12 
 } __attribute__((packed)) Kmer_ht_r; 
 
 typedef struct {
-	bool occupied; 			// 1
-	Kmer_ht_r* ptr_to_ht; 	// 8
-	// uint64_t cityhash; 		// 8
-	uint32_t org_idx; 		// 4
-	char padding[3];
+	bool occupied;			// 1
+	Kmer_ht_r* ptr_to_ht;	// 8
+	uint64_t cityhash;		// 8
+	uint32_t org_idx;		// 4
+	char padding[11];		// 11
 } __attribute__((packed)) Kmer_ptr_r;
 
 
@@ -33,12 +33,12 @@ typedef struct {
 	union {
 		base_4bit_t* ptr_to_pool;
 		Kmer_ht_r* ptr_to_ht;	
-	};								//8
-	uint32_t insert_idx; 			//4
-	uint32_t org_idx;				//4
-	bool swap;
-	char padding[7];
-	// uint64_t cityhash;			//8
+	};								// 8
+	uint32_t insert_idx;			// 4
+	uint32_t org_idx;				// 4
+	bool swap;						// 1
+	uint64_t cityhash;				// 8
+	char padding[7];				// 7
 } __attribute__((packed)) Kmer_queue_r;
 
 class SimpleKmerHashTable {
@@ -72,6 +72,7 @@ private:
 		queue[this->queue_idx].insert_idx = cityhash_new & (this->capacity -1 ); // modulo
 		queue[this->queue_idx].org_idx = queue[this->queue_idx].insert_idx;
 		queue[this->queue_idx].swap = false;
+		queue[this->queue_idx].cityhash = cityhash_new;
 		__builtin_prefetch(&pointertable[queue[this->queue_idx].insert_idx], 1, 3);
 
 		this->queue_idx++;
@@ -81,10 +82,10 @@ private:
 	as an array of size queue_sz*/
 	void __insert_from_queue(size_t queue_sz) {
 			this->queue_idx = 0; // start again
-			for (size_t i =0; i < queue_sz; i++)
-			{
-				// std::cout << queue[i].insert_idx << "|" ;
-			}
+			// for (size_t i =0; i < queue_sz; i++)
+			// {
+			// 	std::cout << queue[i].insert_idx << "|" ;
+			// }
 			// std::cout << std::endl;
 			for (size_t i =0; i < queue_sz; i++)
 			{
@@ -125,25 +126,30 @@ private:
 
 			pointertable[pidx].occupied = true;
 			pointertable[pidx].org_idx = q->org_idx;
+			pointertable[pidx].cityhash = q->cityhash;
 
-			return;
-		}
+			return;		
+		} 
 
 #ifdef CALC_STATS
 		this->num_hashcmps++;
 #endif
 
-		if (memcmp(pointertable[pidx].ptr_to_ht->kmer_data, q->ptr_to_pool, 
-					KMER_DATA_LENGTH) == 0) 
+		if (pointertable[pidx].cityhash == q->cityhash)
 		{
+			if (memcmp(pointertable[pidx].ptr_to_ht->kmer_data, q->ptr_to_pool, 
+						KMER_DATA_LENGTH) == 0) 
+			{
+
 #ifdef CALC_STATS
 		this->num_memcmps++;
 #endif
-			//__TODO__ prefetch, how?
-			pointertable[pidx].ptr_to_ht->kmer_count++;
-			// std::cout << "INC to " << pointertable[pidx].ptr_to_ht->kmer_count << std::endl;
-			return;
-		}			
+				//__TODO__ prefetch, how?
+				pointertable[pidx].ptr_to_ht->kmer_count++;
+				// std::cout << "INC to " << pointertable[pidx].ptr_to_ht->kmer_count << std::endl;
+				return;
+			}	
+		}
 
 		if (__distance_to_bucket(pointertable[pidx].org_idx, pidx) < 
 			__distance_to_bucket(q->org_idx, pidx))
@@ -179,10 +185,11 @@ private:
 	void __insert_and_swap( Kmer_queue_r* q){
 
 		uint32_t pidx = q->insert_idx;		// pointertable location at which pointer is to be inserted.
-		uint32_t hidx 	= this->ht_idx;		// hashtable location at which data is to be copied (if needed)
+		uint32_t hidx = this->ht_idx;		// hashtable location at which data is to be copied (if needed)
 
 		Kmer_ht_r* temp_h = pointertable[pidx].ptr_to_ht;
 		uint32_t temp_o = pointertable[pidx].org_idx;
+		uint64_t temp_c = pointertable[pidx].cityhash;
 
 		// if this queue element is already a swap victim
 		// it is now being swapped in
@@ -190,6 +197,7 @@ private:
 		{
 			pointertable[pidx].ptr_to_ht = q->ptr_to_ht;
 			pointertable[pidx].org_idx = q->org_idx;
+			pointertable[pidx].cityhash = q->cityhash;
 		} else 
 		{
 			memcpy(&hashtable[hidx].kmer_data, q->ptr_to_pool, KMER_DATA_LENGTH);
@@ -197,13 +205,15 @@ private:
 			this->ht_idx++;
 			pointertable[pidx].ptr_to_ht = &hashtable[hidx];
 			pointertable[pidx].org_idx = q->org_idx;
+			pointertable[pidx].cityhash = q->cityhash;
 		}
 
 		// pointertable[q->insert_idx].occupied = true; // not needed
 
 		q->ptr_to_ht = temp_h;
 		q->org_idx = temp_o;
-		q->insert_idx = pidx + 1;
+		q->cityhash - temp_c;
+		q->insert_idx = (pidx + 1) & (this->capacity -1);
 		q->swap = true;
 		queue[this->queue_idx] = *q;
 
