@@ -22,11 +22,11 @@
 /*
 create kmer data (per thread)
 */
-#define KMER_CREATE_DATA_BASE	1000000
-#define KMER_CREATE_DATA_MULT	2  
-#define KMER_CREATE_DATA_UNIQ	1000000
+#define KMER_CREATE_DATA_BASE	131072
+#define KMER_CREATE_DATA_MULT	1
+#define KMER_CREATE_DATA_UNIQ	1048576
 
-// #define ALPHANUM_KMERS
+#define ALPHANUM_KMERS
 
 /* for hash table */
 // #define MAX_REPROBES 62 /*from jellyfish*/
@@ -37,3 +37,35 @@ create kmer data (per thread)
 ////
 
 #endif  //_TEST_CONFIG_H_
+
+
+/*
+million-6
+63:
+1048576
+1
+1048576
+
+million-7
+78
+524288
+1
+1048576
+
+88:
+262144
+1
+1048576
+
+million-9
+93:
+131072
+1
+1048576
+
+98:
+32768
+1
+1048576
+
+*/

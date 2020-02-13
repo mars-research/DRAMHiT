@@ -34,12 +34,16 @@ typedef struct {
 		base_4bit_t* ptr_to_pool;
 		Kmer_ht_r* ptr_to_ht;	
 	};								// 8
+	Kmer_ht_r* ptr_for_cmp;			// 8
+	uint64_t cityhash;				// 8
 	uint32_t insert_idx;			// 4
 	uint32_t org_idx;				// 4
 	bool swap;						// 1
-	uint64_t cityhash;				// 8
-	char padding[7];				// 7
+	char padding[31];				// 31
 } __attribute__((packed)) Kmer_queue_r;
+
+
+/* TODO use attribute aligned instead of padding */
 
 class SimpleKmerHashTable {
 
@@ -50,36 +54,39 @@ private:
 	uint32_t ht_idx;
 
 
-	size_t __hash(const base_4bit_t* k)
-	{
-		uint64_t cityhash =  CityHash64((const char*)k, KMER_DATA_LENGTH);
-		/* n % d => n & (d - 1) */
-		return (cityhash & (this->capacity -1 )); // modulo
-	}
+	// size_t __hash(const base_4bit_t* k)
+	// {
+	// 	uint64_t cityhash =  CityHash64((const char*)k, KMER_DATA_LENGTH);
+	// 	/* n % d => n & (d - 1) */
+	// 	return (cityhash & (this->capacity -1 )); // modulo
+	// }
 
 	void __insert_into_queue(const base_4bit_t* kmer_data)
 	{
 		uint64_t cityhash_new = CityHash64((const char*)kmer_data,
 			KMER_DATA_LENGTH);
 
-		/* prefetch buckets and store kmer_data pointers in queue */
-		// TODO how much to prefetch?
-		// TODO if we do prefetch: what to return? API breaks
+		/* 	prefetch buckets and store kmer_data pointers in queue
+			TODO how much to prefetch?
+			TODO if we do prefetch: what to return? API breaks
+		*/
 
 
 		//printf("inserting into queue at %u\n", this->queue_idx);
 		queue[this->queue_idx].ptr_to_pool = (base_4bit_t*) kmer_data; 
+		queue[this->queue_idx].ptr_for_cmp = NULL;
 		queue[this->queue_idx].insert_idx = cityhash_new & (this->capacity -1 ); // modulo
 		queue[this->queue_idx].org_idx = queue[this->queue_idx].insert_idx;
 		queue[this->queue_idx].swap = false;
 		queue[this->queue_idx].cityhash = cityhash_new;
+
 		__builtin_prefetch(&pointertable[queue[this->queue_idx].insert_idx], 1, 3);
 
 		this->queue_idx++;
 	}
 
-	/* Insert items from queue into hash table, interpreting "queue" 
-	as an array of size queue_sz*/
+	/* Insert items from queue into hash table, interpreting "queue"  as an array of size 
+	queue_sz*/
 	void __insert_from_queue(size_t queue_sz) {
 			this->queue_idx = 0; // start again
 			// for (size_t i =0; i < queue_sz; i++)
@@ -94,20 +101,38 @@ private:
 			// std::cout << "----------------------" << std:: endl;
 	}
 
-	/* Insert using prefetch: using a dynamic prefetch queue.
-		If bucket is occupied, add to queue again to reprobe.
-	*/
+	/* Insert using prefetch: using a dynamic prefetch queue. If bucket is occupied, 
+	add to queue again to reprobe. */
 	void __insert(Kmer_queue_r* q)
 	{
 
-		uint32_t pidx = q->insert_idx;		// pointertable location at which pointer is to be inserted.
-		uint32_t hidx = this->ht_idx;		// hashtable location at which data is to be copied (if needed)
+		/* pointertable location at which pointer is to be inserted. */
+		uint32_t pidx = q->insert_idx;		
 
-		// std::cout << "[" << pidx << "]\t-> ";
+		/* hashtable location at which data is to be copied (if needed) */
+		uint32_t hidx = this->ht_idx;	
+		//printf("[INFO] pidx = %lu, hidx = %lu\n", pidx, hidx);
+
+		if (q->ptr_for_cmp)
+		{
+#ifdef CALC_STATS
+		this->num_memcmps++;
+#endif
+			/* should be already prefetched by now */
+			if (memcmp(q->ptr_for_cmp->kmer_data, q->ptr_to_pool, 
+						KMER_DATA_LENGTH) == 0) 
+			{
+				q->ptr_for_cmp->kmer_count++;
+				// std::cout << "INC to " << pointertable[pidx].ptr_to_ht->kmer_count << std::endl;
+			}	
+			return;
+		}
 
 		if (!pointertable[pidx].occupied)
 		{
-
+			
+			/* if queue element is being swapped in, no need to memcpy into hashtable, just
+			make pointertable entry point to corresponding hashtable entry */
 			if (q->swap)
 			{
 				pointertable[pidx].ptr_to_ht = q->ptr_to_ht;
@@ -137,18 +162,13 @@ private:
 
 		if (pointertable[pidx].cityhash == q->cityhash)
 		{
-			if (memcmp(pointertable[pidx].ptr_to_ht->kmer_data, q->ptr_to_pool, 
-						KMER_DATA_LENGTH) == 0) 
-			{
-
-#ifdef CALC_STATS
-		this->num_memcmps++;
-#endif
-				//__TODO__ prefetch, how?
-				pointertable[pidx].ptr_to_ht->kmer_count++;
-				// std::cout << "INC to " << pointertable[pidx].ptr_to_ht->kmer_count << std::endl;
-				return;
-			}	
+			/*	prefetch hashtable entry to compare. insert entry back into prefetch queue
+			 	to be compared on next run */
+			__builtin_prefetch(pointertable[pidx].ptr_to_ht, 1, 3);
+			q->ptr_for_cmp = pointertable[pidx].ptr_to_ht;
+			queue[this->queue_idx] = *q;
+			this->queue_idx ++;
+			return;
 		}
 
 		if (__distance_to_bucket(pointertable[pidx].org_idx, pidx) < 
@@ -184,15 +204,17 @@ private:
 
 	void __insert_and_swap( Kmer_queue_r* q){
 
-		uint32_t pidx = q->insert_idx;		// pointertable location at which pointer is to be inserted.
-		uint32_t hidx = this->ht_idx;		// hashtable location at which data is to be copied (if needed)
+		/* pointertable location at which pointer is to be inserted. */
+		uint32_t pidx = q->insert_idx;		
+
+		/* hashtable location at which data is to be copied (if needed) */
+		uint32_t hidx = this->ht_idx;		
 
 		Kmer_ht_r* temp_h = pointertable[pidx].ptr_to_ht;
 		uint32_t temp_o = pointertable[pidx].org_idx;
 		uint64_t temp_c = pointertable[pidx].cityhash;
 
-		// if this queue element is already a swap victim
-		// it is now being swapped in
+		/* if this queue element is already a swap victim it is now being swapped in */
 		if (q->swap)
 		{
 			pointertable[pidx].ptr_to_ht = q->ptr_to_ht;
@@ -320,7 +342,7 @@ public:
 			KMER_DATA_LENGTH);
 		size_t idx = cityhash_new & (this->capacity -1 ); // modulo
 
-		// // std::cout << "pt[" << idx << "]" ;
+		// printf("pt[%lu]\n",idx);
 
 		int memcmp_res = memcmp(pointertable[idx].ptr_to_ht->kmer_data, 
 			kmer_data, KMER_DATA_LENGTH);
