@@ -19,20 +19,24 @@
 #define FIPC_CACHE_LINE_SIZE	64
 #endif
 
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 4096
+#endif
+
 /*
 create kmer data (per thread)
 */
 #define KMER_CREATE_DATA_BASE	1048576
 #define KMER_CREATE_DATA_MULT	1
-#define KMER_CREATE_DATA_UNIQ	1048576
+#define KMER_CREATE_DATA_UNIQ   1048576
 
 #define ALPHANUM_KMERS
 
 /* for hash table */
 // #define MAX_REPROBES 62 /*from jellyfish*/
-//#define NUM_THREADS 1 // TODO have in an argv
-#define READ_KMERS_FROM_DISK
-//#define WRITE_KMERS_TO_DISK
+#define NUM_THREADS 1 // TODO have in an argv
+//#define READ_KMERS_FROM_DISK
+#define WRITE_KMERS_TO_DISK
 #define CALC_STATS
 ////
 
@@ -40,29 +44,25 @@ create kmer data (per thread)
 
 
 /*
-38:
-1048576
+39:
+524288 
 1
 1048576
 
-78
-524288
+63:
+1048576 
 1
 1048576
 
-88:
-262144
-1
+86
+1048576
+2
 1048576
 
-93:
-131072
-1
+98
+1048576
+4
 1048576
 
-98:
-32768
-1
-1048576
 
 */

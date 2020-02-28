@@ -54,7 +54,9 @@ void* create_shards(void *arg) {
 	td->shard->shard_idx = td->thread_idx;
 	create_data(td->shard);
 
-	size_t HT_SIZE = KMER_CREATE_DATA_BASE*KMER_CREATE_DATA_MULT;
+	size_t HT_SIZE = KMER_CREATE_DATA_UNIQ;
+	size_t POOL_SIZE = KMER_CREATE_DATA_BASE*KMER_CREATE_DATA_MULT;
+	printf("HT_SIZE %lu, POOL_SIZE %lu\n", HT_SIZE, POOL_SIZE);
 
 	/* Create hash table */
 	skht_map skht_ht(HT_SIZE);
@@ -69,7 +71,7 @@ void* create_shards(void *arg) {
 	start = RDTSC_START();
 
 	/*	Begin insert loop	*/
-	for (size_t i = 0; i < HT_SIZE; i++) 
+	for (size_t i = 0; i < POOL_SIZE; i++) 
 	{
 		// printf("%lu: ", i);
 		bool res = skht_ht.insert((base_4bit_t*)&td->shard->kmer_big_pool[i]);
@@ -87,7 +89,7 @@ void* create_shards(void *arg) {
 
 	/*	Begin find loop	*/
 	start = RDTSC_START();
-	for (size_t i = 0; i <HT_SIZE; i++)
+	for (size_t i = 0; i <POOL_SIZE; i++)
 	{
 		Kmer_r* k = skht_ht.find((base_4bit_t*)&td->shard->kmer_big_pool[i]);
 		//std::cout << *k << std::endl;
@@ -134,46 +136,69 @@ void* create_shards(void *arg) {
 	return NULL;
 }	
 
-int spawn_shard_threads(uint32_t num_shards) {
+int spawn_shard_threads(uint32_t num_shards, bool split) {
 	
 	cpu_set_t cpuset; 
 	int s;
 	size_t i;
 
-	// threads = (pthread_t*) malloc(sizeof(pthread_t*) * num_shards);
-
 	pthread_t* threads = (pthread_t*) memalign(FIPC_CACHE_LINE_SIZE, 
-			sizeof(pthread_t) * num_shards);
-	// thread_data all_td[num_shards] = {{0}};
+		sizeof(pthread_t) * num_shards);
 	thread_data* all_td = (thread_data*) memalign(FIPC_CACHE_LINE_SIZE, 
-			sizeof(thread_data)*num_shards);
-
+		sizeof(thread_data)*num_shards);
 	memset(all_td, 0, sizeof(thread_data*)*num_shards);
 
-	for (i = 0; i < num_shards; i++)
+	if (split)
 	{
+		size_t num_nodes = nodes.size();
+		size_t shards_per_node = num_shards / num_nodes;
 
-		// thread_data *td = (thread_data*) memalign(FIPC_CACHE_LINE_SIZE, 
-		// 	sizeof(thread_data));
-		thread_data *td = &all_td[i];
-		td->thread_idx = i;
+		/* TODO support uneven splits, and spills after splits :*/
+		// size_t shards_per_node_spill = num_shards % num_nodes; 
 
-		s = pthread_create(&threads[i], NULL, create_shards, (void*)td);
-  		if (s != 0)
-  		{
-  			printf("[ERROR] pthread_create: Could not create create_shard \
-  				thread");
-			exit(-1);
-  		}
-		// pin this (controller) thread to last cpu of last numa
-		CPU_ZERO(&cpuset);
-#ifndef NDEBUG
-		printf("[INFO] thread: %lu, affinity: %u,\n", i, nodes[0].cpu_list[i]);
-#endif
-		CPU_SET(nodes[0].cpu_list[i], &cpuset);
-		pthread_setaffinity_np(threads[i], sizeof(cpu_set_t), &cpuset);
+		for (size_t x = 0; x < num_nodes; x++)
+		{
+			for (size_t y = 0; y < shards_per_node; y++)
+			{
+				uint32_t tidx = shards_per_node * x + y;
+				thread_data *td = &all_td[tidx];
+				td->thread_idx = tidx;
+				s = pthread_create(&threads[tidx], NULL, create_shards, (void*)td);
+				if (s != 0)
+				{
+					printf("[ERROR] pthread_create: Could not create create_shard \
+						thread");
+					exit(-1);
+				}
+				CPU_ZERO(&cpuset);
+				CPU_SET(nodes[x].cpu_list[y], &cpuset);
+				pthread_setaffinity_np(threads[tidx], sizeof(cpu_set_t), &cpuset);
+				printf("[INFO] thread: %lu, set affinity: %u,\n", tidx, nodes[x].cpu_list[y]);
+			}
+		}
 	}
 
+	else if (!split)
+	{
+		for (size_t x = 0; x < num_shards; x++) 
+		{
+			thread_data *td = &all_td[x];
+			td->thread_idx = x;
+			s = pthread_create(&threads[x], NULL, create_shards, (void*)td);
+			if (s != 0)
+			{
+				printf("[ERROR] pthread_create: Could not create create_shard \
+					thread");
+				exit(-1);
+			}
+			CPU_ZERO(&cpuset);
+			size_t cpu_idx = x % nodes[0].cpu_list.size();
+			CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
+			pthread_setaffinity_np(threads[x], sizeof(cpu_set_t), &cpuset);
+			printf("[INFO] thread: %lu, set affinity: %u,\n", x, nodes[0].cpu_list[cpu_idx]);
+		}
+	}
+	
 	CPU_ZERO(&cpuset);
 	/* last cpu of last node  */
 	auto last_numa_node = nodes[n.get_num_nodes()-1];
@@ -267,15 +292,8 @@ if (argc == 2){
 
 	printf("PREFETCH_QUEUE_SIZE: %d\n", PREFETCH_QUEUE_SIZE);
 
-	uint32_t num_threads = nodes[0].num_cpus;
-#ifdef NUM_THREADS
-	num_threads = NUM_THREADS;
-#endif	
-	spawn_shard_threads(num_threads);
-
-
-
-
+	uint32_t num_threads = NUM_THREADS;
+	spawn_shard_threads(num_threads, false);
 }
 
 
