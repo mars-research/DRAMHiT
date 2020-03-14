@@ -16,7 +16,7 @@
 */
 
 #ifndef FIPC_CACHE_LINE_SIZE
-#define FIPC_CACHE_LINE_SIZE	64
+#define FIPC_CACHE_LINE_SIZE 64
 #endif
 
 #ifndef PAGE_SIZE
@@ -30,15 +30,14 @@
 
 #endif  //_TEST_CONFIG_H_
 
-
 /*
 39:
-524288 
+524288
 1
 1048576
 
 63:
-1048576 
+1048576
 1
 1048576
 
