@@ -23,20 +23,8 @@
 #define PAGE_SIZE 4096
 #endif
 
-/*
-create kmer data (per thread)
-*/
-#define KMER_CREATE_DATA_BASE	1048576
-#define KMER_CREATE_DATA_MULT	1
-#define KMER_CREATE_DATA_UNIQ   1048576
-
-#define ALPHANUM_KMERS
-
 /* for hash table */
 // #define MAX_REPROBES 62 /*from jellyfish*/
-#define NUM_THREADS 1 // TODO have in an argv
-//#define READ_KMERS_FROM_DISK
-#define WRITE_KMERS_TO_DISK
 #define CALC_STATS
 ////
 

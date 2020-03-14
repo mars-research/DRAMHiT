@@ -4,13 +4,19 @@
  * @Author   : Abdullah Younis
  * @Copyright: University of Utah
  *
- * This library contains timing helper functions for the several fipc tests.
+ * This library contains timing and other helper functions for the several fipc tests.
  *
  * NOTE: This library assumes an x86 architecture.
  */
 
-#ifndef LIBFIPC_TEST_TIME_LIBRARY_LOCK
-#define LIBFIPC_TEST_TIME_LIBRARY_LOCK
+#ifndef LIBFIPC
+#define LIBFIPC
+
+#define fipc_test_FAI(X)       __sync_fetch_and_add( &X, 1 )
+#define fipc_test_FAD(X)       __sync_fetch_and_add( &X, -1 )
+#define fipc_test_mfence()   asm volatile ( "mfence" : : )
+#define fipc_test_pause()    asm volatile ( "pause\n": : :"memory" );
+#define fipc_test_CAS(a,b,c)   __sync_bool_compare_and_swap(a,b,c);
 
 static inline
 uint64_t RDTSC_START ( void )
