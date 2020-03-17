@@ -63,6 +63,14 @@ struct thread_stats
 #endif /*CALC_STATS*/
 };
 
+
+/* insert kmer to non-standard (our) table */
+template <typename Table>
+int insert_kmer_to_table(Table *ktable, void *data)
+{
+  return ktable->insert(data);
+}
+
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
@@ -419,7 +427,8 @@ int main(int argc, char *argv[])
     }
     else if (config.ht_type == 4)
     {
-      printf("[INFO] Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED\n");
+      printf("[INFO] Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)\n");
+      printf("[INFO] Exiting ... \n");
       exit(0);
     }
 
