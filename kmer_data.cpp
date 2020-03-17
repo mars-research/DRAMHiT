@@ -18,7 +18,7 @@ extern "C"
 #include "data_types.h"
 #include "kmer_struct.h"
 #include "shard.h"
-#include "test_config.h"
+// #include "test_config.h"
 
 const char *POOL_FILE_FORMAT = "/local/devel/pools/%02u.bin";
 
@@ -120,7 +120,7 @@ TODO look into this.	*/
 
 void __attribute__((optimize("O0"))) __touch(char *fmap, size_t sz)
 {
-  for (int i = 0; i < sz; i += PAGE_SIZE) char temp = fmap[i];
+  for (int i = 0; i < sz; i += __PAGE_SIZE) char temp = fmap[i];
 }
 
 char *read_data(Shard *sh, const char *filename, uint64_t big_pool_count)
@@ -160,7 +160,7 @@ void create_data(Shard *sh)
   // 		sh->shard_idx, KMER_SMALL_POOL_COUNT);
 
   sh->kmer_small_pool = (Kmer_s *)memalign(
-      FIPC_CACHE_LINE_SIZE, sizeof(Kmer_s) * KMER_SMALL_POOL_COUNT);
+      __CACHE_LINE_SIZE, sizeof(Kmer_s) * KMER_SMALL_POOL_COUNT);
 
   if (!sh->kmer_small_pool)
   {
@@ -171,7 +171,7 @@ void create_data(Shard *sh)
   // 	printf("[INFO] Shard %u Creating kmer BIG POOL of %lu elements\n",
   // 		sh->shard_idx, KMER_BIG_POOL_COUNT);
 
-  sh->kmer_big_pool = (Kmer_s *)memalign(FIPC_CACHE_LINE_SIZE,
+  sh->kmer_big_pool = (Kmer_s *)memalign(__CACHE_LINE_SIZE,
                                          sizeof(Kmer_s) * KMER_BIG_POOL_COUNT);
 
   if (!sh->kmer_big_pool)

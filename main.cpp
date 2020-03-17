@@ -6,13 +6,16 @@
 #include <ctime>
 #include <fstream>
 #include "kmer_data.cpp"
-#include "skht.h"
 // #include "timestamp.h"
 #include "data_types.h"
 #include "libfipc.h"
 #include "numa.hpp"
 #include "shard.h"
-#include "test_config.h"
+// #include "test_config.h"
+
+#include "cas_kht.hpp"
+#include "robinhood_kht.hpp"
+#include "simple_kht.hpp"
 
 /*/proc/cpuinfo*/
 #define CPUFREQ_MHZ (2200.0)
@@ -28,12 +31,13 @@ const Configuration def = {
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
     .num_threads = 10,
-    .read_write_kmers = 1,
+    .read_write_kmers = 1,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
     .stats_file = std::string(""),
-    .ht_file = std::string("")};
+    .ht_file = std::string(""),
+    .ht_type = 1};  // TODO enum
 
 /* global config */
 Configuration config;
@@ -47,6 +51,7 @@ struct thread_stats
   uint64_t find_cycles;
   uint64_t ht_fill;
   uint64_t ht_capacity;
+  // uint64_t total_threads;
 #ifdef CALC_STATS
   uint64_t num_reprobes;
   uint64_t num_memcpys;
@@ -58,9 +63,6 @@ struct thread_stats
 #endif /*CALC_STATS*/
 };
 
-typedef SimpleKmerHashTable skht_map;
-std::string outfile;
-
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
@@ -71,7 +73,7 @@ void *create_shards(void *arg)
 
   // printf("[INFO] Thread %u. Creating new shard\n", td->thread_idx);
 
-  Shard *s = (Shard *)memalign(FIPC_CACHE_LINE_SIZE, sizeof(Shard));
+  Shard *s = (Shard *)memalign(__CACHE_LINE_SIZE, sizeof(Shard));
   td->shard = s;
   td->shard->shard_idx = td->thread_idx;
   create_data(td->shard);
@@ -84,7 +86,22 @@ void *create_shards(void *arg)
   // printf("kmer pool size: %lu\n", POOL_SIZE);
 
   /* Create hash table */
-  skht_map skht_ht(HT_SIZE);
+  KmerHashTable *kmer_ht = NULL;
+  if (config.ht_type == 1)
+  {
+    kmer_ht = new SimpleKmerHashTable(HT_SIZE);
+  }
+  else if (config.ht_type == 2)
+  {
+    kmer_ht = new RobinhoodKmerHashTable(HT_SIZE);
+  }
+  else if (config.ht_type == 3)
+  {
+    /* For the CAS Hash table, size is the same as
+    size of one partitioned ht * number of threads */
+    kmer_ht = new CASKmerHashTable(HT_SIZE * config.num_threads);
+    /*TODO tidy this up, don't use static + locks maybe*/
+  }
 
   fipc_test_FAI(ready_threads);
   while (!ready) fipc_test_pause();
@@ -95,29 +112,31 @@ void *create_shards(void *arg)
   for (size_t i = 0; i < POOL_SIZE; i++)
   {
     // printf("%lu: ", i);
-    bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+    int res =
+        insert_kmer_to_table(kmer_ht, (void *)&td->shard->kmer_big_pool[i]);
+    // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
     if (!res)
     {
       printf("FAIL\n");
     }
   }
-  skht_ht.flush_queue();
+  kmer_ht->flush_queue();
   end = RDTSCP();
   td->insertion_cycles = (end - start);
   printf("[INFO] Thread %u: Inserts complete\n", td->thread_idx);
   /*	End insert loop	*/
 
-  /*	Begin find loop	*/
+  /*	Begin find loop
   start = RDTSC_START();
   for (size_t i = 0; i < POOL_SIZE; i++)
   {
-    Kmer_r *k = skht_ht.find((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+    Kmer_r *k = kmer_ht->find((base_4bit_t *)&td->shard->kmer_big_pool[i]);
     // std::cout << *k << std::endl;
   }
   end = RDTSCP();
   td->find_cycles = (end - start);
   printf("[INFO] Thread %u: Finds complete\n", td->thread_idx);
-  /*	End find loop	*/
+  End find loop	*/
 
   /* Write to file */
   if (!config.ht_file.empty())
@@ -125,37 +144,27 @@ void *create_shards(void *arg)
     std::string outfile = config.ht_file + std::to_string(td->thread_idx);
     printf("[INFO] Thread %u: Printing to file: %s\n", td->thread_idx,
            outfile.c_str());
-    ofstream f;
-    f.open(config.ht_file + std::to_string(td->thread_idx));
-    Kmer_r *ht = skht_ht.hashtable;
-
-    for (size_t i = 0; i < skht_ht.get_capacity(); i++)
-    {
-      if (ht[i].kmer_count > 0)
-      {
-        f << ht[i] << std::endl;
-      }
-    }
+    kmer_ht->print_to_file(config.ht_file + std::to_string(td->thread_idx));
   }
 
-  td->ht_fill = skht_ht.get_fill();
-  td->ht_capacity = skht_ht.get_capacity();
+  td->ht_fill = kmer_ht->get_fill();
+  td->ht_capacity = kmer_ht->get_capacity();
 
   printf("[INFO] Thread %u. HT fill: %lu of %lu (%f %) \n", td->thread_idx,
-         skht_ht.get_fill(), skht_ht.get_capacity(),
-         (double)skht_ht.get_fill() / skht_ht.get_capacity() * 100);
+         kmer_ht->get_fill(), kmer_ht->get_capacity(),
+         (double)kmer_ht->get_fill() / kmer_ht->get_capacity() * 100);
   printf("[INFO] Thread %u. HT max_kmer_count: %lu\n", td->thread_idx,
-         skht_ht.get_max_count());
+         kmer_ht->get_max_count());
 
 #ifdef CALC_STATS
-  td->num_reprobes = skht_ht.num_reprobes;
-  td->num_memcmps = skht_ht.num_memcmps;
-  td->num_memcpys = skht_ht.num_memcpys;
-  td->num_queue_flushes = skht_ht.num_queue_flushes;
-  td->num_hashcmps = skht_ht.num_hashcmps;
+  td->num_reprobes = kmer_ht->num_reprobes;
+  td->num_memcmps = kmer_ht->num_memcmps;
+  td->num_memcpys = kmer_ht->num_memcpys;
+  td->num_queue_flushes = kmer_ht->num_queue_flushes;
+  td->num_hashcmps = kmer_ht->num_hashcmps;
   td->avg_distance_from_bucket =
-      (double)(skht_ht.sum_distance_from_bucket / HT_SIZE);
-  td->max_distance_from_bucket = skht_ht.max_distance_from_bucket;
+      (double)(kmer_ht->sum_distance_from_bucket / HT_SIZE);
+  td->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
 #endif
 
   fipc_test_FAD(ready_threads);
@@ -236,9 +245,9 @@ int spawn_shard_threads()
   size_t i;
 
   pthread_t *threads = (pthread_t *)memalign(
-      FIPC_CACHE_LINE_SIZE, sizeof(pthread_t) * config.num_threads);
+      __CACHE_LINE_SIZE, sizeof(pthread_t) * config.num_threads);
   thread_stats *all_td = (thread_stats *)memalign(
-      FIPC_CACHE_LINE_SIZE, sizeof(thread_stats) * config.num_threads);
+      __CACHE_LINE_SIZE, sizeof(thread_stats) * config.num_threads);
   memset(all_td, 0, sizeof(thread_stats *) * config.num_threads);
 
   if (config.numa_split)
@@ -267,7 +276,7 @@ int spawn_shard_threads()
         CPU_ZERO(&cpuset);
         CPU_SET(nodes[x].cpu_list[y], &cpuset);
         pthread_setaffinity_np(threads[tidx], sizeof(cpu_set_t), &cpuset);
-        printf("[INFO] thread: %lu, set affinity: %u,\n", tidx,
+        printf("[INFO] Thread: %lu, set affinity: %u,\n", tidx,
                nodes[x].cpu_list[y]);
       }
     }
@@ -291,7 +300,7 @@ int spawn_shard_threads()
       size_t cpu_idx = x % nodes[0].cpu_list.size();
       CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
       pthread_setaffinity_np(threads[x], sizeof(cpu_set_t), &cpuset);
-      printf("[INFO] thread: %lu, set affinity: %u,\n", x,
+      printf("[INFO] Thread: %lu, set affinity: %u,\n", x,
              nodes[0].cpu_list[cpu_idx]);
     }
   }
@@ -332,7 +341,7 @@ int main(int argc, char *argv[])
         "mode",
         po::value<uint32_t>(&config.read_write_kmers)
             ->default_value(def.read_write_kmers),
-        "1: Dry run\n 2: Read K-mers from disk,\n 3: Write K-mers to disk")(
+        "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -364,6 +373,11 @@ int main(int argc, char *argv[])
         po::value<std::string>(&config.stats_file)
             ->default_value(def.stats_file),
         "Stats file name.")(
+        "ht_type",
+        po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
+        "1: SimpleKmerHashTable \n2: "
+        "RobinhoodKmerHashTable, \n3: CASKmerHashTable, \n4. "
+        "StdmapKmerHashTable")(
         "outfile",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
         "Hashtable output file name.");
@@ -385,10 +399,28 @@ int main(int argc, char *argv[])
     }
     else if (config.read_write_kmers == 3)
     {
-      printf("[INFO] mode : Writing kmers to disk ...\n");
+      printf("[INFO] Mode : Writing kmers to disk ...\n");
       printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
              config.kmer_create_data_base, config.kmer_create_data_mult,
              config.kmer_create_data_uniq);
+    }
+
+    if (config.ht_type == 1)
+    {
+      printf("[INFO] Hashtable type : SimpleKmerHashTable\n");
+    }
+    else if (config.ht_type == 2)
+    {
+      printf("[INFO] Hashtable type : RobinhoodKmerHashTable\n");
+    }
+    else if (config.ht_type == 3)
+    {
+      printf("[INFO] Hashtable type : CASKmerHashTable\n");
+    }
+    else if (config.ht_type == 4)
+    {
+      printf("[INFO] Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED\n");
+      exit(0);
     }
 
     if (vm.count("help"))

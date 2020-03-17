@@ -15,14 +15,6 @@
 
 */
 
-#ifndef FIPC_CACHE_LINE_SIZE
-#define FIPC_CACHE_LINE_SIZE 64
-#endif
-
-#ifndef PAGE_SIZE
-#define PAGE_SIZE 4096
-#endif
-
 /* for hash table */
 // #define MAX_REPROBES 62 /*from jellyfish*/
 #define CALC_STATS

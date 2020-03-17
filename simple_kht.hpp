@@ -1,22 +1,14 @@
 #ifndef _SKHT_H
 #define _SKHT_H
 
+#include "base_kht.hpp"
 #include "city/city.h"
 #include "data_types.h"
 #include "kmer_struct.h"
 
-// Assumed PAGE SIZE from getconf PAGE_SIZE
-#define PAGE_SIZE 4096
-
 #define PREFETCH_QUEUE_SIZE 20
 
-/*
-Kmer q in the hash hashtable
-Each q spills over a queue line for now, queue-align later
-*/
-
 // 2^21
-
 typedef struct
 {
   char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
@@ -31,14 +23,26 @@ typedef struct
 // TODO should we pack the struct?
 
 // TODO store org kmer idx, to check if we have wrappd around after reprobe
+
+/*
+Kmer q in the hash hashtable
+Each q spills over a queue line for now, queue-align later
+*/
+
 typedef struct
 {
-  const base_4bit_t *kmer_data_ptr;
+  const void *kmer_data_ptr;
   uint32_t kmer_idx;       // TODO reduce size, TODO decided by hashtable size?
   uint64_t kmer_cityhash;  // 8 bytes
 } __attribute__((packed)) Kmer_queue_r;
 
-class SimpleKmerHashTable
+std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
+{
+  return strm << std::string(k.kmer_data, KMER_DATA_LENGTH) << " : "
+              << k.kmer_count;
+}
+
+class SimpleKmerHashTable : public KmerHashTable
 {
  private:
   uint64_t capacity;
@@ -46,14 +50,14 @@ class SimpleKmerHashTable
   Kmer_queue_r *queue;  // TODO prefetch this?
   uint32_t queue_idx;
 
-  size_t __hash(const base_4bit_t *k)
+  size_t __hash(const void *k)
   {
     uint64_t cityhash = CityHash64((const char *)k, KMER_DATA_LENGTH);
     /* n % d => n & (d - 1) */
     return (cityhash & (this->capacity - 1));  // modulo
   }
 
-  void __insert_into_queue(const base_4bit_t *kmer_data)
+  void __insert_into_queue(const void *kmer_data)
   {
     uint64_t cityhash_new =
         CityHash64((const char *)kmer_data, KMER_DATA_LENGTH);
@@ -174,12 +178,12 @@ class SimpleKmerHashTable
     // TODO power of 2 hashtable size for ease of mod operations
     this->capacity = this->__upper_power_of_two(c);
     this->hashtable =
-        (Kmer_r *)aligned_alloc(PAGE_SIZE, capacity * sizeof(Kmer_r));
+        (Kmer_r *)aligned_alloc(__PAGE_SIZE, capacity * sizeof(Kmer_r));
     memset(hashtable, 0, capacity * sizeof(Kmer_r));
     memset(&this->empty_kmer_r, 0, sizeof(Kmer_r));
 
     this->queue = (Kmer_queue_r *)(aligned_alloc(
-        PAGE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue_r)));
+        __PAGE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue_r)));
     this->queue_idx = 0;
     __builtin_prefetch(queue, 1, 3);
   }
@@ -191,7 +195,7 @@ class SimpleKmerHashTable
   }
 
   /* insert and increment if exists */
-  bool insert(const base_4bit_t *kmer_data)
+  bool insert(const void *kmer_data)
   {
     __insert_into_queue(kmer_data);
 
@@ -224,7 +228,7 @@ class SimpleKmerHashTable
 #endif
   }
 
-  Kmer_r *find(const base_4bit_t *kmer_data)
+  Kmer_r *find(const void *kmer_data)
   {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
@@ -301,13 +305,20 @@ class SimpleKmerHashTable
     }
     return count;
   }
-};
 
-std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
-{
-  return strm << std::string(k.kmer_data, KMER_DATA_LENGTH) << " : "
-              << k.kmer_count;
-}
+  void print_to_file(std::string outfile)
+  {
+    std::ofstream f;
+    f.open(outfile);
+    for (size_t i = 0; i < this->get_capacity(); i++)
+    {
+      if (this->hashtable[i].kmer_count > 0)
+      {
+        f << this->hashtable[i] << std::endl;
+      }
+    }
+  }
+};
 
 // TODO bloom filters for high frequency kmers?
 

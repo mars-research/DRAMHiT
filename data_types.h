@@ -1,17 +1,8 @@
 #ifndef _DATA_TYPES_H
 #define _DATA_TYPES_H
 
-typedef struct
-{
-  unsigned high : 4;
-  unsigned low : 4;
-} __attribute__((packed)) base_4bit_t;
-
-// kmer data (value)
-struct Kmer_value_t
-{
-  uint64_t counter;
-};
+#define __CACHE_LINE_SIZE 64
+#define __PAGE_SIZE 4096
 
 /* Test config */
 struct Configuration
@@ -26,6 +17,7 @@ struct Configuration
   bool numa_split;
   std::string stats_file;
   std::string ht_file;
+  uint32_t ht_type;
 };
 
 #endif /* _DATA_TYPES_H */

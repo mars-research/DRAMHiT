@@ -51,4 +51,4 @@ static inline uint64_t RDTSCP(void)
   return ((uint64_t)cycles_high << 32) | cycles_low;
 }
 
-#endif
+#endif /*LIBFIPC*/
