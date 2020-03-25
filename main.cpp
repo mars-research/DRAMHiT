@@ -1,18 +1,19 @@
 #include <errno.h>
 #include <pthread.h>
 #include <time.h>
+
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <ctime>
 #include <fstream>
+
 #include "kmer_data.cpp"
 // #include "timestamp.h"
 #include "data_types.h"
 #include "libfipc.h"
 #include "numa.hpp"
-#include "shard.h"
+// #include "shard.h"
 // #include "test_config.h"
-
 #include "cas_kht.hpp"
 #include "robinhood_kht.hpp"
 #include "simple_kht.hpp"
@@ -37,32 +38,11 @@ const Configuration def = {
     .numa_split = false,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
+    .in_file = std::string(""),
     .ht_type = 1};  // TODO enum
 
 /* global config */
 Configuration config;
-
-/* Thread stats */
-struct thread_stats
-{
-  uint32_t thread_idx;        // set before calling create_shards
-  Shard *shard;               // to be set by create_shards
-  uint64_t insertion_cycles;  // to be set by create_shards
-  uint64_t find_cycles;
-  uint64_t ht_fill;
-  uint64_t ht_capacity;
-  // uint64_t total_threads;
-#ifdef CALC_STATS
-  uint64_t num_reprobes;
-  uint64_t num_memcpys;
-  uint64_t num_memcmps;
-  uint64_t num_hashcmps;
-  uint64_t num_queue_flushes;
-  double avg_distance_from_bucket;
-  uint64_t max_distance_from_bucket;
-#endif /*CALC_STATS*/
-};
-
 
 /* insert kmer to non-standard (our) table */
 template <typename Table>
@@ -76,15 +56,12 @@ static uint64_t ready_threads = 0;
 
 void *create_shards(void *arg)
 {
-  thread_stats *td = (thread_stats *)arg;
-  uint64_t start, end;
+  __shard *sh = (__shard *)arg;
+  uint64_t t_start, t_end;
 
   // printf("[INFO] Thread %u. Creating new shard\n", td->thread_idx);
-
-  Shard *s = (Shard *)memalign(__CACHE_LINE_SIZE, sizeof(Shard));
-  td->shard = s;
-  td->shard->shard_idx = td->thread_idx;
-  create_data(td->shard);
+  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
+  create_data(sh);
 
   size_t HT_SIZE = config.kmer_create_data_uniq;
   size_t POOL_SIZE =
@@ -116,12 +93,11 @@ void *create_shards(void *arg)
   // fipc_test_mfence();
 
   /*	Begin insert loop */
-  start = RDTSC_START();
+  t_start = RDTSC_START();
   for (size_t i = 0; i < POOL_SIZE; i++)
   {
     // printf("%lu: ", i);
-    int res =
-        insert_kmer_to_table(kmer_ht, (void *)&td->shard->kmer_big_pool[i]);
+    int res = insert_kmer_to_table(kmer_ht, (void *)&sh->kmer_big_pool[i]);
     // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
     if (!res)
     {
@@ -129,40 +105,35 @@ void *create_shards(void *arg)
     }
   }
   kmer_ht->flush_queue();
-  end = RDTSCP();
-  td->insertion_cycles = (end - start);
-  printf("[INFO] Thread %u: Inserts complete\n", td->thread_idx);
-  /*	End insert loop	*/
+  t_end = RDTSCP();
+  sh->stats->insertion_cycles = (t_end - t_start);
+  printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);
+  /*	Finish insert loop	*/
 
-  /*	Begin find loop
-  start = RDTSC_START();
-  for (size_t i = 0; i < POOL_SIZE; i++)
-  {
-    Kmer_r *k = kmer_ht->find((base_4bit_t *)&td->shard->kmer_big_pool[i]);
-    // std::cout << *k << std::endl;
-  }
-  end = RDTSCP();
-  td->find_cycles = (end - start);
-  printf("[INFO] Thread %u: Finds complete\n", td->thread_idx);
-  End find loop	*/
+  /*	Begin find loop */
+  /*   t_start = RDTSC_START();
+    for (size_t i = 0; i < POOL_SIZE; i++)
+    {
+      Kmer_r *k = kmer_ht->find((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+      // std::cout << *k << std::endl;
+    }
+    t_end = RDTSCP();
+    td->find_cycles = (t_end - t_start);
+    printf("[INFO] Thread %u: Finds complete\n", td->thread_idx); */
+  /* Finish find loop	*/
+
+  sh->stats->ht_fill = kmer_ht->get_fill();
+  sh->stats->ht_capacity = kmer_ht->get_capacity();
+  sh->stats->max_count = kmer_ht->get_max_count();
 
   /* Write to file */
   if (!config.ht_file.empty())
   {
-    std::string outfile = config.ht_file + std::to_string(td->thread_idx);
-    printf("[INFO] Thread %u: Printing to file: %s\n", td->thread_idx,
+    std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
+    printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
            outfile.c_str());
-    kmer_ht->print_to_file(config.ht_file + std::to_string(td->thread_idx));
+    kmer_ht->print_to_file(outfile);
   }
-
-  td->ht_fill = kmer_ht->get_fill();
-  td->ht_capacity = kmer_ht->get_capacity();
-
-  printf("[INFO] Thread %u. HT fill: %lu of %lu (%f %) \n", td->thread_idx,
-         kmer_ht->get_fill(), kmer_ht->get_capacity(),
-         (double)kmer_ht->get_fill() / kmer_ht->get_capacity() * 100);
-  printf("[INFO] Thread %u. HT max_kmer_count: %lu\n", td->thread_idx,
-         kmer_ht->get_max_count());
 
 #ifdef CALC_STATS
   td->num_reprobes = kmer_ht->num_reprobes;
@@ -180,16 +151,16 @@ void *create_shards(void *arg)
   return NULL;
 }
 
-void print_stats(thread_stats *all_td, uint32_t num_shards)
+void print_stats(__shard *all_sh)
 {
   uint64_t kmer_big_pool_size_per_shard =
       (config.kmer_create_data_base * config.kmer_create_data_mult);
   uint64_t total_kmer_big_pool_size =
-      (kmer_big_pool_size_per_shard * num_shards);
+      (kmer_big_pool_size_per_shard * config.num_threads);
 
   uint64_t kmer_small_pool_size_per_shard = config.kmer_create_data_uniq;
   uint64_t total_kmer_small_pool_size =
-      (kmer_small_pool_size_per_shard * num_shards);
+      (kmer_small_pool_size_per_shard * config.num_threads);
 
   uint64_t all_total_cycles = 0;
   double all_total_time_ns = 0;
@@ -198,12 +169,22 @@ void print_stats(thread_stats *all_td, uint32_t num_shards)
   uint64_t all_total_find_cycles = 0;
   double all_total_find_time_ns = 0;
 
-  for (size_t k = 0; k < num_shards; k++)
+  //  printf("[INFO] Thread %u. cycles/insertion: %lu, fill: %lu of %lu (%f %)
+  //  \n",
+  //        sh->shard_idx,
+  //        sh->stats->insertion_cycles / kmer_big_pool_size_per_shard,
+  //        sh->stats->ht_fill, sh->stats->ht_capacity,
+  //        (double)sh->stats->ht_fill / sh->stats->ht_capacity * 100);
+  printf("===============================================================\n");
+  for (size_t k = 0; k < config.num_threads; k++)
   {
     printf(
         "Thread %2d: "
-        "%lu cycles per insertion, "
-        "%lu cycles per find"
+        "%lu cycles/insert, "
+        "%lu cycles/find "
+        "{ "
+        "fill: %lu of %lu (%f %)"
+        " }"
 #ifdef CALC_STATS
         " [num_reprobes: %lu, "
         "num_memcmps: %lu, "
@@ -212,51 +193,65 @@ void print_stats(thread_stats *all_td, uint32_t num_shards)
         "num_hashcmps: %lu, "
         "max_distance_from_bucket: %lu, "
         "avg_distance_from_bucket: %f]"
-#endif /*CALC_STATS*/
+#endif  // CALC_STATS
         "\n",
-        all_td[k].thread_idx,
-        all_td[k].insertion_cycles / kmer_big_pool_size_per_shard,
-        all_td[k].find_cycles / kmer_big_pool_size_per_shard
+        all_sh[k].shard_idx,
+        all_sh[k].stats->insertion_cycles / kmer_big_pool_size_per_shard,
+        all_sh[k].stats->find_cycles / kmer_big_pool_size_per_shard,
+        all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
+        (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity * 100
 #ifdef CALC_STATS
         ,
-        all_td[k].num_reprobes, all_td[k].num_memcmps, all_td[k].num_memcpys,
-        all_td[k].num_queue_flushes, all_td[k].num_hashcmps,
-        all_td[k].max_distance_from_bucket, all_td[k].avg_distance_from_bucket
-#endif /*CALC_STATS*/
+        all_sh[k].stats->num_reprobes, all_sh[k].stats->num_memcmps,
+        all_sh[k].stats->num_memcpys, all_sh[k].stats->num_queue_flushes,
+        all_sh[k].stats->num_hashcmps,
+        all_sh[k].stats->max_distance_from_bucket,
+        all_sh[k].stats->avg_distance_from_bucket
+#endif  // CALC_STATS
     );
-    all_total_cycles += all_td[k].insertion_cycles;
-    all_total_time_ns += (double)all_td[k].insertion_cycles * one_cycle_ns;
-    // all_total_reprobes += all_td[k].num_reprobes;
-    all_total_find_cycles += all_td[k].find_cycles;
-    all_total_find_time_ns = (double)all_td[k].find_cycles * one_cycle_ns;
+    all_total_cycles += all_sh[k].stats->insertion_cycles;
+    all_total_time_ns +=
+        (double)all_sh[k].stats->insertion_cycles * one_cycle_ns;
+    // all_total_reprobes += all_sh[k].stats->num_reprobes;
+    all_total_find_cycles += all_sh[k].stats->find_cycles;
+    all_total_find_time_ns =
+        (double)all_sh[k].stats->find_cycles * one_cycle_ns;
   }
   printf("===============================================================\n");
   printf(
-      "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles per "
-      "insertion)\n",
-      all_total_cycles / num_shards,
+      "Average (insertion) : %lu cycles (%f ms) for %lu insertions (%lu cycles "
+      "per insertion)\n",
+      all_total_cycles / config.num_threads,
       (double)all_total_time_ns * one_cycle_ns / 1000,
       kmer_big_pool_size_per_shard,
-      all_total_cycles / num_shards / kmer_big_pool_size_per_shard);
-  printf("Average  : %lu cycles (%f ms) for %lu finds (%lu cycles per find)\n",
-         all_total_find_cycles / num_shards,
-         (double)all_total_find_time_ns * one_cycle_ns / 1000,
-         kmer_big_pool_size_per_shard,
-         all_total_find_cycles / num_shards / kmer_big_pool_size_per_shard);
+      all_total_cycles / config.num_threads / kmer_big_pool_size_per_shard);
+  printf(
+      "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
+      "find)\n",
+      all_total_find_cycles / config.num_threads,
+      (double)all_total_find_time_ns * one_cycle_ns / 1000,
+      kmer_big_pool_size_per_shard,
+      all_total_find_cycles / config.num_threads /
+          kmer_big_pool_size_per_shard);
   printf("===============================================================\n");
 }
 
 int spawn_shard_threads()
 {
   cpu_set_t cpuset;
-  int s;
+  int e;
   size_t i;
 
   pthread_t *threads = (pthread_t *)memalign(
       __CACHE_LINE_SIZE, sizeof(pthread_t) * config.num_threads);
-  thread_stats *all_td = (thread_stats *)memalign(
-      __CACHE_LINE_SIZE, sizeof(thread_stats) * config.num_threads);
-  memset(all_td, 0, sizeof(thread_stats *) * config.num_threads);
+
+  __shard *all_shards = (__shard *)memalign(
+      __CACHE_LINE_SIZE, sizeof(__shard) * config.num_threads);
+  memset(all_shards, 0, sizeof(__shard) * config.num_threads);
+
+  // thread_stats *all_td = (thread_stats *)memalign(
+  //     __CACHE_LINE_SIZE, sizeof(thread_stats) * config.num_threads);
+  // memset(all_td, 0, sizeof(thread_stats) * config.num_threads);
 
   if (config.numa_split)
   {
@@ -271,10 +266,10 @@ int spawn_shard_threads()
       for (size_t y = 0; y < shards_per_node; y++)
       {
         uint32_t tidx = shards_per_node * x + y;
-        thread_stats *td = &all_td[tidx];
-        td->thread_idx = tidx;
-        s = pthread_create(&threads[tidx], NULL, create_shards, (void *)td);
-        if (s != 0)
+        __shard *sh = &all_shards[tidx];
+        sh->shard_idx = tidx;
+        e = pthread_create(&threads[tidx], NULL, create_shards, (void *)sh);
+        if (e != 0)
         {
           printf(
               "[ERROR] pthread_create: "
@@ -294,10 +289,10 @@ int spawn_shard_threads()
   {
     for (size_t x = 0; x < config.num_threads; x++)
     {
-      thread_stats *td = &all_td[x];
-      td->thread_idx = x;
-      s = pthread_create(&threads[x], NULL, create_shards, (void *)td);
-      if (s != 0)
+      __shard *sh = &all_shards[x];
+      sh->shard_idx = x;
+      e = pthread_create(&threads[x], NULL, create_shards, (void *)sh);
+      if (e != 0)
       {
         printf(
             "[ERROR] pthread_create: Could not create create_shard \
@@ -330,10 +325,10 @@ int spawn_shard_threads()
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
 
-  print_stats(all_td, config.num_threads);
+  print_stats(all_shards);
 
   free(threads);
-  free(all_td);
+  free(all_shards);
 
   return 0;
 }

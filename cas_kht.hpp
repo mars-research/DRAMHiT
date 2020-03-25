@@ -5,7 +5,7 @@
 #include "base_kht.hpp"
 #include "city/city.h"
 #include "data_types.h"
-#include "kmer_struct.h"
+// #include "kmer_struct.h"
 #include "libfipc.h"
 
 #define PREFETCH_QUEUE_SIZE 20

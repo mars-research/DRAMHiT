@@ -3,6 +3,13 @@
 
 #define __CACHE_LINE_SIZE 64
 #define __PAGE_SIZE 4096
+#define KMER_DATA_LENGTH 100 * 2 / 8  // 20 mer for now
+
+// kmer (key)
+struct Kmer_s
+{
+  char data[KMER_DATA_LENGTH];
+};
 
 /* Test config */
 struct Configuration
@@ -17,7 +24,39 @@ struct Configuration
   bool numa_split;
   std::string stats_file;
   std::string ht_file;
+  std::string in_file;
   uint32_t ht_type;
+};
+
+/* Thread stats */
+struct thread_stats
+{
+  uint64_t insertion_cycles;  // to be set by create_shards
+  uint64_t find_cycles;
+  uint64_t ht_fill;
+  uint64_t ht_capacity;
+  uint32_t max_count;
+  // uint64_t total_threads; // TODO add this back
+#ifdef CALC_STATS
+  uint64_t num_reprobes;
+  uint64_t num_memcpys;
+  uint64_t num_memcmps;
+  uint64_t num_hashcmps;
+  uint64_t num_queue_flushes;
+  double avg_distance_from_bucket;
+  uint64_t max_distance_from_bucket;
+#endif /*CALC_STATS*/
+};
+
+struct __shard
+{
+  uint32_t shard_idx;
+  uint64_t start;     // start byte into file
+  uint64_t file_end;  // end byte into file
+  thread_stats* stats;
+  Kmer_s* kmer_big_pool;
+  Kmer_s* kmer_small_pool;
+  Kmer_s* pool;
 };
 
 #endif /* _DATA_TYPES_H */
