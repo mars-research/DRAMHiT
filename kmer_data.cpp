@@ -20,6 +20,9 @@ extern "C"
 // #include "shard.h"
 // #include "test_config.h"
 
+// KSEQ_INIT(gzFile, gzread)
+
+
 const char *POOL_FILE_FORMAT = "/local/devel/pools/%02u.bin";
 
 extern Configuration config;
@@ -120,32 +123,53 @@ TODO look into this.	*/
 
 void __attribute__((optimize("O0"))) __touch(char *fmap, size_t sz)
 {
-  for (int i = 0; i < sz; i += __PAGE_SIZE) char temp = fmap[i];
+  for (uint64_t i = 0; i < sz; i += __PAGE_SIZE) char temp = fmap[i];
 }
 
-char *read_data(__shard *sh, const char *filename, uint64_t big_pool_count)
+char *read_data(__shard *sh, const char *filename)
 {
   int fd = open(filename, O_RDONLY);
   struct stat sb;
   if (fstat(fd, &sb) == -1)
   {
-    fprintf(stderr, "[ERROR] Shard % u: couldn't get file size\n",
+    fprintf(stderr, "[ERROR] Shard %u: couldn't get file size\n",
             sh->shard_idx);
   }
-  size_t SIZE = sb.st_size;
+  size_t f_sz = sb.st_size;
   // big_pool_count* KMER_DATA_LENGTH;
 
-  printf("[INFO] Shard %u: %s, %lu bytes\n", sh->shard_idx, filename, SIZE);
-  char *fmap = (char *)mmap(NULL, SIZE, PROT_READ, MAP_PRIVATE, fd, 0);
+  printf("[INFO] Shard %u: %s, %lu bytes\n", sh->shard_idx, filename, f_sz);
+  char *fmap = (char *)mmap(NULL, f_sz, PROT_READ, MAP_PRIVATE, fd, 0);
 
-  __touch(fmap, SIZE);
+  __touch(fmap, f_sz);
 
-  mlock(fmap, SIZE);
+  mlock(fmap, f_sz);
 
   // printf("[INFO] Shard %u, mlock done\n", sh->shard_idx);
 
   return fmap;
 }
+
+/* char *read_fasta(__shard *sh)
+{
+  gzFile fp;
+  kseq_t *seq;
+  int fd;
+
+  const char *filename = config.in_file.c_str();
+
+  fd = open(filename, O_RDONLY);
+  fp = gzdopen(fd);
+  size_t f_sz = (sh->f_end - sh->f_start);
+  printf("[INFO] Shard %u: start: %lu, end: %lu, %lu bytes\n", sh->shard_idx,
+         sh->f_start, sh->f_end, f_sz);
+
+  char *fmap = (char *)mmap(NULL, f_sz, PROT_READ, MAP_PRIVATE, fd, 0);
+
+  __touch(fmap, f_sz);
+  mlock(fmap, f_sz);
+  return NULL;
+} */
 
 /* 	The small pool and big pool is there to carefully control the ratio of
 total k-mers to unique k-mers.	*/
@@ -192,8 +216,7 @@ void create_data(__shard *sh)
   }
   else if (config.read_write_kmers == 2)
   {
-    sh->kmer_big_pool =
-        (Kmer_s *)read_data(sh, pool_filename, KMER_BIG_POOL_COUNT);
+    sh->kmer_big_pool = (Kmer_s *)read_data(sh, pool_filename);
   }
   else if (config.read_write_kmers == 3)
   {

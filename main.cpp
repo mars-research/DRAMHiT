@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <time.h>
+#include <zlib.h>
 
 #include <boost/program_options.hpp>
 #include <chrono>
@@ -8,6 +9,7 @@
 #include <fstream>
 
 #include "kmer_data.cpp"
+#include "misc_lib.hpp"
 // #include "timestamp.h"
 #include "data_types.h"
 #include "libfipc.h"
@@ -15,9 +17,11 @@
 // #include "shard.h"
 // #include "test_config.h"
 #include "cas_kht.hpp"
+#include "kseq.h"
 #include "robinhood_kht.hpp"
 #include "simple_kht.hpp"
 
+KSEQ_INIT(gzFile, gzread)
 /*/proc/cpuinfo*/
 #define CPUFREQ_MHZ (2200.0)
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
@@ -38,129 +42,28 @@ const Configuration def = {
     .numa_split = false,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
-    .in_file = std::string(""),
-    .ht_type = 1};  // TODO enum
+    .in_file =
+        std::string("/local/devel/devel/master/testfiles/turkey_1000.fna"),
+    .ht_type = 1,
+    .in_file_sz = 0};  // TODO enum
 
 /* global config */
 Configuration config;
 
-/* insert kmer to non-standard (our) table */
-template <typename Table>
-int insert_kmer_to_table(Table *ktable, void *data)
-{
-  return ktable->insert(data);
-}
-
+/* for synchronization of threads */
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
-
-void *create_shards(void *arg)
-{
-  __shard *sh = (__shard *)arg;
-  uint64_t t_start, t_end;
-
-  // printf("[INFO] Thread %u. Creating new shard\n", td->thread_idx);
-  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
-  create_data(sh);
-
-  size_t HT_SIZE = config.kmer_create_data_uniq;
-  size_t POOL_SIZE =
-      (config.kmer_create_data_base * config.kmer_create_data_mult);
-
-  // printf("hashtable size: %lu\n", HT_SIZE);
-  // printf("kmer pool size: %lu\n", POOL_SIZE);
-
-  /* Create hash table */
-  KmerHashTable *kmer_ht = NULL;
-  if (config.ht_type == 1)
-  {
-    kmer_ht = new SimpleKmerHashTable(HT_SIZE);
-  }
-  else if (config.ht_type == 2)
-  {
-    kmer_ht = new RobinhoodKmerHashTable(HT_SIZE);
-  }
-  else if (config.ht_type == 3)
-  {
-    /* For the CAS Hash table, size is the same as
-    size of one partitioned ht * number of threads */
-    kmer_ht = new CASKmerHashTable(HT_SIZE * config.num_threads);
-    /*TODO tidy this up, don't use static + locks maybe*/
-  }
-
-  fipc_test_FAI(ready_threads);
-  while (!ready) fipc_test_pause();
-  // fipc_test_mfence();
-
-  /*	Begin insert loop */
-  t_start = RDTSC_START();
-  for (size_t i = 0; i < POOL_SIZE; i++)
-  {
-    // printf("%lu: ", i);
-    int res = insert_kmer_to_table(kmer_ht, (void *)&sh->kmer_big_pool[i]);
-    // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
-    if (!res)
-    {
-      printf("FAIL\n");
-    }
-  }
-  kmer_ht->flush_queue();
-  t_end = RDTSCP();
-  sh->stats->insertion_cycles = (t_end - t_start);
-  printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);
-  /*	Finish insert loop	*/
-
-  /*	Begin find loop */
-  /*   t_start = RDTSC_START();
-    for (size_t i = 0; i < POOL_SIZE; i++)
-    {
-      Kmer_r *k = kmer_ht->find((base_4bit_t *)&td->shard->kmer_big_pool[i]);
-      // std::cout << *k << std::endl;
-    }
-    t_end = RDTSCP();
-    td->find_cycles = (t_end - t_start);
-    printf("[INFO] Thread %u: Finds complete\n", td->thread_idx); */
-  /* Finish find loop	*/
-
-  sh->stats->ht_fill = kmer_ht->get_fill();
-  sh->stats->ht_capacity = kmer_ht->get_capacity();
-  sh->stats->max_count = kmer_ht->get_max_count();
-
-  /* Write to file */
-  if (!config.ht_file.empty())
-  {
-    std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
-    printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
-           outfile.c_str());
-    kmer_ht->print_to_file(outfile);
-  }
-
-#ifdef CALC_STATS
-  td->num_reprobes = kmer_ht->num_reprobes;
-  td->num_memcmps = kmer_ht->num_memcmps;
-  td->num_memcpys = kmer_ht->num_memcpys;
-  td->num_queue_flushes = kmer_ht->num_queue_flushes;
-  td->num_hashcmps = kmer_ht->num_hashcmps;
-  td->avg_distance_from_bucket =
-      (double)(kmer_ht->sum_distance_from_bucket / HT_SIZE);
-  td->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
-#endif
-
-  fipc_test_FAD(ready_threads);
-
-  return NULL;
-}
 
 void print_stats(__shard *all_sh)
 {
   uint64_t kmer_big_pool_size_per_shard =
       (config.kmer_create_data_base * config.kmer_create_data_mult);
-  uint64_t total_kmer_big_pool_size =
-      (kmer_big_pool_size_per_shard * config.num_threads);
+  // uint64_t total_kmer_big_pool_size =
+  //     (kmer_big_pool_size_per_shard * config.num_threads);
 
-  uint64_t kmer_small_pool_size_per_shard = config.kmer_create_data_uniq;
-  uint64_t total_kmer_small_pool_size =
-      (kmer_small_pool_size_per_shard * config.num_threads);
+  // uint64_t kmer_small_pool_size_per_shard = config.kmer_create_data_uniq;
+  // uint64_t total_kmer_small_pool_size =
+  //     (kmer_small_pool_size_per_shard * config.num_threads);
 
   uint64_t all_total_cycles = 0;
   double all_total_time_ns = 0;
@@ -236,11 +139,166 @@ void print_stats(__shard *all_sh)
   printf("===============================================================\n");
 }
 
+/* insert kmer to non-standard (our) table */
+template <typename Table>
+int insert_kmer_to_table(Table *ktable, void *data)
+{
+  return ktable->insert(data);
+}
+
+void *shard_thread(void *arg)
+{
+  __shard *sh = (__shard *)arg;
+  uint64_t t_start, t_end;
+  gzFile fp;
+  kseq_t *seq;
+  int l;
+  z_off_t curr_pos;
+
+  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
+  // read_fasta(sh);
+
+  // estimate of HT_SIZE TODO change
+  size_t HT_SIZE = get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) / 100 *
+                   config.num_threads;
+  printf("hashtable size: %lu\n", HT_SIZE);
+
+  /* Create hash table */
+  KmerHashTable *kmer_ht = NULL;
+  if (config.ht_type == 1)
+  {
+    kmer_ht = new SimpleKmerHashTable(HT_SIZE);
+  }
+  else if (config.ht_type == 2)
+  {
+    kmer_ht = new RobinhoodKmerHashTable(HT_SIZE);
+  }
+  else if (config.ht_type == 3)
+  {
+    /* For the CAS Hash table, size is the same as
+    size of one partitioned ht * number of threads */
+    kmer_ht = new CASKmerHashTable(HT_SIZE * config.num_threads);
+    /*TODO tidy this up, don't use static + locks maybe*/
+  }
+
+  // open file
+  fp = gzopen(config.in_file.c_str(), "r");
+  // jump to start of segment
+  if (gzseek(fp, sh->f_start, SEEK_SET) == -1)
+  {
+    printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
+  }
+
+  fipc_test_FAI(ready_threads);
+  while (!ready) fipc_test_pause();
+
+  // fipc_test_mfence();
+
+  /* Begin insert loop */
+  seq = kseq_init(fp);  // initialize seq data struct
+  t_start = RDTSC_START();
+  // each time kseq_read is called, it tries to read the next record starting
+  // with > if kseq_read is called at a position in the middle of a sequence, it
+  // will skip to the next record
+  while ((l = kseq_read(seq)) >= 0)
+  {
+    // printf("[INFO] Shard %u, name: %s\n", seq->name.s);
+    // if (seq->comment.l) {
+    //   printf("[INFO] Shard %u, comment: %s\n", seq->comment.s);
+    // }
+    // if (seq->qual.l)
+    // {
+    //   printf("qual: %s\n", seq->qual.s);
+    // }
+    // printf(sh->shard_idx, seq->seq.s);
+    // printf("[INFO] Shard %u: l = %lu", sh->shard_idx, l);
+
+    // TODO i type
+    for (int i = 0; i < l; i += KMER_DATA_LENGTH)
+    {
+      // printf("[INFO] Shard %u: i = %lu", sh->shard_idx, i);
+      int res = insert_kmer_to_table(kmer_ht, (void *)(seq->seq.s + i));
+      // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+      if (!res)
+      {
+        printf("FAIL\n");
+      }
+    }
+    kmer_ht->flush_queue();
+
+    // checking if reached end of assigned segment
+    curr_pos = gztell(fp);
+    if (curr_pos >= sh->f_end)
+    {
+      break;
+    }
+  }
+  t_end = RDTSCP();
+  kseq_destroy(seq);
+  gzclose(fp);
+  /*
+    for (size_t i = 0; i < POOL_SIZE; i++)
+    {
+      // printf("%lu: ", i);
+      int res = insert_kmer_to_table(kmer_ht, (void *)&sh->kmer_big_pool[i]);
+      // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+      if (!res)
+      {
+        printf("FAIL\n");
+      }
+    }
+    kmer_ht->flush_queue();
+  */
+
+  sh->stats->insertion_cycles = (t_end - t_start);
+  printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);
+  /* Finish insert loop */
+
+  /*	Begin find loop */
+  // t_start = RDTSC_START();
+  // for (size_t i = 0; i < POOL_SIZE; i++)
+  // {
+  //   Kmer_r *k = kmer_ht->find((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+  //   // std::cout << *k << std::endl;
+  // }
+  // t_end = RDTSCP();
+  // td->find_cycles = (t_end - t_start);
+  // printf("[INFO] Thread %u: Finds complete\n", td->thread_idx);
+  /* Finish find loop	*/
+
+  sh->stats->ht_fill = kmer_ht->get_fill();
+  sh->stats->ht_capacity = kmer_ht->get_capacity();
+  sh->stats->max_count = kmer_ht->get_max_count();
+
+  /* Write to file */
+  if (!config.ht_file.empty())
+  {
+    std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
+    printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
+           outfile.c_str());
+    kmer_ht->print_to_file(outfile);
+  }
+
+#ifdef CALC_STATS
+  td->num_reprobes = kmer_ht->num_reprobes;
+  td->num_memcmps = kmer_ht->num_memcmps;
+  td->num_memcpys = kmer_ht->num_memcpys;
+  td->num_queue_flushes = kmer_ht->num_queue_flushes;
+  td->num_hashcmps = kmer_ht->num_hashcmps;
+  td->avg_distance_from_bucket =
+      (double)(kmer_ht->sum_distance_from_bucket / HT_SIZE);
+  td->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
+#endif
+
+  fipc_test_FAD(ready_threads);
+
+  return NULL;
+}
+
 int spawn_shard_threads()
 {
   cpu_set_t cpuset;
   int e;
-  size_t i;
 
   pthread_t *threads = (pthread_t *)memalign(
       __CACHE_LINE_SIZE, sizeof(pthread_t) * config.num_threads);
@@ -252,6 +310,13 @@ int spawn_shard_threads()
   // thread_stats *all_td = (thread_stats *)memalign(
   //     __CACHE_LINE_SIZE, sizeof(thread_stats) * config.num_threads);
   // memset(all_td, 0, sizeof(thread_stats) * config.num_threads);
+
+  config.in_file_sz = get_file_size(config.in_file.c_str());
+  size_t seg_sz = config.in_file_sz / config.num_threads;
+  if (seg_sz < 4096)
+  {
+    seg_sz = 4096;
+  }
 
   if (config.numa_split)
   {
@@ -268,18 +333,22 @@ int spawn_shard_threads()
         uint32_t tidx = shards_per_node * x + y;
         __shard *sh = &all_shards[tidx];
         sh->shard_idx = tidx;
-        e = pthread_create(&threads[tidx], NULL, create_shards, (void *)sh);
+        sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
+        sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+        e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
+                           (void *)sh);
         if (e != 0)
         {
           printf(
               "[ERROR] pthread_create: "
-              " Could not create create_shard thread");
+              " Could not create create shard thread");
           exit(-1);
         }
         CPU_ZERO(&cpuset);
         CPU_SET(nodes[x].cpu_list[y], &cpuset);
-        pthread_setaffinity_np(threads[tidx], sizeof(cpu_set_t), &cpuset);
-        printf("[INFO] Thread: %lu, set affinity: %u,\n", tidx,
+        pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
+                               &cpuset);
+        printf("[INFO] Thread: %u, set affinity: %u\n", tidx,
                nodes[x].cpu_list[y]);
       }
     }
@@ -291,19 +360,19 @@ int spawn_shard_threads()
     {
       __shard *sh = &all_shards[x];
       sh->shard_idx = x;
-      e = pthread_create(&threads[x], NULL, create_shards, (void *)sh);
+      sh->f_start = round_up(seg_sz * x, __PAGE_SIZE);
+      sh->f_end = round_up(seg_sz * (x + 1), __PAGE_SIZE);
+      e = pthread_create(&threads[x], NULL, shard_thread, (void *)sh);
       if (e != 0)
       {
-        printf(
-            "[ERROR] pthread_create: Could not create create_shard \
-					thread");
+        printf("[ERROR] pthread_create: Could not create create_shard thread");
         exit(-1);
       }
       CPU_ZERO(&cpuset);
       size_t cpu_idx = x % nodes[0].cpu_list.size();
       CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
       pthread_setaffinity_np(threads[x], sizeof(cpu_set_t), &cpuset);
-      printf("[INFO] Thread: %lu, set affinity: %u,\n", x,
+      printf("[INFO] Thread: %lu, set affinity: %u\n", x,
              nodes[0].cpu_list[cpu_idx]);
     }
   }
@@ -344,7 +413,8 @@ int main(int argc, char *argv[])
         "mode",
         po::value<uint32_t>(&config.read_write_kmers)
             ->default_value(def.read_write_kmers),
-        "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk")(
+        "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk \n4: "
+        "Read Fasta from disk (--in_file)")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -381,13 +451,21 @@ int main(int argc, char *argv[])
         "1: SimpleKmerHashTable \n2: "
         "RobinhoodKmerHashTable, \n3: CASKmerHashTable, \n4. "
         "StdmapKmerHashTable")(
-        "outfile",
+        "out_file",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
-        "Hashtable output file name.");
+        "Hashtable output file name.")(
+        "in_file",
+        po::value<std::string>(&config.in_file)->default_value(def.in_file),
+        "Input fasta file");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
+
+    if (!config.in_file.empty())
+    {
+      config.read_write_kmers = 4;
+    }
 
     if (config.read_write_kmers == 1)
     {
@@ -406,6 +484,15 @@ int main(int argc, char *argv[])
       printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
              config.kmer_create_data_base, config.kmer_create_data_mult,
              config.kmer_create_data_uniq);
+    }
+    else if (config.read_write_kmers == 4)
+    {
+      printf("[INFO] Mode : Reading fasta from disk ...\n");
+      if (config.in_file.empty())
+      {
+        printf("[ERROR] Please provide input fasta file.\n");
+        exit(-1);
+      }
     }
 
     if (config.ht_type == 1)

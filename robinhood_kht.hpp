@@ -253,7 +253,6 @@ class RobinhoodKmerHashTable : public KmerHashTable
 
   void display()
   {
-    uint32_t max = 0;
     for (size_t i = 0; i < this->capacity; i++)
     {
       if (hashtable[i].kmer.is_occupied)

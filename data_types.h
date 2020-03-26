@@ -3,7 +3,8 @@
 
 #define __CACHE_LINE_SIZE 64
 #define __PAGE_SIZE 4096
-#define KMER_DATA_LENGTH 100 * 2 / 8  // 20 mer for now
+// #define KMER_DATA_LENGTH 100 * 2 / 8  // 20 mer for now
+#define KMER_DATA_LENGTH 50
 
 // kmer (key)
 struct Kmer_s
@@ -26,6 +27,7 @@ struct Configuration
   std::string ht_file;
   std::string in_file;
   uint32_t ht_type;
+  uint64_t in_file_sz;
 };
 
 /* Thread stats */
@@ -51,8 +53,8 @@ struct thread_stats
 struct __shard
 {
   uint32_t shard_idx;
-  uint64_t start;     // start byte into file
-  uint64_t file_end;  // end byte into file
+  uint64_t f_start;     // start byte into file
+  uint64_t f_end;  // end byte into file
   thread_stats* stats;
   Kmer_s* kmer_big_pool;
   Kmer_s* kmer_small_pool;
