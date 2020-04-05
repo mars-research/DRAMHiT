@@ -22,7 +22,8 @@
 #include "simple_kht.hpp"
 
 KSEQ_INIT(gzFile, gzread)
-/*/proc/cpuinfo*/
+
+/*From /proc/cpuinfo*/
 #define CPUFREQ_MHZ (2200.0)
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
@@ -42,8 +43,7 @@ const Configuration def = {
     .numa_split = false,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
-    .in_file =
-        std::string("/local/devel/devel/master/testfiles/turkey_1000.fna"),
+    .in_file = std::string("/local/devel/devel/master/testfiles/turkey.fna"),
     .ht_type = 1,
     .in_file_sz = 0};  // TODO enum
 
@@ -56,8 +56,8 @@ static uint64_t ready_threads = 0;
 
 void print_stats(__shard *all_sh)
 {
-  uint64_t kmer_big_pool_size_per_shard =
-      (config.kmer_create_data_base * config.kmer_create_data_mult);
+  // uint64_t kmer_big_pool_size_per_shard =
+  //     (config.kmer_create_data_base * config.kmer_create_data_mult);
   // uint64_t total_kmer_big_pool_size =
   //     (kmer_big_pool_size_per_shard * config.num_threads);
 
@@ -67,6 +67,7 @@ void print_stats(__shard *all_sh)
 
   uint64_t all_total_cycles = 0;
   double all_total_time_ns = 0;
+  uint64_t all_total_num_inserts = 0;
   // uint64_t all_total_reprobes = 0;
 
   uint64_t all_total_find_cycles = 0;
@@ -84,7 +85,7 @@ void print_stats(__shard *all_sh)
     printf(
         "Thread %2d: "
         "%lu cycles/insert, "
-        "%lu cycles/find "
+        // "%lu cycles/find "
         "{ "
         "fill: %lu of %lu (%f %)"
         " }"
@@ -99,8 +100,8 @@ void print_stats(__shard *all_sh)
 #endif  // CALC_STATS
         "\n",
         all_sh[k].shard_idx,
-        all_sh[k].stats->insertion_cycles / kmer_big_pool_size_per_shard,
-        all_sh[k].stats->find_cycles / kmer_big_pool_size_per_shard,
+        all_sh[k].stats->insertion_cycles / all_sh[k].stats->num_inserts,
+        // all_sh[k].stats->find_cycles / all_sh[k].stats->num_inserts,
         all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
         (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity * 100
 #ifdef CALC_STATS
@@ -115,10 +116,12 @@ void print_stats(__shard *all_sh)
     all_total_cycles += all_sh[k].stats->insertion_cycles;
     all_total_time_ns +=
         (double)all_sh[k].stats->insertion_cycles * one_cycle_ns;
+    all_total_num_inserts += all_sh[k].stats->num_inserts;
     // all_total_reprobes += all_sh[k].stats->num_reprobes;
-    all_total_find_cycles += all_sh[k].stats->find_cycles;
-    all_total_find_time_ns =
-        (double)all_sh[k].stats->find_cycles * one_cycle_ns;
+
+    // all_total_find_cycles += all_sh[k].stats->find_cycles;
+    // all_total_find_time_ns =
+    //     (double)all_sh[k].stats->find_cycles * one_cycle_ns;
   }
   printf("===============================================================\n");
   printf(
@@ -126,16 +129,16 @@ void print_stats(__shard *all_sh)
       "per insertion)\n",
       all_total_cycles / config.num_threads,
       (double)all_total_time_ns * one_cycle_ns / 1000,
-      kmer_big_pool_size_per_shard,
-      all_total_cycles / config.num_threads / kmer_big_pool_size_per_shard);
-  printf(
-      "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
-      "find)\n",
-      all_total_find_cycles / config.num_threads,
-      (double)all_total_find_time_ns * one_cycle_ns / 1000,
-      kmer_big_pool_size_per_shard,
-      all_total_find_cycles / config.num_threads /
-          kmer_big_pool_size_per_shard);
+      all_total_num_inserts / config.num_threads,
+      all_total_cycles / all_total_num_inserts / config.num_threads);
+  // printf(
+  //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
+  //     "find)\n",
+  //     all_total_find_cycles / config.num_threads,
+  //     (double)all_total_find_time_ns * one_cycle_ns / 1000,
+  //     kmer_big_pool_size_per_shard,
+  //     all_total_find_cycles / config.num_threads /
+  //         kmer_big_pool_size_per_shard);
   printf("===============================================================\n");
 }
 
@@ -159,8 +162,8 @@ void *shard_thread(void *arg)
   // read_fasta(sh);
 
   // estimate of HT_SIZE TODO change
-  size_t HT_SIZE = get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) / 100 *
-                   config.num_threads;
+  size_t HT_SIZE = get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) /
+                   (30 * config.num_threads);
   printf("hashtable size: %lu\n", HT_SIZE);
 
   /* Create hash table */
@@ -200,19 +203,9 @@ void *shard_thread(void *arg)
   // each time kseq_read is called, it tries to read the next record starting
   // with > if kseq_read is called at a position in the middle of a sequence, it
   // will skip to the next record
+  uint64_t num_inserts = 0;
   while ((l = kseq_read(seq)) >= 0)
   {
-    // printf("[INFO] Shard %u, name: %s\n", seq->name.s);
-    // if (seq->comment.l) {
-    //   printf("[INFO] Shard %u, comment: %s\n", seq->comment.s);
-    // }
-    // if (seq->qual.l)
-    // {
-    //   printf("qual: %s\n", seq->qual.s);
-    // }
-    // printf(sh->shard_idx, seq->seq.s);
-    // printf("[INFO] Shard %u: l = %lu", sh->shard_idx, l);
-
     // TODO i type
     for (int i = 0; i < l; i += KMER_DATA_LENGTH)
     {
@@ -223,6 +216,7 @@ void *shard_thread(void *arg)
       {
         printf("FAIL\n");
       }
+      num_inserts++;
     }
     kmer_ht->flush_queue();
 
@@ -236,35 +230,11 @@ void *shard_thread(void *arg)
   t_end = RDTSCP();
   kseq_destroy(seq);
   gzclose(fp);
-  /*
-    for (size_t i = 0; i < POOL_SIZE; i++)
-    {
-      // printf("%lu: ", i);
-      int res = insert_kmer_to_table(kmer_ht, (void *)&sh->kmer_big_pool[i]);
-      // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
-      if (!res)
-      {
-        printf("FAIL\n");
-      }
-    }
-    kmer_ht->flush_queue();
-  */
 
   sh->stats->insertion_cycles = (t_end - t_start);
+  sh->stats->num_inserts = num_inserts;
   printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);
   /* Finish insert loop */
-
-  /*	Begin find loop */
-  // t_start = RDTSC_START();
-  // for (size_t i = 0; i < POOL_SIZE; i++)
-  // {
-  //   Kmer_r *k = kmer_ht->find((base_4bit_t *)&td->shard->kmer_big_pool[i]);
-  //   // std::cout << *k << std::endl;
-  // }
-  // t_end = RDTSCP();
-  // td->find_cycles = (t_end - t_start);
-  // printf("[INFO] Thread %u: Finds complete\n", td->thread_idx);
-  /* Finish find loop	*/
 
   sh->stats->ht_fill = kmer_ht->get_fill();
   sh->stats->ht_capacity = kmer_ht->get_capacity();
@@ -306,10 +276,6 @@ int spawn_shard_threads()
   __shard *all_shards = (__shard *)memalign(
       __CACHE_LINE_SIZE, sizeof(__shard) * config.num_threads);
   memset(all_shards, 0, sizeof(__shard) * config.num_threads);
-
-  // thread_stats *all_td = (thread_stats *)memalign(
-  //     __CACHE_LINE_SIZE, sizeof(thread_stats) * config.num_threads);
-  // memset(all_td, 0, sizeof(thread_stats) * config.num_threads);
 
   config.in_file_sz = get_file_size(config.in_file.c_str());
   size_t seg_sz = config.in_file_sz / config.num_threads;

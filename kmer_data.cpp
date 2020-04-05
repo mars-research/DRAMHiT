@@ -150,26 +150,32 @@ char *read_data(__shard *sh, const char *filename)
   return fmap;
 }
 
-/* char *read_fasta(__shard *sh)
-{
-  gzFile fp;
-  kseq_t *seq;
-  int fd;
+// char *read_fasta(__shard *sh)
+// {
+//   gzFile fp;
+//   kseq_t *seq;
+//   int fd;
+//   int read;
 
-  const char *filename = config.in_file.c_str();
+//   const char *filename = config.in_file.c_str();
 
-  fd = open(filename, O_RDONLY);
-  fp = gzdopen(fd);
-  size_t f_sz = (sh->f_end - sh->f_start);
-  printf("[INFO] Shard %u: start: %lu, end: %lu, %lu bytes\n", sh->shard_idx,
-         sh->f_start, sh->f_end, f_sz);
+//   fd = open(filename, O_RDONLY);
+//   fp = gzdopen(fd);
+//   size_t f_sz = (sh->f_end - sh->f_start);
+//   printf("[INFO] Shard %u: start: %lu, end: %lu, %lu bytes\n", sh->shard_idx,
+//          sh->f_start, sh->f_end, f_sz);
 
-  char *fmap = (char *)mmap(NULL, f_sz, PROT_READ, MAP_PRIVATE, fd, 0);
+//   while((read = kseq_read(seq)) >=0)
+//   {
 
-  __touch(fmap, f_sz);
-  mlock(fmap, f_sz);
-  return NULL;
-} */
+//   }
+
+//   char *fmap = (char *)mmap(NULL, f_sz, PROT_READ, MAP_PRIVATE, fd, 0);
+
+//   __touch(fmap, f_sz);
+//   mlock(fmap, f_sz);
+//   return NULL;
+// }
 
 /* 	The small pool and big pool is there to carefully control the ratio of
 total k-mers to unique k-mers.	*/

@@ -34,7 +34,9 @@ struct Configuration
 struct thread_stats
 {
   uint64_t insertion_cycles;  // to be set by create_shards
+  uint64_t num_inserts;
   uint64_t find_cycles;
+  uint64_t num_finds;
   uint64_t ht_fill;
   uint64_t ht_capacity;
   uint32_t max_count;
