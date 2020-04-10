@@ -238,7 +238,7 @@ void *shard_thread(void *arg)
   // fipc_test_mfence();
 
   /* Begin insert loop */
-  seq = kseq_init(fp, sh->f_end - sh->f_start);  // initialize seq data struct
+  seq = kseq_init(fp, sh->f_start, sh->f_end);  // initialize seq data struct
 
   t_start = RDTSC_START();
   // each time kseq_read is called, it tries to read the next record starting
@@ -263,11 +263,11 @@ void *shard_thread(void *arg)
 
     // checking if reached end of assigned segment
     //curr_pos = ftell(fp);
-    curr_pos = lseek(fp, 0, SEEK_CUR);
+    /*curr_pos = lseek(fp, 0, SEEK_CUR);
     if (curr_pos >= sh->f_end)
     {
       break;
-    }
+    }*/
   }
   t_end = RDTSCP();
   kseq_destroy(seq);
@@ -412,6 +412,13 @@ int spawn_shard_threads()
 
 int main(int argc, char *argv[])
 {
+  cout << EFAULT << endl;//Either events or timeout is an invalid pointer.
+
+  cout << EINTR << endl; //Interrupted by a signal handler; see signal(7).
+
+  cout << EINVAL << endl; //ctx_id is invalid.  min_nr is out of range or nr is out of range.
+
+  cout << ENOSYS << endl; //io_getevents() is not implemented on this architecture.
   try
   {
     namespace po = boost::program_options;
