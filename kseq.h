@@ -41,25 +41,47 @@
 #define __KS_TYPE(type_t)						\
 	typedef struct __kstream_t {				\
 		char *buf;								\
+		void *buf1;								\
+		void *buf2;								\
 		int begin, end, is_eof;					\
+		long offset; \
 		type_t f;								\
+		long filelen; \
+		struct iocb cb;	\
+	  struct iocb* iocbs;	\
+	  struct io_event events[1];	\
+	  io_context_t ctx;	\
+		int curBuf;	\
 	} kstream_t;
 
 #define ks_eof(ks) ((ks)->is_eof && (ks)->begin >= (ks)->end)
 #define ks_rewind(ks) ((ks)->is_eof = (ks)->begin = (ks)->end = 0)
 
 #define __KS_BASIC(type_t, __bufsize)								\
-	static inline kstream_t *ks_init(type_t f)						\
+	static inline kstream_t *ks_init(type_t f, long filelen)						\
 	{																\
 		kstream_t *ks = (kstream_t*)calloc(1, sizeof(kstream_t));	\
 		ks->f = f;													\
-		ks->buf = (char*)malloc(__bufsize);							\
+		posix_memalign((void**)&ks->buf1, getpagesize(), __bufsize); \
+		posix_memalign((void**)&ks->buf2, getpagesize(), __bufsize); \
+		ks ->filelen = filelen; \
+		memset(&ks->ctx, 0, sizeof(ks->ctx));	\
+	  memset(&ks->cb, 0, sizeof(ks->cb));	\
+		ks->iocbs = &ks->cb;	\
+		ks->curBuf = 1; 	\
+		ks-> end = read(f, ks->buf1, __bufsize);	\
+		ks ->buf = (char*)ks->buf1;	\
+		ks-> begin = 0;	\
+		ks -> offset = ks	-> end;		\
+		io_prep_pread(&ks->cb, ks->f, ks->buf2, __bufsize, ks->offset);	\
 		return ks;													\
 	}																\
 	static inline void ks_destroy(kstream_t *ks)					\
 	{																\
 		if (ks) {													\
-			free(ks->buf);											\
+			free(ks->buf1);											\
+			free(ks->buf2);							\
+			io_destroy(ks->ctx);	\
 			free(ks);												\
 		}															\
 	}
@@ -70,9 +92,29 @@
 		if (ks->is_eof && ks->begin >= ks->end) return -1;	\
 		if (ks->begin >= ks->end) {							\
 			ks->begin = 0;									\
-			ks->end = __read(ks->f, ks->buf, __bufsize);	\
-			if (ks->end < __bufsize) ks->is_eof = 1;		\
-			if (ks->end == 0) return -1;					\
+			if(io_getevents(ks->ctx, 1, 1, ks->events, NULL) != 1) printf("io_getevents error\n"); \
+			ks -> offset += ks->events[0].res;	\
+			ks->end = ks->events[0].res;	\
+			if (ks->end < __bufsize || ks->offset >= ks->filelen) ks->is_eof = 1;		\
+			else{	\
+				memset(&ks->ctx, 0, sizeof(ks->ctx));	\
+				memset(&ks->cb, 0, sizeof(ks->cb));	\
+				io_setup(1, &ks->ctx);	\
+				if(ks->curBuf == 1){	\
+					io_prep_pread(&ks->cb, ks->f, ks->buf1, __bufsize, ks->offset);	\
+					ks-> curBuf = 2;	\
+					ks -> buf = (char*)ks -> buf2;	\
+				}	\
+				else{	\
+					io_prep_pread(&ks->cb, ks->f, ks->buf2, __bufsize, ks->offset);	\
+					ks -> curBuf = 1;	\
+					ks -> buf = (char*)ks -> buf1;	\
+				}	\
+				if(io_submit(ks->ctx, 1, &ks->iocbs) < 0){	\
+			   	printf("io_setup error\n");	\
+			 	}	\
+				if (ks->end == 0) return -1;					\
+			}	\
 		}													\
 		return (int)ks->buf[ks->begin++];					\
 	}
@@ -99,9 +141,30 @@ typedef struct __kkstring_t {
 			int i;														\
 			if (ks->begin >= ks->end) {									\
 				if (!ks->is_eof) {										\
-					ks->begin = 0;										\
-					ks->end = __read(ks->f, ks->buf, __bufsize);		\
-					if (ks->end < __bufsize) ks->is_eof = 1;			\
+					ks->begin = 0;									\
+					if(io_getevents(ks->ctx, 1, 1, ks->events, NULL) != 1) printf("io_getevents error\n"); \
+					ks -> offset += ks->events[0].res;	\
+					ks->end = ks->events[0].res;	\
+					if (ks->end < __bufsize || ks->offset >= ks->filelen) ks->is_eof = 1;		\
+					else{	\
+						memset(&ks->ctx, 0, sizeof(ks->ctx));	\
+						memset(&ks->cb, 0, sizeof(ks->cb));	\
+						io_setup(1, &ks->ctx);	\
+						if(ks->curBuf == 1){	\
+							io_prep_pread(&ks->cb, ks->f, ks->buf1, __bufsize, ks->offset);	\
+							ks-> curBuf = 2;	\
+							ks -> buf = (char*)ks -> buf2;	\
+						}	\
+						else{	\
+							io_prep_pread(&ks->cb, ks->f, ks->buf2, __bufsize, ks->offset);	\
+							ks -> curBuf = 1;	\
+							ks -> buf = (char*)ks -> buf1;	\
+						}	\
+						if(io_submit(ks->ctx, 1, &ks->iocbs) < 0){	\
+					   	printf("io_setup error\n");	\
+					 	}	\
+						if (ks->end == 0) return -1;					\
+					}	\
 					if (ks->end == 0) break;							\
 				} else break;											\
 			}															\
@@ -143,10 +206,10 @@ typedef struct __kkstring_t {
 	__KS_GETUNTIL(__read, __bufsize)
 
 #define __KSEQ_BASIC(type_t)											\
-	static inline kseq_t *kseq_init(type_t fd)							\
+	static inline kseq_t *kseq_init(type_t fd, long offset)							\
 	{																	\
 		kseq_t *s = (kseq_t*)calloc(1, sizeof(kseq_t));					\
-		s->f = ks_init(fd);												\
+		s->f = ks_init(fd, offset);												\
 		return s;														\
 	}																	\
 	static inline void kseq_rewind(kseq_t *ks)							\

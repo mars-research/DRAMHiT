@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS=-g -std=c++17 -Wall -O3 -DNDEBUG
-LDFLAGS= -lboost_program_options -lz -lnuma -lpthread
+LDFLAGS= -lboost_program_options -lz -lnuma -lpthread -laio
 TARGET=./bin/lpht
 
 all:

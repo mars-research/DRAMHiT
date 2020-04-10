@@ -2,11 +2,12 @@
 #include <pthread.h>
 #include <time.h>
 #include <zlib.h>
-
+#include<unistd.h>
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <ctime>
 #include <fstream>
+#include <libaio.h>
 
 #include "kmer_data.cpp"
 #include "misc_lib.hpp"
@@ -21,7 +22,44 @@
 #include "robinhood_kht.hpp"
 #include "simple_kht.hpp"
 
-KSEQ_INIT(gzFile, gzread)
+/*int asyncRead(int& fd, void* data, int size, long offset){
+  //return read(fd, data, size);
+  /*if(offset != 0)
+    munmap(data, fd);
+  (char*)data = (char*)mmap(NULL,size,PROT_READ,MAP_PRIVATE,fd,offset);
+  //memcpy(data, buffer, size);
+  //munmap(buffer, fd);
+  //return size;
+
+  struct iocb cb;
+  struct iocb* iocbs = &cb;
+  struct io_event events[1];
+  io_context_t ctx;
+  int res;
+  memset(&ctx, 0, sizeof(ctx));
+  memset(&cb, 0, sizeof(cb));
+  if(io_setup(1, &ctx) < 0) {
+    printf("io_setup error\n");
+    return -1;
+  }
+  io_prep_pread(&cb, fd, data, size, offset);
+  if(io_submit(ctx, 1, &iocbs) < 0){
+    printf("io_setup error\n");
+    return -1;
+  }
+  if(io_getevents(ctx, 1, 1, events, NULL) != 1){
+    printf("io_getevents error\n");
+    return -1;
+  }
+  if(io_destroy(ctx) < 0){
+    printf("io_destroy error\n");
+    return -1;
+  }
+  //cout << events[0].res << endl;
+  return events[0].res;
+}*/
+
+KSEQ_INIT(int, read)
 
 /*From /proc/cpuinfo*/
 #define CPUFREQ_MHZ (2200.0)
@@ -36,14 +74,15 @@ const Configuration def = {
     .kmer_create_data_base = 524288,
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
-    .num_threads = 10,
+    .num_threads = 4,
     .read_write_kmers = 1,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
-    .in_file = std::string("/local/devel/devel/master/testfiles/turkey.fna"),
+    //.in_file = std::string("/local/devel/devel/master/testfiles/turkey.fna"),
+    .in_file = std::string("./testfiles/turkey_1000.fna"),
     .ht_type = 1,
     .in_file_sz = 0};  // TODO enum
 
@@ -153,7 +192,7 @@ void *shard_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
   uint64_t t_start, t_end;
-  gzFile fp;
+  int fp;
   kseq_t *seq;
   int l;
   z_off_t curr_pos;
@@ -185,9 +224,10 @@ void *shard_thread(void *arg)
   }
 
   // open file
-  fp = gzopen(config.in_file.c_str(), "r");
+
+  fp = open(config.in_file.c_str(), O_RDONLY | O_DIRECT);
   // jump to start of segment
-  if (gzseek(fp, sh->f_start, SEEK_SET) == -1)
+  if (lseek(fp, sh->f_start, SEEK_SET) == -1)
   {
     printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
   }
@@ -198,7 +238,8 @@ void *shard_thread(void *arg)
   // fipc_test_mfence();
 
   /* Begin insert loop */
-  seq = kseq_init(fp);  // initialize seq data struct
+  seq = kseq_init(fp, sh->f_end - sh->f_start);  // initialize seq data struct
+
   t_start = RDTSC_START();
   // each time kseq_read is called, it tries to read the next record starting
   // with > if kseq_read is called at a position in the middle of a sequence, it
@@ -221,7 +262,8 @@ void *shard_thread(void *arg)
     kmer_ht->flush_queue();
 
     // checking if reached end of assigned segment
-    curr_pos = gztell(fp);
+    //curr_pos = ftell(fp);
+    curr_pos = lseek(fp, 0, SEEK_CUR);
     if (curr_pos >= sh->f_end)
     {
       break;
@@ -229,7 +271,7 @@ void *shard_thread(void *arg)
   }
   t_end = RDTSCP();
   kseq_destroy(seq);
-  gzclose(fp);
+  close(fp);
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
