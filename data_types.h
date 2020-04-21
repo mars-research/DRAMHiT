@@ -27,6 +27,7 @@ struct Configuration
   std::string ht_file;
   std::string in_file;
   uint32_t ht_type;
+  uint64_t buffer_size;
   uint64_t in_file_sz;
 };
 

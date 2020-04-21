@@ -21,6 +21,7 @@
 #include "kseq.h"
 #include "robinhood_kht.hpp"
 #include "simple_kht.hpp"
+#include "FASTAParser.hpp"
 
 /*int asyncRead(int& fd, void* data, int size, long offset){
   //return read(fd, data, size);
@@ -84,6 +85,7 @@ const Configuration def = {
     //.in_file = std::string("/local/devel/devel/master/testfiles/turkey.fna"),
     .in_file = std::string("./testfiles/turkey_1000.fna"),
     .ht_type = 1,
+    .buffer_size = 4096,
     .in_file_sz = 0};  // TODO enum
 
 /* global config */
@@ -193,7 +195,7 @@ void *shard_thread(void *arg)
   __shard *sh = (__shard *)arg;
   uint64_t t_start, t_end;
   int fp;
-  kseq_t *seq;
+  //kseq_t *seq;
   int l;
   z_off_t curr_pos;
 
@@ -201,7 +203,7 @@ void *shard_thread(void *arg)
   // read_fasta(sh);
 
   // estimate of HT_SIZE TODO change
-  size_t HT_SIZE = get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) /
+  size_t HT_SIZE = 100*get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) /
                    (30 * config.num_threads);
   printf("hashtable size: %lu\n", HT_SIZE);
 
@@ -225,12 +227,12 @@ void *shard_thread(void *arg)
 
   // open file
 
-  fp = open(config.in_file.c_str(), O_RDONLY | O_DIRECT);
+  //fp = open(config.in_file.c_str(), O_RDONLY | O_NONBLOCK | O_DIRECT);
   // jump to start of segment
-  if (lseek(fp, sh->f_start, SEEK_SET) == -1)
-  {
-    printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
-  }
+  //if (lseek(fp, sh->f_start, SEEK_SET) == -1)
+  //{
+    //printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
+  //}
 
   fipc_test_FAI(ready_threads);
   while (!ready) fipc_test_pause();
@@ -238,21 +240,29 @@ void *shard_thread(void *arg)
   // fipc_test_mfence();
 
   /* Begin insert loop */
-  seq = kseq_init(fp, sh->f_start, sh->f_end);  // initialize seq data struct
+  //seq = kseq_init(fp, sh->f_start, sh->f_end);  // initialize seq data struct
+  FASTAParser parser(config.in_file, config.buffer_size, sh->f_start, sh->f_end);
 
   t_start = RDTSC_START();
   // each time kseq_read is called, it tries to read the next record starting
   // with > if kseq_read is called at a position in the middle of a sequence, it
   // will skip to the next record
   uint64_t num_inserts = 0;
-  while ((l = kseq_read(seq)) >= 0)
+  //while ((l = kseq_read(seq)) >= 0)
+  char* cur;
+  while((l = parser.get_next(cur)) > 0)
   {
     // TODO i type
-    for (int i = 0; i < l; i += KMER_DATA_LENGTH)
+    // cout << l << endl;
+    //cur[l] = 0;
+    //printf("%s\n", cur);
+    for (int i = 0; i + KMER_DATA_LENGTH < l; i += 1)
     {
       // printf("[INFO] Shard %u: i = %lu", sh->shard_idx, i);
-      int res = insert_kmer_to_table(kmer_ht, (void *)(seq->seq.s + i));
+      //int res = insert_kmer_to_table(kmer_ht, (void *)(seq->seq.s + i)); //Pointer point to my buffer
+      int res = insert_kmer_to_table(kmer_ht, (void *)(cur+i)); //Pointer point to my buffer
       // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+
       if (!res)
       {
         printf("FAIL\n");
@@ -270,8 +280,10 @@ void *shard_thread(void *arg)
     }*/
   }
   t_end = RDTSCP();
-  kseq_destroy(seq);
-  close(fp);
+
+  cout << "END" << endl;
+  //kseq_destroy(seq);
+  //close(fp);
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
@@ -471,7 +483,10 @@ int main(int argc, char *argv[])
         "Hashtable output file name.")(
         "in_file",
         po::value<std::string>(&config.in_file)->default_value(def.in_file),
-        "Input fasta file");
+        "Input fasta file")(
+        "buffer_size",
+        po::value<uint64_t>(&config.buffer_size)->default_value(def.buffer_size),
+        "I/O buffer size");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
