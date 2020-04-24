@@ -7,7 +7,6 @@
 #include <chrono>
 #include <ctime>
 #include <fstream>
-#include <libaio.h>
 
 #include "kmer_data.cpp"
 #include "misc_lib.hpp"
@@ -75,7 +74,7 @@ const Configuration def = {
     .kmer_create_data_base = 524288,
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
-    .num_threads = 4,
+    .num_threads = 10,
     .read_write_kmers = 1,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
@@ -203,7 +202,7 @@ void *shard_thread(void *arg)
   // read_fasta(sh);
 
   // estimate of HT_SIZE TODO change
-  size_t HT_SIZE = 100*get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) /
+  size_t HT_SIZE = 25*get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) /
                    (30 * config.num_threads);
   printf("hashtable size: %lu\n", HT_SIZE);
 
@@ -252,12 +251,12 @@ void *shard_thread(void *arg)
   char* cur;
   while((l = parser.get_next(cur)) > 0)
   {
-    // TODO i type
     // cout << l << endl;
+    // TODO i type
     //cur[l] = 0;
     //printf("%s\n", cur);
-    for (int i = 0; i + KMER_DATA_LENGTH < l; i += 1)
-    {
+    for (int i = 0; i + KMER_DATA_LENGTH <= l; i += 1){
+  
       // printf("[INFO] Shard %u: i = %lu", sh->shard_idx, i);
       //int res = insert_kmer_to_table(kmer_ht, (void *)(seq->seq.s + i)); //Pointer point to my buffer
       int res = insert_kmer_to_table(kmer_ht, (void *)(cur+i)); //Pointer point to my buffer
@@ -280,7 +279,7 @@ void *shard_thread(void *arg)
     }*/
   }
   t_end = RDTSCP();
-
+  //cout << parser.read_cnt << endl;
   cout << "END" << endl;
   //kseq_destroy(seq);
   //close(fp);
