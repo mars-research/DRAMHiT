@@ -202,8 +202,7 @@ void *shard_thread(void *arg)
   // read_fasta(sh);
 
   // estimate of HT_SIZE TODO change
-  size_t HT_SIZE = 25*get_ht_size(config.in_file_sz, KMER_DATA_LENGTH) /
-                   (30 * config.num_threads);
+  size_t HT_SIZE = config.in_file_sz / (config.num_threads * 100);
   printf("hashtable size: %lu\n", HT_SIZE);
 
   /* Create hash table */
@@ -279,7 +278,7 @@ void *shard_thread(void *arg)
     }*/
   }
   t_end = RDTSCP();
-  //cout << parser.read_cnt << endl;
+  //cout << parser.total_read_size << endl;
   cout << "END" << endl;
   //kseq_destroy(seq);
   //close(fp);

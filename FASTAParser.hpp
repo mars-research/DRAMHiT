@@ -14,7 +14,7 @@ public:
         //fp = open(config.in_file.c_str(), O_RDONLY | O_NONBLOCK | O_DIRECT);
         fp = fopen(FileName.c_str(), "rb");
         if (fseek(fp, f_start, SEEK_SET) == -1) printf("Cannot move fp");
-
+        //cout << f_start << " " << f_end << endl;
         file_size = f_end - f_start;
         setbuf(fp, NULL); //Disable buffering
         BUFFER_SIZE = buffer_size;
@@ -59,8 +59,12 @@ public:
         }*/
 
         else if (next_cur - buffer < BUFFER_SIZE){ //looking for the next seq in this buffer, no need to read from the file
-            if(total_read_size - (BUFFER_SIZE + buffer -cur) >= file_size)
+            if(total_read_size - (BUFFER_SIZE + buffer -cur) >= file_size){
+                printf("End of thread\n");
+                //cout << total_read_size << " " << BUFFER_SIZE << " " << cur - buffer << " " << file_size << endl;
                 return 0;
+            }
+                
             offset = 0;
             //cur = next_cur;
             FIND_NEXT_HEADER = true; //This is the end of a seq, need to find the next seq header 
@@ -69,8 +73,10 @@ public:
         else{
             //memcpy(boundary_buf, buffer + BUFFER_SIZE - KMER_DATA_LENGTH, KMER_DATA_LENGTH - 1)
             //cout << "Read here" << endl;
-            if(END_OF_FILE)
+            if(END_OF_FILE){
+                //printf("End of File\n");
                 return 0;
+            }
             if(offset >= KMER_DATA_LENGTH){
                 memmove(out_buffer, out_buffer + offset - KMER_DATA_LENGTH + 1, KMER_DATA_LENGTH - 1);
                 //memcpy(out_buffer, buffer, KMER_DATA_LENGTH-1);
@@ -102,7 +108,7 @@ public:
             BUFFER_SIZE = read_size;
         }   
         cur = next_cur = buffer;
-        
+        //cout << offset << " " << size << " " << read_size << " " <<  total_read_size << endl;
         return read_size;
     }
 
@@ -131,6 +137,10 @@ public:
                 cur = next_cur;
             }
             kseq_begin = out_buffer;
+            if(offset == 0){ //happens when the end of the buffer is a header
+               FIND_NEXT_HEADER = true;
+               return parse_data(kseq_begin);
+            }
             return offset;
         }
         else if (_FileType == ft_fastq){
@@ -241,6 +251,10 @@ public:
         if (total_read_size == 0){
             //read_into_buffer(0, BUFFER_SIZE);
             total_read_size = read(fp, in_buffer[0], BUFFER_SIZE);
+	    if(total_read_size >= file_size){
+		END_OF_FILE = true;
+		}
+	    else{
             memset(&ctx, 0, sizeof(ctx));	
 	        memset(&cb, 0, sizeof(cb));	
 		    iocbs = &cb;
@@ -253,6 +267,7 @@ public:
 			    printf("io_submit error\n");
 		    }
             _buffer_cur = 0;
+	}
             buffer = in_buffer[_buffer_cur];
             cur = buffer;
             return parse_data(kseq_begin);
