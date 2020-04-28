@@ -5,16 +5,15 @@
 #define __PAGE_SIZE 4096
 // #define KMER_DATA_LENGTH 100 * 2 / 8  // 20 mer for now
 #define KMER_DATA_LENGTH 50
+#define ALPHA 0.15
 
 // kmer (key)
-struct Kmer_s
-{
+struct Kmer_s {
   char data[KMER_DATA_LENGTH];
 };
 
 /* Test config */
-struct Configuration
-{
+struct Configuration {
   uint64_t kmer_create_data_base;
   uint32_t kmer_create_data_mult;
   uint64_t kmer_create_data_uniq;
@@ -28,11 +27,11 @@ struct Configuration
   std::string in_file;
   uint32_t ht_type;
   uint64_t in_file_sz;
+  bool drop_caches;
 };
 
 /* Thread stats */
-struct thread_stats
-{
+struct thread_stats {
   uint64_t insertion_cycles;  // to be set by create_shards
   uint64_t num_inserts;
   uint64_t find_cycles;
@@ -52,11 +51,10 @@ struct thread_stats
 #endif /*CALC_STATS*/
 };
 
-struct __shard
-{
+struct __shard {
   uint32_t shard_idx;
-  uint64_t f_start;     // start byte into file
-  uint64_t f_end;  // end byte into file
+  off64_t f_start;  // start byte into file
+  off64_t f_end;    // end byte into file
   thread_stats* stats;
   Kmer_s* kmer_big_pool;
   Kmer_s* kmer_small_pool;
