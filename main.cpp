@@ -98,7 +98,7 @@ inline int __attribute__((optimize("O0")))
 insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
 {
   (*num_inserts)++;
-  //  return ktable->insert(data);
+  return ktable->insert(data);
 }
 
 void *shard_thread(void *arg)
@@ -111,7 +111,7 @@ void *shard_thread(void *arg)
   int l = 0;
   FunctorRead r;
   int res;
-  //KmerHashTable *kmer_ht = NULL;
+  KmerHashTable *kmer_ht = NULL;
 
   sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
 
@@ -155,8 +155,7 @@ void *shard_thread(void *arg)
    will skip to the next record */
   uint64_t num_inserts = 0;
   //while ((l = kseq_read(seq)) >= 0)
-  char* cur;
-  while((l = parser.get_next(cur)) > 0)
+  while((l = parser.get_next()) > 0)
   {
     // cout << l << endl;
     // TODO i type
@@ -166,14 +165,14 @@ void *shard_thread(void *arg)
   
       // printf("[INFO] Shard %u: i = %lu", sh->shard_idx, i);
       //int res = insert_kmer_to_table(kmer_ht, (void *)(seq->seq.s + i)); //Pointer point to my buffer
-      /*int res = insert_kmer_to_table(kmer_ht, (void *)(cur+i)); //Pointer point to my buffer
+      int res = insert_kmer_to_table(kmer_ht, (void *)(parser.out_buffer+i), &num_inserts); //Pointer point to my buffer
       // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
 
       if (!res)
       {
         printf("FAIL\n");
-      }*/
-      num_inserts++;
+      }
+      //num_inserts++;
     }
     kmer_ht->flush_queue();
 
