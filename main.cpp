@@ -202,7 +202,7 @@ void *shard_thread(void *arg)
   // read_fasta(sh);
 
   // estimate of HT_SIZE TODO change
-  size_t HT_SIZE = config.in_file_sz / (config.num_threads * 100);
+  size_t HT_SIZE = 0.01*config.in_file_sz / (config.num_threads);
   printf("hashtable size: %lu\n", HT_SIZE);
 
   /* Create hash table */
@@ -258,13 +258,13 @@ void *shard_thread(void *arg)
   
       // printf("[INFO] Shard %u: i = %lu", sh->shard_idx, i);
       //int res = insert_kmer_to_table(kmer_ht, (void *)(seq->seq.s + i)); //Pointer point to my buffer
-      int res = insert_kmer_to_table(kmer_ht, (void *)(cur+i)); //Pointer point to my buffer
+      /*int res = insert_kmer_to_table(kmer_ht, (void *)(cur+i)); //Pointer point to my buffer
       // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
 
       if (!res)
       {
         printf("FAIL\n");
-      }
+      }*/
       num_inserts++;
     }
     kmer_ht->flush_queue();

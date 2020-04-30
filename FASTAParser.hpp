@@ -252,7 +252,7 @@ public:
             //read_into_buffer(0, BUFFER_SIZE);
             total_read_size = read(fp, in_buffer[0], BUFFER_SIZE);
 	    if(total_read_size >= file_size){
-		END_OF_FILE = true;
+		    END_OF_FILE = true;
 		}
 	    else{
             memset(&ctx, 0, sizeof(ctx));	
@@ -315,6 +315,7 @@ public:
         if(END_OF_FILE) return 0;
 
         while(io_getevents(ctx, 0, 1, events, NULL) != 1) printf("io_getevents error\n");
+       
 		int read_size = events[0].res;
 		f_start += read_size;
 		
