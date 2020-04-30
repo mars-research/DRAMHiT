@@ -33,7 +33,7 @@ uint64_t round_up(uint64_t n, uint64_t m)
 }
 
 // TODO max value of k to support?s
-uint64_t get_ht_size(uint64_t l, uint8_t k)
+uint64_t calc_num_kmers(uint64_t l, uint8_t k)
 {
     return (l - k + 1);
 }
