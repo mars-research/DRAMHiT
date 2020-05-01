@@ -59,7 +59,6 @@ public:
             return parse_data();
         }
         else{
-
             if(this->END_OF_FILE){
                 return 0;
             }
@@ -95,10 +94,9 @@ public:
         if (this->_FileType == ft_fasta){
             if(this->FIND_NEXT_HEADER){
                 if (find_next_headerline() == -1) return 0;
-                if (skip_line() == -1) return 0;
-      
+                if (skip_line() == -1) return 0;      
             }
-
+            
             this->next_cur = this->cur;
             
             while(this->next_cur < this->buffer + this->BufferSize && *this->next_cur != '>'){
@@ -115,9 +113,11 @@ public:
                     this->next_cur ++;
                 this->cur = this->next_cur;
             }
+            //when cur is '>' or cur is '\n'
             if(this->offset == 0){ //happens when the end of the buffer is a header
-               this->FIND_NEXT_HEADER = true;
-               return parse_data();
+                if (skip_line() == -1) return 0;
+                this->FIND_NEXT_HEADER = false;
+                return parse_data();
             }
             return this->offset;
         }
@@ -132,7 +132,11 @@ public:
     int skip_line(){
         while (*this->cur != '\n' && this->cur < this->buffer+this->BufferSize)
             ++this->cur;
-        while(this->cur == this->buffer+this->BufferSize){
+        while(this->cur >= this->buffer+this->BufferSize - 1){
+            if (*this->cur == '\n'){
+                if (read_into_buffer() == 0) return -1;
+                return 0;
+            }   
             if (read_into_buffer() == 0) return -1;
             //if(total_read_size >= file_size || END_OF_FILE)
                 //return;
@@ -147,16 +151,27 @@ public:
     int find_next_headerline(){
         while (*this->cur != '>' && this->cur < this->buffer+this->BufferSize)
             ++this->cur;
-        while(this->cur == this->buffer+this->BufferSize){
+        while(this->cur >= this->buffer+this->BufferSize - 1){
+            if (*this->cur == '>'){
+                if (read_into_buffer() == 0) return -1;
+                return 0;
+            }   
             if(read_into_buffer() == 0) return -1;
             //if(total_read_size >= file_size || END_OF_FILE)
                 //return;
-            this->cur = this->buffer;
+            //this->cur = this->buffer;
             while (*this->cur != '>' && this->cur < this->buffer+this->BufferSize)
                 ++this->cur;   
         }
         return 0;
     }
+
+    /*bool begin_with_header(){
+        char* p = this -> buffer;
+        for(int i = 0; i < 100; i++){
+            if(*(p + i) == '>') return false
+        }
+    }*/
 
 
     ~FASTAParser(){
@@ -306,7 +321,7 @@ public:
                 if (skip_line() == -1) return 0;
       
             }
-
+    
             this->next_cur = this->cur;
             
             while(this->next_cur < this->buffer + this->BufferSize && *this->next_cur != '>'){
@@ -340,7 +355,13 @@ public:
     int skip_line(){
         while (*this->cur != '\n' && this->cur < this->buffer+this->BufferSize)
             ++this->cur;
+        
+            
         while(this->cur == this->buffer+this->BufferSize){
+            if (*this->cur == '\n'){
+                if (read_into_buffer() == 0) return -1;
+                return 0;
+            }      
             if (read_into_buffer() == 0) return -1;
             //if(total_read_size >= file_size || END_OF_FILE)
                 //return;
@@ -355,6 +376,10 @@ public:
     int find_next_headerline(){
         while (*this->cur != '>' && this->cur < this->buffer+this->BufferSize)
             ++this->cur;
+        if (*this->cur == '\n' && this->cur == this->buffer+this->BufferSize){
+            if (read_into_buffer() == 0) return -1;
+            return 0;
+        }
         while(this->cur == this->buffer + this->BufferSize){
             if(read_into_buffer() == 0) return -1;
             //if(total_read_size >= file_size || END_OF_FILE)
