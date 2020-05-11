@@ -11,7 +11,7 @@
 
 #include "kmer_data.cpp"
 #include "./include/misc_lib.h"
-// #include "timestamp.h"
+// #include "./include/timestamp.h"
 #include "./include/data_types.h"
 #include "./include/libfipc.h"
 #include "./include/numa.hpp"

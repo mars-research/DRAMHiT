@@ -4,7 +4,7 @@
 #include "../include/base_kht.hpp"
 #include "data_types.h"
 // #include "kmer_struct.h"
-#include "kmer_class.h"
+#include "../include/kmer_class.h"
 
 class StdmapKmerHashTable : public KmerHashTable
 {
