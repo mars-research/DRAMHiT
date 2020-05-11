@@ -1,9 +1,9 @@
 #ifndef _ROBINHOOD_SKHT_H
 #define _ROBINHOOD_SKHT_H
 
-#include "base_kht.hpp"
-#include "city/city.h"
-#include "data_types.h"
+#include "../include/base_kht.hpp"
+#include "../city/city.h"
+#include "../include/data_types.h"
 // #include "kmer_struct.h"
 
 #define PREFETCH_QUEUE_SIZE 20

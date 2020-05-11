@@ -15,7 +15,7 @@ extern "C"
 #include "sys/types.h"
 }
 
-#include "data_types.h"
+#include "./include/data_types.h"
 // #include "kmer_struct.h"
 // #include "shard.h"
 // #include "test_config.h"

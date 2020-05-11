@@ -3,7 +3,7 @@ CFLAGS=-g -std=c++17 -Wall -DNDEBUG
 OPT_YES=-O3
 OPT_NO=-O0
 LDFLAGS= -lboost_program_options -lz -lnuma -lpthread
-TARGET=./bin/lpht
+TARGET=./kmercounter
 
 all:
 	$(CC)  main.cpp -o $(TARGET) $(CFLAGS) $(OPT_YES) $(LDFLAGS) city/city.cc

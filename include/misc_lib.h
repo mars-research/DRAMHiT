@@ -1,23 +1,21 @@
 #ifndef _MISC_LIB_H
 #define _MISC_LIB_H
 
-extern "C"
-{
+extern "C" {
 #include "fcntl.h"
+#include "stdio.h"
 #include "sys/mman.h"
 #include "sys/stat.h"
 #include "sys/types.h"
-#include "stdio.h"
 }
 
-
-uint64_t get_file_size(const char *fn)
+uint64_t get_file_size(const char* fn)
 {
   int fd = open(fn, O_RDONLY);
   struct stat sb;
-  if (fstat(fd, &sb) == -1)
-  {
-    fprintf(stderr, "[ERROR]couldn't get file size\n");
+  if (fstat(fd, &sb) == -1) {
+    fprintf(stderr, "[ERROR] Couldn't stat file size\n");
+    exit(-1);
   }
   return sb.st_size;
 }
@@ -33,10 +31,18 @@ uint64_t round_up(uint64_t n, uint64_t m)
 }
 
 // TODO max value of k to support?s
-uint64_t calc_num_kmers(uint64_t l, uint8_t k)
+uint64_t calc_num_kmers(uint64_t l, uint8_t k) { return (l - k + 1); }
+
+int find_last_N_in_seq(const char* c)
 {
-    return (l - k + 1);
+  if (!c) return -1;
+  int i = KMER_DATA_LENGTH;
+  while (i-- > 0) {
+    if (c[i] == 'N' || c[i] == 'n') {
+      return i;
+    }
+  }
+  return -1;
 }
 
-
-#endif //_MISC_LIB_H
+#endif  //_MISC_LIB_H

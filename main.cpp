@@ -10,19 +10,20 @@
 #include <fstream>
 
 #include "kmer_data.cpp"
-#include "misc_lib.hpp"
+#include "./include/misc_lib.h"
 // #include "timestamp.h"
-#include "data_types.h"
-#include "libfipc.h"
-#include "numa.hpp"
+#include "./include/data_types.h"
+#include "./include/libfipc.h"
+#include "./include/numa.hpp"
 // #include "shard.h"
 // #include "test_config.h"
-#include "ac_kseq.h"
-#include "cas_kht.hpp"
+#include "./include/ac_kseq.h"
 // #include "kseq.h"
-#include "calcstats.h"
-#include "robinhood_kht.hpp"
-#include "simple_kht.hpp"
+
+#include "./include/calcstats.h"
+#include "./hashtables/robinhood_kht.hpp"
+#include "./hashtables/simple_kht.hpp"
+#include "./hashtables/cas_kht.hpp"
 
 /* Numa config */
 Numa n;
@@ -58,7 +59,7 @@ inline int __attribute__((optimize("O0")))
 insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
 {
   (*num_inserts)++;
-  //  return ktable->insert(data);
+  return ktable->insert(data);
 }
 
 void *shard_thread(void *arg)
@@ -74,18 +75,30 @@ void *shard_thread(void *arg)
   KmerHashTable *kmer_ht = NULL;
 
   sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
+  printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
+         sh->f_start, sh->f_end);
 
   // open file
   fp = open(config.in_file.c_str(), O_RDONLY);
   // jump to start of segment
+  /*   if (sh->shard_idx != 0) {
+      if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
+        printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
+      }
+    } else {
+      if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
+        printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
+      }
+    } */
+
   if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
     printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
   }
+
   kstream<int, FunctorRead> ks(fp, r);
 
   /* estimate of ht_size TODO change */
   size_t ht_size = config.in_file_sz / config.num_threads;
-  printf("[INFO] Thread %u: hashtable size: %lu\n", sh->shard_idx, ht_size);
 
   /* Create hash table */
   if (config.ht_type == 1) {
@@ -111,12 +124,26 @@ void *shard_thread(void *arg)
    with > if kseq_read is called at a position in the middle of a sequence, it
    will skip to the next record */
   uint64_t num_inserts = 0;
+  int e = 0;
   while ((l = ks.read(seq)) >= 0) {
+    if (e ==0) {
+      printf("[INFO] Thread %u: first seq: %s\n", sh->shard_idx, seq.seq.data());
+    }
+    if (e ==1) {
+      printf("[INFO] Thread %u: second seq: %s\n", sh->shard_idx, seq.seq.data());
+    }
     // printf("[INFO] Thread %u, %d bytes read\n", sh->shard_idx, l);
     /*  TODO i type */
+
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
-      res = insert_kmer_to_table(kmer_ht, (void *)(seq.seq.data() + i),
-                                 &num_inserts);
+      char *kmer = seq.seq.data() + i;
+      int found_N = find_last_N_in_seq(kmer);
+      if (found_N >= 0) {
+        i += found_N;
+        continue;
+      }
+
+      res = insert_kmer_to_table(kmer_ht, (void *)kmer, &num_inserts);
       if (!res) {
         printf("FAIL\n");
       }
@@ -124,15 +151,17 @@ void *shard_thread(void *arg)
       // if (num_inserts % 1000000 == 0) {
       //   double perc_fill =
       //       (double)kmer_ht->get_fill() / kmer_ht->get_capacity() * 100;
-      //   printf("[INFO] Thread %u: fill: %.2f from %lu inserts\n", sh->shard_idx,
+      //   printf("[INFO] Thread %u: fill: %.2f from %lu inserts\n",
+      //   sh->shard_idx,
       //          perc_fill, num_inserts);
       // }
     }
-    kmer_ht->flush_queue();
-
+    e++;
+    // printf("[INFO] Thread %u: e: %d\n", sh->shard_idx, e);
     /* checking if reached end of assigned segment */
     curr_pos = lseek64(fp, 0, SEEK_CUR);
     if (curr_pos >= sh->f_end) {
+      kmer_ht->flush_queue();
       break;
     }
   }
@@ -140,7 +169,7 @@ void *shard_thread(void *arg)
   close(fp);
   // kseq_destroy(seq);
   // gzclose(fp);
-
+  printf("[INFO] Thread %u: last seq: %s\n", sh->shard_idx, seq.seq.data());
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
   printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);
@@ -184,9 +213,11 @@ int spawn_shard_threads()
 
   __shard *all_shards = (__shard *)memalign(
       __CACHE_LINE_SIZE, sizeof(__shard) * config.num_threads);
+
   memset(all_shards, 0, sizeof(__shard) * config.num_threads);
 
   config.in_file_sz = get_file_size(config.in_file.c_str());
+  printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
   size_t seg_sz = config.in_file_sz / config.num_threads;
   if (seg_sz < 4096) {
     seg_sz = 4096;
@@ -218,8 +249,7 @@ int spawn_shard_threads()
         CPU_SET(nodes[x].cpu_list[y], &cpuset);
         pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
                                &cpuset);
-        printf("[INFO] Thread: %u, set affinity: %u\n", tidx,
-               nodes[x].cpu_list[y]);
+        printf("[INFO] Thread %u: affinity: %u\n", tidx, nodes[x].cpu_list[y]);
       }
     }
   }
