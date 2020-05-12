@@ -48,6 +48,8 @@ struct thread_stats {
   uint64_t num_queue_flushes;
   double avg_distance_from_bucket;
   uint64_t max_distance_from_bucket;
+  uint64_t avg_read_length;
+  uint64_t num_sequences;
 #endif /*CALC_STATS*/
 };
 

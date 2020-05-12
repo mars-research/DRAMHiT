@@ -41,6 +41,7 @@ SOFTWARE.
 #include <unistd.h>
 
 #include <cctype>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 
@@ -74,15 +75,17 @@ class FunctorRead
   int operator()(int fd, void *buf, size_t count);
 };
 
+// TODO clean up kseq
 class kseq
 {
  public:
   kseq();
   ~kseq();
+  std::string seq;
   std::string name;
   std::string comment;
-  std::string seq;
   std::string qual;
+  uint64_t qual_length;
   int last_char;
 };
 
@@ -90,7 +93,7 @@ template <class FileIdentifier, class ReadFunction>
 class kstream
 {
  public:
-  kstream(FileIdentifier , ReadFunction );
+  kstream(FileIdentifier, ReadFunction, uint32_t, off_t, off_t);
   ~kstream();
   int read(kseq &seq);
 
@@ -103,8 +106,15 @@ class kstream
   int is_eof;
   int begin;
   int end;
+
   FileIdentifier fileid;
   ReadFunction readfunc;
+
+  uint32_t idx;       // thread id corresponding to this kstream
+  off64_t off_start;  // start byte into file
+  off64_t off_end;    // end byte into file
+  int is_first_read;  // is this the first time read is being called?
+  int done;
 };
 
 #include "../ac_kseq.cpp"

@@ -1,6 +1,8 @@
 #ifndef _MISC_LIB_H
 #define _MISC_LIB_H
 
+#include "data_types.h"
+
 extern "C" {
 #include "fcntl.h"
 #include "stdio.h"

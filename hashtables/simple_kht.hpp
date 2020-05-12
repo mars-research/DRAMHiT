@@ -155,15 +155,7 @@ class SimpleKmerHashTable : public KmerHashTable
   }
 
  public:
-#ifdef CALC_STATS
-  uint64_t num_reprobes = 0;
-  uint64_t num_memcmps = 0;
-  uint64_t num_memcpys = 0;
-  uint64_t num_hashcmps = 0;
-  uint64_t num_queue_flushes = 0;
-  uint64_t sum_distance_from_bucket = 0;
-  uint64_t max_distance_from_bucket = 0;
-#endif
+
   Kmer_r *hashtable;
 
   SimpleKmerHashTable(uint64_t c)

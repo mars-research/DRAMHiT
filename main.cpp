@@ -9,8 +9,8 @@
 #include <ctime>
 #include <fstream>
 
-#include "kmer_data.cpp"
 #include "./include/misc_lib.h"
+#include "kmer_data.cpp"
 // #include "./include/timestamp.h"
 #include "./include/data_types.h"
 #include "./include/libfipc.h"
@@ -20,10 +20,10 @@
 #include "./include/ac_kseq.h"
 // #include "kseq.h"
 
-#include "./include/calcstats.h"
+#include "./hashtables/cas_kht.hpp"
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
-#include "./hashtables/cas_kht.hpp"
+#include "./include/print_stats.h"
 
 /* Numa config */
 Numa n;
@@ -95,7 +95,7 @@ void *shard_thread(void *arg)
     printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
   }
 
-  kstream<int, FunctorRead> ks(fp, r);
+  kstream<int, FunctorRead> ks(fp, r, sh->shard_idx, sh->f_start, sh->f_end);
 
   /* estimate of ht_size TODO change */
   size_t ht_size = config.in_file_sz / config.num_threads;
@@ -120,21 +120,12 @@ void *shard_thread(void *arg)
 
   /* Begin insert loop */
   t_start = RDTSC_START();
-  /* Each time kseq_read is called, it tries to read the next record starting
-   with > if kseq_read is called at a position in the middle of a sequence, it
-   will skip to the next record */
-  uint64_t num_inserts = 0;
-  int e = 0;
-  while ((l = ks.read(seq)) >= 0) {
-    if (e ==0) {
-      printf("[INFO] Thread %u: first seq: %s\n", sh->shard_idx, seq.seq.data());
-    }
-    if (e ==1) {
-      printf("[INFO] Thread %u: second seq: %s\n", sh->shard_idx, seq.seq.data());
-    }
-    // printf("[INFO] Thread %u, %d bytes read\n", sh->shard_idx, l);
-    /*  TODO i type */
 
+  uint64_t avg_read_length = 0;
+  uint64_t num_sequences = 0;
+
+  uint64_t num_inserts = 0;
+  while ((l = ks.read(seq)) >= 0) {
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
       char *kmer = seq.seq.data() + i;
       int found_N = find_last_N_in_seq(kmer);
@@ -148,21 +139,14 @@ void *shard_thread(void *arg)
         printf("FAIL\n");
       }
 
-      // if (num_inserts % 1000000 == 0) {
-      //   double perc_fill =
-      //       (double)kmer_ht->get_fill() / kmer_ht->get_capacity() * 100;
-      //   printf("[INFO] Thread %u: fill: %.2f from %lu inserts\n",
-      //   sh->shard_idx,
-      //          perc_fill, num_inserts);
-      // }
-    }
-    e++;
-    // printf("[INFO] Thread %u: e: %d\n", sh->shard_idx, e);
-    /* checking if reached end of assigned segment */
-    curr_pos = lseek64(fp, 0, SEEK_CUR);
-    if (curr_pos >= sh->f_end) {
-      kmer_ht->flush_queue();
-      break;
+#ifdef CALC_STATS
+      num_sequences++;
+      if (!avg_read_length) {
+        avg_read_length = seq.seq.length();
+      } else {
+        avg_read_length = (avg_read_length + seq.seq.length()) / 2;
+      }
+#endif
     }
   }
   t_end = RDTSCP();
@@ -188,14 +172,16 @@ void *shard_thread(void *arg)
   }
 
 #ifdef CALC_STATS
-  td->num_reprobes = kmer_ht->num_reprobes;
-  td->num_memcmps = kmer_ht->num_memcmps;
-  td->num_memcpys = kmer_ht->num_memcpys;
-  td->num_queue_flushes = kmer_ht->num_queue_flushes;
-  td->num_hashcmps = kmer_ht->num_hashcmps;
-  td->avg_distance_from_bucket =
+  sh->stats->num_reprobes = kmer_ht->num_reprobes;
+  sh->stats->num_memcmps = kmer_ht->num_memcmps;
+  sh->stats->num_memcpys = kmer_ht->num_memcpys;
+  sh->stats->num_queue_flushes = kmer_ht->num_queue_flushes;
+  sh->stats->num_hashcmps = kmer_ht->num_hashcmps;
+  sh->stats->avg_distance_from_bucket =
       (double)(kmer_ht->sum_distance_from_bucket / ht_size);
-  td->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
+  sh->stats->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
+  sh->stats->avg_read_length = avg_read_length;
+  sh->stats->num_sequences = num_sequences;
 #endif
 
   fipc_test_FAD(ready_threads);
