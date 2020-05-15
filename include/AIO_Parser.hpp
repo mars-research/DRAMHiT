@@ -78,7 +78,8 @@ public:
                 skip_line();
             }
             else{
-                this->FIND_NEXT_HEADER = true;
+                find_next_headerline();
+                skip_line();
             }
             return parse_data();
         }
@@ -257,19 +258,19 @@ public:
             return 0;
         }
         if(this->_FileType == ft_fastq){
-            while (*this->cur != '@' && this->cur < this->buffer+this->BufferSize){
+            /*while (*this->cur != '@' && this->cur < this->buffer+this->BufferSize){
                 ++this->cur;
-            }
+            }*/
             
             
             //TODO: What if \n and @ are located on the boudary
-            /*while (this->cur < this->buffer+this->BufferSize){
+            while (this->cur < this->buffer+this->BufferSize){
                 if(*this->cur == '\n' && *(this->cur+1) == '@'){ //&& (this->cur > this->buffer) && *(this->cur-1)!='+'){
                     this->cur += 2;
                     return 0;
                 }
                 ++this->cur;
-            }*/
+            }
 
             /*TODO: What if \n and @ are located on the boudary
             if (*this->cur == '\n' && this->cur == this->buffer+this->BufferSize){
