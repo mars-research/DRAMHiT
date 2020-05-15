@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <zlib.h>
-
+#include<unistd.h>
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <cmath>
@@ -19,11 +19,55 @@
 // #include "test_config.h"
 #include "./include/ac_kseq.h"
 // #include "kseq.h"
+<<<<<<< HEAD
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "./include/print_stats.h"
+=======
+#include "calcstats.h"
+#include "robinhood_kht.hpp"
+#include "simple_kht.hpp"
+#include "FASTAParser.hpp"
+
+/*int asyncRead(int& fd, void* data, int size, long offset){
+  //return read(fd, data, size);
+  /*if(offset != 0)
+    munmap(data, fd);
+  (char*)data = (char*)mmap(NULL,size,PROT_READ,MAP_PRIVATE,fd,offset);
+  //memcpy(data, buffer, size);
+  //munmap(buffer, fd);
+  //return size;
+
+  struct iocb cb;
+  struct iocb* iocbs = &cb;
+  struct io_event events[1];
+  io_context_t ctx;
+  int res;
+  memset(&ctx, 0, sizeof(ctx));
+  memset(&cb, 0, sizeof(cb));
+  if(io_setup(1, &ctx) < 0) {
+    printf("io_setup error\n");
+    return -1;
+  }
+  io_prep_pread(&cb, fd, data, size, offset);
+  if(io_submit(ctx, 1, &iocbs) < 0){
+    printf("io_setup error\n");
+    return -1;
+  }
+  if(io_getevents(ctx, 1, 1, events, NULL) != 1){
+    printf("io_getevents error\n");
+    return -1;
+  }
+  if(io_destroy(ctx) < 0){
+    printf("io_destroy error\n");
+    return -1;
+  }
+  //cout << events[0].res << endl;
+  return events[0].res;
+}*/
+>>>>>>> be2ab69ea9cdf8f9f4d636b7eba1a877d614be63
 
 /* Numa config */
 Numa n;
@@ -41,8 +85,14 @@ const Configuration def = {
     .numa_split = false,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
+<<<<<<< HEAD
     .in_file = std::string("./testfiles/SRR072006.fastq"),
+=======
+    //.in_file = std::string("/local/devel/devel/master/testfiles/turkey.fna"),
+    .in_file = std::string("./testfiles/turkey_1000.fna"),
+>>>>>>> be2ab69ea9cdf8f9f4d636b7eba1a877d614be63
     .ht_type = 1,
+    .buffer_size = 4096,
     .in_file_sz = 0,
     .drop_caches = true};  // TODO enum
 
@@ -59,7 +109,10 @@ inline int __attribute__((optimize("O0")))
 insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
 {
   (*num_inserts)++;
+<<<<<<< HEAD
   return 1;
+=======
+>>>>>>> be2ab69ea9cdf8f9f4d636b7eba1a877d614be63
   return ktable->insert(data);
 }
 
@@ -80,8 +133,9 @@ void *shard_thread(void *arg)
          sh->f_start, sh->f_end);
 
   // open file
-  fp = open(config.in_file.c_str(), O_RDONLY);
+  //fp = open(config.in_file.c_str(), O_RDONLY);
   // jump to start of segment
+<<<<<<< HEAD
   /*   if (sh->shard_idx != 0) {
       if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
         printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
@@ -97,6 +151,12 @@ void *shard_thread(void *arg)
   }
 
   kstream<int, FunctorRead> ks(fp, r, sh->shard_idx, sh->f_start, sh->f_end);
+=======
+  /*if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
+    printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
+  }
+  kstream<int, FunctorRead> ks(fp, r);*/
+>>>>>>> be2ab69ea9cdf8f9f4d636b7eba1a877d614be63
 
   /* estimate of ht_size TODO change */
   size_t ht_size = 0.01*config.in_file_sz / config.num_threads;
@@ -120,12 +180,16 @@ void *shard_thread(void *arg)
   printf("[INFO] Thread %u: begin insert loop \n", sh->shard_idx);
 
   /* Begin insert loop */
+  //seq = kseq_init(fp, sh->f_start, sh->f_end);  // initialize seq data struct
+  FASTAParser parser(config.in_file, config.buffer_size, sh->f_start, sh->f_end);
+
   t_start = RDTSC_START();
 
   uint64_t avg_read_length = 0;
   uint64_t num_sequences = 0;
 
   uint64_t num_inserts = 0;
+<<<<<<< HEAD
   while ((l = ks.read(seq)) >= 0) {
     num_sequences ++;
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
@@ -157,6 +221,44 @@ void *shard_thread(void *arg)
   // kseq_destroy(seq);
   // gzclose(fp);
   printf("[INFO] Thread %u: last seq: %s\n", sh->shard_idx, seq.seq.data());
+=======
+  //while ((l = kseq_read(seq)) >= 0)
+  while((l = parser.get_next()) > 0)
+  {
+    // cout << l << endl;
+    // TODO i type
+    //cur[l] = 0;
+    //printf("%s\n", cur);
+    for (int i = 0; i + KMER_DATA_LENGTH <= l; i += 1){
+  
+      // printf("[INFO] Shard %u: i = %lu", sh->shard_idx, i);
+      //int res = insert_kmer_to_table(kmer_ht, (void *)(seq->seq.s + i)); //Pointer point to my buffer
+      int res = insert_kmer_to_table(kmer_ht, (void *)(parser.out_buffer+i), &num_inserts); //Pointer point to my buffer
+      // bool res = skht_ht.insert((base_4bit_t *)&td->shard->kmer_big_pool[i]);
+
+      if (!res)
+      {
+        printf("FAIL\n");
+      }
+      //num_inserts++;
+    }
+    kmer_ht->flush_queue();
+
+    // checking if reached end of assigned segment
+    //curr_pos = ftell(fp);
+    /*curr_pos = lseek(fp, 0, SEEK_CUR);
+    if (curr_pos >= sh->f_end)
+    {
+      break;
+    }*/
+  }
+  t_end = RDTSCP();
+  //cout << parser.total_read_size << endl;
+  cout << "END" << endl;
+  //kseq_destroy(seq);
+  //close(fp);
+
+>>>>>>> be2ab69ea9cdf8f9f4d636b7eba1a877d614be63
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
   printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);
@@ -341,9 +443,13 @@ int main(int argc, char *argv[])
         "infile",
         po::value<std::string>(&config.in_file)->default_value(def.in_file),
         "Input fasta file")(
+        "buffer_size",
+        po::value<uint64_t>(&config.buffer_size)->default_value(def.buffer_size),
+        "I/O buffer size")(
         "drop-caches",
         po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
         "drop page cache before run");
+        
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
