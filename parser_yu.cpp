@@ -15,6 +15,7 @@
 #include "./include/data_types.h"
 #include "./include/libfipc.h"
 #include "./include/numa.hpp"
+#include "./include/AIO_Parser.hpp"
 // #include "shard.h"
 // #include "test_config.h"
 #include "./include/ac_kseq.h"
@@ -79,24 +80,7 @@ void *shard_thread(void *arg)
   printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
          sh->f_start, sh->f_end);
 
-  // open file
-  fp = open(config.in_file.c_str(), O_RDONLY);
-  // jump to start of segment
-  /*   if (sh->shard_idx != 0) {
-      if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
-        printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
-      }
-    } else {
-      if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
-        printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
-      }
-    } */
-
-  if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
-    printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
-  }
-
-  kstream<int, FunctorRead> ks(fp, r, sh->shard_idx, sh->f_start, sh->f_end);
+  
 
   /* estimate of ht_size TODO change */
   size_t ht_size = 0.01*config.in_file_sz / config.num_threads;
@@ -119,6 +103,7 @@ void *shard_thread(void *arg)
   // fipc_test_mfence();
   printf("[INFO] Thread %u: begin insert loop \n", sh->shard_idx);
 
+  AIO_Parser aioparser(config.in_file, 4194304, sh->f_start, sh->f_end, sh->shard_idx);
   /* Begin insert loop */
   t_start = RDTSC_START();
 
@@ -126,17 +111,19 @@ void *shard_thread(void *arg)
   uint64_t num_sequences = 0;
 
   uint64_t num_inserts = 0;
-  while ((l = ks.read(seq)) >= 0) {
+
+  while ((l = aioparser.get_next()) > 0) {
     num_sequences ++;
+    //*(aioparser.out_buffer + l) = 0;
+    //printf("%s\n", aioparser.out_buffer);
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
-      const char *kmer = seq.seq.data() + i;
-      int found_N = find_last_N_in_seq(kmer);
+      int found_N = find_last_N_in_seq(aioparser.out_buffer + i);
       if (found_N >= 0) {
         i += found_N;
         continue;
       }
 
-      res = insert_kmer_to_table(kmer_ht, (void *)kmer, &num_inserts);
+      res = insert_kmer_to_table(kmer_ht, (void *)(aioparser.out_buffer + i), &num_inserts);
       if (!res) {
         printf("FAIL\n");
       }
@@ -144,9 +131,9 @@ void *shard_thread(void *arg)
 #ifdef CALC_STATS
       num_sequences++;
       if (!avg_read_length) {
-        avg_read_length = seq.seq.length();
+        avg_read_length = l;
       } else {
-        avg_read_length = (avg_read_length + seq.seq.length()) / 2;
+        avg_read_length = (avg_read_length + l) / 2;
       }
 #endif
     }

@@ -213,9 +213,6 @@ int kstream<FileIdentifier, ReadFunction>::getuntil(int delimiter,
     } else
       i = 0;
 
-    /* Append to seq.name/seq.comment  */
-    // str.append(this->buf + this->begin,
-    //            static_cast<unsigned long>(i - this->begin));
     this->begin = i + 1;
     if (i < this->end) {
       if (dret) *dret = this->buf[i];
