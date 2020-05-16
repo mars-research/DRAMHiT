@@ -39,6 +39,7 @@ SOFTWARE.
 #define BUFFER_SIZE 4096
 
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <cctype>
 #include <cstdint>
@@ -69,12 +70,6 @@ SOFTWARE.
 // };
 // #endif
 
-class FunctorRead
-{
- public:
-  int operator()(int fd, void *buf, size_t count);
-};
-
 // TODO clean up kseq
 class kseq
 {
@@ -82,24 +77,21 @@ class kseq
   kseq();
   ~kseq();
   std::string seq;
-  std::string name;
-  std::string comment;
-  std::string qual;
   uint64_t qual_length;
   int last_char;
 };
 
-template <class FileIdentifier, class ReadFunction>
 class kstream
 {
  public:
-  kstream(FileIdentifier, ReadFunction, uint32_t, off_t, off_t);
+  kstream(uint32_t, off_t, off_t);
   ~kstream();
-  int read(kseq &seq);
+  int readseq(kseq &seq);
+  int readfunc(int, void*, size_t);
 
  private:
   int getc();
-  int getuntil(int delimiter, std::string &str, int *dret);
+  int getuntil(int delimiter, int *dret);
 
   char *buf;
   const unsigned int bufferSize;
@@ -107,16 +99,12 @@ class kstream
   int begin;
   int end;
 
-  FileIdentifier fileid;
-  ReadFunction readfunc;
-
-  uint32_t idx;       // thread id corresponding to this kstream
+  int fileid;
+  uint32_t thread_id;       // thread id corresponding to this kstream
   off64_t off_start;  // start byte into file
   off64_t off_end;    // end byte into file
   int is_first_read;  // is this the first time read is being called?
   int done;
 };
-
-#include "../ac_kseq.cpp"
 
 #endif

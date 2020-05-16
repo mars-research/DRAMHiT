@@ -9,7 +9,7 @@ OPT_NO=-O0
 .PHONY: all noopt clean ugdb
 
 all:
-	$(CC)  main.cpp -o $(TARGET) $(CFLAGS) $(OPT_YES) $(LDFLAGS) city/city.cc
+	$(CC)  main.cpp ac_kseq.cpp  city/city.cc -o $(TARGET) $(CFLAGS) $(OPT_YES) $(LDFLAGS)
 
 stats:
 	$(CC)  main.cpp -o $(TARGET) $(CFLAGS) $(STATS_YES) $(OPT_YES) $(LDFLAGS) city/city.cc

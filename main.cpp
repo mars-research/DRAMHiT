@@ -66,11 +66,8 @@ void *shard_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
   uint64_t t_start, t_end;
-  int fp;
-  off64_t curr_pos;
   kseq seq;
   int l = 0;
-  FunctorRead r;
   int res;
   KmerHashTable *kmer_ht = NULL;
 
@@ -78,24 +75,7 @@ void *shard_thread(void *arg)
   printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
          sh->f_start, sh->f_end);
 
-  // open file
-  fp = open(config.in_file.c_str(), O_RDONLY);
-  // jump to start of segment
-  /*   if (sh->shard_idx != 0) {
-      if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
-        printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
-      }
-    } else {
-      if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
-        printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
-      }
-    } */
-
-  if (lseek64(fp, sh->f_start, SEEK_SET) == -1) {
-    printf("[ERROR] Shard %u: Unable to seek", sh->shard_idx);
-  }
-
-  kstream<int, FunctorRead> ks(fp, r, sh->shard_idx, sh->f_start, sh->f_end);
+  kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
   /* estimate of ht_size TODO change */
   size_t ht_size = config.in_file_sz / config.num_threads;
@@ -125,7 +105,7 @@ void *shard_thread(void *arg)
   uint64_t num_sequences = 0;
 
   uint64_t num_inserts = 0;
-  while ((l = ks.read(seq)) >= 0) {
+  while ((l = ks.readseq(seq)) >= 0) {
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
       char *kmer = seq.seq.data() + i;
       int found_N = find_last_N_in_seq(kmer);
@@ -150,10 +130,8 @@ void *shard_thread(void *arg)
     }
   }
   t_end = RDTSCP();
-  close(fp);
-  // kseq_destroy(seq);
-  // gzclose(fp);
-  printf("[INFO] Thread %u: last seq: %s\n", sh->shard_idx, seq.seq.data());
+
+  // printf("[INFO] Thread %u: last seq: %s\n", sh->shard_idx, seq.seq.data());
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
   printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);

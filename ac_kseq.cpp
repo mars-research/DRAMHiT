@@ -34,11 +34,9 @@ SOFTWARE.
 /*https://github.com/gtonkinhill/pairsnp-r/blob/master/src/kseq.h */
 
 #include "./include/ac_kseq.h"
+#include "./include/data_types.h"
 
-int FunctorRead::operator()(int fd, void *buf, size_t count)
-{
-  return read(fd, buf, count);
-}
+extern Configuration config;
 
 kseq::kseq()
 {
@@ -47,47 +45,35 @@ kseq::kseq()
 };
 kseq::~kseq() = default;
 
-/* class __kseq
+kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
+    : bufferSize(BUFFER_SIZE)
 {
-  public:
-    __kseq(): last_char(0){};
-    ~__kseq() = default;
-    char outbuf [BUFFER_SIZE];
-    int last_char;
-};
- */
-template <class FileIdentifier, class ReadFunction>
-kstream<FileIdentifier, ReadFunction>::kstream(FileIdentifier fi,
-                                               ReadFunction rf,
-                                               uint32_t shard_idx,
-                                               off_t f_start, off_t f_end)
-    : bufferSize(BUFFER_SIZE),
-      idx(shard_idx),
-      off_start(f_start),
-      off_end(f_end)
-{
-  is_eof = 0;
-  begin = 0;
-  end = 0;
-  is_first_read = 0;
-  readfunc = rf;
-  fileid = fi;
-  done = 0;
+  this->off_start = f_start;
+  this->off_end = f_end;
+  this->is_eof = 0;
+  this->begin = 0;
+  this->end = 0;
+  this->is_first_read = 0;
+  this->done = 0;
+  this->thread_id = shard_idx;
+  this->buf = (char *)malloc(this->bufferSize);
 
-  buf = (char *)malloc(bufferSize);
+  this->fileid = open(config.in_file.c_str(), O_RDONLY);
+  if (lseek64(this->fileid, this->off_start, SEEK_SET) == -1) {
+    printf("[ERROR] Shard %u: Unable to seek", this->thread_id);
+  }
 }
 
-template <class FileIdentifier, class ReadFunction>
-kstream<FileIdentifier, ReadFunction>::~kstream()
+kstream::~kstream()
 {
-  free(buf);
+  close(this->fileid);
+  free(this->buf);
 }
 
 /* Each time read is called, it tries to read the next record starting with '@'.
  * If read is called t a position in the middle of a sequence, it  will skip to
  * the next record */
-template <class FileIdentifier, class ReadFunction>
-int kstream<FileIdentifier, ReadFunction>::read(kseq &seq)
+int kstream::readseq(kseq &seq)
 {
   int c;
   if (this->done) return -1;
@@ -97,7 +83,7 @@ int kstream<FileIdentifier, ReadFunction>::read(kseq &seq)
     while (true) {
       c = this->getc();
       if (c == -1) break;
-      if (this->idx == 0) {  // this is thread idx 0
+      if (this->thread_id == 0) {  // this is thread idx 0
         if (c == '@') break;
       } else if (!this->is_first_read) {
         if (c == '@') break;
@@ -120,33 +106,28 @@ int kstream<FileIdentifier, ReadFunction>::read(kseq &seq)
    * sequence in buffer */
   seq.seq.clear();
   seq.qual_length = 0;
-  // seq.qual.clear();
-  // seq.comment.clear();
 
-  /* consume buffer into seq.name until we see space characters*/
-  if (this->getuntil(0, seq.name, &c) < 0) return -1;
-  /* consume buffer into seq.comment until we see a newline */
-  if (c != '\n') this->getuntil('\n', seq.comment, 0);
-  /* consume buffer into seq.seq (the actual sequence) until there are
-   * characters to read */
-  while ((c = this->getc()) != -1 /* && c != '>' */ && c != '+' && c != '@') {
+  /* consume buffer until we see space characters*/
+  if (this->getuntil(0, &c) < 0) return -1;
+
+  /* consume buffer until we see a newline */
+  if (c != '\n') this->getuntil('\n', 0);
+
+  /* consume buffer into seq.seq until there are characters to read */
+  while ((c = this->getc()) != -1  && c != '+' && c != '@') {
     if (isgraph(c)) {
       seq.seq += (char)c;
     }
   }
   if (c == '@') seq.last_char = c;
 
-  /*TODO: remove this? there will always be a + in FastQ */
+  /* TODO: remove this? there will always be a + in FastQ */
   if (c != '+') return (int)seq.seq.length();
 
   while ((c = this->getc()) != -1 && c != '\n')
     ;
 
   if (c == -1) return -2;
-  /* Read quality scores into seq.qual */
-  // while ((c = this->getc()) != -1 && seq.qual.length() < seq.seq.length()) {
-  //   if (c >= 33 && c <= 127) seq.qual += (char)c;
-  // }
 
   /* skip quality scores */
   while ((c = this->getc()) != -1 && seq.qual_length < seq.seq.length()) {
@@ -160,29 +141,29 @@ int kstream<FileIdentifier, ReadFunction>::read(kseq &seq)
   return (int)seq.seq.length();
 }
 
-template <class FileIdentifier, class ReadFunction>
-int kstream<FileIdentifier, ReadFunction>::getc()
+int kstream::readfunc(int fd, void* buf, size_t count){
+
+  int bytes_read = read(fd, buf, count);
+  if (lseek64(this->fileid, 0, SEEK_CUR) > this->off_end) this->done = 1;
+  if (bytes_read < this->bufferSize) this->is_eof = 1;
+  return bytes_read;
+}
+
+
+int kstream::getc()
 {
   if (this->is_eof && this->begin >= this->end) return -1;
   if (this->begin >= this->end) {
     this->begin = 0;
     this->end = this->readfunc(this->fileid, this->buf, bufferSize);
-    /* checking if reached end of assigned segment */
-    if (lseek64(this->fileid, 0, SEEK_CUR) > this->off_end) this->done = 1;
-    if (this->end < bufferSize) this->is_eof = 1;
     if (this->end == 0) return -1;
   }
   return (int)this->buf[this->begin++];
 }
 
-template <class FileIdentifier, class ReadFunction>
-int kstream<FileIdentifier, ReadFunction>::getuntil(int delimiter,
-                                                    std::string &str, int *dret)
+int kstream::getuntil(int delimiter, int *dret)
 {
   if (dret) *dret = 0;
-  if (!str.empty()) {
-    str.clear();
-  }
 
   if (this->begin >= this->end && this->is_eof) return -1;
   for (;;) {
@@ -191,9 +172,6 @@ int kstream<FileIdentifier, ReadFunction>::getuntil(int delimiter,
       if (!this->is_eof) {
         this->begin = 0;
         this->end = this->readfunc(this->fileid, this->buf, bufferSize);
-        /* checking if reached end of assigned segment */
-        if (lseek64(this->fileid, 0, SEEK_CUR) > this->off_end) this->done = 1;
-        if (this->end < bufferSize) this->is_eof = 1;
         if (this->end == 0) break;
       } else
         break;
@@ -213,14 +191,11 @@ int kstream<FileIdentifier, ReadFunction>::getuntil(int delimiter,
     } else
       i = 0;
 
-    /* Append to seq.name/seq.comment  */
-    // str.append(this->buf + this->begin,
-    //            static_cast<unsigned long>(i - this->begin));
     this->begin = i + 1;
     if (i < this->end) {
       if (dret) *dret = this->buf[i];
       break;
     }
   }
-  return (int)str.length();
+  return 0;
 }
