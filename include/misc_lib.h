@@ -35,11 +35,11 @@ uint64_t round_up(uint64_t n, uint64_t m)
 // TODO max value of k to support?s
 uint64_t calc_num_kmers(uint64_t l, uint8_t k) { return (l - k + 1); }
 
-int find_last_N_in_seq(const char* c)
+int find_last_N(const char* c)
 {
   if (!c) return -1;
   int i = KMER_DATA_LENGTH;
-  while (i-- > 0) {
+  while (--i >= 0) {
     if (c[i] == 'N' || c[i] == 'n') {
       return i;
     }

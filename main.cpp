@@ -59,7 +59,7 @@ inline int __attribute__((optimize("O0")))
 insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
 {
   (*num_inserts)++;
-  return ktable->insert(data);
+  // return ktable->insert(data);
 }
 
 void *shard_thread(void *arg)
@@ -78,7 +78,7 @@ void *shard_thread(void *arg)
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
   /* estimate of ht_size TODO change */
-  size_t ht_size = config.in_file_sz / config.num_threads;
+  size_t ht_size = 0;  // config.in_file_sz / config.num_threads;
 
   /* Create hash table */
   if (config.ht_type == 1) {
@@ -103,24 +103,42 @@ void *shard_thread(void *arg)
 
   uint64_t avg_read_length = 0;
   uint64_t num_sequences = 0;
-
   uint64_t num_inserts = 0;
+  int found_N = 0;
+  char *kmer;
   while ((l = ks.readseq(seq)) >= 0) {
+
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
-      char *kmer = seq.seq.data() + i;
-      int found_N = find_last_N_in_seq(kmer);
-      if (found_N >= 0) {
+      kmer = seq.seq.data() + i;
+
+      /*  search through whole string of N if first kmer OR if we found an N as
+       last character of previous kmer */
+      if (found_N != -1) {
+        found_N = find_last_N(kmer);
+        if (found_N >= 0) {
+          i += found_N;
+          continue;
+        }
+      }
+
+      /* if last charcter is a kmer skip this kmer*/
+      char last_char = kmer[KMER_DATA_LENGTH - 1];
+      if (last_char == 'N' || last_char == 'n') {
+        found_N = KMER_DATA_LENGTH - 1;
         i += found_N;
         continue;
       }
 
+      // printf("[INFO] Thread %u:, i: %02d, inserting: %.50s\n", sh->shard_idx, i,
+      //        kmer);
+
       res = insert_kmer_to_table(kmer_ht, (void *)kmer, &num_inserts);
+
       if (!res) {
         printf("FAIL\n");
       }
 
 #ifdef CALC_STATS
-      num_sequences++;
       if (!avg_read_length) {
         avg_read_length = seq.seq.length();
       } else {
@@ -128,13 +146,12 @@ void *shard_thread(void *arg)
       }
 #endif
     }
+    found_N = 0;
   }
   t_end = RDTSCP();
 
-  // printf("[INFO] Thread %u: last seq: %s\n", sh->shard_idx, seq.seq.data());
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
-  printf("[INFO] Thread %u: Inserts complete\n", sh->shard_idx);
   /* Finish insert loop */
 
   sh->stats->ht_fill = kmer_ht->get_fill();
