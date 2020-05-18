@@ -59,7 +59,7 @@ inline int __attribute__((optimize("O0")))
 insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
 {
   (*num_inserts)++;
-  // return ktable->insert(data);
+  return ktable->insert(data);
 }
 
 void *shard_thread(void *arg)
@@ -78,7 +78,7 @@ void *shard_thread(void *arg)
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
   /* estimate of ht_size TODO change */
-  size_t ht_size = 0;  // config.in_file_sz / config.num_threads;
+  size_t ht_size = config.in_file_sz / config.num_threads;
 
   /* Create hash table */
   if (config.ht_type == 1) {
