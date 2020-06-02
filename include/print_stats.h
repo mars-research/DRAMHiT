@@ -28,10 +28,14 @@ void print_stats(__shard *all_sh)
 
   printf("===============================================================\n");
   for (size_t k = 0; k < config.num_threads; k++) {
+    if (all_sh[k].stats->num_inserts == 0) {
+      printf("Thread %2d: No inserts \n", all_sh[k].shard_idx);
+      continue;
+    }
+
     printf(
         "Thread %2d: "
         "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
-        // "%lu cycles/find "
         "{ fill: %lu of %lu (%f %%) }"
 #ifdef CALC_STATS
         " [num_reprobes: %lu, "
@@ -50,14 +54,13 @@ void print_stats(__shard *all_sh)
         (double)all_sh[k].stats->insertion_cycles * one_cycle_ns / 1000000.0,
         all_sh[k].stats->num_inserts,
         all_sh[k].stats->insertion_cycles / all_sh[k].stats->num_inserts,
-        // all_sh[k].stats->find_cycles / all_sh[k].stats->num_inserts,
         all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
         (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity * 100
 #ifdef CALC_STATS
         ,
         all_sh[k].stats->num_reprobes, 
         all_sh[k].stats->num_memcmps,
-        all_sh[k].stats->num_memcpys, 
+        all_sh[k].stats->num_memcpys,
         all_sh[k].stats->num_queue_flushes,
         all_sh[k].stats->num_hashcmps,
         all_sh[k].stats->max_distance_from_bucket,
@@ -72,8 +75,8 @@ void print_stats(__shard *all_sh)
     all_total_num_inserts += all_sh[k].stats->num_inserts;
 
 #ifdef CALC_STATS
-        all_total_num_sequences += all_sh[k].stats->num_sequences;
-        all_total_avg_read_length += all_sh[k].stats->avg_read_length;
+    all_total_num_sequences += all_sh[k].stats->num_sequences;
+    all_total_avg_read_length += all_sh[k].stats->avg_read_length;
 #endif  // CALC_STATS
 
     // all_total_reprobes += all_sh[k].stats->num_reprobes;

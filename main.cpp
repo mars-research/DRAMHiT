@@ -9,10 +9,10 @@
 #include <ctime>
 #include <fstream>
 
+#include "./include/data_types.h"
 #include "./include/misc_lib.h"
 #include "kmer_data.cpp"
 // #include "./include/timestamp.h"
-#include "./include/data_types.h"
 #include "./include/libfipc.h"
 #include "./include/numa.hpp"
 // #include "shard.h"
@@ -59,7 +59,9 @@ inline int __attribute__((optimize("O0")))
 insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
 {
   (*num_inserts)++;
+#ifndef NO_INSERTS
   return ktable->insert(data);
+#endif
 }
 
 void *shard_thread(void *arg)
@@ -78,7 +80,10 @@ void *shard_thread(void *arg)
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
   /* estimate of ht_size TODO change */
+  size_t ht_size = 0;
+#ifndef NO_INSERTS
   size_t ht_size = config.in_file_sz / config.num_threads;
+#endif
 
   /* Create hash table */
   if (config.ht_type == 1) {
@@ -107,7 +112,6 @@ void *shard_thread(void *arg)
   int found_N = 0;
   char *kmer;
   while ((l = ks.readseq(seq)) >= 0) {
-
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
       kmer = seq.seq.data() + i;
 
@@ -129,8 +133,10 @@ void *shard_thread(void *arg)
         continue;
       }
 
+      // if (sh->shard_idx == 0){
       // printf("[INFO] Thread %u:, i: %02d, inserting: %.50s\n", sh->shard_idx, i,
       //        kmer);
+      // }
 
       res = insert_kmer_to_table(kmer_ht, (void *)kmer, &num_inserts);
 
@@ -218,6 +224,9 @@ int spawn_shard_threads()
         sh->shard_idx = tidx;
         sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
         sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+        /* TODO don't spawn threads if f_start >= in_file_sz
+        Not doing it now, as it has implications for num_threads,
+        which is used in calculating stats */
         e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
                            (void *)sh);
         if (e != 0) {
@@ -241,6 +250,8 @@ int spawn_shard_threads()
       sh->shard_idx = x;
       sh->f_start = round_up(seg_sz * x, __PAGE_SIZE);
       sh->f_end = round_up(seg_sz * (x + 1), __PAGE_SIZE);
+
+      /* TODO don't spawn threads if f_start >= in_file_sz */
       e = pthread_create(&threads[x], NULL, shard_thread, (void *)sh);
       if (e != 0) {
         printf("[ERROR] pthread_create: Could not create create_shard thread");

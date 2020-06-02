@@ -7,6 +7,9 @@
 #define KMER_DATA_LENGTH 50
 #define ALPHA 0.15
 
+#include <cstdint>
+#include <string>
+
 // kmer (key)
 struct Kmer_s {
   char data[KMER_DATA_LENGTH];

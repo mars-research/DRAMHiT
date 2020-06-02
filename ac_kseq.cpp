@@ -34,9 +34,37 @@ SOFTWARE.
 /*https://github.com/gtonkinhill/pairsnp-r/blob/master/src/kseq.h */
 
 #include "./include/ac_kseq.h"
+
 #include "./include/data_types.h"
+#include "./include/misc_lib.h"
 
 extern Configuration config;
+
+#ifdef __MMAP_FILE
+char *kstream::fmap = NULL;
+char *kstream::fmap_end = NULL;
+
+ssize_t kstream::__mmap_read()
+{
+  int bytes_read;
+  char *prev_buf = this->buf;
+
+  // return zero bytes read if offset greater than end of file
+  if (this->fmap + this->off_curr >= this->fmap_end) return 0;
+
+  this->buf = this->fmap + this->off_curr;
+  this->off_curr += this->bufferSize;
+  if (this->fmap + this->off_curr > this->fmap_end) {
+    // end of file
+    bytes_read = (int)((uint64_t)this->fmap_end - (uint64_t)buf);
+  } else {
+    bytes_read = this->bufferSize;
+  }
+  return bytes_read;
+}
+
+off64_t kstream::__mmap_lseek64() { return this->off_curr; }
+#endif  //__MMAP_FILE
 
 kseq::kseq()
 {
@@ -56,18 +84,41 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
   this->is_first_read = 0;
   this->done = 0;
   this->thread_id = shard_idx;
-  this->buf = (char *)malloc(this->bufferSize);
 
   this->fileid = open(config.in_file.c_str(), O_RDONLY);
+#ifdef __MMAP_FILE
+  // if this is the first thread, map the whole file
+  if (this->thread_id == 0) {
+    this->fmap = (char *)mmap(NULL, config.in_file_sz, PROT_READ, MAP_PRIVATE,
+                              this->fileid, 0);
+    if (!this->fmap) {
+      printf("[ERROR] Shard %u: Unable to mmap\n", this->thread_id);
+      exit(-1);
+    }
+
+    off64_t off_size = this->off_end - this->off_start;
+    touchpages(fmap, off_size);
+    mlock(fmap, off_size);
+  }
+  while (!this->fmap)
+    ;
+  this->off_curr = this->off_start;
+  this->fmap_end = this->fmap + config.in_file_sz;
+
+  printf("[INFO] Shard %u: mmap and locked\n", this->thread_id);
+#else
+  this->buf = (char *)malloc(this->bufferSize);
   if (lseek64(this->fileid, this->off_start, SEEK_SET) == -1) {
     printf("[ERROR] Shard %u: Unable to seek", this->thread_id);
+    exit(-1);
   }
+#endif
 }
 
 kstream::~kstream()
 {
   close(this->fileid);
-  free(this->buf);
+  // free(this->fmap);
 }
 
 /* Each time read is called, it tries to read the next record starting with '@'.
@@ -114,7 +165,7 @@ int kstream::readseq(kseq &seq)
   if (c != '\n') this->getuntil('\n', 0);
 
   /* consume buffer into seq.seq until there are characters to read */
-  while ((c = this->getc()) != -1  && c != '+' && c != '@') {
+  while ((c = this->getc()) != -1 && c != '+' && c != '@') {
     if (isgraph(c)) {
       seq.seq += (char)c;
     }
@@ -141,14 +192,26 @@ int kstream::readseq(kseq &seq)
   return (int)seq.seq.length();
 }
 
-int kstream::readfunc(int fd, void* buf, size_t count){
-
-  int bytes_read = read(fd, buf, count);
-  if (lseek64(this->fileid, 0, SEEK_CUR) > this->off_end) this->done = 1;
+int kstream::readfunc(int fd, void *buffer, size_t count)
+{
+#ifdef __MMAP_FILE
+  int bytes_read = __mmap_read();
+  if (__mmap_lseek64() > this->off_end) {
+    printf("[INFO] Shard %u: done\n", this->thread_id);
+    this->done = 1;
+  }
   if (bytes_read < this->bufferSize) this->is_eof = 1;
   return bytes_read;
+#else
+  int bytes_read = read(fd, buffer, count);
+  if (lseek64(this->fileid, 0, SEEK_CUR) > this->off_end) {
+    // printf("[INFO] Shard %u: done\n", this->thread_id);
+    this->done = 1;
+  }
+  if (bytes_read < this->bufferSize) this->is_eof = 1;
+  return bytes_read;
+#endif
 }
-
 
 int kstream::getc()
 {

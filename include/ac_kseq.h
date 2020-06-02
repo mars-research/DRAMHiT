@@ -92,6 +92,10 @@ class kstream
  private:
   int getc();
   int getuntil(int delimiter, int *dret);
+#ifdef __MMAP_FILE
+  ssize_t __mmap_read();
+  off64_t __mmap_lseek64();
+#endif 
 
   char *buf;
   const unsigned int bufferSize;
@@ -100,11 +104,18 @@ class kstream
   int end;
 
   int fileid;
-  uint32_t thread_id;       // thread id corresponding to this kstream
+  uint32_t thread_id; // thread id corresponding to this kstream
   off64_t off_start;  // start byte into file
   off64_t off_end;    // end byte into file
-  int is_first_read;  // is this the first time read is being called?
+  int is_first_read;  // is this the first time readseq is being called?
   int done;
+
+#ifdef __MMAP_FILE
+  static char* fmap;
+  static char* fmap_end;
+  off64_t off_curr;
+#endif 
+
 };
 
 #endif

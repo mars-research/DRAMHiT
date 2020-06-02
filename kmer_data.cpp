@@ -16,6 +16,7 @@ extern "C"
 }
 
 #include "./include/data_types.h"
+#include "./include/misc_lib.h"
 // #include "kmer_struct.h"
 // #include "shard.h"
 // #include "test_config.h"
@@ -116,10 +117,6 @@ void write_data(__shard *sh, const char *filename, const char *data,
   fclose(fp);
 }
 
-/*	Touching pages bring mmaped pages into memory. Possibly because we
-have lot of memory, pages are never swapped out. mlock itself doesn't
-seem to bring pages into memory (it should as per the man page)
-TODO look into this.	*/
 
 void __attribute__((optimize("O0"))) __touch(char *fmap, size_t sz)
 {
@@ -141,7 +138,7 @@ char *read_data(__shard *sh, const char *filename)
   printf("[INFO] Shard %u: %s, %lu bytes\n", sh->shard_idx, filename, f_sz);
   char *fmap = (char *)mmap(NULL, f_sz, PROT_READ, MAP_PRIVATE, fd, 0);
 
-  __touch(fmap, f_sz);
+  touchpages(fmap, f_sz);
 
   mlock(fmap, f_sz);
 
