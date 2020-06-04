@@ -37,17 +37,18 @@ SOFTWARE.
 
 #include "./include/data_types.h"
 #include "./include/misc_lib.h"
+#include "./include/libfipc.h"
 
 extern Configuration config;
 
 #ifdef __MMAP_FILE
 char *kstream::fmap = NULL;
 char *kstream::fmap_end = NULL;
+uint64_t kstream::mmaped_file = 0;
 
 ssize_t kstream::__mmap_read()
 {
   int bytes_read;
-  char *prev_buf = this->buf;
 
   // return zero bytes read if offset greater than end of file
   if (this->fmap + this->off_curr >= this->fmap_end) return 0;
@@ -88,31 +89,31 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
   this->fileid = open(config.in_file.c_str(), O_RDONLY);
 #ifdef __MMAP_FILE
   // if this is the first thread, map the whole file
-  if (this->thread_id == 0) {
+  if (!this->fmap) {
+    printf("[INFO] Shard %u: mmaping file ...\n", this->thread_id);
     this->fmap = (char *)mmap(NULL, config.in_file_sz, PROT_READ, MAP_PRIVATE,
                               this->fileid, 0);
     if (!this->fmap) {
       printf("[ERROR] Shard %u: Unable to mmap\n", this->thread_id);
       exit(-1);
     }
-
-    off64_t off_size = this->off_end - this->off_start;
-    touchpages(fmap, off_size);
-    mlock(fmap, off_size);
+    mlock(fmap, config.in_file_sz);
+    touchpages(fmap, config.in_file_sz);
+    mmaped_file=1;
+    printf("[INFO] Shard %u: mmaping file ... done \n", this->thread_id);
   }
-  while (!this->fmap)
-    ;
+  while (mmaped_file == 0) fipc_test_pause();
+
   this->off_curr = this->off_start;
   this->fmap_end = this->fmap + config.in_file_sz;
-
-  printf("[INFO] Shard %u: mmap and locked\n", this->thread_id);
 #else
-  this->buf = (char *)malloc(this->bufferSize);
+  this->buf = (char *)memalign(__CACHE_LINE_SIZE, this->bufferSize);
   if (lseek64(this->fileid, this->off_start, SEEK_SET) == -1) {
     printf("[ERROR] Shard %u: Unable to seek", this->thread_id);
     exit(-1);
   }
 #endif
+  printf("[INFO] Shard %u: kstream init done \n", this->thread_id);
 }
 
 kstream::~kstream()
@@ -197,7 +198,7 @@ int kstream::readfunc(int fd, void *buffer, size_t count)
 #ifdef __MMAP_FILE
   int bytes_read = __mmap_read();
   if (__mmap_lseek64() > this->off_end) {
-    printf("[INFO] Shard %u: done\n", this->thread_id);
+    printf("[INFO] Shard %u: reached done\n", this->thread_id);
     this->done = 1;
   }
   if (bytes_read < this->bufferSize) this->is_eof = 1;

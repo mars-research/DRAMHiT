@@ -62,6 +62,7 @@ insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
 #ifndef NO_INSERTS
   return ktable->insert(data);
 #endif
+  return 1;
 }
 
 void *shard_thread(void *arg)

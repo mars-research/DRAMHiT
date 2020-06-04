@@ -163,7 +163,7 @@ class SimpleKmerHashTable : public KmerHashTable
     // TODO static cast
     // TODO power of 2 hashtable size for ease of mod operations
     this->capacity = this->__upper_power_of_two(c);
-    printf("[INFO] Hashtable size: %lu\n", this->capacity);
+    // printf("[INFO] Hashtable size: %lu\n", this->capacity);
     this->hashtable =
         (Kmer_r *)aligned_alloc(__PAGE_SIZE, capacity * sizeof(Kmer_r));
     if (this->hashtable == NULL) {

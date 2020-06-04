@@ -45,6 +45,7 @@ SOFTWARE.
 #include <cstdint>
 #include <cstdlib>
 #include <string>
+#include <malloc.h>
 
 // #if HAVE_ZLIB
 // #include <zlib.h>
@@ -113,6 +114,7 @@ class kstream
 #ifdef __MMAP_FILE
   static char* fmap;
   static char* fmap_end;
+  static uint64_t mmaped_file;
   off64_t off_curr;
 #endif 
 
