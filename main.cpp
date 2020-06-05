@@ -65,6 +65,11 @@ insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
   return 1;
 }
 
+uint64_t synth_run(KmerHashTable *kmer_ht) {
+  printf("Synthetic run\n");
+  return 0;
+}
+
 void *shard_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
@@ -73,12 +78,12 @@ void *shard_thread(void *arg)
   int l = 0;
   int res;
   KmerHashTable *kmer_ht = NULL;
+  uint64_t num_inserts = 0;
 
   sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
   printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
          sh->f_start, sh->f_end);
 
-  kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
   /* estimate of ht_size TODO change */
   size_t ht_size = 0;
@@ -107,53 +112,60 @@ void *shard_thread(void *arg)
   /* Begin insert loop */
   t_start = RDTSC_START();
 
-  //uint64_t avg_read_length = 0;
-  //uint64_t num_sequences = 0;
-  uint64_t num_inserts = 0;
-  int found_N = 0;
-  char *kmer;
-  while ((l = ks.readseq(seq)) >= 0) {
-    for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
-      kmer = seq.seq.data() + i;
+  if (config.mode == SYNTH) {
+    num_inserts = synth_run(kmer_ht); 
+  } else {
+  
+    //uint64_t avg_read_length = 0;
+    //uint64_t num_sequences = 0;
+    int found_N = 0;
+    char *kmer;
 
-      /*  search through whole string of N if first kmer OR if we found an N as
-       last character of previous kmer */
-      if (found_N != -1) {
-        found_N = find_last_N(kmer);
-        if (found_N >= 0) {
+    kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
+
+    while ((l = ks.readseq(seq)) >= 0) {
+      for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
+        kmer = seq.seq.data() + i;
+
+        /*  search through whole string of N if first kmer OR if we found an N as
+         last character of previous kmer */
+        if (found_N != -1) {
+          found_N = find_last_N(kmer);
+          if (found_N >= 0) {
+            i += found_N;
+            continue;
+          }
+        }
+
+        /* if last charcter is a kmer skip this kmer*/
+        char last_char = kmer[KMER_DATA_LENGTH - 1];
+        if (last_char == 'N' || last_char == 'n') {
+          found_N = KMER_DATA_LENGTH - 1;
           i += found_N;
           continue;
         }
-      }
 
-      /* if last charcter is a kmer skip this kmer*/
-      char last_char = kmer[KMER_DATA_LENGTH - 1];
-      if (last_char == 'N' || last_char == 'n') {
-        found_N = KMER_DATA_LENGTH - 1;
-        i += found_N;
-        continue;
-      }
+        // if (sh->shard_idx == 0){
+        // printf("[INFO] Thread %u:, i: %02d, inserting: %.50s\n", sh->shard_idx, i,
+        //        kmer);
+        // }
 
-      // if (sh->shard_idx == 0){
-      // printf("[INFO] Thread %u:, i: %02d, inserting: %.50s\n", sh->shard_idx, i,
-      //        kmer);
-      // }
+        res = insert_kmer_to_table(kmer_ht, (void *)kmer, &num_inserts);
 
-      res = insert_kmer_to_table(kmer_ht, (void *)kmer, &num_inserts);
-
-      if (!res) {
-        printf("FAIL\n");
-      }
+        if (!res) {
+          printf("FAIL\n");
+        }
 
 #ifdef CALC_STATS
-      if (!avg_read_length) {
-        avg_read_length = seq.seq.length();
-      } else {
-        avg_read_length = (avg_read_length + seq.seq.length()) / 2;
-      }
+        if (!avg_read_length) {
+          avg_read_length = seq.seq.length();
+        } else {
+          avg_read_length = (avg_read_length + seq.seq.length()) / 2;
+        }
 #endif
+      }
+      found_N = 0;
     }
-    found_N = 0;
   }
   t_end = RDTSCP();
 
@@ -204,11 +216,15 @@ int spawn_shard_threads()
 
   memset(all_shards, 0, sizeof(__shard) * config.num_threads);
 
-  config.in_file_sz = get_file_size(config.in_file.c_str());
-  printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
-  size_t seg_sz = config.in_file_sz / config.num_threads;
-  if (seg_sz < 4096) {
-    seg_sz = 4096;
+  size_t seg_sz = 0; 
+
+  if (config.mode != SYNTH) {
+    config.in_file_sz = get_file_size(config.in_file.c_str());
+    printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
+    seg_sz = config.in_file_sz / config.num_threads;
+    if (seg_sz < 4096) {
+      seg_sz = 4096;
+    }
   }
 
   if (config.numa_split) {
@@ -361,7 +377,7 @@ int main(int argc, char *argv[])
     }
 
     if (!config.in_file.empty()) {
-      config.mode = DRY_RUN;
+      config.mode = SYNTH /* DRY_RUN */;
     }
 
     if (config.mode == DRY_RUN) {
