@@ -103,6 +103,11 @@ void *shard_thread(void *arg)
   KmerHashTable *kmer_ht = NULL;
   uint64_t num_inserts = 0;
 
+#ifdef CALC_STATS
+  uint64_t avg_read_length = 0;
+  uint64_t num_sequences = 0;
+#endif
+
   sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
   printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
          sh->f_start, sh->f_end);
@@ -139,10 +144,6 @@ void *shard_thread(void *arg)
     num_inserts = synth_run(kmer_ht); 
   } else {
   
-#ifdef CALC_STATS
-    uint64_t avg_read_length = 0;
-    uint64_t num_sequences = 0;
-#endif
 
     int found_N = 0;
     char *kmer;
@@ -325,6 +326,7 @@ int spawn_shard_threads()
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
 
+  printf("Print stats here\n"); 
   print_stats(all_shards);
 
   free(threads);

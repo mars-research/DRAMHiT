@@ -5,6 +5,8 @@ TARGET=kmercounter
 OPT_YES=-O3
 OPT_NO=-O0
 sources =  misc_lib.cpp ac_kseq.cpp city/city.cc main.cpp
+CFLAGS += -DCALC_STATS
+
 
 .PHONY: all noopt clean ugdb
 
