@@ -34,7 +34,7 @@ const Configuration def = {
     .kmer_create_data_base = 524288,
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
-    .num_threads = 10,
+    .num_threads = 1,
     .mode = DRY_RUN,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
@@ -65,9 +65,31 @@ insert_kmer_to_table(Table *ktable, void *data, uint64_t *num_inserts)
   return 1;
 }
 
-uint64_t synth_run(KmerHashTable *kmer_ht) {
+struct kmer {
+  char data[KMER_DATA_LENGTH];
+};
+
+#define BATCH_LENGTH  4096
+/* 1 << 24 -- 16M */
+#define NUM_INSERTS  (1<<24)
+
+struct kmer kmers[BATCH_LENGTH]; 
+
+uint64_t synth_run(KmerHashTable *ktable) {
+  auto count = 0;
+  auto k = 0; 
+
   printf("Synthetic run\n");
-  return 0;
+
+  for(auto i = 0; i < NUM_INSERTS; i++) {
+    *((uint64_t *)&kmers[k].data) = count; 
+    ktable->insert((void*)&kmers[k]);
+    k = (k + 1) & (BATCH_LENGTH - 1);
+    
+    count++;
+  }
+
+  return count;
 }
 
 void *shard_thread(void *arg)
@@ -86,7 +108,7 @@ void *shard_thread(void *arg)
 
 
   /* estimate of ht_size TODO change */
-  size_t ht_size = 0;
+  size_t ht_size = NUM_INSERTS*2;
 #ifndef NO_INSERTS
   size_t ht_size = config.in_file_sz / config.num_threads;
 #endif
