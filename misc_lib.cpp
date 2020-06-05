@@ -40,7 +40,12 @@ int find_last_N(const char* c)
 have lot of memory, pages are never swapped out. mlock itself doesn't
 seem to bring pages into memory (it should as per the man page)
 TODO look into this.	*/
-void __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz)
+uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz)
 {
-  for (uint64_t i = 0; i < sz; i += __PAGE_SIZE) char temp = fmap[i];
+  uint64_t sum = 0; 
+  for (uint64_t i = 0; i < sz; i += __PAGE_SIZE)
+    sum += fmap[i];
+  return sum; 
 }
+
+

@@ -204,7 +204,7 @@ int kstream::readfunc(int fd, void *buffer, size_t count)
   if (bytes_read < this->bufferSize) this->is_eof = 1;
   return bytes_read;
 #else
-  int bytes_read = read(fd, buffer, count);
+  unsigned int bytes_read = read(fd, buffer, count);
   if (lseek64(this->fileid, 0, SEEK_CUR) > this->off_end) {
     // printf("[INFO] Shard %u: done\n", this->thread_id);
     this->done = 1;

@@ -118,11 +118,6 @@ void write_data(__shard *sh, const char *filename, const char *data,
 }
 
 
-void __attribute__((optimize("O0"))) __touch(char *fmap, size_t sz)
-{
-  for (uint64_t i = 0; i < sz; i += __PAGE_SIZE) char temp = fmap[i];
-}
-
 char *read_data(__shard *sh, const char *filename)
 {
   int fd = open(filename, O_RDONLY);
@@ -212,22 +207,26 @@ void create_data(__shard *sh)
   char pool_filename[pool_filename_format.length()];
   sprintf(pool_filename, pool_filename_format.c_str(), sh->shard_idx);
 
-  if (config.read_write_kmers == 1)
+  if (config.mode == 1)
   {
     generate_random_data_small_pool(sh, KMER_SMALL_POOL_COUNT);
     populate_big_kmer_pool(sh, KMER_SMALL_POOL_COUNT, KMER_BIG_POOL_COUNT);
   }
-  else if (config.read_write_kmers == 2)
+  else if (config.mode == 2)
   {
     sh->kmer_big_pool = (Kmer_s *)read_data(sh, pool_filename);
   }
-  else if (config.read_write_kmers == 3)
+  else if (config.mode == 3)
   {
     generate_random_data_small_pool(sh, KMER_SMALL_POOL_COUNT);
     populate_big_kmer_pool(sh, KMER_SMALL_POOL_COUNT, KMER_BIG_POOL_COUNT);
     write_data(sh, pool_filename, (const char *)sh->kmer_big_pool->data,
                KMER_BIG_POOL_COUNT);
+  } else if (config.mode == 5)
+  {
+
   }
+
 
   /* We are done with small pool. From now on, only big pool matters */
   free(sh->kmer_small_pool);

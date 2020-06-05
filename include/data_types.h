@@ -15,13 +15,21 @@ struct Kmer_s {
   char data[KMER_DATA_LENGTH];
 };
 
+typedef enum {
+  DRY_RUN = 1, 
+  READ_FROM_DISK = 2, 
+  WRITE_TO_DISK = 3, 
+  FASTA = 4,
+  SYNTH = 5
+} run_mode_t;
+
 /* Test config */
 struct Configuration {
   uint64_t kmer_create_data_base;
   uint32_t kmer_create_data_mult;
   uint64_t kmer_create_data_uniq;
   uint32_t num_threads;
-  uint32_t read_write_kmers;
+  run_mode_t mode;
   std::string kmer_files_dir;
   bool alphanum_kmers;
   bool numa_split;

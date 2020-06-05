@@ -35,7 +35,7 @@ const Configuration def = {
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
     .num_threads = 10,
-    .read_write_kmers = 1,  // TODO enum
+    .mode = DRY_RUN,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
@@ -107,8 +107,8 @@ void *shard_thread(void *arg)
   /* Begin insert loop */
   t_start = RDTSC_START();
 
-  uint64_t avg_read_length = 0;
-  uint64_t num_sequences = 0;
+  //uint64_t avg_read_length = 0;
+  //uint64_t num_sequences = 0;
   uint64_t num_inserts = 0;
   int found_N = 0;
   char *kmer;
@@ -299,8 +299,8 @@ int main(int argc, char *argv[])
 
     desc.add_options()("help", "produce help message")(
         "mode",
-        po::value<uint32_t>(&config.read_write_kmers)
-            ->default_value(def.read_write_kmers),
+        po::value<uint32_t>((uint32_t *)&config.mode)
+            ->default_value(def.mode),
         "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk \n4: "
         "Read Fasta from disk (--in_file)")(
         "base",
@@ -361,22 +361,22 @@ int main(int argc, char *argv[])
     }
 
     if (!config.in_file.empty()) {
-      config.read_write_kmers = 4;
+      config.mode = DRY_RUN;
     }
 
-    if (config.read_write_kmers == 1) {
+    if (config.mode == DRY_RUN) {
       printf("[INFO] Mode : Dry run ...\n");
       printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
              config.kmer_create_data_base, config.kmer_create_data_mult,
              config.kmer_create_data_uniq);
-    } else if (config.read_write_kmers == 2) {
+    } else if (config.mode == READ_FROM_DISK) {
       printf("[INFO] Mode : Reading kmers from disk ...\n");
-    } else if (config.read_write_kmers == 3) {
+    } else if (config.mode == WRITE_TO_DISK) {
       printf("[INFO] Mode : Writing kmers to disk ...\n");
       printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
              config.kmer_create_data_base, config.kmer_create_data_mult,
              config.kmer_create_data_uniq);
-    } else if (config.read_write_kmers == 4) {
+    } else if (config.mode == FASTA) {
       printf("[INFO] Mode : Reading fasta from disk ...\n");
       if (config.in_file.empty()) {
         printf("[ERROR] Please provide input fasta file.\n");
