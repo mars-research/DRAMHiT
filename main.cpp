@@ -69,7 +69,7 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-#define BATCH_LENGTH  4096
+#define BATCH_LENGTH  64
 /* 1 << 24 -- 16M */
 #define NUM_INSERTS  (1<<24)
 
@@ -82,11 +82,12 @@ uint64_t synth_run(KmerHashTable *ktable) {
   printf("Synthetic run\n");
 
   for(auto i = 0; i < NUM_INSERTS; i++) {
+
     *((uint64_t *)&kmers[k].data) = count; 
-    ktable->insert((void*)&kmers[k]);
-    k = (k + 1) & (BATCH_LENGTH - 1);
-    
+    ktable->insert((void*)&kmers[k]);    
+    k = (k + 1) & (BATCH_LENGTH - 1);    
     count++;
+
   }
 
   return count;
@@ -138,8 +139,11 @@ void *shard_thread(void *arg)
     num_inserts = synth_run(kmer_ht); 
   } else {
   
-    //uint64_t avg_read_length = 0;
-    //uint64_t num_sequences = 0;
+#ifdef CALC_STATS
+    uint64_t avg_read_length = 0;
+    uint64_t num_sequences = 0;
+#endif
+
     int found_N = 0;
     char *kmer;
 
