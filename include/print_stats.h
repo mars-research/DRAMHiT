@@ -41,15 +41,17 @@ void print_stats(__shard *all_sh)
         "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
         "{ fill: %lu of %lu (%f %%) }"
 #ifdef CALC_STATS
-        " [num_reprobes: %lu, "
-        "num_memcmps: %lu, "
-        "num_memcpys: %lu, "
-        "num_queue_flushes: %lu, "
-        "num_hashcmps: %lu, "
-        "max_distance_from_bucket: %lu, "
-        "avg_distance_from_bucket: %f,"
-        "avg_read_length: %lu,"
-        "num_sequences :%lu]"
+        "\n["
+        "\nnum_reprobes: %lu, "
+        "\nnum_memcmps: %lu, "
+        "\nnum_memcpys: %lu, "
+        "\nnum_queue_flushes: %lu, "
+        "\nnum_hashcmps: %lu, "
+        "\nmax_distance_from_bucket: %lu, "
+        "\navg_distance_from_bucket: %f,"
+        "\navg_read_length: %lu,"
+        "\nnum_sequences :%lu"
+        "\n]"
 #endif  // CALC_STATS
         "\n",
         all_sh[k].shard_idx, 
