@@ -107,7 +107,8 @@ int rand(uint64_t *seed)
 uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
   auto count = 0;
   auto k = 0; 
-
+  
+  seed2 = seed;
 
   for(auto i = 0; i < PREFETCH_STRIDE; i++) {
 
@@ -119,10 +120,11 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
   for(auto i = 0; i < NUM_INSERTS; i++) {
 
     k = rand(&seed);
+    //printf("%lu\n", k);
     ktable->touch(k);   
 
-    k = rand(&seed2);
-    ktable->prefetch(k);
+    //k = rand(&seed2);
+    //ktable->prefetch(k);
     count++;
 
   }
