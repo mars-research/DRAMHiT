@@ -22,7 +22,8 @@ typedef enum {
   READ_FROM_DISK = 2, 
   WRITE_TO_DISK = 3, 
   FASTA = 4,
-  SYNTH = 5
+  SYNTH = 5,
+  PREFETCH = 6
 } run_mode_t;
 
 /* Test config */

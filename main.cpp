@@ -93,6 +93,32 @@ uint64_t synth_run(KmerHashTable *ktable) {
   return count;
 }
 
+uint64_t seed = 123456789;
+
+int rand()
+{
+  uint64_t m = 1 << 31;
+  seed = (1103515245 * seed + 12345) % m;
+	return seed;
+}
+
+uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
+  auto count = 0;
+  auto k = 0; 
+
+  printf("Prefetch test run\n");
+
+  for(auto i = 0; i < NUM_INSERTS; i++) {
+
+    k = rand();
+    ktable->touch(k);    
+    count++;
+
+  }
+
+  return count;
+}
+
 void *shard_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
@@ -141,7 +167,13 @@ void *shard_thread(void *arg)
   t_start = RDTSC_START();
 
   if (config.mode == SYNTH) {
+
     num_inserts = synth_run(kmer_ht); 
+
+  } else if (config.mode == PREFETCH) {
+
+    num_inserts = prefetch_test_run((SimpleKmerHashTable*)kmer_ht);
+
   } else {
   
 
@@ -247,7 +279,7 @@ int spawn_shard_threads()
 
   size_t seg_sz = 0; 
 
-  if (config.mode != SYNTH) {
+  if ((config.mode != SYNTH) && (config.mode != PREFETCH)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -407,7 +439,7 @@ int main(int argc, char *argv[])
     }
 
     if (!config.in_file.empty()) {
-      config.mode = SYNTH /* DRY_RUN */;
+      config.mode = PREFETCH /* SYNTH */ /* DRY_RUN */;
     }
 
     if (config.mode == DRY_RUN) {

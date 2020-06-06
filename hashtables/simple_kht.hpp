@@ -63,6 +63,12 @@ static inline void prefetch_object(const void *addr, uint64_t size) {
 
 class SimpleKmerHashTable : public KmerHashTable
 {
+ 
+  public:
+  void touch(uint64_t i) {
+    hashtable[i & (this->capacity - 1)].occupied = 1;
+  };
+
  private:
   uint64_t capacity;
   Kmer_r empty_kmer_r;  /* for comparison for empty slot */
@@ -106,7 +112,7 @@ class SimpleKmerHashTable : public KmerHashTable
     }
   }
 
-  /* Insert using prefetch: using a dynamic prefetch queue.
+    /* Insert using prefetch: using a dynamic prefetch queue.
           If bucket is occupied, add to queue again to reprobe.
   */
   void __insert(Kmer_queue_r *q)
