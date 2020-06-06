@@ -176,9 +176,9 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
 
 		
     //k = rand(&seed2);
-		//k = xorwow(&xw_state2);
+		k = xorwow(&xw_state2);
     //printf("p: %lu\n", k);
-    //ktable->prefetch(k);
+    ktable->prefetch(k);
     count++;
 
   }
