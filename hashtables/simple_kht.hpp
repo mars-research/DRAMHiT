@@ -56,7 +56,7 @@ static inline void prefetch_object(const void *addr, uint64_t size) {
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
- // __builtin_prefetch((const void*)cache_line1_addr, 1, 0);
+  //__builtin_prefetch((const void*)cache_line1_addr, 1, 0);
  // if (cache_line1_addr != cache_line2_addr)
  //   __builtin_prefetch((const void*)cache_line2_addr, 1, 0);
 }
@@ -65,6 +65,11 @@ class SimpleKmerHashTable : public KmerHashTable
 {
  
   public:
+  void prefetch(uint64_t i) {
+    prefetch_object(&hashtable[i & (this->capacity - 1)].occupied, 
+                    sizeof(&hashtable[i & (this->capacity - 1)].occupied));
+  };
+
   void touch(uint64_t i) {
     hashtable[i & (this->capacity - 1)].occupied = 1;
   };
