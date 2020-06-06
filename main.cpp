@@ -71,7 +71,7 @@ struct kmer {
 
 #define BATCH_LENGTH  PREFETCH_QUEUE_SIZE*4
 /* 1 << 24 -- 16M */
-#define NUM_INSERTS  (1<<24)
+#define NUM_INSERTS  (1<<25)
 
 struct kmer kmers[BATCH_LENGTH]; 
 
@@ -97,7 +97,7 @@ uint64_t seed = 123456789;
 uint64_t seed2 = 123456789;
 uint64_t PREFETCH_STRIDE = 128;
 
-int rand(uint64_t *seed)
+int myrand(uint64_t *seed)
 {
   uint64_t m = 1 << 31;
   *seed = (1103515245 * (*seed) + 12345) % m;
@@ -110,16 +110,18 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
   
   seed2 = seed;
 
+  /*
   for(auto i = 0; i < PREFETCH_STRIDE; i++) {
 
     k = rand(&seed2);
     ktable->prefetch(k);    
 
-  }
+  }*/
 
   for(auto i = 0; i < NUM_INSERTS; i++) {
 
-    k = rand(&seed);
+    //k = rand(&seed);
+    k = rand();
     //printf("%lu\n", k);
     ktable->touch(k);   
 
@@ -153,7 +155,7 @@ void *shard_thread(void *arg)
 
 
   /* estimate of ht_size TODO change */
-  size_t ht_size = NUM_INSERTS*8;
+  size_t ht_size = NUM_INSERTS*4;
 #ifndef NO_INSERTS
   size_t ht_size = config.in_file_sz / config.num_threads;
 #endif
