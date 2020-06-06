@@ -69,9 +69,9 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-#define BATCH_LENGTH  64
+#define BATCH_LENGTH  PREFETCH_QUEUE_SIZE*4
 /* 1 << 24 -- 16M */
-#define NUM_INSERTS  (1<<24)
+#define NUM_INSERTS  (1<<26)
 
 struct kmer kmers[BATCH_LENGTH]; 
 
@@ -198,6 +198,8 @@ void *shard_thread(void *arg)
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
+  printf("Quick stats: cycles per insertion:%lu\n", (t_end - t_start)/num_inserts);
+
   /* Finish insert loop */
 
   sh->stats->ht_fill = kmer_ht->get_fill();

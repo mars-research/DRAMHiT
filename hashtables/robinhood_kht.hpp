@@ -6,7 +6,6 @@
 #include "../include/data_types.h"
 // #include "kmer_struct.h"
 
-#define PREFETCH_QUEUE_SIZE 20
 
 /*
 Kmer cache_record in the hash hashtable

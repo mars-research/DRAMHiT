@@ -1,5 +1,7 @@
 CC=g++
-CFLAGS=-g -std=c++17 -Wall -DNO_INSERTS
+CFLAGS=-g -std=c++17 -Wall -DNO_INSERTS -mprefetchwt1 
+# This crashes citihash
+#-march=sandybridge
 LDFLAGS= -lboost_program_options -lz -lnuma -lpthread
 TARGET=kmercounter
 OPT_YES=-O3

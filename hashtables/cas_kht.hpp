@@ -8,8 +8,6 @@
 // #include "kmer_struct.h"
 #include "../include/libfipc.h"
 
-#define PREFETCH_QUEUE_SIZE 20
-
 static uint64_t working_threads = 0;
 
 typedef struct

@@ -6,8 +6,6 @@
 #include "../include/data_types.h"
 // #include "kmer_struct.h"
 
-#define PREFETCH_QUEUE_SIZE 20
-
 // 2^21
 typedef struct {
   char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
@@ -40,6 +38,29 @@ std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
               << k.kmer_count;
 }
 
+#define CACHE_BLOCK_BITS 6
+#define CACHE_BLOCK_SIZE (1U << CACHE_BLOCK_BITS)  /* 64 */
+#define CACHE_BLOCK_MASK (CACHE_BLOCK_SIZE - 1)    /* 63, 0x3F */
+
+/* Which byte offset in its cache block does this address reference? */
+#define CACHE_BLOCK_OFFSET(ADDR) ((ADDR) & CACHE_BLOCK_MASK)
+
+/* Address of 64 byte block brought into the cache when ADDR accessed */
+#define CACHE_BLOCK_ALIGNED_ADDR(ADDR) ((ADDR) & ~CACHE_BLOCK_MASK)
+
+static inline void prefetch_object(const void *addr, uint64_t size) {
+  uint64_t cache_line1_addr = CACHE_BLOCK_ALIGNED_ADDR((uint64_t)addr);
+  uint64_t cache_line2_addr = CACHE_BLOCK_ALIGNED_ADDR((uint64_t)addr + size - 1);
+
+  // 1 -- prefetch for write (vs 0 -- read)
+  // 0 -- data has no temporal locality (3 -- high temporal locality)
+  //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
+
+ // __builtin_prefetch((const void*)cache_line1_addr, 1, 0);
+ // if (cache_line1_addr != cache_line2_addr)
+ //   __builtin_prefetch((const void*)cache_line2_addr, 1, 0);
+}
+
 class SimpleKmerHashTable : public KmerHashTable
 {
  private:
@@ -66,7 +87,8 @@ class SimpleKmerHashTable : public KmerHashTable
     // TODO how much to prefetch?
     // TODO if we do prefetch: what to return? API breaks
 
-    __builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
+    prefetch_object(&hashtable[__kmer_idx], sizeof(hashtable[__kmer_idx]));
+
     // printf("inserting into queue at %u\n", this->queue_idx);
     queue[this->queue_idx].kmer_data_ptr = kmer_data;
     queue[this->queue_idx].kmer_idx = __kmer_idx;
@@ -126,7 +148,8 @@ class SimpleKmerHashTable : public KmerHashTable
       */
       pidx++;
       pidx = pidx & (this->capacity - 1);  // modulo
-      __builtin_prefetch(&hashtable[pidx], 1, 3);
+      //__builtin_prefetch(&hashtable[pidx], 1, 3);
+      prefetch_object(&hashtable[pidx], sizeof(hashtable[pidx]));
       q->kmer_idx = pidx;
 
       queue[this->queue_idx] = *q;
