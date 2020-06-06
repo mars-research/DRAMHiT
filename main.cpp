@@ -71,7 +71,9 @@ struct kmer {
 
 #define BATCH_LENGTH  PREFETCH_QUEUE_SIZE*4
 /* 1 << 24 -- 16M */
-#define NUM_INSERTS  (1<<25)
+#define NUM_INSERTS  (1<<26)
+
+#define HT_SIZE  NUM_INSERTS*16
 
 struct kmer kmers[BATCH_LENGTH]; 
 
@@ -104,6 +106,43 @@ int myrand(uint64_t *seed)
 	return *seed;
 }
 
+
+struct xorwow_state {
+  uint32_t a, b, c, d;
+  uint32_t counter;
+};
+
+struct xorwow_state xw_state;
+
+void xorwow_init(struct xorwow_state *s) {
+
+	s->a = rand();
+	s->b = rand();
+	s->c = rand();
+	s->d = rand();
+  s->counter = rand();
+}
+
+/* The state array must be initialized to not be all zero in the first four words */
+uint32_t xorwow(struct xorwow_state *state)
+{
+	/* Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs" */
+	uint32_t t = state->d;
+
+	uint32_t const s = state->a;
+	state->d = state->c;
+	state->c = state->b;
+	state->b = s;
+
+	t ^= t >> 2;
+	t ^= t << 1;
+	t ^= s ^ (s << 4);
+	state->a = t;
+
+	state->counter += 362437;
+	return t + state->counter;
+}
+
 uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
   auto count = 0;
   auto k = 0; 
@@ -120,10 +159,13 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
 
   for(auto i = 0; i < NUM_INSERTS; i++) {
 
-    //k = rand(&seed);
-    k = rand();
+    //k = myrand(&seed);
+    //k = rand();
+
+		k = xorwow(&xw_state);
+
     //printf("%lu\n", k);
-    //ktable->touch(k);   
+    ktable->touch(k);   
 
     //k = rand(&seed2);
     //ktable->prefetch(k);
@@ -155,7 +197,7 @@ void *shard_thread(void *arg)
 
 
   /* estimate of ht_size TODO change */
-  size_t ht_size = NUM_INSERTS*4;
+  size_t ht_size = HT_SIZE;
 #ifndef NO_INSERTS
   size_t ht_size = config.in_file_sz / config.num_threads;
 #endif
@@ -187,7 +229,10 @@ void *shard_thread(void *arg)
 
   } else if (config.mode == PREFETCH) {
 
-    printf("Prefetch test run\n");
+    printf("Prefetch test run: ht size:%lu, insertions:%lu\n", HT_SIZE, NUM_INSERTS);
+
+		xorwow_init(&xw_state);
+
     for(auto i = 0; i < 512; i++) {
       t_start = RDTSC_START();
       PREFETCH_STRIDE = i;
