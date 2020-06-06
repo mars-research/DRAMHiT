@@ -10,7 +10,7 @@
 typedef struct {
   char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
   uint16_t kmer_count;     // 2 bytes // TODO seems too long, max count is ~14
-  bool occupied;           // 1 bytes
+  volatile bool occupied;           // 1 bytes
   uint64_t kmer_cityhash;  // 8 bytes
   char padding[3];         // 3 bytes // TODO remove hardcode
 } __attribute__((packed)) Kmer_r;
@@ -56,7 +56,7 @@ static inline void prefetch_object(const void *addr, uint64_t size) {
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
-  __builtin_prefetch((const void*)cache_line1_addr, 1, 0);
+  //__builtin_prefetch((const void*)cache_line1_addr, 1, 3);
  // if (cache_line1_addr != cache_line2_addr)
  //   __builtin_prefetch((const void*)cache_line2_addr, 1, 0);
 }
@@ -66,8 +66,9 @@ class SimpleKmerHashTable : public KmerHashTable
  
   public:
   void prefetch(uint64_t i) {
-    prefetch_object(&hashtable[i & (this->capacity - 1)].occupied, 
-                    sizeof(&hashtable[i & (this->capacity - 1)].occupied));
+    prefetch_object(&hashtable[i & (this->capacity - 1)], 
+                    sizeof(hashtable[i & (this->capacity - 1)]));
+		//hashtable[i & (this->capacity - 1)].occupied = 5;
   };
 
   void touch(uint64_t i) {

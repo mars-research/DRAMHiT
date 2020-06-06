@@ -72,8 +72,10 @@ struct kmer {
 #define BATCH_LENGTH  PREFETCH_QUEUE_SIZE*4
 /* 1 << 24 -- 16M */
 #define NUM_INSERTS  (1<<26)
+//#define NUM_INSERTS  (1<<7)
 
 #define HT_SIZE  NUM_INSERTS*16
+#define MAX_STRIDE 256
 
 struct kmer kmers[BATCH_LENGTH]; 
 
@@ -97,7 +99,7 @@ uint64_t synth_run(KmerHashTable *ktable) {
 
 uint64_t seed = 123456789;
 uint64_t seed2 = 123456789;
-uint64_t PREFETCH_STRIDE = 128;
+uint64_t PREFETCH_STRIDE = 0;
 
 int myrand(uint64_t *seed)
 {
@@ -113,6 +115,7 @@ struct xorwow_state {
 };
 
 struct xorwow_state xw_state;
+struct xorwow_state xw_state2;
 
 void xorwow_init(struct xorwow_state *s) {
 
@@ -147,15 +150,19 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
   auto count = 0;
   auto k = 0; 
   
-  seed2 = seed;
+  //seed2 = seed;
 
-  /*
+  memcpy(&xw_state2, &xw_state, sizeof(xw_state));
+  
   for(auto i = 0; i < PREFETCH_STRIDE; i++) {
 
-    k = rand(&seed2);
+    //k = rand(&seed2);
+		k = xorwow(&xw_state2);
+		
+    //printf("p: %lu\n", k);
     ktable->prefetch(k);    
 
-  }*/
+  }
 
   for(auto i = 0; i < NUM_INSERTS; i++) {
 
@@ -164,10 +171,13 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
 
 		k = xorwow(&xw_state);
 
-    //printf("%lu\n", k);
+    //printf("t: %lu\n", k);
     ktable->touch(k);   
 
+		
     //k = rand(&seed2);
+		//k = xorwow(&xw_state2);
+    //printf("p: %lu\n", k);
     //ktable->prefetch(k);
     count++;
 
@@ -233,7 +243,7 @@ void *shard_thread(void *arg)
 
 		xorwow_init(&xw_state);
 
-    for(auto i = 0; i < 512; i++) {
+    for(auto i = 0; i < MAX_STRIDE; i++) {
       t_start = RDTSC_START();
       PREFETCH_STRIDE = i;
       num_inserts = prefetch_test_run((SimpleKmerHashTable*)kmer_ht);
