@@ -8,7 +8,11 @@ OPT_YES=-O3
 OPT_NO=-O0
 sources =  misc_lib.cpp ac_kseq.cpp city/city.cc main.cpp
 CFLAGS += -DCALC_STATS
-
+CFLAGS += -DTOUCH_DEPENDENCY
+#CFLAGS += -DSERIAL_SCAN
+CFLAGS += -DXORWOW_SCAN
+#CFLAGS += -DPREFETCH_TOUCH
+CFLAGS += -DPREFETCH_TOUCH_WRITE
 
 .PHONY: all noopt clean ugdb
 

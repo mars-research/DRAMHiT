@@ -56,7 +56,9 @@ static inline void prefetch_object(const void *addr, uint64_t size) {
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
-  //__builtin_prefetch((const void*)cache_line1_addr, 1, 3);
+#if defined(PREFETCH_TOUCH)
+  __builtin_prefetch((const void*)cache_line1_addr, 1, 3);
+#endif
  // if (cache_line1_addr != cache_line2_addr)
  //   __builtin_prefetch((const void*)cache_line2_addr, 1, 0);
 }
@@ -66,17 +68,23 @@ class SimpleKmerHashTable : public KmerHashTable
  
   public:
   void prefetch(uint64_t i) {
-    //prefetch_object(&hashtable[i & (this->capacity - 1)], 
-    //                sizeof(hashtable[i & (this->capacity - 1)]));
-		//hashtable[i & (this->capacity - 1)].occupied = 5;
+    prefetch_object(&hashtable[i & (this->capacity - 1)], 
+                    sizeof(hashtable[i & (this->capacity - 1)]));
+#if defined(PREFETCH_TOUCH_WRITE)
+		hashtable[i & (this->capacity - 1)].occupied = 5;
+#endif
   };
 
   void touch(uint64_t i) {
+#if defined(TOUCH_DEPENDENCY)
 		if (hashtable[i & (this->capacity - 1)].occupied == 0) {
-	    hashtable[i & (this->capacity - 1)].occupied = 1;
+	    hashtable[i & (this->capacity - 1)].occupied = 27;
 		} else {
-			hashtable[i & (this->capacity - 1)].occupied = 3;
+			hashtable[i & (this->capacity - 1)].occupied = 78;
 		};
+#else
+	  hashtable[i & (this->capacity - 1)].occupied = 78;
+#endif
   };
 
  private:

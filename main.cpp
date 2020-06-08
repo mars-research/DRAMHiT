@@ -169,11 +169,19 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
     //k = myrand(&seed);
     //k = rand();
 
+
+#ifdef XORWOW_SCAN 
+    /* With if-then dependency it's 99 cycles, without 30 (no prefetch) */
     k = xorwow(&xw_state);
 
     //printf("t: %lu\n", k);
-    ktable->touch(k);   
+    ktable->touch(k);  
+#endif
 
+#ifdef SERIAL_SCAN 
+    /* Fully prefethed serial scan is 14 cycles */
+    ktable->touch(i);
+#endif
 		
     //k = rand(&seed2);
     k = xorwow(&xw_state2);
@@ -241,7 +249,7 @@ void *shard_thread(void *arg)
 
     printf("Prefetch test run: ht size:%lu, insertions:%lu\n", HT_SIZE, NUM_INSERTS);
 
-		xorwow_init(&xw_state);
+    xorwow_init(&xw_state);
 
     for(auto i = 0; i < MAX_STRIDE; i++) {
       t_start = RDTSC_START();
