@@ -4,7 +4,7 @@
 #define __CACHE_LINE_SIZE 64
 #define __PAGE_SIZE 4096
 // #define KMER_DATA_LENGTH 100 * 2 / 8  // 20 mer for now
-#define KMER_DATA_LENGTH 50
+#define KMER_DATA_LENGTH 20
 #define ALPHA 0.15
 
 #include <cstdint>

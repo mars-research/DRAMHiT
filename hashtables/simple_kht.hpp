@@ -8,12 +8,13 @@
 
 // 2^21
 typedef struct {
-  char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
-  uint16_t kmer_count;     // 2 bytes // TODO seems too long, max count is ~14
-  volatile char padding[3];         // 3 bytes // TODO remove hardcode
-  volatile bool occupied;           // 1 bytes
-  uint64_t kmer_cityhash;  // 8 bytes
+  char kmer_data[KMER_DATA_LENGTH];   // 20 bytes
+  uint32_t kmer_count;                // 4 bytes // TODO seems too long, max count is ~14
+  volatile bool occupied;             // 1 bytes
+  uint32_t kmer_cityhash;             // 4 bytes (4B enties is enough)
+  volatile char padding[3];           // 3 bytes // TODO remove hardcode
 } __attribute__((packed)) Kmer_r;
+
 // TODO use char and bit manipulation instead of bit fields in Kmer_r:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
 // TODO how long should be the count variable?
