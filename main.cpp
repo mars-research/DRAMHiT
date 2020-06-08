@@ -157,7 +157,7 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
   for(auto i = 0; i < PREFETCH_STRIDE; i++) {
 
     //k = rand(&seed2);
-		k = xorwow(&xw_state2);
+    k = xorwow(&xw_state2);
 		
     //printf("p: %lu\n", k);
     ktable->prefetch(k);    
@@ -169,14 +169,14 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
     //k = myrand(&seed);
     //k = rand();
 
-		k = xorwow(&xw_state);
+    k = xorwow(&xw_state);
 
     //printf("t: %lu\n", k);
     ktable->touch(k);   
 
 		
     //k = rand(&seed2);
-		k = xorwow(&xw_state2);
+    k = xorwow(&xw_state2);
     //printf("p: %lu\n", k);
     ktable->prefetch(k);
     count++;
