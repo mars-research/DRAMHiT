@@ -25,6 +25,8 @@
 #include "./hashtables/simple_kht.hpp"
 #include "./include/print_stats.h"
 
+uint32_t PREFETCH_QUEUE_SIZE = 32;
+
 /* Numa config */
 Numa n;
 std::vector<numa_node> nodes = n.get_node_config();
@@ -69,7 +71,7 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-#define BATCH_LENGTH  PREFETCH_QUEUE_SIZE*4
+#define BATCH_LENGTH  256
 /* 1 << 24 -- 16M */
 #define NUM_INSERTS  (1<<26)
 //#define NUM_INSERTS  (1<<7)
@@ -260,7 +262,19 @@ void *shard_thread(void *arg)
 
   if (config.mode == SYNTH) {
 
-    num_inserts = synth_run(kmer_ht); 
+
+    printf("Synth test run: ht size:%lu, insertions:%lu\n", HT_SIZE, NUM_INSERTS);
+
+    for(auto i = 1; i < MAX_STRIDE; i++) {
+      t_start = RDTSC_START();
+      PREFETCH_QUEUE_SIZE = i;
+	    num_inserts = synth_run(kmer_ht); 
+      t_end = RDTSCP();
+      printf("Batch size: %lu, cycles per insertion:%lu\n", 
+          i, (t_end - t_start)/num_inserts);
+
+    }
+
 
   } else if (config.mode == PREFETCH) {
 
@@ -543,7 +557,11 @@ int main(int argc, char *argv[])
     }
 
     if (!config.in_file.empty()) {
+#if defined(PREFETCH_RUN) 
       config.mode = PREFETCH /* SYNTH */ /* DRY_RUN */;
+#else
+			config.mode = SYNTH; 
+#endif
     }
 
     if (config.mode == DRY_RUN) {

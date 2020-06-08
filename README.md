@@ -7,3 +7,6 @@ Enable 1GB pages
 https://www.kernel.org/doc/html/latest/admin-guide/mm/hugetlbpage.html
 
 echo 40 > /sys/devices/system/node/node1/hugepages/hugepages-1048576kB/nr_hugepages
+
+Disable hardware prefetcher (on core 0)
+sudo taskset 0x1 wrmsr 0x1a4 0x0
