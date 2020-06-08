@@ -10,9 +10,9 @@
 typedef struct {
   char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
   uint16_t kmer_count;     // 2 bytes // TODO seems too long, max count is ~14
+  volatile char padding[3];         // 3 bytes // TODO remove hardcode
   volatile bool occupied;           // 1 bytes
   uint64_t kmer_cityhash;  // 8 bytes
-  char padding[3];         // 3 bytes // TODO remove hardcode
 } __attribute__((packed)) Kmer_r;
 // TODO use char and bit manipulation instead of bit fields in Kmer_r:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
@@ -56,11 +56,43 @@ static inline void prefetch_object(const void *addr, uint64_t size) {
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
-#if defined(PREFETCH_TOUCH)
-  __builtin_prefetch((const void*)cache_line1_addr, 1, 3);
-#endif
- // if (cache_line1_addr != cache_line2_addr)
- //   __builtin_prefetch((const void*)cache_line2_addr, 1, 0);
+  __builtin_prefetch((const void*)cache_line1_addr, 1, 0);
+
+#if defined(PREFETCH_TWO_LINE)
+  if (cache_line1_addr != cache_line2_addr)
+    __builtin_prefetch((const void*)cache_line2_addr, 1, 3);
+#endif	
+
+}
+
+static inline void prefetch_with_write(Kmer_r *k) {
+	/* if I write occupied I get 
+	 * Prefetch stride: 0, cycles per insertion:122
+	 * Prefetch stride: 1, cycles per insertion:36
+	 * Prefetch stride: 2, cycles per insertion:46
+	 * Prefetch stride: 3, cycles per insertion:44
+	 * Prefetch stride: 4, cycles per insertion:45
+	 * Prefetch stride: 5, cycles per insertion:46
+	 * Prefetch stride: 6, cycles per insertion:46
+	 * Prefetch stride: 7, cycles per insertion:47
+	 */
+//  k->occupied = 1;
+  /* If I write padding I get 
+   * Prefetch stride: 0, cycles per insertion:123
+   * Prefetch stride: 1, cycles per insertion:104
+   * Prefetch stride: 2, cycles per insertion:84
+   * Prefetch stride: 3, cycles per insertion:73
+   * Prefetch stride: 4, cycles per insertion:66
+   * Prefetch stride: 5, cycles per insertion:61
+   * Prefetch stride: 6, cycles per insertion:57
+   * Prefetch stride: 7, cycles per insertion:55
+   * Prefetch stride: 8, cycles per insertion:54
+   * Prefetch stride: 9, cycles per insertion:53
+   * Prefetch stride: 10, cycles per insertion:53
+   * Prefetch stride: 11, cycles per insertion:53
+   * Prefetch stride: 12, cycles per insertion:52
+   */
+  k->padding[0] = 1; 
 }
 
 class SimpleKmerHashTable : public KmerHashTable
@@ -68,10 +100,13 @@ class SimpleKmerHashTable : public KmerHashTable
  
   public:
   void prefetch(uint64_t i) {
+#if defined(PREFETCH_TOUCH)
     prefetch_object(&hashtable[i & (this->capacity - 1)], 
                     sizeof(hashtable[i & (this->capacity - 1)]));
+#endif
+
 #if defined(PREFETCH_TOUCH_WRITE)
-		hashtable[i & (this->capacity - 1)].occupied = 5;
+		prefetch_with_write(&hashtable[i & (this->capacity - 1)]);
 #endif
   };
 

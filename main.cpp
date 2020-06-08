@@ -171,7 +171,24 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
 
 
 #ifdef XORWOW_SCAN 
-    /* With if-then dependency it's 99 cycles, without 30 (no prefetch) */
+    /* 
+		 * With if-then dependency it's 99 cycles, without 30 (no prefetch)
+		 * 
+		 * Prefetch itself doesn't help, 100 cycles with normal prefetch (with 
+		 * dependency). 
+		 *
+		 * However, if I prefetch with the "write" it seems to help
+		 *
+		 * Prefetch test run: ht size:1073741824, insertions:67108864
+		 * Prefetch stride: 0, cycles per insertion:121
+		 * Prefetch stride: 1, cycles per insertion:36
+		 * Prefetch stride: 2, cycles per insertion:46
+		 * Prefetch stride: 3, cycles per insertion:44
+		 * Prefetch stride: 4, cycles per insertion:45
+		 * Prefetch stride: 5, cycles per insertion:46
+		 * Prefetch stride: 6, cycles per insertion:47
+     */
+
     k = xorwow(&xw_state);
 
     //printf("t: %lu\n", k);
