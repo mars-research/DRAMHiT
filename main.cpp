@@ -211,7 +211,7 @@ void *shard_thread(void *arg)
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = __num_inserts;
-  printf("Quick stats: num_inserts:%lu\n",__num_inserts);
+  printf("Quick stats: num_inserts:%lu\n", __num_inserts);
   printf("Quick stats: cycles per insertion:%lu\n",
          (t_end - t_start) / __num_inserts);
 
@@ -430,6 +430,8 @@ int main(int argc, char *argv[])
 #if defined(PREFETCH_RUN)
       config.mode = PREFETCH /* SYNTH */ /* DRY_RUN */;
       printf("[INFO] Mode : PREFETCH\n");
+#else
+      printf("[INFO] Mode : SYNTH\n");
 #endif
     } else if (config.mode == DRY_RUN) {
       printf("[INFO] Mode : Dry run ...\n");
