@@ -58,7 +58,7 @@ std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
 #endif
 
 #define CACHE_BLOCK_BITS 6
-#define CACHE_BLOCK_SIZE (1U << CACHE_BLOCK_BITS)  /* 64 */
+#define CACHE_BLOCK_SIZE (1ULL << CACHE_BLOCK_BITS)  /* 64 */
 #define CACHE_BLOCK_MASK (CACHE_BLOCK_SIZE - 1)    /* 63, 0x3F */
 
 /* Which byte offset in its cache block does this address reference? */
@@ -77,6 +77,7 @@ static inline void prefetch_object(const void *addr, uint64_t size) {
 
   __builtin_prefetch((const void*)cache_line1_addr, 1, 0);
 
+  //__builtin_prefetch(addr, 1, 0);
 #if defined(PREFETCH_TWO_LINE)
   if (cache_line1_addr != cache_line2_addr)
     __builtin_prefetch((const void*)cache_line2_addr, 1, 3);

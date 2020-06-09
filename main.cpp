@@ -202,10 +202,12 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
     ktable->touch(i);
 #endif
 		
+#ifdef XORWOW_SCAN 
     //k = rand(&seed2);
     k = xorwow(&xw_state2);
     //printf("p: %lu\n", k);
     ktable->prefetch(k);
+#endif
     count++;
 
   }
