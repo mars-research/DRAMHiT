@@ -1,6 +1,7 @@
 #ifndef _SKHT_H
 #define _SKHT_H
 
+#include <sys/mman.h>
 #include "../include/base_kht.hpp"
 #include "../city/city.h"
 #include "../include/data_types.h"
@@ -38,6 +39,23 @@ std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
   return strm << std::string(k.kmer_data, KMER_DATA_LENGTH) << " : "
               << k.kmer_count;
 }
+
+/* AB: 1GB page table code is from https://github.com/torvalds/linux/blob/master/tools/testing/selftests/vm/hugepage-mmap.c */
+
+#define FILE_NAME "/mnt/huge/hugepagefile"
+#define LENGTH (1*1024UL*1024*1024)
+#define PROTECTION (PROT_READ | PROT_WRITE)
+
+#define MAP_HUGE_1GB    (30 << MAP_HUGE_SHIFT)
+
+/* Only ia64 requires this */
+#ifdef __ia64__
+#define ADDR (void *)(0x8000000000000000UL)
+#define FLAGS (MAP_SHARED | MAP_FIXED)
+#else
+#define ADDR (void *)(0x0UL)
+#define FLAGS (MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS )
+#endif
 
 #define CACHE_BLOCK_BITS 6
 #define CACHE_BLOCK_SIZE (1U << CACHE_BLOCK_BITS)  /* 64 */
@@ -160,8 +178,28 @@ class SimpleKmerHashTable : public KmerHashTable
     // TODO power of 2 hashtable size for ease of mod operations
     this->capacity = this->__upper_power_of_two(c);
     // printf("[INFO] Hashtable size: %lu\n", this->capacity);
+#if !defined(HUGE_1GB_PAGES)
     this->hashtable =
         (Kmer_r *)aligned_alloc(__PAGE_SIZE, capacity * sizeof(Kmer_r));
+#else
+		int fd;
+
+		fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
+		if (fd < 0) {
+			perror("Open failed");
+			exit(1);
+		}
+
+		this->hashtable = (Kmer_r *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(Kmer_r), 
+																			PROTECTION, FLAGS, fd, 0);
+		if (this->hashtable == MAP_FAILED) {
+			perror("mmap");
+			unlink(FILE_NAME);
+			exit(1);
+		}
+
+#endif
+
     if (this->hashtable == NULL) {
       perror("[ERROR]: SimpleKmerHashTable aligned_alloc");
     }
@@ -183,6 +221,67 @@ class SimpleKmerHashTable : public KmerHashTable
     free(hashtable);
     free(queue);
   }
+
+#if 0
+  void insert_batch(Kmer_r *karray) {
+
+    uint64_t cityhash_new =
+        CityHash64((const char *)kmer_data, KMER_DATA_LENGTH);
+    size_t __kmer_idx = cityhash_new & (this->capacity - 1);  // modulo
+
+    occupied = hashtable[pidx].occupied; 
+
+    /* Compare with empty kmer to check if bucket is empty, and insert.*/
+    if (!occupied) {
+#ifdef CALC_STATS
+      this->num_memcpys++;
+#endif
+      memcpy(&hashtable[pidx].kmer_data, q->kmer_data_ptr, KMER_DATA_LENGTH);
+      hashtable[pidx].kmer_count++;
+      hashtable[pidx].occupied = true;
+      hashtable[pidx].kmer_cityhash = q->kmer_cityhash;
+      return;
+    }
+
+#ifdef CALC_STATS
+    this->num_hashcmps++;
+#endif
+
+    if (hashtable[pidx].kmer_cityhash == q->kmer_cityhash) {
+#ifdef CALC_STATS
+      this->num_memcmps++;
+#endif
+
+      if (memcmp(&hashtable[pidx].kmer_data, q->kmer_data_ptr,
+                 KMER_DATA_LENGTH) == 0) {
+        hashtable[pidx].kmer_count++;
+        return;
+      }
+    }
+
+    {
+      /* insert back into queue, and prefetch next bucket.
+      next bucket will be probed in the next run
+      */
+      pidx++;
+      pidx = pidx & (this->capacity - 1);  // modulo
+      prefetch(pidx);
+      q->kmer_idx = pidx;
+
+      queue[this->queue_idx] = *q;
+      // queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr;
+      // queue[this->queue_idx].kmer_idx = q->kmer_idx;
+      this->queue_idx++;
+
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
+      return;
+    }
+
+  };
+ 
+#endif
 
   /* Insert using prefetch: using a dynamic prefetch queue.
           If bucket is occupied, add to queue again to reprobe.
@@ -240,6 +339,7 @@ class SimpleKmerHashTable : public KmerHashTable
       return;
     }
   }
+
 
 
   /* Insert items from queue into hash table, interpreting "queue"
