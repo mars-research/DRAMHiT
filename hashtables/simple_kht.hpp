@@ -297,13 +297,10 @@ class SimpleKmerHashTable : public KmerHashTable
     free(queue);
   }
 
-#if 0
-  void insert_batch(Kmer_r *karray) {
+#if INSERT_BATCH
 
-    uint64_t cityhash_new =
-        CityHash64((const char *)kmer_data, KMER_DATA_LENGTH);
-    size_t __kmer_idx = cityhash_new & (this->capacity - 1);  // modulo
-
+  insert_one () {
+    
     occupied = hashtable[pidx].occupied; 
 
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
@@ -351,6 +348,25 @@ class SimpleKmerHashTable : public KmerHashTable
 #ifdef CALC_STATS
       this->num_reprobes++;
 #endif
+
+
+  }
+
+
+  void insert_batch(kmer_data_t *karray[4]) {
+
+    uint64_t hash_new_0 = __hash((const char *)karray[0]);
+    size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+ 
+    uint64_t hash_new_0 = __hash((const char *)karray[0]);
+    size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+ 
+    uint64_t hash_new_0 = __hash((const char *)karray[0]);
+    size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+ 
+    uint64_t hash_new_0 = __hash((const char *)karray[0]);
+    size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+ 
       return;
     }
 

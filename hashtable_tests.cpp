@@ -5,7 +5,7 @@ struct kmer {
 
 uint32_t PREFETCH_QUEUE_SIZE = 8;
 
-#define BATCH_LENGTH  32
+#define BATCH_LENGTH  16
 /* 1 << 24 -- 16M */
 #define NUM_INSERTS  (1<<26)
 //#define NUM_INSERTS  (1<<7)

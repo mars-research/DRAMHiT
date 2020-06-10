@@ -49,11 +49,13 @@ class RobinhoodKmerHashTable : public KmerHashTable
   RH_Kmer_queue_r *queue;  // TODO prefetch this?
   uint32_t queue_idx;      // pointer to head of queue
 
-  size_t __hash(const void *k)
+  uint64_t __hash(const void *k)
   {
+#if defined(CITY_HASH)  
     uint64_t cityhash = CityHash64((const char *)k, KMER_DATA_LENGTH);
     /* n % d => n & (d - 1) */
-    return (cityhash & (this->capacity - 1));  // modulo
+    return cityhash;  // modulo
+#endif
   }
 
   /* Insert items from queue into hash table, interpreting "queue"
@@ -176,9 +178,9 @@ class RobinhoodKmerHashTable : public KmerHashTable
   /* insert and increment if exists */
   bool insert(const void *kmer_data)
   {
-    uint64_t cityhash_new =
-        CityHash64((const char *)kmer_data, KMER_DATA_LENGTH);
-    size_t __kmer_idx = cityhash_new & (this->capacity - 1);  // modulo
+    uint64_t hash_new =
+        __hash((const char *)kmer_data);
+    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
 
     __builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
     // printf("inserting into queue at %u\n", this->queue_idx);

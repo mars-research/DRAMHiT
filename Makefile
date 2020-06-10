@@ -1,12 +1,13 @@
 CC=g++
 CFLAGS=-g -std=c++17 -Wall -mprefetchwt1 
 # This crashes citihash
-#-march=sandybridge
-LDFLAGS= -lboost_program_options -lz -lnuma -lpthread
+CFLAGS +=-march=skylake
+LDFLAGS= -lboost_program_options -lz -lnuma -lpthread -flto
 TARGET=kmercounter
 OPT_YES=-O3
 OPT_NO=-O0
-sources =  misc_lib.cpp ac_kseq.cpp include/city/city.cc include/xx/xxhash.c main.cpp
+#sources =  misc_lib.cpp ac_kseq.cpp include/city/city.cc include/xx/xxhash.c main.cpp
+sources =  misc_lib.cpp ac_kseq.cpp include/xx/xxhash.c main.cpp
 #CFLAGS += -DCALC_STATS
 CFLAGS += -DTOUCH_DEPENDENCY
 #CFLAGS += -DSERIAL_SCAN

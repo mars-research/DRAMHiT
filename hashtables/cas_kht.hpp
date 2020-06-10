@@ -42,18 +42,20 @@ class CASKmerHashTable : public KmerHashTable
   uint32_t queue_idx;
   std::mutex ht_init_mutex;
 
-  size_t __hash(const void* k)
+  uint64_t __hash(const void* k)
   {
+#if defined(CITY_HASH)
     uint64_t cityhash = CityHash64((const char*)k, KMER_DATA_LENGTH);
     /* n % d => n & (d - 1) */
-    return (cityhash & (this->capacity - 1));  // modulo
+    return cityhash;  // modulo
+#endif
   }
 
   void __insert_into_queue(const void* kmer_data)
   {
-    uint64_t cityhash_new =
-        CityHash64((const char*)kmer_data, KMER_DATA_LENGTH);
-    size_t __kmer_idx = cityhash_new & (this->capacity - 1);  // modulo
+    uint64_t hash_new =
+        __hash((const char*)kmer_data);
+    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
     // size_t __kmer_idx = cityhash_new % (this->capacity);
 
     /* prefetch buckets and store kmer_data pointers in queue */
@@ -64,7 +66,7 @@ class CASKmerHashTable : public KmerHashTable
     // printf("inserting into queue at %u\n", this->queue_idx);
     queue[this->queue_idx].kmer_data_ptr = kmer_data;
     queue[this->queue_idx].kmer_idx = __kmer_idx;
-    queue[this->queue_idx].kmer_cityhash = cityhash_new;
+    queue[this->queue_idx].kmer_cityhash = hash_new;
     this->queue_idx++;
   }
 
