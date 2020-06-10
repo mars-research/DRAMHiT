@@ -28,6 +28,52 @@ Kmer q in the hash hashtable
 Each q spills over a queue line for now, queue-align later
 */
 
+/*
+ * 32 bit magic FNV-1a prime
+ */
+#define FNV_32_PRIME ((uint32_t)0x01000193)
+uint32_t hval = 0; 
+
+/*
+ * fnv_32a_buf - perform a 32 bit Fowler/Noll/Vo FNV-1a hash on a buffer
+ *
+ * input:
+ *	buf	- start of buffer to hash
+ *	len	- length of buffer in octets
+ *	hval	- previous hash value or 0 if first call
+ *
+ * returns:
+ *	32 bit hash as a static hash type
+ *
+ * NOTE: To use the recommended 32 bit FNV-1a hash, use FNV1_32A_INIT as the
+ * 	 hval arg on the first call to either fnv_32a_buf() or fnv_32a_str().
+ */
+uint32_t fnv_32a_buf(const void *buf, size_t len, uint32_t hval)
+{
+  unsigned char *bp = (unsigned char *)buf;	/* start of buffer */
+  unsigned char *be = bp + len;		/* beyond end of buffer */
+
+  /*
+   * FNV-1a hash each octet in the buffer
+   */
+  while (bp < be) {
+
+    /* xor the bottom with the current octet */
+    hval ^= (uint32_t)*bp++;
+
+    /* multiply by the 32 bit FNV magic prime mod 2^32 */
+#if defined(NO_FNV_GCC_OPTIMIZATION)
+    hval *= FNV_32_PRIME;
+#else
+    hval += (hval<<1) + (hval<<4) + (hval<<7) + (hval<<8) + (hval<<24);
+#endif
+  }
+
+  /* return our new hash value */
+  return hval;
+}
+
+
 typedef struct {
   const void *kmer_data_ptr;
   uint32_t kmer_idx;       // TODO reduce size, TODO decided by hashtable size?
@@ -69,13 +115,16 @@ std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
 
 static inline void prefetch_object(const void *addr, uint64_t size) {
   uint64_t cache_line1_addr = CACHE_BLOCK_ALIGNED_ADDR((uint64_t)addr);
+
+#if defined(PREFETCH_TWO_LINE)
   uint64_t cache_line2_addr = CACHE_BLOCK_ALIGNED_ADDR((uint64_t)addr + size - 1);
+#endif
 
   // 1 -- prefetch for write (vs 0 -- read)
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
-  __builtin_prefetch((const void*)cache_line1_addr, 1, 0);
+  __builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
   //__builtin_prefetch(addr, 1, 0);
 #if defined(PREFETCH_TWO_LINE)
@@ -148,11 +197,18 @@ class SimpleKmerHashTable : public KmerHashTable
   Kmer_queue_r *queue;  // TODO prefetch this?
   uint32_t queue_idx;
 
-  size_t __hash(const void *k)
+  uint64_t __hash(const void *k)
   {
+#if defined(CITY_HASH)
     uint64_t cityhash = CityHash64((const char *)k, KMER_DATA_LENGTH);
-    /* n % d => n & (d - 1) */
-    return (cityhash & (this->capacity - 1));  // modulo
+    return cityhash;  // modulo
+#endif
+
+#if defined(FNV_HASH)
+    hval = fnv_32a_buf(k, KMER_DATA_LENGTH, hval);
+    return hval;
+#endif
+
   }
 
 
@@ -355,9 +411,8 @@ class SimpleKmerHashTable : public KmerHashTable
 
   void __insert_into_queue(const void *kmer_data)
   {
-    uint64_t cityhash_new =
-        CityHash64((const char *)kmer_data, KMER_DATA_LENGTH);
-    size_t __kmer_idx = cityhash_new & (this->capacity - 1);  // modulo
+    uint64_t hash_new = __hash((const char *)kmer_data);
+    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
     // size_t __kmer_idx = cityhash_new % (this->capacity);
 
     /* prefetch buckets and store kmer_data pointers in queue */
@@ -368,7 +423,7 @@ class SimpleKmerHashTable : public KmerHashTable
     // printf("inserting into queue at %u\n", this->queue_idx);
     queue[this->queue_idx].kmer_data_ptr = kmer_data;
     queue[this->queue_idx].kmer_idx = __kmer_idx;
-    queue[this->queue_idx].kmer_cityhash = cityhash_new;
+    queue[this->queue_idx].kmer_cityhash = hash_new;
     this->queue_idx++;
   }
 
@@ -410,10 +465,9 @@ class SimpleKmerHashTable : public KmerHashTable
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t cityhash_new =
-        CityHash64((const char *)kmer_data, KMER_DATA_LENGTH);
+    uint64_t hash_new = __hash((const char *)kmer_data);
 
-    size_t idx = cityhash_new & (this->capacity - 1);  // modulo
+    size_t idx = hash_new & (this->capacity - 1);  // modulo
 
     int memcmp_res =
         memcmp(&hashtable[idx].kmer_data, kmer_data, KMER_DATA_LENGTH);
