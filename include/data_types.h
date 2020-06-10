@@ -18,12 +18,13 @@ struct Kmer_s {
 };
 
 typedef enum {
-  DRY_RUN = 1, 
-  READ_FROM_DISK = 2, 
-  WRITE_TO_DISK = 3, 
-  FASTA = 4,
-  SYNTH = 5,
-  PREFETCH = 6
+  DRY_RUN = 1,
+  READ_FROM_DISK = 2,
+  WRITE_TO_DISK = 3,
+  FASTQ = 4,
+  NO_INSERTS = 5,  // FASTQ but no inserts
+  SYNTH = 6,
+  PREFETCH = 7
 } run_mode_t;
 
 /* Test config */

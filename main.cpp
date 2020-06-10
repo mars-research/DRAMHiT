@@ -24,8 +24,7 @@
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "./include/print_stats.h"
-
-uint32_t PREFETCH_QUEUE_SIZE = 32;
+#include "hashtable_tests.cpp"
 
 /* Numa config */
 Numa n;
@@ -37,7 +36,7 @@ const Configuration def = {
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
     .num_threads = 1,
-    .mode = DRY_RUN,  // TODO enum
+    .mode = NO_INSERTS,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
@@ -55,6 +54,7 @@ Configuration config;
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
+<<<<<<< HEAD
 /* insert kmer to non-standard (our) table */
 template <typename Table>
 inline int __attribute__((optimize("O0")))
@@ -218,6 +218,8 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable) {
   return count;
 }
 
+=======
+>>>>>>> 4ea6f509f51e8324975ef84090e6a0538846e230
 void *shard_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
@@ -227,6 +229,8 @@ void *shard_thread(void *arg)
   int res;
   KmerHashTable *kmer_ht = NULL;
   uint64_t num_inserts = 0;
+  uint64_t __num_inserts = 0;
+  size_t ht_size = 0;
 
 #ifdef CALC_STATS
   uint64_t avg_read_length = 0;
@@ -237,12 +241,13 @@ void *shard_thread(void *arg)
   printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
          sh->f_start, sh->f_end);
 
-
-  /* estimate of ht_size TODO change */
-  size_t ht_size = HT_SIZE;
-#ifndef NO_INSERTS
-  size_t ht_size = config.in_file_sz / config.num_threads;
-#endif
+  if (config.mode == NO_INSERTS) {
+    ht_size = 0;
+  } else if (config.mode == FASTQ) {
+    ht_size = config.in_file_sz / config.num_threads;
+  } else if (config.mode == SYNTH || config.mode == PREFETCH) {
+    ht_size = HT_SIZE;
+  }
 
   /* Create hash table */
   if (config.ht_type == 1) {
@@ -256,53 +261,77 @@ void *shard_thread(void *arg)
     /*TODO tidy this up, don't use static + locks maybe*/
   }
 
+  printf("[INFO] Thread %u: ht_size: %lu \n", sh->shard_idx, ht_size);
+
   fipc_test_FAI(ready_threads);
   while (!ready) fipc_test_pause();
 
   // fipc_test_mfence();
-  printf("[INFO] Thread %u: begin insert loop \n", sh->shard_idx);
-
+  printf("[INFO] Thread %u: begin loop \n", sh->shard_idx);
   /* Begin insert loop */
   t_start = RDTSC_START();
 
   if (config.mode == SYNTH) {
+    printf("Synth test run: ht size:%lu, insertions:%lu\n", HT_SIZE,
+           NUM_INSERTS);
 
-
-    printf("Synth test run: ht size:%lu, insertions:%lu\n", HT_SIZE, NUM_INSERTS);
-
-    for(auto i = 1; i < MAX_STRIDE; i++) {
+    for (auto i = 1; i < MAX_STRIDE; i++) {
       t_start = RDTSC_START();
       
       //PREFETCH_QUEUE_SIZE = i;
       
       PREFETCH_QUEUE_SIZE = 32;
 	    num_inserts = synth_run(kmer_ht); 
-      t_end = RDTSCP();
-      printf("Batch size: %lu, cycles per insertion:%lu\n", 
-          i, (t_end - t_start)/num_inserts);
-
+      
+	    t_end = RDTSCP();
+      printf("Batch size: %lu, cycles per insertion:%lu\n", i,
+             (t_end - t_start) / num_inserts);
     }
-
-
   } else if (config.mode == PREFETCH) {
-
-    printf("Prefetch test run: ht size:%lu, insertions:%lu\n", HT_SIZE, NUM_INSERTS);
+    printf("Prefetch test run: ht size:%lu, insertions:%lu\n", HT_SIZE,
+           NUM_INSERTS);
 
     xorwow_init(&xw_state);
 
-    for(auto i = 0; i < MAX_STRIDE; i++) {
+    for (auto i = 0; i < MAX_STRIDE; i++) {
       t_start = RDTSC_START();
       PREFETCH_STRIDE = i;
-      num_inserts = prefetch_test_run((SimpleKmerHashTable*)kmer_ht);
+      num_inserts = prefetch_test_run((SimpleKmerHashTable *)kmer_ht);
       t_end = RDTSCP();
-      printf("Prefetch stride: %lu, cycles per insertion:%lu\n", 
-          i, (t_end - t_start)/num_inserts);
-
+      printf("Prefetch stride: %lu, cycles per insertion:%lu\n", i,
+             (t_end - t_start) / num_inserts);
     }
 
-  } else {
-  
+  } else if (config.mode == NO_INSERTS) {
+    int found_N = 0;
+    char *kmer;
 
+    kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
+
+    while ((l = ks.readseq(seq)) >= 0) {
+      for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
+        kmer = seq.seq.data() + i;
+        if (found_N != -1) {
+          found_N = find_last_N(kmer);
+          if (found_N >= 0) {
+            i += found_N;
+            continue;
+          }
+        }
+        char last_char = kmer[KMER_DATA_LENGTH - 1];
+        if (last_char == 'N' || last_char == 'n') {
+          found_N = KMER_DATA_LENGTH - 1;
+          i += found_N;
+          continue;
+        }
+        /*** Perform the "insert" ***/
+        __num_inserts++;
+      }
+      found_N = 0;
+    }
+  }
+
+  else {
     int found_N = 0;
     char *kmer;
 
@@ -312,8 +341,8 @@ void *shard_thread(void *arg)
       for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
         kmer = seq.seq.data() + i;
 
-        /*  search through whole string of N if first kmer OR if we found an N as
-         last character of previous kmer */
+        /*  search through whole string of N if first kmer OR if we found an N
+         as last character of previous kmer */
         if (found_N != -1) {
           found_N = find_last_N(kmer);
           if (found_N >= 0) {
@@ -330,15 +359,11 @@ void *shard_thread(void *arg)
           continue;
         }
 
-        // if (sh->shard_idx == 0){
-        // printf("[INFO] Thread %u:, i: %02d, inserting: %.50s\n", sh->shard_idx, i,
-        //        kmer);
-        // }
-
-        res = insert_kmer_to_table(kmer_ht, (void *)kmer, &num_inserts);
-
+        res = kmer_ht->insert((void *)kmer);
         if (!res) {
           printf("FAIL\n");
+        } else {
+          __num_inserts++;
         }
 
 #ifdef CALC_STATS
@@ -355,15 +380,21 @@ void *shard_thread(void *arg)
   t_end = RDTSCP();
 
   sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_inserts = num_inserts;
-  printf("Quick stats: cycles per insertion:%lu\n", (t_end - t_start)/num_inserts);
+  sh->stats->num_inserts = __num_inserts;
+  printf("Quick stats: num_inserts:%lu\n", __num_inserts);
+  printf("Quick stats: cycles per insertion:%lu\n",
+         (t_end - t_start) / __num_inserts);
 
   /* Finish insert loop */
-
-  sh->stats->ht_fill = kmer_ht->get_fill();
-  sh->stats->ht_capacity = kmer_ht->get_capacity();
-  sh->stats->max_count = kmer_ht->get_max_count();
-
+  if (config.mode == SYNTH || config.mode == PREFETCH || config.mode == FASTQ) {
+    sh->stats->ht_fill = kmer_ht->get_fill();
+    sh->stats->ht_capacity = kmer_ht->get_capacity();
+    sh->stats->max_count = kmer_ht->get_max_count();
+  } else {
+    sh->stats->ht_fill = 0;
+    sh->stats->ht_capacity = 0;
+    sh->stats->max_count = 0;
+  }
   /* Write to file */
   if (!config.ht_file.empty()) {
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
@@ -403,7 +434,7 @@ int spawn_shard_threads()
 
   memset(all_shards, 0, sizeof(__shard) * config.num_threads);
 
-  size_t seg_sz = 0; 
+  size_t seg_sz = 0;
 
   if ((config.mode != SYNTH) && (config.mode != PREFETCH)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
@@ -486,7 +517,7 @@ int spawn_shard_threads()
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
 
-  printf("Print stats here\n"); 
+  printf("Print stats here\n");
   print_stats(all_shards);
 
   free(threads);
@@ -503,10 +534,11 @@ int main(int argc, char *argv[])
 
     desc.add_options()("help", "produce help message")(
         "mode",
-        po::value<uint32_t>((uint32_t *)&config.mode)
-            ->default_value(def.mode),
-        "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk \n4: "
-        "Read Fasta from disk (--in_file)")(
+        po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
+        "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk "
+        "\n4: Read FASTQ + insert to ht (--in_file)"
+        "\n5: Read FASTQ, DO NOT insert to ht (--in_file) "
+        "\n6/7: Synth/Prefetch,")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -564,15 +596,14 @@ int main(int argc, char *argv[])
       }
     }
 
-    if (!config.in_file.empty()) {
-#if defined(PREFETCH_RUN) 
+    if (config.mode == SYNTH) {
+#if defined(PREFETCH_RUN)
       config.mode = PREFETCH /* SYNTH */ /* DRY_RUN */;
+      printf("[INFO] Mode : PREFETCH\n");
 #else
-			config.mode = SYNTH; 
+      printf("[INFO] Mode : SYNTH\n");
 #endif
-    }
-
-    if (config.mode == DRY_RUN) {
+    } else if (config.mode == DRY_RUN) {
       printf("[INFO] Mode : Dry run ...\n");
       printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
              config.kmer_create_data_base, config.kmer_create_data_mult,
@@ -584,12 +615,19 @@ int main(int argc, char *argv[])
       printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
              config.kmer_create_data_base, config.kmer_create_data_mult,
              config.kmer_create_data_uniq);
-    } else if (config.mode == FASTA) {
-      printf("[INFO] Mode : Reading fasta from disk ...\n");
+    } else if (config.mode == FASTQ || config.mode == NO_INSERTS) {
       if (config.in_file.empty()) {
         printf("[ERROR] Please provide input fasta file.\n");
         exit(-1);
       }
+    }
+
+    if (config.mode == FASTQ) {
+      printf(
+          "[INFO] Mode : Reading fasta from disk + inserting into hashtables "
+          "...\n");
+    } else if (config.mode == NO_INSERTS) {
+      printf("[INFO] Mode : Reading fasta from disk, no inserts ...\n");
     }
 
     if (config.ht_type == 1) {
