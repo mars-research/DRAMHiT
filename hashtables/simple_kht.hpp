@@ -3,8 +3,16 @@
 
 #include <sys/mman.h>
 #include "../include/base_kht.hpp"
-#include "../city/city.h"
+#include "../include/city/city.h"
 #include "../include/data_types.h"
+
+#if defined(XX_HASH)
+#include "../include/xx/xxhash.h"
+#endif
+
+#if defined(XX_HASH_3)
+#include "../include/xx/xxh3.h"
+#endif
 // #include "kmer_struct.h"
 
 // 2^21
@@ -201,12 +209,22 @@ class SimpleKmerHashTable : public KmerHashTable
   {
 #if defined(CITY_HASH)
     uint64_t cityhash = CityHash64((const char *)k, KMER_DATA_LENGTH);
-    return cityhash;  // modulo
+    return cityhash;
 #endif
 
 #if defined(FNV_HASH)
     hval = fnv_32a_buf(k, KMER_DATA_LENGTH, hval);
     return hval;
+#endif
+
+#if defined(XX_HASH)
+    XXH64_hash_t xxhash = XXH64(k, KMER_DATA_LENGTH, 0);
+    return xxhash;
+#endif
+
+#if defined(XX_HASH_3)
+    XXH64_hash_t xxhash = XXH3_64bits(k, KMER_DATA_LENGTH);
+    return xxhash;
 #endif
 
   }

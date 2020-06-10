@@ -6,7 +6,7 @@ LDFLAGS= -lboost_program_options -lz -lnuma -lpthread
 TARGET=kmercounter
 OPT_YES=-O3
 OPT_NO=-O0
-sources =  misc_lib.cpp ac_kseq.cpp city/city.cc main.cpp
+sources =  misc_lib.cpp ac_kseq.cpp include/city/city.cc include/xx/xxhash.c main.cpp
 #CFLAGS += -DCALC_STATS
 CFLAGS += -DTOUCH_DEPENDENCY
 #CFLAGS += -DSERIAL_SCAN
@@ -17,8 +17,10 @@ CFLAGS += -DPREFETCH_WITH_PREFETCH_INSTR
 #CFLAGS += -DPREFETCH_WITH_WRITE
 #CFLAGS += -DPREFETCH_RUN
 CFLAGS += -DHUGE_1GB_PAGES
-CFLAGS += -DCITY_HASH
+# CFLAGS += -DCITY_HASH
 #CFLAGS += -DFNV_HASH
+CFLAGS += -DXX_HASH
+# CFLAGS += -DXX_HASH_3
 
 .PHONY: all noopt clean ugdb
 

@@ -3,7 +3,7 @@
 
 #include <mutex>
 #include "../include/base_kht.hpp"
-#include "../city/city.h"
+#include "../include/city/city.h"
 #include "../include/data_types.h"
 // #include "kmer_struct.h"
 #include "../include/libfipc.h"
