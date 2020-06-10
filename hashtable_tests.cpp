@@ -5,13 +5,13 @@ struct kmer {
 
 uint32_t PREFETCH_QUEUE_SIZE = 32;
 
-#define BATCH_LENGTH  256
+#define BATCH_LENGTH  32
 /* 1 << 24 -- 16M */
 #define NUM_INSERTS  (1<<26)
 //#define NUM_INSERTS  (1<<7)
 
 #define HT_SIZE  NUM_INSERTS*16
-#define MAX_STRIDE 256
+#define MAX_STRIDE 2
 
 struct kmer kmers[BATCH_LENGTH]; 
 
@@ -22,8 +22,11 @@ uint64_t synth_run(KmerHashTable *ktable) {
   printf("Synthetic run\n");
 
   for(auto i = 0; i < NUM_INSERTS; i++) {
-
+#if defined(SAME_KMER)
+    *((uint64_t *)&kmers[k].data) = count & (32 - 1); 
+#else
     *((uint64_t *)&kmers[k].data) = count; 
+#endif
     ktable->insert((void*)&kmers[k]);    
     k = (k + 1) & (BATCH_LENGTH - 1);    
     count++;
