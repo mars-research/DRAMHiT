@@ -3,7 +3,7 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-uint32_t PREFETCH_QUEUE_SIZE = 32;
+uint32_t PREFETCH_QUEUE_SIZE = 8;
 
 #define BATCH_LENGTH  32
 /* 1 << 24 -- 16M */
