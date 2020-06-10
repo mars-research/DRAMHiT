@@ -66,7 +66,9 @@ class CASKmerHashTable : public KmerHashTable
     // printf("inserting into queue at %u\n", this->queue_idx);
     queue[this->queue_idx].kmer_data_ptr = kmer_data;
     queue[this->queue_idx].kmer_idx = __kmer_idx;
+#ifdef COMPARE_HASH    
     queue[this->queue_idx].kmer_cityhash = hash_new;
+#endif
     this->queue_idx++;
   }
 

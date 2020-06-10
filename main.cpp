@@ -112,8 +112,8 @@ void *shard_thread(void *arg)
       t_start = RDTSC_START();
       
       //PREFETCH_QUEUE_SIZE = i;
-      
-      PREFETCH_QUEUE_SIZE = 32;
+     
+      //PREFETCH_QUEUE_SIZE = 32;
 	    num_inserts = synth_run(kmer_ht); 
       
 	    t_end = RDTSCP();

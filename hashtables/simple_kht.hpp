@@ -390,7 +390,9 @@ class SimpleKmerHashTable : public KmerHashTable
       memcpy(&hashtable[pidx].kmer_data, q->kmer_data_ptr, KMER_DATA_LENGTH);
       hashtable[pidx].kmer_count++;
       hashtable[pidx].occupied = true;
+#ifdef COMPARE_HASH    
       hashtable[pidx].kmer_cityhash = q->kmer_cityhash;
+#endif
       return;
     }
 
@@ -398,7 +400,10 @@ class SimpleKmerHashTable : public KmerHashTable
     this->num_hashcmps++;
 #endif
 
-    if (hashtable[pidx].kmer_cityhash == q->kmer_cityhash) {
+#ifdef COMPARE_HASH    
+    if (hashtable[pidx].kmer_cityhash == q->kmer_cityhash)
+#endif    
+    {
 #ifdef CALC_STATS
       this->num_memcmps++;
 #endif
@@ -435,13 +440,22 @@ class SimpleKmerHashTable : public KmerHashTable
 
   /* Insert items from queue into hash table, interpreting "queue"
   as an array of size queue_sz*/
-  void __insert_from_queue(size_t queue_sz)
+  void __insert_from_queue()
   {
     this->queue_idx = 0;  // start again
-    for (size_t i = 0; i < queue_sz; i++) {
+    for (size_t i = 0; i < PREFETCH_QUEUE_SIZE; i++) {
       __insert(&queue[i]);
     }
   }
+
+  void __flush_from_queue(size_t qsize)
+  {
+    this->queue_idx = 0;  // start again
+    for (size_t i = 0; i < qsize; i++) {
+      __insert(&queue[i]);
+    }
+  }
+
 
   void __insert_into_queue(const void *kmer_data)
   {
@@ -457,7 +471,9 @@ class SimpleKmerHashTable : public KmerHashTable
     // printf("inserting into queue at %u\n", this->queue_idx);
     queue[this->queue_idx].kmer_data_ptr = kmer_data;
     queue[this->queue_idx].kmer_idx = __kmer_idx;
+#ifdef COMPARE_HASH
     queue[this->queue_idx].kmer_cityhash = hash_new;
+#endif
     this->queue_idx++;
   }
 
@@ -469,8 +485,8 @@ class SimpleKmerHashTable : public KmerHashTable
 
     /* if queue is full, actually insert */
     // now queue_idx = 20
-    while (this->queue_idx >= PREFETCH_QUEUE_SIZE) {
-      this->__insert_from_queue(PREFETCH_QUEUE_SIZE);
+    if (this->queue_idx >= PREFETCH_QUEUE_SIZE) {
+      this->__insert_from_queue();
     }
 
     /* if queue is still full, empty it. This is especially needed
@@ -486,7 +502,7 @@ class SimpleKmerHashTable : public KmerHashTable
   {
     size_t curr_queue_sz = this->queue_idx;
     while (curr_queue_sz != 0) {
-      __insert_from_queue(curr_queue_sz);
+      __flush_from_queue(curr_queue_sz);
       curr_queue_sz = this->queue_idx;
     }
 #ifdef CALC_STATS

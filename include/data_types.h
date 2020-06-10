@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <string>
 
-extern uint32_t PREFETCH_QUEUE_SIZE;
+extern const uint32_t PREFETCH_QUEUE_SIZE;
 
 // kmer (key)
 struct Kmer_s {
