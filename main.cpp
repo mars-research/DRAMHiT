@@ -63,7 +63,6 @@ void *shard_thread(void *arg)
   int res;
   KmerHashTable *kmer_ht = NULL;
   uint64_t num_inserts = 0;
-  uint64_t __num_inserts = 0;
   size_t ht_size = 0;
 
 #ifdef CALC_STATS
@@ -159,7 +158,7 @@ void *shard_thread(void *arg)
           continue;
         }
         /*** Perform the "insert" ***/
-        __num_inserts++;
+        num_inserts++;
       }
       found_N = 0;
     }
@@ -197,7 +196,7 @@ void *shard_thread(void *arg)
         if (!res) {
           printf("FAIL\n");
         } else {
-          __num_inserts++;
+          num_inserts++;
         }
 
 #ifdef CALC_STATS
@@ -214,10 +213,9 @@ void *shard_thread(void *arg)
   t_end = RDTSCP();
 
   sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_inserts = __num_inserts;
-  printf("Quick stats: num_inserts:%lu\n", __num_inserts);
+  sh->stats->num_inserts = num_inserts;
   printf("Quick stats: cycles per insertion:%lu\n",
-         (t_end - t_start) / __num_inserts);
+         (t_end - t_start) / num_inserts);
 
   /* Finish insert loop */
   if (config.mode == SYNTH || config.mode == PREFETCH || config.mode == FASTQ) {
