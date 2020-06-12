@@ -7,7 +7,7 @@ TARGET=kmercounter
 OPT_YES=-O3
 OPT_NO=-O0
 #sources =  misc_lib.cpp ac_kseq.cpp include/city/city.cc include/xx/xxhash.c main.cpp
-sources =  misc_lib.cpp ac_kseq.cpp include/xx/xxhash.c main.cpp
+sources =  bqueue.c misc_lib.cpp ac_kseq.cpp include/xx/xxhash.c main.cpp 
 #CFLAGS += -DCALC_STATS
 CFLAGS += -DTOUCH_DEPENDENCY
 #CFLAGS += -DSERIAL_SCAN
@@ -47,3 +47,4 @@ clean:
 
 ugdb:
 	ugdb $(TARGET)
+	

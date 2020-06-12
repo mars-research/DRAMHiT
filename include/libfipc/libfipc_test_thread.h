@@ -135,7 +135,7 @@ static inline
 pthread_t* fipc_test_thread_spawn_on_CPU ( void* (*threadfn)(void* data),
 	void* data, size_t cpu_pin )
 {
-	pthread_t* thread = malloc( sizeof( pthread_t ) );
+	pthread_t* thread = (pthread_t*) malloc( sizeof( pthread_t ) );
 
 	int pthread_create_err = pthread_create( thread, NULL, threadfn, data );
 

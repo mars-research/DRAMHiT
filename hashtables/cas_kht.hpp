@@ -6,7 +6,7 @@
 #include "../include/city/city.h"
 #include "../include/data_types.h"
 // #include "kmer_struct.h"
-#include "../include/libfipc.h"
+#include "../include/libfipc/libfipc_test.h"
 
 static uint64_t working_threads = 0;
 

@@ -37,7 +37,7 @@ SOFTWARE.
 
 #include "./include/data_types.h"
 #include "./include/misc_lib.h"
-#include "./include/libfipc.h"
+#include "./include/libfipc/libfipc_test.h"
 
 extern Configuration config;
 

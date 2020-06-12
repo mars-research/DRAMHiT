@@ -13,7 +13,7 @@
 #include "./include/misc_lib.h"
 #include "kmer_data.cpp"
 // #include "./include/timestamp.h"
-#include "./include/libfipc.h"
+#include "./include/libfipc/libfipc_test_config.h"
 #include "./include/numa.hpp"
 // #include "shard.h"
 // #include "test_config.h"
@@ -36,7 +36,7 @@ const Configuration def = {
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
     .num_threads = 1,
-    .mode = NO_INSERTS,  // TODO enum
+    .mode = BQUEUE,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
@@ -45,7 +45,9 @@ const Configuration def = {
     .in_file = std::string("/local/devel/devel/datasets/turkey/myseq0.fa"),
     .ht_type = 1,
     .in_file_sz = 0,
-    .drop_caches = true};  // TODO enum
+    .drop_caches = true,
+    .n_prod = 2,
+    .n_cons = 2};  // TODO enum
 
 /* global config */
 Configuration config;
@@ -54,25 +56,13 @@ Configuration config;
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
-void *shard_thread(void *arg)
-{
-  __shard *sh = (__shard *)arg;
-  uint64_t t_start, t_end;
-  kseq seq;
-  int l = 0;
-  int res;
-  KmerHashTable *kmer_ht = NULL;
-  uint64_t num_inserts = 0;
+/* for bqueues */
+static int *bqueue_halt;
+
+
+KmerHashTable * init_ht(__shard* sh){
   size_t ht_size = 0;
-
-#ifdef CALC_STATS
-  uint64_t avg_read_length = 0;
-  uint64_t num_sequences = 0;
-#endif
-
-  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
-  printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
-         sh->f_start, sh->f_end);
+  KmerHashTable *kmer_ht = NULL;
 
   if (config.mode == NO_INSERTS) {
     ht_size = 0;
@@ -81,6 +71,8 @@ void *shard_thread(void *arg)
   } else if (config.mode == SYNTH || config.mode == PREFETCH) {
     ht_size = HT_SIZE;
   }
+
+  printf("[INFO] Thread %u: ht_size: %lu \n", sh->shard_idx, ht_size);
 
   /* Create hash table */
   if (config.ht_type == 1) {
@@ -93,8 +85,29 @@ void *shard_thread(void *arg)
     kmer_ht = new CASKmerHashTable(ht_size * config.num_threads);
     /*TODO tidy this up, don't use static + locks maybe*/
   }
+  return kmer_ht;
+}
 
-  printf("[INFO] Thread %u: ht_size: %lu \n", sh->shard_idx, ht_size);
+void *shard_thread(void *arg)
+{
+  __shard *sh = (__shard *)arg;
+  uint64_t t_start, t_end;
+  kseq seq;
+  int l = 0;
+  int res;
+  uint64_t num_inserts = 0;
+  KmerHashTable *kmer_ht = NULL;
+
+#ifdef CALC_STATS
+  uint64_t avg_read_length = 0;
+  uint64_t num_sequences = 0;
+#endif
+
+  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
+  printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
+         sh->f_start, sh->f_end);
+
+  kmer_ht = init_ht(sh);
 
   fipc_test_FAI(ready_threads);
   while (!ready) fipc_test_pause();
@@ -110,13 +123,13 @@ void *shard_thread(void *arg)
 
     for (auto i = 1; i < MAX_STRIDE; i++) {
       t_start = RDTSC_START();
-      
-      //PREFETCH_QUEUE_SIZE = i;
-     
-      //PREFETCH_QUEUE_SIZE = 32;
-	    num_inserts = synth_run(kmer_ht); 
-      
-	    t_end = RDTSCP();
+
+      // PREFETCH_QUEUE_SIZE = i;
+
+      // PREFETCH_QUEUE_SIZE = 32;
+      num_inserts = synth_run(kmer_ht);
+
+      t_end = RDTSCP();
       printf("Batch size: %lu, cycles per insertion:%lu\n", i,
              (t_end - t_start) / num_inserts);
     }
@@ -253,6 +266,168 @@ void *shard_thread(void *arg)
   return NULL;
 }
 
+void *producer_thread(void *arg)
+{
+  __shard *sh = (__shard *)arg;
+  printf("[INFO]: Producer %lu starting\n", sh->prod_idx);
+
+  fipc_test_FAI(ready_producers);
+  while (!test_ready) fipc_test_pause();
+  fipc_test_mfence();
+
+  return NULL;
+}
+
+void *consumer_thread(void *arg)
+{
+  __shard *sh = (__shard *)arg;
+  printf("[INFO]: Consumer %lu starting\n", sh->cons_idx);
+
+  return NULL;
+}
+
+int spawn_shard_threads_bqueues()
+{
+  cpu_set_t cpuset;
+  uint64_t e, i, j;
+
+  /*TODO numa split */
+  if (config.n_prod + config.n_cons > nodes[0].cpu_list.size()) {
+    printf(
+        "[ERROR] producers [%u] + consumers [%u] exceeded number of available "
+        "CPUs on node 0 [%lu]\n",
+        config.n_prod, config.n_cons, nodes[0].cpu_list.size());
+    exit(-1);
+  }
+
+  printf("[%lu]: Controller: starting [spawn_shard_threads_bqueues]...\n",
+         pthread_self());
+  producer_count = config.n_prod;
+  consumer_count = config.n_cons;
+
+  /* Stats data structures */
+  __shard *all_shards = (__shard *)memalign(FIPC_CACHE_LINE_SIZE,
+                                            sizeof(__shard) * consumer_count);
+
+  memset(all_shards, 0, sizeof(__shard) * config.num_threads);
+
+  /* Queue Allocation */
+  queue_t *queues = (queue_t *)memalign(
+      FIPC_CACHE_LINE_SIZE, producer_count * consumer_count * sizeof(queue_t));
+
+  for (i = 0; i < producer_count * consumer_count; ++i) init_queue(&queues[i]);
+
+  prod_queues = (queue_t ***)memalign(FIPC_CACHE_LINE_SIZE,
+                                      producer_count * sizeof(queue_t **));
+  cons_queues = (queue_t ***)memalign(FIPC_CACHE_LINE_SIZE,
+                                      consumer_count * sizeof(queue_t **));
+
+  bqueue_halt = (int *)malloc(consumer_count * sizeof(*bqueue_halt));
+
+  /* For each producer allocate a queue connecting it to <consumer_count>
+   * consumers */
+  for (i = 0; i < producer_count; ++i)
+    prod_queues[i] = (queue_t **)memalign(FIPC_CACHE_LINE_SIZE,
+                                          consumer_count * sizeof(queue_t *));
+
+  for (i = 0; i < consumer_count; ++i) {
+    cons_queues[i] = (queue_t **)memalign(FIPC_CACHE_LINE_SIZE,
+                                          producer_count * sizeof(queue_t *));
+    bqueue_halt[i] = 0;
+  }
+
+  /* Queue Linking */
+  for (i = 0; i < producer_count; ++i) {
+    for (j = 0; j < consumer_count; ++j) {
+      prod_queues[i][j] = &queues[i * consumer_count + j];
+    }
+  }
+
+  for (i = 0; i < consumer_count; ++i) {
+    for (j = 0; j < producer_count; ++j) {
+      cons_queues[i][j] = &queues[i + j * consumer_count];
+    }
+  }
+
+  fipc_test_mfence();
+
+  /* Thread Allocation */
+  pthread_t *prod_threads = (pthread_t *)memalign(
+      FIPC_CACHE_LINE_SIZE, sizeof(pthread_t) * producer_count);
+  pthread_t *cons_threads = (pthread_t *)memalign(
+      FIPC_CACHE_LINE_SIZE, sizeof(pthread_t) * consumer_count);
+
+  /* Spawn producer threads */
+  for (size_t x = 0; x < producer_count; x++) {
+    __shard *sh = &all_shards[x];
+    sh->prod_idx = x;
+    e = pthread_create(&prod_threads[x], NULL, producer_thread, (void *)sh);
+    if (e != 0) {
+      printf(
+          "[ERROR] pthread_create: Could not create thread: producer_thread\n");
+      exit(-1);
+    }
+    CPU_ZERO(&cpuset);
+    size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2;
+    CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
+    pthread_setaffinity_np(prod_threads[x], sizeof(cpu_set_t), &cpuset);
+    printf("[INFO] Thread: %lu, producer_thread, affinity: %u\n", x,
+           nodes[0].cpu_list[cpu_idx]);
+  }
+
+  /* Spawn consumer threads */
+  for (size_t x = 0; x < consumer_count; x++) {
+    __shard *sh = &all_shards[x];
+    sh->cons_idx = x;
+    e = pthread_create(&cons_threads[x], NULL, consumer_thread, (void *)sh);
+    if (e != 0) {
+      printf(
+          "[ERROR] pthread_create: Could not create thread: consumer_thread\n");
+      exit(-1);
+    }
+    CPU_ZERO(&cpuset);
+    size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2 + 1;
+    // CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
+    pthread_setaffinity_np(cons_threads[x], sizeof(cpu_set_t), &cpuset);
+    printf("[INFO] Thread: %lu, consumer_thread, affinity: %u\n", x,
+           nodes[0].cpu_list[cpu_idx]);
+  }
+
+  CPU_ZERO(&cpuset);
+  /* last cpu of last node  */
+  auto last_numa_node = nodes[n.get_num_nodes() - 1];
+  CPU_SET(last_numa_node.cpu_list[last_numa_node.num_cpus - 1], &cpuset);
+  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+
+  /* Wait for threads to be ready for test */
+  while (ready_consumers < consumer_count) fipc_test_pause();
+  while (ready_producers < producer_count) fipc_test_pause();
+
+  fipc_test_mfence();
+
+  /* Begin Test */
+  test_ready = 1;
+
+  /* Wait for producers to complete */
+  while (completed_producers < producer_count) fipc_test_pause();
+
+  fipc_test_mfence();
+
+  /* Tell consumers to halt */
+  for (i = 0; i < consumer_count; ++i) {
+    bqueue_halt[i] = 1;
+  }
+
+  /* Wait for consumers to complete */
+  while (completed_consumers < consumer_count) fipc_test_pause();
+
+  fipc_test_mfence();
+
+  return 0;
+
+  // TODO free everything
+}
+
 int spawn_shard_threads()
 {
   cpu_set_t cpuset;
@@ -387,7 +562,7 @@ int main(int argc, char *argv[])
         po::value<uint32_t>(&config.num_threads)
             ->default_value(def.num_threads),
         "Number of threads")(
-        "files_dir",
+        "files-dir",
         po::value<std::string>(&config.kmer_files_dir)
             ->default_value(def.kmer_files_dir),
         "Directory of input files, files should be in format: '\\d{2}.bin'")(
@@ -415,7 +590,11 @@ int main(int argc, char *argv[])
         "Input fasta file")(
         "drop-caches",
         po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
-        "drop page cache before run");
+        "drop page cache before run")(
+        "nprod", po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
+        "for bqueues only")(
+        "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
+        "for bqueues only");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -429,12 +608,9 @@ int main(int argc, char *argv[])
     }
 
     if (config.mode == SYNTH) {
-#if defined(PREFETCH_RUN)
-      config.mode = PREFETCH /* SYNTH */ /* DRY_RUN */;
-      printf("[INFO] Mode : PREFETCH\n");
-#else
       printf("[INFO] Mode : SYNTH\n");
-#endif
+    } else if (config.mode == PREFETCH) {
+      printf("[INFO] Mode : PREFETCH\n");
     } else if (config.mode == DRY_RUN) {
       printf("[INFO] Mode : Dry run ...\n");
       printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
@@ -483,5 +659,10 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  spawn_shard_threads();
+  if (config.mode != BQUEUE)
+    spawn_shard_threads();
+  else
+    spawn_shard_threads_bqueues();
+
+  return 0;
 }
