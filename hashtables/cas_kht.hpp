@@ -49,6 +49,7 @@ class CASKmerHashTable : public KmerHashTable
     /* n % d => n & (d - 1) */
     return cityhash;  // modulo
 #endif
+    return 0;
   }
 
   void __insert_into_queue(const void* kmer_data)

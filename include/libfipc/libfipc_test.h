@@ -21,8 +21,8 @@
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
 
-#define NUM_CORES sysconf(_SC_NPROCESSORS_ONLN)
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
+#define NUM_CORES ((unsigned long)sysconf(_SC_NPROCESSORS_ONLN))
+#define PAGE_SIZE ((unsigned long)sysconf(_SC_PAGESIZE))
 
 #define PAGES_NEEDED(x) \
 				((1UL << (x)) < PAGE_SIZE ? 1 : (1UL << (x)) / PAGE_SIZE)

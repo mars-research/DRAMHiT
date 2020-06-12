@@ -118,7 +118,7 @@ void *shard_thread(void *arg)
   t_start = RDTSC_START();
 
   if (config.mode == SYNTH) {
-    printf("Synth test run: ht size:%lu, insertions:%lu\n", HT_SIZE,
+    printf("Synth test run: ht size:%llu, insertions:%llu\n", HT_SIZE,
            NUM_INSERTS);
 
     for (auto i = 1; i < MAX_STRIDE; i++) {
@@ -130,11 +130,11 @@ void *shard_thread(void *arg)
       num_inserts = synth_run(kmer_ht);
 
       t_end = RDTSCP();
-      printf("Batch size: %lu, cycles per insertion:%lu\n", i,
+      printf("Batch size: %d, cycles per insertion:%lu\n", i,
              (t_end - t_start) / num_inserts);
     }
   } else if (config.mode == PREFETCH) {
-    printf("Prefetch test run: ht size:%lu, insertions:%lu\n", HT_SIZE,
+    printf("Prefetch test run: ht size:%llu, insertions:%llu\n", HT_SIZE,
            NUM_INSERTS);
 
     xorwow_init(&xw_state);
@@ -144,7 +144,7 @@ void *shard_thread(void *arg)
       PREFETCH_STRIDE = i;
       num_inserts = prefetch_test_run((SimpleKmerHashTable *)kmer_ht);
       t_end = RDTSCP();
-      printf("Prefetch stride: %lu, cycles per insertion:%lu\n", i,
+      printf("Prefetch stride: %d, cycles per insertion:%lu\n", i,
              (t_end - t_start) / num_inserts);
     }
 
@@ -269,7 +269,7 @@ void *shard_thread(void *arg)
 void *producer_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
-  printf("[INFO]: Producer %lu starting\n", sh->prod_idx);
+  printf("[INFO]: Producer %u starting\n", sh->prod_idx);
 
   fipc_test_FAI(ready_producers);
   while (!test_ready) fipc_test_pause();
@@ -281,7 +281,7 @@ void *producer_thread(void *arg)
 void *consumer_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
-  printf("[INFO]: Consumer %lu starting\n", sh->cons_idx);
+  printf("[INFO]: Consumer %u starting\n", sh->cons_idx);
 
   return NULL;
 }
@@ -572,7 +572,7 @@ int main(int argc, char *argv[])
         "Use alphanum_kmers (for debugging)")(
         "numa-split",
         po::value<bool>(&config.numa_split)->default_value(def.numa_split),
-        "Split spwaning threads between numa nodes")(
+        "Split spawning threads between numa nodes")(
         "stats",
         po::value<std::string>(&config.stats_file)
             ->default_value(def.stats_file),

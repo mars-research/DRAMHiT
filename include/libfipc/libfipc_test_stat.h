@@ -46,8 +46,8 @@ typedef struct stats_t
 static inline
 double fipc_test_stat_get_mean ( int64_t* sample_set, uint64_t sample_size )
 {
-	register double sum;
-	register uint64_t i;
+	double sum;
+	uint64_t i;
 
 	for ( sum = 0, i = 0; i < sample_size; ++i )
 	{
@@ -64,9 +64,9 @@ double fipc_test_stat_get_mean ( int64_t* sample_set, uint64_t sample_size )
 static inline
 int64_t fipc_test_stat_get_tolerance ( int64_t* sample_set, uint64_t sample_size )
 {
-	register float sum;
-	register float mean;
-	register uint64_t i;
+	float sum;
+	float mean;
+	uint64_t i;
 
 	// For a quick sketch idea of the data, only go through 1/16 of it.
 	if ( sample_size > 16 )
@@ -116,12 +116,12 @@ int fipc_test_stat_calculate_stats ( int64_t* sample_set, uint64_t sample_size, 
 	stat->norm_max = NINF;
 	stat->outliers = 0;
 
-	register double stdevSum = 0;
-	register double abdevSum = 0;
-	register double normSum = 0;
-	register double normStdevSum = 0;
-	register double normAbdevSum = 0;
-	register uint64_t i;
+	double stdevSum = 0;
+	double abdevSum = 0;
+	double normSum = 0;
+	double normStdevSum = 0;
+	double normAbdevSum = 0;
+	uint64_t i;
 
 	for ( i = 0; i < sample_size; ++i )
 	{
@@ -198,8 +198,8 @@ double fipc_test_stat_zscore_value ( stats_t* stat, int64_t value )
 static inline
 uint64_t fipc_test_stat_count_in_range ( int64_t* sample_set, uint64_t sample_size, int64_t min, int64_t max )
 {
-	register uint64_t i;
-	register uint64_t count;
+	uint64_t i;
+	uint64_t count;
 
 	for ( count = 0, i = 0; i < sample_size; ++i )
 		if ( sample_set[i] >= min && sample_set[i] <= max )
@@ -422,9 +422,9 @@ int fipc_test_stat_print_raw ( int64_t* sample_set, uint64_t sample_size, uint64
 	if ( print_count > sample_size )
 		print_count = sample_size;
 
-	int i;
+	uint64_t i;
 	for ( i = 0; i < print_count; ++i )
-		printf ( "%d.\t %ld\n", i, sample_set[i] );
+		printf ( "%lu.\t %ld\n", i, sample_set[i] );
 
 	return 0;
 }

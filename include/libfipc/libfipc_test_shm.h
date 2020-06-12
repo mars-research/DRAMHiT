@@ -20,7 +20,7 @@
 
 typedef struct shared_mutex
 {
-  int count;
+  uint64_t count;
   pthread_mutex_t mutex;
 
 } shared_mutex_t;

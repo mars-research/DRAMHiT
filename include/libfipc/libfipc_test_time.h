@@ -51,10 +51,10 @@ uint64_t RDTSCP ( void )
 static inline
 uint64_t fipc_test_time_get_correction ( void )
 {
-	register CACHE_ALIGNED uint64_t start;
-	register CACHE_ALIGNED uint64_t end;
-	register CACHE_ALIGNED uint64_t sum;
-	register CACHE_ALIGNED uint64_t i;
+	CACHE_ALIGNED uint64_t start;
+	CACHE_ALIGNED uint64_t end;
+	CACHE_ALIGNED uint64_t sum;
+	CACHE_ALIGNED uint64_t i;
 
 	for ( sum = 0, i = 0; i < 100000; ++i )
 	{
