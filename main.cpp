@@ -59,187 +59,160 @@ static uint64_t ready_threads = 0;
 /* for bqueues */
 static int *bqueue_halt;
 
-
-KmerHashTable * init_ht(__shard* sh){
-  size_t ht_size = 0;
+KmerHashTable *init_ht(uint64_t sz)
+{
   KmerHashTable *kmer_ht = NULL;
-
-  if (config.mode == NO_INSERTS) {
-    ht_size = 0;
-  } else if (config.mode == FASTQ) {
-    ht_size = config.in_file_sz / config.num_threads;
-  } else if (config.mode == SYNTH || config.mode == PREFETCH) {
-    ht_size = HT_SIZE;
-  }
-
-  printf("[INFO] Thread %u: ht_size: %lu \n", sh->shard_idx, ht_size);
 
   /* Create hash table */
   if (config.ht_type == 1) {
-    kmer_ht = new SimpleKmerHashTable(ht_size);
+    kmer_ht = new SimpleKmerHashTable(sz);
   } else if (config.ht_type == 2) {
-    kmer_ht = new RobinhoodKmerHashTable(ht_size);
+    kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == 3) {
     /* For the CAS Hash table, size is the same as
     size of one partitioned ht * number of threads */
-    kmer_ht = new CASKmerHashTable(ht_size * config.num_threads);
+    kmer_ht = new CASKmerHashTable(sz * config.num_threads);
     /*TODO tidy this up, don't use static + locks maybe*/
   }
   return kmer_ht;
 }
 
-void *shard_thread(void *arg)
+void shard_thread_parse_no_inserts(__shard *sh)
 {
-  __shard *sh = (__shard *)arg;
+  uint64_t t_start, t_end;
+  kseq seq;
+  int l = 0;
+  uint64_t num_inserts = 0;
+  int found_N = 0;
+  char *kmer;
+  t_start = RDTSC_START();
+
+  kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
+
+  while ((l = ks.readseq(seq)) >= 0) {
+    for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
+      kmer = seq.seq.data() + i;
+      if (found_N != -1) {
+        found_N = find_last_N(kmer);
+        if (found_N >= 0) {
+          i += found_N;
+          continue;
+        }
+      }
+      char last_char = kmer[KMER_DATA_LENGTH - 1];
+      if (last_char == 'N' || last_char == 'n') {
+        found_N = KMER_DATA_LENGTH - 1;
+        i += found_N;
+        continue;
+      }
+      /*** Perform the "insert" ***/
+      num_inserts++;
+    }
+    found_N = 0;
+  }
+  t_end = RDTSCP();
+
+  sh->stats->insertion_cycles = (t_end - t_start);
+  sh->stats->num_inserts = num_inserts;
+
+  sh->stats->ht_fill = 0;
+  sh->stats->ht_capacity = 0;
+  sh->stats->max_count = 0;
+}
+
+inline void shard_thread_parse_and_insert(__shard *sh, KmerHashTable *kmer_ht)
+{
   uint64_t t_start, t_end;
   kseq seq;
   int l = 0;
   int res;
   uint64_t num_inserts = 0;
-  KmerHashTable *kmer_ht = NULL;
+  int found_N = 0;
+  char *kmer;
 
 #ifdef CALC_STATS
   uint64_t avg_read_length = 0;
   uint64_t num_sequences = 0;
 #endif
 
+  kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
+
+  while ((l = ks.readseq(seq)) >= 0) {
+    // std::cout << seq.seq << std::endl;
+    for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
+      kmer = seq.seq.data() + i;
+
+      /*  search through whole string of N if first kmer OR if we found an N
+       as last character of previous kmer */
+      if (found_N != -1) {
+        found_N = find_last_N(kmer);
+        if (found_N >= 0) {
+          i += found_N;
+          continue;
+        }
+      }
+
+      /* if last charcter is a kmer skip this kmer*/
+      char last_char = kmer[KMER_DATA_LENGTH - 1];
+      if (last_char == 'N' || last_char == 'n') {
+        found_N = KMER_DATA_LENGTH - 1;
+        i += found_N;
+        continue;
+      }
+
+      res = kmer_ht->insert((void *)kmer);
+      if (!res) {
+        printf("FAIL\n");
+      } else {
+        num_inserts++;
+      }
+
+#ifdef CALC_STATS
+      if (!avg_read_length) {
+        avg_read_length = seq.seq.length();
+      } else {
+        avg_read_length = (avg_read_length + seq.seq.length()) / 2;
+      }
+#endif
+    }
+    found_N = 0;
+  }
+  t_end = RDTSCP();
+
+  sh->stats->insertion_cycles = (t_end - t_start);
+  sh->stats->num_inserts = num_inserts;
+  get_ht_stats(sh, kmer_ht);
+  
+  delete &seq;
+}
+
+void *shard_thread(void *arg)
+{
+
+  __shard *sh = (__shard *)arg;
+  KmerHashTable *kmer_ht;
+
   sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
   printf("[INFO] Thread %u: f_start %lu, f_end: %lu\n", sh->shard_idx,
          sh->f_start, sh->f_end);
 
-  kmer_ht = init_ht(sh);
+  if (config.mode == FASTQ) {
+    kmer_ht = init_ht(config.in_file_sz / config.num_threads);
+  }
 
   fipc_test_FAI(ready_threads);
   while (!ready) fipc_test_pause();
 
   // fipc_test_mfence();
   printf("[INFO] Thread %u: begin loop \n", sh->shard_idx);
-  /* Begin insert loop */
-  t_start = RDTSC_START();
+  /* Begin insert loops */
 
-  if (config.mode == SYNTH) {
-    printf("Synth test run: ht size:%lu, insertions:%lu\n", HT_SIZE,
-           NUM_INSERTS);
-
-    for (auto i = 1; i < MAX_STRIDE; i++) {
-      t_start = RDTSC_START();
-
-      // PREFETCH_QUEUE_SIZE = i;
-
-      // PREFETCH_QUEUE_SIZE = 32;
-      num_inserts = synth_run(kmer_ht);
-
-      t_end = RDTSCP();
-      printf("Batch size: %lu, cycles per insertion:%lu\n", i,
-             (t_end - t_start) / num_inserts);
-    }
-  } else if (config.mode == PREFETCH) {
-    printf("Prefetch test run: ht size:%lu, insertions:%lu\n", HT_SIZE,
-           NUM_INSERTS);
-
-    xorwow_init(&xw_state);
-
-    for (auto i = 0; i < MAX_STRIDE; i++) {
-      t_start = RDTSC_START();
-      PREFETCH_STRIDE = i;
-      num_inserts = prefetch_test_run((SimpleKmerHashTable *)kmer_ht);
-      t_end = RDTSCP();
-      printf("Prefetch stride: %lu, cycles per insertion:%lu\n", i,
-             (t_end - t_start) / num_inserts);
-    }
-
-  } else if (config.mode == NO_INSERTS) {
-    int found_N = 0;
-    char *kmer;
-
-    kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
-
-    while ((l = ks.readseq(seq)) >= 0) {
-      for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
-        kmer = seq.seq.data() + i;
-        if (found_N != -1) {
-          found_N = find_last_N(kmer);
-          if (found_N >= 0) {
-            i += found_N;
-            continue;
-          }
-        }
-        char last_char = kmer[KMER_DATA_LENGTH - 1];
-        if (last_char == 'N' || last_char == 'n') {
-          found_N = KMER_DATA_LENGTH - 1;
-          i += found_N;
-          continue;
-        }
-        /*** Perform the "insert" ***/
-        num_inserts++;
-      }
-      found_N = 0;
-    }
-  }
-
-  else {
-    int found_N = 0;
-    char *kmer;
-
-    kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
-
-    while ((l = ks.readseq(seq)) >= 0) {
-      for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
-        kmer = seq.seq.data() + i;
-
-        /*  search through whole string of N if first kmer OR if we found an N
-         as last character of previous kmer */
-        if (found_N != -1) {
-          found_N = find_last_N(kmer);
-          if (found_N >= 0) {
-            i += found_N;
-            continue;
-          }
-        }
-
-        /* if last charcter is a kmer skip this kmer*/
-        char last_char = kmer[KMER_DATA_LENGTH - 1];
-        if (last_char == 'N' || last_char == 'n') {
-          found_N = KMER_DATA_LENGTH - 1;
-          i += found_N;
-          continue;
-        }
-
-        res = kmer_ht->insert((void *)kmer);
-        if (!res) {
-          printf("FAIL\n");
-        } else {
-          num_inserts++;
-        }
-
-#ifdef CALC_STATS
-        if (!avg_read_length) {
-          avg_read_length = seq.seq.length();
-        } else {
-          avg_read_length = (avg_read_length + seq.seq.length()) / 2;
-        }
-#endif
-      }
-      found_N = 0;
-    }
-  }
-  t_end = RDTSCP();
-
-  sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_inserts = num_inserts;
-  printf("Quick stats: cycles per insertion:%lu\n",
-         (t_end - t_start) / num_inserts);
-
-  /* Finish insert loop */
-  if (config.mode == SYNTH || config.mode == PREFETCH || config.mode == FASTQ) {
-    sh->stats->ht_fill = kmer_ht->get_fill();
-    sh->stats->ht_capacity = kmer_ht->get_capacity();
-    sh->stats->max_count = kmer_ht->get_max_count();
+  if (config.mode == NO_INSERTS) {
+    shard_thread_parse_no_inserts(sh);
   } else {
-    sh->stats->ht_fill = 0;
-    sh->stats->ht_capacity = 0;
-    sh->stats->max_count = 0;
+    shard_thread_parse_and_insert(sh, kmer_ht);
   }
+
   /* Write to file */
   if (!config.ht_file.empty()) {
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
@@ -248,19 +221,6 @@ void *shard_thread(void *arg)
     kmer_ht->print_to_file(outfile);
   }
 
-#ifdef CALC_STATS
-  sh->stats->num_reprobes = kmer_ht->num_reprobes;
-  sh->stats->num_memcmps = kmer_ht->num_memcmps;
-  sh->stats->num_memcpys = kmer_ht->num_memcpys;
-  sh->stats->num_queue_flushes = kmer_ht->num_queue_flushes;
-  sh->stats->num_hashcmps = kmer_ht->num_hashcmps;
-  sh->stats->avg_distance_from_bucket =
-      (double)(kmer_ht->sum_distance_from_bucket / ht_size);
-  sh->stats->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
-  sh->stats->avg_read_length = avg_read_length;
-  sh->stats->num_sequences = num_sequences;
-#endif
-
   fipc_test_FAD(ready_threads);
 
   return NULL;
@@ -268,8 +228,31 @@ void *shard_thread(void *arg)
 
 void *producer_thread(void *arg)
 {
-  __shard *sh = (__shard *)arg;
-  printf("[INFO]: Producer %lu starting\n", sh->prod_idx);
+  // __shard *sh = (__shard *)arg;
+  // struct xorwow_state xw_state;
+  // xorwow_init(&xw_state);
+  // uint64_t k = 0;
+  // uint64_t num_inserts = 0;
+  // KmerHashTable *kmer_ht = NULL;
+  // uint64_t t_start, t_end;
+
+  // kmer_ht = init_ht(sz);
+
+  // for (auto i = 1; i < MAX_STRIDE; i++) {
+  //   t_start = RDTSC_START();
+
+  //   // PREFETCH_QUEUE_SIZE = i;
+
+  //   // PREFETCH_QUEUE_SIZE = 32;
+  //   num_inserts = synth_run(kmer_ht);
+
+  //   t_end = RDTSCP();
+  //   printf("Batch size: %lu, cycles per insertion:%lu\n", i,
+  //          (t_end - t_start) / num_inserts);
+  // }
+
+  // printf("[INFO]: Producer %lu starting. ht size:%lu, NUM_INSERTIONS:%lu\n",
+  //        sh->prod_idx);
 
   fipc_test_FAI(ready_producers);
   while (!test_ready) fipc_test_pause();
@@ -300,8 +283,8 @@ int spawn_shard_threads_bqueues()
     exit(-1);
   }
 
-  printf("[%lu]: Controller: starting [spawn_shard_threads_bqueues]...\n",
-         pthread_self());
+  printf("[INFO]: Controller: starting [spawn_shard_threads_bqueues]...\n");
+  // pthread_self()
   producer_count = config.n_prod;
   consumer_count = config.n_cons;
 
@@ -364,14 +347,15 @@ int spawn_shard_threads_bqueues()
     e = pthread_create(&prod_threads[x], NULL, producer_thread, (void *)sh);
     if (e != 0) {
       printf(
-          "[ERROR] pthread_create: Could not create thread: producer_thread\n");
+          "[ERROR]: pthread_create: Could not create thread: "
+          "producer_thread\n");
       exit(-1);
     }
     CPU_ZERO(&cpuset);
     size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2;
     CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
     pthread_setaffinity_np(prod_threads[x], sizeof(cpu_set_t), &cpuset);
-    printf("[INFO] Thread: %lu, producer_thread, affinity: %u\n", x,
+    printf("[INFO]: Spawn producer_thread %lu, affinity: %u\n", x,
            nodes[0].cpu_list[cpu_idx]);
   }
 
@@ -389,7 +373,7 @@ int spawn_shard_threads_bqueues()
     size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2 + 1;
     // CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
     pthread_setaffinity_np(cons_threads[x], sizeof(cpu_set_t), &cpuset);
-    printf("[INFO] Thread: %lu, consumer_thread, affinity: %u\n", x,
+    printf("[INFO]: Spawn consumer_thread %lu, affinity: %u\n", x,
            nodes[0].cpu_list[cpu_idx]);
   }
 
@@ -659,7 +643,11 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  if (config.mode != BQUEUE)
+  if (config.mode == SYNTH) {
+    synth_run_exec();
+  } else if (config.mode == PREFETCH) {
+    prefetch_test_run_exec();
+  } else if (config.mode != BQUEUE)
     spawn_shard_threads();
   else
     spawn_shard_threads_bqueues();

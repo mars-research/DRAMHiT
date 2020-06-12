@@ -119,7 +119,11 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
 kstream::~kstream()
 {
   close(this->fileid);
-  // free(this->fmap);
+// #ifdef __MMAP_FILE
+//   free(this->fmap);
+// #else
+//   free(this->buf);
+// #endif
 }
 
 /* Each time read is called, it tries to read the next record starting with '@'.

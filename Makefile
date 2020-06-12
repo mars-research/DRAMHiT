@@ -9,6 +9,7 @@ OPT_NO=-O0
 #sources =  misc_lib.cpp ac_kseq.cpp include/city/city.cc include/xx/xxhash.c main.cpp
 sources =  bqueue.c misc_lib.cpp ac_kseq.cpp include/xx/xxhash.c main.cpp 
 #CFLAGS += -DCALC_STATS
+# CFLAGS += -D__MMAP_FILE
 CFLAGS += -DTOUCH_DEPENDENCY
 #CFLAGS += -DSERIAL_SCAN
 CFLAGS += -DXORWOW_SCAN
@@ -32,15 +33,6 @@ kc: $(sources)
 
 kc_noopt: $(sources)
 	$(CC) $(sources) -o $(TARGET) $(CFLAGS) $(OPT_NO) $(LDFLAGS)
-
-mmap_file_noopt: $(sources)
-	$(CC) $(sources) -o $(TARGET) $(CFLAGS) -D__MMAP_FILE $(OPT_NO) $(LDFLAGS)
-
-mmap_file: $(sources)
-	$(CC) $(sources) -o $(TARGET) $(CFLAGS) -D__MMAP_FILE $(OPT_YES) $(LDFLAGS)
-
-stats: $(sources)
-	$(CC) $(sources) -o $(TARGET) $(CFLAGS) -DCALC_STATS $(OPT_YES) $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET) *.o

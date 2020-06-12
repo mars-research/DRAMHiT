@@ -84,3 +84,14 @@ struct __shard {
 };
 
 #endif /* _DATA_TYPES_H */
+
+
+// X mmap, no inserts, 1 thread 
+// X mmap, no inserts, 10 threads
+// X nommap,  no inserts, 1 thread
+// X nommap, no inserts, 10 threads
+
+// mmap fasta 1 thread
+// mmap fastq 10 threds
+// nommap fasta 1 thread
+// nommap fastq 10 threds
