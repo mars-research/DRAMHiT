@@ -1,13 +1,20 @@
 #!/bin/bash
 
-# TODO: Pick this up from lscpu or derive it from msrs.
-CPU_FREQ=2200000
+CPU_FREQ_KHZ=0
+
+get_rated_cpufreq() {
+	# lscpu reports the rated processor freq in %1.2f format. Since bash cannot natively do
+	# floating point arithmetic, cheat here a bit to get an integer freq. Note: There's bc!
+	CPU_FREQ_GHZ=$(lscpu | grep -o "[0-9\.]\+GHz" | grep -o "[0-9\.]\+" | sed 's/\.//')
+	CPU_FREQ_KHZ=$((${CPU_FREQ_GHZ}*10*1000))
+	echo $CPU_FREQ_KHZ
+}
 
 set_freq() {
 	# make both min and max to the advertised freq
 	if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]; then
-		for i in $(ls /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq); do echo "${CPU_FREQ}" | sudo tee $i > /dev/null 2>&1 ;done
-		for i in $(ls /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq); do echo "${CPU_FREQ}" | sudo tee $i > /dev/null 2>&1 ;done
+		for i in $(ls /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq); do echo "${CPU_FREQ_KHZ}" | sudo tee $i > /dev/null 2>&1 ;done
+		for i in $(ls /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq); do echo "${CPU_FREQ_KHZ}" | sudo tee $i > /dev/null 2>&1 ;done
 	fi
 }
 
@@ -51,5 +58,6 @@ dump_sys_state() {
 	sudo rdmsr -a 0x1a0 -f 38:38
 }
 
+get_rated_cpufreq;
 set_const_freq;
 dump_sys_state;
