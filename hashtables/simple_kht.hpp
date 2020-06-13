@@ -278,12 +278,9 @@ class SimpleKmerHashTable : public KmerHashTable
     if (this->hashtable == NULL) {
       perror("[ERROR]: SimpleKmerHashTable aligned_alloc");
     }
-    if (memset(hashtable, 0, capacity * sizeof(Kmer_r)) < 0){
-      perror("[ERROR]: SimpleKmerHashTable memset");
-    }
-    if (memset(&this->empty_kmer_r, 0, sizeof(Kmer_r)) < 0){
-      perror("[ERROR]: SimpleKmerHashTable");
-    }
+
+    memset(hashtable, 0, capacity * sizeof(Kmer_r));
+    memset(&this->empty_kmer_r, 0, sizeof(Kmer_r));
 
     this->queue = (Kmer_queue_r *)(aligned_alloc(
         __PAGE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue_r)));

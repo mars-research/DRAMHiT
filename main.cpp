@@ -264,7 +264,7 @@ void *producer_thread(void *arg)
 void *consumer_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
-  printf("[INFO]: Consumer %lu starting\n", sh->cons_idx);
+  printf("[INFO]: Consumer %u starting\n", sh->cons_idx);
 
   return NULL;
 }
@@ -556,7 +556,7 @@ int main(int argc, char *argv[])
         "Use alphanum_kmers (for debugging)")(
         "numa-split",
         po::value<bool>(&config.numa_split)->default_value(def.numa_split),
-        "Split spwaning threads between numa nodes")(
+        "Split spawning threads between numa nodes")(
         "stats",
         po::value<std::string>(&config.stats_file)
             ->default_value(def.stats_file),

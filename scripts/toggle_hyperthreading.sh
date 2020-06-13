@@ -3,7 +3,9 @@ typeset -i core_id
 typeset -i sibling_id
 typeset -i state
 
-for i in /sys/devices/system/cpu/cpu[0-$(( $(nproc) - 1 ))]*; do
+NPROC=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
+
+for i in /sys/devices/system/cpu/cpu[0-$(( ${NPROC} - 1 ))]*; do
   core_id="${i##*cpu}"
   sibling_id="-1"
 

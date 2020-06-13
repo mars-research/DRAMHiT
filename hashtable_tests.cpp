@@ -9,10 +9,10 @@ extern KmerHashTable *init_ht(uint64_t sz);
 
 #define BATCH_LENGTH 32
 /* 1 << 24 -- 16M */
-#define NUM_INSERTS (1 << 26)
+#define NUM_INSERTS  (1ULL<<26)
 //#define NUM_INSERTS  (1<<7)
 
-#define HT_SIZE NUM_INSERTS * 16
+#define HT_SIZE  (NUM_INSERTS*16)
 #define MAX_STRIDE 2
 
 struct kmer kmers[BATCH_LENGTH];
@@ -25,7 +25,7 @@ uint64_t synth_run(KmerHashTable *ktable)
 
   printf("Synthetic run\n");
 
-  for (auto i = 0; i < NUM_INSERTS; i++) {
+  for(auto i = 0u; i < NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     *((uint64_t *)&kmers[k].data) = count & (32 - 1);
 #else
@@ -96,8 +96,9 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
   // seed2 = seed;
 
   memcpy(&xw_state2, &xw_state, sizeof(xw_state));
-
-  for (auto i = 0; i < PREFETCH_STRIDE; i++) {
+  
+  for(auto i = 0u; i < PREFETCH_STRIDE; i++) {
+    
     // k = rand(&seed2);
     k = xorwow(&xw_state2);
 
@@ -105,27 +106,29 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
     ktable->prefetch(k);
   }
 
-  for (auto i = 0; i < NUM_INSERTS; i++) {
-    // k = myrand(&seed);
-    // k = rand();
+  for(auto i = 0u; i < NUM_INSERTS; i++) {
 
-#ifdef XORWOW_SCAN
-    /*
-     * With if-then dependency it's 99 cycles, without 30 (no prefetch)
-     *
-     * Prefetch itself doesn't help, 100 cycles with normal prefetch (with
-     * dependency).
-     *
-     * However, if I prefetch with the "write" it seems to help
-     *
-     * Prefetch test run: ht size:1073741824, insertions:67108864
-     * Prefetch stride: 0, cycles per insertion:121
-     * Prefetch stride: 1, cycles per insertion:36
-     * Prefetch stride: 2, cycles per insertion:46
-     * Prefetch stride: 3, cycles per insertion:44
-     * Prefetch stride: 4, cycles per insertion:45
-     * Prefetch stride: 5, cycles per insertion:46
-     * Prefetch stride: 6, cycles per insertion:47
+    //k = myrand(&seed);
+    //k = rand();
+
+
+#ifdef XORWOW_SCAN 
+    /* 
+		 * With if-then dependency it's 99 cycles, without 30 (no prefetch)
+		 * 
+		 * Prefetch itself doesn't help, 100 cycles with normal prefetch (with 
+		 * dependency). 
+		 *
+		 * However, if I prefetch with the "write" it seems to help
+		 *
+		 * Prefetch test run: ht size:1073741824, insertions:67108864
+		 * Prefetch stride: 0, cycles per insertion:121
+		 * Prefetch stride: 1, cycles per insertion:36
+		 * Prefetch stride: 2, cycles per insertion:46
+		 * Prefetch stride: 3, cycles per insertion:44
+		 * Prefetch stride: 4, cycles per insertion:45
+		 * Prefetch stride: 5, cycles per insertion:46
+		 * Prefetch stride: 6, cycles per insertion:47
      */
 
     k = xorwow(&xw_state);
