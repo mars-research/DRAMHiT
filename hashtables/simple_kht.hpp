@@ -292,6 +292,7 @@ class SimpleKmerHashTable : public KmerHashTable
   {
     free(hashtable);
     free(queue);
+    printf("hashtable freed\n");
   }
 
 #if INSERT_BATCH

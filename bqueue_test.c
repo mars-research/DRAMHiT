@@ -38,7 +38,8 @@ void* producer(void* data)
   node_t* t = node_tables[thread_id];
   queue_t** q = prod_queues[thread_id];
 
-  pr_err("[%lu]: Producer %lu starting...\n", pthread_self(), thread_id);
+  pr_err("[%lu]: Producer %lu starting, transactions: %lu...\n", 
+    pthread_self(), thread_id, transactions);
 
   /* Touching data */
   // for ( transaction_id = 0; transaction_id < mem_pool_size; transaction_id++

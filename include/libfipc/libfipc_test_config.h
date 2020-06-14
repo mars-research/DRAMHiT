@@ -11,7 +11,7 @@
 #include "../bqueue.h"
 
 // Test Variables
-[[maybe_unused]] static uint64_t transactions = 100000000;
+static uint64_t transactions = 100000000;
 // static uint64_t transactions = 200000000;
 
 static uint8_t producer_count = 1;
@@ -35,9 +35,9 @@ module_param( consumer_count, byte, 0 );
 //NUMA node2 CPU(s):     2,6,10,14,18,22,26,30
 //NUMA node3 CPU(s):     3,7,11,15,19,23,27,31
 
-[[maybe_unused]] static uint8_t producer_cpus[10] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18};
+static uint8_t producer_cpus[10] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18};
 
-[[maybe_unused]] static uint8_t consumer_cpus[10] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
+static uint8_t consumer_cpus[10] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
 
 //static uint8_t producer_cpus[32] = { 0, 4, 8, 12,
 // 								     1, 5, 9, 13,
@@ -61,7 +61,7 @@ module_param( consumer_count, byte, 0 );
 // Queue Variables
 static queue_t*** prod_queues = NULL;
 static queue_t*** cons_queues = NULL;
-[[maybe_unused]] static node_t**   node_tables = NULL;
+static node_t**   node_tables = NULL;
 
 // Request Types
 #define MSG_ENQUEUE         1
@@ -73,6 +73,6 @@ static uint64_t completed_consumers = 0;
 static uint64_t ready_consumers     = 0;
 static uint64_t ready_producers     = 0;
 static uint64_t test_ready          = 0;
-[[maybe_unused]] static uint64_t test_finished       = 0;
+static uint64_t test_finished       = 0;
 
 #endif

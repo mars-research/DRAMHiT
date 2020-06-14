@@ -71,8 +71,11 @@ kseq::kseq()
 {
   this->seq.reserve(BUFFER_SIZE);
   this->last_char = 0;
-};
-kseq::~kseq() = default;
+}
+
+kseq::~kseq() {
+  printf("kseq destructor called\n");
+}
 
 kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
     : bufferSize(BUFFER_SIZE)
@@ -124,6 +127,7 @@ kstream::~kstream()
 // #else
 //   free(this->buf);
 // #endif
+  printf("kstream descturtor\n");
 }
 
 /* Each time read is called, it tries to read the next record starting with '@'.

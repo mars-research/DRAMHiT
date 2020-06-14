@@ -1,3 +1,5 @@
+#ifndef HT_TESTS
+#define HT_TESTS
 
 struct kmer {
   char data[KMER_DATA_LENGTH];
@@ -7,16 +9,16 @@ const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
 extern KmerHashTable *init_ht(uint64_t sz);
 
-#define BATCH_LENGTH 32
+// #define HT_TESTS_BATCH_LENGTH 32
+#define HT_TESTS_BATCH_LENGTH 128
 /* 1 << 24 -- 16M */
-#define NUM_INSERTS  (1ULL<<26)
-//#define NUM_INSERTS  (1<<7)
+#define HT_TESTS_NUM_INSERTS  (1ULL<<26)
+//#define HT_TESTS_NUM_INSERTS  (1<<7)
 
-#define HT_SIZE  (NUM_INSERTS*16)
-#define MAX_STRIDE 2
+#define HT_TESTS_HT_SIZE  (HT_TESTS_NUM_INSERTS*16)
+#define HT_TESTS_MAX_STRIDE 2
 
-struct kmer kmers[BATCH_LENGTH];
-KmerHashTable *kmer_ht = NULL;
+struct kmer kmers[HT_TESTS_BATCH_LENGTH];
 
 uint64_t synth_run(KmerHashTable *ktable)
 {
@@ -25,14 +27,14 @@ uint64_t synth_run(KmerHashTable *ktable)
 
   printf("Synthetic run\n");
 
-  for(auto i = 0u; i < NUM_INSERTS; i++) {
+  for(auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     *((uint64_t *)&kmers[k].data) = count & (32 - 1);
 #else
     *((uint64_t *)&kmers[k].data) = count;
 #endif
     ktable->insert((void *)&kmers[k]);
-    k = (k + 1) & (BATCH_LENGTH - 1);
+    k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
     count++;
   }
 
@@ -106,7 +108,7 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
     ktable->prefetch(k);
   }
 
-  for(auto i = 0u; i < NUM_INSERTS; i++) {
+  for(auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 
     //k = myrand(&seed);
     //k = rand();
@@ -156,14 +158,14 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
 
 void synth_run_exec()
 {
+  KmerHashTable *kmer_ht;
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  kmer_ht = init_ht(HT_SIZE);
+  printf("Synth test run: ht size:%llu, insertions:%llu\n", HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
-  printf("Synth test run: ht size:%lu, insertions:%lu\n", HT_SIZE, NUM_INSERTS);
-
-  for (auto i = 1; i < MAX_STRIDE; i++) {
+  kmer_ht = init_ht(HT_TESTS_HT_SIZE);
+  for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     t_start = RDTSC_START();
 
     // PREFETCH_QUEUE_SIZE = i;
@@ -172,28 +174,32 @@ void synth_run_exec()
     num_inserts = synth_run(kmer_ht);
 
     t_end = RDTSCP();
-    printf("Batch size: %lu, cycles per insertion:%lu\n", i,
+    printf("Batch size: %d, cycles per insertion:%lu\n", i,
            (t_end - t_start) / num_inserts);
   }
 }
 
 void prefetch_test_run_exec()
 {
-
+  KmerHashTable *kmer_ht;
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
-  kmer_ht = init_ht(HT_SIZE);
-  printf("Prefetch test run: ht size:%lu, insertions:%lu\n", HT_SIZE,
-         NUM_INSERTS);
+
+  printf("Prefetch test run: ht size:%llu, insertions:%llu\n", HT_TESTS_HT_SIZE,
+         HT_TESTS_NUM_INSERTS);
+
+  kmer_ht = init_ht(HT_TESTS_HT_SIZE);
 
   xorwow_init(&xw_state);
 
-  for (auto i = 0; i < MAX_STRIDE; i++) {
+  for (auto i = 0; i < HT_TESTS_MAX_STRIDE; i++) {
     t_start = RDTSC_START();
     PREFETCH_STRIDE = i;
     num_inserts = prefetch_test_run((SimpleKmerHashTable *)kmer_ht);
     t_end = RDTSCP();
-    printf("Prefetch stride: %lu, cycles per insertion:%lu\n", i,
+    printf("Prefetch stride: %d, cycles per insertion:%lu\n", i,
            (t_end - t_start) / num_inserts);
   }
 }
+
+#endif /* HASHTABLE_TESTS */

@@ -21,8 +21,8 @@ typedef enum {
   DRY_RUN = 1,
   READ_FROM_DISK = 2,
   WRITE_TO_DISK = 3,
-  FASTQ = 4,
-  NO_INSERTS = 5,  // FASTQ but no inserts
+  FASTQ_WITH_INSERT = 4,
+  FASTQ_NO_INSERT = 5, 
   SYNTH = 6,
   PREFETCH = 7,
   BQUEUE = 8
