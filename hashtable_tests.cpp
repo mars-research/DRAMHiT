@@ -12,10 +12,10 @@ extern KmerHashTable *init_ht(uint64_t sz);
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
 /* 1 << 24 -- 16M */
-#define HT_TESTS_NUM_INSERTS  (1ULL<<26)
+#define HT_TESTS_NUM_INSERTS (1ULL << 26)
 //#define HT_TESTS_NUM_INSERTS  (1<<7)
 
-#define HT_TESTS_HT_SIZE  (HT_TESTS_NUM_INSERTS*16)
+#define HT_TESTS_HT_SIZE (HT_TESTS_NUM_INSERTS * 16)
 #define HT_TESTS_MAX_STRIDE 2
 
 struct kmer kmers[HT_TESTS_BATCH_LENGTH];
@@ -25,9 +25,7 @@ uint64_t synth_run(KmerHashTable *ktable)
   auto count = 0;
   auto k = 0;
 
-  printf("Synthetic run\n");
-
-  for(auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     *((uint64_t *)&kmers[k].data) = count & (32 - 1);
 #else
@@ -98,9 +96,8 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
   // seed2 = seed;
 
   memcpy(&xw_state2, &xw_state, sizeof(xw_state));
-  
-  for(auto i = 0u; i < PREFETCH_STRIDE; i++) {
-    
+
+  for (auto i = 0u; i < PREFETCH_STRIDE; i++) {
     // k = rand(&seed2);
     k = xorwow(&xw_state2);
 
@@ -108,29 +105,27 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
     ktable->prefetch(k);
   }
 
-  for(auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+    // k = myrand(&seed);
+    // k = rand();
 
-    //k = myrand(&seed);
-    //k = rand();
-
-
-#ifdef XORWOW_SCAN 
-    /* 
-		 * With if-then dependency it's 99 cycles, without 30 (no prefetch)
-		 * 
-		 * Prefetch itself doesn't help, 100 cycles with normal prefetch (with 
-		 * dependency). 
-		 *
-		 * However, if I prefetch with the "write" it seems to help
-		 *
-		 * Prefetch test run: ht size:1073741824, insertions:67108864
-		 * Prefetch stride: 0, cycles per insertion:121
-		 * Prefetch stride: 1, cycles per insertion:36
-		 * Prefetch stride: 2, cycles per insertion:46
-		 * Prefetch stride: 3, cycles per insertion:44
-		 * Prefetch stride: 4, cycles per insertion:45
-		 * Prefetch stride: 5, cycles per insertion:46
-		 * Prefetch stride: 6, cycles per insertion:47
+#ifdef XORWOW_SCAN
+    /*
+     * With if-then dependency it's 99 cycles, without 30 (no prefetch)
+     *
+     * Prefetch itself doesn't help, 100 cycles with normal prefetch (with
+     * dependency).
+     *
+     * However, if I prefetch with the "write" it seems to help
+     *
+     * Prefetch test run: ht size:1073741824, insertions:67108864
+     * Prefetch stride: 0, cycles per insertion:121
+     * Prefetch stride: 1, cycles per insertion:36
+     * Prefetch stride: 2, cycles per insertion:46
+     * Prefetch stride: 3, cycles per insertion:44
+     * Prefetch stride: 4, cycles per insertion:45
+     * Prefetch stride: 5, cycles per insertion:46
+     * Prefetch stride: 6, cycles per insertion:47
      */
 
     k = xorwow(&xw_state);
@@ -156,15 +151,14 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
   return count;
 }
 
-void synth_run_exec()
+void synth_run_exec(__shard *sh, KmerHashTable *kmer_ht)
 {
-  KmerHashTable *kmer_ht;
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("Synth test run: ht size:%llu, insertions:%llu\n", HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
+  printf("[INFO] Synth test run: thread %u, ht size: %llu, insertions: %llu\n",
+         sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
-  kmer_ht = init_ht(HT_TESTS_HT_SIZE);
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     t_start = RDTSC_START();
 
@@ -174,21 +168,23 @@ void synth_run_exec()
     num_inserts = synth_run(kmer_ht);
 
     t_end = RDTSCP();
-    printf("Batch size: %d, cycles per insertion:%lu\n", i,
-           (t_end - t_start) / num_inserts);
+    printf(
+        "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
+        "insertion:%lu\n",
+        sh->shard_idx, i, (t_end - t_start) / num_inserts);
   }
+  sh->stats->insertion_cycles = (t_end - t_start);
+  sh->stats->num_inserts = num_inserts;
+  get_ht_stats(sh, kmer_ht);
 }
 
-void prefetch_test_run_exec()
+void prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht)
 {
-  KmerHashTable *kmer_ht;
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("Prefetch test run: ht size:%llu, insertions:%llu\n", HT_TESTS_HT_SIZE,
-         HT_TESTS_NUM_INSERTS);
-
-  kmer_ht = init_ht(HT_TESTS_HT_SIZE);
+  printf("[INFO] Prefetch test run: thread %u, ht size:%llu, insertions:%llu\n",
+         sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   xorwow_init(&xw_state);
 
@@ -197,9 +193,15 @@ void prefetch_test_run_exec()
     PREFETCH_STRIDE = i;
     num_inserts = prefetch_test_run((SimpleKmerHashTable *)kmer_ht);
     t_end = RDTSCP();
-    printf("Prefetch stride: %d, cycles per insertion:%lu\n", i,
-           (t_end - t_start) / num_inserts);
+    printf(
+        "[INFO] Quick stats: thread %u, Prefetch stride: %d, cycles per "
+        "insertion:%lu\n",
+        sh->shard_idx, i, (t_end - t_start) / num_inserts);
   }
+
+  sh->stats->insertion_cycles = (t_end - t_start);
+  sh->stats->num_inserts = num_inserts;
+  get_ht_stats(sh, kmer_ht);
 }
 
 #endif /* HASHTABLE_TESTS */
