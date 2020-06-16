@@ -7,7 +7,7 @@
 #define BQ_TESTS_NUM_INSERTS (1ULL << 26)
 #define BQ_TESTS_HT_SIZE (BQ_TESTS_NUM_INSERTS * 16)
 
-extern KmerHashTable *init_ht(uint64_t sz);
+extern KmerHashTable *init_ht(uint64_t sz, uint8_t);
 
 static int *bqueue_halt;
 struct bq_kmer {
@@ -95,7 +95,7 @@ void *consumer_thread(void *arg)
   queue_t **q = cons_queues[this_cons_id];
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
-  kmer_ht = init_ht(BQ_TESTS_HT_SIZE);
+  kmer_ht = init_ht(BQ_TESTS_HT_SIZE, sh->shard_idx);
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();

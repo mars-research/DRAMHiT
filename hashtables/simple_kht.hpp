@@ -86,8 +86,11 @@ uint32_t fnv_32a_buf(const void *buf, size_t len, uint32_t hval)
 typedef struct {
   const void *kmer_data_ptr;
   uint32_t kmer_idx;       // TODO reduce size, TODO decided by hashtable size?
+  uint8_t pad[4];
+#ifdef COMPARE_HASH
   uint64_t kmer_cityhash;  // 8 bytes
-} __attribute__((packed)) Kmer_queue_r;
+#endif
+} __attribute__((aligned(64))) Kmer_queue_r;
 
 std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
 {
@@ -97,7 +100,7 @@ std::ostream &operator<<(std::ostream &strm, const Kmer_r &k)
 
 /* AB: 1GB page table code is from https://github.com/torvalds/linux/blob/master/tools/testing/selftests/vm/hugepage-mmap.c */
 
-#define FILE_NAME "/mnt/huge/hugepagefile"
+#define FILE_NAME "/mnt/huge/hugepagefile%d"
 #define LENGTH (1*1024UL*1024*1024)
 #define PROTECTION (PROT_READ | PROT_WRITE)
 
@@ -173,7 +176,7 @@ static inline void prefetch_with_write(Kmer_r *k) {
   k->padding[0] = 1; 
 }
 
-class SimpleKmerHashTable : public KmerHashTable
+class alignas(64) SimpleKmerHashTable : public KmerHashTable
 {
  
   public:
@@ -248,7 +251,21 @@ class SimpleKmerHashTable : public KmerHashTable
 
   Kmer_r *hashtable;
 
-  SimpleKmerHashTable(uint64_t c)
+  // https://www.bfilipek.com/2019/08/newnew-align.html
+  void* operator new(std::size_t size, std::align_val_t align) {
+    auto ptr = aligned_alloc(static_cast<std::size_t>(align), size);
+
+    if (!ptr)
+      throw std::bad_alloc{};
+
+    std::cout << "new: " << size << ", align: "
+      << static_cast<std::size_t>(align)
+      << ", ptr: " << ptr << '\n';
+
+    return ptr;
+  }
+
+  SimpleKmerHashTable(uint64_t c, uint32_t id)
   {
     // TODO static cast
     // TODO power of 2 hashtable size for ease of mod operations
@@ -259,22 +276,29 @@ class SimpleKmerHashTable : public KmerHashTable
         (Kmer_r *)aligned_alloc(__PAGE_SIZE, capacity * sizeof(Kmer_r));
 #else
 		int fd;
+    char mmap_path[256] = {0};
 
-		fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
+    snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
+
+		fd = open(mmap_path, O_CREAT | O_RDWR, 0755);
 
     if (fd < 0) {
-      dbg("Couldn't open file %s:", FILE_NAME);
+      dbg("Couldn't open file %s:", mmap_path);
       perror("");
       exit(1);
+    } else {
+      dbg("opened file %s\n", mmap_path);
     }
 
 		this->hashtable = (Kmer_r *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(Kmer_r), 
 																			PROTECTION, FLAGS, fd, 0);
 		if (this->hashtable == MAP_FAILED) {
 			perror("mmap");
-			unlink(FILE_NAME);
+			unlink(mmap_path);
 			exit(1);
-		}
+		} else {
+      dbg("mmap returns %p\n", this->hashtable);
+    }
 
 #endif
 
@@ -286,9 +310,10 @@ class SimpleKmerHashTable : public KmerHashTable
     memset(&this->empty_kmer_r, 0, sizeof(Kmer_r));
 
     this->queue = (Kmer_queue_r *)(aligned_alloc(
-        __PAGE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue_r)));
+        64, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue_r)));
     this->queue_idx = 0;
-    __builtin_prefetch(queue, 1, 3);
+    dbg("id: %d this->queue %p\n", id, this->queue);
+//    __builtin_prefetch(queue, 1, 3);
   }
 
   ~SimpleKmerHashTable()
@@ -470,6 +495,8 @@ class SimpleKmerHashTable : public KmerHashTable
     this->prefetch(__kmer_idx);
 
     // printf("inserting into queue at %u\n", this->queue_idx);
+    __builtin_prefetch(&queue[this->queue_idx + 4], 1, 3);
+    //__builtin_prefetch(&queue[this->queue_idx + 2], 1, 3);
     queue[this->queue_idx].kmer_data_ptr = kmer_data;
     queue[this->queue_idx].kmer_idx = __kmer_idx;
 #ifdef COMPARE_HASH

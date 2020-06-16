@@ -62,13 +62,13 @@ Configuration config;
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
-KmerHashTable *init_ht(uint64_t sz)
+KmerHashTable *init_ht(uint64_t sz, uint8_t id)
 {
   KmerHashTable *kmer_ht = NULL;
 
   /* Create hash table */
   if (config.ht_type == 1) {
-    kmer_ht = new SimpleKmerHashTable(sz);
+    kmer_ht = new SimpleKmerHashTable(sz, id);
   } else if (config.ht_type == 2) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == 3) {
@@ -88,11 +88,12 @@ void *shard_thread(void *arg)
   sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
 
   if (config.mode == FASTQ_WITH_INSERT) {
-    kmer_ht = init_ht(config.in_file_sz / config.num_threads);
+    kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
   } else if (config.mode == SYNTH || config.mode == PREFETCH) {
-    kmer_ht = init_ht(HT_TESTS_HT_SIZE);
+    kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
   } else if (config.mode == BQ_TESTS_NO_BQ) {
-    kmer_ht = init_ht(BQ_TESTS_HT_SIZE);
+    kmer_ht = init_ht(BQ_TESTS_HT_SIZE, sh->shard_idx);
+
   }
 
   fipc_test_FAI(ready_threads);

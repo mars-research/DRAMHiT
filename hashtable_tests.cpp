@@ -5,25 +5,24 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-const uint32_t PREFETCH_QUEUE_SIZE = 64;
+const uint32_t PREFETCH_QUEUE_SIZE = 32 * 2;
 
 extern KmerHashTable *init_ht(uint64_t sz);
 
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
 /* 1 << 24 -- 16M */
-#define HT_TESTS_NUM_INSERTS (1ULL << 26)
+#define HT_TESTS_NUM_INSERTS (1ULL << 25)
 //#define HT_TESTS_NUM_INSERTS  (1<<7)
 
-#define HT_TESTS_HT_SIZE (HT_TESTS_NUM_INSERTS * 16)
+#define HT_TESTS_HT_SIZE (HT_TESTS_NUM_INSERTS * 4)
 #define HT_TESTS_MAX_STRIDE 2
-
-struct kmer kmers[HT_TESTS_BATCH_LENGTH];
 
 uint64_t synth_run(KmerHashTable *ktable)
 {
   auto count = 0;
   auto k = 0;
+  __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH];
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
