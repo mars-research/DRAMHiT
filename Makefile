@@ -23,6 +23,7 @@ CFLAGS += -DHUGE_1GB_PAGES
 #CFLAGS += -DFNV_HASH
 CFLAGS += -DXX_HASH
 # CFLAGS += -DXX_HASH_3
+# CFLAGS += -DBQ_TESTS_INSERT_XORWOW
 
 .PHONY: all noopt clean ugdb
 
@@ -39,4 +40,3 @@ clean:
 
 ugdb:
 	ugdb $(TARGET)
-	

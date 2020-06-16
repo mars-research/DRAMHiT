@@ -24,11 +24,9 @@
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "./include/print_stats.h"
-
-#include "hashtable_tests.cpp"
 #include "bq_tests.cpp"
+#include "hashtable_tests.cpp"
 #include "parser_tests.cpp"
-
 
 /* Numa config */
 Numa n;
@@ -40,7 +38,7 @@ const Configuration def = {
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
     .num_threads = 1,
-    .mode = BQUEUE,  // TODO enum
+    .mode = BQ_TESTS_YES_BQ,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
@@ -89,6 +87,8 @@ void *shard_thread(void *arg)
     kmer_ht = init_ht(config.in_file_sz / config.num_threads);
   } else if (config.mode == SYNTH || config.mode == PREFETCH) {
     kmer_ht = init_ht(HT_TESTS_HT_SIZE);
+  } else if (config.mode == BQ_TESTS_NO_BQ) {
+    kmer_ht = init_ht(BQ_TESTS_HT_SIZE);
   }
 
   fipc_test_FAI(ready_threads);
@@ -104,6 +104,8 @@ void *shard_thread(void *arg)
     synth_run_exec(sh, kmer_ht);
   } else if (config.mode == PREFETCH) {
     prefetch_test_run_exec(sh, kmer_ht);
+  } else if (config.mode == BQ_TESTS_NO_BQ) {
+    no_bqueues(sh, kmer_ht);
   }
 
   /* Write to file */
@@ -140,10 +142,11 @@ int spawn_shard_threads_bqueues()
          producer_count, consumer_count);
 
   /* Stats data structures */
-  __shard *all_shards = (__shard *)memalign(FIPC_CACHE_LINE_SIZE,
-                                            sizeof(__shard) * consumer_count);
+  __shard *all_shards =
+      (__shard *)memalign(FIPC_CACHE_LINE_SIZE,
+                          sizeof(__shard) * (producer_count + consumer_count));
 
-  memset(all_shards, 0, sizeof(__shard) * config.num_threads);
+  memset(all_shards, 0, sizeof(__shard) * (producer_count + consumer_count));
 
   /* Queue Allocation */
   queue_t *queues = (queue_t *)memalign(
@@ -198,7 +201,7 @@ int spawn_shard_threads_bqueues()
   /* Spawn producer threads */
   for (size_t x = 0; x < producer_count; x++) {
     __shard *sh = &all_shards[x];
-    sh->prod_idx = x;
+    sh->shard_idx = x;
     e = pthread_create(&prod_threads[x], NULL, producer_thread, (void *)sh);
     if (e != 0) {
       printf(
@@ -207,7 +210,7 @@ int spawn_shard_threads_bqueues()
       exit(-1);
     }
     CPU_ZERO(&cpuset);
-    size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2;
+    size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2;  // {0,2,4,6,8}
     CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
     pthread_setaffinity_np(prod_threads[x], sizeof(cpu_set_t), &cpuset);
     printf("[INFO]: Spawn producer_thread %lu, affinity: %u\n", x,
@@ -215,20 +218,21 @@ int spawn_shard_threads_bqueues()
   }
 
   /* Spawn consumer threads */
-  for (size_t x = 0; x < consumer_count; x++) {
+  for (size_t x = producer_count, y = 0; x < producer_count + consumer_count;
+       x++, y++) {
     __shard *sh = &all_shards[x];
-    sh->cons_idx = x;
-    e = pthread_create(&cons_threads[x], NULL, consumer_thread, (void *)sh);
+    sh->shard_idx = x;
+    e = pthread_create(&cons_threads[y], NULL, consumer_thread, (void *)sh);
     if (e != 0) {
       printf(
           "[ERROR] pthread_create: Could not create thread: consumer_thread\n");
       exit(-1);
     }
     CPU_ZERO(&cpuset);
-    size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2 + 1;
-    // CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
-    pthread_setaffinity_np(cons_threads[x], sizeof(cpu_set_t), &cpuset);
-    printf("[INFO]: Spawn consumer_thread %lu, affinity: %u\n", x,
+    size_t cpu_idx = (y % nodes[0].cpu_list.size()) * 2 + 1;  //{1,3,5,7,9}
+    CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
+    pthread_setaffinity_np(cons_threads[y], sizeof(cpu_set_t), &cpuset);
+    printf("[INFO]: Spawn consumer_thread %lu, affinity: %u\n", y,
            nodes[0].cpu_list[cpu_idx]);
   }
 
@@ -263,11 +267,13 @@ int spawn_shard_threads_bqueues()
 
   fipc_test_mfence();
 
-  /* Tell consumers to halt once producers are done */
+  config.num_threads = producer_count + consumer_count;
+  print_stats(all_shards);
 
+  /* Tell consumers to halt once producers are done */
   return 0;
 
-  // TODO free everything
+  /* TODO free everything */
 }
 
 int spawn_shard_threads()
@@ -499,10 +505,10 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  if (config.mode != BQUEUE)
-    spawn_shard_threads();
-  else
+  if (config.mode == BQ_TESTS_YES_BQ)
     spawn_shard_threads_bqueues();
+  else
+    spawn_shard_threads();
 
   return 0;
 }

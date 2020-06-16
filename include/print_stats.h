@@ -49,8 +49,13 @@ void print_stats(__shard *all_sh)
   //   uint64_t all_total_find_cycles = 0;
   //   double all_total_find_time_ns = 0;
 
+  size_t k = 0;
+  if (config.mode == BQ_TESTS_YES_BQ) {
+    k = producer_count;
+  }
+
   printf("===============================================================\n");
-  for (size_t k = 0; k < config.num_threads; k++) {
+  for (; k < config.num_threads; k++) {
     if (all_sh[k].stats->num_inserts == 0) {
       printf("Thread %2d: No inserts \n", all_sh[k].shard_idx);
       continue;

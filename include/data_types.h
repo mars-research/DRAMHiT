@@ -25,7 +25,8 @@ typedef enum {
   FASTQ_NO_INSERT = 5, 
   SYNTH = 6,
   PREFETCH = 7,
-  BQUEUE = 8
+  BQ_TESTS_YES_BQ = 8,
+  BQ_TESTS_NO_BQ = 9
 } run_mode_t;
 
 /* Test config */
@@ -72,15 +73,13 @@ struct thread_stats {
 };
 
 struct __shard {
-  uint32_t shard_idx; 
+  uint8_t shard_idx; // equivalent to a thread_id
   off64_t f_start;  // start byte into file
   off64_t f_end;    // end byte into file
   thread_stats* stats;
   Kmer_s* kmer_big_pool;
   Kmer_s* kmer_small_pool;
   Kmer_s* pool;
-  uint32_t prod_idx;
-  uint32_t cons_idx;
 };
 
 #endif /* _DATA_TYPES_H */
