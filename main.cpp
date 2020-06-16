@@ -28,6 +28,10 @@
 #include "hashtable_tests.cpp"
 #include "parser_tests.cpp"
 
+#ifdef WITH_PAPI_LIB
+#include <papi.h>
+#endif
+
 /* Numa config */
 Numa n;
 std::vector<numa_node> nodes = n.get_node_config();
@@ -380,6 +384,19 @@ int spawn_shard_threads()
   return 0;
 }
 
+#ifdef WITH_PAPI_LIB
+void papi_init(void) {
+  if(PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+  {
+    printf("Library initialization error! \n");
+    exit(1);
+  }
+  printf("PAPI library initialized\n");
+}
+#else
+void papi_init(void) { }
+#endif
+
 int main(int argc, char *argv[])
 {
   try {
@@ -442,6 +459,8 @@ int main(int argc, char *argv[])
         "for bqueues only")(
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
         "for bqueues only");
+
+    papi_init();
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
