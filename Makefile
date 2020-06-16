@@ -25,6 +25,8 @@ CFLAGS += -DXX_HASH
 # CFLAGS += -DXX_HASH_3
 # CFLAGS += -DBQ_TESTS_INSERT_XORWOW
 
+CFLAGS += -I./include
+
 CFLAGS_PAPI = -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
 LDFLAGS_PAPI = -L$(PWD)/papi/src/install/lib/ -lpapi
 

@@ -1,6 +1,7 @@
 #ifndef _SKHT_H
 #define _SKHT_H
 
+#include "dbg.hpp"
 #include <sys/mman.h>
 #include "../include/base_kht.hpp"
 #include "../include/city/city.h"
@@ -260,10 +261,12 @@ class SimpleKmerHashTable : public KmerHashTable
 		int fd;
 
 		fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
-		if (fd < 0) {
-			perror("Open failed");
-			exit(1);
-		}
+
+    if (fd < 0) {
+      dbg("Couldn't open file %s:", FILE_NAME);
+      perror("");
+      exit(1);
+    }
 
 		this->hashtable = (Kmer_r *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(Kmer_r), 
 																			PROTECTION, FLAGS, fd, 0);
