@@ -17,7 +17,7 @@ extern KmerHashTable *init_ht(uint64_t sz);
 #define HT_TESTS_NUM_INSERTS (HT_TESTS_HT_SIZE >> 2)
 //#define HT_TESTS_NUM_INSERTS  (1<<7)
 
-#define HT_TESTS_MAX_STRIDE 1
+#define HT_TESTS_MAX_STRIDE 2
 
 struct xorwow_state {
   uint32_t a, b, c, d;
