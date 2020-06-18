@@ -5,28 +5,47 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-const uint32_t PREFETCH_QUEUE_SIZE = 32 * 2;
+const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
 extern KmerHashTable *init_ht(uint64_t sz);
+
+#define HT_TESTS_HT_SIZE (1 << 26)
 
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
 /* 1 << 24 -- 16M */
-#define HT_TESTS_NUM_INSERTS (1ULL << 25)
+#define HT_TESTS_NUM_INSERTS (HT_TESTS_HT_SIZE >> 2)
 //#define HT_TESTS_NUM_INSERTS  (1<<7)
 
-#define HT_TESTS_HT_SIZE (HT_TESTS_NUM_INSERTS * 4)
-#define HT_TESTS_MAX_STRIDE 2
+#define HT_TESTS_MAX_STRIDE 1
+
+struct xorwow_state {
+  uint32_t a, b, c, d;
+  uint32_t counter;
+};
+
+__thread struct xorwow_state xw_state;
+__thread struct xorwow_state xw_state2;
+
+void xorwow_init(struct xorwow_state *s);
+uint32_t xorwow(struct xorwow_state *state);
 
 uint64_t synth_run(KmerHashTable *ktable)
 {
   auto count = 0;
   auto k = 0;
+  struct xorwow_state _xw_state;
+
+  xorwow_init(&_xw_state);
+
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH];
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     *((uint64_t *)&kmers[k].data) = count & (32 - 1);
+#elif defined(XORWOW)
+#warning "Xorwow rand kmer insert"
+  *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
 #else
     *((uint64_t *)&kmers[k].data) = count;
 #endif
@@ -40,7 +59,7 @@ uint64_t synth_run(KmerHashTable *ktable)
 
 uint64_t seed = 123456789;
 uint64_t seed2 = 123456789;
-uint64_t PREFETCH_STRIDE = 0;
+uint64_t PREFETCH_STRIDE = 64;
 
 int myrand(uint64_t *seed)
 {
@@ -48,14 +67,6 @@ int myrand(uint64_t *seed)
   *seed = (1103515245 * (*seed) + 12345) % m;
   return *seed;
 }
-
-struct xorwow_state {
-  uint32_t a, b, c, d;
-  uint32_t counter;
-};
-
-struct xorwow_state xw_state;
-struct xorwow_state xw_state2;
 
 void xorwow_init(struct xorwow_state *s)
 {
@@ -94,6 +105,7 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
 
   // seed2 = seed;
 
+#ifdef XORWOW_SCAN
   memcpy(&xw_state2, &xw_state, sizeof(xw_state));
 
   for (auto i = 0u; i < PREFETCH_STRIDE; i++) {
@@ -103,6 +115,7 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
     // printf("p: %lu\n", k);
     ktable->prefetch(k);
   }
+#endif  // XORWOW_SCAN
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
     // k = myrand(&seed);
@@ -136,6 +149,7 @@ uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
 #ifdef SERIAL_SCAN
     /* Fully prefethed serial scan is 14 cycles */
     ktable->touch(i);
+    //ktable->prefetch(i+(1 << 20) & (HT_TESTS_NUM_INSERTS - 1));
 #endif
 
 #ifdef XORWOW_SCAN
@@ -169,8 +183,9 @@ void synth_run_exec(__shard *sh, KmerHashTable *kmer_ht)
     t_end = RDTSCP();
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu\n",
-        sh->shard_idx, i, (t_end - t_start) / num_inserts);
+        "insertion:%lu num_reprobes: %lu",
+        sh->shard_idx, i, (t_end - t_start) / num_inserts,
+        kmer_ht->num_reprobes);
   }
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
@@ -189,13 +204,13 @@ void prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht)
 
   for (auto i = 0; i < HT_TESTS_MAX_STRIDE; i++) {
     t_start = RDTSC_START();
-    PREFETCH_STRIDE = i;
+    //PREFETCH_STRIDE = i;
     num_inserts = prefetch_test_run((SimpleKmerHashTable *)kmer_ht);
     t_end = RDTSCP();
     printf(
         "[INFO] Quick stats: thread %u, Prefetch stride: %d, cycles per "
         "insertion:%lu\n",
-        sh->shard_idx, i, (t_end - t_start) / num_inserts);
+        sh->shard_idx, PREFETCH_STRIDE, (t_end - t_start) / num_inserts);
   }
 
   sh->stats->insertion_cycles = (t_end - t_start);

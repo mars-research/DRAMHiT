@@ -17,11 +17,6 @@ void get_ht_stats(__shard *sh, KmerHashTable *kmer_ht)
   sh->stats->num_memcpys = kmer_ht->num_memcpys;
   sh->stats->num_queue_flushes = kmer_ht->num_queue_flushes;
   sh->stats->num_hashcmps = kmer_ht->num_hashcmps;
-  sh->stats->avg_distance_from_bucket =
-      (double)(kmer_ht->sum_distance_from_bucket / ht_size);
-  sh->stats->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
-  sh->stats->avg_read_length = avg_read_length;
-  sh->stats->num_sequences = num_sequences;
 #endif
 }
 
