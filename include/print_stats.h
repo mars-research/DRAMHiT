@@ -18,24 +18,13 @@ void get_ht_stats(__shard *sh, KmerHashTable *kmer_ht)
   sh->stats->num_queue_flushes = kmer_ht->num_queue_flushes;
   sh->stats->num_hashcmps = kmer_ht->num_hashcmps;
   sh->stats->avg_distance_from_bucket =
-      (double)(kmer_ht->sum_distance_from_bucket / ht_size);
+      (double)(kmer_ht->sum_distance_from_bucket / sh->stats->ht_fill);
   sh->stats->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
-  sh->stats->avg_read_length = avg_read_length;
-  sh->stats->num_sequences = num_sequences;
 #endif
 }
 
 void print_stats(__shard *all_sh)
 {
-  // uint64_t kmer_big_pool_size_per_shard =
-  //     (config.kmer_create_data_base * config.kmer_create_data_mult);
-  // uint64_t total_kmer_big_pool_size =
-  //     (kmer_big_pool_size_per_shard * config.num_threads);
-
-  // uint64_t kmer_small_pool_size_per_shard = config.kmer_create_data_uniq;
-  // uint64_t total_kmer_small_pool_size =
-  //     (kmer_small_pool_size_per_shard * config.num_threads);
-
   uint64_t all_total_cycles = 0;
   double all_total_time_ns = 0;
   uint64_t all_total_num_inserts = 0;
@@ -43,11 +32,10 @@ void print_stats(__shard *all_sh)
 #ifdef CALC_STATS
   uint64_t all_total_avg_read_length = 0;
   uint64_t all_total_num_sequences = 0;
-  // uint64_t all_total_reprobes = 0;
+  uint64_t all_total_reprobes = 0;
+  uint64_t all_total_find_cycles = 0;
+  double all_total_find_time_ns = 0;
 #endif
-
-  //   uint64_t all_total_find_cycles = 0;
-  //   double all_total_find_time_ns = 0;
 
   size_t k = 0;
   if (config.mode == BQ_TESTS_YES_BQ) {
@@ -66,17 +54,17 @@ void print_stats(__shard *all_sh)
         "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
         "{ fill: %lu of %lu (%f %%) }"
 #ifdef CALC_STATS
-        "\n["
-        "\nnum_reprobes: %lu, "
-        "\nnum_memcmps: %lu, "
-        "\nnum_memcpys: %lu, "
-        "\nnum_queue_flushes: %lu, "
-        "\nnum_hashcmps: %lu, "
-        "\nmax_distance_from_bucket: %lu, "
-        "\navg_distance_from_bucket: %f,"
-        "\navg_read_length: %lu,"
-        "\nnum_sequences :%lu"
-        "\n]"
+        "["
+        "num_reprobes: %lu, "
+        "num_memcmps: %lu, "
+        "num_memcpys: %lu, "
+        "num_queue_flushes: %lu, "
+        "num_hashcmps: %lu, "
+        "max_distance_from_bucket: %lu, "
+        "avg_distance_from_bucket: %f,"
+        "avg_read_length: %lu,"
+        "num_sequences :%lu"
+        "]"
 #endif  // CALC_STATS
         "\n",
         all_sh[k].shard_idx, all_sh[k].stats->insertion_cycles,
@@ -103,13 +91,11 @@ void print_stats(__shard *all_sh)
 #ifdef CALC_STATS
     all_total_num_sequences += all_sh[k].stats->num_sequences;
     all_total_avg_read_length += all_sh[k].stats->avg_read_length;
+    all_total_reprobes += all_sh[k].stats->num_reprobes;
+    all_total_find_cycles += all_sh[k].stats->find_cycles;
+    all_total_find_time_ns =
+        (double)all_sh[k].stats->find_cycles * one_cycle_ns;
 #endif  // CALC_STATS
-
-    // all_total_reprobes += all_sh[k].stats->num_reprobes;
-
-    // all_total_find_cycles += all_sh[k].stats->find_cycles;
-    // all_total_find_time_ns =
-    //     (double)all_sh[k].stats->find_cycles * one_cycle_ns;
   }
   printf("===============================================================\n");
   printf(

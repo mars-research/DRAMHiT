@@ -107,6 +107,12 @@ void shard_thread_parse_and_insert(__shard *sh, KmerHashTable *kmer_ht)
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
+
+#ifdef CALC_STATS
+  sh->stats->avg_read_length = avg_read_length;
+  sh->stats->num_sequences = num_sequences;
+#endif
+
   get_ht_stats(sh, kmer_ht);
   printf("[INFO] Shard %u: DONE\n", sh->shard_idx);
 }
