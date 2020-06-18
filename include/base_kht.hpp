@@ -22,9 +22,11 @@ class KmerHashTable
   virtual size_t get_max_count() = 0;
 
   virtual void print_to_file(std::string outfile) = 0;
+ public:
+  uint64_t num_reprobes = 0;
 
 #ifdef CALC_STATS
-  uint64_t num_reprobes = 0;
+ private:
   uint64_t num_memcmps = 0;
   uint64_t num_memcpys = 0;
   uint64_t num_hashcmps = 0;
