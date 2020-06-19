@@ -8,6 +8,11 @@ sudo apt install libnuma-dev libboost-program-options1.65*
 ```
 make
 ```
+* Build (with -O0)
+```
+make OPT=no
+```
+
 * Before running
 - Set all cpus to run at a constant frequency
 ```
@@ -29,10 +34,9 @@ sudo wrmsr -a 0x1a4 0xf
 # Disable hardware prefetcher (on core 0)
 sudo wrmsr -p 0 0x1a4 0xf
 ```
-- build papi
+- Fetch and build papi
 ```
 ./scripts/install_papi.sh
-make papi
 ```
 
 * Run
@@ -42,8 +46,7 @@ make papi
 
 * Run with papi
 ```
-make papi
-sudo LD_LIBRARY_PATH=/local/devel/kmer-counting-hash-table/papi/src/install/lib ./kmercounter
+LD_LIBRARY_PATH=/local/devel/kmer-counting-hash-table/papi/src/install/lib ./kmercounter
 ```
 
 ### Memory tests
@@ -201,3 +204,10 @@ To improve the memory bandwidth, we have to choose a machine that has more
 number of memory channels. cl6420 on cloudlab Clemson has all 6 channels
 populated on both the sockets, thus giving us twice the memory bandwidth of
 c240g5.
+
+
+### Links
+* Understanding memory bandwidth
+https://lenovopress.com/lp0501.pdf
+
+* All about memory organization https://frankdenneman.nl/2015/02/18/memory-tech-primer-memory-subsystem-organization/
