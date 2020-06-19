@@ -101,7 +101,7 @@ uint32_t xorwow(struct xorwow_state *state)
 uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
 {
   auto count = 0;
-  auto k = 0;
+  [[maybe_unused]] auto k = 0;
 
   // seed2 = seed;
 
@@ -169,7 +169,7 @@ void synth_run_exec(__shard *sh, KmerHashTable *kmer_ht)
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("[INFO] Synth test run: thread %u, ht size: %llu, insertions: %llu\n",
+  printf("[INFO] Synth test run: thread %u, ht size: %u, insertions: %u\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
@@ -183,7 +183,7 @@ void synth_run_exec(__shard *sh, KmerHashTable *kmer_ht)
     t_end = RDTSCP();
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu num_reprobes: %lu",
+        "insertion:%lu num_reprobes: %lu\n",
         sh->shard_idx, i, (t_end - t_start) / num_inserts,
         kmer_ht->num_reprobes);
   }
@@ -197,7 +197,7 @@ void prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht)
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("[INFO] Prefetch test run: thread %u, ht size:%llu, insertions:%llu\n",
+  printf("[INFO] Prefetch test run: thread %u, ht size:%u, insertions:%u\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   xorwow_init(&xw_state);
@@ -208,7 +208,7 @@ void prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht)
     num_inserts = prefetch_test_run((SimpleKmerHashTable *)kmer_ht);
     t_end = RDTSCP();
     printf(
-        "[INFO] Quick stats: thread %u, Prefetch stride: %d, cycles per "
+        "[INFO] Quick stats: thread %u, Prefetch stride: %lu, cycles per "
         "insertion:%lu\n",
         sh->shard_idx, PREFETCH_STRIDE, (t_end - t_start) / num_inserts);
   }

@@ -34,7 +34,7 @@ void print_stats(__shard *all_sh)
   uint64_t all_total_num_sequences = 0;
   uint64_t all_total_reprobes = 0;
   uint64_t all_total_find_cycles = 0;
-  double all_total_find_time_ns = 0;
+[[maybe_unused]]  double all_total_find_time_ns = 0;
 #endif
 
   size_t k = 0;
