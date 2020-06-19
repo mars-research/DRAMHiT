@@ -93,7 +93,9 @@ void *shard_thread(void *arg)
     kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
   } else if (config.mode == BQ_TESTS_NO_BQ) {
     kmer_ht = init_ht(BQ_TESTS_HT_SIZE, sh->shard_idx);
-
+  } else {
+    fprintf(stderr, "No config mode specified! cannot run");
+    return NULL;
   }
 
   fipc_test_FAI(ready_threads);

@@ -58,7 +58,8 @@ CPP_SRCS = misc_lib.cpp \
 
 DEPS = $(wildcard hashtables/*.hpp) \
        $(wildcard include/*.h) \
-       $(wildcard include/*.hpp)
+       $(wildcard include/*.hpp) \
+       $(wildcard *_tests.cpp)
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
