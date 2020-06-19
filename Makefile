@@ -1,14 +1,21 @@
-CC=g++
-CFLAGS=-g -std=c++17 -Wall -mprefetchwt1 
-# This crashes citihash
-CFLAGS +=-march=skylake
-LDFLAGS= -lboost_program_options -lz -lnuma -lpthread -flto
-TARGET=kmercounter
-OPT_YES=-O3
-OPT_NO=-O0
-#sources =  misc_lib.cpp ac_kseq.cpp include/city/city.cc include/xx/xxhash.c main.cpp
-sources =  bqueue.c misc_lib.cpp ac_kseq.cpp include/xx/xxhash.c main.cpp 
-#CFLAGS += -DCALC_STATS
+CXX=g++
+
+ifeq ($(OPT), no)
+	OPT_FLAGS = -O0
+else
+	OPT_FLAGS =-O3
+endif
+
+IDIR=./include
+
+CFLAGS = -g -Wall -mprefetchwt1 $(OPT_FLAGS)
+# This crashes cityhash
+CFLAGS += -march=skylake
+CFLAGS += -I$(IDIR)
+CFLAGS += -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
+
+# YES. We love spaghetti!!!
+CFLAGS += -DCALC_STATS
 # CFLAGS += -D__MMAP_FILE
 CFLAGS += -DTOUCH_DEPENDENCY
 CFLAGS += -DSERIAL_SCAN
@@ -25,28 +32,52 @@ CFLAGS += -DXX_HASH
 # CFLAGS += -DXX_HASH_3
 # CFLAGS += -DBQ_TESTS_INSERT_XORWOW
 
-CFLAGS += -I./include
+CXXFLAGS = -std=c++17 $(CFLAGS)
 
-CFLAGS_PAPI = -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
-LDFLAGS_PAPI = -L$(PWD)/papi/src/install/lib/ -lpapi
+# boostpo to parse args
+LIBS = -lboost_program_options
+# for compressed fasta?
+LIBS += -lz
+# Used for numa partitioning
+LIBS += -lnuma
+# Multithreading
+LIBS += -lpthread -flto
 
-.PHONY: all noopt clean ugdb
+# for PAPI
+LIBS += -lpapi
+LDFLAGS = -L$(PWD)/papi/src/install/lib/
 
-all: kc
+TARGET=kmercounter
 
-papi: kc_papi
+C_SRCS = bqueue.c \
+	 include/xx/xxhash.c
 
-kc_papi: $(sources)
-	$(CC) $(sources) -o $(TARGET) $(CFLAGS) $(CFLAGS_PAPI) $(OPT_YES) $(LDFLAGS) $(LDFLAGS_PAPI)
+CPP_SRCS = misc_lib.cpp \
+	   ac_kseq.cpp \
+	   main.cpp 
 
-kc: $(sources)
-	$(CC) $(sources) -o $(TARGET) $(CFLAGS) $(OPT_YES) $(LDFLAGS)
+DEPS = $(wildcard hashtables/*.hpp) \
+       $(wildcard include/*.h) \
+       $(wildcard include/*.hpp)
 
-kc_noopt: $(sources)
-	$(CC) $(sources) -o $(TARGET) $(CFLAGS) $(OPT_NO) $(LDFLAGS)
+OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
+
+%.o : %.cpp $(DEPS)
+	$(CXX) -c -o $@ $< $(CXXFLAGS) $(OPT_YES)
+
+%.o : %.c $(DEPS)
+	$(CXX) -c -o $@ $< $(CFLAGS) $(OPT_YES)
+
+
+.PHONY: all papi clean ugdb
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f $(TARGET) *.o
+	rm -f $(TARGET) $(OBJS)
 
 ugdb:
 	ugdb $(TARGET)
