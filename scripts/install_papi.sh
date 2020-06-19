@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PROJ_ROOT=$(pwd)
+
 PAPI_SRC_DIR=./papi/src
 
 
@@ -20,7 +22,13 @@ install_papi() {
   echo "export PATH=\${PAPI_DIR}/bin:\$PATH"
   echo "export LD_LIBRARY_PATH=\${PAPI_DIR}/lib:\$LD_LIBRARY_PATH"
   echo "*********************************************************"
-  echo "To build with papi, invoke make papi"
 }
 
+check_papi() {
+  if [ ! -d ${PROJ_ROOT}/${PAPI_SRC_DIR} ]; then
+    git submodule init && git submodule update
+  fi
+}
+
+check_papi;
 install_papi;
