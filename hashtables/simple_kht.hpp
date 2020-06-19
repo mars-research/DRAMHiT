@@ -3,16 +3,16 @@
 
 #include "dbg.hpp"
 #include <sys/mman.h>
-#include "../include/base_kht.hpp"
-#include "../include/city/city.h"
-#include "../include/data_types.h"
+#include "base_kht.hpp"
+#include "city/city.h"
+#include "data_types.h"
 
 #if defined(XX_HASH)
-#include "../include/xx/xxhash.h"
+#include "xx/xxhash.h"
 #endif
 
 #if defined(XX_HASH_3)
-#include "../include/xx/xxh3.h"
+#include "xx/xxh3.h"
 #endif
 // #include "kmer_struct.h"
 

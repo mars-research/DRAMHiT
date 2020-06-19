@@ -9,21 +9,21 @@
 #include <ctime>
 #include <fstream>
 
-#include "./include/data_types.h"
-#include "./include/misc_lib.h"
+#include "data_types.h"
+#include "misc_lib.h"
 #include "kmer_data.cpp"
-// #include "./include/timestamp.h"
-#include "./include/libfipc/libfipc_test_config.h"
-#include "./include/numa.hpp"
+// #include "timestamp.h"
+#include "libfipc/libfipc_test_config.h"
+#include "numa.hpp"
 // #include "shard.h"
 // #include "test_config.h"
-#include "./include/ac_kseq.h"
+#include "ac_kseq.h"
 // #include "kseq.h"
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
-#include "./include/print_stats.h"
+#include "print_stats.h"
 #include "bq_tests.cpp"
 #include "hashtable_tests.cpp"
 #include "parser_tests.cpp"

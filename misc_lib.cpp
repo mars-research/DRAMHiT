@@ -1,4 +1,4 @@
-#include "./include/misc_lib.h"
+#include "misc_lib.h"
 
 uint64_t get_file_size(const char* fn)
 {

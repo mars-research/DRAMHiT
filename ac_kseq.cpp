@@ -33,11 +33,11 @@ SOFTWARE.
 
 /*https://github.com/gtonkinhill/pairsnp-r/blob/master/src/kseq.h */
 
-#include "./include/ac_kseq.h"
+#include "ac_kseq.h"
 
-#include "./include/data_types.h"
-#include "./include/misc_lib.h"
-#include "./include/libfipc/libfipc_test.h"
+#include "data_types.h"
+#include "misc_lib.h"
+#include "libfipc/libfipc_test.h"
 
 extern Configuration config;
 

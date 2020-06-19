@@ -22,7 +22,7 @@
  *
  */
 
-#include "include/bqueue.h"
+#include "bqueue.h"
 
 static data_t ELEMENT_ZERO = 0x0UL;
 

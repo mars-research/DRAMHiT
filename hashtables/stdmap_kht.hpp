@@ -1,10 +1,10 @@
 #ifndef _STDMAP_KHT_H
 #define _STDMAP_KHT_H
 
-#include "../include/base_kht.hpp"
+#include "base_kht.hpp"
 #include "data_types.h"
 // #include "kmer_struct.h"
-#include "../include/kmer_class.h"
+#include "kmer_class.h"
 
 class StdmapKmerHashTable : public KmerHashTable
 {

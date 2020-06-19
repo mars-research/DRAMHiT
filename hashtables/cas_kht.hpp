@@ -2,11 +2,11 @@
 #define _CAS_KHT_H
 
 #include <mutex>
-#include "../include/base_kht.hpp"
-#include "../include/city/city.h"
-#include "../include/data_types.h"
+#include "base_kht.hpp"
+#include "city/city.h"
+#include "data_types.h"
 // #include "kmer_struct.h"
-#include "../include/libfipc/libfipc_test.h"
+#include "libfipc/libfipc_test.h"
 
 static uint64_t working_threads = 0;
 
