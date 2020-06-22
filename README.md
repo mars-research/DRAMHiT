@@ -207,7 +207,9 @@ c240g5.
 
 
 ### Links
-* Understanding memory bandwidth
-https://lenovopress.com/lp0501.pdf
+* [Understanding memory bandwidth] (https://lenovopress.com/lp0501.pdf)
 
-* All about memory organization https://frankdenneman.nl/2015/02/18/memory-tech-primer-memory-subsystem-organization/
+
+* [All about memory organization] (https://frankdenneman.nl/2015/02/18/memory-tech-primer-memory-subsystem-organization/)
+
+* [Sample FASTQ files] (https://figshare.com/articles/MOESM1_of_Gerbil_a_fast_and_memory-efficient_k-mer_counter_with_GPU-support/4806346/1)
