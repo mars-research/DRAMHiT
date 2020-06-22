@@ -36,10 +36,41 @@ SOFTWARE.
 #include "ac_kseq.h"
 
 #include "data_types.h"
-#include "misc_lib.h"
 #include "libfipc/libfipc_test.h"
+#include "misc_lib.h"
 
 extern Configuration config;
+
+#ifndef CHAR_ARRAY_PARSE_BUFFER
+kseq::kseq()
+{
+  this->seq.reserve(BUFFER_SIZE);
+  this->last_char = 0;
+}
+#else
+kseq::kseq() : bufferSize(BUFFER_SIZE)
+{
+  this->seq =
+      (char *)memalign(__CACHE_LINE_SIZE, sizeof(char) * this->bufferSize);
+  this->_s = 0;
+  this->last_char = 0;
+}
+#endif
+
+#ifdef CHAR_ARRAY_PARSE_BUFFER
+void kseq::clearSeq() { this->_s = 0; }
+
+void kseq::addToSeq(char c)
+{
+  this->seq[_s++] = c;
+  if (this->_s >= this->bufferSize) {
+    fprintf(stderr, "[ERROR] kseq::addToSeq overflow \n");
+    exit(-1);
+  }
+}
+#endif
+
+kseq::~kseq() { printf("kseq destructor called\n"); }
 
 #ifdef __MMAP_FILE
 char *kstream::fmap = NULL;
@@ -67,16 +98,6 @@ ssize_t kstream::__mmap_read()
 off64_t kstream::__mmap_lseek64() { return this->off_curr; }
 #endif  //__MMAP_FILE
 
-kseq::kseq()
-{
-  this->seq.reserve(BUFFER_SIZE);
-  this->last_char = 0;
-}
-
-kseq::~kseq() {
-  printf("kseq destructor called\n");
-}
-
 kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
     : bufferSize(BUFFER_SIZE)
 {
@@ -102,7 +123,7 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
     }
     mlock(fmap, config.in_file_sz);
     touchpages(fmap, config.in_file_sz);
-    mmaped_file=1;
+    mmaped_file = 1;
     printf("[INFO] Shard %u: mmaping file ... done \n", this->thread_id);
   }
   while (mmaped_file == 0) fipc_test_pause();
@@ -164,7 +185,11 @@ int kstream::readseq(kseq &seq)
 
   /* At this point, "buffer" is filled with data, "begin" points to start of new
    * sequence in buffer */
+#ifndef CHAR_ARRAY_PARSE_BUFFER
   seq.seq.clear();
+#else
+  seq.clearSeq();
+#endif
   seq.qual_length = 0;
 
   /* consume buffer until we see space characters*/
@@ -176,29 +201,52 @@ int kstream::readseq(kseq &seq)
   /* consume buffer into seq.seq until there are characters to read */
   while ((c = this->getc()) != -1 && c != '+' && c != '@') {
     if (isgraph(c)) {
+#ifndef CHAR_ARRAY_PARSE_BUFFER
       seq.seq += (char)c;
+#else
+      seq.addToSeq((char)c);
+#endif
     }
   }
   if (c == '@') seq.last_char = c;
 
   /* TODO: remove this? there will always be a + in FastQ */
-  if (c != '+') return (int)seq.seq.length();
+  if (c != '+') {
+#ifndef CHAR_ARRAY_PARSE_BUFFER
+    return (int)seq.seq.length();
+#else
+    return seq._s;
+#endif
+  }
 
   while ((c = this->getc()) != -1 && c != '\n')
     ;
 
   if (c == -1) return -2;
 
-  /* skip quality scores */
+    /* skip quality scores */
+#ifndef CHAR_ARRAY_PARSE_BUFFER
   while ((c = this->getc()) != -1 && seq.qual_length < seq.seq.length()) {
     if (c >= 33 && c <= 127) {
       seq.qual_length++;
     };
   }
+#else
+  while ((c = this->getc()) != -1 && seq.qual_length < seq._s) {
+    if (c >= 33 && c <= 127) {
+      seq.qual_length++;
+    };
+  }
+#endif
 
   seq.last_char = 0;
+#ifndef CHAR_ARRAY_PARSE_BUFFER
   if (seq.seq.length() != seq.qual_length) return -2;
   return (int)seq.seq.length();
+#else
+  if (seq._s != seq.qual_length) return -2;
+  return seq._s;
+#endif
 }
 
 int kstream::readfunc(int fd, void *buffer, size_t count)
@@ -209,7 +257,7 @@ int kstream::readfunc(int fd, void *buffer, size_t count)
     printf("[INFO] Shard %u: reached done\n", this->thread_id);
     this->done = 1;
   }
-  if (bytes_read < this->bufferSize) this->is_eof = 1;
+  if (bytes_read < (int)this->bufferSize) this->is_eof = 1;
   return bytes_read;
 #else
   unsigned int bytes_read = read(fd, buffer, count);

@@ -8,6 +8,7 @@
 #define BQ_TESTS_HT_SIZE (BQ_TESTS_NUM_INSERTS * 16)
 
 extern KmerHashTable *init_ht(uint64_t sz, uint8_t);
+extern void get_ht_stats(__shard *, KmerHashTable *);
 
 static int *bqueue_halt;
 struct bq_kmer {

@@ -38,14 +38,14 @@ SOFTWARE.
 
 #define BUFFER_SIZE 4096
 
-#include <unistd.h>
 #include <fcntl.h>
+#include <malloc.h>
+#include <unistd.h>
 
 #include <cctype>
 #include <cstdint>
 #include <cstdlib>
 #include <string>
-#include <malloc.h>
 
 // #if HAVE_ZLIB
 // #include <zlib.h>
@@ -77,7 +77,16 @@ class kseq
  public:
   kseq();
   ~kseq();
+#ifndef CHAR_ARRAY_PARSE_BUFFER
   std::string seq;
+#else
+  char *seq;
+  const unsigned int bufferSize;
+  int _s;
+  int _len;
+  void clearSeq();
+  void addToSeq(char c);
+#endif
   uint64_t qual_length;
   int last_char;
 };
@@ -88,7 +97,7 @@ class kstream
   kstream(uint32_t, off_t, off_t);
   ~kstream();
   int readseq(kseq &seq);
-  int readfunc(int, void*, size_t);
+  int readfunc(int, void *, size_t);
 
  private:
   int getc();
@@ -96,7 +105,7 @@ class kstream
 #ifdef __MMAP_FILE
   ssize_t __mmap_read();
   off64_t __mmap_lseek64();
-#endif 
+#endif
 
   char *buf;
   const unsigned int bufferSize;
@@ -105,19 +114,18 @@ class kstream
   int end;
 
   int fileid;
-  uint32_t thread_id; // thread id corresponding to this kstream
-  off64_t off_start;  // start byte into file
-  off64_t off_end;    // end byte into file
-  int is_first_read;  // is this the first time readseq is being called?
+  uint32_t thread_id;  // thread id corresponding to this kstream
+  off64_t off_start;   // start byte into file
+  off64_t off_end;     // end byte into file
+  int is_first_read;   // is this the first time readseq is being called?
   int done;
 
 #ifdef __MMAP_FILE
-  static char* fmap;
-  static char* fmap_end;
+  static char *fmap;
+  static char *fmap_end;
   static uint64_t mmaped_file;
   off64_t off_curr;
-#endif 
-
+#endif
 };
 
 #endif

@@ -12,11 +12,11 @@ CFLAGS = -g -Wall -mprefetchwt1 $(OPT_FLAGS)
 # This crashes cityhash
 CFLAGS += -march=skylake
 CFLAGS += -I$(IDIR)
-CFLAGS += -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
+# CFLAGS += -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
 
 # YES. We love spaghetti!!!
-CFLAGS += -DCALC_STATS
-# CFLAGS += -D__MMAP_FILE
+# CFLAGS += -DCALC_STATS
+CFLAGS += -D__MMAP_FILE
 CFLAGS += -DTOUCH_DEPENDENCY
 CFLAGS += -DSERIAL_SCAN
 #CFLAGS += -DXORWOW_SCAN
@@ -31,6 +31,7 @@ CFLAGS += -DHUGE_1GB_PAGES
 CFLAGS += -DXX_HASH
 # CFLAGS += -DXX_HASH_3
 # CFLAGS += -DBQ_TESTS_INSERT_XORWOW
+CFLAGS += -DCHAR_ARRAY_PARSE_BUFFER
 
 CXXFLAGS = -std=c++17 $(CFLAGS)
 

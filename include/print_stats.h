@@ -34,7 +34,7 @@ void print_stats(__shard *all_sh)
   uint64_t all_total_num_sequences = 0;
   uint64_t all_total_reprobes = 0;
   uint64_t all_total_find_cycles = 0;
-[[maybe_unused]]  double all_total_find_time_ns = 0;
+  [[maybe_unused]] double all_total_find_time_ns = 0;
 #endif
 
   size_t k = 0;
@@ -70,9 +70,14 @@ void print_stats(__shard *all_sh)
         all_sh[k].shard_idx, all_sh[k].stats->insertion_cycles,
         (double)all_sh[k].stats->insertion_cycles * one_cycle_ns / 1000000.0,
         all_sh[k].stats->num_inserts,
-        all_sh[k].stats->insertion_cycles / all_sh[k].stats->num_inserts,
+        all_sh[k].stats->num_inserts == 0
+            ? 0
+            : all_sh[k].stats->insertion_cycles / all_sh[k].stats->num_inserts,
         all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
-        (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity * 100
+        all_sh[k].stats->ht_capacity == 0
+            ? 0
+            : (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity *
+                  100
 #ifdef CALC_STATS
         ,
         all_sh[k].stats->num_reprobes, all_sh[k].stats->num_memcmps,

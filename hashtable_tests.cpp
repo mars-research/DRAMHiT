@@ -183,8 +183,8 @@ void synth_run_exec(__shard *sh, KmerHashTable *kmer_ht)
     t_end = RDTSCP();
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu num_reprobes: %lu\n",
-        sh->shard_idx, i, (t_end - t_start) / num_inserts, kmer_ht->num_reprobes);
+        "insertion:%lu\n",
+        sh->shard_idx, i, (t_end - t_start) / num_inserts);
   }
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;

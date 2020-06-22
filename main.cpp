@@ -10,8 +10,8 @@
 #include <fstream>
 
 #include "data_types.h"
-#include "misc_lib.h"
 #include "kmer_data.cpp"
+#include "misc_lib.h"
 // #include "timestamp.h"
 #include "libfipc/libfipc_test_config.h"
 #include "numa.hpp"
@@ -23,10 +23,10 @@
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
-#include "print_stats.h"
 #include "bq_tests.cpp"
 #include "hashtable_tests.cpp"
 #include "parser_tests.cpp"
+#include "print_stats.h"
 
 #ifdef WITH_PAPI_LIB
 #include <papi.h>
@@ -93,8 +93,10 @@ void *shard_thread(void *arg)
     kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
   } else if (config.mode == BQ_TESTS_NO_BQ) {
     kmer_ht = init_ht(BQ_TESTS_HT_SIZE, sh->shard_idx);
+  } else if (config.mode == FASTQ_NO_INSERT) {
+    // no ht needed
   } else {
-    fprintf(stderr, "No config mode specified! cannot run");
+    fprintf(stderr, "[ERROR] No config mode specified! cannot run");
     return NULL;
   }
 
@@ -116,7 +118,7 @@ void *shard_thread(void *arg)
   }
 
   /* Write to file */
-  if (!config.ht_file.empty()) {
+  if (config.mode != FASTQ_NO_INSERT && !config.ht_file.empty()) {
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
     printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
            outfile.c_str());
@@ -388,16 +390,16 @@ int spawn_shard_threads()
 }
 
 #ifdef WITH_PAPI_LIB
-void papi_init(void) {
-  if(PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-  {
+void papi_init(void)
+{
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
     printf("Library initialization error! \n");
     exit(1);
   }
   printf("PAPI library initialized\n");
 }
 #else
-void papi_init(void) { }
+void papi_init(void) {}
 #endif
 
 int main(int argc, char *argv[])
