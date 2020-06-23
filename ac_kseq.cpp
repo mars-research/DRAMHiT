@@ -63,7 +63,7 @@ void kseq::clearSeq() { this->_s = 0; }
 void kseq::addToSeq(char c)
 {
   this->seq[_s++] = c;
-  if (this->_s >= this->bufferSize) {
+  if (this->_s >= (int)this->bufferSize) {
     fprintf(stderr, "[ERROR] kseq::addToSeq overflow \n");
     exit(-1);
   }
@@ -113,12 +113,12 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
   this->fileid = open(config.in_file.c_str(), O_RDONLY);
 #ifdef __MMAP_FILE
   // if this is the first thread, map the whole file
-  if (!this->fmap) {
+  if (this->thread_id == 0) {
     printf("[INFO] Shard %u: mmaping file ...\n", this->thread_id);
     this->fmap = (char *)mmap(NULL, config.in_file_sz, PROT_READ, MAP_PRIVATE,
                               this->fileid, 0);
-    if (!this->fmap) {
-      printf("[ERROR] Shard %u: Unable to mmap\n", this->thread_id);
+    if (this->fmap == MAP_FAILED) {
+      perror("[ERROR] mmap() failed");
       exit(-1);
     }
     mlock(fmap, config.in_file_sz);
@@ -143,11 +143,11 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
 kstream::~kstream()
 {
   close(this->fileid);
-// #ifdef __MMAP_FILE
-//   free(this->fmap);
-// #else
-//   free(this->buf);
-// #endif
+  // #ifdef __MMAP_FILE
+  //   free(this->fmap);
+  // #else
+  //   free(this->buf);
+  // #endif
   printf("kstream descturtor\n");
 }
 
@@ -160,7 +160,10 @@ int kstream::readseq(kseq &seq)
   if (this->done) return -1;
   if (seq.last_char == 0) {
     /* Keep reading into buffer until we see a '\n' followed by '@'  (except for
-     * the is_first_read thread - just look for '@') */
+     * the is_first_read thread - just look for '@')
+     * TODO verify if this is enough:
+     * https://en.wikipedia.org/wiki/FASTQ_format*/
+
     while (true) {
       c = this->getc();
       if (c == -1) break;
@@ -192,6 +195,8 @@ int kstream::readseq(kseq &seq)
 #endif
   seq.qual_length = 0;
 
+  /* TODO remove statement this altogether? Just consume until newline (see next
+   * statement) */
   /* consume buffer until we see space characters*/
   if (this->getuntil(0, &c) < 0) return -1;
 
@@ -200,6 +205,7 @@ int kstream::readseq(kseq &seq)
 
   /* consume buffer into seq.seq until there are characters to read */
   while ((c = this->getc()) != -1 && c != '+' && c != '@') {
+    // TODO convert to isalpha?
     if (isgraph(c)) {
 #ifndef CHAR_ARRAY_PARSE_BUFFER
       seq.seq += (char)c;
@@ -232,7 +238,7 @@ int kstream::readseq(kseq &seq)
     };
   }
 #else
-  while ((c = this->getc()) != -1 && seq.qual_length < seq._s) {
+  while ((c = this->getc()) != -1 && seq.qual_length < (uint64_t)seq._s) {
     if (c >= 33 && c <= 127) {
       seq.qual_length++;
     };
@@ -244,7 +250,7 @@ int kstream::readseq(kseq &seq)
   if (seq.seq.length() != seq.qual_length) return -2;
   return (int)seq.seq.length();
 #else
-  if (seq._s != seq.qual_length) return -2;
+  if ((uint64_t) seq._s != seq.qual_length) return -2;
   return seq._s;
 #endif
 }

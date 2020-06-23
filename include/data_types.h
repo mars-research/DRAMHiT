@@ -47,6 +47,7 @@ struct Configuration {
   bool drop_caches;
   uint32_t n_prod;
   uint32_t n_cons;
+  uint32_t __K;
 };
 
 /* Thread stats */

@@ -53,7 +53,8 @@ const Configuration def = {
     .in_file_sz = 0,
     .drop_caches = true,
     .n_prod = 1,
-    .n_cons = 1};  // TODO enum
+    .n_cons = 1,
+    .__K = 32};  // TODO enum
 
 /* global config */
 Configuration config;
@@ -83,7 +84,7 @@ KmerHashTable *init_ht(uint64_t sz, uint8_t id)
 void *shard_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
-  KmerHashTable *kmer_ht;
+  KmerHashTable *kmer_ht = NULL;
 
   sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
 
@@ -412,9 +413,10 @@ int main(int argc, char *argv[])
         "mode",
         po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
         "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk "
-        "\n4: Read FASTQ + insert to ht (--in_file)"
-        "\n5: Read FASTQ, DO NOT insert to ht (--in_file) "
-        "\n6/7: Synth/Prefetch,")(
+        "\n4: Read FASTQ, and insert to ht (specify --in_file)"
+        "\n5: Read FASTQ, but do not insert to ht (specify --in_file) "
+        "\n6/7: Synth/Prefetch,"
+        "\n8/9: Bqueue tests: with bqueues/without bequeues")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -463,20 +465,15 @@ int main(int argc, char *argv[])
         "nprod", po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
         "for bqueues only")(
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
-        "for bqueues only");
+        "for bqueues only")(
+        "k", po::value<uint32_t>(&config.__K)->default_value(def.__K),
+        "the value of 'k' in k-mer");
 
     papi_init();
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-
-    if (config.drop_caches) {
-      printf("[INFO] Dropping the page cache\n");
-      if (system("sudo bash -c 'echo 3 > /proc/sys/vm/drop_caches'") < 0) {
-        perror("drop caches");
-      }
-    }
 
     if (config.mode == SYNTH) {
       printf("[INFO] Mode : SYNTH\n");
@@ -527,6 +524,13 @@ int main(int argc, char *argv[])
   } catch (std::exception &e) {
     std::cout << e.what() << "\n";
     exit(-1);
+  }
+
+  if (config.drop_caches) {
+    printf("[INFO] Dropping the page cache\n");
+    if (system("sudo bash -c 'echo 3 > /proc/sys/vm/drop_caches'") < 0) {
+      perror("drop caches");
+    }
   }
 
   if (config.mode == BQ_TESTS_YES_BQ)
