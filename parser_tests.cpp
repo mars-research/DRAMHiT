@@ -1,129 +1,6 @@
 #ifndef PARSER_TESTS
 #define PARSER_TESTS
 
-#include <deque>
-
-#if 0
-void shard_thread_parse_no_inserts_v2(__shard* sh)
-{
-  uint64_t t_start, t_end;
-  kseq seq;
-  int l = 0;
-  uint64_t num_inserts = 0;
-  std::string n("N");
-
-  kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
-  t_start = RDTSC_START();
-
-  while ((l = ks.readseq(seq)) >= 0) {
-    std::transform(seq.seq.begin(), seq.seq.end(), seq.seq.begin(), ::toupper);
-    std::deque<char> window(seq.seq.begin(),
-                            seq.seq.begin() + KMER_DATA_LENGTH);
-
-    // walk over all windows across sequence
-    for (size_t i = KMER_DATA_LENGTH; i <= seq.seq.length(); ++i) {
-      std::string mer_f(window.begin(), window.end());
-      // #ifdef DEBUG
-      //     std::fprintf(stderr, "[%s]\n", mer_f.c_str());
-      // #endif
-      window.pop_front();
-      window.push_back(seq.seq[i]);
-      std::size_t n_found = mer_f.find(n);
-      if (n_found != std::string::npos) {
-        continue;
-      }
-      // std::string mer_r(mer_f);
-      // reverse_complement_string(mer_r);
-      // #ifdef DEBUG
-      //     std::fprintf(
-      //         stderr, "PRE  [%s : %d]\t[%s : %d]\n", mer_f.c_str(),
-      //         (mer_count(mer_f) == 0 ? 0 :
-      //         this->mer_counts().find(mer_f)->second), mer_r.c_str(),
-      //         (mer_count(mer_r) == 0 ? 0 :
-      //         this->mer_counts().find(mer_r)->second));
-      // #endif
-
-      /*** Perform the "insert" ***/
-      num_inserts++;
-
-#if 0
-    if ((mer_count(mer_f) == 0) && (mer_count(mer_r) == 0)) {
-// #ifdef DEBUG
-//       std::fprintf(stderr, "INITIALIZING [%s]\n", mer_f.c_str());
-// #endif
-      set_mer_count(mer_f, 1);
-      // we don't want to add a palindrome twice
-
-      if ((mer_f.compare(mer_r) == 0) && (!this->double_count_palindromes)) {
-// #ifdef DEBUG
-//         std::fprintf(
-//             stderr, "POST %d [%s : %d]\t[%s : %d]\n-----------------\n",
-//             (this->double_count_palindromes ? 1 : 0), mer_f.c_str(),
-//             (mer_count(mer_f) == 0 ? 0
-//                                    : this->mer_counts().find(mer_f)->second),
-//             mer_r.c_str(),
-//             (mer_count(mer_r) == 0 ? 0
-//                                    : this->mer_counts().find(mer_r)->second));
-// #endif
-        continue;
-      }
-
-// #ifdef DEBUG
-//       std::fprintf(stderr, "INITIALIZING [%s]\n", mer_r.c_str());
-// #endif
-      if (mer_count(mer_r) == 0) {
-        set_mer_count(mer_r, 1);
-      } else if (this->double_count_palindromes) {
-        increment_mer_count(mer_r);
-      }
-    } else if ((mer_count(mer_f) == 1) || (mer_count(mer_r) == 1)) {
-// #ifdef DEBUG
-//       std::fprintf(stderr, "INCREMENTING [%s]\n", mer_f.c_str());
-// #endif
-      increment_mer_count(mer_f);
-      if ((mer_f.compare(mer_r) == 0) && (!this->double_count_palindromes)) {
-// #ifdef DEBUG
-//         std::fprintf(
-//             stderr, "POST %d [%s : %d]\t[%s : %d]\n-----------------\n",
-//             (this->double_count_palindromes ? 1 : 0), mer_f.c_str(),
-//             (mer_count(mer_f) == 0 ? 0
-//                                    : this->mer_counts().find(mer_f)->second),
-//             mer_r.c_str(),
-//             (mer_count(mer_r) == 0 ? 0
-//                                    : this->mer_counts().find(mer_r)->second));
-// #endif
-        continue;
-      }
-// #ifdef DEBUG
-//       std::fprintf(stderr, "INCREMENTING [%s]\n", mer_r.c_str());
-// #endif
-      increment_mer_count(mer_r);
-    }
-#endif
-      // #ifdef DEBUG
-      //     std::fprintf(
-      //         stderr, "POST [%s : %d]\t[%s : %d]\n-----------------\n",
-      //         mer_f.c_str(), (mer_count(mer_f) == 0 ? 0 :
-      //         this->mer_counts().find(mer_f)->second), mer_r.c_str(),
-      //         (mer_count(mer_r) == 0 ? 0 :
-      //         this->mer_counts().find(mer_r)->second));
-      // #endif
-    }
-  }
-  t_end = RDTSCP();
-
-  sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_inserts = num_inserts;
-
-  sh->stats->ht_fill = 0;
-  sh->stats->ht_capacity = 0;
-  sh->stats->max_count = 0;
-
-}
-
-#endif
-
-#if 0
 static unsigned char seq_nt4_table[128] = {  // Table to change "ACGTN" to 01234
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -142,12 +19,18 @@ void shard_thread_parse_no_inserts_v3(__shard *sh)
 
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
+#ifdef CALC_STATS
+  std::string first_seq;
+  std::string last_seq;
+  uint64_t num_sequences = 0;
+#endif
+
   t_start = RDTSC_START();
   while ((len = ks.readseq(seq)) >= 0) {
     int i, l;
     uint64_t x[2] = {0};
-    uint64_t mask = (1ULL << KMER_DATA_LENGTH * 2) - 1;
-    uint64_t shift = (KMER_DATA_LENGTH - 1) * 2;
+    uint64_t mask = (1ULL << config.__K * 2) - 1;
+    uint64_t shift = (config.__K - 1) * 2;
 
     for (i = l = 0, x[0] = x[1] = 0; i < len; ++i) {
       int c = (uint8_t)seq.seq.data()[i] < 128
@@ -156,7 +39,7 @@ void shard_thread_parse_no_inserts_v3(__shard *sh)
       if (c < 4) {                                      // not an "N" base
         x[0] = (x[0] << 2 | c) & mask;                  // forward strand
         x[1] = x[1] >> 2 | (uint64_t)(3 - c) << shift;  // reverse strand
-        if (++l >= KMER_DATA_LENGTH) {                                 // we find a k-mer
+        if (++l >= config.__K) {                        // we find a k-mer
           uint64_t y = x[0] < x[1] ? x[0] : x[1];
           /*** Perform the "insert" ***/
           num_inserts++;
@@ -164,8 +47,20 @@ void shard_thread_parse_no_inserts_v3(__shard *sh)
       } else
         l = 0, x[0] = x[1] = 0;  // if there is an "N", restart
     }
+#ifdef CALC_STATS
+    num_sequences++;
+    if (first_seq.length() == 0) first_seq = seq.seq;
+    last_seq = seq.seq;
+#endif
   }
   t_end = RDTSCP();
+
+#ifdef CALC_STATS
+  printf("[INFO] Shard %u, num_sequences: %lu, first seq: %s\n", sh->shard_idx,
+         num_sequences, first_seq.c_str());
+  printf("[INFO] Shard %u, num_sequences: %lu, last seq: %s\n", sh->shard_idx,
+         num_sequences, last_seq.c_str());
+#endif
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
@@ -175,7 +70,6 @@ void shard_thread_parse_no_inserts_v3(__shard *sh)
   sh->stats->max_count = 0;
 }
 
-#endif
 
 void shard_thread_parse_no_inserts(__shard *sh)
 {
@@ -188,14 +82,14 @@ void shard_thread_parse_no_inserts(__shard *sh)
 
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
-  t_start = RDTSC_START();
-
 #ifdef CALC_STATS
   std::string first_seq;
   std::string last_seq;
   uint64_t num_sequences = 0;
   uint64_t avg_read_length = 0;
 #endif
+
+  t_start = RDTSC_START();
 
   while ((l = ks.readseq(seq)) >= 0) {
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {

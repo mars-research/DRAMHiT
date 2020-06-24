@@ -55,7 +55,7 @@ const Configuration def = {
     .drop_caches = true,
     .n_prod = 1,
     .n_cons = 1,
-    .__K = 32};  // TODO enum
+    .__K = 20};  // TODO enum
 
 /* global config */
 Configuration config;
@@ -108,7 +108,7 @@ void *shard_thread(void *arg)
   // fipc_test_mfence();
   /* Begin insert loops */
   if (config.mode == FASTQ_NO_INSERT) {
-    shard_thread_parse_no_inserts(sh);
+    shard_thread_parse_no_inserts_v3(sh);
   } else if (config.mode == FASTQ_WITH_INSERT) {
     shard_thread_parse_and_insert(sh, kmer_ht);
   } else if (config.mode == SYNTH) {

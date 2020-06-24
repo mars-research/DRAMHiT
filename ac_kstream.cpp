@@ -144,59 +144,6 @@ int kstream::readseq(kseq &seq)
     seq.last_char = c;
   }
 
-#if 0
-  if (seq.last_char == 0) { /* then jump to the next header line */
-    /* Keep reading into buffer until we see a '\n' followed by '@'  (except for
-     * the is_first_read thread - just look for '@')
-     * TODO verify if this is enough:
-     * https://en.wikipedia.org/wiki/FASTQ_format*/
-
-    while (true) {
-      c = this->getc();
-      if (c == -1) break;
-
-      //   if (this->thread_id == 0){
-      //       if (c == '@') break;
-      //   } else {
-      //       if (!this-> is_first_read && c == '@') break;
-      //       if (c != '\n') continue;
-      //       c = getc();
-      //       if (c == '@') break;
-      //       if (c == -1) break;
-      //   }
-
-      //       if (this->is_first_read == 0) {
-      //         if (this->thread_id == 0) {
-      //             if (c == '@') break;
-      //         } else {
-      //             if (c != '\n') continue;
-      //             c = this->getc();
-      //             if (c == '@') break;
-      //             if (c == -1) break;
-      //         }
-      //       } else {
-      //         if (c == '@') break;
-      //       }
-
-      if (this->thread_id == 0) {  // this is thread idx 0
-        if (c == '@') break;
-      } else if (!this->is_first_read) {
-        if (c == '@') break;
-      } else {
-        if (c != '\n') continue;
-        this->is_first_read = 1;
-        c = this->getc();
-        if (c == -1) break;
-        if (c == '@') break;
-      }
-    }
-    if (c == -1) {
-      return -1;
-    }
-    seq.last_char = c;
-  } /* the first header char has been read */
-#endif
-
   /* At this point, "buffer" is filled with data, "begin" points to start of
    * new sequence in buffer */
 #ifndef CHAR_ARRAY_PARSE_BUFFER
