@@ -55,7 +55,8 @@ const Configuration def = {
     .drop_caches = true,
     .n_prod = 1,
     .n_cons = 1,
-    .__K = 20};  // TODO enum
+    .K = 20,
+    .ht_fill = 50};  // TODO enum
 
 /* global config */
 Configuration config;
@@ -467,8 +468,11 @@ int main(int argc, char *argv[])
         "for bqueues only")(
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
         "for bqueues only")(
-        "k", po::value<uint32_t>(&config.__K)->default_value(def.__K),
-        "the value of 'k' in k-mer");
+        "k", po::value<uint32_t>(&config.K)->default_value(def.K),
+        "the value of 'k' in k-mer")(
+        "ht-fill",
+        po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
+        "adjust hashtable fill ratio [0-100] ");
 
     papi_init();
 
