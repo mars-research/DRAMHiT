@@ -9,13 +9,11 @@ const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
 extern KmerHashTable *init_ht(uint64_t sz);
 
-#define HT_TESTS_HT_SIZE (1 << 26)
-
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
-/* 1 << 24 -- 16M */
-#define HT_TESTS_NUM_INSERTS (HT_TESTS_HT_SIZE >> 2)
-//#define HT_TESTS_NUM_INSERTS  (1<<7)
+
+const uint64_t HT_TESTS_HT_SIZE = (1 << 26);
+uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
@@ -169,7 +167,7 @@ void synth_run_exec(__shard *sh, KmerHashTable *kmer_ht)
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("[INFO] Synth test run: thread %u, ht size: %u, insertions: %u\n",
+  printf("[INFO] Synth test run: thread %u, ht size: %lu, insertions: %lu\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
@@ -196,7 +194,7 @@ void prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht)
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("[INFO] Prefetch test run: thread %u, ht size:%u, insertions:%u\n",
+  printf("[INFO] Prefetch test run: thread %u, ht size:%lu, insertions:%lu\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   xorwow_init(&xw_state);

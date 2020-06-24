@@ -104,11 +104,12 @@ void print_stats(__shard *all_sh)
   }
   printf("===============================================================\n");
   printf(
-      "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert)\n",
+      "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert) (fill = %u %%)\n",
       all_total_cycles / config.num_threads,
       (double)all_total_time_ns / 1000000.0 / config.num_threads,
       all_total_num_inserts / config.num_threads,
-      all_total_cycles / all_total_num_inserts);
+      all_total_cycles / all_total_num_inserts,
+      config.ht_fill);
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
   //     "find)\n",

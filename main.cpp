@@ -56,7 +56,7 @@ const Configuration def = {
     .n_prod = 1,
     .n_cons = 1,
     .K = 20,
-    .ht_fill = 50};  // TODO enum
+    .ht_fill = 25};  // TODO enum
 
 /* global config */
 Configuration config;
@@ -520,6 +520,12 @@ int main(int argc, char *argv[])
       printf("[INFO] Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)\n");
       printf("[INFO] Exiting ... \n");
       exit(0);
+    }
+
+    if (config.ht_fill) {
+      if (config.ht_fill > 0 && config.ht_fill < 100) {
+        HT_TESTS_NUM_INSERTS = static_cast<double>(HT_TESTS_HT_SIZE) * config.ht_fill * 0.01;
+      }
     }
 
     if (vm.count("help")) {

@@ -23,7 +23,7 @@ typedef struct {
   volatile bool occupied;             // 1 bytes
   uint32_t kmer_cityhash;             // 4 bytes (4B enties is enough)
   volatile char padding[3];           // 3 bytes // TODO remove hardcode
-  uint8_t _pad[32];
+  //uint8_t _pad[32];
 } __attribute__((packed)) Kmer_r;
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_r:
@@ -409,6 +409,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable
     /* hashtable location at which data is to be inserted */
     size_t pidx = q->kmer_idx;
 
+  try_insert:
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
     if (!this->hashtable[pidx].occupied) {
 #ifdef CALC_STATS
@@ -443,14 +444,23 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable
     }
 
     {
-      //   | cacheline |
-      //   | i | i + 1 |
-      //
       /* insert back into queue, and prefetch next bucket.
       next bucket will be probed in the next run
       */
       pidx++;
       pidx = pidx & (this->capacity - 1);  // modulo
+
+      //   | cacheline |
+      //   | i | i + 1 |
+      //   In the case where two elements fit in a cacheline, a single prefetch
+      //   would bring in both the elements. We need not issue a second
+      //   prefetch. 
+      if (unlikely(pidx & 0x1)) {
+#ifdef CALC_STATS
+        this->num_reprobes++;
+#endif
+        goto try_insert;
+      } 
       prefetch(pidx);
       q->kmer_idx = pidx;
 
