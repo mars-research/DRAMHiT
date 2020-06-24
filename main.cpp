@@ -18,6 +18,7 @@
 // #include "shard.h"
 // #include "test_config.h"
 #include "ac_kseq.h"
+#include "ac_kstream.h"
 // #include "kseq.h"
 
 #include "./hashtables/cas_kht.hpp"

@@ -55,7 +55,9 @@ C_SRCS = bqueue.c \
 
 CPP_SRCS = misc_lib.cpp \
 	   ac_kseq.cpp \
-	   main.cpp 
+	   ac_kstream.cpp \
+	   main.cpp \
+
 
 DEPS = $(wildcard hashtables/*.hpp) \
        $(wildcard include/*.h) \

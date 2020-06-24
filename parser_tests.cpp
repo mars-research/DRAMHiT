@@ -123,6 +123,60 @@ void shard_thread_parse_no_inserts_v2(__shard* sh)
 
 #endif
 
+#if 0
+static unsigned char seq_nt4_table[128] = {  // Table to change "ACGTN" to 01234
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0,
+    4, 1, 4, 4, 4, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 1, 4, 4, 4, 2, 4, 4, 4, 4, 4, 4,
+    4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+
+// https://bioinformatics.stackexchange.com/questions/5359/what-is-the-most-compact-data-structure-for-canonical-k-mers-with-the-fastest-lo?noredirect=1&lq=1
+void shard_thread_parse_no_inserts_v3(__shard *sh)
+{
+  uint64_t t_start, t_end;
+  kseq seq;
+  uint64_t num_inserts = 0;
+  int len = 0;
+
+  kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
+
+  t_start = RDTSC_START();
+  while ((len = ks.readseq(seq)) >= 0) {
+    int i, l;
+    uint64_t x[2] = {0};
+    uint64_t mask = (1ULL << KMER_DATA_LENGTH * 2) - 1;
+    uint64_t shift = (KMER_DATA_LENGTH - 1) * 2;
+
+    for (i = l = 0, x[0] = x[1] = 0; i < len; ++i) {
+      int c = (uint8_t)seq.seq.data()[i] < 128
+                  ? seq_nt4_table[(uint8_t)seq.seq.data()[i]]
+                  : 4;
+      if (c < 4) {                                      // not an "N" base
+        x[0] = (x[0] << 2 | c) & mask;                  // forward strand
+        x[1] = x[1] >> 2 | (uint64_t)(3 - c) << shift;  // reverse strand
+        if (++l >= KMER_DATA_LENGTH) {                                 // we find a k-mer
+          uint64_t y = x[0] < x[1] ? x[0] : x[1];
+          /*** Perform the "insert" ***/
+          num_inserts++;
+        }
+      } else
+        l = 0, x[0] = x[1] = 0;  // if there is an "N", restart
+    }
+  }
+  t_end = RDTSCP();
+
+  sh->stats->insertion_cycles = (t_end - t_start);
+  sh->stats->num_inserts = num_inserts;
+
+  sh->stats->ht_fill = 0;
+  sh->stats->ht_capacity = 0;
+  sh->stats->max_count = 0;
+}
+
+#endif
+
 void shard_thread_parse_no_inserts(__shard *sh)
 {
   uint64_t t_start, t_end;
@@ -135,6 +189,14 @@ void shard_thread_parse_no_inserts(__shard *sh)
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
   t_start = RDTSC_START();
+
+#ifdef CALC_STATS
+  std::string first_seq;
+  std::string last_seq;
+  uint64_t num_sequences = 0;
+  uint64_t avg_read_length = 0;
+#endif
+
   while ((l = ks.readseq(seq)) >= 0) {
     for (int i = 0; i < (l - KMER_DATA_LENGTH + 1); i++) {
 #ifndef CHAR_ARRAY_PARSE_BUFFER
@@ -155,12 +217,31 @@ void shard_thread_parse_no_inserts(__shard *sh)
         i += found_N;
         continue;
       }
-      /*** Perform the "insert" ***/
+      /*** Perform the "insert ***/
       num_inserts++;
+#ifdef CALC_STATS
+      if (!avg_read_length) {
+        avg_read_length = seq.seq.length();
+      } else {
+        avg_read_length = (avg_read_length + seq.seq.length()) / 2;
+      }
+#endif
     }
+#ifdef CALC_STATS
+    num_sequences++;
+    if (first_seq.length() == 0) first_seq = seq.seq;
+    last_seq = seq.seq;
+#endif
     found_N = 0;
   }
   t_end = RDTSCP();
+
+#ifdef CALC_STATS
+  printf("[INFO] Shard %u, num_sequences: %lu, first seq: %s\n", sh->shard_idx,
+         num_sequences, first_seq.c_str());
+  printf("[INFO] Shard %u, num_sequences: %lu, last seq: %s\n", sh->shard_idx,
+         num_sequences, last_seq.c_str());
+#endif
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;

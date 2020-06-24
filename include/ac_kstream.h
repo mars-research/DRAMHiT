@@ -23,9 +23,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
-#ifndef AC_KSEQ_H
-#define AC_KSEQ_H
+#ifndef AC_KSTREAM_H
+#define AC_KSTREAM_H
 
 // #include <fcntl.h>
 // #include <malloc.h>
@@ -35,54 +34,46 @@ SOFTWARE.
 // #include <cstdint>
 // #include <cstdlib>
 // #include <string>
-#include <cstdint>
-#include <cstdlib>
-#include "data_types.h"
 
-#define BUFFER_SIZE 4096
+#include "ac_kseq.h"
+#include "libfipc/libfipc_test.h"
+#include "misc_lib.h"
 
-// #if HAVE_ZLIB
-// #include <zlib.h>
-// class FunctorZlib
-// {
-//  public:
-//   int operator()(gzFile file, void *buffer, unsigned int len)
-//   {
-//     return gzread(file, buffer, len);
-//   }
-// };
-// #endif
-
-// #if HAVE_BZIP2
-// #include <bzlib.h>
-// class FunctorBZlib2
-// {
-//  public:
-//   int operator()(BZFILE *file, void *buffer, int len)
-//   {
-//     return BZ2_bzread(file, buffer, len);
-//   }
-// };
-// #endif
-
-// TODO clean up kseq
-class kseq
+class kstream
 {
  public:
-  kseq();
-  ~kseq();
-#ifndef CHAR_ARRAY_PARSE_BUFFER
-  std::string seq;
-#else
-  char *seq;
+  kstream(uint32_t, off_t, off_t);
+  ~kstream();
+  int readseq(kseq &seq);
+  int readfunc(int, void *, size_t);
+
+ private:
+  int getc();
+  int getuntil(int delimiter, int *dret);
+#ifdef __MMAP_FILE
+  ssize_t __mmap_read();
+  off64_t __mmap_lseek64();
+#endif /* __MMAP_FILE */
+
+  char *buf;
   const unsigned int bufferSize;
-  int _s;
-  int _len;
-  void clearSeq();
-  void addToSeq(char c);
-#endif
-  uint64_t qual_length;
-  int last_char;
+  int is_eof;
+  int begin;
+  int end;
+
+  int fileid;
+  uint32_t thread_id;  // thread id corresponding to this kstream
+  off64_t off_start;   // start byte into file
+  off64_t off_end;     // end byte into file
+  int is_first_read;   // is this the first time readseq is being called?
+  int done;
+
+#ifdef __MMAP_FILE
+  static char *fmap;
+  static char *fmap_end;
+  static uint64_t mmaped_file;
+  off64_t off_curr;
+#endif /* __MMAP_FILE */
 };
 
-#endif
+#endif /* AC_KSTREAM_H */
