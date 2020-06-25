@@ -312,23 +312,135 @@ int spawn_shard_threads()
     }
   }
 
+  /*   TODO don't spawn threads if f_start >= in_file_sz
+    Not doing it now, as it has implications for num_threads,
+    which is used in calculating stats */
+
+  /*   TODO use PGROUNDUP instead of round_up()
+    #define PGROUNDUP(sz) (((sz)+PGSIZE−1) & ~(PGSIZE−1))
+    #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE−1)) */
+
   if (config.numa_split) {
+    size_t num_total_cpus = 0;
     size_t num_nodes = nodes.size();
-    size_t shards_per_node = config.num_threads / num_nodes;
+    size_t threads_per_node = (size_t)config.num_threads / num_nodes;  // 3
+    size_t threads_per_node_spill =
+        (size_t)config.num_threads % num_nodes;  // 2
 
-    /* TODO support uneven splits, and spills after splits :*/
-    // size_t shards_per_node_spill = config.num_threads % num_nodes;
+    for (auto i : nodes) num_total_cpus += i.cpu_list.size();
 
+    // 3*4+2
+    printf("[INFO] # nodes: %lu, # cpus (total): %lu\n", num_nodes,
+           num_total_cpus);
+    printf(
+        "[INFO] # threads (from config): %u # threads per node: %lu, # threads "
+        "spill: %lu\n",
+        config.num_threads, threads_per_node, threads_per_node_spill);
+
+    if (config.num_threads > num_total_cpus - 1) {
+      fprintf(stderr,
+              "[ERROR] More threads configured than cores available (Note: one "
+              "core assigned completely for synchronization) \n");
+      exit(-1);
+    }
+
+    // printf("====================================\n");
+
+    // size_t cpus_assigned = 0;
+    // size_t shard_idx_assigned = 0;
+    // for (auto numa_n : nodes) {
+    //   for (auto cpu : numa_n.cpu_list) {
+    //     __shard *sh = &all_shards[shard_idx_assigned];
+    //     sh->shard_idx = shard_idx_assigned;
+    //     sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
+    //     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+    //     // e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
+    //     //                    (void *)sh);
+    //     if (e != 0) {
+    //       perror("pthread_create");
+    //       exit(-1);
+    //     }
+    //     CPU_ZERO(&cpuset);
+    //     CPU_SET(cpu, &cpuset);
+    //     // pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
+    //     //                        &cpuset);
+    //     printf("[INFO] Thread %.2u: affinity: %.2u\n", sh->shard_idx, cpu);
+    //     shard_idx_assigned++;
+    //     cpus_assigned++;
+    //     if (cpus_assigned == threads_per_node) {
+    //       cpus_assigned = 0;
+    //       break;
+    //     }
+    //   }
+    // }
+
+    // printf("====================================\n");
+
+    size_t shard_idx_ctr = 0;
+    size_t node_idx_ctr = 0;
+    size_t cpu_idx_ctr = 0;
+    size_t last_cpu_idx = 0;
+
+    for (auto i = 0; i < threads_per_node * num_nodes; i++) {
+      __shard *sh = &all_shards[shard_idx_ctr];
+      sh->shard_idx = shard_idx_ctr;
+      sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
+      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+      // e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
+      //                    (void *)sh);
+      // if (e != 0) {
+      //   perror("pthread_create");
+      //   exit(-1);
+      // }
+      CPU_ZERO(&cpuset);
+      uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+      CPU_SET(cpu_assigned, &cpuset);
+      // pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
+      //                        &cpuset);
+      printf("[INFO] Thread %u: node: %lu, affinity: %u\n", sh->shard_idx,
+             node_idx_ctr, cpu_assigned);
+
+      cpu_idx_ctr += 1;
+      shard_idx_ctr += 1;
+      if (cpu_idx_ctr == threads_per_node) {
+        printf("---------\n");
+        node_idx_ctr++;
+        last_cpu_idx = cpu_idx_ctr;
+        cpu_idx_ctr = 0;
+      }
+    }
+
+    node_idx_ctr = 0;
+    for (auto i = 0; i < threads_per_node_spill; i++) {
+      __shard *sh = &all_shards[shard_idx_ctr];
+      sh->shard_idx = shard_idx_ctr;
+
+      sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
+      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+      e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
+                         (void *)sh);
+      if (e != 0) {
+        perror("pthread_create");
+        exit(-1);
+      }
+      CPU_ZERO(&cpuset);
+      uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[last_cpu_idx];
+      CPU_SET(cpu_assigned, &cpuset);
+      pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
+                             &cpuset);
+      printf("[INFO] Thread %u: node: %lu, affinity: %u\n", sh->shard_idx,
+             node_idx_ctr, cpu_assigned);
+      node_idx_ctr++;
+    }
+
+#if 0
     for (size_t x = 0; x < num_nodes; x++) {
-      for (size_t y = 0; y < shards_per_node; y++) {
-        uint32_t tidx = shards_per_node * x + y;
+      for (size_t y = 0; y < threads_per_node; y++) {
+        uint32_t tidx = threads_per_node * x + y;
         __shard *sh = &all_shards[tidx];
         sh->shard_idx = tidx;
         sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
         sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
-        /* TODO don't spawn threads if f_start >= in_file_sz
-        Not doing it now, as it has implications for num_threads,
-        which is used in calculating stats */
         e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
                            (void *)sh);
         if (e != 0) {
@@ -344,6 +456,7 @@ int spawn_shard_threads()
         printf("[INFO] Thread %u: affinity: %u\n", tidx, nodes[x].cpu_list[y]);
       }
     }
+#endif
   }
 
   else if (!config.numa_split) {
