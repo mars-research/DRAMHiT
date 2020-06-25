@@ -1,13 +1,15 @@
 #ifndef BQ_TESTS
 #define BQ_TESTS
 
+#include "misc_lib.h"
+
 #define BQ_MAGIC_64BIT 0xD221A6BE96E04673UL
 #define BQ_TESTS_BATCH_LENGTH (1ULL << 5)         // 32
 #define BQ_TESTS_DEQUEUE_ARR_LENGTH (1ULL << 10)  // 512
 #define BQ_TESTS_NUM_INSERTS (1ULL << 26)
 #define BQ_TESTS_HT_SIZE (BQ_TESTS_NUM_INSERTS * 16)
 
-extern KmerHashTable *init_ht(uint64_t sz, uint8_t);
+extern KmerHashTable *init_ht(uint64_t, uint8_t);
 extern void get_ht_stats(__shard *, KmerHashTable *);
 
 static int *bqueue_halt;
@@ -217,4 +219,4 @@ void no_bqueues(__shard *sh, KmerHashTable *kmer_ht)
   fipc_test_FAI(completed_producers);
 }
 
-#endif
+#endif //BQ_TESTS

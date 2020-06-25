@@ -1,13 +1,16 @@
 #ifndef HT_TESTS
 #define HT_TESTS
 
+#include "misc_lib.h"
+
 struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
 const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
-extern KmerHashTable *init_ht(uint64_t sz);
+extern KmerHashTable *init_ht(uint64_t, uint8_t);
+extern void get_ht_stats(__shard *, KmerHashTable *);
 
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
@@ -17,16 +20,8 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
-struct xorwow_state {
-  uint32_t a, b, c, d;
-  uint32_t counter;
-};
-
 __thread struct xorwow_state xw_state;
 __thread struct xorwow_state xw_state2;
-
-void xorwow_init(struct xorwow_state *s);
-uint32_t xorwow(struct xorwow_state *state);
 
 uint64_t synth_run(KmerHashTable *ktable)
 {
@@ -64,36 +59,6 @@ int myrand(uint64_t *seed)
   uint64_t m = 1 << 31;
   *seed = (1103515245 * (*seed) + 12345) % m;
   return *seed;
-}
-
-void xorwow_init(struct xorwow_state *s)
-{
-  s->a = rand();
-  s->b = rand();
-  s->c = rand();
-  s->d = rand();
-  s->counter = rand();
-}
-
-/* The state array must be initialized to not be all zero in the first four
- * words */
-uint32_t xorwow(struct xorwow_state *state)
-{
-  /* Algorithm "xorwow" from p. 5 of Marsaglia, "Xorshift RNGs" */
-  uint32_t t = state->d;
-
-  uint32_t const s = state->a;
-  state->d = state->c;
-  state->c = state->b;
-  state->b = s;
-
-  t ^= t >> 2;
-  t ^= t << 1;
-  t ^= s ^ (s << 4);
-  state->a = t;
-
-  state->counter += 362437;
-  return t + state->counter;
 }
 
 uint64_t prefetch_test_run(SimpleKmerHashTable *ktable)
