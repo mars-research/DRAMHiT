@@ -33,7 +33,7 @@ CFLAGS += -DXX_HASH
 # CFLAGS += -DBQ_TESTS_INSERT_XORWOW
 # CFLAGS += -DCHAR_ARRAY_PARSE_BUFFER
 
-CXXFLAGS = -std=c++17 $(CFLAGS)
+CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD
 
 # boostpo to parse args
 LIBS = -lboost_program_options
@@ -45,7 +45,7 @@ LIBS += -lnuma
 LIBS += -lpthread -flto
 
 # for PAPI
-LIBS += -lpapi
+#LIBS += -lpapi
 LDFLAGS = -L$(PWD)/papi/src/install/lib/
 
 TARGET=kmercounter
@@ -59,17 +59,12 @@ CPP_SRCS = misc_lib.cpp \
 	   main.cpp \
 
 
-DEPS = $(wildcard hashtables/*.hpp) \
-       $(wildcard include/*.h) \
-       $(wildcard include/*.hpp) \
-       $(wildcard *_tests.cpp)
-
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 
-%.o : %.cpp $(DEPS)
+%.o : %.cpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS) $(OPT_YES)
 
-%.o : %.c $(DEPS)
+%.o : %.c
 	$(CXX) -c -o $@ $< $(CFLAGS) $(OPT_YES)
 
 
@@ -80,8 +75,14 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS) $(LIBS)
 
+
+# Use automatic dependency generation
+-include $(CPP_SRCS:.cpp=.d)
+-include $(C_SRCS:.c=.d)
+
 clean:
 	rm -f $(TARGET) $(OBJS)
+	rm -f *.d
 
 ugdb:
 	ugdb $(TARGET)
