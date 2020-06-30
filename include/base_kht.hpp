@@ -40,7 +40,5 @@ class KmerHashTable
 #endif
 };
 
-// TODO bloom filters for high frequency kmers?
-
 } // namespace kmercounter
-#endif /* _BASE_KHT_H */
+#endif // _BASE_KHT_H
