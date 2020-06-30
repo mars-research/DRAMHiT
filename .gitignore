@@ -2,3 +2,4 @@
 kmercounter
 **/*.o
 *.o
+**/*.d

@@ -6,7 +6,7 @@ else
 	OPT_FLAGS =-O3
 endif
 
-IDIR=./include
+IDIR=include
 
 CFLAGS = -g -Wall -mprefetchwt1 $(OPT_FLAGS)
 # This crashes cityhash
@@ -50,13 +50,13 @@ LDFLAGS = -L$(PWD)/papi/src/install/lib/
 
 TARGET=kmercounter
 
-C_SRCS = bqueue.c \
-	 include/xx/xxhash.c
+C_SRCS = $(patsubst %,src/%, bqueue.c \
+	 hashers/xx/xxhash.c)
 
-CPP_SRCS = misc_lib.cpp \
+CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
 	   ac_kseq.cpp \
 	   ac_kstream.cpp \
-	   main.cpp \
+	   main.cpp)
 
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
