@@ -9,12 +9,11 @@
 #include <ctime>
 #include <fstream>
 
-#include "types.hpp"
 #include "kmer_data.cpp"
 #include "misc_lib.h"
+#include "types.hpp"
 // #include "timestamp.h"
 #include "libfipc/libfipc_test_config.h"
-#include "numa.hpp"
 // #include "shard.h"
 // #include "test_config.h"
 #include "ac_kseq.h"
@@ -24,21 +23,17 @@
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
+#include "Application.hpp"
 #include "bq_tests.cpp"
 #include "hashtable_tests.cpp"
 #include "parser_tests.cpp"
 #include "print_stats.h"
-#include "Application.hpp"
 
 #ifdef WITH_PAPI_LIB
 #include <papi.h>
 #endif
 
 namespace kmercounter {
-/* Numa config */
-Numa n;
-std::vector<numa_node> nodes = n.get_node_config();
-
 /* default config */
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -67,8 +62,7 @@ Configuration config;
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
-KmerHashTable *init_ht(uint64_t sz, uint8_t id)
-{
+KmerHashTable *init_ht(uint64_t sz, uint8_t id) {
   KmerHashTable *kmer_ht = NULL;
 
   /* Create hash table */
@@ -85,8 +79,7 @@ KmerHashTable *init_ht(uint64_t sz, uint8_t id)
   return kmer_ht;
 }
 
-void *shard_thread(void *arg)
-{
+void *shard_thread(void *arg) {
   __shard *sh = (__shard *)arg;
   KmerHashTable *kmer_ht = NULL;
 
@@ -135,8 +128,7 @@ void *shard_thread(void *arg)
   return NULL;
 }
 
-int spawn_shard_threads_bqueues()
-{
+int Application::spawn_shard_threads_bqueues() {
   cpu_set_t cpuset;
   uint64_t e, i, j;
 
@@ -252,7 +244,7 @@ int spawn_shard_threads_bqueues()
 
   CPU_ZERO(&cpuset);
   /* last cpu of last node  */
-  auto last_numa_node = nodes[n.get_num_nodes() - 1];
+  auto last_numa_node = nodes[n->get_num_nodes() - 1];
   CPU_SET(last_numa_node.cpu_list[last_numa_node.num_cpus - 1], &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
 
@@ -290,8 +282,7 @@ int spawn_shard_threads_bqueues()
   /* TODO free everything */
 }
 
-int spawn_shard_threads()
-{
+int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
   int e;
 
@@ -485,7 +476,7 @@ int spawn_shard_threads()
 
   CPU_ZERO(&cpuset);
   /* last cpu of last node  */
-  auto last_numa_node = nodes[n.get_num_nodes() - 1];
+  auto last_numa_node = nodes[n->get_num_nodes() - 1];
   CPU_SET(last_numa_node.cpu_list[last_numa_node.num_cpus - 1], &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
 
@@ -508,8 +499,7 @@ int spawn_shard_threads()
 }
 
 #ifdef WITH_PAPI_LIB
-void papi_init(void)
-{
+void papi_init(void) {
   if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
     printf("Library initialization error! \n");
     exit(1);
@@ -520,8 +510,7 @@ void papi_init(void)
 void papi_init(void) {}
 #endif
 
-int Application::process(int argc, char *argv[])
-{
+int Application::process(int argc, char *argv[]) {
   try {
     namespace po = boost::program_options;
     po::options_description desc("Program options");
@@ -639,7 +628,8 @@ int Application::process(int argc, char *argv[])
 
     if (config.ht_fill) {
       if (config.ht_fill > 0 && config.ht_fill < 100) {
-        HT_TESTS_NUM_INSERTS = static_cast<double>(HT_TESTS_HT_SIZE) * config.ht_fill * 0.01;
+        HT_TESTS_NUM_INSERTS =
+            static_cast<double>(HT_TESTS_HT_SIZE) * config.ht_fill * 0.01;
       }
     }
 
@@ -660,10 +650,10 @@ int Application::process(int argc, char *argv[])
   }
 
   if (config.mode == BQ_TESTS_YES_BQ)
-    spawn_shard_threads_bqueues();
+    this->spawn_shard_threads_bqueues();
   else
     spawn_shard_threads();
 
   return 0;
 }
-} // namespace kmercounter
+}  // namespace kmercounter

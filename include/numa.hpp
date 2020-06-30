@@ -9,11 +9,12 @@
 #include <map>
 #include <vector>
 
-#define RESET_MASK(x) ~(1LL << (x))
-
 using namespace std;
 
 namespace kmercounter {
+
+constexpr long long RESET_MASK(int x) { return ~(1LL << (x)); }
+
 typedef struct numa_node {
   unsigned int id;
   unsigned long cpu_bitmask;
