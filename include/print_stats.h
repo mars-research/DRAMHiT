@@ -1,13 +1,14 @@
 #ifndef _PRINT_STATS_H
 #define _PRINT_STATS_H
 
+#include "base_kht.hpp"
+
 namespace kmercounter {
 /*From /proc/cpuinfo*/
 #define CPUFREQ_MHZ (2200.0)
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
-void get_ht_stats(__shard *sh, KmerHashTable *kmer_ht)
-{
+inline void get_ht_stats(__shard *sh, KmerHashTable *kmer_ht) {
   sh->stats->ht_fill = kmer_ht->get_fill();
   sh->stats->ht_capacity = kmer_ht->get_capacity();
   sh->stats->max_count = kmer_ht->get_max_count();
@@ -24,8 +25,7 @@ void get_ht_stats(__shard *sh, KmerHashTable *kmer_ht)
 #endif
 }
 
-void print_stats(__shard *all_sh)
-{
+inline void print_stats(__shard *all_sh, Configuration &config) {
   uint64_t all_total_cycles = 0;
   double all_total_time_ns = 0;
   uint64_t all_total_num_inserts = 0;
@@ -39,9 +39,9 @@ void print_stats(__shard *all_sh)
 #endif
 
   size_t k = 0;
-  if (config.mode == BQ_TESTS_YES_BQ) {
-    k = producer_count;
-  }
+  // if (config.mode == BQ_TESTS_YES_BQ) {
+  //  k = producer_count;
+  //}
 
   printf("===============================================================\n");
   for (; k < config.num_threads; k++) {
@@ -105,12 +105,12 @@ void print_stats(__shard *all_sh)
   }
   printf("===============================================================\n");
   printf(
-      "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert) (fill = %u %%)\n",
+      "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
+      "(fill = %u %%)\n",
       all_total_cycles / config.num_threads,
       (double)all_total_time_ns / 1000000.0 / config.num_threads,
       all_total_num_inserts / config.num_threads,
-      all_total_cycles / all_total_num_inserts,
-      config.ht_fill);
+      all_total_cycles / all_total_num_inserts, config.ht_fill);
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
   //     "find)\n",
@@ -133,5 +133,5 @@ void print_stats(__shard *all_sh)
   printf("===============================================================\n");
 }
 
-} // namespace kmercounter
+}  // namespace kmercounter
 #endif  // _STATS_H

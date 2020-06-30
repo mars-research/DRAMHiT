@@ -56,12 +56,17 @@ TARGET=kmercounter
 C_SRCS = $(patsubst %,src/%, bqueue.c \
 	 hashers/xx/xxhash.c)
 
+TESTS = $(patsubst %,src/tests/%, bq_tests.cpp  \
+	hashtable_tests.cpp  \
+	parser_tests.cpp\
+	)
+
 CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
 	   ac_kseq.cpp \
 	   ac_kstream.cpp \
 	   Application.cpp \
 	   kmercounter.cpp \
-	   )
+	   ) $(TESTS)
 
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)

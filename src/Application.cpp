@@ -9,24 +9,16 @@
 #include <ctime>
 #include <fstream>
 
+#include "ac_kseq.h"
+#include "ac_kstream.h"
 #include "kmer_data.cpp"
 #include "misc_lib.h"
 #include "types.hpp"
-// #include "timestamp.h"
-#include "libfipc/libfipc_test_config.h"
-// #include "shard.h"
-// #include "test_config.h"
-#include "ac_kseq.h"
-#include "ac_kstream.h"
-// #include "kseq.h"
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "Application.hpp"
-#include "bq_tests.cpp"
-#include "hashtable_tests.cpp"
-#include "parser_tests.cpp"
 #include "print_stats.h"
 
 #ifdef WITH_PAPI_LIB
@@ -34,6 +26,13 @@
 #endif
 
 namespace kmercounter {
+
+extern uint64_t HT_TESTS_HT_SIZE;
+extern uint64_t HT_TESTS_NUM_INSERTS;
+
+extern uint64_t BQ_TESTS_HT_SIZE;
+extern uint64_t BQ_TESTS_NUM_INSERTS;
+
 /* default config */
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -62,7 +61,7 @@ Configuration config;
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
-KmerHashTable *init_ht(uint64_t sz, uint8_t id) {
+KmerHashTable *init_ht(const uint64_t sz, uint8_t id) {
   KmerHashTable *kmer_ht = NULL;
 
   /* Create hash table */
@@ -79,8 +78,8 @@ KmerHashTable *init_ht(uint64_t sz, uint8_t id) {
   return kmer_ht;
 }
 
-void *shard_thread(void *arg) {
-  __shard *sh = (__shard *)arg;
+void Application::shard_thread(int tid) {
+  __shard *sh = &this->shards[tid];
   KmerHashTable *kmer_ht = NULL;
 
   sh->stats = (thread_stats *)memalign(CACHE_LINE_SIZE, sizeof(thread_stats));
@@ -95,7 +94,7 @@ void *shard_thread(void *arg) {
     // no ht needed
   } else {
     fprintf(stderr, "[ERROR] No config mode specified! cannot run");
-    return NULL;
+    // return NULL;
   }
 
   fipc_test_FAI(ready_threads);
@@ -104,15 +103,15 @@ void *shard_thread(void *arg) {
   // fipc_test_mfence();
   /* Begin insert loops */
   if (config.mode == FASTQ_NO_INSERT) {
-    shard_thread_parse_no_inserts_v3(sh);
+    this->test.pat.shard_thread_parse_no_inserts_v3(sh, config);
   } else if (config.mode == FASTQ_WITH_INSERT) {
-    shard_thread_parse_and_insert(sh, kmer_ht);
+    this->test.pat.shard_thread_parse_and_insert(sh, kmer_ht);
   } else if (config.mode == SYNTH) {
-    synth_run_exec(sh, kmer_ht);
+    this->test.st.synth_run_exec(sh, kmer_ht);
   } else if (config.mode == PREFETCH) {
-    prefetch_test_run_exec(sh, kmer_ht);
+    this->test.pt.prefetch_test_run_exec(sh, kmer_ht);
   } else if (config.mode == BQ_TESTS_NO_BQ) {
-    no_bqueues(sh, kmer_ht);
+    this->test.bqt.no_bqueues(sh, kmer_ht);
   }
 
   /* Write to file */
@@ -125,174 +124,19 @@ void *shard_thread(void *arg) {
 
   fipc_test_FAD(ready_threads);
 
-  return NULL;
-}
-
-int Application::spawn_shard_threads_bqueues() {
-  cpu_set_t cpuset;
-  uint64_t e, i, j;
-
-  /*TODO numa split */
-  if (config.n_prod + config.n_cons > nodes[0].cpu_list.size()) {
-    printf(
-        "[ERROR] producers [%u] + consumers [%u] exceeded number of available "
-        "CPUs on node 0 [%lu]\n",
-        config.n_prod, config.n_cons, nodes[0].cpu_list.size());
-    exit(-1);
-  }
-
-  // pthread_self()
-  producer_count = config.n_prod;
-  consumer_count = config.n_cons;
-  printf("[INFO]: Controller starting ... nprod: %u, ncons: %u\n",
-         producer_count, consumer_count);
-
-  /* Stats data structures */
-  __shard *all_shards =
-      (__shard *)memalign(FIPC_CACHE_LINE_SIZE,
-                          sizeof(__shard) * (producer_count + consumer_count));
-
-  memset(all_shards, 0, sizeof(__shard) * (producer_count + consumer_count));
-
-  /* Queue Allocation */
-  queue_t *queues = (queue_t *)memalign(
-      FIPC_CACHE_LINE_SIZE, producer_count * consumer_count * sizeof(queue_t));
-
-  for (i = 0; i < producer_count * consumer_count; ++i) init_queue(&queues[i]);
-
-  prod_queues = (queue_t ***)memalign(FIPC_CACHE_LINE_SIZE,
-                                      producer_count * sizeof(queue_t **));
-  cons_queues = (queue_t ***)memalign(FIPC_CACHE_LINE_SIZE,
-                                      consumer_count * sizeof(queue_t **));
-
-  bqueue_halt = (int *)malloc(consumer_count * sizeof(*bqueue_halt));
-
-  /* For each producer allocate a queue connecting it to <consumer_count>
-   * consumers */
-  for (i = 0; i < producer_count; ++i)
-    prod_queues[i] = (queue_t **)memalign(FIPC_CACHE_LINE_SIZE,
-                                          consumer_count * sizeof(queue_t *));
-
-  for (i = 0; i < consumer_count; ++i) {
-    cons_queues[i] = (queue_t **)memalign(FIPC_CACHE_LINE_SIZE,
-                                          producer_count * sizeof(queue_t *));
-    bqueue_halt[i] = 0;
-  }
-
-  /* Queue Linking */
-  for (i = 0; i < producer_count; ++i) {
-    for (j = 0; j < consumer_count; ++j) {
-      prod_queues[i][j] = &queues[i * consumer_count + j];
-      printf("[INFO] prod_queues[%lu][%lu] = %p\n", i, j,
-             &queues[i * consumer_count + j]);
-    }
-  }
-
-  for (i = 0; i < consumer_count; ++i) {
-    for (j = 0; j < producer_count; ++j) {
-      cons_queues[i][j] = &queues[i + j * consumer_count];
-      printf("[INFO] cons_queues[%lu][%lu] = %p\n", i, j,
-             &queues[i + j * consumer_count]);
-    }
-  }
-
-  fipc_test_mfence();
-
-  /* Thread Allocation */
-  pthread_t *prod_threads = (pthread_t *)memalign(
-      FIPC_CACHE_LINE_SIZE, sizeof(pthread_t) * producer_count);
-  pthread_t *cons_threads = (pthread_t *)memalign(
-      FIPC_CACHE_LINE_SIZE, sizeof(pthread_t) * consumer_count);
-
-  /* Spawn producer threads */
-  for (size_t x = 0; x < producer_count; x++) {
-    __shard *sh = &all_shards[x];
-    sh->shard_idx = x;
-    e = pthread_create(&prod_threads[x], NULL, producer_thread, (void *)sh);
-    if (e != 0) {
-      printf(
-          "[ERROR]: pthread_create: Could not create thread: "
-          "producer_thread\n");
-      exit(-1);
-    }
-    CPU_ZERO(&cpuset);
-    size_t cpu_idx = (x % nodes[0].cpu_list.size()) * 2;  // {0,2,4,6,8}
-    CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
-    pthread_setaffinity_np(prod_threads[x], sizeof(cpu_set_t), &cpuset);
-    printf("[INFO]: Spawn producer_thread %lu, affinity: %u\n", x,
-           nodes[0].cpu_list[cpu_idx]);
-  }
-
-  /* Spawn consumer threads */
-  for (size_t x = producer_count, y = 0; x < producer_count + consumer_count;
-       x++, y++) {
-    __shard *sh = &all_shards[x];
-    sh->shard_idx = x;
-    e = pthread_create(&cons_threads[y], NULL, consumer_thread, (void *)sh);
-    if (e != 0) {
-      printf(
-          "[ERROR] pthread_create: Could not create thread: consumer_thread\n");
-      exit(-1);
-    }
-    CPU_ZERO(&cpuset);
-    size_t cpu_idx = (y % nodes[0].cpu_list.size()) * 2 + 1;  //{1,3,5,7,9}
-    CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
-    pthread_setaffinity_np(cons_threads[y], sizeof(cpu_set_t), &cpuset);
-    printf("[INFO]: Spawn consumer_thread %lu, affinity: %u\n", y,
-           nodes[0].cpu_list[cpu_idx]);
-  }
-
-  CPU_ZERO(&cpuset);
-  /* last cpu of last node  */
-  auto last_numa_node = nodes[n->get_num_nodes() - 1];
-  CPU_SET(last_numa_node.cpu_list[last_numa_node.num_cpus - 1], &cpuset);
-  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-
-  /* Wait for threads to be ready for test */
-  while (ready_consumers < consumer_count) fipc_test_pause();
-  while (ready_producers < producer_count) fipc_test_pause();
-
-  fipc_test_mfence();
-
-  /* Begin Test */
-  test_ready = 1;
-  fipc_test_mfence();
-
-  /* Wait for producers to complete */
-  while (completed_producers < producer_count) fipc_test_pause();
-
-  fipc_test_mfence();
-
-  /* Tell consumers to halt */
-  for (i = 0; i < consumer_count; ++i) {
-    bqueue_halt[i] = 1;
-  }
-
-  /* Wait for consumers to complete */
-  while (completed_consumers < consumer_count) fipc_test_pause();
-
-  fipc_test_mfence();
-
-  config.num_threads = producer_count + consumer_count;
-  print_stats(all_shards);
-
-  /* Tell consumers to halt once producers are done */
-  return 0;
-
-  /* TODO free everything */
+  // return NULL;
 }
 
 int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
   int e;
 
-  pthread_t *threads = (pthread_t *)memalign(
-      CACHE_LINE_SIZE, sizeof(pthread_t) * config.num_threads);
+  this->threads = new std::thread[config.num_threads];
 
-  __shard *all_shards = (__shard *)memalign(
+  this->shards = (__shard *)std::aligned_alloc(
       CACHE_LINE_SIZE, sizeof(__shard) * config.num_threads);
 
-  memset(all_shards, 0, sizeof(__shard) * config.num_threads);
+  memset(this->shards, 0, sizeof(__shard) * config.num_threads);
 
   size_t seg_sz = 0;
 
@@ -337,64 +181,29 @@ int Application::spawn_shard_threads() {
       exit(-1);
     }
 
-    // printf("====================================\n");
-
-    // size_t cpus_assigned = 0;
-    // size_t shard_idx_assigned = 0;
-    // for (auto numa_n : nodes) {
-    //   for (auto cpu : numa_n.cpu_list) {
-    //     __shard *sh = &all_shards[shard_idx_assigned];
-    //     sh->shard_idx = shard_idx_assigned;
-    //     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
-    //     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    //     // e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
-    //     //                    (void *)sh);
-    //     if (e != 0) {
-    //       perror("pthread_create");
-    //       exit(-1);
-    //     }
-    //     CPU_ZERO(&cpuset);
-    //     CPU_SET(cpu, &cpuset);
-    //     // pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
-    //     //                        &cpuset);
-    //     printf("[INFO] Thread %.2u: affinity: %.2u\n", sh->shard_idx, cpu);
-    //     shard_idx_assigned++;
-    //     cpus_assigned++;
-    //     if (cpus_assigned == threads_per_node) {
-    //       cpus_assigned = 0;
-    //       break;
-    //     }
-    //   }
-    // }
-
-    // printf("====================================\n");
-
     size_t shard_idx_ctr = 0;
     size_t node_idx_ctr = 0;
     size_t cpu_idx_ctr = 0;
     size_t last_cpu_idx = 0;
+    int i;
 
-    for (auto i = 0; i < threads_per_node * num_nodes; i++) {
-      __shard *sh = &all_shards[shard_idx_ctr];
-      sh->shard_idx = shard_idx_ctr;
+    for (i = 0; i < threads_per_node * num_nodes; i++) {
+      __shard *sh = &this->shards[i];
+      sh->shard_idx = i;
       sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
       sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-      // e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
-      //                    (void *)sh);
-      // if (e != 0) {
-      //   perror("pthread_create");
-      //   exit(-1);
-      // }
+
+      this->threads[i] = std::thread(&Application::shard_thread, this, i);
+
       CPU_ZERO(&cpuset);
       uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
       CPU_SET(cpu_assigned, &cpuset);
-      // pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
-      //                        &cpuset);
+      pthread_setaffinity_np(this->threads[i].native_handle(),
+                             sizeof(cpu_set_t), &cpuset);
       printf("[INFO] Thread %u: node: %lu, affinity: %u\n", sh->shard_idx,
              node_idx_ctr, cpu_assigned);
 
       cpu_idx_ctr += 1;
-      shard_idx_ctr += 1;
       if (cpu_idx_ctr == threads_per_node) {
         printf("---------\n");
         node_idx_ctr++;
@@ -403,73 +212,46 @@ int Application::spawn_shard_threads() {
       }
     }
 
+    shard_idx_ctr = i - 1;
     node_idx_ctr = 0;
     for (auto i = 0; i < threads_per_node_spill; i++) {
-      __shard *sh = &all_shards[shard_idx_ctr];
+      __shard *sh = &this->shards[shard_idx_ctr];
       sh->shard_idx = shard_idx_ctr;
 
       sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
       sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-      e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
-                         (void *)sh);
-      if (e != 0) {
-        perror("pthread_create");
-        exit(-1);
-      }
+
+      this->threads[shard_idx_ctr] =
+          std::thread(&Application::shard_thread, this, shard_idx_ctr);
+
       CPU_ZERO(&cpuset);
       uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[last_cpu_idx];
       CPU_SET(cpu_assigned, &cpuset);
-      pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
-                             &cpuset);
+      pthread_setaffinity_np(threads[sh->shard_idx].native_handle(),
+                             sizeof(cpu_set_t), &cpuset);
       printf("[INFO] Thread %u: node: %lu, affinity: %u\n", sh->shard_idx,
              node_idx_ctr, cpu_assigned);
       node_idx_ctr++;
     }
-
-#if 0
-    for (size_t x = 0; x < num_nodes; x++) {
-      for (size_t y = 0; y < threads_per_node; y++) {
-        uint32_t tidx = threads_per_node * x + y;
-        __shard *sh = &all_shards[tidx];
-        sh->shard_idx = tidx;
-        sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
-        sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-        e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
-                           (void *)sh);
-        if (e != 0) {
-          printf(
-              "[ERROR] pthread_create: "
-              " Could not create create shard thread");
-          exit(-1);
-        }
-        CPU_ZERO(&cpuset);
-        CPU_SET(nodes[x].cpu_list[y], &cpuset);
-        pthread_setaffinity_np(threads[sh->shard_idx], sizeof(cpu_set_t),
-                               &cpuset);
-        printf("[INFO] Thread %u: affinity: %u\n", tidx, nodes[x].cpu_list[y]);
-      }
-    }
-#endif
   }
 
   else if (!config.numa_split) {
-    for (size_t x = 0; x < config.num_threads; x++) {
-      __shard *sh = &all_shards[x];
-      sh->shard_idx = x;
-      sh->f_start = round_up(seg_sz * x, PAGE_SIZE);
-      sh->f_end = round_up(seg_sz * (x + 1), PAGE_SIZE);
+    for (size_t i = 0; i < config.num_threads; i++) {
+      __shard *sh = &this->shards[i];
+      sh->shard_idx = i;
+      sh->f_start = round_up(seg_sz * i, PAGE_SIZE);
+      sh->f_end = round_up(seg_sz * (i + 1), PAGE_SIZE);
 
       /* TODO don't spawn threads if f_start >= in_file_sz */
-      e = pthread_create(&threads[x], NULL, shard_thread, (void *)sh);
-      if (e != 0) {
-        printf("[ERROR] pthread_create: Could not create create_shard thread");
-        exit(-1);
-      }
+      this->threads[i] = std::thread(&Application::shard_thread, this, i);
+
       CPU_ZERO(&cpuset);
-      size_t cpu_idx = x % nodes[0].cpu_list.size();
+      size_t cpu_idx = i % nodes[0].cpu_list.size();
       CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
-      pthread_setaffinity_np(threads[x], sizeof(cpu_set_t), &cpuset);
-      printf("[INFO] Thread: %lu, set affinity: %u\n", x,
+      pthread_setaffinity_np(threads[i].native_handle(), sizeof(cpu_set_t),
+                             &cpuset);
+
+      printf("[INFO] Thread: %lu, set affinity: %u\n", i,
              nodes[0].cpu_list[cpu_idx]);
     }
   }
@@ -490,10 +272,10 @@ int Application::spawn_shard_threads() {
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
 
-  print_stats(all_shards);
+  print_stats(this->shards, config);
 
   free(threads);
-  free(all_shards);
+  std::free(this->shards);
 
   return 0;
 }
@@ -649,8 +431,8 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ)
-    this->spawn_shard_threads_bqueues();
+  if (config.mode == BQ_TESTS_YES_BQ) this->test.bqt.run_test(&config, this->n);
+  // this->spawn_shard_threads_bqueues();
   else
     spawn_shard_threads();
 

@@ -1,8 +1,16 @@
 #ifndef PARSER_TESTS
 #define PARSER_TESTS
 
+#include "ParserTest.hpp"
+#include "ac_kseq.h"
+#include "ac_kstream.h"
+#include "base_kht.hpp"
+#include "print_stats.h"
+#include "sync.h"
+
 namespace kmercounter {
-/* https://bioinformatics.stackexchange.com/questions/5359/what-is-the-most-compact-data-structure-for-canonical-k-mers-with-the-fastest-lo?noredirect=1&lq=1 */
+/* https://bioinformatics.stackexchange.com/questions/5359/what-is-the-most-compact-data-structure-for-canonical-k-mers-with-the-fastest-lo?noredirect=1&lq=1
+ */
 
 extern void get_ht_stats(__shard *, KmerHashTable *);
 
@@ -14,8 +22,8 @@ static unsigned char seq_nt4_table[128] = {  // Table to change "ACGTN" to 01234
     4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 1, 4, 4, 4, 2, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-void shard_thread_parse_no_inserts_v3(__shard *sh)
-{
+void ParserTest::shard_thread_parse_no_inserts_v3(__shard *sh,
+                                                  Configuration &config) {
   uint64_t t_start, t_end;
   kseq seq;
   uint64_t num_inserts = 0;
@@ -43,7 +51,7 @@ void shard_thread_parse_no_inserts_v3(__shard *sh)
       if (c < 4) {                                      // not an "N" base
         x[0] = (x[0] << 2 | c) & mask;                  // forward strand
         x[1] = x[1] >> 2 | (uint64_t)(3 - c) << shift;  // reverse strand
-        if (++l >= config.K) {                        // we find a k-mer
+        if (++l >= config.K) {                          // we find a k-mer
           uint64_t y = x[0] < x[1] ? x[0] : x[1];
           /* Perform the "insert" */
           num_inserts++;
@@ -74,9 +82,7 @@ void shard_thread_parse_no_inserts_v3(__shard *sh)
   sh->stats->max_count = 0;
 }
 
-
-void shard_thread_parse_no_inserts(__shard *sh)
-{
+void ParserTest::shard_thread_parse_no_inserts(__shard *sh) {
   uint64_t t_start, t_end;
   kseq seq;
   int l = 0;
@@ -149,8 +155,8 @@ void shard_thread_parse_no_inserts(__shard *sh)
   sh->stats->max_count = 0;
 }
 
-void shard_thread_parse_and_insert(__shard *sh, KmerHashTable *kmer_ht)
-{
+void ParserTest::shard_thread_parse_and_insert(__shard *sh,
+                                               KmerHashTable *kmer_ht) {
   uint64_t t_start, t_end;
   kseq seq;
   int l = 0;
@@ -225,5 +231,5 @@ void shard_thread_parse_and_insert(__shard *sh, KmerHashTable *kmer_ht)
   printf("[INFO] Shard %u: DONE\n", sh->shard_idx);
 }
 
-} // namespace kmercounter
+}  // namespace kmercounter
 #endif

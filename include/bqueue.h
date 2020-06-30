@@ -8,7 +8,10 @@
 #ifndef LIBFIPC_TEST_QUEUE
 #define LIBFIPC_TEST_QUEUE
 
-#include "libfipc/libfipc_test.h"
+//#include "libfipc/libfipc_test.h"
+#include <stdint.h>
+#include <unistd.h>
+#include <string.h>
 
 #define QUEUE_SIZE (1024 * 8) //8192 
 #define BATCH_SIZE (QUEUE_SIZE/16) //512
@@ -24,6 +27,16 @@
 #define EMPTY_COLLECTION     2
 #define BUFFER_FULL         -1
 #define BUFFER_EMPTY        -2
+
+// Assumed cache line size, in bytes
+#ifndef FIPC_CACHE_LINE_SIZE
+	#define FIPC_CACHE_LINE_SIZE 64
+#endif
+
+#ifndef CACHE_ALIGNED
+	#define CACHE_ALIGNED __attribute__((aligned(FIPC_CACHE_LINE_SIZE)))
+#endif
+
 
 // Types
 typedef uint64_t data_t;
@@ -102,4 +115,45 @@ int free_queue ( queue_t* q );
 int enqueue    ( queue_t* q, data_t  d );
 int dequeue    ( queue_t* q, data_t* d );
 
+// Request Types
+#define MSG_ENQUEUE         1
+#define MSG_HALT            2
+
+// Thread Locks
+static uint64_t completed_producers = 0;
+static uint64_t completed_consumers = 0;
+static uint64_t ready_consumers     = 0;
+static uint64_t ready_producers     = 0;
+static uint64_t test_ready          = 0;
+[[maybe_unused]] static uint64_t test_finished       = 0;
+
+/**
+ * This function returns a time stamp with no preceding fence instruction.
+ */
+static inline
+uint64_t fipc_test_time_get_timestamp ( void )
+{
+	unsigned int low, high;
+
+	asm volatile("rdtsc" : "=a" (low), "=d" (high));
+
+	return low | ((uint64_t)high) << 32;	
+}
+
+
+/**
+ * This function waits for atleast ticks clock cycles.
+ */
+static inline
+void fipc_test_time_wait_ticks ( uint64_t ticks )
+{
+		uint64_t current_time;
+		uint64_t time = fipc_test_time_get_timestamp();
+		time += ticks;
+		do
+		{
+			current_time = fipc_test_time_get_timestamp();
+		}
+		while ( current_time < time );
+}
 #endif

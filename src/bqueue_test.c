@@ -8,7 +8,7 @@
 #define pr_err printf
 #include <malloc.h>
 
-#include "libfipc/libfipc_test_config.h"
+//#include "libfipc/libfipc_test_config.h"
 
 uint64_t CACHE_ALIGNED prod_sum = 0;
 uint64_t CACHE_ALIGNED cons_sum = 0;

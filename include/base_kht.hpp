@@ -1,16 +1,15 @@
 #ifndef _BASE_KHT_H
 #define _BASE_KHT_H
 
-extern "C" {
-#include <stddef.h>
-}
+#include <stdint.h>
+#include <string>
 
+using namespace std;
 namespace kmercounter {
 
-  const uint32_t PREFETCH_QUEUE_SIZE = 64;
+const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
-class KmerHashTable
-{
+class KmerHashTable {
   /* insert and increment if exists */
  public:
   virtual bool insert(const void *kmer_data) = 0;
@@ -26,7 +25,6 @@ class KmerHashTable
   virtual size_t get_max_count() = 0;
 
   virtual void print_to_file(std::string outfile) = 0;
- 
 
 #ifdef CALC_STATS
   uint64_t num_reprobes = 0;
@@ -40,5 +38,5 @@ class KmerHashTable
 #endif
 };
 
-} // namespace kmercounter
-#endif // _BASE_KHT_H
+}  // namespace kmercounter
+#endif  // _BASE_KHT_H
