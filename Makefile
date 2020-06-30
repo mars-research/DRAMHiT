@@ -59,7 +59,9 @@ C_SRCS = $(patsubst %,src/%, bqueue.c \
 CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
 	   ac_kseq.cpp \
 	   ac_kstream.cpp \
-	   main.cpp)
+	   Application.cpp \
+	   kmercounter.cpp \
+	   )
 
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
@@ -85,7 +87,7 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(TARGET) $(OBJS)
-	rm -f *.d
+	rm -f src/*.d
 
 ugdb:
 	ugdb $(TARGET)

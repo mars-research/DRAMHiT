@@ -1,6 +1,3 @@
-#ifndef BQ_TESTS
-#define BQ_TESTS
-
 #include "misc_lib.h"
 
 #define BQ_MAGIC_64BIT 0xD221A6BE96E04673UL
@@ -8,6 +5,8 @@
 #define BQ_TESTS_DEQUEUE_ARR_LENGTH (1ULL << 10)  // 512
 #define BQ_TESTS_NUM_INSERTS (1ULL << 26)
 #define BQ_TESTS_HT_SIZE (BQ_TESTS_NUM_INSERTS * 16)
+
+namespace kmercounter {
 
 extern KmerHashTable *init_ht(uint64_t, uint8_t);
 extern void get_ht_stats(__shard *, KmerHashTable *);
@@ -23,7 +22,7 @@ int bq_kmers_idx = 0;
 void *producer_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
-  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
+  sh->stats = (thread_stats *)memalign(CACHE_LINE_SIZE, sizeof(thread_stats));
   uint64_t k = 0;
   uint8_t this_prod_id = sh->shard_idx;
   uint8_t cons_id = 0;
@@ -87,7 +86,7 @@ void *producer_thread(void *arg)
 void *consumer_thread(void *arg)
 {
   __shard *sh = (__shard *)arg;
-  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
+  sh->stats = (thread_stats *)memalign(CACHE_LINE_SIZE, sizeof(thread_stats));
   uint64_t t_start, t_end;
   KmerHashTable *kmer_ht = NULL;
   uint8_t finished_producers;
@@ -218,5 +217,4 @@ void no_bqueues(__shard *sh, KmerHashTable *kmer_ht)
 
   fipc_test_FAI(completed_producers);
 }
-
-#endif //BQ_TESTS
+} // namespace

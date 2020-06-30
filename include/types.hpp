@@ -1,14 +1,13 @@
-#ifndef _DATA_TYPES_H
-#define _DATA_TYPES_H
-
-#define __CACHE_LINE_SIZE 64
-#define __PAGE_SIZE 4096
-// #define KMER_DATA_LENGTH 100 * 2 / 8  // 20 mer for now
-#define KMER_DATA_LENGTH 20
-#define ALPHA 0.15
+#ifndef __TYPES_HPP__
+#define __TYPES_HPP__
 
 #include <cstdint>
 #include <string>
+
+#define CACHE_LINE_SIZE 64
+#define PAGE_SIZE 4096
+#define KMER_DATA_LENGTH 20
+#define ALPHA 0.15
 
 extern const uint32_t PREFETCH_QUEUE_SIZE;
 
@@ -22,7 +21,7 @@ typedef enum {
   READ_FROM_DISK = 2,
   WRITE_TO_DISK = 3,
   FASTQ_WITH_INSERT = 4,
-  FASTQ_NO_INSERT = 5, 
+  FASTQ_NO_INSERT = 5,
   SYNTH = 6,
   PREFETCH = 7,
   BQ_TESTS_YES_BQ = 8,
@@ -75,19 +74,18 @@ struct thread_stats {
 };
 
 struct __shard {
-  uint8_t shard_idx; // equivalent to a thread_id
-  off64_t f_start;  // start byte into file
-  off64_t f_end;    // end byte into file
+  uint8_t shard_idx;  // equivalent to a thread_id
+  off64_t f_start;    // start byte into file
+  off64_t f_end;      // end byte into file
   thread_stats* stats;
   Kmer_s* kmer_big_pool;
   Kmer_s* kmer_small_pool;
   Kmer_s* pool;
 };
 
-#endif /* _DATA_TYPES_H */
+#endif  // __TYPES_HPP__
 
-
-// X mmap, no inserts, 1 thread 
+// X mmap, no inserts, 1 thread
 // X mmap, no inserts, 10 threads
 // X nommap,  no inserts, 1 thread
 // X nommap, no inserts, 10 threads

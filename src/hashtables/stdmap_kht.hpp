@@ -2,10 +2,11 @@
 #define _STDMAP_KHT_H
 
 #include "base_kht.hpp"
-#include "data_types.h"
+#include "types.hpp"
 // #include "kmer_struct.h"
 #include "kmer_class.h"
 
+namespace kmercounter {
 class StdmapKmerHashTable : public KmerHashTable
 {
   std::unordered_map<Kmer, Kmer_value_t, Kmer_hash, Kmer_equal> std_kmer_umap;
@@ -83,4 +84,5 @@ class StdmapKmerHashTable : public KmerHashTable
 
 // TODO bloom filters for high frequency kmers?
 
+} // namespace kmercounter
 #endif /* _STDMAP_KHT_H */

@@ -25,6 +25,7 @@ SOFTWARE.
 
 #include "ac_kstream.h"
 
+namespace kmercounter {
 extern Configuration config;
 
 #ifdef __MMAP_FILE
@@ -87,7 +88,7 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
   this->fmap_end = this->fmap + config.in_file_sz;
 #else
   this->buf = static_cast<char *>(
-      std::aligned_alloc(__CACHE_LINE_SIZE, sizeof(char) * this->bufferSize));
+      std::aligned_alloc(CACHE_LINE_SIZE, sizeof(char) * this->bufferSize));
   if (lseek64(this->fileid, this->off_start, SEEK_SET) == -1) {
     printf("[ERROR] Shard %u: Unable to seek", this->thread_id);
     exit(-1);
@@ -283,3 +284,4 @@ int kstream::getuntil(int delimiter, int *dret)
   }
   return 0;
 }
+} // namespace kmercounter

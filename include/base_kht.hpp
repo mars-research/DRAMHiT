@@ -5,6 +5,10 @@ extern "C" {
 #include <stddef.h>
 }
 
+namespace kmercounter {
+
+  const uint32_t PREFETCH_QUEUE_SIZE = 64;
+
 class KmerHashTable
 {
   /* insert and increment if exists */
@@ -38,4 +42,5 @@ class KmerHashTable
 
 // TODO bloom filters for high frequency kmers?
 
+} // namespace kmercounter
 #endif /* _BASE_KHT_H */

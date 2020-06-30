@@ -3,7 +3,7 @@
 
 #include "base_kht.hpp"
 #include "city/city.h"
-#include "data_types.h"
+#include "types.hpp"
 // #include "kmer_struct.h"
 
 
@@ -14,6 +14,7 @@ Each cache_record spills over a queue line for now, queue-align later
 
 // 2^21
 
+namespace kmercounter {
 typedef struct
 {
   char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
@@ -160,12 +161,12 @@ class RobinhoodKmerHashTable : public KmerHashTable
     // TODO power of 2 hashtable size for ease of mod operations
     this->capacity = this->__upper_power_of_two(c);
     this->hashtable =
-        (RH_Kmer_r *)(aligned_alloc(__PAGE_SIZE, capacity * sizeof(RH_Kmer_r)));
+        (RH_Kmer_r *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(RH_Kmer_r)));
     memset(hashtable, 0, capacity * sizeof(RH_Kmer_r));
     memset(&this->empty_kmer_r, 0, sizeof(RH_Kmer_r));
 
     this->queue = (RH_Kmer_queue_r *)(aligned_alloc(
-        __PAGE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(RH_Kmer_queue_r)));
+        PAGE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(RH_Kmer_queue_r)));
     this->queue_idx = 0;
     __builtin_prefetch(queue, 1, 3);
   }
@@ -302,4 +303,5 @@ class RobinhoodKmerHashTable : public KmerHashTable
 
 // TODO bloom filters for high frequency kmers?
 
+} // namespace kmercounter
 #endif /* _ROBINHOOD_SKHT_H */

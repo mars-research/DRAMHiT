@@ -24,9 +24,11 @@ SOFTWARE.
 */
 
 #include "ac_kseq.h"
-// #include "data_types.h"
+// #include "types.hpp"
 // #include "libfipc/libfipc_test.h"
 // #include "misc_lib.h"
+
+namespace kmercounter {
 
 #ifndef CHAR_ARRAY_PARSE_BUFFER
 kseq::kseq()
@@ -38,7 +40,7 @@ kseq::kseq()
 kseq::kseq() : bufferSize(BUFFER_SIZE)
 {
   this->seq = static_cast<char*>(
-      std::aligned_alloc(__CACHE_LINE_SIZE, sizeof(char) * this->bufferSize));
+      std::aligned_alloc(CACHE_LINE_SIZE, sizeof(char) * this->bufferSize));
   this->_s = 0;
   this->last_char = 0;
 }
@@ -58,3 +60,4 @@ void kseq::addToSeq(char c)
 #endif
 
 kseq::~kseq() { printf("kseq destructor called\n"); }
+} // namespace kmercounter

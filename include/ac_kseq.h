@@ -37,7 +37,9 @@ SOFTWARE.
 // #include <string>
 #include <cstdint>
 #include <cstdlib>
-#include "data_types.h"
+#include "types.hpp"
+
+namespace kmercounter {
 
 #define BUFFER_SIZE 4096
 
@@ -85,4 +87,5 @@ class kseq
   int last_char;
 };
 
+} // namespace kmercounter
 #endif

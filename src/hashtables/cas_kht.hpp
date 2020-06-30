@@ -4,10 +4,11 @@
 #include <mutex>
 #include "base_kht.hpp"
 #include "city/city.h"
-#include "data_types.h"
+#include "types.hpp"
 // #include "kmer_struct.h"
 #include "libfipc/libfipc_test.h"
 
+namespace kmercounter {
 static uint64_t working_threads = 0;
 
 typedef struct
@@ -209,14 +210,14 @@ class CASKmerHashTable : public KmerHashTable
     if (!hashtable)
     {
       this->hashtable = (CAS_Kmer_r*)(aligned_alloc(
-          __PAGE_SIZE, capacity * sizeof(CAS_Kmer_r)));
+          PAGE_SIZE, capacity * sizeof(CAS_Kmer_r)));
       memset(hashtable, 0, capacity * sizeof(CAS_Kmer_r));
       memset(&this->empty_kmer_r, 0, sizeof(CAS_Kmer_r));
     }
     this->ht_init_mutex.unlock();
 
     this->queue = (CAS_Kmer_queue_r*)(aligned_alloc(
-        __PAGE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(CAS_Kmer_queue_r)));
+        PAGE_SIZE, kmercounter::PREFETCH_QUEUE_SIZE * sizeof(CAS_Kmer_queue_r)));
     this->queue_idx = 0;
     // __builtin_prefetch(queue, 1, 3);
     fipc_test_FAI(working_threads);
@@ -371,4 +372,5 @@ CAS_Kmer_r* CASKmerHashTable::hashtable;
 
 // TODO bloom filters for high frequency kmers?
 
+} // namespace kmercounter
 #endif /* _CAS_KHT_H */

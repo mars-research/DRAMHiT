@@ -39,6 +39,7 @@ SOFTWARE.
 #include "libfipc/libfipc_test.h"
 #include "misc_lib.h"
 
+namespace kmercounter {
 class kstream
 {
  public:
@@ -76,4 +77,5 @@ class kstream
 #endif /* __MMAP_FILE */
 };
 
+} // namespace kmercounter
 #endif /* AC_KSTREAM_H */

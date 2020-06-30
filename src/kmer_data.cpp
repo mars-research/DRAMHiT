@@ -15,7 +15,7 @@ extern "C"
 #include "sys/types.h"
 }
 
-#include "data_types.h"
+#include "types.hpp"
 #include "misc_lib.h"
 // #include "kmer_struct.h"
 // #include "shard.h"
@@ -24,6 +24,7 @@ extern "C"
 // KSEQ_INIT(gzFile, gzread)
 
 
+namespace kmercounter {
 const char *POOL_FILE_FORMAT = "/local/devel/pools/%02u.bin";
 
 extern Configuration config;
@@ -182,7 +183,7 @@ void create_data(__shard *sh)
   // 		sh->shard_idx, KMER_SMALL_POOL_COUNT);
 
   sh->kmer_small_pool = (Kmer_s *)memalign(
-      __CACHE_LINE_SIZE, sizeof(Kmer_s) * KMER_SMALL_POOL_COUNT);
+      CACHE_LINE_SIZE, sizeof(Kmer_s) * KMER_SMALL_POOL_COUNT);
 
   if (!sh->kmer_small_pool)
   {
@@ -193,7 +194,7 @@ void create_data(__shard *sh)
   // 	printf("[INFO] Shard %u Creating kmer BIG POOL of %lu elements\n",
   // 		sh->shard_idx, KMER_BIG_POOL_COUNT);
 
-  sh->kmer_big_pool = (Kmer_s *)memalign(__CACHE_LINE_SIZE,
+  sh->kmer_big_pool = (Kmer_s *)memalign(CACHE_LINE_SIZE,
                                          sizeof(Kmer_s) * KMER_BIG_POOL_COUNT);
 
   if (!sh->kmer_big_pool)
@@ -231,3 +232,4 @@ void create_data(__shard *sh)
   /* We are done with small pool. From now on, only big pool matters */
   free(sh->kmer_small_pool);
 }
+} // namespace kmercounter

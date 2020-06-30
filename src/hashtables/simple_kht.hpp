@@ -5,7 +5,7 @@
 #include <sys/mman.h>
 #include "base_kht.hpp"
 #include "city/city.h"
-#include "data_types.h"
+#include "types.hpp"
 
 #if defined(XX_HASH)
 #include "xx/xxhash.h"
@@ -16,6 +16,7 @@
 #endif
 // #include "kmer_struct.h"
 
+namespace kmercounter {
 // 2^21
 typedef struct {
   char kmer_data[KMER_DATA_LENGTH];   // 20 bytes
@@ -274,7 +275,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable
     // printf("[INFO] Hashtable size: %lu\n", this->capacity);
 #if !defined(HUGE_1GB_PAGES)
     this->hashtable =
-        (Kmer_r *)aligned_alloc(__PAGE_SIZE, capacity * sizeof(Kmer_r));
+        (Kmer_r *)aligned_alloc(PAGE_SIZE, capacity * sizeof(Kmer_r));
 #else
 		int fd;
     char mmap_path[256] = {0};
@@ -640,4 +641,5 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable
 
 // TODO bloom filters for high frequency kmers?
 
+} // namespace kmercounter
 #endif /* _SKHT_H_ */

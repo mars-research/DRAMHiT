@@ -9,7 +9,7 @@
 #include <ctime>
 #include <fstream>
 
-#include "data_types.h"
+#include "types.hpp"
 #include "kmer_data.cpp"
 #include "misc_lib.h"
 // #include "timestamp.h"
@@ -28,11 +28,13 @@
 #include "hashtable_tests.cpp"
 #include "parser_tests.cpp"
 #include "print_stats.h"
+#include "Application.hpp"
 
 #ifdef WITH_PAPI_LIB
 #include <papi.h>
 #endif
 
+namespace kmercounter {
 /* Numa config */
 Numa n;
 std::vector<numa_node> nodes = n.get_node_config();
@@ -88,7 +90,7 @@ void *shard_thread(void *arg)
   __shard *sh = (__shard *)arg;
   KmerHashTable *kmer_ht = NULL;
 
-  sh->stats = (thread_stats *)memalign(__CACHE_LINE_SIZE, sizeof(thread_stats));
+  sh->stats = (thread_stats *)memalign(CACHE_LINE_SIZE, sizeof(thread_stats));
 
   if (config.mode == FASTQ_WITH_INSERT) {
     kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
@@ -294,10 +296,10 @@ int spawn_shard_threads()
   int e;
 
   pthread_t *threads = (pthread_t *)memalign(
-      __CACHE_LINE_SIZE, sizeof(pthread_t) * config.num_threads);
+      CACHE_LINE_SIZE, sizeof(pthread_t) * config.num_threads);
 
   __shard *all_shards = (__shard *)memalign(
-      __CACHE_LINE_SIZE, sizeof(__shard) * config.num_threads);
+      CACHE_LINE_SIZE, sizeof(__shard) * config.num_threads);
 
   memset(all_shards, 0, sizeof(__shard) * config.num_threads);
 
@@ -352,8 +354,8 @@ int spawn_shard_threads()
     //   for (auto cpu : numa_n.cpu_list) {
     //     __shard *sh = &all_shards[shard_idx_assigned];
     //     sh->shard_idx = shard_idx_assigned;
-    //     sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
-    //     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+    //     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
+    //     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
     //     // e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
     //     //                    (void *)sh);
     //     if (e != 0) {
@@ -384,8 +386,8 @@ int spawn_shard_threads()
     for (auto i = 0; i < threads_per_node * num_nodes; i++) {
       __shard *sh = &all_shards[shard_idx_ctr];
       sh->shard_idx = shard_idx_ctr;
-      sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
-      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+      sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
+      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
       // e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
       //                    (void *)sh);
       // if (e != 0) {
@@ -415,8 +417,8 @@ int spawn_shard_threads()
       __shard *sh = &all_shards[shard_idx_ctr];
       sh->shard_idx = shard_idx_ctr;
 
-      sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
-      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+      sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
+      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
       e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
                          (void *)sh);
       if (e != 0) {
@@ -439,8 +441,8 @@ int spawn_shard_threads()
         uint32_t tidx = threads_per_node * x + y;
         __shard *sh = &all_shards[tidx];
         sh->shard_idx = tidx;
-        sh->f_start = round_up(seg_sz * sh->shard_idx, __PAGE_SIZE);
-        sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), __PAGE_SIZE);
+        sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
+        sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
         e = pthread_create(&threads[sh->shard_idx], NULL, shard_thread,
                            (void *)sh);
         if (e != 0) {
@@ -463,8 +465,8 @@ int spawn_shard_threads()
     for (size_t x = 0; x < config.num_threads; x++) {
       __shard *sh = &all_shards[x];
       sh->shard_idx = x;
-      sh->f_start = round_up(seg_sz * x, __PAGE_SIZE);
-      sh->f_end = round_up(seg_sz * (x + 1), __PAGE_SIZE);
+      sh->f_start = round_up(seg_sz * x, PAGE_SIZE);
+      sh->f_end = round_up(seg_sz * (x + 1), PAGE_SIZE);
 
       /* TODO don't spawn threads if f_start >= in_file_sz */
       e = pthread_create(&threads[x], NULL, shard_thread, (void *)sh);
@@ -518,7 +520,7 @@ void papi_init(void)
 void papi_init(void) {}
 #endif
 
-int main(int argc, char *argv[])
+int Application::process(int argc, char *argv[])
 {
   try {
     namespace po = boost::program_options;
@@ -664,3 +666,4 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+} // namespace kmercounter

@@ -5,7 +5,7 @@
 #include "city/city.h"
 #include "tbb/scalable_allocator.h"
 #include "tbb/tbb_allocator.h"
-#include "data_types.h"
+#include "types.hpp"
 
 #define KMER_ALIGNMENT		64
 

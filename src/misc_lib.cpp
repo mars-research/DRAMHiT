@@ -43,7 +43,7 @@ TODO look into this.	*/
 uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz)
 {
   uint64_t sum = 0;
-  for (uint64_t i = 0; i < sz; i += __PAGE_SIZE) sum += fmap[i];
+  for (uint64_t i = 0; i < sz; i += PAGE_SIZE) sum += fmap[i];
   return sum;
 }
 

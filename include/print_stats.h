@@ -1,6 +1,7 @@
 #ifndef _PRINT_STATS_H
 #define _PRINT_STATS_H
 
+namespace kmercounter {
 /*From /proc/cpuinfo*/
 #define CPUFREQ_MHZ (2200.0)
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
@@ -132,4 +133,5 @@ void print_stats(__shard *all_sh)
   printf("===============================================================\n");
 }
 
+} // namespace kmercounter
 #endif  // _STATS_H

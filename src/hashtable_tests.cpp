@@ -3,11 +3,10 @@
 
 #include "misc_lib.h"
 
+namespace kmercounter {
 struct kmer {
   char data[KMER_DATA_LENGTH];
 };
-
-const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
 extern KmerHashTable *init_ht(uint64_t, uint8_t);
 extern void get_ht_stats(__shard *, KmerHashTable *);
@@ -180,4 +179,5 @@ void prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht)
   get_ht_stats(sh, kmer_ht);
 }
 
+} // namespace kmercounter
 #endif /* HASHTABLE_TESTS */
