@@ -6,12 +6,15 @@ else
 	OPT_FLAGS =-O3
 endif
 
-IDIR=include
+IDIRS = include \
+	include/xx \
+	include/city
 
 CFLAGS = -g -Wall -mprefetchwt1 $(OPT_FLAGS)
 # This crashes cityhash
 CFLAGS += -march=skylake
-CFLAGS += -I$(IDIR)
+CFLAGS += $(patsubst %,-I%/,$(IDIRS))
+
 # CFLAGS += -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
 
 # YES. We love spaghetti!!!
