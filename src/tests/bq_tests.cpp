@@ -282,8 +282,11 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
   cpu_set_t cpuset;
   uint64_t e, i, j;
 
+  this->n = n;
+  this->nodes = this->n->get_node_config();
+
   // TODO numa split
-  if (cfg->n_prod + cfg->n_cons > nodes[0].cpu_list.size()) {
+  if (cfg->n_prod + cfg->n_cons > this->nodes[0].cpu_list.size()) {
     printf(
         "[ERROR] producers [%u] + consumers [%u] exceeded number of available "
         "CPUs on node 0 [%lu]\n",
@@ -291,8 +294,6 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
     exit(-1);
   }
 
-  this->n = n;
-  this->nodes = this->n->get_node_config();
   this->cfg = cfg;
   this->prod_threads = new std::thread[cfg->n_prod];
   this->cons_threads = new std::thread[cfg->n_cons];
@@ -321,7 +322,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
   this->cons_threads = new std::thread[consumer_count];
 
   // Spawn producer threads
-  for (size_t i = 0; i < producer_count; i++) {
+  for (i = 0; i < producer_count; i++) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
 
@@ -337,12 +338,11 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
   }
 
   // Spawn consumer threads
-  for (size_t i = producer_count, j = 0; i < producer_count + consumer_count;
-       i++, j++) {
+  for (j = 0; j < consumer_count; j++, i++) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
 
-    this->cons_threads[i] = std::thread(&BQueueTest::consumer_thread, this, i);
+    this->cons_threads[j] = std::thread(&BQueueTest::consumer_thread, this, i);
 
     CPU_ZERO(&cpuset);
     size_t cpu_idx = (j % nodes[0].cpu_list.size()) * 2 + 1;  //{1,3,5,7,9}
@@ -384,12 +384,23 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
 
   fipc_test_mfence();
 
+  
   cfg->num_threads = producer_count + consumer_count;
   print_stats(this->shards, *cfg);
 
   /* Tell consumers to halt once producers are done */
   // return 0;
+  for (auto i = 0; i < cfg->n_prod; i++) {
+    if (this->prod_threads[i].joinable()) {
+      this->prod_threads[i].join();
+    }
+  }
 
+  for (auto i = 0; i < cfg->n_cons; i++) {
+    if (this->cons_threads[i].joinable()) {
+      this->cons_threads[i].join();
+    }
+  }
   /* TODO free everything */
 }
 

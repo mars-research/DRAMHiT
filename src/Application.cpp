@@ -283,9 +283,15 @@ int Application::spawn_shard_threads() {
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
 
+  for (auto t = 0; t < config.num_threads; t++) {
+    if (this->threads[t].joinable()) {
+      this->threads[t].join();
+    }
+  }
+
   print_stats(this->shards, config);
 
-  free(threads);
+  delete [] threads;
   std::free(this->shards);
 
   return 0;
