@@ -68,8 +68,12 @@ CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
 	   kmercounter.cpp \
 	   ) $(TESTS)
 
+CC_SRCS = src/hashers/city/city.cc
 
-OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
+OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o) $(CC_SRCS:.cc=.o)
+
+%.o : %.cc
+	$(CXX) -c -o $@ $< $(CXXFLAGS) $(OPT_YES)
 
 %.o : %.cpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS) $(OPT_YES)
