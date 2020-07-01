@@ -30,8 +30,6 @@ namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
-extern uint64_t BQ_TESTS_HT_SIZE;
-extern uint64_t BQ_TESTS_NUM_INSERTS;
 
 /* default config */
 const Configuration def = {
@@ -82,19 +80,22 @@ void Application::shard_thread(int tid) {
   Shard *sh = &this->shards[tid];
   KmerHashTable *kmer_ht = NULL;
 
-  sh->stats = (thread_stats *)memalign(CACHE_LINE_SIZE, sizeof(thread_stats));
+  sh->stats = (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
 
-  if (config.mode == FASTQ_WITH_INSERT) {
+  switch (config.mode) {
+  case FASTQ_WITH_INSERT:
     kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
-  } else if (config.mode == SYNTH || config.mode == PREFETCH) {
+    break;
+  case SYNTH:
+  case PREFETCH:
+  case BQ_TESTS_NO_BQ:
     kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
-  } else if (config.mode == BQ_TESTS_NO_BQ) {
-    kmer_ht = init_ht(BQ_TESTS_HT_SIZE, sh->shard_idx);
-  } else if (config.mode == FASTQ_NO_INSERT) {
-    // no ht needed
-  } else {
+    break;
+  case FASTQ_NO_INSERT:
+    break;
+  default:
     fprintf(stderr, "[ERROR] No config mode specified! cannot run");
-    // return NULL;
+    return;
   }
 
   fipc_test_FAI(ready_threads);
@@ -124,7 +125,7 @@ void Application::shard_thread(int tid) {
 
   fipc_test_FAD(ready_threads);
 
-  // return NULL;
+  return;
 }
 
 int Application::spawn_shard_threads() {

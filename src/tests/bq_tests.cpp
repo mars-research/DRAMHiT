@@ -9,8 +9,8 @@
 
 namespace kmercounter {
 
-uint64_t BQ_TESTS_HT_SIZE = (1 << 26);
-uint64_t BQ_TESTS_NUM_INSERTS;
+extern uint64_t HT_TESTS_HT_SIZE;
+extern uint64_t HT_TESTS_NUM_INSERTS;
 
 // Test Variables
 [[maybe_unused]] static uint64_t transactions = 100000000;
@@ -57,11 +57,11 @@ void BQueueTest::producer_thread(int tid) {
   fipc_test_mfence();
 
   printf("[INFO] Producer %u starting. Total inserts :%llu \n", this_prod_id,
-         BQ_TESTS_NUM_INSERTS * consumer_count);
+         HT_TESTS_NUM_INSERTS * consumer_count);
 
-  /* BQ_TESTS_NUM_INSERTS enqueues per consumer */
+  /* HT_TESTS_NUM_INSERTS enqueues per consumer */
   cons_id = 0;
-  for (transaction_id = 0u; transaction_id < BQ_TESTS_NUM_INSERTS;) {
+  for (transaction_id = 0u; transaction_id < HT_TESTS_NUM_INSERTS;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
      * consumer */
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {
@@ -80,7 +80,7 @@ void BQueueTest::producer_thread(int tid) {
         break;
       }
       transaction_id++;
-      if (transaction_id % (BQ_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
+      if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
                transaction_id);
       }
@@ -114,7 +114,7 @@ void BQueueTest::consumer_thread(int tid) {
   queue_t **q = this->cons_queues[this_cons_id];
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
-  kmer_ht = init_ht(BQ_TESTS_HT_SIZE, sh->shard_idx);
+  kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
@@ -149,7 +149,7 @@ void BQueueTest::consumer_thread(int tid) {
       }
 
       transaction_id++;
-      if (transaction_id % (BQ_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
+      if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         printf("[INFO] Consumer %u, transaction_id %lu\n", this_cons_id,
                transaction_id);
       }
@@ -241,11 +241,11 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
   printf(
       "[INFO] no_bqueues thread %u starting. Total inserts in this "
       "thread:%llu \n",
-      sh->shard_idx, BQ_TESTS_NUM_INSERTS);
+      sh->shard_idx, HT_TESTS_NUM_INSERTS);
 
   t_start = RDTSC_START();
 
-  for (transaction_id = 0u; transaction_id < BQ_TESTS_NUM_INSERTS;
+  for (transaction_id = 0u; transaction_id < HT_TESTS_NUM_INSERTS;
        transaction_id++) {
 #ifdef BQ_TESTS_INSERT_XORWOW
     k = xorwow(&xw_state);
@@ -259,7 +259,7 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
     bq_kmers_idx++;
     if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
 
-    if (transaction_id % (BQ_TESTS_NUM_INSERTS) == 0) {
+    if (transaction_id % (HT_TESTS_NUM_INSERTS) == 0) {
       printf("[INFO] no_bqueues thread %u, transaction_id %lu\n", sh->shard_idx,
              transaction_id);
     }
