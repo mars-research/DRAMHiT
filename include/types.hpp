@@ -33,6 +33,13 @@ typedef enum {
   BQ_TESTS_NO_BQ = 9
 } run_mode_t;
 
+typedef enum {
+  SIMPLE_KHT = 1,
+  ROBINHOOD_KHT,
+  CAS_KHT,
+  STDMAP_KHT,
+} ht_type_t;
+
 /* Test config */
 struct Configuration {
   uint64_t kmer_create_data_base;

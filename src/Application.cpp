@@ -30,7 +30,6 @@ namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
-
 /* default config */
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -62,16 +61,18 @@ static uint64_t ready_threads = 0;
 KmerHashTable *init_ht(const uint64_t sz, uint8_t id) {
   KmerHashTable *kmer_ht = NULL;
 
-  /* Create hash table */
-  if (config.ht_type == 1) {
+  // Create hash table
+  if (config.ht_type == SIMPLE_KHT) {
     kmer_ht = new SimpleKmerHashTable(sz, id);
-  } else if (config.ht_type == 2) {
+  } else if (config.ht_type == ROBINHOOD_KHT) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
-  } else if (config.ht_type == 3) {
+  } else if (config.ht_type == CAS_KHT) {
     /* For the CAS Hash table, size is the same as
     size of one partitioned ht * number of threads */
     kmer_ht = new CASKmerHashTable(sz * config.num_threads);
     /*TODO tidy this up, don't use static + locks maybe*/
+  } else {
+    fprintf(stderr, "STDMAP_KHT Not implemented\n");
   }
   return kmer_ht;
 }
@@ -80,22 +81,23 @@ void Application::shard_thread(int tid) {
   Shard *sh = &this->shards[tid];
   KmerHashTable *kmer_ht = NULL;
 
-  sh->stats = (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
+  sh->stats =
+      (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
 
   switch (config.mode) {
-  case FASTQ_WITH_INSERT:
-    kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
-    break;
-  case SYNTH:
-  case PREFETCH:
-  case BQ_TESTS_NO_BQ:
-    kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
-    break;
-  case FASTQ_NO_INSERT:
-    break;
-  default:
-    fprintf(stderr, "[ERROR] No config mode specified! cannot run");
-    return;
+    case FASTQ_WITH_INSERT:
+      kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
+      break;
+    case SYNTH:
+    case PREFETCH:
+    case BQ_TESTS_NO_BQ:
+      kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
+      break;
+    case FASTQ_NO_INSERT:
+      break;
+    default:
+      fprintf(stderr, "[ERROR] No config mode specified! cannot run");
+      return;
   }
 
   fipc_test_FAI(ready_threads);
@@ -103,19 +105,27 @@ void Application::shard_thread(int tid) {
 
   // fipc_test_mfence();
   /* Begin insert loops */
-  if (config.mode == FASTQ_NO_INSERT) {
-    this->test.pat.shard_thread_parse_no_inserts_v3(sh, config);
-  } else if (config.mode == FASTQ_WITH_INSERT) {
-    this->test.pat.shard_thread_parse_and_insert(sh, kmer_ht);
-  } else if (config.mode == SYNTH) {
-    this->test.st.synth_run_exec(sh, kmer_ht);
-  } else if (config.mode == PREFETCH) {
-    this->test.pt.prefetch_test_run_exec(sh, kmer_ht);
-  } else if (config.mode == BQ_TESTS_NO_BQ) {
-    this->test.bqt.no_bqueues(sh, kmer_ht);
+  switch (config.mode) {
+    case FASTQ_WITH_INSERT:
+      this->test.pat.shard_thread_parse_and_insert(sh, kmer_ht);
+      break;
+    case SYNTH:
+      this->test.st.synth_run_exec(sh, kmer_ht);
+      break;
+    case PREFETCH:
+      this->test.pt.prefetch_test_run_exec(sh, kmer_ht);
+      break;
+    case BQ_TESTS_NO_BQ:
+      this->test.bqt.no_bqueues(sh, kmer_ht);
+      break;
+    case FASTQ_NO_INSERT:
+      this->test.pat.shard_thread_parse_no_inserts_v3(sh, config);
+      break;
+    default:
+      break;
   }
 
-  /* Write to file */
+  // Write to file
   if (config.mode != FASTQ_NO_INSERT && !config.ht_file.empty()) {
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
     printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
@@ -397,13 +407,13 @@ int Application::process(int argc, char *argv[]) {
       }
     }
 
-    if (config.ht_type == 1) {
+    if (config.ht_type == SIMPLE_KHT) {
       printf("[INFO] Hashtable type : SimpleKmerHashTable\n");
-    } else if (config.ht_type == 2) {
+    } else if (config.ht_type == ROBINHOOD_KHT) {
       printf("[INFO] Hashtable type : RobinhoodKmerHashTable\n");
-    } else if (config.ht_type == 3) {
+    } else if (config.ht_type == CAS_KHT) {
       printf("[INFO] Hashtable type : CASKmerHashTable\n");
-    } else if (config.ht_type == 4) {
+    } else if (config.ht_type == STDMAP_KHT) {
       printf("[INFO] Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)\n");
       printf("[INFO] Exiting ... \n");
       exit(0);
@@ -432,10 +442,11 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ) this->test.bqt.run_test(&config, this->n);
-  // this->spawn_shard_threads_bqueues();
-  else
+  if (config.mode == BQ_TESTS_YES_BQ) {
+    this->test.bqt.run_test(&config, this->n);
+  } else {
     spawn_shard_threads();
+  }
 
   return 0;
 }
