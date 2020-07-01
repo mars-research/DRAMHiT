@@ -214,7 +214,7 @@ int kstream::readseq(kseq &seq)
 #endif
 }
 
-int kstream::readfunc(int fd, void *buffer, size_t count)
+inline int kstream::readfunc(int fd, void *buffer, size_t count)
 {
 #ifdef __MMAP_FILE
   int bytes_read = __mmap_read();
@@ -235,7 +235,7 @@ int kstream::readfunc(int fd, void *buffer, size_t count)
 #endif
 }
 
-int kstream::getc()
+inline int kstream::getc()
 {
   if (this->is_eof && this->begin >= this->end) return -1;
   if (this->begin >= this->end) {
@@ -246,7 +246,7 @@ int kstream::getc()
   return (int)this->buf[this->begin++];
 }
 
-int kstream::getuntil(int delimiter, int *dret)
+inline int kstream::getuntil(int delimiter, int *dret)
 {
   if (dret) *dret = 0;
 
