@@ -16,8 +16,8 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 [[maybe_unused]] static uint64_t transactions = 100000000;
 // static uint64_t transactions = 200000000;
 
-uint8_t producer_count = 1;
-uint8_t consumer_count = 1;
+uint32_t producer_count = 1;
+uint32_t consumer_count = 1;
 
 uint64_t batch_size = 1;
 
@@ -56,7 +56,7 @@ void BQueueTest::producer_thread(int tid) {
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
 
-  printf("[INFO] Producer %u starting. Total inserts :%llu \n", this_prod_id,
+  printf("[INFO] Producer %u starting. Total inserts :%lu \n", this_prod_id,
          HT_TESTS_NUM_INSERTS * consumer_count);
 
   /* HT_TESTS_NUM_INSERTS enqueues per consumer */
@@ -182,8 +182,8 @@ void BQueueTest::consumer_thread(int tid) {
   fipc_test_FAI(completed_consumers);
 }
 
-void BQueueTest::init_queues(int nprod, int ncons) {
-  uint64_t e, i, j;
+void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
+  uint32_t i, j;
   // Queue Allocation
   queue_t *queues = (queue_t *)std::aligned_alloc(
       FIPC_CACHE_LINE_SIZE, nprod * ncons * sizeof(queue_t));
@@ -213,7 +213,7 @@ void BQueueTest::init_queues(int nprod, int ncons) {
   for (i = 0; i < nprod; ++i) {
     for (j = 0; j < ncons; ++j) {
       this->prod_queues[i][j] = &queues[i * ncons + j];
-      printf("[INFO] prod_queues[%lu][%lu] = %p\n", i, j,
+      printf("[INFO] prod_queues[%u][%u] = %p\n", i, j,
              &queues[i * ncons + j]);
     }
   }
@@ -221,7 +221,7 @@ void BQueueTest::init_queues(int nprod, int ncons) {
   for (i = 0; i < ncons; ++i) {
     for (j = 0; j < nprod; ++j) {
       this->cons_queues[i][j] = &queues[i + j * ncons];
-      printf("[INFO] cons_queues[%lu][%lu] = %p\n", i, j,
+      printf("[INFO] cons_queues[%u][%u] = %p\n", i, j,
              &queues[i + j * ncons]);
     }
   }
@@ -240,7 +240,7 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
 
   printf(
       "[INFO] no_bqueues thread %u starting. Total inserts in this "
-      "thread:%llu \n",
+      "thread:%lu \n",
       sh->shard_idx, HT_TESTS_NUM_INSERTS);
 
   t_start = RDTSC_START();
@@ -280,7 +280,7 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
 
 void BQueueTest::run_test(Configuration *cfg, Numa *n) {
   cpu_set_t cpuset;
-  uint64_t e, i, j;
+  uint64_t i, j;
 
   this->n = n;
   this->nodes = this->n->get_node_config();
@@ -390,13 +390,13 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
 
   /* Tell consumers to halt once producers are done */
   // return 0;
-  for (auto i = 0; i < cfg->n_prod; i++) {
+  for (auto i = 0u; i < cfg->n_prod; i++) {
     if (this->prod_threads[i].joinable()) {
       this->prod_threads[i].join();
     }
   }
 
-  for (auto i = 0; i < cfg->n_cons; i++) {
+  for (auto i = 0u; i < cfg->n_cons; i++) {
     if (this->cons_threads[i].joinable()) {
       this->cons_threads[i].join();
     }

@@ -27,7 +27,7 @@ void ParserTest::shard_thread_parse_no_inserts_v3(Shard *sh,
   uint64_t t_start, t_end;
   kseq seq;
   uint64_t num_inserts = 0;
-  int len = 0;
+  uint64_t len = 0;
 
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
@@ -39,7 +39,7 @@ void ParserTest::shard_thread_parse_no_inserts_v3(Shard *sh,
 
   t_start = RDTSC_START();
   while ((len = ks.readseq(seq)) >= 0) {
-    int i, l;
+    uint32_t i, l;
     uint64_t x[2] = {0};
     uint64_t mask = (1ULL << config.K * 2) - 1;
     uint64_t shift = (config.K - 1) * 2;

@@ -9,9 +9,6 @@
 #define KMER_DATA_LENGTH 20
 #define ALPHA 0.15
 
-#define unlikely(expr) __builtin_expect(!!(expr), 0)
-#define likely(expr) __builtin_expect(!!(expr), 1)
-
 extern const uint32_t PREFETCH_QUEUE_SIZE;
 
 typedef void * (*PTHREAD_FUNC)(void *);

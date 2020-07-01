@@ -13,6 +13,7 @@
 #include "dbg.hpp"
 #include "types.hpp"
 #include <string.h>
+#include "sync.h"
 
 #if defined(XX_HASH)
 #include "xx/xxhash.h"
@@ -51,7 +52,7 @@ Each q spills over a queue line for now, queue-align later
  * 32 bit magic FNV-1a prime
  */
 #define FNV_32_PRIME ((uint32_t)0x01000193)
-static uint32_t hval = 0;
+[[maybe_unused]] static uint32_t hval = 0;
 
 /*
  * fnv_32a_buf - perform a 32 bit Fowler/Noll/Vo FNV-1a hash on a buffer

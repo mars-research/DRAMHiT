@@ -27,17 +27,10 @@ SOFTWARE.
 #define AC_KSTREAM_H
 
 #include <fcntl.h>
-// #include <malloc.h>
- #include <unistd.h>
-
-// #include <cctype>
-// #include <cstdint>
-// #include <cstdlib>
-// #include <string>
-
+#include <unistd.h>
 #include "ac_kseq.h"
-//#include "libfipc/libfipc_test.h"
 #include "misc_lib.h"
+#include "sync.h"
 
 namespace kmercounter {
 class kstream
@@ -77,6 +70,5 @@ class kstream
 #endif /* __MMAP_FILE */
 };
 
-#define fipc_test_pause()   asm volatile("pause")
 } // namespace kmercounter
 #endif /* AC_KSTREAM_H */

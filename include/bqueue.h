@@ -120,11 +120,11 @@ int dequeue    ( queue_t* q, data_t* d );
 #define MSG_HALT            2
 
 // Thread Locks
-static uint64_t completed_producers = 0;
-static uint64_t completed_consumers = 0;
-static uint64_t ready_consumers     = 0;
-static uint64_t ready_producers     = 0;
-static uint64_t test_ready          = 0;
+[[maybe_unused]] static uint64_t completed_producers = 0;
+[[maybe_unused]] static uint64_t completed_consumers = 0;
+[[maybe_unused]] static uint64_t ready_consumers     = 0;
+[[maybe_unused]] static uint64_t ready_producers     = 0;
+[[maybe_unused]] static uint64_t test_ready          = 0;
 [[maybe_unused]] static uint64_t test_finished       = 0;
 
 /**

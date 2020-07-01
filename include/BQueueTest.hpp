@@ -25,7 +25,7 @@ class BQueueTest {
   void run_test(Configuration *cfg, Numa *n);
   void producer_thread(int tid);
   void consumer_thread(int tid);
-  void init_queues(int nprod, int ncons);
+  void init_queues(uint32_t nprod, uint32_t ncons);
 };
 
 }  // namespace kmercounter

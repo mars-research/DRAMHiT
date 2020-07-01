@@ -140,8 +140,6 @@ void Application::shard_thread(int tid) {
 
 int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
-  int e;
-
   this->threads = new std::thread[config.num_threads];
 
   this->shards = (Shard *)std::aligned_alloc(
@@ -196,7 +194,7 @@ int Application::spawn_shard_threads() {
     size_t node_idx_ctr = 0;
     size_t cpu_idx_ctr = 0;
     size_t last_cpu_idx = 0;
-    int i;
+    uint32_t i;
 
     for (i = 0; i < threads_per_node * num_nodes; i++) {
       Shard *sh = &this->shards[i];
@@ -225,7 +223,7 @@ int Application::spawn_shard_threads() {
 
     shard_idx_ctr = i - 1;
     node_idx_ctr = 0;
-    for (auto i = 0; i < threads_per_node_spill; i++) {
+    for (auto i = 0u; i < threads_per_node_spill; i++) {
       Shard *sh = &this->shards[shard_idx_ctr];
       sh->shard_idx = shard_idx_ctr;
 
@@ -283,7 +281,7 @@ int Application::spawn_shard_threads() {
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
 
-  for (auto t = 0; t < config.num_threads; t++) {
+  for (auto t = 0u; t < config.num_threads; t++) {
     if (this->threads[t].joinable()) {
       this->threads[t].join();
     }
