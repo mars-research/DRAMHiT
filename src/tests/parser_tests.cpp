@@ -12,7 +12,7 @@ namespace kmercounter {
 /* https://bioinformatics.stackexchange.com/questions/5359/what-is-the-most-compact-data-structure-for-canonical-k-mers-with-the-fastest-lo?noredirect=1&lq=1
  */
 
-extern void get_ht_stats(__shard *, KmerHashTable *);
+extern void get_ht_stats(Shard *, KmerHashTable *);
 
 static unsigned char seq_nt4_table[128] = {  // Table to change "ACGTN" to 01234
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -22,7 +22,7 @@ static unsigned char seq_nt4_table[128] = {  // Table to change "ACGTN" to 01234
     4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 1, 4, 4, 4, 2, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-void ParserTest::shard_thread_parse_no_inserts_v3(__shard *sh,
+void ParserTest::shard_thread_parse_no_inserts_v3(Shard *sh,
                                                   Configuration &config) {
   uint64_t t_start, t_end;
   kseq seq;
@@ -82,7 +82,7 @@ void ParserTest::shard_thread_parse_no_inserts_v3(__shard *sh,
   sh->stats->max_count = 0;
 }
 
-void ParserTest::shard_thread_parse_no_inserts(__shard *sh) {
+void ParserTest::shard_thread_parse_no_inserts(Shard *sh) {
   uint64_t t_start, t_end;
   kseq seq;
   int l = 0;
@@ -155,7 +155,7 @@ void ParserTest::shard_thread_parse_no_inserts(__shard *sh) {
   sh->stats->max_count = 0;
 }
 
-void ParserTest::shard_thread_parse_and_insert(__shard *sh,
+void ParserTest::shard_thread_parse_and_insert(Shard *sh,
                                                KmerHashTable *kmer_ht) {
   uint64_t t_start, t_end;
   kseq seq;

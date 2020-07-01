@@ -12,7 +12,7 @@ namespace kmercounter {
 class BQueueTest {
   std::thread *prod_threads;
   std::thread *cons_threads;
-  __shard *shards;
+  Shard *shards;
   Configuration *cfg;
   Numa *n;
 
@@ -21,7 +21,7 @@ class BQueueTest {
   queue_t*** cons_queues;
 
  public:
-  void no_bqueues(__shard *sh, KmerHashTable *kmer_ht);
+  void no_bqueues(Shard *sh, KmerHashTable *kmer_ht);
   void run_test(Configuration *cfg, Numa *n);
   void producer_thread(int tid);
   void consumer_thread(int tid);

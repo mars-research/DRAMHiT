@@ -12,7 +12,7 @@ class Application {
   Numa *n;
   Tests test;
   std::thread *threads;
-  __shard *shards;
+  Shard *shards;
 
  public:
   std::vector<numa_node> nodes;

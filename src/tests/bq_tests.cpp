@@ -25,7 +25,7 @@ uint64_t mem_pool_order = 16;
 uint64_t mem_pool_size;
 
 extern KmerHashTable *init_ht(uint64_t, uint8_t);
-extern void get_ht_stats(__shard *, KmerHashTable *);
+extern void get_ht_stats(Shard *, KmerHashTable *);
 
 int *bqueue_halt;
 
@@ -37,7 +37,7 @@ struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 int bq_kmers_idx = 0;
 
 void BQueueTest::producer_thread(int tid) {
-  __shard *sh = &this->shards[tid];
+  Shard *sh = &this->shards[tid];
 
   sh->stats =
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
@@ -101,7 +101,7 @@ void BQueueTest::producer_thread(int tid) {
 }
 
 void BQueueTest::consumer_thread(int tid) {
-  __shard *sh = &this->shards[tid];
+  Shard *sh = &this->shards[tid];
   sh->stats =
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
   uint64_t t_start, t_end;
@@ -227,7 +227,7 @@ void BQueueTest::init_queues(int nprod, int ncons) {
   }
 }
 
-void BQueueTest::no_bqueues(__shard *sh, KmerHashTable *kmer_ht) {
+void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
   uint64_t k = 0;
   // uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
@@ -304,11 +304,11 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
          producer_count, consumer_count);
 
   /* Stats data structures */
-  this->shards = (__shard *)std::aligned_alloc(
+  this->shards = (Shard *)std::aligned_alloc(
       FIPC_CACHE_LINE_SIZE,
-      sizeof(__shard) * (producer_count + consumer_count));
+      sizeof(Shard) * (producer_count + consumer_count));
 
-  memset(this->shards, 0, sizeof(__shard) * (producer_count + consumer_count));
+  memset(this->shards, 0, sizeof(Shard) * (producer_count + consumer_count));
 
   // Init queues
   this->init_queues(cfg->n_prod, cfg->n_cons);
@@ -322,7 +322,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
 
   // Spawn producer threads
   for (size_t i = 0; i < producer_count; i++) {
-    __shard *sh = &this->shards[i];
+    Shard *sh = &this->shards[i];
     sh->shard_idx = i;
 
     this->prod_threads[i] = std::thread(&BQueueTest::producer_thread, this, i);
@@ -339,7 +339,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
   // Spawn consumer threads
   for (size_t i = producer_count, j = 0; i < producer_count + consumer_count;
        i++, j++) {
-    __shard *sh = &this->shards[i];
+    Shard *sh = &this->shards[i];
     sh->shard_idx = i;
 
     this->cons_threads[i] = std::thread(&BQueueTest::consumer_thread, this, i);

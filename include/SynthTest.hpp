@@ -8,7 +8,7 @@ namespace kmercounter {
 
 class SynthTest {
  public:
-  void synth_run_exec(__shard *sh, KmerHashTable *kmer_ht);
+  void synth_run_exec(Shard *sh, KmerHashTable *kmer_ht);
   uint64_t synth_run(KmerHashTable *ktable);
 };
 

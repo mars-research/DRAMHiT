@@ -48,7 +48,7 @@ std::string random_alphanum_string(size_t length)
   return str;
 }
 
-void generate_random_data_small_pool(__shard *sh, uint64_t small_pool_count)
+void generate_random_data_small_pool(Shard *sh, uint64_t small_pool_count)
 {
   std::string s(KMER_DATA_LENGTH, 0);
   std::srand(0);
@@ -66,7 +66,7 @@ void generate_random_data_small_pool(__shard *sh, uint64_t small_pool_count)
   }
 }
 
-void populate_big_kmer_pool(__shard *sh, const uint64_t small_pool_count,
+void populate_big_kmer_pool(Shard *sh, const uint64_t small_pool_count,
                             const uint64_t big_pool_count)
 {
   std::random_device rd;
@@ -94,7 +94,7 @@ void populate_big_kmer_pool(__shard *sh, const uint64_t small_pool_count,
   }
 }
 
-void write_data(__shard *sh, const char *filename, const char *data,
+void write_data(Shard *sh, const char *filename, const char *data,
                 uint64_t big_pool_count)
 {
   FILE *fp;
@@ -119,7 +119,7 @@ void write_data(__shard *sh, const char *filename, const char *data,
 }
 
 
-char *read_data(__shard *sh, const char *filename)
+char *read_data(Shard *sh, const char *filename)
 {
   int fd = open(filename, O_RDONLY);
   struct stat sb;
@@ -143,7 +143,7 @@ char *read_data(__shard *sh, const char *filename)
   return fmap;
 }
 
-// char *read_fasta(__shard *sh)
+// char *read_fasta(Shard *sh)
 // {
 //   gzFile fp;
 //   kseq_t *seq;
@@ -173,7 +173,7 @@ char *read_data(__shard *sh, const char *filename)
 /* 	The small pool and big pool is there to carefully control the ratio of
 total k-mers to unique k-mers.	*/
 
-void create_data(__shard *sh)
+void create_data(Shard *sh)
 {
   uint64_t KMER_BIG_POOL_COUNT =
       config.kmer_create_data_base * config.kmer_create_data_mult;

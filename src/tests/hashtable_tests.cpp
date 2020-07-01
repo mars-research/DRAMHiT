@@ -12,7 +12,7 @@ struct kmer {
 };
 
 extern KmerHashTable *init_ht(uint64_t, uint8_t);
-extern void get_ht_stats(__shard *, KmerHashTable *);
+extern void get_ht_stats(Shard *, KmerHashTable *);
 
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
@@ -126,7 +126,7 @@ uint64_t PrefetchTest::prefetch_test_run(SimpleKmerHashTable *ktable) {
   return count;
 }
 
-void SynthTest::synth_run_exec(__shard *sh, KmerHashTable *kmer_ht) {
+void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
@@ -152,7 +152,7 @@ void SynthTest::synth_run_exec(__shard *sh, KmerHashTable *kmer_ht) {
   get_ht_stats(sh, kmer_ht);
 }
 
-void PrefetchTest::prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht) {
+void PrefetchTest::prefetch_test_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 

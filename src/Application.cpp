@@ -79,7 +79,7 @@ KmerHashTable *init_ht(const uint64_t sz, uint8_t id) {
 }
 
 void Application::shard_thread(int tid) {
-  __shard *sh = &this->shards[tid];
+  Shard *sh = &this->shards[tid];
   KmerHashTable *kmer_ht = NULL;
 
   sh->stats = (thread_stats *)memalign(CACHE_LINE_SIZE, sizeof(thread_stats));
@@ -133,10 +133,10 @@ int Application::spawn_shard_threads() {
 
   this->threads = new std::thread[config.num_threads];
 
-  this->shards = (__shard *)std::aligned_alloc(
-      CACHE_LINE_SIZE, sizeof(__shard) * config.num_threads);
+  this->shards = (Shard *)std::aligned_alloc(
+      CACHE_LINE_SIZE, sizeof(Shard) * config.num_threads);
 
-  memset(this->shards, 0, sizeof(__shard) * config.num_threads);
+  memset(this->shards, 0, sizeof(Shard) * config.num_threads);
 
   size_t seg_sz = 0;
 
@@ -188,7 +188,7 @@ int Application::spawn_shard_threads() {
     int i;
 
     for (i = 0; i < threads_per_node * num_nodes; i++) {
-      __shard *sh = &this->shards[i];
+      Shard *sh = &this->shards[i];
       sh->shard_idx = i;
       sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
       sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
@@ -215,7 +215,7 @@ int Application::spawn_shard_threads() {
     shard_idx_ctr = i - 1;
     node_idx_ctr = 0;
     for (auto i = 0; i < threads_per_node_spill; i++) {
-      __shard *sh = &this->shards[shard_idx_ctr];
+      Shard *sh = &this->shards[shard_idx_ctr];
       sh->shard_idx = shard_idx_ctr;
 
       sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
@@ -237,7 +237,7 @@ int Application::spawn_shard_threads() {
 
   else if (!config.numa_split) {
     for (size_t i = 0; i < config.num_threads; i++) {
-      __shard *sh = &this->shards[i];
+      Shard *sh = &this->shards[i];
       sh->shard_idx = i;
       sh->f_start = round_up(seg_sz * i, PAGE_SIZE);
       sh->f_end = round_up(seg_sz * (i + 1), PAGE_SIZE);

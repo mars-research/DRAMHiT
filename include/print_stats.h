@@ -8,7 +8,7 @@ namespace kmercounter {
 #define CPUFREQ_MHZ (2200.0)
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
-inline void get_ht_stats(__shard *sh, KmerHashTable *kmer_ht) {
+inline void get_ht_stats(Shard *sh, KmerHashTable *kmer_ht) {
   sh->stats->ht_fill = kmer_ht->get_fill();
   sh->stats->ht_capacity = kmer_ht->get_capacity();
   sh->stats->max_count = kmer_ht->get_max_count();
@@ -25,7 +25,7 @@ inline void get_ht_stats(__shard *sh, KmerHashTable *kmer_ht) {
 #endif
 }
 
-inline void print_stats(__shard *all_sh, Configuration &config) {
+inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t all_total_cycles = 0;
   double all_total_time_ns = 0;
   uint64_t all_total_num_inserts = 0;

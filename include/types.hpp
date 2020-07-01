@@ -78,7 +78,7 @@ struct thread_stats {
 #endif /*CALC_STATS*/
 };
 
-struct __shard {
+struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
   off64_t f_start;    // start byte into file
   off64_t f_end;      // end byte into file

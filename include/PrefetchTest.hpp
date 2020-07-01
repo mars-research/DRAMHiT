@@ -8,7 +8,7 @@ namespace kmercounter {
 
 class PrefetchTest {
  public:
-  void prefetch_test_run_exec(__shard *sh, KmerHashTable *kmer_ht);
+  void prefetch_test_run_exec(Shard *sh, KmerHashTable *kmer_ht);
   uint64_t prefetch_test_run(SimpleKmerHashTable *ktable);
 };
 
