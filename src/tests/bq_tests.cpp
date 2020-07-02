@@ -7,8 +7,8 @@
 #define BQ_TESTS_BATCH_LENGTH (1ULL << 5)         // 32
 #define BQ_TESTS_DEQUEUE_ARR_LENGTH (1ULL << 10)  // 512
 
-namespace kmercounter {
-
+namespace kmercounter
+{
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -33,7 +33,8 @@ struct bq_kmer {
   char data[KMER_DATA_LENGTH];
 } __attribute__((aligned(64)));
 
-void BQueueTest::producer_thread(int tid) {
+void BQueueTest::producer_thread(int tid)
+{
   Shard *sh = &this->shards[tid];
 
   sh->stats =
@@ -53,8 +54,8 @@ void BQueueTest::producer_thread(int tid) {
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
 
-  printf("[INFO] Producer %u starting. Sending %lu messages to %d consumers\n", this_prod_id,
-         HT_TESTS_NUM_INSERTS, consumer_count);
+  printf("[INFO] Producer %u starting. Sending %lu messages to %d consumers\n",
+         this_prod_id, HT_TESTS_NUM_INSERTS, consumer_count);
 
   /* HT_TESTS_NUM_INSERTS enqueues per consumer */
   cons_id = 0;
@@ -99,7 +100,8 @@ void BQueueTest::producer_thread(int tid) {
   fipc_test_FAI(completed_producers);
 }
 
-void BQueueTest::consumer_thread(int tid) {
+void BQueueTest::consumer_thread(int tid)
+{
   Shard *sh = &this->shards[tid];
   sh->stats =
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
@@ -185,7 +187,8 @@ void BQueueTest::consumer_thread(int tid) {
   fipc_test_FAI(completed_consumers);
 }
 
-void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
+void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons)
+{
   uint32_t i, j;
   // Queue Allocation
   queue_t *queues = (queue_t *)std::aligned_alloc(
@@ -216,21 +219,20 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
   for (i = 0; i < nprod; ++i) {
     for (j = 0; j < ncons; ++j) {
       this->prod_queues[i][j] = &queues[i * ncons + j];
-      printf("[INFO] prod_queues[%u][%u] = %p\n", i, j,
-             &queues[i * ncons + j]);
+      printf("[INFO] prod_queues[%u][%u] = %p\n", i, j, &queues[i * ncons + j]);
     }
   }
 
   for (i = 0; i < ncons; ++i) {
     for (j = 0; j < nprod; ++j) {
       this->cons_queues[i][j] = &queues[i + j * ncons];
-      printf("[INFO] cons_queues[%u][%u] = %p\n", i, j,
-             &queues[i + j * ncons]);
+      printf("[INFO] cons_queues[%u][%u] = %p\n", i, j, &queues[i + j * ncons]);
     }
   }
 }
 
-void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
+void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
+{
   uint64_t k = 0;
   // uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
@@ -283,19 +285,33 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
   fipc_test_FAI(completed_producers);
 }
 
-void BQueueTest::run_test(Configuration *cfg, Numa *n) {
+void BQueueTest::run_test(Configuration *cfg, Numa *n)
+{
   cpu_set_t cpuset;
   uint64_t i, j;
+  size_t num_total_cpus = 0;
+  size_t num_nodes = 0;
+  size_t node_idx_ctr = 0;
+  size_t cpu_idx_ctr = 0;
 
   this->n = n;
   this->nodes = this->n->get_node_config();
 
+  for (auto i : nodes) num_total_cpus += i.cpu_list.size();
+  num_nodes = this->nodes.size();  // TODO use nodes.get_num_nodes();
+
+  printf("[INFO] # nodes: %lu, # cpus (total): %lu\n", num_nodes,
+         num_total_cpus);
+  printf("[INFO] from config: n_prod %u n_cons: %u \n", cfg->n_prod,
+         cfg->n_cons);
+
   // TODO numa split
-  if (cfg->n_prod + cfg->n_cons > this->nodes[0].cpu_list.size()) {
+  if (cfg->n_prod + cfg->n_cons + 1 > num_total_cpus) {
     printf(
-        "[ERROR] producers [%u] + consumers [%u] exceeded number of available "
-        "CPUs on node 0 [%lu]\n",
-        cfg->n_prod, cfg->n_cons, nodes[0].cpu_list.size());
+        "[ERROR] producers (%u) + consumers (%u) exceeded number of "
+        "available CPUs (%lu) (Note: one core assigned completely "
+        "for synchronization)\n",
+        cfg->n_prod, cfg->n_cons, num_total_cpus);
     exit(-1);
   }
 
@@ -311,8 +327,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
 
   /* Stats data structures */
   this->shards = (Shard *)std::aligned_alloc(
-      FIPC_CACHE_LINE_SIZE,
-      sizeof(Shard) * (producer_count + consumer_count));
+      FIPC_CACHE_LINE_SIZE, sizeof(Shard) * (producer_count + consumer_count));
 
   memset(this->shards, 0, sizeof(Shard) * (producer_count + consumer_count));
 
@@ -334,12 +349,18 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
     this->prod_threads[i] = std::thread(&BQueueTest::producer_thread, this, i);
 
     CPU_ZERO(&cpuset);
-    size_t cpu_idx = (i % nodes[0].cpu_list.size()) * 2;  // {0,2,4,6,8}
-    CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
+    uint32_t cpu_assigned = this->nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+    CPU_SET(cpu_assigned, &cpuset);
     pthread_setaffinity_np(prod_threads[i].native_handle(), sizeof(cpu_set_t),
                            &cpuset);
-    printf("[INFO]: Spawn producer_thread %lu, affinity: %u\n", i,
-           nodes[0].cpu_list[cpu_idx]);
+    printf("[INFO]: Spawn producer_thread %lu, node: %lu, affinity: %u\n", i,
+           node_idx_ctr, cpu_assigned);
+    cpu_idx_ctr += 1;
+    if (cpu_idx_ctr == this->nodes[node_idx_ctr].cpu_list.size()) {
+      printf("---------\n");
+      node_idx_ctr++;
+      cpu_idx_ctr = 0;
+    }
   }
 
   // Spawn consumer threads
@@ -350,17 +371,29 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
     this->cons_threads[j] = std::thread(&BQueueTest::consumer_thread, this, i);
 
     CPU_ZERO(&cpuset);
-    size_t cpu_idx = (j % nodes[0].cpu_list.size()) * 2 + 1;  //{1,3,5,7,9}
-    CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
+    uint32_t cpu_assigned = this->nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+    CPU_SET(cpu_assigned, &cpuset);
     pthread_setaffinity_np(this->cons_threads[j].native_handle(),
                            sizeof(cpu_set_t), &cpuset);
-    printf("[INFO]: Spawn consumer_thread %lu, affinity: %u\n", j,
-           nodes[0].cpu_list[cpu_idx]);
+    printf("[INFO]: Spawn consumer_thread %lu, node: %lu, affinity: %u\n", i,
+           node_idx_ctr, cpu_assigned);
+    cpu_idx_ctr += 1;
+    if (cpu_idx_ctr == this->nodes[node_idx_ctr].cpu_list.size()) {
+      printf("[INFO]: ---- next node ---- \n");
+      node_idx_ctr++;
+      cpu_idx_ctr = 0;
+    }
   }
 
   CPU_ZERO(&cpuset);
   /* last cpu of last node  */
   auto last_numa_node = nodes[n->get_num_nodes() - 1];
+  auto cpu_assigned = last_numa_node.cpu_list[last_numa_node.num_cpus - 1];
+  printf(
+      "[INFO]: Pinning run_test to last cpu of last numa node: %u, affinity: "
+      "%u\n",
+      last_numa_node.id, cpu_assigned);
+
   CPU_SET(last_numa_node.cpu_list[last_numa_node.num_cpus - 1], &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
 
@@ -389,7 +422,6 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n) {
 
   fipc_test_mfence();
 
-  
   cfg->num_threads = producer_count + consumer_count;
   print_stats(this->shards, *cfg);
 
