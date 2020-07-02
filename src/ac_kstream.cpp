@@ -25,7 +25,8 @@ SOFTWARE.
 
 #include "ac_kstream.hpp"
 
-namespace kmercounter {
+namespace kmercounter
+{
 extern Configuration config;
 
 #ifdef __MMAP_FILE
@@ -62,8 +63,10 @@ kstream::kstream(uint32_t shard_idx, off_t f_start, off_t f_end)
   this->is_eof = 0;
   this->begin = 0;
   this->end = 0;
+#ifndef NO_CORNER_CASES
   this->is_first_read = 0;
   this->done = 0;
+#endif /* NO_CORNER_CASES */
   this->thread_id = shard_idx;
 
   this->fileid = open(config.in_file.c_str(), O_RDONLY);
@@ -114,7 +117,9 @@ kstream::~kstream()
 int kstream::readseq(kseq &seq)
 {
   int c;
+#ifndef NO_CORNER_CASES
   if (this->done) return -1;
+#endif /* NO_CORNER_CASES */
 
   if (seq.last_char == 0) {
     /* Keep reading into buffer until we see a '\n' followed by '@'  (except for
@@ -122,6 +127,7 @@ int kstream::readseq(kseq &seq)
      * TODO verify if this is enough:
      * https://en.wikipedia.org/wiki/FASTQ_format*/
 
+#ifndef NO_CORNER_CASES
     while (true) {
       c = this->getc();
       if (c == -1) break;
@@ -139,6 +145,13 @@ int kstream::readseq(kseq &seq)
         if (c == '@') break;
       }
     }
+#else
+    while (true) {
+      c = this->getc();
+      if (c == -1) break;
+      if (c == '@') break;
+    }
+#endif
     if (c == -1) {
       return -1;
     }
@@ -218,21 +231,25 @@ inline int kstream::readfunc(int fd, void *buffer, size_t count)
 {
 #ifdef __MMAP_FILE
   int bytes_read = __mmap_read();
+#ifndef NO_CORNER_CASES
   if (__mmap_lseek64() > this->off_end) {
     printf("[INFO] Shard %u: reached done\n", this->thread_id);
     this->done = 1;
   }
+#endif /* NO_CORNER_CASES */
   if (bytes_read < (int)this->bufferSize) this->is_eof = 1;
   return bytes_read;
 #else
   unsigned int bytes_read = read(fd, buffer, count);
+#ifndef NO_CORNER_CASES
   if (lseek64(this->fileid, 0, SEEK_CUR) > this->off_end) {
     // printf("[INFO] Shard %u: done\n", this->thread_id);
     this->done = 1;
   }
+#endif /* NO_CORNER_CASES */
   if (bytes_read < this->bufferSize) this->is_eof = 1;
   return bytes_read;
-#endif
+#endif /* __MMAP_FILE */
 }
 
 inline int kstream::getc()
@@ -284,4 +301,4 @@ inline int kstream::getuntil(int delimiter, int *dret)
   }
   return 0;
 }
-} // namespace kmercounter
+}  // namespace kmercounter

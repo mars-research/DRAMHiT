@@ -27,7 +27,7 @@ void ParserTest::shard_thread_parse_no_inserts_v3(Shard *sh,
   uint64_t t_start, t_end;
   kseq seq;
   uint64_t num_inserts = 0;
-  uint64_t len = 0;
+  int len = 0;
 
   kstream ks(sh->shard_idx, sh->f_start, sh->f_end);
 
@@ -63,6 +63,7 @@ void ParserTest::shard_thread_parse_no_inserts_v3(Shard *sh,
     num_sequences++;
     if (first_seq.length() == 0) first_seq = seq.seq;
     last_seq = seq.seq;
+    // printf("sequence#: %lu, seq: %s\n", num_sequences, seq.seq.c_str());
 #endif
   }
   t_end = RDTSCP();

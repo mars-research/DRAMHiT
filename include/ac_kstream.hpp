@@ -59,8 +59,10 @@ class kstream
   uint32_t thread_id;  // thread id corresponding to this kstream
   off64_t off_start;   // start byte into file
   off64_t off_end;     // end byte into file
+#ifndef NO_CORNER_CASES
   int is_first_read;   // is this the first time readseq is being called?
   int done;
+#endif
 
 #ifdef __MMAP_FILE
   static char *fmap;
