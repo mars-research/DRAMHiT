@@ -2,8 +2,8 @@
 #define PARSER_TESTS
 
 #include "ParserTest.hpp"
-#include "ac_kseq.h"
-#include "ac_kstream.h"
+#include "ac_kseq.hpp"
+#include "ac_kstream.hpp"
 #include "base_kht.hpp"
 #include "print_stats.h"
 #include "sync.h"

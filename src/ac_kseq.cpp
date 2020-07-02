@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ac_kseq.h"
+#include "ac_kseq.hpp"
 // #include "types.hpp"
 // #include "libfipc/libfipc_test.h"
 // #include "misc_lib.h"

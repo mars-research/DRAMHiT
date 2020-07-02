@@ -9,8 +9,8 @@
 #include <ctime>
 #include <fstream>
 
-#include "ac_kseq.h"
-#include "ac_kstream.h"
+#include "ac_kseq.hpp"
+#include "ac_kstream.hpp"
 #include "kmer_data.cpp"
 #include "misc_lib.h"
 #include "types.hpp"

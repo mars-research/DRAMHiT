@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ac_kstream.h"
+#include "ac_kstream.hpp"
 
 namespace kmercounter {
 extern Configuration config;

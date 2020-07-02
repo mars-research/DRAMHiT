@@ -3,7 +3,7 @@
 
 #include "base_kht.hpp"
 #include "types.hpp"
-#include "kmer_class.h"
+#include "kmer_class.hpp"
 
 namespace kmercounter {
 

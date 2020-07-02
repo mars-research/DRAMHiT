@@ -117,13 +117,8 @@ inline std::ostream &operator<<(std::ostream &strm, const Kmer_r &k) {
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
 /* Only ia64 requires this */
-#ifdef __ia64__
-#define ADDR (void *)(0x8000000000000000UL)
-#define FLAGS (MAP_SHARED | MAP_FIXED)
-#else
 #define ADDR (void *)(0x0UL)
 #define FLAGS (MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS)
-#endif
 
 #define CACHE_BLOCK_BITS 6
 #define CACHE_BLOCK_SIZE (1ULL << CACHE_BLOCK_BITS) /* 64 */
