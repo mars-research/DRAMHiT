@@ -31,10 +31,7 @@ int *bqueue_halt;
 
 struct bq_kmer {
   char data[KMER_DATA_LENGTH];
-};
-
-struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-int bq_kmers_idx = 0;
+} __attribute__((aligned(64)));
 
 void BQueueTest::producer_thread(int tid) {
   Shard *sh = &this->shards[tid];
@@ -56,8 +53,8 @@ void BQueueTest::producer_thread(int tid) {
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
 
-  printf("[INFO] Producer %u starting. Total inserts :%lu \n", this_prod_id,
-         HT_TESTS_NUM_INSERTS * consumer_count);
+  printf("[INFO] Producer %u starting. Sending %lu messages to %d consumers\n", this_prod_id,
+         HT_TESTS_NUM_INSERTS, consumer_count);
 
   /* HT_TESTS_NUM_INSERTS enqueues per consumer */
   cons_id = 0;
@@ -80,10 +77,12 @@ void BQueueTest::producer_thread(int tid) {
         break;
       }
       transaction_id++;
+#if 0
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
                transaction_id);
       }
+#endif
     }
 
     ++cons_id;
@@ -112,6 +111,8 @@ void BQueueTest::consumer_thread(int tid) {
   uint8_t prod_id = 0;
   uint8_t this_cons_id = sh->shard_idx - producer_count;
   queue_t **q = this->cons_queues[this_cons_id];
+  int bq_kmers_idx = 0;
+  struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
@@ -149,10 +150,12 @@ void BQueueTest::consumer_thread(int tid) {
       }
 
       transaction_id++;
+#if 0
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         printf("[INFO] Consumer %u, transaction_id %lu\n", this_cons_id,
                transaction_id);
       }
+#endif
     }
     ++prod_id;
     if (prod_id >= producer_count) {
@@ -232,6 +235,8 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht) {
   // uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
   uint64_t transaction_id;
+  struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
+  int bq_kmers_idx = 0;
 
 #ifdef BQ_TESTS_INSERT_XORWOW
   struct xorwow_state xw_state;
