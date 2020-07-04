@@ -10,8 +10,8 @@ namespace kmercounter {
 const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
 class KmerHashTable {
-  /* insert and increment if exists */
  public:
+  // Upsert (Insert and Update)
   virtual bool insert(const void *kmer_data) = 0;
 
   virtual void flush_queue() = 0;
@@ -24,7 +24,7 @@ class KmerHashTable {
 
   virtual size_t get_max_count() = 0;
 
-  virtual void print_to_file(std::string outfile) = 0;
+  virtual void print_to_file(std::string &outfile) = 0;
 
 #ifdef CALC_STATS
   uint64_t num_reprobes = 0;

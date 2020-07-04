@@ -59,7 +59,7 @@ void BQueueTest::producer_thread(int tid)
 
   /* HT_TESTS_NUM_INSERTS enqueues per consumer */
   cons_id = 0;
-  for (transaction_id = 0u; transaction_id < HT_TESTS_NUM_INSERTS;) {
+  for (transaction_id = 0u; transaction_id < HT_TESTS_NUM_INSERTS * consumer_count / producer_count ;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
      * consumer */
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {

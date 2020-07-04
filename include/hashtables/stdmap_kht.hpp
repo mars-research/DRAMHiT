@@ -55,7 +55,7 @@ class StdmapKmerHashTable : public KmerHashTable {
     return count;
   }
 
-  void print_to_file(std::string outfile) {
+  void print_to_file(std::string &outfile) {
     std::ofstream f;
     f.open(outfile);
     for (size_t i = 0; i < this->get_capacity(); i++) {

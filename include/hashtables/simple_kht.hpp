@@ -1,19 +1,20 @@
 #ifndef _SKHT_H
 #define _SKHT_H
 
-#include <iostream>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <cassert>
 #include <fstream>
+#include <iostream>
 #include "base_kht.hpp"
 #include "city/city.h"
 #include "dbg.hpp"
-#include "types.hpp"
-#include <string.h>
 #include "sync.h"
+#include "types.hpp"
 
 #if defined(XX_HASH)
 #include "xx/xxhash.h"
@@ -507,6 +508,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
   /* insert and increment if exists */
   bool insert(const void *kmer_data) {
+    assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
     __insert_into_queue(kmer_data);
 
     /* if queue is full, actually insert */
@@ -520,12 +522,15 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
     }
 
-    /* if queue is still full, empty it. This is especially needed
-    if queue size is small (< 20?) */
-    // if (this->queue_idx == PREFETCH_QUEUE_SIZE)
-    // {
-    // 	this->flush_queue();
-    // }
+    // XXX: This is to ensure correctness of the hashtable. No matter what the
+    // queue size is, this has to be enabled!
+    if (this->queue_idx == PREFETCH_QUEUE_SIZE) {
+      this->flush_queue();
+    }
+
+    // XXX: Most likely the HT is full here. We should panic here!
+    assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
+
     return true;
   }
 
@@ -603,7 +608,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     return count;
   }
 
-  void print_to_file(std::string outfile) {
+  void print_to_file(std::string &outfile) {
     std::ofstream f;
     f.open(outfile);
     for (size_t i = 0; i < this->get_capacity(); i++) {

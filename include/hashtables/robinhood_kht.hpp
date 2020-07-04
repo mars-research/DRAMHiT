@@ -287,7 +287,7 @@ class RobinhoodKmerHashTable : public KmerHashTable
     return count;
   }
 
-  void print_to_file(std::string outfile)
+  void print_to_file(std::string &outfile)
   {
     std::ofstream f;
     f.open(outfile);
