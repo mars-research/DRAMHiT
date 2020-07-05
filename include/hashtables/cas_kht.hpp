@@ -4,6 +4,7 @@
 #include <mutex>
 #include "base_kht.hpp"
 #include "city/city.h"
+#include "helper.hpp"
 #include "sync.h"
 #include "types.hpp"
 
@@ -157,18 +158,6 @@ class CASKmerHashTable : public KmerHashTable {
     }
   }
 
-  uint64_t __upper_power_of_two(uint64_t v) {
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v |= v >> 32;
-    v++;
-    return v;
-  }
-
  public:
 #ifdef CALC_STATS
   uint64_t num_reprobes = 0;
@@ -186,7 +175,7 @@ class CASKmerHashTable : public KmerHashTable {
   CASKmerHashTable(uint64_t c) {
     // TODO static cast
     // TODO power of 2 hashtable size for ease of mod operations
-    this->capacity = this->__upper_power_of_two(c);
+    this->capacity = kmercounter::next_pow2(c);
     this->ht_init_mutex.lock();
     if (!hashtable) {
       this->hashtable = (CAS_Kmer_r*)(aligned_alloc(
@@ -282,7 +271,7 @@ class CASKmerHashTable : public KmerHashTable {
     return idx;
   }
 
-  void display() {
+  void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
       if (hashtable[i].occupied) {
         for (size_t k = 0; k < KMER_DATA_LENGTH; k++) {
@@ -293,7 +282,7 @@ class CASKmerHashTable : public KmerHashTable {
     }
   }
 
-  size_t get_fill() {
+  size_t get_fill() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
       if (hashtable[i].occupied) {
@@ -303,9 +292,9 @@ class CASKmerHashTable : public KmerHashTable {
     return count;
   }
 
-  size_t get_capacity() { return this->capacity; }
+  size_t get_capacity() const override { return this->capacity; }
 
-  size_t get_max_count() {
+  size_t get_max_count() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
       if (hashtable[i].kmer_count > count) {
@@ -315,7 +304,7 @@ class CASKmerHashTable : public KmerHashTable {
     return count;
   }
 
-  void print_to_file(std::string &outfile) {
+  void print_to_file(std::string& outfile) const override {
     std::ofstream f;
     f.open(outfile);
     for (size_t i = 0; i < this->get_capacity(); i++) {

@@ -11,8 +11,6 @@
 
 extern const uint32_t PREFETCH_QUEUE_SIZE;
 
-typedef void * (*PTHREAD_FUNC)(void *);
-
 // kmer (key)
 struct Kmer_s {
   char data[KMER_DATA_LENGTH];

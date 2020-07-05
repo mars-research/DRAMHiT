@@ -13,6 +13,7 @@
 #include "base_kht.hpp"
 #include "city/city.h"
 #include "dbg.hpp"
+#include "helper.hpp"
 #include "sync.h"
 #include "types.hpp"
 
@@ -112,31 +113,35 @@ inline std::ostream &operator<<(std::ostream &strm, const Kmer_r &k) {
  */
 
 #define FILE_NAME "/mnt/huge/hugepagefile%d"
-#define LENGTH (1 * 1024UL * 1024 * 1024)
-#define PROTECTION (PROT_READ | PROT_WRITE)
 
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
 /* Only ia64 requires this */
 #define ADDR (void *)(0x0UL)
-#define FLAGS (MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS)
 
-#define CACHE_BLOCK_BITS 6
-#define CACHE_BLOCK_SIZE (1ULL << CACHE_BLOCK_BITS) /* 64 */
-#define CACHE_BLOCK_MASK (CACHE_BLOCK_SIZE - 1)     /* 63, 0x3F */
+constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
+constexpr auto MAP_FLAGS = MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+constexpr auto LENGTH = 1ULL * 1024 * 1024 * 1024;
 
-/* Which byte offset in its cache block does this address reference? */
-#define CACHE_BLOCK_OFFSET(ADDR) ((ADDR)&CACHE_BLOCK_MASK)
 
-/* Address of 64 byte block brought into the cache when ADDR accessed */
-#define CACHE_BLOCK_ALIGNED_ADDR(ADDR) ((ADDR) & ~CACHE_BLOCK_MASK)
+constexpr uint64_t CACHE_BLOCK_BITS = 6;
+constexpr uint64_t CACHE_BLOCK_MASK = (1ULL << CACHE_BLOCK_BITS) - 1;
 
-static inline void prefetch_object(const void *addr, uint64_t size) {
-  uint64_t cache_line1_addr = CACHE_BLOCK_ALIGNED_ADDR((uint64_t)addr);
+// Which byte offset in its cache block does this address reference?
+constexpr uint64_t cache_block_offset(uint64_t addr) {
+  return addr & CACHE_BLOCK_MASK;
+}
+// Address of 64 byte block brought into the cache when ADDR accessed
+constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
+  return addr & ~CACHE_BLOCK_MASK;
+}
+
+inline constexpr void prefetch_object(const void *addr, uint64_t size) {
+  uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
 
 #if defined(PREFETCH_TWO_LINE)
   uint64_t cache_line2_addr =
-      CACHE_BLOCK_ALIGNED_ADDR((uint64_t)addr + size - 1);
+      cache_block_aligned_addr((uint64_t)addr + size - 1);
 #endif
 
   // 1 -- prefetch for write (vs 0 -- read)
@@ -184,6 +189,29 @@ static inline void prefetch_with_write(Kmer_r *k) {
 
 class alignas(64) SimpleKmerHashTable : public KmerHashTable {
  public:
+  Kmer_r *hashtable;
+
+  // https://www.bfilipek.com/2019/08/newnew-align.html
+  void *operator new(std::size_t size, std::align_val_t align) {
+    auto ptr = aligned_alloc(static_cast<std::size_t>(align), size);
+
+    if (!ptr) throw std::bad_alloc{};
+
+    std::cout << "new: " << size
+              << ", align: " << static_cast<std::size_t>(align)
+              << ", ptr: " << ptr << '\n';
+
+    return ptr;
+  }
+
+  void operator delete(void *ptr, std::size_t size,
+                       std::align_val_t align) noexcept {
+    std::cout << "delete: " << size
+              << ", align: " << static_cast<std::size_t>(align)
+              << ", ptr : " << ptr << '\n';
+    free(ptr);
+  }
+
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object(&this->hashtable[i & (this->capacity - 1)],
@@ -207,70 +235,13 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
   };
 
- private:
-  uint64_t capacity;
-  Kmer_r empty_kmer_r;  /* for comparison for empty slot */
-  Kmer_queue_r *queue;  // TODO prefetch this?
-  uint32_t queue_idx;
-
-  uint64_t __hash(const void *k) {
-#if defined(CITY_HASH)
-    uint64_t cityhash = CityHash64((const char *)k, KMER_DATA_LENGTH);
-    return cityhash;
-#endif
-
-#if defined(FNV_HASH)
-    hval = fnv_32a_buf(k, KMER_DATA_LENGTH, hval);
-    return hval;
-#endif
-
-#if defined(XX_HASH)
-    XXH64_hash_t xxhash = XXH64(k, KMER_DATA_LENGTH, 0);
-    return xxhash;
-#endif
-
-#if defined(XX_HASH_3)
-    XXH64_hash_t xxhash = XXH3_64bits(k, KMER_DATA_LENGTH);
-    return xxhash;
-#endif
-  }
-
-  uint64_t __upper_power_of_two(uint64_t v) {
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v |= v >> 32;
-    v++;
-    return v;
-  }
-
- public:
-  Kmer_r *hashtable;
-
-  // https://www.bfilipek.com/2019/08/newnew-align.html
-  void *operator new(std::size_t size, std::align_val_t align) {
-    auto ptr = aligned_alloc(static_cast<std::size_t>(align), size);
-
-    if (!ptr) throw std::bad_alloc{};
-
-    std::cout << "new: " << size
-              << ", align: " << static_cast<std::size_t>(align)
-              << ", ptr: " << ptr << '\n';
-
-    return ptr;
-  }
-
   SimpleKmerHashTable(uint64_t c, uint32_t id) {
     // TODO static cast
     // TODO power of 2 hashtable size for ease of mod operations
-    this->capacity = this->__upper_power_of_two(c);
+    this->capacity = kmercounter::next_pow2(c);
     // printf("[INFO] Hashtable size: %lu\n", this->capacity);
 #if !defined(HUGE_1GB_PAGES)
-    this->hashtable =
-        (Kmer_r *)aligned_alloc(PAGE_SIZE, capacity * sizeof(Kmer_r));
+    this->hashtable = (Kmer_r *)aligned_alloc(PAGE_SIZE, capacity * sizeof(Kmer_r));
 #else
     int fd;
     char mmap_path[256] = {0};
@@ -289,7 +260,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
     this->hashtable =
         (Kmer_r *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(Kmer_r),
-                       PROTECTION, FLAGS, fd, 0);
+                       PROT_RW, MAP_FLAGS, fd, 0);
     if (this->hashtable == MAP_FAILED) {
       perror("mmap");
       unlink(mmap_path);
@@ -374,16 +345,16 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     }
 
     void insert_batch(kmer_data_t * karray[4]) {
-      uint64_t hash_new_0 = __hash((const char *)karray[0]);
+      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
       size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
 
-      uint64_t hash_new_0 = __hash((const char *)karray[0]);
+      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
       size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
 
-      uint64_t hash_new_0 = __hash((const char *)karray[0]);
+      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
       size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
 
-      uint64_t hash_new_0 = __hash((const char *)karray[0]);
+      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
       size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
 
       return;
@@ -484,7 +455,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
   }
 
   void __insert_into_queue(const void *kmer_data) {
-    uint64_t hash_new = __hash((const char *)kmer_data);
+    uint64_t hash_new = this->hash((const char *)kmer_data);
     size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
     // size_t __kmer_idx2 = (hash_new + 3) & (this->capacity - 1);  // modulo
     // size_t __kmer_idx = cityhash_new % (this->capacity);
@@ -549,7 +520,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t hash_new = __hash((const char *)kmer_data);
+    uint64_t hash_new = this->hash((const char *)kmer_data);
 
     size_t idx = hash_new & (this->capacity - 1);  // modulo
 
@@ -575,7 +546,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     return &this->hashtable[idx];
   }
 
-  void display() {
+  void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
       if (this->hashtable[i].occupied) {
         for (size_t k = 0; k < KMER_DATA_LENGTH; k++) {
@@ -586,7 +557,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     }
   }
 
-  size_t get_fill() {
+  size_t get_fill() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
       if (this->hashtable[i].occupied) {
@@ -596,9 +567,9 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     return count;
   }
 
-  size_t get_capacity() { return this->capacity; }
+  size_t get_capacity() const override { return this->capacity; }
 
-  size_t get_max_count() {
+  size_t get_max_count() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
       if (this->hashtable[i].kmer_count > count) {
@@ -608,7 +579,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     return count;
   }
 
-  void print_to_file(std::string &outfile) {
+  void print_to_file(std::string &outfile) const override {
     std::ofstream f;
     f.open(outfile);
     for (size_t i = 0; i < this->get_capacity(); i++) {
@@ -616,6 +587,26 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
         f << this->hashtable[i] << std::endl;
       }
     }
+  }
+
+ private:
+  uint64_t capacity;
+  Kmer_r empty_kmer_r;  /* for comparison for empty slot */
+  Kmer_queue_r *queue;  // TODO prefetch this?
+  uint32_t queue_idx;
+
+  uint64_t hash(const void *k) {
+    uint64_t hash_val;
+#if defined(CITY_HASH)
+    hash_val = CityHash64((const char *)k, KMER_DATA_LENGTH);
+#elif defined(FNV_HASH)
+    hash_val = hval = fnv_32a_buf(k, KMER_DATA_LENGTH, hval);
+#elif defined(XX_HASH)
+    hash_val = XXH64(k, KMER_DATA_LENGTH, 0);
+#elif defined(XX_HASH_3)
+    hash_val = XXH3_64bits(k, KMER_DATA_LENGTH);
+#endif
+    return hash_val;
   }
 };
 
