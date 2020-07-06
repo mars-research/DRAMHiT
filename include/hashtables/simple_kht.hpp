@@ -26,19 +26,18 @@
 #endif
 // #include "kmer_struct.h"
 
-using namespace std;
 namespace kmercounter {
-// 2^21
-typedef struct {
-  char kmer_data[KMER_DATA_LENGTH];  // 20 bytes
-  uint32_t kmer_count;       // 4 bytes // TODO seems too long, max count is ~14
-  volatile bool occupied;    // 1 bytes
-  uint32_t kmer_cityhash;    // 4 bytes (4B enties is enough)
-  volatile char padding[3];  // 3 bytes // TODO remove hardcode
-  // uint8_t _pad[32];
-} __attribute__((packed)) Kmer_r;
 
-// TODO use char and bit manipulation instead of bit fields in Kmer_r:
+struct Kmer_KV {
+  Kmer_base_t kb; // 20 + 2 bytes 
+  uint32_t kmer_hash;    // 4 bytes (4B enties is enough)
+  volatile char padding[6];  // 3 bytes // TODO remove hardcode
+  // uint8_t _pad[32];
+} __attribute__((packed));
+
+static_assert(sizeof(Kmer_KV) % 32 == 0, "Sizeof Kmer_KV must be a multiple of 32"); 
+
+// TODO use char and bit manipulation instead of bit fields in Kmer_KV:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
@@ -94,18 +93,18 @@ inline uint32_t fnv_32a_buf(const void *buf, size_t len, uint32_t hval) {
   return hval;
 }
 
-typedef struct {
-  const void *kmer_data_ptr;
+struct Kmer_queue {
+  const void *kmer_p;
   uint32_t kmer_idx;  // TODO reduce size, TODO decided by hashtable size?
   uint8_t pad[4];
 #ifdef COMPARE_HASH
-  uint64_t kmer_cityhash;  // 8 bytes
+  uint64_t kmer_hash;  // 8 bytes
 #endif
-} __attribute__((packed)) Kmer_queue_r;
+} __attribute__((packed));
 
-inline std::ostream &operator<<(std::ostream &strm, const Kmer_r &k) {
-  return strm << std::string(k.kmer_data, KMER_DATA_LENGTH) << " : "
-              << k.kmer_count;
+inline std::ostream &operator<<(std::ostream &strm, const Kmer_KV &k) {
+  return strm << std::string(k.kb.kmer.data, KMER_DATA_LENGTH) << " : "
+              << k.kb.count;
 }
 
 /* AB: 1GB page table code is from
@@ -116,9 +115,7 @@ inline std::ostream &operator<<(std::ostream &strm, const Kmer_r &k) {
 
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
-/* Only ia64 requires this */
-#define ADDR (void *)(0x0UL)
-
+constexpr auto ADDR = static_cast<void*>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
 constexpr auto MAP_FLAGS = MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
 constexpr auto LENGTH = 1ULL * 1024 * 1024 * 1024;
@@ -157,7 +154,7 @@ inline constexpr void prefetch_object(const void *addr, uint64_t size) {
 #endif
 }
 
-static inline void prefetch_with_write(Kmer_r *k) {
+static inline void prefetch_with_write(Kmer_KV *k) {
   /* if I write occupied I get
    * Prefetch stride: 0, cycles per insertion:122
    * Prefetch stride: 1, cycles per insertion:36
@@ -189,7 +186,7 @@ static inline void prefetch_with_write(Kmer_r *k) {
 
 class alignas(64) SimpleKmerHashTable : public KmerHashTable {
  public:
-  Kmer_r *hashtable;
+  Kmer_KV *hashtable;
 
   // https://www.bfilipek.com/2019/08/newnew-align.html
   void *operator new(std::size_t size, std::align_val_t align) {
@@ -225,13 +222,13 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
   void touch(uint64_t i) {
 #if defined(TOUCH_DEPENDENCY)
-    if (this->hashtable[i & (this->capacity - 1)].occupied == 0) {
-      this->hashtable[i & (this->capacity - 1)].occupied = 27;
+    if (this->hashtable[i & (this->capacity - 1)].kb.occupied == 0) {
+      this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
     } else {
-      this->hashtable[i & (this->capacity - 1)].occupied = 78;
+      this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
     };
 #else
-    this->hashtable[i & (this->capacity - 1)].occupied = 78;
+    this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
 #endif
   };
 
@@ -241,7 +238,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     this->capacity = kmercounter::next_pow2(c);
     // printf("[INFO] Hashtable size: %lu\n", this->capacity);
 #if !defined(HUGE_1GB_PAGES)
-    this->hashtable = (Kmer_r *)aligned_alloc(PAGE_SIZE, capacity * sizeof(Kmer_r));
+    this->hashtable = (Kmer_KV *)aligned_alloc(PAGE_SIZE, capacity * sizeof(Kmer_KV));
 #else
     int fd;
     char mmap_path[256] = {0};
@@ -259,7 +256,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     }
 
     this->hashtable =
-        (Kmer_r *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(Kmer_r),
+        (Kmer_KV *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(Kmer_KV),
                        PROT_RW, MAP_FLAGS, fd, 0);
     if (this->hashtable == MAP_FAILED) {
       perror("mmap");
@@ -275,11 +272,11 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       perror("[ERROR]: SimpleKmerHashTable aligned_alloc");
     }
 
-    memset(hashtable, 0, capacity * sizeof(Kmer_r));
-    memset(&this->empty_kmer_r, 0, sizeof(Kmer_r));
+    memset(hashtable, 0, capacity * sizeof(Kmer_KV));
+    memset(&this->null_kmer, 0, sizeof(Kmer_KV));
 
-    this->queue = (Kmer_queue_r *)(aligned_alloc(
-        64, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue_r)));
+    this->queue = (Kmer_queue *)(aligned_alloc(
+        64, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue)));
     this->queue_idx = 0;
     dbg("id: %d this->queue %p\n", id, this->queue);
     //    __builtin_prefetch(queue, 1, 3);
@@ -294,18 +291,18 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #if INSERT_BATCH
 
   insert_one() {
-    occupied = this->hashtable[pidx].occupied;
+    occupied = this->hashtable[pidx].kb.occupied;
 
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
     if (!occupied) {
 #ifdef CALC_STATS
       this->num_memcpys++;
 #endif
-      memcpy(&this->hashtable[pidx].kmer_data, q->kmer_data_ptr,
+      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
              KMER_DATA_LENGTH);
-      this->hashtable[pidx].kmer_count++;
-      this->hashtable[pidx].occupied = true;
-      this->hashtable[pidx].kmer_cityhash = q->kmer_cityhash;
+      this->hashtable[pidx].kb.count++;
+      this->hashtable[pidx].kb.occupied = true;
+      this->hashtable[pidx].kmer_hash = q->kmer_hash;
       return;
     }
 
@@ -313,14 +310,14 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     this->num_hashcmps++;
 #endif
 
-    if (this->hashtable[pidx].kmer_cityhash == q->kmer_cityhash) {
+    if (this->hashtable[pidx].kmer_hash == q->kmer_hash) {
 #ifdef CALC_STATS
       this->num_memcmps++;
 #endif
 
-      if (memcmp(&this->hashtable[pidx].kmer_data, q->kmer_data_ptr,
+      if (memcmp(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
                  KMER_DATA_LENGTH) == 0) {
-        this->hashtable[pidx].kmer_count++;
+        this->hashtable[pidx].kb.count++;
         return;
       }
     }
@@ -335,7 +332,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       q->kmer_idx = pidx;
 
       this->queue[this->queue_idx] = *q;
-      // this->queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr;
+      // this->queue[this->queue_idx].kmer_p = q->kmer_p;
       // this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
       this->queue_idx++;
 
@@ -366,22 +363,22 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
   /* Insert using prefetch: using a dynamic prefetch queue.
           If bucket is occupied, add to queue again to reprobe.
   */
-  void __insert(Kmer_queue_r *q) {
+  void __insert(Kmer_queue *q) {
     /* hashtable location at which data is to be inserted */
     size_t pidx = q->kmer_idx;
 
   try_insert:
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
-    if (!this->hashtable[pidx].occupied) {
+    if (!this->hashtable[pidx].kb.occupied) {
 #ifdef CALC_STATS
       this->num_memcpys++;
 #endif
-      memcpy(&this->hashtable[pidx].kmer_data, q->kmer_data_ptr,
+      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
              KMER_DATA_LENGTH);
-      this->hashtable[pidx].kmer_count++;
-      this->hashtable[pidx].occupied = true;
+      this->hashtable[pidx].kb.count++;
+      this->hashtable[pidx].kb.occupied = true;
 #ifdef COMPARE_HASH
-      this->hashtable[pidx].kmer_cityhash = q->kmer_cityhash;
+      this->hashtable[pidx].kmer_hash = q->kmer_hash;
 #endif
       return;
     }
@@ -391,16 +388,16 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
 
 #ifdef COMPARE_HASH
-    if (this->hashtable[pidx].kmer_cityhash == q->kmer_cityhash)
+    if (this->hashtable[pidx].kmer_hash == q->kmer_hash)
 #endif
     {
 #ifdef CALC_STATS
       this->num_memcmps++;
 #endif
 
-      if (memcmp(&this->hashtable[pidx].kmer_data, q->kmer_data_ptr,
+      if (memcmp(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
                  KMER_DATA_LENGTH) == 0) {
-        this->hashtable[pidx].kmer_count++;
+        this->hashtable[pidx].kb.count++;
         return;
       }
     }
@@ -427,7 +424,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       q->kmer_idx = pidx;
 
       this->queue[this->queue_idx] = *q;
-      // this->queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr;
+      // this->queue[this->queue_idx].kmer_p = q->kmer_p;
       // this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
       this->queue_idx++;
 
@@ -469,10 +466,10 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     // printf("inserting into queue at %u\n", this->queue_idx);
     // for (auto i = 0; i < 10; i++)
     //  asm volatile("nop");
-    this->queue[this->queue_idx].kmer_data_ptr = kmer_data;
+    this->queue[this->queue_idx].kmer_p = kmer_data;
     this->queue[this->queue_idx].kmer_idx = __kmer_idx;
 #ifdef COMPARE_HASH
-    this->queue[this->queue_idx].kmer_cityhash = hash_new;
+    this->queue[this->queue_idx].kmer_hash = hash_new;
 #endif
     this->queue_idx++;
   }
@@ -516,7 +513,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
   }
 
-  Kmer_r *find(const void *kmer_data) {
+  Kmer_KV *find(const void *kmer_data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
@@ -525,13 +522,13 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     size_t idx = hash_new & (this->capacity - 1);  // modulo
 
     int memcmp_res =
-        memcmp(&this->hashtable[idx].kmer_data, kmer_data, KMER_DATA_LENGTH);
+        memcmp(&this->hashtable[idx].kb.kmer.data, kmer_data, KMER_DATA_LENGTH);
 
     while (memcmp_res != 0) {
       idx++;
       idx = idx & (this->capacity - 1);
       memcmp_res =
-          memcmp(&this->hashtable[idx].kmer_data, kmer_data, KMER_DATA_LENGTH);
+          memcmp(&this->hashtable[idx].kb.kmer.data, kmer_data, KMER_DATA_LENGTH);
 #ifdef CALC_STATS
       distance_from_bucket++;
 #endif
@@ -548,11 +545,11 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
   void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].occupied) {
+      if (this->hashtable[i].kb.occupied) {
         for (size_t k = 0; k < KMER_DATA_LENGTH; k++) {
-          printf("%c", this->hashtable[i].kmer_data[k]);
+          printf("%c", this->hashtable[i].kb.kmer.data[k]);
         }
-        printf(": %u\n", this->hashtable[i].kmer_count);
+        printf(": %u\n", this->hashtable[i].kb.count);
       }
     }
   }
@@ -560,7 +557,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
   size_t get_fill() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].occupied) {
+      if (this->hashtable[i].kb.occupied) {
         count++;
       }
     }
@@ -572,18 +569,21 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
   size_t get_max_count() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].kmer_count > count) {
-        count = this->hashtable[i].kmer_count;
+      if (this->hashtable[i].kb.count > count) {
+        count = this->hashtable[i].kb.count;
       }
     }
     return count;
   }
 
   void print_to_file(std::string &outfile) const override {
-    std::ofstream f;
-    f.open(outfile);
+    std::ofstream f(outfile);
+    if (!f) {
+      dbg("Could not open outfile %s\n", outfile.c_str());
+      return;
+    }
     for (size_t i = 0; i < this->get_capacity(); i++) {
-      if (this->hashtable[i].kmer_count > 0) {
+      if (this->hashtable[i].kb.count > 0) {
         f << this->hashtable[i] << std::endl;
       }
     }
@@ -591,8 +591,8 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
  private:
   uint64_t capacity;
-  Kmer_r empty_kmer_r;  /* for comparison for empty slot */
-  Kmer_queue_r *queue;  // TODO prefetch this?
+  Kmer_KV null_kmer;  /* for comparison for empty slot */
+  Kmer_queue *queue;  // TODO prefetch this?
   uint32_t queue_idx;
 
   uint64_t hash(const void *k) {

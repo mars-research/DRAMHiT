@@ -16,6 +16,14 @@ struct Kmer_s {
   char data[KMER_DATA_LENGTH];
 };
 
+struct Kmer_base {
+  Kmer_s kmer;
+  uint16_t count : 15;
+  uint8_t occupied : 1;
+} __attribute__((packed));
+
+using Kmer_base_t = struct Kmer_base;
+
 typedef enum {
   DRY_RUN = 1,
   READ_FROM_DISK = 2,
