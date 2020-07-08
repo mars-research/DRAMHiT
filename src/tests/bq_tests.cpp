@@ -27,7 +27,9 @@ uint64_t mem_pool_size;
 extern KmerHashTable *init_ht(uint64_t, uint8_t);
 extern void get_ht_stats(Shard *, KmerHashTable *);
 
+#ifdef BQ_TESTS_USE_HALT
 int *bqueue_halt;
+#endif
 
 #ifdef BQ_TESTS_DO_HT_INSERTS
 struct bq_kmer {
@@ -95,12 +97,19 @@ void BQueueTest::producer_thread(int tid)
     if (cons_id >= consumer_count) cons_id = 0;
   }
 
+#ifdef BQ_TESTS_USE_HALT
+  /* Tell consumers to halt */
+  for (auto i = 0; i < consumer_count; ++i) {
+    bqueue_halt[i] = 1;
+  }
+#else
   /* enqueue halt messages */
   for (cons_id = 0; cons_id < consumer_count; cons_id++) {
     while (enqueue(q[cons_id], (data_t)BQ_MAGIC_64BIT) != SUCCESS)
       ;
     transaction_id++;
   }
+#endif
 
   fipc_test_FAI(completed_producers);
 }
@@ -131,7 +140,12 @@ void BQueueTest::consumer_thread(int tid)
   t_start = RDTSC_START();
 
   prod_id = 0;
+#ifdef BQ_TESTS_USE_HALT
+  while (!bqueue_halt[this_cons_id]) {
+#else
   while (finished_producers < producer_count) {
+#endif
+
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {
       /* Receive and unmarshall */
       if (dequeue(q[prod_id], (data_t *)&k) != SUCCESS) {
@@ -142,8 +156,9 @@ void BQueueTest::consumer_thread(int tid)
       }
 
 #ifdef BQ_TESTS_DO_HT_INSERTS
-      /* Save kmer into array, and insert into HT */
+      /* Save kmer into array*/
       memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
+      /* insert kmer into HT */
       kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
       bq_kmers_idx++;
       if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
@@ -207,7 +222,9 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons)
   this->cons_queues = (queue_t ***)std::aligned_alloc(
       FIPC_CACHE_LINE_SIZE, ncons * sizeof(queue_t **));
 
+#ifdef BQ_TESTS_USE_HALT
   bqueue_halt = (int *)calloc(ncons, sizeof(*bqueue_halt));
+#endif
 
   /* For each producer allocate a queue connecting it to <ncons>
    * consumers */
@@ -218,7 +235,9 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons)
   for (i = 0; i < ncons; ++i) {
     this->cons_queues[i] = (queue_t **)std::aligned_alloc(
         FIPC_CACHE_LINE_SIZE, nprod * sizeof(queue_t *));
+#ifdef BQ_TESTS_USE_HALT
     bqueue_halt[i] = 0;
+#endif
   }
 
   /* Queue Linking */
@@ -239,7 +258,7 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons)
 
 void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
 {
-[[maybe_unused]] uint64_t k = 0;
+  [[maybe_unused]] uint64_t k = 0;
   // uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
   uint64_t transaction_id;
@@ -266,8 +285,9 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
 #endif
 
 #ifdef BQ_TESTS_DO_HT_INSERTS
-    // *((uint64_t *)&kmers[i].data) = k;
+    /* Save kmer into array*/
     memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
+    /* insert kmer into HT */
     kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
     bq_kmers_idx++;
     if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
@@ -288,8 +308,6 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
       "[INFO] Quick Stats: no_bqueues thread %u finished, sending %lu messages "
       "(cycles per message %lu)\n",
       sh->shard_idx, transaction_id, (t_end - t_start) / transaction_id);
-
-  fipc_test_FAI(completed_producers);
 }
 
 void BQueueTest::run_test(Configuration *cfg, Numa *n)
@@ -371,7 +389,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n)
   }
 
   // Spawn consumer threads
-  for (j = 0; j < consumer_count; j++, i++) {
+  for (i = producer_count, j = 0; j < consumer_count; j++, i++) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
 
@@ -418,11 +436,6 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n)
   while (completed_producers < producer_count) fipc_test_pause();
 
   fipc_test_mfence();
-
-  /* Tell consumers to halt */
-  for (i = 0; i < consumer_count; ++i) {
-    bqueue_halt[i] = 1;
-  }
 
   /* Wait for consumers to complete */
   while (completed_consumers < consumer_count) fipc_test_pause();
