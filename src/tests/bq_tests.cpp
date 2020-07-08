@@ -5,7 +5,7 @@
 
 #define BQ_MAGIC_64BIT 0xD221A6BE96E04673UL
 #define BQ_TESTS_BATCH_LENGTH (1ULL << 5)         // 32
-#define BQ_TESTS_DEQUEUE_ARR_LENGTH (1ULL << 10)  // 512
+#define BQ_TESTS_DEQUEUE_ARR_LENGTH (1ULL << 10)  // 1024
 
 namespace kmercounter
 {
@@ -29,9 +29,14 @@ extern void get_ht_stats(Shard *, KmerHashTable *);
 
 int *bqueue_halt;
 
+#ifdef BQ_TESTS_DO_HT_INSERTS
 struct bq_kmer {
   char data[KMER_DATA_LENGTH];
 } __attribute__((aligned(64)));
+
+struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
+int bq_kmers_idx = 0;
+#endif
 
 void BQueueTest::producer_thread(int tid)
 {
@@ -59,7 +64,7 @@ void BQueueTest::producer_thread(int tid)
 
   /* HT_TESTS_NUM_INSERTS enqueues per consumer */
   cons_id = 0;
-  for (transaction_id = 0u; transaction_id < HT_TESTS_NUM_INSERTS * consumer_count / producer_count ;) {
+  for (transaction_id = 0u; transaction_id < HT_TESTS_NUM_INSERTS;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
      * consumer */
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {
@@ -78,7 +83,7 @@ void BQueueTest::producer_thread(int tid)
         break;
       }
       transaction_id++;
-#if 0
+#ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
                transaction_id);
@@ -113,8 +118,7 @@ void BQueueTest::consumer_thread(int tid)
   uint8_t prod_id = 0;
   uint8_t this_cons_id = sh->shard_idx - producer_count;
   queue_t **q = this->cons_queues[this_cons_id];
-  int bq_kmers_idx = 0;
-  struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
+
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
@@ -137,11 +141,13 @@ void BQueueTest::consumer_thread(int tid)
         break;
       }
 
+#ifdef BQ_TESTS_DO_HT_INSERTS
       /* Save kmer into array, and insert into HT */
       memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
       kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
       bq_kmers_idx++;
       if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
+#endif
 
       if ((data_t)k == BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
@@ -152,7 +158,7 @@ void BQueueTest::consumer_thread(int tid)
       }
 
       transaction_id++;
-#if 0
+#ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         printf("[INFO] Consumer %u, transaction_id %lu\n", this_cons_id,
                transaction_id);
@@ -233,12 +239,10 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons)
 
 void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
 {
-  uint64_t k = 0;
+[[maybe_unused]] uint64_t k = 0;
   // uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
   uint64_t transaction_id;
-  struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-  int bq_kmers_idx = 0;
 
 #ifdef BQ_TESTS_INSERT_XORWOW
   struct xorwow_state xw_state;
@@ -260,11 +264,14 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
 #else
     k = transaction_id;
 #endif
+
+#ifdef BQ_TESTS_DO_HT_INSERTS
     // *((uint64_t *)&kmers[i].data) = k;
     memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
     kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
     bq_kmers_idx++;
     if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
+#endif
 
     if (transaction_id % (HT_TESTS_NUM_INSERTS) == 0) {
       printf("[INFO] no_bqueues thread %u, transaction_id %lu\n", sh->shard_idx,
