@@ -351,15 +351,15 @@ int Application::process(int argc, char *argv[]) {
         po::value<std::string>(&config.stats_file)
             ->default_value(def.stats_file),
         "Stats file name.")(
-        "httype",
+        "ht-type",
         po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
         "1: SimpleKmerHashTable \n2: "
         "RobinhoodKmerHashTable, \n3: CASKmerHashTable, \n4. "
         "StdmapKmerHashTable")(
-        "outfile",
+        "out-file",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
         "Hashtable output file name.")(
-        "infile",
+        "in-file",
         po::value<std::string>(&config.in_file)->default_value(def.in_file),
         "Input fasta file")(
         "drop-caches",

@@ -194,7 +194,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
     if (!ptr) throw std::bad_alloc{};
 
-    std::cout << "new: " << size
+    std::cout << "[INFO] " << "new: " << size
               << ", align: " << static_cast<std::size_t>(align)
               << ", ptr: " << ptr << '\n';
 

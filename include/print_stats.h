@@ -45,10 +45,6 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 
   printf("===============================================================\n");
   for (; k < config.num_threads; k++) {
-    if (all_sh[k].stats->num_inserts == 0) {
-      printf("Thread %2d: No inserts \n", all_sh[k].shard_idx);
-      continue;
-    }
 
     printf(
         "Thread %2d: "
