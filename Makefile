@@ -15,7 +15,10 @@ CFLAGS = -g -Wall -mprefetchwt1 $(OPT_FLAGS)
 CFLAGS += -march=skylake
 CFLAGS += $(patsubst %,-I%/,$(IDIRS))
 
-# CFLAGS += -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
+
+ifeq ($(PAPI), yes)
+	CFLAGS += -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
+endif
 
 # YES. We love spaghetti!!!
 # CFLAGS += -DCALC_STATS
@@ -49,10 +52,15 @@ LIBS += -lz
 LIBS += -lnuma
 # Multithreading
 LIBS += -lpthread -flto
-
+ 
 # for PAPI
-#LIBS += -lpapi
-LDFLAGS = -L$(PWD)/papi/src/install/lib/
+LIBPAPI = libpapi.a
+LIBDIR = $(PWD)/papi/src/install/lib/
+PAPILIB = $(LIBDIR)/$(LIBPAPI) 
+
+ifeq ($(PAPI), yes)
+	LIBS += $(PAPILIB)
+endif
 
 TARGET=kmercounter
 
