@@ -29,13 +29,13 @@
 namespace kmercounter {
 
 struct Kmer_KV {
-  Kmer_base_t kb; // 20 + 2 bytes 
-  uint32_t kmer_hash;    // 4 bytes (4B enties is enough)
+  Kmer_base_t kb;            // 20 + 2 bytes
+  uint32_t kmer_hash;        // 4 bytes (4B enties is enough)
   volatile char padding[6];  // 3 bytes // TODO remove hardcode
-  // uint8_t _pad[32];
 } __attribute__((packed));
 
-static_assert(sizeof(Kmer_KV) % 32 == 0, "Sizeof Kmer_KV must be a multiple of 32"); 
+static_assert(sizeof(Kmer_KV) % 32 == 0,
+              "Sizeof Kmer_KV must be a multiple of 32");
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
@@ -115,11 +115,11 @@ inline std::ostream &operator<<(std::ostream &strm, const Kmer_KV &k) {
 
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
-constexpr auto ADDR = static_cast<void*>(0x0ULL);
+constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
-constexpr auto MAP_FLAGS = MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+constexpr auto MAP_FLAGS =
+    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
 constexpr auto LENGTH = 1ULL * 1024 * 1024 * 1024;
-
 
 constexpr uint64_t CACHE_BLOCK_BITS = 6;
 constexpr uint64_t CACHE_BLOCK_MASK = (1ULL << CACHE_BLOCK_BITS) - 1;
@@ -184,9 +184,10 @@ static inline void prefetch_with_write(Kmer_KV *k) {
   k->padding[0] = 1;
 }
 
+template <typename T = Kmer_KV>
 class alignas(64) SimpleKmerHashTable : public KmerHashTable {
  public:
-  Kmer_KV *hashtable;
+  T *hashtable;
 
   // https://www.bfilipek.com/2019/08/newnew-align.html
   void *operator new(std::size_t size, std::align_val_t align) {
@@ -194,7 +195,8 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
     if (!ptr) throw std::bad_alloc{};
 
-    std::cout << "[INFO] " << "new: " << size
+    std::cout << "[INFO] "
+              << "new: " << size
               << ", align: " << static_cast<std::size_t>(align)
               << ", ptr: " << ptr << '\n';
 
@@ -220,7 +222,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
   };
 
-  void touch(uint64_t i) {
+  inline uint8_t touch(uint64_t i) {
 #if defined(TOUCH_DEPENDENCY)
     if (this->hashtable[i & (this->capacity - 1)].kb.occupied == 0) {
       this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
@@ -230,6 +232,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #else
     this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
 #endif
+    return 0;
   };
 
   SimpleKmerHashTable(uint64_t c, uint32_t id) {
@@ -238,7 +241,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     this->capacity = kmercounter::next_pow2(c);
     // printf("[INFO] Hashtable size: %lu\n", this->capacity);
 #if !defined(HUGE_1GB_PAGES)
-    this->hashtable = (Kmer_KV *)aligned_alloc(PAGE_SIZE, capacity * sizeof(Kmer_KV));
+    this->hashtable = (T *)aligned_alloc(PAGE_SIZE, capacity * sizeof(T));
 #else
     int fd;
     char mmap_path[256] = {0};
@@ -255,9 +258,8 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       dbg("opened file %s\n", mmap_path);
     }
 
-    this->hashtable =
-        (Kmer_KV *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(Kmer_KV),
-                       PROT_RW, MAP_FLAGS, fd, 0);
+    this->hashtable = (T *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(T),
+                                PROT_RW, MAP_FLAGS, fd, 0);
     if (this->hashtable == MAP_FAILED) {
       perror("mmap");
       unlink(mmap_path);
@@ -272,8 +274,8 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       perror("[ERROR]: SimpleKmerHashTable aligned_alloc");
     }
 
-    memset(hashtable, 0, capacity * sizeof(Kmer_KV));
-    memset(&this->null_kmer, 0, sizeof(Kmer_KV));
+    memset(hashtable, 0, capacity * sizeof(T));
+    memset(&this->null_kmer, 0, sizeof(T));
 
     this->queue = (Kmer_queue *)(aligned_alloc(
         64, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue)));
@@ -298,8 +300,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #ifdef CALC_STATS
       this->num_memcpys++;
 #endif
-      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
-             KMER_DATA_LENGTH);
+      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p, KMER_DATA_LENGTH);
       this->hashtable[pidx].kb.count++;
       this->hashtable[pidx].kb.occupied = true;
       this->hashtable[pidx].kmer_hash = q->kmer_hash;
@@ -373,8 +374,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #ifdef CALC_STATS
       this->num_memcpys++;
 #endif
-      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
-             KMER_DATA_LENGTH);
+      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p, KMER_DATA_LENGTH);
       this->hashtable[pidx].kb.count++;
       this->hashtable[pidx].kb.occupied = true;
 #ifdef COMPARE_HASH
@@ -513,7 +513,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
   }
 
-  Kmer_KV *find(const void *kmer_data) {
+  T *find(const void *kmer_data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
@@ -527,8 +527,8 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     while (memcmp_res != 0) {
       idx++;
       idx = idx & (this->capacity - 1);
-      memcmp_res =
-          memcmp(&this->hashtable[idx].kb.kmer.data, kmer_data, KMER_DATA_LENGTH);
+      memcmp_res = memcmp(&this->hashtable[idx].kb.kmer.data, kmer_data,
+                          KMER_DATA_LENGTH);
 #ifdef CALC_STATS
       distance_from_bucket++;
 #endif
@@ -591,7 +591,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
  private:
   uint64_t capacity;
-  Kmer_KV null_kmer;  /* for comparison for empty slot */
+  T null_kmer;        /* for comparison for empty slot */
   Kmer_queue *queue;  // TODO prefetch this?
   uint32_t queue_idx;
 

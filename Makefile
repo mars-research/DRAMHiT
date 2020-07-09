@@ -23,7 +23,7 @@ endif
 # YES. We love spaghetti!!!
 # CFLAGS += -DCALC_STATS
 CFLAGS += -D__MMAP_FILE
-CFLAGS += -DTOUCH_DEPENDENCY
+#CFLAGS += -DTOUCH_DEPENDENCY
 CFLAGS += -DSERIAL_SCAN
 #CFLAGS += -DXORWOW_SCAN
 CFLAGS += -DPREFETCH_WITH_PREFETCH_INSTR
@@ -69,7 +69,8 @@ C_SRCS = $(patsubst %,src/%, bqueue.c \
 
 TESTS = $(patsubst %,src/tests/%, bq_tests.cpp  \
 	hashtable_tests.cpp  \
-	parser_tests.cpp\
+	parser_tests.cpp \
+	prefetch_tests.cpp \
 	)
 
 CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \

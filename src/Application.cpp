@@ -63,7 +63,7 @@ KmerHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   if (config.ht_type == SIMPLE_KHT) {
-    kmer_ht = new SimpleKmerHashTable(sz, id);
+    kmer_ht = new SimpleKmerHashTable<>(sz, id);
   } else if (config.ht_type == ROBINHOOD_KHT) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == CAS_KHT) {
@@ -88,8 +88,10 @@ void Application::shard_thread(int tid) {
     case FASTQ_WITH_INSERT:
       kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
       break;
-    case SYNTH:
     case PREFETCH:
+      // prefetch test creates its own HT
+      break;
+    case SYNTH:
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
@@ -113,7 +115,7 @@ void Application::shard_thread(int tid) {
       this->test.st.synth_run_exec(sh, kmer_ht);
       break;
     case PREFETCH:
-      this->test.pt.prefetch_test_run_exec(sh, kmer_ht);
+      this->test.pt.prefetch_test_run_exec(sh, config);
       break;
     case BQ_TESTS_NO_BQ:
       this->test.bqt.no_bqueues(sh, kmer_ht);
@@ -287,7 +289,7 @@ int Application::spawn_shard_threads() {
 
   print_stats(this->shards, config);
 
-  delete [] threads;
+  delete[] threads;
   std::free(this->shards);
 
   return 0;
