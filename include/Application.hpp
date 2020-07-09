@@ -10,6 +10,7 @@ namespace kmercounter {
 
 class Application {
   Numa *n;
+  NumaPolicyThreads *np;
   Tests test;
   std::thread *threads;
   Shard *shards;

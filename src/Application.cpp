@@ -168,108 +168,37 @@ int Application::spawn_shard_threads() {
     #define PGROUNDUP(sz) (((sz)+PGSIZE−1) & ~(PGSIZE−1))
     #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE−1)) */
 
-  if (config.numa_split) {
-    size_t num_total_cpus = this->n->get_num_total_cpus();
-    size_t num_nodes = this->n->get_num_nodes();
-    size_t threads_per_node = (size_t)config.num_threads / num_nodes;  // 3
-    size_t threads_per_node_spill =
-        (size_t)config.num_threads % num_nodes;  // 2
-
-    // 3*4+2
-    printf("[INFO] # nodes: %lu, # cpus (total): %lu\n", num_nodes,
-           num_total_cpus);
-    printf(
-        "[INFO] # threads (from config): %u # threads per node: %lu, # threads "
-        "spill: %lu\n",
-        config.num_threads, threads_per_node, threads_per_node_spill);
-
-    if (config.num_threads > num_total_cpus - 1) {
-      fprintf(stderr,
-              "[ERROR] More threads configured than cores available (Note: one "
-              "cpu assigned completely for synchronization) \n");
-      exit(-1);
-    }
-
-    size_t shard_idx_ctr = 0;
-    size_t node_idx_ctr = 0;
-    size_t cpu_idx_ctr = 0;
-    size_t last_cpu_idx = 0;
-    uint32_t i;
-
-    for (i = 0; i < threads_per_node * num_nodes; i++) {
-      Shard *sh = &this->shards[i];
-      sh->shard_idx = i;
-      sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
-      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-
-      this->threads[i] = std::thread(&Application::shard_thread, this, i);
-
-      CPU_ZERO(&cpuset);
-      uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
-      CPU_SET(cpu_assigned, &cpuset);
-      pthread_setaffinity_np(this->threads[i].native_handle(),
-                             sizeof(cpu_set_t), &cpuset);
-      printf("[INFO] Thread %u: node: %lu, affinity: %u\n", sh->shard_idx,
-             node_idx_ctr, cpu_assigned);
-
-      cpu_idx_ctr += 1;
-      if (cpu_idx_ctr == threads_per_node) {
-        printf("---------\n");
-        node_idx_ctr++;
-        last_cpu_idx = cpu_idx_ctr;
-        cpu_idx_ctr = 0;
-      }
-    }
-
-    shard_idx_ctr = i - 1;
-    node_idx_ctr = 0;
-    for (auto i = 0u; i < threads_per_node_spill; i++) {
-      Shard *sh = &this->shards[shard_idx_ctr];
-      sh->shard_idx = shard_idx_ctr;
-
-      sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
-      sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-
-      this->threads[shard_idx_ctr] =
-          std::thread(&Application::shard_thread, this, shard_idx_ctr);
-
-      CPU_ZERO(&cpuset);
-      uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[last_cpu_idx];
-      CPU_SET(cpu_assigned, &cpuset);
-      pthread_setaffinity_np(threads[sh->shard_idx].native_handle(),
-                             sizeof(cpu_set_t), &cpuset);
-      printf("[INFO] Thread %u: node: %lu, affinity: %u\n", sh->shard_idx,
-             node_idx_ctr, cpu_assigned);
-      node_idx_ctr++;
-    }
+  if (config.num_threads >
+      static_cast<uint32_t>(this->n->get_num_total_cpus()) - 1) {
+    fprintf(stderr,
+            "[ERROR] More threads configured than cores available (Note: one "
+            "cpu assigned completely for synchronization) \n");
+    exit(-1);
   }
 
-  else if (!config.numa_split) {
-    for (size_t i = 0; i < config.num_threads; i++) {
-      Shard *sh = &this->shards[i];
-      sh->shard_idx = i;
-      sh->f_start = round_up(seg_sz * i, PAGE_SIZE);
-      sh->f_end = round_up(seg_sz * (i + 1), PAGE_SIZE);
-
-      /* TODO don't spawn threads if f_start >= in_file_sz */
-      this->threads[i] = std::thread(&Application::shard_thread, this, i);
-
-      CPU_ZERO(&cpuset);
-      size_t cpu_idx = i % nodes[0].cpu_list.size();
-      CPU_SET(nodes[0].cpu_list[cpu_idx], &cpuset);
-      pthread_setaffinity_np(threads[i].native_handle(), sizeof(cpu_set_t),
-                             &cpuset);
-
-      printf("[INFO] Thread: %lu, set affinity: %u\n", i,
-             nodes[0].cpu_list[cpu_idx]);
-    }
+  uint32_t i = 0;
+  for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
+    Shard *sh = &this->shards[i];
+    sh->shard_idx = i;
+    sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
+    sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
+    this->threads[i] = std::thread(&Application::shard_thread, this, i);
+    CPU_ZERO(&cpuset);
+    CPU_SET(assigned_cpu, &cpuset);
+    pthread_setaffinity_np(this->threads[i].native_handle(), sizeof(cpu_set_t),
+                           &cpuset);
+    printf("[INFO] Thread %u: affinity: %u\n", sh->shard_idx, assigned_cpu);
+    i += 1;
   }
 
+  /* pin this thread to last cpu of last node. */
+  /* TODO don't waste one thread on synchronization  */
   CPU_ZERO(&cpuset);
-  /* last cpu of last node  */
   auto last_numa_node = nodes[n->get_num_nodes() - 1];
-  CPU_SET(last_numa_node.cpu_list[last_numa_node.num_cpus - 1], &cpuset);
+  uint32_t last_cpu = last_numa_node.cpu_list[last_numa_node.num_cpus - 1];
+  CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+  printf("[INFO] Thread 'main': affinity: %u\n", last_cpu);
 
   while (ready_threads < config.num_threads) {
     fipc_test_pause();
@@ -449,9 +378,16 @@ int Application::process(int argc, char *argv[]) {
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.bqt.run_test(&config, this->n);
   } else {
-    spawn_shard_threads();
+    if (config.numa_split)
+      this->np = new NumaPolicyThreads(config.num_threads,
+                                       THREADS_SPLIT_SEPARATE_NODES);
+    else
+      this->np =
+          new NumaPolicyThreads(config.num_threads, THREADS_ASSIGN_SEQUENTIAL);
+
+    this->spawn_shard_threads();
   }
 
   return 0;
 }
-}  // namespace kmercounter
+} // namespace kmercounter

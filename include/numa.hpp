@@ -2,7 +2,9 @@
 #define __NUMA_HPP__
 
 #include <numa.h>
+
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
@@ -11,8 +13,7 @@
 
 using namespace std;
 
-namespace kmercounter
-{
+namespace kmercounter {
 constexpr long long RESET_MASK(int x) { return ~(1LL << (x)); }
 
 typedef struct numa_node {
@@ -22,11 +23,9 @@ typedef struct numa_node {
   std::vector<uint32_t> cpu_list;
 } numa_node_t;
 
-class Numa
-{
- public:
-  Numa() : numa_present(!numa_available())
-  {
+class Numa {
+public:
+  Numa() : numa_present(!numa_available()) {
     if (numa_present) {
       max_node = numa_max_node();
       max_possible_node = numa_max_possible_node();
@@ -42,8 +41,7 @@ class Numa
 
   inline bool is_numa_present(void) const { return numa_present; }
 
-  friend std::ostream &operator<<(std::ostream &os, const Numa &n)
-  {
+  friend std::ostream &operator<<(std::ostream &os, const Numa &n) {
     printf("NUMA available: %s\n", n.numa_present ? "true" : "false");
     printf("Node config:\n");
     printf("\tnuma_num_possible_nodes: %d\n", n.num_possible_nodes);
@@ -56,15 +54,14 @@ class Numa
 
   const int get_num_nodes() const { return num_configured_nodes; }
 
-  const int get_num_total_cpus()
-  {
+  const int get_num_total_cpus() {
     int num_total_cpus = 0;
-    for (auto i : nodes) num_total_cpus += i.cpu_list.size();
+    for (auto i : nodes)
+      num_total_cpus += i.cpu_list.size();
     return num_total_cpus;
   }
 
-  void print_numa_nodes(void)
-  {
+  void print_numa_nodes(void) {
     std::for_each(nodes.begin(), nodes.end(), [](auto &node) {
       printf("Node: %d cpu_bitmask: 0x%08lx | num_cpus: %d\n\t", node.id,
              node.cpu_bitmask, node.num_cpus);
@@ -76,7 +73,7 @@ class Numa
 
   const std::vector<numa_node_t> &get_node_config(void) const { return nodes; }
 
- private:
+private:
   int numa_present;
   int max_node;
   int max_possible_node;
@@ -87,8 +84,7 @@ class Numa
   int num_nodes;
   std::vector<numa_node_t> nodes;
 
-  int extract_numa_config(void)
-  {
+  int extract_numa_config(void) {
     struct bitmask *cm = numa_allocate_cpumask();
     auto ret = 0;
 
@@ -120,39 +116,110 @@ class Numa
   void append_node(numa_node_t &node) { nodes.push_back(node); }
 };
 
-class NumaPolicy : public Numa
-{
- public:
-  // These are some preliminary ideas for numa policies. This may not be
-  // sufficient to cover all possible cases. Policies: PROD_CONS_SEPARATE_NODES
-  // - This mode is to stress the framework as running producers and consumers
-  // on different numa nodes PROD_CONS_SAME_NODES - Run producers and consumers
-  // on the same numa node. Of course, this is bounded by the number of cpus
-  // available on a numa node. prod + cons <= node_x_cpus PROD_CONS_MIXED_MODE -
-  // the affinity does not matter. Just run it as long as you can tie this
-  // thread to a cpu.
-  enum numa_policy {
-    PROD_CONS_SEPARATE_NODES = 1,
-    PROD_CONS_SAME_NODES = 2,
-    PROD_CONS_MIXED_MODE = 3,
-    NUM_POLICIES,
-  };
-
-  NumaPolicy()
-  {
-    // uint32_t *producers = new uint32_t[num_configured_cpus];
-    auto nodes = get_node_config();
-  }
-  // returns a tuple of producer, consumer cpus according to the policy
-  std::tuple<uint32_t *, uint32_t *> get_prod_cons_list(enum numa_policy policy)
-  {
-    return policy_map[policy];
-  }
-
- private:
-  std::map<numa_policy, std::tuple<uint32_t *, uint32_t *>> policy_map;
-  int num_policies = NUM_POLICIES;
+/* Numa policy for when using producer/consumer queues.
+- PROD_CONS_SEPARATE_NODES: This mode is to stress the framework as running
+producers and consumers on different numa nodes
+- PROD_CONS_SAME_NODES: Run producers and consumers  on the same numa node. Of
+course, this is bounded by the number of cpus available on a numa node. prod +
+cons <= node_x_cpus
+- PROD_CONS_MIXED_MODE: the affinity does not matter. Just run it as long as you
+can tie this thread to a cpu.
+ */
+enum numa_policy_queues {
+  PROD_CONS_SEPARATE_NODES = 1,
+  PROD_CONS_SAME_NODES = 2,
+  PROD_CONS_MIXED_MODE = 3,
 };
-}  // namespace kmercounter
 
-#endif  // __NUMA_HPP__
+/* Numa policy when using just a "number of threads" assignment */
+enum numa_policy_threads {
+  THREADS_SPLIT_SEPARATE_NODES = 1,
+  THREADS_ASSIGN_SEQUENTIAL = 2
+};
+
+class NumaPolicyThreads : public Numa {
+public:
+  NumaPolicyThreads(int num_threads, numa_policy_threads np) {
+    this->config_num_threads = num_threads;
+    this->nodes = Numa::get_node_config();
+    this->np = np;
+    this->generate_cpu_list();
+  }
+
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const NumaPolicyThreads &n) {
+
+    std::cout << "assigned cpu list: \n";
+    for (auto i : n.assigned_cpu_list) {
+      std::cout << i << ' ';
+    }
+    std::cout << "\n";
+    return os;
+  }
+
+  std::vector<uint32_t> get_assigned_cpu_list() {
+    std::cout << *this << std::endl;
+    return this->assigned_cpu_list;
+  }
+
+private:
+  uint32_t config_num_threads;
+  numa_policy_threads np;
+  std::vector<numa_node_t> nodes;
+  std::vector<uint32_t> assigned_cpu_list;
+
+  void generate_cpu_list() {
+
+    assert(this->config_num_threads <=
+           static_cast<uint32_t>(Numa::get_num_total_cpus()));
+
+    if (this->np == THREADS_SPLIT_SEPARATE_NODES) {
+      int num_nodes = Numa::get_num_nodes();
+      uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0, last_cpu_idx = 0;
+      uint32_t threads_per_node =
+          static_cast<int>(this->config_num_threads / num_nodes);
+      uint32_t threads_per_node_spill =
+          static_cast<int>(this->config_num_threads % num_nodes);
+
+      for (auto i = 0u; i < threads_per_node * num_nodes; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list.push_back(cpu_assigned);
+        cpu_idx_ctr += 1;
+        if (cpu_idx_ctr == threads_per_node) {
+          node_idx_ctr++;
+          last_cpu_idx = cpu_idx_ctr;
+          cpu_idx_ctr = 0;
+        }
+      }
+
+      node_idx_ctr = 0;
+      for (auto i = 0u; i < threads_per_node_spill; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[last_cpu_idx];
+        this->assigned_cpu_list.push_back(cpu_assigned);
+        node_idx_ctr += 1;
+        cpu_idx_ctr += 1; // not necessary
+      }
+
+      return;
+    }
+
+    if (this->np == THREADS_ASSIGN_SEQUENTIAL) {
+      uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;
+
+      for (auto i = 0u; i < this->config_num_threads; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list.push_back(cpu_assigned);
+        cpu_idx_ctr += 1;
+        if (cpu_idx_ctr == nodes[node_idx_ctr].cpu_list.size()) {
+          node_idx_ctr += 1;
+          cpu_idx_ctr = 0;
+        }
+      }
+      return;
+    }
+  }
+};
+
+} // namespace kmercounter
+
+#endif // __NUMA_HPP__
