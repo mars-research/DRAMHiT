@@ -39,7 +39,7 @@ CFLAGS += -DXX_HASH
 # CFLAGS += -DBQ_TESTS_INSERT_XORWOW
 # CFLAGS += -DCHAR_ARRAY_PARSE_BUFFER
 # CFLAGS += -DNO_CORNER_CASES
-# CFLAGS += -DBQ_TESTS_DO_HT_INSERTS
+CFLAGS += -DBQ_TESTS_DO_HT_INSERTS
 CFLAGS += -DBQ_TESTS_USE_HALT
 
 CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD
@@ -93,7 +93,7 @@ OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o) $(CC_SRCS:.cc=.o)
 	$(CXX) -c -o $@ $< $(CFLAGS) $(OPT_YES)
 
 
-.PHONY: all papi clean ugdb
+.PHONY: all papi clean
 
 all: $(TARGET)
 
@@ -109,5 +109,3 @@ clean:
 	rm -f $(TARGET) $(OBJS)
 	rm -f src/*.d
 
-ugdb:
-	ugdb $(TARGET)

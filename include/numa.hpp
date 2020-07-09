@@ -11,8 +11,8 @@
 
 using namespace std;
 
-namespace kmercounter {
-
+namespace kmercounter
+{
 constexpr long long RESET_MASK(int x) { return ~(1LL << (x)); }
 
 typedef struct numa_node {
@@ -22,9 +22,11 @@ typedef struct numa_node {
   std::vector<uint32_t> cpu_list;
 } numa_node_t;
 
-class Numa {
+class Numa
+{
  public:
-  Numa() : numa_present(!numa_available()) {
+  Numa() : numa_present(!numa_available())
+  {
     if (numa_present) {
       max_node = numa_max_node();
       max_possible_node = numa_max_possible_node();
@@ -40,7 +42,8 @@ class Numa {
 
   inline bool is_numa_present(void) const { return numa_present; }
 
-  friend std::ostream &operator<<(std::ostream &os, const Numa &n) {
+  friend std::ostream &operator<<(std::ostream &os, const Numa &n)
+  {
     printf("NUMA available: %s\n", n.numa_present ? "true" : "false");
     printf("Node config:\n");
     printf("\tnuma_num_possible_nodes: %d\n", n.num_possible_nodes);
@@ -53,9 +56,15 @@ class Numa {
 
   const int get_num_nodes() const { return num_configured_nodes; }
 
-  void append_node(numa_node_t &node) { nodes.push_back(node); }
+  const int get_num_total_cpus()
+  {
+    int num_total_cpus = 0;
+    for (auto i : nodes) num_total_cpus += i.cpu_list.size();
+    return num_total_cpus;
+  }
 
-  void print_numa_nodes(void) {
+  void print_numa_nodes(void)
+  {
     std::for_each(nodes.begin(), nodes.end(), [](auto &node) {
       printf("Node: %d cpu_bitmask: 0x%08lx | num_cpus: %d\n\t", node.id,
              node.cpu_bitmask, node.num_cpus);
@@ -65,7 +74,21 @@ class Numa {
     });
   }
 
-  int extract_numa_config(void) {
+  const std::vector<numa_node_t> &get_node_config(void) const { return nodes; }
+
+ private:
+  int numa_present;
+  int max_node;
+  int max_possible_node;
+  int num_possible_nodes;
+  int num_configured_nodes;
+  int num_configured_cpus;
+  int num_possible_cpus;
+  int num_nodes;
+  std::vector<numa_node_t> nodes;
+
+  int extract_numa_config(void)
+  {
     struct bitmask *cm = numa_allocate_cpumask();
     auto ret = 0;
 
@@ -94,21 +117,11 @@ class Numa {
     return ret;
   }
 
-  const std::vector<numa_node_t> &get_node_config(void) const { return nodes; }
-
- private:
-  int numa_present;
-  int max_node;
-  int max_possible_node;
-  int num_possible_nodes;
-  int num_configured_nodes;
-  int num_configured_cpus;
-  int num_possible_cpus;
-  int num_nodes;
-  std::vector<numa_node_t> nodes;
+  void append_node(numa_node_t &node) { nodes.push_back(node); }
 };
 
-class NumaPolicy : public Numa {
+class NumaPolicy : public Numa
+{
  public:
   // These are some preliminary ideas for numa policies. This may not be
   // sufficient to cover all possible cases. Policies: PROD_CONS_SEPARATE_NODES
@@ -125,13 +138,14 @@ class NumaPolicy : public Numa {
     NUM_POLICIES,
   };
 
-  NumaPolicy() {
+  NumaPolicy()
+  {
     // uint32_t *producers = new uint32_t[num_configured_cpus];
     auto nodes = get_node_config();
   }
   // returns a tuple of producer, consumer cpus according to the policy
-  std::tuple<uint32_t *, uint32_t *> get_prod_cons_list(
-      enum numa_policy policy) {
+  std::tuple<uint32_t *, uint32_t *> get_prod_cons_list(enum numa_policy policy)
+  {
     return policy_map[policy];
   }
 

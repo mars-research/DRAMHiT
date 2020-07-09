@@ -167,13 +167,11 @@ int Application::spawn_shard_threads() {
     #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE−1)) */
 
   if (config.numa_split) {
-    size_t num_total_cpus = 0;
-    size_t num_nodes = nodes.size();
+    size_t num_total_cpus = this->n->get_num_total_cpus();
+    size_t num_nodes = this->n->get_num_nodes();
     size_t threads_per_node = (size_t)config.num_threads / num_nodes;  // 3
     size_t threads_per_node_spill =
         (size_t)config.num_threads % num_nodes;  // 2
-
-    for (auto i : nodes) num_total_cpus += i.cpu_list.size();
 
     // 3*4+2
     printf("[INFO] # nodes: %lu, # cpus (total): %lu\n", num_nodes,
@@ -186,7 +184,7 @@ int Application::spawn_shard_threads() {
     if (config.num_threads > num_total_cpus - 1) {
       fprintf(stderr,
               "[ERROR] More threads configured than cores available (Note: one "
-              "core assigned completely for synchronization) \n");
+              "cpu assigned completely for synchronization) \n");
       exit(-1);
     }
 
