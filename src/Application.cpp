@@ -194,8 +194,7 @@ int Application::spawn_shard_threads() {
   /* pin this thread to last cpu of last node. */
   /* TODO don't waste one thread on synchronization  */
   CPU_ZERO(&cpuset);
-  auto last_numa_node = nodes[n->get_num_nodes() - 1];
-  uint32_t last_cpu = last_numa_node.cpu_list[last_numa_node.num_cpus - 1];
+  uint32_t last_cpu = this->np->get_unassigned_cpu_list()[0];
   CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
   printf("[INFO] Thread 'main': affinity: %u\n", last_cpu);
@@ -376,7 +375,12 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == BQ_TESTS_YES_BQ) {
-    this->test.bqt.run_test(&config, this->n);
+    if (config.numa_split)
+      this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
+                                       PROD_CONS_SEPARATE_NODES);
+    else
+      this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
+                                       PROD_CONS_SEQUENTIAL);
   } else {
     if (config.numa_split)
       this->np = new NumaPolicyThreads(config.num_threads,
@@ -384,7 +388,11 @@ int Application::process(int argc, char *argv[]) {
     else
       this->np =
           new NumaPolicyThreads(config.num_threads, THREADS_ASSIGN_SEQUENTIAL);
+  }
 
+  if (config.mode == BQ_TESTS_YES_BQ) {
+    this->test.bqt.run_test(&config, this->n, this->npq);
+  } else {
     this->spawn_shard_threads();
   }
 

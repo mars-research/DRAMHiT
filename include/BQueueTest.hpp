@@ -15,6 +15,7 @@ class BQueueTest {
   Shard *shards;
   Configuration *cfg;
   Numa *n;
+  NumaPolicyQueues *npq;
 
   std::vector<numa_node> nodes;
   queue_t*** prod_queues;
@@ -22,7 +23,7 @@ class BQueueTest {
 
  public:
   void no_bqueues(Shard *sh, KmerHashTable *kmer_ht);
-  void run_test(Configuration *cfg, Numa *n);
+  void run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
   void producer_thread(int tid);
   void consumer_thread(int tid);
   void init_queues(uint32_t nprod, uint32_t ncons);

@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <iostream>
 #include <map>
+#include <set>
 #include <vector>
 
 using namespace std;
@@ -126,9 +127,167 @@ cons <= node_x_cpus
 can tie this thread to a cpu.
  */
 enum numa_policy_queues {
-  PROD_CONS_SEPARATE_NODES = 1,
-  PROD_CONS_SAME_NODES = 2,
-  PROD_CONS_MIXED_MODE = 3,
+  PROD_CONS_SEQUENTIAL = 1,
+  PROD_CONS_SEPARATE_NODES = 2
+};
+
+class NumaPolicyQueues : public Numa {
+public:
+  NumaPolicyQueues(int num_prod, int num_cons, numa_policy_queues npq) {
+    this->config_num_prod = num_prod;
+    this->config_num_cons = num_cons;
+    this->nodes = Numa::get_node_config();
+    this->npq = npq;
+    this->init_unassigned_cpus_list();
+    this->generate_cpu_lists();
+    std::cout << *this << std::endl;
+  }
+
+  friend std::ostream &operator<<(std::ostream &os, const NumaPolicyQueues &n) {
+
+    std::cout << "assigned_cpu_list_producers: ";
+    for (auto i : n.assigned_cpu_list_producers) {
+      std::cout << i << ' ';
+    }
+    std::cout << "\n";
+    std::cout << "assigned_cpu_list_consumers: ";
+    for (auto i : n.assigned_cpu_list_consumers) {
+      std::cout << i << ' ';
+    }
+    std::cout << "\n";
+    return os;
+  }
+
+  std::vector<uint32_t> get_assigned_cpu_list_producers() {
+    // std::cout << *this << std::endl;
+    return this->assigned_cpu_list_producers;
+  }
+
+  std::vector<uint32_t> get_assigned_cpu_list_consumers() {
+    // std::cout << *this << std::endl;
+    return this->assigned_cpu_list_consumers;
+  }
+
+  std::vector<uint32_t> get_unassigned_cpu_list() {
+    std::vector<uint32_t> v(this->unassigned_cpu_list.begin(),
+                            this->unassigned_cpu_list.end());
+    return v;
+  }
+
+  // TODO There is definitely a less ugly way to do this
+  std::tuple<uint32_t, uint32_t>
+  get_num_nodes_and_cpus_reqd(uint32_t num_threads) {
+    uint32_t num_nodes_reqd = 1;
+    uint32_t num_cpus_reqd = 0;
+    for (numa_node_t n : this->nodes) {
+      for (uint32_t c : n.cpu_list) {
+        (void)c;
+        num_cpus_reqd += 1;
+        num_threads--;
+        if (num_threads == 0)
+          return std::make_tuple(num_nodes_reqd, num_cpus_reqd);
+      }
+      num_nodes_reqd += 1;
+    }
+    // shouldn't get here
+    return std::make_tuple(0, 0);
+  }
+
+private:
+  uint32_t config_num_prod;
+  uint32_t config_num_cons;
+  numa_policy_queues npq;
+  std::vector<numa_node_t> nodes;
+  std::vector<uint32_t> assigned_cpu_list_producers;
+  std::vector<uint32_t> assigned_cpu_list_consumers;
+  std::set<uint32_t> unassigned_cpu_list;
+
+  void generate_cpu_lists() {
+    uint32_t total_threads = this->config_num_cons + this->config_num_prod;
+
+    assert(total_threads <= static_cast<uint32_t>(Numa::get_num_total_cpus()));
+
+    if (this->npq == PROD_CONS_SEQUENTIAL) {
+      uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;
+
+      for (auto i = 0u; i < this->config_num_prod; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list_producers.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
+        cpu_idx_ctr += 1;
+        if (cpu_idx_ctr == nodes[node_idx_ctr].cpu_list.size()) {
+          node_idx_ctr += 1;
+          cpu_idx_ctr = 0;
+        }
+      }
+
+      for (auto i = 0u; i < this->config_num_cons; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list_consumers.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
+        cpu_idx_ctr += 1;
+        if (cpu_idx_ctr == nodes[node_idx_ctr].cpu_list.size()) {
+          node_idx_ctr += 1;
+          cpu_idx_ctr = 0;
+        }
+      }
+      return;
+    }
+
+    if (this->npq == PROD_CONS_SEPARATE_NODES) {
+      uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;
+      uint32_t num_nodes = static_cast<uint32_t>(Numa::get_num_nodes());
+
+      auto prod_config = get_num_nodes_and_cpus_reqd(this->config_num_prod);
+      auto cons_config = get_num_nodes_and_cpus_reqd(this->config_num_cons);
+
+      /* check nodes required vs. available */
+      std::cout << "prod_config: "
+                << "num_nodes_reqd: " << std::get<0>(prod_config) << ", "
+                << "num_cpus_reqd: " << std::get<1>(prod_config) << "\n";
+      std::cout << "cons_config: "
+                << "num_nodes_reqd: " << std::get<0>(cons_config) << ", "
+                << "num_cpus_reqd: " << std::get<1>(cons_config) << "\n";
+      assert(std::get<0>(prod_config) + std::get<0>(cons_config) <= num_nodes);
+
+      for (auto i = 0u; i < this->config_num_prod; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list_producers.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
+        cpu_idx_ctr += 1;
+        if (cpu_idx_ctr == nodes[node_idx_ctr].cpu_list.size()) {
+          // break if we are done with producers
+          if (cpu_idx_ctr == this->config_num_prod)
+            break;
+          node_idx_ctr += 1;
+          cpu_idx_ctr = 0;
+        }
+      }
+
+      node_idx_ctr += 1; // go to next node
+      cpu_idx_ctr = 0;   // first cpu idx of next node
+      for (auto i = 0u; i < this->config_num_cons; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list_consumers.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
+        cpu_idx_ctr += 1;
+        if (cpu_idx_ctr == nodes[node_idx_ctr].cpu_list.size()) {
+          // break if we are done with consumers
+          if (cpu_idx_ctr == this->config_num_cons)
+            break;
+          node_idx_ctr += 1;
+          cpu_idx_ctr = 0;
+        }
+      }
+      return;
+    }
+  }
+
+  void init_unassigned_cpus_list() {
+    for (numa_node_t n : this->nodes)
+      for (uint32_t c : n.cpu_list)
+        this->unassigned_cpu_list.insert(c);
+  }
 };
 
 /* Numa policy when using just a "number of threads" assignment */
@@ -143,6 +302,7 @@ public:
     this->config_num_threads = num_threads;
     this->nodes = Numa::get_node_config();
     this->np = np;
+    this->init_unassigned_cpus_list();
     this->generate_cpu_list();
   }
 
@@ -158,8 +318,14 @@ public:
   }
 
   std::vector<uint32_t> get_assigned_cpu_list() {
-    std::cout << *this << std::endl;
+    // std::cout << *this << std::endl;
     return this->assigned_cpu_list;
+  }
+
+  std::vector<uint32_t> get_unassigned_cpu_list() {
+    std::vector<uint32_t> v(this->unassigned_cpu_list.begin(),
+                            this->unassigned_cpu_list.end());
+    return v;
   }
 
 private:
@@ -167,6 +333,7 @@ private:
   numa_policy_threads np;
   std::vector<numa_node_t> nodes;
   std::vector<uint32_t> assigned_cpu_list;
+  std::set<uint32_t> unassigned_cpu_list;
 
   void generate_cpu_list() {
 
@@ -184,6 +351,7 @@ private:
       for (auto i = 0u; i < threads_per_node * num_nodes; i++) {
         uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
         this->assigned_cpu_list.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
         cpu_idx_ctr += 1;
         if (cpu_idx_ctr == threads_per_node) {
           node_idx_ctr++;
@@ -196,6 +364,7 @@ private:
       for (auto i = 0u; i < threads_per_node_spill; i++) {
         uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[last_cpu_idx];
         this->assigned_cpu_list.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
         node_idx_ctr += 1;
         cpu_idx_ctr += 1; // not necessary
       }
@@ -209,6 +378,7 @@ private:
       for (auto i = 0u; i < this->config_num_threads; i++) {
         uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
         this->assigned_cpu_list.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
         cpu_idx_ctr += 1;
         if (cpu_idx_ctr == nodes[node_idx_ctr].cpu_list.size()) {
           node_idx_ctr += 1;
@@ -217,6 +387,12 @@ private:
       }
       return;
     }
+  }
+
+  void init_unassigned_cpus_list() {
+    for (numa_node_t n : this->nodes)
+      for (uint32_t c : n.cpu_list)
+        this->unassigned_cpu_list.insert(c);
   }
 };
 

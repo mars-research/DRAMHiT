@@ -310,41 +310,32 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
       sh->shard_idx, transaction_id, (t_end - t_start) / transaction_id);
 }
 
-void BQueueTest::run_test(Configuration *cfg, Numa *n)
+void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) 
 {
   cpu_set_t cpuset;
-  uint64_t i, j;
-  size_t num_total_cpus = 0;
-  size_t num_nodes = 0;
-  size_t node_idx_ctr = 0;
-  size_t cpu_idx_ctr = 0;
+  uint32_t i = 0, j = 0;
 
   this->n = n;
   this->nodes = this->n->get_node_config();
+  this->npq = npq;
+  this->cfg = cfg;
 
-  for (auto i : nodes) num_total_cpus += i.cpu_list.size();
-  num_nodes = this->nodes.size();  // TODO use nodes.get_num_nodes();
+  uint32_t num_nodes = static_cast<uint32_t>(this->n->get_num_nodes());
+  uint32_t num_cpus = static_cast<uint32_t>(this->n->get_num_total_cpus());
 
-  printf("[INFO] # nodes: %lu, # cpus (total): %lu\n", num_nodes,
-         num_total_cpus);
-  printf("[INFO] from config: n_prod %u n_cons: %u \n", cfg->n_prod,
-         cfg->n_cons);
-
-  // TODO numa split
-  if (cfg->n_prod + cfg->n_cons + 1 > num_total_cpus) {
-    printf(
-        "[ERROR] producers (%u) + consumers (%u) exceeded number of "
-        "available CPUs (%lu) (Note: one core assigned completely "
-        "for synchronization)\n",
-        cfg->n_prod, cfg->n_cons, num_total_cpus);
+  /* num_nodes cpus not available TODO Verify this logic*/
+  if (this->cfg->n_prod + this->cfg->n_cons + num_nodes > num_cpus) {
+    fprintf(stderr,
+            "[ERROR] producers (%u) + consumers (%u) exceeded number of "
+            "available CPUs (%u)\n",
+            this->cfg->n_prod, this->cfg->n_cons, num_cpus);
+    fprintf(stderr,
+            "[ERROR] Note: %u core(s) not available, one of which "
+            "is assigned completely for synchronization\n",
+            num_nodes);
     exit(-1);
   }
 
-  this->cfg = cfg;
-  this->prod_threads = new std::thread[cfg->n_prod];
-  this->cons_threads = new std::thread[cfg->n_cons];
-
-  // pthread_self()
   producer_count = cfg->n_prod;
   consumer_count = cfg->n_cons;
   printf("[INFO]: Controller starting ... nprod: %u, ncons: %u\n",
@@ -353,78 +344,60 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n)
   /* Stats data structures */
   this->shards = (Shard *)std::aligned_alloc(
       FIPC_CACHE_LINE_SIZE, sizeof(Shard) * (producer_count + consumer_count));
-
   memset(this->shards, 0, sizeof(Shard) * (producer_count + consumer_count));
 
-  // Init queues
+  /* Init queues */
   this->init_queues(cfg->n_prod, cfg->n_cons);
 
   fipc_test_mfence();
 
-  // Thread Allocation
+  /* Thread Allocation */
   this->prod_threads = new std::thread[producer_count];
-
   this->cons_threads = new std::thread[consumer_count];
 
-  // Spawn producer threads
-  for (i = 0; i < producer_count; i++) {
+  /* Spawn producer threads */
+  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
-
     this->prod_threads[i] = std::thread(&BQueueTest::producer_thread, this, i);
-
     CPU_ZERO(&cpuset);
-    uint32_t cpu_assigned = this->nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
-    CPU_SET(cpu_assigned, &cpuset);
+    CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(prod_threads[i].native_handle(), sizeof(cpu_set_t),
                            &cpuset);
-    printf("[INFO]: Spawn producer_thread %lu, node: %lu, affinity: %u\n", i,
-           node_idx_ctr, cpu_assigned);
-    cpu_idx_ctr += 1;
-    if (cpu_idx_ctr == this->nodes[node_idx_ctr].cpu_list.size()) {
-      printf("---------\n");
-      node_idx_ctr++;
-      cpu_idx_ctr = 0;
-    }
+    printf("[INFO]: Thread producer_thread: %u, affinity: %u\n", i,
+           assigned_cpu);
+    i += 1;
   }
 
-  // Spawn consumer threads
-  for (i = producer_count, j = 0; j < consumer_count; j++, i++) {
+  /* Spawn consumer threads */
+  i = producer_count;
+  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
-
     this->cons_threads[j] = std::thread(&BQueueTest::consumer_thread, this, i);
-
     CPU_ZERO(&cpuset);
-    uint32_t cpu_assigned = this->nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
-    CPU_SET(cpu_assigned, &cpuset);
+    CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(this->cons_threads[j].native_handle(),
                            sizeof(cpu_set_t), &cpuset);
-    printf("[INFO]: Spawn consumer_thread %lu, node: %lu, affinity: %u\n", i,
-           node_idx_ctr, cpu_assigned);
-    cpu_idx_ctr += 1;
-    if (cpu_idx_ctr == this->nodes[node_idx_ctr].cpu_list.size()) {
-      printf("[INFO]: ---- next node ---- \n");
-      node_idx_ctr++;
-      cpu_idx_ctr = 0;
-    }
+    printf("[INFO]: Thread consumer_thread: %u, affinity: %u\n", i,
+           assigned_cpu);
+    i += 1;
+    j += 1;
   }
 
+  /* pin this thread to last cpu of last node. */
+  /* TODO don't waste one thread on synchronization  */
   CPU_ZERO(&cpuset);
-  /* last cpu of last node  */
-  auto last_numa_node = nodes[n->get_num_nodes() - 1];
-  auto cpu_assigned = last_numa_node.cpu_list[last_numa_node.num_cpus - 1];
-  printf(
-      "[INFO]: Pinning run_test to last cpu of last numa node: %u, affinity: "
-      "%u\n",
-      last_numa_node.id, cpu_assigned);
-
-  CPU_SET(last_numa_node.cpu_list[last_numa_node.num_cpus - 1], &cpuset);
+  uint32_t last_cpu = this->npq->get_unassigned_cpu_list()[0];
+  CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+  printf("[INFO]: Thread 'controller': affinity: %u\n", last_cpu);
 
   /* Wait for threads to be ready for test */
-  while (ready_consumers < consumer_count) fipc_test_pause();
-  while (ready_producers < producer_count) fipc_test_pause();
+  while (ready_consumers < consumer_count)
+    fipc_test_pause();
+  while (ready_producers < producer_count)
+    fipc_test_pause();
 
   fipc_test_mfence();
 
@@ -433,12 +406,14 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n)
   fipc_test_mfence();
 
   /* Wait for producers to complete */
-  while (completed_producers < producer_count) fipc_test_pause();
+  while (completed_producers < producer_count)
+    fipc_test_pause();
 
   fipc_test_mfence();
 
   /* Wait for consumers to complete */
-  while (completed_consumers < consumer_count) fipc_test_pause();
+  while (completed_consumers < consumer_count)
+    fipc_test_pause();
 
   fipc_test_mfence();
 
@@ -461,4 +436,4 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n)
   /* TODO free everything */
 }
 
-}  // namespace kmercounter
+} // namespace kmercounter
