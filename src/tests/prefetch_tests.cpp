@@ -1,5 +1,7 @@
 #include <sched.h>
+#ifdef WITH_PAPI_LIB
 #include "PapiEvent.hpp"
+#endif
 #include "PrefetchTest.hpp"
 #include "print_stats.h"
 #include "types.hpp"
