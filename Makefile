@@ -12,7 +12,7 @@ IDIRS = include \
 
 CFLAGS = -g -Wall -mprefetchwt1 $(OPT_FLAGS)
 # This crashes cityhash
-CFLAGS += -march=skylake
+CFLAGS += -march=native
 CFLAGS += $(patsubst %,-I%/,$(IDIRS))
 
 
