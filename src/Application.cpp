@@ -19,10 +19,12 @@
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "Application.hpp"
+#include "PrefetchTest.hpp"
 #include "print_stats.h"
 
 #ifdef WITH_PAPI_LIB
 #include <papi.h>
+#include "PapiEvent.hpp"
 #endif
 
 namespace kmercounter {
@@ -58,6 +60,14 @@ Configuration config;
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
+#ifdef WITH_PAPI_LIB
+PapiEvent pr(6);
+PapiEvent pw(6);
+
+PapiEvent pr1(6);
+PapiEvent pw1(6);
+#endif
+
 KmerHashTable *init_ht(const uint64_t sz, uint8_t id) {
   KmerHashTable *kmer_ht = NULL;
 
@@ -89,7 +99,8 @@ void Application::shard_thread(int tid) {
       kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
       break;
     case PREFETCH:
-      // prefetch test creates its own HT
+      kmer_ht =
+          new SimpleKmerHashTable<Prefetch_KV>(HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
     case SYNTH:
     case BQ_TESTS_NO_BQ:
@@ -103,6 +114,35 @@ void Application::shard_thread(int tid) {
   }
 
   fipc_test_FAI(ready_threads);
+
+#ifdef WITH_PAPI_LIB
+  if (ready_threads == config.num_threads) {
+    pr.init_event(0);
+    pr1.init_event(1);
+    // pr.add_event(std::string("UNC_C_REQUESTS:READS"),
+    //             std::string("skx_unc_cha"));
+    pr.add_event(std::string("UNC_M_CAS_COUNT:RD"), std::string("skx_unc_imc"));
+
+    pr1.add_event(std::string("UNC_M_CAS_COUNT:RD"),
+                  std::string("skx_unc_imc"));
+
+    pw.init_event(0);
+    pw1.init_event(1);
+    // pw.add_event(std::string("UNC_C_IMC_WRITES_COUNT:FULL"),
+    //             std::string("skx_unc_cha"));
+    pw.add_event(std::string("UNC_M_CAS_COUNT:WR"), std::string("skx_unc_imc"));
+
+    pw1.add_event(std::string("UNC_M_CAS_COUNT:WR"),
+                  std::string("skx_unc_imc"));
+
+    pr.start();
+    pw.start();
+
+    pr1.start();
+    pw1.start();
+  }
+#endif
+
   while (!ready) fipc_test_pause();
 
   // fipc_test_mfence();
@@ -115,7 +155,7 @@ void Application::shard_thread(int tid) {
       this->test.st.synth_run_exec(sh, kmer_ht);
       break;
     case PREFETCH:
-      this->test.pt.prefetch_test_run_exec(sh, config);
+      this->test.pt.prefetch_test_run_exec(sh, config, kmer_ht);
       break;
     case BQ_TESTS_NO_BQ:
       this->test.bqt.no_bqueues(sh, kmer_ht);
@@ -136,6 +176,16 @@ void Application::shard_thread(int tid) {
   }
 
   fipc_test_FAD(ready_threads);
+
+#ifdef WITH_PAPI_LIB
+  if (ready_threads == 0) {
+    pr.stop();
+    pw.stop();
+
+    pr1.stop();
+    pw1.stop();
+  }  // PapiEvent scope
+#endif
 
   return;
 }
@@ -398,4 +448,4 @@ int Application::process(int argc, char *argv[]) {
 
   return 0;
 }
-} // namespace kmercounter
+}  // namespace kmercounter

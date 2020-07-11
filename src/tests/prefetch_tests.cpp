@@ -1,8 +1,6 @@
 #include <sched.h>
-#ifdef WITH_PAPI_LIB
-#include "PapiEvent.hpp"
-#endif
 #include "PrefetchTest.hpp"
+#include "misc_lib.h"
 #include "print_stats.h"
 #include "types.hpp"
 
@@ -14,6 +12,9 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 
 inline uint64_t seed = 123456789;
 inline uint64_t PREFETCH_STRIDE = 64;
+
+__thread struct xorwow_state xw_state;
+__thread struct xorwow_state xw_state2;
 
 inline int myrand(uint64_t *seed) {
   uint64_t m = 1 << 31;
@@ -29,28 +30,10 @@ uint64_t PrefetchTest::prefetch_test_run(
 
   printf("NUM inserts %lu\n", HT_TESTS_NUM_INSERTS);
 
-#ifdef WITH_PAPI_LIB
-  PapiEvent pr(6);
-  PapiEvent pw(6);
-  unsigned int cpu;
-  cpu = sched_getcpu();
-  if (sched_getcpu() == 0) {
-    pr.init_event(cpu);
-    // pr.add_event(std::string("UNC_C_REQUESTS:READS"),
-    // std::string("skx_unc_cha"));
-    pr.add_event(std::string("UNC_M_CAS_COUNT:RD"), std::string("skx_unc_imc"));
-
-    pw.init_event(cpu);
-    // pw.add_event(std::string("UNC_C_REQUESTS:WRITES"),
-    // std::string("skx_unc_cha"));
-    pw.add_event(std::string("UNC_M_CAS_COUNT:WR"), std::string("skx_unc_imc"));
-    pr.start();
-    pw.start();
-  }
-#endif
   // seed2 = seed;
 
 #ifdef XORWOW_SCAN
+#warning "XORWOW_SCAN"
   memcpy(&xw_state2, &xw_state, sizeof(xw_state));
 
   for (auto i = 0u; i < PREFETCH_STRIDE; i++) {
@@ -94,7 +77,7 @@ uint64_t PrefetchTest::prefetch_test_run(
 #ifdef SERIAL_SCAN
     /* Fully prefethed serial scan is 14 cycles */
     sum += ktable->touch(i);
-    // ktable->prefetch(i+32);
+    // ktable->prefetch(i + 32);
 #endif
 
 #ifdef XORWOW_SCAN
@@ -105,22 +88,13 @@ uint64_t PrefetchTest::prefetch_test_run(
 #endif
     count++;
   }
-
-#ifdef WITH_PAPI_LIB
-  if (sched_getcpu() == 0) {
-    pr.stop();
-    pw.stop();
-  }  // PapiEvent scope
-#endif
   return count;
 }
 
-void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg) {
+void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
+                                          KmerHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
-  // TODO: use cfg to determine which HT we need
-  KmerHashTable *kmer_ht =
-      new SimpleKmerHashTable<Prefetch_KV>(HT_TESTS_HT_SIZE, sh->shard_idx);
 
   printf("[INFO] Prefetch test run: thread %u, ht size:%lu, insertions:%lu\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
@@ -142,7 +116,9 @@ void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg) {
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
+#ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
+#endif
 }
 
 }  // namespace kmercounter

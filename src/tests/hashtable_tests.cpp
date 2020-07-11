@@ -21,9 +21,6 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
-__thread struct xorwow_state xw_state;
-__thread struct xorwow_state xw_state2;
-
 uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
   auto count = 0;
   auto k = 0;

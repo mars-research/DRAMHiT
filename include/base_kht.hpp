@@ -28,6 +28,7 @@ class KmerHashTable {
 
 #ifdef CALC_STATS
   uint64_t num_reprobes = 0;
+  uint64_t num_soft_reprobes = 0;
   uint64_t num_memcmps = 0;
   uint64_t num_memcpys = 0;
   uint64_t num_hashcmps = 0;
