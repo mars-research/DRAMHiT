@@ -32,7 +32,8 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
-    *((uint64_t *)&kmers[k].data) = count & (32 - 1);
+    //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
+    *((uint64_t *)&kmers[k].data) = 32;
 #elif defined(XORWOW)
 #warning "Xorwow rand kmer insert"
     *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
@@ -68,12 +69,16 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     t_end = RDTSCP();
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu\n",
-        sh->shard_idx, i, (t_end - t_start) / num_inserts);
+        "insertion:%lu reprobes %lu soft_reprobes %lu "
+        "hashing took %lu cycles (num_hashed %lu)\n",
+        sh->shard_idx, i, (t_end - t_start) / num_inserts,
+        kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
   }
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
+#ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
+#endif
 }
 
 }  // namespace kmercounter

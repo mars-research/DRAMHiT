@@ -24,14 +24,13 @@
 #if defined(XX_HASH_3)
 #include "xx/xxh3.h"
 #endif
-// #include "kmer_struct.h"
 
 namespace kmercounter {
 
 struct Kmer_KV {
   Kmer_base_t kb;            // 20 + 2 bytes
-  uint32_t kmer_hash;        // 4 bytes (4B enties is enough)
-  volatile char padding[6];  // 3 bytes // TODO remove hardcode
+  uint64_t kmer_hash;        // 8 bytes
+  volatile char padding[2];  // 2 bytes
 } __attribute__((packed));
 
 static_assert(sizeof(Kmer_KV) % 32 == 0,
@@ -416,7 +415,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       //   prefetch.
       if (unlikely(pidx & 0x1)) {
 #ifdef CALC_STATS
-        this->num_reprobes++;
+        this->num_soft_reprobes++;
 #endif
         goto try_insert;
       }
