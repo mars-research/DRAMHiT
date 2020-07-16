@@ -3,7 +3,7 @@
 
 # configure these
 ROOT_DIR=/mnt/nvmedrive/
-MAX_CPUS=20
+MAX_CPUS=16
 
 # directories
 DATA_DIR=${ROOT_DIR}/datasets/
@@ -13,8 +13,11 @@ OUT_DIR=${ROOT_DIR}/tmp/
 LOG_DIR=${ROOT_DIR}/log/
 
 # datasets
-dataset=dm
+dataset=fv
 datafile=${DATA_DIR}/${dataset}/${dataset}.fastq
+
+# run commands
+TIME_CMD="/usr/bin/time -v"
 
 # the binary
 APP=kmerind
@@ -32,15 +35,15 @@ EXEC=${KMERIND_BIN_DIR}/testKmerCounter-FASTQ-a4-k31-CANONICAL-DENSEHASH-COUNT-d
 #eval "/usr/local/sbin/drop_caches"
 
 # across different nodes
-for t in $MAX_CPUS 16 12 8 4; do
+for t in $MAX_CPUS 12 8 4; do
 
   cpu_max_1=$(((t / 2) - 1))
-  cpu_max_2=$((10 + (t / 2) - 1))
+  cpu_max_2=$(($((MAX_CPUS / 2)) + (t / 2) - 1))
   echo "cpu_max_1 ${cpu_max_1}"
   echo "cpu_max_2 ${cpu_max_2}"
 
-  CPU_AFFINITY=0-${cpu_max_1},10-${cpu_max_2}
-  MPI_CMD="/usr/bin/mpiexec -np ${t} --cpu-set ${CPU_AFFINITY}"
+  CPU_AFFINITY=0-${cpu_max_1},$((MAX_CPUS / 2))-${cpu_max_2}
+  MPI_CMD="/usr/bin/mpiexec -np ${t} --cpu-set ${CPU_AFFINITY} --bind-to core"
   echo MPI_CMD:$MPI_CMD
 
   for iter in 1 2 3; do
@@ -86,7 +89,6 @@ for t in $MAX_CPUS 16 12 8 4; do
         #EXEC
 
       done
-
       #map
 
       #================ Densehash (Kmerind)
@@ -98,7 +100,7 @@ for t in $MAX_CPUS 16 12 8 4; do
 
         exec_name=$(basename ${EXEC})
 
-        logfile=${logdir}/kmerind/${exec_name}-n1-p${t}-${dataset}.$iter.log
+        logfile=${LOG_DIR}/kmerind/${exec_name}-n1-p${t}-${dataset}.$iter.log
         outfile=${OUT_DIR}/${exec_name}-n1-p${t}-${dataset}.$iter.bin
 
         # only execute if the file does not exist.
@@ -128,7 +130,6 @@ for t in $MAX_CPUS 16 12 8 4; do
       #EXEC
 
     done
-
     #K
 
   done

@@ -3,7 +3,7 @@
 
 # configure these
 ROOT_DIR=/mnt/nvmedrive/
-MAX_CPUS=20
+MAX_CPUS=16
 
 # directories
 DATA_DIR=${ROOT_DIR}/datasets/
@@ -13,13 +13,12 @@ OUT_DIR=${ROOT_DIR}/tmp/
 LOG_DIR=${ROOT_DIR}/log/
 
 # datasets
-dataset=dm
+dataset=fv
 datafile=${DATA_DIR}/${dataset}/${dataset}.fastq
 
 # run commands
 TIME_CMD="/usr/bin/time -v"
 CACHE_CLEAR_CMD="free && sync && echo 3 > /proc/sys/vm/drop_caches && free"
-
 
 # executable
 APP=gerbil
@@ -31,14 +30,14 @@ GERBIL_EXEC=$APPS_DIR/gerbil/build/gerbil
 # rm ${LOCAL_TMP}/test.out*
 
 # across different nodes
-for t in $MAX_CPUS 16 12 8 4; do
+for t in $MAX_CPUS 12 8 4; do
 
   cpu_max_1=$(((t / 2) - 1))
-  cpu_max_2=$((10 + (t / 2) - 1))
+  cpu_max_2=$(($((MAX_CPUS / 2)) + (t / 2) - 1))
   echo "cpu_max_1 ${cpu_max_1}"
   echo "cpu_max_2 ${cpu_max_2}"
 
-  CPU_AFFINITY=0-${cpu_max_1},10-${cpu_max_2}
+  CPU_AFFINITY=0-${cpu_max_1},$((MAX_CPUS / 2))-${cpu_max_2}
   NUMA_CMD="/usr/bin/numactl --physcpubind=${CPU_AFFINITY}"
   echo $NUMA_CMD
 
@@ -57,7 +56,6 @@ for t in $MAX_CPUS 16 12 8 4; do
         echo "COMMAND (CANONICAL): ${cmd}"
         echo "LOGFILE: ${logfile}"
         echo "$cmd" > $logfile
-        exit
 
         # eval "$CACHE_CLEAR_CMD >> $logfile 2>&1"
         eval "($TIME_CMD $cmd >> $logfile 2>&1) >> $logfile 2>&1"
@@ -69,9 +67,10 @@ for t in $MAX_CPUS 16 12 8 4; do
       fi
 
     done
-    #K
 
+    #K
   done
+
   #iter
 
 done
