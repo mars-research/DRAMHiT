@@ -64,7 +64,7 @@ class PapiEvent {
     return 0;
   }
 
-  int add_event(std::string&& event_name, std::string&& uncore_base) {
+  int add_event(std::string& event_name, std::string& uncore_base) {
     auto retval = 0;
     for (auto i = 0; i < this->num_events; i++) {
       std::ostringstream out;
@@ -110,8 +110,8 @@ class PapiEvent {
       sum += values[i];
     }
     printf("--------------------------------------------\n");
-    printf("TOTAL(cpu %d)  %s: %llu\n", this->cpu,
-           this->uncore_events[0].c_str(), sum);
+    printf("TOTAL(cpu %d)  %s: %llu (%f)\n", this->cpu,
+           this->uncore_events[0].c_str(), sum, static_cast<float>(sum)/1000000.0);
     printf("--------------------------------------------\n");
   }
 };

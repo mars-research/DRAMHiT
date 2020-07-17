@@ -116,30 +116,46 @@ void Application::shard_thread(int tid) {
   fipc_test_FAI(ready_threads);
 
 #ifdef WITH_PAPI_LIB
+  auto retval = PAPI_thread_init((unsigned long (*)(void)) ( pthread_self ) );
+  if ( retval != PAPI_OK ) {
+    printf("PAPI Thread init failed\n");
+  }
+
   if (ready_threads == config.num_threads) {
     pr.init_event(0);
     pr1.init_event(1);
-    // pr.add_event(std::string("UNC_C_REQUESTS:READS"),
-    //             std::string("skx_unc_cha"));
-    pr.add_event(std::string("UNC_M_CAS_COUNT:RD"), std::string("skx_unc_imc"));
-
-    pr1.add_event(std::string("UNC_M_CAS_COUNT:RD"),
-                  std::string("skx_unc_imc"));
 
     pw.init_event(0);
     pw1.init_event(1);
-    // pw.add_event(std::string("UNC_C_IMC_WRITES_COUNT:FULL"),
-    //             std::string("skx_unc_cha"));
-    pw.add_event(std::string("UNC_M_CAS_COUNT:WR"), std::string("skx_unc_imc"));
 
-    pw1.add_event(std::string("UNC_M_CAS_COUNT:WR"),
-                  std::string("skx_unc_imc"));
+    std::string cha_box("skx_unc_cha");
+    std::string imc_box("skx_unc_imc");
+
+    std::string req_read("UNC_C_REQUESTS:READS");
+    std::string req_wr("UNC_C_IMC_WRITES_COUNT:FULL");
+
+    std::string cas_rd("UNC_M_CAS_COUNT:RD");
+    std::string cas_wr("UNC_M_CAS_COUNT:WR");
+
+    // pr.add_event(req_read, cha_box);
+    // pr1.add_event(req_read, cha_box);
+
+    // pw.add_event(req_wr, cha_box);
+    // pw1.add_event(req_wr, cha_box);
+
+    pr.add_event(cas_rd, imc_box);
+    pr1.add_event(cas_rd, imc_box);
+
+    pw.add_event(cas_wr, imc_box);
+    pw1.add_event(cas_wr, imc_box);
 
     pr.start();
     pw.start();
 
     pr1.start();
     pw1.start();
+
+    ready = 1;
   }
 #endif
 
@@ -254,7 +270,9 @@ int Application::spawn_shard_threads() {
   }
 
   // fipc_test_mfence();
+#if !defined(WITH_PAPI_LIB)
   ready = 1;
+#endif
 
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
