@@ -1,6 +1,3 @@
-#ifndef HT_TESTS
-#define HT_TESTS
-
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
@@ -28,7 +25,7 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
 
   xorwow_init(&_xw_state);
 
-  __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH];
+  __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
@@ -38,11 +35,13 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
 #warning "Xorwow rand kmer insert"
     *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
 #else
-    *((uint64_t *)&kmers[k].data) = count;
+    *((uint64_t *)&kmers[k].data) = count++;
 #endif
     ktable->insert((void *)&kmers[k]);
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+#if defined(SAME_KMER)
     count++;
+#endif
   }
 
   return count;
@@ -69,10 +68,13 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     t_end = RDTSCP();
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu reprobes %lu soft_reprobes %lu "
-        "hashing took %lu cycles (num_hashed %lu)\n",
-        sh->shard_idx, i, (t_end - t_start) / num_inserts,
-        kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
+        "insertion:%lu \n",
+        sh->shard_idx, i, (t_end - t_start) / num_inserts);
+
+#ifdef CALC_STATS
+    printf(" Reprobes %lu soft_reprobes %lu\n", kmer_ht->num_reprobes,
+           kmer_ht->num_soft_reprobes);
+#endif
   }
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
@@ -82,4 +84,3 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
 }
 
 }  // namespace kmercounter
-#endif /* HASHTABLE_TESTS */

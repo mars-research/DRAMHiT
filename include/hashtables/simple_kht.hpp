@@ -422,9 +422,9 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       prefetch(pidx);
       q->kmer_idx = pidx;
 
-      this->queue[this->queue_idx] = *q;
-      // this->queue[this->queue_idx].kmer_p = q->kmer_p;
-      // this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+      //this->queue[this->queue_idx] = *q;
+      this->queue[this->queue_idx].kmer_p = q->kmer_p;
+      this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
       this->queue_idx++;
 
 #ifdef CALC_STATS
