@@ -368,6 +368,49 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     size_t pidx = q->kmer_idx;
 
   try_insert:
+#ifdef BRANCHLESS
+	static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
+    auto const key_dst_ptr = &this->hashtable[pidx].kb.kmer.data;
+    asm volatile (
+      /* Compare with empty kmer to check if bucket is empty, and insert.*/
+      /* copy current key value from [key_dst_ptr] into registers R8-10 */
+      "movq %[key_dst_ptr], %%rcx\n\t"
+      "movq (%%rcx), %%r8\n\t"    // 0-7   bytes
+      "movq 8(%%rcx), %%r9\n\t"   // 8-15  bytes
+      "movl 16(%%rcx), %%r10\n\t" // 16-19 bytes
+      /* if (!this->hastable[pidx].kb.occupied) */
+      "test %[occ], %[occ]\n\t"
+      /* if previous condition is true,
+           overwrite R8-10 with q->kmer_p */
+      "movq %[key_src_ptr], %%rdx\n\t"
+      "cmoveq (%%rdx), %%r8\n\t"    // 0-7   bytes
+      "cmoveq 8(%%rdx), %%r9\n\t"   // 8-15  bytes
+      "cmovel 16(%%rdx), %%r10\n\t" // 16-19 bytes
+      /*   this->hashtable[pidx].kb.occupied = 1; */
+      "sete %[occ]\n\t"
+      /* write R8-10 back to [key_dst_ptr] */
+      "movq %%r8, (%%rcx)\n\t"    // 0-7   bytes
+      "movq %%r9, 8(%%rcx)\n\t"   // 8-15  bytes
+      "movl %%r10, 16(%%rcx)\n\t" // 16-19 bytes
+      : [occ]"+r"(this->hashtable[pidx].kb.occupied)
+      : [key_dst_ptr]"rm"(key_dst_ptr), [key_src_ptr]"rm"(q->kmer_p)
+	  );
+	/* at this point, this->hashtable[pidx].kb.occupied is 1;
+	 * this->hashtable[pidx].kb.data may or may not be equal
+	 * to q->kmer_p */
+    auto const cmp = memcmp(key_dst_ptr, q->kmer_p,
+        KMER_DATA_LENGTH);
+		asm volatile (
+      /* if (memcmp(...) == 0)
+       *   this->hashtable[pidx].kb.count++; */
+      "test %[cmp], %[cmp]\n\t"
+      "sete %%dx\n\t"
+      "addw %%dx, %[cnt]\n\t"
+      : [cnt]"+r"(this->hashtable[pidx].kb.count)
+      : [cmp]"rm"(cmp)
+		);
+
+#else
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
     if (!this->hashtable[pidx].kb.occupied) {
 #ifdef CALC_STATS
@@ -432,6 +475,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
       return;
     }
+#endif // BRANCHLESS
   }
 
   /* Insert items from queue into hash table, interpreting "queue"
