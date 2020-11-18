@@ -360,6 +360,37 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
 #endif
 
+namespace {
+
+  using Kv_mask = std::array<uint32_t, 8>;
+  /* The VMASKMOVPS instruction we use to load the key into a ymmx
+   * register loads 4-byte (floating point) numbers based on the
+   * MSB of the corresponding 4-byte number in the mask register.
+   * The first 20 bytes of an entry in the hastable make up the key.
+   * Hence, the first 5 (20/4) entries in the array must have their
+   * MSB set.
+   * NOTE: this is selected when Kmer_base::occupied == 0
+   */
+  constexpr auto mask_rw = Kv_mask {
+    0x80000000, 0x80000000, 0x80000000, 0x80000000,
+    0x80000000, 0x0,        0x0,        0x0
+  };
+  /* When we do not want to read or write, the "mask" must consist
+   * of 4-byte numbers with their MSB set to 0.
+   * NOTE: this is selected when the index, Kmer_base::occupied == 1
+   */
+  constexpr auto mask_ignore = Kv_mask {
+    0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0
+  };
+  uint32_t const* const kv_masks[2] =
+  {
+    mask_rw.data(),
+    mask_ignore.data(),
+  };
+
+} // unnamed namespace
+
   /* Insert using prefetch: using a dynamic prefetch queue.
           If bucket is occupied, add to queue again to reprobe.
   */
@@ -369,46 +400,29 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
   try_insert:
 #ifdef BRANCHLESS
-	static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
-    auto const key_dst_ptr = &this->hashtable[pidx].kb.kmer.data;
-    asm volatile (
-      /* Compare with empty kmer to check if bucket is empty, and insert.*/
-      /* copy current key value from [key_dst_ptr] into registers R8-10 */
-      "movq %[key_dst_ptr], %%rcx\n\t"
-      "movq (%%rcx), %%r8\n\t"    // 0-7   bytes
-      "movq 8(%%rcx), %%r9\n\t"   // 8-15  bytes
-      "movl 16(%%rcx), %%r10\n\t" // 16-19 bytes
-      /* if (!this->hastable[pidx].kb.occupied) */
-      "test %[occ], %[occ]\n\t"
-      /* if previous condition is true,
-           overwrite R8-10 with q->kmer_p */
-      "movq %[key_src_ptr], %%rdx\n\t"
-      "cmoveq (%%rdx), %%r8\n\t"    // 0-7   bytes
-      "cmoveq 8(%%rdx), %%r9\n\t"   // 8-15  bytes
-      "cmovel 16(%%rdx), %%r10\n\t" // 16-19 bytes
-      /*   this->hashtable[pidx].kb.occupied = 1; */
-      "sete %[occ]\n\t"
-      /* write R8-10 back to [key_dst_ptr] */
-      "movq %%r8, (%%rcx)\n\t"    // 0-7   bytes
-      "movq %%r9, 8(%%rcx)\n\t"   // 8-15  bytes
-      "movl %%r10, 16(%%rcx)\n\t" // 16-19 bytes
-      : [occ]"+r"(this->hashtable[pidx].kb.occupied)
-      : [key_dst_ptr]"rm"(key_dst_ptr), [key_src_ptr]"rm"(q->kmer_p)
-	  );
-	/* at this point, this->hashtable[pidx].kb.occupied is 1;
-	 * this->hashtable[pidx].kb.data may or may not be equal
-	 * to q->kmer_p */
-    auto const cmp = memcmp(key_dst_ptr, q->kmer_p,
-        KMER_DATA_LENGTH);
-		asm volatile (
-      /* if (memcmp(...) == 0)
-       *   this->hashtable[pidx].kb.count++; */
-      "test %[cmp], %[cmp]\n\t"
-      "sete %%dx\n\t"
-      "addw %%dx, %[cnt]\n\t"
-      : [cnt]"+r"(this->hashtable[pidx].kb.count)
-      : [cmp]"rm"(cmp)
-		);
+    static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
+    auto mm256_load = [](const uint32_t* addr)
+    {
+      return _mm256_load_si256(reinterpret_cast<const __m256i*>(addr);
+    }
+
+    /* load key- and conditional- masks */
+    auto key_mask = mm256_load(kv_masks[0 /* RW mask */]);
+    /* kv_masks[] returns a mask that reads/writes if occupied is 0,
+     * and a mask that does nothing if occupied is 1 */
+    const uint32_t& occupied = this->hashtable[pidx].kb.occupied;
+    auto cond_mask = mm256_load(kv_masks[occupied]);
+
+    /* src and dst pointers to the key */
+    const auto kv_dst = reinterpret_cast<float*>(&this->hashtable[pidx]);
+    const auto kv_src = reinterpret_cast<const float*>(q->kmer_p);
+
+    /* conditionally store the new key into hashtable[pidx] */
+    const auto new_key = _mm256_maskload_ps(kv_src, key_mask);
+    _mm256_maskstore_ps(kv_dst, cond_mask, new_key);
+
+    /* read key from hashtable */
+    auto key = _mm256_maskload_ps(kv_dst, key_mask);
 
 #else
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
