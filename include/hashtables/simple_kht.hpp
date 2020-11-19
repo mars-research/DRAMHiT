@@ -424,6 +424,22 @@ namespace {
     /* read key from hashtable */
     auto key = _mm256_maskload_ps(kv_dst, key_mask);
 
+    asm volatile (
+        /* set occupied, since we copy the new key if occupied == 0 */
+        "set %[occ]\n\t"
+
+        /* we use VPCMPEQD to compare the new key and the key in the
+         * hashtable. if they are equal, all bits in the result YMM
+         * register will be set. */
+        "vpcmpeqd %[new_key], %[key], %%ymm8\n\t"
+
+        /* this is difficult to test, so we "compress" it into 8 bits
+         * (MSB of every 32 bits), which can be tested against 0xFF */
+        "vmovmskps %%ymm8, %%rcx\n\t"
+        "cmp %%rcx, $0xFF\n\t"
+        : [occ]"=r"(occupied)
+        : [new_key]"r"(new_key), [key]"r"(key)
+    );
 #else
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
     if (!this->hashtable[pidx].kb.occupied) {
