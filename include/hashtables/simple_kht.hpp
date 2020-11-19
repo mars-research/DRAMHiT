@@ -10,6 +10,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <array>
 #include "base_kht.hpp"
 #include "city/city.h"
 #include "dbg.hpp"
@@ -408,8 +409,8 @@ namespace {
 
     /* load key- and conditional- masks */
     auto key_mask = mm256_load(kv_masks[0 /* RW mask */]);
-    /* kv_masks[] returns a mask that reads/writes if occupied is 0,
-     * and a mask that does nothing if occupied is 1 */
+    /* kv_masks[0] returns a mask that reads/writes;
+     * kv_masks[1] returns a mask that does nothing */
     const uint32_t& occupied = this->hashtable[pidx].kb.occupied;
     auto cond_mask = mm256_load(kv_masks[occupied]);
 
