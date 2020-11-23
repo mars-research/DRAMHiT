@@ -402,45 +402,68 @@ namespace {
   try_insert:
 #ifdef BRANCHLESS
     static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
-    auto mm256_load = [](const uint32_t* addr)
+    auto ymm_load = [](const uint32_t* addr)
     {
       return _mm256_load_si256(reinterpret_cast<const __m256i*>(addr);
-    }
+    };
+    auto ymm_maskload = [](const auto* addr, auto mask)
+    {
+      return _mm256_maskload_epi32(reinterpret_cast<const int*>(addr), mask);
+    };
+    auto ymm_maskstore = [](auto* addr, auto mask, auto data)
+    {
+      return _mm256_maskstore_epi32(reinterpret_cast<int*>(addr), mask, data);
+    };
+    auto ymm_cmp(auto a, auto b)
+    {
+      return _mm256_cmpeq_epi32(a, b);
+    };
 
     /* load key- and conditional- masks */
-    auto key_mask = mm256_load(kv_masks[0 /* RW mask */]);
+    auto key_mask = ymm_load(kv_masks[0 /* RW mask */]);
     /* kv_masks[0] returns a mask that reads/writes;
      * kv_masks[1] returns a mask that does nothing */
-    const uint32_t& occupied = this->hashtable[pidx].kb.occupied;
-    auto cond_mask = mm256_load(kv_masks[occupied]);
+    auto& occupied = this->hashtable[pidx].kb.occupied;
+    auto cond_mask = ymm_load(kv_masks[occupied]);
 
     /* src and dst pointers to the key */
-    const auto kv_dst = reinterpret_cast<float*>(&this->hashtable[pidx]);
-    const auto kv_src = reinterpret_cast<const float*>(q->kmer_p);
+    const auto kv_dst = &this->hashtable[pidx];
+    const auto kv_src = q->kmer_p;
 
     /* conditionally store the new key into hashtable[pidx] */
-    const auto new_key = _mm256_maskload_ps(kv_src, key_mask);
-    _mm256_maskstore_ps(kv_dst, cond_mask, new_key);
+    const auto new_key = ymm_maskload(kv_src, key_mask);
+    ymm_maskstore(kv_dst, cond_mask, new_key);
 
-    /* read key from hashtable */
-    auto key = _mm256_maskload_ps(kv_dst, key_mask);
+    /* at  this point the key in the hashtable is either equal to
+     * the new key (q->kmer_p) or not. compare them */
+    const auto key = ymm_maskload(kv_dst, key_mask);
+    const auto cmp_raw = ymm_cmp(new_key, key);
+    /* ymm_cmp compares the keys as packed 4-byte integers
+     * cmp_raw consists of packed 4-byte "result" integers that are
+     * 0xFF..FF if the corresponding 4-byte integers in the keys are equal,
+     * and 0x00..00 otherwise. testing this is not straight-forward.
+     * so, we "compress" the eigth integers into a bit each (MSB). */
+    const auto cmp = ymm_movemask(_mm256_castsi256_ps(cmp_raw));
 
+    /* cmp is 0xff *IFF* new_key == key */
     asm volatile (
-        /* set occupied, since we copy the new key if occupied == 0 */
-        "set %[occ]\n\t"
+        "cmpl %[cmp], $0xFF\n\t"
+        "jne  reprobe\n\t"
 
-        /* we use VPCMPEQD to compare the new key and the key in the
-         * hashtable. if they are equal, all bits in the result YMM
-         * register will be set. */
-        "vpcmpeqd %[new_key], %[key], %%ymm8\n\t"
-
-        /* this is difficult to test, so we "compress" it into 8 bits
-         * (MSB of every 32 bits), which can be tested against 0xFF */
-        "vmovmskps %%ymm8, %%rcx\n\t"
-        "cmp %%rcx, $0xFF\n\t"
-        : [occ]"=r"(occupied)
-        : [new_key]"r"(new_key), [key]"r"(key)
+        /* keys are equal
+         * this->hashtable[pidx].kb.count++; */
+        "inc  %[count]\n\t"
+        /* this->hashtable[pidx].kb.occupied = 1; */
+        "set  %[occ]\n\t"
+        "ret"
+        : [occ]"=rm"(occupied), [count]"=rm"(this->hashtable[pidx].kb.count),
     );
+
+reprobe:
+    /* hash collision has occurred */
+    pidx++;
+    pidx = pidx & (this->capacity - 1);  // modulo
+
 #else
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
     if (!this->hashtable[pidx].kb.occupied) {
