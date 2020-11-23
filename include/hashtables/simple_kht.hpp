@@ -399,7 +399,6 @@ namespace {
     /* hashtable location at which data is to be inserted */
     size_t pidx = q->kmer_idx;
 
-  try_insert:
 #ifdef BRANCHLESS
     static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
     auto ymm_load = [](const uint32_t* addr)
@@ -419,33 +418,40 @@ namespace {
       return _mm256_cmpeq_epi32(a, b);
     };
 
-    /* load key- and conditional- masks */
-    auto key_mask = ymm_load(kv_masks[0 /* RW mask */]);
-    /* kv_masks[0] returns a mask that reads/writes;
-     * kv_masks[1] returns a mask that does nothing */
-    auto& occupied = this->hashtable[pidx].kb.occupied;
-    auto cond_mask = ymm_load(kv_masks[occupied]);
+    /* load key mask and new key */
+    const auto key_mask = ymm_load(kv_masks[0 /* RW mask */]);
+    const auto new_key = ymm_maskload(q->kmer_p, key_mask);
 
-    /* src and dst pointers to the key */
-    const auto kv_dst = &this->hashtable[pidx];
-    const auto kv_src = q->kmer_p;
+    /* define lambda that tries to insert the requested key at idx,
+     * if idx is unoccupied.
+     *
+     * returns the result of the comparison between the new key
+     * and the key at idx */
+    auto try_insert = [&](const auto idx)
+    {
+      /* kv_masks[0] returns a mask that reads/writes;
+       * kv_masks[1] returns a mask that does nothing */
+      const auto occupied = this->hashtable[idx].kb.occupied;
+      auto cond_mask = ymm_load(kv_masks[occupied]);
 
-    /* conditionally store the new key into hashtable[pidx] */
-    const auto new_key = ymm_maskload(kv_src, key_mask);
-    ymm_maskstore(kv_dst, cond_mask, new_key);
+      /* conditionally store the new key into hashtable[idx] */
+      const auto kv_dst = &this->hashtable[idx];
+      ymm_maskstore(kv_dst, cond_mask, new_key);
 
-    /* at  this point the key in the hashtable is either equal to
-     * the new key (q->kmer_p) or not. compare them */
-    const auto key = ymm_maskload(kv_dst, key_mask);
-    const auto cmp_raw = ymm_cmp(new_key, key);
-    /* ymm_cmp compares the keys as packed 4-byte integers
-     * cmp_raw consists of packed 4-byte "result" integers that are
-     * 0xFF..FF if the corresponding 4-byte integers in the keys are equal,
-     * and 0x00..00 otherwise. testing this is not straight-forward.
-     * so, we "compress" the eigth integers into a bit each (MSB). */
-    const auto cmp = ymm_movemask(_mm256_castsi256_ps(cmp_raw));
+      /* at  this point the key in the hashtable is either equal to
+       * the new key (q->kmer_p) or not. compare them */
+      const auto key = ymm_maskload(kv_dst, key_mask);
+      const auto cmp_raw = ymm_cmp(new_key, key);
+      /* ymm_cmp compares the keys as packed 4-byte integers
+       * cmp_raw consists of packed 4-byte "result" integers that are
+       * 0xFF..FF if the corresponding 4-byte integers in the keys are equal,
+       * and 0x00..00 otherwise. testing this is not straight-forward.
+       * so, we "compress" the eigth integers into a bit each (MSB). */
+      return ymm_movemask(_mm256_castsi256_ps(cmp_raw));
+    };
 
-    /* cmp is 0xff *IFF* new_key == key */
+    auto cmp = try_insert(pidx);
+    /* cmp is 0xff *IFF* new_key == key at pidx*/
     asm volatile (
         "cmpl %[cmp], $0xFF\n\t"
         "jne  reprobe\n\t"
@@ -456,7 +462,8 @@ namespace {
         /* this->hashtable[pidx].kb.occupied = 1; */
         "set  %[occ]\n\t"
         "ret"
-        : [occ]"=rm"(occupied), [count]"=rm"(this->hashtable[pidx].kb.count),
+        : [occ]"=rm"(this->hashtable[pidx].kb.occupied),
+          [count]"=rm"(this->hashtable[pidx].kb.count),
     );
 
 reprobe:
@@ -464,7 +471,48 @@ reprobe:
     pidx++;
     pidx = pidx & (this->capacity - 1);  // modulo
 
-#else
+    //   | cacheline |
+    //   | i | i + 1 |
+    //   In the case where two elements fit in a cacheline, a single prefetch
+    //   would bring in both the elements. We need not issue a second one.
+    //   Check if pidx points to an entry on a new cacheline.
+    asm volatile (
+        "andl $0x1, %[pidx]\n\t"
+        "jz   prefetch\n\t"
+        :
+        : [pidx]"r"(pidx)
+    );
+
+    // we can perform a soft reprobe
+    cmp = try_insert(pidx);
+
+    /* cmp is 0xff *IFF* new_key == key at pidx*/
+    asm volatile (
+        "cmpl %[cmp], $0xFF\n\t"
+        "jne  prefetch\n\t"
+
+        /* keys are equal
+         * this->hashtable[pidx].kb.count++; */
+        "inc  %[count]\n\t"
+        "ret"
+        : [count]"=rm"(this->hashtable[pidx].kb.count),
+    );
+
+prefetch:
+    //   pidx now points to an entry in a new cacheline, issue a prefetch
+    //   and re-insert into the queue
+    prefetch(pidx);
+    q->kmer_idx = pidx;
+
+    //this->queue[this->queue_idx] = *q;
+    this->queue[this->queue_idx].kmer_p = q->kmer_p;
+    this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+    this->queue_idx++;
+
+    return;
+
+#else // ! BRANCHLESS
+try_insert:
     /* Compare with empty kmer to check if bucket is empty, and insert.*/
     if (!this->hashtable[pidx].kb.occupied) {
 #ifdef CALC_STATS
