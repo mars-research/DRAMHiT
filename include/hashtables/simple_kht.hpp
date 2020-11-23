@@ -457,7 +457,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     /* cmp is 0xff *IFF* new_key == key at pidx*/
     asm volatile (
         "cmpl $0xFF, %[cmp]\n\t"
-        "jne  98765\n\t" // label reprobe
+        "jne  reprobe\n\t"
 
         /* keys are equal
          * this->hashtable[pidx].kb.count++; */
@@ -472,7 +472,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
 reprobe:
     asm volatile (
-        "98765:\n\t"
+        "reprobe:\n\t"
     );
     /* hash collision has occurred */
     pidx++;
@@ -485,7 +485,7 @@ reprobe:
     //   Check if pidx points to an entry on a new cacheline.
     asm volatile (
         "andq $0x1, %[pidx]\n\t"
-        "jz   54321\n\t" // label prefetch
+        "jz   prefetch\n\t"
         :
         : [pidx]"r"(pidx)
     );
@@ -496,7 +496,7 @@ reprobe:
     /* cmp is 0xff *IFF* new_key == key at pidx*/
     asm volatile (
         "cmpl $0xFF, %[cmp]\n\t"
-        "jne  54321\n\t" // label prefetch
+        "jne  prefetch\n\t"
 
         /* keys are equal
          * this->hashtable[pidx].kb.count++; */
@@ -508,7 +508,7 @@ reprobe:
 
 prefetch:
     asm volatile (
-        "54321:\n\t"
+        "prefetch:\n\t"
     );
     //   pidx now points to an entry in a new cacheline, issue a prefetch
     //   and re-insert into the queue
