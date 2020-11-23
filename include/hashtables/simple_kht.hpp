@@ -457,7 +457,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     /* cmp is 0xff *IFF* new_key == key at pidx*/
     asm volatile (
         "cmpl $0xFF, %[cmp]\n\t"
-        "jne  1\n\t" // local label reprobe
+        "jne  1f\n\t" // local label reprobe
 
         /* keys are equal
          * this->hashtable[pidx].kb.count++; */
@@ -485,7 +485,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     //   Check if pidx points to an entry on a new cacheline.
     asm volatile (
         "andq $0x1, %[pidx]\n\t"
-        "jz   2\n\t" // local label prefetch
+        "jz   2f\n\t" // local label prefetch
         :
         : [pidx]"r"(pidx)
     );
@@ -496,7 +496,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     /* cmp is 0xff *IFF* new_key == key at pidx*/
     asm volatile (
         "cmpl $0xFF, %[cmp]\n\t"
-        "jne  2\n\t" // local label prefetch
+        "jne  2f\n\t" // local label prefetch
 
         /* keys are equal
          * this->hashtable[pidx].kb.count++; */
