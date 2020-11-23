@@ -43,6 +43,9 @@ CFLAGS += -DBQ_TESTS_DO_HT_INSERTS
 CFLAGS += -DBQ_TESTS_USE_HALT
 
 CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD
+ifeq ($(BRANCH), no)
+	CXXFLAGS += -DBRANCHLESS
+endif
 
 # boostpo to parse args
 LIBS = -lboost_program_options

@@ -26,6 +26,10 @@
 #include "xx/xxh3.h"
 #endif
 
+#if defined(BRANCHLESS)
+#include <immintrin.h>
+#endif
+
 namespace kmercounter {
 
 struct Kmer_KV {
@@ -361,37 +365,6 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
 #endif
 
-namespace {
-
-  using Kv_mask = std::array<uint32_t, 8>;
-  /* The VMASKMOVPS instruction we use to load the key into a ymmx
-   * register loads 4-byte (floating point) numbers based on the
-   * MSB of the corresponding 4-byte number in the mask register.
-   * The first 20 bytes of an entry in the hastable make up the key.
-   * Hence, the first 5 (20/4) entries in the array must have their
-   * MSB set.
-   * NOTE: this is selected when Kmer_base::occupied == 0
-   */
-  constexpr auto mask_rw = Kv_mask {
-    0x80000000, 0x80000000, 0x80000000, 0x80000000,
-    0x80000000, 0x0,        0x0,        0x0
-  };
-  /* When we do not want to read or write, the "mask" must consist
-   * of 4-byte numbers with their MSB set to 0.
-   * NOTE: this is selected when the index, Kmer_base::occupied == 1
-   */
-  constexpr auto mask_ignore = Kv_mask {
-    0x0, 0x0, 0x0, 0x0,
-    0x0, 0x0, 0x0, 0x0
-  };
-  uint32_t const* const kv_masks[2] =
-  {
-    mask_rw.data(),
-    mask_ignore.data(),
-  };
-
-} // unnamed namespace
-
   /* Insert using prefetch: using a dynamic prefetch queue.
           If bucket is occupied, add to queue again to reprobe.
   */
@@ -401,9 +374,35 @@ namespace {
 
 #ifdef BRANCHLESS
     static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
+    using Kv_mask = std::array<uint32_t, 8>;
+    /* The VMASKMOVPS instruction we use to load the key into a ymmx
+     * register loads 4-byte (floating point) numbers based on the
+     * MSB of the corresponding 4-byte number in the mask register.
+     * The first 20 bytes of an entry in the hastable make up the key.
+     * Hence, the first 5 (20/4) entries in the array must have their
+     * MSB set.
+     * NOTE: this is selected when Kmer_base::occupied == 0
+     */
+    constexpr auto mask_rw = Kv_mask {
+      0x80000000, 0x80000000, 0x80000000, 0x80000000,
+      0x80000000, 0x0,        0x0,        0x0
+    };
+    /* When we do not want to read or write, the "mask" must consist
+     * of 4-byte numbers with their MSB set to 0.
+     * NOTE: this is selected when the index, Kmer_base::occupied == 1
+     */
+    constexpr auto mask_ignore = Kv_mask {
+      0x0, 0x0, 0x0, 0x0,
+      0x0, 0x0, 0x0, 0x0
+    };
+    uint32_t const* const kv_masks[2] =
+    {
+      mask_rw.data(),
+      mask_ignore.data(),
+    };
     auto ymm_load = [](const uint32_t* addr)
     {
-      return _mm256_load_si256(reinterpret_cast<const __m256i*>(addr);
+      return _mm256_load_si256(reinterpret_cast<const __m256i*>(addr));
     };
     auto ymm_maskload = [](const auto* addr, auto mask)
     {
@@ -413,9 +412,13 @@ namespace {
     {
       return _mm256_maskstore_epi32(reinterpret_cast<int*>(addr), mask, data);
     };
-    auto ymm_cmp(auto a, auto b)
+    auto ymm_cmp = [](auto a, auto b)
     {
       return _mm256_cmpeq_epi32(a, b);
+    };
+    auto ymm_movemask = [](auto a)
+    {
+      return _mm256_movemask_ps(a);
     };
 
     /* load key mask and new key */
@@ -453,17 +456,18 @@ namespace {
     auto cmp = try_insert(pidx);
     /* cmp is 0xff *IFF* new_key == key at pidx*/
     asm volatile (
-        "cmpl %[cmp], $0xFF\n\t"
+        "cmpl $0xFF, %[cmp]\n\t"
         "jne  reprobe\n\t"
 
         /* keys are equal
          * this->hashtable[pidx].kb.count++; */
         "inc  %[count]\n\t"
         /* this->hashtable[pidx].kb.occupied = 1; */
-        "set  %[occ]\n\t"
+        "mov  $1, %[occ]\n\t"
         "ret"
         : [occ]"=rm"(this->hashtable[pidx].kb.occupied),
-          [count]"=rm"(this->hashtable[pidx].kb.count),
+          [count]"=rm"(this->hashtable[pidx].kb.count)
+        : [cmp]"rm"(cmp)
     );
 
 reprobe:
@@ -477,7 +481,7 @@ reprobe:
     //   would bring in both the elements. We need not issue a second one.
     //   Check if pidx points to an entry on a new cacheline.
     asm volatile (
-        "andl $0x1, %[pidx]\n\t"
+        "andq $0x1, %[pidx]\n\t"
         "jz   prefetch\n\t"
         :
         : [pidx]"r"(pidx)
@@ -488,14 +492,15 @@ reprobe:
 
     /* cmp is 0xff *IFF* new_key == key at pidx*/
     asm volatile (
-        "cmpl %[cmp], $0xFF\n\t"
+        "cmpl $0xFF, %[cmp]\n\t"
         "jne  prefetch\n\t"
 
         /* keys are equal
          * this->hashtable[pidx].kb.count++; */
         "inc  %[count]\n\t"
         "ret"
-        : [count]"=rm"(this->hashtable[pidx].kb.count),
+        : [count]"=rm"(this->hashtable[pidx].kb.count)
+        : [cmp]"rm"(cmp)
     );
 
 prefetch:
