@@ -561,8 +561,12 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     this->queue[this->queue_idx].kmer_p = q->kmer_p;
     this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
 
-    // TODO: perform this increment based on cmp and cmp_retry
-    this->queue_idx++;
+    // this->queue_idx should not be incremented if either
+    // of the try_inserts succeeded
+    int inc{1};
+    inc = (cmp == 0xFF) ? 0 : inc;
+    inc = (cmp_retry == 0xFF) ? 0 : inc;
+    this->queue_idx += inc;
 
     return;
 
