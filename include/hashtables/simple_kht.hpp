@@ -425,56 +425,75 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     const auto key_mask = ymm_load(kv_masks[0 /* RW mask */]);
     const auto new_key = ymm_maskload(q->kmer_p, key_mask);
 
-    /* define lambda that tries to insert the requested key at idx,
-     * if idx is unoccupied.
+    /* define lambda that tries to insert the requested key at idx.
+     * if no_op == 1, do nothing
      *
      * returns the result of the comparison between the new key
      * and the key at idx */
-    auto try_insert = [&](const auto idx)
+    auto try_insert = [&](const auto idx, const int no_op)
     {
+      /* if no_op == 1, it overrides the behaviour of this
+       * lambda to not read/write from/to the hashtable */
+      const auto mask_idx = this->hashtable[pidx].kb.occupied | no_op;
       /* kv_masks[0] returns a mask that reads/writes;
        * kv_masks[1] returns a mask that does nothing */
-      const auto occupied = this->hashtable[idx].kb.occupied;
-      auto cond_mask = ymm_load(kv_masks[occupied]);
+      auto cond_mask = ymm_load(kv_masks[mask_idx]);
 
       /* conditionally store the new key into hashtable[idx] */
       const auto kv_dst = &this->hashtable[idx];
       ymm_maskstore(kv_dst, cond_mask, new_key);
 
-      /* at  this point the key in the hashtable is either equal to
-       * the new key (q->kmer_p) or not. compare them */
-      const auto key = ymm_maskload(kv_dst, key_mask);
+      /* at this point the key in the hashtable is either equal to
+       * the new key (q->kmer_p) or not. compare them
+       * NOTE: if no_op == 1, we do not read the key from memory */
+      const auto key = ymm_maskload(kv_dst, kv_masks[0/*RW mask*/|no_op]);
       const auto cmp_raw = ymm_cmp(new_key, key);
       /* ymm_cmp compares the keys as packed 4-byte integers
        * cmp_raw consists of packed 4-byte "result" integers that are
        * 0xFF..FF if the corresponding 4-byte integers in the keys are equal,
        * and 0x00..00 otherwise. testing this is not straight-forward.
-       * so, we "compress" the eigth integers into a bit each (MSB). */
-      return ymm_movemask(_mm256_castsi256_ps(cmp_raw));
+       * so, we "compress" the eigth integers into a bit each (MSB).
+       *
+       * NOTE: when no_op == 1, we compare the new_key against 0.
+       *       if the new_key happens to be 0, we will see a false
+       *       positive comparison result. to avoid this, we must do
+       *       the following:
+       *         1. when no_op == 0, return (result & 0xFF..FF)
+       *         2. when no_op == 1, return (result & 0x00..00)
+       *       this means, we should return (result & no_op-1) */
+      return ymm_movemask(_mm256_castsi256_ps(cmp_raw)) & (no_op-1);
     };
 
-    auto cmp = try_insert(pidx);
-    /* cmp is 0xff *IFF* new_key == key at pidx*/
-    asm volatile (
-        "cmpl $0xFF, %[cmp]\n\t"
-        "jne  1f\n\t" // local label reprobe
+    /* first attempt must not be a NO_OP */
+    int no_op{0};
+    const auto cmp = try_insert(pidx, no_op);
 
-        /* keys are equal
-         * this->hashtable[pidx].kb.count++; */
-        "inc  %[count]\n\t"
-        /* this->hashtable[pidx].kb.occupied = 1; */
-        "mov  $1, %[occ]\n\t"
-        "ret"
-        : [occ]"=rm"(this->hashtable[pidx].kb.occupied),
-          [count]"=rm"(this->hashtable[pidx].kb.count)
-        : [cmp]"rm"(cmp)
-    );
+    /* cmp is 0xff *IFF* new_key == key at pidx,
+     * decide if reprobe is necessary */
+    {
+      int tmp{0};
+      asm volatile (
+          "cmpl $0xFF, %[cmp]\n\t"
 
-// local label reprobe:
-    asm volatile (
-        "1:\n\t"
-    );
-    /* hash collision has occurred */
+          /* if cmp == 0xFF */
+          /*   no_op = 1; */
+          "sete %[no_op]\n\t"  // no_op is unset to 0 if cmp != 0xFF
+          /*   this->hashtable[pidx].kb.occupied = 1; */
+          "movl   %[occ], %[tmp]\n\t"
+          "cmovel $1, %[tmp]\n\t"
+          "movl   %[tmp], %[occ]\n\t"
+          /*   this->hashtable[pidx].kb.count++; */
+          "sete %[tmp]\n\t"
+          "addl %[tmp], %[count]\n\t"
+          : [occ]"=rm"(this->hashtable[pidx].kb.occupied),
+            [count]"=rm"(this->hashtable[pidx].kb.count),
+            [tmp]"=rm"(tmp),
+            [no_op]"=rm"(no_op)
+          : [cmp]"rm"(cmp)
+          );
+    }
+
+    /* prepare for (possible) soft reprobe */
     pidx++;
     pidx = pidx & (this->capacity - 1);  // modulo
 
@@ -482,42 +501,67 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     //   | i | i + 1 |
     //   In the case where two elements fit in a cacheline, a single prefetch
     //   would bring in both the elements. We need not issue a second one.
-    //   Check if pidx points to an entry on a new cacheline.
-    asm volatile (
-        "andq $0x1, %[pidx]\n\t"
-        "jz   2f\n\t" // local label prefetch
-        :
-        : [pidx]"r"(pidx)
-    );
+    // 
+    //   no_op has been set/unset based on the result of the last try_insert.
+    //   We need to perform an *ADDITIONAL* check before a (possible) reprobe
+    //   to make sure the reprobe does not happen if pidx is pointing to an
+    //   entry in the next cacheline
+    //   
+    //   no_op | pidx & 0x1 || no_op
+    //     0   |      0     ||   1    // insert failed, pidx in new cacheline
+    //     0   |      1     ||   0    // insert failed, pidx in same cacheline
+    //     1   |      0     ||   1    // insert succeeded, pidx irrelevant
+    //     1   |      1     ||   1    // insert succeeded, pidx irrelevant
+    no_op = no_op | (1 ^ (pidx & 0x1));
 
-    // we can perform a soft reprobe
-    cmp = try_insert(pidx);
+    // we still do not know enough to decide if we must perform a reprobe
+    // if the entry at pidx is occupied, the reprobe must be a NO_OP
+    // no_op | occupied || no_op
+    //   0   |    0     ||   0    // reprobe reqd., entry unoccupied
+    //   0   |    1     ||   1    // reprobe reqd., entry occupied
+    //   1   |    0     ||   1   
+    //   1   |    1     ||   1   
+    no_op |= this->hashtable[pidx].kb.occupied;
 
-    /* cmp is 0xff *IFF* new_key == key at pidx*/
-    asm volatile (
-        "cmpl $0xFF, %[cmp]\n\t"
-        "jne  2f\n\t" // local label prefetch
+    // perform a (conditional) soft reprobe
+    const auto cmp_retry = try_insert(pidx, no_op);
+    /* cmp_retry is 0xff *IFF* new_key == key at pidx */
+    {
+      int tmp{0};
+      asm volatile (
+          "cmpl $0xFF, %[cmp]\n\t"
 
-        /* keys are equal
-         * this->hashtable[pidx].kb.count++; */
-        "inc  %[count]\n\t"
-        "ret"
-        : [count]"=rm"(this->hashtable[pidx].kb.count)
-        : [cmp]"rm"(cmp)
-    );
+          /* if cmp == 0xFF */
+          /*   this->hashtable[pidx].kb.occupied = 1; */
+          "movl   %[occ], %[tmp]\n\t"
+          "cmovel $1, %[tmp]\n\t"
+          "movl   %[tmp], %[occ]\n\t"
+          /*   this->hashtable[pidx].kb.count++; */
+          "sete %[tmp]\n\t"
+          "addl %[tmp], %[count]\n\t"
+          : [occ]"=rm"(this->hashtable[pidx].kb.occupied),
+            [count]"=rm"(this->hashtable[pidx].kb.count),
+            [tmp]"=rm"(tmp)
+          : [cmp]"rm"(cmp_retry)
+          );
+    }
 
-// local label prefetch:
-    asm volatile (
-        "2:\n\t"
-    );
-    //   pidx now points to an entry in a new cacheline, issue a prefetch
-    //   and re-insert into the queue
-    prefetch(pidx);
+    // at this point, pidx is either pointing at an entry in the
+    // second half of the current cacheline, or at the start of the
+    // next cacheline, which must be prefetched.
+    // to avoid branching, we issue a prefetch command for the
+    // current or next cacheline by making pidx an even number
+    prefetch(pidx & (~0x1));
+
+    // if neither of the attempts succeeded, we must re-insert
+    // into the queue
     q->kmer_idx = pidx;
 
     //this->queue[this->queue_idx] = *q;
     this->queue[this->queue_idx].kmer_p = q->kmer_p;
     this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+
+    // TODO: perform this increment based on cmp and cmp_retry
     this->queue_idx++;
 
     return;
