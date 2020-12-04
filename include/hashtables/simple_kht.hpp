@@ -514,15 +514,6 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     //     1   |      1     ||   1    // insert succeeded, pidx irrelevant
     no_op = no_op | (1 ^ (pidx & 0x1));
 
-    // we still do not know enough to decide if we must perform a reprobe
-    // if the entry at pidx is occupied, the reprobe must be a NO_OP
-    // no_op | occupied || no_op
-    //   0   |    0     ||   0    // reprobe reqd., entry unoccupied
-    //   0   |    1     ||   1    // reprobe reqd., entry occupied
-    //   1   |    0     ||   1   
-    //   1   |    1     ||   1   
-    no_op |= this->hashtable[pidx].kb.occupied;
-
     // perform a (conditional) soft reprobe
     const auto cmp_retry = try_insert(pidx, no_op);
     /* cmp_retry is 0xff *IFF* new_key == key at pidx */
