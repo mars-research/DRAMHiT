@@ -22,7 +22,14 @@ struct Kmer_base {
   uint8_t occupied : 1;
 } __attribute__((packed));
 
+struct Kmer_base_cas {
+  Kmer_s kmer;
+  uint16_t count;
+  bool occupied;
+} __attribute__((packed));
+
 using Kmer_base_t = struct Kmer_base;
+using Kmer_base_cas_t = struct Kmer_base_cas;
 
 typedef enum {
   DRY_RUN = 1,
