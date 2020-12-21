@@ -437,16 +437,17 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       const auto mask_idx = this->hashtable[pidx].kb.occupied | no_op;
       /* kv_masks[0] returns a mask that reads/writes;
        * kv_masks[1] returns a mask that does nothing */
-      auto cond_mask = ymm_load(kv_masks[mask_idx]);
+      auto cond_store_mask = ymm_load(kv_masks[mask_idx]);
 
       /* conditionally store the new key into hashtable[idx] */
       const auto kv_dst = &this->hashtable[idx];
-      ymm_maskstore(kv_dst, cond_mask, new_key);
+      ymm_maskstore(kv_dst, cond_store_mask, new_key);
 
       /* at this point the key in the hashtable is either equal to
        * the new key (q->kmer_p) or not. compare them
        * NOTE: if no_op == 1, we do not read the key from memory */
-      const auto key = ymm_maskload(kv_dst, kv_masks[0/*RW mask*/|no_op]);
+      auto cond_load_mask = ymm_load(kv_masks[0/*RW mask*/|no_op]);
+      const auto key = ymm_maskload(kv_dst, cond_load_mask);
       const auto cmp_raw = ymm_cmp(new_key, key);
       /* ymm_cmp compares the keys as packed 4-byte integers
        * cmp_raw consists of packed 4-byte "result" integers that are
@@ -468,28 +469,27 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     int no_op{0};
     const auto cmp = try_insert(pidx, no_op);
 
+    // the occupied field can be set unconditionally
+    this->hashtable[pidx].kb.occupied = 1;
+
     /* cmp is 0xff *IFF* new_key == key at pidx,
      * decide if reprobe is necessary */
     {
-      int tmp{0};
       asm volatile (
+          "xorl %%r8d, %%r8d\n\t"
           "cmpl $0xFF, %[cmp]\n\t"
 
           /* if cmp == 0xFF */
           /*   no_op = 1; */
-          "sete %[no_op]\n\t"  // no_op is unset to 0 if cmp != 0xFF
-          /*   this->hashtable[pidx].kb.occupied = 1; */
-          "movl   %[occ], %[tmp]\n\t"
-          "cmovel $1, %[tmp]\n\t"
-          "movl   %[tmp], %[occ]\n\t"
+          "sete %%r8b\n\t"  // r8 is unset to 0 if cmp != 0xFF
+          "movl %%r8d, %[no_op]\n\t"
           /*   this->hashtable[pidx].kb.count++; */
-          "sete %[tmp]\n\t"
-          "addl %[tmp], %[count]\n\t"
+          "addw %%r8w, %[count]\n\t"
           : [occ]"=rm"(this->hashtable[pidx].kb.occupied),
             [count]"=rm"(this->hashtable[pidx].kb.count),
-            [tmp]"=rm"(tmp),
             [no_op]"=rm"(no_op)
           : [cmp]"rm"(cmp)
+          : "r8"
           );
     }
 
@@ -518,22 +518,24 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     const auto cmp_retry = try_insert(pidx, no_op);
     /* cmp_retry is 0xff *IFF* new_key == key at pidx */
     {
-      int tmp{0};
       asm volatile (
-          "cmpl $0xFF, %[cmp]\n\t"
+          "xor  %%r8w,  %%r8w\n\t"
+          "movw $1,     %%r9w\n\t"
+
+          "cmpl $0xFF,  %[cmp]\n\t"
 
           /* if cmp == 0xFF */
           /*   this->hashtable[pidx].kb.occupied = 1; */
-          "movl   %[occ], %[tmp]\n\t"
-          "cmovel $1, %[tmp]\n\t"
-          "movl   %[tmp], %[occ]\n\t"
+          "movb  %[occ], %%r8b\n\t"
+          "cmovew %%r9w, %%r8w\n\t"
+          "movb  %%r8b, %[occ]\n\t"
           /*   this->hashtable[pidx].kb.count++; */
-          "sete %[tmp]\n\t"
-          "addl %[tmp], %[count]\n\t"
+          "sete %%r8b\n\t"
+          "addw %%r8w, %[count]\n\t"
           : [occ]"=rm"(this->hashtable[pidx].kb.occupied),
-            [count]"=rm"(this->hashtable[pidx].kb.count),
-            [tmp]"=rm"(tmp)
+            [count]"=rm"(this->hashtable[pidx].kb.count)
           : [cmp]"rm"(cmp_retry)
+          : "r8", "r9", "r10"
           );
     }
 
