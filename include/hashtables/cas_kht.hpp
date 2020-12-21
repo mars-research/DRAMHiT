@@ -117,6 +117,7 @@ class CASKmerHashTable : public KmerHashTable {
     curr_idx++;
     curr_idx = curr_idx & (this->capacity - 1);  // modulo
     // __builtin_prefetch(&hashtable[curr_idx], 1, 3);
+    this->prefetch(curr_idx);
     q->kmer_idx = curr_idx;
 
     //queue[this->queue_idx] = *q;
@@ -193,16 +194,7 @@ class CASKmerHashTable : public KmerHashTable {
   }
 
  public:
-#ifdef CALC_STATS
-  uint64_t num_reprobes = 0;
-  uint64_t num_memcmps = 0;
-  uint64_t num_memcpys = 0;
-  uint64_t num_hashcmps = 0;
-  uint64_t num_queue_flushes = 0;
-  uint64_t sum_distance_from_bucket = 0;
-  uint64_t max_distance_from_bucket = 0;
-#endif
-  T* hashtable;
+  static T* hashtable;
   // static std::vector<std::mutex> hashtable_mutexes;
   // uint32_t thread_id;
 
@@ -351,7 +343,8 @@ class CASKmerHashTable : public KmerHashTable {
   }
 };
 
-//CAS_Kmer_r* CASKmerHashTable::hashtable;
+template<class T>
+T* CASKmerHashTable<T>::hashtable;
 // std::vector<std::mutex> CASKmerHashTable:: hashtable_mutexes;
 
 // TODO bloom filters for high frequency kmers?
