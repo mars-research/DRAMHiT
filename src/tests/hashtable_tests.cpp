@@ -43,6 +43,8 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
     count++;
 #endif
   }
+  // flush the last batch explicitly
+  ktable->flush_queue();
 
   return count;
 }

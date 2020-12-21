@@ -110,28 +110,9 @@ class CASKmerHashTable : public KmerHashTable {
     }
   }
 
-  /* Insert using prefetch: using a dynamic prefetch queue.
-          If bucket is occupied, add to queue again to reprobe.
-  */
-  void __reprobe(CAS_Kmer_queue_r* q, size_t curr_idx) {
-    curr_idx++;
-    curr_idx = curr_idx & (this->capacity - 1);  // modulo
-    // __builtin_prefetch(&hashtable[curr_idx], 1, 3);
-    this->prefetch(curr_idx);
-    q->kmer_idx = curr_idx;
-
-    //queue[this->queue_idx] = *q;
-    queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr;
-    queue[this->queue_idx].kmer_idx = q->kmer_idx;
-    this->queue_idx++;
-#ifdef CALC_STATS
-    this->num_reprobes++;
-#endif
-  }
-
   void __insert(CAS_Kmer_queue_r* q) {
-    size_t pidx = q->kmer_idx; /* hashtable location at which data is to be
-                                  inserted */
+    static int no_ins = 0;
+    size_t pidx = q->kmer_idx; /* hashtable location at which data is to be inserted */
 
     /* Compare with empty kmer to check if bucket is empty, and insert. */
     // hashtable_mutexes[pidx].lock();
@@ -140,8 +121,7 @@ class CASKmerHashTable : public KmerHashTable {
     if (!hashtable[pidx].kb.occupied) {
       bool cas_res = fipc_test_CAS(&hashtable[pidx].kb.occupied, false, true);
       if (!cas_res) {
-        __reprobe(q, pidx);
-        return;
+        goto reprobe;
       }
 #ifdef CALC_STATS
       this->num_memcpys++;
@@ -150,7 +130,9 @@ class CASKmerHashTable : public KmerHashTable {
       memcpy(&hashtable[pidx].kb.kmer.data, q->kmer_data_ptr, KMER_DATA_LENGTH);
       hashtable[pidx].kb.count++;
       // hashtable[pidx].occupied = true;
+#ifdef COMPARE_HASH
       hashtable[pidx].kmer_hash = q->kmer_hash;
+#endif
       // hashtable_mutexes[pidx].unlock();
       // printf("Thread %lu, released lock: %lu\n", this->thread_id,
       // pidx);
@@ -170,25 +152,43 @@ class CASKmerHashTable : public KmerHashTable {
                  KMER_DATA_LENGTH) == 0) {
         bool cas_res = false;
         uint32_t ocount;
+        // TODO: atomic_inc
+#ifdef USE_ATOMICS
+        fipc_test_FAI(hashtable[pidx].kb.count);
+#else
         while (cas_res == false) {
           ocount = hashtable[pidx].kb.count;
           cas_res =
               fipc_test_CAS(&hashtable[pidx].kb.count, ocount, ocount + 1);
         }
-
+#endif
         // hashtable[pidx].kmer_count++;
         // hashtable_mutexes[pidx].unlock();
         return;
       }
     }
-
+reprobe:
     {
+      // hashtable_mutexes[pidx].unlock();
+
       /* insert back into queue, and prefetch next bucket.
       next bucket will be probed in the next run
       */
-      // hashtable_mutexes[pidx].unlock();
-      __reprobe(q, pidx);
+      pidx++;
+      pidx = pidx & (this->capacity - 1);  // modulo
 
+      prefetch(pidx);
+      q->kmer_idx = pidx;
+
+      //this->queue[this->queue_idx] = *q;
+      this->queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr;
+      this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+      this->queue_idx++;
+      // printf("reprobe pidx %d\n", pidx);
+
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
       return;
     }
   }
@@ -298,10 +298,10 @@ class CASKmerHashTable : public KmerHashTable {
   void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
       if (hashtable[i].kb.occupied) {
-        for (size_t k = 0; k < KMER_DATA_LENGTH; k++) {
+        /*for (size_t k = 0; k < KMER_DATA_LENGTH; k++) {
           printf("%c", hashtable[i].kb.kmer.data[k]);
-        }
-        printf(": %u\n", hashtable[i].kb.count);
+        }*/
+        printf("%u: %u\n", i, hashtable[i].kb.count);
       }
     }
   }
