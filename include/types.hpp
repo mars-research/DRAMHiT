@@ -19,7 +19,8 @@ struct Kmer_s {
 struct Kmer_base {
   Kmer_s kmer;
   uint16_t count : 15;
-  uint8_t occupied : 1;
+  uint16_t occupied : 1; // type is 16 bits wide for easier
+                         // manipulation using inline assembly
 } __attribute__((packed));
 
 using Kmer_base_t = struct Kmer_base;
