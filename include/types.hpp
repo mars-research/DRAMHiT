@@ -7,30 +7,14 @@
 
 #define CACHE_LINE_SIZE 64
 #define PAGE_SIZE 4096
-#define KMER_DATA_LENGTH 20
 #define ALPHA 0.15
+#define PACKED __attribute__((packed))
+
+#define KMER_DATA_LENGTH 20
+#define KEY_SIZE 7
+#define VALUE_SIZE 8
 
 extern const uint32_t PREFETCH_QUEUE_SIZE;
-
-// kmer (key)
-struct Kmer_s {
-  char data[KMER_DATA_LENGTH];
-};
-
-struct Kmer_base {
-  Kmer_s kmer;
-  uint16_t count : 15;
-  uint8_t occupied : 1;
-} __attribute__((packed));
-
-struct Kmer_base_cas {
-  Kmer_s kmer;
-  uint16_t count;
-  bool occupied;
-} __attribute__((packed));
-
-using Kmer_base_t = struct Kmer_base;
-using Kmer_base_cas_t = struct Kmer_base_cas;
 
 typedef enum {
   DRY_RUN = 1,
@@ -96,14 +80,18 @@ struct thread_stats {
 #endif /*CALC_STATS*/
 };
 
+struct Kmer_s {
+  char data[KMER_DATA_LENGTH];
+};
+
 struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
   off64_t f_start;    // start byte into file
   off64_t f_end;      // end byte into file
-  thread_stats* stats;
-  Kmer_s* kmer_big_pool;
-  Kmer_s* kmer_small_pool;
-  Kmer_s* pool;
+  thread_stats *stats;
+  Kmer_s *kmer_big_pool;
+  Kmer_s *kmer_small_pool;
+  Kmer_s *pool;
 };
 
 #endif  // __TYPES_HPP__

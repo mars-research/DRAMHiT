@@ -7,154 +7,30 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <cassert>
 #include <fstream>
 #include <iostream>
-#include "base_kht.hpp"
-#include "city/city.h"
+
 #include "dbg.hpp"
 #include "helper.hpp"
-#include "sync.h"
-#include "types.hpp"
 #include "ht_helper.hpp"
-
-#if defined(XX_HASH)
-#include "xx/xxhash.h"
-#endif
-
-#if defined(XX_HASH_3)
-#include "xx/xxh3.h"
-#endif
+#include "sync.h"
 
 namespace kmercounter {
-
-struct Kmer_KV {
-  Kmer_base_t kb;            // 20 + 2 bytes
-  uint64_t kmer_hash;        // 8 bytes
-  volatile char padding[2];  // 2 bytes
-} __attribute__((packed));
-
-static_assert(sizeof(Kmer_KV) % 32 == 0,
-              "Sizeof Kmer_KV must be a multiple of 32");
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
-// TODO store org kmer idx, to check if we have wrappd around after reprobe
-
-/*
-Kmer q in the hash hashtable
-Each q spills over a queue line for now, queue-align later
-*/
-
-/*
- * 32 bit magic FNV-1a prime
- */
-#define FNV_32_PRIME ((uint32_t)0x01000193)
-[[maybe_unused]] static uint32_t hval = 0;
-
-/*
- * fnv_32a_buf - perform a 32 bit Fowler/Noll/Vo FNV-1a hash on a buffer
- *
- * input:
- *	buf	- start of buffer to hash
- *	len	- length of buffer in octets
- *	hval	- previous hash value or 0 if first call
- *
- * returns:
- *	32 bit hash as a static hash type
- *
- * NOTE: To use the recommended 32 bit FNV-1a hash, use FNV1_32A_INIT as the
- * 	 hval arg on the first call to either fnv_32a_buf() or fnv_32a_str().
- */
-inline uint32_t fnv_32a_buf(const void *buf, size_t len, uint32_t hval) {
-  unsigned char *bp = (unsigned char *)buf; /* start of buffer */
-  unsigned char *be = bp + len;             /* beyond end of buffer */
-
-  /*
-   * FNV-1a hash each octet in the buffer
-   */
-  while (bp < be) {
-    /* xor the bottom with the current octet */
-    hval ^= (uint32_t)*bp++;
-
-    /* multiply by the 32 bit FNV magic prime mod 2^32 */
-#if defined(NO_FNV_GCC_OPTIMIZATION)
-    hval *= FNV_32_PRIME;
-#else
-    hval +=
-        (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
-#endif
-  }
-
-  /* return our new hash value */
-  return hval;
-}
-
-struct Kmer_queue {
-  const void *kmer_p;
-  uint32_t kmer_idx;  // TODO reduce size, TODO decided by hashtable size?
-  uint8_t pad[4];
-#ifdef COMPARE_HASH
-  uint64_t kmer_hash;  // 8 bytes
-#endif
-} __attribute__((packed));
-
-inline std::ostream &operator<<(std::ostream &strm, const Kmer_KV &k) {
-  return strm << std::string(k.kb.kmer.data, KMER_DATA_LENGTH) << " : "
-              << k.kb.count;
-}
-
-/* AB: 1GB page table code is from
- * https://github.com/torvalds/linux/blob/master/tools/testing/selftests/vm/hugepage-mmap.c
- */
-
-#define FILE_NAME "/mnt/huge/hugepagefile%d"
-
-#define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
-
-constexpr auto ADDR = static_cast<void *>(0x0ULL);
-constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
-constexpr auto MAP_FLAGS =
-    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
-constexpr auto LENGTH = 1ULL * 1024 * 1024 * 1024;
-
-static inline void prefetch_with_write(Kmer_KV *k) {
-  /* if I write occupied I get
-   * Prefetch stride: 0, cycles per insertion:122
-   * Prefetch stride: 1, cycles per insertion:36
-   * Prefetch stride: 2, cycles per insertion:46
-   * Prefetch stride: 3, cycles per insertion:44
-   * Prefetch stride: 4, cycles per insertion:45
-   * Prefetch stride: 5, cycles per insertion:46
-   * Prefetch stride: 6, cycles per insertion:46
-   * Prefetch stride: 7, cycles per insertion:47
-   */
-  //  k->occupied = 1;
-  /* If I write padding I get
-   * Prefetch stride: 0, cycles per insertion:123
-   * Prefetch stride: 1, cycles per insertion:104
-   * Prefetch stride: 2, cycles per insertion:84
-   * Prefetch stride: 3, cycles per insertion:73
-   * Prefetch stride: 4, cycles per insertion:66
-   * Prefetch stride: 5, cycles per insertion:61
-   * Prefetch stride: 6, cycles per insertion:57
-   * Prefetch stride: 7, cycles per insertion:55
-   * Prefetch stride: 8, cycles per insertion:54
-   * Prefetch stride: 9, cycles per insertion:53
-   * Prefetch stride: 10, cycles per insertion:53
-   * Prefetch stride: 11, cycles per insertion:53
-   * Prefetch stride: 12, cycles per insertion:52
-   */
-  k->padding[0] = 1;
-}
-
-template <typename T = Kmer_KV>
-class alignas(64) SimpleKmerHashTable : public KmerHashTable {
+template <typename KV, typename KVQ>
+class alignas(64) PartitionedHashStore : public BaseHashTable {
  public:
-  T *hashtable;
+  KV *hashtable;
+  int fd;
+  int id;
+  size_t data_length;
 
   // https://www.bfilipek.com/2019/08/newnew-align.html
   void *operator new(std::size_t size, std::align_val_t align) {
@@ -202,59 +78,21 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     return 0;
   };
 
-  SimpleKmerHashTable(uint64_t c, uint32_t id) {
-    // TODO static cast
-    // TODO power of 2 hashtable size for ease of mod operations
+  PartitionedHashStore(uint64_t c, uint32_t id) : fd(-1), id(id), queue_idx(0) {
     this->capacity = kmercounter::next_pow2(c);
-    // printf("[INFO] Hashtable size: %lu\n", this->capacity);
-#if !defined(HUGE_1GB_PAGES)
-    this->hashtable = (T *)aligned_alloc(PAGE_SIZE, capacity * sizeof(T));
-#else
-    int fd;
-    char mmap_path[256] = {0};
-
-    snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
-
-    fd = open(mmap_path, O_CREAT | O_RDWR, 0755);
-
-    if (fd < 0) {
-      dbg("Couldn't open file %s:", mmap_path);
-      perror("");
-      exit(1);
-    } else {
-      dbg("opened file %s\n", mmap_path);
-    }
-
-    this->hashtable = (T *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(T),
-                                PROT_RW, MAP_FLAGS, fd, 0);
-    if (this->hashtable == MAP_FAILED) {
-      perror("mmap");
-      unlink(mmap_path);
-      exit(1);
-    } else {
-      dbg("mmap returns %p\n", this->hashtable);
-    }
-
-#endif
-
-    if (this->hashtable == NULL) {
-      perror("[ERROR]: SimpleKmerHashTable aligned_alloc");
-    }
-
-    memset(hashtable, 0, capacity * sizeof(T));
-    memset(&this->null_kmer, 0, sizeof(T));
+    this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
+    memset(&this->null_item, 0, sizeof(KV));
+    this->data_length = null_item.data_length();
 
     this->queue = (Kmer_queue *)(aligned_alloc(
         64, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue)));
-    this->queue_idx = 0;
     dbg("id: %d this->queue %p\n", id, this->queue);
-    //    __builtin_prefetch(queue, 1, 3);
+    printf("[INFO] Hashtable size: %lu\n", this->capacity);
   }
 
-  ~SimpleKmerHashTable() {
-    free(hashtable);
+  ~PartitionedHashStore() {
     free(queue);
-    printf("hashtable freed\n");
+    free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
   }
 
 #if INSERT_BATCH
@@ -267,7 +105,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #ifdef CALC_STATS
       this->num_memcpys++;
 #endif
-      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p, KMER_DATA_LENGTH);
+      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p, this->data_length);
       this->hashtable[pidx].kb.count++;
       this->hashtable[pidx].kb.occupied = true;
       this->hashtable[pidx].kmer_hash = q->kmer_hash;
@@ -284,7 +122,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
 
       if (memcmp(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
-                 KMER_DATA_LENGTH) == 0) {
+                 this->data_length) == 0) {
         this->hashtable[pidx].kb.count++;
         return;
       }
@@ -328,123 +166,10 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
 #endif
 
-  /* Insert using prefetch: using a dynamic prefetch queue.
-          If bucket is occupied, add to queue again to reprobe.
-  */
-  void __insert(Kmer_queue *q) {
-    /* hashtable location at which data is to be inserted */
-    size_t pidx = q->kmer_idx;
-
-  try_insert:
-    /* Compare with empty kmer to check if bucket is empty, and insert.*/
-    if (!this->hashtable[pidx].kb.occupied) {
-#ifdef CALC_STATS
-      this->num_memcpys++;
-#endif
-      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p, KMER_DATA_LENGTH);
-      this->hashtable[pidx].kb.count++;
-      this->hashtable[pidx].kb.occupied = true;
-#ifdef COMPARE_HASH
-      this->hashtable[pidx].kmer_hash = q->kmer_hash;
-#endif
-      return;
-    }
-
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-#ifdef COMPARE_HASH
-    if (this->hashtable[pidx].kmer_hash == q->kmer_hash)
-#endif
-    {
-#ifdef CALC_STATS
-      this->num_memcmps++;
-#endif
-
-      if (memcmp(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
-                 KMER_DATA_LENGTH) == 0) {
-        this->hashtable[pidx].kb.count++;
-        return;
-      }
-    }
-
-    {
-      /* insert back into queue, and prefetch next bucket.
-      next bucket will be probed in the next run
-      */
-      pidx++;
-      pidx = pidx & (this->capacity - 1);  // modulo
-
-      //   | cacheline |
-      //   | i | i + 1 |
-      //   In the case where two elements fit in a cacheline, a single prefetch
-      //   would bring in both the elements. We need not issue a second
-      //   prefetch.
-      if (unlikely(pidx & 0x1)) {
-#ifdef CALC_STATS
-        this->num_soft_reprobes++;
-#endif
-        goto try_insert;
-      }
-      prefetch(pidx);
-      q->kmer_idx = pidx;
-
-      //this->queue[this->queue_idx] = *q;
-      this->queue[this->queue_idx].kmer_p = q->kmer_p;
-      this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
-      this->queue_idx++;
-
-#ifdef CALC_STATS
-      this->num_reprobes++;
-#endif
-      return;
-    }
-  }
-
-  /* Insert items from queue into hash table, interpreting "queue"
-  as an array of size queue_sz*/
-  void __insert_from_queue() {
-    this->queue_idx = 0;  // start again
-    for (size_t i = 0; i < PREFETCH_QUEUE_SIZE; i++) {
-      __insert(&this->queue[i]);
-    }
-  }
-
-  void __flush_from_queue(size_t qsize) {
-    this->queue_idx = 0;  // start again
-    for (size_t i = 0; i < qsize; i++) {
-      __insert(&this->queue[i]);
-    }
-  }
-
-  void __insert_into_queue(const void *kmer_data) {
-    uint64_t hash_new = this->hash((const char *)kmer_data);
-    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
-    // size_t __kmer_idx2 = (hash_new + 3) & (this->capacity - 1);  // modulo
-    // size_t __kmer_idx = cityhash_new % (this->capacity);
-
-    /* prefetch buckets and store kmer_data pointers in queue */
-    // TODO how much to prefetch?
-    // TODO if we do prefetch: what to return? API breaks
-    this->prefetch(__kmer_idx);
-    // this->prefetch(__kmer_idx2);
-
-    // printf("inserting into queue at %u\n", this->queue_idx);
-    // for (auto i = 0; i < 10; i++)
-    //  asm volatile("nop");
-    this->queue[this->queue_idx].kmer_p = kmer_data;
-    this->queue[this->queue_idx].kmer_idx = __kmer_idx;
-#ifdef COMPARE_HASH
-    this->queue[this->queue_idx].kmer_hash = hash_new;
-#endif
-    this->queue_idx++;
-  }
-
   /* insert and increment if exists */
-  bool insert(const void *kmer_data) {
+  bool insert(const void *data) {
     assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
-    __insert_into_queue(kmer_data);
+    __insert_into_queue(data);
 
     /* if queue is full, actually insert */
     // now queue_idx = 20
@@ -480,22 +205,22 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 #endif
   }
 
-  T *find(const void *kmer_data) {
+  void *find(const void *data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t hash_new = this->hash((const char *)kmer_data);
+    uint64_t hash_new = this->hash((const char *)data);
 
     size_t idx = hash_new & (this->capacity - 1);  // modulo
 
     int memcmp_res =
-        memcmp(&this->hashtable[idx].kb.kmer.data, kmer_data, KMER_DATA_LENGTH);
+        memcmp(&this->hashtable[idx].kb.kmer.data, data, this->data_length);
 
     while (memcmp_res != 0) {
       idx++;
       idx = idx & (this->capacity - 1);
-      memcmp_res = memcmp(&this->hashtable[idx].kb.kmer.data, kmer_data,
-                          KMER_DATA_LENGTH);
+      memcmp_res =
+          memcmp(&this->hashtable[idx].kb.kmer.data, data, this->data_length);
 #ifdef CALC_STATS
       distance_from_bucket++;
 #endif
@@ -512,11 +237,11 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
   void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].kb.occupied) {
-        for (size_t k = 0; k < KMER_DATA_LENGTH; k++) {
+      if (this->hashtable[i].is_occupied()) {
+        /*for (size_t k = 0; k < this->data_length; k++) {
           printf("%c", this->hashtable[i].kb.kmer.data[k]);
-        }
-        printf(": %u\n", this->hashtable[i].kb.count);
+        }*/
+        std::cout << this->hashtable[i] << std::endl;
       }
     }
   }
@@ -524,7 +249,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
   size_t get_fill() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].kb.occupied) {
+      if (this->hashtable[i].is_occupied()) {
         count++;
       }
     }
@@ -536,8 +261,8 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
   size_t get_max_count() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].kb.count > count) {
-        count = this->hashtable[i].kb.count;
+      if (this->hashtable[i].count() > count) {
+        count = this->hashtable[i].count();
       }
     }
     return count;
@@ -550,7 +275,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
       return;
     }
     for (size_t i = 0; i < this->get_capacity(); i++) {
-      if (this->hashtable[i].kb.count > 0) {
+      if (this->hashtable[i].count() > 0) {
         f << this->hashtable[i] << std::endl;
       }
     }
@@ -558,22 +283,144 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
 
  private:
   uint64_t capacity;
-  T null_kmer;        /* for comparison for empty slot */
+  KV null_item;       /* for comparison for empty slot */
   Kmer_queue *queue;  // TODO prefetch this?
   uint32_t queue_idx;
 
   uint64_t hash(const void *k) {
     uint64_t hash_val;
 #if defined(CITY_HASH)
-    hash_val = CityHash64((const char *)k, KMER_DATA_LENGTH);
+    hash_val = CityHash64((const char *)k, this->data_length);
 #elif defined(FNV_HASH)
-    hash_val = hval = fnv_32a_buf(k, KMER_DATA_LENGTH, hval);
+    hash_val = hval = fnv_32a_buf(k, this->data_length, hval);
 #elif defined(XX_HASH)
-    hash_val = XXH64(k, KMER_DATA_LENGTH, 0);
+    hash_val = XXH64(k, this->data_length, 0);
 #elif defined(XX_HASH_3)
-    hash_val = XXH3_64bits(k, KMER_DATA_LENGTH);
+    hash_val = XXH3_64bits(k, this->data_length);
 #endif
     return hash_val;
+  }
+
+  /* Insert using prefetch: using a dynamic prefetch queue.
+          If bucket is occupied, add to queue again to reprobe.
+  */
+  void __insert(Kmer_queue *q) {
+    /* hashtable location at which data is to be inserted */
+    size_t pidx = q->kmer_idx;
+
+  try_insert:
+    /* Compare with empty kmer to check if bucket is empty, and insert.*/
+    if (!this->hashtable[pidx].is_occupied()) {
+      this->hashtable[pidx].set_occupied();  // = true;
+#ifdef CALC_STATS
+      this->num_memcpys++;
+#endif
+      memcpy(this->hashtable[pidx].data(), q->kmer_p,
+             this->hashtable[pidx].data_length());
+      // this->hashtable[pidx].kb.count++;
+      this->hashtable[pidx].set_count(this->hashtable[pidx].count() + 1);
+      // printf("inserting %d | ",
+      // *(uint64_t*)&this->hashtable[pidx].kb.kmer.data printf("%lu: %d |
+      // %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
+#ifdef COMPARE_HASH
+      this->hashtable[pidx].kmer_hash = q->kmer_hash;
+#endif
+      return;
+    }
+
+#ifdef CALC_STATS
+    this->num_hashcmps++;
+#endif
+
+#ifdef COMPARE_HASH
+    if (this->hashtable[pidx].kmer_hash == q->kmer_hash)
+#endif
+    {
+#ifdef CALC_STATS
+      this->num_memcmps++;
+#endif
+
+      if (memcmp(this->hashtable[pidx].data(), q->kmer_p,
+                 this->hashtable[pidx].data_length()) == 0) {
+        this->hashtable[pidx].set_count(this->hashtable[pidx].count() + 1);
+
+        // this->hashtable[pidx].kb.count++;
+        // TODO: Copy value
+        return;
+      }
+    }
+
+    {
+      /* insert back into queue, and prefetch next bucket.
+      next bucket will be probed in the next run
+      */
+      pidx++;
+      pidx = pidx & (this->capacity - 1);  // modulo
+
+      //   | cacheline |
+      //   | i | i + 1 |
+      //   In the case where two elements fit in a cacheline, a single prefetch
+      //   would bring in both the elements. We need not issue a second
+      //   prefetch.
+      if (unlikely(pidx & 0x1)) {
+#ifdef CALC_STATS
+        this->num_soft_reprobes++;
+#endif
+        goto try_insert;
+      }
+      prefetch(pidx);
+      q->kmer_idx = pidx;
+
+      // this->queue[this->queue_idx] = *q;
+      this->queue[this->queue_idx].kmer_p = q->kmer_p;
+      this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+      this->queue_idx++;
+      // printf("reprobe pidx %d\n", pidx);
+
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
+      return;
+    }
+  }
+
+  /* Insert items from queue into hash table, interpreting "queue"
+  as an array of size queue_sz*/
+  void __insert_from_queue() {
+    this->queue_idx = 0;  // start again
+    for (size_t i = 0; i < PREFETCH_QUEUE_SIZE; i++) {
+      __insert(&this->queue[i]);
+    }
+  }
+
+  void __flush_from_queue(size_t qsize) {
+    this->queue_idx = 0;  // start again
+    for (size_t i = 0; i < qsize; i++) {
+      __insert(&this->queue[i]);
+    }
+  }
+
+  void __insert_into_queue(const void *data) {
+    uint64_t hash_new = this->hash((const char *)data);
+    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
+    // size_t __kmer_idx2 = (hash_new + 3) & (this->capacity - 1);  // modulo
+    // size_t __kmer_idx = cityhash_new % (this->capacity);
+
+    /* prefetch buckets and store data pointers in queue */
+    // TODO how much to prefetch?
+    // TODO if we do prefetch: what to return? API breaks
+    this->prefetch(__kmer_idx);
+    // this->prefetch(__kmer_idx2);
+
+    // printf("inserting into queue at %u\n", this->queue_idx);
+    // for (auto i = 0; i < 10; i++)
+    //  asm volatile("nop");
+    this->queue[this->queue_idx].kmer_p = data;
+    this->queue[this->queue_idx].kmer_idx = __kmer_idx;
+#ifdef COMPARE_HASH
+    this->queue[this->queue_idx].kmer_hash = hash_new;
+#endif
+    this->queue_idx++;
   }
 };
 

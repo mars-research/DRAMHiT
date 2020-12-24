@@ -38,7 +38,7 @@ std::ostream &operator<<(std::ostream &strm, const __RH_Kmer_r &k) {
               << k.kmer_count;
 }
 
-class RobinhoodKmerHashTable : public KmerHashTable {
+class RobinhoodKmerHashTable : public BaseHashTable {
  private:
   uint64_t capacity;
   RH_Kmer_r empty_kmer_r;  /* for comparison for empty slot */
