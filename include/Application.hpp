@@ -2,6 +2,7 @@
 #define __APPLICATION_HPP__
 
 #include <thread>
+
 #include "numa.hpp"
 #include "tests.hpp"
 

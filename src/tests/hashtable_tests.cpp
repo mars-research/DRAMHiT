@@ -8,7 +8,7 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-extern void get_ht_stats(Shard *, KmerHashTable *);
+extern void get_ht_stats(Shard *, BaseHashTable *);
 
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
@@ -18,7 +18,7 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
-uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
+uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
   auto count = 0;
   auto k = 0;
   struct xorwow_state _xw_state;
@@ -37,6 +37,7 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
 #else
     *((uint64_t *)&kmers[k].data) = count++;
 #endif
+    // printf("%s, inserting i= %d, data %lu\n", __func__, i, count);
     ktable->insert((void *)&kmers[k]);
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
 #if defined(SAME_KMER)
@@ -45,14 +46,13 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
   }
   // flush the last batch explicitly
   ktable->flush_queue();
-
   return count;
 }
 
 uint64_t seed2 = 123456789;
 inline uint64_t PREFETCH_STRIDE = 64;
 
-void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
+void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
@@ -82,6 +82,7 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
   sh->stats->num_inserts = num_inserts;
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
+  // kmer_ht->display();
 #endif
 }
 

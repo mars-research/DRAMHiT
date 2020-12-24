@@ -2,7 +2,7 @@
 
 using namespace kmercounter;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   Application application;
   application.process(argc, argv);
 

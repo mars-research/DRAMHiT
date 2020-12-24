@@ -2,6 +2,7 @@
 #define _BASE_KHT_H
 
 #include <stdint.h>
+
 #include <string>
 
 using namespace std;
@@ -9,10 +10,12 @@ namespace kmercounter {
 
 const uint32_t PREFETCH_QUEUE_SIZE = 64;
 
-class KmerHashTable {
+class BaseHashTable {
  public:
   // Upsert (Insert and Update)
-  virtual bool insert(const void *kmer_data) = 0;
+  virtual bool insert(const void *data) = 0;
+
+  virtual void *find(const void *data) = 0;
 
   virtual void flush_queue() = 0;
 
@@ -26,6 +29,7 @@ class KmerHashTable {
 
   virtual void print_to_file(std::string &outfile) const = 0;
 
+  virtual ~BaseHashTable() {}
 #ifdef CALC_STATS
   uint64_t num_reprobes = 0;
   uint64_t num_soft_reprobes = 0;
