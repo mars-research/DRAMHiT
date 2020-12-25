@@ -477,6 +477,10 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
     // the occupied field can be set unconditionally
     this->hashtable[pidx].kb.occupied = 1;
 
+#ifdef EARLY_EXIT
+    if (cmp == 0xFF) return;
+#endif // EARLY_EXIT
+
     /* prepare for (possible) soft reprobe */
     pidx++;
     pidx = pidx & (this->capacity - 1);  // modulo
@@ -509,7 +513,7 @@ class alignas(64) SimpleKmerHashTable : public KmerHashTable {
         "movw   $1,    %%r8w\n\t"
         "cmpl   $0xFF, %[cmp_retry]\n\t"
         "cmovew %%r8w, %[new_occ]\n\t"
-        : [new_occ]"=rm"(new_occ)
+        : [new_occ]"+rm"(new_occ)
         : [cmp_retry]"rm"(cmp_retry)
         : "r8"
         );

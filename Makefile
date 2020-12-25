@@ -21,6 +21,7 @@ ifeq ($(PAPI), yes)
 endif
 
 # YES. We love spaghetti!!!
+#CFLAGS += -DEARLY_EXIT
 # CFLAGS += -DCALC_STATS
 CFLAGS += -D__MMAP_FILE
 #CFLAGS += -DTOUCH_DEPENDENCY
