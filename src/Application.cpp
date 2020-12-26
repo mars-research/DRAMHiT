@@ -51,7 +51,8 @@ const Configuration def = {
     .n_prod = 1,
     .n_cons = 1,
     .K = 20,
-    .ht_fill = 25};  // TODO enum
+    .ht_fill = 25,  // TODO enum
+    .masked_load_store_n_loops = 100};
 
 /* global config */
 Configuration config;
@@ -303,6 +304,56 @@ void papi_init(void) {
 void papi_init(void) {}
 #endif
 
+// AVX masked load/store intruction profiling
+// TODO: remove once profiling is done
+#include <array>
+#include <immintrin.h>
+namespace {
+  using Kv_mask = std::array<uint32_t, 8>;
+  __attribute__((aligned(32))) constexpr auto mask_rw = Kv_mask {
+    0x80000000, 0x80000000, 0x80000000, 0x80000000,
+    0x80000000, 0x0,        0x0,        0x0
+  };
+  __attribute__((aligned(32))) constexpr auto mask_ignore = Kv_mask {
+    0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0
+  };
+  const uint32_t* const kv_masks[2] =
+  {
+    mask_rw.data(),
+    mask_ignore.data(),
+  };
+  auto ymm_load = [](const uint32_t* addr)
+  {
+    return _mm256_load_si256(reinterpret_cast<const __m256i*>(addr));
+  };
+  auto ymm_maskload = [](const auto* addr, auto mask)
+  {
+    return _mm256_maskload_epi32(reinterpret_cast<const int*>(addr), mask);
+  };
+  auto ymm_maskstore = [](auto* addr, auto mask, auto data)
+  {
+    return _mm256_maskstore_epi32(reinterpret_cast<int*>(addr), mask, data);
+  };
+
+// runs AVX masked load/store instructions in a loop for profiling
+void masked_load_store_test(const uint32_t loop_count, bool no_write)
+{
+  kmercounter::Kmer_KV ht_entry_src{}, ht_entry_dst{};
+  const __m256i read_mask  = ymm_load(mask_rw.data());
+  const __m256i write_mask = ymm_load(no_write ?
+                                      mask_ignore.data() :
+                                      mask_rw.data());
+  // run instructions in a loop
+  for (auto i = 0U; i < loop_count; i++)
+  {
+    const __m256i key = ymm_maskload(&ht_entry_src, read_mask);
+    ymm_maskstore(&ht_entry_dst, write_mask, key);
+  }
+}
+
+}
+
 int Application::process(int argc, char *argv[]) {
   try {
     namespace po = boost::program_options;
@@ -315,7 +366,9 @@ int Application::process(int argc, char *argv[]) {
         "\n4: Read FASTQ, and insert to ht (specify --in_file)"
         "\n5: Read FASTQ, but do not insert to ht (specify --in_file) "
         "\n6/7: Synth/Prefetch,"
-        "\n8/9: Bqueue tests: with bqueues/without bequeues")(
+        "\n8/9: Bqueue tests: with bqueues/without bequeues"
+        "\n10/11: Masked load/store test: use RW/Zero(ignore) mask for writes"
+        "(optionally specify --n-loops)")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -369,7 +422,11 @@ int Application::process(int argc, char *argv[]) {
         "the value of 'k' in k-mer")(
         "ht-fill",
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
-        "adjust hashtable fill ratio [0-100] ");
+        "adjust hashtable fill ratio [0-100] ")(
+        "n-loops",
+        po::value<uint32_t>(&config.masked_load_store_n_loops)->
+          default_value(def.masked_load_store_n_loops),
+        "set loop count for masked load/store test");
 
     papi_init();
 
@@ -405,6 +462,16 @@ int Application::process(int argc, char *argv[]) {
         printf("[ERROR] Please provide input fasta file.\n");
         exit(-1);
       }
+    } else if (config.mode == MASKED_LOAD_STORE_TEST_RW) {
+      printf("[INFO] Mode : MASKED_LOAD_STORE_TEST_RW\n");
+      masked_load_store_test(config.masked_load_store_n_loops,
+                             /*no_write=*/false);
+      return 0;
+    } else if (config.mode == MASKED_LOAD_STORE_TEST_IG) {
+      printf("[INFO] Mode : MASKED_LOAD_STORE_TEST_IG\n");
+      masked_load_store_test(config.masked_load_store_n_loops,
+                             /*no_write=*/true);
+      return 0;
     }
 
     if (config.ht_type == SIMPLE_KHT) {

@@ -34,7 +34,9 @@ typedef enum {
   SYNTH = 6,
   PREFETCH = 7,
   BQ_TESTS_YES_BQ = 8,
-  BQ_TESTS_NO_BQ = 9
+  BQ_TESTS_NO_BQ = 9,
+  MASKED_LOAD_STORE_TEST_RW = 10,
+  MASKED_LOAD_STORE_TEST_IG = 11,
 } run_mode_t;
 
 typedef enum {
@@ -64,6 +66,7 @@ struct Configuration {
   uint32_t n_cons;
   uint32_t K;
   uint32_t ht_fill;
+  uint32_t masked_load_store_n_loops;
 };
 
 /* Thread stats */
