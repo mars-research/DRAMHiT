@@ -80,7 +80,11 @@ CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
 	   kmercounter.cpp \
 	   ) $(TESTS)
 
-CC_SRCS = src/hashers/city/city.cc
+CC_SRCS = src/hashers/city/city.cc \
+			src/tests/pregen/mem.cc \
+			#$(wildcard src/tests/distributions/*/*.cc) 
+			#src/tests/distributions/build/zipf.cc
+			#src/tests/distributions/mica/zipf.cc \
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o) $(CC_SRCS:.cc=.o)
 

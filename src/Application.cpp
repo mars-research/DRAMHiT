@@ -38,14 +38,14 @@ const Configuration def = {
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
     .num_threads = 1,
-    .mode = BQ_TESTS_YES_BQ,  // TODO enum
+    .mode = SYNTH, //BQ_TESTS_YES_BQ,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
     .in_file = std::string("/local/devel/devel/datasets/turkey/myseq0.fa"),
-    .ht_type = 1,
+    .ht_type = SIMPLE_KHT, //1,
     .in_file_sz = 0,
     .drop_caches = true,
     .n_prod = 1,
@@ -303,7 +303,14 @@ void papi_init(void) {
 void papi_init(void) {}
 #endif
 
+double theta_arg;
 int Application::process(int argc, char *argv[]) {
+	if(argc == 2)
+	{
+		printf("argv[%d] = %s\n", 1, argv[1]);
+		theta_arg = atof(argv[1]);
+		argv[1] = "";
+	}
   try {
     namespace po = boost::program_options;
     po::options_description desc("Program options");
@@ -376,7 +383,7 @@ int Application::process(int argc, char *argv[]) {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
-
+	
     if (config.mode == SYNTH) {
       printf("[INFO] Mode : SYNTH\n");
     } else if (config.mode == PREFETCH) {
