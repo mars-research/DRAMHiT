@@ -30,7 +30,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   KV *hashtable;
   int fd;
   int id;
-  size_t data_length;
+  size_t data_length, key_length;
 
   // https://www.bfilipek.com/2019/08/newnew-align.html
   void *operator new(std::size_t size, std::align_val_t align) {
@@ -67,13 +67,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   inline uint8_t touch(uint64_t i) {
 #if defined(TOUCH_DEPENDENCY)
-    if (this->hashtable[i & (this->capacity - 1)].kb.occupied == 0) {
-      this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
+    if (this->hashtable[i & (this->capacity - 1)].kb.count == 0) {
+      this->hashtable[i & (this->capacity - 1)].kb.count = 1;
     } else {
-      this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
+      this->hashtable[i & (this->capacity - 1)].kb.count = 1;
     };
 #else
-    this->hashtable[i & (this->capacity - 1)].kb.occupied = 1;
+    this->hashtable[i & (this->capacity - 1)].kb.count = 1;
 #endif
     return 0;
   };
@@ -81,13 +81,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   PartitionedHashStore(uint64_t c, uint32_t id) : fd(-1), id(id), queue_idx(0) {
     this->capacity = kmercounter::next_pow2(c);
     this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
-    memset(&this->null_item, 0, sizeof(KV));
-    this->data_length = null_item.data_length();
+    this->empty_item = this->empty_item.get_empty_key();
+    this->key_length = empty_item.key_length();
+    this->data_length = empty_item.data_length();
 
-    this->queue = (Kmer_queue *)(aligned_alloc(
-        64, PREFETCH_QUEUE_SIZE * sizeof(Kmer_queue)));
+    cout << "Empty item: " << this->empty_item << endl;
+    this->queue = (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     dbg("id: %d this->queue %p\n", id, this->queue);
     printf("[INFO] Hashtable size: %lu\n", this->capacity);
+    printf("%s, data_length %lu\n", __func__, this->data_length);
   }
 
   ~PartitionedHashStore() {
@@ -108,7 +110,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p, this->data_length);
       this->hashtable[pidx].kb.count++;
       this->hashtable[pidx].kb.occupied = true;
-      this->hashtable[pidx].kmer_hash = q->kmer_hash;
+      this->hashtable[pidx].key_hash = q->key_hash;
       return;
     }
 
@@ -138,8 +140,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       q->kmer_idx = pidx;
 
       this->queue[this->queue_idx] = *q;
-      // this->queue[this->queue_idx].kmer_p = q->kmer_p;
-      // this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+      // this->queue[this->queue_idx].data = q->data;
+      // this->queue[this->queue_idx].idx = q->idx;
       this->queue_idx++;
 
 #ifdef CALC_STATS
@@ -149,16 +151,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     void insert_batch(kmer_data_t * karray[4]) {
       uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
 
       uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
 
       uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
 
       uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash_new & (this->capacity - 1);  // modulo
+      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
 
       return;
     }
@@ -205,22 +207,36 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
   }
 
+  void upsert(const void *data) {
+    // key = find(data);
+    // if (key) {
+    //    update_count();
+    //}
+  }
+
+  void insert_defn(const void *data) {
+    //
+    //
+    //
+  }
+
   void *find(const void *data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t hash_new = this->hash((const char *)data);
+    uint64_t hash = this->hash((const char *)data);
 
-    size_t idx = hash_new & (this->capacity - 1);  // modulo
+    size_t idx = hash & (this->capacity - 1);  // modulo
 
-    int memcmp_res =
-        memcmp(&this->hashtable[idx].kb.kmer.data, data, this->data_length);
+    int memcmp_res = memcmp(this->hashtable[idx].data(), data,
+                            this->hashtable[idx].data_length());
 
     while (memcmp_res != 0) {
       idx++;
       idx = idx & (this->capacity - 1);
-      memcmp_res =
-          memcmp(&this->hashtable[idx].kb.kmer.data, data, this->data_length);
+      memcmp_res = memcmp(this->hashtable[idx].data(), data,
+                          this->hashtable[idx].data_length());
+
 #ifdef CALC_STATS
       distance_from_bucket++;
 #endif
@@ -237,7 +253,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].is_occupied()) {
+      if (!this->hashtable[i].is_empty()) {
         /*for (size_t k = 0; k < this->data_length; k++) {
           printf("%c", this->hashtable[i].kb.kmer.data[k]);
         }*/
@@ -249,7 +265,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   size_t get_fill() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].is_occupied()) {
+      if (!this->hashtable[i].is_empty()) {
         count++;
       }
     }
@@ -261,8 +277,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   size_t get_max_count() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].count() > count) {
-        count = this->hashtable[i].count();
+      if (this->hashtable[i].get_value() > count) {
+        count = this->hashtable[i].get_value();
       }
     }
     return count;
@@ -275,7 +291,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return;
     }
     for (size_t i = 0; i < this->get_capacity(); i++) {
-      if (this->hashtable[i].count() > 0) {
+      if (!this->hashtable[i].is_empty()) {
         f << this->hashtable[i] << std::endl;
       }
     }
@@ -283,20 +299,20 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
  private:
   uint64_t capacity;
-  KV null_item;       /* for comparison for empty slot */
-  Kmer_queue *queue;  // TODO prefetch this?
+  KV empty_item; /* for comparison for empty slot */
+  KVQ *queue;    // TODO prefetch this?
   uint32_t queue_idx;
 
   uint64_t hash(const void *k) {
     uint64_t hash_val;
 #if defined(CITY_HASH)
-    hash_val = CityHash64((const char *)k, this->data_length);
+    hash_val = CityHash64((const char *)k, this->key_length);
 #elif defined(FNV_HASH)
-    hash_val = hval = fnv_32a_buf(k, this->data_length, hval);
+    hash_val = hval = fnv_32a_buf(k, this->key_length, hval);
 #elif defined(XX_HASH)
-    hash_val = XXH64(k, this->data_length, 0);
+    hash_val = XXH64(k, this->key_length, 0);
 #elif defined(XX_HASH_3)
-    hash_val = XXH3_64bits(k, this->data_length);
+    hash_val = XXH3_64bits(k, this->key_length);
 #endif
     return hash_val;
   }
@@ -304,26 +320,28 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   /* Insert using prefetch: using a dynamic prefetch queue.
           If bucket is occupied, add to queue again to reprobe.
   */
-  void __insert(Kmer_queue *q) {
+  void __insert_with_soft_reprobe(KVQ *q) {
     /* hashtable location at which data is to be inserted */
-    size_t pidx = q->kmer_idx;
-
+    size_t pidx = q->idx;
+    KV *curr = &this->hashtable[pidx];
+    // printf("%s trying to insert %d\n", __func__, *(uint64_t*)q->data);
+    // cout << "element at pidx: " << pidx << " => " << this->hashtable[pidx] <<
+    // " occupied: " << occupied << endl;
   try_insert:
-    /* Compare with empty kmer to check if bucket is empty, and insert.*/
-    if (!this->hashtable[pidx].is_occupied()) {
-      this->hashtable[pidx].set_occupied();  // = true;
+    // Compare with empty element
+    if (curr->is_empty()) {
 #ifdef CALC_STATS
       this->num_memcpys++;
 #endif
-      memcpy(this->hashtable[pidx].data(), q->kmer_p,
-             this->hashtable[pidx].data_length());
+      curr.update_item(q->data);
       // this->hashtable[pidx].kb.count++;
-      this->hashtable[pidx].set_count(this->hashtable[pidx].count() + 1);
+      // this->hashtable[pidx].set_count(this->hashtable[pidx].count() + 1);
       // printf("inserting %d | ",
       // *(uint64_t*)&this->hashtable[pidx].kb.kmer.data printf("%lu: %d |
       // %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
+      // cout << "Inserting " << this->hashtable[pidx] << endl;
 #ifdef COMPARE_HASH
-      this->hashtable[pidx].kmer_hash = q->kmer_hash;
+      this->hashtable[pidx].key_hash = q->key_hash;
 #endif
       return;
     }
@@ -333,19 +351,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
 
 #ifdef COMPARE_HASH
-    if (this->hashtable[pidx].kmer_hash == q->kmer_hash)
+    if (this->hashtable[pidx].key_hash == q->key_hash)
 #endif
     {
 #ifdef CALC_STATS
       this->num_memcmps++;
 #endif
 
-      if (memcmp(this->hashtable[pidx].data(), q->kmer_p,
-                 this->hashtable[pidx].data_length()) == 0) {
-        this->hashtable[pidx].set_count(this->hashtable[pidx].count() + 1);
-
-        // this->hashtable[pidx].kb.count++;
-        // TODO: Copy value
+      if (curr->compare_key(q->data)) {
+        // update value
+        curr->update_value(q->data, 0);
         return;
       }
     }
@@ -362,18 +377,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       //   In the case where two elements fit in a cacheline, a single prefetch
       //   would bring in both the elements. We need not issue a second
       //   prefetch.
-      if (unlikely(pidx & 0x1)) {
+      if ((pidx & 0x1) || (pidx & 0x2)) {
+        // if (unlikely(pidx & 0x1)) {
 #ifdef CALC_STATS
         this->num_soft_reprobes++;
 #endif
         goto try_insert;
       }
       prefetch(pidx);
-      q->kmer_idx = pidx;
+      // q->idx = pidx;
 
       // this->queue[this->queue_idx] = *q;
-      this->queue[this->queue_idx].kmer_p = q->kmer_p;
-      this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+      this->queue[this->queue_idx].data = q->data;
+      this->queue[this->queue_idx].idx = pidx;
       this->queue_idx++;
       // printf("reprobe pidx %d\n", pidx);
 
@@ -382,6 +398,58 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
       return;
     }
+  }
+
+  void __insert(KVQ *q) {
+    // hashtable idx at which data is to be inserted
+    size_t idx = q->idx;
+    KV *curr = &this->hashtable[idx];
+
+    // Compare with empty element
+    if (curr->is_empty()) {
+#ifdef CALC_STATS
+      this->num_memcpys++;
+#endif
+      curr->insert_item(q->data, 0);
+
+#ifdef COMPARE_HASH
+      this->hashtable[pidx].key_hash = q->key_hash;
+#endif
+      return;
+    }
+
+#ifdef CALC_STATS
+    this->num_hashcmps++;
+#endif
+
+#ifdef COMPARE_HASH
+    if (this->hashtable[pidx].key_hash == q->key_hash)
+#endif
+    {
+#ifdef CALC_STATS
+      this->num_memcmps++;
+#endif
+
+      if (curr->compare_key(q->data)) {
+        curr->update_value(q->data, 0);
+        return;
+      }
+    }
+
+    // insert back into queue, and prefetch next bucket.
+    // next bucket will be probed in the next run
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+    prefetch(idx);
+
+    this->queue[this->queue_idx].data = q->data;
+    this->queue[this->queue_idx].idx = idx;
+    this->queue_idx++;
+
+#ifdef CALC_STATS
+    this->num_reprobes++;
+#endif
+    return;
   }
 
   /* Insert items from queue into hash table, interpreting "queue"
@@ -401,24 +469,24 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void __insert_into_queue(const void *data) {
-    uint64_t hash_new = this->hash((const char *)data);
-    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
-    // size_t __kmer_idx2 = (hash_new + 3) & (this->capacity - 1);  // modulo
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);  // modulo
+    // size_t __kmer_idx2 = (hash + 3) & (this->capacity - 1);  // modulo
     // size_t __kmer_idx = cityhash_new % (this->capacity);
 
     /* prefetch buckets and store data pointers in queue */
     // TODO how much to prefetch?
     // TODO if we do prefetch: what to return? API breaks
-    this->prefetch(__kmer_idx);
+    this->prefetch(idx);
     // this->prefetch(__kmer_idx2);
 
     // printf("inserting into queue at %u\n", this->queue_idx);
     // for (auto i = 0; i < 10; i++)
     //  asm volatile("nop");
-    this->queue[this->queue_idx].kmer_p = data;
-    this->queue[this->queue_idx].kmer_idx = __kmer_idx;
+    this->queue[this->queue_idx].data = data;
+    this->queue[this->queue_idx].idx = idx;
 #ifdef COMPARE_HASH
-    this->queue[this->queue_idx].kmer_hash = hash_new;
+    this->queue[this->queue_idx].key_hash = hash;
 #endif
     this->queue_idx++;
   }

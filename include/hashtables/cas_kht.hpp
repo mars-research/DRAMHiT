@@ -181,22 +181,22 @@ class CASKmerHashTable : public BaseHashTable {
     prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
   };
-  void __insert_into_queue(const void *kmer_data) {
-    uint64_t hash_new = this->hash((const char *)kmer_data);
-    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
+  void __insert_into_queue(const void *data) {
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);  // modulo
     // size_t __kmer_idx = cityhash_new % (this->capacity);
 
     /* prefetch buckets and store kmer_data pointers in queue */
     // TODO how much to prefetch?
     // TODO if we do prefetch: what to return? API breaks
-    this->prefetch(__kmer_idx);
+    this->prefetch(idx);
 
     // __builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
     // printf("inserting into queue at %u\n", this->queue_idx);
-    this->queue[this->queue_idx].kmer_data_ptr = kmer_data;
-    this->queue[this->queue_idx].kmer_idx = __kmer_idx;
+    this->queue[this->queue_idx].data = data;
+    this->queue[this->queue_idx].idx = idx;
 #ifdef COMPARE_HASH
-    this->queue[this->queue_idx].kmer_cityhash = hash_new;
+    this->queue[this->queue_idx].key_hash = hash;
 #endif
     this->queue_idx++;
   }
@@ -212,7 +212,7 @@ class CASKmerHashTable : public BaseHashTable {
 
   void __insert(CAS_Kmer_queue_r *q) {
     size_t pidx =
-        q->kmer_idx; /* hashtable location at which data is to be inserted */
+        q->idx; /* hashtable location at which data is to be inserted */
 
     /* Compare with empty kmer to check if bucket is empty, and insert. */
     // hashtable_mutexes[pidx].lock();
@@ -227,7 +227,7 @@ class CASKmerHashTable : public BaseHashTable {
       this->num_memcpys++;
 #endif
 
-      memcpy(&hashtable[pidx].kb.kmer.data, q->kmer_data_ptr, KMER_DATA_LENGTH);
+      memcpy(&hashtable[pidx].kb.kmer.data, q->data, KMER_DATA_LENGTH);
       hashtable[pidx].kb.count++;
 #ifdef COMPARE_HASH
       hashtable[pidx].kmer_hash = q->kmer_hash;
@@ -245,15 +245,15 @@ class CASKmerHashTable : public BaseHashTable {
 #endif
 
 #ifdef COMPARE_HASH
-    if (this->hashtable[pidx].kmer_hash == q->kmer_hash)
+    if (this->hashtable[pidx].key_hash == q->key_hash)
 #endif
     {
 #ifdef CALC_STATS
       this->num_memcmps++;
 #endif
 
-      if (memcmp(&hashtable[pidx].kb.kmer.data, q->kmer_data_ptr,
-                 KMER_DATA_LENGTH) == 0) {
+      if (memcmp(&hashtable[pidx].kb.kmer.data, q->data, KMER_DATA_LENGTH) ==
+          0) {
 #ifdef USE_ATOMICS
         fipc_test_FAI(hashtable[pidx].kb.count);
 #else
@@ -280,11 +280,11 @@ class CASKmerHashTable : public BaseHashTable {
     pidx = pidx & (this->capacity - 1);  // modulo
 
     prefetch(pidx);
-    q->kmer_idx = pidx;
+    q->idx = pidx;
 
     // this->queue[this->queue_idx] = *q;
-    this->queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr;
-    this->queue[this->queue_idx].kmer_idx = q->kmer_idx;
+    this->queue[this->queue_idx].data = q->data;
+    this->queue[this->queue_idx].idx = q->idx;
     this->queue_idx++;
     // printf("reprobe pidx %d\n", pidx);
 

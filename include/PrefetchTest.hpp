@@ -12,20 +12,55 @@ struct Prefetch_KV {
   volatile char padding[6];
   uint8_t _pad[32];
 
-  inline bool is_occupied() const { return kb.occupied; }
-
-  inline uint16_t count() const { return kb.count; }
-
-  inline void set_count(uint16_t count) { kb.count = count; }
-
-  inline void set_occupied() { kb.occupied = true; }
-
   inline void *data() { return this->kb.kmer.data; }
 
+  inline void *key() { return this->kb.kmer.data; }
+
+  inline void *value() { return NULL; }
+
   inline constexpr size_t data_length() const { return sizeof(this->kb.kmer); }
+
+  inline constexpr size_t key_length() const { return sizeof(this->kb.kmer); }
+
+  inline constexpr size_t value_length() const { return sizeof(this->kb); }
+
+  inline void insert_item(const void *from, size_t len) {
+    const char *kmer_data = reinterpret_cast<const char *>(from);
+    memcpy(this->kb.kmer.data, kmer_data, this->key_length());
+    this->kb.count += 1;
+  }
+
+  inline bool compare_key(const void *from) {
+    const char *kmer_data = reinterpret_cast<const char *>(from);
+    return !memcmp(this->kb.kmer.data, kmer_data, this->key_length());
+  }
+
+  inline void update_value(const void *from, size_t len) {
+    this->kb.count += 1;
+  }
+
+  inline Prefetch_KV get_empty_key() {
+    Prefetch_KV empty;
+    memset(empty.kb.kmer.data, 0, sizeof(empty.kb.kmer.data));
+    return empty;
+  }
+
+  inline bool is_empty() {
+    Prefetch_KV empty = this->get_empty_key();
+    return !memcmp(this->key(), empty.key(), this->key_length());
+  }
+
+  inline uint16_t get_value() const { return this->kb.count; }
 } PACKED;
 
-struct PrefetchKV_Queue {};
+struct PrefetchKV_Queue {
+  const void *data;
+  uint32_t idx;
+  uint8_t pad[4];
+#ifdef COMPARE_HASH
+  uint64_t key_hash;  // 8 bytes
+#endif
+};
 
 static_assert(sizeof(Prefetch_KV) == CACHE_LINE_SIZE,
               "Sizeof Prefetch_KV should be equal to CACHE_LINE_SIZE(64)");

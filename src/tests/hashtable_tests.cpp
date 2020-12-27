@@ -19,33 +19,44 @@ uint64_t HT_TESTS_NUM_INSERTS;
 #define HT_TESTS_MAX_STRIDE 2
 
 uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
-  auto count = 0;
+  uint64_t count = 1;
   auto k = 0;
   struct xorwow_state _xw_state;
 
   xorwow_init(&_xw_state);
 
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
     *((uint64_t *)&kmers[k].data) = 32;
+    *((uint64_t *)items[k].key()) = 32;
+    *((uint64_t *)items[k].value()) = 32;
 #elif defined(XORWOW)
 #warning "Xorwow rand kmer insert"
     *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
 #else
-    *((uint64_t *)&kmers[k].data) = count++;
+    //*((uint64_t *)&kmers[k].data) = count++;
+    *((uint64_t *)items[k].key()) = count;
+    *((uint64_t *)items[k].value()) = count;
 #endif
     // printf("%s, inserting i= %d, data %lu\n", __func__, i, count);
-    ktable->insert((void *)&kmers[k]);
+    // printf("%s, inserting i= %d\n", __func__, i);
+    // ktable->insert((void *)&kmers[k]);
+    // printf("->Inserting %lu\n", count);
+    count++;
+    ktable->insert((void *)&items[k]);
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
 #if defined(SAME_KMER)
     count++;
 #endif
   }
   // flush the last batch explicitly
+  printf("%s calling flush queue\n", __func__);
   ktable->flush_queue();
+  // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
   return count;
 }
 

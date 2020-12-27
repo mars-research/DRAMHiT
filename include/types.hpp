@@ -11,7 +11,7 @@
 #define PACKED __attribute__((packed))
 
 #define KMER_DATA_LENGTH 20
-#define KEY_SIZE 7
+#define KEY_SIZE 8
 #define VALUE_SIZE 8
 
 extern const uint32_t PREFETCH_QUEUE_SIZE;
