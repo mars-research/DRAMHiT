@@ -78,7 +78,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return 0;
   };
 
-  PartitionedHashStore(uint64_t c, uint32_t id) : fd(-1), id(id), queue_idx(0) {
+  PartitionedHashStore(uint64_t c, uint8_t id) : fd(-1), id(id), queue_idx(0) {
     this->capacity = kmercounter::next_pow2(c);
     this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
     this->empty_item = this->empty_item.get_empty_key();
@@ -207,57 +207,45 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
   }
 
-  void upsert(const void *data) {
-    // key = find(data);
-    // if (key) {
-    //    update_count();
-    //}
-  }
-
-  void insert_defn(const void *data) {
-    //
-    //
-    //
-  }
-
   void *find(const void *data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
     uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash;
+    KV *curr;
+    bool found = false;
 
-    size_t idx = hash & (this->capacity - 1);  // modulo
-
-    int memcmp_res = memcmp(this->hashtable[idx].data(), data,
-                            this->hashtable[idx].data_length());
-
-    while (memcmp_res != 0) {
-      idx++;
+    // printf("Thread %lu: Trying memcmp at: %lu\n", this->thread_id, idx);
+    for (auto i = 0u; i < this->capacity; i++) {
       idx = idx & (this->capacity - 1);
-      memcmp_res = memcmp(this->hashtable[idx].data(), data,
-                          this->hashtable[idx].data_length());
-
+      curr = &this->hashtable[idx];
+      if (curr->compare_key(data)) {
+        found = true;
+        break;
+      }
 #ifdef CALC_STATS
       distance_from_bucket++;
 #endif
+      idx++;
     }
-
 #ifdef CALC_STATS
     if (distance_from_bucket > this->max_distance_from_bucket) {
       this->max_distance_from_bucket = distance_from_bucket;
     }
     this->sum_distance_from_bucket += distance_from_bucket;
 #endif
-    return &this->hashtable[idx];
+    // return empty_element if nothing is found
+    if (!found) {
+      curr = &this->empty_item;
+    }
+    return curr;
   }
 
   void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
       if (!this->hashtable[i].is_empty()) {
-        /*for (size_t k = 0; k < this->data_length; k++) {
-          printf("%c", this->hashtable[i].kb.kmer.data[k]);
-        }*/
-        std::cout << this->hashtable[i] << std::endl;
+        cout << this->hashtable[i] << endl;
       }
     }
   }
@@ -411,7 +399,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->num_memcpys++;
 #endif
       curr->insert_item(q->data, 0);
-
 #ifdef COMPARE_HASH
       this->hashtable[pidx].key_hash = q->key_hash;
 #endif

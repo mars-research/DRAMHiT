@@ -10,34 +10,14 @@ struct Kmer_base {
   uint16_t count;
 } PACKED;
 
-struct Kmer_base_cas {
-  Kmer_s kmer;
-  uint8_t count;
-  bool occupied;
-} PACKED;
-
-using Kmer_base_t = struct Kmer_base;
-using Kmer_base_cas_t = struct Kmer_base_cas;
-
-struct Kmer_KV_cas {
-  Kmer_base_cas_t kb;        // 20 + 2 bytes
-  uint64_t kmer_hash;        // 8 bytes
-  volatile char padding[2];  // 2 bytes
-
-  friend std::ostream &operator<<(std::ostream &strm, const Kmer_KV_cas &k) {
-    return strm << std::string(k.kb.kmer.data, KMER_DATA_LENGTH) << " : "
-                << k.kb.count;
-  }
-} PACKED;
-
 struct Kmer_KV {
-  Kmer_base_t kb;            // 20 + 2 bytes
+  Kmer_base kb;              // 20 + 2 bytes
   uint64_t kmer_hash;        // 8 bytes
   volatile char padding[2];  // 2 bytes
 
   friend std::ostream &operator<<(std::ostream &strm, const Kmer_KV &k) {
     // return strm << std::string(k.kb.kmer.data, KMER_DATA_LENGTH) << " : "
-    return strm << *(uint64_t *)k.kb.kmer.data << " : " << k.kb.count;
+    return strm << *((uint64_t *)k.kb.kmer.data) << " : " << k.kb.count;
   }
 
   inline void *data() { return this->kb.kmer.data; }
@@ -51,6 +31,8 @@ struct Kmer_KV {
     memcpy(this->kb.kmer.data, kmer_data, this->key_length());
     this->kb.count += 1;
   }
+
+  inline void cas_insert(const void *from, Kmer_KV &empty) {}
 
   inline bool compare_key(const void *from) {
     const char *kmer_data = reinterpret_cast<const char *>(from);
@@ -96,16 +78,6 @@ struct Kmer_queue {
 #endif
 } PACKED;
 
-// TODO store org kmer idx, to check if we have wrappd around after reprobe
-struct CAS_Kmer_queue_r {
-  const void *data;
-  uint32_t idx;  // TODO reduce size, TODO decided by hashtable size?
-  uint8_t pad[4];
-#ifdef COMPARE_HASH
-  uint64_t key_hash;  // 8 bytes
-#endif
-} PACKED;
-
 struct KVPair {
   uint64_t key;
   uint64_t value;
@@ -129,6 +101,17 @@ struct Item {
     this->kvpair = *kvpair;
   }
 
+  inline bool cas_insert(const void *from, Item &empty) {
+    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
+    auto success = __sync_bool_compare_and_swap(&this->kvpair.key,
+                                                empty.kvpair.key, kvpair->key);
+
+    if (success) {
+      this->kvpair.value = kvpair->value;
+    }
+    return success;
+  }
+
   inline bool compare_key(const void *from) {
     const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
     return this->kvpair.key == kvpair->key;
@@ -137,6 +120,18 @@ struct Item {
   inline void update_value(const void *from, size_t len) {
     const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
     this->kvpair.value = kvpair->value;
+  }
+
+  inline bool cas_update(const void *from) {
+    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
+    auto ret = false;
+    uint64_t old_val;
+    while (!ret) {
+      old_val = this->kvpair.value;
+      ret = __sync_bool_compare_and_swap(&this->kvpair.value, old_val,
+                                         kvpair->value);
+    }
+    return ret;
   }
 
   inline void *data() { return &this->kvpair; }

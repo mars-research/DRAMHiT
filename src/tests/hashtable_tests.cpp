@@ -38,7 +38,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
 #warning "Xorwow rand kmer insert"
     *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
 #else
-    //*((uint64_t *)&kmers[k].data) = count++;
+    *((uint64_t *)&kmers[k].data) = count;
     *((uint64_t *)items[k].key()) = count;
     *((uint64_t *)items[k].value()) = count;
 #endif
@@ -56,7 +56,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
   // flush the last batch explicitly
   printf("%s calling flush queue\n", __func__);
   ktable->flush_queue();
-  // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
+  printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
   return count;
 }
 

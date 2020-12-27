@@ -7,7 +7,7 @@
 namespace kmercounter {
 
 struct Prefetch_KV {
-  Kmer_base_t kb;      // 20 + 2 bytes
+  Kmer_base kb;        // 20 + 2 bytes
   uint32_t kmer_hash;  // 4 bytes (4B enties is enough)
   volatile char padding[6];
   uint8_t _pad[32];

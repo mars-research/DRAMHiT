@@ -74,13 +74,13 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   if (config.ht_type == SIMPLE_KHT) {
-    kmer_ht = new PartitionedHashStore<Kmer_KV, Kmer_queue>(sz, id);
+    kmer_ht = new PartitionedHashStore<Item, ItemQueue>(sz, id);
   } else if (config.ht_type == ROBINHOOD_KHT) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == CAS_KHT) {
     /* For the CAS Hash table, size is the same as
     size of one partitioned ht * number of threads */
-    kmer_ht = new CASKmerHashTable(sz * config.num_threads);
+    kmer_ht = new CASHashTable<Item, ItemQueue>(sz * config.num_threads);
     /*TODO tidy this up, don't use static + locks maybe*/
   } else {
     fprintf(stderr, "STDMAP_KHT Not implemented\n");
