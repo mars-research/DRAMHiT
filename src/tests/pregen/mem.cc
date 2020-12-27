@@ -8,8 +8,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#warning here!
-
 /*#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -24,7 +22,7 @@
 #define MMAP
 #define HUGEPAGES
 //#define FILE_MMAP
-//#define HEADER TOOBIASED//STCKOVRFLW//MICA
+#define HEADER STCKOVRFLW//MICA//TOOBIASED//
 
 #ifndef HEADER
 	#include "../distributions/zipf.h"
@@ -33,7 +31,7 @@
 #elif HEADER == STCKOVRFLW
 	#include "../distributions/stackoverflow/zipf.h"
 #elif HEADER == TOOBIASED
-	//#include "../distributions/toobiased/zipf.h"
+	#include "../distributions/toobiased/zipf.h"
 #endif
 
 #ifdef HUGEPAGES

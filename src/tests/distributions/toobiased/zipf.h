@@ -11,7 +11,6 @@
  * All rights reserved. Published under the BSD-2 license in the LICENSE file.
  ******************************************************************************/
 
-#warning first here!
 
 #ifndef ZIPF_H_
 #define ZIPF_H_

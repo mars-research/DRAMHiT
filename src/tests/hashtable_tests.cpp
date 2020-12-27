@@ -21,8 +21,8 @@
 //#define SAME_KMER
 //#define ZIPF
 //#define MINE
-//#define PREGEN
-#define HEADER TOOBIASED//MICA//STCKOVRFLW//
+#define PREGEN
+//#define HEADER MICA//STCKOVRFLW//TOOBIASED//
 
 #ifdef PREGEN
   #include "pregen/mem.h"
@@ -116,6 +116,7 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
       //printf("here\n");
       //uint64_t t_start = RDTSC_START();
       mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
+      printf("Data generated.\n");
       //mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
       //uint64_t t_end = RDTSCP();
       //printf("Cycles to generate: %lu (%f ms)\t Cycles per gen: %f\n", t_end-t_start, (double)(t_end-t_start)* one_cycle_ns / 1000000.0, (t_end-t_start)/(HT_TESTS_NUM_INSERTS*1.0));
@@ -127,7 +128,6 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     #elif defined(HEADER)
       ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
     #endif
-
     t_start = RDTSC_START();
 
     // PREFETCH_QUEUE_SIZE = i;
