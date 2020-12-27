@@ -3,9 +3,10 @@
 #define RAND_H_
 
 #include <cassert>
+
 #include "common.h"
 
-//mica random number generation class
+// mica random number generation class
 class Rand {
  public:
   explicit Rand() : state_(0) {}
