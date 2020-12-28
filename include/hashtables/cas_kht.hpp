@@ -245,9 +245,7 @@ class CASHashTable : public BaseHashTable {
       // printf("%lu: %d | %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
       // If CAS fails, we need to see if someother thread has updated the same
       // <k,v> onto the position we were trying to insert. If so, we need to
-      // update the value instead of inserting new
-      idx--;
-      goto reprobe;
+      // update the value instead of inserting new. Just fall-through to check!
     }
 
 #ifdef CALC_STATS
