@@ -18,6 +18,11 @@
 #include "ht_helper.hpp"
 #include "sync.h"
 
+#if defined(BRANCHLESS) && defined(BRACNHLESS_NO_SIMD)
+#error \
+    "BRACHLESS and BRANCHLESS_NO_SIMD options selected in CFLAGS, remove one to fix this error"
+#endif
+
 #if defined(BRANCHLESS)
 #include <immintrin.h>
 #endif
@@ -398,7 +403,49 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t idx = q->idx;
     KV *curr = &this->hashtable[idx];
 
-#ifdef BRANCHLESS
+#ifdef BRANCHLESS_NO_SIMD
+    uint16_t cmp = 0;
+
+    auto try_insert = [&]() {
+      int empty = curr->is_empty();
+
+      asm volatile(
+          "cmp $1, %[empty]\n\t"
+          "mov %[data], %%r12\n\t"
+          "mov %[kv_dest], %%rbx\n\t"
+          "cmove %%r12, %%rbx\n\t"
+          "mov %%rbx, %[kv_dest]\n\t"
+          "mov %[kv_dest], %%rbx\n\t"
+          "cmp %%rbx, %[data]\n\t"
+          "mov $0xFF, %%r13w\n\t"
+          "cmove %%r13w, %[cmp]\n\t"
+          : [ cmp ] "=r"(cmp), [ kv_dest ] "+m"(*(uint64_t *)curr)
+          : [ empty ] "r"(empty), [ data ] "r"(*(uint64_t *)(q->data))
+          : "rbx", "r12", "r13", "memory");
+      return cmp;
+    };
+
+    cmp = try_insert();
+
+    curr->update_brless(cmp);
+
+    /* prepare for (possible) soft reprobe */
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+
+    prefetch(idx);
+    this->queue[this->queue_idx].data = q->data;
+    this->queue[this->queue_idx].idx = idx;
+
+    // this->queue_idx should not be incremented if either
+    // of the try_inserts succeeded
+    int inc{1};
+    inc = (cmp == 0xFF) ? 0 : inc;
+    this->queue_idx += inc;
+
+    return;
+
+#elif defined(BRANCHLESS)
     static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
     using Kv_mask = std::array<uint32_t, 8>;
     /* The VMASKMOVPS instruction we use to load the key into a ymmx

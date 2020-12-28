@@ -48,6 +48,10 @@ ifeq ($(BRANCH), no)
 	CXXFLAGS += -DBRANCHLESS
 endif
 
+ifeq ($(BRANCH_NO_SIMD), yes)
+	CXXFLAGS += -DBRANCHLESS_NO_SIMD
+endif
+
 # boostpo to parse args
 LIBS = -lboost_program_options
 # for compressed fasta?
