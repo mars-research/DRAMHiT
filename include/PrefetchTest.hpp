@@ -39,6 +39,8 @@ struct Prefetch_KV {
     this->kb.count += 1;
   }
 
+  inline void update_brless(uint8_t cmp) {}
+
   inline Prefetch_KV get_empty_key() {
     Prefetch_KV empty;
     memset(empty.kb.kmer.data, 0, sizeof(empty.kb.kmer.data));

@@ -126,6 +126,17 @@ struct Aggr_KV {
 
   inline void update_value(const void *from, size_t len) { this->count += 1; }
 
+  inline void update_brless(uint8_t cmp) {
+    asm volatile(
+        "mov %[count], %%rbx\n\t"
+        "inc %%rbx\n\t"
+        "cmpb $0xff, %[cmp]\n\t"
+        "cmove %%rbx, %[count]"
+        : [ count ] "+r"(this->count)
+        : [ cmp ] "S"(cmp)
+        : "rbx");
+  }
+
   inline uint16_t get_value() const { return this->count; }
 
   inline constexpr size_t data_length() const { return sizeof(Aggr_KV); }
