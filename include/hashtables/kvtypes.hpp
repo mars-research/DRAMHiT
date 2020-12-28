@@ -32,8 +32,6 @@ struct Kmer_KV {
     this->kb.count += 1;
   }
 
-  inline void cas_insert(const void *from, Kmer_KV &empty) {}
-
   inline bool compare_key(const void *from) {
     const char *kmer_data = reinterpret_cast<const char *>(from);
     return !memcmp(this->kb.kmer.data, kmer_data, this->key_length());
@@ -76,6 +74,76 @@ struct Kmer_queue {
 #ifdef COMPARE_HASH
   uint64_t key_hash;  // 8 bytes
 #endif
+} PACKED;
+
+struct Aggr_KV {
+  using key_type = uint64_t;
+  using value_type = uint64_t;
+
+  key_type key;
+  value_type count;
+
+  friend std::ostream &operator<<(std::ostream &strm, const Aggr_KV &k) {
+    return strm << k.key << " : " << k.count;
+  }
+
+  // inline void *data() { return this; }
+
+  // inline void *key() { return &this->key; }
+
+  // inline void *value() { return NULL; }
+
+  inline void insert_item(const void *from, size_t len) {
+    const key_type *key = reinterpret_cast<const key_type *>(from);
+    this->key = *key;
+    this->count += 1;
+  }
+
+  inline bool cas_insert(const void *from, Aggr_KV &empty) {
+    const key_type *key = reinterpret_cast<const key_type *>(from);
+    auto success = __sync_bool_compare_and_swap(&this->key, empty.key, *key);
+
+    if (success) {
+      this->cas_update(from);
+    }
+    return success;
+  }
+
+  inline bool cas_update(const void *from) {
+    auto ret = false;
+    uint64_t old_val;
+    while (!ret) {
+      old_val = this->count;
+      ret = __sync_bool_compare_and_swap(&this->count, old_val, old_val + 1);
+    }
+    return ret;
+  }
+
+  inline bool compare_key(const void *from) {
+    const key_type *key = reinterpret_cast<const key_type *>(from);
+    return this->key == *key;
+  }
+
+  inline void update_value(const void *from, size_t len) { this->count += 1; }
+
+  inline uint16_t get_value() const { return this->count; }
+
+  inline constexpr size_t data_length() const { return sizeof(Aggr_KV); }
+
+  inline constexpr size_t key_length() const { return sizeof(key_type); }
+
+  inline constexpr size_t value_length() const { return sizeof(value_type); }
+
+  inline Aggr_KV get_empty_key() {
+    Aggr_KV empty;
+    empty.key = empty.count = 0;
+    return empty;
+  }
+
+  inline bool is_empty() {
+    Aggr_KV empty = this->get_empty_key();
+    return this->key == empty.key;
+  }
 } PACKED;
 
 struct KVPair {
@@ -150,7 +218,7 @@ struct Item {
 
   inline bool is_empty() {
     Item empty = this->get_empty_key();
-    return !memcmp(this->key(), empty.key(), this->key_length());
+    return this->kvpair.key == empty.kvpair.key;
   }
 
 } PACKED;

@@ -27,6 +27,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
 
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
@@ -41,13 +42,15 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
     *((uint64_t *)&kmers[k].data) = count;
     *((uint64_t *)items[k].key()) = count;
     *((uint64_t *)items[k].value()) = count;
+    keys[k] = count;
 #endif
     // printf("%s, inserting i= %d, data %lu\n", __func__, i, count);
     // printf("%s, inserting i= %d\n", __func__, i);
     // ktable->insert((void *)&kmers[k]);
     // printf("->Inserting %lu\n", count);
     count++;
-    ktable->insert((void *)&items[k]);
+    // ktable->insert((void *)&items[k]);
+    ktable->insert((void *)&keys[k]);
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
 #if defined(SAME_KMER)
     count++;

@@ -74,13 +74,13 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   if (config.ht_type == SIMPLE_KHT) {
-    kmer_ht = new PartitionedHashStore<Item, ItemQueue>(sz, id);
+    kmer_ht = new PartitionedHashStore<Aggr_KV, ItemQueue>(sz, id);
   } else if (config.ht_type == ROBINHOOD_KHT) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == CAS_KHT) {
     /* For the CAS Hash table, size is the same as
     size of one partitioned ht * number of threads */
-    kmer_ht = new CASHashTable<Item, ItemQueue>(sz * config.num_threads);
+    kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
     /*TODO tidy this up, don't use static + locks maybe*/
   } else {
     fprintf(stderr, "STDMAP_KHT Not implemented\n");
@@ -191,11 +191,19 @@ void Application::shard_thread(int tid) {
 
   // Write to file
   if (config.mode != FASTQ_NO_INSERT && !config.ht_file.empty()) {
+    // for CAS hashtable, not every thread has to write to file
+    if ((config.ht_type == CAS_KHT) && (sh->shard_idx > 0)) {
+      goto done;
+    }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
     printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
            outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
+
+  free_ht(kmer_ht);
+
+done:
 
   fipc_test_FAD(ready_threads);
 
@@ -208,7 +216,6 @@ void Application::shard_thread(int tid) {
     pw1.stop();
   }  // PapiEvent scope
 #endif
-  free_ht(kmer_ht);
   return;
 }
 
