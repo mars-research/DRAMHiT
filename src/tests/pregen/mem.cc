@@ -18,21 +18,24 @@
 #define MICA 1
 #define STCKOVRFLW 2
 #define TOOBIASED 3
+#define REJ_INV 4
 
 //#define MEM
 #define MMAP
 #define HUGEPAGES
 //#define FILE_MMAP
-#define HEADER STCKOVRFLW  // MICA//TOOBIASED//
+#define HEADER REJ_INV//STCKOVRFLW//MICA//TOOBIASED//
 
 #ifndef HEADER
-#include "../distributions/zipf.h"
+  #include "../distributions/zipf.h"
 #elif HEADER == MICA
-#include "../distributions/mica/zipf.h"
+  #include "../distributions/mica/zipf.h"
 #elif HEADER == STCKOVRFLW
-#include "../distributions/stackoverflow/zipf.h"
+  #include "../distributions/stackoverflow/zipf.h"
 #elif HEADER == TOOBIASED
-#include "../distributions/toobiased/zipf.h"
+  #include "../distributions/toobiased/zipf.h"
+#elif HEADER == REJ_INV
+  #include "../distributions/rej_inv_abseil/zipf.h"
 #endif
 
 #ifdef HUGEPAGES

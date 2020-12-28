@@ -15,26 +15,29 @@
 #define MICA 1
 #define STCKOVRFLW 2
 #define TOOBIASED 3
+#define REJ_INV 4
 
 // Select one of defines to enable
 //#define SAME_KMER
 //#define ZIPF
 //#define MINE
-#define PREGEN
-//#define HEADER MICA//STCKOVRFLW//TOOBIASED//
+//#define PREGEN
+#define HEADER REJ_INV//STCKOVRFLW//MICA//TOOBIASED//
 
 #ifdef PREGEN
-#include "pregen/mem.h"
+    #include "pregen/mem.h"
 #else
-#ifndef HEADER
-#include "distributions/zipf.h"
-#elif HEADER == MICA
-#include "distributions/mica/zipf.h"
-#elif HEADER == STCKOVRFLW
-#include "distributions/stackoverflow/zipf.h"
-#elif HEADER == TOOBIASED
-#include "distributions/toobiased/zipf.h"
-#endif
+    #ifndef HEADER
+        #include "distributions/zipf.h"
+    #elif HEADER == MICA
+        #include "distributions/mica/zipf.h"
+    #elif HEADER == STCKOVRFLW
+        #include "distributions/stackoverflow/zipf.h"
+    #elif HEADER == TOOBIASED
+        #include "distributions/toobiased/zipf.h"
+    #elif HEADER == REJ_INV
+        #include "distributions/rej_inv_abseil/zipf.h"
+    #endif
 #endif
 
 namespace kmercounter {
@@ -86,7 +89,7 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
     *((uint64_t *)&kmers[k].data) =
         next();  // ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg,
                  // HT_TESTS_NUM_INSERTS);//next();//1;//
-    // printf("%lu\n", next());
+    //printf("%lu\n", next());
 #else
     *((uint64_t *)&kmers[k].data) = count;  //++;
 #endif
@@ -150,6 +153,7 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
 #elif defined(MINE)
     delete rand_;
 #endif
+ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
 
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "

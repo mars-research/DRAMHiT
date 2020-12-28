@@ -173,7 +173,7 @@ uint64_t theta_next() {
   // databases. In SIGMOD, 1994.
 
   // double u = erand48(rand_state_);
-  double u = rand_.next_f64();
+  double u = 0.5;//rand_.next_f64();
   double uz = u * zetan_;
   if (uz < 1.)
     return 0UL;
