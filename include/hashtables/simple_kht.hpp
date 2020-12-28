@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <array>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -16,6 +17,10 @@
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "sync.h"
+
+#if defined(BRANCHLESS)
+#include <immintrin.h>
+#endif
 
 namespace kmercounter {
 
@@ -393,6 +398,92 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t idx = q->idx;
     KV *curr = &this->hashtable[idx];
 
+#ifdef BRANCHLESS
+    static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
+    using Kv_mask = std::array<uint32_t, 8>;
+    /* The VMASKMOVPS instruction we use to load the key into a ymmx
+     * register loads 4-byte (floating point) numbers based on the
+     * MSB of the corresponding 4-byte number in the mask register.
+     * The first 8 bytes of an entry in the hastable make up the key.
+     * Hence, the first 2 (8/4) entries in the array must have their
+     * MSB set.
+     */
+    __attribute__((aligned(32))) constexpr auto mask_rw =
+        Kv_mask{0x80000000, 0x80000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    /* When we do not want to read or write, the "mask" must consist
+     * of 4-byte numbers with their MSB set to 0.
+     */
+    __attribute__((aligned(32))) constexpr auto mask_ignore =
+        Kv_mask{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    const uint32_t *const kv_masks[2] = {
+        mask_rw.data(),
+        mask_ignore.data(),
+    };
+    auto ymm_load = [](const uint32_t *addr) {
+      return _mm256_load_si256(reinterpret_cast<const __m256i *>(addr));
+    };
+    auto ymm_maskload = [](const auto *addr, auto mask) {
+      return _mm256_maskload_epi32(reinterpret_cast<const int *>(addr), mask);
+    };
+    auto ymm_maskstore = [](auto *addr, auto mask, auto data) {
+      return _mm256_maskstore_epi32(reinterpret_cast<int *>(addr), mask, data);
+    };
+    auto ymm_cmp = [](auto a, auto b) { return _mm256_cmpeq_epi32(a, b); };
+    auto ymm_movemask = [](auto a) { return _mm256_movemask_ps(a); };
+
+    /* load key mask and new key */
+    const __m256i key_mask = ymm_load(kv_masks[0 /* RW mask */]);
+    const __m256i new_key = ymm_maskload(q->data, key_mask);
+
+    /*
+     * returns the result of the comparison between the new key
+     * and the key at idx */
+    auto try_insert = [&](const auto idx) {
+      const int mask_idx = !curr->is_empty();
+      /* kv_masks[0] returns a mask that reads/writes;
+       * kv_masks[1] returns a mask that does nothing */
+      const __m256i cond_store_mask = ymm_load(kv_masks[mask_idx]);
+
+      /* conditionally store the new key into hashtable[idx] */
+      ymm_maskstore(curr, cond_store_mask, new_key);
+
+      /* at this point the key in the hashtable is either equal to
+       * the new key (q->data) or not. compare them
+       */
+      const __m256i cond_load_mask = ymm_load(kv_masks[0 /*RW mask*/]);
+      const __m256i key = ymm_maskload(curr, cond_load_mask);
+      const __m256i cmp_raw = ymm_cmp(new_key, key);
+      /* ymm_cmp compares the keys as packed 4-byte integers
+       * cmp_raw consists of packed 4-byte "result" integers that are
+       * 0xFF..FF if the corresponding 4-byte integers in the keys are equal,
+       * and 0x00..00 otherwise. testing this is not straight-forward.
+       * so, we "compress" the eigth integers into a bit each (MSB).
+       */
+      return ymm_movemask(_mm256_castsi256_ps(cmp_raw));
+    };
+
+    const int cmp = try_insert(idx);
+
+    curr->update_brless(cmp);
+
+    /* prepare for (possible) soft reprobe */
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+
+    prefetch(idx);
+    this->queue[this->queue_idx].data = q->data;
+    this->queue[this->queue_idx].idx = idx;
+
+    // this->queue_idx should not be incremented if either
+    // of the try_inserts succeeded
+    int inc{1};
+    inc = (cmp == 0xFF) ? 0 : inc;
+    this->queue_idx += inc;
+
+    return;
+
+#else  // !BRANCHLESS
+
     // Compare with empty element
     if (curr->is_empty()) {
 #ifdef CALC_STATS
@@ -437,6 +528,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->num_reprobes++;
 #endif
     return;
+#endif  // BRANCHLESS
   }
 
   /* Insert items from queue into hash table, interpreting "queue"

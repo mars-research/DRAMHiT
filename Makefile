@@ -44,6 +44,9 @@ CFLAGS += -DBQ_TESTS_USE_HALT
 #CFLAGS += -DUSE_ATOMICS
 
 CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD
+ifeq ($(BRANCH), no)
+	CXXFLAGS += -DBRANCHLESS
+endif
 
 # boostpo to parse args
 LIBS = -lboost_program_options
