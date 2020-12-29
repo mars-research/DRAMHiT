@@ -136,7 +136,6 @@ struct Aggr_KV {
         : [ cmp ] "S"(cmp)
         : "rbx");
   }
-
   inline uint16_t get_value() const { return this->count; }
 
   inline constexpr size_t data_length() const { return sizeof(Aggr_KV); }
@@ -155,6 +154,25 @@ struct Aggr_KV {
     Aggr_KV empty = this->get_empty_key();
     return this->key == empty.key;
   }
+
+  inline uint16_t insert_or_update(const void * data){
+      uint16_t ret = 0;
+      int empty = this->is_empty();
+      asm volatile(
+          "mov %[count], %%r14\n\t"
+          "inc %%r14\n\t" // inc count to use later
+          "cmp $1, %[empty]\n\t" //cmp is empty
+          "cmove %[data], %[key]\n\t" // conditionally move data to hashtable
+          "cmp %[key], %[data]\n\t"
+          "mov $0xFF, %%r13w\n\t"
+          "cmove %%r14, %[count]\n\t" //  conditionally increment count
+          "cmove %%r13w, %[ret]\n\t" //return success
+          : [ ret ] "=r"(ret), [ key ] "+r"(this->key), [count] "+r"(this->count)
+          : [ empty ] "r"(empty), [ data ] "r"(*(uint64_t *)data)
+          : "r13", "r14", "memory"
+          );
+      return ret;
+    };
 } PACKED;
 
 struct KVPair {
@@ -241,6 +259,6 @@ struct ItemQueue {
   uint64_t key_hash;  // 8 bytes
 #endif
 } PACKED;
-
 }  // namespace kmercounter
-#endif  // __KV_TYPES_HPP__
+
+#endif // __KV_TYPES_HPP__

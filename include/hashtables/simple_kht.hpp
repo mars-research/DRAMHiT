@@ -404,30 +404,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     KV *curr = &this->hashtable[idx];
 
 #ifdef BRANCHLESS_NO_SIMD
-    uint16_t cmp = 0;
-
-    auto try_insert = [&]() {
-      int empty = curr->is_empty();
-
-      asm volatile(
-          "cmp $1, %[empty]\n\t"
-          "mov %[data], %%r12\n\t"
-          "mov %[kv_dest], %%rbx\n\t"
-          "cmove %%r12, %%rbx\n\t"
-          "mov %%rbx, %[kv_dest]\n\t"
-          "mov %[kv_dest], %%rbx\n\t"
-          "cmp %%rbx, %[data]\n\t"
-          "mov $0xFF, %%r13w\n\t"
-          "cmove %%r13w, %[cmp]\n\t"
-          : [ cmp ] "=r"(cmp), [ kv_dest ] "+m"(*(uint64_t *)curr)
-          : [ empty ] "r"(empty), [ data ] "r"(*(uint64_t *)(q->data))
-          : "rbx", "r12", "r13", "memory");
-      return cmp;
-    };
-
-    cmp = try_insert();
-
-    curr->update_brless(cmp);
+    uint16_t cmp = curr->insert_or_update(q->data); //0xFF: insert or update was successfull
 
     /* prepare for (possible) soft reprobe */
     idx++;

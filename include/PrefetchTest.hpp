@@ -53,6 +53,8 @@ struct Prefetch_KV {
   }
 
   inline uint16_t get_value() const { return this->kb.count; }
+
+  inline uint16_t insert_or_update(const void * data) { return 0xFF; }
 } PACKED;
 
 struct PrefetchKV_Queue {
