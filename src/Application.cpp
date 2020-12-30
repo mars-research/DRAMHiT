@@ -51,7 +51,11 @@ const Configuration def = {
     .n_prod = 1,
     .n_cons = 1,
     .K = 20,
-    .ht_fill = 25};  // TODO enum
+    .ht_fill = 25,
+    
+    .theta = 0.75,
+    .data_length = (1LL<<16),//HT_TESTS_HT_SIZE;//(1LL << 28);
+    .data_range = (1LL<<8)};  // TODO enum
 
 /* global config */
 Configuration config;
@@ -305,12 +309,6 @@ void papi_init(void) {}
 
 double theta_arg;
 int Application::process(int argc, char *argv[]) {
-	if(argc == 2)
-	{
-		printf("argv[%d] = %s\n", 1, argv[1]);
-		theta_arg = atof(argv[1]);
-		argv[1] = "";
-	}
   try {
     namespace po = boost::program_options;
     po::options_description desc("Program options");
@@ -376,7 +374,14 @@ int Application::process(int argc, char *argv[]) {
         "the value of 'k' in k-mer")(
         "ht-fill",
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
-        "adjust hashtable fill ratio [0-100] ");
+        "adjust hashtable fill ratio [0-100] ")
+
+        ("theta", po::value<double>(&config.theta)->default_value(def.theta),
+        "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ")
+        ("length", po::value<uint64_t>(&config.data_length)->default_value(def.data_length),
+        "How many keys of distribution to generate ")
+        ("range", po::value<uint64_t>(&config.data_range)->default_value(def.data_range),
+        "What should the range of keys generated be (0 - Value) ");
 
     papi_init();
 

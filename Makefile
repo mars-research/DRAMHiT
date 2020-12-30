@@ -81,8 +81,8 @@ CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
 	   ) $(TESTS)
 
 CC_SRCS = src/hashers/city/city.cc \
-			src/tests/pregen/mem.cc \
-			src/tests/distributions/mica/zipf.cc
+			src/tests/distribution/pregen/mem.cc \
+			src/tests/distribution/mica/zipf.cc
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o) $(CC_SRCS:.cc=.o)
 
@@ -107,6 +107,7 @@ $(TARGET): $(OBJS)
 # Use automatic dependency generation
 -include $(CPP_SRCS:.cpp=.d)
 -include $(C_SRCS:.c=.d)
+-include $(CC_SRCS:.cc=.d)
 
 clean:
 	rm -f $(TARGET) $(OBJS)

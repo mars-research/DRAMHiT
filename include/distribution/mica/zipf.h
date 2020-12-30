@@ -5,14 +5,14 @@
 #include "distribution/rand.h"
 
 /*#ifdef MULTITHREAD_GENERATION
-  #warning multthrd gen def for zipf header  
+  #warning zipf.h MULTITHREAD_GENERATION ON  
 #else
-  #warning multthrd gen NOT def for zipf header  
+  #warning zipf.h MULTITHREAD_GENERATION OFF  
 #endif
 #ifdef MULTITHREAD_SUMMATION
-  #warning multthrd sum def for zipf header  
+  #warning zipf.h MULTITHREAD_SUMMATION ON   
 #else
-  #warning multthrd sum NOT def for zipf header  
+  #warning zipf.h MULTITHREAD_SUMMATION OFF
 #endif*/
 
 
@@ -49,7 +49,9 @@ uint64_t large_next(int);
 
 
 //Helper functions
-static double pow_approx(double a, double b) {
+
+inline double pow_approx(double a, double b)
+{
   // from http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
 
   // calculate approximation with fraction of the exponent
@@ -74,7 +76,7 @@ static double pow_approx(double a, double b) {
   return r * u.d;
 }
 
-static double zeta(uint64_t last_n, double last_sum, uint64_t n, double theta) {
+inline double zeta(uint64_t last_n, double last_sum, uint64_t n, double theta) {
   if (last_n > n) {
     last_n = 0;
     last_sum = 0.;

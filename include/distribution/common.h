@@ -28,9 +28,16 @@ static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 //Threads to use in zipf and mem
 #define MULTITHREAD_SUMMATION
 #define MULTITHREAD_GENERATION
+#define MULTITHREAD_INSERTION
 
+//Generation and Insertion method (chunking or interleaving)
+//#define GENERATION_CHUNKING
+//#define INSERTION_CHUNKING
+
+//Number of threads for each section
 #define NUM_THREADS 3
-#define SUM_THREADS NUM_THREADS//2
-#define GEN_THREADS NUM_THREADS//2
+#define SUM_THREADS 2//NUM_THREADS//
+#define GEN_THREADS NUM_THREADS//2//
+#define INS_THREADS NUM_THREADS//2//
 
 #endif

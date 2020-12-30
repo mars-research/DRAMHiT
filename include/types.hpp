@@ -70,6 +70,10 @@ struct Configuration {
   uint32_t n_cons;
   uint32_t K;
   uint32_t ht_fill;
+
+  double theta;
+  uint64_t data_length;
+  uint64_t data_range;
 };
 
 /* Thread stats */

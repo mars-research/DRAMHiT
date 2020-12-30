@@ -3,42 +3,8 @@
 #include "sync.h"
 #include "tests.hpp"
 
-//#include "distributions/mica/zipf.h"
-//#include "distributions/zipf.h"
-//#include "distributions/mine/fast_skew.h"
-
 // For extern theta_arg
 #include "Application.hpp"
-
-// definitions of Zipf distribuition generators to select from
-//#define NONE 0
-/*#define MICA 1
-#define STCKOVRFLW 2
-#define TOOBIASED 3
-#define REJ_INV 4*/
-
-// Select one of defines to enable
-//#define SAME_KMER
-//#define ZIPF
-//#define MINE
-//#define PREGEN
-//#define HEADER MICA//REJ_INV//STCKOVRFLW//TOOBIASED//
-
-/*#ifdef PREGEN
-    #include "pregen/mem.h"
-#else
-    #ifndef HEADER
-        #include "distributions/zipf.h"
-    #elif HEADER == MICA
-        #include "distributions/mica/zipf.h"
-    #elif HEADER == STCKOVRFLW
-        #include "distributions/stackoverflow/zipf.h"
-    #elif HEADER == TOOBIASED
-        #include "distributions/toobiased/zipf.h"
-    #elif HEADER == REJ_INV
-        #include "distributions/rej_inv_abseil/zipf.h"
-    #endif
-#endif*/
 
 
 #include "distribution/pregen/mem.h"
@@ -58,10 +24,91 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
-uint64_t data_len = 100;//HT_TESTS_HT_SIZE;//(1LL << 28);
-uint64_t data_range = (1LL<<26);//100;//HT_TESTS_HT_SIZE;//
-extern double theta_arg;
+uint64_t data_len = 1000;//HT_TESTS_HT_SIZE;//(1LL << 28);
+uint64_t data_range = 50;//(1LL<<26);//100;//HT_TESTS_HT_SIZE;//
+//extern double theta_arg;
+extern Configuration config;
 volatile uint64_t *mem;
+
+typedef struct insert_thread_data {
+    int thread_id;
+    //uint64_t seed;
+    uint64_t* data;
+    uint64_t num;
+    //uint64_t start;
+    //uint64_t end;
+    
+    KmerHashTable* ktable;
+
+    uint64_t count;
+} insert_data;
+void* insert_chunk(void* data)
+{
+    insert_data* td = (insert_data*) data;
+    td->count = 0;
+    auto k = 0;
+
+    __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
+    //printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, td->start, td->end-1);
+    //printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, 0, td->num-1);
+    for (uint64_t i = 0; i < td->num; i++) {
+        #ifdef INSERTION_CHUNKING
+            *((uint64_t *)&kmers[k].data) = td->data[i];
+        #else
+            *((uint64_t *)&kmers[k].data) = td->data[INS_THREADS*i];
+        #endif
+        //printf("%lu\n", mem[i]);
+        
+        //td->ktable->insert((void *)&kmers[k]);
+        k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+        ++(td->count);
+    }
+    
+    return NULL;
+  // printf("FILE: \"%s\":%d\n",__FILE__, __LINE__);
+  //return count;
+}
+uint64_t SynthTest::synth_run2(KmerHashTable *ktable) {
+    uint64_t count = 0;
+    pthread_t thread[INS_THREADS];
+    insert_data td[INS_THREADS];
+    uint64_t start, end;
+    int rc;
+
+    for(int i = 0; i < INS_THREADS; i++) {
+        td[i].thread_id = i;
+
+        start = ((double)i/INS_THREADS)*config.data_length;
+        end = ((double)(i+1)/INS_THREADS)*config.data_length;
+        td[i].num = end - start;
+        #ifdef INSERTION_CHUNKING
+            td[i].data = start + (uint64_t*) mem;
+        #else
+            td[i].data = i + (uint64_t*) mem;
+        #endif
+        //td[i].start = ((double)i/INS_THREADS)*data_len;
+        //td[i].end = ((double)(i+1)/INS_THREADS)*data_len;
+        //td[i].data = (uint64_t*) mem;
+
+        rc = pthread_create(&thread[i], NULL, insert_chunk, (void *)&td[i]);
+        
+        if (rc) {
+          perror("Error:unable to create thread");
+          exit(-1);
+        }
+    }
+
+    for(int i = 0; i < INS_THREADS; i++) {
+        rc = pthread_join(thread[i], NULL);
+        if (rc) {
+          perror("thread join failed");
+          exit(-1);
+        }
+        count += td[i].count;
+    }
+    
+    return count;
+}
 uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
   auto count = 0;
   auto k = 0;
@@ -71,7 +118,7 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
 
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
   //for (auto i = 0u; i < HT_TESTS_NUM_INSERTS /*data_len*/; i++) {
-  for (auto i = 0u; i < data_len; i++) {
+  for (auto i = 0u; i < config.data_length; i++) {
     // Depending on selected macro, give different data
 #if defined(SAME_KMER)
     //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
@@ -89,7 +136,7 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
     // printf("%ld\n", mine::next(0.36, -1.47, -0.296, rand_));
     // printf("%lu\n", mine::next2(rand_));
 #elif defined(PREGEN)
-    
+    *((uint64_t *)&kmers[k].data) = mem[i];
     //printf("%lu\n", mem[i]);
 #elif defined(HEADER)
     *((uint64_t *)&kmers[k].data) =
@@ -136,7 +183,7 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     // uint64_t t_start = RDTSC_START();
 
     t_start = RDTSC_START();
-    mem = generate(data_len, data_range, theta_arg, HT_TESTS_NUM_INSERTS);
+    mem = generate(config.data_length, config.data_range, config.theta, (uint64_t)(config.data_length*config.data_range*config.theta));
     //mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
     t_end = RDTSCP();
     printf("[INFO] Pre-generated data in %lu cycles (%f ms) at rate of %lu cycles/element\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/HT_TESTS_NUM_INSERTS);
@@ -151,7 +198,7 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     // PREFETCH_QUEUE_SIZE = i;
 
     // PREFETCH_QUEUE_SIZE = 32;
-    num_inserts = synth_run(kmer_ht);
+    num_inserts = synth_run2(kmer_ht);
 
     t_end = RDTSCP();
 

@@ -10,6 +10,7 @@ class SynthTest {
  public:
   void synth_run_exec(Shard *sh, KmerHashTable *kmer_ht);
   uint64_t synth_run(KmerHashTable *ktable);
+  uint64_t synth_run2(KmerHashTable *ktable);
 };
 
 }  // namespace kmercounter
