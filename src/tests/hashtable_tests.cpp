@@ -5,26 +5,26 @@
 
 //#include "distributions/mica/zipf.h"
 //#include "distributions/zipf.h"
-#include "distributions/mine/fast_skew.h"
+//#include "distributions/mine/fast_skew.h"
 
 // For extern theta_arg
 #include "Application.hpp"
 
 // definitions of Zipf distribuition generators to select from
 //#define NONE 0
-#define MICA 1
+/*#define MICA 1
 #define STCKOVRFLW 2
 #define TOOBIASED 3
-#define REJ_INV 4
+#define REJ_INV 4*/
 
 // Select one of defines to enable
 //#define SAME_KMER
 //#define ZIPF
 //#define MINE
 //#define PREGEN
-#define HEADER REJ_INV//STCKOVRFLW//MICA//TOOBIASED//
+//#define HEADER MICA//REJ_INV//STCKOVRFLW//TOOBIASED//
 
-#ifdef PREGEN
+/*#ifdef PREGEN
     #include "pregen/mem.h"
 #else
     #ifndef HEADER
@@ -38,7 +38,10 @@
     #elif HEADER == REJ_INV
         #include "distributions/rej_inv_abseil/zipf.h"
     #endif
-#endif
+#endif*/
+
+
+#include "distribution/pregen/mem.h"
 
 namespace kmercounter {
 struct kmer {
@@ -55,8 +58,10 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
+uint64_t data_len = 100;//HT_TESTS_HT_SIZE;//(1LL << 28);
+uint64_t data_range = (1LL<<26);//100;//HT_TESTS_HT_SIZE;//
 extern double theta_arg;
-uint64_t *mem;
+volatile uint64_t *mem;
 uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
   auto count = 0;
   auto k = 0;
@@ -65,7 +70,8 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
   xorwow_init(&_xw_state);
 
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
-  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+  //for (auto i = 0u; i < HT_TESTS_NUM_INSERTS /*data_len*/; i++) {
+  for (auto i = 0u; i < data_len; i++) {
     // Depending on selected macro, give different data
 #if defined(SAME_KMER)
     //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
@@ -83,17 +89,18 @@ uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
     // printf("%ld\n", mine::next(0.36, -1.47, -0.296, rand_));
     // printf("%lu\n", mine::next2(rand_));
 #elif defined(PREGEN)
-    *((uint64_t *)&kmers[k].data) = mem[i];
-    // printf("%lu\n", mem[i]);
+    
+    //printf("%lu\n", mem[i]);
 #elif defined(HEADER)
     *((uint64_t *)&kmers[k].data) =
         next();  // ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg,
                  // HT_TESTS_NUM_INSERTS);//next();//1;//
     //printf("%lu\n", next());
 #else
-    *((uint64_t *)&kmers[k].data) = count;  //++;
+    *((uint64_t *)&kmers[k].data) = mem[i];
+    // *((uint64_t *)&kmers[k].data) = count;  //++;
 #endif
-    ktable->insert((void *)&kmers[k]);
+    //ktable->insert((void *)&kmers[k]);
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
     //#if defined(SAME_KMER) || defined(ZIPF) || defined(MINE)
     ++count;  // count++;
@@ -116,18 +123,7 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
 // Depending on selected macro, initialize different datas
-#ifdef PREGEN
-    // printf("here\n");
-    // uint64_t t_start = RDTSC_START();
-    mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg,
-                   HT_TESTS_NUM_INSERTS);
-    printf("Data generated.\n");
-    // mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg,
-    // HT_TESTS_NUM_INSERTS); uint64_t t_end = RDTSCP(); printf("Cycles to
-    // generate: %lu (%f ms)\t Cycles per gen: %f\n", t_end-t_start,
-    // (double)(t_end-t_start)* one_cycle_ns / 1000000.0,
-    // (t_end-t_start)/(HT_TESTS_NUM_INSERTS*1.0));
-#elif defined(ZIPF)
+#if defined(ZIPF)
     printf("theta_arg = %f\n", theta_arg);
     Base_ZipfGen *zg =
         ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
@@ -135,6 +131,20 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     Rand *rand_ = new Rand();
 #elif defined(HEADER)
     ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
+#else
+    // printf("here\n");
+    // uint64_t t_start = RDTSC_START();
+
+    t_start = RDTSC_START();
+    mem = generate(data_len, data_range, theta_arg, HT_TESTS_NUM_INSERTS);
+    //mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
+    t_end = RDTSCP();
+    printf("[INFO] Pre-generated data in %lu cycles (%f ms) at rate of %lu cycles/element\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/HT_TESTS_NUM_INSERTS);
+    // mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg,
+    // HT_TESTS_NUM_INSERTS); uint64_t t_end = RDTSCP(); printf("Cycles to
+    // generate: %lu (%f ms)\t Cycles per gen: %f\n", t_end-t_start,
+    // (double)(t_end-t_start)* one_cycle_ns / 1000000.0,
+    // (t_end-t_start)/(HT_TESTS_NUM_INSERTS*1.0));
 #endif
     t_start = RDTSC_START();
 
@@ -146,14 +156,14 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     t_end = RDTSCP();
 
 // Depending on selected macro, free any allocated memory
-#ifdef PREGEN
-    clear(mem);
-#elif defined(ZIPF)
+#if defined(ZIPF)
     delete zg;
 #elif defined(MINE)
     delete rand_;
+#else
+    clear((uint64_t*) mem);
 #endif
-ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
+//ZipfGen(HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
 
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
