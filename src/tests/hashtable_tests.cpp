@@ -13,7 +13,7 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
 
-uint64_t HT_TESTS_HT_SIZE = (1 << 28);
+uint64_t HT_TESTS_HT_SIZE = (1 << 26);
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2

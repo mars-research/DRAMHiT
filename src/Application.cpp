@@ -79,7 +79,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   if (config.ht_type == SIMPLE_KHT) {
-    kmer_ht = new PartitionedHashStore<Item, ItemQueue>(sz, id);
+    kmer_ht = new PartitionedHashStore<Aggr_KV, ItemQueue>(sz, id);
   } else if (config.ht_type == ROBINHOOD_KHT) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == CAS_KHT) {
@@ -448,6 +448,9 @@ int Application::process(int argc, char *argv[]) {
     }
 
     if (config.ht_fill) {
+      if (config.ht_type == CAS_KHT) {
+        HT_TESTS_HT_SIZE *= config.num_threads;
+      }
       if (config.ht_fill > 0 && config.ht_fill < 100) {
         HT_TESTS_NUM_INSERTS =
             static_cast<double>(HT_TESTS_HT_SIZE) * config.ht_fill * 0.01;
