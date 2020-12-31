@@ -17,8 +17,10 @@ fi
 
 sudo mount -t hugetlbfs nodev /mnt/huge
 
-USER=$(whoami)
-GROUP=$(id -g -n)
+USER=${SUDO_USER}
+GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
+
+echo ${USER}:${GROUP}
 
 sudo chown -R ${USER}:${GROUP} /mnt/huge
 
