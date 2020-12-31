@@ -406,10 +406,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void __insert(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
+  try_insert:
     KV *curr = &this->hashtable[idx];
 
 #ifdef BRANCHLESS_NO_SIMD
-    uint16_t cmp = curr->insert_or_update(q->data); //0xFF: insert or update was successfull
+    // 0xFF: insert or update was successfull
+    uint16_t cmp = curr->insert_or_update(q->data);
 
     /* prepare for (possible) soft reprobe */
     idx++;
@@ -547,6 +549,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // next bucket will be probed in the next run
     idx++;
     idx = idx & (this->capacity - 1);  // modulo
+
+    // |    4 elements |
+    // | 0 | 1 | 2 | 3 | 4 | 5 ....
+    if ((idx & 0x3) != 0) {
+      goto try_insert;
+    }
+
     prefetch(idx);
 
     this->queue[this->queue_idx].data = q->data;

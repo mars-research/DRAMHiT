@@ -251,6 +251,7 @@ class CASHashTable : public BaseHashTable {
   void __insert(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
+  try_insert:
     KV *curr = &this->hashtable[idx];
 
     // hashtable_mutexes[pidx].lock();
@@ -303,6 +304,12 @@ class CASHashTable : public BaseHashTable {
     */
     idx++;
     idx = idx & (this->capacity - 1);  // modulo
+
+    // |    4 elements |
+    // | 0 | 1 | 2 | 3 | 4 | 5 ....
+    if ((idx & 0x3) != 0) {
+      goto try_insert;
+    }
 
     prefetch(idx);
 

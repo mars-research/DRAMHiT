@@ -110,6 +110,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     dbg("opened file %s\n", mmap_path);
   }
 
+  printf("%s, requesting %lu\n", __func__, capacity * sizeof(T));
   addr = (T *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(T), PROT_RW,
                    MAP_FLAGS, fd, 0);
   if (addr == MAP_FAILED) {
