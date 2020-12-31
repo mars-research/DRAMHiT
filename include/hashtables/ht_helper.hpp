@@ -40,7 +40,7 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
   return addr & ~CACHE_BLOCK_MASK;
 }
 
-inline constexpr void prefetch_object(const void *addr, uint64_t size) {
+inline void prefetch_object(const void *addr, uint64_t size) {
   uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
 
 #if defined(PREFETCH_TWO_LINE)

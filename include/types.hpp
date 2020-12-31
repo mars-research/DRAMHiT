@@ -30,9 +30,10 @@ typedef enum {
 
 typedef enum {
   SIMPLE_KHT = 1,
-  ROBINHOOD_KHT,
-  CAS_KHT,
-  STDMAP_KHT,
+  ROBINHOOD_KHT = 2,
+  CAS_KHT = 3,
+  CAS_NOPREFETCH = 4,
+  STDMAP_KHT = 5,
 } ht_type_t;
 
 /* Test config */
@@ -53,6 +54,7 @@ struct Configuration {
   bool drop_caches;
   uint32_t n_prod;
   uint32_t n_cons;
+  uint32_t num_nops;
   uint32_t K;
   uint32_t ht_fill;
 };

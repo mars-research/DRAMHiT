@@ -178,8 +178,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
 #endif
 
+  void insert_noprefetch(void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   /* insert and increment if exists */
-  bool insert(const void *data) {
+  bool insert(const void *data) override {
     assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
     __insert_into_queue(data);
 
@@ -206,7 +211,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return true;
   }
 
-  void flush_queue() {
+  void flush_queue() override {
     size_t curr_queue_sz = this->queue_idx;
     while (curr_queue_sz != 0) {
       __flush_from_queue(curr_queue_sz);
@@ -217,7 +222,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
   }
 
-  void *find(const void *data) {
+  void *find(const void *data) override {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
@@ -331,7 +336,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef CALC_STATS
       this->num_memcpys++;
 #endif
-      curr.update_item(q->data);
+      curr->update_item(q->data);
       // this->hashtable[pidx].kb.count++;
       // this->hashtable[pidx].set_count(this->hashtable[pidx].count() + 1);
       // printf("inserting %d | ",

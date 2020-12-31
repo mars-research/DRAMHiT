@@ -24,19 +24,24 @@ class CASHashTable : public BaseHashTable {
   CASHashTable(uint64_t c) : fd(-1), id(1), queue_idx(0) {
     this->capacity = kmercounter::next_pow2(c);
     // this->ht_init_mutex.lock();
-    if (!this->hashtable) {
-      this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+    {
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+      if (!this->hashtable) {
+        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+      }
     }
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
     cout << "Empty item: " << this->empty_item << endl;
-    // this->ht_init_mutex.unlock();
-
     this->queue = (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
-    // this->thread_id = t;
 
+    printf("[INFO] Hashtable size: %lu\n", this->capacity);
+    printf("%s, data_length %lu\n", __func__, this->data_length);
+
+    // this->ht_init_mutex.unlock();
+    // this->thread_id = t;
     // std::vector<std::mutex> __ hashtable_mutexes (this->capacity);
     // hashtable_mutexes.swap(__// hashtable_mutexes);
   }
@@ -76,6 +81,30 @@ class CASHashTable : public BaseHashTable {
 #ifdef CALC_STATS
     this->num_queue_flushes++;
 #endif
+  }
+
+  void insert_noprefetch(void *data) {
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);  // modulo
+
+    for (auto i = 0u; i < this->capacity; i++) {
+      KV *curr = &this->hashtable[idx];
+    retry:
+      if (curr->is_empty()) {
+        bool cas_res = curr->cas_insert(data, this->empty_item);
+        if (cas_res) {
+          break;
+        } else {
+          goto retry;
+        }
+      } else if (curr->compare_key(data)) {
+        curr->cas_update(data);
+        break;
+      } else {
+        idx++;
+        idx = idx & (this->capacity - 1);
+      }
+    }
   }
 
   void *find(const void *data) {
@@ -159,11 +188,11 @@ class CASHashTable : public BaseHashTable {
   }
 
  private:
+  static std::mutex ht_init_mutex;
   uint64_t capacity;
   KV empty_item;
   KVQ *queue;
   uint32_t queue_idx;
-  std::mutex ht_init_mutex;
 
   uint64_t hash(const void *k) {
     uint64_t hash_val;
@@ -266,7 +295,7 @@ class CASHashTable : public BaseHashTable {
         return;
       }
     }
-  reprobe:
+
     // hashtable_mutexes[pidx].unlock();
 
     /* insert back into queue, and prefetch next bucket.
@@ -291,6 +320,9 @@ class CASHashTable : public BaseHashTable {
 
 template <class KV, class KVQ>
 KV *CASHashTable<KV, KVQ>::hashtable;
+
+template <class KV, class KVQ>
+std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
 // std::vector<std::mutex> CASHashTable:: hashtable_mutexes;
 
 // TODO bloom filters for high frequency kmers?

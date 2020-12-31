@@ -28,6 +28,10 @@
 #include "PapiEvent.hpp"
 #endif
 
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
+#endif
+
 namespace kmercounter {
 
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -51,6 +55,7 @@ const Configuration def = {
     .drop_caches = true,
     .n_prod = 1,
     .n_cons = 1,
+    .num_nops = 0,
     .K = 20,
     .ht_fill = 25};  // TODO enum
 
@@ -74,14 +79,17 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   if (config.ht_type == SIMPLE_KHT) {
-    kmer_ht = new PartitionedHashStore<Aggr_KV, ItemQueue>(sz, id);
+    kmer_ht = new PartitionedHashStore<Item, ItemQueue>(sz, id);
   } else if (config.ht_type == ROBINHOOD_KHT) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == CAS_KHT) {
     /* For the CAS Hash table, size is the same as
     size of one partitioned ht * number of threads */
-    kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
+    kmer_ht =
+        new CASHashTable<Aggr_KV, ItemQueue>(sz);  // * config.num_threads);
     /*TODO tidy this up, don't use static + locks maybe*/
+  } else if (config.ht_type == CAS_NOPREFETCH) {
+    kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
   } else {
     fprintf(stderr, "STDMAP_KHT Not implemented\n");
   }
@@ -201,7 +209,7 @@ void Application::shard_thread(int tid) {
     kmer_ht->print_to_file(outfile);
   }
 
-  free_ht(kmer_ht);
+  // free_ht(kmer_ht);
 
 done:
 
@@ -237,6 +245,10 @@ int Application::spawn_shard_threads() {
     if (seg_sz < 4096) {
       seg_sz = 4096;
     }
+  }
+
+  if (config.ht_type == CAS_KHT) {
+    HT_TESTS_NUM_INSERTS /= (float)config.num_threads;
   }
 
   /*   TODO don't spawn threads if f_start >= in_file_sz
@@ -380,6 +392,9 @@ int Application::process(int argc, char *argv[]) {
         "for bqueues only")(
         "k", po::value<uint32_t>(&config.K)->default_value(def.K),
         "the value of 'k' in k-mer")(
+        "num_nops",
+        po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
+        "number of nops in bqueue cons thread")(
         "ht-fill",
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
         "adjust hashtable fill ratio [0-100] ");

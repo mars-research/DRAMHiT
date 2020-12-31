@@ -13,14 +13,15 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
 
-uint64_t HT_TESTS_HT_SIZE = (1 << 26);
+uint64_t HT_TESTS_HT_SIZE = (1 << 28);
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
-uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
-  uint64_t count = 1;
+uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
+  uint64_t count = HT_TESTS_NUM_INSERTS * start;
   auto k = 0;
+  auto i = 0;
   struct xorwow_state _xw_state;
 
   xorwow_init(&_xw_state);
@@ -29,7 +30,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
 
-  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+  for (i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
     *((uint64_t *)&kmers[k].data) = 32;
@@ -45,13 +46,15 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
     *((uint64_t *)items[k].value()) = count;
     keys[k] = count;
 #endif
-    // printf("%s, inserting i= %d, data %lu\n", __func__, i, count);
+    // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
     // printf("%s, inserting i= %d\n", __func__, i);
     // ktable->insert((void *)&kmers[k]);
     // printf("->Inserting %lu\n", count);
     count++;
     // ktable->insert((void *)&items[k]);
     ktable->insert((void *)&keys[k]);
+
+    // ktable->insert_noprefetch((void *)&keys[k]);
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
 #if defined(SAME_KMER)
     count++;
@@ -61,7 +64,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable) {
   printf("%s calling flush queue\n", __func__);
   ktable->flush_queue();
   printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
-  return count;
+  return i;
 }
 
 uint64_t seed2 = 123456789;
@@ -80,7 +83,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
     // PREFETCH_QUEUE_SIZE = i;
 
     // PREFETCH_QUEUE_SIZE = 32;
-    num_inserts = synth_run(kmer_ht);
+    num_inserts = synth_run(kmer_ht, sh->shard_idx);
 
     t_end = RDTSCP();
     printf(

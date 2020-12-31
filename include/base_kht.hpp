@@ -15,6 +15,8 @@ class BaseHashTable {
   // Upsert (Insert and Update)
   virtual bool insert(const void *data) = 0;
 
+  virtual void insert_noprefetch(void *data) = 0;
+
   virtual void *find(const void *data) = 0;
 
   virtual void flush_queue() = 0;

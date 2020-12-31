@@ -168,6 +168,11 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     return true;
   }
 
+  void insert_noprefetch(void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   void flush_queue() {
     size_t curr_queue_sz = this->queue_idx;
     while (curr_queue_sz != 0) {
@@ -176,7 +181,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     }
   }
 
-  __RH_Kmer_r *find(const void *kmer_data) {
+  void *find(const void *kmer_data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif

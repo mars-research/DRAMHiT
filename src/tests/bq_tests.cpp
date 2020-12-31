@@ -3,9 +3,13 @@
 #include "print_stats.h"
 #include "sync.h"
 
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
+#endif
+
 #define BQ_MAGIC_64BIT 0xD221A6BE96E04673UL
-#define BQ_TESTS_BATCH_LENGTH (1ULL << 5)         // 32
-#define BQ_TESTS_DEQUEUE_ARR_LENGTH (1ULL << 10)  // 1024
+#define BQ_TESTS_BATCH_LENGTH (1ULL << 6)      // 32
+#define BQ_TESTS_DEQUEUE_ARR_LENGTH (1U << 6)  // 1024
 
 namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -36,7 +40,9 @@ struct bq_kmer {
 } __attribute__((aligned(64)));
 
 struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-int bq_kmers_idx = 0;
+// thread-local since we have multiple consumers
+__thread int data_idx = 0;
+__thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 #endif
 
 void BQueueTest::producer_thread(int tid) {
@@ -49,7 +55,10 @@ void BQueueTest::producer_thread(int tid) {
   uint8_t cons_id = 0;
   uint64_t transaction_id;
   queue_t **q = this->prod_queues[this_prod_id];
-
+#ifdef WITH_VTUNE_LIB
+  std::string thread_name("producer_thread" + std::to_string(tid));
+  __itt_thread_set_name(thread_name.c_str());
+#endif
 #ifdef BQ_TESTS_INSERT_XORWOW
   struct xorwow_state xw_state;
   xorwow_init(&xw_state);
@@ -112,7 +121,7 @@ void BQueueTest::producer_thread(int tid) {
   fipc_test_FAI(completed_producers);
 }
 
-void BQueueTest::consumer_thread(int tid) {
+void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   Shard *sh = &this->shards[tid];
   sh->stats =
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
@@ -125,6 +134,11 @@ void BQueueTest::consumer_thread(int tid) {
   uint8_t this_cons_id = sh->shard_idx - producer_count;
   queue_t **q = this->cons_queues[this_cons_id];
 
+#ifdef WITH_VTUNE_LIB
+  std::string thread_name("consumer_thread" + std::to_string(tid));
+  printf("%s, thread_name %s\n", __func__, thread_name.c_str());
+  __itt_thread_set_name(thread_name.c_str());
+#endif
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
@@ -154,11 +168,21 @@ void BQueueTest::consumer_thread(int tid) {
 
 #ifdef BQ_TESTS_DO_HT_INSERTS
       /* Save kmer into array*/
-      memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
+      // memcpy(&bq_kmers[data_idx].data, &k, sizeof(k));
+      // uint64_t key = k;
+      keys[data_idx] = k;
       /* insert kmer into HT */
-      kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
-      bq_kmers_idx++;
-      if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
+      // kmer_ht->insert((void *)&bq_kmers[data_idx]);
+      // kmer_ht->insert((void *)&key);
+      for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
+
+      data_idx++;
+      if (data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
+        data_idx = 0;
+        for (auto j = 0u; j < BQ_TESTS_DEQUEUE_ARR_LENGTH; j++) {
+          kmer_ht->insert((void *)&keys[j]);
+        }
+      }
 #endif
 
       if ((data_t)k == BQ_MAGIC_64BIT) {
@@ -281,11 +305,11 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
 
 #ifdef BQ_TESTS_DO_HT_INSERTS
     /* Save kmer into array*/
-    memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
+    memcpy(&bq_kmers[data_idx].data, &k, sizeof(k));
     /* insert kmer into HT */
-    kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
-    bq_kmers_idx++;
-    if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
+    kmer_ht->insert((void *)&bq_kmers[data_idx]);
+    data_idx++;
+    if (data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) data_idx = 0;
 #endif
 
     if (transaction_id % (HT_TESTS_NUM_INSERTS) == 0) {
@@ -368,7 +392,8 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
-    this->cons_threads[j] = std::thread(&BQueueTest::consumer_thread, this, i);
+    this->cons_threads[j] =
+        std::thread(&BQueueTest::consumer_thread, this, i, cfg->num_nops);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(this->cons_threads[j].native_handle(),
