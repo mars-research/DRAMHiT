@@ -3,6 +3,8 @@
 #include "sync.h"
 #include "tests.hpp"
 
+#include "hashtables/kvtypes.hpp"
+
 // For extern theta_arg
 #include "Application.hpp"
 
@@ -36,7 +38,7 @@ typedef struct insert_thread_data {
     //uint64_t start;
     //uint64_t end;
     
-    KmerHashTable* ktable;
+    BaseHashTable* ktable;
 
     uint64_t count;
 } insert_data;
@@ -50,6 +52,38 @@ void* insert_chunk(void* data)
     auto k = 0;
 
     __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
+    __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
+    __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
+
+    for (uint64_t i = 0u; i < HT_TESTS_NUM_INSERTS/*td->num*//*config.data_length*/; i++) {
+        *((uint64_t *)&kmers[k].data) = td->count;//mem[i];
+        *((uint64_t *)items[k].key()) = td->count;
+        *((uint64_t *)items[k].value()) = td->count;
+        keys[k] = td->count;
+
+        /*#ifdef INSERTION_CHUNKING
+            *((uint64_t *)&kmers[k].data) = td->data[i];
+        #else
+            *((uint64_t *)&kmers[k].data) = td->data[INS_THREADS*i];
+        #endif*/
+        // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
+        // printf("%s, inserting i= %d\n", __func__, i);
+        // ktable->insert((void *)&kmers[k]);
+        // printf("->Inserting %lu\n", count);
+        td->count++;
+        // ktable->insert((void *)&items[k]);
+        td->ktable->insert((void *)&keys[k]);
+
+        // ktable->insert_noprefetch((void *)&keys[k]);
+        k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+        //#if defined(SAME_KMER) || defined(ZIPF) || defined(MINE)
+        ++td->count;  // count++;
+        //#endif
+    }
+    // flush the last batch explicitly
+    printf("%s calling flush queue\n", __func__);
+    td->ktable->flush_queue();
+    printf("%s: %p\n", __func__, td->ktable->find(&kmers[k]));
     //printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, td->start, td->end-1);
     //printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, 0, td->num-1);
 
@@ -74,7 +108,7 @@ void* insert_chunk(void* data)
   // printf("FILE: \"%s\":%d\n",__FILE__, __LINE__);
   //return count;
 }
-uint64_t SynthTest::synth_run2(KmerHashTable *ktable) {
+uint64_t SynthTest::synth_run_thrd(BaseHashTable *ktable, uint8_t start) {
     cpu_set_t cpuset;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -82,17 +116,17 @@ uint64_t SynthTest::synth_run2(KmerHashTable *ktable) {
     pthread_t thread[INS_THREADS];
     //std::thread* thread = new std::thread[INS_THREADS];
     insert_data td[INS_THREADS];
-    uint64_t start, end;
+    uint64_t start_index, end_index;
     int rc;
 
     for(int i = 0, cpu = 0; i < INS_THREADS; ++i, cpu = (cpu+1)%std::thread::hardware_concurrency()) {
         td[i].thread_id = i;
 
-        start = ((double)i/INS_THREADS)*config.data_length;
-        end = ((double)(i+1)/INS_THREADS)*config.data_length;
-        td[i].num = end - start;
+        start_index = ((double)i/INS_THREADS)*config.data_length;
+        end_index = ((double)(i+1)/INS_THREADS)*config.data_length;
+        td[i].num = end_index - start_index;
         #ifdef INSERTION_CHUNKING
-            td[i].data = start + (uint64_t*) mem;
+            td[i].data = start_index + (uint64_t*) mem;
         #else
             td[i].data = i + (uint64_t*) mem;
         #endif
@@ -197,7 +231,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     // ktable->insert_noprefetch((void *)&keys[k]);
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
     //#if defined(SAME_KMER) || defined(ZIPF) || defined(MINE)
-    ++count;  // count++;
+    //++count;  // count++;
     //#endif
   }
   // flush the last batch explicitly
@@ -248,7 +282,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
     // PREFETCH_QUEUE_SIZE = 32;
     #ifdef MULTITHREAD_INSERTION
-        num_inserts = synth_run2(kmer_ht, sh->shard_idx);
+        num_inserts = synth_run_thrd(kmer_ht, sh->shard_idx);
     #else
         num_inserts = synth_run(kmer_ht, sh->shard_idx);
     #endif
