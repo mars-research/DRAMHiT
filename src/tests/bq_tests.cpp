@@ -45,7 +45,7 @@ __thread int data_idx = 0;
 __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 #endif
 
-void BQueueTest::producer_thread(int tid) {
+void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   Shard *sh = &this->shards[tid];
 
   sh->stats =
@@ -68,12 +68,21 @@ void BQueueTest::producer_thread(int tid) {
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
 
-  printf("[INFO] Producer %u starting. Sending %lu messages to %d consumers\n",
-         this_prod_id, HT_TESTS_NUM_INSERTS, consumer_count);
-
   /* HT_TESTS_NUM_INSERTS enqueues per consumer */
   cons_id = 0;
-  for (transaction_id = 0u; transaction_id < HT_TESTS_NUM_INSERTS;) {
+  auto mult_factor = n_cons / n_prod;
+  auto key_start = HT_TESTS_NUM_INSERTS * mult_factor * tid;
+  // n_prod = 2 ; n_cons = 8;
+  // 64 * 0.75 * 8
+
+  printf(
+      "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
+      "key_start %lu\n",
+      this_prod_id, HT_TESTS_NUM_INSERTS * mult_factor, consumer_count,
+      key_start);
+
+  for (transaction_id = 0u;
+       transaction_id < HT_TESTS_NUM_INSERTS * mult_factor;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
      * consumer */
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {
@@ -81,7 +90,7 @@ void BQueueTest::producer_thread(int tid) {
       k = xorwow(&xw_state);
       k = k << 32 | xorwow(&xw_state);
 #else
-      k = transaction_id;
+      k = key_start++;
 #endif
       // *((uint64_t *)&kmers[i].data) = k;
 
@@ -127,7 +136,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
   uint64_t t_start, t_end;
   BaseHashTable *kmer_ht = NULL;
-  uint8_t finished_producers;
+  uint8_t finished_producers = 0;
   uint64_t k = 0;
   uint64_t transaction_id = 0;
   uint8_t prod_id = 0;
@@ -166,26 +175,27 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
         break;
       }
 
+      if ((data_t)k != BQ_MAGIC_64BIT) {
 #ifdef BQ_TESTS_DO_HT_INSERTS
-      /* Save kmer into array*/
-      // memcpy(&bq_kmers[data_idx].data, &k, sizeof(k));
-      // uint64_t key = k;
-      keys[data_idx] = k;
-      /* insert kmer into HT */
-      // kmer_ht->insert((void *)&bq_kmers[data_idx]);
-      // kmer_ht->insert((void *)&key);
-      for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
+        /* Save kmer into array*/
+        // memcpy(&bq_kmers[data_idx].data, &k, sizeof(k));
+        // uint64_t key = k;
+        keys[data_idx] = k;
+        /* insert kmer into HT */
+        // kmer_ht->insert((void *)&bq_kmers[data_idx]);
+        // kmer_ht->insert((void *)&key);
+        for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
-      data_idx++;
-      if (data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
-        data_idx = 0;
-        for (auto j = 0u; j < BQ_TESTS_DEQUEUE_ARR_LENGTH; j++) {
-          kmer_ht->insert((void *)&keys[j]);
+        data_idx++;
+        if (data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
+          data_idx = 0;
+          for (auto j = 0u; j < BQ_TESTS_DEQUEUE_ARR_LENGTH; j++) {
+            kmer_ht->insert((void *)&keys[j]);
+          }
         }
-      }
 #endif
-
-      if ((data_t)k == BQ_MAGIC_64BIT) {
+      } else {
+        // if ((data_t)k == BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
         printf(
             "[INFO] Consumer %u, received HALT from prod_id %u. "
@@ -214,8 +224,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
   printf(
       "[INFO] Quick Stats: Consumer %u finished, receiving %lu messages "
-      "(cycles per message %lu)\n",
-      this_cons_id, transaction_id, (t_end - t_start) / transaction_id);
+      "(cycles per message %lu) prod_count %u | finished %u\n",
+      this_cons_id, transaction_id, (t_end - t_start) / transaction_id,
+      producer_count, finished_producers);
 
   /* Write to file */
   if (!this->cfg->ht_file.empty()) {
@@ -377,7 +388,8 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
-    this->prod_threads[i] = std::thread(&BQueueTest::producer_thread, this, i);
+    this->prod_threads[i] = std::thread(&BQueueTest::producer_thread, this, i,
+                                        cfg->n_prod, cfg->n_cons);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(prod_threads[i].native_handle(), sizeof(cpu_set_t),
