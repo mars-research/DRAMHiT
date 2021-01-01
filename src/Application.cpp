@@ -53,9 +53,9 @@ const Configuration def = {
     .K = 20,
     .ht_fill = 25,
     
-    .theta = 0.75,
-    .data_length = (1LL<<16),//HT_TESTS_HT_SIZE;//(1LL << 28);
-    .data_range = (1LL<<8)};  // TODO enum
+    .theta = 0.99,
+    .data_length = (1LL<<31),//HT_TESTS_HT_SIZE;//(1LL << 28);
+    .data_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
 
 /* global config */
 Configuration config;

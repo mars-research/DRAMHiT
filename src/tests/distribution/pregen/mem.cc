@@ -27,8 +27,8 @@
 
 //#define MEM
 #define MMAP
-//#define HUGEPAGES_1GB
-#define HUGEPAGES_2MB
+#define HUGEPAGES_1GB
+//#define HUGEPAGES_2MB
 #define FILE_MMAP
 
 #ifdef HUGEPAGES_1GB
@@ -66,12 +66,16 @@ uint64_t data_size = num;
 
   uint64_t num_pages = (((++data_size) * sizeof(uint64_t)) / pagesize) + 1;
   #ifdef FILE_MMAP
-    ftruncate(fd, num_pages*pagesize);
+    if(ftruncate(fd, num_pages*pagesize))
+    {
+      perror("Couldn't resize file.");
+      return NULL;
+    }
   #endif
-
+  printf("size: %lu\n", num_pages * pagesize );
   uint64_t* data = (uint64_t*)mmap(
       NULL, //(void*)(pagesize * (1 << 20)),  // Map from the start of the 2^20th page
-      num_pages * pagesize,           // for one page length
+      num_pages * pagesize,
       PROT_READ | PROT_WRITE,         //|PROT_EXEC,
       MAP_PRIVATE//MAP_SHARED
 			#ifndef FILE_MMAP
@@ -189,7 +193,9 @@ int clear(uint64_t* data) {
 
   void next(uint64_t* data, uint64_t len, uint64_t seed)
   {
-    //printf("LINE: %d\n", __LINE__);
+    cpu_set_t cpuset;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
     pthread_t thread[GEN_THREADS];
     generate_data td[GEN_THREADS];
     int rc;
@@ -197,7 +203,7 @@ int clear(uint64_t* data) {
 
 
     //printf("LINE: %d\n", __LINE__);
-    for(int i = 0; i < GEN_THREADS; i++) {
+    for(int i = 0, cpu = 0; i < GEN_THREADS; ++i, cpu = (cpu+1)%std::thread::hardware_concurrency()) {
     //printf("LINE: %d\n", __LINE__);
         td[i].thread_id = i;
     //printf("LINE: %d\n", __LINE__);
@@ -224,10 +230,20 @@ int clear(uint64_t* data) {
           td[i].data = data + i;
         #endif
     //printf("LINE: %d\n", __LINE__);
-
-        rc = pthread_create(&thread[i], NULL, next_chunk, (void *)&td[i]);
         
-    //printf("LINE: %d\n", __LINE__);
+        CPU_ZERO(&cpuset);
+        if(cpu == 1)
+        {
+          ++cpu;
+        }
+        CPU_SET(cpu, &cpuset);
+        rc = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);//thread[i], sizeof(cpu_set_t), &cpuset);
+        if (rc) {
+          perror("Error:unable to set thread affinity");
+          exit(-1);
+        }
+
+        rc = pthread_create(&thread[i], &attr, next_chunk, (void *)&td[i]);
         if (rc) {
           perror("Error:unable to create thread");
           exit(-1);
@@ -245,6 +261,8 @@ int clear(uint64_t* data) {
   }
   void* next_chunk(void* data)
   {
+    //unsigned cpu;
+    //uint64_t t_start, t_end;
     generate_data* td = (generate_data*) data;
 
     //printf("LINE: %d\n", __LINE__);
@@ -256,15 +274,20 @@ int clear(uint64_t* data) {
     printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, 0, td->num-1);*/
     //printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, 0, td->num-1);
     //int count = 0;
+    //t_start = RDTSC_START();
     for (uint64_t i = 0; i < td->num; ++i) {
       #ifdef GENERATION_CHUNKING
         td->data[i] = next(td->thread_id);
       #else
-        td->data[GEN_THREADS*i] = next(td->thread_id);
+        td->data[i] = next(td->thread_id);
+        //td->data[GEN_THREADS*i] = next(td->thread_id);
       #endif
       //printf("%lu\n", td->data[i]);
       //++count;
     }
+    /*t_end = RDTSCP();
+    getcpu(&cpu, NULL);
+    printf("Thread %d: Gen data in %lu cycles (%f ms) on CPU #%d\n", td->thread_id, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, cpu);*/
     /*printf("td->num: %lu\n", td->num);*/
     //printf("generate count: %d\n", count);
     //printf("LINE: %d\n", __LINE__);

@@ -44,6 +44,9 @@ typedef struct insert_thread_data {
 } insert_data;
 void* insert_chunk(void* data)
 {
+    //unsigned cpu;
+    //uint64_t t_start, t_end;
+
     insert_data* td = (insert_data*) data;
     td->count = 0;
     auto k = 0;
@@ -51,6 +54,8 @@ void* insert_chunk(void* data)
     __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
     //printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, td->start, td->end-1);
     //printf("Thread %d: i goes from %lu - %lu\n", td->thread_id, 0, td->num-1);
+
+    //t_start = RDTSC_START();
     for (uint64_t i = 0; i < td->num; i++) {
         #ifdef INSERTION_CHUNKING
             *((uint64_t *)&kmers[k].data) = td->data[i];
@@ -63,19 +68,26 @@ void* insert_chunk(void* data)
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
         ++(td->count);
     }
+    /*t_end = RDTSCP();
+    getcpu(&cpu, NULL);
+    printf("Thread %d: Ins data in %lu cycles (%f ms) on CPU #%d\n", td->thread_id, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, cpu);*/
     
     return NULL;
   // printf("FILE: \"%s\":%d\n",__FILE__, __LINE__);
   //return count;
 }
 uint64_t SynthTest::synth_run2(KmerHashTable *ktable) {
+    cpu_set_t cpuset;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
     uint64_t count = 0;
     pthread_t thread[INS_THREADS];
+    //std::thread* thread = new std::thread[INS_THREADS];
     insert_data td[INS_THREADS];
     uint64_t start, end;
     int rc;
 
-    for(int i = 0; i < INS_THREADS; i++) {
+    for(int i = 0, cpu = 0; i < INS_THREADS; ++i, cpu = (cpu+1)%std::thread::hardware_concurrency()) {
         td[i].thread_id = i;
 
         start = ((double)i/INS_THREADS)*config.data_length;
@@ -86,16 +98,36 @@ uint64_t SynthTest::synth_run2(KmerHashTable *ktable) {
         #else
             td[i].data = i + (uint64_t*) mem;
         #endif
+
+        CPU_ZERO(&cpuset);
+        if(cpu == 1)
+        {
+          ++cpu;
+        }
+        CPU_SET(cpu, &cpuset);
+        rc = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);//thread[i], sizeof(cpu_set_t), &cpuset);
+        if (rc) {
+          perror("Error:unable to set thread affinity");
+          exit(-1);
+        }
+
         //td[i].start = ((double)i/INS_THREADS)*data_len;
         //td[i].end = ((double)(i+1)/INS_THREADS)*data_len;
         //td[i].data = (uint64_t*) mem;
 
-        rc = pthread_create(&thread[i], NULL, insert_chunk, (void *)&td[i]);
-        
+        rc = pthread_create(&thread[i], &attr, insert_chunk, (void *)&td[i]);
         if (rc) {
           perror("Error:unable to create thread");
           exit(-1);
         }
+
+        /*CPU_ZERO(&cpuset);
+        CPU_SET(i, &cpuset);
+        pthread_setaffinity_np(thread[i], sizeof(cpu_set_t), &cpuset);
+        if (rc) {
+          perror("Error:unable to set thread affinity");
+          exit(-1);
+        }*/
     }
 
     for(int i = 0; i < INS_THREADS; i++) {
@@ -107,6 +139,8 @@ uint64_t SynthTest::synth_run2(KmerHashTable *ktable) {
         count += td[i].count;
     }
     
+
+    //delete[] threads;
     return count;
 }
 uint64_t SynthTest::synth_run(KmerHashTable *ktable) {
@@ -183,7 +217,7 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     // uint64_t t_start = RDTSC_START();
 
     t_start = RDTSC_START();
-    mem = generate(config.data_length, config.data_range, config.theta, (uint64_t)(config.data_length*config.data_range*config.theta));
+    mem = generate(config.data_length, config.data_range, config.theta, (uint64_t)(config.data_length*config.data_range*config.theta)%(1UL << 48));
     //mem = generate(HT_TESTS_NUM_INSERTS, HT_TESTS_NUM_INSERTS, theta_arg, HT_TESTS_NUM_INSERTS);
     t_end = RDTSCP();
     printf("[INFO] Pre-generated data in %lu cycles (%f ms) at rate of %lu cycles/element\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/HT_TESTS_NUM_INSERTS);
@@ -198,10 +232,15 @@ void SynthTest::synth_run_exec(Shard *sh, KmerHashTable *kmer_ht) {
     // PREFETCH_QUEUE_SIZE = i;
 
     // PREFETCH_QUEUE_SIZE = 32;
-    num_inserts = synth_run2(kmer_ht);
+    #ifdef MULTITHREAD_INSERTION
+        num_inserts = synth_run2(kmer_ht);
+    #else
+        num_inserts = synth_run(kmer_ht);
+    #endif
 
     t_end = RDTSCP();
-
+    printf("[INFO] Inserted data in %lu cycles (%f ms) at rate of %lu cycles/element\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/HT_TESTS_NUM_INSERTS);
+    
 // Depending on selected macro, free any allocated memory
 #if defined(ZIPF)
     delete zg;

@@ -125,7 +125,7 @@ uint64_t uniform_next(int id) {
     if (++seq_ >= n_) seq_ = 0;
   #endif
   
-  return v;
+  return v+1;
 }
 uint64_t single_next(int id) {
   #ifdef MULTITHREAD_GENERATION
@@ -133,7 +133,7 @@ uint64_t single_next(int id) {
   #else
     double u = rand_.next_f64();
   #endif
-  return (uint64_t)(dbl_n_ * u);
+  return (uint64_t)(dbl_n_ * u) +1;
 }
 uint64_t theta_next(int id) {
     //printf("LINE: %d\n", __LINE__);
@@ -152,12 +152,12 @@ uint64_t theta_next(int id) {
   if (u < zetan_)//1./zetan_)
   {
     //printf("U < %f(1/zetan)\n", zetan_);//1/zetan_);
-    return 0UL;
+    return 1UL;//0UL;
   }
   else if (u < thres_)//thres_/zetan_)
   {
     //printf("Z < %f(threshold/zetan)\n", thres_);//thres_/zetan_);
-    return 1UL;
+    return 2UL;//1UL;
   }
   else {
     //printf("LINE: %d\n", __LINE__);
@@ -172,11 +172,11 @@ uint64_t theta_next(int id) {
       //printf("Key generated is outside range\n");
       v = n_ - 1;
     }
-    return v;
+    return v+1;
   }
 }
 uint64_t large_next(int thread_id) {
-  return 0UL;
+  return 1UL;//0UL;
 }
 
 #ifdef MULTITHREAD_GENERATION
@@ -186,25 +186,47 @@ uint64_t large_next(int thread_id) {
 #ifdef MULTITHREAD_SUMMATION
   void* zeta_chunk(void* data)
   {
-    sum_data* td = (sum_data*) data;
+    //unsigned cpu;
+    //uint64_t t_start, t_end;
+
+    sum_data* td = (sum_data*) data;    
+    //t_start = RDTSC_START();
     td->sum = zeta(td->last_n, 0, td->n, td->theta);
+    /*t_end = RDTSCP();
+    getcpu(&cpu, NULL);
+    printf("Thread %d: Sum data in %lu cycles (%f ms) on CPU #%d\n", td->thread_id, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, cpu);*/
     return NULL;//pthread_exit(NULL);
   }
   double zeta(uint64_t n, double theta)
   {
+    cpu_set_t cpuset;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+
     double sum = 0;
     pthread_t thread[SUM_THREADS];
     sum_data td[SUM_THREADS];
     int rc;
 
-    for(int i = 0; i < SUM_THREADS; i++) {
+    for(int i = 0, cpu = 0; i < SUM_THREADS; ++i,cpu = (cpu+1)%std::thread::hardware_concurrency()) {
         td[i].thread_id = i;
         td[i].last_n = ((double)i/SUM_THREADS)*n;
         td[i].n = ((double)(i+1)/SUM_THREADS)*n;
         td[i].theta = theta;
 
-        rc = pthread_create(&thread[i], NULL, zeta_chunk, (void *)&td[i]);
-        
+        CPU_ZERO(&cpuset);
+        if(cpu == 1)
+        {
+          ++cpu;
+        }
+        CPU_SET(cpu, &cpuset);
+        rc = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);//thread[i], sizeof(cpu_set_t), &cpuset);
+        if (rc) {
+          perror("Error:unable to set thread affinity");
+          exit(-1);
+        }
+
+        rc = pthread_create(&thread[i], &attr, zeta_chunk, (void *)&td[i]);
         if (rc) {
           perror("Error:unable to create thread");
           exit(-1);
