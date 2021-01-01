@@ -5,7 +5,8 @@ typeset -i state
 
 NPROC=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
 
-for i in /sys/devices/system/cpu/cpu[0-$(( ${NPROC} - 1 ))]*; do
+for cpu in $(seq 0 $(( ${NPROC} - 1 ))); do
+  i="/sys/devices/system/cpu/cpu${cpu}"
   core_id="${i##*cpu}"
   sibling_id="-1"
 

@@ -1,4 +1,5 @@
 #include <sched.h>
+
 #include "PrefetchTest.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
@@ -6,7 +7,7 @@
 
 namespace kmercounter {
 
-extern void get_ht_stats(Shard *, KmerHashTable *);
+extern void get_ht_stats(Shard *, BaseHashTable *);
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -23,7 +24,7 @@ inline int myrand(uint64_t *seed) {
 }
 
 uint64_t PrefetchTest::prefetch_test_run(
-    SimpleKmerHashTable<Prefetch_KV> *ktable) {
+    PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue> *ktable) {
   auto count = 0;
   auto sum = 0;
   [[maybe_unused]] auto k = 0;
@@ -92,7 +93,7 @@ uint64_t PrefetchTest::prefetch_test_run(
 }
 
 void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
-                                          KmerHashTable *kmer_ht) {
+                                          BaseHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
@@ -106,7 +107,8 @@ void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
   // for (auto i = 0; i < HT_TESTS_MAX_STRIDE; i++) {
   t_start = RDTSC_START();
   // PREFETCH_STRIDE = i;
-  num_inserts = prefetch_test_run((SimpleKmerHashTable<Prefetch_KV> *)kmer_ht);
+  num_inserts = prefetch_test_run(
+      (PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue> *)kmer_ht);
   t_end = RDTSCP();
   printf(
       "[INFO] Quick stats: thread %u, Prefetch stride: %lu, cycles per "

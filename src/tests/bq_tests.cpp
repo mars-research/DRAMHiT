@@ -3,12 +3,15 @@
 #include "print_stats.h"
 #include "sync.h"
 
-#define BQ_MAGIC_64BIT 0xD221A6BE96E04673UL
-#define BQ_TESTS_BATCH_LENGTH (1ULL << 5)         // 32
-#define BQ_TESTS_DEQUEUE_ARR_LENGTH (1ULL << 10)  // 1024
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
+#endif
 
-namespace kmercounter
-{
+#define BQ_MAGIC_64BIT 0xD221A6BE96E04673UL
+#define BQ_TESTS_BATCH_LENGTH (1ULL << 6)      // 32
+#define BQ_TESTS_DEQUEUE_ARR_LENGTH (1U << 6)  // 1024
+
+namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -24,8 +27,8 @@ uint64_t batch_size = 1;
 uint64_t mem_pool_order = 16;
 uint64_t mem_pool_size;
 
-extern KmerHashTable *init_ht(uint64_t, uint8_t);
-extern void get_ht_stats(Shard *, KmerHashTable *);
+extern BaseHashTable *init_ht(uint64_t, uint8_t);
+extern void get_ht_stats(Shard *, BaseHashTable *);
 
 #ifdef BQ_TESTS_USE_HALT
 int *bqueue_halt;
@@ -37,11 +40,12 @@ struct bq_kmer {
 } __attribute__((aligned(64)));
 
 struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-int bq_kmers_idx = 0;
+// thread-local since we have multiple consumers
+__thread int data_idx = 0;
+__thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 #endif
 
-void BQueueTest::producer_thread(int tid)
-{
+void BQueueTest::producer_thread(int tid) {
   Shard *sh = &this->shards[tid];
 
   sh->stats =
@@ -51,7 +55,10 @@ void BQueueTest::producer_thread(int tid)
   uint8_t cons_id = 0;
   uint64_t transaction_id;
   queue_t **q = this->prod_queues[this_prod_id];
-
+#ifdef WITH_VTUNE_LIB
+  std::string thread_name("producer_thread" + std::to_string(tid));
+  __itt_thread_set_name(thread_name.c_str());
+#endif
 #ifdef BQ_TESTS_INSERT_XORWOW
   struct xorwow_state xw_state;
   xorwow_init(&xw_state);
@@ -99,7 +106,7 @@ void BQueueTest::producer_thread(int tid)
 
 #ifdef BQ_TESTS_USE_HALT
   /* Tell consumers to halt */
-  for (auto i = 0; i < consumer_count; ++i) {
+  for (auto i = 0u; i < consumer_count; ++i) {
     bqueue_halt[i] = 1;
   }
 #else
@@ -114,13 +121,12 @@ void BQueueTest::producer_thread(int tid)
   fipc_test_FAI(completed_producers);
 }
 
-void BQueueTest::consumer_thread(int tid)
-{
+void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   Shard *sh = &this->shards[tid];
   sh->stats =
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
   uint64_t t_start, t_end;
-  KmerHashTable *kmer_ht = NULL;
+  BaseHashTable *kmer_ht = NULL;
   uint8_t finished_producers;
   uint64_t k = 0;
   uint64_t transaction_id = 0;
@@ -128,6 +134,11 @@ void BQueueTest::consumer_thread(int tid)
   uint8_t this_cons_id = sh->shard_idx - producer_count;
   queue_t **q = this->cons_queues[this_cons_id];
 
+#ifdef WITH_VTUNE_LIB
+  std::string thread_name("consumer_thread" + std::to_string(tid));
+  printf("%s, thread_name %s\n", __func__, thread_name.c_str());
+  __itt_thread_set_name(thread_name.c_str());
+#endif
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
@@ -157,11 +168,21 @@ void BQueueTest::consumer_thread(int tid)
 
 #ifdef BQ_TESTS_DO_HT_INSERTS
       /* Save kmer into array*/
-      memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
+      // memcpy(&bq_kmers[data_idx].data, &k, sizeof(k));
+      // uint64_t key = k;
+      keys[data_idx] = k;
       /* insert kmer into HT */
-      kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
-      bq_kmers_idx++;
-      if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
+      // kmer_ht->insert((void *)&bq_kmers[data_idx]);
+      // kmer_ht->insert((void *)&key);
+      for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
+
+      data_idx++;
+      if (data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
+        data_idx = 0;
+        for (auto j = 0u; j < BQ_TESTS_DEQUEUE_ARR_LENGTH; j++) {
+          kmer_ht->insert((void *)&keys[j]);
+        }
+      }
 #endif
 
       if ((data_t)k == BQ_MAGIC_64BIT) {
@@ -208,8 +229,7 @@ void BQueueTest::consumer_thread(int tid)
   fipc_test_FAI(completed_consumers);
 }
 
-void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons)
-{
+void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
   uint32_t i, j;
   // Queue Allocation
   queue_t *queues = (queue_t *)std::aligned_alloc(
@@ -256,8 +276,7 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons)
   }
 }
 
-void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
-{
+void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
   [[maybe_unused]] uint64_t k = 0;
   // uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
@@ -286,11 +305,11 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
 
 #ifdef BQ_TESTS_DO_HT_INSERTS
     /* Save kmer into array*/
-    memcpy(&bq_kmers[bq_kmers_idx].data, &k, sizeof(k));
+    memcpy(&bq_kmers[data_idx].data, &k, sizeof(k));
     /* insert kmer into HT */
-    kmer_ht->insert((void *)&bq_kmers[bq_kmers_idx]);
-    bq_kmers_idx++;
-    if (bq_kmers_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) bq_kmers_idx = 0;
+    kmer_ht->insert((void *)&bq_kmers[data_idx]);
+    data_idx++;
+    if (data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) data_idx = 0;
 #endif
 
     if (transaction_id % (HT_TESTS_NUM_INSERTS) == 0) {
@@ -310,8 +329,7 @@ void BQueueTest::no_bqueues(Shard *sh, KmerHashTable *kmer_ht)
       sh->shard_idx, transaction_id, (t_end - t_start) / transaction_id);
 }
 
-void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) 
-{
+void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   cpu_set_t cpuset;
   uint32_t i = 0, j = 0;
 
@@ -374,7 +392,8 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq)
   for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
-    this->cons_threads[j] = std::thread(&BQueueTest::consumer_thread, this, i);
+    this->cons_threads[j] =
+        std::thread(&BQueueTest::consumer_thread, this, i, cfg->num_nops);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(this->cons_threads[j].native_handle(),
@@ -394,10 +413,8 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq)
   printf("[INFO]: Thread 'controller': affinity: %u\n", last_cpu);
 
   /* Wait for threads to be ready for test */
-  while (ready_consumers < consumer_count)
-    fipc_test_pause();
-  while (ready_producers < producer_count)
-    fipc_test_pause();
+  while (ready_consumers < consumer_count) fipc_test_pause();
+  while (ready_producers < producer_count) fipc_test_pause();
 
   fipc_test_mfence();
 
@@ -406,14 +423,12 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq)
   fipc_test_mfence();
 
   /* Wait for producers to complete */
-  while (completed_producers < producer_count)
-    fipc_test_pause();
+  while (completed_producers < producer_count) fipc_test_pause();
 
   fipc_test_mfence();
 
   /* Wait for consumers to complete */
-  while (completed_consumers < consumer_count)
-    fipc_test_pause();
+  while (completed_consumers < consumer_count) fipc_test_pause();
 
   fipc_test_mfence();
 
@@ -436,4 +451,4 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq)
   /* TODO free everything */
 }
 
-} // namespace kmercounter
+}  // namespace kmercounter

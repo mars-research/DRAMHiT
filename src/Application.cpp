@@ -1,3 +1,5 @@
+#include "Application.hpp"
+
 #include <errno.h>
 #include <pthread.h>
 #include <time.h>
@@ -9,22 +11,25 @@
 #include <ctime>
 #include <fstream>
 
+#include "./hashtables/cas_kht.hpp"
+#include "./hashtables/robinhood_kht.hpp"
+#include "./hashtables/simple_kht.hpp"
+#include "PrefetchTest.hpp"
 #include "ac_kseq.hpp"
 #include "ac_kstream.hpp"
 #include "kmer_data.cpp"
 #include "misc_lib.h"
-#include "types.hpp"
-
-#include "./hashtables/cas_kht.hpp"
-#include "./hashtables/robinhood_kht.hpp"
-#include "./hashtables/simple_kht.hpp"
-#include "Application.hpp"
-#include "PrefetchTest.hpp"
 #include "print_stats.h"
+#include "types.hpp"
 
 #ifdef WITH_PAPI_LIB
 #include <papi.h>
+
 #include "PapiEvent.hpp"
+#endif
+
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
 #endif
 
 namespace kmercounter {
@@ -50,6 +55,7 @@ const Configuration def = {
     .drop_caches = true,
     .n_prod = 1,
     .n_cons = 1,
+    .num_nops = 0,
     .K = 20,
     .ht_fill = 25,
     
@@ -72,28 +78,36 @@ PapiEvent pr1(6);
 PapiEvent pw1(6);
 #endif
 
-KmerHashTable *init_ht(const uint64_t sz, uint8_t id) {
-  KmerHashTable *kmer_ht = NULL;
+BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
+  BaseHashTable *kmer_ht = NULL;
 
   // Create hash table
   if (config.ht_type == SIMPLE_KHT) {
-    kmer_ht = new SimpleKmerHashTable<>(sz, id);
+    kmer_ht = new PartitionedHashStore<Item, ItemQueue>(sz, id);
   } else if (config.ht_type == ROBINHOOD_KHT) {
     kmer_ht = new RobinhoodKmerHashTable(sz);
   } else if (config.ht_type == CAS_KHT) {
     /* For the CAS Hash table, size is the same as
     size of one partitioned ht * number of threads */
-    kmer_ht = new CASKmerHashTable(sz * config.num_threads);
+    kmer_ht =
+        new CASHashTable<Aggr_KV, ItemQueue>(sz);  // * config.num_threads);
     /*TODO tidy this up, don't use static + locks maybe*/
+  } else if (config.ht_type == CAS_NOPREFETCH) {
+    kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
   } else {
     fprintf(stderr, "STDMAP_KHT Not implemented\n");
   }
   return kmer_ht;
 }
 
+void free_ht(BaseHashTable *kmer_ht) {
+  printf("Calling free_ht\n");
+  delete kmer_ht;
+}
+
 void Application::shard_thread(int tid) {
   Shard *sh = &this->shards[tid];
-  KmerHashTable *kmer_ht = NULL;
+  BaseHashTable *kmer_ht = NULL;
 
   sh->stats =
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
@@ -103,8 +117,8 @@ void Application::shard_thread(int tid) {
       kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
       break;
     case PREFETCH:
-      kmer_ht =
-          new SimpleKmerHashTable<Prefetch_KV>(HT_TESTS_HT_SIZE, sh->shard_idx);
+      kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
+          HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
     case SYNTH:
     case BQ_TESTS_NO_BQ:
@@ -120,8 +134,8 @@ void Application::shard_thread(int tid) {
   fipc_test_FAI(ready_threads);
 
 #ifdef WITH_PAPI_LIB
-  auto retval = PAPI_thread_init((unsigned long (*)(void)) ( pthread_self ) );
-  if ( retval != PAPI_OK ) {
+  auto retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self));
+  if (retval != PAPI_OK) {
     printf("PAPI Thread init failed\n");
   }
 
@@ -189,11 +203,19 @@ void Application::shard_thread(int tid) {
 
   // Write to file
   if (config.mode != FASTQ_NO_INSERT && !config.ht_file.empty()) {
+    // for CAS hashtable, not every thread has to write to file
+    if ((config.ht_type == CAS_KHT) && (sh->shard_idx > 0)) {
+      goto done;
+    }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
     printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
            outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
+
+  // free_ht(kmer_ht);
+
+done:
 
   fipc_test_FAD(ready_threads);
 
@@ -206,7 +228,6 @@ void Application::shard_thread(int tid) {
     pw1.stop();
   }  // PapiEvent scope
 #endif
-
   return;
 }
 
@@ -228,6 +249,10 @@ int Application::spawn_shard_threads() {
     if (seg_sz < 4096) {
       seg_sz = 4096;
     }
+  }
+
+  if (config.ht_type == CAS_KHT) {
+    HT_TESTS_NUM_INSERTS /= (float)config.num_threads;
   }
 
   /*   TODO don't spawn threads if f_start >= in_file_sz
@@ -372,6 +397,9 @@ int Application::process(int argc, char *argv[]) {
         "for bqueues only")(
         "k", po::value<uint32_t>(&config.K)->default_value(def.K),
         "the value of 'k' in k-mer")(
+        "num_nops",
+        po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
+        "number of nops in bqueue cons thread")(
         "ht-fill",
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
         "adjust hashtable fill ratio [0-100] ")

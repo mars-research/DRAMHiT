@@ -38,7 +38,7 @@ std::ostream &operator<<(std::ostream &strm, const __RH_Kmer_r &k) {
               << k.kmer_count;
 }
 
-class RobinhoodKmerHashTable : public KmerHashTable {
+class RobinhoodKmerHashTable : public BaseHashTable {
  private:
   uint64_t capacity;
   RH_Kmer_r empty_kmer_r;  /* for comparison for empty slot */
@@ -168,6 +168,11 @@ class RobinhoodKmerHashTable : public KmerHashTable {
     return true;
   }
 
+  void insert_noprefetch(void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   void flush_queue() {
     size_t curr_queue_sz = this->queue_idx;
     while (curr_queue_sz != 0) {
@@ -176,7 +181,7 @@ class RobinhoodKmerHashTable : public KmerHashTable {
     }
   }
 
-  __RH_Kmer_r *find(const void *kmer_data) {
+  void *find(const void *kmer_data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif

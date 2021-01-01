@@ -2,248 +2,58 @@
 #define _CAS_KHT_H
 
 #include <mutex>
-#include "base_kht.hpp"
-#include "city/city.h"
-#include "helper.hpp"
-#include "sync.h"
-#include "types.hpp"
+
 #include "dbg.hpp"
+#include "helper.hpp"
 #include "ht_helper.hpp"
-
-#if defined(XX_HASH)
-#include "xx/xxhash.h"
-#endif
-
-#if defined(XX_HASH_3)
-#include "xx/xxh3.h"
-#endif
+#include "sync.h"
 
 namespace kmercounter {
 
-struct Kmer_KV_cas {
-  Kmer_base_cas_t kb;            // 20 + 2 bytes
-  uint64_t kmer_hash;        // 8 bytes
-  volatile char padding[2];  // 2 bytes
-} __attribute__((packed));
-
-static uint64_t working_threads = 0;
-
-typedef struct {
-  char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
-  uint16_t kmer_count;     // 2 bytes // TODO seems too long, max count is ~14
-  bool occupied;           // 1 bytes
-  uint64_t kmer_hash;  // 8 bytes
-  char padding[3];         // 3 bytes // TODO remove hardcode
-} __attribute__((packed)) CAS_Kmer_r;
-
-// TODO store org kmer idx, to check if we have wrappd around after reprobe
-typedef struct {
-  const void* kmer_data_ptr;
-  uint32_t kmer_idx;       // TODO reduce size, TODO decided by hashtable size?
-  uint64_t kmer_hash;  // 8 bytes
-} __attribute__((packed)) CAS_Kmer_queue_r;
-
-std::ostream& operator<<(std::ostream& strm, const Kmer_KV_cas& k) {
-  return strm << std::string(k.kb.kmer.data, KMER_DATA_LENGTH) << " : "
-              << k.kb.count;
-}
-
-template <typename T = Kmer_KV_cas>
-class CASKmerHashTable : public KmerHashTable {
- private:
-  uint64_t capacity;
-  T empty_kmer_r;  /* for comparison for empty slot */
-  CAS_Kmer_queue_r* queue;  // TODO prefetch this?
-  uint32_t queue_idx;
-  std::mutex ht_init_mutex;
-
-  uint64_t hash(const void *k) {
-    uint64_t hash_val;
-#if defined(CITY_HASH)
-    hash_val = CityHash64((const char *)k, KMER_DATA_LENGTH);
-#elif defined(FNV_HASH)
-    hash_val = hval = fnv_32a_buf(k, KMER_DATA_LENGTH, hval);
-#elif defined(XX_HASH)
-    hash_val = XXH64(k, KMER_DATA_LENGTH, 0);
-#elif defined(XX_HASH_3)
-    hash_val = XXH3_64bits(k, KMER_DATA_LENGTH);
-#endif
-    return hash_val;
-  }
-
-  void prefetch(uint64_t i) {
-#if defined(PREFETCH_WITH_PREFETCH_INSTR)
-    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]));
-#endif
-
-#if defined(PREFETCH_WITH_WRITE)
-    prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
-#endif
-  };
-  void __insert_into_queue(const void* kmer_data) {
-    uint64_t hash_new = this->hash((const char*)kmer_data);
-    size_t __kmer_idx = hash_new & (this->capacity - 1);  // modulo
-    // size_t __kmer_idx = cityhash_new % (this->capacity);
-
-    /* prefetch buckets and store kmer_data pointers in queue */
-    // TODO how much to prefetch?
-    // TODO if we do prefetch: what to return? API breaks
-    this->prefetch(__kmer_idx);
-
-    // __builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
-    // printf("inserting into queue at %u\n", this->queue_idx);
-    this->queue[this->queue_idx].kmer_data_ptr = kmer_data;
-    this->queue[this->queue_idx].kmer_idx = __kmer_idx;
-#ifdef COMPARE_HASH
-    this->queue[this->queue_idx].kmer_cityhash = hash_new;
-#endif
-    this->queue_idx++;
-  }
-
-  /* Insert items from queue into hash table, interpreting "queue"
-  as an array of size queue_sz*/
-  void __insert_from_queue(size_t queue_sz) {
-    this->queue_idx = 0;  // start again
-    for (size_t i = 0; i < queue_sz; i++) {
-      __insert(&this->queue[i]);
-    }
-  }
-
-  /* Insert using prefetch: using a dynamic prefetch queue.
-          If bucket is occupied, add to queue again to reprobe.
-  */
-  void __reprobe(CAS_Kmer_queue_r* q, size_t curr_idx) {
-    curr_idx++;
-    curr_idx = curr_idx & (this->capacity - 1);  // modulo
-    // __builtin_prefetch(&hashtable[curr_idx], 1, 3);
-    q->kmer_idx = curr_idx;
-
-    //queue[this->queue_idx] = *q;
-    queue[this->queue_idx].kmer_data_ptr = q->kmer_data_ptr;
-    queue[this->queue_idx].kmer_idx = q->kmer_idx;
-    this->queue_idx++;
-#ifdef CALC_STATS
-    this->num_reprobes++;
-#endif
-  }
-
-  void __insert(CAS_Kmer_queue_r* q) {
-    size_t pidx = q->kmer_idx; /* hashtable location at which data is to be
-                                  inserted */
-
-    /* Compare with empty kmer to check if bucket is empty, and insert. */
-    // hashtable_mutexes[pidx].lock();
-    // printf("Thread %lu, grabbing lock: %lu\n", this->thread_id, pidx);
-
-    if (!hashtable[pidx].kb.occupied) {
-      bool cas_res = fipc_test_CAS(&hashtable[pidx].kb.occupied, false, true);
-      if (!cas_res) {
-        __reprobe(q, pidx);
-        return;
-      }
-#ifdef CALC_STATS
-      this->num_memcpys++;
-#endif
-
-      memcpy(&hashtable[pidx].kb.kmer.data, q->kmer_data_ptr, KMER_DATA_LENGTH);
-      hashtable[pidx].kb.count++;
-      // hashtable[pidx].occupied = true;
-      hashtable[pidx].kmer_hash = q->kmer_hash;
-      // hashtable_mutexes[pidx].unlock();
-      // printf("Thread %lu, released lock: %lu\n", this->thread_id,
-      // pidx);
-      return;
-    }
-
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-    if (hashtable[pidx].kmer_hash == q->kmer_hash) {
-#ifdef CALC_STATS
-      this->num_memcmps++;
-#endif
-
-      if (memcmp(&hashtable[pidx].kb.kmer.data, q->kmer_data_ptr,
-                 KMER_DATA_LENGTH) == 0) {
-        bool cas_res = false;
-        uint32_t ocount;
-        while (cas_res == false) {
-          ocount = hashtable[pidx].kb.count;
-          cas_res =
-              fipc_test_CAS(&hashtable[pidx].kb.count, ocount, ocount + 1);
-        }
-
-        // hashtable[pidx].kmer_count++;
-        // hashtable_mutexes[pidx].unlock();
-        return;
-      }
-    }
-
-    {
-      /* insert back into queue, and prefetch next bucket.
-      next bucket will be probed in the next run
-      */
-      // hashtable_mutexes[pidx].unlock();
-      __reprobe(q, pidx);
-
-      return;
-    }
-  }
-
+template <typename KV, typename KVQ>
+class CASHashTable : public BaseHashTable {
  public:
-#ifdef CALC_STATS
-  uint64_t num_reprobes = 0;
-  uint64_t num_memcmps = 0;
-  uint64_t num_memcpys = 0;
-  uint64_t num_hashcmps = 0;
-  uint64_t num_queue_flushes = 0;
-  uint64_t sum_distance_from_bucket = 0;
-  uint64_t max_distance_from_bucket = 0;
-#endif
-  T* hashtable;
+  static KV *hashtable;
+  int fd;
+  int id;
+  size_t data_length, key_length;
+
   // static std::vector<std::mutex> hashtable_mutexes;
   // uint32_t thread_id;
 
-  CASKmerHashTable(uint64_t c) {
-    // TODO static cast
-    // TODO power of 2 hashtable size for ease of mod operations
+  CASHashTable(uint64_t c) : fd(-1), id(1), queue_idx(0) {
     this->capacity = kmercounter::next_pow2(c);
-    this->ht_init_mutex.lock();
-    if (!hashtable) {
-      this->hashtable = (T*)(aligned_alloc(
-          PAGE_SIZE, capacity * sizeof(T)));
-      memset(hashtable, 0, capacity * sizeof(T));
-      memset(&this->empty_kmer_r, 0, sizeof(T));
+    // this->ht_init_mutex.lock();
+    {
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+      if (!this->hashtable) {
+        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+      }
     }
-    this->ht_init_mutex.unlock();
+    this->empty_item = this->empty_item.get_empty_key();
+    this->key_length = empty_item.key_length();
+    this->data_length = empty_item.data_length();
 
-    this->queue = (CAS_Kmer_queue_r*)(aligned_alloc(
-        PAGE_SIZE,
-        kmercounter::PREFETCH_QUEUE_SIZE * sizeof(CAS_Kmer_queue_r)));
-    this->queue_idx = 0;
-    // __builtin_prefetch(queue, 1, 3);
-    fipc_test_FAI(working_threads);
+    cout << "Empty item: " << this->empty_item << endl;
+    this->queue = (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
 
+    printf("[INFO] Hashtable size: %lu\n", this->capacity);
+    printf("%s, data_length %lu\n", __func__, this->data_length);
+
+    // this->ht_init_mutex.unlock();
     // this->thread_id = t;
-
     // std::vector<std::mutex> __ hashtable_mutexes (this->capacity);
     // hashtable_mutexes.swap(__// hashtable_mutexes);
   }
 
-  ~CASKmerHashTable() {
+  ~CASHashTable() {
     free(queue);
-    fipc_test_FAD(working_threads);
-    if (!working_threads) {
-      printf("DESTROYED\n");
-      free(hashtable);
-    }
+    free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
   }
 
   /* insert and increment if exists */
-  bool insert(const void* kmer_data) {
-    __insert_into_queue(kmer_data);
+  bool insert(const void *data) {
+    this->__insert_into_queue(data);
 
     /* if queue is full, actually insert */
     // now queue_idx = 20
@@ -251,11 +61,14 @@ class CASKmerHashTable : public KmerHashTable {
       this->__insert_from_queue(PREFETCH_QUEUE_SIZE);
     }
 
-    /* if queue is still full, empty it. This is especially needed
-    if queue size is small (< 20?) */
+    // XXX: This is to ensure correctness of the hashtable. No matter what the
+    // queue size is, this has to be enabled!
     if (this->queue_idx == PREFETCH_QUEUE_SIZE) {
-    	this->flush_queue();
+      this->flush_queue();
     }
+
+    // XXX: Most likely the HT is full here. We should panic here!
+    assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
     return true;
   }
 
@@ -270,28 +83,51 @@ class CASKmerHashTable : public KmerHashTable {
 #endif
   }
 
-  // T* find(const void * kmer_data)
-  T *find(const void* kmer_data) {
+  void insert_noprefetch(void *data) {
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);  // modulo
+
+    for (auto i = 0u; i < this->capacity; i++) {
+      KV *curr = &this->hashtable[idx];
+    retry:
+      if (curr->is_empty()) {
+        bool cas_res = curr->cas_insert(data, this->empty_item);
+        if (cas_res) {
+          break;
+        } else {
+          goto retry;
+        }
+      } else if (curr->compare_key(data)) {
+        curr->cas_update(data);
+        break;
+      } else {
+        idx++;
+        idx = idx & (this->capacity - 1);
+      }
+    }
+  }
+
+  void *find(const void *data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t hash_new = this->hash((const char *)kmer_data);
-
-    size_t idx = hash_new & (this->capacity - 1);  // modulo
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash;
+    KV *curr;
+    bool found = false;
 
     // printf("Thread %lu: Trying memcmp at: %lu\n", this->thread_id, idx);
-    int memcmp_res =
-        memcmp(&hashtable[idx].kb.kmer.data, kmer_data, KMER_DATA_LENGTH);
-
-    while (memcmp_res != 0) {
-      idx++;
+    for (auto i = 0u; i < this->capacity; i++) {
       idx = idx & (this->capacity - 1);
-      // printf("%d\n", idx);
-      memcmp_res =
-          memcmp(&hashtable[idx].kb.kmer.data, kmer_data, KMER_DATA_LENGTH);
+      curr = &this->hashtable[idx];
+      if (curr->compare_key(data)) {
+        found = true;
+        break;
+      }
 #ifdef CALC_STATS
       distance_from_bucket++;
 #endif
+      idx++;
     }
 
 #ifdef CALC_STATS
@@ -300,16 +136,17 @@ class CASKmerHashTable : public KmerHashTable {
     }
     this->sum_distance_from_bucket += distance_from_bucket;
 #endif
-    return &this->hashtable[idx];
+    // return empty_element if nothing is found
+    if (!found) {
+      curr = &this->empty_item;
+    }
+    return curr;
   }
 
   void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
-      if (hashtable[i].kb.occupied) {
-        for (size_t k = 0; k < KMER_DATA_LENGTH; k++) {
-          printf("%c", hashtable[i].kb.kmer.data[k]);
-        }
-        printf(": %u\n", hashtable[i].kb.count);
+      if (!this->hashtable[i].is_empty()) {
+        cout << this->hashtable[i] << endl;
       }
     }
   }
@@ -317,7 +154,7 @@ class CASKmerHashTable : public KmerHashTable {
   size_t get_fill() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].kb.occupied) {
+      if (!this->hashtable[i].is_empty()) {
         count++;
       }
     }
@@ -329,14 +166,14 @@ class CASKmerHashTable : public KmerHashTable {
   size_t get_max_count() const override {
     size_t count = 0;
     for (size_t i = 0; i < this->capacity; i++) {
-      if (hashtable[i].kb.count > count) {
-        count = hashtable[i].kb.count;
+      if (this->hashtable[i].get_value() > count) {
+        count = this->hashtable[i].get_value();
       }
     }
     return count;
   }
 
-  void print_to_file(std::string& outfile) const override {
+  void print_to_file(std::string &outfile) const override {
     std::ofstream f(outfile);
     if (!f) {
       dbg("Could not open outfile %s\n", outfile.c_str());
@@ -344,15 +181,149 @@ class CASKmerHashTable : public KmerHashTable {
     }
 
     for (size_t i = 0; i < this->get_capacity(); i++) {
-      if (this->hashtable[i].kb.count > 0) {
+      if (!this->hashtable[i].is_empty()) {
         f << this->hashtable[i] << std::endl;
       }
     }
   }
+
+ private:
+  static std::mutex ht_init_mutex;
+  uint64_t capacity;
+  KV empty_item;
+  KVQ *queue;
+  uint32_t queue_idx;
+
+  uint64_t hash(const void *k) {
+    uint64_t hash_val;
+#if defined(CITY_HASH)
+    hash_val = CityHash64((const char *)k, this->key_length);
+#elif defined(FNV_HASH)
+    hash_val = hval = fnv_32a_buf(k, this->key_length, hval);
+#elif defined(XX_HASH)
+    hash_val = XXH64(k, this->key_length, 0);
+#elif defined(XX_HASH_3)
+    hash_val = XXH3_64bits(k, this->key_length);
+#endif
+    return hash_val;
+  }
+
+  void prefetch(uint64_t i) {
+#if defined(PREFETCH_WITH_PREFETCH_INSTR)
+    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
+                    sizeof(this->hashtable[i & (this->capacity - 1)]));
+#endif
+
+#if defined(PREFETCH_WITH_WRITE)
+    prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
+#endif
+  };
+
+  void __insert_into_queue(const void *data) {
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);  // modulo
+    // size_t __kmer_idx = cityhash_new % (this->capacity);
+
+    /* prefetch buckets and store kmer_data pointers in queue */
+    // TODO how much to prefetch?
+    // TODO if we do prefetch: what to return? API breaks
+    this->prefetch(idx);
+
+    // __builtin_prefetch(&hashtable[__kmer_idx], 1, 3);
+    // printf("inserting into queue at %u\n", this->queue_idx);
+    this->queue[this->queue_idx].data = data;
+    this->queue[this->queue_idx].idx = idx;
+#ifdef COMPARE_HASH
+    this->queue[this->queue_idx].key_hash = hash;
+#endif
+    this->queue_idx++;
+  }
+
+  /* Insert items from queue into hash table, interpreting "queue"
+  as an array of size queue_sz*/
+  void __insert_from_queue(size_t queue_sz) {
+    this->queue_idx = 0;  // start again
+    for (size_t i = 0; i < queue_sz; i++) {
+      __insert(&this->queue[i]);
+    }
+  }
+
+  void __insert(KVQ *q) {
+    // hashtable idx at which data is to be inserted
+    size_t idx = q->idx;
+    KV *curr = &this->hashtable[idx];
+
+    // hashtable_mutexes[pidx].lock();
+    // printf("Thread %lu, grabbing lock: %lu\n", this->thread_id, pidx);
+    // Compare with empty element
+    if (curr->is_empty()) {
+      bool cas_res = curr->cas_insert(q->data, this->empty_item);
+      if (cas_res) {
+#ifdef CALC_STATS
+        this->num_memcpys++;
+#endif
+
+#ifdef COMPARE_HASH
+        hashtable[pidx].key_hash = q->key_hash;
+#endif
+        return;
+      }
+      // hashtable_mutexes[pidx].unlock();
+      // printf("Thread %lu, released lock: %lu\n", this->thread_id,
+      // pidx);
+      // printf("%lu: %d | %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
+      // If CAS fails, we need to see if someother thread has updated the same
+      // <k,v> onto the position we were trying to insert. If so, we need to
+      // update the value instead of inserting new. Just fall-through to check!
+    }
+
+#ifdef CALC_STATS
+    this->num_hashcmps++;
+#endif
+
+#ifdef COMPARE_HASH
+    if (this->hashtable[pidx].key_hash == q->key_hash)
+#endif
+    {
+#ifdef CALC_STATS
+      this->num_memcmps++;
+#endif
+      if (curr->compare_key(q->data)) {
+        curr->cas_update(q->data);
+        // hashtable[pidx].kmer_count++;
+        // hashtable_mutexes[pidx].unlock();
+        return;
+      }
+    }
+
+    // hashtable_mutexes[pidx].unlock();
+
+    /* insert back into queue, and prefetch next bucket.
+    next bucket will be probed in the next run
+    */
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+
+    prefetch(idx);
+
+    this->queue[this->queue_idx].data = q->data;
+    this->queue[this->queue_idx].idx = idx;
+    this->queue_idx++;
+    // printf("reprobe pidx %d\n", pidx);
+
+#ifdef CALC_STATS
+    this->num_reprobes++;
+#endif
+    return;
+  }
 };
 
-//CAS_Kmer_r* CASKmerHashTable::hashtable;
-// std::vector<std::mutex> CASKmerHashTable:: hashtable_mutexes;
+template <class KV, class KVQ>
+KV *CASHashTable<KV, KVQ>::hashtable;
+
+template <class KV, class KVQ>
+std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
+// std::vector<std::mutex> CASHashTable:: hashtable_mutexes;
 
 // TODO bloom filters for high frequency kmers?
 

@@ -15,9 +15,14 @@ CFLAGS = -g -Wall -mprefetchwt1 $(OPT_FLAGS)
 CFLAGS += -march=native
 CFLAGS += $(patsubst %,-I%/,$(IDIRS))
 
+VTUNE_ROOT := /opt/vtune/vtune_profiler_2020.1.0.607630
 
 ifeq ($(PAPI), yes)
 	CFLAGS += -I$(PWD)/papi/src/install/include/ -DWITH_PAPI_LIB
+endif
+
+ifeq ($(VTUNE), yes)
+	CFLAGS += -I$(VTUNE_ROOT)/include/ -DWITH_VTUNE_LIB
 endif
 
 # YES. We love spaghetti!!!
@@ -41,8 +46,16 @@ CFLAGS += -DXX_HASH
 # CFLAGS += -DNO_CORNER_CASES
 CFLAGS += -DBQ_TESTS_DO_HT_INSERTS
 CFLAGS += -DBQ_TESTS_USE_HALT
+#CFLAGS += -DUSE_ATOMICS
 
 CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD
+ifeq ($(BRANCH), no)
+	CXXFLAGS += -DBRANCHLESS
+endif
+
+ifeq ($(BRANCH_NO_SIMD), yes)
+	CXXFLAGS += -DBRANCHLESS_NO_SIMD
+endif
 
 # boostpo to parse args
 LIBS = -lboost_program_options
@@ -60,6 +73,10 @@ PAPILIB = $(LIBDIR)/$(LIBPAPI)
 
 ifeq ($(PAPI), yes)
 	LIBS += $(PAPILIB)
+endif
+
+ifeq ($(VTUNE), yes)
+	LIBS += -Wl,--no-as-needed -ldl -L$(VTUNE_ROOT)/lib64/ -littnotify
 endif
 
 TARGET=kmercounter

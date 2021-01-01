@@ -12,7 +12,7 @@ namespace kmercounter {
 /* https://bioinformatics.stackexchange.com/questions/5359/what-is-the-most-compact-data-structure-for-canonical-k-mers-with-the-fastest-lo?noredirect=1&lq=1
  */
 
-extern void get_ht_stats(Shard *, KmerHashTable *);
+extern void get_ht_stats(Shard *, BaseHashTable *);
 
 static unsigned char seq_nt4_table[128] = {  // Table to change "ACGTN" to 01234
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -157,7 +157,7 @@ void ParserTest::shard_thread_parse_no_inserts(Shard *sh) {
 }
 
 void ParserTest::shard_thread_parse_and_insert(Shard *sh,
-                                               KmerHashTable *kmer_ht) {
+                                               BaseHashTable *kmer_ht) {
   uint64_t t_start, t_end;
   kseq seq;
   int l = 0;

@@ -2,12 +2,12 @@
 #define _STDMAP_KHT_H
 
 #include "base_kht.hpp"
-#include "types.hpp"
 #include "kmer_class.hpp"
+#include "types.hpp"
 
 namespace kmercounter {
 
-class StdmapKmerHashTable : public KmerHashTable {
+class StdmapKmerHashTable : public BaseHashTable {
   std::unordered_map<Kmer, Kmer_value_t, Kmer_hash, Kmer_equal> std_kmer_umap;
 
   StdmapKmerHashTable(uint64_t c) {
@@ -67,4 +67,4 @@ class StdmapKmerHashTable : public KmerHashTable {
 };
 
 }  // namespace kmercounter
-#endif // _STDMAP_KHT_H
+#endif  // _STDMAP_KHT_H
