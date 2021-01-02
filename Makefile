@@ -88,6 +88,7 @@ TESTS = $(patsubst %,src/tests/%, bq_tests.cpp  \
 	hashtable_tests.cpp  \
 	parser_tests.cpp \
 	prefetch_tests.cpp \
+	lock_tests.cpp \
 	)
 
 CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \

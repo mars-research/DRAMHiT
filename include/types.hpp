@@ -25,7 +25,11 @@ typedef enum {
   SYNTH = 6,
   PREFETCH = 7,
   BQ_TESTS_YES_BQ = 8,
-  BQ_TESTS_NO_BQ = 9
+  BQ_TESTS_NO_BQ = 9,
+  LOCK_TEST_SPINLOCK = 12,
+  LOCK_TEST_ATOMIC_INC = 13,
+  LOCK_TEST_UNCONTENDED_LOCK = 14,
+  LOCK_TEST_UNCONTENDED_INC = 15,
 } run_mode_t;
 
 typedef enum {

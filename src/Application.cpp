@@ -340,7 +340,10 @@ int Application::process(int argc, char *argv[]) {
         "\n4: Read FASTQ, and insert to ht (specify --in_file)"
         "\n5: Read FASTQ, but do not insert to ht (specify --in_file) "
         "\n6/7: Synth/Prefetch,"
-        "\n8/9: Bqueue tests: with bqueues/without bequeues")(
+        "\n8/9: Bqueue tests: with bqueues/without bequeues"
+        "\n12/13/14/15: Lock tests:"
+        "\n    Spinlock\n    Atomic"
+        "\n    Uncontended lock\n    Uncontended increment")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -488,6 +491,14 @@ int Application::process(int argc, char *argv[]) {
 
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.bqt.run_test(&config, this->n, this->npq);
+  } else if (config.mode == LOCK_TEST_SPINLOCK) {
+    this->test.lt.spinlock_increment_test_run(config);
+  } else if (config.mode == LOCK_TEST_ATOMIC_INC) {
+    this->test.lt.atomic_increment_test_run(config);
+  } else if (config.mode == LOCK_TEST_UNCONTENDED_INC) {
+    this->test.lt.uncontended_increment_test_run(config);
+  } else if (config.mode == LOCK_TEST_UNCONTENDED_LOCK) {
+    this->test.lt.uncontended_lock_test_run(config);
   } else {
     this->spawn_shard_threads();
   }

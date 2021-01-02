@@ -5,6 +5,7 @@
 #include "ParserTest.hpp"
 #include "PrefetchTest.hpp"
 #include "SynthTest.hpp"
+#include "LockTest.hpp"
 
 namespace kmercounter {
 
@@ -14,6 +15,7 @@ class Tests {
   PrefetchTest pt;
   ParserTest pat;
   BQueueTest bqt;
+  LockTest lt;
 
   Tests() {}
 };
