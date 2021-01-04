@@ -453,16 +453,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef BRANCHLESS_FIND
     KV *curr = &this->hashtable[idx];
     uint64_t retry;
-    if (*(uint64_t *)q->data == 11180) {
-      // printf("corrupt value\n");
-      // assert(false);
-    }
-    found = curr->find_key_brless(q->data, &retry);
 
-    // if (found)
-    // printf("key = %lu , value %lu | retry = %lu | found = %lu\n",
-    // *(uint64_t*) q->data,
-    //                              *((uint64_t*)q->data + 1), retry, found);
+    found = curr->find_key_brless(q->data, &retry);
 
     // insert back into queue, and prefetch next bucket.
     // next bucket will be probed in the next run
