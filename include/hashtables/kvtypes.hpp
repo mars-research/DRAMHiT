@@ -126,6 +126,8 @@ struct Aggr_KV {
 
   inline void update_value(const void *from, size_t len) { this->count += 1; }
 
+  inline void set_value(Aggr_KV *from) { this->count = from->count; }
+
   inline void update_brless(uint8_t cmp) {
     asm volatile(
         "mov %[count], %%rbx\n\t"
@@ -154,6 +156,58 @@ struct Aggr_KV {
     Aggr_KV empty = this->get_empty_key();
     return this->key == empty.key;
   }
+
+  __attribute__((noinline)) uint64_t find_key_brless(const void *data,
+                                                     uint64_t *retry) {
+    Aggr_KV *kvpair =
+        const_cast<Aggr_KV *>(reinterpret_cast<const Aggr_KV *>(data));
+    // cprintf("%s, data %p | key %lu | ret %p\n", __func__, data, kvpair->key,
+    // ret);
+    uint64_t found = false;
+    asm volatile(
+        "xor %%r13, %%r13\n\t"
+        "mov %[key_in], %%rbx\n\t"
+        "mov %%rbx, %%r12\n\t"
+        "xor %[key_curr], %%rbx\n\t"
+        // if the key is empty, we'll get back the same data
+        "cmp %%r12, %%rbx\n\t"
+        // set empty = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r13\n\t"
+        // set found = false;
+        "mov $0x0, %[found]\n\t"
+        //"cmove %%r15, %[found]\n\t"
+        //"cmovne %%r15, %[found]\n\t"
+        // if key == data, we'll get zero. we've found the key!
+        "xor %%r15, %%r15\n\t"
+        "test %%rbx, %%rbx\n\t"
+        "cmove %[val_curr], %%r15\n\t"
+        "mov %%r15, %[value_out]\n\t"
+        // set found = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %[found]\n\t"
+        // if key != data, we'll get > 0 && !data
+        // if !empty && !found, return 0x1, to continue finding the key
+        // e | f | retry
+        // 0 | 0 | 1
+        // 0 | 1 | 0
+        // 1 | 0 | 0
+        "mov %[found], %%r14\n\t"
+        "xor %%r14, %%r13\n\t"
+        "not %%r13\n\t"
+        "and $0x1, %%r13\n\t"
+        "xor %%r14, %%r14\n\t"
+        "cmp $0x1, %%r13\n\t"
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r14\n\t"
+        "mov %%r14, %[retry]\n\t"
+        : [ value_out ] "=m"(kvpair->count), [ retry ] "=m"(*retry),
+          [ found ] "=r"(found)
+        : [ key_in ] "r"(kvpair->key), [ key_curr ] "m"(this->key),
+          [ val_curr ] "rm"(this->count)
+        : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
+    return found;
+  };
 
   inline uint16_t insert_or_update(const void *data) {
     uint16_t ret = 0;

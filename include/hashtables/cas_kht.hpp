@@ -51,6 +51,8 @@ class CASHashTable : public BaseHashTable {
     free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
   }
 
+  uint8_t flush_find_queue() override { return 0; }
+
   /* insert and increment if exists */
   bool insert(const void *data) {
     this->__insert_into_queue(data);
@@ -105,6 +107,11 @@ class CASHashTable : public BaseHashTable {
         idx = idx & (this->capacity - 1);
       }
     }
+  }
+
+  uint8_t find_batch(uint64_t *keys, uint32_t batch_len) override {
+    assert(false);
+    return 0;
   }
 
   void *find(const void *data) {
