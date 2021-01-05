@@ -48,7 +48,10 @@ CFLAGS += -DBQ_TESTS_DO_HT_INSERTS
 # CFLAGS += -DBQ_TESTS_USE_HALT
 #CFLAGS += -DUSE_ATOMICS
 
-CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD
+# https://wiki.ubuntu.com/ToolChain/CompilerFlags#A-fstack-clash-protection
+CFLAGS += -fcf-protection=none
+
+CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD -fcf-protection=none
 ifeq ($(BRANCH), no)
 	CXXFLAGS += -DBRANCHLESS
 endif
