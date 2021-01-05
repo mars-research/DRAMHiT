@@ -40,7 +40,7 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
   return addr & ~CACHE_BLOCK_MASK;
 }
 
-inline void prefetch_object(const void *addr, uint64_t size) {
+inline void prefetch_object(const void *addr, uint64_t size, bool write) {
   uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
 
 #if defined(PREFETCH_TWO_LINE)
@@ -52,7 +52,7 @@ inline void prefetch_object(const void *addr, uint64_t size) {
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
-  __builtin_prefetch((const void *)cache_line1_addr, 1, 0);
+  __builtin_prefetch((const void *)cache_line1_addr, write, 3);
 
   //__builtin_prefetch(addr, 1, 0);
 #if defined(PREFETCH_TWO_LINE)

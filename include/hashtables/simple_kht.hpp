@@ -67,13 +67,20 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]));
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    true /* write */);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
     prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
   };
+
+  void prefetch_read(uint64_t i) {
+    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    false /* write */);
+  }
 
   inline uint8_t touch(uint64_t i) {
 #if defined(TOUCH_DEPENDENCY)
@@ -242,16 +249,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     KV *keys = reinterpret_cast<KV *>(__keys);
     for (auto k = 0u; k < batch_len; k++) {
       void *data = reinterpret_cast<void *>(&keys[k]);
-
       add_to_find_queue(data);
-
-      if (this->find_idx >= PREFETCH_FIND_QUEUE_SIZE) {
-        found += this->find_prefetched_batch();
-      }
-
-      found += this->flush_find_queue();
     }
-    printf("%s, found %d keys\n", __func__, found);
+
+    found += this->flush_find_queue();
+
+    // printf("%s, found %d keys\n", __func__, found);
     return found;
   }
 
@@ -443,8 +446,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
-  // TODO: Move this to makefile
-  //#define BRANCHLESS_FIND
+// TODO: Move this to makefile
+#define BRANCHLESS_FIND
 
   auto __find_one(KVQ *q) {
     // hashtable idx where the data should be found
@@ -461,7 +464,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     idx++;
     idx = idx & (this->capacity - 1);  // modulo
 
-    prefetch(idx);
+    this->prefetch_read(idx);
 
     this->find_queue[this->find_idx].data = q->data;
     this->find_queue[this->find_idx].idx = idx;
@@ -720,7 +723,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo
 
-    this->prefetch(idx);
+    this->prefetch_read(idx);
     this->find_queue[this->find_idx].idx = idx;
     this->find_queue[this->find_idx].data = data;
 

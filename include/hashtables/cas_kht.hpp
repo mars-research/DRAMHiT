@@ -218,13 +218,20 @@ class CASHashTable : public BaseHashTable {
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]));
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    true /*write*/);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
     prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
   };
+
+  void prefetch_read(uint64_t i) {
+    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    false /* write */);
+  }
 
   void __insert_into_queue(const void *data) {
     uint64_t hash = this->hash((const char *)data);

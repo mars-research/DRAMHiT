@@ -157,12 +157,10 @@ struct Aggr_KV {
     return this->key == empty.key;
   }
 
-  __attribute__((noinline)) uint64_t find_key_brless(const void *data,
-                                                     uint64_t *retry) {
+  inline uint64_t find_key_brless(const void *data, uint64_t *retry) {
     Aggr_KV *kvpair =
         const_cast<Aggr_KV *>(reinterpret_cast<const Aggr_KV *>(data));
-    // cprintf("%s, data %p | key %lu | ret %p\n", __func__, data, kvpair->key,
-    // ret);
+
     uint64_t found = false;
     asm volatile(
         "xor %%r13, %%r13\n\t"

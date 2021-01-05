@@ -12,7 +12,7 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
-#define HT_TESTS_FIND_BATCH_LENGTH 16
+#define HT_TESTS_FIND_BATCH_LENGTH PREFETCH_FIND_QUEUE_SIZE
 
 uint64_t HT_TESTS_HT_SIZE = (1 << 26);
 uint64_t HT_TESTS_NUM_INSERTS;
@@ -87,7 +87,7 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
           ktable->find_batch((uint64_t *)items, HT_TESTS_FIND_BATCH_LENGTH);
       k = 0;
     }
-    printf("\t count %lu | found -> %lu\n", count, found);
+    // printf("\t count %lu | found -> %lu\n", count, found);
   }
   found += ktable->flush_find_queue();
   return found;
