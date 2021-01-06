@@ -39,8 +39,14 @@ struct Prefetch_KV {
     this->kb.count += 1;
   }
 
+  inline void set_value(Prefetch_KV *from) { this->kb.count = from->kb.count; }
+
   inline void update_brless(uint8_t cmp) {}
 
+  inline uint64_t find_key_brless(const void *data, uint64_t *ret) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
   inline Prefetch_KV get_empty_key() {
     Prefetch_KV empty;
     memset(empty.kb.kmer.data, 0, sizeof(empty.kb.kmer.data));
@@ -54,7 +60,7 @@ struct Prefetch_KV {
 
   inline uint16_t get_value() const { return this->kb.count; }
 
-  inline uint16_t insert_or_update(const void * data) { return 0xFF; }
+  inline uint16_t insert_or_update(const void *data) { return 0xFF; }
 } PACKED;
 
 struct PrefetchKV_Queue {

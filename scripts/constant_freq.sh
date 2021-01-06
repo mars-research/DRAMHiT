@@ -30,7 +30,7 @@ disable_turbo() {
 	fi
 
 	# make sure we have this module loaded
-	if [ -z "$(lsmod | grep msr)" ]; then
+	if [ -z "$(lsmod | grep '^msr')" ]; then
 		echo "Loading msr module"
 		sudo modprobe msr
 	fi

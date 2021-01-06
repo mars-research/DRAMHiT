@@ -20,6 +20,7 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
+#define HT_TESTS_FIND_BATCH_LENGTH PREFETCH_FIND_QUEUE_SIZE
 
 uint64_t HT_TESTS_HT_SIZE = (1 << 26);
 uint64_t HT_TESTS_NUM_INSERTS;
@@ -56,7 +57,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
   struct xorwow_state _xw_state;
 
   xorwow_init(&_xw_state);
-
+  if (start == 0) count = 1;
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
@@ -79,6 +80,31 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
   ktable->flush_queue();
   printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
   return count;//i;
+}
+
+uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
+  uint64_t count = HT_TESTS_NUM_INSERTS * start;
+  auto i = 0, k = 0;
+  uint64_t found = 0;
+  if (start == 0) count = 1;
+
+  __attribute__((aligned(64))) Aggr_KV items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+
+  for (i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+    Aggr_KV *ret;
+    // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
+    items[k++].key = count++;
+
+    if (k == HT_TESTS_FIND_BATCH_LENGTH) {
+      // printf("%s, calling find_batch i = %d\n", __func__, i);
+      found +=
+          ktable->find_batch((uint64_t *)items, HT_TESTS_FIND_BATCH_LENGTH);
+      k = 0;
+    }
+    // printf("\t count %lu | found -> %lu\n", count, found);
+  }
+  found += ktable->flush_find_queue();
+  return found;
 }
 
 uint64_t seed2 = 123456789;
@@ -153,6 +179,16 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   }
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
+
+  sleep(1);
+
+  t_start = RDTSC_START();
+  auto num_finds = synth_run_get(kmer_ht, sh->shard_idx);
+  t_end = RDTSCP();
+
+  printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
+         sh->shard_idx, num_finds, (t_end - t_start) / num_finds);
+
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
   // kmer_ht->display();

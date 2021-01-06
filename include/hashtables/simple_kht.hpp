@@ -67,13 +67,20 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]));
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    true /* write */);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
     prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
   };
+
+  void prefetch_read(uint64_t i) {
+    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    false /* write */);
+  }
 
   inline uint8_t touch(uint64_t i) {
 #if defined(TOUCH_DEPENDENCY)
@@ -88,7 +95,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return 0;
   };
 
-  PartitionedHashStore(uint64_t c, uint8_t id) : fd(-1), id(id), queue_idx(0) {
+  PartitionedHashStore(uint64_t c, uint8_t id)
+      : fd(-1), id(id), queue_idx(0), find_idx(0) {
     this->capacity = kmercounter::next_pow2(c);
     this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
     this->empty_item = this->empty_item.get_empty_key();
@@ -97,7 +105,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     cout << "Empty item: " << this->empty_item << endl;
     this->queue = (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
-    dbg("id: %d this->queue %p\n", id, this->queue);
+    this->find_queue =
+        (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
+
+    dbg("id: %d this->queue %p | find_queue %p\n", id, this->queue,
+        this->find_queue);
     printf("[INFO] Hashtable size: %lu\n", this->capacity);
     printf("%s, data_length %lu\n", __func__, this->data_length);
   }
@@ -222,23 +234,51 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
   }
 
+  uint8_t flush_find_queue() override {
+    size_t curr_queue_sz = this->find_idx;
+    uint8_t found = 0;
+    while (curr_queue_sz != 0) {
+      found += __flush_find_queue(curr_queue_sz);
+      curr_queue_sz = this->find_idx;
+    }
+    return found;
+  }
+
+  uint8_t find_batch(uint64_t *__keys, uint32_t batch_len) override {
+    auto found = 0;
+    KV *keys = reinterpret_cast<KV *>(__keys);
+    for (auto k = 0u; k < batch_len; k++) {
+      void *data = reinterpret_cast<void *>(&keys[k]);
+      add_to_find_queue(data);
+    }
+
+    found += this->flush_find_queue();
+
+    // printf("%s, found %d keys\n", __func__, found);
+    return found;
+  }
+
   void *find(const void *data) override {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash;
-    KV *curr;
+    KV *curr = NULL;
     bool found = false;
 
-    // printf("Thread %lu: Trying memcmp at: %lu\n", this->thread_id, idx);
     for (auto i = 0u; i < this->capacity; i++) {
       idx = idx & (this->capacity - 1);
       curr = &this->hashtable[idx];
-      if (curr->compare_key(data)) {
+
+      if (curr->is_empty()) {
+        found = false;
+        goto exit;
+      } else if (curr->compare_key(data)) {
         found = true;
         break;
       }
+
 #ifdef CALC_STATS
       distance_from_bucket++;
 #endif
@@ -254,6 +294,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     if (!found) {
       curr = &this->empty_item;
     }
+  exit:
     return curr;
   }
 
@@ -304,7 +345,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   uint64_t capacity;
   KV empty_item; /* for comparison for empty slot */
   KVQ *queue;    // TODO prefetch this?
+  KVQ *find_queue;
   uint32_t queue_idx;
+  uint32_t find_idx;
 
   uint64_t hash(const void *k) {
     uint64_t hash_val;
@@ -403,13 +446,82 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
+// TODO: Move this to makefile
+#define BRANCHLESS_FIND
+
+  auto __find_one(KVQ *q) {
+    // hashtable idx where the data should be found
+    size_t idx = q->idx;
+    uint64_t found = 0;
+#ifdef BRANCHLESS_FIND
+    KV *curr = &this->hashtable[idx];
+    uint64_t retry;
+
+    found = curr->find_key_brless(q->data, &retry);
+
+    // insert back into queue, and prefetch next bucket.
+    // next bucket will be probed in the next run
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+
+    this->prefetch_read(idx);
+
+    this->find_queue[this->find_idx].data = q->data;
+    this->find_queue[this->find_idx].idx = idx;
+
+    // this->find_idx should not be incremented if either
+    // the desired key is empty or it is found.
+    uint64_t inc{1};
+    inc = (retry == 0x1) ? inc : 0;
+    this->find_idx += inc;
+
+    return found;
+#else
+  try_find:
+    KV *curr = &this->hashtable[idx];
+
+    // Compare with empty element
+    if (curr->is_empty()) {
+      goto exit;
+    } else if (curr->compare_key(q->data)) {
+      KV *kv = const_cast<KV *>(reinterpret_cast<const KV *>(q->data));
+      kv->set_value(curr);
+      found = 1;
+      goto exit;
+    }
+
+    // insert back into queue, and prefetch next bucket.
+    // next bucket will be probed in the next run
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+
+    // |    4 elements |
+    // | 0 | 1 | 2 | 3 | 4 | 5 ....
+    if ((idx & 0x3) != 0) {
+      goto try_find;
+    }
+
+    prefetch(idx);
+
+    this->find_queue[this->find_idx].data = q->data;
+    this->find_queue[this->find_idx].idx = idx;
+    this->find_idx++;
+  exit:
+    // printf("%s, key = %lu | found = %lu\n", __func__, *(uint64_t*) q->data,
+    // found);
+    return found;
+#endif
+  }
+
   void __insert(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
+  try_insert:
     KV *curr = &this->hashtable[idx];
 
 #ifdef BRANCHLESS_NO_SIMD
-    uint16_t cmp = curr->insert_or_update(q->data); //0xFF: insert or update was successfull
+    // 0xFF: insert or update was successfull
+    uint16_t cmp = curr->insert_or_update(q->data);
 
     /* prepare for (possible) soft reprobe */
     idx++;
@@ -512,7 +624,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
 
 #else  // !BRANCHLESS
-
+    assert(
+        !const_cast<KV *>(reinterpret_cast<const KV *>(q->data))->is_empty());
     // Compare with empty element
     if (curr->is_empty()) {
 #ifdef CALC_STATS
@@ -547,6 +660,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // next bucket will be probed in the next run
     idx++;
     idx = idx & (this->capacity - 1);  // modulo
+
+    // |    4 elements |
+    // | 0 | 1 | 2 | 3 | 4 | 5 ....
+    if ((idx & 0x3) != 0) {
+      goto try_insert;
+    }
+
     prefetch(idx);
 
     this->queue[this->queue_idx].data = q->data;
@@ -597,6 +717,39 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->queue[this->queue_idx].key_hash = hash;
 #endif
     this->queue_idx++;
+  }
+
+  void add_to_find_queue(void *data) {
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);  // modulo
+
+    this->prefetch_read(idx);
+    this->find_queue[this->find_idx].idx = idx;
+    this->find_queue[this->find_idx].data = data;
+
+#ifdef COMPARE_HASH
+    this->queue[this->find_idx].key_hash = hash;
+#endif
+    this->find_idx++;
+  }
+
+  // fetch items from queue and call find
+  auto find_prefetched_batch() {
+    uint8_t found = 0;
+    this->find_idx = 0;  // start again
+    for (size_t i = 0; i < PREFETCH_FIND_QUEUE_SIZE; i++) {
+      found += __find_one(&this->find_queue[i]);
+    }
+    return found;
+  }
+
+  auto __flush_find_queue(size_t qsize) {
+    uint8_t found = 0;
+    this->find_idx = 0;  // start again
+    for (size_t i = 0; i < qsize; i++) {
+      found += __find_one(&this->find_queue[i]);
+    }
+    return found;
   }
 };
 

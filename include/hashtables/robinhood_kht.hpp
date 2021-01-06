@@ -173,12 +173,18 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     assert(false);
   }
 
+  uint8_t flush_find_queue() override { return 0; }
   void flush_queue() {
     size_t curr_queue_sz = this->queue_idx;
     while (curr_queue_sz != 0) {
       __insert_from_queue(curr_queue_sz);
       curr_queue_sz = this->queue_idx;
     }
+  }
+
+  uint8_t find_batch(uint64_t *keys, uint32_t batch_len) override {
+    assert(false);
+    return 0;
   }
 
   void *find(const void *kmer_data) {

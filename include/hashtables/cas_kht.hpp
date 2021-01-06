@@ -51,6 +51,8 @@ class CASHashTable : public BaseHashTable {
     free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
   }
 
+  uint8_t flush_find_queue() override { return 0; }
+
   /* insert and increment if exists */
   bool insert(const void *data) {
     this->__insert_into_queue(data);
@@ -105,6 +107,11 @@ class CASHashTable : public BaseHashTable {
         idx = idx & (this->capacity - 1);
       }
     }
+  }
+
+  uint8_t find_batch(uint64_t *keys, uint32_t batch_len) override {
+    assert(false);
+    return 0;
   }
 
   void *find(const void *data) {
@@ -211,13 +218,20 @@ class CASHashTable : public BaseHashTable {
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]));
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    true /*write*/);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
     prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
   };
+
+  void prefetch_read(uint64_t i) {
+    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    false /* write */);
+  }
 
   void __insert_into_queue(const void *data) {
     uint64_t hash = this->hash((const char *)data);
@@ -251,6 +265,7 @@ class CASHashTable : public BaseHashTable {
   void __insert(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
+  try_insert:
     KV *curr = &this->hashtable[idx];
 
     // hashtable_mutexes[pidx].lock();
@@ -303,6 +318,12 @@ class CASHashTable : public BaseHashTable {
     */
     idx++;
     idx = idx & (this->capacity - 1);  // modulo
+
+    // |    4 elements |
+    // | 0 | 1 | 2 | 3 | 4 | 5 ....
+    if ((idx & 0x3) != 0) {
+      goto try_insert;
+    }
 
     prefetch(idx);
 

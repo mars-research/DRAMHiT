@@ -117,6 +117,15 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   printf("===============================================================\n");
   printf("Total  : %lu cycles (%f ms) for %lu insertions\n", all_total_cycles,
          (double)all_total_time_ns / 1000000.0, all_total_num_inserts);
+  {
+    unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
+    unsigned long num_threads = config.num_threads;
+    if (config.mode == BQ_TESTS_YES_BQ) {
+      num_threads = config.n_cons;
+    }
+    printf("Number of insertions per sec (Mops/s): %.3f\n",
+           ((double)2600 / cycles_per_insert) * num_threads);
+  }
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
   //     "find)\n",
