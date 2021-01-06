@@ -16,8 +16,8 @@
 
 //#define MEM
 #define MMAP
-//#define HUGEPAGES_1GB
-#define HUGEPAGES_2MB
+#define HUGEPAGES_1GB
+//#define HUGEPAGES_2MB
 #define FILE_MMAP
 
 #ifdef HUGEPAGES_1GB
@@ -61,19 +61,16 @@ uint64_t data_size = num;
       return NULL;
     }
   #endif
-  //printf("size: %lu\n", num_pages * pagesize );
+  //printf("size: %luGB or %luMB\n", num_pages * pagesize/(1024*1024*1024),num_pages * pagesize/(1024*1024) );
+
+  constexpr auto ADDR = static_cast<void *>(0x0ULL);
+  constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
+  constexpr auto MAP_FLAGS = MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
   uint64_t* data = (uint64_t*)mmap(
-      NULL, //(void*)(pagesize * (1 << 20)),  // Map from the start of the 2^20th page
+      ADDR, //(void*)(pagesize * (1 << 20)),  // Map from the start of the 2^20th page
       num_pages * pagesize,
-      PROT_READ | PROT_WRITE,         //|PROT_EXEC,
-      MAP_PRIVATE//MAP_SHARED
-			#ifndef FILE_MMAP
-				MAP_ANON|
-			#endif
-      #ifdef HUGEPAGES
-        |MAP_HUGETLB|HUGEPAGES
-      #endif
-      ,  // to a private block of hardware memory
+      PROT_RW,         //|PROT_EXEC,
+      MAP_FLAGS,  // to a private block of hardware memory
       0
       #ifdef FILE_MMAP
         |fd
@@ -81,7 +78,7 @@ uint64_t data_size = num;
       ,
       0);
   if (data == MAP_FAILED) {
-    perror("Map Failed.");
+    perror("Map Failed");
 #ifdef FILE_MMAP
     int result = close(fd);
     if (result != 0) {
@@ -102,6 +99,11 @@ uint64_t data_size = num;
 }
 
 int clear(uint64_t* data) {
+  if(!data)
+  {
+    perror("Invalid data");
+    return 1;
+  }
 #if defined(MEM)
   delete[] data;
 #elif defined(MMAP) || defined(FILE_MMAP)

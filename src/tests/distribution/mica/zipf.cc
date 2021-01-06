@@ -11,8 +11,6 @@ static double alpha_ = 0.0; // only depends on theta
 static double thres_ = 0.0; // only depends on theta
 static double dbl_n_ = 0.0; 
 static double zetan_ = 0.0; 
-#define CORES_AVAILABLE 19
-//static uint8_t zeta_partial_ready[CORES_AVAILABLE] = {0};
 volatile uint8_t zeta_sum_ready = 0;
 volatile double zetan_partial_sum = 0.0;
 static double eta_ = 0.0;
