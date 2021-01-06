@@ -60,7 +60,7 @@ const Configuration def = {
     .ht_fill = 25,
     
     .theta = 0.99,
-    .data_length = (1LL<<30),//HT_TESTS_HT_SIZE;//(1LL << 28);
+    .data_length = (1LL<<26),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
     .data_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
 
 /* global config */

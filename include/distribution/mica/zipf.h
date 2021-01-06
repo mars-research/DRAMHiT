@@ -4,21 +4,8 @@
 #include "distribution/common.h"
 #include "distribution/rand.h"
 
-/*#ifdef MULTITHREAD_GENERATION
-  #warning zipf.h MULTITHREAD_GENERATION ON  
-#else
-  #warning zipf.h MULTITHREAD_GENERATION OFF  
-#endif
-#ifdef MULTITHREAD_SUMMATION
-  #warning zipf.h MULTITHREAD_SUMMATION ON   
-#else
-  #warning zipf.h MULTITHREAD_SUMMATION OFF
-#endif*/
-
-
-
 //Main functions
-void ZipfGen(uint64_t n, double t, uint64_t seed);
+void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threads);
 uint64_t next();
 
 //Classes of next functions 
@@ -27,29 +14,8 @@ uint64_t single_next(int);
 uint64_t theta_next(int);
 uint64_t large_next(int);
 
-#ifdef MULTITHREAD_GENERATION
-  uint64_t next(int);
-  void set_seed(uint64_t seed, int thread);
-#endif
-
-#ifdef MULTITHREAD_SUMMATION
-  //Multithreaded Summation computation
-  typedef struct summation_thread_data {
-    int  thread_id;
-    uint64_t last_n;
-    uint64_t n;
-    double theta;
-
-    double sum;
-  } sum_data;
-  void* zeta_chunk(void* data);
-  double zeta(uint64_t n, double theta);
-  //void print_seed();
-#endif
-
 
 //Helper functions
-
 inline double pow_approx(double a, double b)
 {
   // from http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
@@ -81,10 +47,13 @@ inline double zeta(uint64_t last_n, double last_sum, uint64_t n, double theta) {
     last_n = 0;
     last_sum = 0.;
   }
+//printf("LINE: %d\n", __LINE__);
 
+//printf("last_n: %lu\tn: %lu\n", last_n, n);
   while (last_n < n) {
     last_sum += 1. / pow_approx((double)(++last_n), theta);
   }
+  //printf("LINE: %d\n", __LINE__);
   return last_sum;
 }
 
