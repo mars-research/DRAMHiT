@@ -640,19 +640,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     };
 
     auto key_copy_mask = [&empty_cmp, &key_copy_masks](__m512i cacheline, __mmask8 eq_cmp, size_t cidx) {
-      __mmask8 locations = empty_cmp(cacheline, cidx);
-      __mmask8 copy_mask = key_copy_masks[_bit_scan_forward(locations)];
-      // we do not need to copy the key if it is already present
-      // if (eq_cmp) copy_mask = 0;
+      __mmask16 locations = empty_cmp(cacheline, cidx);
+      __mmask16 copy_mask = key_copy_masks[_bit_scan_forward(locations)];
+      // if locations == 0, _bit_scan_forward(locations) is undefined
       asm (
-          "xorw %%cx, %%cx\n\t"
-          "test %[eq_cmp], %[eq_cmp]\n\t"
-          "cmovew %%cx, %[copy_mask]\n\t"
+          "test %[locations], %[locations]\n\t"
+          "cmovzw %[locations], %[copy_mask]\n\t"
           : [copy_mask]"+r"(copy_mask)
-          : [eq_cmp]"r"(eq_cmp)
+          : [locations]"r"(locations)
           : "rcx"
-      );
-      return copy_mask;
+          );
+      return static_cast<__mmask8>(copy_mask);
     };
 
     auto copy_key = [](__m512i &cacheline, __m512i key_vector, __mmask8 copy_mask) {
@@ -674,8 +672,18 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     __mmask8 eq_cmp = key_cmp(cacheline, key_vector, cidx);
     // compute a mask for copying the key into an empty slot
-    __mmask8 copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
-    copy_key(cacheline, key_vector, copy_mask);
+    __mmask16 volatile copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
+    // we do not need to copy the key if it is already present
+    // if (eq_cmp) copy_mask = 0;
+    asm volatile (
+        "xorw %%cx, %%cx\n\t"
+        "test %[eq_cmp], %[eq_cmp]\n\t"
+        "cmovnzw %%cx, %[copy_mask]\n\t"
+        : [copy_mask]"+r"(copy_mask)
+        : [eq_cmp]"r"(eq_cmp)
+        : "rcx"
+        );
+    copy_key(cacheline, key_vector, static_cast<__mmask8>(copy_mask));
 
     // between eq_cmp and copy_mask, at most one bit will be set
     // if we shift-left eq_cmp|copy_mask by 1 bit, the bit will correspond
@@ -697,12 +705,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->queue[this->queue_idx].idx = idx;
     auto queue_idx_inc = 1;
     // if kv_mask != 0, insert succeeded; reprobe unnecessary
-    asm (
+    asm volatile (
         "xorq %%rcx, %%rcx\n\t"
         "movq $4,    %%rbx\n\t"
         "test %[kv_mask], %[kv_mask]\n\t"
         // if (kv_mask) queue_idx_inc = 0;
-        "cmovnzq %%rcx, %[inc]\n\t"
+        "cmovnzl %%ecx, %[inc]\n\t"
         // if (kv_mask) idx -= 4;
         "cmovnzq %%rbx, %%rcx\n\t"
         "sub %%rcx, %[idx]\n\t"
