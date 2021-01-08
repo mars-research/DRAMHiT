@@ -252,7 +252,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       found += this->flush_find_queue();
     }
-    printf("%s, found %d keys\n", __func__, found);
+    //printf("%s, found %d keys\n", __func__, found);
     return found;
   }
 

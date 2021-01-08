@@ -87,7 +87,7 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
           ktable->find_batch((uint64_t *)items, HT_TESTS_FIND_BATCH_LENGTH);
       k = 0;
     }
-    printf("\t count %lu | found -> %lu\n", count, found);
+    // printf("\t count %lu | found -> %lu\n", count, found);
   }
   found += ktable->flush_find_queue();
   return found;
@@ -125,6 +125,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = num_inserts;
 
+#if !defined(SAME_KMER)
   sleep(1);
 
   t_start = RDTSC_START();
@@ -133,6 +134,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
   printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
          sh->shard_idx, num_finds, (t_end - t_start) / num_finds);
+#endif
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
