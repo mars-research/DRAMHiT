@@ -111,6 +111,11 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
+  void insert_batch(KeyPairs &kp) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   uint8_t find_batch(uint64_t *keys, uint32_t batch_len) override {
     assert(false);
     return 0;

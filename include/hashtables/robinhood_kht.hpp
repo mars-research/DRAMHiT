@@ -173,6 +173,11 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     assert(false);
   }
 
+  void insert_batch(KeyPairs &kp) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   uint8_t flush_find_queue() override { return 0; }
   void flush_queue() {
     size_t curr_queue_sz = this->queue_idx;

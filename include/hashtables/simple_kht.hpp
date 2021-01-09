@@ -2,6 +2,7 @@
 #define _SKHT_H
 
 #include <fcntl.h>
+#include <immintrin.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -19,16 +20,8 @@
 #include "ht_helper.hpp"
 #include "sync.h"
 
-#if defined(BRANCHLESS) && defined(BRACNHLESS_NO_SIMD)
-#error \
-    "BRACHLESS and BRANCHLESS_NO_SIMD options selected in CFLAGS, remove one to fix this error"
-#endif
-
-#if defined(BRANCHLESS)
-#include <immintrin.h>
-#endif
-
 const auto FLUSH_THRESHOLD = 160;
+const auto INS_FLUSH_THRESHOLD = 128;
 
 namespace kmercounter {
 
@@ -99,7 +92,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   PartitionedHashStore(uint64_t c, uint8_t id)
-      : fd(-1), id(id), queue_idx(0), find_idx(0), find_head(0), find_tail(0) {
+      : fd(-1),
+        id(id),
+        queue_idx(0),
+        find_idx(0),
+        find_head(0),
+        find_tail(0),
+        insert_idx(0),
+        ins_head(0),
+        ins_tail(0) {
     this->capacity = kmercounter::next_pow2(c);
     this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
     this->empty_item = this->empty_item.get_empty_key();
@@ -108,6 +109,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     cout << "Empty item: " << this->empty_item << endl;
     this->queue = (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
+    this->insert_queue =
+        (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
@@ -122,89 +125,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
   }
 
-#if INSERT_BATCH
-
-  insert_one() {
-    occupied = this->hashtable[pidx].kb.occupied;
-
-    /* Compare with empty kmer to check if bucket is empty, and insert.*/
-    if (!occupied) {
-#ifdef CALC_STATS
-      this->num_memcpys++;
-#endif
-      memcpy(&this->hashtable[pidx].kb.kmer.data, q->kmer_p, this->data_length);
-      this->hashtable[pidx].kb.count++;
-      this->hashtable[pidx].kb.occupied = true;
-      this->hashtable[pidx].key_hash = q->key_hash;
-      return;
-    }
-
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-    if (this->hashtable[pidx].kmer_hash == q->kmer_hash) {
-#ifdef CALC_STATS
-      this->num_memcmps++;
-#endif
-
-      if (memcmp(&this->hashtable[pidx].kb.kmer.data, q->kmer_p,
-                 this->data_length) == 0) {
-        this->hashtable[pidx].kb.count++;
-        return;
-      }
-    }
-
-    {
-      /* insert back into queue, and prefetch next bucket.
-      next bucket will be probed in the next run
-      */
-      pidx++;
-      pidx = pidx & (this->capacity - 1);  // modulo
-      prefetch(pidx);
-      q->kmer_idx = pidx;
-
-      this->queue[this->queue_idx] = *q;
-      // this->queue[this->queue_idx].data = q->data;
-      // this->queue[this->queue_idx].idx = q->idx;
-      this->queue_idx++;
-
-#ifdef CALC_STATS
-      this->num_reprobes++;
-#endif
-    }
-
-    void insert_batch(kmer_data_t * karray[4]) {
-      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
-
-      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
-
-      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
-
-      uint64_t hash_new_0 = this->hash((const char *)karray[0]);
-      size_t __kmer_idx_1 = hash & (this->capacity - 1);  // modulo
-
-      return;
-    }
-  };
-
-#endif
-
   void insert_noprefetch(void *data) {
     cout << "Not implemented!" << endl;
     assert(false);
   }
 
-  /* insert and increment if exists */
+  // insert and increment if exists
   bool insert(const void *data) override {
     assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
     __insert_into_queue(data);
 
-    /* if queue is full, actually insert */
-    // now queue_idx = 20
+    // if queue is full, insert
     if (this->queue_idx >= PREFETCH_QUEUE_SIZE) {
       this->__insert_from_queue();
 
@@ -224,6 +155,35 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
 
     return true;
+  }
+
+  // insert a batch
+  void insert_batch(KeyPairs &kp) override {
+    this->flush_if_needed();
+
+    Keys *keys;
+    uint32_t batch_len;
+    std::tie(batch_len, keys) = kp;
+
+    for (auto k = 0u; k < batch_len; k++) {
+      void *data = reinterpret_cast<void *>(&keys[k]);
+      add_to_insert_queue(data);
+    }
+
+    this->flush_if_needed();
+  }
+
+  // overridden function for insertion
+  void flush_if_needed(void) {
+    size_t curr_queue_sz =
+        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
+    while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
+      __insert_one_v2(&this->insert_queue[this->ins_tail]);
+      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
+      curr_queue_sz =
+          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
+    }
+    return;
   }
 
   void flush_queue() override {
@@ -412,10 +372,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   KV empty_item; /* for comparison for empty slot */
   KVQ *queue;    // TODO prefetch this?
   KVQ *find_queue;
+  KVQ *insert_queue;
   uint32_t queue_idx;
   uint32_t find_idx;
   uint32_t find_head;
   uint32_t find_tail;
+  uint32_t insert_idx;
+  uint32_t ins_head;
+  uint32_t ins_tail;
 
   uint64_t hash(const void *k) {
     uint64_t hash_val;
@@ -431,93 +395,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return hash_val;
   }
 
-  /* Insert using prefetch: using a dynamic prefetch queue.
-          If bucket is occupied, add to queue again to reprobe.
-  */
-  void __insert_with_soft_reprobe(KVQ *q) {
-    /* hashtable location at which data is to be inserted */
-    size_t pidx = q->idx;
-    KV *curr = &this->hashtable[pidx];
-    // printf("%s trying to insert %d\n", __func__, *(uint64_t*)q->data);
-    // cout << "element at pidx: " << pidx << " => " << this->hashtable[pidx] <<
-    // " occupied: " << occupied << endl;
-  try_insert:
-    // Compare with empty element
-    if (curr->is_empty()) {
-#ifdef CALC_STATS
-      this->num_memcpys++;
-#endif
-      curr->update_item(q->data);
-      // this->hashtable[pidx].kb.count++;
-      // this->hashtable[pidx].set_count(this->hashtable[pidx].count() + 1);
-      // printf("inserting %d | ",
-      // *(uint64_t*)&this->hashtable[pidx].kb.kmer.data printf("%lu: %d |
-      // %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
-      // cout << "Inserting " << this->hashtable[pidx] << endl;
-#ifdef COMPARE_HASH
-      this->hashtable[pidx].key_hash = q->key_hash;
-#endif
-      return;
-    }
-
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-#ifdef COMPARE_HASH
-    if (this->hashtable[pidx].key_hash == q->key_hash)
-#endif
-    {
-#ifdef CALC_STATS
-      this->num_memcmps++;
-#endif
-
-      if (curr->compare_key(q->data)) {
-        // update value
-        curr->update_value(q->data, 0);
-        return;
-      }
-    }
-
-    {
-      /* insert back into queue, and prefetch next bucket.
-      next bucket will be probed in the next run
-      */
-      pidx++;
-      pidx = pidx & (this->capacity - 1);  // modulo
-
-      //   | cacheline |
-      //   | i | i + 1 |
-      //   In the case where two elements fit in a cacheline, a single prefetch
-      //   would bring in both the elements. We need not issue a second
-      //   prefetch.
-      if ((pidx & 0x1) || (pidx & 0x2)) {
-        // if (unlikely(pidx & 0x1)) {
-#ifdef CALC_STATS
-        this->num_soft_reprobes++;
-#endif
-        goto try_insert;
-      }
-      prefetch(pidx);
-      // q->idx = pidx;
-
-      // this->queue[this->queue_idx] = *q;
-      this->queue[this->queue_idx].data = q->data;
-      this->queue[this->queue_idx].idx = pidx;
-      this->queue_idx++;
-      // printf("reprobe pidx %d\n", pidx);
-
-#ifdef CALC_STATS
-      this->num_reprobes++;
-#endif
-      return;
-    }
-  }
-
-// TODO: Move this to makefile
-#define BRANCHLESS_FIND
-
-  auto __find_one_v2(KVQ *q, ValuePairs &vp) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -526,65 +404,76 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     KV *curr = &this->hashtable[idx];
     uint64_t retry;
+    found = curr->find_key_regular_v2(q, &retry, vp);
 
-    // if (q->key == 45146313) {
-    // printf("corrupted! %ld\n", q->key);
-    // }
-    // found = curr->find_key_brless_v2(q, &retry, vp);
-    __builtin_prefetch(q + 6, 1, 3);
-
-    if constexpr (branching == BRANCHKIND::Cmove) {
-      found = curr->find_key_brless_v2(q, &retry, vp);
-    } else {
-      found = curr->find_key_regular_v2(q, &retry, vp);
-    }
-
-    /*     printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found =
-       %ld, retry %ld\n", __func__, q->key, vp.first, vp.second[(vp.first - 1) %
-       PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1) %
-       PREFETCH_FIND_QUEUE_SIZE].id, found, retry); */
-
-    if constexpr (branching == BRANCHKIND::Yes) {
-      if (retry) {
-        // insert back into queue, and prefetch next bucket.
-        // next bucket will be probed in the next run
-        idx++;
-        idx = idx & (this->capacity - 1);  // modulo
-                                           // |    4 elements |
-        // | 0 | 1 | 2 | 3 | 4 | 5 ....
-        if ((idx & 0x3) != 0) {
-          goto try_find;
-        }
-
-        this->prefetch_read(idx);
-
-        this->find_queue[this->find_head].key = q->key;
-        this->find_queue[this->find_head].key_id = q->key_id;
-        this->find_queue[this->find_head].idx = idx;
-
-        this->find_head += 1;
-        this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
-      }
-    } else {
+    //  printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found
+    //  =%ld, retry %ld\n",
+    //         __func__, q->key, vp.first, vp.second[(vp.first - 1) %
+    //                 PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
+    //                 % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
+    if (retry) {
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run
       idx++;
       idx = idx & (this->capacity - 1);  // modulo
+      // |    4 elements |
+      // | 0 | 1 | 2 | 3 | 4 | 5 ....
+      if ((idx & 0x3) != 0) {
+        goto try_find;
+      }
+
+      this->prefetch_read(idx);
+
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
-      this->prefetch_read(idx);
 
-      // this->find_head should not be incremented if either
-      // the desired key is empty or it is found.
-      uint64_t inc{1};
-      inc = (retry == 0x1) ? inc : 0;
-
-      this->find_head += inc;
+      this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
+    return found;
+  }
+
+  uint64_t __find_branchless_cmov(KVQ *q, ValuePairs &vp) {
+    // hashtable idx where the data should be found
+    size_t idx = q->idx;
+    uint64_t found = 0;
+
+    KV *curr = &this->hashtable[idx];
+    uint64_t retry;
+
+    found = curr->find_key_brless_v2(q, &retry, vp);
+
+    // insert back into queue, and prefetch next bucket.
+    // next bucket will be probed in the next run
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+    this->find_queue[this->find_head].key = q->key;
+    this->find_queue[this->find_head].key_id = q->key_id;
+    this->find_queue[this->find_head].idx = idx;
+    this->prefetch_read(idx);
+
+    // this->find_head should not be incremented if either
+    // the desired key is empty or it is found.
+    uint64_t inc{1};
+    inc = (retry == 0x1) ? inc : 0;
+
+    this->find_head += inc;
+    this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
 
     return found;
+  }
+
+  uint64_t __find_branchless_simd(KVQ *q, ValuePairs &vp) { return 0; }
+
+  auto __find_one_v2(KVQ *q, ValuePairs &vp) {
+    if constexpr (branching == BRANCHKIND::WithBranch) {
+      return __find_branched(q, vp);
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
+      return __find_branchless_cmov(q, vp);
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+      return __find_branchless_simd(q, vp);
+    }
   }
 
   auto __find_one(KVQ *q) {
@@ -649,6 +538,162 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // found);
     return found;
 #endif
+  }
+
+  void __insert_branched(KVQ *q) {
+    // hashtable idx at which data is to be inserted
+    size_t idx = q->idx;
+  try_insert:
+    KV *curr = &this->hashtable[idx];
+
+    // printf("%s, key = %lu curr %p  \n", __func__, q->key, curr);
+
+    auto retry = curr->insert_regular_v2(q);
+
+    if (retry) {
+      // insert back into queue, and prefetch next bucket.
+      // next bucket will be probed in the next run
+      idx++;
+      idx = idx & (this->capacity - 1);  // modulo
+
+      // |    4 elements |
+      // | 0 | 1 | 2 | 3 | 4 | 5 ....
+      if ((idx & 0x3) != 0) {
+        goto try_insert;
+      }
+
+      prefetch(idx);
+
+      this->insert_queue[this->ins_head].key = q->key;
+      this->insert_queue[this->ins_head].key_id = q->key_id;
+      this->insert_queue[this->ins_head].idx = idx;
+      this->ins_head += 1;
+      this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
+
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
+    }
+  }
+
+  void __insert_branchless_cmov(KVQ *q) {
+    // hashtable idx at which data is to be inserted
+    size_t idx = q->idx;
+    KV *curr = &this->hashtable[idx];
+    // 0xFF: insert or update was successfull
+    uint16_t cmp = curr->insert_or_update_v2(q);
+
+    /* prepare for (possible) soft reprobe */
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+
+    prefetch(idx);
+    this->insert_queue[this->ins_head].key = q->key;
+    this->insert_queue[this->ins_head].key_id = q->key_id;
+    this->insert_queue[this->ins_head].idx = idx;
+
+    // this->queue_idx should not be incremented if either
+    // of the try_inserts succeeded
+    int inc{1};
+    inc = (cmp == 0xFF) ? 0 : inc;
+    this->ins_head += inc;
+    this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
+  }
+
+  void __insert_branchless_simd(KVQ *q) {
+    // hashtable idx at which data is to be inserted
+    size_t idx = q->idx;
+    KV *curr = &this->hashtable[idx];
+    static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
+    using Kv_mask = std::array<uint32_t, 8>;
+    /* The VMASKMOVPS instruction we use to load the key into a ymmx
+     * register loads 4-byte (floating point) numbers based on the
+     * MSB of the corresponding 4-byte number in the mask register.
+     * The first 8 bytes of an entry in the hastable make up the key.
+     * Hence, the first 2 (8/4) entries in the array must have their
+     * MSB set.
+     */
+    __attribute__((aligned(32))) constexpr auto mask_rw =
+        Kv_mask{0x80000000, 0x80000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    /* When we do not want to read or write, the "mask" must consist
+     * of 4-byte numbers with their MSB set to 0.
+     */
+    __attribute__((aligned(32))) constexpr auto mask_ignore =
+        Kv_mask{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    const uint32_t *const kv_masks[2] = {
+        mask_rw.data(),
+        mask_ignore.data(),
+    };
+    auto ymm_load = [](const uint32_t *addr) {
+      return _mm256_load_si256(reinterpret_cast<const __m256i *>(addr));
+    };
+    auto ymm_maskload = [](const auto *addr, auto mask) {
+      return _mm256_maskload_epi32(reinterpret_cast<const int *>(addr), mask);
+    };
+    auto ymm_maskstore = [](auto *addr, auto mask, auto data) {
+      return _mm256_maskstore_epi32(reinterpret_cast<int *>(addr), mask, data);
+    };
+    auto ymm_cmp = [](auto a, auto b) { return _mm256_cmpeq_epi32(a, b); };
+    auto ymm_movemask = [](auto a) { return _mm256_movemask_ps(a); };
+
+    /* load key mask and new key */
+    const __m256i key_mask = ymm_load(kv_masks[0 /* RW mask */]);
+    const __m256i new_key = ymm_maskload(q->data, key_mask);
+
+    /*
+     * returns the result of the comparison between the new key
+     * and the key at idx */
+    auto try_insert = [&](const auto idx) {
+      const int mask_idx = !curr->is_empty();
+      /* kv_masks[0] returns a mask that reads/writes;
+       * kv_masks[1] returns a mask that does nothing */
+      const __m256i cond_store_mask = ymm_load(kv_masks[mask_idx]);
+
+      /* conditionally store the new key into hashtable[idx] */
+      ymm_maskstore(curr, cond_store_mask, new_key);
+
+      /* at this point the key in the hashtable is either equal to
+       * the new key (q->data) or not. compare them
+       */
+      const __m256i cond_load_mask = ymm_load(kv_masks[0 /*RW mask*/]);
+      const __m256i key = ymm_maskload(curr, cond_load_mask);
+      const __m256i cmp_raw = ymm_cmp(new_key, key);
+      /* ymm_cmp compares the keys as packed 4-byte integers
+       * cmp_raw consists of packed 4-byte "result" integers that are
+       * 0xFF..FF if the corresponding 4-byte integers in the keys are equal,
+       * and 0x00..00 otherwise. testing this is not straight-forward.
+       * so, we "compress" the eigth integers into a bit each (MSB).
+       */
+      return ymm_movemask(_mm256_castsi256_ps(cmp_raw));
+    };
+
+    const int cmp = try_insert(idx);
+
+    curr->update_brless(cmp);
+
+    /* prepare for (possible) soft reprobe */
+    idx++;
+    idx = idx & (this->capacity - 1);  // modulo
+
+    prefetch(idx);
+    this->queue[this->queue_idx].data = q->data;
+    this->queue[this->queue_idx].idx = idx;
+
+    // this->queue_idx should not be incremented if either
+    // of the try_inserts succeeded
+    int inc{1};
+    inc = (cmp == 0xFF) ? 0 : inc;
+    this->queue_idx += inc;
+  }
+
+  void __insert_one_v2(KVQ *q) {
+    if constexpr (branching == BRANCHKIND::WithBranch) {
+      __insert_branched(q);
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
+      __insert_branchless_cmov(q);
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+      __insert_branchless_simd(q);
+    }
   }
 
   void __insert(KVQ *q) {
@@ -876,6 +921,27 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->queue[this->find_idx].key_hash = hash;
 #endif
     this->find_idx++;
+  }
+
+  void add_to_insert_queue(void *data) {
+    Keys *key_data = reinterpret_cast<Keys *>(data);
+    uint64_t hash = this->hash((const char *)&key_data->key);
+    size_t idx = hash & (this->capacity - 1);  // modulo
+
+    // cout << " -- Adding " << key_data->key  << " at " << this->ins_head <<
+    // endl;
+    this->prefetch(idx);
+
+    this->insert_queue[this->ins_head].idx = idx;
+    this->insert_queue[this->ins_head].key = key_data->key;
+    this->insert_queue[this->ins_head].key_id = key_data->id;
+
+#ifdef COMPARE_HASH
+    this->insert_queue[this->ins_head].key_hash = hash;
+#endif
+
+    this->ins_head++;
+    if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
   }
 
   void add_to_find_queue_v2(void *data) {

@@ -10,7 +10,7 @@
 using namespace std;
 namespace kmercounter {
 
-const uint32_t PREFETCH_QUEUE_SIZE = 64;
+const uint32_t PREFETCH_QUEUE_SIZE = 64 * 4;
 const uint32_t PREFETCH_FIND_QUEUE_SIZE = 64 * 4;
 
 // #define HT_TESTS_BATCH_LENGTH 32
@@ -23,6 +23,8 @@ class BaseHashTable {
   virtual bool insert(const void *data) = 0;
 
   virtual void insert_noprefetch(void *data) = 0;
+
+  virtual void insert_batch(KeyPairs &kp) = 0;
 
   virtual void *find(const void *data) = 0;
 

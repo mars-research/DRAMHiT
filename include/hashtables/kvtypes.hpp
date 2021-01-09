@@ -109,6 +109,21 @@ struct Aggr_KV {
     this->count += 1;
   }
 
+  inline bool insert_regular_v2(const void *data) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    if (this->is_empty()) {
+      this->key = elem->key;
+      this->count += 1;
+      return false;
+    } else if (this->key == elem->key) {
+      this->count += 1;
+      return false;
+    }
+    return true;
+  }
+
   inline bool cas_insert(const void *from, Aggr_KV &empty) {
     const key_type *key = reinterpret_cast<const key_type *>(from);
     auto success = __sync_bool_compare_and_swap(&this->key, empty.key, *key);
@@ -188,7 +203,7 @@ struct Aggr_KV {
     return found;
   }
 
-  //#define EMPTY_CHECK_C
+  // #define EMPTY_CHECK_C
 
   inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
                                      ValuePairs &vp) {
@@ -374,6 +389,28 @@ struct Aggr_KV {
         : "r13", "r14", "memory");
     return ret;
   };
+
+  inline uint16_t insert_or_update_v2(const void *data) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    uint16_t ret = 0;
+    int empty = this->is_empty();
+    asm volatile(
+        "mov %[count], %%r14\n\t"
+        "inc %%r14\n\t"              // inc count to use later
+        "cmp $1, %[empty]\n\t"       // cmp is empty
+        "cmove %[data], %[key]\n\t"  // conditionally move data to hashtable
+        "cmp %[key], %[data]\n\t"
+        "mov $0xFF, %%r13w\n\t"
+        "cmove %%r14, %[count]\n\t"  //  conditionally increment count
+        "cmove %%r13w, %[ret]\n\t"   // return success
+        :
+        [ ret ] "=r"(ret), [ key ] "+r"(this->key), [ count ] "+r"(this->count)
+        : [ empty ] "r"(empty), [ data ] "r"(elem->key)
+        : "r13", "r14", "cc", "memory");
+    return ret;
+  };
 } PACKED;
 
 struct KVPair {
@@ -412,6 +449,11 @@ struct Item {
 
   inline uint16_t insert_or_update(const void *data) {
     std::cout << "Not implemented for Item!" << std::endl;
+    assert(false);
+  }
+
+  inline bool insert_regular_v2(const void *data) {
+    cout << "Not implemented!" << endl;
     assert(false);
   }
 
