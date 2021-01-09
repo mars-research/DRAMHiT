@@ -101,7 +101,6 @@ CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
 	   ) $(TESTS)
 
 CC_SRCS = src/hashers/city/city.cc \
-			src/tests/distribution/pregen/mem.cc \
 			src/tests/distribution/mica/zipf.cc
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o) $(CC_SRCS:.cc=.o)
