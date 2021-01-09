@@ -8,8 +8,8 @@ echo always > /sys/kernel/mm/transparent_hugepage/defrag
 # https://www.kernel.org/doc/html/latest/admin-guide/mm/hugetlbpage.html
 
 # Dynamically reserve 1GB pages (40GBs on node0)
-echo 80 > /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
-echo 80 > /sys/devices/system/node/node1/hugepages/hugepages-1048576kB/nr_hugepages
+echo 128 > /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
+echo 128 > /sys/devices/system/node/node1/hugepages/hugepages-1048576kB/nr_hugepages
 
 if [ ! -d /mnt/huge ]; then
 	sudo mkdir -p /mnt/huge
