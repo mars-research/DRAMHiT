@@ -130,11 +130,11 @@ uint64_t theta_next(int id) {
   double u = rand_.next_f64();
   if (u < zetan_)
   {
-    return 1UL;//0UL;
+    return 0UL;//1UL;//
   }
   else if (u < thres_)
   {
-    return 2UL;//1UL;
+    return 1UL;//2UL;//
   }
   else {
     uint64_t v = (uint64_t)(dbl_n_ * pow_approx(eta_ * (u - 1.) + 1., alpha_));
@@ -142,7 +142,7 @@ uint64_t theta_next(int id) {
     {
       v = n_ - 1;
     }
-    return v+1;
+    return v;
   }
 }
 uint64_t large_next(int thread_id) {

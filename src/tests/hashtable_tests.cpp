@@ -63,7 +63,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
         *((uint64_t *)&kmers[k].data) = count;//mem[i];
         *((uint64_t *)items[k].key()) = count;
         *((uint64_t *)items[k].value()) = count;
-        keys[k] = mem[i]+1;
+        keys[k] = mem[i];
         
         ktable->insert((void *)&keys[k]);
 
@@ -79,7 +79,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
 }
 
 uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
-  uint64_t count = HT_TESTS_NUM_INSERTS * start;//INS_SIZE * start; //
+  uint64_t count = HT_TESTS_NUM_INSERTS * start;
   auto i = 0, k = 0;
   uint64_t found = 0;
   if (start == 0) count = 1;
@@ -112,11 +112,9 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
   printf("[INFO] Synth test run: thread %u, ht size: %lu, insertions: %lu\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
-  /*printf("[INFO] Synth test run: thread %u, ht size: %lu, insertions: %lu\n",
-         sh->shard_idx, HT_SIZE, INS_SIZE);*/
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
-    size_t distr_length = config.distr_length;//INS_SIZE;//
+    size_t distr_length = config.distr_length;
 
     //freeze threads that arent thread 0 until use_ready is incremented
     if(sh->shard_idx == 0)
@@ -145,7 +143,9 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
     t_start = RDTSC_START();
     for (uint64_t j = start[sh->shard_idx]; j < end[sh->shard_idx]; ++j) 
     {
-        mem[j] = next(); //TODO: modify to return key instead i.e. "keys[next()]"
+        //next returns a number from [0 - config.range]
+        //insert has issues if key inserted is 0 so add 1
+        mem[j] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
     }
     t_end = RDTSCP();
     printf("[INFO] Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", data_size[sh->shard_idx], t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/data_size[sh->shard_idx]);
