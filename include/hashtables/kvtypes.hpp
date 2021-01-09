@@ -443,7 +443,7 @@ struct Item {
 
   inline void *value() { return &this->kvpair.value; }
 
-  inline uint16_t get_value() const { return this->kvpair.value; }
+  inline uint64_t get_value() const { return this->kvpair.value; }
 
   inline Item get_empty_key() {
     Item empty;

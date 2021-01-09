@@ -834,6 +834,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
+  uint64_t read_hashtable_element(const void *data) {
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);
+    KV *curr = &this->hashtable[idx];
+    return  curr->get_value();
+  }
+
   void __insert_into_queue(const void *data) {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo

@@ -344,6 +344,11 @@ class CASHashTable : public BaseHashTable {
 #endif
     return;
   }
+
+  uint64_t read_hashtable_element(const void *data) override {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
 };
 
 template <class KV, class KVQ>

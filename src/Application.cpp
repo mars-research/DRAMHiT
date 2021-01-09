@@ -122,6 +122,9 @@ void Application::shard_thread(int tid, bool mainthread) {
       break;
     case FASTQ_NO_INSERT:
       break;
+    case CACHE_MISS:
+      kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
+      break;
     default:
       fprintf(stderr, "[ERROR] No config mode specified! cannot run");
       return;
@@ -208,6 +211,9 @@ void Application::shard_thread(int tid, bool mainthread) {
     case FASTQ_NO_INSERT:
       this->test.pat.shard_thread_parse_no_inserts_v3(sh, config);
       break;
+    case CACHE_MISS:
+      this->test.cmt.cache_miss_run(sh, kmer_ht);
+      break;
     default:
       break;
   }
@@ -254,7 +260,8 @@ int Application::spawn_shard_threads() {
 
   size_t seg_sz = 0;
 
-  if ((config.mode != SYNTH) && (config.mode != PREFETCH)) {
+  if ((config.mode != SYNTH) && (config.mode != PREFETCH) &&
+      (config.mode != CACHE_MISS)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -332,8 +339,7 @@ int Application::spawn_shard_threads() {
       th.join();
     }
   }
-
-  print_stats(this->shards, config);
+  if (config.mode != CACHE_MISS) print_stats(this->shards, config);
 
   std::free(this->shards);
 
@@ -364,7 +370,8 @@ int Application::process(int argc, char *argv[]) {
         "\n4: Read FASTQ, and insert to ht (specify --in_file)"
         "\n5: Read FASTQ, but do not insert to ht (specify --in_file) "
         "\n6/7: Synth/Prefetch,"
-        "\n8/9: Bqueue tests: with bqueues/without bequeues")(
+        "\n8/9: Bqueue tests: with bqueues/without bequeues"
+        "\n10: Cache Miss test")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),

@@ -266,8 +266,11 @@ class RobinhoodKmerHashTable : public BaseHashTable {
       }
     }
   }
+  uint64_t read_hashtable_element(const void *data) override {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
 };
-
 // TODO bloom filters for high frequency kmers?
 
 }  // namespace kmercounter
