@@ -639,17 +639,20 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return cmp & key_cmp_masks[cidx];
     };
 
-    auto key_copy_mask = [&empty_cmp, &key_copy_masks](__m512i cacheline, __mmask8 eq_cmp, size_t cidx) {
-      __mmask16 locations = empty_cmp(cacheline, cidx);
-      __mmask16 copy_mask = key_copy_masks[_bit_scan_forward(locations)];
+    auto key_copy_mask = [&empty_cmp, &key_copy_masks](__m512i cacheline, uint32_t eq_cmp, size_t cidx) {
+      uint32_t locations = empty_cmp(cacheline, cidx);
+      __mmask16 copy_mask = 1 << _bit_scan_forward(locations);
       // if locations == 0, _bit_scan_forward(locations) is undefined
+      // if eq_cmp != 0, key is already present
+      //
+      // if ((locations && !eq_cmp) == 0) copy_mask = 0;
       asm (
-          "test %[locations], %[locations]\n\t"
-          "cmovzw %[locations], %[copy_mask]\n\t"
+          "andnl %[locations], %[eq_cmp], %%ecx\n\t"
+          "cmovzw %%cx, %[copy_mask]\n\t"
           : [copy_mask]"+r"(copy_mask)
-          : [locations]"r"(locations)
+          : [locations]"r"(locations), [eq_cmp]"r"(eq_cmp)
           : "rcx"
-          );
+      );
       return static_cast<__mmask8>(copy_mask);
     };
 
@@ -671,18 +674,24 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     __m512i key_vector = load_key_vector();
 
     __mmask8 eq_cmp = key_cmp(cacheline, key_vector, cidx);
+    /*
+    if (eq_cmp)
+    {
+      __mmask8 key_mask = eq_cmp;
+      __mmask8 val_mask = key_mask << 1;
+      // at this point, increment the count
+      increment_count(cacheline, val_mask);
+
+      // write the cacheline back; just the KV pair that was modified
+      __mmask8 kv_mask = key_mask | val_mask;
+      store_cacheline(cacheline, kv_mask);
+
+      return;
+    }
+    */
     // compute a mask for copying the key into an empty slot
-    __mmask16 volatile copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
-    // we do not need to copy the key if it is already present
-    // if (eq_cmp) copy_mask = 0;
-    asm volatile (
-        "xorw %%cx, %%cx\n\t"
-        "test %[eq_cmp], %[eq_cmp]\n\t"
-        "cmovnzw %%cx, %[copy_mask]\n\t"
-        : [copy_mask]"+r"(copy_mask)
-        : [eq_cmp]"r"(eq_cmp)
-        : "rcx"
-        );
+    // will be 0 if eq_cmp != 0 (key already exists in the cacheline)
+    __mmask16 copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
     copy_key(cacheline, key_vector, static_cast<__mmask8>(copy_mask));
 
     // between eq_cmp and copy_mask, at most one bit will be set
@@ -698,29 +707,27 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     store_cacheline(cacheline, kv_mask);
 
     // prepare for possible reprobe
-    // point idx to the start of the cacheline
-    idx = idx + KV_PER_CACHE_LINE - cidx;
-    idx = idx & (this->capacity - 1);  // modulo
+    // point next idx (nidx) to the start of the next cacheline
+    auto nidx = idx + KV_PER_CACHE_LINE - cidx;
+    nidx = nidx & (this->capacity - 1);  // modulo
     this->queue[this->queue_idx].data = q->data;
-    this->queue[this->queue_idx].idx = idx;
+    this->queue[this->queue_idx].idx = nidx;
     auto queue_idx_inc = 1;
     // if kv_mask != 0, insert succeeded; reprobe unnecessary
     asm volatile (
         "xorq %%rcx, %%rcx\n\t"
-        "movq $4,    %%rbx\n\t"
         "test %[kv_mask], %[kv_mask]\n\t"
         // if (kv_mask) queue_idx_inc = 0;
         "cmovnzl %%ecx, %[inc]\n\t"
-        // if (kv_mask) idx -= 4;
-        "cmovnzq %%rbx, %%rcx\n\t"
-        "sub %%rcx, %[idx]\n\t"
-        : [idx]"+r"(idx), [inc]"+r"(queue_idx_inc)
-        : [kv_mask]"r"(kv_mask)
-        : "rbx", "rcx"
+        // if (kv_mask) nidx = idx;
+        "cmovnzq %[idx], %[nidx]\n\t"
+        : [nidx]"+r"(nidx), [inc]"+r"(queue_idx_inc)
+        : [kv_mask]"r"(kv_mask), [idx]"r"(idx)
+        : "rcx"
     );
 
     // issue prefetch
-    prefetch(idx);
+    prefetch(nidx);
     this->queue_idx += queue_idx_inc;
 
     return;
