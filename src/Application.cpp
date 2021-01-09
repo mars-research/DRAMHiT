@@ -32,6 +32,8 @@
 #include <ittnotify.h>
 #endif
 
+#include "distribution/mica/zipf.h"
+
 namespace kmercounter {
 
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -59,6 +61,9 @@ const Configuration def = {
     .K = 20,
     .ht_fill = 25,
 
+    .distr_file = true,
+    .distr_filename = "",
+
     .zipf_theta = 0.99,
     .distr_length = (1LL<<34),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
     .distr_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
@@ -69,6 +74,8 @@ Configuration config;
 /* for synchronization of threads */
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
+
+uint64_t* mem = NULL;
 
 #ifdef WITH_PAPI_LIB
 PapiEvent pr(6);
@@ -229,6 +236,149 @@ done:
   }  // PapiEvent scope
 #endif
   return;
+}
+
+uint64_t* Application::alloc_distribution() {
+  uint64_t t_start, t_end;
+  ssize_t result, remaining, off = 0;
+  int distr_fd;
+  uint64_t* m;
+
+  if(config.distr_file)
+  {
+    distr_fd = open(config.distr_filename.c_str(), O_RDONLY, S_IRWXU);
+    if (distr_fd == -1)
+    {
+      perror("Opening file Failed");
+      return NULL;
+    }
+
+
+    t_start = RDTSC_START();
+    config.distr_length = lseek64(distr_fd, 0, SEEK_END);
+    t_end = RDTSCP();
+    printf("[INFO] Seeking to end of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
+  
+    config.distr_length >>= 3;// /= sizeof(uint64_t);//
+
+  }
+  m = calloc_ht<uint64_t>(config.distr_length, -1, &fd, false);
+  
+  if(config.distr_file)
+  {
+    t_start = RDTSC_START();
+    lseek64(distr_fd, 0, SEEK_SET);
+    t_end = RDTSCP();
+    printf("[INFO] Seeking back to start of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
+  
+
+    t_start = RDTSC_START();
+    do
+    {
+      remaining = (config.distr_length<<3)-off;
+      off += result = read(distr_fd, m+(off>>3), remaining);
+      if(result == -1)
+      {
+        perror("Reading file elements Failed");
+        return NULL;
+      }
+      else if(result < remaining)
+      {
+        printf("read %lu bytes with %lu bytes remaining, instead of whole file with %lu bytes\n", result, remaining, config.distr_length<<3);
+      }
+      else if(result == remaining)
+      {
+        printf("successfully read whole file into memory\n");
+      }
+      else
+      {
+        printf("something else happened\n");
+      }
+    } while(off < config.distr_length<<3);
+    t_end = RDTSCP();
+    printf("[INFO] Read %lu bytes to file in %lu cycles (%f ms) at rate of %lu cycles/byte\n", off, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/off);
+    
+    
+    result = close(distr_fd);
+    if (result != 0) {
+      perror("Could not close file");
+      return NULL;
+    }
+
+    /*for (uint64_t i = 0; i < config.distr_length; ++i) 
+    {
+        //next returns a number from [0 - config.range]
+        //insert has issues if key inserted is 0 so add 1
+        //m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
+        printf("%lu\n", m[i]);
+    }
+    printf("%lu keys\n", config.distr_length);*/
+  }
+  else
+  {
+    //Precompute sum and data for pregeneration
+    t_start = RDTSC_START();
+    ZipfGen(config.distr_range, config.zipf_theta, 125512, 0, 1);
+    t_end = RDTSCP();
+    printf("[INFO] Sum %lu range in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_range, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
+    
+    //pregenerate the indices/keys
+    t_start = RDTSC_START();
+    for (uint64_t i = 0; i < config.distr_length; ++i) 
+    {
+        //next returns a number from [0 - config.range]
+        //insert has issues if key inserted is 0 so add 1
+        m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
+        //printf("%lu\n", m[i]);
+    }
+    t_end = RDTSCP();
+    printf("[INFO] Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_length, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
+  
+    distr_fd = open(config.distr_filename.c_str(), O_WRONLY|O_CREAT, S_IRWXU);
+    if (distr_fd == -1)
+    {
+      perror("Opening file Failed");
+      return NULL;
+    }
+
+    t_start = RDTSC_START();
+    do
+    {
+      remaining = (config.distr_length<<3)-off;
+      off += result = write(distr_fd, m+(off>>3), remaining);
+      if(result == -1)
+      {
+        perror("Writing file elements Failed");
+        return NULL;
+      }
+      else if(result < remaining)
+      {
+        printf("wrote %lu bytes with %lu bytes remaining, instead of whole file with %lu bytes\n", result, remaining, config.distr_length<<3);
+      }
+      else if(result == remaining)
+      {
+        printf("successfully wrote whole memory into file\n");
+      }
+      else
+      {
+        printf("something else happened\n");
+      }
+    } while(off < config.distr_length<<3);
+    t_end = RDTSCP();
+    printf("[INFO] Wrote %lu bytes to file in %lu cycles (%f ms) at rate of %lu cycles/byte\n", off, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/off);
+    
+
+    result = close(distr_fd);
+    if (result != 0) {
+      perror("Could not close file");
+      return NULL;
+    }
+  }
+
+  return m;
+}
+void Application::free_distribution(uint64_t* m) {
+  free_mem((void*) m, config.distr_length, -1, fd);
 }
 
 int Application::spawn_shard_threads() {
@@ -404,6 +554,11 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
         "adjust hashtable fill ratio [0-100] ")
 
+        ("distr-file", po::value<bool>(&config.distr_file)->default_value(def.distr_file),
+        "Should a file be read from that file the distribution (if not created with the distribution) ")
+        ("distr-filename", po::value<std::string>(&config.distr_filename)->default_value(def.distr_filename),
+        "Name of file to store or read from ")
+
         ("zipf-theta", po::value<double>(&config.zipf_theta)->default_value(def.zipf_theta),
         "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ")
         ("length", po::value<uint64_t>(&config.distr_length)->default_value(def.distr_length),
@@ -504,7 +659,9 @@ int Application::process(int argc, char *argv[]) {
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.bqt.run_test(&config, this->n, this->npq);
   } else {
+    mem = this->alloc_distribution();
     this->spawn_shard_threads();
+    this->free_distribution(mem);
   }
 
   return 0;

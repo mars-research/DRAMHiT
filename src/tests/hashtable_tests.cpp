@@ -28,7 +28,8 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 
 extern Configuration config;
-volatile uint64_t* mem;
+//volatile 
+extern uint64_t* mem;
 
 volatile uint8_t use_ready = 0;
 volatile uint8_t clr_ready = 0;
@@ -66,7 +67,8 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
         *((uint64_t *)&kmers[k].data) = count;//mem[i];
         *((uint64_t *)items[k].key()) = count;
         *((uint64_t *)items[k].value()) = count;
-        keys[k] = mem[i];
+        keys[k] = mem[i];//1;//count;//
+        //printf("%lu\n", mem[i]);
         
         ktable->insert((void *)&keys[k]);
 
@@ -75,9 +77,9 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
         ++count;
     }
   // flush the last batch explicitly
-  printf("%s calling flush queue\n", __func__);
+  //printf("%s calling flush queue\n", __func__);
   ktable->flush_queue();
-  printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
+  //printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
   return count;//i;
 }
 
@@ -118,7 +120,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     size_t distr_length = config.distr_length;
-
+    /*
     //freeze threads that arent thread 0 until use_ready is incremented
     if(sh->shard_idx == 0)
     {
@@ -129,16 +131,17 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
     until_ready(sh->shard_idx);
     ++clr_ready;
     until_ready(config.num_threads);
+    */
 
     //Compute start and end range of data range for each thread
     start[sh->shard_idx] = ((double)sh->shard_idx/config.num_threads)*distr_length;
     end[sh->shard_idx] = ((double)(sh->shard_idx+1)/config.num_threads)*distr_length;
     data_size[sh->shard_idx] = end[sh->shard_idx] - start[sh->shard_idx];
 
-
+    /*
     //Precompute sum and data for pregeneration
     t_start = RDTSC_START();
-    ZipfGen(config.distr_range, config.zipf_theta, seed2*sh->shard_idx, sh->shard_idx, config.num_threads);
+    ZipfGen(config.distr_range, config.zipf_theta, 12451, sh->shard_idx, config.num_threads);
     t_end = RDTSCP();
     printf("[INFO] Sum %lu range in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_range, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/data_size[sh->shard_idx]);
     
@@ -152,7 +155,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
     }
     t_end = RDTSCP();
     printf("[INFO] Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", data_size[sh->shard_idx], t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/data_size[sh->shard_idx]);
-
+    */
 
     t_start = RDTSC_START();
     // PREFETCH_QUEUE_SIZE = i;
@@ -162,6 +165,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
     t_end = RDTSCP();
     printf("[INFO] Inserted %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", num_inserts, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/num_inserts);
     
+    /*
     if(sh->shard_idx == 0)
     {
       clr_ready = 0;
@@ -177,6 +181,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
     {
       free_mem((void*) mem, distr_length, -1, fd);
     }
+    */
 
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
@@ -193,9 +198,9 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
   sleep(1);
 
-  t_start = RDTSC_START();
+  /*t_start = RDTSC_START();
   auto num_finds = synth_run_get(kmer_ht, sh->shard_idx);
-  t_end = RDTSCP();
+  t_end = RDTSCP();*
 
   if(num_finds)
   {
@@ -206,7 +211,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   {
     printf("[INFO] thread %u | num_finds 0 | cycles: %lu\n",
           sh->shard_idx, (t_end - t_start));
-  }
+  }*/
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
