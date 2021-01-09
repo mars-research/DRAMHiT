@@ -37,7 +37,7 @@ namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
-/* default config */
+// default configuration
 const Configuration def = {
     .kmer_create_data_base = 524288,
     .kmer_create_data_mult = 1,
@@ -101,7 +101,7 @@ void free_ht(BaseHashTable *kmer_ht) {
   delete kmer_ht;
 }
 
-void Application::shard_thread(int tid) {
+void Application::shard_thread(int tid, bool mainthread) {
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -127,7 +127,9 @@ void Application::shard_thread(int tid) {
       return;
   }
 
-  fipc_test_FAI(ready_threads);
+  if (!mainthread) {
+    fipc_test_FAI(ready_threads);
+  }
 
 #ifdef WITH_PAPI_LIB
   auto retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self));
@@ -173,7 +175,20 @@ void Application::shard_thread(int tid) {
   }
 #endif
 
-  while (!ready) fipc_test_pause();
+  if (mainthread) {
+    while (ready_threads < (config.num_threads - 1)) {
+      fipc_test_pause();
+    }
+#if !defined(WITH_PAPI_LIB)
+    ready = 1;
+#else
+    // If papi is enabled, main thread has to wait as well until ready is
+    // signalled. ready is signalled by the last enetering thread.
+    while (!ready) fipc_test_pause();
+#endif
+  } else {
+    while (!ready) fipc_test_pause();
+  }
 
   // fipc_test_mfence();
   /* Begin insert loops */
@@ -213,7 +228,9 @@ void Application::shard_thread(int tid) {
 
 done:
 
-  fipc_test_FAD(ready_threads);
+  if (!mainthread) {
+    fipc_test_FAD(ready_threads);
+  }
 
 #ifdef WITH_PAPI_LIB
   if (ready_threads == 0) {
@@ -229,7 +246,6 @@ done:
 
 int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
-  this->threads = new std::thread[config.num_threads];
 
   this->shards = (Shard *)std::aligned_alloc(
       CACHE_LINE_SIZE, sizeof(Shard) * config.num_threads);
@@ -260,7 +276,7 @@ int Application::spawn_shard_threads() {
     #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE−1)) */
 
   if (config.num_threads >
-      static_cast<uint32_t>(this->n->get_num_total_cpus()) - 1) {
+      static_cast<uint32_t>(this->n->get_num_total_cpus())) {
     fprintf(stderr,
             "[ERROR] More threads configured than cores available (Note: one "
             "cpu assigned completely for synchronization) \n");
@@ -269,48 +285,56 @@ int Application::spawn_shard_threads() {
 
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
+    if (assigned_cpu == 0) continue;
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    this->threads[i] = std::thread(&Application::shard_thread, this, i);
+    auto _thread = std::thread(&Application::shard_thread, this, i, false);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
-    pthread_setaffinity_np(this->threads[i].native_handle(), sizeof(cpu_set_t),
-                           &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
     printf("[INFO] Thread %u: affinity: %u\n", sh->shard_idx, assigned_cpu);
+    this->threads.push_back(std::move(_thread));
     i += 1;
   }
 
-  /* pin this thread to last cpu of last node. */
-  /* TODO don't waste one thread on synchronization  */
+  // Pin main application thread to cpu 0 and run our thread routine
   CPU_ZERO(&cpuset);
-  uint32_t last_cpu = this->np->get_unassigned_cpu_list()[0];
-  CPU_SET(last_cpu, &cpuset);
+  CPU_SET(0, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  printf("[INFO] Thread 'main': affinity: %u\n", last_cpu);
+  printf("[INFO] Thread 'main': affinity: %u\n", 0);
 
+  printf("Running master thread with id %d\n", i);
+  {
+    Shard *sh = &this->shards[i];
+    sh->shard_idx = i;
+    sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
+    sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
+    this->shard_thread(i, true);
+  }
+
+#if 0
   while (ready_threads < config.num_threads) {
     fipc_test_pause();
   }
 
-  // fipc_test_mfence();
 #if !defined(WITH_PAPI_LIB)
   ready = 1;
 #endif
+#endif  // if 0
 
   /* TODO thread join vs sync on atomic variable*/
   while (ready_threads) fipc_test_pause();
 
-  for (auto t = 0u; t < config.num_threads; t++) {
-    if (this->threads[t].joinable()) {
-      this->threads[t].join();
+  for (auto &th : this->threads) {
+    if (th.joinable()) {
+      th.join();
     }
   }
 
   print_stats(this->shards, config);
 
-  delete[] threads;
   std::free(this->shards);
 
   return 0;
