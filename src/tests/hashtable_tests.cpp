@@ -5,11 +5,7 @@
 
 #include "hashtables/kvtypes.hpp"
 
-// For extern theta_arg
-#include "Application.hpp"
-
-
-#include "distribution/pregen/mem.h"
+#include "distribution/mica/zipf.h"
 
 namespace kmercounter {
 struct kmer {
@@ -22,15 +18,11 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 #define HT_TESTS_BATCH_LENGTH 128
 #define HT_TESTS_FIND_BATCH_LENGTH PREFETCH_FIND_QUEUE_SIZE
 
-uint64_t HT_TESTS_HT_SIZE = (1 << 26);
+uint64_t HT_TESTS_HT_SIZE = (1 << 28);
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
 
-
-
-
-#define MAX_THREADS 64
 
 extern Configuration config;
 volatile uint64_t* mem;
@@ -46,6 +38,10 @@ void until_ready(uint8_t tid)
     while(clr_ready!=tid){}
 }
 
+//#define HT_SIZE (config.ht_size/config.num_threads)
+//#define INS_SIZE ((config.ht_size*config.ht_fill)/(100*config.num_threads))
+
+#define MAX_THREADS 64
 uint64_t start[MAX_THREADS];
 uint64_t end[MAX_THREADS];
 uint64_t data_size[MAX_THREADS];
@@ -62,23 +58,19 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
 
-    uint64_t s = start[tid], e = end[tid], sum = 0;
-    
+    uint64_t s = start[tid], e = end[tid];
     for (i = s; i < e; i++) {
         *((uint64_t *)&kmers[k].data) = count;//mem[i];
         *((uint64_t *)items[k].key()) = count;
         *((uint64_t *)items[k].value()) = count;
-        //keys[k] = 
-        sum += mem[i];//count;//mem[i];//
-        // ktable->insert((void *)&items[k]);
-        //ktable->insert((void *)&keys[k]);
+        keys[k] = mem[i]+1;
+        
+        ktable->insert((void *)&keys[k]);
 
         // ktable->insert_noprefetch((void *)&keys[k]);
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
         ++count;
     }
-
-  printf("SUM: %lu\n", sum);
   // flush the last batch explicitly
   printf("%s calling flush queue\n", __func__);
   ktable->flush_queue();
@@ -87,14 +79,14 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
 }
 
 uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
-  uint64_t count = HT_TESTS_NUM_INSERTS * start;
+  uint64_t count = HT_TESTS_NUM_INSERTS * start;//INS_SIZE * start; //
   auto i = 0, k = 0;
   uint64_t found = 0;
   if (start == 0) count = 1;
 
   __attribute__((aligned(64))) Aggr_KV items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
-  for (i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+  for (i = 0u; i < /*INS_SIZE*/HT_TESTS_NUM_INSERTS; i++) {
     Aggr_KV *ret;
     // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
     items[k++].key = count++;
@@ -116,46 +108,48 @@ inline uint64_t PREFETCH_STRIDE = 64;
 void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
+  int fd;
 
   printf("[INFO] Synth test run: thread %u, ht size: %lu, insertions: %lu\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
+  /*printf("[INFO] Synth test run: thread %u, ht size: %lu, insertions: %lu\n",
+         sh->shard_idx, HT_SIZE, INS_SIZE);*/
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
-
-    //Compute start and end range of data range for each thread
-    start[sh->shard_idx] = ((double)sh->shard_idx/config.num_threads)*config.data_length;
-    end[sh->shard_idx] = ((double)(sh->shard_idx+1)/config.num_threads)*config.data_length;
-    data_size[sh->shard_idx] = end[sh->shard_idx] - start[sh->shard_idx];
+    size_t distr_length = config.distr_length;//INS_SIZE;//
 
     //freeze threads that arent thread 0 until use_ready is incremented
-    until_use_ready(sh->shard_idx);
     if(sh->shard_idx == 0)
     {
-        //allocate memory size with mmap and let other threads continue
-        mem = allocate(config.data_length, config.data_range, config.theta, 0/*seed*/);
-        ++use_ready;
+        mem = calloc_ht<uint64_t>(distr_length, -1, &fd);
     }
 
-    //couldnt allocate memory
-    if(!mem)
-    {
-      return;
-    }
+    //Syncronize threads to make sure to use mem after it is allocated
+    until_ready(sh->shard_idx);
+    ++clr_ready;
+    until_ready(config.num_threads);
+
+    //Compute start and end range of data range for each thread
+    start[sh->shard_idx] = ((double)sh->shard_idx/config.num_threads)*distr_length;
+    end[sh->shard_idx] = ((double)(sh->shard_idx+1)/config.num_threads)*distr_length;
+    data_size[sh->shard_idx] = end[sh->shard_idx] - start[sh->shard_idx];
+
 
     //Precompute sum and data for pregeneration
     t_start = RDTSC_START();
-    ZipfGen(config.data_range, config.theta, 0/*seed*/, sh->shard_idx, config.num_threads);
+    ZipfGen(config.distr_range, config.zipf_theta, seed2*sh->shard_idx, sh->shard_idx, config.num_threads);
     t_end = RDTSCP();
-    printf("[INFO] Sum %lu range in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.data_range, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/data_size[sh->shard_idx]);
+    printf("[INFO] Sum %lu range in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_range, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/data_size[sh->shard_idx]);
     
     //pregenerate the indices/keys
     t_start = RDTSC_START();
     for (uint64_t j = start[sh->shard_idx]; j < end[sh->shard_idx]; ++j) 
     {
-        mem[j] = next(); //TODO: modify to return key instead i.e. "keys[next()]
+        mem[j] = next(); //TODO: modify to return key instead i.e. "keys[next()]"
     }
     t_end = RDTSCP();
     printf("[INFO] Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", data_size[sh->shard_idx], t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/data_size[sh->shard_idx]);
+
 
     t_start = RDTSC_START();
     // PREFETCH_QUEUE_SIZE = i;
@@ -165,15 +159,20 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
     t_end = RDTSCP();
     printf("[INFO] Inserted %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", num_inserts, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/num_inserts);
     
-    //Syncronize threads
+    if(sh->shard_idx == 0)
+    {
+      clr_ready = 0;
+    }
+
+    //Syncronize threads to make sure to free mem after it is used
     until_ready(sh->shard_idx);
     ++clr_ready;
     until_ready(config.num_threads);
     
-    //free memeory allocated by thread 0
+    //free memory allocated by thread 0
     if(sh->shard_idx == 0)
     {
-        clear((uint64_t*) mem);
+      free_mem((void*) mem, distr_length, -1, fd);
     }
 
     printf(

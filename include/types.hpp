@@ -58,9 +58,9 @@ struct Configuration {
   uint32_t K;
   uint32_t ht_fill;
 
-  double theta;
-  uint64_t data_length;
-  uint64_t data_range;
+  double zipf_theta;
+  uint64_t distr_length;
+  uint64_t distr_range;
 };
 
 /* Thread stats */
