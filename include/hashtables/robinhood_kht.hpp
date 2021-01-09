@@ -187,6 +187,13 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     return 0;
   }
 
+  void find_batch_v2(KeyPairs &kp, ValuePairs &values) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
+  void flush_find_queue_v2(ValuePairs &vp) override {}
+
   void *find(const void *kmer_data) {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;

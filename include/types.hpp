@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #define CACHE_LINE_SIZE 64
 #define PAGE_SIZE 4096
@@ -15,6 +16,16 @@
 #define VALUE_SIZE 8
 
 extern const uint32_t PREFETCH_QUEUE_SIZE;
+
+enum class BRANCHKIND { Yes, Cmove, Simd };
+
+#if defined(BRANCHLESS)
+constexpr BRANCHKIND branching = BRANCHKIND::Cmove;
+#elif defined(BRANCHLESS_SIMD)
+constexpr BRANCHKIND branching = BRANCHKIND::Simd;
+#else
+constexpr BRANCHKIND branching = BRANCHKIND::Yes;
+#endif
 
 typedef enum {
   DRY_RUN = 1,
@@ -95,6 +106,19 @@ struct Shard {
   Kmer_s *kmer_small_pool;
   Kmer_s *pool;
 };
+
+struct Keys {
+  uint64_t key;
+  uint64_t id;
+};
+
+struct Values {
+  uint64_t value;
+  uint64_t id;
+};
+
+using ValuePairs = std::pair<uint32_t, Values *>;
+using KeyPairs = std::pair<uint32_t, Keys *>;
 
 #endif  // __TYPES_HPP__
 

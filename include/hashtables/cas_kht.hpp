@@ -53,6 +53,8 @@ class CASHashTable : public BaseHashTable {
 
   uint8_t flush_find_queue() override { return 0; }
 
+  void flush_find_queue_v2(ValuePairs &vp) override { return; }
+
   /* insert and increment if exists */
   bool insert(const void *data) {
     this->__insert_into_queue(data);
@@ -112,6 +114,11 @@ class CASHashTable : public BaseHashTable {
   uint8_t find_batch(uint64_t *keys, uint32_t batch_len) override {
     assert(false);
     return 0;
+  }
+
+  void find_batch_v2(KeyPairs &kp, ValuePairs &values) {
+    cout << "Not implemented!" << endl;
+    assert(false);
   }
 
   void *find(const void *data) {
