@@ -58,10 +58,10 @@ const Configuration def = {
     .num_nops = 0,
     .K = 20,
     .ht_fill = 25,
-    
-    .theta = 0.99,
-    .data_length = (1LL<<26),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
-    .data_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
+
+    .zipf_theta = 0.99,
+    .distr_length = (1LL<<34),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
+    .distr_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
 
 /* global config */
 Configuration config;
@@ -404,11 +404,11 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
         "adjust hashtable fill ratio [0-100] ")
 
-        ("theta", po::value<double>(&config.theta)->default_value(def.theta),
+        ("zipf-theta", po::value<double>(&config.zipf_theta)->default_value(def.zipf_theta),
         "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ")
-        ("length", po::value<uint64_t>(&config.data_length)->default_value(def.data_length),
+        ("length", po::value<uint64_t>(&config.distr_length)->default_value(def.distr_length),
         "How many keys of distribution to generate ")
-        ("range", po::value<uint64_t>(&config.data_range)->default_value(def.data_range),
+        ("range", po::value<uint64_t>(&config.distr_range)->default_value(def.distr_range),
         "What should the range of keys generated be (0 - Value) ");
 
     papi_init();
