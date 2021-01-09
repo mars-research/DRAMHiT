@@ -12,6 +12,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <tuple>
 
 #include "dbg.hpp"
 #include "helper.hpp"
@@ -26,6 +27,8 @@
 #if defined(BRANCHLESS)
 #include <immintrin.h>
 #endif
+
+const auto FLUSH_THRESHOLD = 160;
 
 namespace kmercounter {
 
@@ -96,7 +99,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   PartitionedHashStore(uint64_t c, uint8_t id)
-      : fd(-1), id(id), queue_idx(0), find_idx(0) {
+      : fd(-1), id(id), queue_idx(0), find_idx(0), find_head(0), find_tail(0) {
     this->capacity = kmercounter::next_pow2(c);
     this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd, true);
     this->empty_item = this->empty_item.get_empty_key();
@@ -234,6 +237,36 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
   }
 
+  void flush_find_queue_v2(ValuePairs &vp) override {
+    size_t curr_queue_sz =
+        (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
+
+    while (curr_queue_sz != 0) {
+      __find_one_v2(&this->find_queue[this->find_tail], vp);
+      if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
+      curr_queue_sz =
+          (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
+    }
+  }
+
+  void flush_if_needed(ValuePairs &vp) {
+    size_t curr_queue_sz =
+        (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
+    // make sure you return at most batch_sz (but can possibly return lesser
+    // number of elements)
+    while ((curr_queue_sz > FLUSH_THRESHOLD) &&
+           (vp.first < HT_TESTS_FIND_BATCH_LENGTH)) {
+      // cout << "Finding value for key " <<
+      // this->find_queue[this->find_tail].key << " at tail : " <<
+      // this->find_tail << endl;
+      __find_one_v2(&this->find_queue[this->find_tail], vp);
+      if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
+      curr_queue_sz =
+          (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
+    }
+    return;
+  }
+
   uint8_t flush_find_queue() override {
     size_t curr_queue_sz = this->find_idx;
     uint8_t found = 0;
@@ -242,6 +275,39 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       curr_queue_sz = this->find_idx;
     }
     return found;
+  }
+
+  void find_batch_v2(KeyPairs &kp, ValuePairs &values) {
+    // What's the size of the prefetch queue size?
+    // pfq_sz = 4 * 64;
+    // flush_threshold = 128;
+    // batch_sz = 64;
+    // On arrival, there are three possibilities
+    // 1) The prefetch queue is empty -> we can happily submit the batch and
+    // return 2) The prefetch queue is full -> we need to go thro to see if some
+    // of them can be reaped 3) The prefetch queue is half-full -> we can
+    // enqueue half the batch, process the queue and enqueue the leftover items
+
+    // cout << "-> flush_before head: " << this->find_head << " tail: " <<
+    // this->find_tail << endl;
+    this->flush_if_needed(values);
+    // cout << "== > post flush_before head: " << this->find_head << " tail: "
+    // << this->find_tail << endl;
+
+    Keys *keys;
+    uint32_t batch_len;
+    std::tie(batch_len, keys) = kp;
+
+    for (auto k = 0u; k < batch_len; k++) {
+      void *data = reinterpret_cast<void *>(&keys[k]);
+      add_to_find_queue_v2(data);
+    }
+
+    // cout << "-> flush_after head: " << this->find_head << " tail: " <<
+    // this->find_tail << endl;
+    this->flush_if_needed(values);
+    // cout << "== > post flush_after head: " << this->find_head << " tail: " <<
+    // this->find_tail << endl;
   }
 
   uint8_t find_batch(uint64_t *__keys, uint32_t batch_len) override {
@@ -348,6 +414,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   KVQ *find_queue;
   uint32_t queue_idx;
   uint32_t find_idx;
+  uint32_t find_head;
+  uint32_t find_tail;
 
   uint64_t hash(const void *k) {
     uint64_t hash_val;
@@ -448,6 +516,76 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
 // TODO: Move this to makefile
 #define BRANCHLESS_FIND
+
+  auto __find_one_v2(KVQ *q, ValuePairs &vp) {
+    // hashtable idx where the data should be found
+    size_t idx = q->idx;
+    uint64_t found = 0;
+
+  try_find:
+
+    KV *curr = &this->hashtable[idx];
+    uint64_t retry;
+
+    // if (q->key == 45146313) {
+    // printf("corrupted! %ld\n", q->key);
+    // }
+    // found = curr->find_key_brless_v2(q, &retry, vp);
+    __builtin_prefetch(q + 6, 1, 3);
+
+    if constexpr (branching == BRANCHKIND::Cmove) {
+      found = curr->find_key_brless_v2(q, &retry, vp);
+    } else {
+      found = curr->find_key_regular_v2(q, &retry, vp);
+    }
+
+    /*     printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found =
+       %ld, retry %ld\n", __func__, q->key, vp.first, vp.second[(vp.first - 1) %
+       PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1) %
+       PREFETCH_FIND_QUEUE_SIZE].id, found, retry); */
+
+    if constexpr (branching == BRANCHKIND::Yes) {
+      if (retry) {
+        // insert back into queue, and prefetch next bucket.
+        // next bucket will be probed in the next run
+        idx++;
+        idx = idx & (this->capacity - 1);  // modulo
+                                           // |    4 elements |
+        // | 0 | 1 | 2 | 3 | 4 | 5 ....
+        if ((idx & 0x3) != 0) {
+          goto try_find;
+        }
+
+        this->prefetch_read(idx);
+
+        this->find_queue[this->find_head].key = q->key;
+        this->find_queue[this->find_head].key_id = q->key_id;
+        this->find_queue[this->find_head].idx = idx;
+
+        this->find_head += 1;
+        this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+      }
+    } else {
+      // insert back into queue, and prefetch next bucket.
+      // next bucket will be probed in the next run
+      idx++;
+      idx = idx & (this->capacity - 1);  // modulo
+      this->find_queue[this->find_head].key = q->key;
+      this->find_queue[this->find_head].key_id = q->key_id;
+      this->find_queue[this->find_head].idx = idx;
+      this->prefetch_read(idx);
+
+      // this->find_head should not be incremented if either
+      // the desired key is empty or it is found.
+      uint64_t inc{1};
+      inc = (retry == 0x1) ? inc : 0;
+
+      this->find_head += inc;
+      this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+    }
+
+    return found;
+  }
 
   auto __find_one(KVQ *q) {
     // hashtable idx where the data should be found
@@ -696,6 +834,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
+  uint64_t read_hashtable_element(const void *data) {
+    uint64_t hash = this->hash((const char *)data);
+    size_t idx = hash & (this->capacity - 1);
+    KV *curr = &this->hashtable[idx];
+    return  curr->get_value();
+  }
+
   void __insert_into_queue(const void *data) {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo
@@ -733,6 +878,28 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->find_idx++;
   }
 
+  void add_to_find_queue_v2(void *data) {
+    Keys *key_data = reinterpret_cast<Keys *>(data);
+    uint64_t hash = this->hash((const char *)&key_data->key);
+    size_t idx = hash & (this->capacity - 1);  // modulo
+
+    this->prefetch_read(idx);
+
+    // cout << " -- Adding " << key_data->key  << " at " << this->find_head <<
+    // endl;
+
+    this->find_queue[this->find_head].idx = idx;
+    this->find_queue[this->find_head].key = key_data->key;
+    this->find_queue[this->find_head].key_id = key_data->id;
+
+#ifdef COMPARE_HASH
+    this->queue[this->find_head].key_hash = hash;
+#endif
+
+    this->find_head++;
+    if (this->find_head >= PREFETCH_FIND_QUEUE_SIZE) this->find_head = 0;
+  }
+
   // fetch items from queue and call find
   auto find_prefetched_batch() {
     uint8_t found = 0;
@@ -743,7 +910,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return found;
   }
 
-  auto __flush_find_queue(size_t qsize) {
+  void __flush_find_queue_v2(size_t qsize, ValuePairs &vp) {
+    for (size_t i = 0; i < qsize; i++) {
+    }
+  }
+
+  uint8_t __flush_find_queue(size_t qsize) {
     uint8_t found = 0;
     this->find_idx = 0;  // start again
     for (size_t i = 0; i < qsize; i++) {

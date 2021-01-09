@@ -2,6 +2,7 @@
 #define __TESTS_HPP__
 
 #include "BQueueTest.hpp"
+#include "CacheMissTest.hpp"
 #include "ParserTest.hpp"
 #include "PrefetchTest.hpp"
 #include "SynthTest.hpp"
@@ -14,6 +15,7 @@ class Tests {
   PrefetchTest pt;
   ParserTest pat;
   BQueueTest bqt;
+  CacheMissTest cmt;
 
   Tests() {}
 };

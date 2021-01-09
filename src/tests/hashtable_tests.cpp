@@ -14,6 +14,7 @@ struct kmer {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
+<<<<<<< HEAD
 // #define HT_TESTS_BATCH_LENGTH 32
 #define HT_TESTS_BATCH_LENGTH 128
 #define HT_TESTS_FIND_BATCH_LENGTH PREFETCH_FIND_QUEUE_SIZE
@@ -22,6 +23,9 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 //128GB of data with 32 or 64 cores when this is 26 instead, works but slows down
 //due to too many insertions for the hashtable size
 uint64_t HT_TESTS_HT_SIZE = (1 << 28);
+=======
+uint64_t HT_TESTS_HT_SIZE = (1 << 26ULL);  // * 8ull;
+>>>>>>> b6887b906db3eda99f6d0daf023f37b8cb6253a8
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
@@ -75,6 +79,37 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
         // ktable->insert_noprefetch((void *)&keys[k]);
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
         ++count;
+
+        /*
+        #if defined(SAME_KMER)
+            //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
+            *((uint64_t *)&kmers[k].data) = 32;
+            *((uint64_t *)items[k].key()) = 32;
+            *((uint64_t *)items[k].value()) = 32;
+            keys[k] = 32;
+        #elif defined(XORWOW)
+        #warning "Xorwow rand kmer insert"
+            *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
+        #else
+            *((uint64_t *)&kmers[k].data) = count;
+            *((uint64_t *)items[k].key()) = count;
+            *((uint64_t *)items[k].value()) = count;
+            keys[k] = count;
+        #endif
+            // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
+            // printf("%s, inserting i= %d\n", __func__, i);
+            // ktable->insert((void *)&kmers[k]);
+            // printf("->Inserting %lu\n", count);
+            count++;
+            // ktable->insert((void *)&items[k]);
+            ktable->insert((void *)&items[k]);
+
+            // ktable->insert_noprefetch((void *)&keys[k]);
+            k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+        #if defined(SAME_KMER)
+            count++;
+        #endif
+        */
     }
   // flush the last batch explicitly
   //printf("%s calling flush queue\n", __func__);
@@ -85,26 +120,41 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
 
 uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
   uint64_t count = HT_TESTS_NUM_INSERTS * start;
-  auto i = 0, k = 0;
-  uint64_t found = 0;
+  auto k = 0;
+  uint64_t found = 0, not_found = 0;
   if (start == 0) count = 1;
 
-  __attribute__((aligned(64))) Aggr_KV items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
-  for (i = 0u; i < /*INS_SIZE*/HT_TESTS_NUM_INSERTS; i++) {
-    Aggr_KV *ret;
+  Values *values;
+  values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, values);
+
+  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
     // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
-    items[k++].key = count++;
-
+#if defined(SAME_KMER)
+    items[k].key = items[k].id = 32;
+    k++;
+#else
+    items[k].key = count;
+    items[k].id = count;
+    k++;
+    count++;
+#endif
     if (k == HT_TESTS_FIND_BATCH_LENGTH) {
+      KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
       // printf("%s, calling find_batch i = %d\n", __func__, i);
-      found +=
-          ktable->find_batch((uint64_t *)items, HT_TESTS_FIND_BATCH_LENGTH);
+      // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
+      ktable->find_batch_v2(kp, vp);
+      found += vp.first;
+      vp.first = 0;
       k = 0;
+      not_found += HT_TESTS_FIND_BATCH_LENGTH - found;
+      // printf("\t count %lu | found -> %lu | not_found -> %lu \n", count,
+      // found, not_found);
     }
-    // printf("\t count %lu | found -> %lu\n", count, found);
   }
-  found += ktable->flush_find_queue();
+  // found += ktable->flush_find_queue();
   return found;
 }
 
@@ -202,16 +252,9 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   auto num_finds = synth_run_get(kmer_ht, sh->shard_idx);
   t_end = RDTSCP();*
 
-  if(num_finds)
-  {
-    printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
-          sh->shard_idx, num_finds, (t_end - t_start) / num_finds);
-  }
-  else
-  {
-    printf("[INFO] thread %u | num_finds 0 | cycles: %lu\n",
-          sh->shard_idx, (t_end - t_start));
-  }*/
+  if (num_finds > 0)
+  printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
+         sh->shard_idx, num_finds, (t_end - t_start) / num_finds);*/
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);

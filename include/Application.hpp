@@ -14,7 +14,7 @@ class Application {
   NumaPolicyThreads *np;
   NumaPolicyQueues *npq;
   Tests test;
-  std::thread *threads;
+  std::vector<std::thread> threads;
   Shard *shards;
 
   int fd;
@@ -26,7 +26,7 @@ class Application {
   uint64_t* alloc_distribution();//NEW
   void free_distribution(uint64_t* mem);//NEW
   int spawn_shard_threads();
-  void shard_thread(int tid);
+  void shard_thread(int tid, bool mainthread);
 
   Application() {
     this->n = new Numa();

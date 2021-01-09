@@ -76,6 +76,16 @@ struct Kmer_queue {
 #endif
 } PACKED;
 
+struct ItemQueue {
+  const void *data;
+  uint64_t key;
+  uint32_t key_id;
+  uint32_t idx;
+#ifdef COMPARE_HASH
+  uint64_t key_hash;  // 8 bytes
+#endif
+} PACKED;
+
 struct Aggr_KV {
   using key_type = uint64_t;
   using value_type = uint64_t;
@@ -156,6 +166,145 @@ struct Aggr_KV {
     Aggr_KV empty = this->get_empty_key();
     return this->key == empty.key;
   }
+
+  inline uint64_t find_key_regular_v2(const void *data, uint64_t *retry,
+                                      ValuePairs &vp) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+    auto found = false;
+    *retry = 0;
+    if (this->is_empty()) {
+      goto exit;
+    } else if (this->key == elem->key) {
+      found = true;
+      vp.second[vp.first].value = this->count;
+      vp.second[vp.first].id = elem->key_id;
+      vp.first++;
+      goto exit;
+    } else {
+      *retry = 1;
+    }
+  exit:
+    return found;
+  }
+
+  //#define EMPTY_CHECK_C
+
+  inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
+                                     ValuePairs &vp) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    uint64_t found = false;
+    uint32_t cur_val_idx = vp.first;
+
+#ifdef EMPTY_CHECK_C
+    *retry = 1;
+    bool empty = this->is_empty();
+    asm volatile(
+        // set found = false;
+        "mov $0x0, %[found]\n\t"
+        // prep registers
+        "xor %%r15, %%r15\n\t"
+        "xor %%r14, %%r14\n\t"
+        // move incoming key to rbx
+        "mov %[key_in], %%rbx\n\t"
+        // if ((cur->key ^ key) == 0), we've found the key!
+        "xor %[key_curr], %%rbx\n\t"
+        // temporarily increment the cur_val_idx (local var)
+        "inc %[cur_val_idx]\n\t"
+        // check if the key is equal to curr->key
+        "test %%rbx, %%rbx\n\t"
+        "cmove %[val_curr], %%r15\n\t"
+        "mov %%r15, %[value_out]\n\t"
+        // copy key_id if found = true
+        "cmove %[key_id], %%r14d\n\t"
+        "mov %%r14, %[value_id]\n\t"
+        // set found = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %[found]\n\t"
+        "mov %[values_idx], %%r14\n\t"
+        "cmove %[cur_val_idx], %%r14d\n\t"
+        "mov %%r14, %[values_idx]\n\t"
+
+        // if key != data, we'll get > 0 && !data
+        // if !empty && !found, return 0x1, to continue finding the key
+        // e | f | retry
+        // 0 | 0 | 1
+        // 0 | 1 | 0
+        // 1 | 0 | 0
+        "mov %[empty], %%r13b\n\t"
+        "or %[found], %%r13\n\t"
+        "cmp $0x1, %%r13\n\t"
+        "mov %[retry], %%r14\n\t"
+        "mov $0x0, %%r15\n\t"
+        "cmove %%r15, %%r14\n\t"
+        "mov %%r14, %[retry]\n\t"
+        : [ value_out ] "=m"(vp.second[cur_val_idx]),
+          [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
+          [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
+          [ cur_val_idx ] "+r"(cur_val_idx)
+        : [ key_in ] "r"(elem->key), [ key_id ] "r"(elem->key_id),
+          [ key_curr ] "m"(this->key), [ empty ] "r"(empty),
+          [ val_curr ] "rm"(this->count)
+        : "rax", "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
+#else
+    asm volatile(
+        "xor %%r13, %%r13\n\t"
+        "mov %[key_in], %%rbx\n\t"
+        "mov %%rbx, %%r12\n\t"
+        "xor %[key_curr], %%rbx\n\t"
+        // 1) if the key is empty, we'll get back the same data
+        "cmp %%r12, %%rbx\n\t"
+        // set empty = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r13\n\t"
+        // set found = false;
+        "mov $0x0, %[found]\n\t"
+
+        // 2) if key == data, we'll get zero. we've found the key!
+        "xor %%r15, %%r15\n\t"
+        "xor %%r14, %%r14\n\t"
+        // increment the cur_val_idx
+        "inc %[cur_val_idx]\n\t"
+        "test %%rbx, %%rbx\n\t"
+        "cmove %[val_curr], %%r15\n\t"
+        "mov %%r15, %[value_out]\n\t"
+        // copy key_id if found = true
+        "cmove %[key_id], %%r14d\n\t"
+        "mov %%r14, %[value_id]\n\t"
+
+        // set found = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %[found]\n\t"
+        "mov %[values_idx], %%r14\n\t"
+        "cmove %[cur_val_idx], %%r14d\n\t"
+        "mov %%r14, %[values_idx]\n\t"
+        // if key != data, we'll get > 0 && !data
+        // if !empty && !found, return 0x1, to continue finding the key
+        // e | f | retry
+        // 0 | 0 | 1
+        // 0 | 1 | 0
+        // 1 | 0 | 0
+        "mov %[found], %%r14\n\t"
+        "xor %%r14, %%r13\n\t"
+        "not %%r13\n\t"
+        "and $0x1, %%r13\n\t"
+        "xor %%r14, %%r14\n\t"
+        "cmp $0x1, %%r13\n\t"
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r14\n\t"
+        "mov %%r14, %[retry]\n\t"
+        : [ value_out ] "=m"(vp.second[cur_val_idx]),
+          [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
+          [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
+          [ cur_val_idx ] "+r"(cur_val_idx)
+        : [ key_in ] "r"(elem->key), [ key_id ] "r"(elem->key_id),
+          [ key_curr ] "m"(this->key), [ val_curr ] "rm"(this->count)
+        : "rax", "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
+#endif  // EMPTY_CHECK_C
+    return found;
+  };
 
   inline uint64_t find_key_brless(const void *data, uint64_t *retry) {
     Aggr_KV *kvpair =
@@ -294,7 +443,7 @@ struct Item {
 
   inline void *value() { return &this->kvpair.value; }
 
-  inline uint16_t get_value() const { return this->kvpair.value; }
+  inline uint64_t get_value() const { return this->kvpair.value; }
 
   inline Item get_empty_key() {
     Item empty;
@@ -307,15 +456,122 @@ struct Item {
     return this->kvpair.key == empty.kvpair.key;
   }
 
+  inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
+                                     ValuePairs &vp) {
+    ItemQueue *item =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    uint64_t found = false;
+    uint32_t cur_val_idx = vp.first;
+
+    asm volatile(
+        "xor %%r13, %%r13\n\t"
+        "mov %[key_in], %%rbx\n\t"
+        "mov %%rbx, %%r12\n\t"
+        "xor %[key_curr], %%rbx\n\t"
+        // 1) if the key is empty, we'll get back the same data
+        "cmp %%r12, %%rbx\n\t"
+        // set empty = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r13\n\t"
+        // set found = false;
+        // "cmove $0x0, %[found]\n\t"
+
+        // 2) if key == data, we'll get zero. we've found the key!
+        "xor %%r15, %%r15\n\t"
+        "xor %%r14, %%r14\n\t"
+        // increment the cur_val_idx
+        "inc %[cur_val_idx]\n\t"
+        "test %%rbx, %%rbx\n\t"
+        "cmove %[val_curr], %%r15\n\t"
+        "mov %%r15, %[value_out]\n\t"
+        // copy key_id if found = true
+        "cmove %[key_id], %%r14d\n\t"
+        "mov %%r14, %[value_id]\n\t"
+
+        // set found = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %[found]\n\t"
+        "mov %[values_idx], %%r14\n\t"
+        "cmove %[cur_val_idx], %%r14d\n\t"
+        "mov %%r14, %[values_idx]\n\t"
+
+        // if key != data, we'll get > 0 && !data
+        // if !empty && !found, return 0x1, to continue finding the key
+        // e | f | retry
+        // 0 | 0 | 1
+        // 0 | 1 | 0
+        // 1 | 0 | 0
+        "mov %[found], %%r14\n\t"
+        "xor %%r14, %%r13\n\t"
+        "not %%r13\n\t"
+        "and $0x1, %%r13\n\t"
+        "xor %%r14, %%r14\n\t"
+        "cmp $0x1, %%r13\n\t"
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r14\n\t"
+        "mov %%r14, %[retry]\n\t"
+        : [ value_out ] "=m"(vp.second[cur_val_idx]),
+          [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
+          [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
+          [ cur_val_idx ] "+r"(cur_val_idx)
+        : [ key_in ] "r"(item->key), [ key_id ] "r"(item->key_id),
+          [ key_curr ] "m"(this->kvpair.key),
+          [ val_curr ] "rm"(this->kvpair.value)
+        : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
+    return found;
+  };
+
+  inline uint64_t find_key_brless(const void *data, uint64_t *retry) {
+    Item *item = const_cast<Item *>(reinterpret_cast<const Item *>(data));
+
+    uint64_t found = false;
+    asm volatile(
+        "xor %%r13, %%r13\n\t"
+        "mov %[key_in], %%rbx\n\t"
+        "mov %%rbx, %%r12\n\t"
+        "xor %[key_curr], %%rbx\n\t"
+        // if the key is empty, we'll get back the same data
+        "cmp %%r12, %%rbx\n\t"
+        // set empty = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r13\n\t"
+        // set found = false;
+        "mov $0x0, %[found]\n\t"
+        //"cmove %%r15, %[found]\n\t"
+        //"cmovne %%r15, %[found]\n\t"
+        // if key == data, we'll get zero. we've found the key!
+        "xor %%r15, %%r15\n\t"
+        "test %%rbx, %%rbx\n\t"
+        "cmove %[val_curr], %%r15\n\t"
+        "mov %%r15, %[value_out]\n\t"
+        // set found = true;
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %[found]\n\t"
+        // if key != data, we'll get > 0 && !data
+        // if !empty && !found, return 0x1, to continue finding the key
+        // e | f | retry
+        // 0 | 0 | 1
+        // 0 | 1 | 0
+        // 1 | 0 | 0
+        "mov %[found], %%r14\n\t"
+        "xor %%r14, %%r13\n\t"
+        "not %%r13\n\t"
+        "and $0x1, %%r13\n\t"
+        "xor %%r14, %%r14\n\t"
+        "cmp $0x1, %%r13\n\t"
+        "mov $0x1, %%r15\n\t"
+        "cmove %%r15, %%r14\n\t"
+        "mov %%r14, %[retry]\n\t"
+        : [ value_out ] "=m"(item->kvpair.value), [ retry ] "=m"(*retry),
+          [ found ] "=r"(found)
+        : [ key_in ] "r"(item->kvpair.key), [ key_curr ] "m"(this->kvpair.key),
+          [ val_curr ] "rm"(this->kvpair.value)
+        : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
+    return found;
+  };
 } PACKED;
 
-struct ItemQueue {
-  const void *data;
-  uint32_t idx;
-#ifdef COMPARE_HASH
-  uint64_t key_hash;  // 8 bytes
-#endif
-} PACKED;
 }  // namespace kmercounter
 
 #endif  // __KV_TYPES_HPP__
