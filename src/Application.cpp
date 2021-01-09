@@ -262,8 +262,8 @@ done:
 }
 
 uint64_t* Application::alloc_distribution() {
-  uint64_t t_start, t_end;
   ssize_t result, remaining, off = 0;
+  uint64_t t_start, t_end;
   int distr_fd;
   uint64_t* m;
 
@@ -280,7 +280,7 @@ uint64_t* Application::alloc_distribution() {
     t_start = RDTSC_START();
     config.distr_length = lseek64(distr_fd, 0, SEEK_END);
     t_end = RDTSCP();
-    printf("[INFO] Seeking to end of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
+    printf("[INFO] Seeking to end of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0);
   
     config.distr_length >>= 3;// /= sizeof(uint64_t);//
 
@@ -292,7 +292,7 @@ uint64_t* Application::alloc_distribution() {
     t_start = RDTSC_START();
     lseek64(distr_fd, 0, SEEK_SET);
     t_end = RDTSCP();
-    printf("[INFO] Seeking back to start of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
+    printf("[INFO] Seeking back to start of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0);
   
 
     t_start = RDTSC_START();
@@ -317,7 +317,7 @@ uint64_t* Application::alloc_distribution() {
       {
         printf("something else happened\n");
       }
-    } while(off < config.distr_length<<3);
+    } while((size_t) off < config.distr_length<<3);
     t_end = RDTSCP();
     printf("[INFO] Read %lu bytes to file in %lu cycles (%f ms) at rate of %lu cycles/byte\n", off, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/off);
     
@@ -364,6 +364,12 @@ uint64_t* Application::alloc_distribution() {
       return NULL;
     }
 
+    if(ftruncate(distr_fd, config.distr_length<<3))
+    {
+      perror("Couldn't resize file.");
+      return NULL;
+    }
+
     t_start = RDTSC_START();
     do
     {
@@ -386,7 +392,7 @@ uint64_t* Application::alloc_distribution() {
       {
         printf("something else happened\n");
       }
-    } while(off < config.distr_length<<3);
+    } while((size_t)off < config.distr_length<<3);
     t_end = RDTSCP();
     printf("[INFO] Wrote %lu bytes to file in %lu cycles (%f ms) at rate of %lu cycles/byte\n", off, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/off);
     
