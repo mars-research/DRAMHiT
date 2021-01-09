@@ -18,6 +18,9 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 #define HT_TESTS_BATCH_LENGTH 128
 #define HT_TESTS_FIND_BATCH_LENGTH PREFETCH_FIND_QUEUE_SIZE
 
+//needs to be diff values (27 or 28) for different sizes of generated data and cores
+//128GB of data with 32 or 64 cores when this is 26 instead, works but slows down
+//due to too many insertions for the hashtable size
 uint64_t HT_TESTS_HT_SIZE = (1 << 28);
 uint64_t HT_TESTS_NUM_INSERTS;
 
