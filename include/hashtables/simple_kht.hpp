@@ -98,7 +98,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   PartitionedHashStore(uint64_t c, uint8_t id)
       : fd(-1), id(id), queue_idx(0), find_idx(0) {
     this->capacity = kmercounter::next_pow2(c);
-    this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
+    this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd, true);
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();

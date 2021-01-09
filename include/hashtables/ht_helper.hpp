@@ -92,7 +92,7 @@ static inline void prefetch_with_write(Kmer_KV *k) {
 }
 
 template <class T>
-T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
+T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd, bool mem_clear) {
   T *addr;
 #ifdef HUGE_1GB_PAGES
   int fd;
@@ -127,7 +127,10 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     exit(1);
   }
 #endif
-  memset(addr, 0, capacity * sizeof(T));
+  if(mem_clear)
+  {
+    memset(addr, 0, capacity * sizeof(T));
+  }
   *out_fd = fd;
   return addr;
 }
