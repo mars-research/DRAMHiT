@@ -16,11 +16,11 @@ void CacheMissTest::cache_miss_run(Shard *sh, BaseHashTable *k_ht) {
       "[INFO] Cache Miss test run: thread %u, ht size: %lu, insertions: %lu\n",
       sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
-  if (t_start == 0) count = 1;
+  if (sh->shard_idx == 0) count = 1;
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
 
   t_start = RDTSC_START();
-  for (auto i = 0; i < HT_TESTS_NUM_INSERTS; i++) {
+  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     keys[k] = 32;
 #else
@@ -33,7 +33,7 @@ void CacheMissTest::cache_miss_run(Shard *sh, BaseHashTable *k_ht) {
   t_end = RDTSCP();
 
   printf(
-      "[INFO] CacheMissTest: Quick stats: thread %u, Batch size: %d, cycles "
+      "[INFO] CacheMissTest: Quick stats: thread %u, Batch size: %ld, cycles "
       "per "
       "insertion:%lu \n",
       sh->shard_idx, (count - 1), ((t_end - t_start) / (count - 1)));
