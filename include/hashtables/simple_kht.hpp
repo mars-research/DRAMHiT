@@ -20,8 +20,8 @@
 #include "ht_helper.hpp"
 #include "sync.h"
 
-const auto FLUSH_THRESHOLD = 160;
-const auto INS_FLUSH_THRESHOLD = 128;
+const auto FLUSH_THRESHOLD = 32;
+const auto INS_FLUSH_THRESHOLD = 32;
 
 namespace kmercounter {
 
@@ -440,7 +440,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t found = 0;
 
     KV *curr = &this->hashtable[idx];
-    uint64_t retry;
+    uint64_t retry = 1;
 
     found = curr->find_key_brless_v2(q, &retry, vp);
 
@@ -580,8 +580,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
     KV *curr = &this->hashtable[idx];
-    // 0xFF: insert or update was successfull
-    uint16_t cmp = curr->insert_or_update_v2(q);
+    // returns 1 succeeded
+    uint8_t cmp = curr->insert_or_update_v2(q);
 
     /* prepare for (possible) soft reprobe */
     idx++;
@@ -595,7 +595,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // this->queue_idx should not be incremented if either
     // of the try_inserts succeeded
     int inc{1};
-    inc = (cmp == 0xFF) ? 0 : inc;
+    inc = (cmp == 0xff) ? 0 : inc;
     this->ins_head += inc;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
   }
@@ -883,7 +883,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);
     KV *curr = &this->hashtable[idx];
-    return  curr->get_value();
+    return curr->get_value();
   }
 
   void __insert_into_queue(const void *data) {

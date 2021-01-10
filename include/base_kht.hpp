@@ -10,12 +10,12 @@
 using namespace std;
 namespace kmercounter {
 
-const uint32_t PREFETCH_QUEUE_SIZE = 64 * 4;
-const uint32_t PREFETCH_FIND_QUEUE_SIZE = 64 * 4;
+const uint32_t PREFETCH_QUEUE_SIZE = 64;
+const uint32_t PREFETCH_FIND_QUEUE_SIZE = 64;
 
 // #define HT_TESTS_BATCH_LENGTH 32
-#define HT_TESTS_BATCH_LENGTH 128
-#define HT_TESTS_FIND_BATCH_LENGTH 64
+#define HT_TESTS_BATCH_LENGTH 16
+#define HT_TESTS_FIND_BATCH_LENGTH 16
 
 class BaseHashTable {
  public:
