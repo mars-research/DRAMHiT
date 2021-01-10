@@ -21,7 +21,7 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 //needs to be diff values (27 or 28) for different sizes of generated data and cores
 //128GB of data with 32 or 64 cores when this is 26 instead, works but slows down
 //due to too many insertions for the hashtable size
-uint64_t HT_TESTS_HT_SIZE = (1 << 26);
+uint64_t HT_TESTS_HT_SIZE = (1 << 27);
 //uint64_t HT_TESTS_HT_SIZE = (1 << 26ULL);  // * 8ull;
 uint64_t HT_TESTS_NUM_INSERTS;
 
