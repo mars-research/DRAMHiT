@@ -17,8 +17,8 @@ class Application {
   std::vector<std::thread> threads;
   Shard *shards;
 
-  //int* fd;
-  int fd;
+  int* fd;
+  //int fd;
 
  public:
   std::vector<numa_node> nodes;

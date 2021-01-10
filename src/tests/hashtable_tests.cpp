@@ -21,7 +21,7 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 //needs to be diff values (27 or 28) for different sizes of generated data and cores
 //128GB of data with 32 or 64 cores when this is 26 instead, works but slows down
 //due to too many insertions for the hashtable size
-uint64_t HT_TESTS_HT_SIZE = (1 << 26);
+uint64_t HT_TESTS_HT_SIZE = (1 << 27);
 //uint64_t HT_TESTS_HT_SIZE = (1 << 26ULL);  // * 8ull;
 uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -30,11 +30,11 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 extern Configuration config;
 //volatile 
-extern uint64_t* mem;
-/*extern uint64_t** mem;
+//extern uint64_t* mem;
+extern uint64_t** mem;
 extern int num_nodes;
 extern int* node_thread_count;
-extern std::vector<int> thread_nodes;*/
+extern std::vector<int> thread_nodes;
 
 volatile uint8_t use_ready = 0;
 volatile uint8_t clr_ready = 0;
@@ -67,18 +67,18 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
 
-    //uint64_t* node_mem = mem[thread_nodes[tid]];
+    uint64_t* node_mem = mem[thread_nodes[tid]];
     uint64_t s = start[tid], e = end[tid];
     //printf("Node %u Thread %u: mem %lu-%lu\n",thread_nodes[tid], tid, s, e);
     for (i = s; i < e; i++) {
         *((uint64_t *)&kmers[k].data) = count;//mem[i];
         *((uint64_t *)items[k].key()) = count;
         *((uint64_t *)items[k].value()) = count;
-        //keys[k] = node_mem[i];//1;//count;//
-        keys[k] = mem[i];
-        //printf("%lu\n", node_mem[i]);
+        keys[k] = node_mem[i];//1;//count;//
+        //keys[k] = mem[i];
+        //printf("%lu\n", mem[i]);
         
-        //ktable->insert((void *)&keys[k]);
+        ktable->insert((void *)&keys[k]);
 
         // ktable->insert_noprefetch((void *)&keys[k]);
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
@@ -173,7 +173,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
-    /*size_t node_distr_length = config.distr_length/num_nodes;
+    size_t node_distr_length = config.distr_length/num_nodes;
 
 
     int idx = 0;
@@ -187,14 +187,11 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
         ++node_num_threads;
       }
       ++idx;
-    }*/
-    //int num_threads = node_thread_count[sh->numa_node];
+    }
 
     //Compute start and end range of data range for each thread
-    //start[sh->shard_idx] = ((double)node_thread_idx/node_num_threads)*node_distr_length;
-    //end[sh->shard_idx] = ((double)(node_thread_idx+1)/node_num_threads)*node_distr_length;
-    start[sh->shard_idx] = ((double)sh->shard_idx/config.num_threads)*config.distr_length;
-    end[sh->shard_idx] = ((double)(sh->shard_idx+1)/config.num_threads)*config.distr_length;
+    start[sh->shard_idx] = ((double)node_thread_idx/node_num_threads)*node_distr_length;
+    end[sh->shard_idx] = ((double)(node_thread_idx+1)/node_num_threads)*node_distr_length;
 
     t_start = RDTSC_START();
     // PREFETCH_QUEUE_SIZE = i;

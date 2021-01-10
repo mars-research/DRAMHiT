@@ -63,7 +63,7 @@ const Configuration def = {
 
     .seed = 1,
     .zipf_theta = 0.99,
-    .distr_length = (1LL<<34),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
+    .distr_length = (1LL<<33),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
     .distr_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
 
 /* global config */
@@ -73,11 +73,11 @@ Configuration config;
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
-uint64_t* mem = NULL;
-/*uint64_t** mem = NULL;
+//uint64_t* mem = NULL;
+uint64_t** mem = NULL;
 int num_nodes = 0;
 int* node_thread_count = NULL;
-std::vector<int> thread_nodes;*/
+std::vector<int> thread_nodes;
 
 
 #ifdef WITH_PAPI_LIB
@@ -272,7 +272,7 @@ void until_ready1(uint8_t tid)
 {
     while(main_ready!=tid){}
 }*/
-/*int get_node(int cpu, int used_nodes, std::vector<numa_node> nodes)
+int get_node(int cpu, int used_nodes, std::vector<numa_node> nodes)
 {
   int num = 0;
   int num_threads = config.num_threads;
@@ -302,26 +302,17 @@ int used_nodes(std::vector<numa_node> nodes)
     if (num_threads == 0) break;
   }
   return num;
-}*/
-/*void pregen(int cpu, uint64_t* m, uint64_t start, uint64_t end)
+}
+void pregen(int cpu, uint64_t* m, uint64_t start, uint64_t end)
 {
   uint64_t t_start, t_end;
   t_start = RDTSC_START();
-  generate(m, start, end);
-  t_end = RDTSCP();
-  printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
-}*/
-void pregen(uint64_t* m, uint64_t start, uint64_t end, int cpu, int nr_cpus )
-{
-  uint64_t t_start, t_end;
-  t_start = RDTSC_START();
-  ZipfGen(config.distr_range, config.zipf_theta, cpu*config.seed, cpu, nr_cpus);
   generate(m, start, end);
   t_end = RDTSCP();
   printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
 }
 
-/*void alloc_gen(numa_node node, uint64_t node_distr_length, int* fd)
+void alloc_gen(numa_node node, uint64_t node_distr_length, int* fd)
 {
   uint64_t start, end;
   std::vector<std::thread> threads;
@@ -378,54 +369,10 @@ void pregen(uint64_t* m, uint64_t start, uint64_t end, int cpu, int nr_cpus )
   printf("[INFO] Node %u Thread 'main' Core %u: Finished generating data\n", node.id, main_cpu);
 
   threads.clear();
-}*/
+}
 
 
 void Application::alloc_distribution() {
-
-  uint64_t start, end, t_start, t_end;
-  std::vector<std::thread> threads;
-  cpu_set_t cpuset;
-  int main_cpu = 0, nr_cpus = n->get_num_total_cpus();
-
-  CPU_ZERO(&cpuset);
-  CPU_SET(main_cpu, &cpuset);
-  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  mem = calloc_ht<uint64_t>(config.distr_length, -1, &fd, false);
-  //Make threads per each node
-
-
-  for (int cpu = 1; cpu < nr_cpus; ++cpu)
-  {
-    start = ((double)cpu/nr_cpus)*config.distr_length;
-    end = ((double)(cpu+1)/nr_cpus)*config.distr_length;
-    //printf("[INFO] Node %u Core %u: Creating Node allocation thread\n", nd, nodes[nd].cpu_list[0]);
-    auto _thread = std::thread(&pregen, mem, start, end, cpu, nr_cpus);
-    
-    CPU_ZERO(&cpuset);
-    CPU_SET(cpu, &cpuset);
-    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    threads.push_back(std::move(_thread));
-  }
-
-  //Precompute sum and data for pregeneration
-  start = 0;
-  end = (1.0/nr_cpus)*config.distr_length;
-  printf("[INFO] Node %u Thread 'main' Core %u: Creating Node allocation thread\n", 0, main_cpu);
-  pregen(mem, start, end, main_cpu, nr_cpus);
-  
-  for (auto &thrd : threads) 
-  {
-    if (thrd.joinable()) 
-    {
-      thrd.join();
-    }
-  }
-
-  printf("[INFO] Thread 'main' Core %u: Finished with Node allocation(s)\n", 0, main_cpu);
-}
-
-/*void Application::alloc_distribution() {
 
   uint64_t start, end, t_start, t_end;
   std::vector<std::thread> threads;
@@ -499,9 +446,9 @@ void Application::alloc_distribution() {
   {
     node_thread_count[nd] = 0;
   }
-}*/
+}
 
-/*void Application::free_distribution()
+void Application::free_distribution()
 {
   cpu_set_t cpuset;
   uint64_t node_distr_length = config.distr_length/num_nodes;
@@ -519,10 +466,6 @@ void Application::alloc_distribution() {
   delete[] mem;
   delete[] fd;
   delete[] node_thread_count;
-}*/
-void Application::free_distribution()
-{
-  free_mem((void*) mem, config.distr_length, -1, fd);
 }
 
 
@@ -574,7 +517,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    //thread_nodes.push_back(get_node(assigned_cpu, num_nodes, nodes));
+    thread_nodes.push_back(get_node(assigned_cpu, num_nodes, nodes));
     auto _thread = std::thread(&Application::shard_thread, this, i, false);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
@@ -592,7 +535,7 @@ int Application::spawn_shard_threads() {
 
   printf("Running master thread with id %d\n", i);
   {
-    //thread_nodes.push_back(get_node(0, num_nodes, nodes));
+    thread_nodes.push_back(get_node(0, num_nodes, nodes));
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
@@ -813,7 +756,7 @@ int Application::process(int argc, char *argv[]) {
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.bqt.run_test(&config, this->n, this->npq);
   } else {
-    //num_nodes = used_nodes(nodes);
+    num_nodes = used_nodes(nodes);
     this->alloc_distribution();
     this->spawn_shard_threads();
     this->free_distribution();
