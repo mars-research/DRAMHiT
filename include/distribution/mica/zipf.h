@@ -6,6 +6,7 @@
 
 //Main functions
 void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threads);
+void generate(uint64_t* m, uint64_t start, uint64_t end);
 uint64_t next();
 
 //Classes of next functions 

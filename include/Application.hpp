@@ -17,14 +17,15 @@ class Application {
   std::vector<std::thread> threads;
   Shard *shards;
 
+  //int* fd;
   int fd;
 
  public:
   std::vector<numa_node> nodes;
   int process(int argc, char **argv);
   int spawn_shard_threads_bqueues();
-  uint64_t* alloc_distribution();//NEW
-  void free_distribution(uint64_t* mem);//NEW
+  void alloc_distribution();//NEW
+  void free_distribution();//NEW
   int spawn_shard_threads();
   void shard_thread(int tid, bool mainthread);
 

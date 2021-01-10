@@ -81,9 +81,12 @@ void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threa
   else if (t > 0. && t < 1.) {
     double zetan_partial = zeta(n_, theta_, tid, num_threads);
 
+
+    //printf("THREAD %u: zetan_partial: %f\n", tid, zetan_partial);//70.561536
     until_sum(tid);
     zetan_partial_sum += zetan_partial;
     ++zeta_sum_ready;
+    //printf("THREAD %u: zeta_sum_ready: %lu\n", tid, zeta_sum_ready);//70.561536
     until_sum(num_threads);
 
     zetan_ = zetan_partial_sum;
@@ -98,6 +101,18 @@ void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threa
   } 
   else {
     func = large_next;
+  }
+}
+
+void generate(uint64_t* m, uint64_t start, uint64_t end)
+{
+  //pregenerate the indices/keys
+  for(uint64_t i = start; i < end; ++i) 
+  {
+      //next returns a number from [0 - config.range]
+      //insert has issues if key inserted is 0 so add 1
+      m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
+      //printf("%lu\n", m[i]);
   }
 }
 

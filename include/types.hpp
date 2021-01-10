@@ -70,9 +70,7 @@ struct Configuration {
   uint32_t K;
   uint32_t ht_fill;
 
-  bool distr_file;
-  std::string distr_filename;
-
+  uint64_t seed;
   double zipf_theta;
   uint64_t distr_length;
   uint64_t distr_range;

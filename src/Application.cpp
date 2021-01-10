@@ -61,9 +61,7 @@ const Configuration def = {
     .K = 20,
     .ht_fill = 25,
 
-    .distr_file = true,
-    .distr_filename = "",
-
+    .seed = 1,
     .zipf_theta = 0.99,
     .distr_length = (1LL<<34),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
     .distr_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
@@ -76,6 +74,11 @@ static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
 uint64_t* mem = NULL;
+/*uint64_t** mem = NULL;
+int num_nodes = 0;
+int* node_thread_count = NULL;
+std::vector<int> thread_nodes;*/
+
 
 #ifdef WITH_PAPI_LIB
 PapiEvent pr(6);
@@ -261,154 +264,268 @@ done:
   return;
 }
 
-uint64_t* Application::alloc_distribution() {
-  ssize_t result, remaining, off = 0;
+
+
+/*#define MAX_THREADS 64
+volatile uint8_t main_ready = 0;
+void until_ready1(uint8_t tid)
+{
+    while(main_ready!=tid){}
+}*/
+/*int get_node(int cpu, int used_nodes, std::vector<numa_node> nodes)
+{
+  int num = 0;
+  int num_threads = config.num_threads;
+  for(int i = 0; i<used_nodes; ++i)//numa_node_t node : nodes) 
+  {
+    numa_node_t node = nodes[i];
+    for (uint32_t c : node.cpu_list) 
+    {
+      if (c == cpu) return node.id;
+    }
+  }
+  perror("Failed to get node for cpu");
+  exit(1);
+}
+int used_nodes(std::vector<numa_node> nodes)
+{
+  int num = 0;
+  int num_threads = config.num_threads;
+  for (numa_node_t node : nodes) 
+  {
+    ++num;
+    for (uint32_t cpu : node.cpu_list) 
+    {
+      num_threads--;
+      if (num_threads == 0) break;
+    }
+    if (num_threads == 0) break;
+  }
+  return num;
+}*/
+/*void pregen(int cpu, uint64_t* m, uint64_t start, uint64_t end)
+{
   uint64_t t_start, t_end;
-  int distr_fd;
-  uint64_t* m;
-
-  if(config.distr_file)
-  {
-    distr_fd = open(config.distr_filename.c_str(), O_RDONLY, S_IRWXU);
-    if (distr_fd == -1)
-    {
-      perror("Opening file Failed");
-      return NULL;
-    }
-
-
-    t_start = RDTSC_START();
-    config.distr_length = lseek64(distr_fd, 0, SEEK_END);
-    t_end = RDTSCP();
-    printf("[INFO] Seeking to end of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0);
-  
-    config.distr_length >>= 3;// /= sizeof(uint64_t);//
-
-  }
-  m = calloc_ht<uint64_t>(config.distr_length, -1, &fd, false);
-  
-  if(config.distr_file)
-  {
-    t_start = RDTSC_START();
-    lseek64(distr_fd, 0, SEEK_SET);
-    t_end = RDTSCP();
-    printf("[INFO] Seeking back to start of file took %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0);
-  
-
-    t_start = RDTSC_START();
-    do
-    {
-      remaining = (config.distr_length<<3)-off;
-      off += result = read(distr_fd, m+(off>>3), remaining);
-      if(result == -1)
-      {
-        perror("Reading file elements Failed");
-        return NULL;
-      }
-      else if(result < remaining)
-      {
-        printf("read %lu bytes with %lu bytes remaining, instead of whole file with %lu bytes\n", result, remaining, config.distr_length<<3);
-      }
-      else if(result == remaining)
-      {
-        printf("successfully read whole file into memory\n");
-      }
-      else
-      {
-        printf("something else happened\n");
-      }
-    } while((size_t) off < config.distr_length<<3);
-    t_end = RDTSCP();
-    printf("[INFO] Read %lu bytes to file in %lu cycles (%f ms) at rate of %lu cycles/byte\n", off, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/off);
-    
-    
-    result = close(distr_fd);
-    if (result != 0) {
-      perror("Could not close file");
-      return NULL;
-    }
-
-    /*for (uint64_t i = 0; i < config.distr_length; ++i) 
-    {
-        //next returns a number from [0 - config.range]
-        //insert has issues if key inserted is 0 so add 1
-        //m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
-        printf("%lu\n", m[i]);
-    }
-    printf("%lu keys\n", config.distr_length);*/
-  }
-  else
-  {
-    //Precompute sum and data for pregeneration
-    t_start = RDTSC_START();
-    ZipfGen(config.distr_range, config.zipf_theta, 125512, 0, 1);
-    t_end = RDTSCP();
-    printf("[INFO] Sum %lu range in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_range, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
-    
-    //pregenerate the indices/keys
-    t_start = RDTSC_START();
-    for (uint64_t i = 0; i < config.distr_length; ++i) 
-    {
-        //next returns a number from [0 - config.range]
-        //insert has issues if key inserted is 0 so add 1
-        m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
-        //printf("%lu\n", m[i]);
-    }
-    t_end = RDTSCP();
-    printf("[INFO] Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_length, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_length);
-  
-    distr_fd = open(config.distr_filename.c_str(), O_WRONLY|O_CREAT, S_IRWXU);
-    if (distr_fd == -1)
-    {
-      perror("Opening file Failed");
-      return NULL;
-    }
-
-    if(ftruncate(distr_fd, config.distr_length<<3))
-    {
-      perror("Couldn't resize file.");
-      return NULL;
-    }
-
-    t_start = RDTSC_START();
-    do
-    {
-      remaining = (config.distr_length<<3)-off;
-      off += result = write(distr_fd, m+(off>>3), remaining);
-      if(result == -1)
-      {
-        perror("Writing file elements Failed");
-        return NULL;
-      }
-      else if(result < remaining)
-      {
-        printf("wrote %lu bytes with %lu bytes remaining, instead of whole file with %lu bytes\n", result, remaining, config.distr_length<<3);
-      }
-      else if(result == remaining)
-      {
-        printf("successfully wrote whole memory into file\n");
-      }
-      else
-      {
-        printf("something else happened\n");
-      }
-    } while((size_t)off < config.distr_length<<3);
-    t_end = RDTSCP();
-    printf("[INFO] Wrote %lu bytes to file in %lu cycles (%f ms) at rate of %lu cycles/byte\n", off, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/off);
-    
-
-    result = close(distr_fd);
-    if (result != 0) {
-      perror("Could not close file");
-      return NULL;
-    }
-  }
-
-  return m;
+  t_start = RDTSC_START();
+  generate(m, start, end);
+  t_end = RDTSCP();
+  printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
+}*/
+void pregen(uint64_t* m, uint64_t start, uint64_t end, int cpu, int nr_cpus )
+{
+  uint64_t t_start, t_end;
+  t_start = RDTSC_START();
+  ZipfGen(config.distr_range, config.zipf_theta, cpu*config.seed, cpu, nr_cpus);
+  generate(m, start, end);
+  t_end = RDTSCP();
+  printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
 }
-void Application::free_distribution(uint64_t* m) {
-  free_mem((void*) m, config.distr_length, -1, fd);
+
+/*void alloc_gen(numa_node node, uint64_t node_distr_length, int* fd)
+{
+  uint64_t start, end;
+  std::vector<std::thread> threads;
+  cpu_set_t cpuset;
+  int main_cpu = node.cpu_list[0], nr_cpus = node.cpu_list.size();
+
+  CPU_ZERO(&cpuset);
+  CPU_SET(main_cpu, &cpuset);
+  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+  printf("[INFO] Node %u Thread 'main' Core %u: allocating memory\n", node.id, main_cpu);
+  mem[node.id] = calloc_ht<uint64_t>(node_distr_length, -1, fd, false);
+
+  int c = 1;
+  for(int cpu : node.cpu_list)
+  {
+    if(cpu == main_cpu){continue;}
+
+    start = ((double)c/nr_cpus)*node_distr_length;
+    end = ((double)(c+1)/nr_cpus)*node_distr_length;
+
+    //printf("CORE %u: start %lu\t end %lu\n", cpu, start, end);
+    //mem_node[cpu] = node.id;
+
+    printf("[INFO] Node %u Core %u: generating data\n", node.id, cpu);
+    auto _thread = std::thread(&pregen, cpu, mem[node.id], start, end);
+    
+    CPU_ZERO(&cpuset);
+    CPU_SET(cpu, &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+    //printf("[INFO] Thread %u: affinity: %u\n", cpu, cpu);
+    threads.push_back(std::move(_thread)); 
+    ++c;
+  }
+
+
+  start = 0;
+  end = (1.0/nr_cpus)*node_distr_length;
+  //mem_node[main_cpu] = node.id;
+
+  //until_ready1(main_cpu);
+  printf("[INFO] Node %u Thread 'main' Core %u: generating data\n", node.id, main_cpu);
+  pregen(main_cpu, mem[node.id], start, end);
+
+
+  for (auto &thrd : threads) 
+  {
+    if (thrd.joinable()) 
+    {
+      thrd.join();
+    }
+  }
+  //t_end = RDTSCP();
+  //printf("[INFO] Generate finished in %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0);
+  printf("[INFO] Node %u Thread 'main' Core %u: Finished generating data\n", node.id, main_cpu);
+
+  threads.clear();
+}*/
+
+
+void Application::alloc_distribution() {
+
+  uint64_t start, end, t_start, t_end;
+  std::vector<std::thread> threads;
+  cpu_set_t cpuset;
+  int main_cpu = 0, nr_cpus = n->get_num_total_cpus();
+
+  CPU_ZERO(&cpuset);
+  CPU_SET(main_cpu, &cpuset);
+  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+  mem = calloc_ht<uint64_t>(config.distr_length, -1, &fd, false);
+  //Make threads per each node
+
+
+  for (int cpu = 1; cpu < nr_cpus; ++cpu)
+  {
+    start = ((double)cpu/nr_cpus)*config.distr_length;
+    end = ((double)(cpu+1)/nr_cpus)*config.distr_length;
+    //printf("[INFO] Node %u Core %u: Creating Node allocation thread\n", nd, nodes[nd].cpu_list[0]);
+    auto _thread = std::thread(&pregen, mem, start, end, cpu, nr_cpus);
+    
+    CPU_ZERO(&cpuset);
+    CPU_SET(cpu, &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+    threads.push_back(std::move(_thread));
+  }
+
+  //Precompute sum and data for pregeneration
+  start = 0;
+  end = (1.0/nr_cpus)*config.distr_length;
+  printf("[INFO] Node %u Thread 'main' Core %u: Creating Node allocation thread\n", 0, main_cpu);
+  pregen(mem, start, end, main_cpu, nr_cpus);
+  
+  for (auto &thrd : threads) 
+  {
+    if (thrd.joinable()) 
+    {
+      thrd.join();
+    }
+  }
+
+  printf("[INFO] Thread 'main' Core %u: Finished with Node allocation(s)\n", 0, main_cpu);
 }
+
+/*void Application::alloc_distribution() {
+
+  uint64_t start, end, t_start, t_end;
+  std::vector<std::thread> threads;
+  cpu_set_t cpuset;
+  int main_cpu = nodes[0].cpu_list[0], nr_cpus = n->get_num_total_cpus();
+
+  CPU_ZERO(&cpuset);
+  CPU_SET(main_cpu, &cpuset);
+  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+  
+  t_start = RDTSC_START();
+  for (int cpu = 1; cpu < nr_cpus; ++cpu)
+  {
+    auto _thread = std::thread(&ZipfGen, config.distr_range, config.zipf_theta, cpu*config.seed, cpu, nr_cpus);
+    
+    CPU_ZERO(&cpuset);
+    CPU_SET(cpu, &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+    //printf("[INFO] Thread %u: affinity: %u\n", cpu, cpu);
+    threads.push_back(std::move(_thread));
+  }
+
+  //Precompute sum and data for pregeneration
+  ZipfGen(config.distr_range, config.zipf_theta, main_cpu*config.seed, main_cpu, nr_cpus);
+  
+  for (auto &thrd : threads) 
+  {
+    if (thrd.joinable()) 
+    {
+      thrd.join();
+    }
+  }
+  t_end = RDTSCP();
+  printf("[INFO] Sum %lu range in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_range, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_range);
+  
+//-------------------------------------------------------------------------------
+
+  //Make threads per each node
+  uint64_t node_distr_length = config.distr_length/num_nodes;
+  mem = new uint64_t*[num_nodes];//[n->get_num_nodes()];
+  fd = new int[num_nodes];
+  for (int nd = 1; nd < num_nodes; ++nd)
+  {
+    printf("[INFO] Node %u Core %u: Creating Node allocation thread\n", nd, nodes[nd].cpu_list[0]);
+    auto _thread = std::thread(&alloc_gen, nodes[nd], node_distr_length, &fd[nd]);
+    
+    CPU_ZERO(&cpuset);
+    CPU_SET(nodes[nd].cpu_list[0], &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+    threads.push_back(std::move(_thread));
+  }
+
+  //Precompute sum and data for pregeneration
+  printf("[INFO] Node %u Thread 'main' Core %u: Creating Node allocation thread\n", 0, main_cpu);
+  alloc_gen(nodes[0], node_distr_length, &fd[0]);
+  
+  for (auto &thrd : threads) 
+  {
+    if (thrd.joinable()) 
+    {
+      thrd.join();
+    }
+  }
+
+  printf("[INFO] Thread 'main' Core %u: Finished with Node allocation(s)\n", 0, main_cpu);
+
+
+
+  node_thread_count = new int[num_nodes];
+  for (int nd = 0; nd < num_nodes; ++nd)
+  {
+    node_thread_count[nd] = 0;
+  }
+}*/
+
+/*void Application::free_distribution()
+{
+  cpu_set_t cpuset;
+  uint64_t node_distr_length = config.distr_length/num_nodes;
+  for(int nd = 0;nd < num_nodes ; ++nd)
+  {
+    numa_node_t node = nodes[nd];
+    int32_t main_cpu = node.cpu_list[0];
+
+    CPU_ZERO(&cpuset);
+    CPU_SET(main_cpu, &cpuset);
+    sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+    printf("[INFO] Thread 'main': On core %u (Node id %u) freeing memory\n", main_cpu, node.id);
+    free_mem((void*) (mem[node.id]), node_distr_length, -1, fd[node.id]);
+  }
+  delete[] mem;
+  delete[] fd;
+  delete[] node_thread_count;
+}*/
+void Application::free_distribution()
+{
+  free_mem((void*) mem, config.distr_length, -1, fd);
+}
+
+
 
 int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
@@ -457,6 +574,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
+    //thread_nodes.push_back(get_node(assigned_cpu, num_nodes, nodes));
     auto _thread = std::thread(&Application::shard_thread, this, i, false);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
@@ -474,6 +592,7 @@ int Application::spawn_shard_threads() {
 
   printf("Running master thread with id %d\n", i);
   {
+    //thread_nodes.push_back(get_node(0, num_nodes, nodes));
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
@@ -591,11 +710,9 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
         "adjust hashtable fill ratio [0-100] ")
 
-        ("distr-file", po::value<bool>(&config.distr_file)->default_value(def.distr_file),
-        "Should a file be read from that file the distribution (if not created with the distribution) ")
-        ("distr-filename", po::value<std::string>(&config.distr_filename)->default_value(def.distr_filename),
-        "Name of file to store or read from ")
 
+        ("seed", po::value<uint64_t>(&config.seed)->default_value(def.seed),
+        "Seed value for psuedo-random generation ")
         ("zipf-theta", po::value<double>(&config.zipf_theta)->default_value(def.zipf_theta),
         "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ")
         ("length", po::value<uint64_t>(&config.distr_length)->default_value(def.distr_length),
@@ -696,9 +813,10 @@ int Application::process(int argc, char *argv[]) {
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.bqt.run_test(&config, this->n, this->npq);
   } else {
-    mem = this->alloc_distribution();
+    //num_nodes = used_nodes(nodes);
+    this->alloc_distribution();
     this->spawn_shard_threads();
-    this->free_distribution(mem);
+    this->free_distribution();
   }
 
   return 0;
