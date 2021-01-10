@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #define CACHE_LINE_SIZE 64
 #define PAGE_SIZE 4096
@@ -16,6 +17,20 @@
 
 extern const uint32_t PREFETCH_QUEUE_SIZE;
 
+enum class BRANCHKIND { WithBranch, NoBranch_Cmove, NoBranch_Simd };
+
+#if defined(BRANCHLESS_CMOVE)
+constexpr BRANCHKIND branching = BRANCHKIND::NoBranch_Cmove;
+#elif defined(BRANCHLESS_SIMD)
+constexpr BRANCHKIND branching = BRANCHKIND::NoBranch_Simd;
+#else
+constexpr BRANCHKIND branching = BRANCHKIND::WithBranch;
+#endif
+
+#if defined(BRANCHLESS_SIMD) && defined(BRACNHLESS_CMOVE)
+#error "BRACHLESS_SIMD and BRANCHLESS_CMOVE options cannot be enabled together"
+#endif
+
 typedef enum {
   DRY_RUN = 1,
   READ_FROM_DISK = 2,
@@ -25,7 +40,8 @@ typedef enum {
   SYNTH = 6,
   PREFETCH = 7,
   BQ_TESTS_YES_BQ = 8,
-  BQ_TESTS_NO_BQ = 9
+  BQ_TESTS_NO_BQ = 9,
+  CACHE_MISS = 10
 } run_mode_t;
 
 typedef enum {
@@ -95,6 +111,19 @@ struct Shard {
   Kmer_s *kmer_small_pool;
   Kmer_s *pool;
 };
+
+struct Keys {
+  uint64_t key;
+  uint64_t id;
+};
+
+struct Values {
+  uint64_t value;
+  uint64_t id;
+};
+
+using ValuePairs = std::pair<uint32_t, Values *>;
+using KeyPairs = std::pair<uint32_t, Keys *>;
 
 #endif  // __TYPES_HPP__
 

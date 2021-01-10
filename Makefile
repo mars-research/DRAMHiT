@@ -48,13 +48,18 @@ CFLAGS += -DBQ_TESTS_DO_HT_INSERTS
 # CFLAGS += -DBQ_TESTS_USE_HALT
 #CFLAGS += -DUSE_ATOMICS
 
-CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD
-ifeq ($(BRANCH), no)
-	CXXFLAGS += -DBRANCHLESS
+# https://wiki.ubuntu.com/ToolChain/CompilerFlags#A-fstack-clash-protection
+CFLAGS += -fcf-protection=none
+#CFLAGS += -fsanitize=address -lasan
+
+CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD -fcf-protection=none
+
+ifeq ($(BRANCH), cmov)
+	CXXFLAGS += -DBRANCHLESS_CMOVE
 endif
 
-ifeq ($(BRANCH_NO_SIMD), yes)
-	CXXFLAGS += -DBRANCHLESS_NO_SIMD
+ifeq ($(BRANCH), simd)
+	CXXFLAGS += -DBRANCHLESS_SIMD
 endif
 
 # boostpo to parse args
@@ -88,6 +93,7 @@ TESTS = $(patsubst %,src/tests/%, bq_tests.cpp  \
 	hashtable_tests.cpp  \
 	parser_tests.cpp \
 	prefetch_tests.cpp \
+	cachemiss_test.cpp \
 	)
 
 CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \

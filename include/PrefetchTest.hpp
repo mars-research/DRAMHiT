@@ -30,6 +30,17 @@ struct Prefetch_KV {
     this->kb.count += 1;
   }
 
+  inline bool insert_regular_v2(const void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+    return false;
+  }
+
+  inline uint16_t insert_or_update_v2(const void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   inline bool compare_key(const void *from) {
     const char *kmer_data = reinterpret_cast<const char *>(from);
     return !memcmp(this->kb.kmer.data, kmer_data, this->key_length());
@@ -47,6 +58,19 @@ struct Prefetch_KV {
     cout << "Not implemented!" << endl;
     assert(false);
   }
+
+  inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
+                                     ValuePairs &vp) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
+  inline uint64_t find_key_regular_v2(const void *data, uint64_t *retry,
+                                      ValuePairs &vp) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   inline Prefetch_KV get_empty_key() {
     Prefetch_KV empty;
     memset(empty.kb.kmer.data, 0, sizeof(empty.kb.kmer.data));
@@ -66,6 +90,8 @@ struct Prefetch_KV {
 struct PrefetchKV_Queue {
   const void *data;
   uint32_t idx;
+  uint64_t key;
+  uint64_t key_id;
   uint8_t pad[4];
 #ifdef COMPARE_HASH
   uint64_t key_hash;  // 8 bytes

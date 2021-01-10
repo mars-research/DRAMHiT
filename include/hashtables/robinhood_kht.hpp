@@ -173,6 +173,11 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     assert(false);
   }
 
+  void insert_batch(KeyPairs &kp) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   uint8_t flush_find_queue() override { return 0; }
   void flush_queue() {
     size_t curr_queue_sz = this->queue_idx;
@@ -186,6 +191,13 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     assert(false);
     return 0;
   }
+
+  void find_batch_v2(KeyPairs &kp, ValuePairs &values) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
+  void flush_find_queue_v2(ValuePairs &vp) override {}
 
   void *find(const void *kmer_data) {
 #ifdef CALC_STATS
@@ -259,8 +271,11 @@ class RobinhoodKmerHashTable : public BaseHashTable {
       }
     }
   }
+  uint64_t read_hashtable_element(const void *data) override {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
 };
-
 // TODO bloom filters for high frequency kmers?
 
 }  // namespace kmercounter

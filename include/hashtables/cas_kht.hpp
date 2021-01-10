@@ -53,6 +53,8 @@ class CASHashTable : public BaseHashTable {
 
   uint8_t flush_find_queue() override { return 0; }
 
+  void flush_find_queue_v2(ValuePairs &vp) override { return; }
+
   /* insert and increment if exists */
   bool insert(const void *data) {
     this->__insert_into_queue(data);
@@ -109,9 +111,19 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
+  void insert_batch(KeyPairs &kp) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   uint8_t find_batch(uint64_t *keys, uint32_t batch_len) override {
     assert(false);
     return 0;
+  }
+
+  void find_batch_v2(KeyPairs &kp, ValuePairs &values) {
+    cout << "Not implemented!" << endl;
+    assert(false);
   }
 
   void *find(const void *data) {
@@ -218,13 +230,20 @@ class CASHashTable : public BaseHashTable {
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]));
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    true /*write*/);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
     prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
   };
+
+  void prefetch_read(uint64_t i) {
+    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
+                    sizeof(this->hashtable[i & (this->capacity - 1)]),
+                    false /* write */);
+  }
 
   void __insert_into_queue(const void *data) {
     uint64_t hash = this->hash((const char *)data);
@@ -329,6 +348,11 @@ class CASHashTable : public BaseHashTable {
     this->num_reprobes++;
 #endif
     return;
+  }
+
+  uint64_t read_hashtable_element(const void *data) override {
+    cout << "Not implemented!" << endl;
+    assert(false);
   }
 };
 
