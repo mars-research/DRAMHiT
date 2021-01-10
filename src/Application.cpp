@@ -74,10 +74,6 @@ static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
 uint64_t* mem = NULL;
-/*uint64_t** mem = NULL;
-int num_nodes = 0;
-int* node_thread_count = NULL;
-std::vector<int> thread_nodes;*/
 
 
 #ifdef WITH_PAPI_LIB
@@ -266,51 +262,7 @@ done:
 
 
 
-/*#define MAX_THREADS 64
-volatile uint8_t main_ready = 0;
-void until_ready1(uint8_t tid)
-{
-    while(main_ready!=tid){}
-}*/
-/*int get_node(int cpu, int used_nodes, std::vector<numa_node> nodes)
-{
-  int num = 0;
-  int num_threads = config.num_threads;
-  for(int i = 0; i<used_nodes; ++i)//numa_node_t node : nodes) 
-  {
-    numa_node_t node = nodes[i];
-    for (uint32_t c : node.cpu_list) 
-    {
-      if (c == cpu) return node.id;
-    }
-  }
-  perror("Failed to get node for cpu");
-  exit(1);
-}
-int used_nodes(std::vector<numa_node> nodes)
-{
-  int num = 0;
-  int num_threads = config.num_threads;
-  for (numa_node_t node : nodes) 
-  {
-    ++num;
-    for (uint32_t cpu : node.cpu_list) 
-    {
-      num_threads--;
-      if (num_threads == 0) break;
-    }
-    if (num_threads == 0) break;
-  }
-  return num;
-}*/
-/*void pregen(int cpu, uint64_t* m, uint64_t start, uint64_t end)
-{
-  uint64_t t_start, t_end;
-  t_start = RDTSC_START();
-  generate(m, start, end);
-  t_end = RDTSCP();
-  printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
-}*/
+
 void pregen(uint64_t* m, uint64_t start, uint64_t end, int cpu, int nr_cpus )
 {
   uint64_t t_start, t_end;
@@ -321,64 +273,7 @@ void pregen(uint64_t* m, uint64_t start, uint64_t end, int cpu, int nr_cpus )
   printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
 }
 
-/*void alloc_gen(numa_node node, uint64_t node_distr_length, int* fd)
-{
-  uint64_t start, end;
-  std::vector<std::thread> threads;
-  cpu_set_t cpuset;
-  int main_cpu = node.cpu_list[0], nr_cpus = node.cpu_list.size();
 
-  CPU_ZERO(&cpuset);
-  CPU_SET(main_cpu, &cpuset);
-  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  printf("[INFO] Node %u Thread 'main' Core %u: allocating memory\n", node.id, main_cpu);
-  mem[node.id] = calloc_ht<uint64_t>(node_distr_length, -1, fd, false);
-
-  int c = 1;
-  for(int cpu : node.cpu_list)
-  {
-    if(cpu == main_cpu){continue;}
-
-    start = ((double)c/nr_cpus)*node_distr_length;
-    end = ((double)(c+1)/nr_cpus)*node_distr_length;
-
-    //printf("CORE %u: start %lu\t end %lu\n", cpu, start, end);
-    //mem_node[cpu] = node.id;
-
-    printf("[INFO] Node %u Core %u: generating data\n", node.id, cpu);
-    auto _thread = std::thread(&pregen, cpu, mem[node.id], start, end);
-    
-    CPU_ZERO(&cpuset);
-    CPU_SET(cpu, &cpuset);
-    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    //printf("[INFO] Thread %u: affinity: %u\n", cpu, cpu);
-    threads.push_back(std::move(_thread)); 
-    ++c;
-  }
-
-
-  start = 0;
-  end = (1.0/nr_cpus)*node_distr_length;
-  //mem_node[main_cpu] = node.id;
-
-  //until_ready1(main_cpu);
-  printf("[INFO] Node %u Thread 'main' Core %u: generating data\n", node.id, main_cpu);
-  pregen(main_cpu, mem[node.id], start, end);
-
-
-  for (auto &thrd : threads) 
-  {
-    if (thrd.joinable()) 
-    {
-      thrd.join();
-    }
-  }
-  //t_end = RDTSCP();
-  //printf("[INFO] Generate finished in %lu cycles (%f ms)\n", t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0);
-  printf("[INFO] Node %u Thread 'main' Core %u: Finished generating data\n", node.id, main_cpu);
-
-  threads.clear();
-}*/
 
 
 void Application::alloc_distribution() {
@@ -425,101 +320,6 @@ void Application::alloc_distribution() {
   printf("[INFO] Thread 'main' Core %u: Finished with Node allocation(s)\n", 0, main_cpu);
 }
 
-/*void Application::alloc_distribution() {
-
-  uint64_t start, end, t_start, t_end;
-  std::vector<std::thread> threads;
-  cpu_set_t cpuset;
-  int main_cpu = nodes[0].cpu_list[0], nr_cpus = n->get_num_total_cpus();
-
-  CPU_ZERO(&cpuset);
-  CPU_SET(main_cpu, &cpuset);
-  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  
-  t_start = RDTSC_START();
-  for (int cpu = 1; cpu < nr_cpus; ++cpu)
-  {
-    auto _thread = std::thread(&ZipfGen, config.distr_range, config.zipf_theta, cpu*config.seed, cpu, nr_cpus);
-    
-    CPU_ZERO(&cpuset);
-    CPU_SET(cpu, &cpuset);
-    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    //printf("[INFO] Thread %u: affinity: %u\n", cpu, cpu);
-    threads.push_back(std::move(_thread));
-  }
-
-  //Precompute sum and data for pregeneration
-  ZipfGen(config.distr_range, config.zipf_theta, main_cpu*config.seed, main_cpu, nr_cpus);
-  
-  for (auto &thrd : threads) 
-  {
-    if (thrd.joinable()) 
-    {
-      thrd.join();
-    }
-  }
-  t_end = RDTSCP();
-  printf("[INFO] Sum %lu range in %lu cycles (%f ms) at rate of %lu cycles/element\n", config.distr_range, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/config.distr_range);
-  
-//-------------------------------------------------------------------------------
-
-  //Make threads per each node
-  uint64_t node_distr_length = config.distr_length/num_nodes;
-  mem = new uint64_t*[num_nodes];//[n->get_num_nodes()];
-  fd = new int[num_nodes];
-  for (int nd = 1; nd < num_nodes; ++nd)
-  {
-    printf("[INFO] Node %u Core %u: Creating Node allocation thread\n", nd, nodes[nd].cpu_list[0]);
-    auto _thread = std::thread(&alloc_gen, nodes[nd], node_distr_length, &fd[nd]);
-    
-    CPU_ZERO(&cpuset);
-    CPU_SET(nodes[nd].cpu_list[0], &cpuset);
-    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    threads.push_back(std::move(_thread));
-  }
-
-  //Precompute sum and data for pregeneration
-  printf("[INFO] Node %u Thread 'main' Core %u: Creating Node allocation thread\n", 0, main_cpu);
-  alloc_gen(nodes[0], node_distr_length, &fd[0]);
-  
-  for (auto &thrd : threads) 
-  {
-    if (thrd.joinable()) 
-    {
-      thrd.join();
-    }
-  }
-
-  printf("[INFO] Thread 'main' Core %u: Finished with Node allocation(s)\n", 0, main_cpu);
-
-
-
-  node_thread_count = new int[num_nodes];
-  for (int nd = 0; nd < num_nodes; ++nd)
-  {
-    node_thread_count[nd] = 0;
-  }
-}*/
-
-/*void Application::free_distribution()
-{
-  cpu_set_t cpuset;
-  uint64_t node_distr_length = config.distr_length/num_nodes;
-  for(int nd = 0;nd < num_nodes ; ++nd)
-  {
-    numa_node_t node = nodes[nd];
-    int32_t main_cpu = node.cpu_list[0];
-
-    CPU_ZERO(&cpuset);
-    CPU_SET(main_cpu, &cpuset);
-    sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-    printf("[INFO] Thread 'main': On core %u (Node id %u) freeing memory\n", main_cpu, node.id);
-    free_mem((void*) (mem[node.id]), node_distr_length, -1, fd[node.id]);
-  }
-  delete[] mem;
-  delete[] fd;
-  delete[] node_thread_count;
-}*/
 void Application::free_distribution()
 {
   free_mem((void*) mem, config.distr_length, -1, fd);
@@ -574,7 +374,6 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    //thread_nodes.push_back(get_node(assigned_cpu, num_nodes, nodes));
     auto _thread = std::thread(&Application::shard_thread, this, i, false);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
@@ -592,7 +391,6 @@ int Application::spawn_shard_threads() {
 
   printf("Running master thread with id %d\n", i);
   {
-    //thread_nodes.push_back(get_node(0, num_nodes, nodes));
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
@@ -813,7 +611,6 @@ int Application::process(int argc, char *argv[]) {
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.bqt.run_test(&config, this->n, this->npq);
   } else {
-    //num_nodes = used_nodes(nodes);
     this->alloc_distribution();
     this->spawn_shard_threads();
     this->free_distribution();
