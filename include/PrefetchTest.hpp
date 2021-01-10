@@ -30,6 +30,17 @@ struct Prefetch_KV {
     this->kb.count += 1;
   }
 
+  inline bool insert_regular_v2(const void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+    return false;
+  }
+
+  inline uint16_t insert_or_update_v2(const void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
   inline bool compare_key(const void *from) {
     const char *kmer_data = reinterpret_cast<const char *>(from);
     return !memcmp(this->kb.kmer.data, kmer_data, this->key_length());

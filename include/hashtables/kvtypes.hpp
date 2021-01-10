@@ -109,6 +109,21 @@ struct Aggr_KV {
     this->count += 1;
   }
 
+  inline bool insert_regular_v2(const void *data) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    if (this->is_empty()) {
+      this->key = elem->key;
+      this->count += 1;
+      return false;
+    } else if (this->key == elem->key) {
+      this->count += 1;
+      return false;
+    }
+    return true;
+  }
+
   inline bool cas_insert(const void *from, Aggr_KV &empty) {
     const key_type *key = reinterpret_cast<const key_type *>(from);
     auto success = __sync_bool_compare_and_swap(&this->key, empty.key, *key);
@@ -188,22 +203,19 @@ struct Aggr_KV {
     return found;
   }
 
-  //#define EMPTY_CHECK_C
+#define EMPTY_CHECK_C
 
   inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
                                      ValuePairs &vp) {
     ItemQueue *elem =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
 
-    uint64_t found = false;
+    uint8_t found = false;
     uint32_t cur_val_idx = vp.first;
 
 #ifdef EMPTY_CHECK_C
-    *retry = 1;
-    bool empty = this->is_empty();
+    // *retry = 1;
     asm volatile(
-        // set found = false;
-        "mov $0x0, %[found]\n\t"
         // prep registers
         "xor %%r15, %%r15\n\t"
         "xor %%r14, %%r14\n\t"
@@ -211,6 +223,9 @@ struct Aggr_KV {
         "mov %[key_in], %%rbx\n\t"
         // if ((cur->key ^ key) == 0), we've found the key!
         "xor %[key_curr], %%rbx\n\t"
+        "cmp %[key_in], %%rbx\n\t"
+        // set empty = true
+        "sete %%r13b\n\t"
         // temporarily increment the cur_val_idx (local var)
         "inc %[cur_val_idx]\n\t"
         // check if the key is equal to curr->key
@@ -221,8 +236,7 @@ struct Aggr_KV {
         "cmove %[key_id], %%r14d\n\t"
         "mov %%r14, %[value_id]\n\t"
         // set found = true;
-        "mov $0x1, %%r15\n\t"
-        "cmove %%r15, %[found]\n\t"
+        "sete %[found]\n\t"
         "mov %[values_idx], %%r14\n\t"
         "cmove %[cur_val_idx], %%r14d\n\t"
         "mov %%r14, %[values_idx]\n\t"
@@ -233,33 +247,25 @@ struct Aggr_KV {
         // 0 | 0 | 1
         // 0 | 1 | 0
         // 1 | 0 | 0
-        "mov %[empty], %%r13b\n\t"
-        "or %[found], %%r13\n\t"
-        "cmp $0x1, %%r13\n\t"
-        "mov %[retry], %%r14\n\t"
-        "mov $0x0, %%r15\n\t"
-        "cmove %%r15, %%r14\n\t"
-        "mov %%r14, %[retry]\n\t"
+        "xor %[found], %%r13b\n\t"
+        "cmp $0x1, %%r13b\n\t"
+        // "mov %[retry], %%r14\n\t"
+        "setne %%r15b\n\t"
+        "mov %%r15, %[retry]\n\t"
         : [ value_out ] "=m"(vp.second[cur_val_idx]),
           [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
           [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
           [ cur_val_idx ] "+r"(cur_val_idx)
         : [ key_in ] "r"(elem->key), [ key_id ] "r"(elem->key_id),
-          [ key_curr ] "m"(this->key), [ empty ] "r"(empty),
-          [ val_curr ] "rm"(this->count)
+          [ key_curr ] "m"(this->key), [ val_curr ] "rm"(this->count)
         : "rax", "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
 #else
+    bool empty = this->is_empty();
+
     asm volatile(
         "xor %%r13, %%r13\n\t"
         "mov %[key_in], %%rbx\n\t"
-        "mov %%rbx, %%r12\n\t"
         "xor %[key_curr], %%rbx\n\t"
-        // 1) if the key is empty, we'll get back the same data
-        "cmp %%r12, %%rbx\n\t"
-        // set empty = true;
-        "mov $0x1, %%r15\n\t"
-        "cmove %%r15, %%r13\n\t"
-        // set found = false;
         "mov $0x0, %[found]\n\t"
 
         // 2) if key == data, we'll get zero. we've found the key!
@@ -286,21 +292,29 @@ struct Aggr_KV {
         // 0 | 0 | 1
         // 0 | 1 | 0
         // 1 | 0 | 0
+        "mov %[empty], %%r13b\n\t"
         "mov %[found], %%r14\n\t"
-        "xor %%r14, %%r13\n\t"
-        "not %%r13\n\t"
-        "and $0x1, %%r13\n\t"
-        "xor %%r14, %%r14\n\t"
+        "or %%r14, %%r13\n\t"
         "cmp $0x1, %%r13\n\t"
-        "mov $0x1, %%r15\n\t"
+        "mov %[retry], %%r14\n\t"
+        "mov $0x0, %%r15\n\t"
         "cmove %%r15, %%r14\n\t"
         "mov %%r14, %[retry]\n\t"
+
+        // "not %%r13\n\t"
+        // "and $0x1, %%r13\n\t"
+        // "xor %%r14, %%r14\n\t"
+        // "cmp $0x1, %%r13\n\t"
+        // "mov $0x1, %%r15\n\t"
+        // "cmove %%r15, %%r14\n\t"
+        // "mov %%r14, %[retry]\n\t"
         : [ value_out ] "=m"(vp.second[cur_val_idx]),
           [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
           [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
           [ cur_val_idx ] "+r"(cur_val_idx)
         : [ key_in ] "r"(elem->key), [ key_id ] "r"(elem->key_id),
-          [ key_curr ] "m"(this->key), [ val_curr ] "rm"(this->count)
+          [ key_curr ] "m"(this->key), [ val_curr ] "rm"(this->count),
+          [ empty ] "r"(empty)
         : "rax", "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
 #endif  // EMPTY_CHECK_C
     return found;
@@ -374,6 +388,80 @@ struct Aggr_KV {
         : "r13", "r14", "memory");
     return ret;
   };
+
+#if 0
+  inline uint16_t insert_or_update_v2(const void *data) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    uint16_t ret = 0;
+    int empty = this->is_empty();
+    asm volatile(
+        "mov %[count], %%r14\n\t"
+        "inc %%r14\n\t"              // inc count to use later
+        "cmp $1, %[empty]\n\t"       // cmp is empty
+        "cmove %[key_in], %[key]\n\t"  // conditionally move data to hashtable
+        "cmp %[key], %[key_in]\n\t"
+        "mov $0xFF, %%r13w\n\t"
+        "cmove %%r14, %[count]\n\t"  //  conditionally increment count
+        //"sete %[ret]\n\t"
+        "cmove %%r13w, %[ret]\n\t"   // return success
+        :
+        [ ret ] "=r"(ret), [ key ] "+r"(this->key), [ count ] "+r"(this->count)
+        : [ empty ] "r"(empty), [ key_in ] "r"(elem->key)
+        : "r13", "r14", "cc", "memory");
+    return ret;
+  };
+#else
+
+  inline uint16_t insert_or_update_v2(const void *data) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+    Aggr_KV empty = this->get_empty_key();
+
+#if 0
+    //uint8_t ret = 0;
+    // __m64 empty_mask = _mm_set1_pi8((this->is_empty() << 7));
+    auto inc_count = reinterpret_cast<__m64>(this->count + 1);
+    auto this_key = reinterpret_cast<__m64>(this->key);
+    auto key_in = reinterpret_cast<__m64>(elem->key);
+    auto empty_key = reinterpret_cast<__m64>(empty.key);
+    
+    auto equal_mask = _mm_cmpeq_pi32(key_in, this_key);
+    auto empty_mask = _mm_cmpeq_pi32(empty_key, this_key);
+
+    _m_maskmovq(key_in, empty_mask, reinterpret_cast<char*>(&this->key));
+    _m_maskmovq(inc_count, equal_mask, reinterpret_cast<char*>(&this->count));
+
+    return _m_pmovmskb(_mm_or_si64(equal_mask, empty_mask));
+#else
+    int ret = 0;
+    asm volatile(
+        "movq %[count], %%r13\n\t"
+        "inc %%r13\n\t"  // inc count to use later
+        "movq %%r13, %%mm0\n\t"
+        "movq %[key_in], %%mm1\n\t"
+        "movq %[key], %%mm2\n\t"
+        "movq %[empty_key], %%mm3\n\t"
+        // empty_mask mm3
+        "pcmpeqd %%mm2, %%mm3\n\t"
+        // equal_mask mm2
+        "pcmpeqd %%mm1, %%mm2\n\t"
+        "mov %[_this], %%rdi\n\t"
+        "maskmovq %%mm3, %%mm1\n\t"
+        "add $0x8, %%rdi\n\t"
+        "maskmovq %%mm2, %%mm0\n\t"
+        "por %%mm2, %%mm3\n\t"
+        "pmovmskb %%mm3, %[ret]\n\t"
+        : [ ret ] "=r"(ret)
+        : [ key ] "r"(this->key), [ count ] "r"(this->count),
+          [ empty_key ] "r"(empty.key), [ key_in ] "r"(elem->key),
+          [ _this ] "r"(this)
+        : "mm0", "mm1", "mm2", "mm3", "rdi", "r13", "cc", "memory");
+    return ret;
+#endif
+  };
+#endif
 } PACKED;
 
 struct KVPair {
@@ -412,6 +500,11 @@ struct Item {
 
   inline uint16_t insert_or_update(const void *data) {
     std::cout << "Not implemented for Item!" << std::endl;
+    assert(false);
+  }
+
+  inline bool insert_regular_v2(const void *data) {
+    cout << "Not implemented!" << endl;
     assert(false);
   }
 

@@ -17,14 +17,18 @@
 
 extern const uint32_t PREFETCH_QUEUE_SIZE;
 
-enum class BRANCHKIND { Yes, Cmove, Simd };
+enum class BRANCHKIND { WithBranch, NoBranch_Cmove, NoBranch_Simd };
 
-#if defined(BRANCHLESS)
-constexpr BRANCHKIND branching = BRANCHKIND::Cmove;
+#if defined(BRANCHLESS_CMOVE)
+constexpr BRANCHKIND branching = BRANCHKIND::NoBranch_Cmove;
 #elif defined(BRANCHLESS_SIMD)
-constexpr BRANCHKIND branching = BRANCHKIND::Simd;
+constexpr BRANCHKIND branching = BRANCHKIND::NoBranch_Simd;
 #else
-constexpr BRANCHKIND branching = BRANCHKIND::Yes;
+constexpr BRANCHKIND branching = BRANCHKIND::WithBranch;
+#endif
+
+#if defined(BRANCHLESS_SIMD) && defined(BRACNHLESS_CMOVE)
+#error "BRACHLESS_SIMD and BRANCHLESS_CMOVE options cannot be enabled together"
 #endif
 
 typedef enum {
