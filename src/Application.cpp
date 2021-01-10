@@ -113,8 +113,8 @@ void Application::shard_thread(int tid, bool mainthread) {
       kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
       break;
     case PREFETCH:
-      kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
-          HT_TESTS_HT_SIZE, sh->shard_idx);
+      // kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
+      //    HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
     case SYNTH:
     case BQ_TESTS_NO_BQ:

@@ -109,6 +109,7 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
       // printf("\t count %lu | found -> %lu | not_found -> %lu \n", count,
       // found, not_found);
     }
+    // printf("\t count %lu | found -> %lu\n", count, found);
   }
   // found += ktable->flush_find_queue();
   return found;

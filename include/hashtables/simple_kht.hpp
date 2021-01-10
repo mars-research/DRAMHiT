@@ -19,6 +19,7 @@
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "sync.h"
+#include <x86intrin.h> // _bit_scan_forward
 
 const auto FLUSH_THRESHOLD = 32;
 const auto INS_FLUSH_THRESHOLD = 32;
@@ -723,89 +724,191 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
 
 #elif defined(BRANCHLESS)
-    static_assert(KMER_DATA_LENGTH == 20, "k-mer key size has changed");
-    using Kv_mask = std::array<uint32_t, 8>;
-    /* The VMASKMOVPS instruction we use to load the key into a ymmx
-     * register loads 4-byte (floating point) numbers based on the
-     * MSB of the corresponding 4-byte number in the mask register.
-     * The first 8 bytes of an entry in the hastable make up the key.
-     * Hence, the first 2 (8/4) entries in the array must have their
-     * MSB set.
-     */
-    __attribute__((aligned(32))) constexpr auto mask_rw =
-        Kv_mask{0x80000000, 0x80000000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
-    /* When we do not want to read or write, the "mask" must consist
-     * of 4-byte numbers with their MSB set to 0.
-     */
-    __attribute__((aligned(32))) constexpr auto mask_ignore =
-        Kv_mask{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
-    const uint32_t *const kv_masks[2] = {
-        mask_rw.data(),
-        mask_ignore.data(),
-    };
-    auto ymm_load = [](const uint32_t *addr) {
-      return _mm256_load_si256(reinterpret_cast<const __m256i *>(addr));
-    };
-    auto ymm_maskload = [](const auto *addr, auto mask) {
-      return _mm256_maskload_epi32(reinterpret_cast<const int *>(addr), mask);
-    };
-    auto ymm_maskstore = [](auto *addr, auto mask, auto data) {
-      return _mm256_maskstore_epi32(reinterpret_cast<int *>(addr), mask, data);
-    };
-    auto ymm_cmp = [](auto a, auto b) { return _mm256_cmpeq_epi32(a, b); };
-    auto ymm_movemask = [](auto a) { return _mm256_movemask_ps(a); };
+    static_assert(CACHE_LINE_SIZE == 64);
+    static_assert(sizeof(KV) == 16);
+    constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / sizeof (KV);
 
-    /* load key mask and new key */
-    const __m256i key_mask = ymm_load(kv_masks[0 /* RW mask */]);
-    const __m256i new_key = ymm_maskload(q->data, key_mask);
+    // masks for AVX512 instructions
+    constexpr __mmask8 KEY0 = 0b00000001;
+    constexpr __mmask8 KEY1 = 0b00000100;
+    constexpr __mmask8 KEY2 = 0b00010000;
+    constexpr __mmask8 KEY3 = 0b01000000;
+    constexpr __mmask8 VAL0 = 0b00000010;
+    constexpr __mmask8 VAL1 = 0b00001000;
+    constexpr __mmask8 VAL2 = 0b00100000;
+    constexpr __mmask8 VAL3 = 0b10000000;
+    constexpr __mmask8 KVP0 = KEY0 | VAL0;
+    constexpr __mmask8 KVP1 = KEY1 | VAL1;
+    constexpr __mmask8 KVP2 = KEY2 | VAL2;
+    constexpr __mmask8 KVP3 = KEY3 | VAL3;
 
+    // a vector of 1s that is used for incrementing a value
+    constexpr __m512i INCREMENT_VECTOR = {
+      0ULL, 1ULL, // KVP0
+      0ULL, 1ULL, // KVP1
+      0ULL, 1ULL, // KVP2
+      0ULL, 1ULL, // KVP3
+    };
+
+    // cacheline_masks is indexed by q->idx % KV_PER_CACHE_LINE
+    constexpr std::array<__mmask8, KV_PER_CACHE_LINE> cacheline_masks = {
+      KVP3|KVP2|KVP1|KVP0, // load all KV pairs in the cacheline
+      KVP3|KVP2|KVP1,      // skip the first KV pair
+      KVP3|KVP2,           // skip the first two KV pairs
+      KVP3,                // load only the last KV pair
+    };
+    // key_cmp_masks are indexed by cidx, the index of an entry in a cacheline
+    // the masks are used to mask irrelevant bits of the result of 4-way SIMD
+    // key comparisons
+    constexpr std::array<__mmask8, KV_PER_CACHE_LINE> key_cmp_masks = {
+      KEY3|KEY2|KEY1|KEY0, // cidx: 0; all key comparisons valid
+      KEY3|KEY2|KEY1,      // cidx: 1; only last three comparisons valid
+      KEY3|KEY2,           // cidx: 2; only last two comparisons valid
+      KEY3,                // cidx: 3; only last comparison valid
+    };
+    // key_copy_masks are indexed by the return value of the BSF instruction,
+    // executed on the mask returned by a search for empty keys in a
+    // cacheline
+    //       <-------------------- cacheline --------------------->
+    //       || key | val || key | val || key | val || key | val ||
+    // bits: ||  0     1      2     3      4     5      6     7  ||
+    // the only possible indices are: 0, 2, 4, 6
+    constexpr std::array<__mmask8, 8> key_copy_masks = {
+      KEY0, // bit 0 set; choose first key
+      0,
+      KEY1, // bit 2 set; choose second
+      0,
+      KEY2, // bit 4 set; choose third
+      0,
+      KEY3, // bit 6 set; choose last
+      0,
+    };
+
+    auto load_key_vector = [q]() {
+      // we want to load only the keys into a ZMM register, as two 32-bit
+      // integers. 0b0011 matches the first 64 bits of a KV pair -- the key
+      __mmask16 mask{0b0011001100110011};
+      __m128i   kv = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(q->data));
+      return _mm512_maskz_broadcast_i32x2(mask, kv);
+    };
+
+    auto load_cacheline = [this, idx, &cacheline_masks](size_t cidx) {
+      const KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE-1)];
+      return _mm512_maskz_load_epi64(cacheline_masks[cidx], cptr);
+    };
+
+    auto store_cacheline = [this, idx](__m512i cacheline, __mmask8 kv_mask) {
+      KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE-1)];
+      _mm512_mask_store_epi64(cptr, kv_mask, cacheline);
+    };
+
+    auto key_cmp = [&key_cmp_masks](__m512i cacheline, __m512i key_vector, size_t cidx) {
+      __mmask8 cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector);
+      // zmm registers are compared as 8 uint64_t
+      // mask irrelevant results before returning
+      return cmp & key_cmp_masks[cidx];
+    };
+
+    auto empty_cmp = [&key_cmp_masks](__m512i cacheline, size_t cidx) {
+      const __m512i empty_key_vector = _mm512_setzero_si512();
+      __mmask8 cmp = _mm512_cmpeq_epu64_mask(cacheline, empty_key_vector);
+      // zmm registers are compared as 8 uint64_t
+      // mask irrelevant results before returning
+      return cmp & key_cmp_masks[cidx];
+    };
+
+    auto key_copy_mask = [&empty_cmp, &key_copy_masks](__m512i cacheline, uint32_t eq_cmp, size_t cidx) {
+      uint32_t locations = empty_cmp(cacheline, cidx);
+      __mmask16 copy_mask = 1 << _bit_scan_forward(locations);
+      // if locations == 0, _bit_scan_forward(locations) is undefined
+      // if eq_cmp != 0, key is already present
+      //
+      // if ((locations && !eq_cmp) == 0) copy_mask = 0;
+      asm (
+          "andnl %[locations], %[eq_cmp], %%ecx\n\t"
+          "cmovzw %%cx, %[copy_mask]\n\t"
+          : [copy_mask]"+r"(copy_mask)
+          : [locations]"r"(locations), [eq_cmp]"r"(eq_cmp)
+          : "rcx"
+      );
+      return static_cast<__mmask8>(copy_mask);
+    };
+
+    auto copy_key = [](__m512i &cacheline, __m512i key_vector, __mmask8 copy_mask) {
+      cacheline = _mm512_mask_blend_epi64(copy_mask, cacheline, key_vector);
+    };
+
+    auto increment_count = [INCREMENT_VECTOR](__m512i &cacheline, __mmask8 val_mask) {
+      cacheline = _mm512_mask_add_epi64(cacheline, val_mask, cacheline, INCREMENT_VECTOR);
+    };
+
+    // compute index within the cacheline
+    const size_t cidx = idx & (KV_PER_CACHE_LINE-1);
+
+    // depending on the value of idx, between 1 and 4 KV pairs in a cacheline
+    // can be probed for an insert operation. load the cacheline.
+    __m512i cacheline = load_cacheline(cidx);
+    // load a vector of the key in all 4 positions
+    __m512i key_vector = load_key_vector();
+
+    __mmask8 eq_cmp = key_cmp(cacheline, key_vector, cidx);
     /*
-     * returns the result of the comparison between the new key
-     * and the key at idx */
-    auto try_insert = [&](const auto idx) {
-      const int mask_idx = !curr->is_empty();
-      /* kv_masks[0] returns a mask that reads/writes;
-       * kv_masks[1] returns a mask that does nothing */
-      const __m256i cond_store_mask = ymm_load(kv_masks[mask_idx]);
+    if (eq_cmp)
+    {
+      __mmask8 key_mask = eq_cmp;
+      __mmask8 val_mask = key_mask << 1;
+      // at this point, increment the count
+      increment_count(cacheline, val_mask);
 
-      /* conditionally store the new key into hashtable[idx] */
-      ymm_maskstore(curr, cond_store_mask, new_key);
+      // write the cacheline back; just the KV pair that was modified
+      __mmask8 kv_mask = key_mask | val_mask;
+      store_cacheline(cacheline, kv_mask);
 
-      /* at this point the key in the hashtable is either equal to
-       * the new key (q->data) or not. compare them
-       */
-      const __m256i cond_load_mask = ymm_load(kv_masks[0 /*RW mask*/]);
-      const __m256i key = ymm_maskload(curr, cond_load_mask);
-      const __m256i cmp_raw = ymm_cmp(new_key, key);
-      /* ymm_cmp compares the keys as packed 4-byte integers
-       * cmp_raw consists of packed 4-byte "result" integers that are
-       * 0xFF..FF if the corresponding 4-byte integers in the keys are equal,
-       * and 0x00..00 otherwise. testing this is not straight-forward.
-       * so, we "compress" the eigth integers into a bit each (MSB).
-       */
-      return ymm_movemask(_mm256_castsi256_ps(cmp_raw));
-    };
+      return;
+    }
+    */
+    // compute a mask for copying the key into an empty slot
+    // will be 0 if eq_cmp != 0 (key already exists in the cacheline)
+    __mmask16 copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
+    copy_key(cacheline, key_vector, static_cast<__mmask8>(copy_mask));
 
-    const int cmp = try_insert(idx);
+    // between eq_cmp and copy_mask, at most one bit will be set
+    // if we shift-left eq_cmp|copy_mask by 1 bit, the bit will correspond
+    // to the value of the KV-pair we are interested in
+    __mmask8 key_mask = eq_cmp | copy_mask;
+    __mmask8 val_mask = key_mask << 1;
+    // at this point, increment the count
+    increment_count(cacheline, val_mask);
 
-    curr->update_brless(cmp);
+    // write the cacheline back; just the KV pair that was modified
+    __mmask8 kv_mask = key_mask | val_mask;
+    store_cacheline(cacheline, kv_mask);
 
-    /* prepare for (possible) soft reprobe */
-    idx++;
-    idx = idx & (this->capacity - 1);  // modulo
-
-    prefetch(idx);
+    // prepare for possible reprobe
+    // point next idx (nidx) to the start of the next cacheline
+    auto nidx = idx + KV_PER_CACHE_LINE - cidx;
+    nidx = nidx & (this->capacity - 1);  // modulo
     this->queue[this->queue_idx].data = q->data;
-    this->queue[this->queue_idx].idx = idx;
+    this->queue[this->queue_idx].idx = nidx;
+    auto queue_idx_inc = 1;
+    // if kv_mask != 0, insert succeeded; reprobe unnecessary
+    asm volatile (
+        "xorq %%rcx, %%rcx\n\t"
+        "test %[kv_mask], %[kv_mask]\n\t"
+        // if (kv_mask) queue_idx_inc = 0;
+        "cmovnzl %%ecx, %[inc]\n\t"
+        // if (kv_mask) nidx = idx;
+        "cmovnzq %[idx], %[nidx]\n\t"
+        : [nidx]"+r"(nidx), [inc]"+r"(queue_idx_inc)
+        : [kv_mask]"r"(kv_mask), [idx]"r"(idx)
+        : "rcx"
+    );
 
-    // this->queue_idx should not be incremented if either
-    // of the try_inserts succeeded
-    int inc{1};
-    inc = (cmp == 0xFF) ? 0 : inc;
-    this->queue_idx += inc;
+    // issue prefetch
+    prefetch(nidx);
+    this->queue_idx += queue_idx_inc;
 
     return;
-
 #else  // !BRANCHLESS
     assert(
         !const_cast<KV *>(reinterpret_cast<const KV *>(q->data))->is_empty());
