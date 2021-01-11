@@ -14,19 +14,9 @@ static double zetan_ = 0.0;
 uint8_t zeta_sum_ready = 0;
 volatile double zetan_partial_sum = 0.0;
 static double eta_ = 0.0;
-#ifdef MULTITHREAD_GENERATION
-  static Rand rand_[GEN_THREADS];
-#else
-  static thread_local Rand rand_;
-#endif
 
-
-//NON-CONSTANT (READ & WRITE)
-#ifdef MULTITHREAD_GENERATION
-  static uint64_t seq_[GEN_THREADS] = {0}; // for sequential number generation
-#else
-  static thread_local uint64_t seq_ = 0; // for sequential number generation
-#endif
+static thread_local Rand rand_;
+static thread_local uint64_t seq_ = 0; // for sequential number generation
 
 inline void until_sum(uint8_t tid)
 {
@@ -82,17 +72,14 @@ void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threa
   else if (t > 0. && t < 1.) {
     double zetan_partial = zeta(n_, theta_, tid, num_threads);
 
-
-    //printf("THREAD %u: zetan_partial: %f\n", tid, zetan_partial);//70.561536
     until_sum(tid);
-    zetan_partial_sum += zetan_partial;
-    ++zeta_sum_ready;
-    //printf("THREAD %u: zeta_sum_ready: %lu\n", tid, zeta_sum_ready);//70.561536
+    {
+      zetan_partial_sum += zetan_partial;
+      ++zeta_sum_ready;
+    }
     until_sum(num_threads);
 
     zetan_ = zetan_partial_sum;
-    //printf("THREAD %u: zetan: %f\n", tid, zetan_);//70.561536
-
     eta_ = (1. - pow_approx(2. / (double)n_, 1. - theta_))/(1. - zeta(0, 0., 2, theta_) / zetan_);
     thres_ = (1. + pow_approx(0.5, t))/zetan_;
 
@@ -105,16 +92,13 @@ void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threa
   }
 }
 
-void generate(uint64_t* m, uint64_t start, uint64_t end)
+void gen_keys(uint64_t* key, uint64_t start, uint64_t end, uint64_t (*key_map)(uint64_t))
 {
   //pregenerate the indices/keys
-  for(uint64_t i = start; i < end; ++i) 
-  {
-      //next returns a number from [0 - config.range]
-      //insert has issues if key inserted is 0 so add 1
-      m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
-      //printf("%lu\n", m[i]);
-  }
+  if(key_map) 
+    for(uint64_t i = start; i < end; ++i) {key[i] = next();}
+  else 
+    for(uint64_t i = start; i < end; ++i) {key[i] = key_map(next());}
 }
 
 uint64_t next() { return func(0); }
