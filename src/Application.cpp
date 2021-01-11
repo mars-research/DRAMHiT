@@ -63,7 +63,7 @@ const Configuration def = {
 
     .seed = 1,
     .zipf_theta = 0.99,
-    .distr_length = (1LL<<34),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
+    .distr_length = (1LL<<33),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
     .distr_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
 
 /* global config */
@@ -210,7 +210,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       this->test.pat.shard_thread_parse_and_insert(sh, kmer_ht);
       break;
     case SYNTH:
-      this->test.st.synth_run_exec(sh, kmer_ht);
+      this->test.st.find_test(sh, kmer_ht);//synth_run_exec(sh, kmer_ht);
       break;
     case PREFETCH:
       this->test.pt.prefetch_test_run_exec(sh, config, kmer_ht);
@@ -513,8 +513,6 @@ int Application::process(int argc, char *argv[]) {
         "Seed value for psuedo-random generation ")
         ("zipf-theta", po::value<double>(&config.zipf_theta)->default_value(def.zipf_theta),
         "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ")
-        ("length", po::value<uint64_t>(&config.distr_length)->default_value(def.distr_length),
-        "How many keys of distribution to generate ")
         ("range", po::value<uint64_t>(&config.distr_range)->default_value(def.distr_range),
         "What should the range of keys generated be (0 - Value) ");
 
@@ -611,6 +609,7 @@ int Application::process(int argc, char *argv[]) {
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.bqt.run_test(&config, this->n, this->npq);
   } else {
+    config.distr_length = (config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE)/100;
     this->alloc_distribution();
     this->spawn_shard_threads();
     this->free_distribution();
