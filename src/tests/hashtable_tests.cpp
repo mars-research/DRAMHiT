@@ -153,6 +153,9 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   auto num_finds = synth_run_get(kmer_ht, sh->shard_idx);
   t_end = RDTSCP();
 
+  sh->stats->find_cycles = (t_end - t_start);
+  sh->stats->num_finds = num_finds;
+
   if (num_finds > 0)
     printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
            sh->shard_idx, num_finds, (t_end - t_start) / num_finds);

@@ -29,6 +29,8 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t all_total_cycles = 0;
   double all_total_time_ns = 0;
   uint64_t all_total_num_inserts = 0;
+  uint64_t total_find_cycles = 0;
+  uint64_t total_finds = 0;
 
 #ifdef CALC_STATS
   uint64_t all_total_avg_read_length = 0;
@@ -88,12 +90,13 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     all_total_time_ns +=
         (double)all_sh[k].stats->insertion_cycles * one_cycle_ns;
     all_total_num_inserts += all_sh[k].stats->num_inserts;
+    total_finds += all_sh[k].stats->num_finds;
+    total_find_cycles += all_sh[k].stats->find_cycles;
 
 #ifdef CALC_STATS
     all_total_num_sequences += all_sh[k].stats->num_sequences;
     all_total_avg_read_length += all_sh[k].stats->avg_read_length;
     all_total_reprobes += all_sh[k].stats->num_reprobes;
-    all_total_find_cycles += all_sh[k].stats->find_cycles;
     all_total_find_time_ns =
         (double)all_sh[k].stats->find_cycles * one_cycle_ns;
 #endif  // CALC_STATS
@@ -119,12 +122,17 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
          (double)all_total_time_ns / 1000000.0, all_total_num_inserts);
   {
     unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
+
+    unsigned long cycles_per_find = total_find_cycles / total_finds;
+
     unsigned long num_threads = config.num_threads;
     if (config.mode == BQ_TESTS_YES_BQ) {
       num_threads = config.n_cons;
     }
     printf("Number of insertions per sec (Mops/s): %.3f\n",
            ((double)2600 / cycles_per_insert) * num_threads);
+    printf("Number of finds per sec (Mops/s): %.3f\n",
+           ((double)2600 / cycles_per_find) * num_threads);
   }
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
