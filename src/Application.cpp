@@ -62,9 +62,7 @@ const Configuration def = {
     .ht_fill = 25,
 
     .seed = 1,
-    .zipf_theta = 0.99,
-    .distr_length = (1LL<<33),//(1LL<<31)-(1LL<<27)-10,//(1LL<<30)-(1LL<<19),//HT_TESTS_HT_SIZE;//(1LL << 28);
-    .distr_range = (1LL<<32)}; //2 seconds to compute 32 bits with 16 threads // TODO enum
+    .zipf_theta = 0.99;
 
 /* global config */
 Configuration config;
@@ -513,8 +511,6 @@ int Application::process(int argc, char *argv[]) {
         "Seed value for psuedo-random generation ")
         ("zipf-theta", po::value<double>(&config.zipf_theta)->default_value(def.zipf_theta),
         "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ")
-        ("range", po::value<uint64_t>(&config.distr_range)->default_value(def.distr_range),
-        "What should the range of keys generated be (0 - Value) ");
 
     papi_init();
 
@@ -610,6 +606,8 @@ int Application::process(int argc, char *argv[]) {
     this->test.bqt.run_test(&config, this->n, this->npq);
   } else {
     config.distr_length = (config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE)/100;
+    config.distr_range = config.distr_length;
+    
     this->alloc_distribution();
     this->spawn_shard_threads();
     this->free_distribution();
