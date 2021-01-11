@@ -39,6 +39,12 @@ namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
+#ifdef NOAGGR
+using KVType = Item;
+#else
+using KVType = Aggr_KV;
+#endif
+
 // default configuration
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -64,10 +70,10 @@ const Configuration def = {
     .seed = 1,
     .zipf_theta = 0.99}; //2 seconds to compute 32 bits with 16 threads // TODO enum
 
-/* global config */
+// global config
 Configuration config;
 
-/* for synchronization of threads */
+// for synchronization of threads
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
 
@@ -86,20 +92,25 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
 
   // Create hash table
-  if (config.ht_type == SIMPLE_KHT) {
-    kmer_ht = new PartitionedHashStore<Aggr_KV, ItemQueue>(sz, id);
-  } else if (config.ht_type == ROBINHOOD_KHT) {
-    kmer_ht = new RobinhoodKmerHashTable(sz);
-  } else if (config.ht_type == CAS_KHT) {
-    /* For the CAS Hash table, size is the same as
-    size of one partitioned ht * number of threads */
-    kmer_ht =
-        new CASHashTable<Aggr_KV, ItemQueue>(sz);  // * config.num_threads);
-    /*TODO tidy this up, don't use static + locks maybe*/
-  } else if (config.ht_type == CAS_NOPREFETCH) {
-    kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
-  } else {
-    fprintf(stderr, "STDMAP_KHT Not implemented\n");
+  switch (config.ht_type) {
+    case SIMPLE_KHT:
+      kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
+      break;
+    case ROBINHOOD_KHT:
+      kmer_ht = new RobinhoodKmerHashTable(sz);
+      break;
+    case CAS_KHT:
+      /* For the CAS Hash table, size is the same as
+          size of one partitioned ht * number of threads */
+      kmer_ht =
+          new CASHashTable<Aggr_KV, ItemQueue>(sz);  // * config.num_threads);
+      break;
+    case CAS_NOPREFETCH:
+      kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
+      break;
+    default:
+      fprintf(stderr, "STDMAP_KHT Not implemented\n");
+      break;
   }
   return kmer_ht;
 }

@@ -19,24 +19,19 @@ const uint32_t PREFETCH_FIND_QUEUE_SIZE = 64;
 
 class BaseHashTable {
  public:
-  // Upsert (Insert and Update)
   virtual bool insert(const void *data) = 0;
-
-  virtual void insert_noprefetch(void *data) = 0;
 
   virtual void insert_batch(KeyPairs &kp) = 0;
 
-  virtual void *find(const void *data) = 0;
+  virtual void insert_noprefetch(void *data) = 0;
 
-  virtual uint8_t find_batch(uint64_t *keys, uint32_t batch_len) = 0;
+  virtual void flush_insert_queue() = 0;
 
-  virtual void find_batch_v2(KeyPairs &kp, ValuePairs &vp) = 0;
+  virtual void find_batch(KeyPairs &kp, ValuePairs &vp) = 0;
 
-  virtual void flush_queue() = 0;
+  virtual void *find_noprefetch(const void *data) = 0;
 
-  virtual uint8_t flush_find_queue() = 0;
-
-  virtual void flush_find_queue_v2(ValuePairs &vp) = 0;
+  virtual void flush_find_queue(ValuePairs &vp) = 0;
 
   virtual void display() const = 0;
 
@@ -51,7 +46,7 @@ class BaseHashTable {
   virtual uint64_t read_hashtable_element(const void *data) = 0;
 
   virtual ~BaseHashTable() {}
-#ifdef CALC_STATS
+
   uint64_t num_reprobes = 0;
   uint64_t num_soft_reprobes = 0;
   uint64_t num_memcmps = 0;
@@ -61,7 +56,6 @@ class BaseHashTable {
   uint64_t sum_distance_from_bucket = 0;
   uint64_t max_distance_from_bucket = 0;
   uint64_t num_swaps = 0;
-#endif
 };
 
 }  // namespace kmercounter

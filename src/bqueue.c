@@ -26,148 +26,155 @@
 
 static data_t ELEMENT_ZERO = 0x0UL;
 
-int init_queue(queue_t *q)
-{
-	memset(q, 0, sizeof(struct queue_t));
+int init_queue(queue_t *q) {
+  memset(q, 0, sizeof(struct queue_t));
 #if defined(CONS_BATCH)
-	q->batch_history = CONS_BATCH_SIZE;
+  q->batch_history = CONS_BATCH_SIZE;
 #endif
-	return 0;
+  return 0;
 }
 
-int free_queue(queue_t *q)
-{
-	return 0;
-}
+int free_queue(queue_t *q) { return 0; }
 
 #if defined(PROD_BATCH) || defined(CONS_BATCH)
-inline int leqthan(volatile data_t point, volatile data_t batch_point)
-{
-	return (point == batch_point);
+inline int leqthan(volatile data_t point, volatile data_t batch_point) {
+  return (point == batch_point);
 }
 #endif
 
 #if defined(PROD_BATCH)
-int enqueue(queue_t * q, data_t value)
-{
-	uint32_t tmp_head;
-	if( q->head == q->batch_head ) {
-		tmp_head = q->head + PROD_BATCH_SIZE;
-		if ( tmp_head >= QUEUE_SIZE )
-			tmp_head = 0;
+int enqueue(queue_t *q, data_t value) {
+  uint32_t tmp_head;
+  if (q->head == q->batch_head) {
+    tmp_head = q->head + PROD_BATCH_SIZE;
+    if (tmp_head >= QUEUE_SIZE) tmp_head = 0;
 
-		if ( q->data[tmp_head] ) {
-			fipc_test_time_wait_ticks(CONGESTION_PENALTY);
-			return BUFFER_FULL;
-		}
+    if (q->data[tmp_head]) {
+      // fipc_test_time_wait_ticks(CONGESTION_PENALTY);
+      return BUFFER_FULL;
+    }
 
-		q->batch_head = tmp_head;
-	}
-	q->data[q->head] = value;
-	q->head ++;
-	if ( q->head >= QUEUE_SIZE ) {
-		q->head = 0;
-	}
+    q->batch_head = tmp_head;
+  }
+  q->data[q->head] = value;
+  q->head++;
+  if (q->head >= QUEUE_SIZE) {
+    q->head = 0;
+  }
 
-	return SUCCESS;
+  return SUCCESS;
 }
-#else /* PROD_BATCH */
-int enqueue(queue_t * q, data_t value)
-{
-	if ( q->data[q->head] )
-		return BUFFER_FULL;
-	q->data[q->head] = value;
-	q->head ++;
-	if ( q->head >= QUEUE_SIZE ) {
-		q->head = 0;
-	}
+#else  /* PROD_BATCH */
+int enqueue(queue_t *q, data_t value) {
+  if (q->data[q->head]) return BUFFER_FULL;
+  q->data[q->head] = value;
+  q->head++;
+  if (q->head >= QUEUE_SIZE) {
+    q->head = 0;
+  }
 
-	return SUCCESS;
+  return SUCCESS;
 }
 #endif /* PROD_BATCH */
 
 #if defined(CONS_BATCH)
 
-static inline int backtracking(queue_t * q)
-{
-	uint32_t tmp_tail;
-	tmp_tail = q->tail + CONS_BATCH_SIZE -1;
-	if ( tmp_tail >= QUEUE_SIZE ) {
-		tmp_tail = 0;
-	}
+static inline int backtracking(queue_t *q) {
+  uint32_t tmp_tail;
+  tmp_tail = q->tail + CONS_BATCH_SIZE - 1;
+  if (tmp_tail >= QUEUE_SIZE) {
+    tmp_tail = 0;
+  }
 
 #if defined(ADAPTIVE)
-		if (q->batch_history < CONS_BATCH_SIZE) {
-			q->batch_history = 
-				(CONS_BATCH_SIZE < (q->batch_history + BATCH_INCREMENT))? 
-				CONS_BATCH_SIZE : (q->batch_history + BATCH_INCREMENT);
-		}
+  if (q->batch_history < CONS_BATCH_SIZE) {
+    q->batch_history = (CONS_BATCH_SIZE < (q->batch_history + BATCH_INCREMENT))
+                           ? CONS_BATCH_SIZE
+                           : (q->batch_history + BATCH_INCREMENT);
+  }
 #endif
 
 #if defined(BACKTRACKING)
-	unsigned long batch_size = q->batch_history;
-	while (!(q->data[tmp_tail])) {
+  unsigned long batch_size = q->batch_history;
+  while (!(q->data[tmp_tail])) {
+    // fipc_test_time_wait_ticks(CONGESTION_PENALTY);
 
-		fipc_test_time_wait_ticks(CONGESTION_PENALTY);
-
-		if( batch_size > 1) {
-			batch_size = batch_size >> 1;
-			tmp_tail = q->tail + batch_size -1;
-			if (tmp_tail >= QUEUE_SIZE)
-				tmp_tail = 0;
-		}
-		else
-			return -1;
-	}
+    if (batch_size > 1) {
+      batch_size = batch_size >> 1;
+      tmp_tail = q->tail + batch_size - 1;
+      if (tmp_tail >= QUEUE_SIZE) tmp_tail = 0;
+    } else
+      return -1;
+  }
 
 #if defined(ADAPTIVE)
-	q->batch_history = batch_size;
+  q->batch_history = batch_size;
 #endif
 
 #else
-	if ( !q->data[tmp_tail] ) {
-		wait_ticks(CONGESTION_PENALTY); 
-		return -1;
-	}
-#endif  /* end BACKTRACKING */
+  if (!q->data[tmp_tail]) {
+    wait_ticks(CONGESTION_PENALTY);
+    return -1;
+  }
+#endif /* end BACKTRACKING */
 
-	if ( tmp_tail == q->tail ) {
-		tmp_tail = (tmp_tail + 1) >= QUEUE_SIZE ?
-			0 : tmp_tail + 1;
-	}
-	q->batch_tail = tmp_tail;
+  if (tmp_tail == q->tail) {
+    tmp_tail = (tmp_tail + 1) >= QUEUE_SIZE ? 0 : tmp_tail + 1;
+  }
+  q->batch_tail = tmp_tail;
 
-	return 0;
+  return 0;
 }
 
-int dequeue(queue_t * q, data_t * value)
-{
-	if( q->tail == q->batch_tail ) {
-		if ( backtracking(q) != 0 )
-			return BUFFER_EMPTY;
-	}
-	*value = q->data[q->tail];
-	q->data[q->tail] = ELEMENT_ZERO;
-	q->tail ++;
-	if ( q->tail >= QUEUE_SIZE )
-		q->tail = 0;
+// Prefetch the queue itself
+// We observed cache misses for `q` on VTune
+void prefetch_queue(queue_t *q, bool producer) {
+  if (producer) {
+    __builtin_prefetch(q, 1, 3);
+  } else {
+    __builtin_prefetch(q, 1, 3);
+  }
+}
 
-	return SUCCESS;
+// Prefetch the queue data
+void prefetch_queue_data(queue_t *q, bool producer) {
+  if (producer) {
+    __builtin_prefetch(q, 1, 3);
+    __builtin_prefetch(&q->data[q->head + 4 * 0], 1, 3);
+    __builtin_prefetch(&q->data[q->head + 4 * 1], 1, 3);
+    __builtin_prefetch(&q->data[q->head + 4 * 2], 1, 3);
+    __builtin_prefetch(&q->data[q->head + 4 * 3], 1, 3);
+  } else {
+    __builtin_prefetch(q, 1, 3);
+    __builtin_prefetch(&q->data[q->tail + 4 * 0], 1, 3);
+    __builtin_prefetch(&q->data[q->tail + 4 * 1], 1, 3);
+    __builtin_prefetch(&q->data[q->tail + 4 * 2], 1, 3);
+    __builtin_prefetch(&q->data[q->tail + 4 * 3], 1, 3);
+  }
+}
+
+int dequeue(queue_t *q, data_t *value) {
+  if (q->tail == q->batch_tail) {
+    if (backtracking(q) != 0) return BUFFER_EMPTY;
+  }
+  *value = q->data[q->tail];
+  q->data[q->tail] = ELEMENT_ZERO;
+  q->tail++;
+  if (q->tail >= QUEUE_SIZE) q->tail = 0;
+
+  return SUCCESS;
 }
 
 #else /* CONS_BATCH */
 
-int dequeue(struct queue_t * q, data_t * value)
-{
-	if ( !q->data[q->tail] )
-		return BUFFER_EMPTY;
-	*value = q->data[q->tail];
-	q->data[q->tail] = ELEMENT_ZERO;
-	q->tail ++;
-	if ( q->tail >= QUEUE_SIZE )
-		q->tail = 0;
+int dequeue(struct queue_t *q, data_t *value) {
+  if (!q->data[q->tail]) return BUFFER_EMPTY;
+  *value = q->data[q->tail];
+  q->data[q->tail] = ELEMENT_ZERO;
+  q->tail++;
+  if (q->tail >= QUEUE_SIZE) q->tail = 0;
 
-	return SUCCESS;
+  return SUCCESS;
 }
 
 #endif

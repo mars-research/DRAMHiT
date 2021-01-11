@@ -1,7 +1,5 @@
 #include "tests.hpp"
 
-#define HT_TESTS_BATCH_LENGTH 128
-
 namespace kmercounter {
 
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -11,7 +9,7 @@ void CacheMissTest::cache_miss_run(Shard *sh, BaseHashTable *k_ht) {
   uint64_t t_start, t_end;
   uint64_t val = 0;
   int k = 0;
-  int i = 0;
+  uint64_t i = 0u;
   uint64_t count = HT_TESTS_NUM_INSERTS * sh->shard_idx;
   printf(
       "[INFO] Cache Miss test run: thread %u, ht size: %lu, insertions: %lu\n",
@@ -34,9 +32,8 @@ void CacheMissTest::cache_miss_run(Shard *sh, BaseHashTable *k_ht) {
   t_end = RDTSCP();
 
   printf(
-      "[INFO] CacheMissTest: Quick stats: thread %u, Batch size: %d, cycles "
-      "per "
-      "insertion:%lu \n",
+      "[INFO] CacheMissTest: Quick stats: thread %u, Batch size: %lu, cycles "
+      "per insertion: %lu\n",
       sh->shard_idx, i, ((t_end - t_start) / i));
 }
 }  // namespace kmercounter

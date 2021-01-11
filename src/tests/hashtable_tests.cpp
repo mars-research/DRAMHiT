@@ -100,7 +100,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
 
   // flush the last batch explicitly
   // printf("%s calling flush queue\n", __func__);
-  // ktable->flush_queue();
+  ktable->flush_insert_queue();
   // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
   return inserted;
 }
@@ -131,7 +131,7 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
       // printf("%s, calling find_batch i = %d\n", __func__, i);
       // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
-      ktable->find_batch_v2(kp, vp);
+      ktable->find_batch(kp, vp);
       found += vp.first;
       vp.first = 0;
       k = 0;
@@ -141,7 +141,11 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
     }
     // printf("\t count %lu | found -> %lu\n", count, found);
   }
-  // found += ktable->flush_find_queue();
+  if (vp.first > 0) {
+    vp.first = 0;
+  }
+  ktable->flush_find_queue(vp);
+  found += vp.first;
   return found;
 }
 void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
@@ -186,6 +190,9 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   t_start = RDTSC_START();
   auto num_finds = synth_run_get(kmer_ht, sh->shard_idx);
   t_end = RDTSCP();
+
+  sh->stats->find_cycles = (t_end - t_start);
+  sh->stats->num_finds = num_finds;
 
   if (num_finds > 0)
     printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",

@@ -178,26 +178,26 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     assert(false);
   }
 
-  uint8_t flush_find_queue() override { return 0; }
-  void flush_queue() {
-    size_t curr_queue_sz = this->queue_idx;
-    while (curr_queue_sz != 0) {
-      __insert_from_queue(curr_queue_sz);
-      curr_queue_sz = this->queue_idx;
-    }
-  }
-
-  uint8_t find_batch(uint64_t *keys, uint32_t batch_len) override {
-    assert(false);
-    return 0;
-  }
-
-  void find_batch_v2(KeyPairs &kp, ValuePairs &values) {
+  void flush_insert_queue() override {
     cout << "Not implemented!" << endl;
     assert(false);
   }
 
-  void flush_find_queue_v2(ValuePairs &vp) override {}
+  void flush_find_queue(ValuePairs &vp) override {
+    cout << "Not implemented!" << endl;
+    assert(false);
+  }
+
+  void find_batch(KeyPairs &kp, ValuePairs &vp) override {
+    assert(false);
+    return;
+  }
+
+  void *find_noprefetch(const void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+    return NULL;
+  }
 
   void *find(const void *kmer_data) {
 #ifdef CALC_STATS
