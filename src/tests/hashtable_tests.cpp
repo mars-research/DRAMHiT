@@ -17,7 +17,7 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 //needs to be diff values (27 or 28) for different sizes of generated data and cores
 //128GB of data with 32 or 64 cores when this is 26 instead, works but slows down
 //due to too many insertions for the hashtable size
-uint64_t HT_TESTS_HT_SIZE = 128;//(1 << 26);
+uint64_t HT_TESTS_HT_SIZE = (1 << 26);
 //uint64_t HT_TESTS_HT_SIZE = (1 << 26ULL);  // * 8ull;
 uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -27,17 +27,6 @@ uint64_t HT_TESTS_NUM_INSERTS;
 extern Configuration config;
 //volatile 
 extern uint64_t* mem;
-
-volatile uint8_t use_ready = 0;
-volatile uint8_t ready = 0;
-void until_use_ready(uint8_t tid)
-{
-    while(tid!=0 && !use_ready){}
-}
-inline void until_ready(uint8_t tid)
-{
-    while(ready!=tid){}
-}
 
 //#define HT_SIZE (config.ht_size/config.num_threads)
 //#define INS_SIZE ((config.ht_size*config.ht_fill)/(100*config.num_threads))
@@ -255,6 +244,12 @@ void SynthTest::insert_test(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
+uint8_t ready = 0;
+inline void until_ready(uint8_t tid)
+{
+  while(ready!=tid) fipc_test_pause();
+}
+
 void SynthTest::find_test(Shard *sh, BaseHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t num_finds = 0, not_found = 0;
@@ -310,7 +305,7 @@ void SynthTest::find_test(Shard *sh, BaseHashTable *kmer_ht) {
           if (++k == HT_TESTS_FIND_BATCH_LENGTH) 
           {
             KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
-            kmer_ht->find_batch_v2(kp, vp);
+            kmer_ht->find_batch(kp, vp);//_v2(kp, vp);
             num_finds += vp.first;
             vp.first = 0;
             k = 0;
@@ -320,10 +315,10 @@ void SynthTest::find_test(Shard *sh, BaseHashTable *kmer_ht) {
     }
     t_end = RDTSCP();
 
-    until_ready(tid);
+    //until_ready(tid);
     if (num_finds > 0) printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n", tid, num_finds, (t_end - t_start) / num_finds);
     else printf("[INFO] Didnt find anything\n");
-    ++ready;
+    //++ready;
     
 
     

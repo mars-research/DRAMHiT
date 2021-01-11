@@ -270,18 +270,13 @@ done:
 }
 
 
-
+uint8_t done_till = 0;
 void pregen(uint64_t* m, uint64_t start, uint64_t end, int cpu, int nr_cpus )
 {
   uint64_t t_start, t_end;
   t_start = RDTSC_START();
   ZipfGen(config.distr_range, config.zipf_theta, cpu*config.seed, cpu, nr_cpus);
-
-    printf("[INFO]]Core %u: done with zipfgen\n", cpu);
-  //until_ready(cpu);
-    printf("[INFO]]Core %u: starting gen\n", cpu);
   generate(m, start, end);
-  //++ready2;
   t_end = RDTSCP();
   printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
 }
@@ -319,10 +314,9 @@ void Application::alloc_distribution() {
   //Precompute sum and data for pregeneration
   start = 0;
   end = (1.0/nr_cpus)*config.distr_length;
-  printf("[INFO] Node %u Thread 'main' Core %u: Creating Node allocation thread\n", 0, main_cpu);
+  //printf("[INFO] Node %u Thread 'main' Core %u: Creating Node allocation thread\n", 0, main_cpu);
   pregen(mem, start, end, main_cpu, nr_cpus);
-  
-  printf("here\n");
+
   for (auto &thrd : threads) 
   {
     if (thrd.joinable()) 
@@ -331,7 +325,7 @@ void Application::alloc_distribution() {
     }
   }
 
-  printf("[INFO] Thread 'main' Core %u: Finished with Node allocation(s)\n", 0, main_cpu);
+  printf("[INFO] Thread 'main' Core %u: Finished with generation\n", 0, main_cpu);
 }
 
 void Application::free_distribution()
@@ -624,13 +618,13 @@ int Application::process(int argc, char *argv[]) {
     config.distr_length = (config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE)/100;
     config.distr_range = config.distr_length;
 
-  printf("range: %lu\n",HT_TESTS_HT_SIZE);
-  printf("range: %lu\n",config.num_threads);
-  printf("range: %lu\n",config.ht_fill);
-  printf("range: %lu\n",config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE);
-  printf("range: %lu\n",(config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE) /100);
-  printf("range: %lu\n",config.distr_length );
-  printf("range: %lu\n",config.distr_range );
+  //printf("range: %lu\n",HT_TESTS_HT_SIZE);
+  //printf("range: %lu\n",config.num_threads);
+  //printf("range: %lu\n",config.ht_fill);
+  //printf("range: %lu\n",config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE);
+  //printf("range: %lu\n",(config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE) /100);
+  //printf("range: %lu\n",config.distr_length );
+  //printf("range: %lu\n",config.distr_range );
     this->alloc_distribution();
     this->spawn_shard_threads();
     this->free_distribution();

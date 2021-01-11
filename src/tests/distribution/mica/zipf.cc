@@ -11,7 +11,7 @@ static double alpha_ = 0.0; // only depends on theta
 static double thres_ = 0.0; // only depends on theta
 static double dbl_n_ = 0.0; 
 static double zetan_ = 0.0; 
-volatile uint8_t zeta_sum_ready = 0;
+uint8_t zeta_sum_ready = 0;
 volatile double zetan_partial_sum = 0.0;
 static double eta_ = 0.0;
 #ifdef MULTITHREAD_GENERATION
@@ -25,12 +25,12 @@ static double eta_ = 0.0;
 #ifdef MULTITHREAD_GENERATION
   static uint64_t seq_[GEN_THREADS] = {0}; // for sequential number generation
 #else
-  static uint64_t seq_ = 0; // for sequential number generation
+  static thread_local uint64_t seq_ = 0; // for sequential number generation
 #endif
 
-void until_sum(uint8_t tid)
+inline void until_sum(uint8_t tid)
 {
-  while(zeta_sum_ready!=tid){}
+  while(zeta_sum_ready!=tid) fipc_test_pause();
 }
 
 double zeta(uint64_t n, double theta, uint8_t tid, uint8_t num_threads) {
@@ -65,6 +65,7 @@ void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threa
     set_seed(seed, 0); //TODO: make for multiple threads
   #else
     rand_ = Rand(seed);
+    rand_ = Rand(rand_.next_u32());
   #endif
 
   if (t == -1.) {
@@ -112,7 +113,7 @@ void generate(uint64_t* m, uint64_t start, uint64_t end)
       //next returns a number from [0 - config.range]
       //insert has issues if key inserted is 0 so add 1
       m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
-      printf("%lu\n", m[i]);
+      //printf("%lu\n", m[i]);
   }
 }
 
@@ -128,7 +129,7 @@ uint64_t uniform_next(int id) {
     if (++seq_ >= n_) seq_ = 0;
   #endif
   
-  return v+1;
+  return v;
 }
 uint64_t single_next(int id) {
   #ifdef MULTITHREAD_GENERATION
@@ -136,7 +137,7 @@ uint64_t single_next(int id) {
   #else
     double u = rand_.next_f64();
   #endif
-  return (uint64_t)(dbl_n_ * u) +1;
+  return (uint64_t)(dbl_n_ * u);
 }
 uint64_t theta_next(int id) {
   // from J. Gray et al. Quickly generating billion-record synthetic
@@ -152,8 +153,6 @@ uint64_t theta_next(int id) {
     return 1UL;//2UL;//
   }
   else {
-
-    printf("[INFO]]Core %u: Creating Node allocation thread\n", id);
     uint64_t v = (uint64_t)(dbl_n_ * pow_approx(eta_ * (u - 1.) + 1., alpha_));
     if (v >= n_) 
     {
@@ -163,7 +162,7 @@ uint64_t theta_next(int id) {
   }
 }
 uint64_t large_next(int thread_id) {
-  return 1UL;//0UL;
+  return 0UL;
 }
 
 #endif
