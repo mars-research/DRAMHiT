@@ -6,10 +6,14 @@
 
 //Main functions
 void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threads);
+
+void gen_keys(uint64_t* key, uint64_t start, uint64_t end);
 void gen_keys(uint64_t* key, uint64_t start, uint64_t end, uint64_t (*key_map)(uint64_t));
+
 uint64_t next();
 
-//Classes of next functions 
+
+//Classes of next functions based on input theta value
 uint64_t uniform_next(int);
 uint64_t single_next(int);
 uint64_t theta_next(int);

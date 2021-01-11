@@ -92,11 +92,16 @@ void ZipfGen(uint64_t n, double t, uint64_t seed, uint8_t tid, uint8_t num_threa
   }
 }
 
+void gen_keys(uint64_t* key, uint64_t start, uint64_t end)
+{
+  //pregenerate the indices/keys
+  for(uint64_t i = start; i < end; ++i) {key[i] = next();}
+}
 void gen_keys(uint64_t* key, uint64_t start, uint64_t end, uint64_t (*key_map)(uint64_t))
 {
   //pregenerate the indices/keys
-  if(key_map) 
-    for(uint64_t i = start; i < end; ++i) {key[i] = next();}
+  if(!key_map) 
+    gen_keys(key, start, end);
   else 
     for(uint64_t i = start; i < end; ++i) {key[i] = key_map(next());}
 }
