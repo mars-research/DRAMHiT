@@ -82,6 +82,10 @@ struct Configuration {
   uint32_t K;
   uint32_t ht_fill;
 
+  uint8_t ht_size_pow;
+  uint64_t ht_size_factor;
+  uint64_t ht_size;
+
   uint64_t seed;
   double zipf_theta;
   uint64_t distr_length;

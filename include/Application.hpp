@@ -17,14 +17,15 @@ class Application {
   std::vector<std::thread> threads;
   Shard *shards;
 
+  //needed for calloc_ht function
   int fd;
 
  public:
   std::vector<numa_node> nodes;
   int process(int argc, char **argv);
   int spawn_shard_threads_bqueues();
-  void alloc_distribution();
-  void free_distribution();
+  void alloc_distr();
+  void free_distr();
   int spawn_shard_threads();
   void shard_thread(int tid, bool mainthread);
 
