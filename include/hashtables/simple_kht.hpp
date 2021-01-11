@@ -23,8 +23,60 @@
 
 const auto FLUSH_THRESHOLD = 32;
 const auto INS_FLUSH_THRESHOLD = 32;
+const auto KV_SIZE = 16; // 8-byte key + 8-byte value
 
 namespace kmercounter {
+
+namespace {
+// utility constants and lambdas for SIMD operations
+constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / KV_SIZE;
+
+// cacheline
+//       <------------------------ cacheline ------------------------->
+//       || val3 | key3 || val2 | key2 || val1 | key1 || val0 | key0 ||
+// bits: ||  7      6       5      4       3      2       1      0   ||
+// masks for AVX512 instructions
+constexpr __mmask8 KEY0 = 0b00000001;
+constexpr __mmask8 KEY1 = 0b00000100;
+constexpr __mmask8 KEY2 = 0b00010000;
+constexpr __mmask8 KEY3 = 0b01000000;
+constexpr __mmask8 VAL0 = 0b00000010;
+constexpr __mmask8 VAL1 = 0b00001000;
+constexpr __mmask8 VAL2 = 0b00100000;
+constexpr __mmask8 VAL3 = 0b10000000;
+constexpr __mmask8 KVP0 = KEY0 | VAL0;
+constexpr __mmask8 KVP1 = KEY1 | VAL1;
+constexpr __mmask8 KVP2 = KEY2 | VAL2;
+constexpr __mmask8 KVP3 = KEY3 | VAL3;
+
+// key_cmp_masks are indexed by cidx, the index of an entry in a cacheline
+// the masks are used to mask irrelevant bits of the result of 4-way SIMD
+// key comparisons
+constexpr std::array<__mmask8, KV_PER_CACHE_LINE> key_cmp_masks = {
+    KEY3 | KEY2 | KEY1 | KEY0,  // cidx: 0; all key comparisons valid
+    KEY3 | KEY2 | KEY1,         // cidx: 1; only last three comparisons valid
+    KEY3 | KEY2,                // cidx: 2; only last two comparisons valid
+    KEY3,                       // cidx: 3; only last comparison valid
+};
+
+auto load_cacheline = [](void const *cptr) { return _mm512_load_epi64(cptr); };
+
+auto store_cacheline = [](void *cptr, __mmask8 kv_mask, __m512i cacheline) {
+  _mm512_mask_store_epi64(cptr, kv_mask, cacheline);
+};
+
+auto key_cmp = [](__m512i cacheline, __m512i key_vector, size_t cidx) {
+  __mmask8 cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector);
+  // zmm registers are compared as 8 uint64_t
+  // mask irrelevant results before returning
+  return cmp & key_cmp_masks[cidx];
+};
+
+auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
+  const __m512i empty_key_vector = _mm512_setzero_si512();
+  return key_cmp(cacheline, empty_key_vector, cidx);
+};
+}  // unnamed namespace
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
@@ -63,9 +115,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
-    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]),
-                    true /* write */);
+    prefetch_object<true /* write */>(
+        &this->hashtable[i & (this->capacity - 1)],
+        sizeof(this->hashtable[i & (this->capacity - 1)]));
+    // true /* write */);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
@@ -74,9 +127,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   void prefetch_read(uint64_t i) {
-    prefetch_object(&this->hashtable[i & (this->capacity - 1)],
-                    sizeof(this->hashtable[i & (this->capacity - 1)]),
-                    false /* write */);
+    prefetch_object<false /* write */>(
+        &this->hashtable[i & (this->capacity - 1)],
+        sizeof(this->hashtable[i & (this->capacity - 1)]));
+    // false /* write */);
   }
 
   inline uint8_t touch(uint64_t i) {
@@ -465,7 +519,79 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return found;
   }
 
-  uint64_t __find_branchless_simd(KVQ *q, ValuePairs &vp) { return 0; }
+  uint64_t __find_branchless_simd(KVQ *q, ValuePairs &vp) {
+    static_assert(sizeof(KV) == KV_SIZE);
+
+    // hashtable idx at which data is to be found
+    size_t idx = q->idx;
+    // index within the cacheline
+    const size_t cidx = idx & (KV_PER_CACHE_LINE - 1);
+    // index at which current cacheline starts
+    const size_t ccidx = idx - cidx;
+    // pointer to current cacheline
+    KV *cptr = &this->hashtable[ccidx];
+
+    auto load_key_vector = [q]() {
+      // we want to load only the keys into a ZMM register, as two 32-bit
+      // integers. 0b0011 matches the first 64 bits of a KV pair -- the key
+      __mmask16 mask{0b0011001100110011};
+      __m128i kv = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&q->key));
+      return _mm512_maskz_broadcast_i32x2(mask, kv);
+    };
+
+    // load the cacheline.
+    __m512i cacheline = load_cacheline(cptr);
+    // load a vector of the key in all 4 positions
+    __m512i key_vector = load_key_vector();
+
+    // depending on the value of idx, between 1 and 4 KV pairs in a cacheline
+    // can be probed for a find operation. compare key at relevant positions
+    __mmask8 eq_cmp = key_cmp(cacheline, key_vector, cidx);
+    // look for empty keys in the same (relevant) positions
+    __mmask8 empty_cmp = empty_key_cmp(cacheline, cidx);
+
+    // compute index at which there is a key match
+    size_t midx = _bit_scan_forward(eq_cmp) >> 1;
+    const KV *match = &this->hashtable[midx];
+    // copy the value out
+    vp.second[vp.first].value = match->count;
+    vp.second[vp.first].id = q->key_id;
+
+    // if eq_cmp == 0, match is invalid as there is no match
+    __mmask8 found;
+    asm (
+        // if (!eq_cmp) found = 1;
+        "test %[eq_cmp], %[eq_cmp]\n\t"
+        "setnz %[found]\n\t"
+        : [found]"=r"(found)
+        : [eq_cmp]"r"(eq_cmp)
+        );
+    vp.first += found;
+
+    // if key is not found, and we have not encountered any empty "slots"
+    // reprobe is necessary
+    __mmask8 reprobe;
+    asm (
+        // if (!found && !empty_cmp) reprobe = 1;
+        "orb %[found], %[empty_cmp]\n\t"
+        "setz %[reprobe]\n\t"
+        : [reprobe]"=r"(reprobe)
+        : [found]"r"(found), [empty_cmp]"r"(empty_cmp)
+        );
+
+    // index at which reprobe must begin
+    size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
+    ridx &= this->capacity - 1; // modulo
+    this->prefetch_read(ridx);
+
+    this->find_queue[this->find_head].key = q->key;
+    this->find_queue[this->find_head].key_id = q->key_id;
+    this->find_queue[this->find_head].idx = ridx;
+
+    this->find_head += reprobe;
+    this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+    return found;
+  }
 
   auto __find_one_v2(KVQ *q, ValuePairs &vp) {
     if constexpr (branching == BRANCHKIND::WithBranch) {
@@ -602,69 +728,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void __insert_branchless_simd(KVQ *q) {
+    static_assert(sizeof(KV) == KV_SIZE);
+
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
     KV *curr = &this->hashtable[idx];
-
-    static_assert(CACHE_LINE_SIZE == 64);
-    static_assert(sizeof(KV) == 16);
-    constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / sizeof(KV);
-
-    // masks for AVX512 instructions
-    constexpr __mmask8 KEY0 = 0b00000001;
-    constexpr __mmask8 KEY1 = 0b00000100;
-    constexpr __mmask8 KEY2 = 0b00010000;
-    constexpr __mmask8 KEY3 = 0b01000000;
-    constexpr __mmask8 VAL0 = 0b00000010;
-    constexpr __mmask8 VAL1 = 0b00001000;
-    constexpr __mmask8 VAL2 = 0b00100000;
-    constexpr __mmask8 VAL3 = 0b10000000;
-    constexpr __mmask8 KVP0 = KEY0 | VAL0;
-    constexpr __mmask8 KVP1 = KEY1 | VAL1;
-    constexpr __mmask8 KVP2 = KEY2 | VAL2;
-    constexpr __mmask8 KVP3 = KEY3 | VAL3;
-
-    // a vector of 1s that is used for incrementing a value
-    constexpr __m512i INCREMENT_VECTOR = {
-        0ULL, 1ULL,  // KVP0
-        0ULL, 1ULL,  // KVP1
-        0ULL, 1ULL,  // KVP2
-        0ULL, 1ULL,  // KVP3
-    };
-
-    // cacheline_masks is indexed by q->idx % KV_PER_CACHE_LINE
-    constexpr std::array<__mmask8, KV_PER_CACHE_LINE> cacheline_masks = {
-        KVP3 | KVP2 | KVP1 | KVP0,  // load all KV pairs in the cacheline
-        KVP3 | KVP2 | KVP1,         // skip the first KV pair
-        KVP3 | KVP2,                // skip the first two KV pairs
-        KVP3,                       // load only the last KV pair
-    };
-    // key_cmp_masks are indexed by cidx, the index of an entry in a cacheline
-    // the masks are used to mask irrelevant bits of the result of 4-way SIMD
-    // key comparisons
-    constexpr std::array<__mmask8, KV_PER_CACHE_LINE> key_cmp_masks = {
-        KEY3 | KEY2 | KEY1 | KEY0,  // cidx: 0; all key comparisons valid
-        KEY3 | KEY2 | KEY1,  // cidx: 1; only last three comparisons valid
-        KEY3 | KEY2,         // cidx: 2; only last two comparisons valid
-        KEY3,                // cidx: 3; only last comparison valid
-    };
-    // key_copy_masks are indexed by the return value of the BSF instruction,
-    // executed on the mask returned by a search for empty keys in a
-    // cacheline
-    //       <-------------------- cacheline --------------------->
-    //       || key | val || key | val || key | val || key | val ||
-    // bits: ||  0     1      2     3      4     5      6     7  ||
-    // the only possible indices are: 0, 2, 4, 6
-    constexpr std::array<__mmask8, 8> key_copy_masks = {
-        KEY0,  // bit 0 set; choose first key
-        0,
-        KEY1,  // bit 2 set; choose second
-        0,
-        KEY2,  // bit 4 set; choose third
-        0,
-        KEY3,  // bit 6 set; choose last
-        0,
-    };
+    KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE - 1)];
 
     auto load_key_vector = [q]() {
       // we want to load only the keys into a ZMM register, as two 32-bit
@@ -674,45 +743,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return _mm512_maskz_broadcast_i32x2(mask, kv);
     };
 
-    auto load_cacheline = [this, idx, &cacheline_masks](size_t cidx) {
-      const KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE - 1)];
-      return _mm512_maskz_load_epi64(cacheline_masks[cidx], cptr);
-    };
-
-    auto store_cacheline = [this, idx](__m512i cacheline, __mmask8 kv_mask) {
-      KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE - 1)];
-      _mm512_mask_store_epi64(cptr, kv_mask, cacheline);
-    };
-
-    auto key_cmp = [&key_cmp_masks](__m512i cacheline, __m512i key_vector,
-                                    size_t cidx) {
-      __mmask8 cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector);
-      // zmm registers are compared as 8 uint64_t
-      // mask irrelevant results before returning
-      return cmp & key_cmp_masks[cidx];
-    };
-
-    auto empty_cmp = [&key_cmp_masks](__m512i cacheline, size_t cidx) {
-      const __m512i empty_key_vector = _mm512_setzero_si512();
-      __mmask8 cmp = _mm512_cmpeq_epu64_mask(cacheline, empty_key_vector);
-      // zmm registers are compared as 8 uint64_t
-      // mask irrelevant results before returning
-      return cmp & key_cmp_masks[cidx];
-    };
-
-    auto key_copy_mask = [&empty_cmp, &key_copy_masks](
-                             __m512i cacheline, uint32_t eq_cmp, size_t cidx) {
-      uint32_t locations = empty_cmp(cacheline, cidx);
-      __mmask16 copy_mask = 1 << _bit_scan_forward(locations);
+    auto key_copy_mask = [](__m512i cacheline, uint32_t eq_cmp,
+                                      size_t cidx) {
+      uint32_t locations = empty_key_cmp(cacheline, cidx);
+      uint32_t copy_mask = 1 << _bit_scan_forward(locations);
       // if locations == 0, _bit_scan_forward(locations) is undefined
       // if eq_cmp != 0, key is already present
       //
       // if ((locations && !eq_cmp) == 0) copy_mask = 0;
-      asm("andnl %[locations], %[eq_cmp], %%ecx\n\t"
-          "cmovzw %%cx, %[copy_mask]\n\t"
-          : [ copy_mask ] "+r"(copy_mask)
-          : [ locations ] "r"(locations), [ eq_cmp ] "r"(eq_cmp)
-          : "rcx");
+      uint32_t zero;
+      asm("andnl %[locations], %[eq_cmp], %[zero]\n\t"
+          "cmovzl %[zero], %[copy_mask]\n\t"
+          : [ copy_mask ] "+r"(copy_mask), [ zero ] "=r"(zero)
+          : [ locations ] "r"(locations), [ eq_cmp ] "r"(eq_cmp));
       return static_cast<__mmask8>(copy_mask);
     };
 
@@ -721,8 +764,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       cacheline = _mm512_mask_blend_epi64(copy_mask, cacheline, key_vector);
     };
 
-    auto increment_count = [INCREMENT_VECTOR](__m512i &cacheline,
-                                              __mmask8 val_mask) {
+    auto increment_count = [](__m512i &cacheline, __mmask8 val_mask) {
+      // a vector of 1s that is used for incrementing a value
+      constexpr __m512i INCREMENT_VECTOR = {
+          0ULL, 1ULL,  // KVP0
+          0ULL, 1ULL,  // KVP1
+          0ULL, 1ULL,  // KVP2
+          0ULL, 1ULL,  // KVP3
+      };
+
       cacheline = _mm512_mask_add_epi64(cacheline, val_mask, cacheline,
                                         INCREMENT_VECTOR);
     };
@@ -732,73 +782,59 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // depending on the value of idx, between 1 and 4 KV pairs in a cacheline
     // can be probed for an insert operation. load the cacheline.
-    __m512i cacheline = load_cacheline(cidx);
+    __m512i cacheline = load_cacheline(cptr);
     // load a vector of the key in all 4 positions
     __m512i key_vector = load_key_vector();
 
     __mmask8 eq_cmp = key_cmp(cacheline, key_vector, cidx);
-    /*
-    if (eq_cmp)
-    {
-      __mmask8 key_mask = eq_cmp;
-      __mmask8 val_mask = key_mask << 1;
-      // at this point, increment the count
-      increment_count(cacheline, val_mask);
-
-      // write the cacheline back; just the KV pair that was modified
-      __mmask8 kv_mask = key_mask | val_mask;
-      store_cacheline(cacheline, kv_mask);
-
-      return;
-    }
-    */
     // compute a mask for copying the key into an empty slot
     // will be 0 if eq_cmp != 0 (key already exists in the cacheline)
     __mmask16 copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
-    copy_key(cacheline, key_vector, static_cast<__mmask8>(copy_mask));
+    // copy_key(cacheline, key_vector, static_cast<__mmask8>(copy_mask));
 
     // between eq_cmp and copy_mask, at most one bit will be set
     // if we shift-left eq_cmp|copy_mask by 1 bit, the bit will correspond
     // to the value of the KV-pair we are interested in
     __mmask8 key_mask = eq_cmp | copy_mask;
     __mmask8 val_mask = key_mask << 1;
+    __mmask8 kv_mask = key_mask | val_mask;
+    __mmask8 inc_mask = copy_mask ? kv_mask : val_mask;
     // at this point, increment the count
-    increment_count(cacheline, val_mask);
+    increment_count(cacheline, inc_mask);
 
     // write the cacheline back; just the KV pair that was modified
-    __mmask8 kv_mask = key_mask | val_mask;
-    store_cacheline(cacheline, kv_mask);
+    store_cacheline(cptr, kv_mask, cacheline);
 
     // prepare for possible reprobe
     // point next idx (nidx) to the start of the next cacheline
     auto nidx = idx + KV_PER_CACHE_LINE - cidx;
     nidx = nidx & (this->capacity - 1);  // modulo
-    this->queue[this->queue_idx].key = q->key;
-    this->queue[this->queue_idx].key_id = q->key_id;
-    this->queue[this->queue_idx].idx = nidx;
-    auto queue_idx_inc = 1;
+    this->queue[this->ins_head].key = q->key;
+    this->queue[this->ins_head].key_id = q->key_id;
+    this->queue[this->ins_head].idx = nidx;
+    auto ins_head_inc = 1;
     // if kv_mask != 0, insert succeeded; reprobe unnecessary
     asm volatile(
         "xorq %%rcx, %%rcx\n\t"
         "test %[kv_mask], %[kv_mask]\n\t"
-        // if (kv_mask) queue_idx_inc = 0;
+        // if (kv_mask) ins_head_inc = 0;
         "cmovnzl %%ecx, %[inc]\n\t"
         // if (kv_mask) nidx = idx;
         "cmovnzq %[idx], %[nidx]\n\t"
-        : [ nidx ] "+r"(nidx), [ inc ] "+r"(queue_idx_inc)
+        : [ nidx ] "+r"(nidx), [ inc ] "+r"(ins_head_inc)
         : [ kv_mask ] "r"(kv_mask), [ idx ] "r"(idx)
         : "rcx");
 
     // issue prefetch
     prefetch(nidx);
-    this->ins_head += queue_idx_inc;
+    this->ins_head += ins_head_inc;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
     return;
   }
 
   void __insert_one_v2(KVQ *q) {
-    if constexpr (branching == BRANCHKIND::WithBranch) {
+    if constexpr (true) {// branching == BRANCHKIND::WithBranch) {
       __insert_branched(q);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       __insert_branchless_cmov(q);
@@ -808,88 +844,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void __insert(KVQ *q) {
-    // hashtable idx at which data is to be inserted
-    size_t idx = q->idx;
-  try_insert:
-    KV *curr = &this->hashtable[idx];
-
-#ifdef BRANCHLESS_NO_SIMD
-    // 0xFF: insert or update was successfull
-    uint16_t cmp = curr->insert_or_update(q->data);
-
-    /* prepare for (possible) soft reprobe */
-    idx++;
-    idx = idx & (this->capacity - 1);  // modulo
-
-    prefetch(idx);
-    this->queue[this->queue_idx].data = q->data;
-    this->queue[this->queue_idx].idx = idx;
-
-    // this->queue_idx should not be incremented if either
-    // of the try_inserts succeeded
-    int inc{1};
-    inc = (cmp == 0xFF) ? 0 : inc;
-    this->queue_idx += inc;
-
-    return;
-
-#elif defined(BRANCHLESS)
-
-#else  // !BRANCHLESS
-    assert(
-        !const_cast<KV *>(reinterpret_cast<const KV *>(q->data))->is_empty());
-    // Compare with empty element
-    if (curr->is_empty()) {
-#ifdef CALC_STATS
-      this->num_memcpys++;
-#endif
-      curr->insert_item(q->data, 0);
-#ifdef COMPARE_HASH
-      this->hashtable[pidx].key_hash = q->key_hash;
-#endif
-      return;
-    }
-
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-#ifdef COMPARE_HASH
-    if (this->hashtable[pidx].key_hash == q->key_hash)
-#endif
-    {
-#ifdef CALC_STATS
-      this->num_memcmps++;
-#endif
-
-      if (curr->compare_key(q->data)) {
-        curr->update_value(q->data, 0);
-        return;
-      }
-    }
-
-    // insert back into queue, and prefetch next bucket.
-    // next bucket will be probed in the next run
-    idx++;
-    idx = idx & (this->capacity - 1);  // modulo
-
-    // |    4 elements |
-    // | 0 | 1 | 2 | 3 | 4 | 5 ....
-    if ((idx & 0x3) != 0) {
-      goto try_insert;
-    }
-
-    prefetch(idx);
-
-    this->queue[this->queue_idx].data = q->data;
-    this->queue[this->queue_idx].idx = idx;
-    this->queue_idx++;
-
-#ifdef CALC_STATS
-    this->num_reprobes++;
-#endif
-    return;
-#endif  // BRANCHLESS
+    // return __insert_one_v2(q);
   }
 
   /* Insert items from queue into hash table, interpreting "queue"
