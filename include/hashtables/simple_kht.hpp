@@ -773,9 +773,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // point next idx (nidx) to the start of the next cacheline
     auto nidx = idx + KV_PER_CACHE_LINE - cidx;
     nidx = nidx & (this->capacity - 1);  // modulo
-    this->queue[this->queue_idx].key = q->key;
-    this->queue[this->queue_idx].key_id = q->key_id;
-    this->queue[this->queue_idx].idx = nidx;
+    this->insert_queue[this->ins_head].key = q->key;
+    this->insert_queue[this->ins_head].key_id = q->key_id;
+    this->insert_queue[this->ins_head].idx = nidx;
     auto queue_idx_inc = 1;
     // if kv_mask != 0, insert succeeded; reprobe unnecessary
     asm volatile(
@@ -803,8 +803,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       __insert_branchless_cmov(q);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      __insert_branched(q);
-      // __insert_branchless_simd(q);
+      __insert_branchless_simd(q);
     }
   }
 
