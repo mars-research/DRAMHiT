@@ -60,6 +60,11 @@ typedef enum {
   STDMAP_KHT = 5,
 } ht_type_t;
 
+typedef enum {
+  INSERT = 1,
+  FIND = 2
+} synth_test_t;
+
 /* Test config */
 struct Configuration {
   uint64_t kmer_create_data_base;
@@ -67,6 +72,7 @@ struct Configuration {
   uint64_t kmer_create_data_uniq;
   uint32_t num_threads;
   run_mode_t mode;
+  synth_test_t synth_test;
   std::string kmer_files_dir;
   bool alphanum_kmers;
   bool numa_split;

@@ -31,6 +31,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t all_total_num_inserts = 0;
   uint64_t total_find_cycles = 0;
   uint64_t total_finds = 0;
+  double total_find_time_ns = 0;
 
 #ifdef CALC_STATS
   uint64_t all_total_avg_read_length = 0;
@@ -47,6 +48,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 
   printf("===============================================================\n");
   for (; k < config.num_threads; k++) {
+    if(config.synth_test == INSERT)
     printf(
         "Thread %2d: "
         "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
@@ -86,12 +88,54 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         all_sh[k].stats->avg_read_length, all_sh[k].stats->num_sequences
 #endif  // CALC_STATS
     );
+    else if(config.synth_test == FIND)
+    printf(
+        "Thread %2d: "
+        "%lu cycles (%f ms) for %lu finds (%lu cycles/find) "
+        "{ fill: %lu of %lu (%f %%) }"
+#ifdef CALC_STATS
+        "["
+        "num_reprobes: %lu, "
+        "num_memcmps: %lu, "
+        "num_memcpys: %lu, "
+        "num_queue_flushes: %lu, "
+        "num_hashcmps: %lu, "
+        "max_distance_from_bucket: %lu, "
+        "avg_distance_from_bucket: %f,"
+        "avg_read_length: %lu,"
+        "num_sequences :%lu"
+        "]"
+#endif  // CALC_STATS
+        "\n",
+        all_sh[k].shard_idx, all_sh[k].stats->find_cycles,
+        (double)all_sh[k].stats->find_cycles * one_cycle_ns / 1000000.0,
+        all_sh[k].stats->num_finds,
+        all_sh[k].stats->num_finds == 0
+            ? 0
+            : all_sh[k].stats->find_cycles / all_sh[k].stats->num_finds,
+        all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
+        all_sh[k].stats->ht_capacity == 0
+            ? 0
+            : (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity *
+                  100
+#ifdef CALC_STATS
+        ,
+        all_sh[k].stats->num_reprobes, all_sh[k].stats->num_memcmps,
+        all_sh[k].stats->num_memcpys, all_sh[k].stats->num_queue_flushes,
+        all_sh[k].stats->num_hashcmps,
+        all_sh[k].stats->max_distance_from_bucket,
+        all_sh[k].stats->avg_distance_from_bucket,
+        all_sh[k].stats->avg_read_length, all_sh[k].stats->num_sequences
+#endif  // CALC_STATS
+    );
     all_total_cycles += all_sh[k].stats->insertion_cycles;
     all_total_time_ns +=
         (double)all_sh[k].stats->insertion_cycles * one_cycle_ns;
     all_total_num_inserts += all_sh[k].stats->num_inserts;
     total_finds += all_sh[k].stats->num_finds;
     total_find_cycles += all_sh[k].stats->find_cycles;
+    total_find_time_ns +=
+        (double)all_sh[k].stats->find_cycles * one_cycle_ns;
 
 #ifdef CALC_STATS
     all_total_num_sequences += all_sh[k].stats->num_sequences;
@@ -100,8 +144,10 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     all_total_find_time_ns =
         (double)all_sh[k].stats->find_cycles * one_cycle_ns;
 #endif  // CALC_STATS
+
   }
   printf("===============================================================\n");
+  if(config.synth_test == INSERT)
   printf(
       "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
       "(fill = %u %%)\n",
@@ -109,17 +155,21 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
       (double)all_total_time_ns / 1000000.0 / config.num_threads,
       all_total_num_inserts / config.num_threads,
       all_total_cycles / all_total_num_inserts, config.ht_fill);
-  // printf(
-  //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
-  //     "find)\n",
-  //     all_total_find_cycles / config.num_threads,
-  //     (double)all_total_find_time_ns * one_cycle_ns / 1000,
-  //     kmer_big_pool_size_per_shard,
-  //     all_total_find_cycles / config.num_threads /
-  //         kmer_big_pool_size_per_shard);
+  else if(config.synth_test == FIND)
+  printf(
+      "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles/find) "
+      "(fill = %u %%)\n",
+      total_find_cycles / config.num_threads,
+      (double)total_find_time_ns / 1000000.0 / config.num_threads,
+      total_finds / config.num_threads,
+      total_find_cycles / total_finds, config.ht_fill);
   printf("===============================================================\n");
+  if(config.synth_test == INSERT)
   printf("Total  : %lu cycles (%f ms) for %lu insertions\n", all_total_cycles,
          (double)all_total_time_ns / 1000000.0, all_total_num_inserts);
+  else if(config.synth_test == FIND)
+  printf("Total  : %lu cycles (%f ms) for %lu insertions\n", total_find_cycles,
+         (double)total_find_time_ns / 1000000.0, total_finds);
   {
     unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
 

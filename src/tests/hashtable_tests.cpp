@@ -82,7 +82,7 @@ inline void until_ready(uint8_t tid)
 }
 
 void SynthTest::find_test(Shard *sh, BaseHashTable *kmer_ht) {
-  uint64_t num_inserts = 0;
+  //uint64_t num_inserts = 0;
   uint64_t num_finds = 0, not_found = 0;
   uint64_t t_start, t_end;
 
@@ -107,7 +107,7 @@ void SynthTest::find_test(Shard *sh, BaseHashTable *kmer_ht) {
           k = 0;
           KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &_items[0]);
           kmer_ht->insert_batch(kp);
-          num_inserts += HT_TESTS_BATCH_LENGTH;
+          //num_inserts += HT_TESTS_BATCH_LENGTH;
         }
       }
     }

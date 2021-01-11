@@ -52,6 +52,7 @@ const Configuration def = {
     .kmer_create_data_uniq = 1048576,
     .num_threads = 1,
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
+    .synth_test = INSERT,
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .numa_split = false,
@@ -222,7 +223,8 @@ void Application::shard_thread(int tid, bool mainthread) {
       this->test.pat.shard_thread_parse_and_insert(sh, kmer_ht);
       break;
     case SYNTH:
-      this->test.st.find_test(sh, kmer_ht);//synth_run_exec(sh, kmer_ht);
+      if(config.synth_test == INSERT) this->test.st.insert_test(sh, kmer_ht);
+      else if(config.synth_test == FIND) this->test.st.find_test(sh, kmer_ht);
       break;
     case PREFETCH:
       this->test.pt.prefetch_test_run_exec(sh, config, kmer_ht);
@@ -290,8 +292,8 @@ void generate_distr(uint64_t* keys, uint64_t start, uint64_t end, int cpu, int n
 void Application::alloc_distr() 
 {
   int main_cpu = 0, nr_cpus = n->get_num_total_cpus();
-  uint64_t start, end, t_start, t_end;
   std::vector<std::thread> threads;
+  uint64_t start, end;
   cpu_set_t cpuset;
 
   //Allocate memory for key distribution on main cpu (0)
@@ -452,7 +454,7 @@ int Application::process(int argc, char *argv[]) {
   try {
     namespace po = boost::program_options;
     po::options_description desc("Program options");
-
+    
     desc.add_options()("help", "produce help message")(
         "mode",
         po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
@@ -462,6 +464,9 @@ int Application::process(int argc, char *argv[]) {
         "\n6/7: Synth/Prefetch,"
         "\n8/9: Bqueue tests: with bqueues/without bequeues"
         "\n10: Cache Miss test")(
+        "synth",
+        po::value<uint32_t>((uint32_t *)&config.synth_test)->default_value(def.synth_test),
+        "1: Insert test \n2: Find test")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
