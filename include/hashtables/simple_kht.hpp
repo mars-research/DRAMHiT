@@ -76,6 +76,7 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
   const __m512i empty_key_vector = _mm512_setzero_si512();
   return key_cmp(cacheline, empty_key_vector, cidx);
 };
+
 }  // unnamed namespace
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
@@ -495,7 +496,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t midx = _bit_scan_forward(eq_cmp) >> 1;
     const KV *match = &this->hashtable[midx];
     // copy the value out
-    vp.second[vp.first].value = match->count;
+    vp.second[vp.first].value = match->get_value();
     vp.second[vp.first].id = q->key_id;
 
     // if eq_cmp == 0, match is invalid as there is no match
@@ -676,6 +677,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return _mm512_maskz_broadcast_i32x2(mask, kv);
     };
 
+    auto load_kv_vector = [q]() {
+      // we want to load only the key value pair into a ZMM register, as four
+      // 4-byte integers. 0b1111 matches the entire KV pair
+      __mmask16 mask{0b1111111111111111};
+      __m128i kv = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&q->key));
+      return _mm512_maskz_broadcast_i32x2(mask, kv);
+    };
+
     auto load_cacheline = [this, idx, &cacheline_masks](size_t cidx) {
       const KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE - 1)];
       return _mm512_maskz_load_epi64(cacheline_masks[cidx], cptr);
@@ -718,9 +727,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return static_cast<__mmask8>(copy_mask);
     };
 
-    auto copy_key = [](__m512i &cacheline, __m512i key_vector,
-                       __mmask8 copy_mask) {
-      cacheline = _mm512_mask_blend_epi64(copy_mask, cacheline, key_vector);
+    auto blend = [](__m512i &cacheline, __m512i kv_vector,
+                       __mmask8 mask) {
+      cacheline = _mm512_mask_blend_epi64(mask, cacheline, kv_vector);
     };
 
     auto increment_count = [INCREMENT_VECTOR](__m512i &cacheline,
@@ -735,39 +744,35 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // depending on the value of idx, between 1 and 4 KV pairs in a cacheline
     // can be probed for an insert operation. load the cacheline.
     __m512i cacheline = load_cacheline(cidx);
-    // load a vector of the key in all 4 positions
-    __m512i key_vector = load_key_vector();
-
-    __mmask8 eq_cmp = key_cmp(cacheline, key_vector, cidx);
-    /*
-       if (eq_cmp)
-       {
-       __mmask8 key_mask = eq_cmp;
-       __mmask8 val_mask = key_mask << 1;
-    // at this point, increment the count
-    increment_count(cacheline, val_mask);
-    // write the cacheline back; just the KV pair that was modified
-    __mmask8 kv_mask = key_mask | val_mask;
-    store_cacheline(cacheline, kv_mask);
-    return;
+    // load a vector of the key-value in all 4 positions
+    __m512i kv_vector;
+    if constexpr (std::is_same_v<KV, Aggr_KV>) {
+      kv_vector = load_key_vector();
+    } else {
+      kv_vector = load_kv_vector();
     }
-    */
+
+    __mmask8 eq_cmp = key_cmp(cacheline, kv_vector, cidx);
+
     // compute a mask for copying the key into an empty slot
     // will be 0 if eq_cmp != 0 (key already exists in the cacheline)
-    __mmask16 copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
-    copy_key(cacheline, key_vector, static_cast<__mmask8>(copy_mask));
+    __mmask8 copy_mask = key_copy_mask(cacheline, eq_cmp, cidx);
 
     // between eq_cmp and copy_mask, at most one bit will be set
     // if we shift-left eq_cmp|copy_mask by 1 bit, the bit will correspond
     // to the value of the KV-pair we are interested in
     __mmask8 key_mask = eq_cmp | copy_mask;
     __mmask8 val_mask = key_mask << 1;
-    // at this point, increment the count
-    increment_count(cacheline, val_mask);
-
-    // write the cacheline back; just the KV pair that was modified
     __mmask8 kv_mask = key_mask | val_mask;
-    store_cacheline(cacheline, kv_mask);
+
+    if constexpr (std::is_same_v<KV, Aggr_KV>) {
+      blend(cacheline, kv_vector, copy_mask);
+      increment_count(cacheline, val_mask);
+      // write the cacheline back; just the KV pair that was modified
+      store_cacheline(cacheline, kv_mask);
+    } else {
+      store_cacheline(kv_vector, kv_mask);
+    }
 
     // prepare for possible reprobe
     // point next idx (nidx) to the start of the next cacheline

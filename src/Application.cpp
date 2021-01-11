@@ -37,6 +37,12 @@ namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
+#ifdef NOAGGR
+using KVType = Item;
+#else
+using KVType = Aggr_KV;
+#endif
+
 // default configuration
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -80,7 +86,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   // Create hash table
   switch (config.ht_type) {
     case SIMPLE_KHT:
-      kmer_ht = new PartitionedHashStore<Aggr_KV, ItemQueue>(sz, id);
+      kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
       break;
     case ROBINHOOD_KHT:
       kmer_ht = new RobinhoodKmerHashTable(sz);

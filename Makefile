@@ -25,6 +25,10 @@ ifeq ($(VTUNE), yes)
 	CFLAGS += -I$(VTUNE_ROOT)/include/ -DWITH_VTUNE_LIB
 endif
 
+ifeq ($(AGGR), no)
+	CFLAGS += -DNOAGGR
+endif
+
 # YES. We love spaghetti!!!
 # CFLAGS += -DCALC_STATS
 CFLAGS += -D__MMAP_FILE
