@@ -50,7 +50,7 @@ CFLAGS += -DBQ_TESTS_DO_HT_INSERTS
 
 # https://wiki.ubuntu.com/ToolChain/CompilerFlags#A-fstack-clash-protection
 CFLAGS += -fcf-protection=none
-#CFLAGS += -fsanitize=address -lasan
+# CFLAGS += -fsanitize=address
 
 CXXFLAGS = -std=c++17 $(CFLAGS) -MP -MD -fcf-protection=none
 
@@ -62,8 +62,10 @@ ifeq ($(BRANCH), simd)
 	CXXFLAGS += -DBRANCHLESS_SIMD
 endif
 
+# LIBS = -lasan
+
 # boostpo to parse args
-LIBS = -lboost_program_options
+LIBS += -lboost_program_options
 # for compressed fasta?
 LIBS += -lz
 # Used for numa partitioning

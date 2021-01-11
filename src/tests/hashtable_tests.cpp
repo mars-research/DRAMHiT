@@ -69,7 +69,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   printf("%s, inserted %lu items\n", __func__, inserted);
   // flush the last batch explicitly
   // printf("%s calling flush queue\n", __func__);
-  // ktable->flush_queue();
+  ktable->flush_insert_queue();
   // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
   return i;
 }
@@ -101,7 +101,7 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
       // printf("%s, calling find_batch i = %d\n", __func__, i);
       // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
-      ktable->find_batch_v2(kp, vp);
+      ktable->find_batch(kp, vp);
       found += vp.first;
       vp.first = 0;
       k = 0;
@@ -111,7 +111,11 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
     }
     // printf("\t count %lu | found -> %lu\n", count, found);
   }
-  // found += ktable->flush_find_queue();
+  if (vp.first > 0) {
+    vp.first = 0;
+  }
+  ktable->flush_find_queue(vp);
+  found += vp.first;
   return found;
 }
 

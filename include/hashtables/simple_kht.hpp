@@ -23,7 +23,7 @@
 
 const auto FLUSH_THRESHOLD = 32;
 const auto INS_FLUSH_THRESHOLD = 32;
-const auto KV_SIZE = 16; // 8-byte key + 8-byte value
+const auto KV_SIZE = 16;  // 8-byte key + 8-byte value
 
 namespace kmercounter {
 
@@ -147,15 +147,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   PartitionedHashStore(uint64_t c, uint8_t id)
-      : fd(-1),
-        id(id),
-        queue_idx(0),
-        find_idx(0),
-        find_head(0),
-        find_tail(0),
-        insert_idx(0),
-        ins_head(0),
-        ins_tail(0) {
+      : fd(-1), id(id), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::next_pow2(c);
     this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
     this->empty_item = this->empty_item.get_empty_key();
@@ -163,53 +155,26 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->data_length = empty_item.data_length();
 
     cout << "Empty item: " << this->empty_item << endl;
-    this->queue = (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
-    dbg("id: %d this->queue %p | find_queue %p\n", id, this->queue,
+    dbg("id: %d insert_queue %p | find_queue %p\n", id, this->insert_queue,
         this->find_queue);
     printf("[INFO] Hashtable size: %lu\n", this->capacity);
     printf("%s, data_length %lu\n", __func__, this->data_length);
   }
 
   ~PartitionedHashStore() {
-    free(queue);
+    free(find_queue);
+    free(insert_queue);
     free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
   }
 
   void insert_noprefetch(void *data) {
     cout << "Not implemented!" << endl;
     assert(false);
-  }
-
-  // insert and increment if exists
-  bool insert(const void *data) override {
-    assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
-    __insert_into_queue(data);
-
-    // if queue is full, insert
-    if (this->queue_idx >= PREFETCH_QUEUE_SIZE) {
-      this->__insert_from_queue();
-
-#if 0
-      for (auto i = 0u; i < PREFETCH_QUEUE_SIZE / 2; i += 4)
-        __builtin_prefetch(&this->queue[this->queue_idx + i], 1, 3);
-#endif
-    }
-
-    // XXX: This is to ensure correctness of the hashtable. No matter what the
-    // queue size is, this has to be enabled!
-    if (this->queue_idx == PREFETCH_QUEUE_SIZE) {
-      this->flush_queue();
-    }
-
-    // XXX: Most likely the HT is full here. We should panic here!
-    assert(this->queue_idx < PREFETCH_QUEUE_SIZE);
-
-    return true;
   }
 
   // insert a batch
@@ -228,12 +193,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->flush_if_needed();
   }
 
+  bool insert(const void *data) { return false; }
+
   // overridden function for insertion
   void flush_if_needed(void) {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
-      __insert_one_v2(&this->insert_queue[this->ins_tail]);
+      __insert_one(&this->insert_queue[this->ins_tail]);
       if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
       curr_queue_sz =
           (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
@@ -241,23 +208,24 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void flush_queue() override {
-    size_t curr_queue_sz = this->queue_idx;
+  void flush_insert_queue() override {
+    size_t curr_queue_sz =
+        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
+
     while (curr_queue_sz != 0) {
-      __flush_from_queue(curr_queue_sz);
-      curr_queue_sz = this->queue_idx;
+      __insert_one(&this->insert_queue[this->ins_tail]);
+      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
+      curr_queue_sz =
+          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     }
-#ifdef CALC_STATS
-    this->num_queue_flushes++;
-#endif
   }
 
-  void flush_find_queue_v2(ValuePairs &vp) override {
+  void flush_find_queue(ValuePairs &vp) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
-    while (curr_queue_sz != 0) {
-      __find_one_v2(&this->find_queue[this->find_tail], vp);
+    while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
+      __find_one(&this->find_queue[this->find_tail], vp);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -274,7 +242,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
-      __find_one_v2(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -282,17 +250,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  uint8_t flush_find_queue() override {
-    size_t curr_queue_sz = this->find_idx;
-    uint8_t found = 0;
-    while (curr_queue_sz != 0) {
-      found += __flush_find_queue(curr_queue_sz);
-      curr_queue_sz = this->find_idx;
-    }
-    return found;
-  }
-
-  void find_batch_v2(KeyPairs &kp, ValuePairs &values) {
+  void find_batch(KeyPairs &kp, ValuePairs &values) {
     // What's the size of the prefetch queue size?
     // pfq_sz = 4 * 64;
     // flush_threshold = 128;
@@ -315,7 +273,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     for (auto k = 0u; k < batch_len; k++) {
       void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue_v2(data);
+      add_to_find_queue(data);
     }
 
     // cout << "-> flush_after head: " << this->find_head << " tail: " <<
@@ -325,21 +283,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // this->find_tail << endl;
   }
 
-  uint8_t find_batch(uint64_t *__keys, uint32_t batch_len) override {
-    auto found = 0;
-    KV *keys = reinterpret_cast<KV *>(__keys);
-    for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data);
-    }
-
-    found += this->flush_find_queue();
-
-    // printf("%s, found %d keys\n", __func__, found);
-    return found;
-  }
-
-  void *find(const void *data) override {
+  void *find_noprefetch(const void *data) override {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
@@ -428,11 +372,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   KVQ *queue;    // TODO prefetch this?
   KVQ *find_queue;
   KVQ *insert_queue;
-  uint32_t queue_idx;
-  uint32_t find_idx;
   uint32_t find_head;
   uint32_t find_tail;
-  uint32_t insert_idx;
   uint32_t ins_head;
   uint32_t ins_tail;
 
@@ -559,29 +500,27 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // if eq_cmp == 0, match is invalid as there is no match
     __mmask8 found;
-    asm (
+    asm(
         // if (!eq_cmp) found = 1;
         "test %[eq_cmp], %[eq_cmp]\n\t"
         "setnz %[found]\n\t"
-        : [found]"=r"(found)
-        : [eq_cmp]"r"(eq_cmp)
-        );
+        : [ found ] "=r"(found)
+        : [ eq_cmp ] "r"(eq_cmp));
     vp.first += found;
 
     // if key is not found, and we have not encountered any empty "slots"
     // reprobe is necessary
     __mmask8 reprobe;
-    asm (
+    asm(
         // if (!found && !empty_cmp) reprobe = 1;
         "orb %[found], %[empty_cmp]\n\t"
         "setz %[reprobe]\n\t"
-        : [reprobe]"=r"(reprobe)
-        : [found]"r"(found), [empty_cmp]"r"(empty_cmp)
-        );
+        : [ reprobe ] "=r"(reprobe)
+        : [ found ] "r"(found), [ empty_cmp ] "r"(empty_cmp));
 
     // index at which reprobe must begin
     size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-    ridx &= this->capacity - 1; // modulo
+    ridx &= this->capacity - 1;  // modulo
     this->prefetch_read(ridx);
 
     this->find_queue[this->find_head].key = q->key;
@@ -593,7 +532,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return found;
   }
 
-  auto __find_one_v2(KVQ *q, ValuePairs &vp) {
+  auto __find_one(KVQ *q, ValuePairs &vp) {
     if constexpr (branching == BRANCHKIND::WithBranch) {
       return __find_branched(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
@@ -601,70 +540,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
       return __find_branchless_simd(q, vp);
     }
-  }
-
-  auto __find_one(KVQ *q) {
-    // hashtable idx where the data should be found
-    size_t idx = q->idx;
-    uint64_t found = 0;
-#ifdef BRANCHLESS_FIND
-    KV *curr = &this->hashtable[idx];
-    uint64_t retry;
-
-    found = curr->find_key_brless(q->data, &retry);
-
-    // insert back into queue, and prefetch next bucket.
-    // next bucket will be probed in the next run
-    idx++;
-    idx = idx & (this->capacity - 1);  // modulo
-
-    this->prefetch_read(idx);
-
-    this->find_queue[this->find_idx].data = q->data;
-    this->find_queue[this->find_idx].idx = idx;
-
-    // this->find_idx should not be incremented if either
-    // the desired key is empty or it is found.
-    uint64_t inc{1};
-    inc = (retry == 0x1) ? inc : 0;
-    this->find_idx += inc;
-
-    return found;
-#else
-  try_find:
-    KV *curr = &this->hashtable[idx];
-
-    // Compare with empty element
-    if (curr->is_empty()) {
-      goto exit;
-    } else if (curr->compare_key(q->data)) {
-      KV *kv = const_cast<KV *>(reinterpret_cast<const KV *>(q->data));
-      kv->set_value(curr);
-      found = 1;
-      goto exit;
-    }
-
-    // insert back into queue, and prefetch next bucket.
-    // next bucket will be probed in the next run
-    idx++;
-    idx = idx & (this->capacity - 1);  // modulo
-
-    // |    4 elements |
-    // | 0 | 1 | 2 | 3 | 4 | 5 ....
-    if ((idx & 0x3) != 0) {
-      goto try_find;
-    }
-
-    prefetch(idx);
-
-    this->find_queue[this->find_idx].data = q->data;
-    this->find_queue[this->find_idx].idx = idx;
-    this->find_idx++;
-  exit:
-    // printf("%s, key = %lu | found = %lu\n", __func__, *(uint64_t*) q->data,
-    // found);
-    return found;
-#endif
   }
 
   void __insert_branched(KVQ *q) {
@@ -693,8 +568,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       this->insert_queue[this->ins_head].key = q->key;
       this->insert_queue[this->ins_head].key_id = q->key_id;
+      this->insert_queue[this->ins_head].value = q->value;
       this->insert_queue[this->ins_head].idx = idx;
-      this->ins_head += 1;
+      ++this->ins_head;
       this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
 #ifdef CALC_STATS
@@ -752,27 +628,27 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // a vector of 1s that is used for incrementing a value
     constexpr __m512i INCREMENT_VECTOR = {
-      0ULL, 1ULL,  // KVP0
-      0ULL, 1ULL,  // KVP1
-      0ULL, 1ULL,  // KVP2
-      0ULL, 1ULL,  // KVP3
+        0ULL, 1ULL,  // KVP0
+        0ULL, 1ULL,  // KVP1
+        0ULL, 1ULL,  // KVP2
+        0ULL, 1ULL,  // KVP3
     };
 
     // cacheline_masks is indexed by q->idx % KV_PER_CACHE_LINE
     constexpr std::array<__mmask8, KV_PER_CACHE_LINE> cacheline_masks = {
-      KVP3 | KVP2 | KVP1 | KVP0,  // load all KV pairs in the cacheline
-      KVP3 | KVP2 | KVP1,         // skip the first KV pair
-      KVP3 | KVP2,                // skip the first two KV pairs
-      KVP3,                       // load only the last KV pair
+        KVP3 | KVP2 | KVP1 | KVP0,  // load all KV pairs in the cacheline
+        KVP3 | KVP2 | KVP1,         // skip the first KV pair
+        KVP3 | KVP2,                // skip the first two KV pairs
+        KVP3,                       // load only the last KV pair
     };
     // key_cmp_masks are indexed by cidx, the index of an entry in a cacheline
     // the masks are used to mask irrelevant bits of the result of 4-way SIMD
     // key comparisons
     constexpr std::array<__mmask8, KV_PER_CACHE_LINE> key_cmp_masks = {
-      KEY3 | KEY2 | KEY1 | KEY0,  // cidx: 0; all key comparisons valid
-      KEY3 | KEY2 | KEY1,  // cidx: 1; only last three comparisons valid
-      KEY3 | KEY2,         // cidx: 2; only last two comparisons valid
-      KEY3,                // cidx: 3; only last comparison valid
+        KEY3 | KEY2 | KEY1 | KEY0,  // cidx: 0; all key comparisons valid
+        KEY3 | KEY2 | KEY1,  // cidx: 1; only last three comparisons valid
+        KEY3 | KEY2,         // cidx: 2; only last two comparisons valid
+        KEY3,                // cidx: 3; only last comparison valid
     };
     // key_copy_masks are indexed by the return value of the BSF instruction,
     // executed on the mask returned by a search for empty keys in a
@@ -782,14 +658,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // bits: ||  0     1      2     3      4     5      6     7  ||
     // the only possible indices are: 0, 2, 4, 6
     constexpr std::array<__mmask8, 8> key_copy_masks = {
-      KEY0,  // bit 0 set; choose first key
-      0,
-      KEY1,  // bit 2 set; choose second
-      0,
-      KEY2,  // bit 4 set; choose third
-      0,
-      KEY3,  // bit 6 set; choose last
-      0,
+        KEY0,  // bit 0 set; choose first key
+        0,
+        KEY1,  // bit 2 set; choose second
+        0,
+        KEY2,  // bit 4 set; choose third
+        0,
+        KEY3,  // bit 6 set; choose last
+        0,
     };
 
     auto load_key_vector = [q]() {
@@ -811,7 +687,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     };
 
     auto key_cmp = [&key_cmp_masks](__m512i cacheline, __m512i key_vector,
-        size_t cidx) {
+                                    size_t cidx) {
       __mmask8 cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector);
       // zmm registers are compared as 8 uint64_t
       // mask irrelevant results before returning
@@ -827,7 +703,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     };
 
     auto key_copy_mask = [&empty_cmp, &key_copy_masks](
-        __m512i cacheline, uint32_t eq_cmp, size_t cidx) {
+                             __m512i cacheline, uint32_t eq_cmp, size_t cidx) {
       uint32_t locations = empty_cmp(cacheline, cidx);
       __mmask16 copy_mask = 1 << _bit_scan_forward(locations);
       // if locations == 0, _bit_scan_forward(locations) is undefined
@@ -843,14 +719,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     };
 
     auto copy_key = [](__m512i &cacheline, __m512i key_vector,
-        __mmask8 copy_mask) {
+                       __mmask8 copy_mask) {
       cacheline = _mm512_mask_blend_epi64(copy_mask, cacheline, key_vector);
     };
 
     auto increment_count = [INCREMENT_VECTOR](__m512i &cacheline,
-        __mmask8 val_mask) {
+                                              __mmask8 val_mask) {
       cacheline = _mm512_mask_add_epi64(cacheline, val_mask, cacheline,
-          INCREMENT_VECTOR);
+                                        INCREMENT_VECTOR);
     };
 
     // compute index within the cacheline
@@ -921,7 +797,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void __insert_one_v2(KVQ *q) {
+  void __insert_one(KVQ *q) {
     if constexpr (branching == BRANCHKIND::WithBranch) {
       __insert_branched(q);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
@@ -932,68 +808,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
-  void __insert(KVQ *q) {
-    // return __insert_one_v2(q);
-  }
-
-  /* Insert items from queue into hash table, interpreting "queue"
-  as an array of size queue_sz*/
-  void __insert_from_queue() {
-    this->queue_idx = 0;  // start again
-    for (size_t i = 0; i < PREFETCH_QUEUE_SIZE; i++) {
-      __insert(&this->queue[i]);
-    }
-  }
-
-  void __flush_from_queue(size_t qsize) {
-    this->queue_idx = 0;  // start again
-    for (size_t i = 0; i < qsize; i++) {
-      __insert(&this->queue[i]);
-    }
-  }
-
   uint64_t read_hashtable_element(const void *data) {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);
     KV *curr = &this->hashtable[idx];
     return curr->get_value();
-  }
-
-  void __insert_into_queue(const void *data) {
-    uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash & (this->capacity - 1);  // modulo
-    // size_t __kmer_idx2 = (hash + 3) & (this->capacity - 1);  // modulo
-    // size_t __kmer_idx = cityhash_new % (this->capacity);
-
-    /* prefetch buckets and store data pointers in queue */
-    // TODO how much to prefetch?
-    // TODO if we do prefetch: what to return? API breaks
-    this->prefetch(idx);
-    // this->prefetch(__kmer_idx2);
-
-    // printf("inserting into queue at %u\n", this->queue_idx);
-    // for (auto i = 0; i < 10; i++)
-    //  asm volatile("nop");
-    this->queue[this->queue_idx].data = data;
-    this->queue[this->queue_idx].idx = idx;
-#ifdef COMPARE_HASH
-    this->queue[this->queue_idx].key_hash = hash;
-#endif
-    this->queue_idx++;
-  }
-
-  void add_to_find_queue(void *data) {
-    uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash & (this->capacity - 1);  // modulo
-
-    this->prefetch_read(idx);
-    this->find_queue[this->find_idx].idx = idx;
-    this->find_queue[this->find_idx].data = data;
-
-#ifdef COMPARE_HASH
-    this->queue[this->find_idx].key_hash = hash;
-#endif
-    this->find_idx++;
   }
 
   void add_to_insert_queue(void *data) {
@@ -1017,7 +836,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
   }
 
-  void add_to_find_queue_v2(void *data) {
+  void add_to_find_queue(void *data) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);  // modulo
@@ -1037,30 +856,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     this->find_head++;
     if (this->find_head >= PREFETCH_FIND_QUEUE_SIZE) this->find_head = 0;
-  }
-
-  // fetch items from queue and call find
-  auto find_prefetched_batch() {
-    uint8_t found = 0;
-    this->find_idx = 0;  // start again
-    for (size_t i = 0; i < PREFETCH_FIND_QUEUE_SIZE; i++) {
-      found += __find_one(&this->find_queue[i]);
-    }
-    return found;
-  }
-
-  void __flush_find_queue_v2(size_t qsize, ValuePairs &vp) {
-    for (size_t i = 0; i < qsize; i++) {
-    }
-  }
-
-  uint8_t __flush_find_queue(size_t qsize) {
-    uint8_t found = 0;
-    this->find_idx = 0;  // start again
-    for (size_t i = 0; i < qsize; i++) {
-      found += __find_one(&this->find_queue[i]);
-    }
-    return found;
   }
 };
 

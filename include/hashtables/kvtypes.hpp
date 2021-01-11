@@ -77,8 +77,8 @@ struct Kmer_queue {
 } PACKED;
 
 struct ItemQueue {
-  const void *data;
   uint64_t key;
+  uint64_t value;
   uint32_t key_id;
   uint32_t idx;
 #ifdef COMPARE_HASH
@@ -124,12 +124,16 @@ struct Aggr_KV {
     return true;
   }
 
-  inline bool cas_insert(const void *from, Aggr_KV &empty) {
-    const key_type *key = reinterpret_cast<const key_type *>(from);
-    auto success = __sync_bool_compare_and_swap(&this->key, empty.key, *key);
+  inline bool cas_insert(const void *data) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    const Aggr_KV empty = this->get_empty_key();
+    auto success =
+        __sync_bool_compare_and_swap(&this->key, empty.key, elem->key);
 
     if (success) {
-      this->cas_update(from);
+      this->cas_update(data);
     }
     return success;
   }
@@ -137,6 +141,7 @@ struct Aggr_KV {
   inline bool cas_update(const void *from) {
     auto ret = false;
     uint64_t old_val;
+
     while (!ret) {
       old_val = this->count;
       ret = __sync_bool_compare_and_swap(&this->count, old_val, old_val + 1);
@@ -145,8 +150,9 @@ struct Aggr_KV {
   }
 
   inline bool compare_key(const void *from) {
-    const key_type *key = reinterpret_cast<const key_type *>(from);
-    return this->key == *key;
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(from));
+    return this->key == elem->key;
   }
 
   inline void update_value(const void *from, size_t len) { this->count += 1; }
@@ -487,13 +493,15 @@ struct Item {
     this->kvpair = *kvpair;
   }
 
-  inline bool cas_insert(const void *from, Item &empty) {
-    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
+  inline bool cas_insert(const void *from) {
+    const ItemQueue *elem = reinterpret_cast<const ItemQueue *>(from);
+    const Item empty = this->get_empty_key();
+
     auto success = __sync_bool_compare_and_swap(&this->kvpair.key,
-                                                empty.kvpair.key, kvpair->key);
+                                                empty.kvpair.key, elem->key);
 
     if (success) {
-      this->kvpair.value = kvpair->value;
+      this->update_value(from);
     }
     return success;
   }
@@ -513,19 +521,19 @@ struct Item {
     return this->kvpair.key == kvpair->key;
   }
 
-  inline void update_value(const void *from, size_t len) {
+  inline void update_value(const void *from) {
     const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
     this->kvpair.value = kvpair->value;
   }
 
   inline bool cas_update(const void *from) {
-    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
+    const ItemQueue *elem = reinterpret_cast<const ItemQueue *>(from);
     auto ret = false;
     uint64_t old_val;
     while (!ret) {
       old_val = this->kvpair.value;
       ret = __sync_bool_compare_and_swap(&this->kvpair.value, old_val,
-                                         kvpair->value);
+                                         elem->value);
     }
     return ret;
   }
