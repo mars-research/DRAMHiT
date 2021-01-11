@@ -8,8 +8,8 @@
 #endif
 
 #define BQ_MAGIC_64BIT 0xD221A6BE96E04673UL
-#define BQ_TESTS_BATCH_LENGTH (1ULL << 6)      // 32
-#define BQ_TESTS_DEQUEUE_ARR_LENGTH (1U << 6)  // 1024
+#define BQ_TESTS_BATCH_LENGTH 16
+#define BQ_TESTS_DEQUEUE_ARR_LENGTH 16
 
 namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -34,7 +34,6 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 int *bqueue_halt;
 #endif
 
-#ifdef BQ_TESTS_DO_HT_INSERTS
 struct bq_kmer {
   char data[KMER_DATA_LENGTH];
 } __attribute__((aligned(64)));
@@ -43,7 +42,11 @@ struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 // thread-local since we have multiple consumers
 __thread int data_idx = 0;
 __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-#endif
+__attribute__((
+    aligned(64))) __thread Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+
+uint64_t num_enq_failures[64][64] = {0};
+uint64_t num_deq_failures[64][64] = {0};
 
 void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   Shard *sh = &this->shards[tid];
@@ -52,7 +55,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
   uint64_t k = 0;
   uint8_t this_prod_id = sh->shard_idx;
-  uint8_t cons_id = 0;
+  uint32_t cons_id = 0;
   uint64_t transaction_id;
   queue_t **q = this->prod_queues[this_prod_id];
 #ifdef WITH_VTUNE_LIB
@@ -68,23 +71,25 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
 
-  /* HT_TESTS_NUM_INSERTS enqueues per consumer */
+  // HT_TESTS_NUM_INSERTS enqueues per consumer
   cons_id = 0;
-  auto mult_factor = n_cons / n_prod;
-  auto key_start = HT_TESTS_NUM_INSERTS * mult_factor * tid;
-  // n_prod = 2 ; n_cons = 8;
-  // 64 * 0.75 * 8
+  auto mult_factor = static_cast<double>(n_cons) / n_prod;
+  auto _num_messages = HT_TESTS_NUM_INSERTS * mult_factor;
+  uint64_t num_messages = static_cast<uint64_t>(_num_messages);
+  uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
 
+  printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n", __func__,
+         mult_factor, _num_messages, num_messages);
+  if (key_start == 0) key_start = 1;
   printf(
       "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
       "key_start %lu\n",
-      this_prod_id, HT_TESTS_NUM_INSERTS * mult_factor, consumer_count,
-      key_start);
+      this_prod_id, num_messages, consumer_count, key_start);
 
-  for (transaction_id = 0u;
-       transaction_id < HT_TESTS_NUM_INSERTS * mult_factor;) {
+  for (transaction_id = 0u; transaction_id < num_messages;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
      * consumer */
+
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {
 #ifdef BQ_TESTS_INSERT_XORWOW
       k = xorwow(&xw_state);
@@ -98,6 +103,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
         /* if enqueue fails, move to next consumer queue */
         // printf("[ERROR] Producer %u -> Consumer %u \n", this_prod_id,
         // cons_id);
+        num_enq_failures[this_prod_id][cons_id]++;
         break;
       }
       transaction_id++;
@@ -111,6 +117,15 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
 
     ++cons_id;
     if (cons_id >= consumer_count) cons_id = 0;
+
+    auto get_next_cons = [&](auto inc) {
+      auto next_cons_id = cons_id + inc;
+      if (next_cons_id >= consumer_count) next_cons_id -= consumer_count;
+      return next_cons_id;
+    };
+
+    prefetch_queue(q[get_next_cons(2)], true);
+    prefetch_queue_data(q[get_next_cons(1)], true);
   }
 
 #ifdef BQ_TESTS_USE_HALT
@@ -139,10 +154,10 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   uint8_t finished_producers = 0;
   uint64_t k = 0;
   uint64_t transaction_id = 0;
-  uint8_t prod_id = 0;
+  uint32_t prod_id = 0;
   uint8_t this_cons_id = sh->shard_idx - producer_count;
   queue_t **q = this->cons_queues[this_cons_id];
-
+  uint64_t inserted = 0u;
 #ifdef WITH_VTUNE_LIB
   std::string thread_name("consumer_thread" + std::to_string(tid));
   printf("%s, thread_name %s\n", __func__, thread_name.c_str());
@@ -172,35 +187,42 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
         /* move on to next producer queue to dequeue */
         // printf("[ERROR] Consumer %u <- Producer %u \n", sh->shard_idx,
         // prod_id);
+        num_deq_failures[tid][prod_id]++;
+
         break;
       }
 
-      if ((data_t)k != BQ_MAGIC_64BIT) {
-#ifdef BQ_TESTS_DO_HT_INSERTS
-        /* Save kmer into array*/
-        // memcpy(&bq_kmers[data_idx].data, &k, sizeof(k));
-        // uint64_t key = k;
-        keys[data_idx] = k;
-        /* insert kmer into HT */
-        // kmer_ht->insert((void *)&bq_kmers[data_idx]);
-        // kmer_ht->insert((void *)&key);
-        for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
-
-        data_idx++;
-        if (data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
-          data_idx = 0;
-          for (auto j = 0u; j < BQ_TESTS_DEQUEUE_ARR_LENGTH; j++) {
-            kmer_ht->insert((void *)&keys[j]);
-          }
-        }
-#endif
-      } else {
-        // if ((data_t)k == BQ_MAGIC_64BIT) {
+      if ((data_t)k == BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
         printf(
             "[INFO] Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u\n",
             this_cons_id, prod_id, finished_producers);
+        continue;
+      }
+
+      if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+        _items[data_idx].key = _items[data_idx].id = k;
+
+        for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
+
+        if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
+          KeyPairs kp = std::make_pair(BQ_TESTS_DEQUEUE_ARR_LENGTH, &_items[0]);
+
+          auto get_next_prod = [&](auto inc) {
+            auto next_prod_id = prod_id + inc;
+            if (next_prod_id >= producer_count) next_prod_id -= producer_count;
+            return next_prod_id;
+          };
+
+          prefetch_queue(q[get_next_prod(2)], false);
+          prefetch_queue_data(q[get_next_prod(1)], false);
+
+          kmer_ht->insert_batch(kp);
+          inserted += kp.first;
+
+          data_idx = 0;
+        }
       }
 
       transaction_id++;
@@ -222,6 +244,8 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
+  printf("%s, cons_id %d | inserted %lu elements\n", __func__, this_cons_id,
+         inserted);
   printf(
       "[INFO] Quick Stats: Consumer %u finished, receiving %lu messages "
       "(cycles per message %lu) prod_count %u | finished %u\n",

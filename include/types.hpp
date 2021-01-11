@@ -27,6 +27,14 @@ constexpr BRANCHKIND branching = BRANCHKIND::NoBranch_Simd;
 constexpr BRANCHKIND branching = BRANCHKIND::WithBranch;
 #endif
 
+enum class BQUEUE_LOAD { None, HtInsert };
+
+#if defined(BQ_TESTS_DO_HT_INSERTS)
+constexpr BQUEUE_LOAD bq_load = BQUEUE_LOAD::HtInsert;
+#else
+constexpr BQUEUE_LOAD bq_load = BQUEUE_LOAD::HtInsert;
+#endif
+
 #if defined(BRANCHLESS_SIMD) && defined(BRACNHLESS_CMOVE)
 #error "BRACHLESS_SIMD and BRANCHLESS_CMOVE options cannot be enabled together"
 #endif
