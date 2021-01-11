@@ -727,8 +727,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return static_cast<__mmask8>(copy_mask);
     };
 
-    auto blend = [](__m512i &cacheline, __m512i kv_vector,
-                       __mmask8 mask) {
+    auto blend = [](__m512i &cacheline, __m512i kv_vector, __mmask8 mask) {
       cacheline = _mm512_mask_blend_epi64(mask, cacheline, kv_vector);
     };
 
