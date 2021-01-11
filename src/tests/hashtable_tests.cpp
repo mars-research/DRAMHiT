@@ -34,7 +34,7 @@ void until_use_ready(uint8_t tid)
 {
     while(tid!=0 && !use_ready){}
 }
-void until_ready(uint8_t tid)
+inline void until_ready(uint8_t tid)
 {
     while(ready!=tid){}
 }
@@ -42,10 +42,7 @@ void until_ready(uint8_t tid)
 //#define HT_SIZE (config.ht_size/config.num_threads)
 //#define INS_SIZE ((config.ht_size*config.ht_fill)/(100*config.num_threads))
 
-#define MAX_THREADS 64
-uint64_t start[MAX_THREADS];
-uint64_t end[MAX_THREADS];
-
+/*
 uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t tid) {
   uint64_t count = 0;//HT_TESTS_NUM_INSERTS * tid;
   auto k = 0;
@@ -199,7 +196,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   // kmer_ht->display();
 #endif
 }
-
+*/
 void SynthTest::insert_test(Shard *sh, BaseHashTable *kmer_ht) {
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;

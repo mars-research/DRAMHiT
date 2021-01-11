@@ -62,7 +62,7 @@ const Configuration def = {
     .ht_fill = 25,
 
     .seed = 1,
-    .zipf_theta = 0.99;
+    .zipf_theta = 0.99}; //2 seconds to compute 32 bits with 16 threads // TODO enum
 
 /* global config */
 Configuration config;
@@ -260,13 +260,17 @@ done:
 
 
 
-
 void pregen(uint64_t* m, uint64_t start, uint64_t end, int cpu, int nr_cpus )
 {
   uint64_t t_start, t_end;
   t_start = RDTSC_START();
   ZipfGen(config.distr_range, config.zipf_theta, cpu*config.seed, cpu, nr_cpus);
+
+    printf("[INFO]]Core %u: done with zipfgen\n", cpu);
+  //until_ready(cpu);
+    printf("[INFO]]Core %u: starting gen\n", cpu);
   generate(m, start, end);
+  //++ready2;
   t_end = RDTSCP();
   printf("[INFO] Thread %u: Generate %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", cpu, end-start, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/(end-start));
 }
@@ -292,8 +296,8 @@ void Application::alloc_distribution() {
   {
     start = ((double)cpu/nr_cpus)*config.distr_length;
     end = ((double)(cpu+1)/nr_cpus)*config.distr_length;
-    //printf("[INFO] Node %u Core %u: Creating Node allocation thread\n", nd, nodes[nd].cpu_list[0]);
     auto _thread = std::thread(&pregen, mem, start, end, cpu, nr_cpus);
+    
     
     CPU_ZERO(&cpuset);
     CPU_SET(cpu, &cpuset);
@@ -307,6 +311,7 @@ void Application::alloc_distribution() {
   printf("[INFO] Node %u Thread 'main' Core %u: Creating Node allocation thread\n", 0, main_cpu);
   pregen(mem, start, end, main_cpu, nr_cpus);
   
+  printf("here\n");
   for (auto &thrd : threads) 
   {
     if (thrd.joinable()) 
@@ -510,7 +515,7 @@ int Application::process(int argc, char *argv[]) {
         ("seed", po::value<uint64_t>(&config.seed)->default_value(def.seed),
         "Seed value for psuedo-random generation ")
         ("zipf-theta", po::value<double>(&config.zipf_theta)->default_value(def.zipf_theta),
-        "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ")
+        "Parameter describing skewness of Zipfian distribution, value = {-1}U[0-1)U[40, inf) ");
 
     papi_init();
 
@@ -607,7 +612,14 @@ int Application::process(int argc, char *argv[]) {
   } else {
     config.distr_length = (config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE)/100;
     config.distr_range = config.distr_length;
-    
+
+  printf("range: %lu\n",HT_TESTS_HT_SIZE);
+  printf("range: %lu\n",config.num_threads);
+  printf("range: %lu\n",config.ht_fill);
+  printf("range: %lu\n",config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE);
+  printf("range: %lu\n",(config.ht_fill*config.num_threads*HT_TESTS_HT_SIZE) /100);
+  printf("range: %lu\n",config.distr_length );
+  printf("range: %lu\n",config.distr_range );
     this->alloc_distribution();
     this->spawn_shard_threads();
     this->free_distribution();

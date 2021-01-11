@@ -112,7 +112,7 @@ void generate(uint64_t* m, uint64_t start, uint64_t end)
       //next returns a number from [0 - config.range]
       //insert has issues if key inserted is 0 so add 1
       m[i] = next()+1; //TODO: modify to return key instead i.e. "keys[next()]"
-      //printf("%lu\n", m[i]);
+      printf("%lu\n", m[i]);
   }
 }
 
@@ -152,6 +152,8 @@ uint64_t theta_next(int id) {
     return 1UL;//2UL;//
   }
   else {
+
+    printf("[INFO]]Core %u: Creating Node allocation thread\n", id);
     uint64_t v = (uint64_t)(dbl_n_ * pow_approx(eta_ * (u - 1.) + 1., alpha_));
     if (v >= n_) 
     {
