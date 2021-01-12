@@ -557,6 +557,27 @@ struct Item {
     return this->kvpair.key == empty.kvpair.key;
   }
 
+  inline uint64_t find_key_regular_v2(const void *data, uint64_t *retry,
+                                      ValuePairs &vp) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+    auto found = false;
+    *retry = 0;
+    if (this->is_empty()) {
+      goto exit;
+    } else if (this->kvpair.key == elem->key) {
+      found = true;
+      vp.second[vp.first].value = this->kvpair.value;
+      vp.second[vp.first].id = elem->key_id;
+      vp.first++;
+      goto exit;
+    } else {
+      *retry = 1;
+    }
+  exit:
+    return found;
+  }
+
   inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
                                      ValuePairs &vp) {
     ItemQueue *item =

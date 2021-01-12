@@ -95,7 +95,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       /* For the CAS Hash table, size is the same as
           size of one partitioned ht * number of threads */
       kmer_ht =
-          new CASHashTable<Aggr_KV, ItemQueue>(sz);  // * config.num_threads);
+          new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
     case CAS_NOPREFETCH:
       kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
