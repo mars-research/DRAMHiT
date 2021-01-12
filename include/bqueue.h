@@ -69,6 +69,7 @@ typedef struct queue_t {
   uint64_t start_c __attribute__((aligned(64)));
   uint64_t stop_c;
 
+  uint64_t backtrack_count;
   /* accessed by both producer and comsumer */
   data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
 } __attribute__((aligned(64))) queue_t;
