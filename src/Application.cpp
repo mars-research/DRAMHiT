@@ -343,7 +343,8 @@ int Application::process(int argc, char *argv[]) {
         "\n8/9: Bqueue tests: with bqueues/without bequeues"
         "\n12/13/14/15/16: Lock tests:"
         "\n    Spinlock\n    Atomic\n    CAS"
-        "\n    Uncontended lock\n    Uncontended increment")(
+        "\n    Uncontended lock\n    Uncontended CAS"
+        "\n    Uncontended increment")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -501,6 +502,8 @@ int Application::process(int argc, char *argv[]) {
     this->test.lt.uncontended_increment_test_run(config);
   } else if (config.mode == LOCK_TEST_UNCONTENDED_LOCK) {
     this->test.lt.uncontended_lock_test_run(config);
+  } else if (config.mode == LOCK_TEST_UNCONTENDED_CAS) {
+    this->test.lt.uncontended_cas_test_run(config);
   } else {
     this->spawn_shard_threads();
   }

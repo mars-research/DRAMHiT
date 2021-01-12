@@ -126,6 +126,21 @@ void uncontended_lock_increment(std::size_t id,
   cycles += (t_end - t_start);
 }
 
+// uncontended cas
+void uncontended_cas_increment(std::size_t id,
+                               std::atomic<std::size_t>& cycles) {
+  auto __attribute__((aligned(64))) counter = CAS_counter{};
+
+  uint64_t t_start = RDTSC_START();
+  for (uint64_t i = 0; i < NUM_INCREMENTS; i++) {
+    counter.increment();
+  }
+  uint64_t t_end = RDTSCP();
+
+  printf("[INFO]: thread: %zu cycles: %zu\n", id, t_end - t_start);
+  cycles += (t_end - t_start);
+}
+
 // uncontended increment
 void uncontended_increment(std::size_t id, std::atomic<std::size_t>& cycles) {
   // counter is volatile to avoid optimizations that prevent
@@ -244,6 +259,35 @@ void LockTest::uncontended_lock_test_run(Configuration const& cfg) {
     // start threads
     for (std::size_t i = 0; i < cfg.num_threads; i++) {
       threads.emplace_back(uncontended_lock_increment, i, std::ref(cycles));
+    }
+
+    // wait for them to finish executing
+    for (auto& thread : threads) {
+      thread.join();
+    }
+
+    // each thread increments cycles by the number of cycles it took
+    // for all increment operations; compute average
+    auto avg = static_cast<double>(cycles) / (NUM_INCREMENTS * cfg.num_threads);
+
+    printf("[INFO] Quick stats: cycles per increment: %f\n", avg);
+    avgs.push_back(avg);
+  }
+  double total = std::accumulate(avgs.begin(), avgs.end(), 0.0);
+  printf("[INFO] Final stats: average cycles per increment: %f\n", total / TEST_REPS);
+}
+
+void LockTest::uncontended_cas_test_run(Configuration const& cfg) {
+  printf("[INFO] Uncontended CAS test run: threads %u, insertions:%lu\n",
+         cfg.num_threads, NUM_INCREMENTS);
+  auto avgs = std::vector<double>{};
+  for (auto i = 0; i < TEST_REPS; i++) {
+    auto cycles = std::atomic<std::size_t>{0};
+    auto threads = std::vector<std::thread>{};
+
+    // start threads
+    for (std::size_t i = 0; i < cfg.num_threads; i++) {
+      threads.emplace_back(uncontended_cas_increment, i, std::ref(cycles));
     }
 
     // wait for them to finish executing

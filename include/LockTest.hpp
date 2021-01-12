@@ -13,6 +13,7 @@ struct LockTest {
   void cas_increment_test_run(Configuration const&);
   void uncontended_increment_test_run(Configuration const&);
   void uncontended_lock_test_run(Configuration const&);
+  void uncontended_cas_test_run(Configuration const&);
 };
 
 } // namespace kmercounter
