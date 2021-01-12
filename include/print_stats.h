@@ -170,19 +170,24 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   else if(config.synth_test == FIND)
   printf("Total  : %lu cycles (%f ms) for %lu insertions\n", total_find_cycles,
          (double)total_find_time_ns / 1000000.0, total_finds);
+
   {
-    unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
-
-    unsigned long cycles_per_find = total_find_cycles / total_finds;
-
     unsigned long num_threads = config.num_threads;
     if (config.mode == BQ_TESTS_YES_BQ) {
       num_threads = config.n_cons;
     }
-    printf("Number of insertions per sec (Mops/s): %.3f\n",
-           ((double)2600 / cycles_per_insert) * num_threads);
-    printf("Number of finds per sec (Mops/s): %.3f\n",
-           ((double)2600 / cycles_per_find) * num_threads);
+    if(config.synth_test == INSERT)
+    {
+      unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
+      printf("Number of insertions per sec (Mops/s): %.3f\n",
+            ((double)2600 / cycles_per_insert) * num_threads);
+    }
+    else if(config.synth_test == FIND)
+    {
+      unsigned long cycles_per_find = total_find_cycles / total_finds;
+      printf("Number of finds per sec (Mops/s): %.3f\n",
+            ((double)2600 / cycles_per_find) * num_threads);
+    }
   }
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "

@@ -631,15 +631,10 @@ int Application::process(int argc, char *argv[]) {
   {
     //Compute input dependent values
     config.ht_size = config.ht_size_factor*(1<<config.ht_size_pow);
-    if(config.ht_type == CAS_KHT)
-    {
-      config.distr_length = (config.ht_fill*config.ht_size)/100;
-    }
-    else
-    {
-      config.distr_length = (config.ht_fill*config.num_threads*config.ht_size)/100; 
-    }
-    config.distr_range = config.distr_length;
+    if(config.ht_type == CAS_KHT){config.distr_length = (config.ht_fill*config.ht_size)/100;}
+    else{config.distr_length = (config.ht_fill*config.num_threads*config.ht_size)/100; }
+    if(config.synth_test == INSERT){config.distr_range = (1LL<<32);}
+    else if(config.synth_test == FIND){config.distr_range = config.distr_length;}
 
     this->alloc_distr();
     this->spawn_shard_threads();

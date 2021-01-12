@@ -57,7 +57,7 @@ void SynthTest::insert_test(Shard *sh, BaseHashTable *kmer_ht) {
     }
     t_end = RDTSCP();
     printf("[INFO] Inserted %lu elements in %lu cycles (%f ms) at rate of %lu cycles/element\n", num_inserts, t_end-t_start, (double)(t_end-t_start) * one_cycle_ns / 1000000.0, (t_end-t_start)/num_inserts);
-    printf("[INFO] Quick stats: thread %u, Batch size: %d, cycles per insertion:%lu \n", sh->shard_idx, i, (t_end - t_start) / num_inserts);
+    printf("[INFO] Quick stats: thread %u, Batch size: %d, cycles per insertion:%lu \n", sh->shard_idx, HT_TESTS_BATCH_LENGTH, (t_end - t_start) / num_inserts);
 
 #ifdef CALC_STATS
     printf(" Reprobes %lu soft_reprobes %lu\n", kmer_ht->num_reprobes,
