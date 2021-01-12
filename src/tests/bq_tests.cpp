@@ -185,7 +185,8 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   fipc_test_FAI(completed_producers);
 }
 #else
-void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
+void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
+                                 bool main_thread) {
   Shard *sh = &this->shards[tid];
 
   sh->stats =
@@ -206,9 +207,22 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   xorwow_init(&xw_state);
 #endif
 
-  fipc_test_FAI(ready_producers);
-  while (!test_ready) fipc_test_pause();
-  fipc_test_mfence();
+  if (main_thread) {
+    // Wait for threads to be ready for test
+    while (ready_consumers < consumer_count) fipc_test_pause();
+    // main thread is a producer, but won't increment!
+    while (ready_producers < (producer_count - 1)) fipc_test_pause();
+
+    fipc_test_mfence();
+
+    // Signal begin
+    test_ready = 1;
+    fipc_test_mfence();
+  } else {
+    fipc_test_FAI(ready_producers);
+    while (!test_ready) fipc_test_pause();
+    fipc_test_mfence();
+  }
 
   // HT_TESTS_NUM_INSERTS enqueues per consumer
   cons_id = 0;
@@ -217,16 +231,15 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   uint64_t num_messages = static_cast<uint64_t>(_num_messages);
   uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
 
-  printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n", __func__,
-         mult_factor, _num_messages, num_messages);
+  // printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n", __func__,
+  //        mult_factor, _num_messages, num_messages);
   if (key_start == 0) key_start = 1;
-  printf(
-      "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
-      "key_start %lu\n",
-      this_prod_id, num_messages, consumer_count, key_start);
+  // printf(
+  //     "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
+  //     "key_start %lu\n",
+  //     this_prod_id, num_messages, consumer_count, key_start);
 
   auto hash_to_cpu = [&](auto hash) {
-    // return (hash * 11400714819323198485llu) & (n_cons - 1);
     // return (hash * 11400714819323198485llu) % n_cons;
     return hash % n_cons;
   };
@@ -258,6 +271,9 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
         goto retry;
         // break;
       }
+      // printf("%s[%d], enqueuing to q[%d] = %p\n", __func__, this_prod_id,
+      // cons_id, q[cons_id]);
+
       {
         // | 0 | 1 | .... | 7 |
         auto *_q = q[cons_id];
@@ -306,7 +322,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
     transaction_id++;
   }
 #endif
-
+  // main thread will also increment this
   fipc_test_FAI(completed_producers);
 }
 #endif
@@ -382,6 +398,8 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
         }
         break;
       }
+      // printf("%s[%d], dequeing from q[%d] = %p\n", __func__, this_cons_id,
+      // prod_id, q[prod_id]);
 
       auto *_q = q[prod_id];
       if ((_q->tail & 7) == 0) {
@@ -569,7 +587,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   uint32_t num_cpus = static_cast<uint32_t>(this->n->get_num_total_cpus());
 
   /* num_nodes cpus not available TODO Verify this logic*/
-  if (this->cfg->n_prod + this->cfg->n_cons + num_nodes > num_cpus) {
+  if (this->cfg->n_prod + this->cfg->n_cons > num_cpus) {
     fprintf(stderr,
             "[ERROR] producers (%u) + consumers (%u) exceeded number of "
             "available CPUs (%u)\n",
@@ -601,59 +619,64 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
 
   fipc_test_mfence();
 
-  /* Thread Allocation */
-  this->prod_threads = new std::thread[producer_count];
-  this->cons_threads = new std::thread[consumer_count];
-
-  /* Spawn producer threads */
+  // Spawn producer threads
   for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
+    // skip the first CPU, we'll launch producer on this
+    if (assigned_cpu == 0) continue;
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
-    this->prod_threads[i] = std::thread(&BQueueTest::producer_thread, this, i,
-                                        cfg->n_prod, cfg->n_cons);
+    auto _thread = std::thread(&BQueueTest::producer_thread, this, i,
+                               cfg->n_prod, cfg->n_cons, false);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
-    pthread_setaffinity_np(prod_threads[i].native_handle(), sizeof(cpu_set_t),
-                           &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+    this->prod_threads.push_back(std::move(_thread));
     printf("[INFO]: Thread producer_thread: %u, affinity: %u\n", i,
            assigned_cpu);
     i += 1;
   }
 
-  /* Spawn consumer threads */
-  i = producer_count;
-  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
-    Shard *sh = &this->shards[i];
-    sh->shard_idx = i;
-    this->cons_threads[j] =
-        std::thread(&BQueueTest::consumer_thread, this, i, cfg->num_nops);
-    CPU_ZERO(&cpuset);
-    CPU_SET(assigned_cpu, &cpuset);
-    pthread_setaffinity_np(this->cons_threads[j].native_handle(),
-                           sizeof(cpu_set_t), &cpuset);
-    printf("[INFO]: Thread consumer_thread: %u, affinity: %u\n", i,
-           assigned_cpu);
-    i += 1;
-    j += 1;
-  }
-
-  /* pin this thread to last cpu of last node. */
-  /* TODO don't waste one thread on synchronization  */
+  printf("%s, creating cons threads i %d \n", __func__, i);
+  Shard *main_sh = &this->shards[i];
+  main_sh->shard_idx = i;
   CPU_ZERO(&cpuset);
-  uint32_t last_cpu = this->npq->get_unassigned_cpu_list()[0];
+  uint32_t last_cpu = 0;
   CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
   printf("[INFO]: Thread 'controller': affinity: %u\n", last_cpu);
 
-  /* Wait for threads to be ready for test */
-  while (ready_consumers < consumer_count) fipc_test_pause();
-  while (ready_producers < producer_count) fipc_test_pause();
+  // Spawn consumer threads
+  i = producer_count;
+  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
+    printf("%s, i %d assigned cpu %d\n", __func__, i, assigned_cpu);
+    Shard *sh = &this->shards[i];
+    sh->shard_idx = i;
+    auto _thread =
+        std::thread(&BQueueTest::consumer_thread, this, i, cfg->num_nops);
+    CPU_ZERO(&cpuset);
+    CPU_SET(assigned_cpu, &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+    printf("[INFO]: Thread consumer_thread: %u, affinity: %u\n", i,
+           assigned_cpu);
+    this->cons_threads.push_back(std::move(_thread));
+    i += 1;
+    j += 1;
+  }
 
-  fipc_test_mfence();
+  {
+    printf("Running master thread with id %d\n", main_sh->shard_idx);
+    this->producer_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true);
+  }
 
-  /* Begin Test */
-  test_ready = 1;
-  fipc_test_mfence();
+  // // Wait for threads to be ready for test
+  // while (ready_consumers < consumer_count) fipc_test_pause();
+  // while (ready_producers < producer_count) fipc_test_pause();
+
+  // fipc_test_mfence();
+
+  // /* Begin Test */
+  // test_ready = 1;
+  // fipc_test_mfence();
 
   /* Wait for producers to complete */
   while (completed_producers < producer_count) fipc_test_pause();
@@ -670,16 +693,13 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
 
   /* Tell consumers to halt once producers are done */
   // return 0;
-  for (auto i = 0u; i < cfg->n_prod; i++) {
-    if (this->prod_threads[i].joinable()) {
-      this->prod_threads[i].join();
-    }
+
+  for (auto &th : this->prod_threads) {
+    th.join();
   }
 
-  for (auto i = 0u; i < cfg->n_cons; i++) {
-    if (this->cons_threads[i].joinable()) {
-      this->cons_threads[i].join();
-    }
+  for (auto &th : this->cons_threads) {
+    th.join();
   }
   /* TODO free everything */
 }

@@ -11,8 +11,8 @@
 namespace kmercounter {
 
 class BQueueTest {
-  std::thread *prod_threads;
-  std::thread *cons_threads;
+  std::vector<std::thread> prod_threads;
+  std::vector<std::thread> cons_threads;
   Shard *shards;
   Configuration *cfg;
   Numa *n;
@@ -25,7 +25,7 @@ class BQueueTest {
  public:
   void no_bqueues(Shard *sh, BaseHashTable *kmer_ht);
   void run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
-  void producer_thread(int tid, int n_prod, int n_cons);
+  void producer_thread(int tid, int n_prod, int n_cons, bool main_thread);
   void consumer_thread(int tid, uint32_t num_nops);
   void init_queues(uint32_t nprod, uint32_t ncons);
 };
