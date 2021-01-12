@@ -32,7 +32,7 @@ enum class BQUEUE_LOAD { None, HtInsert };
 #if defined(BQ_TESTS_DO_HT_INSERTS)
 constexpr BQUEUE_LOAD bq_load = BQUEUE_LOAD::HtInsert;
 #else
-constexpr BQUEUE_LOAD bq_load = BQUEUE_LOAD::HtInsert;
+constexpr BQUEUE_LOAD bq_load = BQUEUE_LOAD::None;
 #endif
 
 #if defined(BRANCHLESS_SIMD) && defined(BRACNHLESS_CMOVE)

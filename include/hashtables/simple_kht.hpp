@@ -834,7 +834,20 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void add_to_insert_queue(void *data) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
-    uint64_t hash = this->hash((const char *)&key_data->key);
+    uint64_t hash = 0;
+    uint64_t key = 0;
+
+    // TODO: bq_load is broken. We need something else
+    // uncomment this block for running bqueue prod/cons tests
+    // if constexpr(bq_load == BQUEUE_LOAD::HtInsert) {
+    //  hash = key_data->key >> 32;
+    //  key = key_data->key & 0xFFFFFFFF;
+    //} else
+    {
+      hash = this->hash((const char *)&key_data->key);
+      key = key_data->key & 0xFFFFFFFF;
+    }
+
     size_t idx = hash & (this->capacity - 1);  // modulo
 
     // cout << " -- Adding " << key_data->key  << " at " << this->ins_head <<
@@ -842,7 +855,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->prefetch(idx);
 
     this->insert_queue[this->ins_head].idx = idx;
-    this->insert_queue[this->ins_head].key = key_data->key;
+    this->insert_queue[this->ins_head].key = key;
     this->insert_queue[this->ins_head].key_id = key_data->id;
 
 #ifdef COMPARE_HASH
