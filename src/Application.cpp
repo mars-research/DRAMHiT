@@ -341,8 +341,8 @@ int Application::process(int argc, char *argv[]) {
         "\n5: Read FASTQ, but do not insert to ht (specify --in_file) "
         "\n6/7: Synth/Prefetch,"
         "\n8/9: Bqueue tests: with bqueues/without bequeues"
-        "\n12/13/14/15: Lock tests:"
-        "\n    Spinlock\n    Atomic"
+        "\n12/13/14/15/16: Lock tests:"
+        "\n    Spinlock\n    Atomic\n    CAS"
         "\n    Uncontended lock\n    Uncontended increment")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
@@ -495,6 +495,8 @@ int Application::process(int argc, char *argv[]) {
     this->test.lt.spinlock_increment_test_run(config);
   } else if (config.mode == LOCK_TEST_ATOMIC_INC) {
     this->test.lt.atomic_increment_test_run(config);
+  } else if (config.mode == LOCK_TEST_CAS_INC) {
+    this->test.lt.cas_increment_test_run(config);
   } else if (config.mode == LOCK_TEST_UNCONTENDED_INC) {
     this->test.lt.uncontended_increment_test_run(config);
   } else if (config.mode == LOCK_TEST_UNCONTENDED_LOCK) {
