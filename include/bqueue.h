@@ -48,10 +48,12 @@ typedef struct node {
   uint64_t field;
 } CACHE_ALIGNED node_t;
 
-#define ADAPTIVE 1
+#define ADAPTIVE 0
 #define BACKTRACKING 1
 #define PROD_BATCH 1
 #define CONS_BATCH 1
+//#define OPTIMIZE_BACKTRACKING
+#define OPTIMIZE_BACKTRACKING2
 
 #if defined(CONS_BATCH) || defined(PROD_BATCH)
 
@@ -70,6 +72,7 @@ typedef struct queue_t {
   uint64_t stop_c;
 
   uint64_t backtrack_count;
+  uint64_t backtrack_flag;
   /* accessed by both producer and comsumer */
   data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
 } __attribute__((aligned(64))) queue_t;
@@ -117,7 +120,7 @@ int init_queue(queue_t* q);
 int free_queue(queue_t* q);
 int enqueue(queue_t* q, data_t d);
 int dequeue(queue_t* q, data_t* d);
-void prefetch_queue(queue_t* q, bool producer);
+void prefetch_queue(queue_t* q);
 void prefetch_queue_data(queue_t* q, bool producer);
 
 // Request Types

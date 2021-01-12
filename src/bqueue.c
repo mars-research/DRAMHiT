@@ -24,8 +24,6 @@
 
 #include "bqueue.h"
 
-#define OPTIMIZE_BACKTRACKING
-
 static data_t ELEMENT_ZERO = 0x0UL;
 
 int init_queue(queue_t *q) {
@@ -98,6 +96,12 @@ static inline int backtracking(queue_t *q) {
 
 #if defined(BACKTRACKING)
   unsigned long batch_size = q->batch_history;
+#if defined(OPTIMIZE_BACKTRACKING2)
+  if ((!q->data[tmp_tail]) && !q->backtrack_flag) {
+    return -1;
+  }
+#endif
+
 #if defined(OPTIMIZE_BACKTRACKING)
   if ((!q->data[tmp_tail]) && (q->backtrack_count++ & 255)) {
     return -1;
@@ -135,13 +139,7 @@ static inline int backtracking(queue_t *q) {
 
 // Prefetch the queue itself
 // We observed cache misses for `q` on VTune
-void prefetch_queue(queue_t *q, bool producer) {
-  if (producer) {
-    __builtin_prefetch(q, 1, 3);
-  } else {
-    __builtin_prefetch(q, 1, 3);
-  }
-}
+void prefetch_queue(queue_t *q) { __builtin_prefetch(q, 1, 3); }
 
 // Prefetch the queue data
 void prefetch_queue_data(queue_t *q, bool producer) {
@@ -151,10 +149,17 @@ void prefetch_queue_data(queue_t *q, bool producer) {
     __builtin_prefetch(&q->data[q->head + 4 * 2], 1, 3);
     __builtin_prefetch(&q->data[q->head + 4 * 3], 1, 3);
   } else {
-    __builtin_prefetch(&q->data[q->tail + 4 * 0], 1, 3);
-    __builtin_prefetch(&q->data[q->tail + 4 * 1], 1, 3);
-    __builtin_prefetch(&q->data[q->tail + 4 * 2], 1, 3);
-    __builtin_prefetch(&q->data[q->tail + 4 * 3], 1, 3);
+    uint32_t new_tail = (q->tail + 8) & (QUEUE_SIZE - 1);
+    __builtin_prefetch(&q->data[q->tail], 1, 3);
+    __builtin_prefetch(&q->data[new_tail], 1, 3);
+    new_tail = (q->tail + 16) & (QUEUE_SIZE - 1);
+    __builtin_prefetch(&q->data[new_tail], 1, 3);
+    new_tail = (q->tail + 24) & (QUEUE_SIZE - 1);
+    __builtin_prefetch(&q->data[new_tail], 1, 3);
+    //__builtin_prefetch(&q->data[q->tail + 4 * 0], 1, 3);
+    //__builtin_prefetch(&q->data[q->tail + 4 * 1], 1, 3);
+    //__builtin_prefetch(&q->data[q->tail + 4 * 2], 1, 3);
+    //__builtin_prefetch(&q->data[q->tail + 4 * 3], 1, 3);
   }
 }
 
