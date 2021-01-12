@@ -40,11 +40,19 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
 #else
     // *((uint64_t *)&kmers[k].data) = count;
-    *((uint64_t *)items[k].key()) = count;
-    *((uint64_t *)items[k].value()) = count;
+    //*((uint64_t *)items[k].key()) = count;
+    //*((uint64_t *)items[k].value()) = count;
     keys[k] = count;
     _items[k].key = count;
 #endif
+
+#ifdef NO_PREFETCH
+#warning "Compiling no prefetch"
+    ktable->insert_noprefetch((void *)&keys[k]);
+    k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+    count++;
+#else
+
     // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
     // printf("%s, inserting i= %d\n", __func__, i);
     // ktable->insert((void *)&kmers[k]);
@@ -61,6 +69,7 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       inserted += kp.first;
       // ktable->insert_noprefetch((void *)&keys[k]);
     }
+#endif  //NO_PREFETCH
     // k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
 #if defined(SAME_KMER)
     count++;
@@ -69,7 +78,9 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   printf("%s, inserted %lu items\n", __func__, inserted);
   // flush the last batch explicitly
   // printf("%s calling flush queue\n", __func__);
+#if !defined(NO_PREFETCH)
   ktable->flush_insert_queue();
+#endif
   // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
   return i;
 }
@@ -80,6 +91,7 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
   uint64_t found = 0, not_found = 0;
   if (start == 0) count = 1;
 
+  __attribute__((aligned(64))) uint64_t keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
   Values *values;
@@ -94,10 +106,18 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 #else
     items[k].key = count;
     items[k].id = count;
-    k++;
+    keys[k] = count;
     count++;
 #endif
-    if (k == HT_TESTS_FIND_BATCH_LENGTH) {
+
+#ifdef NO_PREFETCH
+    {
+      void *kv = ktable->find_noprefetch(&items[k]);
+      if (kv) found += 1;
+      k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+    }
+#else
+    if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
       // printf("%s, calling find_batch i = %d\n", __func__, i);
       // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
@@ -109,13 +129,16 @@ uint64_t SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
       // printf("\t count %lu | found -> %lu | not_found -> %lu \n", count,
       // found, not_found);
     }
+#endif  // NO_PREFETCH
     // printf("\t count %lu | found -> %lu\n", count, found);
   }
+#if !defined(NO_PREFETCH)
   if (vp.first > 0) {
     vp.first = 0;
   }
   ktable->flush_find_queue(vp);
   found += vp.first;
+#endif
   return found;
 }
 

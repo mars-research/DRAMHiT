@@ -82,7 +82,11 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
-  bool insert(const void *data) { return false; }
+  bool insert(const void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+    return false;
+  }
 
   // insert a batch
   void insert_batch(KeyPairs &kp) override {
@@ -181,9 +185,14 @@ class CASHashTable : public BaseHashTable {
 
     // printf("Thread %lu: Trying memcmp at: %lu\n", this->thread_id, idx);
     for (auto i = 0u; i < this->capacity; i++) {
+
       idx = idx & (this->capacity - 1);
       curr = &this->hashtable[idx];
-      if (curr->compare_key(data)) {
+
+      if (curr->is_empty()) {
+        found = false;
+        goto exit;
+      } else if (curr->compare_key(data)) {
         found = true;
         break;
       }
@@ -199,6 +208,7 @@ class CASHashTable : public BaseHashTable {
     }
     this->sum_distance_from_bucket += distance_from_bucket;
 #endif
+exit:
     // return empty_element if nothing is found
     if (!found) {
       curr = &this->empty_item;

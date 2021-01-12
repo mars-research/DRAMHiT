@@ -316,11 +316,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
     this->sum_distance_from_bucket += distance_from_bucket;
 #endif
+  exit:
     // return empty_element if nothing is found
     if (!found) {
       curr = &this->empty_item;
     }
-  exit:
     return curr;
   }
 
