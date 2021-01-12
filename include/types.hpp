@@ -130,6 +130,11 @@ struct Values {
   uint64_t id;
 };
 
+enum class QueueType {
+  insert_queue,
+  find_queue,
+};
+
 using ValuePairs = std::pair<uint32_t, Values *>;
 using KeyPairs = std::pair<uint32_t, Keys *>;
 

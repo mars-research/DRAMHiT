@@ -818,6 +818,20 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return curr->get_value();
   }
 
+  void prefetch_queue(QueueType qtype) override {
+    if (qtype == QueueType::insert_queue) {
+      auto _ins_head = this->ins_head;
+      __builtin_prefetch(&this->insert_queue[_ins_head], 1, 3);
+      _ins_head = this->ins_head + (64 / sizeof(KVQ));
+      __builtin_prefetch(&this->insert_queue[_ins_head], 1, 3);
+    } else if (qtype == QueueType::find_queue) {
+      auto _find_head = this->find_head;
+      __builtin_prefetch(&this->insert_queue[_find_head], 1, 3);
+      _find_head = this->find_head + (64 / sizeof(KVQ));
+      __builtin_prefetch(&this->insert_queue[_find_head], 1, 3);
+    }
+  }
+
   void add_to_insert_queue(void *data) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
     uint64_t hash = this->hash((const char *)&key_data->key);

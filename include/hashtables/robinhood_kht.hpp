@@ -63,6 +63,8 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     }
   }
 
+  void prefetch_queue(QueueType qtype) override {}
+
   // TODO inline
   uint32_t __distance_to_bucket(uint32_t original_bucket_idx,
                                 uint32_t probe_bucket_idx) {

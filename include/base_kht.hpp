@@ -45,6 +45,8 @@ class BaseHashTable {
 
   virtual uint64_t read_hashtable_element(const void *data) = 0;
 
+  virtual void prefetch_queue(QueueType qtype) = 0;
+
   virtual ~BaseHashTable() {}
 
   uint64_t num_reprobes = 0;

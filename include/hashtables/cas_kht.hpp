@@ -56,6 +56,8 @@ class CASHashTable : public BaseHashTable {
     free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
   }
 
+  void prefetch_queue(QueueType qtype) override {}
+
   void insert_noprefetch(void *data) {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo
