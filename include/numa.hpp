@@ -210,25 +210,25 @@ class NumaPolicyQueues : public Numa {
       uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;
 
       for (auto i = 0u; i < this->config_num_prod; i++) {
-        if (((i + 1) % 2) == 0)
-          node_idx_ctr = 1;
-        else
-          node_idx_ctr = 0;
-
         uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
         this->assigned_cpu_list_producers.push_back(cpu_assigned);
         this->unassigned_cpu_list.erase(cpu_assigned);
-        cpu_idx_ctr += 1;
-      }
-
-      auto i = 0u;
-      for (auto cpu : this->unassigned_cpu_list) {
-        this->unassigned_cpu_list.erase(cpu);
-        this->assigned_cpu_list_consumers.push_back(cpu);
-        if (++i == this->config_num_cons) {
-          break;
+        if (!(++node_idx_ctr % nodes.size())) {
+          node_idx_ctr = 0;
+          cpu_idx_ctr += 1;
         }
       }
+
+      for (auto i = 0u; i < this->config_num_cons; i++) {
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list_consumers.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
+        if (!(++node_idx_ctr % nodes.size())) {
+          node_idx_ctr = 0;
+          cpu_idx_ctr += 1;
+        }
+      }
+
       return;
     }
 
