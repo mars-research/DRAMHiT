@@ -123,7 +123,11 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   {
     unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
 
-    unsigned long cycles_per_find = total_find_cycles / total_finds;
+    unsigned long cycles_per_find = 0;
+
+    if (total_finds > 0) {
+      cycles_per_find = total_find_cycles / total_finds;
+    }
 
     unsigned long num_threads = config.num_threads;
     if (config.mode == BQ_TESTS_YES_BQ) {
