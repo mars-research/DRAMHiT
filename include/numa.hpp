@@ -127,7 +127,8 @@ can tie this thread to a cpu.
  */
 enum numa_policy_queues {
   PROD_CONS_SEQUENTIAL = 1,
-  PROD_CONS_SEPARATE_NODES = 2
+  PROD_CONS_SEPARATE_NODES = 2,
+  PROD_CONS_EQUAL_PARTITION = 3,
 };
 
 class NumaPolicyQueues : public Numa {
@@ -204,6 +205,32 @@ class NumaPolicyQueues : public Numa {
     uint32_t total_threads = this->config_num_cons + this->config_num_prod;
 
     assert(total_threads <= static_cast<uint32_t>(Numa::get_num_total_cpus()));
+
+    if (this->npq == PROD_CONS_EQUAL_PARTITION) {
+      uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;
+
+      for (auto i = 0u; i < this->config_num_prod; i++) {
+        if (((i + 1) % 2) == 0)
+          node_idx_ctr = 1;
+        else
+          node_idx_ctr = 0;
+
+        uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
+        this->assigned_cpu_list_producers.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
+        cpu_idx_ctr += 1;
+      }
+
+      auto i = 0u;
+      for (auto cpu : this->unassigned_cpu_list) {
+        this->unassigned_cpu_list.erase(cpu);
+        this->assigned_cpu_list_consumers.push_back(cpu);
+        if (++i == this->config_num_cons) {
+          break;
+        }
+      }
+      return;
+    }
 
     if (this->npq == PROD_CONS_SEQUENTIAL) {
       uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;

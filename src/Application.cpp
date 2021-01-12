@@ -52,7 +52,7 @@ const Configuration def = {
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
-    .numa_split = false,
+    .numa_split = 3,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
     .in_file = std::string("/local/devel/devel/datasets/turkey/myseq0.fa"),
@@ -408,7 +408,7 @@ int Application::process(int argc, char *argv[]) {
             ->default_value(def.alphanum_kmers),
         "Use alphanum_kmers (for debugging)")(
         "numa-split",
-        po::value<bool>(&config.numa_split)->default_value(def.numa_split),
+        po::value<uint32_t>(&config.numa_split)->default_value(def.numa_split),
         "Split spawning threads between numa nodes")(
         "stats",
         po::value<std::string>(&config.stats_file)
@@ -516,12 +516,22 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == BQ_TESTS_YES_BQ) {
-    if (config.numa_split)
-      this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
-                                       PROD_CONS_SEPARATE_NODES);
-    else
-      this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
-                                       PROD_CONS_SEQUENTIAL);
+    switch (config.numa_split) {
+      case PROD_CONS_SEPARATE_NODES:
+        this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
+                                         PROD_CONS_SEPARATE_NODES);
+        break;
+      case PROD_CONS_SEQUENTIAL:
+        this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
+                                         PROD_CONS_SEQUENTIAL);
+        break;
+      case PROD_CONS_EQUAL_PARTITION:
+        this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
+                                         PROD_CONS_EQUAL_PARTITION);
+        break;
+      default:
+        break;
+    }
   } else {
     if (config.numa_split)
       this->np = new NumaPolicyThreads(config.num_threads,

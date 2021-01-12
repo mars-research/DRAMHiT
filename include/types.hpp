@@ -69,7 +69,7 @@ struct Configuration {
   run_mode_t mode;
   std::string kmer_files_dir;
   bool alphanum_kmers;
-  bool numa_split;
+  uint32_t numa_split;
   std::string stats_file;
   std::string ht_file;
   std::string in_file;
