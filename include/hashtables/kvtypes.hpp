@@ -89,6 +89,7 @@ struct ItemQueue {
 struct Aggr_KV {
   using key_type = uint64_t;
   using value_type = uint64_t;
+  using queue = ItemQueue;
 
   key_type key;
   value_type count;
@@ -97,22 +98,7 @@ struct Aggr_KV {
     return strm << k.key << " : " << k.count;
   }
 
-  // inline void *data() { return this; }
-
-  // inline void *key() { return &this->key; }
-
-  // inline void *value() { return NULL; }
-
-  inline void insert_item(const void *from, size_t len) {
-    const key_type *key = reinterpret_cast<const key_type *>(from);
-    this->key = *key;
-    this->count += 1;
-  }
-
-  inline bool insert_regular_v2(const void *data) {
-    ItemQueue *elem =
-        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
-
+  inline bool insert(queue *elem) {
     if (this->is_empty()) {
       this->key = elem->key;
       this->count += 1;
@@ -124,10 +110,7 @@ struct Aggr_KV {
     return true;
   }
 
-  inline bool cas_insert(const void *data) {
-    ItemQueue *elem =
-        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
-
+  inline bool insert_cas(queue *elem) {
     const Aggr_KV empty = this->get_empty_key();
     auto success =
         __sync_bool_compare_and_swap(&this->key, empty.key, elem->key);
@@ -138,7 +121,7 @@ struct Aggr_KV {
     return success;
   }
 
-  inline bool cas_update(const void *from) {
+  inline bool update_cas(const void *from) {
     auto ret = false;
     uint64_t old_val;
 
@@ -155,10 +138,6 @@ struct Aggr_KV {
     return this->key == elem->key;
   }
 
-  inline void update_value(const void *from, size_t len) { this->count += 1; }
-
-  inline void set_value(Aggr_KV *from) { this->count = from->count; }
-
   inline void update_brless(uint8_t cmp) {
     asm volatile(
         "mov %[count], %%rbx\n\t"
@@ -169,6 +148,7 @@ struct Aggr_KV {
         : [ cmp ] "S"(cmp)
         : "rbx");
   }
+
   inline uint16_t get_value() const { return this->count; }
 
   inline constexpr size_t data_length() const { return sizeof(Aggr_KV); }
@@ -478,23 +458,27 @@ struct KVPair {
 struct Item {
   KVPair kvpair;
 
+  using key_type = uint64_t;
+  using value_type = uint64_t;
+  using queue = ItemQueue;
+
   friend std::ostream &operator<<(std::ostream &strm, const Item &item) {
     return strm << item.kvpair.key << " : " << item.kvpair.value;
   }
 
-  inline constexpr size_t data_length() const { return sizeof(KVPair); }
-
-  inline constexpr size_t key_length() const { return sizeof(kvpair.key); }
-
-  inline constexpr size_t value_length() const { return sizeof(kvpair.value); }
-
-  inline void insert_item(const void *from, size_t len) {
-    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
-    this->kvpair = *kvpair;
+  inline bool insert(queue *elem) {
+    if (this->is_empty()) {
+      this->key = elem->key;
+      this->count += 1;
+      return false;
+    } else if (this->key == elem->key) {
+      this->count += 1;
+      return false;
+    }
+    return true;
   }
 
-  inline bool cas_insert(const void *from) {
-    const ItemQueue *elem = reinterpret_cast<const ItemQueue *>(from);
+  inline bool insert_cas(queue *elem) {
     const Item empty = this->get_empty_key();
 
     auto success = __sync_bool_compare_and_swap(&this->kvpair.key,
@@ -506,28 +490,7 @@ struct Item {
     return success;
   }
 
-  inline uint16_t insert_or_update(const void *data) {
-    std::cout << "Not implemented for Item!" << std::endl;
-    assert(false);
-  }
-
-  inline bool insert_regular_v2(const void *data) {
-    cout << "Not implemented!" << endl;
-    assert(false);
-  }
-
-  inline bool compare_key(const void *from) {
-    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
-    return this->kvpair.key == kvpair->key;
-  }
-
-  inline void update_value(const void *from) {
-    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
-    this->kvpair.value = kvpair->value;
-  }
-
-  inline bool cas_update(const void *from) {
-    const ItemQueue *elem = reinterpret_cast<const ItemQueue *>(from);
+  inline bool update_cas(queue *elem) {
     auto ret = false;
     uint64_t old_val;
     while (!ret) {
@@ -538,11 +501,26 @@ struct Item {
     return ret;
   }
 
-  inline void *data() { return &this->kvpair; }
+  inline bool compare_key(const void *from) {
+    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
+    return this->kvpair.key == kvpair->key;
+  }
 
-  inline void *key() { return &this->kvpair.key; }
+  inline constexpr size_t data_length() const { return sizeof(KVPair); }
 
-  inline void *value() { return &this->kvpair.value; }
+  inline constexpr size_t key_length() const { return sizeof(kvpair.key); }
+
+  inline constexpr size_t value_length() const { return sizeof(kvpair.value); }
+
+  inline uint16_t insert_or_update(const void *data) {
+    std::cout << "Not implemented for Item!" << std::endl;
+    assert(false);
+  }
+
+  inline void update_value(const void *from) {
+    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
+    this->kvpair.value = kvpair->value;
+  }
 
   inline uint64_t get_value() const { return this->kvpair.value; }
 
