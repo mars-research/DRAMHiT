@@ -23,11 +23,18 @@ come for a small fraction of data)
   visits (values). We initialize a distribution and draw a sample and feed the
   data at that index.
 
-* *Hashtables*: The data is fed into the hash table. We compare against two hashtables (cas and cas++). The hashtables take two template parameters (for Queue and the <k,v> data structure). The KVQ need not be templatized as it is almost similar across different <k,v> types
+* *Hashtables*: The data is fed into the hash table. We compare against two
+  hashtables (cas and cas++). The hashtables take two template parameters (for
+Queue and the <k,v> data structure). The KVQ need not be templatized as it is
+almost similar across different <k,v> types
   	- cas (compare and swap)
   	- cas++ (compare and swap with prefetch queue)
   	- Partitioned (partitioned hashtable with prefetch)
 
-* *Threading*: The application should spawn a set of reader/writer threads for managing get/set requests. As the incoming requests could be skewed, we need to dynamically scale the number of readers/writers up or down based on the requirement. The design details of such scaling needs to be discussed.
+* *Threading*: The application should spawn a set of reader/writer threads for
+  managing get/set requests. As the incoming requests could be skewed, we need
+to dynamically scale the number of readers/writers up or down based on the
+requirement. The design details of such scaling needs to be discussed.
+
 * *Workload*
   * YCSB (https://github.com/brianfrankcooper/YCSB)
