@@ -81,6 +81,7 @@ struct ItemQueue {
   uint64_t value;
   uint32_t key_id;
   uint32_t idx;
+  uint32_t part_id;
 #ifdef COMPARE_HASH
   uint64_t key_hash;  // 8 bytes
 #endif

@@ -123,6 +123,7 @@ struct Shard {
 struct Keys {
   uint64_t key;
   uint64_t id;
+  uint64_t part_id;
 };
 
 struct Values {

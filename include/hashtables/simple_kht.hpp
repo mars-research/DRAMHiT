@@ -14,6 +14,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <tuple>
 
 #include "dbg.hpp"
@@ -30,6 +31,8 @@ namespace kmercounter {
 namespace {
 // utility constants and lambdas for SIMD operations
 constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / KV_SIZE;
+
+const size_t MAX_PARTITIONS = 64;
 
 // cacheline
 //       <------------------------ cacheline ------------------------->
@@ -87,8 +90,8 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
 template <typename KV, typename KVQ>
 class alignas(64) PartitionedHashStore : public BaseHashTable {
  public:
-  KV *hashtable;
-  int fd;
+  static KV **hashtable;
+  static int *fds;
   int id;
   size_t data_length, key_length;
 
@@ -136,21 +139,41 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   inline uint8_t touch(uint64_t i) {
 #if defined(TOUCH_DEPENDENCY)
-    if (this->hashtable[i & (this->capacity - 1)].kb.count == 0) {
-      this->hashtable[i & (this->capacity - 1)].kb.count = 1;
+    if (this->hashtable[this->id][i & (this->capacity - 1)].kb.count == 0) {
+      this->hashtable[this->id][i & (this->capacity - 1)].kb.count = 1;
     } else {
-      this->hashtable[i & (this->capacity - 1)].kb.count = 1;
+      this->hashtable[this->id][i & (this->capacity - 1)].kb.count = 1;
     };
 #else
-    this->hashtable[i & (this->capacity - 1)].kb.count = 1;
+    this->hashtable[this->id][i & (this->capacity - 1)].kb.count = 1;
 #endif
     return 0;
   };
 
   PartitionedHashStore(uint64_t c, uint8_t id)
-      : fd(-1), id(id), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
+      : id(id), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::next_pow2(c);
-    this->hashtable = calloc_ht<KV>(capacity, this->id, &this->fd);
+
+    {
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+
+      if (!this->fds) {
+        this->fds = new int[MAX_PARTITIONS] ();
+      }
+
+      if (!this->hashtable) {
+        // Allocate placeholder for hashtable pointers
+        this->hashtable = new KV*[MAX_PARTITIONS] ();
+      }
+    }
+
+    assert(this->id < MAX_PARTITIONS);
+
+    // paranoid check. id should be unique
+    assert(this->hashtable[this->id] == nullptr);
+
+    // Allocate for this id
+    this->hashtable[this->id] = (KV*) calloc_ht<KV>(this->capacity, this->id, &this->fds[this->id]);
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
@@ -170,7 +193,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   ~PartitionedHashStore() {
     free(find_queue);
     free(insert_queue);
-    free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
+    free_mem<KV>(this->hashtable[this->id], this->capacity, this->id, this->fds[this->id]);
   }
 
   void insert_noprefetch(void *data) {
@@ -290,12 +313,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash;
-    KV *curr = NULL;
+    KV *curr = &this->hashtable[this->id][idx];
     bool found = false;
 
     for (auto i = 0u; i < this->capacity; i++) {
       idx = idx & (this->capacity - 1);
-      curr = &this->hashtable[idx];
 
       if (curr->is_empty()) {
         found = false;
@@ -325,17 +347,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void display() const override {
+    KV *ht = this->hashtable[this->id];
     for (size_t i = 0; i < this->capacity; i++) {
-      if (!this->hashtable[i].is_empty()) {
-        cout << this->hashtable[i] << endl;
+      if (!ht[i].is_empty()) {
+        cout << ht[i] << endl;
       }
     }
   }
 
   size_t get_fill() const override {
     size_t count = 0;
+    KV *ht = this->hashtable[this->id];
     for (size_t i = 0; i < this->capacity; i++) {
-      if (!this->hashtable[i].is_empty()) {
+      if (!ht[i].is_empty()) {
         count++;
       }
     }
@@ -346,9 +370,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   size_t get_max_count() const override {
     size_t count = 0;
+    KV *ht = this->hashtable[this->id];
     for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].get_value() > count) {
-        count = this->hashtable[i].get_value();
+      if (ht[i].get_value() > count) {
+        count = ht[i].get_value();
       }
     }
     return count;
@@ -360,14 +385,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       dbg("Could not open outfile %s\n", outfile.c_str());
       return;
     }
+    KV *ht = this->hashtable[this->id];
     for (size_t i = 0; i < this->get_capacity(); i++) {
-      if (!this->hashtable[i].is_empty()) {
-        f << this->hashtable[i] << std::endl;
+      if (!ht[i].is_empty()) {
+        f << ht[i] << std::endl;
       }
     }
   }
 
  private:
+  static std::mutex ht_init_mutex;
   uint64_t capacity;
   KV empty_item; /* for comparison for empty slot */
   KVQ *queue;    // TODO prefetch this?
@@ -399,7 +426,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   try_find:
 
-    KV *curr = &this->hashtable[idx];
+    KV *curr = &this->hashtable[q->part_id][idx];
     uint64_t retry;
     found = curr->find_key_regular_v2(q, &retry, vp);
 
@@ -424,6 +451,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
+      this->find_queue[this->find_head].part_id = q->part_id;
 
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -436,7 +464,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t idx = q->idx;
     uint64_t found = 0;
 
-    KV *curr = &this->hashtable[idx];
+    KV *curr = &this->hashtable[q->part_id][idx];
     uint64_t retry = 1;
 
     found = curr->find_key_brless_v2(q, &retry, vp);
@@ -471,7 +499,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // index at which current cacheline starts
     const size_t ccidx = idx - cidx;
     // pointer to current cacheline
-    KV *cptr = &this->hashtable[ccidx];
+    KV *cptr = &this->hashtable[q->part_id][idx];
 
     auto load_key_vector = [q]() {
       // we want to load only the keys into a ZMM register, as two 32-bit
@@ -547,7 +575,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
   try_insert:
-    KV *curr = &this->hashtable[idx];
+    KV *curr = &this->hashtable[this->id][idx];
 
     // printf("%s, key = %lu curr %p  \n", __func__, q->key, curr);
 
@@ -583,7 +611,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void __insert_branchless_cmov(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
-    KV *curr = &this->hashtable[idx];
+    KV *curr = &this->hashtable[this->id][idx];
     // returns 1 succeeded
     uint8_t cmp = curr->insert_or_update_v2(q);
 
@@ -607,7 +635,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void __insert_branchless_simd(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
-    KV *curr = &this->hashtable[idx];
+    KV *curr = &this->hashtable[this->id][idx];
 
     static_assert(CACHE_LINE_SIZE == 64);
     static_assert(sizeof(KV) == 16);
@@ -686,12 +714,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     };
 
     auto load_cacheline = [this, idx, &cacheline_masks](size_t cidx) {
-      const KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE - 1)];
+      const KV *cptr = &this->hashtable[this->id][idx & ~(KV_PER_CACHE_LINE - 1)];
       return _mm512_maskz_load_epi64(cacheline_masks[cidx], cptr);
     };
 
     auto store_cacheline = [this, idx](__m512i cacheline, __mmask8 kv_mask) {
-      KV *cptr = &this->hashtable[idx & ~(KV_PER_CACHE_LINE - 1)];
+      KV *cptr = &this->hashtable[this->id][idx & ~(KV_PER_CACHE_LINE - 1)];
       _mm512_mask_store_epi64(cptr, kv_mask, cacheline);
     };
 
@@ -814,7 +842,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   uint64_t read_hashtable_element(const void *data) {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);
-    KV *curr = &this->hashtable[idx];
+    KV *curr = &this->hashtable[this->id][idx];
     return curr->get_value();
   }
 
@@ -879,6 +907,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
     this->find_queue[this->find_head].key_id = key_data->id;
+    this->find_queue[this->find_head].part_id = key_data->part_id;
 
 #ifdef COMPARE_HASH
     this->queue[this->find_head].key_hash = hash;
@@ -888,6 +917,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     if (this->find_head >= PREFETCH_FIND_QUEUE_SIZE) this->find_head = 0;
   }
 };
+
+template <class KV, class KVQ>
+KV **PartitionedHashStore<KV, KVQ>::hashtable;
+
+template <class KV, class KVQ>
+std::mutex PartitionedHashStore<KV, KVQ>::ht_init_mutex;
+
+template <class KV, class KVQ>
+int *PartitionedHashStore<KV, KVQ>::fds;
+
+// std::vector<std::mutex> PartitionedArrayHashTable:: hashtable_mutexes;
 
 // TODO bloom filters for high frequency kmers?
 
