@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include <cstdint>
 #include <cstdlib>
+
 #include "types.hpp"
 
 namespace kmercounter {
@@ -59,8 +60,7 @@ namespace kmercounter {
 // #endif
 
 // TODO clean up kseq
-class kseq
-{
+class kseq {
  public:
   kseq();
   ~kseq();
@@ -78,5 +78,5 @@ class kseq
   int last_char;
 };
 
-} // namespace kmercounter
+}  // namespace kmercounter
 #endif

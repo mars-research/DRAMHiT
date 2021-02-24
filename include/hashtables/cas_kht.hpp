@@ -66,7 +66,7 @@ class CASHashTable : public BaseHashTable {
       KV *curr = &this->hashtable[idx];
     retry:
       if (curr->is_empty()) {
-        bool cas_res = curr->insert_cas(reinterpret_cast<KVQ*>(data));
+        bool cas_res = curr->insert_cas(reinterpret_cast<KVQ *>(data));
         if (cas_res) {
           break;
         } else {
@@ -185,7 +185,6 @@ class CASHashTable : public BaseHashTable {
 
     // printf("Thread %lu: Trying memcmp at: %lu\n", this->thread_id, idx);
     for (auto i = 0u; i < this->capacity; i++) {
-
       idx = idx & (this->capacity - 1);
       curr = &this->hashtable[idx];
 
@@ -208,7 +207,7 @@ class CASHashTable : public BaseHashTable {
     }
     this->sum_distance_from_bucket += distance_from_bucket;
 #endif
-exit:
+  exit:
     // return empty_element if nothing is found
     if (!found) {
       curr = &this->empty_item;

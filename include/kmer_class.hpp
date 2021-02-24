@@ -2,6 +2,7 @@
 #define _KMER_CLASS_H_
 
 #include <cstring>
+
 #include "city/city.h"
 #include "types.hpp"
 

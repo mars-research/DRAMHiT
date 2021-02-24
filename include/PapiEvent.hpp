@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "dbg.hpp"
 #include "papi.h"
 
@@ -111,7 +112,8 @@ class PapiEvent {
     }
     printf("--------------------------------------------\n");
     printf("TOTAL(cpu %d)  %s: %llu (%f)\n", this->cpu,
-           this->uncore_events[0].c_str(), sum, static_cast<float>(sum)/1000000.0);
+           this->uncore_events[0].c_str(), sum,
+           static_cast<float>(sum) / 1000000.0);
     printf("--------------------------------------------\n");
   }
 };

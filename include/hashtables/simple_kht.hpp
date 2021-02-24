@@ -158,12 +158,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
       if (!this->fds) {
-        this->fds = new int[MAX_PARTITIONS] ();
+        this->fds = new int[MAX_PARTITIONS]();
       }
 
       if (!this->hashtable) {
         // Allocate placeholder for hashtable pointers
-        this->hashtable = new KV*[MAX_PARTITIONS] ();
+        this->hashtable = new KV *[MAX_PARTITIONS]();
       }
     }
 
@@ -173,7 +173,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     assert(this->hashtable[this->id] == nullptr);
 
     // Allocate for this id
-    this->hashtable[this->id] = (KV*) calloc_ht<KV>(this->capacity, this->id, &this->fds[this->id]);
+    this->hashtable[this->id] =
+        (KV *)calloc_ht<KV>(this->capacity, this->id, &this->fds[this->id]);
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
@@ -193,7 +194,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   ~PartitionedHashStore() {
     free(find_queue);
     free(insert_queue);
-    free_mem<KV>(this->hashtable[this->id], this->capacity, this->id, this->fds[this->id]);
+    free_mem<KV>(this->hashtable[this->id], this->capacity, this->id,
+                 this->fds[this->id]);
   }
 
   void insert_noprefetch(void *data) {
@@ -714,7 +716,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     };
 
     auto load_cacheline = [this, idx, &cacheline_masks](size_t cidx) {
-      const KV *cptr = &this->hashtable[this->id][idx & ~(KV_PER_CACHE_LINE - 1)];
+      const KV *cptr =
+          &this->hashtable[this->id][idx & ~(KV_PER_CACHE_LINE - 1)];
       return _mm512_maskz_load_epi64(cacheline_masks[cidx], cptr);
     };
 

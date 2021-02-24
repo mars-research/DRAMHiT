@@ -28,13 +28,13 @@ SOFTWARE.
 
 #include <fcntl.h>
 #include <unistd.h>
+
 #include "ac_kseq.hpp"
 #include "misc_lib.h"
 #include "sync.h"
 
 namespace kmercounter {
-class kstream
-{
+class kstream {
  public:
   kstream(uint32_t, off_t, off_t);
   ~kstream();
@@ -60,7 +60,7 @@ class kstream
   off64_t off_start;   // start byte into file
   off64_t off_end;     // end byte into file
 #ifndef NO_CORNER_CASES
-  int is_first_read;   // is this the first time readseq is being called?
+  int is_first_read;  // is this the first time readseq is being called?
   int done;
 #endif
 
@@ -72,5 +72,5 @@ class kstream
 #endif /* __MMAP_FILE */
 };
 
-} // namespace kmercounter
+}  // namespace kmercounter
 #endif /* AC_KSTREAM_H */

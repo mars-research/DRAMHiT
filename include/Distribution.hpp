@@ -1,35 +1,37 @@
 #pragma once
 
 class Distribution {
-	virtual uint64_t sample() = 0;
+  virtual uint64_t sample() = 0;
 };
 
 class alignas(128) ZipfDistribution : Distribution {
-	public:
-	ZipfDistribution(uint64_t n, double theta, uint64_t rand_seed);
+ public:
+  ZipfDistribution(uint64_t n, double theta, uint64_t rand_seed);
 
-	uint64_t sample();
+  uint64_t sample();
 
-	private:
-  	static double pow_approx(double a, double b);
+ private:
+  static double pow_approx(double a, double b);
 
-	static double zeta(uint64_t last_n, double last_sum, uint64_t n,
+  static double zeta(uint64_t last_n, double last_sum, uint64_t n,
                      double theta);
 
-	uint64_t n_;  // number of items (input)
-	double theta_;  // skewness (input) in (0, 1); or, 0 = uniform, 1 = always zero
-	double alpha_;     // only depends on theta
-	double thres_;     // only depends on theta
-	uint64_t last_n_;  // last n used to calculate the following
-	double dbl_n_;
-	double zetan_;
-	double eta_;
-	uint64_t seq_;  // for sequential number generation
-	Rand rand_;
+  uint64_t n_;  // number of items (input)
+  double
+      theta_;  // skewness (input) in (0, 1); or, 0 = uniform, 1 = always zero
+  double alpha_;     // only depends on theta
+  double thres_;     // only depends on theta
+  uint64_t last_n_;  // last n used to calculate the following
+  double dbl_n_;
+  double zetan_;
+  double eta_;
+  uint64_t seq_;  // for sequential number generation
+  Rand rand_;
 }
 
-double ZipfDistribution::zeta(uint64_t last_n, double last_sum, uint64_t n,
-                     double theta) {
+double
+ZipfDistribution::zeta(uint64_t last_n, double last_sum, uint64_t n,
+                       double theta) {
   if (last_n > n) {
     last_n = 0;
     last_sum = 0.;
@@ -67,7 +69,8 @@ double ZipfGen::pow_approx(double a, double b) {
   return r * u.d;
 }
 
-ZipfDistribution::ZipfDistribution(uint64_t n, double theta, uint64_t rand_seed) {
+ZipfDistribution::ZipfDistribution(uint64_t n, double theta,
+                                   uint64_t rand_seed) {
   assert(n > 0);
   if (theta > 0.992 && theta < 1)
     fprintf(stderr,
@@ -146,18 +149,16 @@ uint64_t ZipfGen::next() {
 }
 // This is just a monotonically incrementing sequence
 class UniformDistribution : Distribution {
-	public:
-	UniformDistribution(uint64_t min, uint64_t max) :
-		range_min(min), range_max(max)
-	{
-		this->sequence = min;
-	}
+ public:
+  UniformDistribution(uint64_t min, uint64_t max)
+      : range_min(min), range_max(max) {
+    this->sequence = min;
+  }
 
-	uint64_t sample() {
-		return this->sequence++;
-	}
-	private:
-	uint64_t sequence;
-	uint64_t range_min;
-	uint64_t range_max;
+  uint64_t sample() { return this->sequence++; }
+
+ private:
+  uint64_t sequence;
+  uint64_t range_min;
+  uint64_t range_max;
 };
