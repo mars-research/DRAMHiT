@@ -66,14 +66,14 @@ class CASHashTable : public BaseHashTable {
       KV *curr = &this->hashtable[idx];
     retry:
       if (curr->is_empty()) {
-        bool cas_res = curr->cas_insert(data);
+        bool cas_res = curr->insert_cas(reinterpret_cast<KVQ*>(data));
         if (cas_res) {
           break;
         } else {
           goto retry;
         }
       } else if (curr->compare_key(data)) {
-        curr->cas_update(data);
+        curr->update_cas(data);
         break;
       } else {
         idx++;
@@ -354,7 +354,7 @@ exit:
     // printf("Thread %lu, grabbing lock: %lu\n", this->thread_id, pidx);
     // Compare with empty element
     if (curr->is_empty()) {
-      bool cas_res = curr->cas_insert(q);
+      bool cas_res = curr->insert_cas(q);
       if (cas_res) {
 #ifdef CALC_STATS
         this->num_memcpys++;
@@ -386,7 +386,7 @@ exit:
       this->num_memcmps++;
 #endif
       if (curr->compare_key(q)) {
-        curr->cas_update(q);
+        curr->update_cas(q);
         // hashtable[pidx].kmer_count++;
         // hashtable_mutexes[pidx].unlock();
         return;

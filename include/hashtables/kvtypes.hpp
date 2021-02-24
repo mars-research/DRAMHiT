@@ -116,7 +116,7 @@ struct Aggr_KV {
         __sync_bool_compare_and_swap(&this->key, empty.key, elem->key);
 
     if (success) {
-      this->cas_update(data);
+      this->update_cas(elem);
     }
     return success;
   }
@@ -468,11 +468,11 @@ struct Item {
 
   inline bool insert(queue *elem) {
     if (this->is_empty()) {
-      this->key = elem->key;
-      this->count += 1;
+      this->kvpair.key = elem->key;
+      this->kvpair.value = elem->value;
       return false;
-    } else if (this->key == elem->key) {
-      this->count += 1;
+    } else if (this->kvpair.key == elem->key) {
+      this->kvpair.value = elem->value;
       return false;
     }
     return true;
@@ -485,7 +485,7 @@ struct Item {
                                                 empty.kvpair.key, elem->key);
 
     if (success) {
-      this->update_value(from);
+      this->update_value(elem);
     }
     return success;
   }
@@ -518,8 +518,8 @@ struct Item {
   }
 
   inline void update_value(const void *from) {
-    const KVPair *kvpair = reinterpret_cast<const KVPair *>(from);
-    this->kvpair.value = kvpair->value;
+    const queue *elem = reinterpret_cast<const queue *>(from);
+    this->kvpair.value = elem->value;
   }
 
   inline uint64_t get_value() const { return this->kvpair.value; }

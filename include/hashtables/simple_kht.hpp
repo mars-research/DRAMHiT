@@ -551,7 +551,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // printf("%s, key = %lu curr %p  \n", __func__, q->key, curr);
 
-    auto retry = curr->insert_regular_v2(q);
+    auto retry = curr->insert(q);
 
     if (retry) {
       // insert back into queue, and prefetch next bucket.
