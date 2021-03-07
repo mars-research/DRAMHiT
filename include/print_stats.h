@@ -101,6 +101,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         (double)all_sh[k].stats->find_cycles * one_cycle_ns;
 #endif  // CALC_STATS
   }
+  printf("%lu %lu\n", config.num_threads, all_total_num_inserts);
   printf("===============================================================\n");
   printf(
       "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
@@ -120,6 +121,8 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   printf("===============================================================\n");
   printf("Total  : %lu cycles (%f ms) for %lu insertions\n", all_total_cycles,
          (double)all_total_time_ns / 1000000.0, all_total_num_inserts);
+  double find_mops = 0.0, insert_mops = 0.0;
+
   {
     unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
 
@@ -127,17 +130,34 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 
     if (total_finds > 0) {
       cycles_per_find = total_find_cycles / total_finds;
+      printf(
+          "===============================================================\n");
+      printf("Average  : %lu cycles for %lu finds (%lu cycles/find)\n",
+             total_find_cycles / config.num_threads,
+             total_finds / config.num_threads, cycles_per_find);
+      printf(
+          "===============================================================\n");
     }
 
     unsigned long num_threads = config.num_threads;
+    // for inserts, we only use n_cons
     if (config.mode == BQ_TESTS_YES_BQ) {
       num_threads = config.n_cons;
     }
-    printf("Number of insertions per sec (Mops/s): %.3f\n",
-           ((double)2600 / cycles_per_insert) * num_threads);
-    printf("Number of finds per sec (Mops/s): %.3f\n",
-           ((double)2600 / cycles_per_find) * num_threads);
+    insert_mops = ((double)2600 / cycles_per_insert) * num_threads;
+    printf("Number of insertions per sec (Mops/s): %.3f\n", insert_mops);
+
+    // for find, we use all threads
+    if (config.mode == BQ_TESTS_YES_BQ) {
+      num_threads = config.n_cons + config.n_prod;
+    }
+    find_mops = ((double)2600 / cycles_per_find) * num_threads;
+    printf("%s, num_threads %lu\n", __func__, num_threads);
+    printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
   }
+
+  printf("{ insertion: %.3f lookup: %.3f }\n", insert_mops, find_mops);
+
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
   //     "find)\n",
