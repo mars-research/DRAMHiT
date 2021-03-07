@@ -122,7 +122,7 @@ struct Aggr_KV {
     return success;
   }
 
-  inline bool update_cas(const void *from) {
+  inline bool update_cas(queue *elem) {
     auto ret = false;
     uint64_t old_val;
 
@@ -169,8 +169,7 @@ struct Aggr_KV {
     return this->key == empty.key;
   }
 
-  inline uint64_t find_key_regular_v2(const void *data, uint64_t *retry,
-                                      ValuePairs &vp) {
+  inline uint64_t find(const void *data, uint64_t *retry, ValuePairs &vp) {
     ItemQueue *elem =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
     auto found = false;
@@ -192,8 +191,8 @@ struct Aggr_KV {
 
 #define EMPTY_CHECK_C
 
-  inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
-                                     ValuePairs &vp) {
+  inline uint64_t find_brless(const void *data, uint64_t *retry,
+                              ValuePairs &vp) {
     ItemQueue *elem =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
 
@@ -536,8 +535,7 @@ struct Item {
     return this->kvpair.key == empty.kvpair.key;
   }
 
-  inline uint64_t find_key_regular_v2(const void *data, uint64_t *retry,
-                                      ValuePairs &vp) {
+  inline uint64_t find(const void *data, uint64_t *retry, ValuePairs &vp) {
     ItemQueue *elem =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
     auto found = false;
@@ -557,8 +555,8 @@ struct Item {
     return found;
   }
 
-  inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
-                                     ValuePairs &vp) {
+  inline uint64_t find_brless(const void *data, uint64_t *retry,
+                              ValuePairs &vp) {
     ItemQueue *item =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
 

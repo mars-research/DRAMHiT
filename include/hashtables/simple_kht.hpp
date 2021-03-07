@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <x86intrin.h>  // _bit_scan_forward
 
+//#include <linux/getcpu.h>
 #include <array>
 #include <cassert>
 #include <fstream>
@@ -120,14 +121,27 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object<true /* write */>(
-        &this->hashtable[i & (this->capacity - 1)],
-        sizeof(this->hashtable[i & (this->capacity - 1)]));
+        &this->hashtable[this->id][i & (this->capacity - 1)],
+        sizeof(this->hashtable[this->id][i & (this->capacity - 1)]));
     // true /* write */);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
     prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
+  };
+
+  void prefetch_partition(uint64_t idx, int _part_id, bool write) {
+    auto p = _part_id;
+    if (write) {
+      prefetch_object<true>(
+          (void *)&this->hashtable[p][idx & (this->capacity - 1)],
+          sizeof(this->hashtable[p][idx & (this->capacity - 1)]));
+    } else {
+      prefetch_object<false>(
+          (void *)&this->hashtable[p][idx & (this->capacity - 1)],
+          sizeof(this->hashtable[p][idx & (this->capacity - 1)]));
+    }
   };
 
   void prefetch_read(uint64_t i) {
@@ -163,7 +177,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       if (!this->hashtable) {
         // Allocate placeholder for hashtable pointers
-        this->hashtable = new KV *[MAX_PARTITIONS]();
+        this->hashtable =
+            (KV **)(aligned_alloc(64, MAX_PARTITIONS * sizeof(KV *)));
       }
     }
 
@@ -198,7 +213,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
                  this->fds[this->id]);
   }
 
-  void insert_noprefetch(void *data) {
+  void insert_noprefetch(const void *data) {
     cout << "Not implemented!" << endl;
     assert(false);
   }
@@ -425,13 +440,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
+    unsigned int cpu, node;
 
+    // getcpu(&cpu, &node);
   try_find:
-
+    // printf("%s, cpu: %d part_id %d idx %d\n", __func__, cpu, q->part_id,
+    // idx);
     KV *curr = &this->hashtable[q->part_id][idx];
     uint64_t retry;
-    found = curr->find_key_regular_v2(q, &retry, vp);
+    found = curr->find(q, &retry, vp);
 
+    // printf("%s, key = %lu | found = %d\n", __func__, q->key, found);
     //  printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found
     //  =%ld, retry %ld\n",
     //         __func__, q->key, vp.first, vp.second[(vp.first - 1) %
@@ -448,7 +467,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         goto try_find;
       }
 
-      this->prefetch_read(idx);
+      this->prefetch_partition(idx, q->part_id, false);
 
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
@@ -469,7 +488,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     KV *curr = &this->hashtable[q->part_id][idx];
     uint64_t retry = 1;
 
-    found = curr->find_key_brless_v2(q, &retry, vp);
+    found = curr->find_brless(q, &retry, vp);
 
     // insert back into queue, and prefetch next bucket.
     // next bucket will be probed in the next run
@@ -501,7 +520,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // index at which current cacheline starts
     const size_t ccidx = idx - cidx;
     // pointer to current cacheline
-    KV *cptr = &this->hashtable[q->part_id][idx];
+    KV *cptr = &this->hashtable[q->part_id][idx & ~(KV_PER_CACHE_LINE - 1)];
 
     auto load_key_vector = [q]() {
       // we want to load only the keys into a ZMM register, as two 32-bit
@@ -524,7 +543,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // compute index at which there is a key match
     size_t midx = _bit_scan_forward(eq_cmp) >> 1;
-    const KV *match = &this->hashtable[midx];
+    const KV *match = &this->hashtable[q->part_id][midx];
     // copy the value out
     vp.second[vp.first].value = match->get_value();
     vp.second[vp.first].id = q->key_id;
@@ -569,15 +588,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       return __find_branchless_cmov(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      return __find_branchless_simd(q, vp);
+      // return __find_branchless_simd(q, vp);
+      return __find_branched(q, vp);
     }
   }
 
   void __insert_branched(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
+    KV *cur_ht = this->hashtable[this->id];
   try_insert:
-    KV *curr = &this->hashtable[this->id][idx];
+    KV *curr = &cur_ht[idx];
 
     // printf("%s, key = %lu curr %p  \n", __func__, q->key, curr);
 
@@ -637,7 +658,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void __insert_branchless_simd(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
-    KV *curr = &this->hashtable[this->id][idx];
+    KV *cur_ht = this->hashtable[this->id];
+    KV *curr = &cur_ht[idx];
 
     static_assert(CACHE_LINE_SIZE == 64);
     static_assert(sizeof(KV) == 16);
@@ -715,14 +737,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return _mm512_maskz_broadcast_i32x2(mask, kv);
     };
 
-    auto load_cacheline = [this, idx, &cacheline_masks](size_t cidx) {
-      const KV *cptr =
-          &this->hashtable[this->id][idx & ~(KV_PER_CACHE_LINE - 1)];
+    auto load_cacheline = [this, cur_ht, idx, &cacheline_masks](size_t cidx) {
+      const KV *cptr = &cur_ht[idx & ~(KV_PER_CACHE_LINE - 1)];
       return _mm512_maskz_load_epi64(cacheline_masks[cidx], cptr);
     };
 
-    auto store_cacheline = [this, idx](__m512i cacheline, __mmask8 kv_mask) {
-      KV *cptr = &this->hashtable[this->id][idx & ~(KV_PER_CACHE_LINE - 1)];
+    auto store_cacheline = [this, cur_ht, idx](__m512i cacheline,
+                                               __mmask8 kv_mask) {
+      KV *cptr = &cur_ht[idx & ~(KV_PER_CACHE_LINE - 1)];
       _mm512_mask_store_epi64(cptr, kv_mask, cacheline);
     };
 
@@ -870,18 +892,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // TODO: bq_load is broken. We need something else
     // uncomment this block for running bqueue prod/cons tests
-    // if constexpr(bq_load == BQUEUE_LOAD::HtInsert) {
-    //  hash = key_data->key >> 32;
-    //  key = key_data->key & 0xFFFFFFFF;
-    //} else
-    {
+    if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+      hash = key_data->key >> 32;
+      key = key_data->key & 0xFFFFFFFF;
+    } else {
       hash = this->hash((const char *)&key_data->key);
       key = key_data->key & 0xFFFFFFFF;
     }
 
     size_t idx = hash & (this->capacity - 1);  // modulo
 
-    // cout << " -- Adding " << key_data->key  << " at " << this->ins_head <<
+    // cout << " -- Adding " << key  << " at " << this->ins_head <<
     // endl;
     this->prefetch(idx);
 
@@ -899,16 +920,30 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void add_to_find_queue(void *data) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
-    uint64_t hash = this->hash((const char *)&key_data->key);
+    uint64_t hash = 0;
+    uint64_t key = 0;
+
+    if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+      hash = key_data->key >> 32;
+      key = key_data->key & 0xFFFFFFFF;
+    } else {
+      hash = this->hash((const char *)&key_data->key);
+      key = key_data->key & 0xFFFFFFFF;
+    }
+
     size_t idx = hash & (this->capacity - 1);  // modulo
 
-    this->prefetch_read(idx);
+    this->prefetch_partition(idx, key_data->part_id, false);
 
-    // cout << " -- Adding " << key_data->key  << " at " << this->find_head <<
-    // endl;
+    // unsigned int cpu, node;
+
+    // getcpu(&cpu, &node);
+    /*if (cpu == 0)
+    cout << "[" << cpu << "] -- Adding " << key << " partid : " <<
+    key_data->part_id << " at " << this->find_head << endl;*/
 
     this->find_queue[this->find_head].idx = idx;
-    this->find_queue[this->find_head].key = key_data->key;
+    this->find_queue[this->find_head].key = key;
     this->find_queue[this->find_head].key_id = key_data->id;
     this->find_queue[this->find_head].part_id = key_data->part_id;
 

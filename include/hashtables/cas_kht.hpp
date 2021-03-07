@@ -58,22 +58,24 @@ class CASHashTable : public BaseHashTable {
 
   void prefetch_queue(QueueType qtype) override {}
 
-  void insert_noprefetch(void *data) {
+  void insert_noprefetch(const void *data) {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo
+
+    KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
 
     for (auto i = 0u; i < this->capacity; i++) {
       KV *curr = &this->hashtable[idx];
     retry:
       if (curr->is_empty()) {
-        bool cas_res = curr->insert_cas(reinterpret_cast<KVQ *>(data));
+        bool cas_res = curr->insert_cas(elem);
         if (cas_res) {
           break;
         } else {
           goto retry;
         }
       } else if (curr->compare_key(data)) {
-        curr->update_cas(data);
+        curr->update_cas(elem);
         break;
       } else {
         idx++;
@@ -311,7 +313,7 @@ class CASHashTable : public BaseHashTable {
   try_find:
     KV *curr = &this->hashtable[idx];
     uint64_t retry;
-    found = curr->find_key_regular_v2(q, &retry, vp);
+    found = curr->find(q, &retry, vp);
 
     //  printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found
     //  =%ld, retry %ld\n",

@@ -23,7 +23,7 @@ class BaseHashTable {
 
   virtual void insert_batch(KeyPairs &kp) = 0;
 
-  virtual void insert_noprefetch(void *data) = 0;
+  virtual void insert_noprefetch(const void *data) = 0;
 
   virtual void flush_insert_queue() = 0;
 

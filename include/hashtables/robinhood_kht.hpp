@@ -170,7 +170,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     return true;
   }
 
-  void insert_noprefetch(void *data) {
+  void insert_noprefetch(const void *data) {
     cout << "Not implemented!" << endl;
     assert(false);
   }
