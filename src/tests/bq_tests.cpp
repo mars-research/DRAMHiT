@@ -31,6 +31,10 @@ uint64_t batch_size = 1;
 uint64_t mem_pool_order = 16;
 uint64_t mem_pool_size;
 
+// for synchronization of threads
+static uint64_t ready = 0;
+static uint64_t ready_threads = 0;
+
 extern BaseHashTable *init_ht(uint64_t, uint8_t);
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
@@ -98,6 +102,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   auto hash_to_cpu = [&](auto hash) {
     // return (hash * 11400714819323198485llu) & (n_cons - 1);
     // return (hash * 11400714819323198485llu) % n_cons;
+    if (!(n_cons & (n_cons - 1))) return hash & (n_cons - 1);
     return hash % n_cons;
   };
 
@@ -227,20 +232,22 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   // HT_TESTS_NUM_INSERTS enqueues per consumer
   cons_id = 0;
   auto mult_factor = static_cast<double>(n_cons) / n_prod;
-  auto _num_messages = HT_TESTS_NUM_INSERTS * mult_factor;
+  auto _num_messages = HT_TESTS_NUM_INSERTS * 2 * mult_factor;
   uint64_t num_messages = static_cast<uint64_t>(_num_messages);
   uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
 
-  // printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n", __func__,
+  // printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n",
+  // __func__,
   //        mult_factor, _num_messages, num_messages);
   if (key_start == 0) key_start = 1;
-  // printf(
-  //     "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
-  //     "key_start %lu\n",
-  //     this_prod_id, num_messages, consumer_count, key_start);
+  printf(
+      "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
+      "key_start %lu\n",
+      this_prod_id, num_messages, consumer_count, key_start);
 
   auto hash_to_cpu = [&](auto hash) {
     // return (hash * 11400714819323198485llu) % n_cons;
+    if (!(n_cons & (n_cons - 1))) return hash & (n_cons - 1);
     return hash % n_cons;
   };
 
@@ -350,7 +357,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 #endif
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
-  kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
+  printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
+  kmer_ht = init_ht(HT_TESTS_HT_SIZE * 2, sh->shard_idx);
+  (*this->ht_vec)[tid] = kmer_ht;
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
@@ -465,6 +474,121 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   fipc_test_FAI(completed_consumers);
 }
 
+void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
+                             bool main_thread) {
+  int part_id;
+  Shard *sh = &this->shards[tid];
+  int j = 0;
+  uint64_t found = 0, not_found = 0;
+  uint64_t count = HT_TESTS_NUM_INSERTS * tid;
+  BaseHashTable *ktable;
+  uint64_t t_start, t_end;
+
+  if (tid == 0) count = 1;
+
+  alignas(64) uint64_t k = 0;
+#ifdef WITH_VTUNE_LIB
+  std::string thread_name("producer_thread" + std::to_string(tid));
+  __itt_thread_set_name(thread_name.c_str());
+#endif
+
+  ktable = this->ht_vec->at(tid);
+
+  if (ktable == nullptr) {
+    printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
+    ktable = init_ht(HT_TESTS_HT_SIZE * 2, sh->shard_idx);
+    this->ht_vec->at(tid) = ktable;
+  }
+
+  Values *values;
+  values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
+
+  if (main_thread) {
+    // Wait for threads to be ready for test
+    while (ready_threads < (n_prod + n_cons - 1)) fipc_test_pause();
+
+    // Signal begin
+    ready = 1;
+    fipc_test_mfence();
+  } else {
+    fipc_test_FAI(ready_threads);
+    while (!ready) fipc_test_pause();
+    fipc_test_mfence();
+  }
+
+  // HT_TESTS_NUM_INSERTS enqueues per consumer
+  auto mult_factor = static_cast<double>(n_cons) / n_prod;
+  auto _num_messages = HT_TESTS_NUM_INSERTS * mult_factor;
+  uint64_t num_messages = static_cast<uint64_t>(_num_messages);
+  uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
+
+  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+
+  ValuePairs vp = std::make_pair(0, values);
+
+  if (tid == 1) {
+    // return;
+  }
+  // printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n",
+  // __func__,
+  //        mult_factor, _num_messages, num_messages);
+  if (key_start == 0) key_start = 1;
+  printf("[INFO] Finder %u starting. key_start %lu\n", tid, key_start);
+
+  auto hash_to_cpu = [&](auto hash) {
+    // return (hash * 11400714819323198485llu) % n_cons;
+    if (!(n_cons & (n_cons - 1))) return hash & (n_cons - 1);
+    return hash % n_cons;
+  };
+
+  t_start = RDTSC_START();
+
+  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+    k = key_start++;
+    uint64_t hash_val = XXH64(&k, sizeof(k), 0);
+
+    part_id = hash_to_cpu(k);
+    // k has the computed hash in upper 32 bits
+    // and the actual key value in lower 32 bits
+    k |= (hash_val << 32);
+
+    items[j].key = k;
+    items[j].id = count;
+    items[j].part_id = part_id + n_prod;
+    count++;
+
+    if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
+      KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
+      // printf("%s, calling find_batch i = %d\n", __func__, i);
+      // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
+      ktable->find_batch(kp, vp);
+      found += vp.first;
+      j = 0;
+      not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
+      vp.first = 0;
+      // printf("\t tid %lu count %lu | found -> %lu | not_found -> %lu \n",
+      // tid, count, found, not_found);
+    }
+
+#ifdef CALC_STATS
+    if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
+      printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
+             transaction_id);
+    }
+#endif
+  }
+  t_end = RDTSCP();
+
+  sh->stats->find_cycles = (t_end - t_start);
+  sh->stats->num_finds = found;
+
+  if (found > 0)
+    printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
+           sh->shard_idx, found, (t_end - t_start) / found);
+
+  get_ht_stats(sh, ktable);
+}
+
 void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
   uint32_t i, j;
   // Queue Allocation
@@ -575,6 +699,87 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
 }
 
 void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
+  this->ht_vec =
+      new std::vector<BaseHashTable *>(cfg->n_prod + cfg->n_cons, nullptr);
+  // 1) Insert using bqueues
+  this->insert_with_bqueues(cfg, n, npq);
+
+  // 2) spawn n_prod + n_cons threads for find
+  this->run_find_test(cfg, n, npq);
+}
+
+void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
+                               NumaPolicyQueues *npq) {
+  uint32_t i = 0, j = 0;
+  cpu_set_t cpuset;
+  // Spawn threads that will perform find operation
+  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
+    // skip the first CPU, we'll launch it later
+    if (assigned_cpu == 0) continue;
+    Shard *sh = &this->shards[i];
+    sh->shard_idx = i;
+    auto _thread = std::thread(&BQueueTest::find_thread, this, i, cfg->n_prod,
+                               cfg->n_cons, false);
+    CPU_ZERO(&cpuset);
+    CPU_SET(assigned_cpu, &cpuset);
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+    this->prod_threads.push_back(std::move(_thread));
+    printf("[INFO]: Thread find_thread: %u, affinity: %u\n", i, assigned_cpu);
+    i += 1;
+  }
+
+  printf("%s, creating cons threads i %d \n", __func__, i);
+  Shard *main_sh = &this->shards[i];
+  main_sh->shard_idx = i;
+  CPU_ZERO(&cpuset);
+  uint32_t last_cpu = 0;
+  CPU_SET(last_cpu, &cpuset);
+  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+  printf("[INFO]: Thread 'controller': affinity: %u\n", last_cpu);
+
+  // Spawn find threads
+  i = cfg->n_prod;
+  for (auto assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
+    printf("%s, i %d assigned cpu %d\n", __func__, i, assigned_cpu);
+
+    Shard *sh = &this->shards[i];
+    sh->shard_idx = i;
+
+    auto _thread = std::thread(&BQueueTest::find_thread, this, i, cfg->n_prod,
+                               cfg->n_cons, false);
+
+    CPU_ZERO(&cpuset);
+    CPU_SET(assigned_cpu, &cpuset);
+
+    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+
+    printf("[INFO]: Thread find_thread: %u, affinity: %u\n", i, assigned_cpu);
+    printf("[%d] sh->insertion_cycles %lu\n", sh->shard_idx,
+           sh->stats->insertion_cycles);
+
+    this->cons_threads.push_back(std::move(_thread));
+    i += 1;
+    j += 1;
+  }
+
+  {
+    printf("Running master thread with id %d\n", main_sh->shard_idx);
+    this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true);
+  }
+
+  for (auto &th : this->prod_threads) {
+    th.join();
+  }
+
+  for (auto &th : this->cons_threads) {
+    th.join();
+  }
+  printf("Find done!\n");
+  print_stats(this->shards, *cfg);
+}
+
+void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
+                                     NumaPolicyQueues *npq) {
   cpu_set_t cpuset;
   uint32_t i = 0, j = 0;
 
@@ -647,17 +852,23 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
 
   // Spawn consumer threads
   i = producer_count;
-  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
+  for (auto assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
     printf("%s, i %d assigned cpu %d\n", __func__, i, assigned_cpu);
+
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
+
     auto _thread =
         std::thread(&BQueueTest::consumer_thread, this, i, cfg->num_nops);
+
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
+
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+
     printf("[INFO]: Thread consumer_thread: %u, affinity: %u\n", i,
            assigned_cpu);
+
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
     j += 1;
@@ -689,7 +900,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   fipc_test_mfence();
 
   cfg->num_threads = producer_count + consumer_count;
-  print_stats(this->shards, *cfg);
+  // print_stats(this->shards, *cfg);
 
   /* Tell consumers to halt once producers are done */
   // return 0;
@@ -701,6 +912,8 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   for (auto &th : this->cons_threads) {
     th.join();
   }
+  this->prod_threads.clear();
+  this->cons_threads.clear();
   /* TODO free everything */
 }
 
