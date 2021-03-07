@@ -18,7 +18,16 @@ fi
 sudo mount -t hugetlbfs nodev /mnt/huge
 
 USER=${SUDO_USER}
-GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
+
+if [[ ${USER} == "" ]]; then
+  USER=$(id -u -n)
+fi
+
+if [[ ${SUDO_GID} == "" ]]; then
+  GROUP=$(id -g -n)
+else
+  GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
+fi
 
 echo ${USER}:${GROUP}
 
