@@ -14,6 +14,9 @@
 #include "xx/xxh3.h"
 #endif
 
+#include <numa.h>
+#include <numaif.h>
+
 namespace kmercounter {
 /* AB: 1GB page table code is from
  * https://github.com/torvalds/linux/blob/master/tools/testing/selftests/vm/hugepage-mmap.c
@@ -22,6 +25,7 @@ namespace kmercounter {
 #define FILE_NAME "/mnt/huge/hugepagefile%d"
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
+extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
 constexpr auto MAP_FLAGS =
@@ -120,6 +124,24 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     exit(1);
   } else {
     dbg("mmap returns %p\n", addr);
+  }
+
+  if (config.ht_type == CAS_KHT) {
+    void *_addr = addr;
+    size_t len_split = ((capacity * sizeof(T)) >> 1);
+    void *addr_split = _addr + len_split;
+    unsigned long nodemask[4096] = {0};
+    nodemask[0] = 1 << 1;
+    long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
+                     MPOL_MF_MOVE | MPOL_MF_STRICT);
+
+    printf("mmap_addr %lx | len %zu\n", _addr, capacity * sizeof(T));
+    printf("calling mbind with addr %lx | len %zu | nodemask %x\n", addr_split,
+           len_split, nodemask);
+    if (ret < 0) {
+      perror("mbind");
+      printf("mbind ret %d | errno %d\n", ret, errno);
+    }
   }
 #else
   addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
