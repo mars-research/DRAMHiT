@@ -140,6 +140,11 @@ enum class QueueType {
 using ValuePairs = std::pair<uint32_t, Values *>;
 using KeyPairs = std::pair<uint32_t, Keys *>;
 
+struct OpTimings {
+  uint64_t duration;
+  uint64_t op_count;
+};
+
 #endif  // __TYPES_HPP__
 
 // X mmap, no inserts, 1 thread
