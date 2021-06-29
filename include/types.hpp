@@ -49,7 +49,8 @@ typedef enum {
   PREFETCH = 7,
   BQ_TESTS_YES_BQ = 8,
   BQ_TESTS_NO_BQ = 9,
-  CACHE_MISS = 10
+  CACHE_MISS = 10,
+  ZIPFIAN = 11
 } run_mode_t;
 
 typedef enum {

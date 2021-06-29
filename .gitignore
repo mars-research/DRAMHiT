@@ -3,3 +3,4 @@ kmercounter
 **/*.o
 *.o
 **/*.d
+.vscode/

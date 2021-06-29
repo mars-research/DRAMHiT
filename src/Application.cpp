@@ -128,6 +128,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       //    HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
     case SYNTH:
+    case ZIPFIAN:
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
@@ -225,6 +226,8 @@ void Application::shard_thread(int tid, bool mainthread) {
     case CACHE_MISS:
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
+    case ZIPFIAN:
+      this->test.zipf.run(sh, kmer_ht);
     default:
       break;
   }
@@ -271,8 +274,8 @@ int Application::spawn_shard_threads() {
 
   size_t seg_sz = 0;
 
-  if ((config.mode != SYNTH) && (config.mode != PREFETCH) &&
-      (config.mode != CACHE_MISS)) {
+  if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
+      (config.mode != PREFETCH) && (config.mode != CACHE_MISS)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -382,7 +385,8 @@ int Application::process(int argc, char *argv[]) {
         "\n5: Read FASTQ, but do not insert to ht (specify --in_file) "
         "\n6/7: Synth/Prefetch,"
         "\n8/9: Bqueue tests: with bqueues/without bequeues"
-        "\n10: Cache Miss test")(
+        "\n10: Cache Miss test"
+        "\n11: Zipfian test")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
