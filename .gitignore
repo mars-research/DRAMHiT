@@ -1,6 +1,3 @@
 *.swp
-kmercounter
-**/*.o
-*.o
-**/*.d
 .vscode/
+build/
