@@ -1,3 +1,7 @@
 *.swp
 .vscode/
 build/
+*.o
+*.d
+kmercounter
+*.log

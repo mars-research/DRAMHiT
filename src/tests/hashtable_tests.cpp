@@ -50,7 +50,10 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 
 #ifdef NO_PREFETCH
 #warning "Compiling no prefetch"
+    const auto t_start = RDTSC_START();
     ktable->insert_noprefetch((void *)&keys[k]);
+    const auto t_end = RDTSCP();
+    duration += t_end - t_start;
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
     count++;
 #else
@@ -207,11 +210,20 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, unsigned int id) {
   constexpr auto keyrange_width = 128;
-  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   zipf_distribution<keyrange_width> distribution{};
-
-  unsigned int key{};
   std::uint64_t duration{};
+
+#ifdef NO_PREFETCH
+  for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+    alignas(64) std::uint64_t zipf_value {distribution()};
+    const auto start = RDTSC_START();
+    hashtable->insert_noprefetch(&zipf_value);
+    const auto end = RDTSCP();
+    duration += end - start;
+  }
+#else
+  unsigned int key{};
+  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
     const auto zipf_value = distribution();
     items[key] = {zipf_value, n};
@@ -232,6 +244,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, unsigned int id) {
   hashtable->flush_insert_queue();
   const auto end = RDTSCP();
   duration += end - start;
+#endif
 
   return {duration, HT_TESTS_NUM_INSERTS};
 }
