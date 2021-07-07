@@ -13,7 +13,7 @@ endif()
 
 find_package(Threads REQUIRED)
 
-# Setup toolchain
+# Set up toolchain
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
@@ -42,6 +42,17 @@ include_directories(include/ include/xx include/city)
 option(PAPI "Use PAPI to do performance monitering." OFF)
 option(VTUNE "Use VTUNE to do performance monitering." OFF)
 option(AGGR "Something about AGGR" ON)
+option(PREFETCH "Enable prefetching" ON)
+option(BQUEUE "Enable bqueue tests" ON)
+set(BRANCH "simd" CACHE STRING "Branch style")
+
+if(BRANCH STREQUAL "simd")
+    message(WARNING "Building with SIMD")
+    add_definitions(-DBRANCHLESS_SIMD)
+elseif(BRANCH STREQUAL "cmov")
+    message(WARNING "Building with CMOVE")
+    add_definitions(-DBRANCHLESS_CMOVE)
+endif()
 
 # set(LIBPAPI libpapi.a)
 # set(PAPILIBDIR ${CMAKE_CURRENT_SOURCE_DIR}/papi/src/install/lib/)
@@ -62,6 +73,14 @@ endif ()
 if (NOT AGGR)
     add_definitions(-DNOAGGR)
 endif ()
+
+if(NOT PREFETCH)
+    add_definitions(-DNO_PREFETCH)
+endif()
+
+if (BQUEUE)
+    add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
+endif()
 
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
 # add_definitions(-DCALC_STATS)
