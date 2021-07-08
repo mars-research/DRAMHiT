@@ -1,0 +1,7 @@
+{
+    "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+        "BQUEUE": "ON",
+        "BRANCH": "simd"
+    }
+}

@@ -45,6 +45,8 @@ ht_control() {
 
 if [ "$1" == "off" ]; then
 	ht_control 0
+elif [ "$1" == "on" ]; then
+	ht_control 1
 else
 	toggle
 fi
