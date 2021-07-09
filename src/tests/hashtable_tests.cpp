@@ -32,8 +32,8 @@ uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 #if defined(SAME_KMER)
     //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
     *((uint64_t *)&kmers[k].data) = 32;
-    *((uint64_t *)items[k].key()) = 32;
-    *((uint64_t *)items[k].value()) = 32;
+    items[k].kvpair.key = 32;
+    items[k].kvpair.value = 32;
     keys[k] = 32;
 #elif defined(XORWOW)
 #warning "Xorwow rand kmer insert"
