@@ -1,3 +1,9 @@
+/// Compare-and-swap(CAS) with linear probing hashtable based off of 
+/// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
+/// Key and values are stored directly in the table.
+/// The original one is called the casht and the one we modified with 
+/// batching + prefetching though is called casht++.
+
 #ifndef _CAS_KHT_H
 #define _CAS_KHT_H
 

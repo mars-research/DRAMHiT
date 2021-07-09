@@ -1,3 +1,7 @@
+/// Partitioned hashtable.
+/// Each partition is a linear probing with SIMD lookup.
+/// Key and values are stored directly in the table.
+
 #ifndef _SKHT_H
 #define _SKHT_H
 
