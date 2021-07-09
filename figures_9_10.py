@@ -41,28 +41,30 @@ if __name__ == '__main__':
     print('Building partitioned', flush=True)
     partitioned_home.mkdir(parents=True)
     run_synchronous(partitioned_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE==Release', '-DBQUEUE=ON', '-DBRANCH=simd'])
+                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DBQUEUE=ON', '-DBRANCH=simd'])
     run_synchronous(partitioned_home, 'cmake', ['--build', '.'])
 
     print('Building casht++', flush=True)
     cashtpp_home.mkdir(parents=True)
     run_synchronous(cashtpp_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE==Release'])
+                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release'])
     run_synchronous(cashtpp_home, 'cmake', ['--build', '.'])
 
     print('Building casht', flush=True)
     casht_home.mkdir(parents=True)
     run_synchronous(casht_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE==Release', '-DPREFETCH=OFF'])
+                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DPREFETCH=OFF'])
     run_synchronous(casht_home, 'cmake', ['--build', '.'])
 
     scripts = source.joinpath('scripts')
     hugepages = scripts.joinpath('enable_hugepages.sh')
     constant_freq = scripts.joinpath('constant_freq.sh')
     hyperthreading = scripts.joinpath('toggle_hyperthreading.sh')
+    prefetch = scripts.joinpath('prefetch_control.sh')
     run_synchronous(source, 'sudo', [hugepages])
     run_synchronous(source, 'sudo', [constant_freq])
     run_synchronous(source, 'sudo', [hyperthreading, 'off'])
+    run_synchronous(source, 'sudo', [prefetch, 'off'])
 
     for n in [1, 2, 4, 8, 16, 32, 64]:
         if n == 64:
