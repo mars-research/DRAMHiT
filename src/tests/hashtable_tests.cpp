@@ -18,7 +18,7 @@ uint64_t HT_TESTS_NUM_INSERTS;
 uint64_t SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   uint64_t count = HT_TESTS_NUM_INSERTS * start;
   auto k = 0;
-  auto i = 0;
+  uint64_t i = 0;
   struct xorwow_state _xw_state;
   auto inserted = 0lu;
 

@@ -101,7 +101,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         (double)all_sh[k].stats->find_cycles * one_cycle_ns;
 #endif  // CALC_STATS
   }
-  printf("%lu %lu\n", config.num_threads, all_total_num_inserts);
+  printf("%u %lu\n", config.num_threads, all_total_num_inserts);
   printf("===============================================================\n");
   printf(
       "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "

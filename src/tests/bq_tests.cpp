@@ -519,7 +519,6 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   // HT_TESTS_NUM_INSERTS enqueues per consumer
   auto mult_factor = static_cast<double>(n_cons) / n_prod;
   auto _num_messages = HT_TESTS_NUM_INSERTS * mult_factor;
-  uint64_t num_messages = static_cast<uint64_t>(_num_messages);
   uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
 
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};

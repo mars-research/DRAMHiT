@@ -182,7 +182,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       }
     }
 
-    assert(this->id < MAX_PARTITIONS);
+    assert(this->id < (int)MAX_PARTITIONS);
 
     // paranoid check. id should be unique
     assert(this->hashtable[this->id] == nullptr);
@@ -440,7 +440,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
-    unsigned int cpu, node;
+    // unsigned int cpu, node;
 
     // getcpu(&cpu, &node);
   try_find:
