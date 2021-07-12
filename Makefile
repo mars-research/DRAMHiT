@@ -97,23 +97,20 @@ ifeq ($(VTUNE), yes)
 	LIBS += -Wl,--no-as-needed -ldl -L$(VTUNE_ROOT)/lib64/ -littnotify
 endif
 
-TARGET=kmercounter
+TARGET=kvstore
 
 C_SRCS = $(patsubst %,src/%, bqueue.c \
 	 hashers/xx/xxhash.c)
 
 TESTS = $(patsubst %,src/tests/%, bq_tests.cpp  \
 	hashtable_tests.cpp  \
-	parser_tests.cpp \
 	prefetch_tests.cpp \
 	cachemiss_test.cpp \
 	)
 
 CPP_SRCS = $(patsubst %,src/%, misc_lib.cpp \
-	   ac_kseq.cpp \
-	   ac_kstream.cpp \
 	   Application.cpp \
-	   kmercounter.cpp \
+	   kvstore.cpp \
 	   ) $(TESTS)
 
 CC_SRCS = src/hashers/city/city.cc

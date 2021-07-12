@@ -15,8 +15,6 @@
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "PrefetchTest.hpp"
-#include "ac_kseq.hpp"
-#include "ac_kstream.hpp"
 #include "kmer_data.cpp"
 #include "misc_lib.h"
 #include "print_stats.h"
@@ -207,9 +205,6 @@ void Application::shard_thread(int tid, bool mainthread) {
   // fipc_test_mfence();
   /* Begin insert loops */
   switch (config.mode) {
-    case FASTQ_WITH_INSERT:
-      this->test.pat.shard_thread_parse_and_insert(sh, kmer_ht);
-      break;
     case SYNTH:
       this->test.st.synth_run_exec(sh, kmer_ht);
       break;
@@ -219,9 +214,6 @@ void Application::shard_thread(int tid, bool mainthread) {
     case BQ_TESTS_NO_BQ:
       this->test.bqt.no_bqueues(sh, kmer_ht);
       break;
-    case FASTQ_NO_INSERT:
-      this->test.pat.shard_thread_parse_no_inserts_v3(sh, config);
-      break;
     case CACHE_MISS:
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
@@ -230,7 +222,7 @@ void Application::shard_thread(int tid, bool mainthread) {
   }
 
   // Write to file
-  if (config.mode != FASTQ_NO_INSERT && !config.ht_file.empty()) {
+  if (!config.ht_file.empty()) {
     // for CAS hashtable, not every thread has to write to file
     if ((config.ht_type == CAS_KHT) && (sh->shard_idx > 0)) {
       goto done;
@@ -377,12 +369,12 @@ int Application::process(int argc, char *argv[]) {
     desc.add_options()("help", "produce help message")(
         "mode",
         po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
-        "1: Dry run \n2: Read K-mers from disk \n3: Write K-mers to disk "
-        "\n4: Read FASTQ, and insert to ht (specify --in_file)"
-        "\n5: Read FASTQ, but do not insert to ht (specify --in_file) "
-        "\n6/7: Synth/Prefetch,"
-        "\n8/9: Bqueue tests: with bqueues/without bequeues"
-        "\n10: Cache Miss test")(
+        "1: Dry run \n"
+        // Huh? don't look at me. The numbers are not continuous for a reason.
+        // We stripped the kmer related stuff.
+        "6/7: Synth/Prefetch\n"
+        "8/9: Bqueue tests: with bqueues/without bequeues\n"
+        "10: Cache Miss test\n")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -416,9 +408,10 @@ int Application::process(int argc, char *argv[]) {
         "Stats file name.")(
         "ht-type",
         po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
-        "1: SimpleKmerHashTable \n2: "
-        "RobinhoodKmerHashTable, \n3: CASKmerHashTable, \n4. "
-        "StdmapKmerHashTable")(
+        "1: SimpleKmerHashTable\n"
+        "2: RobinhoodKmerHashTable,\n"
+        "3: CASKmerHashTable\n"
+        "4. StdmapKmerHashTable")(
         "out-file",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
         "Hashtable output file name.")(
