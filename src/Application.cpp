@@ -63,7 +63,8 @@ const Configuration def = {
     .n_cons = 1,
     .num_nops = 0,
     .K = 20,
-    .ht_fill = 25};  // TODO enum
+    .ht_fill = 25,
+    .skew = 1.0};  // TODO enum
 
 // global config
 Configuration config;
@@ -227,7 +228,8 @@ void Application::shard_thread(int tid, bool mainthread) {
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
-      this->test.zipf.run(sh, kmer_ht);
+      this->test.zipf.run(sh, kmer_ht, config.skew);
+      break;
     default:
       break;
   }
@@ -440,10 +442,16 @@ int Application::process(int argc, char *argv[]) {
         "the value of 'k' in k-mer")(
         "num_nops",
         po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
-        "number of nops in bqueue cons thread")(
-        "ht-fill",
-        po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
-        "adjust hashtable fill ratio [0-100] ");
+        "number of nops in bqueue cons thread"
+        )(
+          "ht-fill",
+          po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
+          "adjust hashtable fill ratio [0-100] "
+        )(
+          "skew",
+          po::value<double>(&config.skew)->default_value(def.skew),
+          "Zipfian skewness"
+        );
 
     papi_init();
 

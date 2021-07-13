@@ -8,7 +8,7 @@ namespace kmercounter {
 
 class ZipfianTest {
  public:
-  void run(Shard *sh, BaseHashTable *kmer_ht);
+  void run(Shard *sh, BaseHashTable *kmer_ht, double skew);
 };
 
 }  // namespace kmercounter

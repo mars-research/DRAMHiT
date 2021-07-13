@@ -36,13 +36,6 @@ if __name__ == '__main__':
     tests_home.mkdir(parents=True)
     casht_home = tests_home.joinpath('casht', 'build')
     cashtpp_home = tests_home.joinpath('casht++', 'build')
-    partitioned_home = tests_home.joinpath('partitioned', 'build')
-
-    print('Building partitioned', flush=True)
-    partitioned_home.mkdir(parents=True)
-    run_synchronous(partitioned_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DBQUEUE=ON', '-DBRANCH=simd'])
-    run_synchronous(partitioned_home, 'cmake', ['--build', '.'])
 
     print('Building casht++', flush=True)
     cashtpp_home.mkdir(parents=True)
@@ -63,22 +56,14 @@ if __name__ == '__main__':
     prefetch = scripts.joinpath('prefetch_control.sh')
     run_synchronous(source, 'sudo', [hugepages])
     run_synchronous(source, 'sudo', [constant_freq])
-    run_synchronous(source, 'sudo', [hyperthreading, 'off'])
+    run_synchronous(source, 'sudo', [hyperthreading, 'on'])
     run_synchronous(source, 'sudo', [prefetch, 'off'])
 
-    for n in [1, 2, 4, 8, 16, 32, 64]:
-        if n == 64:
-            run_synchronous(source, 'sudo', [hyperthreading, 'on'])
-
-        if n != 1:
-            print(f'Running partioned{n}', flush=True)
-            run_synchronous(partitioned_home, './kmercounter', ['--mode=8', '--ht-fill=75', f'--nprod={n//2}', f'--ncons={n//2}', '--ht-type=1'], os.open(
-                partitioned_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))
-
+    for n in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
         print(f'Running cashtpp{n}', flush=True)
-        run_synchronous(cashtpp_home, './kmercounter', ['--mode=6', '--ht-fill=75',
-                        f'--num-threads={n}', '--ht-type=3'], os.open(cashtpp_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))
+        run_synchronous(cashtpp_home, './kmercounter', ['--mode=11', '--ht-fill=75',
+                        f'--num-threads=64', '--ht-type=3', f'--skew={n}'], os.open(cashtpp_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))
 
         print(f'Running casht{n}', flush=True)
-        run_synchronous(casht_home, './kmercounter', ['--mode=6', '--ht-fill=75',
-                        f'--num-threads={n}', '--ht-type=3'], os.open(casht_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))
+        run_synchronous(casht_home, './kmercounter', ['--mode=11', '--ht-fill=75',
+                        '--num-threads=64', '--ht-type=3', f'--skew={n}'], os.open(casht_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))

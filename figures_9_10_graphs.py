@@ -33,34 +33,11 @@ if __name__ == '__main__':
 
     casht_times = []
     cashtpp_times = []
-    partitioned_times = []
-    threads = [1, 2, 4, 8, 16, 32, 64]
+    skews = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
-    for i in threads:
-        if i != 1:
-            partitioned_times.append(
-                get_times(partitioned_home.joinpath(f'{i}.log')))
+    for i in skews:
+        cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{i}.log'))[0])
+        casht_times.append(get_times(casht_home.joinpath(f'{i}.log'))[0])
 
-        cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{i}.log')))
-        casht_times.append(get_times(casht_home.joinpath(f'{i}.log')))
-
-    print('Partitioned:')
-    for i in range(len(threads) - 1):
-        print(f'\t{threads[i + 1]} threads:')
-        insert, find = partitioned_times[i]
-        print(f'\t\tInsertion: {insert} Mops/s')
-        print(f'\t\tLookup: {find} Mops/s')
-
-    print('Casht++:')
-    for i in range(len(threads)):
-        print(f'\t{threads[i]} threads:')
-        insert, find = cashtpp_times[i]
-        print(f'\t\tInsertion: {insert} Mops/s')
-        print(f'\t\tLookup: {find} Mops/s')
-
-    print('Casht++:')
-    for i in range(len(threads)):
-        print(f'\t{threads[i]} threads:')
-        insert, find = casht_times[i]
-        print(f'\t\tInsertion: {insert} Mops/s')
-        print(f'\t\tLookup: {find} Mops/s')
+    print(f'Casht++: {cashtpp_times}')
+    print(f'Casht: {casht_times}')

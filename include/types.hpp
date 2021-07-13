@@ -82,6 +82,7 @@ struct Configuration {
   uint32_t num_nops;
   uint32_t K;
   uint32_t ht_fill;
+  double skew;
 };
 
 /* Thread stats */

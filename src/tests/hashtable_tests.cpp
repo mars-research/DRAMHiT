@@ -208,12 +208,13 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
-OpTimings do_zipfian_inserts(BaseHashTable *hashtable, unsigned int id) {
-  constexpr auto keyrange_width = 128;
-  zipf_distribution<keyrange_width> distribution{};
+OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew) {
+  constexpr auto keyrange_width = 100'000'000;
+  zipf_distribution distribution {skew, keyrange_width};
   std::uint64_t duration{};
 
 #ifdef NO_PREFETCH
+#warning "Zipfian no-prefetch"
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
     alignas(64) std::uint64_t zipf_value {distribution()};
     const auto start = RDTSC_START();
@@ -254,14 +255,14 @@ OpTimings do_zipfian_gets(BaseHashTable *kmer_ht, unsigned int id) {
   return {0, 1};
 }
 
-void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable) {
+void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew) {
   OpTimings insert_timings{};
 
-  printf("[INFO] Zipfian test run: thread %u, ht size: %lu, insertions: %lu\n",
-         shard->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
+  printf("[INFO] Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew %f\n",
+         shard->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS, skew);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
-    insert_timings = do_zipfian_inserts(hashtable, shard->shard_idx);
+    insert_timings = do_zipfian_inserts(hashtable, skew);
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
         "insertion:%lu \n",

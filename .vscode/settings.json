@@ -3,5 +3,11 @@
     "cmake.configureSettings": {
         "BQUEUE": "ON",
         "BRANCH": "simd"
+    },
+    "files.associations": {
+        "*.tcc": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "typeinfo": "cpp"
     }
 }
