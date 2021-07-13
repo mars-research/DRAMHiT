@@ -1,8 +1,7 @@
 {
     "cmake.generator": "Ninja",
     "cmake.configureSettings": {
-        "BQUEUE": "ON",
-        "BRANCH": "simd"
+        "PREFETCH": "ON"
     },
     "files.associations": {
         "*.tcc": "cpp",

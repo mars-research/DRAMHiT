@@ -4,4 +4,4 @@ build/
 *.d
 kmercounter
 *.log
-tests/
+/tests/
