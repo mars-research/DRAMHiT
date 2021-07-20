@@ -63,10 +63,11 @@ endif()
 #     add_definitions(-DWITH_PAPI_LIB)
 # endif ()
 
-set(VTUNE_ROOT /opt/vtune/vtune_profiler_2020.1.0.607630)
+set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
 if (VTUNE)
-    target_link_libraries(${CMAKE_PROJECT_NAME} dl ittnotify)
+    message(WARNING "Building with vtune")
     include_directories(${VTUNE_ROOT}/include/)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${VTUNE_ROOT}/lib64/libittnotify.a dl)
     add_definitions(-DWITH_VTUNE_LIB)
 endif ()
 
