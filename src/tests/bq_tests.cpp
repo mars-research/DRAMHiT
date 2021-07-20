@@ -488,7 +488,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   alignas(64) uint64_t k = 0;
 #ifdef WITH_VTUNE_LIB
-  std::string thread_name("producer_thread" + std::to_string(tid));
+  std::string thread_name("find_thread" + std::to_string(tid));
   __itt_thread_set_name(thread_name.c_str());
 #endif
 
