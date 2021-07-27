@@ -1,3 +1,5 @@
+#include <atomic>
+
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
@@ -30,6 +32,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  const auto t_start = RDTSC_START();
   for (i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
     //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
@@ -50,10 +53,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 
 #ifdef NO_PREFETCH
 #warning "Compiling no prefetch"
-    const auto t_start = RDTSC_START();
     ktable->insert_noprefetch((void *)&keys[k]);
-    const auto t_end = RDTSCP();
-    duration += t_end - t_start;
     k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
     count++;
 #else
@@ -68,11 +68,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     // ktable->insert((void *)&items[k]);
     if (++k == HT_TESTS_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &_items[0]);
-
-      const auto t_start = RDTSC_START();
       ktable->insert_batch(kp);
-      const auto t_end = RDTSCP();
-      duration += t_end - t_start;
 
       k = 0;
       inserted += kp.first;
@@ -88,12 +84,13 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   // flush the last batch explicitly
   // printf("%s calling flush queue\n", __func__);
 #if !defined(NO_PREFETCH)
-  const auto t_start = RDTSC_START();
-  ktable->flush_insert_queue();
+  ktable->flush_insert_queue();  
+#endif
+
   const auto t_end = RDTSCP();
   duration += t_end - t_start;
-#endif
   // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
+
   return {duration, HT_TESTS_NUM_INSERTS};
 }
 
@@ -208,13 +205,17 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
-OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew) {
-  constexpr auto keyrange_width = 100'000'000;
+OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
+                             unsigned int count) {
+  constexpr auto keyrange_width = 192 * (1 << 20);
   zipf_distribution distribution{skew, keyrange_width};
   std::uint64_t duration{};
 
+  static std::atomic_uint fence{};
   std::vector<std::uint64_t> values(HT_TESTS_NUM_INSERTS);
   for (auto &value : values) value = distribution();
+  ++fence;
+  while (fence < count) _mm_pause();
 
 #ifdef NO_PREFETCH
 #warning "Zipfian no-prefetch"
@@ -222,7 +223,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew) {
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
     hashtable->insert_noprefetch(&values.at(n));
   }
-  
+
   const auto end = RDTSCP();
   duration += end - start;
 #else
@@ -254,8 +255,11 @@ OpTimings do_zipfian_gets(BaseHashTable *kmer_ht, unsigned int id) {
   return {0, 1};
 }
 
-void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew) {
+void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
+                      unsigned int count) {
   OpTimings insert_timings{};
+  static_assert(HT_TESTS_MAX_STRIDE - 1 ==
+                1);  // Otherwise timing logic is wrong
 
   printf(
       "[INFO] Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
@@ -263,7 +267,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew) {
       shard->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS, skew);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
-    insert_timings = do_zipfian_inserts(hashtable, skew);
+    insert_timings = do_zipfian_inserts(hashtable, skew, count);
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
         "insertion:%lu \n",

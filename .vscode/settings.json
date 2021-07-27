@@ -2,8 +2,6 @@
     "cmake.generator": "Ninja",
     "cmake.configureSettings": {
         "PREFETCH": "ON",
-        "BQUEUE": "ON",
-        "BRANCH": "simd",
         "VTUNE": "ON"
     },
     "files.associations": {

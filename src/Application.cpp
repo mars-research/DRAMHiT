@@ -228,7 +228,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
-      this->test.zipf.run(sh, kmer_ht, config.skew);
+      this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
       break;
     default:
       break;

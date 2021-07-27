@@ -13,7 +13,7 @@ class FatalError(BaseException):
     pass
 
 
-def run_synchronous(cwd: str, command: str, args: typing.List[str], log: int = os.open('/dev/null', os.O_RDWR)):
+def run_synchronous(cwd: str, command: str, args: typing.List[str], log: int = os.open('log.log', os.O_RDWR | os.O_CREAT)):
     cmake_pid = os.fork()
     if cmake_pid == 0:
         if log > 2:
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     run_synchronous(source, 'sudo', [hyperthreading, 'on'])
     run_synchronous(source, 'sudo', [prefetch, 'off'])
 
-    for n in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+    for n in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99, 0.999, 0.9999]:
         print(f'Running cashtpp{n}', flush=True)
         run_synchronous(cashtpp_home, './kmercounter', ['--mode=11', '--ht-fill=75',
                         f'--num-threads=64', '--ht-type=3', f'--skew={n}'], os.open(cashtpp_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))
