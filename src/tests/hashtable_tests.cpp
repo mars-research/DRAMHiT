@@ -1,3 +1,5 @@
+#include <ittnotify.h>
+
 #include <atomic>
 
 #include "misc_lib.h"
@@ -32,6 +34,9 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  static const auto event =
+      __itt_event_create("inserting", strlen("inserting"));
+  __itt_event_start(event);
   const auto t_start = RDTSC_START();
   for (i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
@@ -42,7 +47,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     keys[k] = 32;
 #elif defined(XORWOW)
 #warning "Xorwow rand kmer insert"
-    *((uint64_t *)&kmers[k].data) = xorwow(&_xw_state);
+    _items[k].key = xorwow(&_xw_state);
 #else
     // *((uint64_t *)&kmers[k].data) = count;
     //*((uint64_t *)items[k].key()) = count;
@@ -84,10 +89,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   // flush the last batch explicitly
   // printf("%s calling flush queue\n", __func__);
 #if !defined(NO_PREFETCH)
-  ktable->flush_insert_queue();  
+  ktable->flush_insert_queue();
 #endif
 
   const auto t_end = RDTSCP();
+  __itt_event_end(event);
   duration += t_end - t_start;
   // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
 
@@ -206,9 +212,12 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 }
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
-                             unsigned int count) {
+                             unsigned int count, unsigned int id) {
+  static const auto event =
+      __itt_event_create("inserting", strlen("inserting"));
+
   constexpr auto keyrange_width = 192 * (1 << 20);
-  zipf_distribution distribution{skew, keyrange_width};
+  zipf_distribution distribution{skew, keyrange_width, id + 1};
   std::uint64_t duration{};
 
   static std::atomic_uint fence{};
@@ -216,6 +225,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   for (auto &value : values) value = distribution();
   ++fence;
   while (fence < count) _mm_pause();
+
+  __itt_event_start(event);
 
 #ifdef NO_PREFETCH
 #warning "Zipfian no-prefetch"
@@ -233,12 +244,10 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
     items[key] = {values.at(n), n};
 
-    ++key;
-    key = (key == HT_TESTS_BATCH_LENGTH) ? 0 : key;
-
-    if (!key) {
+    if (++key == HT_TESTS_BATCH_LENGTH) {
       KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
       hashtable->insert_batch(keypairs);
+      key = 0;
     }
   }
 
@@ -246,6 +255,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   const auto end = RDTSCP();
   duration += end - start;
 #endif
+
+  __itt_event_end(event);
 
   return {duration, HT_TESTS_NUM_INSERTS};
 }
@@ -267,7 +278,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
       shard->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS, skew);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
-    insert_timings = do_zipfian_inserts(hashtable, skew, count);
+    insert_timings =
+        do_zipfian_inserts(hashtable, skew, count, shard->shard_idx);
     printf(
         "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
         "insertion:%lu \n",

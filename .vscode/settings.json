@@ -2,7 +2,8 @@
     "cmake.generator": "Ninja",
     "cmake.configureSettings": {
         "PREFETCH": "ON",
-        "VTUNE": "ON"
+        "VTUNE": "ON",
+        "XORWOW": "ON"
     },
     "files.associations": {
         "*.tcc": "cpp",

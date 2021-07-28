@@ -44,7 +44,13 @@ option(VTUNE "Use VTUNE to do performance monitering." OFF)
 option(AGGR "Something about AGGR" ON)
 option(PREFETCH "Enable prefetching" ON)
 option(BQUEUE "Enable bqueue tests" OFF)
+option(XORWOW "Xorwow" OFF)
 set(BRANCH "" CACHE STRING "Branch style")
+
+if(XORWOW)
+    message(WARNING "Xorwow")
+    add_definitions(-DXORWOW)
+endif()
 
 if(BRANCH STREQUAL "simd")
     message(WARNING "Building with SIMD branchless")
@@ -107,13 +113,5 @@ add_definitions(-DXX_HASH)
 add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
-
-# Config branching option
-set(BRANCH "")
-if ("${BRANCH}" STREQUAL "cmov")
-    add_definitions(-DBRANCHLESS_CMOVE)
-elseif ("${BRANCH}" STREQUAL "simd")
-    add_definitions(-DBRANCHLESS_SIMD) 
-endif ()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE boost_program_options numa Threads::Threads)
