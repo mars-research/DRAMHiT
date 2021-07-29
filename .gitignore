@@ -4,3 +4,4 @@ kmercounter
 *.o
 **/*.d
 kvstore
+/build/
