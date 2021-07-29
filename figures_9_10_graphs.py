@@ -29,15 +29,19 @@ if __name__ == '__main__':
 
     casht_home = tests_home.joinpath('casht')
     cashtpp_home = tests_home.joinpath('casht++')
+    bq_home = tests_home.joinpath('bq')
     partitioned_home = tests_home.joinpath('partitioned')
 
     casht_times = []
     cashtpp_times = []
+    bq_times = []
     skews = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
 
     for i in skews:
         cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{i}.log'))[0])
         casht_times.append(get_times(casht_home.joinpath(f'{i}.log'))[0])
+        bq_times.append(get_times(bq_home.joinpath(f'{i}.log'))[0])
 
     print(f'Casht++: {cashtpp_times}')
     print(f'Casht: {casht_times}')
+    print(f'Bqueue: {bq_times}')

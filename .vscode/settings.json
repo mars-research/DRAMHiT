@@ -3,7 +3,9 @@
     "cmake.configureSettings": {
         "PREFETCH": "ON",
         "VTUNE": "ON",
-        "XORWOW": "ON"
+        "BQ_ZIPFIAN": "ON",
+        "BRANCH": "simd",
+        "BQUEUE": "ON"
     },
     "files.associations": {
         "*.tcc": "cpp",

@@ -52,6 +52,11 @@ if(XORWOW)
     add_definitions(-DXORWOW)
 endif()
 
+if(BQ_ZIPFIAN)
+    message(WARNING "Zipfian Bqueues")
+    add_definitions(-DBQ_TESTS_INSERT_ZIPFIAN)
+endif()
+
 if(BRANCH STREQUAL "simd")
     message(WARNING "Building with SIMD branchless")
     add_definitions(-DBRANCHLESS_SIMD)

@@ -28,7 +28,7 @@ class BQueueTest {
   void insert_with_bqueues(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
   void no_bqueues(Shard *sh, BaseHashTable *kmer_ht);
   void run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
-  void producer_thread(int tid, int n_prod, int n_cons, bool main_thread);
+  void producer_thread(int tid, int n_prod, int n_cons, bool main_thread, double skew);
   void consumer_thread(int tid, uint32_t num_nops);
   void find_thread(int tid, int n_prod, int n_cons, bool main_thread);
   void init_queues(uint32_t nprod, uint32_t ncons);

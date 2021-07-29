@@ -36,11 +36,12 @@ if __name__ == '__main__':
     tests_home.mkdir(parents=True)
     casht_home = tests_home.joinpath('casht', 'build')
     cashtpp_home = tests_home.joinpath('casht++', 'build')
+    bq_home = tests_home.joinpath('bq', 'build')
 
     print('Building casht++', flush=True)
     cashtpp_home.mkdir(parents=True)
     run_synchronous(cashtpp_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DVTUNE=ON'])
+                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DPREFETCH=ON', '-DVTUNE=ON'])
     run_synchronous(cashtpp_home, 'cmake', ['--build', '.'])
 
     print('Building casht', flush=True)
@@ -48,6 +49,12 @@ if __name__ == '__main__':
     run_synchronous(casht_home, 'cmake', [
                     source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DPREFETCH=OFF', '-DVTUNE=ON'])
     run_synchronous(casht_home, 'cmake', ['--build', '.'])
+
+    print('Building bq', flush=True)
+    bq_home.mkdir(parents=True)
+    run_synchronous(bq_home, 'cmake', [
+                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DPREFETCH=ON', '-DVTUNE=ON', '-DBRANCH=simd', '-DBQ_ZIPFIAN=ON'])
+    run_synchronous(bq_home, 'cmake', ['--build', '.'])
 
     scripts = source.joinpath('scripts')
     hugepages = scripts.joinpath('enable_hugepages.sh')
@@ -67,3 +74,7 @@ if __name__ == '__main__':
         print(f'Running casht{n}', flush=True)
         run_synchronous(casht_home, './kmercounter', ['--mode=11', '--ht-fill=75',
                         '--num-threads=64', '--ht-type=3', f'--skew={n}'], os.open(casht_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))
+
+        print(f'Running bq{n}', flush=True)
+        run_synchronous(bq_home, './kmercounter', ['--mode=8', '--ht-fill=75',
+                        '--ncons=32', '--nprod=32', '--ht-type=1', f'--skew={n}'], os.open(bq_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))
