@@ -5,3 +5,5 @@ build/
 kmercounter
 *.log
 /tests/
+**/*.d
+kvstore

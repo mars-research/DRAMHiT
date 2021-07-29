@@ -3,7 +3,7 @@
     "cmake.configureSettings": {
         "PREFETCH": "ON",
         "VTUNE": "ON",
-        "BQ_ZIPFIAN": "ON",
+        "BQ_ZIPFIAN": "OFF",
         "BRANCH": "simd",
         "BQUEUE": "ON"
     },

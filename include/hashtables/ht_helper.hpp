@@ -129,18 +129,18 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   if (config.ht_type == CAS_KHT) {
     void *_addr = addr;
     size_t len_split = ((capacity * sizeof(T)) >> 1);
-    void *addr_split = _addr + len_split;
+    void *addr_split = (char*)_addr + len_split;
     unsigned long nodemask[4096] = {0};
     nodemask[0] = 1 << 1;
     long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
                      MPOL_MF_MOVE | MPOL_MF_STRICT);
 
-    printf("mmap_addr %lx | len %zu\n", _addr, capacity * sizeof(T));
-    printf("calling mbind with addr %lx | len %zu | nodemask %x\n", addr_split,
+    printf("mmap_addr %p | len %zu\n", _addr, capacity * sizeof(T));
+    printf("calling mbind with addr %p | len %zu | nodemask %p\n", addr_split,
            len_split, nodemask);
     if (ret < 0) {
       perror("mbind");
-      printf("mbind ret %d | errno %d\n", ret, errno);
+      printf("mbind ret %ld | errno %d\n", ret, errno);
     }
   }
 #else

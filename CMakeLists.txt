@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(kmercounter VERSION 0.1.0)
+project(kvstore VERSION 0.1.0)
 
 # Ensure g++
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL GNU)
@@ -21,19 +21,16 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -mprefetchwt1 -march=native -fcf-protection=none)
 
 # Build all the source files.
-add_executable(${CMAKE_PROJECT_NAME}
+add_executable(kvstore
     "src/bqueue.cpp"
     "src/hashers/xx/xxhash.cpp"
     "src/tests/bq_tests.cpp"
     "src/tests/hashtable_tests.cpp"
-	"src/tests/parser_tests.cpp"
 	"src/tests/prefetch_tests.cpp"
 	"src/tests/cachemiss_test.cpp"
     "src/misc_lib.cpp"
-    "src/ac_kseq.cpp"
-    "src/ac_kstream.cpp"
     "src/Application.cpp"
-    "src/kmercounter.cpp")
+    "src/kvstore.cpp")
 
 # Declare include directory.
 include_directories(include/ include/xx include/city)
@@ -45,7 +42,8 @@ option(AGGR "Something about AGGR" ON)
 option(PREFETCH "Enable prefetching" ON)
 option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
-set(BRANCH "" CACHE STRING "Branch style")
+option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
+set(BRANCH "simd" CACHE STRING "Branch style")
 
 if(XORWOW)
     message(WARNING "Xorwow")
@@ -78,7 +76,7 @@ set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
 if (VTUNE)
     message(WARNING "Building with vtune")
     include_directories(${VTUNE_ROOT}/include/)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${VTUNE_ROOT}/lib64/libittnotify.a dl)
+    target_link_libraries(kvstore PRIVATE ${VTUNE_ROOT}/lib64/libittnotify.a dl)
     add_definitions(-DWITH_VTUNE_LIB)
 endif ()
 
@@ -119,4 +117,4 @@ add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE boost_program_options numa Threads::Threads)
+target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
