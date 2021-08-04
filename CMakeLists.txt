@@ -24,6 +24,7 @@ add_compile_options(-Wall -mprefetchwt1 -march=native -fcf-protection=none)
 add_executable(kvstore
     "src/bqueue.cpp"
     "src/hashers/xx/xxhash.cpp"
+    "src/hashers/city/city.cpp"
     "src/tests/bq_tests.cpp"
     "src/tests/hashtable_tests.cpp"
 	"src/tests/prefetch_tests.cpp"
@@ -46,7 +47,7 @@ option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
 set(BRANCH "simd" CACHE STRING "Branch style")
 
 if(XORWOW)
-    message(WARNING "Xorwow")
+    message(WARNING "Xorwow synthetic tests")
     add_definitions(-DXORWOW)
 endif()
 
@@ -97,23 +98,23 @@ endif()
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
 # add_definitions(-DCALC_STATS)
 add_definitions(-D__MMAP_FILE)
-# add_definitions(-DTOUCH_DEPENDENCY)
 add_definitions(-DSERIAL_SCAN)
-# add_definitions(-DXORWOW_SCAN)
 add_definitions(-DPREFETCH_WITH_PREFETCH_INSTR)
+add_definitions(-DHUGE_1GB_PAGES)
+add_definitions(-DXX_HASH)
+add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
+# add_definitions(-DTOUCH_DEPENDENCY)
+# add_definitions(-DXORWOW_SCAN)
 # add_definitions(-DSAME_KMER)
 # add_definitions(-DPREFETCH_TWOLINE)
 # add_definitions(-DPREFETCH_WITH_WRITE)
 # add_definitions(-DPREFETCH_RUN)
-add_definitions(-DHUGE_1GB_PAGES)
 # add_definitions(-DCITY_HASH)
 # add_definitions(-DFNV_HASH)
-add_definitions(-DXX_HASH)
 # add_definitions(-DXX_HASH_3)
 # add_definitions(-DBQ_TESTS_INSERT_XORWOW)
 # add_definitions(-DCHAR_ARRAY_PARSE_BUFFER)
 # add_definitions(-DNO_CORNER_CASES)
-add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 

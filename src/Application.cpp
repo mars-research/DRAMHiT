@@ -15,7 +15,6 @@
 #include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "PrefetchTest.hpp"
-#include "kmer_data.cpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "types.hpp"
