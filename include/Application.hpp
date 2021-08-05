@@ -1,6 +1,7 @@
 #ifndef __APPLICATION_HPP__
 #define __APPLICATION_HPP__
 
+#include <atomic>
 #include <thread>
 
 #include "numa.hpp"
@@ -10,6 +11,9 @@ using namespace std;
 namespace kmercounter {
 
 class Application {
+  static std::atomic_bool ready;
+  static std::atomic_uint ready_threads;
+
   Numa *n;
   NumaPolicyThreads *np;
   NumaPolicyQueues *npq;

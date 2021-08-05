@@ -30,16 +30,6 @@
 #endif
 
 namespace kmercounter {
-
-extern uint64_t HT_TESTS_HT_SIZE;
-extern uint64_t HT_TESTS_NUM_INSERTS;
-
-#ifdef NOAGGR
-using KVType = Item;
-#else
-using KVType = Aggr_KV;
-#endif
-
 // default configuration
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -47,12 +37,12 @@ const Configuration def = {
     .kmer_create_data_uniq = 1048576,
     .num_threads = 1,
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
-    .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
+    .kmer_files_dir = "/local/devel/pools/million/39/",
     .alphanum_kmers = true,
     .numa_split = 3,
-    .stats_file = std::string(""),
-    .ht_file = std::string(""),
-    .in_file = std::string("/local/devel/devel/datasets/turkey/myseq0.fa"),
+    .stats_file = "",
+    .ht_file = "",
+    .in_file = "/local/devel/devel/datasets/turkey/myseq0.fa",
     .ht_type = 1,
     .in_file_sz = 0,
     .drop_caches = true,
@@ -65,9 +55,125 @@ const Configuration def = {
 // global config
 Configuration config;
 
-// for synchronization of threads
-static uint64_t ready = 0;
-static uint64_t ready_threads = 0;
+namespace {
+bool try_configure(int argc, char **argv) {
+  namespace po = boost::program_options;
+  po::options_description desc{"Program options"};
+  auto options = desc.add_options();
+  options("help", "produce help message");
+
+  // Huh? don't look at me. The numbers are not continuous for a reason.
+  // We stripped the kmer related stuff.
+  options(
+      "mode",
+      po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
+      "1: Dry run \n"
+      "6/7: Synth/Prefetch\n"
+      "8/9: Bqueue tests: with bqueues/without bequeues\n"
+      "10: Cache Miss test\n");
+
+  options("base",
+          po::value<uint64_t>(&config.kmer_create_data_base)
+              ->default_value(def.kmer_create_data_base),
+          "Number of base K-mers");
+
+  options("mult",
+          po::value<uint32_t>(&config.kmer_create_data_mult)
+              ->default_value(def.kmer_create_data_mult),
+          "Base multiplier for K-mers");
+
+  options("uniq",
+          po::value<uint64_t>(&config.kmer_create_data_uniq)
+              ->default_value(def.kmer_create_data_uniq),
+          "Number of unique K-mers (to control the ratio)");
+
+  options(
+      "num-threads",
+      po::value<uint32_t>(&config.num_threads)->default_value(def.num_threads),
+      "Number of threads");
+
+  options("files-dir",
+          po::value<std::string>(&config.kmer_files_dir)
+              ->default_value(def.kmer_files_dir),
+          "Directory of input files, files should be in format: '\\d{2}.bin'");
+
+  options("alphanum",
+          po::value<bool>(&config.alphanum_kmers)
+              ->default_value(def.alphanum_kmers),
+          "Use alphanum_kmers (for debugging)");
+
+  options(
+      "numa-split",
+      po::value<uint32_t>(&config.numa_split)->default_value(def.numa_split),
+      "Split spawning threads between numa nodes");
+
+  options(
+      "stats",
+      po::value<std::string>(&config.stats_file)->default_value(def.stats_file),
+      "Stats file name.");
+
+  options("ht-type",
+          po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
+          "1: SimpleKmerHashTable\n"
+          "2: RobinhoodKmerHashTable,\n"
+          "3: CASKmerHashTable\n"
+          "4. StdmapKmerHashTable");
+
+  options("out-file",
+          po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
+          "Hashtable output file name.");
+
+  options("in-file",
+          po::value<std::string>(&config.in_file)->default_value(def.in_file),
+          "Input fasta file");
+
+  options("drop-caches",
+          po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
+          "drop page cache before run");
+
+  options("nprod",
+          po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
+          "for bqueues only");
+
+  options("ncons",
+          po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
+          "for bqueues only");
+
+  options("k", po::value<uint32_t>(&config.K)->default_value(def.K),
+          "the value of 'k' in k-mer");
+
+  options("num_nops",
+          po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
+          "number of nops in bqueue cons thread");
+
+  options("ht-fill",
+          po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
+          "adjust hashtable fill ratio [0-100] ");
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    cout << desc << "\n";
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
+std::atomic_bool Application::ready{};
+std::atomic_uint Application::ready_threads{};
+
+extern uint64_t HT_TESTS_HT_SIZE;
+extern uint64_t HT_TESTS_NUM_INSERTS;
+
+#ifdef NOAGGR
+using KVType = Item;
+#else
+using KVType = Aggr_KV;
+#endif
 
 #ifdef WITH_PAPI_LIB
 PapiEvent pr(6);
@@ -139,7 +245,7 @@ void Application::shard_thread(int tid, bool mainthread) {
   }
 
   if (!mainthread) {
-    fipc_test_FAI(ready_threads);
+    --ready_threads;
   }
 
 #ifdef WITH_PAPI_LIB
@@ -191,7 +297,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       fipc_test_pause();
     }
 #if !defined(WITH_PAPI_LIB)
-    ready = 1;
+    ready = true;
 #else
     // If papi is enabled, main thread has to wait as well until ready is
     // signalled. ready is signalled by the last enetering thread.
@@ -221,23 +327,17 @@ void Application::shard_thread(int tid, bool mainthread) {
   }
 
   // Write to file
-  if (!config.ht_file.empty()) {
+  if (!config.ht_file.empty() &&
+      !((config.ht_type == CAS_KHT) && (sh->shard_idx > 0))) {
     // for CAS hashtable, not every thread has to write to file
-    if ((config.ht_type == CAS_KHT) && (sh->shard_idx > 0)) {
-      goto done;
-    }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
     printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
            outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
 
-  // free_ht(kmer_ht);
-
-done:
-
   if (!mainthread) {
-    fipc_test_FAD(ready_threads);
+    --ready_threads;
   }
 
 #ifdef WITH_PAPI_LIB
@@ -249,6 +349,7 @@ done:
     pw1.stop();
   }  // PapiEvent scope
 #endif
+
   return;
 }
 
@@ -362,82 +463,9 @@ void papi_init(void) {}
 
 int Application::process(int argc, char *argv[]) {
   try {
-    namespace po = boost::program_options;
-    po::options_description desc("Program options");
-
-    desc.add_options()("help", "produce help message")(
-        "mode",
-        po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
-        "1: Dry run \n"
-        // Huh? don't look at me. The numbers are not continuous for a reason.
-        // We stripped the kmer related stuff.
-        "6/7: Synth/Prefetch\n"
-        "8/9: Bqueue tests: with bqueues/without bequeues\n"
-        "10: Cache Miss test\n")(
-        "base",
-        po::value<uint64_t>(&config.kmer_create_data_base)
-            ->default_value(def.kmer_create_data_base),
-        "Number of base K-mers")(
-        "mult",
-        po::value<uint32_t>(&config.kmer_create_data_mult)
-            ->default_value(def.kmer_create_data_mult),
-        "Base multiplier for K-mers")(
-        "uniq",
-        po::value<uint64_t>(&config.kmer_create_data_uniq)
-            ->default_value(def.kmer_create_data_uniq),
-        "Number of unique K-mers (to control the ratio)")(
-        "num-threads",
-        po::value<uint32_t>(&config.num_threads)
-            ->default_value(def.num_threads),
-        "Number of threads")(
-        "files-dir",
-        po::value<std::string>(&config.kmer_files_dir)
-            ->default_value(def.kmer_files_dir),
-        "Directory of input files, files should be in format: '\\d{2}.bin'")(
-        "alphanum",
-        po::value<bool>(&config.alphanum_kmers)
-            ->default_value(def.alphanum_kmers),
-        "Use alphanum_kmers (for debugging)")(
-        "numa-split",
-        po::value<uint32_t>(&config.numa_split)->default_value(def.numa_split),
-        "Split spawning threads between numa nodes")(
-        "stats",
-        po::value<std::string>(&config.stats_file)
-            ->default_value(def.stats_file),
-        "Stats file name.")(
-        "ht-type",
-        po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
-        "1: SimpleKmerHashTable\n"
-        "2: RobinhoodKmerHashTable,\n"
-        "3: CASKmerHashTable\n"
-        "4. StdmapKmerHashTable")(
-        "out-file",
-        po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
-        "Hashtable output file name.")(
-        "in-file",
-        po::value<std::string>(&config.in_file)->default_value(def.in_file),
-        "Input fasta file")(
-        "drop-caches",
-        po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
-        "drop page cache before run")(
-        "nprod", po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
-        "for bqueues only")(
-        "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
-        "for bqueues only")(
-        "k", po::value<uint32_t>(&config.K)->default_value(def.K),
-        "the value of 'k' in k-mer")(
-        "num_nops",
-        po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
-        "number of nops in bqueue cons thread")(
-        "ht-fill",
-        po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
-        "adjust hashtable fill ratio [0-100] ");
+    if (!try_configure(argc, argv)) return 1;
 
     papi_init();
-
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
 
     if (config.mode == SYNTH) {
       printf("[INFO] Mode : SYNTH\n");
@@ -489,11 +517,6 @@ int Application::process(int argc, char *argv[]) {
         HT_TESTS_NUM_INSERTS =
             static_cast<double>(HT_TESTS_HT_SIZE) * config.ht_fill * 0.01;
       }
-    }
-
-    if (vm.count("help")) {
-      cout << desc << "\n";
-      return 1;
     }
   } catch (std::exception &e) {
     std::cout << e.what() << "\n";
