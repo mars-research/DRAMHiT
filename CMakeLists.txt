@@ -38,10 +38,10 @@ include_directories(include/ include/xx include/city)
 
 # Declare options
 option(PAPI "Use PAPI to do performance monitering." OFF)
-option(VTUNE "Use VTUNE to do performance monitering." ON)
+option(VTUNE "Use VTUNE to do performance monitering." OFF)
 option(AGGR "Something about AGGR" ON)
 option(PREFETCH "Enable prefetching" ON)
-option(BQUEUE "Enable bqueue tests" ON)
+option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
 option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
 set(BRANCH "simd" CACHE STRING "Branch style")

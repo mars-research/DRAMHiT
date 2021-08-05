@@ -1,0 +1,16 @@
+{
+    "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+        "PREFETCH": "ON",
+        "VTUNE": "ON",
+        "BQ_ZIPFIAN": "OFF",
+        "BRANCH": "simd",
+        "BQUEUE": "ON"
+    },
+    "files.associations": {
+        "*.tcc": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "typeinfo": "cpp"
+    }
+}

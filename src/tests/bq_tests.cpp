@@ -7,6 +7,10 @@
 #include "xx/xxhash.h"
 #endif
 
+#if defined(BQ_TESTS_INSERT_ZIPFIAN)
+#include "zipf.h"
+#endif
+
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
 #endif
@@ -191,7 +195,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
 }
 #else
 void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
-                                 bool main_thread) {
+                                 bool main_thread, double skew) {
   Shard *sh = &this->shards[tid];
 
   sh->stats =
@@ -210,6 +214,22 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 #ifdef BQ_TESTS_INSERT_XORWOW
   struct xorwow_state xw_state;
   xorwow_init(&xw_state);
+#elif defined(BQ_TESTS_INSERT_ZIPFIAN)
+#warning "Zipfian Bqueues"
+  zipf_distribution dist{skew, 192 * (1 << 20),
+                         tid + 1};  // FIXME: magic numbers
+#endif
+
+  // HT_TESTS_NUM_INSERTS enqueues per consumer
+  cons_id = 0;
+  auto mult_factor = static_cast<double>(n_cons) / n_prod;
+  auto _num_messages = HT_TESTS_NUM_INSERTS * 2 * mult_factor;
+  uint64_t num_messages = static_cast<uint64_t>(_num_messages);
+  uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
+
+#ifdef BQ_TESTS_INSERT_ZIPFIAN
+  std::vector<uint64_t> values(num_messages);
+  for (auto &value : values) value = dist();
 #endif
 
   if (main_thread) {
@@ -228,13 +248,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
     while (!test_ready) fipc_test_pause();
     fipc_test_mfence();
   }
-
-  // HT_TESTS_NUM_INSERTS enqueues per consumer
-  cons_id = 0;
-  auto mult_factor = static_cast<double>(n_cons) / n_prod;
-  auto _num_messages = HT_TESTS_NUM_INSERTS * 2 * mult_factor;
-  uint64_t num_messages = static_cast<uint64_t>(_num_messages);
-  uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
 
   // printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n",
   // __func__,
@@ -259,15 +272,18 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 #ifdef BQ_TESTS_INSERT_XORWOW
       k = xorwow(&xw_state);
       k = k << 32 | xorwow(&xw_state);
+#elif defined(BQ_TESTS_INSERT_ZIPFIAN)  // TODO: this is garbage
+      k = values.at(transaction_id);
 #else
       k = key_start++;
+#endif
+
       uint64_t hash_val = XXH64(&k, sizeof(k), 0);
 
       cons_id = hash_to_cpu(k);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
       k |= (hash_val << 32);
-#endif
       // *((uint64_t *)&kmers[i].data) = k;
     retry:
       if (enqueue(q[cons_id], (data_t)k) != SUCCESS) {
@@ -366,6 +382,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
   printf("[INFO] Consumer %u starting\n", this_cons_id);
 
+  static const auto event =
+      __itt_event_create("message_insert", strlen("message_insert"));
+  __itt_event_start(event);
   t_start = RDTSC_START();
 
   prod_id = 0;
@@ -450,6 +469,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   }
 
   t_end = RDTSCP();
+  __itt_event_end(event);
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
@@ -488,7 +508,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   alignas(64) uint64_t k = 0;
 #ifdef WITH_VTUNE_LIB
-  std::string thread_name("producer_thread" + std::to_string(tid));
+  std::string thread_name("find_thread" + std::to_string(tid));
   __itt_thread_set_name(thread_name.c_str());
 #endif
 
@@ -830,7 +850,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     auto _thread = std::thread(&BQueueTest::producer_thread, this, i,
-                               cfg->n_prod, cfg->n_cons, false);
+                               cfg->n_prod, cfg->n_cons, false, cfg->skew);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -875,7 +895,8 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
 
   {
     printf("Running master thread with id %d\n", main_sh->shard_idx);
-    this->producer_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true);
+    this->producer_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true,
+                          cfg->skew);
   }
 
   // // Wait for threads to be ready for test

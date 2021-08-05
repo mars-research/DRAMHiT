@@ -49,7 +49,8 @@ typedef enum {
   PREFETCH = 7,
   BQ_TESTS_YES_BQ = 8,
   BQ_TESTS_NO_BQ = 9,
-  CACHE_MISS = 10
+  CACHE_MISS = 10,
+  ZIPFIAN = 11
 } run_mode_t;
 
 typedef enum {
@@ -81,6 +82,7 @@ struct Configuration {
   uint32_t num_nops;
   uint32_t K;
   uint32_t ht_fill;
+  double skew;
 };
 
 /* Thread stats */
@@ -138,6 +140,11 @@ enum class QueueType {
 
 using ValuePairs = std::pair<uint32_t, Values *>;
 using KeyPairs = std::pair<uint32_t, Keys *>;
+
+struct OpTimings {
+  uint64_t duration;
+  uint64_t op_count;
+};
 
 #endif  // __TYPES_HPP__
 

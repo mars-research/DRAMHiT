@@ -1,7 +1,10 @@
 *.swp
-kmercounter
-**/*.o
+build/
 *.o
+*.d
+kmercounter
+*.log
+/tests/
 **/*.d
 kvstore
 /build/

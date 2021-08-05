@@ -60,7 +60,8 @@ const Configuration def = {
     .n_cons = 1,
     .num_nops = 0,
     .K = 20,
-    .ht_fill = 25};  // TODO enum
+    .ht_fill = 25,
+    .skew = 1.0};  // TODO enum
 
 // global config
 Configuration config;
@@ -125,6 +126,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       //    HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
     case SYNTH:
+    case ZIPFIAN:
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
@@ -216,6 +218,9 @@ void Application::shard_thread(int tid, bool mainthread) {
     case CACHE_MISS:
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
+    case ZIPFIAN:
+      this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
+      break;
     default:
       break;
   }
@@ -262,8 +267,8 @@ int Application::spawn_shard_threads() {
 
   size_t seg_sz = 0;
 
-  if ((config.mode != SYNTH) && (config.mode != PREFETCH) &&
-      (config.mode != CACHE_MISS)) {
+  if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
+      (config.mode != PREFETCH) && (config.mode != CACHE_MISS)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -372,8 +377,9 @@ int Application::process(int argc, char *argv[]) {
         // Huh? don't look at me. The numbers are not continuous for a reason.
         // We stripped the kmer related stuff.
         "6/7: Synth/Prefetch\n"
-        "8/9: Bqueue tests: with bqueues/without bequeues\n"
-        "10: Cache Miss test\n")(
+        "8/9: Bqueue tests: with bqueues/without bequeues (can be built with zipfian)\n"
+        "10: Cache Miss test\n"
+        "11: Zipfian non-bqueue test")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -428,10 +434,16 @@ int Application::process(int argc, char *argv[]) {
         "the value of 'k' in k-mer")(
         "num_nops",
         po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
-        "number of nops in bqueue cons thread")(
-        "ht-fill",
-        po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
-        "adjust hashtable fill ratio [0-100] ");
+        "number of nops in bqueue cons thread"
+        )(
+          "ht-fill",
+          po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
+          "adjust hashtable fill ratio [0-100] "
+        )(
+          "skew",
+          po::value<double>(&config.skew)->default_value(def.skew),
+          "Zipfian skewness"
+        );
 
     papi_init();
 
