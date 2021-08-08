@@ -26,10 +26,7 @@
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "sync.h"
-
-const auto FLUSH_THRESHOLD = 32;
-const auto INS_FLUSH_THRESHOLD = 32;
-const auto KV_SIZE = 16;  // 8-byte key + 8-byte value
+#include "constants.h"
 
 namespace kmercounter {
 

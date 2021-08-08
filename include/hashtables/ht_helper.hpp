@@ -14,8 +14,13 @@
 #include "xx/xxh3.h"
 #endif
 
+#include <fcntl.h>
 #include <numa.h>
 #include <numaif.h>
+#include <sys/mman.h>
+#include <unistd.h>
+
+#include <cstring>
 
 namespace kmercounter {
 /* AB: 1GB page table code is from
@@ -97,7 +102,8 @@ static inline void prefetch_with_write(Kmer_KV *k) {
 }
 
 template <class T>
-T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
+T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
+             bool is_cas_a_special_snowflake = false) {
   T *addr;
 #ifdef HUGE_1GB_PAGES
   int fd;
@@ -126,10 +132,12 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     dbg("mmap returns %p\n", addr);
   }
 
-  if (config.ht_type == CAS_KHT) {
+  // Special handling for CAS that does NOT depend on global config state
+  // Which it shouldn't have in the first place...
+  if (is_cas_a_special_snowflake) {
     void *_addr = addr;
     size_t len_split = ((capacity * sizeof(T)) >> 1);
-    void *addr_split = (char*)_addr + len_split;
+    void *addr_split = (char *)_addr + len_split;
     unsigned long nodemask[4096] = {0};
     nodemask[0] = 1 << 1;
     long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,

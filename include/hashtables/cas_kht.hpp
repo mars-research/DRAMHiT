@@ -1,21 +1,24 @@
-/// Compare-and-swap(CAS) with linear probing hashtable based off of 
+/// Compare-and-swap(CAS) with linear probing hashtable based off of
 /// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
 /// Key and values are stored directly in the table.
-/// The original one is called the casht and the one we modified with 
+/// The original one is called the casht and the one we modified with
 /// batching + prefetching though is called casht++.
 
 #ifndef _CAS_KHT_H
 #define _CAS_KHT_H
 
+#include <cassert>
+#include <fstream>
+#include <iostream>
 #include <mutex>
 
+#include "constants.h"
 #include "dbg.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "sync.h"
 
 namespace kmercounter {
-
 template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
  public:
@@ -34,7 +37,7 @@ class CASHashTable : public BaseHashTable {
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
-        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd, true);
       }
     }
     this->empty_item = this->empty_item.get_empty_key();

@@ -5,6 +5,8 @@
 #include "kmer_class.hpp"
 #include "types.hpp"
 
+// NOTE: Unbuildable as of 2021-08-07
+
 namespace kmercounter {
 
 class StdmapKmerHashTable : public BaseHashTable {

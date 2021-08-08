@@ -119,3 +119,6 @@ add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
 # add_definitions(-DUSE_ATOMICS)
 
 target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
+
+enable_testing()
+add_subdirectory(auto-tests)
