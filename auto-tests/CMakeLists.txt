@@ -1,4 +1,6 @@
 add_executable(find_inserted find_inserted.cpp ../src/hashers/xx/xxhash.cpp)
 target_link_libraries(find_inserted numa)
-add_test(partitioned_find_inserted find_inserted partitioned)
-add_test(cas_find_inserted find_inserted cas)
+add_test(find_inserted_partitioned_sync find_inserted partitioned sync)
+add_test(find_inserted_cas_sync find_inserted cas sync)
+add_test(find_inserted_partitioned_async find_inserted partitioned async)
+add_test(find_inserted_cas_async find_inserted cas async)
