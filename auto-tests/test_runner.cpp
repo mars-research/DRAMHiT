@@ -11,6 +11,7 @@ constexpr auto hashtable_size = 1ull << 26;
 
 // Tests finds of inserted elements after a flush is forced
 // Avoiding asynchronous effects
+// Note the off-by-one on found values
 bool try_synchronous_test(BaseHashTable* ht) {
   try {
     std::cerr << "[TEST] Synchronous\n";
@@ -49,7 +50,7 @@ bool try_synchronous_test(BaseHashTable* ht) {
     }
 
     std::cerr << "[TEST] Ran " << count << " iterations\n";
-    if (n_found != n_inserted) {
+    if (n_found != n_inserted - 1) {
       std::cerr << "[TEST] Not all inserted values were found\n";
       std::cerr << "[TEST] Found " << n_found << "!=" << n_inserted << "\n";
       return false;
@@ -149,11 +150,11 @@ bool try_fill_test(BaseHashTable* ht) {
       n_inserted += items.first;
       ht->insert_batch(items);
     }
-    
+
     ht->flush_insert_queue();
 
     std::cerr << "[TEST] Ran " << count << " iterations\n";
-    if (ht->get_fill() != n_inserted) {
+    if (ht->get_fill() != n_inserted - 1) { // Note that one "inserted" value is ignored
       std::cerr << "[TEST] Not all values were inserted\n";
       std::cerr << "[TEST] Found " << n_inserted << "!=" << ht->get_fill()
                 << "\n";
@@ -168,14 +169,32 @@ bool try_fill_test(BaseHashTable* ht) {
 }
 
 // Test for presence of an off-by-one error in synchronous use
-bool try_single_insert(BaseHashTable* ht)
-{
-  Keys pair {0, 128};
-  KeyPairs keys {1ull, &pair};
+bool try_single_insert(BaseHashTable* ht) {
+  Keys pair{0, 128};
+  KeyPairs keys{1ull, &pair};
   ht->insert_batch(keys);
   ht->flush_insert_queue();
   std::cerr << "[TEST] Fill was: " << ht->get_fill() << "\n";
-  return ht->get_fill() == 1;
+  return ht->get_fill() == 0; // Note that the single key is not inserted
+}
+
+// Test demonstrating the nonintuitive difference in the interpretation of batch
+// lengths between find/insert
+// NOTE: also noted a very strange use of the value field
+bool try_off_by_one(BaseHashTable* ht) {
+  std::array<Keys, 2> keys{Keys{0, 128}, Keys{0xdeadbeef, 256}};
+  KeyPairs keypairs{2, keys.data()};
+  ht->insert_batch(keypairs);
+  ht->flush_insert_queue();
+  std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
+  ValuePairs valuepairs{0, values.data()};
+  ht->find_batch(keypairs, valuepairs);
+  ht->flush_find_queue(valuepairs);
+  std::cerr << "[TEST] Found " << valuepairs.first << ": {"
+            << valuepairs.second->id << ", " << valuepairs.second->value << "}\n";
+
+  // Note that we only insert 256 *once*, so the "value" should be 1
+  return valuepairs.first == 1 && valuepairs.second->id == 256 && valuepairs.second->value == 1;
 }
 }  // namespace
 }  // namespace kmercounter
@@ -194,6 +213,8 @@ int main(int argc, char** argv) {
       return kmercounter::try_fill_test;
     else if (test == "unit_fill")
       return kmercounter::try_single_insert;
+    else if (test == "off_by_one")
+      return kmercounter::try_off_by_one;
     else
       return nullptr;
   }();

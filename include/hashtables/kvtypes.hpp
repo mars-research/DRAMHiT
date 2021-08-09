@@ -80,7 +80,7 @@ struct Kmer_queue {
 
 struct ItemQueue {
   uint64_t key;
-  uint64_t value;
+  uint64_t value; // NOTE: this is currently ignored @David
   uint32_t key_id;
   uint32_t idx;
   uint32_t part_id;
