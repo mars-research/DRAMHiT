@@ -166,6 +166,17 @@ bool try_fill_test(BaseHashTable* ht) {
 
   return true;
 }
+
+// Test for presence of an off-by-one error in synchronous use
+bool try_single_insert(BaseHashTable* ht)
+{
+  Keys pair {0, 128};
+  KeyPairs keys {1ull, &pair};
+  ht->insert_batch(keys);
+  ht->flush_insert_queue();
+  std::cerr << "[TEST] Fill was: " << ht->get_fill() << "\n";
+  return ht->get_fill() == 1;
+}
 }  // namespace
 }  // namespace kmercounter
 
@@ -181,6 +192,8 @@ int main(int argc, char** argv) {
       return kmercounter::try_asynchronous_test;
     else if (test == "fill_sync")
       return kmercounter::try_fill_test;
+    else if (test == "unit_fill")
+      return kmercounter::try_single_insert;
     else
       return nullptr;
   }();
