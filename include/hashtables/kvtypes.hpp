@@ -89,6 +89,7 @@ struct ItemQueue {
 #endif
 } PACKED;
 
+// FIXME: @David paritioned gets the insert count wrong somehow
 struct Aggr_KV {
   using key_type = uint64_t;
   using value_type = uint64_t;

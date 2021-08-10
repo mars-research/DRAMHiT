@@ -33,7 +33,7 @@ bool try_synchronous_test(BaseHashTable* ht) {
       std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
       ValuePairs found{0, values.data()};
       for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {i + j, (i + j) * 2};
+        keys.at(j) = {1, j + 1};
 
       KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
       n_inserted += items.first;
@@ -47,14 +47,20 @@ bool try_synchronous_test(BaseHashTable* ht) {
 
       ht->flush_find_queue(found);
       n_found += found.first;
+      std::cerr << "[TEST] Batch " << i << "\n";
+      for (std::uint64_t j{}; j < found.first; ++j) {
+        auto& value = found.second[j];
+        std::cerr << "[TEST] (" << value.id << ", " << value.value << ")\n";
+      }
+
+      if (n_found != n_inserted) {
+        std::cerr << "[TEST] Not all inserted values were found\n";
+        std::cerr << "[TEST] Found " << n_found << "!=" << n_inserted << "\n";
+        return false;
+      }
     }
 
     std::cerr << "[TEST] Ran " << count << " iterations\n";
-    if (n_found != n_inserted - 1) {
-      std::cerr << "[TEST] Not all inserted values were found\n";
-      std::cerr << "[TEST] Found " << n_found << "!=" << n_inserted << "\n";
-      return false;
-    }
   } catch (...) {
     std::cerr << "Exception thrown\n";
     return false;
@@ -154,7 +160,8 @@ bool try_fill_test(BaseHashTable* ht) {
     ht->flush_insert_queue();
 
     std::cerr << "[TEST] Ran " << count << " iterations\n";
-    if (ht->get_fill() != n_inserted - 1) { // Note that one "inserted" value is ignored
+    if (ht->get_fill() !=
+        n_inserted - 1) {  // Note that one "inserted" value is ignored
       std::cerr << "[TEST] Not all values were inserted\n";
       std::cerr << "[TEST] Found " << n_inserted << "!=" << ht->get_fill()
                 << "\n";
@@ -175,14 +182,14 @@ bool try_single_insert(BaseHashTable* ht) {
   ht->insert_batch(keys);
   ht->flush_insert_queue();
   std::cerr << "[TEST] Fill was: " << ht->get_fill() << "\n";
-  return ht->get_fill() == 0; // Note that the single key is not inserted
+  return ht->get_fill() == 0;  // Note that the single key is not inserted
 }
 
 // Test demonstrating the nonintuitive difference in the interpretation of batch
 // lengths between find/insert
 // NOTE: also noted a very strange use of the value field
 bool try_off_by_one(BaseHashTable* ht) {
-  std::array<Keys, 2> keys{Keys{0, 128}, Keys{0xdeadbeef, 256}};
+  std::array<Keys, 2> keys{Keys{1, 128}, Keys{0xdeadbeef, 256}};
   KeyPairs keypairs{2, keys.data()};
   ht->insert_batch(keypairs);
   ht->flush_insert_queue();
@@ -191,10 +198,13 @@ bool try_off_by_one(BaseHashTable* ht) {
   ht->find_batch(keypairs, valuepairs);
   ht->flush_find_queue(valuepairs);
   std::cerr << "[TEST] Found " << valuepairs.first << ": {"
-            << valuepairs.second->id << ", " << valuepairs.second->value << "}\n";
+            << valuepairs.second->id << ", " << valuepairs.second->value
+            << "}\n";
 
   // Note that we only insert 256 *once*, so the "value" should be 1
-  return valuepairs.first == 1 && valuepairs.second->id == 256 && valuepairs.second->value == 1;
+  return valuepairs.first == 2 && valuepairs.second[0].id == 128 &&
+         valuepairs.second[0].value == 1 && valuepairs.second[1].id == 256 &&
+         valuepairs.second[1].value == 1;
 }
 }  // namespace
 }  // namespace kmercounter

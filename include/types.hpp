@@ -122,6 +122,8 @@ struct Shard {
   Kmer_s *pool;
 };
 
+// NEVER NEVER NEVER USE KEY OR ID 0
+// Your inserts will be ignored if you do (we use these as empty markers)
 struct Keys {
   uint64_t key;
   uint64_t id;

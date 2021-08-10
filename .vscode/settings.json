@@ -4,7 +4,7 @@
         "PREFETCH": "ON",
         "VTUNE": "ON",
         "BQ_ZIPFIAN": "OFF",
-        "BRANCH": "simd",
+        "BRANCH": "",
         "BQUEUE": "ON"
     },
     "files.associations": {
