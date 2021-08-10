@@ -89,7 +89,7 @@ bool try_asynchronous_test(BaseHashTable* ht) {
       ValuePairs found{0, values.data()};
 
       for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {i + j, (i + j) * 2};
+        keys.at(j) = {1, i + j + 1};
 
       KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
       ht->insert_batch(items);
@@ -107,7 +107,7 @@ bool try_asynchronous_test(BaseHashTable* ht) {
       std::array<Keys, HT_TESTS_BATCH_LENGTH> keys{};
 
       for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {i + j, (i + j) * 2};
+        keys.at(j) = {1, i + j + 1};
 
       KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
       ht->find_batch(items, found);
@@ -150,7 +150,7 @@ bool try_fill_test(BaseHashTable* ht) {
 
       std::array<Keys, size> keys{};
       for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {i + j, (i + j) * 2};
+        keys.at(j) = {i + j + 1, i + j + 1}; // Insert different values each time to force max fill
 
       KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
       n_inserted += items.first;
@@ -160,8 +160,7 @@ bool try_fill_test(BaseHashTable* ht) {
     ht->flush_insert_queue();
 
     std::cerr << "[TEST] Ran " << count << " iterations\n";
-    if (ht->get_fill() !=
-        n_inserted - 1) {  // Note that one "inserted" value is ignored
+    if (ht->get_fill() != n_inserted) {
       std::cerr << "[TEST] Not all values were inserted\n";
       std::cerr << "[TEST] Found " << n_inserted << "!=" << ht->get_fill()
                 << "\n";
