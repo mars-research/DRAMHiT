@@ -5,6 +5,13 @@
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/simple_kht.hpp"
 
+/*
+  - Fill depends on the *distinct* key/id pairs
+  - find_batch() returns pairs of (id, count), where count is the number of
+  times a particular id occurs
+    - independent of key?
+*/
+
 namespace kmercounter {
 namespace {
 constexpr auto hashtable_size = 1ull << 26;
@@ -16,7 +23,7 @@ bool try_synchronous_test(BaseHashTable* ht) {
   try {
     std::cerr << "[TEST] Synchronous\n";
 
-    constexpr auto size = 1 << 8;
+    constexpr auto size = 1 << 12;
     static_assert(size % HT_TESTS_BATCH_LENGTH == 0,
                   "Test size is assumed to be a multiple of batch size");
 
@@ -33,7 +40,7 @@ bool try_synchronous_test(BaseHashTable* ht) {
       std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
       ValuePairs found{0, values.data()};
       for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {1, j + 1};
+        keys.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
       KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
       n_inserted += items.first;
@@ -73,52 +80,37 @@ bool try_asynchronous_test(BaseHashTable* ht) {
   try {
     std::cerr << "[TEST] Asynchronous\n";
 
-    constexpr auto size = 1 << 8;
+    std::uint64_t n_inserted{};
+    std::uint64_t n_found{};
+    constexpr auto size = 1 << 12;
     static_assert(size % HT_TESTS_BATCH_LENGTH == 0,
                   "Test size is assumed to be a multiple of batch size");
 
     static_assert(HT_TESTS_FIND_BATCH_LENGTH == HT_TESTS_BATCH_LENGTH,
                   "Test logic assumes these batch sizes are equal");
 
-    std::uint64_t n_inserted{};
-    std::uint64_t n_insert_loops{};
     for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
-      ++n_insert_loops;
       std::array<Keys, HT_TESTS_BATCH_LENGTH> keys{};
-      std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
-      ValuePairs found{0, values.data()};
 
       for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {1, i + j + 1};
+        keys.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
       KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
       ht->insert_batch(items);
       n_inserted += HT_TESTS_BATCH_LENGTH;
-    }
 
-    ht->flush_insert_queue();
+      ht->flush_insert_queue();
 
-    std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
-    ValuePairs found{0, values.data()};
-    std::uint64_t n_found{};
-    std::uint64_t n_find_loops{};
-    for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
-      ++n_find_loops;
-      std::array<Keys, HT_TESTS_BATCH_LENGTH> keys{};
-
-      for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {1, i + j + 1};
-
-      KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
+      std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
+      ValuePairs found{0, values.data()};
       ht->find_batch(items, found);
       n_found += found.first;
       found.first = 0;
+
+      ht->flush_find_queue(found);
+      n_found += found.first;
     }
 
-    ht->flush_find_queue(found);
-    n_found += found.first;
-    std::cerr << "[TEST] Ran " << n_insert_loops << " insert iterations\n";
-    std::cerr << "[TEST] Ran " << n_find_loops << " find iterations\n";
     if (n_found != n_inserted) {
       std::cerr << "[TEST] Not all inserted values were found\n";
       std::cerr << "[TEST] Found " << n_found << " != " << n_inserted << "\n";
@@ -150,7 +142,9 @@ bool try_fill_test(BaseHashTable* ht) {
 
       std::array<Keys, size> keys{};
       for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-        keys.at(j) = {i + j + 1, i + j + 1}; // Insert different values each time to force max fill
+        keys.at(j) = {
+            i + j + 1,
+            i + j + 1};  // Insert different values each time to force max fill
 
       KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
       n_inserted += items.first;
@@ -176,12 +170,12 @@ bool try_fill_test(BaseHashTable* ht) {
 
 // Test for presence of an off-by-one error in synchronous use
 bool try_single_insert(BaseHashTable* ht) {
-  Keys pair{0, 128};
+  Keys pair{1, 128};
   KeyPairs keys{1ull, &pair};
   ht->insert_batch(keys);
   ht->flush_insert_queue();
   std::cerr << "[TEST] Fill was: " << ht->get_fill() << "\n";
-  return ht->get_fill() == 0;  // Note that the single key is not inserted
+  return ht->get_fill() == 1;
 }
 
 // Test demonstrating the nonintuitive difference in the interpretation of batch
