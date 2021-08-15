@@ -216,7 +216,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   xorwow_init(&xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian Bqueues"
-  zipf_distribution dist{skew, 192 * (1 << 20),
+  zipf_distribution dist{skew, 192ull * (1ull << 20),
                          tid + 1};  // FIXME: magic numbers
 #endif
 
@@ -374,7 +374,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
-  kmer_ht = init_ht(HT_TESTS_HT_SIZE * 2, sh->shard_idx);
+  kmer_ht = init_ht(HT_TESTS_HT_SIZE * 2, sh->shard_idx); // TODO: @David fix special-casing of 32 consumer case
   (*this->ht_vec)[tid] = kmer_ht;
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();

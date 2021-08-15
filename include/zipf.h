@@ -184,7 +184,7 @@ static void mehcached_test_zipf(double theta) {
 
 class zipf_distribution {
  public:
-  zipf_distribution(double skew, unsigned int maximum, unsigned int seed) {
+  zipf_distribution(double skew, std::uint64_t maximum, unsigned int seed) {
     mehcached_zipf_init(&state, maximum, skew, seed);
   }
 

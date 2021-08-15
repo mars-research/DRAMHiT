@@ -47,7 +47,9 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     keys[k] = 32;
 #elif defined(XORWOW)
 #warning "Xorwow rand kmer insert"
-    _items[k].key = xorwow(&_xw_state);
+    const auto value = xorwow(&_xw_state);
+    _items[k].key = value;
+    keys[k] = value;
 #else
     // *((uint64_t *)&kmers[k].data) = count;
     //*((uint64_t *)items[k].key()) = count;
@@ -216,7 +218,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   static const auto event =
       __itt_event_create("inserting", strlen("inserting"));
 
-  constexpr auto keyrange_width = 192 * (1 << 20);
+  constexpr auto keyrange_width = 64ull * (1ull << 26);  // 192 * (1 << 20);
   zipf_distribution distribution{skew, keyrange_width, id + 1};
   std::uint64_t duration{};
 

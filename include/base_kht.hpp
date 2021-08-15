@@ -21,12 +21,16 @@ class BaseHashTable {
  public:
   virtual bool insert(const void *data) = 0;
 
+  // NEVER NEVER NEVER USE KEY OR ID 0
+  // Your inserts will be ignored if you do (we use these as empty markers)
   virtual void insert_batch(KeyPairs &kp) = 0;
 
   virtual void insert_noprefetch(const void *data) = 0;
 
   virtual void flush_insert_queue() = 0;
 
+  // NEVER NEVER NEVER USE KEY OR ID 0
+  // Your inserts will be ignored if you do (we use these as empty markers)
   virtual void find_batch(KeyPairs &kp, ValuePairs &vp) = 0;
 
   virtual void *find_noprefetch(const void *data) = 0;

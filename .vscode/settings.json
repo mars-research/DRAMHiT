@@ -1,11 +1,12 @@
 {
     "cmake.generator": "Ninja",
     "cmake.configureSettings": {
-        "PREFETCH": "ON",
+        "PREFETCH": "OFF",
         "VTUNE": "ON",
-        "BQ_ZIPFIAN": "OFF",
-        "BRANCH": "",
-        "BQUEUE": "ON"
+        "BQ_ZIPFIAN": "ON",
+        "BRANCH": "simd",
+        "BQUEUE": "ON",
+        "XORWOW": "OFF"
     },
     "files.associations": {
         "*.tcc": "cpp",
@@ -71,5 +72,6 @@
         "typeindex": "cpp",
         "variant": "cpp",
         "*.ipp": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": true
 }
