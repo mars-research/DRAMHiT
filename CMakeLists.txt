@@ -96,7 +96,7 @@ if (BQUEUE)
 endif()
 
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
-# add_definitions(-DCALC_STATS)
+add_definitions(-DCALC_STATS)
 add_definitions(-D__MMAP_FILE)
 add_definitions(-DSERIAL_SCAN)
 add_definitions(-DPREFETCH_WITH_PREFETCH_INSTR)

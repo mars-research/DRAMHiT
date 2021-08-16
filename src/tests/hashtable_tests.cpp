@@ -1,4 +1,6 @@
+#ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
+#endif
 
 #include <atomic>
 
@@ -34,9 +36,13 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+
+#ifdef WITH_VTUNE_LIB
   static const auto event =
       __itt_event_create("inserting", strlen("inserting"));
   __itt_event_start(event);
+#endif
+
   const auto t_start = RDTSC_START();
   for (i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
@@ -95,7 +101,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 #endif
 
   const auto t_end = RDTSCP();
+
+#ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
+#endif
+
   duration += t_end - t_start;
   // printf("%s: %p\n", __func__, ktable->find(&kmers[k]));
 
@@ -215,9 +225,6 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
                              unsigned int count, unsigned int id) {
-  static const auto event =
-      __itt_event_create("inserting", strlen("inserting"));
-
   constexpr auto keyrange_width = 64ull * (1ull << 26);  // 192 * (1 << 20);
   zipf_distribution distribution{skew, keyrange_width, id + 1};
   std::uint64_t duration{};
@@ -228,7 +235,11 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   ++fence;
   while (fence < count) _mm_pause();
 
+#ifdef WITH_VTUNE_LIB
+  static const auto event =
+      __itt_event_create("inserting", strlen("inserting"));
   __itt_event_start(event);
+#endif
 
 #ifdef NO_PREFETCH
 #warning "Zipfian no-prefetch"
@@ -258,7 +269,9 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   duration += end - start;
 #endif
 
+#ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
+#endif
 
   return {duration, HT_TESTS_NUM_INSERTS};
 }
@@ -288,8 +301,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
         shard->shard_idx, i, insert_timings.duration / insert_timings.op_count);
 
 #ifdef CALC_STATS
-    printf(" Reprobes %lu soft_reprobes %lu\n", kmer_ht->num_reprobes,
-           kmer_ht->num_soft_reprobes);
+    printf(" Reprobes %lu soft_reprobes %lu\n", hashtable->num_reprobes,
+           hashtable->num_soft_reprobes);
 #endif
   }
 

@@ -374,7 +374,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
-  kmer_ht = init_ht(HT_TESTS_HT_SIZE * 2, sh->shard_idx); // TODO: @David fix special-casing of 32 consumer case
+  kmer_ht = init_ht(
+      HT_TESTS_HT_SIZE * 2,
+      sh->shard_idx);  // TODO: @David fix special-casing of 32 consumer case
   (*this->ht_vec)[tid] = kmer_ht;
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
@@ -382,9 +384,12 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
   printf("[INFO] Consumer %u starting\n", this_cons_id);
 
+#ifdef WITH_VTUNE_LIB
   static const auto event =
       __itt_event_create("message_insert", strlen("message_insert"));
   __itt_event_start(event);
+#endif
+
   t_start = RDTSC_START();
 
   prod_id = 0;
@@ -469,7 +474,11 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   }
 
   t_end = RDTSCP();
+
+#ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
+#endif
+
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
@@ -590,10 +599,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     }
 
 #ifdef CALC_STATS
-    if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
-      printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
-             transaction_id);
-    }
+    // if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
+    //   printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
+    //          transaction_id);
+    // }
 #endif
   }
   t_end = RDTSCP();

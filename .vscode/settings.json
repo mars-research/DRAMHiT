@@ -2,7 +2,7 @@
     "cmake.generator": "Ninja",
     "cmake.configureSettings": {
         "PREFETCH": "OFF",
-        "VTUNE": "ON",
+        "VTUNE": "OFF",
         "BQ_ZIPFIAN": "ON",
         "BRANCH": "simd",
         "BQUEUE": "ON",
