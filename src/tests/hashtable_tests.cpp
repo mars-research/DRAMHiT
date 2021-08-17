@@ -1,4 +1,6 @@
+#ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
+#endif
 
 #include <atomic>
 
