@@ -95,9 +95,6 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       kmer_ht =
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
-    case CAS_NOPREFETCH:
-      kmer_ht = new CASHashTable<Aggr_KV, ItemQueue>(sz * config.num_threads);
-      break;
     default:
       fprintf(stderr, "STDMAP_KHT Not implemented\n");
       break;

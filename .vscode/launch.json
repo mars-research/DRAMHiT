@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/kvstore",
-            "args": ["--ht-fill=75", "--ht-type=1", "--mode=11", "--skew=0.0", "--nprod=32", "--ncons=32"],
+            "args": ["--ht-fill=75", "--ht-type=1", "--mode=8", "--skew=0.0", "--nprod=32", "--ncons=32"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

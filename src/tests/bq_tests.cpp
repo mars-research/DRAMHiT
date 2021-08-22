@@ -361,7 +361,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
       // sizeof(thread_stats));
       (thread_stats *)calloc(1, sizeof(thread_stats));
 
-  std::uint64_t count {};
+  std::uint64_t count{};
   uint64_t t_start, t_end;
   BaseHashTable *kmer_ht = NULL;
   uint8_t finished_producers = 0;
@@ -379,9 +379,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
-  kmer_ht = init_ht(
-      HT_TESTS_HT_SIZE * 2,
-      sh->shard_idx);  // TODO: @David fix special-casing of 32 consumer case
+  kmer_ht =
+      init_ht(HT_TESTS_HT_SIZE * (cfg->n_prod + cfg->n_cons) / cfg->n_cons,
+              sh->shard_idx);
   (*this->ht_vec)[tid] = kmer_ht;
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
