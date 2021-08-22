@@ -1,11 +1,11 @@
 {
     "cmake.generator": "Ninja",
     "cmake.configureSettings": {
-        "PREFETCH": "OFF",
-        "VTUNE": "OFF",
-        "BQ_ZIPFIAN": "ON",
+        "PREFETCH": "ON",
+        "VTUNE": "ON",
+        "BQ_ZIPFIAN": "OFF",
         "BRANCH": "simd",
-        "BQUEUE": "ON",
+        "BQUEUE": "OFF", /* Never, EVER turn this on for non-bqueue tests */
         "XORWOW": "OFF"
     },
     "files.associations": {

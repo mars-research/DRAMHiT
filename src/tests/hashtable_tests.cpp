@@ -3,6 +3,7 @@
 #endif
 
 #include <atomic>
+#include <sstream>
 
 #include "misc_lib.h"
 #include "print_stats.h"
@@ -245,6 +246,9 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #warning "Zipfian no-prefetch"
   const auto start = RDTSC_START();
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+    if (n % 8 == 0 && n + 16 < values.size())
+      prefetch_object<false>(&values.at(n + 16), 64);
+
     hashtable->insert_noprefetch(&values.at(n));
   }
 
@@ -255,6 +259,9 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   const auto start = RDTSC_START();
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+    if (n % 8 == 0 && n + 16 < values.size())
+      prefetch_object<false>(&values.at(n + 16), 64);
+
     items[key] = {values.at(n), n};
 
     if (++key == HT_TESTS_BATCH_LENGTH) {
@@ -262,12 +269,24 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
       hashtable->insert_batch(keypairs);
       key = 0;
     }
+
+    if (n % 1024 == 0) {
+      std::stringstream msg{};
+      msg << "[DEBUG] Ping " << n << "\n";
+      msg << "[DEBUG] Reprobes: " << hashtable->num_reprobes
+          << ", Soft Reprobes: " << hashtable->num_soft_reprobes << "\n";
+
+      std::cout << msg.str();
+    }
   }
 
   hashtable->flush_insert_queue();
   const auto end = RDTSCP();
   duration += end - start;
 #endif
+
+  std::cout << "[DEBUG] Inserts done; Reprobes: " << hashtable->num_reprobes
+            << ", Soft Reprobes: " << hashtable->num_soft_reprobes << "\n";
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);

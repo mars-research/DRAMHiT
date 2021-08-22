@@ -19,8 +19,8 @@ inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->num_memcpys = kmer_ht->num_memcpys;
   sh->stats->num_queue_flushes = kmer_ht->num_queue_flushes;
   sh->stats->num_hashcmps = kmer_ht->num_hashcmps;
-  sh->stats->avg_distance_from_bucket =
-      (double)(kmer_ht->sum_distance_from_bucket / sh->stats->ht_fill);
+  // sh->stats->avg_distance_from_bucket =
+  //     (double)(kmer_ht->sum_distance_from_bucket / sh->stats->ht_fill);
   sh->stats->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
 #endif
 }
