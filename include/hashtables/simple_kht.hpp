@@ -27,7 +27,6 @@
 #include "ht_helper.hpp"
 #include "sync.h"
 #include "constants.h"
-#include "fastrange.h"
 
 namespace kmercounter {
 
@@ -572,7 +571,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // index at which reprobe must begin
     size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-    ridx = (ridx < this->capacity) ? ridx : ridx % this->capacity;  // modulo
+    ridx &= this->capacity - 1;  // modulo
     this->prefetch_read(ridx);
 
     this->find_queue[this->find_head].key = q->key;
@@ -831,7 +830,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // prepare for possible reprobe
     // point next idx (nidx) to the start of the next cacheline
     auto nidx = idx + KV_PER_CACHE_LINE - cidx;
-    nidx = (nidx < this->capacity) ? nidx : 0;  // modulo (NEEDS TO BE A MODULO)
+    nidx = nidx & (this->capacity - 1);  // modulo
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
     this->insert_queue[this->ins_head].idx = nidx;
@@ -868,7 +867,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   uint64_t read_hashtable_element(const void *data) {
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = fastrange64(hash, this->capacity);
+    size_t idx = hash & (this->capacity - 1);
     KV *curr = &this->hashtable[this->id][idx];
     return curr->get_value();
   }
@@ -902,7 +901,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
-    size_t idx = fastrange64(hash, this->capacity);  // modulo
+    size_t idx = hash & (this->capacity - 1);  // modulo
 
     // cout << " -- Adding " << key  << " at " << this->ins_head <<
     // endl;
@@ -933,7 +932,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
-    size_t idx = fastrange64(hash, this->capacity - 1);  // modulo
+    size_t idx = hash & (this->capacity - 1);  // modulo
 
     this->prefetch_partition(idx, key_data->part_id, false);
 
