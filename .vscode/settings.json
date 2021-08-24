@@ -5,7 +5,7 @@
         "VTUNE": "ON",
         "BQ_ZIPFIAN": "OFF",
         "BRANCH": "simd",
-        "BQUEUE": "ON", /* Never, EVER turn this on for non-bqueue tests */
+        "BQUEUE": "OFF", /* Never, EVER turn this on for non-bqueue tests */
         "XORWOW": "OFF"
     },
     "files.associations": {

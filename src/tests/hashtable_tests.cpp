@@ -269,15 +269,6 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
       hashtable->insert_batch(keypairs);
       key = 0;
     }
-
-    if (n % 1024 == 0) {
-      std::stringstream msg{};
-      msg << "[DEBUG] Ping " << n << "\n";
-      msg << "[DEBUG] Reprobes: " << hashtable->num_reprobes
-          << ", Soft Reprobes: " << hashtable->num_soft_reprobes << "\n";
-
-      std::cout << msg.str();
-    }
   }
 
   hashtable->flush_insert_queue();
