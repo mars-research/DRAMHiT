@@ -2,7 +2,7 @@
 
 * Prerequisites
 ```
-sudo apt install libnuma-dev libboost-program-options1.65*
+sudo apt install libnuma-dev libboost-program-options-dev
 ```
 * Build
 ```
