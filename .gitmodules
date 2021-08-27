@@ -10,3 +10,6 @@
 [submodule "lib/wyhash"]
 	path = lib/wyhash
 	url = https://github.com/wangyi-fudan/wyhash.git
+[submodule "lib/cityhash"]
+	path = lib/cityhash
+	url = https://github.com/google/cityhash.git

@@ -35,7 +35,7 @@ add_executable(kvstore
 # Add subdirectory
 add_subdirectory(lib)
 target_link_directories(kvstore PRIVATE lib/)
-target_link_libraries(kvstore PRIVATE fnv xxhash)
+target_link_libraries(kvstore PRIVATE fnv xxhash cityhash)
 
 # Declare include directory.
 include_directories(include/ lib/)

@@ -6,6 +6,7 @@
 #include "fnv/fnv.h"
 #include "wyhash/wyhash.h"
 #include "xxHash/xxhash.h"
+#include "cityhash/src/city.h"
 
 namespace kmercounter {
 class Hasher {
