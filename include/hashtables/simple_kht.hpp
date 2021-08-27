@@ -27,6 +27,7 @@
 #include "ht_helper.hpp"
 #include "sync.h"
 #include "constants.h"
+#include "hasher.hpp"
 
 namespace kmercounter {
 
@@ -422,19 +423,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   uint32_t find_tail;
   uint32_t ins_head;
   uint32_t ins_tail;
+  Hasher hasher_;
 
   uint64_t hash(const void *k) {
-    uint64_t hash_val;
-#if defined(CITY_HASH)
-    hash_val = CityHash64((const char *)k, this->key_length);
-#elif defined(FNV_HASH)
-    hash_val = hval = fnv_32a_buf(k, this->key_length, hval);
-#elif defined(XX_HASH)
-    hash_val = XXH64(k, this->key_length, 0);
-#elif defined(XX_HASH_3)
-    hash_val = XXH3_64bits(k, this->key_length);
-#endif
-    return hash_val;
+    return hasher_(k, this->key_length);
   }
 
   uint64_t __find_branched(KVQ *q, ValuePairs &vp) {

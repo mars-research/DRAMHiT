@@ -1,5 +1,5 @@
-add_executable(test_runner test_runner.cpp ../src/hashers/xx/xxhash.cpp)
-target_link_libraries(test_runner numa)
+add_executable(test_runner test_runner.cpp)
+target_link_libraries(test_runner numa xxhash)
 add_test(find_inserted_partitioned_sync test_runner partitioned sync)
 add_test(find_inserted_cas_sync test_runner cas sync)
 add_test(find_inserted_partitioned_async test_runner partitioned async)

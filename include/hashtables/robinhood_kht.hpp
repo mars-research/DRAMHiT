@@ -2,9 +2,9 @@
 #define _ROBINHOOD_SKHT_H
 
 #include "base_kht.hpp"
-#include "city/city.h"
 #include "helper.hpp"
 #include "types.hpp"
+#include "hasher.hpp"
 // #include "kmer_struct.h"
 
 /*
@@ -44,14 +44,10 @@ class RobinhoodKmerHashTable : public BaseHashTable {
   RH_Kmer_r empty_kmer_r;  /* for comparison for empty slot */
   RH_Kmer_queue_r *queue;  // TODO prefetch this?
   uint32_t queue_idx;      // pointer to head of queue
+  Hasher hasher_;
 
   uint64_t __hash(const void *k) {
-#if defined(CITY_HASH)
-    uint64_t cityhash = CityHash64((const char *)k, KMER_DATA_LENGTH);
-    /* n % d => n & (d - 1) */
-    return cityhash;  // modulo
-#endif
-    return 0;
+    return hasher_(k, KMER_DATA_LENGTH);
   }
 
   /* Insert items from queue into hash table, interpreting "queue"
@@ -206,7 +202,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     uint64_t distance_from_bucket = 0;
 #endif
     uint64_t cityhash_new =
-        CityHash64((const char *)kmer_data, KMER_DATA_LENGTH);
+        hasher_((const char *)kmer_data, KMER_DATA_LENGTH);
 
     size_t idx = cityhash_new & (this->capacity - 1);  // modulo
 

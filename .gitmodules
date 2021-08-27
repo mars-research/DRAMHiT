@@ -1,3 +1,12 @@
 [submodule "papi"]
 	path = papi
 	url = https://bitbucket.org/icl/papi.git
+[submodule "lib/xxHash"]
+	path = lib/xxHash
+	url = https://github.com/Cyan4973/xxHash.git
+[submodule "lib/fnv"]
+	path = lib/fnv
+	url = https://github.com/haipome/fnv.git
+[submodule "lib/wyhash"]
+	path = lib/wyhash
+	url = https://github.com/wangyi-fudan/wyhash.git
