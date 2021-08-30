@@ -5,6 +5,7 @@
 #include "city/city.h"
 #include "fnv_hash.h"
 #include "hashtables/kvtypes.hpp"
+#include "dbg.hpp"
 
 #if defined(XX_HASH)
 #include "xx/xxhash.h"

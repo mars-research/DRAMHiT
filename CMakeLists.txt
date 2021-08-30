@@ -49,6 +49,7 @@ set(BRANCH "simd" CACHE STRING "Branch style")
 if(XORWOW)
     message(WARNING "Xorwow synthetic tests")
     add_definitions(-DXORWOW)
+    add_definitions(-DBQ_TESTS_INSERT_XORWOW_NEW)
 endif()
 
 if(BQ_ZIPFIAN)
@@ -96,13 +97,12 @@ if (BQUEUE)
 endif()
 
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
-# add_definitions(-DCALC_STATS)
+#add_definitions(-DCALC_STATS) # Make sure this is on only when needed
 add_definitions(-D__MMAP_FILE)
 add_definitions(-DSERIAL_SCAN)
 add_definitions(-DPREFETCH_WITH_PREFETCH_INSTR)
 add_definitions(-DHUGE_1GB_PAGES)
 add_definitions(-DXX_HASH)
-add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
 # add_definitions(-DTOUCH_DEPENDENCY)
 # add_definitions(-DXORWOW_SCAN)
 # add_definitions(-DSAME_KMER)
