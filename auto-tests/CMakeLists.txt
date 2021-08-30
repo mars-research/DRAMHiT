@@ -1,12 +1,14 @@
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 add_executable(test_runner test_runner.cpp ../src/hashers/xx/xxhash.cpp)
-target_link_libraries(test_runner numa)
-add_test(find_inserted_partitioned_sync test_runner partitioned sync)
-add_test(find_inserted_cas_sync test_runner cas sync)
-add_test(find_inserted_partitioned_async test_runner partitioned async)
-add_test(find_inserted_cas_async test_runner cas async)
-add_test(fill_partitioned_sync test_runner partitioned fill_sync)
-add_test(fill_cas_sync test_runner cas fill_sync)
-add_test(unit_fill_partitioned test_runner partitioned unit_fill)
-add_test(unit_fill_cas test_runner cas unit_fill)
-add_test(off_by_one_partitioned test_runner partitioned off_by_one)
-add_test(off_by_one_cas test_runner cas off_by_one)
+target_link_libraries(test_runner gtest_main numa)
+
+include(GoogleTest)
+gtest_discover_tests(test_runner)

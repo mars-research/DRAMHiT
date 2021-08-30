@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string_view>
+#include <gtest/gtest.h>
 
 #include "hashtable.h"
 #include "hashtables/cas_kht.hpp"
@@ -14,7 +15,29 @@
 
 namespace kmercounter {
 namespace {
+// Test size.
 constexpr auto hashtable_size = 1ull << 26;
+// Test names.
+const char SYNCHRONOUS_TEST[] = "Synchronous";
+const char ASYNCHRONOUS_TEST[] = "Asynchronous";
+const char FILL_SYNC_TEST[] = "Fill Sync";
+const char UNIT_FILL_TEST[] = "Unit Fill";
+const char OFF_BY_ONE_TEST[] = "Off By One";
+constexpr const char* TEST_FNS [] {
+  SYNCHRONOUS_TEST,
+  ASYNCHRONOUS_TEST,
+  FILL_SYNC_TEST,
+  UNIT_FILL_TEST,
+  OFF_BY_ONE_TEST,
+};
+// Hashtable names.
+const char PARTITIONED_CAS_HT[] = "Partitioned CAS";
+const char CAS_HT[] = "CAS";
+constexpr const char* HTS [] {
+  PARTITIONED_CAS_HT,
+  CAS_HT,
+};
+
 
 // Tests finds of inserted elements after a flush is forced
 // Avoiding asynchronous effects
@@ -199,47 +222,59 @@ bool try_off_by_one(BaseHashTable* ht) {
          valuepairs.second[0].value == 1 && valuepairs.second[1].id == 256 &&
          valuepairs.second[1].value == 1;
 }
-}  // namespace
-}  // namespace kmercounter
 
-int main(int argc, char** argv) {
-  if (argc != 3) return 1;
-  const std::string_view type{argv[1]};
-  const std::string_view test{argv[2]};
+class CombinationsTest :
+    public ::testing::TestWithParam<std::tuple<const char*, const char*>> {};
 
-  const auto run_test = [test]() -> bool (*)(kmercounter::BaseHashTable*) {
-    if (test == "sync")
+TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
+  // Get input.
+  const auto [test_name, ht_name] = GetParam();
+
+  // Get test function.
+  const auto test_fn = [test_name]() -> bool (*)(kmercounter::BaseHashTable*) {
+    if (test_name == SYNCHRONOUS_TEST)
       return kmercounter::try_synchronous_test;
-    else if (test == "async")
+    else if (test_name == ASYNCHRONOUS_TEST)
       return kmercounter::try_asynchronous_test;
-    else if (test == "fill_sync")
+    else if (test_name == FILL_SYNC_TEST)
       return kmercounter::try_fill_test;
-    else if (test == "unit_fill")
+    else if (test_name == UNIT_FILL_TEST)
       return kmercounter::try_single_insert;
-    else if (test == "off_by_one")
+    else if (test_name == OFF_BY_ONE_TEST)
       return kmercounter::try_off_by_one;
     else
       return nullptr;
   }();
+  ASSERT_NE(test_fn, nullptr) << "Invalid test type: " << test_name;
 
-  const auto ht = [type]() -> kmercounter::BaseHashTable* {
-    if (type == "partitioned")
+  // Get hashtable.
+  const auto ht = [ht_name]() -> kmercounter::BaseHashTable* {
+    if (ht_name == PARTITIONED_CAS_HT)
       return new kmercounter::PartitionedHashStore<kmercounter::Aggr_KV,
                                                    kmercounter::ItemQueue>{
           kmercounter::hashtable_size, 0};
-    else if (type == "cas")
+    else if (ht_name == CAS_HT)
       return new kmercounter::CASHashTable<kmercounter::Aggr_KV,
                                            kmercounter::ItemQueue>{
           kmercounter::hashtable_size};
     else
       return nullptr;
   }();
+  ASSERT_NE(ht, nullptr) << "Invalid hashtable type: " << ht_name;
 
-  if (!(ht && run_test)) {
-    std::cerr << "[TEST] Invalid test type\n";
-    std::cerr << "[TEST] " << type << " " << test << "\n";
-    return 1;
-  }
-
-  return !run_test(ht);
+  // Run test and clean up.
+  ASSERT_TRUE(test_fn(ht));
+  delete ht;
 }
+
+INSTANTIATE_TEST_CASE_P(TestAllCombinations,
+                        CombinationsTest,
+                        ::testing::Combine(
+                          ::testing::ValuesIn(TEST_FNS),
+                          ::testing::ValuesIn(HTS)
+                        )
+);
+
+}  // namespace
+}  // namespace kmercounter
+
