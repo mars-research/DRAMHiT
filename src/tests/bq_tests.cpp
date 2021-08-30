@@ -381,9 +381,11 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
   printf("[INFO] Consumer %u starting\n", this_cons_id);
 
+#ifdef WITH_VTUNE_LIB
   static const auto event =
       __itt_event_create("message_insert", strlen("message_insert"));
   __itt_event_start(event);
+#endif
   t_start = RDTSC_START();
 
   prod_id = 0;
@@ -468,7 +470,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   }
 
   t_end = RDTSCP();
+#ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
+#endif
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
