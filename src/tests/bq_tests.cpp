@@ -1,3 +1,5 @@
+#include <cinttypes>
+
 #include "BQueueTest.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
@@ -5,6 +7,7 @@
 #include "hasher.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
+#include "hashtables/ht_helper.hpp"
 #include "zipf.h"
 #endif
 
@@ -209,7 +212,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   std::string thread_name("producer_thread" + std::to_string(tid));
   __itt_thread_set_name(thread_name.c_str());
 #endif
-#ifdef BQ_TESTS_INSERT_XORWOW
+#ifdef BQ_TESTS_INSERT_XORWOW_NEW
   struct xorwow_state xw_state;
   xorwow_init(&xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
@@ -268,10 +271,11 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
      * consumer */
 
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {
-#ifdef BQ_TESTS_INSERT_XORWOW
+#ifdef BQ_TESTS_INSERT_XORWOW_NEW
       k = xorwow(&xw_state);
-      k = k << 32 | xorwow(&xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)  // TODO: this is garbage
+      if (i % 8 == 0 && i + 16 < values.size())
+        prefetch_object<false>(&values.at(i + 16), 64);
       k = values.at(transaction_id);
 #else
       k = key_start++;
@@ -356,6 +360,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
       // sizeof(thread_stats));
       (thread_stats *)calloc(1, sizeof(thread_stats));
 
+  std::uint64_t count{};
   uint64_t t_start, t_end;
   BaseHashTable *kmer_ht = NULL;
   uint8_t finished_producers = 0;
@@ -373,7 +378,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
-  kmer_ht = init_ht(HT_TESTS_HT_SIZE * 2, sh->shard_idx); // TODO: @David fix special-casing of 32 consumer case
+  kmer_ht =
+      init_ht(HT_TESTS_HT_SIZE * (cfg->n_prod + cfg->n_cons) / cfg->n_cons,
+              sh->shard_idx);
   (*this->ht_vec)[tid] = kmer_ht;
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
@@ -425,10 +432,13 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
         if (data_idx > 0) {
           submit_batch(data_idx);
         }
+
         break;
       }
       // printf("%s[%d], dequeing from q[%d] = %p\n", __func__, this_cons_id,
       // prod_id, q[prod_id]);
+
+      //++count;
 
       auto *_q = q[prod_id];
       if ((_q->tail & 7) == 0) {
@@ -442,6 +452,13 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
             "[INFO] Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u\n",
             this_cons_id, prod_id, finished_producers);
+
+        printf("[DEBUG] Consumer experienced %" PRIu64 " reprobes, %" PRIu64
+               " soft\n",
+               kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
+
+        printf("[DEBUG] Consumer received %" PRIu64 "\n", count);
+
         continue;
       }
 
@@ -594,10 +611,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     }
 
 #ifdef CALC_STATS
-    if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
-      printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
-             transaction_id);
-    }
+    // if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
+    //   printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
+    //          transaction_id);
+    // }
 #endif
   }
   t_end = RDTSCP();

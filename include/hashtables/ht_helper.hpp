@@ -3,6 +3,7 @@
 
 #include "base_kht.hpp"
 #include "hashtables/kvtypes.hpp"
+#include "dbg.hpp"
 
 #include <fcntl.h>
 #include <numa.h>

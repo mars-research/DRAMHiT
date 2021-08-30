@@ -8,3 +8,4 @@ kmercounter
 **/*.d
 kvstore
 /build/
+/.vscode/

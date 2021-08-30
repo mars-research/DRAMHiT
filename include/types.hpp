@@ -57,7 +57,6 @@ typedef enum {
   SIMPLE_KHT = 1,
   ROBINHOOD_KHT = 2,
   CAS_KHT = 3,
-  CAS_NOPREFETCH = 4,
   STDMAP_KHT = 5,
 } ht_type_t;
 
