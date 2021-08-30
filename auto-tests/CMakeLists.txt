@@ -7,8 +7,8 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(test_runner test_runner.cpp ../src/hashers/xx/xxhash.cpp)
-target_link_libraries(test_runner gtest_main numa)
+add_executable(test_runner test_runner.cpp)
+target_link_libraries(test_runner gtest_main numa xxhash cityhash)
 
 include(GoogleTest)
 gtest_discover_tests(test_runner)

@@ -2,10 +2,7 @@
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
-
-#if defined(XX_HASH)
-#include "xx/xxhash.h"
-#endif
+#include "hasher.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "zipf.h"
@@ -94,6 +91,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
   auto _num_messages = HT_TESTS_NUM_INSERTS * mult_factor;
   uint64_t num_messages = static_cast<uint64_t>(_num_messages);
   uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
+  Hasher hasher;
 
   printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n", __func__,
          mult_factor, _num_messages, num_messages);
@@ -120,7 +118,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
       k = k << 32 | xorwow(&xw_state);
 #else
       k = key_start++;
-      uint64_t hash_val = XXH64(&k, sizeof(k), 0);
+      uint64_t hash_val = hasher(&k, sizeof(k));
 
       cons_id = hash_to_cpu(k);
       // cons_id = hash_to_cpu(hash_val);
@@ -226,6 +224,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   auto _num_messages = HT_TESTS_NUM_INSERTS * 2 * mult_factor;
   uint64_t num_messages = static_cast<uint64_t>(_num_messages);
   uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
+  Hasher hasher;
 
 #ifdef BQ_TESTS_INSERT_ZIPFIAN
   std::vector<uint64_t> values(num_messages);
@@ -278,7 +277,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       k = key_start++;
 #endif
 
-      uint64_t hash_val = XXH64(&k, sizeof(k), 0);
+      uint64_t hash_val = hasher(&k, sizeof(k));
 
       cons_id = hash_to_cpu(k);
       // k has the computed hash in upper 32 bits
@@ -382,9 +381,11 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
   printf("[INFO] Consumer %u starting\n", this_cons_id);
 
+#ifdef WITH_VTUNE_LIB
   static const auto event =
       __itt_event_create("message_insert", strlen("message_insert"));
   __itt_event_start(event);
+#endif
   t_start = RDTSC_START();
 
   prod_id = 0;
@@ -469,7 +470,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   }
 
   t_end = RDTSCP();
+#ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
+#endif
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
@@ -503,6 +506,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   uint64_t count = HT_TESTS_NUM_INSERTS * tid;
   BaseHashTable *ktable;
   uint64_t t_start, t_end;
+  Hasher hasher;
 
   if (tid == 0) count = 1;
 
@@ -564,7 +568,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
     k = key_start++;
-    uint64_t hash_val = XXH64(&k, sizeof(k), 0);
+    uint64_t hash_val = hasher(&k, sizeof(k));
 
     part_id = hash_to_cpu(k);
     // k has the computed hash in upper 32 bits
