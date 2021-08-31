@@ -282,7 +282,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       k = key_start++;
 #endif
 
-      uint64_t hash_val = XXH64(&k, sizeof(k), 0);
+      uint64_t hash_val = hash_function(&k, sizeof(k)); //XXH64(&k, sizeof(k), 0);
 
       cons_id = hash_to_cpu(k);
       // k has the computed hash in upper 32 bits
@@ -588,7 +588,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
     k = key_start++;
-    uint64_t hash_val = XXH64(&k, sizeof(k), 0);
+    uint64_t hash_val = hash_function(&k, sizeof(k));
 
     part_id = hash_to_cpu(k);
     // k has the computed hash in upper 32 bits

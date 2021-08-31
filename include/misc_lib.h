@@ -3,6 +3,8 @@
 
 #include "types.hpp"
 
+#include <x86intrin.h>
+
 extern "C" {
 #include "fcntl.h"
 #include "stdio.h"
@@ -24,5 +26,21 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz);
 
 void xorwow_init(xorwow_state *);
 uint32_t xorwow(xorwow_state *);
+
+inline uint64_t hash_function(const void *k, std::uint64_t size) {
+  uint64_t hash_val;
+#if defined(CITY_HASH)
+  hash_val = CityHash64((const char *)k, size);
+#elif defined(FNV_HASH)
+  hash_val = hval = fnv_32a_buf(k, size, hval);
+#elif defined(XX_HASH)
+  hash_val = XXH64(k, size, 0);
+#elif defined(XX_HASH_3)
+  hash_val = XXH3_64bits(k, size);
+#elif defined(CRC32)
+  hash_val = _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t *>(k));
+#endif
+  return hash_val;
+}
 
 #endif  //_MISC_LIB_H
