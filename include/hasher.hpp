@@ -2,11 +2,14 @@
 #define _HASHER_HPP
 
 #include <cstdint>
+#include <x86intrin.h>
 
 #include "fnv/fnv.h"
 #include "wyhash/wyhash.h"
 #include "xxHash/xxhash.h"
 #include "cityhash/src/city.h"
+#include "cityhash/src/citycrc.h"
+
 
 namespace kmercounter {
 class Hasher {
@@ -22,6 +25,11 @@ public:
     hash_val = XXH64(buff, len, 0);
 #elif defined(XX_HASH_3)
     hash_val = XXH3_64bits(buff, len);
+#elif defined(CRC_HASH)
+    assert(len == 8);
+    hash_val = _mm_crc32_u64(0, *(uint64_t*)buff);
+#elif defined(CITY_CRC_HASH)
+    hash_val = CityHashCrc128((const char *)buff, len);
 #else
     static_assert(false, "Hasher is not specified.");
 #endif

@@ -18,7 +18,16 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-add_compile_options(-Wall -mprefetchwt1 -march=native -fcf-protection=none -mavx512dq)
+add_compile_options(
+    -Wall 
+    -mprefetchwt1 
+    -march=native 
+    -fcf-protection=none
+    # SIMD lookup 
+    -mavx512dq 
+    # CRC
+    -msse4.2
+)
 
 # Build all the source files.
 add_executable(kvstore
@@ -38,7 +47,7 @@ target_link_directories(kvstore PRIVATE lib/)
 target_link_libraries(kvstore PRIVATE fnv xxhash cityhash)
 
 # Declare include directory.
-include_directories(include/ lib/)
+include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
 option(PAPI "Use PAPI to do performance monitering." OFF)
@@ -81,6 +90,8 @@ elseif(HASHER STREQUAL "xxhash3")
 elseif(HASHER STREQUAL "fnv")
     add_definitions(-DFNV_HASH)
 elseif(HASHER STREQUAL "crc")
+    add_definitions(-DCRC_HASH)
+elseif(HASHER STREQUAL "citycrc")
     add_definitions(-DCRC_HASH)
 else()
     message(FATAL_ERROR "Invalid HASHER: ${HASHER}")
