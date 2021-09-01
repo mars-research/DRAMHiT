@@ -11,12 +11,6 @@ jobs:
           submodules: 'recursive'
       - uses: cachix/install-nix-action@v12
       - run: nix-build
-      - uses: actions/upload-artifact@v2
-        with:
-          name: build-result
-          path: result/
-
-  
-
+      - run: result/bin/kvstore_test
 
     

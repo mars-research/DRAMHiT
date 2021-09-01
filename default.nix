@@ -33,6 +33,7 @@ in stdenv.mkDerivation {
   installPhase = ''
     mkdir -p $out/bin
     cp kvstore $out/bin/
+    cp auto-tests/test_runner $out/bin/kvstore_test
   '';
 }
 
