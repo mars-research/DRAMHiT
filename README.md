@@ -1,3 +1,6 @@
+# KVStore
+[![Build](https://github.com/mars-research/kmer-counting-hash-table/actions/workflows/build.yml/badge.svg)](https://github.com/mars-research/kmer-counting-hash-table/actions/workflows/build.yml)
+
 ## Build
 
 * Prerequisites
