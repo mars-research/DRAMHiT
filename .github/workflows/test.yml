@@ -11,10 +11,12 @@ jobs:
           submodules: 'recursive'
       - uses: cachix/install-nix-action@v12
       - run: nix-build
+      - run: mkdir build-result
+      - run: cp -r result/* build-result/
       - uses: actions/upload-artifact@v2
         with:
           name: build-result
-          path: result/
+          path: build-result/
       # Test does not work because no avx instructions on test machine.
       # - run: result/bin/kvstore_test
 
