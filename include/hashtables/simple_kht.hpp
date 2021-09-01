@@ -229,7 +229,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     std::tie(batch_len, keys) = kp;
 
     for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[0]);
+      void *data = reinterpret_cast<void *>(&keys[k]);
       add_to_insert_queue(data);
     }
 
@@ -237,6 +237,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   bool insert(const void *data) { return false; }
+
+  // TODO: static_assert for queue pow2
 
   // overridden function for insertion
   void flush_if_needed(void) {

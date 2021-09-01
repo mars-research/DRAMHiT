@@ -2,6 +2,7 @@
 #define _MISC_LIB_H
 
 #include "types.hpp"
+#include "xxhash.h"
 
 #include <x86intrin.h>
 

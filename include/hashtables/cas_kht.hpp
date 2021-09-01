@@ -17,6 +17,7 @@
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "sync.h"
+#include "misc_lib.h"
 
 namespace kmercounter {
 template <typename KV, typename KVQ>
@@ -282,17 +283,7 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_tail;
 
   uint64_t hash(const void *k) {
-    uint64_t hash_val;
-#if defined(CITY_HASH)
-    hash_val = CityHash64((const char *)k, this->key_length);
-#elif defined(FNV_HASH)
-    hash_val = hval = fnv_32a_buf(k, this->key_length, hval);
-#elif defined(XX_HASH)
-    hash_val = XXH64(k, this->key_length, 0);
-#elif defined(XX_HASH_3)
-    hash_val = XXH3_64bits(k, this->key_length);
-#endif
-    return hash_val;
+    return hash_function(k, this->key_length);
   }
 
   void prefetch(uint64_t i) {
