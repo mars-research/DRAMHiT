@@ -406,7 +406,9 @@ class CASHashTable : public BaseHashTable {
     // |    4 elements |
     // | 0 | 1 | 2 | 3 | 4 | 5 ....
     if ((idx & 0x3) != 0) {
-      ++num_soft_reprobes;
+#ifdef CALC_STATS
+      ++this->num_soft_reprobes;
+#endif
       goto try_insert; // FIXME: @David get rid of the goto for crying out loud
     }
 
