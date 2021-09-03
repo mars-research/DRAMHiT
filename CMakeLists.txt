@@ -66,6 +66,7 @@ elseif(BRANCH STREQUAL "cmov")
 endif()
 
 if (PAPI)
+    message(WARNING "PAPI support is currently broken!")
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE papi)
     add_definitions(-DWITH_PAPI_LIB)
 endif ()
