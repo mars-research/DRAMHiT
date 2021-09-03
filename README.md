@@ -1,52 +1,12 @@
 ## Build
 
-* Prerequisites
-```
-sudo apt install libnuma-dev libboost-program-options-dev
-```
-* Build
-```
-make
-```
-* Build (with -O0)
-```
-make OPT=no
-```
+<!--TODO: @David expand on this readme-->
 
-* Before running
-- Set all cpus to run at a constant frequency
-```
-./scripts/constant_freq.sh
-```
-- Enable/disable hyperthreading based on the configuration you wish to run
-```
-./scripts/toggle_hyperthreading.sh
-```
-- Enable hugepages (both 2MiB and 1GiB)
-```
-./scripts/enable_hugepages.sh
-```
-- Additionally, if you want to disable hardware prefetching
-```
-# Disable hardware prefetcher (on all CPUs)
-sudo rdmsr -a 0x1a4
-sudo wrmsr -a 0x1a4 0xf
-# Disable hardware prefetcher (on core 0)
-sudo wrmsr -p 0 0x1a4 0xf
-```
-- Fetch and build papi
-```
-./scripts/install_papi.sh
-```
-
-* Run
-```
-./kmercounter
-```
-
-* Run with papi
-```
-make PAPI=yes
-# require sudo to monitor performance counters
-sudo ./kmercounter
-```
+- Make sure submodules have been cloned
+- Follow instruction in papi/INSTALL.txt to install a copy of papi (including shared library), if PAPI will be enabled later
+- Project builds with cmake
+    - Common options:
+        - VTUNE (ON/OFF)
+        - BQUEUE (ON/OFF)
+        - PAPI (ON/OFF)
+        - BRANCH ("" / simd / cmov)
