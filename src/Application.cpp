@@ -19,9 +19,11 @@
 #include "print_stats.h"
 #include "types.hpp"
 
-#ifdef WITH_PAPI_LIB
+#if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
 #include <papi.h>
+#endif
 
+#ifdef WITH_PAPI_LIB
 #include "PapiEvent.hpp"
 #endif
 
@@ -30,6 +32,11 @@
 #endif
 
 namespace kmercounter {
+#if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
+constexpr auto should_initialize_papi = true;
+#else
+constexpr auto should_initialize_papi = false;
+#endif
 
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
@@ -353,17 +360,17 @@ int Application::spawn_shard_threads() {
   return 0;
 }
 
-#ifdef WITH_PAPI_LIB
-void papi_init(void) {
-  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
-    printf("Library initialization error! \n");
-    exit(1);
+// TODO: Move me @David
+void papi_init() {
+  if constexpr (should_initialize_papi) {
+    if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
+      printf("Library initialization error! \n");
+      exit(1);
+    }
+
+    printf("PAPI library initialized\n");
   }
-  printf("PAPI library initialized\n");
 }
-#else
-void papi_init(void) {}
-#endif
 
 int Application::process(int argc, char *argv[]) {
   try {

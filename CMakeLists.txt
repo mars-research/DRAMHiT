@@ -37,7 +37,8 @@ add_executable(kvstore
 include_directories(include/ include/xx include/city)
 
 # Declare options
-option(PAPI "Use PAPI to do performance monitering." OFF)
+option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
+option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
 option(VTUNE "Use VTUNE to do performance monitering." OFF)
 option(AGGR "Something about AGGR" ON)
 option(PREFETCH "Enable prefetching" ON)
@@ -65,10 +66,16 @@ elseif(BRANCH STREQUAL "cmov")
     add_definitions(-DBRANCHLESS_CMOVE)
 endif()
 
-if (PAPI)
+if (LEGACY_PAPI)
     message(WARNING "PAPI support is currently broken!")
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE papi)
     add_definitions(-DWITH_PAPI_LIB)
+endif ()
+
+if (HIGH_LEVEL_PAPI)
+    message(WARNING "Enabled high-level PAPI support")
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE papi)
+    add_definitions(-DENABLE_HIGH_LEVEL_PAPI)
 endif ()
 
 set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
@@ -116,7 +123,7 @@ add_definitions(-DCRC32)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 
-target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
+target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads papi)
 
 enable_testing()
 add_subdirectory(auto-tests)
