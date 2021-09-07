@@ -9,3 +9,4 @@ kmercounter
 kvstore
 /build/
 /.vscode/
+.papi/
