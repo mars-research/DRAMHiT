@@ -26,8 +26,8 @@
 #include "dbg.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
-#include "sync.h"
 #include "misc_lib.h"
+#include "sync.h"
 
 namespace kmercounter {
 
@@ -426,9 +426,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   uint32_t ins_head;
   uint32_t ins_tail;
 
-  uint64_t hash(const void *k) {
-    return hash_function(k, this->key_length);
-  }
+  uint64_t hash(const void *k) { return hash_function(k, this->key_length); }
 
   uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
     // hashtable idx where the data should be found
@@ -599,14 +597,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     auto retry = curr->insert(q);
 
     if (retry) {
-      // insert back into queue, and prefetch next bucket.
-      // next bucket will be probed in the next run
+      // FIXME: we *really* need an insert_to_queue() subroutine, this is too
+      // brittle insert back into queue, and prefetch next bucket. next bucket
+      // will be probed in the next run
       idx++;
       idx = idx & (this->capacity - 1);  // modulo
 
       // |    4 elements |
       // | 0 | 1 | 2 | 3 | 4 | 5 ....
       if ((idx & 0x3) != 0) {
+#ifdef CALC_STATS
+        this->num_soft_reprobes++;
+#endif
+
         goto try_insert;
       }
 
