@@ -30,6 +30,8 @@ public:
     hash_val = _mm_crc32_u64(0, *(uint64_t*)buff);
 #elif defined(CITY_CRC_HASH)
     hash_val = CityHashCrc128((const char *)buff, len);
+#elif defined(WYHASH)
+    hash_val = wyhash((const char *)buff, len, 0, _wyp);
 #else
     static_assert(false, "Hasher is not specified.");
 #endif
