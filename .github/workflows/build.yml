@@ -10,7 +10,7 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: cachix/install-nix-action@v12
-      - run: nix-build
+      - run: nix-build --arg cmakeFlags '["-DBUILD_TESTING=TRUE"]'
       - run: mkdir build-result
       - run: cp -r result/* build-result/
       - uses: actions/upload-artifact@v2

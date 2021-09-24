@@ -2,12 +2,15 @@ let
   pinnedPkgs = import (import ./nixpkgs.nix) {};
 in {
   pkgs ? pinnedPkgs,
+  cmakeFlags ? [],
 }: let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
 in stdenv.mkDerivation {
   name = "kvstore";
   version = "0.1.0";
+
+  inherit cmakeFlags;
 
   src = lib.cleanSourceWith {
     filter = name: type: !(type == "directory" && baseNameOf name == "build");

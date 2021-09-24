@@ -56,7 +56,7 @@ target_link_libraries(kvstore PRIVATE fnv xxhash cityhash)
 include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
-option(BUILD_TEST "Build tests." OFF)
+option(BUILD_TESTING "Build tests." OFF)
 option(PAPI "Use PAPI to do performance monitering." OFF)
 option(VTUNE "Use VTUNE to do performance monitering." OFF)
 option(AGGR "Something about AGGR" ON)
@@ -159,7 +159,7 @@ add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
 
 target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
 
-if (BUILD_TEST)
+if (BUILD_TESTING)
     enable_testing()
     add_subdirectory(auto-tests)
 endif()
