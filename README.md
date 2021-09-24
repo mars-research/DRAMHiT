@@ -23,7 +23,7 @@ sudo apt install libnuma-dev libboost-program-options-dev cmake
 * Getting the source code
 ```
 git clone git@github.com:mars-research/kmer-counting-hash-table.git --recursive
-cd git@github.com:mars-research/kmer-counting-hash-table.git 
+cd kmer-counting-hash-table
 ```
 * Setup build directory
 ```
@@ -40,25 +40,17 @@ make -j
 ```
 ./scripts/constant_freq.sh
 ```
-- Enable/disable hyperthreading based on the configuration you wish to run
-```
-./scripts/toggle_hyperthreading.sh
-```
 - Enable hugepages (both 2MiB and 1GiB)
 ```
 ./scripts/enable_hugepages.sh
 ```
-- Additionally, if you want to disable hardware prefetching
+- Disable hardware prefetching
 ```
-# Disable hardware prefetcher (on all CPUs)
-sudo rdmsr -a 0x1a4
-sudo wrmsr -a 0x1a4 0xf
-# Disable hardware prefetcher (on core 0)
-sudo wrmsr -p 0 0x1a4 0xf
+./scripts/prefetch_control.sh off
 ```
-- Fetch and build papi
+- (Optional)Enable/disable hyperthreading
 ```
-./scripts/install_papi.sh
+./scripts/toggle_hyperthreading.sh
 ```
 
 * Run
