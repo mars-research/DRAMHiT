@@ -7,6 +7,10 @@
 ```
 sudo apt install libnuma-dev libboost-program-options-dev cmake
 ```
+* Getting the source code
+```
+git clone git@github.com:mars-research/kmer-counting-hash-table.git --recursive
+```
 * Setup build directory
 ```
 mkdir build
