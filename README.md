@@ -5,15 +5,16 @@
 
 * Prerequisites
 ```
-sudo apt install libnuma-dev libboost-program-options-dev
+sudo apt install libnuma-dev libboost-program-options-dev cmake
+```
+* Setup build directory
+```
+mkdir build
+cd build && cmake ..
 ```
 * Build
 ```
-make
-```
-* Build (with -O0)
-```
-make OPT=no
+make -j
 ```
 
 * Before running
