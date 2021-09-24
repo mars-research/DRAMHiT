@@ -18,15 +18,21 @@ All the dependencies should be available in the nix shell now.
 
 #### Option 2: Manual installation.
 ```bash
-sudo apt install libnuma-dev libboost-program-options-dev
+sudo apt install libnuma-dev libboost-program-options-dev cmake
+```
+* Getting the source code
+```
+git clone git@github.com:mars-research/kmer-counting-hash-table.git --recursive
+cd git@github.com:mars-research/kmer-counting-hash-table.git 
+```
+* Setup build directory
+```
+mkdir build
+cd build && cmake ..
 ```
 * Build
 ```
-make
-```
-* Build (with -O0)
-```
-make OPT=no
+make -j
 ```
 
 * Before running
