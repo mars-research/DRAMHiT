@@ -3,8 +3,21 @@
 
 ## Build
 
-* Prerequisites
+### Prerequisites
+
+#### Optional 1: Nix shell(recommended).
+If Nix is not installed, install Nix.
+```bash
+curl -L https://nixos.org/nix/install | sh
 ```
+Use nix shell. 
+```bash
+nix-shell
+```
+All the dependencies should be available in the nix shell now.
+
+#### Option 2: Manual installation.
+```bash
 sudo apt install libnuma-dev libboost-program-options-dev
 ```
 * Build
