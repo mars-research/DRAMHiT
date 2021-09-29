@@ -16,13 +16,6 @@
 #endif
 
 namespace kmercounter {
-// TODO: Move me pls @David
-#ifdef ENABLE_HIGH_LEVEL_PAPI
-constexpr auto should_enable_papi_regions = true;
-#else
-constexpr auto should_enable_papi_regions = false;
-#endif
-
 struct kmer {
   char data[KMER_DATA_LENGTH];
 };
@@ -35,22 +28,24 @@ uint64_t HT_TESTS_NUM_INSERTS;
 #define HT_TESTS_MAX_STRIDE 2
 
 void papi_check(int code) {
-  if constexpr (should_enable_papi_regions) {
-    if (code != PAPI_OK) {
-      std::cerr << "PAPI call failed with code " << code << "\n";
-      std::terminate();
-    }
+#ifdef ENABLE_HIGH_LEVEL_PAPI
+  if (code != PAPI_OK) {
+    std::cerr << "PAPI call failed with code " << code << "\n";
+    std::terminate();
   }
+#endif
 }
 
 void papi_start_region(const char *name) {
-  if constexpr (should_enable_papi_regions)
-    papi_check(PAPI_hl_region_begin(name));
+#ifdef ENABLE_HIGH_LEVEL_PAPI
+  papi_check(PAPI_hl_region_begin(name));
+#endif
 }
 
 void papi_end_region(const char *name) {
-  if constexpr (should_enable_papi_regions)
-    papi_check(PAPI_hl_region_end(name));
+#ifdef ENABLE_HIGH_LEVEL_PAPI
+  papi_check(PAPI_hl_region_end(name));
+#endif
 }
 
 OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {

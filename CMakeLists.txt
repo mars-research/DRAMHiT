@@ -123,7 +123,7 @@ add_definitions(-DCRC32)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 
-target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads papi)
+target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
 
 enable_testing()
 add_subdirectory(auto-tests)

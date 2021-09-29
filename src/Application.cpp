@@ -32,12 +32,6 @@
 #endif
 
 namespace kmercounter {
-#if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
-constexpr auto should_initialize_papi = true;
-#else
-constexpr auto should_initialize_papi = false;
-#endif
-
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -362,7 +356,7 @@ int Application::spawn_shard_threads() {
 
 // TODO: Move me @David
 void papi_init() {
-  if constexpr (should_initialize_papi) {
+#if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
     if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
       printf("Library initialization error! \n");
       exit(1);
@@ -370,6 +364,7 @@ void papi_init() {
 
     printf("PAPI library initialized\n");
   }
+#endif
 }
 
 int Application::process(int argc, char *argv[]) {
