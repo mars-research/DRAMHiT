@@ -19,9 +19,11 @@
 #include "print_stats.h"
 #include "types.hpp"
 
-#ifdef WITH_PAPI_LIB
+#if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
 #include <papi.h>
+#endif
 
+#ifdef WITH_PAPI_LIB
 #include "PapiEvent.hpp"
 #endif
 
@@ -30,7 +32,6 @@
 #endif
 
 namespace kmercounter {
-
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -137,11 +138,12 @@ void Application::shard_thread(int tid, bool mainthread) {
       return;
   }
 
+#ifndef WITH_PAPI_LIB
   if (!mainthread) {
     fipc_test_FAI(ready_threads);
   }
-
-#ifdef WITH_PAPI_LIB
+#else
+  fipc_test_FAI(ready_threads);
   auto retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self));
   if (retval != PAPI_OK) {
     printf("PAPI Thread init failed\n");
@@ -185,6 +187,7 @@ void Application::shard_thread(int tid, bool mainthread) {
   }
 #endif
 
+  std::atomic_uint entered_threads{config.num_threads};
   if (mainthread) {
     while (ready_threads < (config.num_threads - 1)) {
       fipc_test_pause();
@@ -238,11 +241,12 @@ void Application::shard_thread(int tid, bool mainthread) {
 
 done:
 
+#ifndef WITH_PAPI_LIB
   if (!mainthread) {
     fipc_test_FAD(ready_threads);
   }
-
-#ifdef WITH_PAPI_LIB
+#else
+  fipc_test_FAD(ready_threads);
   if (ready_threads == 0) {
     pr.stop();
     pw.stop();
@@ -350,17 +354,18 @@ int Application::spawn_shard_threads() {
   return 0;
 }
 
-#ifdef WITH_PAPI_LIB
-void papi_init(void) {
-  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
-    printf("Library initialization error! \n");
-    exit(1);
+// TODO: Move me @David
+void papi_init() {
+#if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
+    if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
+      printf("Library initialization error! \n");
+      exit(1);
+    }
+
+    printf("PAPI library initialized\n");
   }
-  printf("PAPI library initialized\n");
-}
-#else
-void papi_init(void) {}
 #endif
+}
 
 int Application::process(int argc, char *argv[]) {
   try {

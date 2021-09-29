@@ -101,7 +101,7 @@ class PapiEvent {
     auto retval = 0;
     auto sum = 0llu;
     // Stop PAPI
-    for (auto i = 0; i < this->num_events; i++) {
+    for (auto i = 0; i < uncore_events.size(); i++) {
       retval |= PAPI_stop(this->event_set[i], &values[i]);
       if (retval != PAPI_OK) {
         dbg("PAPI_stop %d", retval);

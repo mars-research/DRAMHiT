@@ -10,3 +10,4 @@ kvstore
 /build/
 /.vscode/
 result
+.papi/

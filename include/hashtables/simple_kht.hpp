@@ -22,9 +22,11 @@
 #include <mutex>
 #include <tuple>
 
+#include "constants.h"
 #include "dbg.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
+#include "misc_lib.h"
 #include "sync.h"
 #include "constants.h"
 #include "hasher.hpp"
@@ -123,13 +125,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object<true /* write */>(
-        &this->hashtable[this->id][skipmod(i, this->capacity)],
-        sizeof(this->hashtable[this->id][skipmod(i, this->capacity)]));
+        &this->hashtable[this->id][i & (this->capacity - 1)],
+        sizeof(this->hashtable[this->id][i & (this->capacity - 1)]));
     // true /* write */);
 #endif
 
 #if defined(PREFETCH_WITH_WRITE)
-    prefetch_with_write(&this->hashtable[skipmod(i, this->capacity)]);
+    prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
 #endif
   };
 
@@ -137,31 +139,31 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     auto p = _part_id;
     if (write) {
       prefetch_object<true>(
-          (void *)&this->hashtable[p][skipmod(idx, this->capacity)],
-          sizeof(this->hashtable[p][skipmod(idx, this->capacity)]));
+          (void *)&this->hashtable[p][idx & (this->capacity - 1)],
+          sizeof(this->hashtable[p][idx & (this->capacity - 1)]));
     } else {
       prefetch_object<false>(
-          (void *)&this->hashtable[p][skipmod(idx, this->capacity)],
-          sizeof(this->hashtable[p][skipmod(idx, this->capacity)]));
+          (void *)&this->hashtable[p][idx & (this->capacity - 1)],
+          sizeof(this->hashtable[p][idx & (this->capacity - 1)]));
     }
   };
 
   void prefetch_read(uint64_t i) {
     prefetch_object<false /* write */>(
-        &this->hashtable[skipmod(i, this->capacity)],
-        sizeof(this->hashtable[skipmod(i, this->capacity)]));
+        &this->hashtable[i & (this->capacity - 1)],
+        sizeof(this->hashtable[i & (this->capacity - 1)]));
     // false /* write */);
   }
 
   inline uint8_t touch(uint64_t i) {
 #if defined(TOUCH_DEPENDENCY)
-    if (this->hashtable[this->id][skipmod(i, this->capacity)].kb.count == 0) {
-      this->hashtable[this->id][skipmod(i, this->capacity)].kb.count = 1;
+    if (this->hashtable[this->id][i & (this->capacity - 1)].kb.count == 0) {
+      this->hashtable[this->id][i & (this->capacity - 1)].kb.count = 1;
     } else {
-      this->hashtable[this->id][skipmod(i, this->capacity)].kb.count = 1;
+      this->hashtable[this->id][i & (this->capacity - 1)].kb.count = 1;
     };
 #else
-    this->hashtable[this->id][skipmod(i, this->capacity)].kb.count = 1;
+    this->hashtable[this->id][i & (this->capacity - 1)].kb.count = 1;
 #endif
     return 0;
   };
@@ -238,13 +240,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   bool insert(const void *data) { return false; }
 
+  // TODO: static_assert for queue pow2
+
   // overridden function for insertion
   void flush_if_needed(void) {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
       __insert_one(&this->insert_queue[this->ins_tail]);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
+      this->ins_tail = (this->ins_tail + 1) & (PREFETCH_QUEUE_SIZE - 1);
       curr_queue_sz =
           (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     }
@@ -257,7 +261,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     while (curr_queue_sz != 0) {
       __insert_one(&this->insert_queue[this->ins_tail]);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
+      this->ins_tail = (this->ins_tail + 1) & (PREFETCH_QUEUE_SIZE - 1);
       curr_queue_sz =
           (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     }
@@ -336,7 +340,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     bool found = false;
 
     for (auto i = 0u; i < this->capacity; i++) {
-      idx = skipmod(idx, this->capacity);
+      idx = idx & (this->capacity - 1);
 
       if (curr->is_empty()) {
         found = false;
@@ -453,7 +457,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run
       idx++;
-      idx = skipmod(idx, this->capacity);  // modulo
+      idx = idx & (this->capacity - 1);  // modulo
       // |    4 elements |
       // | 0 | 1 | 2 | 3 | 4 | 5 ....
       if ((idx & 0x3) != 0) {
@@ -486,7 +490,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // insert back into queue, and prefetch next bucket.
     // next bucket will be probed in the next run
     idx++;
-    idx = skipmod(idx, this->capacity);  // modulo
+    idx = idx & (this->capacity - 1);  // modulo
     this->find_queue[this->find_head].key = q->key;
     this->find_queue[this->find_head].key_id = q->key_id;
     this->find_queue[this->find_head].idx = idx;
@@ -547,8 +551,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         // if (!eq_cmp) found = 1;
         "test %[eq_cmp], %[eq_cmp]\n\t"
         "setnz %[found]\n\t"
-        : [ found ] "=r"(found)
-        : [ eq_cmp ] "r"(eq_cmp));
+        : [found] "=r"(found)
+        : [eq_cmp] "r"(eq_cmp));
     vp.first += found;
 
     // if key is not found, and we have not encountered any empty "slots"
@@ -558,12 +562,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         // if (!found && !empty_cmp) reprobe = 1;
         "orb %[found], %[empty_cmp]\n\t"
         "setz %[reprobe]\n\t"
-        : [ reprobe ] "=r"(reprobe)
-        : [ found ] "r"(found), [ empty_cmp ] "r"(empty_cmp));
+        : [reprobe] "=r"(reprobe)
+        : [found] "r"(found), [empty_cmp] "r"(empty_cmp));
 
     // index at which reprobe must begin
     size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-    ridx = skipmod(ridx, this->capacity);  // modulo
+    ridx &= this->capacity - 1;  // modulo
     this->prefetch_read(ridx);
 
     this->find_queue[this->find_head].key = q->key;
@@ -598,14 +602,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     auto retry = curr->insert(q);
 
     if (retry) {
-      // insert back into queue, and prefetch next bucket.
-      // next bucket will be probed in the next run
+      // FIXME: we *really* need an insert_to_queue() subroutine, this is too
+      // brittle insert back into queue, and prefetch next bucket. next bucket
+      // will be probed in the next run
       idx++;
-      idx = skipmod(idx, this->capacity);  // modulo
+      idx = idx & (this->capacity - 1);  // modulo
 
       // |    4 elements |
       // | 0 | 1 | 2 | 3 | 4 | 5 ....
       if ((idx & 0x3) != 0) {
+#ifdef CALC_STATS
+        this->num_soft_reprobes++;
+#endif
+
         goto try_insert;
       }
 
@@ -633,7 +642,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     /* prepare for (possible) soft reprobe */
     idx++;
-    idx = skipmod(idx, this->capacity);  // modulo
+    idx = idx & (this->capacity - 1);  // modulo
 
     prefetch(idx);
     this->insert_queue[this->ins_head].key = q->key;
@@ -767,8 +776,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // if ((locations && !eq_cmp) == 0) copy_mask = 0;
       asm("andnl %[locations], %[eq_cmp], %%ecx\n\t"
           "cmovzw %%cx, %[copy_mask]\n\t"
-          : [ copy_mask ] "+r"(copy_mask)
-          : [ locations ] "r"(locations), [ eq_cmp ] "r"(eq_cmp)
+          : [copy_mask] "+r"(copy_mask)
+          : [locations] "r"(locations), [eq_cmp] "r"(eq_cmp)
           : "rcx");
       return static_cast<__mmask8>(copy_mask);
     };
@@ -822,7 +831,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // prepare for possible reprobe
     // point next idx (nidx) to the start of the next cacheline
     auto nidx = idx + KV_PER_CACHE_LINE - cidx;
-    nidx = skipmod(nidx, this->capacity);  // modulo
+    nidx = nidx & (this->capacity - 1);  // modulo
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
     this->insert_queue[this->ins_head].idx = nidx;
@@ -835,8 +844,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         "cmovnzl %%ecx, %[inc]\n\t"
         // if (kv_mask) nidx = idx;
         "cmovnzq %[idx], %[nidx]\n\t"
-        : [ nidx ] "+r"(nidx), [ inc ] "+r"(queue_idx_inc)
-        : [ kv_mask ] "r"(kv_mask), [ idx ] "r"(idx)
+        : [nidx] "+r"(nidx), [inc] "+r"(queue_idx_inc)
+        : [kv_mask] "r"(kv_mask), [idx] "r"(idx)
         : "rcx");
 
     // issue prefetch
@@ -859,7 +868,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   uint64_t read_hashtable_element(const void *data) {
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = skipmod(hash, this->capacity);
+    size_t idx = hash & (this->capacity - 1);
     KV *curr = &this->hashtable[this->id][idx];
     return curr->get_value();
   }
@@ -893,7 +902,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
-    size_t idx = skipmod(hash, this->capacity);  // modulo
+    size_t idx = hash & (this->capacity - 1);  // modulo
 
     // cout << " -- Adding " << key  << " at " << this->ins_head <<
     // endl;
@@ -907,8 +916,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->insert_queue[this->ins_head].key_hash = hash;
 #endif
 
-    this->ins_head++;
-    if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
+    this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
   }
 
   void add_to_find_queue(void *data) {
@@ -924,7 +932,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
-    size_t idx = skipmod(hash, this->capacity);  // modulo
+    size_t idx = hash & (this->capacity - 1);  // modulo
 
     this->prefetch_partition(idx, key_data->part_id, false);
 

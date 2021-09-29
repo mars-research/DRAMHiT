@@ -11,6 +11,10 @@
 #include "tests.hpp"
 #include "zipf.h"
 
+#ifdef ENABLE_HIGH_LEVEL_PAPI
+#include <papi.h>
+#endif
+
 namespace kmercounter {
 struct kmer {
   char data[KMER_DATA_LENGTH];
@@ -22,6 +26,27 @@ uint64_t HT_TESTS_HT_SIZE = (1 << 26ULL);  // * 8ull;
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
+
+void papi_check(int code) {
+#ifdef ENABLE_HIGH_LEVEL_PAPI
+  if (code != PAPI_OK) {
+    std::cerr << "PAPI call failed with code " << code << "\n";
+    std::terminate();
+  }
+#endif
+}
+
+void papi_start_region(const char *name) {
+#ifdef ENABLE_HIGH_LEVEL_PAPI
+  papi_check(PAPI_hl_region_begin(name));
+#endif
+}
+
+void papi_end_region(const char *name) {
+#ifdef ENABLE_HIGH_LEVEL_PAPI
+  papi_check(PAPI_hl_region_end(name));
+#endif
+}
 
 OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   uint64_t count = HT_TESTS_NUM_INSERTS * start;
@@ -42,6 +67,8 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       __itt_event_create("inserting", strlen("inserting"));
   __itt_event_start(event);
 #endif
+
+  papi_start_region("synthetic_insertions");
   const auto t_start = RDTSC_START();
   for (i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
@@ -100,6 +127,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 #endif
 
   const auto t_end = RDTSCP();
+  papi_end_region("synthetic_insertions");
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);

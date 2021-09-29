@@ -3,6 +3,8 @@
 
 #include "types.hpp"
 
+#include <x86intrin.h>
+
 extern "C" {
 #include "fcntl.h"
 #include "stdio.h"
