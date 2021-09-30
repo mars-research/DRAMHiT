@@ -11,3 +11,7 @@ kvstore
 /.vscode/
 result
 .papi/
+*.fastq
+*.zip
+*.gz
+*.tar
