@@ -24,12 +24,11 @@
 
 #include "constants.h"
 #include "dbg.hpp"
+#include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "misc_lib.h"
 #include "sync.h"
-#include "constants.h"
-#include "hasher.hpp"
 
 namespace kmercounter {
 
@@ -222,6 +221,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     assert(false);
   }
 
+  // LOTS OF DEBUGGING FLAGS
+  // In theory, both of these also turn flush_if_needed() and flush_insert_queue() into fancy no-ops, as the queue remains always empty
+  static constexpr bool omit_queue_insertion{false};
+  static constexpr bool omit_queue_manipulation{false}; // leaves only the prefetch
+
   // insert a batch
   void insert_batch(KeyPairs &kp) override {
     this->flush_if_needed();
@@ -231,8 +235,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     std::tie(batch_len, keys) = kp;
 
     for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_insert_queue(data);
+      if constexpr (!omit_queue_insertion) {
+        void *data = reinterpret_cast<void *>(&keys[k]);
+        add_to_insert_queue(data);
+      }
     }
 
     this->flush_if_needed();
@@ -429,9 +435,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   uint32_t ins_tail;
   Hasher hasher_;
 
-  uint64_t hash(const void *k) {
-    return hasher_(k, this->key_length);
-  }
+  uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
     // hashtable idx where the data should be found
@@ -908,15 +912,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // endl;
     this->prefetch(idx);
 
-    this->insert_queue[this->ins_head].idx = idx;
-    this->insert_queue[this->ins_head].key = key;
-    this->insert_queue[this->ins_head].key_id = key_data->id;
+    if constexpr (!omit_queue_manipulation) {
+      this->insert_queue[this->ins_head].idx = idx;
+      this->insert_queue[this->ins_head].key = key;
+      this->insert_queue[this->ins_head].key_id = key_data->id;
 
 #ifdef COMPARE_HASH
-    this->insert_queue[this->ins_head].key_hash = hash;
+      this->insert_queue[this->ins_head].key_hash = hash;
 #endif
 
-    this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
+      this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
+    }
   }
 
   void add_to_find_queue(void *data) {
