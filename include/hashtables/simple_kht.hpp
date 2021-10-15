@@ -222,9 +222,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   // LOTS OF DEBUGGING FLAGS
-  // In theory, both of these also turn flush_if_needed() and flush_insert_queue() into fancy no-ops, as the queue remains always empty
-  static constexpr bool omit_queue_insertion{false};
-  static constexpr bool omit_queue_manipulation{false}; // leaves only the prefetch
+  // In theory, both of these also turn flush_if_needed() and
+  // flush_insert_queue() into fancy no-ops, as the queue remains always empty
+  static constexpr bool omit_queue_insertion{OMIT_QUEUE_INSERTION};
+  
+  // leaves only the prefetch
+  static constexpr bool omit_queue_manipulation{OMIT_QUEUE_MANIPULATION};
 
   // insert a batch
   void insert_batch(KeyPairs &kp) override {
