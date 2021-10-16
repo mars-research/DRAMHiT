@@ -221,7 +221,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     assert(false);
   }
 
-  enum class experiment_type { none, prefetch_only, nop_insert };
+  enum class experiment_type {
+    none,
+    prefetch_only,
+    nop_insert,
+    insert_dry_run
+  };
 
   static constexpr experiment_type active_experiment{KVSTORE_ACTIVE_EXPERIMENT};
 
@@ -600,7 +605,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // printf("%s, key = %lu curr %p  \n", __func__, q->key, curr);
 
-    auto retry = curr->insert(q);
+    auto retry = false;
+    if constexpr (active_experiment != experiment_type::insert_dry_run)
+      retry = curr->insert(q);
 
     if (retry) {
       // FIXME: we *really* need an insert_to_queue() subroutine, this is too
