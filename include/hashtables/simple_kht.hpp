@@ -24,6 +24,7 @@
 
 #include "constants.h"
 #include "dbg.hpp"
+#include "experiments.hpp"
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
@@ -220,15 +221,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     cout << "Not implemented!" << endl;
     assert(false);
   }
-
-  enum class experiment_type {
-    none,
-    prefetch_only,
-    nop_insert,
-    insert_dry_run
-  };
-
-  static constexpr experiment_type active_experiment{KVSTORE_ACTIVE_EXPERIMENT};
 
   // insert a batch
   void insert_batch(KeyPairs &kp) override {
@@ -602,11 +594,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     KV *cur_ht = this->hashtable[this->id];
   try_insert:
     KV *curr = &cur_ht[idx];
-
-    // printf("%s, key = %lu curr %p  \n", __func__, q->key, curr);
-
     auto retry = false;
-    if constexpr (active_experiment != experiment_type::insert_dry_run)
+    if constexpr (experiment_inactive(experiment_type::insert_dry_run,
+                                      experiment_type::insert_touch_write))
       retry = curr->insert(q);
 
     if (retry) {
@@ -865,7 +855,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void __insert_one(KVQ *q) {
-    if constexpr (active_experiment != experiment_type::nop_insert) {
+    if constexpr (experiment_inactive(experiment_type::nop_insert)) {
       if constexpr (branching == BRANCHKIND::WithBranch) {
         __insert_branched(q);
       } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
@@ -918,7 +908,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // endl;
     this->prefetch(idx);
 
-    if constexpr (active_experiment != experiment_type::prefetch_only) {
+    if constexpr (experiment_inactive(experiment_type::prefetch_only)) {
       this->insert_queue[this->ins_head].idx = idx;
       this->insert_queue[this->ins_head].key = key;
       this->insert_queue[this->ins_head].key_id = key_data->id;
