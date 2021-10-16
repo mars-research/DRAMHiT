@@ -111,6 +111,7 @@ struct Aggr_KV {
       this->count += 1;
       return false;
     }
+
     return true;
   }
 
@@ -148,8 +149,8 @@ struct Aggr_KV {
         "inc %%rbx\n\t"
         "cmpb $0xff, %[cmp]\n\t"
         "cmove %%rbx, %[count]"
-        : [ count ] "+r"(this->count)
-        : [ cmp ] "S"(cmp)
+        : [count] "+r"(this->count)
+        : [cmp] "S"(cmp)
         : "rbx");
   }
 
@@ -241,12 +242,12 @@ struct Aggr_KV {
         // "mov %[retry], %%r14\n\t"
         "setne %%r15b\n\t"
         "mov %%r15, %[retry]\n\t"
-        : [ value_out ] "=m"(vp.second[cur_val_idx]),
-          [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
-          [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
-          [ cur_val_idx ] "+r"(cur_val_idx)
-        : [ key_in ] "r"(elem->key), [ key_id ] "r"(elem->key_id),
-          [ key_curr ] "m"(this->key), [ val_curr ] "rm"(this->count)
+        : [value_out] "=m"(vp.second[cur_val_idx]),
+          [value_id] "=m"(vp.second[cur_val_idx].id), [retry] "=m"(*retry),
+          [found] "+r"(found), [values_idx] "+m"(vp.first),
+          [cur_val_idx] "+r"(cur_val_idx)
+        : [key_in] "r"(elem->key), [key_id] "r"(elem->key_id),
+          [key_curr] "m"(this->key), [val_curr] "rm"(this->count)
         : "rax", "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
 #else
     bool empty = this->is_empty();
@@ -297,13 +298,13 @@ struct Aggr_KV {
         // "mov $0x1, %%r15\n\t"
         // "cmove %%r15, %%r14\n\t"
         // "mov %%r14, %[retry]\n\t"
-        : [ value_out ] "=m"(vp.second[cur_val_idx]),
-          [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
-          [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
-          [ cur_val_idx ] "+r"(cur_val_idx)
-        : [ key_in ] "r"(elem->key), [ key_id ] "r"(elem->key_id),
-          [ key_curr ] "m"(this->key), [ val_curr ] "rm"(this->count),
-          [ empty ] "r"(empty)
+        : [value_out] "=m"(vp.second[cur_val_idx]),
+          [value_id] "=m"(vp.second[cur_val_idx].id), [retry] "=m"(*retry),
+          [found] "+r"(found), [values_idx] "+m"(vp.first),
+          [cur_val_idx] "+r"(cur_val_idx)
+        : [key_in] "r"(elem->key), [key_id] "r"(elem->key_id),
+          [key_curr] "m"(this->key), [val_curr] "rm"(this->count),
+          [empty] "r"(empty)
         : "rax", "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
 #endif  // EMPTY_CHECK_C
     return found;
@@ -351,10 +352,10 @@ struct Aggr_KV {
         "mov $0x1, %%r15\n\t"
         "cmove %%r15, %%r14\n\t"
         "mov %%r14, %[retry]\n\t"
-        : [ value_out ] "=m"(kvpair->count), [ retry ] "=m"(*retry),
-          [ found ] "=r"(found)
-        : [ key_in ] "r"(kvpair->key), [ key_curr ] "m"(this->key),
-          [ val_curr ] "rm"(this->count)
+        : [value_out] "=m"(kvpair->count), [retry] "=m"(*retry),
+          [found] "=r"(found)
+        : [key_in] "r"(kvpair->key), [key_curr] "m"(this->key),
+          [val_curr] "rm"(this->count)
         : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
     return found;
   };
@@ -371,9 +372,8 @@ struct Aggr_KV {
         "mov $0xFF, %%r13w\n\t"
         "cmove %%r14, %[count]\n\t"  //  conditionally increment count
         "cmove %%r13w, %[ret]\n\t"   // return success
-        :
-        [ ret ] "=r"(ret), [ key ] "+r"(this->key), [ count ] "+r"(this->count)
-        : [ empty ] "r"(empty), [ data ] "r"(*(uint64_t *)data)
+        : [ret] "=r"(ret), [key] "+r"(this->key), [count] "+r"(this->count)
+        : [empty] "r"(empty), [data] "r"(*(uint64_t *)data)
         : "r13", "r14", "memory");
     return ret;
   };
@@ -442,10 +442,9 @@ struct Aggr_KV {
         "maskmovq %%mm2, %%mm0\n\t"
         "por %%mm2, %%mm3\n\t"
         "pmovmskb %%mm3, %[ret]\n\t"
-        : [ ret ] "=r"(ret)
-        : [ key ] "r"(this->key), [ count ] "r"(this->count),
-          [ empty_key ] "r"(empty.key), [ key_in ] "r"(elem->key),
-          [ _this ] "r"(this)
+        : [ret] "=r"(ret)
+        : [key] "r"(this->key), [count] "r"(this->count),
+          [empty_key] "r"(empty.key), [key_in] "r"(elem->key), [_this] "r"(this)
         : "mm0", "mm1", "mm2", "mm3", "rdi", "r13", "cc", "memory");
     return ret;
 #endif
@@ -613,13 +612,12 @@ struct Item {
         "mov $0x1, %%r15\n\t"
         "cmove %%r15, %%r14\n\t"
         "mov %%r14, %[retry]\n\t"
-        : [ value_out ] "=m"(vp.second[cur_val_idx]),
-          [ value_id ] "=m"(vp.second[cur_val_idx].id), [ retry ] "=m"(*retry),
-          [ found ] "+r"(found), [ values_idx ] "+m"(vp.first),
-          [ cur_val_idx ] "+r"(cur_val_idx)
-        : [ key_in ] "r"(item->key), [ key_id ] "r"(item->key_id),
-          [ key_curr ] "m"(this->kvpair.key),
-          [ val_curr ] "rm"(this->kvpair.value)
+        : [value_out] "=m"(vp.second[cur_val_idx]),
+          [value_id] "=m"(vp.second[cur_val_idx].id), [retry] "=m"(*retry),
+          [found] "+r"(found), [values_idx] "+m"(vp.first),
+          [cur_val_idx] "+r"(cur_val_idx)
+        : [key_in] "r"(item->key), [key_id] "r"(item->key_id),
+          [key_curr] "m"(this->kvpair.key), [val_curr] "rm"(this->kvpair.value)
         : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
     return found;
   };
@@ -665,10 +663,10 @@ struct Item {
         "mov $0x1, %%r15\n\t"
         "cmove %%r15, %%r14\n\t"
         "mov %%r14, %[retry]\n\t"
-        : [ value_out ] "=m"(item->kvpair.value), [ retry ] "=m"(*retry),
-          [ found ] "=r"(found)
-        : [ key_in ] "r"(item->kvpair.key), [ key_curr ] "m"(this->kvpair.key),
-          [ val_curr ] "rm"(this->kvpair.value)
+        : [value_out] "=m"(item->kvpair.value), [retry] "=m"(*retry),
+          [found] "=r"(found)
+        : [key_in] "r"(item->kvpair.key), [key_curr] "m"(this->kvpair.key),
+          [val_curr] "rm"(this->kvpair.value)
         : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
     return found;
   };

@@ -6,7 +6,7 @@ enum class experiment_type {
   prefetch_only,
   nop_insert,
   insert_dry_run,
-  insert_touch_write
+  aggr_kv_write_key_only
 };
 
 static constexpr experiment_type active_experiment{KVSTORE_ACTIVE_EXPERIMENT};
@@ -23,7 +23,7 @@ constexpr bool experiment_inactive(experiment_type type) {
 
 template <typename... pack_types>
 constexpr bool experiment_active(pack_types... other_types) {
-  return !experiment_active(other_types...);
+  return !experiment_inactive(other_types...);
 }
 
 }  // namespace kmercounter

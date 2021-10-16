@@ -84,7 +84,7 @@ else()
     message(WARNING "Branch type selected was: ${BRANCH}")
 endif()
 
-set(experiments none prefetch_only nop_insert insert_dry_run)
+set(experiments none prefetch_only nop_insert insert_dry_run aggr_kv_write_key_only)
 set(experiment none CACHE STRING "Benchmarking experiment")
 set_property(CACHE experiment PROPERTY STRINGS ${experiments})
 if (NOT experiment IN_LIST experiments)

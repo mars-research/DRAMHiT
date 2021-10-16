@@ -595,9 +595,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   try_insert:
     KV *curr = &cur_ht[idx];
     auto retry = false;
-    if constexpr (experiment_inactive(experiment_type::insert_dry_run,
-                                      experiment_type::insert_touch_write))
+    if constexpr (experiment_inactive(
+                      experiment_type::insert_dry_run,
+                      experiment_type::aggr_kv_write_key_only))
       retry = curr->insert(q);
+
+    if constexpr (experiment_active(
+                      experiment_type::aggr_kv_write_key_only)) {
+      curr->key = q->key;
+    }
 
     if (retry) {
       // FIXME: we *really* need an insert_to_queue() subroutine, this is too
