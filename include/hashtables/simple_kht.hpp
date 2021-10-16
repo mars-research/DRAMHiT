@@ -221,13 +221,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     assert(false);
   }
 
-  // LOTS OF DEBUGGING FLAGS
-  // In theory, both of these also turn flush_if_needed() and
-  // flush_insert_queue() into fancy no-ops, as the queue remains always empty
-  static constexpr bool omit_queue_insertion{OMIT_QUEUE_INSERTION};
-  
-  // leaves only the prefetch
-  static constexpr bool omit_queue_manipulation{OMIT_QUEUE_MANIPULATION};
+  enum class experiment_type { none, prefetch_only, nop_insert };
+
+  static constexpr experiment_type active_experiment{KVSTORE_ACTIVE_EXPERIMENT};
 
   // insert a batch
   void insert_batch(KeyPairs &kp) override {
@@ -238,10 +234,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     std::tie(batch_len, keys) = kp;
 
     for (auto k = 0u; k < batch_len; k++) {
-      if constexpr (!omit_queue_insertion) {
-        void *data = reinterpret_cast<void *>(&keys[k]);
-        add_to_insert_queue(data);
-      }
+      void *data = reinterpret_cast<void *>(&keys[k]);
+      add_to_insert_queue(data);
     }
 
     this->flush_if_needed();
@@ -864,12 +858,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void __insert_one(KVQ *q) {
-    if constexpr (branching == BRANCHKIND::WithBranch) {
-      __insert_branched(q);
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
-      __insert_branchless_cmov(q);
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      __insert_branchless_simd(q);
+    if constexpr (active_experiment != experiment_type::nop_insert) {
+      if constexpr (branching == BRANCHKIND::WithBranch) {
+        __insert_branched(q);
+      } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
+        __insert_branchless_cmov(q);
+      } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+        __insert_branchless_simd(q);
+      }
     }
   }
 
@@ -915,7 +911,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // endl;
     this->prefetch(idx);
 
-    if constexpr (!omit_queue_manipulation) {
+    if constexpr (active_experiment != experiment_type::prefetch_only) {
       this->insert_queue[this->ins_head].idx = idx;
       this->insert_queue[this->ins_head].key = key;
       this->insert_queue[this->ins_head].key_id = key_data->id;
