@@ -3,9 +3,15 @@
 
 ## Build
 
-### Prerequisites
+### Download the source
+```
+git clone git@github.com:mars-research/kmer-counting-hash-table.git --recursive
+cd kmer-counting-hash-table
+```
 
-#### Optional 1: Nix shell(recommended).
+### Install dependencies
+
+#### Optional 1(recommended): Nix shell.
 If Nix is not installed, install Nix.
 ```bash
 curl -L https://nixos.org/nix/install | sh
@@ -20,22 +26,17 @@ All the dependencies should be available in the nix shell now.
 ```bash
 sudo apt install libnuma-dev libboost-program-options-dev cmake
 ```
-* Getting the source code
+
+### Setup the machine
+
+#### Option 1(recommended): Express setup 
+- Apply constant frequency, enable hugepages, and disable hardware prefetching.
 ```
-git clone git@github.com:mars-research/kmer-counting-hash-table.git --recursive
-cd kmer-counting-hash-table
-```
-* Setup build directory
-```
-mkdir build
-cd build && cmake ..
-```
-* Build
-```
-make -j
+./scripts/setup.sh
 ```
 
-* Before running
+#### Option 2: Maunal setup
+
 - Set all cpus to run at a constant frequency
 ```
 ./scripts/constant_freq.sh
@@ -53,14 +54,19 @@ make -j
 ./scripts/toggle_hyperthreading.sh
 ```
 
-* Run
+### Build
+* Setup build directory
 ```
-./kmercounter
+mkdir build
+cd build && cmake ..
 ```
 
-* Run with papi
+* Build
 ```
-make PAPI=yes
-# require sudo to monitor performance counters
-sudo ./kmercounter
+make -j
+```
+
+### Run
+```
+./kmercounter
 ```

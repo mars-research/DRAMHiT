@@ -1,6 +1,8 @@
 #!/bin/bash
 
 CPU_FREQ_KHZ=0
+RDMSR=$(which rdmsr)
+WRMSR=$(which wrmsr)
 
 get_rated_cpufreq() {
 	# lscpu reports the rated processor freq in %1.2f format. Since bash cannot natively do
@@ -24,7 +26,7 @@ disable_cstate() {
 }
 
 disable_turbo() {
-	if ! [ -x "$(command -v rdmsr)" ]; then
+	if ! [ -x "$(command -v ${RDMSR})" ]; then
 		echo "Installing msr-tools ..."
 		sudo apt install msr-tools
 	fi
@@ -37,7 +39,7 @@ disable_turbo() {
 
 	# disable turbo boost (bit 38 on 0x1a0 msr)
 	echo "Disabling turboboost"
-	sudo wrmsr -a 0x1a0 $(printf "0x%x" $(($(sudo rdmsr -d 0x1a0)|(1<<38))))
+	sudo ${WRMSR} -a 0x1a0 $(printf "0x%x" $(($(sudo ${RDMSR} -d 0x1a0)|(1<<38))))
 }
 
 set_const_freq() {
@@ -55,7 +57,7 @@ dump_sys_state() {
 	fi
 
 	for i in $(ls /sys/devices/system/cpu/cpu*/cpuidle/state*/disable); do echo "$i: $(cat $i)";done
-	sudo rdmsr -a 0x1a0 -f 38:38
+	sudo ${RDMSR} -a 0x1a0 -f 38:38
 }
 
 get_rated_cpufreq;

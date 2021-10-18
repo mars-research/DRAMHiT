@@ -14,6 +14,7 @@ in pkgs.mkShell {
     boost
     gtest
 
+    msr-tools
     gdb
     linuxPackages.perf
     (pkgs.writeScriptBin "sperf" ''
