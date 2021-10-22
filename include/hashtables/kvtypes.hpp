@@ -517,6 +517,7 @@ struct Item {
   inline uint16_t insert_or_update(const void *data) {
     std::cout << "Not implemented for Item!" << std::endl;
     assert(false);
+    return -1;
   }
 
   inline void update_value(const void *from) {

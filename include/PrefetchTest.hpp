@@ -39,6 +39,7 @@ struct Prefetch_KV {
   inline uint16_t insert_or_update_v2(const void *data) {
     cout << "Not implemented!" << endl;
     assert(false);
+    return -1;
   }
 
   inline bool compare_key(const void *from) {
@@ -57,18 +58,21 @@ struct Prefetch_KV {
   inline uint64_t find_key_brless(const void *data, uint64_t *ret) {
     cout << "Not implemented!" << endl;
     assert(false);
+    return -1;
   }
 
   inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
                                      ValuePairs &vp) {
     cout << "Not implemented!" << endl;
     assert(false);
+    return -1;
   }
 
   inline uint64_t find_key_regular_v2(const void *data, uint64_t *retry,
                                       ValuePairs &vp) {
     cout << "Not implemented!" << endl;
     assert(false);
+    return -1;
   }
 
   inline Prefetch_KV get_empty_key() {

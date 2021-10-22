@@ -84,6 +84,7 @@ static void mehcached_zipf_init(struct zipf_gen_state *state, uint64_t n,
   state->rand_state = rand_seed;
 }
 
+[[maybe_unused]]
 static void mehcached_zipf_init_copy(struct zipf_gen_state *state,
                                      const struct zipf_gen_state *src_state,
                                      uint64_t rand_seed) {
@@ -95,6 +96,7 @@ static void mehcached_zipf_init_copy(struct zipf_gen_state *state,
   state->rand_state = rand_seed;
 }
 
+[[maybe_unused]]
 static void mehcached_zipf_change_n(struct zipf_gen_state *state, uint64_t n) {
   state->n = n;
 }
@@ -158,6 +160,7 @@ static uint64_t mehcached_zipf_next(struct zipf_gen_state *state) {
   }
 }
 
+[[maybe_unused]]
 static void mehcached_test_zipf(double theta) {
   double zetan = 0.;
   const uint64_t n = 1000000UL;

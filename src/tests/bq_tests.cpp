@@ -546,7 +546,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   if (main_thread) {
     // Wait for threads to be ready for test
-    while (ready_threads < (n_prod + n_cons - 1)) fipc_test_pause();
+    while (ready_threads < (uint64_t)(n_prod + n_cons - 1)) fipc_test_pause();
 
     // Signal begin
     ready = 1;

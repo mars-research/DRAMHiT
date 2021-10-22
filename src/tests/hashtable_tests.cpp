@@ -111,7 +111,6 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 
       k = 0;
       inserted += kp.first;
-      // ktable->insert_noprefetch((void *)&keys[k]);
     }
 #endif  // NO_PREFETCH
         // k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
@@ -145,7 +144,6 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
   uint64_t found = 0, not_found = 0;
   if (start == 0) count = 1;
 
-  __attribute__((aligned(64))) uint64_t keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
   Values *values;
@@ -162,7 +160,6 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 #else
     items[k].key = count;
     items[k].id = count;
-    keys[k] = count;
     count++;
 #endif
 
@@ -176,7 +173,6 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
     if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
       // printf("%s, calling find_batch i = %d\n", __func__, i);
-      // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
 
       const auto t_start = RDTSC_START();
       ktable->find_batch(kp, vp);

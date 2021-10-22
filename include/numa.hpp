@@ -202,8 +202,7 @@ class NumaPolicyQueues : public Numa {
   std::set<uint32_t> unassigned_cpu_list;
 
   void generate_cpu_lists() {
-    uint32_t total_threads = this->config_num_cons + this->config_num_prod;
-
+    [[maybe_unused]] uint32_t total_threads = this->config_num_cons + this->config_num_prod;
     assert(total_threads <= static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
     if (this->npq == PROD_CONS_EQUAL_PARTITION) {
@@ -261,7 +260,6 @@ class NumaPolicyQueues : public Numa {
 
     if (this->npq == PROD_CONS_SEPARATE_NODES) {
       uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;
-      uint32_t num_nodes = static_cast<uint32_t>(Numa::get_num_nodes());
 
       auto prod_config = get_num_nodes_and_cpus_reqd(this->config_num_prod);
       auto cons_config = get_num_nodes_and_cpus_reqd(this->config_num_cons);

@@ -665,7 +665,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
     KV *cur_ht = this->hashtable[this->id];
-    KV *curr = &cur_ht[idx];
 
     static_assert(CACHE_LINE_SIZE == 64);
     static_assert(sizeof(KV) == 16);
