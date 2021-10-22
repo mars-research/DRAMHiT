@@ -9,17 +9,18 @@ in pkgs.mkShell {
     cmake
     ninja
 
-    numactl
-    zlib
-    boost
-    gtest
-
     msr-tools
     gdb
     linuxPackages.perf
     (pkgs.writeScriptBin "sperf" ''
       sudo ${linuxPackages.perf}/bin/perf "$@"
     '')
+  ];
+  propagatedBuildInputs = with pkgs; [
+    boost
+    numactl
+    zlib
+    gtest
   ];
   nativeBuildInputs = with pkgs; [
     gcc11
