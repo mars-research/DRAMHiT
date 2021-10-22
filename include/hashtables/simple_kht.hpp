@@ -24,12 +24,12 @@
 
 #include "constants.h"
 #include "dbg.hpp"
+#include "experiments.hpp"
+#include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "misc_lib.h"
 #include "sync.h"
-#include "constants.h"
-#include "hasher.hpp"
 
 namespace kmercounter {
 
@@ -429,9 +429,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   uint32_t ins_tail;
   Hasher hasher_;
 
-  uint64_t hash(const void *k) {
-    return hasher_(k, this->key_length);
-  }
+  uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
     // hashtable idx where the data should be found
@@ -596,10 +594,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     KV *cur_ht = this->hashtable[this->id];
   try_insert:
     KV *curr = &cur_ht[idx];
+    auto retry = false;
+    if constexpr (experiment_inactive(
+                      experiment_type::insert_dry_run,
+                      experiment_type::aggr_kv_write_key_only))
+      retry = curr->insert(q);
 
-    // printf("%s, key = %lu curr %p  \n", __func__, q->key, curr);
-
-    auto retry = curr->insert(q);
+    if constexpr (experiment_active(
+                      experiment_type::aggr_kv_write_key_only)) {
+      curr->key = q->key;
+    }
 
     if (retry) {
       // FIXME: we *really* need an insert_to_queue() subroutine, this is too
@@ -857,12 +861,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void __insert_one(KVQ *q) {
-    if constexpr (branching == BRANCHKIND::WithBranch) {
-      __insert_branched(q);
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
-      __insert_branchless_cmov(q);
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      __insert_branchless_simd(q);
+    if constexpr (experiment_inactive(experiment_type::nop_insert)) {
+      if constexpr (branching == BRANCHKIND::WithBranch) {
+        __insert_branched(q);
+      } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
+        __insert_branchless_cmov(q);
+      } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+        __insert_branchless_simd(q);
+      }
     }
   }
 
@@ -908,15 +914,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // endl;
     this->prefetch(idx);
 
-    this->insert_queue[this->ins_head].idx = idx;
-    this->insert_queue[this->ins_head].key = key;
-    this->insert_queue[this->ins_head].key_id = key_data->id;
+    if constexpr (experiment_inactive(experiment_type::prefetch_only)) {
+      this->insert_queue[this->ins_head].idx = idx;
+      this->insert_queue[this->ins_head].key = key;
+      this->insert_queue[this->ins_head].key_id = key_data->id;
 
 #ifdef COMPARE_HASH
-    this->insert_queue[this->ins_head].key_hash = hash;
+      this->insert_queue[this->ins_head].key_hash = hash;
 #endif
 
-    this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
+      this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
+    }
   }
 
   void add_to_find_queue(void *data) {
