@@ -65,6 +65,7 @@ option(PREFETCH "Enable prefetching" ON)
 option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
 option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
+option(CALC_STATS "Enable hashtable statistics" OFF)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
 set(HASHER "xxhash" CACHE STRING "Hasher")
@@ -163,6 +164,11 @@ endif()
 if (BQUEUE)
     message(WARNING "Enabling bqueues")
     add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
+endif()
+
+if (CALC_STATS)
+    message(WARNING "Enabling CALC_STATS")
+    add_definitions(-DCALC_STATS)
 endif()
 
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
