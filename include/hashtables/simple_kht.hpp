@@ -595,17 +595,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   try_insert:
     KV *curr = &cur_ht[idx];
     auto retry = false;
-    if constexpr (experiment_inactive(
-                      experiment_type::insert_dry_run,
-                      experiment_type::aggr_kv_write_key_only))
+    if constexpr (experiment_inactive(experiment_type::insert_dry_run,
+                                      experiment_type::aggr_kv_write_key_only))
       retry = curr->insert(q);
 
-    if constexpr (experiment_active(
-                      experiment_type::aggr_kv_write_key_only)) {
+    if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only)) {
       curr->key = q->key;
     }
 
     if (retry) {
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
+
       // FIXME: we *really* need an insert_to_queue() subroutine, this is too
       // brittle insert back into queue, and prefetch next bucket. next bucket
       // will be probed in the next run
@@ -616,7 +618,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // | 0 | 1 | 2 | 3 | 4 | 5 ....
       if ((idx & 0x3) != 0) {
 #ifdef CALC_STATS
-        this->num_soft_reprobes++;
+        ++this->num_soft_reprobes;
 #endif
 
         goto try_insert;
@@ -630,10 +632,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->insert_queue[this->ins_head].idx = idx;
       ++this->ins_head;
       this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
-
-#ifdef CALC_STATS
-      this->num_reprobes++;
-#endif
     }
   }
 
