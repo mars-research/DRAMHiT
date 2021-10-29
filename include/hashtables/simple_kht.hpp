@@ -604,10 +604,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
 
     if (retry) {
-#ifdef CALC_STATS
-      this->num_reprobes++;
-#endif
-
       // FIXME: we *really* need an insert_to_queue() subroutine, this is too
       // brittle insert back into queue, and prefetch next bucket. next bucket
       // will be probed in the next run
@@ -632,6 +628,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->insert_queue[this->ins_head].idx = idx;
       ++this->ins_head;
       this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
+
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
     }
   }
 
