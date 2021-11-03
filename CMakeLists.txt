@@ -40,8 +40,8 @@ add_executable(kvstore
     "src/bqueue.cpp"
     "src/tests/bq_tests.cpp"
     "src/tests/hashtable_tests.cpp"
-	"src/tests/prefetch_tests.cpp"
-	"src/tests/cachemiss_test.cpp"
+    "src/tests/prefetch_tests.cpp"
+    "src/tests/cachemiss_test.cpp"
     "src/misc_lib.cpp"
     "src/Application.cpp"
     "src/kvstore.cpp"
@@ -60,7 +60,7 @@ option(BUILD_TESTING "Build tests." OFF)
 option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
 option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
 option(VTUNE "Use VTUNE to do performance monitering." OFF)
-option(AGGR "Something about AGGR" ON)
+option(AGGR "Use aggregation hashtable (histogram)" ON)
 option(PREFETCH "Enable prefetching" ON)
 option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
