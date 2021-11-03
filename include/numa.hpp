@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include "plog/Log.h"
 
 using namespace std;
 
@@ -63,11 +64,12 @@ class Numa {
 
   void print_numa_nodes(void) {
     std::for_each(nodes.begin(), nodes.end(), [](auto &node) {
-      printf("Node: %d cpu_bitmask: 0x%08lx | num_cpus: %d\n\t", node.id,
+      PLOGV.printf("Node: %d cpu_bitmask: 0x%08lx | num_cpus: %d", node.id,
              node.cpu_bitmask, node.num_cpus);
+      std::string nodes;
       std::for_each(node.cpu_list.begin(), node.cpu_list.end(),
-                    [](uint32_t &cpu) { printf("%d ", cpu); });
-      printf("\n");
+                    [&](uint32_t &cpu) { nodes += " " + std::to_string(cpu); });
+      PLOGV << nodes;
     });
   }
 

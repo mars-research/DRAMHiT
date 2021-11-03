@@ -16,3 +16,6 @@
 [submodule "lib/readfq"]
 	path = lib/readfq
 	url = https://github.com/lh3/readfq.git
+[submodule "plog"]
+	path = lib/plog
+	url = https://github.com/SergiusTheBest/plog.git

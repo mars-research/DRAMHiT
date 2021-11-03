@@ -428,6 +428,9 @@ int Application::process(int argc, char *argv[]) {
         "drop-caches",
         po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
         "drop page cache before run")(
+        "v",
+        po::bool_switch()->default_value(false),
+        "enable verbose logging")(
         "nprod", po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
         "for bqueues only")(
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
@@ -452,6 +455,11 @@ int Application::process(int argc, char *argv[]) {
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
+
+    // Enable verbose logging
+    if (vm["v"].as<bool>()) {
+      plog::get()->setMaxSeverity(plog::verbose);
+    }
 
     if (config.mode == SYNTH) {
       printf("[INFO] Mode : SYNTH\n");
