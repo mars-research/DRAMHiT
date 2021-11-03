@@ -97,14 +97,14 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
     default:
-      fprintf(stderr, "STDMAP_KHT Not implemented\n");
+      PLOG_ERROR.printf("STDMAP_KHT Not implemented");
       break;
   }
   return kmer_ht;
 }
 
 void free_ht(BaseHashTable *kmer_ht) {
-  printf("Calling free_ht\n");
+  PLOG_INFO.printf("freeing hashtable");
   delete kmer_ht;
 }
 
@@ -134,7 +134,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
     default:
-      fprintf(stderr, "[ERROR] No config mode specified! cannot run");
+      PLOGF.printf("No config mode specified! cannot run");
       return;
   }
 
@@ -146,7 +146,7 @@ void Application::shard_thread(int tid, bool mainthread) {
   fipc_test_FAI(ready_threads);
   auto retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self));
   if (retval != PAPI_OK) {
-    printf("PAPI Thread init failed\n");
+    PLOGE.printf("PAPI Thread init failed");
   }
 
   if (ready_threads == config.num_threads) {
@@ -232,7 +232,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       goto done;
     }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
-    printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
+    PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
            outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
@@ -271,7 +271,7 @@ int Application::spawn_shard_threads() {
   if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
       (config.mode != PREFETCH) && (config.mode != CACHE_MISS)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
-    printf("[INFO] File size: %lu bytes\n", config.in_file_sz);
+    PLOG_INFO.printf("File size: %lu bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
     if (seg_sz < 4096) {
       seg_sz = 4096;
@@ -292,9 +292,9 @@ int Application::spawn_shard_threads() {
 
   if (config.num_threads >
       static_cast<uint32_t>(this->n->get_num_total_cpus())) {
-    fprintf(stderr,
-            "[ERROR] More threads configured than cores available (Note: one "
-            "cpu assigned completely for synchronization) \n");
+    PLOGE.printf(
+            "More threads configured than cores available (Note: one "
+            "cpu assigned completely for synchronization)");
     exit(-1);
   }
 
@@ -309,7 +309,7 @@ int Application::spawn_shard_threads() {
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    printf("[INFO] Thread %u: affinity: %u\n", sh->shard_idx, assigned_cpu);
+    PLOG_INFO.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
     this->threads.push_back(std::move(_thread));
     i += 1;
   }
@@ -318,9 +318,9 @@ int Application::spawn_shard_threads() {
   CPU_ZERO(&cpuset);
   CPU_SET(0, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  printf("[INFO] Thread 'main': affinity: %u\n", 0);
+  PLOG_INFO.printf("Thread 'main': affinity: %u", 0);
 
-  printf("Running master thread with id %d\n", i);
+  PLOG_INFO.printf("Running master thread with id %d", i);
   {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
@@ -358,11 +358,11 @@ int Application::spawn_shard_threads() {
 void papi_init() {
 #if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
     if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
-      printf("Library initialization error! \n");
+      PLOGE.printf("Library initialization error! ");
       exit(1);
     }
 
-    printf("PAPI library initialized\n");
+    PLOGI.printf("PAPI library initialized");
   }
 #endif
 }
@@ -462,44 +462,44 @@ int Application::process(int argc, char *argv[]) {
     }
 
     if (config.mode == SYNTH) {
-      printf("[INFO] Mode : SYNTH\n");
+      PLOG_INFO.printf("Mode : SYNTH");
     } else if (config.mode == PREFETCH) {
-      printf("[INFO] Mode : PREFETCH\n");
+      PLOG_INFO.printf("Mode : PREFETCH");
     } else if (config.mode == DRY_RUN) {
-      printf("[INFO] Mode : Dry run ...\n");
-      printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
+      PLOG_INFO.printf("Mode : Dry run ...");
+      PLOG_INFO.printf("base: %lu, mult: %u, uniq: %lu",
              config.kmer_create_data_base, config.kmer_create_data_mult,
              config.kmer_create_data_uniq);
     } else if (config.mode == READ_FROM_DISK) {
-      printf("[INFO] Mode : Reading kmers from disk ...\n");
+      PLOG_INFO.printf("Mode : Reading kmers from disk ...");
     } else if (config.mode == WRITE_TO_DISK) {
-      printf("[INFO] Mode : Writing kmers to disk ...\n");
-      printf("[INFO] base: %lu, mult: %u, uniq: %lu\n",
+      PLOG_INFO.printf("Mode : Writing kmers to disk ...");
+      PLOG_INFO.printf("base: %lu, mult: %u, uniq: %lu",
              config.kmer_create_data_base, config.kmer_create_data_mult,
              config.kmer_create_data_uniq);
     } else if (config.mode == FASTQ_WITH_INSERT) {
-      printf("[INFO] Mode : FASTQ_WITH_INSERT\n");
+      PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT");
       if (config.in_file.empty()) {
-        printf("[ERROR] Please provide input fasta file.\n");
+        PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
       }
     } else if (config.mode == FASTQ_NO_INSERT) {
-      printf("[INFO] Mode : FASTQ_NO_INSERT\n");
+      PLOG_INFO.printf("Mode : FASTQ_NO_INSERT");
       if (config.in_file.empty()) {
-        printf("[ERROR] Please provide input fasta file.\n");
+        PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
       }
     }
 
     if (config.ht_type == SIMPLE_KHT) {
-      printf("[INFO] Hashtable type : SimpleKmerHashTable\n");
+      PLOG_INFO.printf("Hashtable type : SimpleKmerHashTable");
     } else if (config.ht_type == ROBINHOOD_KHT) {
-      printf("[INFO] Hashtable type : RobinhoodKmerHashTable\n");
+      PLOG_INFO.printf("Hashtable type : RobinhoodKmerHashTable");
     } else if (config.ht_type == CAS_KHT) {
-      printf("[INFO] Hashtable type : CASKmerHashTable\n");
+      PLOG_INFO.printf("Hashtable type : CASKmerHashTable");
     } else if (config.ht_type == STDMAP_KHT) {
-      printf("[INFO] Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)\n");
-      printf("[INFO] Exiting ... \n");
+      PLOG_INFO.printf("Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
+      PLOG_INFO.printf("Exiting ... ");
       exit(0);
     }
 
@@ -523,7 +523,7 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.drop_caches) {
-    printf("[INFO] Dropping the page cache\n");
+    PLOG_INFO.printf("Dropping the page cache");
     if (system("sudo bash -c 'echo 3 > /proc/sys/vm/drop_caches'") < 0) {
       perror("drop caches");
     }

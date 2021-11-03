@@ -3,13 +3,13 @@
 
 #include "base_kht.hpp"
 #include "hashtables/kvtypes.hpp"
-#include "dbg.hpp"
 
 #include <fcntl.h>
 #include <numa.h>
 #include <numaif.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <plog/Log.h>
 
 #include <cstring>
 
@@ -105,14 +105,14 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
   fd = open(mmap_path, O_CREAT | O_RDWR, 0755);
 
   if (fd < 0) {
-    dbg("Couldn't open file %s:", mmap_path);
+    PLOGE.printf("Couldn't open file %s:", mmap_path);
     perror("");
     exit(1);
   } else {
-    dbg("opened file %s\n", mmap_path);
+    PLOGI.printf("opened file %s", mmap_path);
   }
 
-  printf("%s, requesting %lu\n", __func__, capacity * sizeof(T));
+  PLOGI.printf("requesting to mmap %lu bytes", capacity * sizeof(T));
   addr = (T *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(T), PROT_RW,
                    MAP_FLAGS, fd, 0);
   if (addr == MAP_FAILED) {
@@ -120,7 +120,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
     unlink(mmap_path);
     exit(1);
   } else {
-    dbg("mmap returns %p\n", addr);
+    PLOGD.printf("mmap returns %p", addr);
   }
 
   // Special handling for CAS that does NOT depend on global config state
@@ -134,12 +134,12 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
     long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
                      MPOL_MF_MOVE | MPOL_MF_STRICT);
 
-    printf("mmap_addr %p | len %zu\n", _addr, capacity * sizeof(T));
-    printf("calling mbind with addr %p | len %zu | nodemask %p\n", addr_split,
+    PLOGI.printf("mmap_addr %p | len %zu", _addr, capacity * sizeof(T));
+    PLOGI.printf("calling mbind with addr %p | len %zu | nodemask %p", addr_split,
            len_split, nodemask);
     if (ret < 0) {
       perror("mbind");
-      printf("mbind ret %ld | errno %d\n", ret, errno);
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
 #else
@@ -158,7 +158,7 @@ template <class T>
 void free_mem(T *addr, uint64_t capacity, int id, int fd) {
 #ifdef HUGE_1GB_PAGES
   char mmap_path[256] = {0};
-  printf("%s, called\n", __func__);
+  PLOGI.printf("Entering!");
   snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
   if (addr) {
     munmap(addr, capacity * sizeof(T));
