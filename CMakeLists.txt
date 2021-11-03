@@ -25,14 +25,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 add_compile_options(
-    -Wall 
-    -mprefetchwt1 
-    -march=native 
+    -Wall
+    -mprefetchwt1
+    -march=native
     -fcf-protection=none
-    # SIMD lookup 
-    -mavx512dq 
-    # CRC
-    -msse4.2
 )
 
 # Build all the source files.
