@@ -23,7 +23,7 @@
 #include <tuple>
 
 #include "constants.h"
-#include "dbg.hpp"
+#include "plog/Log.h"
 #include "experiments.hpp"
 #include "hasher.hpp"
 #include "helper.hpp"
@@ -106,19 +106,18 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     if (!ptr) throw std::bad_alloc{};
 
-    std::cout << "[INFO] "
-              << "new: " << size
-              << ", align: " << static_cast<std::size_t>(align)
-              << ", ptr: " << ptr << '\n';
+    PLOGI << "Allocating " << size
+          << ", align: " << static_cast<std::size_t>(align)
+          << ", ptr: " << ptr;
 
     return ptr;
   }
 
   void operator delete(void *ptr, std::size_t size,
                        std::align_val_t align) noexcept {
-    std::cout << "delete: " << size
+    PLOGI << "deleting " << size
               << ", align: " << static_cast<std::size_t>(align)
-              << ", ptr : " << ptr << '\n';
+              << ", ptr : " << ptr;
     free(ptr);
   }
 
@@ -198,16 +197,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-    cout << "Empty item: " << this->empty_item << endl;
+    PLOG_WARNING << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
-    dbg("id: %d insert_queue %p | find_queue %p\n", id, this->insert_queue,
+    PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id, this->insert_queue,
         this->find_queue);
-    printf("[INFO] Hashtable size: %lu\n", this->capacity);
-    printf("%s, data_length %lu\n", __func__, this->data_length);
+    PLOG_INFO.printf("Hashtable size: %lu | data_length %lu", this->capacity, this->data_length);
   }
 
   ~PartitionedHashStore() {
@@ -405,7 +403,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void print_to_file(std::string &outfile) const override {
     std::ofstream f(outfile);
     if (!f) {
-      dbg("Could not open outfile %s\n", outfile.c_str());
+      PLOG_ERROR.printf("Could not open outfile %s", outfile.c_str());
       return;
     }
     KV *ht = this->hashtable[this->id];

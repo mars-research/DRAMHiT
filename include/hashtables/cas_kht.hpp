@@ -13,7 +13,7 @@
 #include <mutex>
 
 #include "constants.h"
-#include "dbg.hpp"
+#include "plog/Log.h"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "sync.h"
@@ -45,7 +45,7 @@ class CASHashTable : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-    cout << "Empty item: " << this->empty_item << endl;
+    PLOG_WARNING << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
@@ -260,7 +260,7 @@ class CASHashTable : public BaseHashTable {
   void print_to_file(std::string &outfile) const override {
     std::ofstream f(outfile);
     if (!f) {
-      dbg("Could not open outfile %s\n", outfile.c_str());
+      PLOG_ERROR.printf("Could not open outfile %s", outfile.c_str());
       return;
     }
 

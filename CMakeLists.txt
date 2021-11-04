@@ -49,7 +49,7 @@ target_link_directories(kvstore PRIVATE lib/)
 target_link_libraries(kvstore PRIVATE fnv xxhash cityhash)
 
 # Declare include directory.
-include_directories(include/ lib/ lib/cityhash/src/)
+include_directories(include/ lib/ lib/cityhash/src/ lib/plog/include/)
 
 # Declare options
 option(BUILD_TESTING "Build tests." OFF)
