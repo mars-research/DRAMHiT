@@ -25,7 +25,6 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 
 // Test Variables
 [[maybe_unused]] static uint64_t transactions = 100000000;
-// static uint64_t transactions = 200000000;
 
 uint32_t producer_count = 1;
 uint32_t consumer_count = 1;
@@ -62,139 +61,6 @@ alignas(64) uint64_t buf_idx[64][64];
 uint64_t num_enq_failures[64][64] = {0};
 uint64_t num_deq_failures[64][64] = {0};
 
-#if defined(DOUBLE_BUFFERING)
-void BQueueTest::producer_thread(int tid, int n_prod, int n_cons) {
-  Shard *sh = &this->shards[tid];
-
-  sh->stats =
-      //(thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE,
-      // sizeof(thread_stats));
-      (thread_stats *)calloc(1, sizeof(thread_stats));
-  alignas(64) uint64_t k = 0;
-  uint8_t this_prod_id = sh->shard_idx;
-  uint32_t cons_id = 0;
-  uint64_t transaction_id;
-  queue_t **q = this->prod_queues[this_prod_id];
-#ifdef WITH_VTUNE_LIB
-  std::string thread_name("producer_thread" + std::to_string(tid));
-  __itt_thread_set_name(thread_name.c_str());
-#endif
-#ifdef BQ_TESTS_INSERT_XORWOW
-  struct xorwow_state xw_state;
-  xorwow_init(&xw_state);
-#endif
-
-  fipc_test_FAI(ready_producers);
-  while (!test_ready) fipc_test_pause();
-  fipc_test_mfence();
-
-  // HT_TESTS_NUM_INSERTS enqueues per consumer
-  cons_id = 0;
-  auto mult_factor = static_cast<double>(n_cons) / n_prod;
-  auto _num_messages = HT_TESTS_NUM_INSERTS * mult_factor;
-  uint64_t num_messages = static_cast<uint64_t>(_num_messages);
-  uint64_t key_start = static_cast<uint64_t>(_num_messages) * tid;
-  Hasher hasher;
-
-  printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n", __func__,
-         mult_factor, _num_messages, num_messages);
-  if (key_start == 0) key_start = 1;
-  printf(
-      "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
-      "key_start %lu\n",
-      this_prod_id, num_messages, consumer_count, key_start);
-
-  auto hash_to_cpu = [&](auto hash) {
-    // return (hash * 11400714819323198485llu) & (n_cons - 1);
-    // return (hash * 11400714819323198485llu) % n_cons;
-    if (!(n_cons & (n_cons - 1))) return hash & (n_cons - 1);
-    return hash % n_cons;
-  };
-
-  for (transaction_id = 0u; transaction_id < num_messages;) {
-    /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
-     * consumer */
-
-    for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH; i++) {
-#ifdef BQ_TESTS_INSERT_XORWOW
-      k = xorwow(&xw_state);
-      k = k << 32 | xorwow(&xw_state);
-#else
-      k = key_start++;
-      uint64_t hash_val = hasher(&k, sizeof(k));
-
-      cons_id = hash_to_cpu(k);
-      // cons_id = hash_to_cpu(hash_val);
-      // k has the computed hash in upper 32 bits
-      // and the actual key value in lower 32 bits
-      k |= (hash_val << 32);
-      cons_buffers[this_prod_id][cons_id][buf_idx[this_prod_id][cons_id]++] = k;
-#endif
-      // *((uint64_t *)&kmers[i].data) = k;
-
-      if (buf_idx[this_prod_id][cons_id] == (BQ_TESTS_BATCH_LENGTH - 2)) {
-        prefetch_queue(q[cons_id]);
-      }
-      if (buf_idx[this_prod_id][cons_id] == (BQ_TESTS_BATCH_LENGTH - 1)) {
-        prefetch_queue_data(q[cons_id], true);
-      }
-
-      if (buf_idx[this_prod_id][cons_id] == BQ_TESTS_BATCH_LENGTH) {
-      retry:
-        for (auto m = 0u; m < BQ_TESTS_BATCH_LENGTH; m++) {
-          if (enqueue(q[cons_id],
-                      (data_t)cons_buffers[this_prod_id][cons_id][m]) !=
-              SUCCESS) {
-            /* if enqueue fails, move to next consumer queue */
-            // printf("[ERROR] Producer %u -> Consumer %u \n", this_prod_id,
-            // cons_id);
-            // num_enq_failures[this_prod_id][cons_id]++;
-            // break;
-            goto retry;
-          }
-          transaction_id++;
-        }
-        buf_idx[this_prod_id][cons_id] = 0;
-      }
-#ifdef CALC_STATS
-      if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
-        printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
-               transaction_id);
-      }
-#endif
-    }
-
-    /* ++cons_id;
-    if (cons_id >= consumer_count) cons_id = 0;
-
-    auto get_next_cons = [&](auto inc) {
-      auto next_cons_id = cons_id + inc;
-      if (next_cons_id >= consumer_count) next_cons_id -= consumer_count;
-      return next_cons_id;
-    };
-
-    prefetch_queue(q[get_next_cons(2)], true);
-    prefetch_queue_data(q[get_next_cons(1)], true);
-    */
-  }
-
-#ifdef BQ_TESTS_USE_HALT
-  /* Tell consumers to halt */
-  for (auto i = 0u; i < consumer_count; ++i) {
-    bqueue_halt[i] = 1;
-  }
-#else
-  /* enqueue halt messages */
-  for (cons_id = 0; cons_id < consumer_count; cons_id++) {
-    while (enqueue(q[cons_id], (data_t)BQ_MAGIC_64BIT) != SUCCESS)
-      ;
-    transaction_id++;
-  }
-#endif
-
-  fipc_test_FAI(completed_producers);
-}
-#else
 void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
                                  bool main_thread, double skew) {
   Shard *sh = &this->shards[tid];
@@ -208,10 +74,12 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   uint32_t cons_id = 0;
   uint64_t transaction_id;
   queue_t **q = this->prod_queues[this_prod_id];
+
 #ifdef WITH_VTUNE_LIB
   std::string thread_name("producer_thread" + std::to_string(tid));
   __itt_thread_set_name(thread_name.c_str());
 #endif
+
 #ifdef BQ_TESTS_INSERT_XORWOW_NEW
   struct xorwow_state xw_state;
   xorwow_init(&xw_state);
@@ -255,9 +123,9 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   // __func__,
   //        mult_factor, _num_messages, num_messages);
   if (key_start == 0) key_start = 1;
-  printf(
-      "[INFO] Producer %u starting. Sending %lu messages to %d consumers | "
-      "key_start %lu\n",
+  PLOG_INFO.printf(
+      "Producer %u starting. Sending %lu messages to %d consumers | "
+      "key_start %lu",
       this_prod_id, num_messages, consumer_count, key_start);
 
   auto hash_to_cpu = [&](auto hash) {
@@ -291,7 +159,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
     retry:
       if (enqueue(q[cons_id], (data_t)k) != SUCCESS) {
         /* if enqueue fails, move to next consumer queue */
-        // printf("[ERROR] Producer %u -> Consumer %u \n", this_prod_id,
+        // PLOG_ERROR.printf("Producer %u -> Consumer %u \n", this_prod_id,
         // cons_id);
         // num_enq_failures[this_prod_id][cons_id]++;
         goto retry;
@@ -314,7 +182,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       transaction_id++;
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
-        printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
+        PLOG_INFO.printf("Producer %u, transaction_id %lu", this_prod_id,
                transaction_id);
       }
 #endif
@@ -351,7 +219,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   // main thread will also increment this
   fipc_test_FAI(completed_producers);
 }
-#endif
 
 void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   Shard *sh = &this->shards[tid];
@@ -372,12 +239,12 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   uint64_t inserted = 0u;
 #ifdef WITH_VTUNE_LIB
   std::string thread_name("consumer_thread" + std::to_string(tid));
-  printf("%s, thread_name %s\n", __func__, thread_name.c_str());
+  PLOG_VERBOSE.printf("thread_name %s", thread_name.c_str());
   __itt_thread_set_name(thread_name.c_str());
 #endif
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
-  printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
+  PLOG_INFO.printf("init_ht with %d", sh->shard_idx);
   kmer_ht =
       init_ht(HT_TESTS_HT_SIZE * (cfg->n_prod + cfg->n_cons) / cfg->n_cons,
               sh->shard_idx);
@@ -386,7 +253,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
 
-  printf("[INFO] Consumer %u starting\n", this_cons_id);
+  PLOG_INFO.printf("Consumer %u starting", this_cons_id);
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -425,7 +292,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
       /* Receive and unmarshall */
       if (dequeue(q[prod_id], (data_t *)&k) != SUCCESS) {
         /* move on to next producer queue to dequeue */
-        // printf("[ERROR] Consumer %u <- Producer %u \n", sh->shard_idx,
+        // PLOG_ERROR.printf("Consumer %u <- Producer %u \n", sh->shard_idx,
         // prod_id);
         // num_deq_failures[tid][prod_id]++;
 
@@ -448,16 +315,16 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
       if ((data_t)k == BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
-        printf(
-            "[INFO] Consumer %u, received HALT from prod_id %u. "
-            "finished_producers :%u\n",
+        PLOG_INFO.printf(
+            "Consumer %u, received HALT from prod_id %u. "
+            "finished_producers :%u",
             this_cons_id, prod_id, finished_producers);
 
-        printf("[DEBUG] Consumer experienced %" PRIu64 " reprobes, %" PRIu64
-               " soft\n",
+        PLOG_DEBUG.printf("Consumer experienced %" PRIu64 " reprobes, %" PRIu64
+               " soft",
                kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
 
-        printf("[DEBUG] Consumer received %" PRIu64 "\n", count);
+        PLOG_DEBUG.printf("Consumer received %" PRIu64, count);
 
         continue;
       }
@@ -475,7 +342,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
       transaction_id++;
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
-        printf("[INFO] Consumer %u, transaction_id %lu\n", this_cons_id,
+        PLOG_INFO.printf("Consumer %u, transaction_id %lu", this_cons_id,
                transaction_id);
       }
 #endif
@@ -494,18 +361,18 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
-  printf("%s, cons_id %d | inserted %lu elements\n", __func__, this_cons_id,
+  PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
          inserted);
-  printf(
-      "[INFO] Quick Stats: Consumer %u finished, receiving %lu messages "
-      "(cycles per message %lu) prod_count %u | finished %u\n",
+  PLOG_INFO.printf(
+      "Quick Stats: Consumer %u finished, receiving %lu messages "
+      "(cycles per message %lu) prod_count %u | finished %u",
       this_cons_id, transaction_id, (t_end - t_start) / transaction_id,
       producer_count, finished_producers);
 
   /* Write to file */
   if (!this->cfg->ht_file.empty()) {
     std::string outfile = this->cfg->ht_file + std::to_string(sh->shard_idx);
-    printf("[INFO] Shard %u: Printing to file: %s\n", sh->shard_idx,
+    PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
            outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
@@ -536,7 +403,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   ktable = this->ht_vec->at(tid);
 
   if (ktable == nullptr) {
-    printf("%s, init_ht with %d\n", __func__, sh->shard_idx);
+    PLOG_INFO.printf("init_ht with %d", sh->shard_idx);
     ktable = init_ht(HT_TESTS_HT_SIZE * 2, sh->shard_idx);
     this->ht_vec->at(tid) = ktable;
   }
@@ -573,7 +440,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   // __func__,
   //        mult_factor, _num_messages, num_messages);
   if (key_start == 0) key_start = 1;
-  printf("[INFO] Finder %u starting. key_start %lu\n", tid, key_start);
+  PLOG_INFO.printf("Finder %u starting. key_start %lu", tid, key_start);
 
   auto hash_to_cpu = [&](auto hash) {
     // return (hash * 11400714819323198485llu) % n_cons;
@@ -612,7 +479,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
 #ifdef CALC_STATS
     // if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
-    //   printf("[INFO] Producer %u, transaction_id %lu\n", this_prod_id,
+    //   PLOG_INFO.printf("Producer %u, transaction_id %lu\n", this_prod_id,
     //          transaction_id);
     // }
 #endif
@@ -622,9 +489,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   sh->stats->find_cycles = (t_end - t_start);
   sh->stats->num_finds = found;
 
-  if (found > 0)
-    printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
+  if (found > 0) {
+    PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu\n",
            sh->shard_idx, found, (t_end - t_start) / found);
+  }
 
   get_ht_stats(sh, ktable);
 }
@@ -664,14 +532,14 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
   for (i = 0; i < nprod; ++i) {
     for (j = 0; j < ncons; ++j) {
       this->prod_queues[i][j] = &queues[i * ncons + j];
-      printf("[INFO] prod_queues[%u][%u] = %p\n", i, j, &queues[i * ncons + j]);
+      PLOG_INFO.printf("prod_queues[%u][%u] = %p", i, j, &queues[i * ncons + j]);
     }
   }
 
   for (i = 0; i < ncons; ++i) {
     for (j = 0; j < nprod; ++j) {
       this->cons_queues[i][j] = &queues[i + j * ncons];
-      printf("[INFO] cons_queues[%u][%u] = %p\n", i, j, &queues[i + j * ncons]);
+      PLOG_INFO.printf("cons_queues[%u][%u] = %p", i, j, &queues[i + j * ncons]);
     }
   }
 
@@ -696,9 +564,9 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
   xorwow_init(&xw_state);
 #endif
 
-  printf(
-      "[INFO] no_bqueues thread %u starting. Total inserts in this "
-      "thread:%lu \n",
+  PLOG_INFO.printf(
+      "no_bqueues thread %u starting. Total inserts in this "
+      "thread:%lu ",
       sh->shard_idx, HT_TESTS_NUM_INSERTS);
 
   t_start = RDTSC_START();
@@ -722,7 +590,7 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 
     if (transaction_id % (HT_TESTS_NUM_INSERTS) == 0) {
-      printf("[INFO] no_bqueues thread %u, transaction_id %lu\n", sh->shard_idx,
+      PLOG_INFO.printf("no_bqueues thread %u, transaction_id %lu", sh->shard_idx,
              transaction_id);
     }
   }
@@ -732,9 +600,9 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
-  printf(
-      "[INFO] Quick Stats: no_bqueues thread %u finished, sending %lu messages "
-      "(cycles per message %lu)\n",
+  PLOG_INFO.printf(
+      "Quick Stats: no_bqueues thread %u finished, sending %lu messages "
+      "(cycles per message %lu)",
       sh->shard_idx, transaction_id, (t_end - t_start) / transaction_id);
 }
 
@@ -764,23 +632,23 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
     this->prod_threads.push_back(std::move(_thread));
-    printf("[INFO]: Thread find_thread: %u, affinity: %u\n", i, assigned_cpu);
+    PLOG_INFO.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
     i += 1;
   }
 
-  printf("%s, creating cons threads i %d \n", __func__, i);
+  PLOG_INFO.printf("creating cons threads i %d ", i);
   Shard *main_sh = &this->shards[i];
   main_sh->shard_idx = i;
   CPU_ZERO(&cpuset);
   uint32_t last_cpu = 0;
   CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  printf("[INFO]: Thread 'controller': affinity: %u\n", last_cpu);
+  PLOG_INFO.printf("Thread 'controller': affinity: %u", last_cpu);
 
   // Spawn find threads
   i = cfg->n_prod;
   for (auto assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
-    printf("%s, i %d assigned cpu %d\n", __func__, i, assigned_cpu);
+    PLOG_INFO.printf("i %d assigned cpu %d", i, assigned_cpu);
 
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
@@ -793,8 +661,8 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
 
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
-    printf("[INFO]: Thread find_thread: %u, affinity: %u\n", i, assigned_cpu);
-    printf("[%d] sh->insertion_cycles %lu\n", sh->shard_idx,
+    PLOG_INFO.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
+    PLOG_INFO.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
            sh->stats->insertion_cycles);
 
     this->cons_threads.push_back(std::move(_thread));
@@ -803,7 +671,7 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
   }
 
   {
-    printf("Running master thread with id %d\n", main_sh->shard_idx);
+    PLOG_INFO.printf("Running master thread with id %d", main_sh->shard_idx);
     this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true);
   }
 
@@ -814,7 +682,7 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
   for (auto &th : this->cons_threads) {
     th.join();
   }
-  printf("Find done!\n");
+  PLOG_INFO.printf("Find done!");
   print_stats(this->shards, *cfg);
 }
 
@@ -833,20 +701,20 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
 
   /* num_nodes cpus not available TODO Verify this logic*/
   if (this->cfg->n_prod + this->cfg->n_cons > num_cpus) {
-    fprintf(stderr,
-            "[ERROR] producers (%u) + consumers (%u) exceeded number of "
-            "available CPUs (%u)\n",
+    PLOG_ERROR.printf(
+            "producers (%u) + consumers (%u) exceeded number of "
+            "available CPUs (%u)",
             this->cfg->n_prod, this->cfg->n_cons, num_cpus);
-    fprintf(stderr,
-            "[ERROR] Note: %u core(s) not available, one of which "
-            "is assigned completely for synchronization\n",
+    PLOG_ERROR.printf(
+            "Note: %u core(s) not available, one of which "
+            "is assigned completely for synchronization",
             num_nodes);
     exit(-1);
   }
 
   producer_count = cfg->n_prod;
   consumer_count = cfg->n_cons;
-  printf("[INFO]: Controller starting ... nprod: %u, ncons: %u\n",
+  PLOG_INFO.printf("Controller starting ... nprod: %u, ncons: %u",
          producer_count, consumer_count);
 
   /* Stats data structures */
@@ -857,9 +725,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   this->shards =
       (Shard *)calloc(sizeof(Shard), (producer_count + consumer_count));
 
-  // memset(this->shards, 0, sizeof(Shard) * (producer_count + consumer_count));
-
-  /* Init queues */
+  // Init queues
   this->init_queues(cfg->n_prod, cfg->n_cons);
 
   fipc_test_mfence();
@@ -876,24 +742,24 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
     this->prod_threads.push_back(std::move(_thread));
-    printf("[INFO]: Thread producer_thread: %u, affinity: %u\n", i,
+    PLOG_INFO.printf("Thread producer_thread: %u, affinity: %u", i,
            assigned_cpu);
     i += 1;
   }
 
-  printf("%s, creating cons threads i %d \n", __func__, i);
+  PLOG_INFO.printf("creating cons threads i %d ", i);
   Shard *main_sh = &this->shards[i];
   main_sh->shard_idx = i;
   CPU_ZERO(&cpuset);
   uint32_t last_cpu = 0;
   CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  printf("[INFO]: Thread 'controller': affinity: %u\n", last_cpu);
+  PLOG_INFO.printf("Thread 'controller': affinity: %u", last_cpu);
 
   // Spawn consumer threads
   i = producer_count;
   for (auto assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
-    printf("%s, i %d assigned cpu %d\n", __func__, i, assigned_cpu);
+    PLOG_INFO.printf("i %d assigned cpu %d", i, assigned_cpu);
 
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
@@ -906,7 +772,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
 
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
-    printf("[INFO]: Thread consumer_thread: %u, affinity: %u\n", i,
+    PLOG_INFO.printf("Thread consumer_thread: %u, affinity: %u", i,
            assigned_cpu);
 
     this->cons_threads.push_back(std::move(_thread));
@@ -915,36 +781,23 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   }
 
   {
-    printf("Running master thread with id %d\n", main_sh->shard_idx);
+    PLOG_INFO.printf("Running master thread with id %d", main_sh->shard_idx);
     this->producer_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true,
                           cfg->skew);
   }
 
-  // // Wait for threads to be ready for test
-  // while (ready_consumers < consumer_count) fipc_test_pause();
-  // while (ready_producers < producer_count) fipc_test_pause();
-
-  // fipc_test_mfence();
-
-  // /* Begin Test */
-  // test_ready = 1;
-  // fipc_test_mfence();
-
-  /* Wait for producers to complete */
+  // Wait for producers to complete
   while (completed_producers < producer_count) fipc_test_pause();
 
   fipc_test_mfence();
 
-  /* Wait for consumers to complete */
+  // Wait for consumers to complete
   while (completed_consumers < consumer_count) fipc_test_pause();
 
   fipc_test_mfence();
 
   cfg->num_threads = producer_count + consumer_count;
   // print_stats(this->shards, *cfg);
-
-  /* Tell consumers to halt once producers are done */
-  // return 0;
 
   for (auto &th : this->prod_threads) {
     th.join();
