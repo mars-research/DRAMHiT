@@ -30,7 +30,7 @@ uint64_t HT_TESTS_NUM_INSERTS;
 void papi_check(int code) {
 #ifdef ENABLE_HIGH_LEVEL_PAPI
   if (code != PAPI_OK) {
-    std::cerr << "PAPI call failed with code " << code << "\n";
+    PLOG_ERROR << "PAPI call failed with code " << code;
     std::terminate();
   }
 #endif
@@ -118,7 +118,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     count++;
 #endif
   }
-  printf("%s, inserted %lu items\n", __func__, inserted);
+  PLOG_INFO.printf("inserted %lu items", inserted);
   // flush the last batch explicitly
   // printf("%s calling flush queue\n", __func__);
 #if !defined(NO_PREFETCH)
@@ -210,14 +210,14 @@ inline uint64_t PREFETCH_STRIDE = 64;
 void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   OpTimings insert_times{};
 
-  printf("[INFO] Synth test run: thread %u, ht size: %lu, insertions: %lu\n",
+  PLOG_INFO.printf("Synth test run: thread %u, ht size: %lu, insertions: %lu",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_times = synth_run(kmer_ht, sh->shard_idx);
-    printf(
-        "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu \n",
+    PLOG_INFO.printf(
+        "Quick stats: thread %u, Batch size: %d, cycles per "
+        "insertion:%lu",
         sh->shard_idx, i, insert_times.duration / insert_times.op_count);
 
 #ifdef CALC_STATS
@@ -236,7 +236,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->num_finds = find_times.op_count;
 
   if (find_times.op_count > 0)
-    printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
+    PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
            sh->shard_idx, find_times.op_count,
            find_times.duration / find_times.op_count);
 
@@ -298,8 +298,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   duration += end - start;
 #endif
 
-  std::cout << "[DEBUG] Inserts done; Reprobes: " << hashtable->num_reprobes
-            << ", Soft Reprobes: " << hashtable->num_soft_reprobes << "\n";
+  PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
+            << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
@@ -309,7 +309,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 }
 
 OpTimings do_zipfian_gets(BaseHashTable *kmer_ht, unsigned int id) {
-  printf("[WARNING] Zipfian gets not implemented yet\n");
+  PLOG_WARNING.printf("Zipfian gets not implemented yet");
   return {0, 1};
 }
 
@@ -319,21 +319,21 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   static_assert(HT_TESTS_MAX_STRIDE - 1 ==
                 1);  // Otherwise timing logic is wrong
 
-  printf(
-      "[INFO] Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
-      "%f\n",
+  PLOG_INFO.printf(
+      "Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
+      "%f",
       shard->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS, skew);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_timings =
         do_zipfian_inserts(hashtable, skew, count, shard->shard_idx);
-    printf(
-        "[INFO] Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu \n",
+    PLOG_INFO.printf(
+        "Quick stats: thread %u, Batch size: %d, cycles per "
+        "insertion:%lu",
         shard->shard_idx, i, insert_timings.duration / insert_timings.op_count);
 
 #ifdef CALC_STATS
-    printf(" Reprobes %lu soft_reprobes %lu\n", hashtable->num_reprobes,
+    PLOG_INFO.printf("Reprobes %lu soft_reprobes %lu", hashtable->num_reprobes,
            hashtable->num_soft_reprobes);
 #endif
   }
@@ -349,7 +349,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   shard->stats->num_finds = num_finds.op_count;
 
   if (num_finds.op_count > 0)
-    printf("[INFO] thread %u | num_finds %lu | cycles per get: %lu\n",
+    PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
            shard->shard_idx, num_finds.op_count,
            num_finds.duration / num_finds.op_count);
 
