@@ -1,10 +1,11 @@
 #include <cinttypes>
 
 #include "BQueueTest.hpp"
+#include "fastrange.h"
+#include "hasher.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
-#include "hasher.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"
@@ -183,7 +184,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         PLOG_INFO.printf("Producer %u, transaction_id %lu", this_prod_id,
-               transaction_id);
+                         transaction_id);
       }
 #endif
     }
@@ -245,9 +246,9 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*consumer_count];
 
   PLOG_INFO.printf("init_ht with %d", sh->shard_idx);
-  kmer_ht =
-      init_ht(HT_TESTS_HT_SIZE * (cfg->n_prod + cfg->n_cons) / cfg->n_cons,
-              sh->shard_idx);
+  kmer_ht = init_ht(HT_TESTS_HT_SIZE * (cfg->n_prod + cfg->n_cons) /
+                        cfg->n_cons,  // FIXME: does this size logic make sense?
+                    sh->shard_idx);
   (*this->ht_vec)[tid] = kmer_ht;
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
@@ -321,8 +322,8 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
             this_cons_id, prod_id, finished_producers);
 
         PLOG_DEBUG.printf("Consumer experienced %" PRIu64 " reprobes, %" PRIu64
-               " soft",
-               kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
+                          " soft",
+                          kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
 
         PLOG_DEBUG.printf("Consumer received %" PRIu64, count);
 
@@ -343,7 +344,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
         PLOG_INFO.printf("Consumer %u, transaction_id %lu", this_cons_id,
-               transaction_id);
+                         transaction_id);
       }
 #endif
     }
@@ -362,7 +363,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   get_ht_stats(sh, kmer_ht);
 
   PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
-         inserted);
+                   inserted);
   PLOG_INFO.printf(
       "Quick Stats: Consumer %u finished, receiving %lu messages "
       "(cycles per message %lu) prod_count %u | finished %u",
@@ -373,7 +374,7 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   if (!this->cfg->ht_file.empty()) {
     std::string outfile = this->cfg->ht_file + std::to_string(sh->shard_idx);
     PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
-           outfile.c_str());
+                     outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
 
@@ -491,7 +492,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   if (found > 0) {
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu\n",
-           sh->shard_idx, found, (t_end - t_start) / found);
+                     sh->shard_idx, found, (t_end - t_start) / found);
   }
 
   get_ht_stats(sh, ktable);
@@ -532,14 +533,16 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
   for (i = 0; i < nprod; ++i) {
     for (j = 0; j < ncons; ++j) {
       this->prod_queues[i][j] = &queues[i * ncons + j];
-      PLOG_INFO.printf("prod_queues[%u][%u] = %p", i, j, &queues[i * ncons + j]);
+      PLOG_INFO.printf("prod_queues[%u][%u] = %p", i, j,
+                       &queues[i * ncons + j]);
     }
   }
 
   for (i = 0; i < ncons; ++i) {
     for (j = 0; j < nprod; ++j) {
       this->cons_queues[i][j] = &queues[i + j * ncons];
-      PLOG_INFO.printf("cons_queues[%u][%u] = %p", i, j, &queues[i + j * ncons]);
+      PLOG_INFO.printf("cons_queues[%u][%u] = %p", i, j,
+                       &queues[i + j * ncons]);
     }
   }
 
@@ -590,8 +593,8 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 
     if (transaction_id % (HT_TESTS_NUM_INSERTS) == 0) {
-      PLOG_INFO.printf("no_bqueues thread %u, transaction_id %lu", sh->shard_idx,
-             transaction_id);
+      PLOG_INFO.printf("no_bqueues thread %u, transaction_id %lu",
+                       sh->shard_idx, transaction_id);
     }
   }
 
@@ -663,7 +666,7 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
 
     PLOG_INFO.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
     PLOG_INFO.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
-           sh->stats->insertion_cycles);
+                     sh->stats->insertion_cycles);
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
@@ -702,20 +705,20 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   /* num_nodes cpus not available TODO Verify this logic*/
   if (this->cfg->n_prod + this->cfg->n_cons > num_cpus) {
     PLOG_ERROR.printf(
-            "producers (%u) + consumers (%u) exceeded number of "
-            "available CPUs (%u)",
-            this->cfg->n_prod, this->cfg->n_cons, num_cpus);
+        "producers (%u) + consumers (%u) exceeded number of "
+        "available CPUs (%u)",
+        this->cfg->n_prod, this->cfg->n_cons, num_cpus);
     PLOG_ERROR.printf(
-            "Note: %u core(s) not available, one of which "
-            "is assigned completely for synchronization",
-            num_nodes);
+        "Note: %u core(s) not available, one of which "
+        "is assigned completely for synchronization",
+        num_nodes);
     exit(-1);
   }
 
   producer_count = cfg->n_prod;
   consumer_count = cfg->n_cons;
   PLOG_INFO.printf("Controller starting ... nprod: %u, ncons: %u",
-         producer_count, consumer_count);
+                   producer_count, consumer_count);
 
   /* Stats data structures */
   // this->shards = (Shard *)std::aligned_alloc(
@@ -743,7 +746,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
     this->prod_threads.push_back(std::move(_thread));
     PLOG_INFO.printf("Thread producer_thread: %u, affinity: %u", i,
-           assigned_cpu);
+                     assigned_cpu);
     i += 1;
   }
 
@@ -773,7 +776,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
     PLOG_INFO.printf("Thread consumer_thread: %u, affinity: %u", i,
-           assigned_cpu);
+                     assigned_cpu);
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
