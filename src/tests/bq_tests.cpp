@@ -130,9 +130,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       this_prod_id, num_messages, consumer_count, key_start);
 
   auto hash_to_cpu = [&](auto hash) {
-    // return (hash * 11400714819323198485llu) % n_cons;
-    if (!(n_cons & (n_cons - 1))) return hash & (n_cons - 1);
-    return hash % n_cons;
+    return fastrange32(hash, n_cons);
   };
 
   for (transaction_id = 0u; transaction_id < num_messages;) {
