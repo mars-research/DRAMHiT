@@ -156,7 +156,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 
       uint64_t hash_val = hasher(&k, sizeof(k));
 
-      cons_id = hash_to_cpu(k);
+      cons_id = hash_to_cpu(hash_val);
       ++hist.at(cons_id);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
@@ -380,13 +380,13 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
-  // PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
-  //                  inserted);
-  // PLOG_INFO.printf(
-  //     "Quick Stats: Consumer %u finished, receiving %lu messages "
-  //     "(cycles per message %lu) prod_count %u | finished %u",
-  //     this_cons_id, transaction_id, (t_end - t_start) / transaction_id,
-  //     producer_count, finished_producers);
+  PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
+                   inserted);
+  PLOG_INFO.printf(
+      "Quick Stats: Consumer %u finished, receiving %lu messages "
+      "(cycles per message %lu) prod_count %u | finished %u",
+      this_cons_id, transaction_id, (t_end - t_start) / transaction_id,
+      producer_count, finished_producers);
 
   /* Write to file */
   if (!this->cfg->ht_file.empty()) {
