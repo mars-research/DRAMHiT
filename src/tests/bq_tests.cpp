@@ -62,6 +62,10 @@ alignas(64) uint64_t buf_idx[64][64];
 uint64_t num_enq_failures[64][64] = {0};
 uint64_t num_deq_failures[64][64] = {0};
 
+auto hash_to_cpu(std::uint32_t hash, unsigned int count) {
+  return fastrange32(hash, count);
+};
+
 void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
                                  bool main_thread, double skew) {
   Shard *sh = &this->shards[tid];
@@ -129,15 +133,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       "key_start %lu",
       this_prod_id, num_messages, consumer_count, key_start);
 
-  auto hash_to_cpu = [&](auto hash) {
-    static const auto bad_style = [&] {
-      PLOG_INFO.printf("hash_to_cpu n_cons=%d", n_cons);
-      return 0;
-    }();
-
-    return fastrange32(hash, n_cons);
-  };
-
   std::vector<unsigned int> hist(n_cons);
   for (transaction_id = 0u; transaction_id < num_messages;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
@@ -156,7 +151,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 
       uint64_t hash_val = hasher(&k, sizeof(k));
 
-      cons_id = hash_to_cpu(hash_val);
+      cons_id = hash_to_cpu(hash_val, n_cons);
       ++hist.at(cons_id);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
@@ -461,19 +456,13 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   if (key_start == 0) key_start = 1;
   PLOG_INFO.printf("Finder %u starting. key_start %lu", tid, key_start);
 
-  auto hash_to_cpu = [&](auto hash) {
-    // return (hash * 11400714819323198485llu) % n_cons;
-    if (!(n_cons & (n_cons - 1))) return hash & (n_cons - 1);
-    return hash % n_cons;
-  };
-
   t_start = RDTSC_START();
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
     k = key_start++;
     uint64_t hash_val = hasher(&k, sizeof(k));
 
-    part_id = hash_to_cpu(k);
+    part_id = hash_to_cpu(hash_val, n_cons);
     // k has the computed hash in upper 32 bits
     // and the actual key value in lower 32 bits
     k |= (hash_val << 32);
