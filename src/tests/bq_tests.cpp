@@ -130,9 +130,15 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       this_prod_id, num_messages, consumer_count, key_start);
 
   auto hash_to_cpu = [&](auto hash) {
+    static const auto bad_style = [&] {
+      PLOG_INFO.printf("hash_to_cpu n_cons=%d", n_cons);
+      return 0;
+    }();
+
     return fastrange32(hash, n_cons);
   };
 
+  std::vector<unsigned int> hist(n_cons);
   for (transaction_id = 0u; transaction_id < num_messages;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
      * consumer */
@@ -151,6 +157,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       uint64_t hash_val = hasher(&k, sizeof(k));
 
       cons_id = hash_to_cpu(k);
+      ++hist.at(cons_id);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
       k |= (hash_val << 32);
@@ -217,6 +224,19 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 #endif
   // main thread will also increment this
   fipc_test_FAI(completed_producers);
+
+  std::stringstream stream{};
+  stream << "[";
+  auto first = true;
+  for (auto n : hist) {
+    if (!first) stream << ", ";
+
+    stream << n;
+    first = false;
+  }
+
+  stream << "]";
+  PLOG_INFO.printf("Producer %d histogram: %s", tid, stream.str().c_str());
 }
 
 void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
@@ -360,13 +380,13 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
-  PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
-                   inserted);
-  PLOG_INFO.printf(
-      "Quick Stats: Consumer %u finished, receiving %lu messages "
-      "(cycles per message %lu) prod_count %u | finished %u",
-      this_cons_id, transaction_id, (t_end - t_start) / transaction_id,
-      producer_count, finished_producers);
+  // PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
+  //                  inserted);
+  // PLOG_INFO.printf(
+  //     "Quick Stats: Consumer %u finished, receiving %lu messages "
+  //     "(cycles per message %lu) prod_count %u | finished %u",
+  //     this_cons_id, transaction_id, (t_end - t_start) / transaction_id,
+  //     producer_count, finished_producers);
 
   /* Write to file */
   if (!this->cfg->ht_file.empty()) {
