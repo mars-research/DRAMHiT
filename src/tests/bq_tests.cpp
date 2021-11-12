@@ -7,6 +7,8 @@
 #include "print_stats.h"
 #include "sync.h"
 
+#include "hashtables/simple_kht.hpp"
+
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"
 #include "zipf.h"
@@ -219,7 +221,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   fipc_test_FAI(completed_producers);
 }
 
-thread_local std::vector<unsigned int> hash_histogram(1 << 5);
+thread_local std::vector<unsigned int> hash_histogram(histogram_buckets);
 
 void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   Shard *sh = &this->shards[tid];

@@ -93,6 +93,9 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
+constexpr auto histogram_bits = 6;
+constexpr std::uint32_t histogram_buckets{1 << histogram_bits};
+constexpr std::uint32_t histogram_mask{histogram_buckets - 1};
 extern thread_local std::vector<unsigned int> hash_histogram;
 
 template <typename KV, typename KVQ>
@@ -906,9 +909,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
-    // The hashes have little to no upper-bit entropy _because of how they are assigned to the queues_
-    size_t idx = hash & (this->capacity - 1);  // modulo
-    ++hash_histogram.at(hash >> 27);
+    // The hashes have little to no upper-bit entropy _because of how they are
+    // assigned to the queues_
+    size_t idx = fastrange32(hash, this->capacity);  // modulo
+    ++hash_histogram.at(idx & histogram_mask);
 
     // cout << " -- Adding " << key  << " at " << this->ins_head <<
     // endl;
