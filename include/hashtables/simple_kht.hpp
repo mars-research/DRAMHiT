@@ -655,7 +655,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     /* prepare for (possible) soft reprobe */
     idx++;
-    idx = idx >= this->capacity ? 0 : idx;  // modulo
+    idx = idx & (this->capacity - 1);  // modulo
 
     prefetch(idx);
     this->insert_queue[this->ins_head].key = q->key;
@@ -882,7 +882,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   uint64_t read_hashtable_element(const void *data) {
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = fastrange32(hash, this->capacity);
+    size_t idx = hash & (this->capacity - 1);
     KV *curr = &this->hashtable[this->id][idx];
     return curr->get_value();
   }
@@ -916,7 +916,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
-    // What is the actual distribution of hashes at this point? Fastrange will only depend on the upper few bits
     size_t idx = hash & (this->capacity - 1);  // modulo
 
     // cout << " -- Adding " << key  << " at " << this->ins_head <<
