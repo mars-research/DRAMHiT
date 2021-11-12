@@ -3,11 +3,10 @@
 #include "BQueueTest.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"
+#include "hashtables/simple_kht.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
-
-#include "hashtables/simple_kht.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"
@@ -65,7 +64,8 @@ uint64_t num_enq_failures[64][64] = {0};
 uint64_t num_deq_failures[64][64] = {0};
 
 auto hash_to_cpu(std::uint32_t hash, unsigned int count) {
-  return fastrange32(hash, count);
+  //return hash & (count - 1);
+  return fastrange32(hash << 16, count);
 };
 
 void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
@@ -358,6 +358,19 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   }
 
   t_end = RDTSCP();
+
+  std::stringstream stream{};
+  stream << "Hash buckets: [";
+  auto first = true;
+  for (auto n : hash_histogram) {
+    if (!first) stream << ", ";
+    stream << n;
+    first = false;
+  }
+
+  stream << "]\n";
+  PLOG_INFO.printf("%s", stream.str().c_str());
+
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
 #endif
@@ -383,18 +396,6 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
   // End test
   fipc_test_FAI(completed_consumers);
-
-  std::stringstream stream{};
-  stream << "Hash buckets: [";
-  auto first = true;
-  for (auto n : hash_histogram) {
-    if (!first) stream << ", ";
-    stream << n;
-    first = false;
-  }
-
-  stream << "]\n";
-  PLOG_INFO.printf("%s", stream.str().c_str());
 }
 
 void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
