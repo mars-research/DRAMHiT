@@ -9,6 +9,7 @@ namespace kmercounter {
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
 inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
+  
   sh->stats->ht_fill = kmer_ht->get_fill();
   sh->stats->ht_capacity = kmer_ht->get_capacity();
   sh->stats->max_count = kmer_ht->get_max_count();

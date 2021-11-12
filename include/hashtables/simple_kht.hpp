@@ -23,12 +23,13 @@
 #include <tuple>
 
 #include "constants.h"
-#include "plog/Log.h"
 #include "experiments.hpp"
+#include "fastrange.h"
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "misc_lib.h"
+#include "plog/Log.h"
 #include "sync.h"
 
 namespace kmercounter {
@@ -92,6 +93,8 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
+extern thread_local std::vector<unsigned int> hash_histogram;
+
 template <typename KV, typename KVQ>
 class alignas(64) PartitionedHashStore : public BaseHashTable {
  public:
@@ -107,8 +110,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     if (!ptr) throw std::bad_alloc{};
 
     PLOGI << "Allocating " << size
-          << ", align: " << static_cast<std::size_t>(align)
-          << ", ptr: " << ptr;
+          << ", align: " << static_cast<std::size_t>(align) << ", ptr: " << ptr;
 
     return ptr;
   }
@@ -116,8 +118,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void operator delete(void *ptr, std::size_t size,
                        std::align_val_t align) noexcept {
     PLOGI << "deleting " << size
-              << ", align: " << static_cast<std::size_t>(align)
-              << ", ptr : " << ptr;
+          << ", align: " << static_cast<std::size_t>(align)
+          << ", ptr : " << ptr;
     free(ptr);
   }
 
@@ -203,9 +205,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
-    PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id, this->insert_queue,
-        this->find_queue);
-    PLOG_INFO.printf("Hashtable size: %lu | data_length %lu", this->capacity, this->data_length);
+    PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
+                      this->insert_queue, this->find_queue);
+    PLOG_INFO.printf("Hashtable size: %lu | data_length %lu", this->capacity,
+                     this->data_length);
   }
 
   ~PartitionedHashStore() {
@@ -904,6 +907,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
 
     size_t idx = hash & (this->capacity - 1);  // modulo
+    ++hash_histogram.at(idx >> 22);
 
     // cout << " -- Adding " << key  << " at " << this->ins_head <<
     // endl;

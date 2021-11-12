@@ -234,6 +234,8 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   PLOG_INFO.printf("Producer %d histogram: %s", tid, stream.str().c_str());
 }
 
+thread_local std::vector<unsigned int> hash_histogram(1 << 5);
+
 void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
   Shard *sh = &this->shards[tid];
   sh->stats =
@@ -393,6 +395,16 @@ void BQueueTest::consumer_thread(int tid, uint32_t num_nops) {
 
   // End test
   fipc_test_FAI(completed_consumers);
+
+  std::stringstream stream{};
+  stream << "Hash buckets: [";
+  auto first = true;
+  for (auto n : hash_histogram) {
+    if (!first) stream << ", ";
+    stream << n;
+  }
+
+  stream << "]\n";
 }
 
 void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
