@@ -174,7 +174,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   PartitionedHashStore(uint64_t c, uint8_t id)
       : id(id), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
-    this->capacity = kmercounter::next_pow2(c);
+    this->capacity = c;
 
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -874,7 +874,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   uint64_t read_hashtable_element(const void *data) {
-    std::terminate(); // TODO: if you want to use this, we don't use pow2 capacities anymore
+    std::terminate();  // TODO: if you want to use this, we don't use pow2
+                       // capacities anymore
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);
     KV *curr = &this->hashtable[this->id][idx];
@@ -900,8 +901,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = 0;
     uint64_t key = 0;
 
-    // TODO: bq_load is broken. We need something else
-    // uncomment this block for running bqueue prod/cons tests
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
       hash = key_data->key >> 32;
       key = key_data->key & 0xFFFFFFFF;

@@ -22,7 +22,7 @@ struct kmer {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
-uint64_t HT_TESTS_HT_SIZE = (1 << 26ULL);  // * 8ull;
+uint64_t HT_TESTS_HT_SIZE = 1 << 26ULL;  // * 8ull;
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
@@ -211,7 +211,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   OpTimings insert_times{};
 
   PLOG_INFO.printf("Synth test run: thread %u, ht size: %lu, insertions: %lu",
-         sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
+                   sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_times = synth_run(kmer_ht, sh->shard_idx);
@@ -237,8 +237,8 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
   if (find_times.op_count > 0)
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-           sh->shard_idx, find_times.op_count,
-           find_times.duration / find_times.op_count);
+                     sh->shard_idx, find_times.op_count,
+                     find_times.duration / find_times.op_count);
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
@@ -299,7 +299,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
 
   PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
-            << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
+             << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
@@ -334,7 +334,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
 #ifdef CALC_STATS
     PLOG_INFO.printf("Reprobes %lu soft_reprobes %lu", hashtable->num_reprobes,
-           hashtable->num_soft_reprobes);
+                     hashtable->num_soft_reprobes);
 #endif
   }
 
@@ -350,8 +350,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   if (num_finds.op_count > 0)
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-           shard->shard_idx, num_finds.op_count,
-           num_finds.duration / num_finds.op_count);
+                     shard->shard_idx, num_finds.op_count,
+                     num_finds.duration / num_finds.op_count);
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(shard, hashtable);
