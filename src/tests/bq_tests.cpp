@@ -64,8 +64,8 @@ uint64_t num_enq_failures[64][64] = {0};
 uint64_t num_deq_failures[64][64] = {0};
 
 auto hash_to_cpu(std::uint32_t hash, unsigned int count) {
-  //return hash & (count - 1);
-  return fastrange32(hash << 16, count);
+  return hash & (count - 1);
+  //return fastrange32(hash << 16, count);
 };
 
 void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
