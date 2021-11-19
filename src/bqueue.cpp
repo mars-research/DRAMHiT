@@ -47,9 +47,10 @@ int enqueue(queue_t *q, data_t value) {
   uint32_t tmp_head;
   if (q->head == q->batch_head) {
     tmp_head = q->head + PROD_BATCH_SIZE;
-    if (tmp_head >= QUEUE_SIZE) tmp_head = 0;
+    if (tmp_head >= QUEUE_SIZE) tmp_head = 0; // This assumes that the queue size is a multiple of the batch size?
 
-    if (q->data[tmp_head]) {
+    // Why are we using volatiles for the queue head/tail
+    if (q->data[tmp_head]) { // Whose idea was it to use a zero as the empty value? Oh well, the hash is uniform
       // fipc_test_time_wait_ticks(CONGESTION_PENALTY);
       return BUFFER_FULL;
     }
@@ -149,6 +150,9 @@ void prefetch_queue_data(queue_t *q, bool producer) {
     __builtin_prefetch(&q->data[q->head + 4 * 2], 1, 3);
     __builtin_prefetch(&q->data[q->head + 4 * 3], 1, 3);
   } else {
+    // just... what? what's with the weirdness of this code?
+    // does repeatedly re-using q->tail instead of adding on to new_tail help somehow?
+    // q->tail is volatile
     uint32_t new_tail = (q->tail + 8) & (QUEUE_SIZE - 1);
     __builtin_prefetch(&q->data[q->tail], 1, 3);
     __builtin_prefetch(&q->data[new_tail], 1, 3);
