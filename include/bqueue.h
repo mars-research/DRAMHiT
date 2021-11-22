@@ -58,11 +58,11 @@ typedef struct node {
 #if defined(CONS_BATCH) || defined(PROD_BATCH)
 
 typedef struct queue_t {
-  /* Mostly accessed by producer. */
+  /* Only accessed by producer. */
   volatile uint32_t head;
   volatile uint32_t batch_head;
 
-  /* Mostly accessed by consumer. */
+  /* Only accessed by consumer. */
   volatile uint32_t tail __attribute__((aligned(64)));
   volatile uint32_t batch_tail;
   unsigned long batch_history;
