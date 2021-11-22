@@ -132,7 +132,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       "key_start %lu",
       this_prod_id, num_messages, consumer_count, key_start);
 
-  std::vector<unsigned int> hist(n_cons);
   const auto t_start = RDTSC_START();
   for (transaction_id = 0u; transaction_id < num_messages;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
@@ -152,7 +151,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       uint64_t hash_val = hasher(&k, sizeof(k));
 
       cons_id = hash_to_cpu(hash_val, n_cons);
-      ++hist.at(cons_id);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
       k |= (hash_val << 32);
@@ -196,19 +194,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 #endif
   // main thread will also increment this
   fipc_test_FAI(completed_producers);
-
-  std::stringstream stream{};
-  stream << "[";
-  auto first = true;
-  for (auto n : hist) {
-    if (!first) stream << ", ";
-
-    stream << n;
-    first = false;
-  }
-
-  stream << "]";
-  PLOG_INFO.printf("Producer %d histogram: %s", tid, stream.str().c_str());
 }
 
 thread_local std::vector<unsigned int> hash_histogram(histogram_buckets);
