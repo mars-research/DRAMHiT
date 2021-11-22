@@ -25,4 +25,5 @@ in pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     gcc11
   ];
+  NIX_CFLAGS_COMPILE = "-march=native";
 }
