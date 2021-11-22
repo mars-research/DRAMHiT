@@ -109,8 +109,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
 #endif
 
   if (main_thread) {
-    // Wait for threads to be ready for test
-    while (ready_consumers < consumer_count) fipc_test_pause();
     // main thread is a producer, but won't increment!
     while (ready_producers < (producer_count - 1)) fipc_test_pause();
 
@@ -135,6 +133,7 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       this_prod_id, num_messages, consumer_count, key_start);
 
   std::vector<unsigned int> hist(n_cons);
+  const auto t_start = RDTSC_START();
   for (transaction_id = 0u; transaction_id < num_messages;) {
     /* BQ_TESTS_BATCH_LENGTH enqueues in one batch, then move on to next
      * consumer */
@@ -157,18 +156,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
       k |= (hash_val << 32);
-      // *((uint64_t *)&kmers[i].data) = k;
-    retry:
-      if (enqueue(q[cons_id], (data_t)k) != SUCCESS) {
-        /* if enqueue fails, move to next consumer queue */
-        // PLOG_ERROR.printf("Producer %u -> Consumer %u \n", this_prod_id,
-        // cons_id);
-        // num_enq_failures[this_prod_id][cons_id]++;
-        goto retry;
-        // break;
-      }
-      // printf("%s[%d], enqueuing to q[%d] = %p\n", __func__, this_prod_id,
-      // cons_id, q[cons_id]);
 
       {
         // | 0 | 1 | .... | 7 |
@@ -189,20 +176,11 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
       }
 #endif
     }
-
-    /* ++cons_id;
-    if (cons_id >= consumer_count) cons_id = 0;
-
-    auto get_next_cons = [&](auto inc) {
-      auto next_cons_id = cons_id + inc;
-      if (next_cons_id >= consumer_count) next_cons_id -= consumer_count;
-      return next_cons_id;
-    };
-
-    prefetch_queue(q[get_next_cons(2)], true);
-    prefetch_queue_data(q[get_next_cons(1)], true);
-    */
   }
+
+  const auto t_end = RDTSCP();
+  sh->stats->num_inserts = transaction_id;
+  sh->stats->insertion_cycles = t_end - t_start;
 
 #ifdef BQ_TESTS_USE_HALT
   /* Tell consumers to halt */
@@ -213,8 +191,6 @@ void BQueueTest::producer_thread(int tid, int n_prod, int n_cons,
   /* enqueue halt messages */
   for (cons_id = 0; cons_id < consumer_count; cons_id++) {
     q[cons_id]->backtrack_flag = 1;
-    while (enqueue(q[cons_id], (data_t)BQ_MAGIC_64BIT) != SUCCESS)
-      ;
     transaction_id++;
   }
 #endif
@@ -747,8 +723,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   //    FIPC_CACHE_LINE_SIZE, sizeof(Shard) * (producer_count +
   //    consumer_count));
 
-  this->shards =
-      (Shard *)calloc(sizeof(Shard), (producer_count + consumer_count));
+  this->shards = (Shard *)calloc(sizeof(Shard), producer_count);
 
   // Init queues
   this->init_queues(cfg->n_prod, cfg->n_cons);
