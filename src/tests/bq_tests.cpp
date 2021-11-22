@@ -638,9 +638,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
       new std::vector<BaseHashTable *>(cfg->n_prod + cfg->n_cons, nullptr);
   // 1) Insert using bqueues
   this->insert_with_bqueues(cfg, n, npq);
-
-  // 2) spawn n_prod + n_cons threads for find
-  this->run_find_test(cfg, n, npq);
+  print_stats(this->shards, *cfg);
 }
 
 void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
@@ -774,7 +772,6 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
     i += 1;
   }
 
-  PLOG_INFO.printf("creating cons threads i %d ", i);
   Shard *main_sh = &this->shards[i];
   main_sh->shard_idx = i;
   CPU_ZERO(&cpuset);
@@ -782,30 +779,6 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
   PLOG_INFO.printf("Thread 'controller': affinity: %u", last_cpu);
-
-  // Spawn consumer threads
-  i = producer_count;
-  for (auto assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
-    PLOG_INFO.printf("i %d assigned cpu %d", i, assigned_cpu);
-
-    Shard *sh = &this->shards[i];
-    sh->shard_idx = i;
-
-    auto _thread =
-        std::thread(&BQueueTest::consumer_thread, this, i, cfg->num_nops);
-
-    CPU_ZERO(&cpuset);
-    CPU_SET(assigned_cpu, &cpuset);
-
-    pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-
-    PLOG_INFO.printf("Thread consumer_thread: %u, affinity: %u", i,
-                     assigned_cpu);
-
-    this->cons_threads.push_back(std::move(_thread));
-    i += 1;
-    j += 1;
-  }
 
   {
     PLOG_INFO.printf("Running master thread with id %d", main_sh->shard_idx);
@@ -818,24 +791,14 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
 
   fipc_test_mfence();
 
-  // Wait for consumers to complete
-  while (completed_consumers < consumer_count) fipc_test_pause();
-
-  fipc_test_mfence();
-
-  cfg->num_threads = producer_count + consumer_count;
+  cfg->num_threads = producer_count;
   // print_stats(this->shards, *cfg);
 
   for (auto &th : this->prod_threads) {
     th.join();
   }
 
-  for (auto &th : this->cons_threads) {
-    th.join();
-  }
   this->prod_threads.clear();
-  this->cons_threads.clear();
-  /* TODO free everything */
 }
 
 }  // namespace kmercounter
