@@ -17,4 +17,3 @@ jobs:
         with:
           name: build-result
           path: build-result/
-      - run: result/bin/kvstore_test

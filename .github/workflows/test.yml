@@ -1,0 +1,15 @@
+name: Test
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: 
+      - completed
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: build-result
+          path: build-result/
+      - run: build-result/bin/kvstore_test
