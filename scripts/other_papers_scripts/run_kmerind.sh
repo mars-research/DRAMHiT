@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 #=========== kmerind
 
 # configure these

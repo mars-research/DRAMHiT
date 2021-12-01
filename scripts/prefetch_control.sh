@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 RDMSR=$(which rdmsr)
 WRMSR=$(which wrmsr)

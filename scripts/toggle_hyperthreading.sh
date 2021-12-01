@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 typeset -i core_id
 typeset -i sibling_id
 typeset -i state

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 CPU_FREQ_KHZ=0
 RDMSR=$(which rdmsr)
