@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 for filename in ./*.txt; do
   echo "downloading files from $filename, 8 files in parallel"

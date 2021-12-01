@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 CPU_FREQ_KHZ=0
 RDMSR=$(which rdmsr)

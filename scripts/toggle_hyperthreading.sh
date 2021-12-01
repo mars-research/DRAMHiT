@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 typeset -i core_id
 typeset -i sibling_id
 typeset -i state

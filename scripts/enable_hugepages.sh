@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Enable 2MB pages
 echo always > /sys/kernel/mm/transparent_hugepage/enabled

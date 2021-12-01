@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 RDMSR=$(which rdmsr)
 WRMSR=$(which wrmsr)
