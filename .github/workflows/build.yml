@@ -27,5 +27,4 @@ jobs:
           name: build-result
           path: ./build-result/
       - run: chmod +x ./build-result/bin/kvstore_test
-      - run: find .
-      - run: ./build-result/bin/kvstore_test
+      - run: nix-shell --run ./build-result/bin/kvstore_test
