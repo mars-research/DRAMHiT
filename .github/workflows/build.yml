@@ -26,4 +26,5 @@ jobs:
         with:
           name: build-result
           path: build-result/
+      - run: chmod +x build-result/bin/kvstore_test
       - run: build-result/bin/kvstore_test
