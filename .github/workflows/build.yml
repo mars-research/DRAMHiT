@@ -17,5 +17,4 @@ jobs:
         with:
           name: build-result
           path: build-result/
-      # Test does not work because no avx instructions on test machine.
-      # - run: result/bin/kvstore_test
+      - run: result/bin/kvstore_test
