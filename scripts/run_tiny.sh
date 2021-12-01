@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 sudo ./scripts/constant_freq.sh
  ./scripts/prefetch_control.sh off
