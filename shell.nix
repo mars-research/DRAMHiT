@@ -1,29 +1,16 @@
 let
-  nixpkgs = import ./nixpkgs.nix;
-  pkgs = import nixpkgs {
-    overlays = [
-    ];
-  };
-in pkgs.mkShell {
-  buildInputs = with pkgs; [
-    cmake
-    ninja
+  lock = builtins.fromJSON (builtins.readFile ./flake.lock);
 
-    msr-tools
-    gdb
-    linuxPackages.perf
-    (pkgs.writeScriptBin "sperf" ''
-      sudo ${linuxPackages.perf}/bin/perf "$@"
-    '')
-  ];
-  propagatedBuildInputs = with pkgs; [
-    boost
-    numactl
-    zlib
-    gtest
-  ];
-  nativeBuildInputs = with pkgs; [
-    gcc11
-  ];
-  NIX_CFLAGS_COMPILE = "-march=native";
-}
+  flake-compat = builtins.fetchTarball {
+    url = "https://github.com/edolstra/flake-compat/archive/${lock.nodes.flake-compat.locked.rev}.tar.gz";
+    sha256 = lock.nodes.flake-compat.locked.narHash;
+  };
+
+  flake = import flake-compat {
+    src = ./.;
+  };
+
+  shell = flake.shellNix.default // {
+    reproduce = flake.defaultNix.outputs.reproduce.${builtins.currentSystem};
+  };
+in shell
