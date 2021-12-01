@@ -20,9 +20,6 @@
           msr-tools
           gdb
           linuxPackages.perf
-          (pkgs.writeScriptBin "sperf" ''
-          sudo ${linuxPackages.perf}/bin/perf "$@"
-          '')
         ];
         propagatedBuildInputs = with pkgs; [
           boost
