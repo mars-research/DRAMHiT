@@ -5,7 +5,7 @@
     mars-std.url = "github:mars-research/mars-std";
   };
 
-  outputs = { self, mars-std, patchShebangs, ... }: let
+  outputs = { self, mars-std, ... }: let
   # System types to support.
   supportedSystems = [ "x86_64-linux" ];
 
@@ -27,7 +27,6 @@
           zlib
           gtest
         ];
-        nativeBuildInputs = [ patchShebangs ];
         NIX_CFLAGS_COMPILE = "-march=native";
       };
     }
