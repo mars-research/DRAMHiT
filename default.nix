@@ -1,7 +1,11 @@
 let
-  pinnedPkgs = import (import ./nixpkgs.nix) {};
+  lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+  lockedPkgs = import (fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/${lock.nodes.nixpkgs.locked.rev}.tar.gz";
+    sha256 = lock.nodes.nixpkgs.locked.narHash;
+  }) {};
 in {
-  pkgs ? pinnedPkgs,
+  pkgs ? lockedPkgs,
   cmakeFlags ? [],
 }: let
   lib = pkgs.lib;
