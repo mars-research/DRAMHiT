@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string_view>
 #include <gtest/gtest.h>
+#include <absl/flags/flag.h>
+#include <absl/flags/parse.h>
 
 #include "hashtable.h"
 #include "hashtables/cas_kht.hpp"
@@ -13,10 +15,13 @@
     - independent of key?
 */
 
+ABSL_FLAG(int, hashtable_size, 1ull << 26,
+          "size of hashtable.");
+ABSL_FLAG(int, test_size, 1ull << 12,
+          "size of test(number of insertions/lookup).");
+
 namespace kmercounter {
 namespace {
-// Test size.
-constexpr auto hashtable_size = 1ull << 26;
 // Test names.
 const char SYNCHRONOUS_TEST[] = "Synchronous";
 const char ASYNCHRONOUS_TEST[] = "Asynchronous";
@@ -45,9 +50,9 @@ constexpr const char* HTS [] {
 void synchronous_test(BaseHashTable* ht) {
   std::cerr << "[TEST] Synchronous\n";
 
-  constexpr auto size = 1 << 12;
-  static_assert(size % HT_TESTS_BATCH_LENGTH == 0,
-                "Test size is assumed to be a multiple of batch size");
+  const auto size = absl::GetFlag(FLAGS_test_size);
+  ASSERT_EQ(size % HT_TESTS_BATCH_LENGTH, 0)
+                << "Test size is assumed to be a multiple of batch size";
 
   static_assert(HT_TESTS_FIND_BATCH_LENGTH == HT_TESTS_BATCH_LENGTH,
                 "Test logic assumes these batch sizes are equal");
@@ -58,7 +63,7 @@ void synchronous_test(BaseHashTable* ht) {
   for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
     ++count;
 
-    std::array<Keys, size> keys{};
+    std::array<Keys, HT_TESTS_FIND_BATCH_LENGTH> keys{};
     std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
     ValuePairs found{0, values.data()};
     for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
@@ -73,11 +78,11 @@ void synchronous_test(BaseHashTable* ht) {
 
     ht->flush_find_queue(found);
     n_found += found.first;
-    std::cerr << "[TEST] Batch " << i << "\n";
-    for (std::uint64_t j{}; j < found.first; ++j) {
-      auto& value = found.second[j];
-      std::cerr << "[TEST] (" << value.id << ", " << value.value << ")\n";
-    }
+    // std::cerr << "[TEST] Batch " << i << "\n";
+    // for (std::uint64_t j{}; j < found.first; ++j) {
+    //   auto& value = found.second[j];
+    //   std::cerr << "[TEST] (" << value.id << ", " << value.value << ")\n";
+    // }
 
     ASSERT_EQ(n_found, n_inserted) << "Not all inserted values were found";
   }
@@ -190,6 +195,7 @@ class CombinationsTest :
 TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
   // Get input.
   const auto [test_name, ht_name] = GetParam();
+  const auto hashtable_size = absl::GetFlag(FLAGS_hashtable_size);
 
   // Get test function.
   const auto test_fn = [test_name]() -> void (*)(kmercounter::BaseHashTable*) {
@@ -209,15 +215,15 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
   ASSERT_NE(test_fn, nullptr) << "Invalid test type: " << test_name;
 
   // Get hashtable.
-  const auto ht = [ht_name]() -> kmercounter::BaseHashTable* {
+  const auto ht = [ht_name, hashtable_size]() -> kmercounter::BaseHashTable* {
     if (ht_name == PARTITIONED_CAS_HT)
       return new kmercounter::PartitionedHashStore<kmercounter::Aggr_KV,
                                                    kmercounter::ItemQueue>{
-          kmercounter::hashtable_size, 0};
+          hashtable_size, 0};
     else if (ht_name == CAS_HT)
       return new kmercounter::CASHashTable<kmercounter::Aggr_KV,
                                            kmercounter::ItemQueue>{
-          kmercounter::hashtable_size};
+          hashtable_size};
     else
       return nullptr;
   }();
@@ -239,3 +245,8 @@ INSTANTIATE_TEST_CASE_P(TestAllCombinations,
 }  // namespace
 }  // namespace kmercounter
 
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  absl::ParseCommandLine(argc, argv);
+  return RUN_ALL_TESTS();
+}
