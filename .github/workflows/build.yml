@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v2.3.4
         with:
           submodules: 'recursive'
-      - uses: cachix/install-nix-action@v12
+      - uses: cachix/install-nix-action@v16
       - run: nix-build --arg cmakeFlags '["-DBUILD_TESTING=TRUE" "-DBRANCH=branched"]'
       - run: mkdir build-result
       - run: cp -r result/* build-result/
