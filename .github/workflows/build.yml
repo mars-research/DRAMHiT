@@ -30,4 +30,4 @@ jobs:
       - uses: cachix/install-nix-action@v12
       - run: nix develop .#prod --command ./scripts/setup.sh
       - run: chmod +x ./build-result/bin/kvstore_test
-      - run: nix develop .#prod --command ./build-result/bin/kvstore_test
+      - run: nix develop .#prod --command ./build-result/bin/kvstore_test --test_size=131072 --hashtable_size=262144
