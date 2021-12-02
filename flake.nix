@@ -11,15 +11,10 @@
 
   in mars-std.lib.eachSystem supportedSystems (system: let
     pkgs = mars-std.legacyPackages.${system};
-    in {
-      devShell = pkgs.mkShell {
+    in rec {
+      devShells.prod = pkgs.mkShell {
         buildInputs = with pkgs; [
-          cmake
-          ninja
-
           msr-tools
-          gdb
-          linuxPackages.perf
         ];
         propagatedBuildInputs = with pkgs; [
           boost
@@ -27,6 +22,26 @@
           zlib
           gtest
         ];
+        NIX_CFLAGS_COMPILE = "-march=native";
+      };
+      devShells.build = pkgs.mkShell {
+        inputsFrom = [
+          devShells.prod
+        ];
+        buildInputs = with pkgs; [
+          cmake
+          ninja
+        ];  
+        NIX_CFLAGS_COMPILE = "-march=native";
+      };
+      devShell = pkgs.mkShell {
+        inputsFrom = [
+          devShells.build
+        ];
+        buildInputs = with pkgs; [
+          gdb
+          linuxPackages.perf
+        ];  
         NIX_CFLAGS_COMPILE = "-march=native";
       };
     }

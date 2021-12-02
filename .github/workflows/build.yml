@@ -28,6 +28,6 @@ jobs:
           name: build-result
           path: ./build-result/
       - uses: cachix/install-nix-action@v12
-      - run: nix-shell --run ./scripts/setup.sh
+      - run: nix develop .#prod --command ./scripts/setup.sh
       - run: chmod +x ./build-result/bin/kvstore_test
-      - run: nix-shell --run ./build-result/bin/kvstore_test
+      - run: nix develop .#prod --command ./build-result/bin/kvstore_test
