@@ -11,12 +11,16 @@
 
   in mars-std.lib.eachSystem supportedSystems (system: let
     pkgs = mars-std.legacyPackages.${system};
+    abseil-cpp-17 = pkgs.abseil-cpp.override {
+            cxxStandard = "17";
+    };
     in rec {
       devShells.prod = pkgs.mkShell {
         buildInputs = with pkgs; [
           msr-tools
         ];
         propagatedBuildInputs = with pkgs; [
+          abseil-cpp-17
           boost
           numactl
           zlib
