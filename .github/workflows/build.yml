@@ -10,7 +10,7 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: cachix/install-nix-action@v16
-      - run: nix-build --arg cmakeFlags '["-DBUILD_TESTING=TRUE" "-DBRANCH=branched"]'
+      - run: nix-build --arg cmakeFlags '["-DBUILD_TESTING=TRUE" "-DBRANCH=branched" "-DHUGEPAGES=FALSE"]'
       - run: mkdir build-result
       - run: cp -r result/* build-result/
       - uses: actions/upload-artifact@v2
