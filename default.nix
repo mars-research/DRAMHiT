@@ -10,6 +10,9 @@ in {
 }: let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
+  abseil-cpp-17 = pkgs.abseil-cpp.override {
+    cxxStandard = "17";
+  };
 in stdenv.mkDerivation {
   name = "kvstore";
   version = "0.1.0";
@@ -27,10 +30,10 @@ in stdenv.mkDerivation {
   nativeBuildInputs = with pkgs; [ 
     cmake
     ninja
-    libarchive
   ];
 
   buildInputs = with pkgs; [
+    abseil-cpp-17
     numactl
     zlib
     boost
