@@ -142,6 +142,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
+  *out_fd = fd;
 #else
   addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
   if (!addr) {
@@ -150,7 +151,6 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
   }
 #endif
   memset(addr, 0, capacity * sizeof(T));
-  *out_fd = fd;
   return addr;
 }
 
