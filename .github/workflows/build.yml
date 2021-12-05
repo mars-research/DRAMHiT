@@ -32,6 +32,5 @@ jobs:
           install_url: https://releases.nixos.org/nix/nix-2.4/install
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - run: nix develop .#prod --command ./scripts/setup.sh
       - run: chmod +x ./build-result/bin/kvstore_test
       - run: nix develop .#prod --command ./build-result/bin/kvstore_test --test_size=131072 --hashtable_size=262144
