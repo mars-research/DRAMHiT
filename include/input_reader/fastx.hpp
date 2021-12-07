@@ -14,7 +14,7 @@ template <class T>
 class FastxReader : public InputReader<T> {
  public:
   /// The size of the output. AKA, The `K` in KMer.
-  constexpr size_t K = sizeof(T);
+  static constexpr size_t K = sizeof(T);
 
   FastxReader(const std::string& file, uint32_t k) : offset(0) {
     int fd = open(file.c_str(), O_RDONLY);
@@ -34,7 +34,7 @@ class FastxReader : public InputReader<T> {
 
     // Shift kmer by one and read in the next mer.
     this->shl_kmer();
-    *this->kmer.rbegin() = this->seq.seq.s[this->offset++];
+    *this->kmer.rbegin() = this->seq->seq.s[this->offset++];
 
     return *(T*)kmer.data();
   }
@@ -50,7 +50,7 @@ class FastxReader : public InputReader<T> {
       if (len < 0) {
         this->eof = true;
         return;
-      } else (len < K) {
+      } else if (len < K) {
         PLOG_WARNING << "Skipping sequence with length " << len
                      << ", which is less than K=" << K << ": "
                      << this->seq->seq.s;
@@ -62,7 +62,7 @@ class FastxReader : public InputReader<T> {
     // And prepare `kmer` for a new sequence by
     // reading K-1 mers into kmer[1, K].
     for (int i = 1; i < K; i++) {
-      this->kmer[i] = this->seq.seq.s[this->offset++];
+      this->kmer[i] = this->seq->seq.s[this->offset++];
     }
   }
 
@@ -77,7 +77,7 @@ class FastxReader : public InputReader<T> {
   /// Handle to the fastx parser.
   kseq_t* seq;
   /// Current offset into `seq->seq->s`.
-  usize_t offset;
+  size_t offset;
   /// Indicate that we have reached the end of the file.
   bool eof;
   /// The kmer returned by the last `next()` call.
