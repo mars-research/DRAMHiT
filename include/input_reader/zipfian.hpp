@@ -18,7 +18,10 @@ public:
         this->iter = values.begin();
     }
 
-    T next() override {
+    std::optional<T> next() override {
+        if (this->iter == this->values.end()) {
+            return std::nullopt;
+        }
         return *(this->iter++);
     }
 

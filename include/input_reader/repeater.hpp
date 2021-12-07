@@ -9,7 +9,7 @@ class Repeater : public InputReader<T> {
 public:
     Repeater(T data) : data(data) {}
 
-    T next() override {
+    std::optional<T> next() override {
         return data;
     }
 

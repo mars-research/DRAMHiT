@@ -10,7 +10,7 @@ class XorwowGenerator : public InputReader<T> {
         xorwow_init(&this->xw_state);
     }
 
-    T next() override {
+    std::optional<T> next() override {
         return xorwow(&_xw_state);
     }
 

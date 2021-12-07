@@ -9,7 +9,7 @@ class Counter : public InputReader<T> {
     public:
     Counter(T start) : data(start) {}
 
-    T next() override {
+    std::optional<T> next() override {
         return data++;
     }
 
