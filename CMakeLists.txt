@@ -18,6 +18,7 @@ endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 find_package(Threads REQUIRED)
+find_package(Boost 1.67 REQUIRED program_options)
 
 # Set up toolchain
 set(CMAKE_CXX_STANDARD 17)
