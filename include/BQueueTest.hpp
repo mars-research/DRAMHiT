@@ -20,6 +20,8 @@ class BQueueTest {
   NumaPolicyQueues *npq;
 
   std::vector<numa_node> nodes;
+  std::map<std::tuple<int, int>, queue_t*> queue_map;
+  std::map<std::tuple<int, int>, queue_stats_t*> qstats_map;
   queue_t ***prod_queues;
   queue_t ***cons_queues;
 

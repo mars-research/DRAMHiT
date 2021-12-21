@@ -27,9 +27,9 @@
 static data_t ELEMENT_ZERO = 0x0UL;
 
 int init_queue(queue_t *q) {
-  memset(q, 0, sizeof(struct queue_t));
+  memset(q->data, 0, QUEUE_SIZE);
 #if defined(CONS_BATCH)
-  q->batch_history = CONS_BATCH_SIZE;
+  Q_BATCH_HISTORY = CONS_BATCH_SIZE;
 #endif
   return 0;
 }
@@ -45,8 +45,8 @@ inline int leqthan(volatile data_t point, volatile data_t batch_point) {
 #if defined(PROD_BATCH)
 int enqueue(queue_t *q, data_t value) {
   uint32_t tmp_head;
-  if (q->head == q->batch_head) {
-    tmp_head = q->head + PROD_BATCH_SIZE;
+  if (Q_HEAD == Q_BATCH_HEAD) {
+    tmp_head = Q_HEAD + PROD_BATCH_SIZE;
     if (tmp_head >= QUEUE_SIZE) tmp_head = 0;
 
     if (q->data[tmp_head]) {
@@ -54,23 +54,23 @@ int enqueue(queue_t *q, data_t value) {
       return BUFFER_FULL;
     }
 
-    q->batch_head = tmp_head;
+    Q_BATCH_HEAD = tmp_head;
   }
-  q->data[q->head] = value;
-  q->head++;
-  if (q->head >= QUEUE_SIZE) {
-    q->head = 0;
+  q->data[Q_HEAD] = value;
+  Q_HEAD++;
+  if (Q_HEAD >= QUEUE_SIZE) {
+    Q_HEAD = 0;
   }
 
   return SUCCESS;
 }
 #else  /* PROD_BATCH */
 int enqueue(queue_t *q, data_t value) {
-  if (q->data[q->head]) return BUFFER_FULL;
-  q->data[q->head] = value;
-  q->head++;
-  if (q->head >= QUEUE_SIZE) {
-    q->head = 0;
+  if (q->data[Q_HEAD]) return BUFFER_FULL;
+  q->data[Q_HEAD] = value;
+  Q_HEAD++;
+  if (Q_HEAD >= QUEUE_SIZE) {
+    Q_HEAD = 0;
   }
 
   return SUCCESS;
@@ -81,23 +81,23 @@ int enqueue(queue_t *q, data_t value) {
 
 static inline int backtracking(queue_t *q) {
   uint32_t tmp_tail;
-  tmp_tail = q->tail + CONS_BATCH_SIZE - 1;
+  tmp_tail = Q_TAIL + CONS_BATCH_SIZE - 1;
   if (tmp_tail >= QUEUE_SIZE) {
     tmp_tail = 0;
   }
 
 #if defined(ADAPTIVE)
-  if (q->batch_history < CONS_BATCH_SIZE) {
-    q->batch_history = (CONS_BATCH_SIZE < (q->batch_history + BATCH_INCREMENT))
+  if (Q_BATCH_HISTORY < CONS_BATCH_SIZE) {
+    Q_BATCH_HISTORY = (CONS_BATCH_SIZE < (Q_BATCH_HISTORY + BATCH_INCREMENT))
                            ? CONS_BATCH_SIZE
-                           : (q->batch_history + BATCH_INCREMENT);
+                           : (Q_BATCH_HISTORY + BATCH_INCREMENT);
   }
 #endif
 
 #if defined(BACKTRACKING)
-  unsigned long batch_size = q->batch_history;
+  unsigned long batch_size = Q_BATCH_HISTORY;
 #if defined(OPTIMIZE_BACKTRACKING2)
-  if ((!q->data[tmp_tail]) && !q->backtrack_flag) {
+  if ((!q->data[tmp_tail]) && !Q_BACKTRACK_FLAG) {
     return -1;
   }
 #endif
@@ -113,13 +113,13 @@ static inline int backtracking(queue_t *q) {
 
     if (batch_size > 1) {
       batch_size = batch_size >> 1;
-      tmp_tail = q->tail + batch_size - 1;
+      tmp_tail = Q_TAIL + batch_size - 1;
       if (tmp_tail >= QUEUE_SIZE) tmp_tail = 0;
     } else
       return -1;
   }
 #if defined(ADAPTIVE)
-  q->batch_history = batch_size;
+  Q_BATCH_HISTORY = batch_size;
 #endif
 
 #else
@@ -129,10 +129,10 @@ static inline int backtracking(queue_t *q) {
   }
 #endif /* end BACKTRACKING */
 
-  if (tmp_tail == q->tail) {
+  if (tmp_tail == Q_TAIL) {
     tmp_tail = (tmp_tail + 1) >= QUEUE_SIZE ? 0 : tmp_tail + 1;
   }
-  q->batch_tail = tmp_tail;
+  Q_BATCH_TAIL = tmp_tail;
 
   return 0;
 }
@@ -144,33 +144,33 @@ void prefetch_queue(queue_t *q) { __builtin_prefetch(q, 1, 3); }
 // Prefetch the queue data
 void prefetch_queue_data(queue_t *q, bool producer) {
   if (producer) {
-    __builtin_prefetch(&q->data[q->head + 4 * 0], 1, 3);
-    __builtin_prefetch(&q->data[q->head + 4 * 1], 1, 3);
-    __builtin_prefetch(&q->data[q->head + 4 * 2], 1, 3);
-    __builtin_prefetch(&q->data[q->head + 4 * 3], 1, 3);
+    __builtin_prefetch(&q->data[Q_HEAD + 4 * 0], 1, 3);
+    __builtin_prefetch(&q->data[Q_HEAD + 4 * 1], 1, 3);
+    __builtin_prefetch(&q->data[Q_HEAD + 4 * 2], 1, 3);
+    __builtin_prefetch(&q->data[Q_HEAD + 4 * 3], 1, 3);
   } else {
-    uint32_t new_tail = (q->tail + 8) & (QUEUE_SIZE - 1);
-    __builtin_prefetch(&q->data[q->tail], 1, 3);
+    uint32_t new_tail = (Q_TAIL + 8) & (QUEUE_SIZE - 1);
+    __builtin_prefetch(&q->data[Q_TAIL], 1, 3);
     __builtin_prefetch(&q->data[new_tail], 1, 3);
-    new_tail = (q->tail + 16) & (QUEUE_SIZE - 1);
+    new_tail = (Q_TAIL + 16) & (QUEUE_SIZE - 1);
     __builtin_prefetch(&q->data[new_tail], 1, 3);
-    new_tail = (q->tail + 24) & (QUEUE_SIZE - 1);
+    new_tail = (Q_TAIL + 24) & (QUEUE_SIZE - 1);
     __builtin_prefetch(&q->data[new_tail], 1, 3);
-    //__builtin_prefetch(&q->data[q->tail + 4 * 0], 1, 3);
-    //__builtin_prefetch(&q->data[q->tail + 4 * 1], 1, 3);
-    //__builtin_prefetch(&q->data[q->tail + 4 * 2], 1, 3);
-    //__builtin_prefetch(&q->data[q->tail + 4 * 3], 1, 3);
+    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 0], 1, 3);
+    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 1], 1, 3);
+    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 2], 1, 3);
+    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 3], 1, 3);
   }
 }
 
 int dequeue(queue_t *q, data_t *value) {
-  if (q->tail == q->batch_tail) {
+  if (Q_TAIL == Q_BATCH_TAIL) {
     if (backtracking(q) != 0) return BUFFER_EMPTY;
   }
-  *value = q->data[q->tail];
-  q->data[q->tail] = ELEMENT_ZERO;
-  q->tail++;
-  if (q->tail >= QUEUE_SIZE) q->tail = 0;
+  *value = q->data[Q_TAIL];
+  q->data[Q_TAIL] = ELEMENT_ZERO;
+  Q_TAIL++;
+  if (Q_TAIL >= QUEUE_SIZE) Q_TAIL = 0;
 
   return SUCCESS;
 }
@@ -178,11 +178,11 @@ int dequeue(queue_t *q, data_t *value) {
 #else /* CONS_BATCH */
 
 int dequeue(struct queue_t *q, data_t *value) {
-  if (!q->data[q->tail]) return BUFFER_EMPTY;
-  *value = q->data[q->tail];
-  q->data[q->tail] = ELEMENT_ZERO;
-  q->tail++;
-  if (q->tail >= QUEUE_SIZE) q->tail = 0;
+  if (!q->data[Q_TAIL]) return BUFFER_EMPTY;
+  *value = q->data[Q_TAIL];
+  q->data[Q_TAIL] = ELEMENT_ZERO;
+  Q_TAIL++;
+  if (Q_TAIL >= QUEUE_SIZE) Q_TAIL = 0;
 
   return SUCCESS;
 }
