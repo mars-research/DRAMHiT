@@ -27,7 +27,7 @@
 static data_t ELEMENT_ZERO = 0x0UL;
 
 int init_queue(queue_t *q) {
-  memset(q->data, 0, QUEUE_SIZE);
+  memset(q->data, 0, QUEUE_SIZE * sizeof(data_t));
 #if defined(CONS_BATCH)
   Q_BATCH_HISTORY = CONS_BATCH_SIZE;
 #endif

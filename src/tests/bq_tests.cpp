@@ -540,31 +540,35 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
   memset(queues, 0, nprod * ncons * sizeof(queue_t));
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
-  PLOG_INFO << "queues " << queues << "\n";
-  prod_metadata_t *pmetadata = (prod_metadata_t *) std::aligned_alloc(
-      FIPC_CACHE_LINE_SIZE, nprod * ncons * sizeof(prod_metadata_t));
-
-  memset(pmetadata, 0, nprod * ncons * sizeof(prod_metadata_t));
-
-  cons_metadata_t *cmetadata = (cons_metadata_t *)std::aligned_alloc(
-      FIPC_CACHE_LINE_SIZE, nprod * ncons * sizeof(cons_metadata_t));
-
-  memset(cmetadata, 0, nprod * ncons * sizeof(cons_metadata_t));
-
   queue_stats_t *qstats = (queue_stats_t *) std::aligned_alloc(
       FIPC_CACHE_LINE_SIZE, nprod * ncons * sizeof(queue_stats_t));
 
   memset(qstats, 0, nprod * ncons * sizeof(queue_stats_t));
 
   for (int p = 0; p < nprod; p++) {
+    prod_metadata_t *pmetadata = (prod_metadata_t *) std::aligned_alloc(
+              FIPC_CACHE_LINE_SIZE, ncons * sizeof(prod_metadata_t));
+    memset(pmetadata, 0, ncons * sizeof(prod_metadata_t));
+
     for (int c = 0; c < ncons; c++) {
       queue_t *q = &queues[p * ncons + c];
       PLOG_INFO << "queue * = " << q << "\n";
-      q->prod_metadata = &pmetadata[p * ncons + c];
-      q->cons_metadata = &cmetadata[p * ncons + c];
+      // p0 c0 | p0 c1 | p0 c2 | Alignment | p1 c0 | p1 c1 | p1 c2 | Alignment | p2 c0 | p2 c1 | p2 c2 |
+      q->prod_metadata = &pmetadata[c];
       qstats_map.insert({std::make_tuple(p, c), &qstats[p * ncons + c]});
       queue_map.insert({std::make_tuple(p, c), &queues[p * ncons + c]});
     }
+  }
+
+  for (int c = 0; c < ncons; c++) {
+      cons_metadata_t *cmetadata = (cons_metadata_t *)std::aligned_alloc(
+          FIPC_CACHE_LINE_SIZE, nprod * sizeof(cons_metadata_t));
+      memset(cmetadata, 0, nprod * sizeof(cons_metadata_t));
+      // c0 p0 | c0 p1 | c0 p2 | Alignment | c1 p0 | c1 p1 | c1 p2 | Alignment | c2 p0 | c2 p1 | c2 p2 |
+      for (int p = 0; p < nprod; p++) {
+        queue_t *q = &queues[p * ncons + c];
+        q->cons_metadata = &cmetadata[p];
+      }
   }
 
   for (i = 0; i < nprod * ncons; ++i) {
