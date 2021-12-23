@@ -31,6 +31,30 @@
 #include <ittnotify.h>
 #endif
 
+const char *run_mode_strings[] = {
+  "",
+  "DRY_RUN",
+  "READ_FROM_DISK",
+  "WRITE_TO_DISK",
+  "FASTQ_WITH_INSERT",
+  "FASTQ_NO_INSERT",
+  "SYNTH",
+  "PREFETCH",
+  "BQ_TESTS_YES_BQ",
+  "BQ_TESTS_NO_BQ",
+  "CACHE_MISS",
+  "ZIPFIAN",
+};
+
+const char *ht_type_strings[] = {
+  "",
+  "PARTITIONED",
+  "ROBINHOOD",
+  "CAS",
+  "",
+  "STDMAP",
+};
+
 namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
@@ -528,6 +552,8 @@ int Application::process(int argc, char *argv[]) {
       perror("drop caches");
     }
   }
+
+  config.dump_configuration();
 
   if (config.mode == BQ_TESTS_YES_BQ) {
     switch (config.numa_split) {
