@@ -100,11 +100,12 @@ typedef struct {
 } queue_stats_t;
 
 typedef struct queue_t {
+  queue_stats_t* qstats;
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   // accessed by both producer and comsumer
   data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
-  prod_metadata_t *prod_metadata;
-  cons_metadata_t *cons_metadata;
+  prod_metadata_t* prod_metadata;
+  cons_metadata_t* cons_metadata;
 #else
   /* Mostly accessed by producer. */
   volatile uint32_t head;
