@@ -1,11 +1,18 @@
 let
-  pinnedPkgs = import (import ./nixpkgs.nix) {};
+  lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+  lockedPkgs = import (fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/${lock.nodes.nixpkgs.locked.rev}.tar.gz";
+    sha256 = lock.nodes.nixpkgs.locked.narHash;
+  }) {};
 in {
-  pkgs ? pinnedPkgs,
+  pkgs ? lockedPkgs,
   cmakeFlags ? [],
 }: let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
+  abseil-cpp-17 = pkgs.abseil-cpp.override {
+    cxxStandard = "17";
+  };
 in stdenv.mkDerivation {
   name = "kvstore";
   version = "0.1.0";
@@ -23,10 +30,10 @@ in stdenv.mkDerivation {
   nativeBuildInputs = with pkgs; [ 
     cmake
     ninja
-    libarchive
   ];
 
   buildInputs = with pkgs; [
+    abseil-cpp-17
     numactl
     zlib
     boost

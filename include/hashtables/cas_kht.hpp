@@ -1,11 +1,15 @@
 /// Compare-and-swap(CAS) with linear probing hashtable based off of
 /// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
 /// Key and values are stored directly in the table.
+/// CASHashtable is not parititioned, meaning that there will be
+/// at max one instance of it. All threads will share the same 
+/// instance.
 /// The original one is called the casht and the one we modified with
 /// batching + prefetching though is called casht++.
+// TODO bloom filters for high frequency kmers?
 
-#ifndef _CAS_KHT_H
-#define _CAS_KHT_H
+#ifndef HASHTABLES_CAS_KHT_HPP
+#define HASHTABLES_CAS_KHT_HPP
 
 #include <cassert>
 #include <fstream>
@@ -23,7 +27,9 @@ namespace kmercounter {
 template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
  public:
+  /// The global instance is shared by all threads.
   static KV *hashtable;
+  /// File descriptor backs the memory
   int fd;
   int id;
   size_t data_length, key_length;
@@ -38,8 +44,10 @@ class CASHashTable : public BaseHashTable {
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
+        assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd, true);
       }
+      this->ref_cnt++;
     }
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
@@ -63,7 +71,15 @@ class CASHashTable : public BaseHashTable {
   ~CASHashTable() {
     free(find_queue);
     free(insert_queue);
-    free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
+    // Deallocate the global hashtable if ref_cnt goes down to zero.
+    {
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+      this->ref_cnt--;
+      if (this->ref_cnt == 0) {
+        free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
+        this->hashtable = nullptr;
+      }
+    }
   }
 
   void prefetch_queue(QueueType qtype) override {}
@@ -272,7 +288,10 @@ class CASHashTable : public BaseHashTable {
   }
 
  private:
+  /// Assure thread-safety in constructor and destructor.
   static std::mutex ht_init_mutex;
+  /// Reference counter of the global `hashtable`.
+  static uint32_t ref_cnt;
   uint64_t capacity;
   KV empty_item;
   KVQ *find_queue;
@@ -479,14 +498,14 @@ class CASHashTable : public BaseHashTable {
   }
 };
 
+/// Static variables
 template <class KV, class KVQ>
-KV *CASHashTable<KV, KVQ>::hashtable;
+KV *CASHashTable<KV, KVQ>::hashtable = nullptr;
 
 template <class KV, class KVQ>
 std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
-// std::vector<std::mutex> CASHashTable:: hashtable_mutexes;
 
-// TODO bloom filters for high frequency kmers?
-
+template <class KV, class KVQ>
+uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
 }  // namespace kmercounter
-#endif /* _CAS_KHT_H */
+#endif // HASHTABLES_CAS_KHT_HPP

@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 sudo ./scripts/constant_freq.sh
  ./scripts/prefetch_control.sh off
