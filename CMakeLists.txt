@@ -147,8 +147,20 @@ if (HIGH_LEVEL_PAPI)
     add_definitions(-DENABLE_HIGH_LEVEL_PAPI)
 endif ()
 
-set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
 if (VTUNE)
+    if (NOT VTUNE_ROOT)
+        set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
+    endif ()
+
+    message(WARNING "Using VTUNE_ROOT: ${VTUNE_ROOT}")
+
+    find_file(ITT_HEADER NAMES "ittnotify.h" PATHS "${VTUNE_ROOT}/include/")
+    find_file(ITT_LIB NAMES "libittnotify.a" PATHS "${VTUNE_ROOT}/lib64/")
+
+    if (ITT_HEADER STREQUAL "ITT_HEADER-NOTFOUND" OR ITT_LIB STREQUAL "ITT_LIB-NOTFOUND")
+        message(FATAL_ERROR "Could not find itt libs/headers! Check ${VTUNE_ROOT} directory")
+    endif ()
+
     message(WARNING "Building with vtune")
     include_directories(${VTUNE_ROOT}/include/)
     target_link_libraries(kvstore PRIVATE ${VTUNE_ROOT}/lib64/libittnotify.a dl)
