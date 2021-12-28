@@ -50,7 +50,7 @@ int enqueue(queue_t *q, data_t value) {
     if (tmp_head >= QUEUE_SIZE) tmp_head = 0;
 
     if (q->data[tmp_head]) {
-      // fipc_test_time_wait_ticks(CONGESTION_PENALTY);
+      fipc_test_time_wait_ticks(CONGESTION_PENALTY);
       return BUFFER_FULL;
     }
 

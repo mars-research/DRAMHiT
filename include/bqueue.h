@@ -21,9 +21,9 @@
 #define PROD_BATCH_SIZE BATCH_SIZE  // 512
 #define BATCH_INCREMENT (BATCH_SIZE / 2)
 
-//#define CONGESTION_PENALTY (1000) /* cycles */
+#define CONGESTION_PENALTY (1000) /* cycles */
 // Try to move to the next queue instead of penalizing
-#define CONGESTION_PENALTY (0) /* cycles */
+//#define CONGESTION_PENALTY (0) /* cycles */
 
 // Error Values
 #define SUCCESS 0
@@ -77,7 +77,7 @@ typedef struct node {
 typedef struct {
   volatile uint32_t head;
   volatile uint32_t batch_head;
-} prod_metadata_t;
+} prod_metadata_t __attribute__((aligned));
 
 // Consumer metadata(extra) for backtracking
 typedef struct {
@@ -85,7 +85,7 @@ typedef struct {
   unsigned long batch_history;
   uint64_t backtrack_count;
   uint64_t backtrack_flag;
-} cons_extra_metadata_t;
+} cons_extra_metadata_t __attribute__((aligned));
 
 // Consumer metadata
 typedef struct {

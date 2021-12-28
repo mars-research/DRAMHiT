@@ -32,18 +32,18 @@
 #endif
 
 const char *run_mode_strings[] = {
-  "",
-  "DRY_RUN",
-  "READ_FROM_DISK",
-  "WRITE_TO_DISK",
-  "FASTQ_WITH_INSERT",
-  "FASTQ_NO_INSERT",
-  "SYNTH",
-  "PREFETCH",
-  "BQ_TESTS_YES_BQ",
-  "BQ_TESTS_NO_BQ",
-  "CACHE_MISS",
-  "ZIPFIAN",
+    "",
+    "DRY_RUN",
+    "READ_FROM_DISK",
+    "WRITE_TO_DISK",
+    "FASTQ_WITH_INSERT",
+    "FASTQ_NO_INSERT",
+    "SYNTH",
+    "PREFETCH",
+    "BQ_TESTS_YES_BQ",
+    "BQ_TESTS_NO_BQ",
+    "CACHE_MISS",
+    "ZIPFIAN",
 };
 
 const char *ht_type_strings[] = {
@@ -257,7 +257,7 @@ void Application::shard_thread(int tid, bool mainthread) {
     }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
     PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
-           outfile.c_str());
+                     outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
 
@@ -317,8 +317,8 @@ int Application::spawn_shard_threads() {
   if (config.num_threads >
       static_cast<uint32_t>(this->n->get_num_total_cpus())) {
     PLOGE.printf(
-            "More threads configured than cores available (Note: one "
-            "cpu assigned completely for synchronization)");
+        "More threads configured than cores available (Note: one "
+        "cpu assigned completely for synchronization)");
     exit(-1);
   }
 
@@ -381,13 +381,13 @@ int Application::spawn_shard_threads() {
 // TODO: Move me @David
 void papi_init() {
 #if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
-    if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
-      PLOGE.printf("Library initialization error! ");
-      exit(1);
-    }
-
-    PLOGI.printf("PAPI library initialized");
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
+    PLOGE.printf("Library initialization error! ");
+    exit(1);
   }
+
+  PLOGI.printf("PAPI library initialized");
+}
 #endif
 }
 
@@ -403,7 +403,8 @@ int Application::process(int argc, char *argv[]) {
         // Huh? don't look at me. The numbers are not continuous for a reason.
         // We stripped the kmer related stuff.
         "6/7: Synth/Prefetch\n"
-        "8/9: Bqueue tests: with bqueues/without bequeues (can be built with zipfian)\n"
+        "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
+        "zipfian)\n"
         "10: Cache Miss test\n"
         "11: Zipfian non-bqueue test")(
         "base",
@@ -452,9 +453,7 @@ int Application::process(int argc, char *argv[]) {
         "drop-caches",
         po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
         "drop page cache before run")(
-        "v",
-        po::bool_switch()->default_value(false),
-        "enable verbose logging")(
+        "v", po::bool_switch()->default_value(false), "enable verbose logging")(
         "nprod", po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
         "for bqueues only")(
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
@@ -463,22 +462,20 @@ int Application::process(int argc, char *argv[]) {
         "the value of 'k' in k-mer")(
         "num_nops",
         po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
-        "number of nops in bqueue cons thread"
-        )(
-          "ht-fill",
-          po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
-          "adjust hashtable fill ratio [0-100] "
-        )(
-          "skew",
-          po::value<double>(&config.skew)->default_value(def.skew),
-          "Zipfian skewness"
-        );
+        "number of nops in bqueue cons thread")(
+        "ht-fill",
+        po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
+        "adjust hashtable fill ratio [0-100] ")(
+        "skew", po::value<double>(&config.skew)->default_value(def.skew),
+        "Zipfian skewness");
 
     papi_init();
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
+
+    plog::get()->setMaxSeverity(plog::info);
 
     // Enable verbose logging
     if (vm["v"].as<bool>()) {
@@ -491,16 +488,16 @@ int Application::process(int argc, char *argv[]) {
       PLOG_INFO.printf("Mode : PREFETCH");
     } else if (config.mode == DRY_RUN) {
       PLOG_INFO.printf("Mode : Dry run ...");
-      PLOG_INFO.printf("base: %lu, mult: %u, uniq: %lu",
-             config.kmer_create_data_base, config.kmer_create_data_mult,
-             config.kmer_create_data_uniq);
+      PLOG_INFO.printf(
+          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == READ_FROM_DISK) {
       PLOG_INFO.printf("Mode : Reading kmers from disk ...");
     } else if (config.mode == WRITE_TO_DISK) {
       PLOG_INFO.printf("Mode : Writing kmers to disk ...");
-      PLOG_INFO.printf("base: %lu, mult: %u, uniq: %lu",
-             config.kmer_create_data_base, config.kmer_create_data_mult,
-             config.kmer_create_data_uniq);
+      PLOG_INFO.printf(
+          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == FASTQ_WITH_INSERT) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT");
       if (config.in_file.empty()) {
@@ -522,7 +519,8 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.ht_type == CAS_KHT) {
       PLOG_INFO.printf("Hashtable type : CASKmerHashTable");
     } else if (config.ht_type == STDMAP_KHT) {
-      PLOG_INFO.printf("Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
+      PLOG_INFO.printf(
+          "Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
       PLOG_INFO.printf("Exiting ... ");
       exit(0);
     }
