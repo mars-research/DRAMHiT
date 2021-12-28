@@ -5,7 +5,7 @@
 
 #include "types.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 struct Kmer_base {
   Kmer_s kmer;

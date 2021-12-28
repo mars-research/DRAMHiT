@@ -8,7 +8,7 @@
 #include "numa.hpp"
 #include "types.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 class BQueueTest {
   std::vector<std::thread> prod_threads;
@@ -34,6 +34,6 @@ class BQueueTest {
   void init_queues(uint32_t nprod, uint32_t ncons);
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __BQUEUE_TEST_HPP__

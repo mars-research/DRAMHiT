@@ -8,7 +8,7 @@
 #include "SynthTest.hpp"
 #include "ZipfianTest.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 class Tests {
  public:

@@ -4,13 +4,13 @@
 #include "base_kht.hpp"
 #include "types.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 class CacheMissTest {
  public:
   void cache_miss_run(Shard *sh, BaseHashTable *kmer_ht);
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __CACHEMISS_TEST_HPP__

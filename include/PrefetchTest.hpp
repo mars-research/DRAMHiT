@@ -4,7 +4,7 @@
 #include "hashtables/simple_kht.hpp"
 #include "types.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 struct Prefetch_KV {
   Kmer_base kb;        // 20 + 2 bytes
@@ -117,6 +117,6 @@ class PrefetchTest {
       PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue> *ktable);
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __PREFETCH_TEST_HPP__

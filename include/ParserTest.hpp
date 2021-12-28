@@ -4,7 +4,7 @@
 #include "base_kht.hpp"
 #include "types.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 class ParserTest {
  public:
@@ -13,6 +13,6 @@ class ParserTest {
   void shard_thread_parse_and_insert(Shard *sh, BaseHashTable *kmer_ht);
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __PARSER_TEST_HPP__

@@ -8,7 +8,7 @@
 #include "types.hpp"
 
 using namespace std;
-namespace kmercounter {
+namespace kvstore {
 
 const uint32_t PREFETCH_QUEUE_SIZE = 64;
 const uint32_t PREFETCH_FIND_QUEUE_SIZE = 64;
@@ -64,5 +64,5 @@ class BaseHashTable {
   uint64_t num_swaps = 0;
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 #endif  // _BASE_KHT_H

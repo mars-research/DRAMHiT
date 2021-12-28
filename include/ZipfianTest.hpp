@@ -4,13 +4,13 @@
 #include "base_kht.hpp"
 #include "types.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 class ZipfianTest {
  public:
   void run(Shard *sh, BaseHashTable *kmer_ht, double skew, unsigned int count);
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __SYNTH_TEST_HPP__

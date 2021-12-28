@@ -31,7 +31,7 @@
 #include <ittnotify.h>
 #endif
 
-namespace kmercounter {
+namespace kvstore {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 

@@ -23,7 +23,7 @@
 #include "sync.h"
 #include "hasher.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
  public:
@@ -39,7 +39,7 @@ class CASHashTable : public BaseHashTable {
 
   CASHashTable(uint64_t c)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
-    this->capacity = kmercounter::next_pow2(c);
+    this->capacity = kvstore::next_pow2(c);
     // this->ht_init_mutex.lock();
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);

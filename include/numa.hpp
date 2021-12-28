@@ -15,7 +15,7 @@
 
 using namespace std;
 
-namespace kmercounter {
+namespace kvstore {
 constexpr long long RESET_MASK(int x) { return ~(1LL << (x)); }
 
 typedef struct numa_node {

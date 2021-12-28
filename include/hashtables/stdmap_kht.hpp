@@ -7,7 +7,7 @@
 
 // NOTE: Unbuildable as of 2021-08-07
 
-namespace kmercounter {
+namespace kvstore {
 
 class StdmapKmerHashTable : public BaseHashTable {
   std::unordered_map<Kmer, Kmer_value_t, Kmer_hash, Kmer_equal> std_kmer_umap;
@@ -68,5 +68,5 @@ class StdmapKmerHashTable : public BaseHashTable {
   }
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 #endif  // _STDMAP_KHT_H

@@ -15,7 +15,7 @@
 #include <papi.h>
 #endif
 
-namespace kmercounter {
+namespace kvstore {
 struct kmer {
   char data[KMER_DATA_LENGTH];
 };

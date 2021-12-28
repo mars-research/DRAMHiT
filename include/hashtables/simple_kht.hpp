@@ -22,16 +22,17 @@
 #include <mutex>
 #include <tuple>
 
+#include "Latency.hpp"
 #include "constants.h"
-#include "plog/Log.h"
 #include "experiments.hpp"
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "misc_lib.h"
+#include "plog/Log.h"
 #include "sync.h"
 
-namespace kmercounter {
+namespace kvstore {
 
 namespace {
 // utility constants and lambdas for SIMD operations
@@ -100,6 +101,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   int id;
   size_t data_length, key_length;
 
+  LatencyCollector<512> collector;
+
   // https://www.bfilipek.com/2019/08/newnew-align.html
   void *operator new(std::size_t size, std::align_val_t align) {
     auto ptr = aligned_alloc(static_cast<std::size_t>(align), size);
@@ -107,8 +110,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     if (!ptr) throw std::bad_alloc{};
 
     PLOGI << "Allocating " << size
-          << ", align: " << static_cast<std::size_t>(align)
-          << ", ptr: " << ptr;
+          << ", align: " << static_cast<std::size_t>(align) << ", ptr: " << ptr;
 
     return ptr;
   }
@@ -116,8 +118,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void operator delete(void *ptr, std::size_t size,
                        std::align_val_t align) noexcept {
     PLOGI << "deleting " << size
-              << ", align: " << static_cast<std::size_t>(align)
-              << ", ptr : " << ptr;
+          << ", align: " << static_cast<std::size_t>(align)
+          << ", ptr : " << ptr;
     free(ptr);
   }
 
@@ -169,7 +171,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   PartitionedHashStore(uint64_t c, uint8_t id)
       : id(id), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
-    this->capacity = kmercounter::next_pow2(c);
+    this->capacity = kvstore::next_pow2(c);
 
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -203,9 +205,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
-    PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id, this->insert_queue,
-        this->find_queue);
-    PLOG_INFO.printf("Hashtable size: %lu | data_length %lu", this->capacity, this->data_length);
+    PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
+                      this->insert_queue, this->find_queue);
+    PLOG_INFO.printf("Hashtable size: %lu | data_length %lu", this->capacity,
+                     this->data_length);
   }
 
   ~PartitionedHashStore() {

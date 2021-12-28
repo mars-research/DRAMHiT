@@ -8,7 +8,7 @@
 #include "plog/Log.h"
 #include "papi.h"
 
-namespace kmercounter {
+namespace kvstore {
 class PapiEvent {
  public:
   int* event_set;
@@ -116,5 +116,5 @@ class PapiEvent {
     PLOG_INFO.printf("--------------------------------------------");
   }
 };
-}  // namespace kmercounter
+}  // namespace kvstore
 #endif  // __PAPIEVENT_HPP__

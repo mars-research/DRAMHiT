@@ -1,6 +1,6 @@
 #pragma once
 
-namespace kmercounter {
+namespace kvstore {
 enum class experiment_type {
   none,
   prefetch_only,

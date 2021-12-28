@@ -5,7 +5,7 @@
 #include "print_stats.h"
 #include "types.hpp"
 
-namespace kmercounter {
+namespace kvstore {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
 extern uint64_t HT_TESTS_HT_SIZE;
