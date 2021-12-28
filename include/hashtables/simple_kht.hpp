@@ -93,6 +93,8 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
+extern thread_local LatencyCollector<512> collector;
+
 template <typename KV, typename KVQ>
 class alignas(64) PartitionedHashStore : public BaseHashTable {
  public:
@@ -100,8 +102,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   static int *fds;
   int id;
   size_t data_length, key_length;
-
-  LatencyCollector<512> collector;
 
   // https://www.bfilipek.com/2019/08/newnew-align.html
   void *operator new(std::size_t size, std::align_val_t align) {
@@ -938,6 +938,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
+    const auto timer_id = collector.start(__rdtsc());
+
     size_t idx = hash & (this->capacity - 1);  // modulo
 
     this->prefetch_partition(idx, key_data->part_id, false);
@@ -951,6 +953,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key;
+    this->find_queue[this->find_head].value = timer_id;
     this->find_queue[this->find_head].key_id = key_data->id;
     this->find_queue[this->find_head].part_id = key_data->part_id;
 
@@ -976,5 +979,5 @@ int *PartitionedHashStore<KV, KVQ>::fds;
 
 // TODO bloom filters for high frequency kmers?
 
-}  // namespace kmercounter
+}  // namespace kvstore
 #endif /* _SKHT_H_ */

@@ -32,6 +32,8 @@
 #endif
 
 namespace kvstore {
+thread_local LatencyCollector<512> collector {};
+
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
