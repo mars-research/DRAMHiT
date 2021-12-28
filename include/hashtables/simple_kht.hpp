@@ -93,7 +93,9 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
 // TODO how long should be the count variable?
 // TODO should we pack the struct?
 
+#ifdef LATENCY_COLLECTION
 extern thread_local LatencyCollector<512> collector;
+#endif
 
 template <typename KV, typename KVQ>
 class alignas(64) PartitionedHashStore : public BaseHashTable {
@@ -938,7 +940,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
+#ifdef LATENCY_COLLECTION
     const auto timer_id = collector.start(__rdtsc());
+#endif
 
     size_t idx = hash & (this->capacity - 1);  // modulo
 
@@ -951,9 +955,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     cout << "[" << cpu << "] -- Adding " << key << " partid : " <<
     key_data->part_id << " at " << this->find_head << endl;*/
 
+#ifdef LATENCY_COLLECTION
+    this->find_queue[this->find_head].value = timer_id;
+#endif
+
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key;
-    this->find_queue[this->find_head].value = timer_id;
     this->find_queue[this->find_head].key_id = key_data->id;
     this->find_queue[this->find_head].part_id = key_data->part_id;
 

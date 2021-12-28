@@ -64,6 +64,7 @@ option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
 option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
+option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
 set(HASHER "xxhash" CACHE STRING "Hasher")
@@ -81,6 +82,15 @@ if (NOT BRANCH IN_LIST branch_types)
     message(FATAL_ERROR "branching type must be one of: ${branch_types}")
 else()
     message(WARNING "Branch type selected was: ${BRANCH}")
+endif()
+
+if (LATENCY_COLLECTION)
+    if (NOT BRANCH STREQUAL "simd")
+        message(FATAL_ERROR "Latency collection only supported on SIMD insert/find")
+    endif()
+
+    message(WARNING "Latency collection enabled")
+    add_definitions(-DLATENCY_COLLECTION)
 endif()
 
 set(experiments none prefetch_only nop_insert insert_dry_run aggr_kv_write_key_only)
