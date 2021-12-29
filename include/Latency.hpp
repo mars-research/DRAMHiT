@@ -5,11 +5,15 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <numeric>
+#include <sstream>
+#include <thread>
 
 namespace kvstore {
 template <std::size_t capacity>
 class LatencyCollector {
+  using timer_type = std::uint16_t;
   static constexpr auto sentinel = std::numeric_limits<std::uint64_t>::max();
 
  public:
@@ -21,13 +25,20 @@ class LatencyCollector {
   }
 
   void end(std::uint64_t stop, std::uint64_t id) {
-    if (id == sentinel)
-      return;
+    if (id == sentinel) return;
 
-    static constexpr auto max_time = std::numeric_limits<std::uint8_t>::max();
+    static constexpr auto max_time = std::numeric_limits<timer_type>::max();
     const auto time = stop - timers.at(id);
     free(id);
-    push(time <= max_time ? static_cast<std::uint8_t>(time) : max_time);
+    push(time <= max_time ? static_cast<timer_type>(time) : max_time);
+  }
+
+  void dump() {
+    std::stringstream stream{};
+    stream << "latencies/" << std::this_thread::get_id() << ".dat";
+    std::ofstream stats{stream.str().c_str()};
+    for (const auto& line : log)
+      for (auto time : line) stats << static_cast<unsigned int>(time) << "\n";
   }
 
  private:
@@ -35,7 +46,8 @@ class LatencyCollector {
   alignas(64) std::array<std::uint64_t, capacity / 64> bitmap{};
 
   // cachelines
-  alignas(64) std::array<std::array<std::uint8_t, 64>, 1 << 16> log{};
+  alignas(64)
+      std::array<std::array<timer_type, 64 / sizeof(timer_type)>, 4096> log{};
 
   // cacheline
   alignas(64) std::uint8_t next_slot{};
@@ -59,10 +71,9 @@ class LatencyCollector {
     return skipped * 64 + leftmost_zero;
   }
 
-  void push(std::uint8_t time) {
-    if (next_slot == 64) {
-      if (next_log_entry == log.size() - 1)
-        return;
+  void push(timer_type time) {
+    if (next_slot == log.front().size()) {
+      if (next_log_entry == log.size() - 1) return;
 
       next_slot = 0;
       ++next_log_entry;
@@ -71,6 +82,10 @@ class LatencyCollector {
     log[next_log_entry][next_slot++] = time;
   }
 };
+
+#ifdef LATENCY_COLLECTION
+extern thread_local LatencyCollector<512> collector;
+#endif
 }  // namespace kvstore
 
 #endif

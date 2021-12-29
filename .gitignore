@@ -16,3 +16,4 @@ result
 *.gz
 *.tar
 .direnv/
+latencies/
