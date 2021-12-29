@@ -21,6 +21,9 @@ class LatencyCollector {
   }
 
   void end(std::uint64_t stop, std::uint64_t id) {
+    if (id == sentinel)
+      return;
+
     static constexpr auto max_time = std::numeric_limits<std::uint8_t>::max();
     const auto time = stop - timers.at(id);
     free(id);
@@ -31,20 +34,18 @@ class LatencyCollector {
   alignas(64) std::array<std::uint64_t, capacity> timers{};
   alignas(64) std::array<std::uint64_t, capacity / 64> bitmap{};
 
-  // cacheline
-  alignas(64) std::array<std::uint8_t, 64> line_a{};
-  static_assert(sizeof(line_a) == 64);
+  // cachelines
+  alignas(64) std::array<std::array<std::uint8_t, 64>, 1 << 16> log{};
 
   // cacheline
-  alignas(64) std::array<std::uint8_t, 64> line_b{};
-  static_assert(sizeof(line_b) == 64);
-
-  // cacheline
-  alignas(64) bool use_line_a{};
-  std::uint8_t next_slot{};
+  alignas(64) std::uint8_t next_slot{};
   std::uint64_t next_log_entry{};
 
-  void free(std::uint64_t id) {}
+  void free(std::uint64_t id) {
+    const auto i = id >> 6;
+    const auto bit = id & 0b111111;
+    bitmap[i] &= ~(1ull << bit);
+  }
 
   std::uint64_t allocate() {
     auto skipped = 0ull;
@@ -58,7 +59,17 @@ class LatencyCollector {
     return skipped * 64 + leftmost_zero;
   }
 
-  void push(std::uint8_t time) {}
+  void push(std::uint8_t time) {
+    if (next_slot == 64) {
+      if (next_log_entry == log.size() - 1)
+        return;
+
+      next_slot = 0;
+      ++next_log_entry;
+    }
+
+    log[next_log_entry][next_slot++] = time;
+  }
 };
 }  // namespace kvstore
 

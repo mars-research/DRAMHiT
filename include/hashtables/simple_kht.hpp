@@ -467,6 +467,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       this->prefetch_partition(idx, q->part_id, false);
 
+#ifdef LATENCY_COLLECTION
+      this->find_queue[this->find_head].value = q->value;
+#endif
+
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
@@ -475,6 +479,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
+
+#ifdef LATENCY_COLLECTION
+    collector.end(__rdtsc(), q->value);
+#endif
+
     return found;
   }
 
