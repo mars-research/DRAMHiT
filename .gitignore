@@ -16,3 +16,5 @@ result
 *.gz
 *.tar
 .direnv/
+*.tbl
+tpch-dbgen/
