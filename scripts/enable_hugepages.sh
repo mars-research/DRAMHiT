@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 # Enable 2MB pages
 echo always > /sys/kernel/mm/transparent_hugepage/enabled

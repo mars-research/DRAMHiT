@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <utility>
 
@@ -39,6 +40,8 @@ constexpr BQUEUE_LOAD bq_load = BQUEUE_LOAD::None;
 #error "BRACHLESS_SIMD and BRANCHLESS_CMOVE options cannot be enabled together"
 #endif
 
+// XXX: If you add/modify a mode, update the `run_mode_strings` in
+// src/Application.cpp
 typedef enum {
   DRY_RUN = 1,
   READ_FROM_DISK = 2,
@@ -50,9 +53,11 @@ typedef enum {
   BQ_TESTS_YES_BQ = 8,
   BQ_TESTS_NO_BQ = 9,
   CACHE_MISS = 10,
-  ZIPFIAN = 11
+  ZIPFIAN = 11,
 } run_mode_t;
 
+// XXX: If you add/modify a mode, update the `ht_type_strings` in
+// src/Application.cpp
 typedef enum {
   SIMPLE_KHT = 1,
   ROBINHOOD_KHT = 2,
@@ -60,7 +65,10 @@ typedef enum {
   STDMAP_KHT = 5,
 } ht_type_t;
 
-/* Test config */
+extern const char *run_mode_strings[];
+extern const char *ht_type_strings[];
+
+// Application configuration
 struct Configuration {
   uint64_t kmer_create_data_base;
   uint32_t kmer_create_data_mult;
@@ -82,6 +90,19 @@ struct Configuration {
   uint32_t K;
   uint32_t ht_fill;
   double skew;
+
+  void dump_configuration() {
+    printf("Run configuration{\n");
+    printf("  num_threads %u\n", this->num_threads);
+    printf("  numa_split %u\n", numa_split);
+    std::cout << "  stats_file " << stats_file << std::endl;
+    printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
+    printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
+    printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
+    printf("  ht_fill %u\n", ht_fill);
+    printf("ZIPFIAN:\n  skew: %f\n", skew);
+    printf("}\n");
+  }
 };
 
 /* Thread stats */

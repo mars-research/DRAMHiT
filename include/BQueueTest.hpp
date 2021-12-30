@@ -20,16 +20,19 @@ class BQueueTest {
   NumaPolicyQueues *npq;
 
   std::vector<numa_node> nodes;
-  queue_t ***prod_queues;
-  queue_t ***cons_queues;
+  std::map<std::tuple<int, int>, queue_t *> queue_map;
+  std::map<std::tuple<int, int>, queue_stats_t *> qstats_map;
 
  public:
   void run_find_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
   void insert_with_bqueues(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
   void no_bqueues(Shard *sh, BaseHashTable *kmer_ht);
   void run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
-  void producer_thread(int tid, int n_prod, int n_cons, bool main_thread, double skew);
-  void consumer_thread(int tid, uint32_t num_nops);
+  void producer_thread(const uint32_t tid, const uint32_t n_prod,
+                       const uint32_t n_cons, const bool main_thread,
+                       const double skew);
+  void consumer_thread(const uint32_t tid, const uint32_t n_prod,
+                       const uint32_t n_cons, const uint32_t num_nops);
   void find_thread(int tid, int n_prod, int n_cons, bool main_thread);
   void init_queues(uint32_t nprod, uint32_t ncons);
 };

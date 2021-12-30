@@ -128,7 +128,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
   RobinhoodKmerHashTable(uint64_t c) {
     // TODO static cast
     // TODO power of 2 hashtable size for ease of mod operations
-    this->capacity = kmercounter::next_pow2(c);
+    this->capacity = kmercounter::utils::next_pow2(c);
     this->hashtable =
         (RH_Kmer_r *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(RH_Kmer_r)));
     memset(hashtable, 0, capacity * sizeof(RH_Kmer_r));

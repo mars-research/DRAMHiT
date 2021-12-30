@@ -169,7 +169,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   PartitionedHashStore(uint64_t c, uint8_t id)
       : id(id), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
-    this->capacity = kmercounter::next_pow2(c);
+    this->capacity = kmercounter::utils::next_pow2(c);
 
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
