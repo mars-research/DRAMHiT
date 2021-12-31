@@ -3,6 +3,7 @@
 
 #include <thread>
 
+#include "MsrHandler.hpp"
 #include "numa.hpp"
 #include "tests.hpp"
 
@@ -16,6 +17,7 @@ class Application {
   Tests test;
   std::vector<std::thread> threads;
   Shard *shards;
+  MsrHandler *msr_ctrl;
 
  public:
   std::vector<numa_node> nodes;
@@ -27,6 +29,7 @@ class Application {
   Application() {
     this->n = new Numa();
     this->nodes = n->get_node_config();
+    this->msr_ctrl = new MsrHandler();
   }
 };
 

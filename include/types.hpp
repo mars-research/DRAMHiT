@@ -90,6 +90,7 @@ struct Configuration {
   uint32_t K;
   uint32_t ht_fill;
   double skew;
+  bool hwprefetchers;
 
   void dump_configuration() {
     printf("Run configuration{\n");
@@ -101,6 +102,7 @@ struct Configuration {
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
+    printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("}\n");
   }
 };
