@@ -19,3 +19,7 @@
 [submodule "plog"]
 	path = lib/plog
 	url = https://github.com/SergiusTheBest/plog.git
+[submodule "tools/msr-safe"]
+	path = tools/msr-safe
+	url = git@github.com:mars-research/msr-safe.git
+	branch = kvstore
