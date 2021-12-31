@@ -1,6 +1,11 @@
-add_executable(test_runner test_runner.cpp)
 find_package(absl REQUIRED)
-target_link_libraries(test_runner gtest_main gtest numa xxhash cityhash absl::flags absl::flags_parse)
+
+add_executable(aggregation_test aggregation_test.cpp)
+target_link_libraries(aggregation_test gtest numa xxhash cityhash absl::flags absl::flags_parse)
+
+add_executable(hashmap_test hashmap_test.cpp)
+target_link_libraries(hashmap_test gtest_main gtest numa xxhash cityhash absl::flags absl::flags_parse)
 
 include(GoogleTest)
-gtest_discover_tests(test_runner)
+gtest_discover_tests(aggregation_test)
+gtest_discover_tests(hashmap_test)
