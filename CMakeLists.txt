@@ -32,7 +32,13 @@ add_compile_options(
     -fcf-protection=none
 )
 
-# Build all the source files.
+# Build all the source files for the library.
+add_library(ht_lib
+    "src/hashtables/kvtypes.cpp"
+)
+target_include_directories(ht_lib PUBLIC include)
+
+# Build all the source files for the executable.
 add_executable(kvstore
     "src/bqueue.cpp"
     "src/tests/bq_tests.cpp"
@@ -47,7 +53,7 @@ add_executable(kvstore
 # Add subdirectory
 add_subdirectory(lib)
 target_link_directories(kvstore PRIVATE lib/)
-target_link_libraries(kvstore PRIVATE fnv xxhash cityhash)
+target_link_libraries(kvstore PRIVATE ht_lib fnv xxhash cityhash)
 
 # Declare include directory.
 include_directories(include/ lib/ lib/cityhash/src/ lib/plog/include/)

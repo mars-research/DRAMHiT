@@ -1,6 +1,7 @@
 #ifndef __KV_TYPES_HPP__
 #define __KV_TYPES_HPP__
 
+#include <cassert>
 #include <cstring>
 
 #include "types.hpp"
@@ -88,6 +89,7 @@ struct ItemQueue {
   uint64_t key_hash;  // 8 bytes
 #endif
 } PACKED;
+std::ostream& operator<<(std::ostream& os, const ItemQueue& q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow
 struct Aggr_KV {
