@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string_view>
+#include <memory>
 #include <gtest/gtest.h>
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
@@ -215,7 +216,7 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
   ASSERT_NE(test_fn, nullptr) << "Invalid test type: " << test_name;
 
   // Get hashtable.
-  const auto ht = [ht_name, hashtable_size]() -> kmercounter::BaseHashTable* {
+  const auto ht = std::unique_ptr<kmercounter::BaseHashTable>([ht_name, hashtable_size]() -> kmercounter::BaseHashTable* {
     if (ht_name == PARTITIONED_CAS_HT)
       return new kmercounter::PartitionedHashStore<kmercounter::Aggr_KV,
                                                    kmercounter::ItemQueue>{
@@ -226,12 +227,11 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
           hashtable_size};
     else
       return nullptr;
-  }();
+  }());
   ASSERT_NE(ht, nullptr) << "Invalid hashtable type: " << ht_name;
 
   // Run test and clean up.
-  ASSERT_NO_THROW(test_fn(ht));
-  delete ht;
+  ASSERT_NO_THROW(test_fn(ht.get()));
 }
 
 INSTANTIATE_TEST_CASE_P(TestAllCombinations,
