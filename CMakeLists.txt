@@ -34,6 +34,7 @@ add_compile_options(
 
 # Build all the source files for the library.
 add_library(ht_lib
+    "src/types.cpp"
     "src/hashtables/kvtypes.cpp"
 )
 target_include_directories(ht_lib PUBLIC include)
