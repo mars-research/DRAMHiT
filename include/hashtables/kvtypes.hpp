@@ -525,6 +525,7 @@ struct Item {
   inline void update_value(const void *from) {
     const queue *elem = reinterpret_cast<const queue *>(from);
     this->kvpair.value = elem->value;
+    std::cerr << "Inserted " << this->kvpair.key << " " << this->kvpair.value << std::endl;
   }
 
   inline uint64_t get_value() const { return this->kvpair.value; }
@@ -545,12 +546,13 @@ struct Item {
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
     auto found = false;
     *retry = 0;
+    std::cerr << "Finding " << this->kvpair.key << " " << this->kvpair.value << std::endl;
     if (this->is_empty()) {
       goto exit;
     } else if (this->kvpair.key == elem->key) {
       found = true;
-      vp.second[vp.first].value = this->kvpair.value;
       vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].value = this->kvpair.value;
       vp.first++;
       goto exit;
     } else {

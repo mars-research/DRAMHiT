@@ -154,6 +154,7 @@ struct Values {
   uint64_t value;
   uint64_t id;
 };
+std::ostream& operator<<(std::ostream& os, const Values& q);
 
 enum class QueueType {
   insert_queue,
