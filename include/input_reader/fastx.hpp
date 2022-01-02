@@ -3,10 +3,12 @@
 
 #include <array>
 
-#include "input_reader.hpp"
+#include "input_reader_base.hpp"
 #include "plog/Log.h"
 #include "readfq/kseq.h"
 
+namespace kmercounter {
+namespace input_reader {
 KSEQ_INIT(int, read)
 /// Read a file in fasta/fastq format.
 /// Return a single KMer a time.
@@ -84,5 +86,7 @@ class FastxReader : public InputReader<T> {
   /// The kmer returned by the last `next()` call.
   std::array<uint8_t, K> kmer;
 };
+} // namespace input_reader
+} // namespace kmercounter
 
 #endif /* INPUT_READER_FASTX */

@@ -1,8 +1,10 @@
 #ifndef INPUT_READER_COUNTER_HPP
 #define INPUT_READER_COUNTER_HPP
 
-#include "input_reader.hpp"
+#include "input_reader_base.hpp"
 
+namespace kmercounter {
+namespace input_reader {
 /// Sequentially incrementin counter.
 template<class T>
 class Counter : public InputReader<T> {
@@ -16,5 +18,7 @@ class Counter : public InputReader<T> {
 private:
     T data;
 };
+} // namespace input_reader
+} // namespace kmercounter
 
 #endif // INPUT_READER_COUNTER_HPP

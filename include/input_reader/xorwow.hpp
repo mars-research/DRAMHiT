@@ -2,8 +2,10 @@
 #define INPUT_READER_XORWOW_HPP
 
 #include "misc_lib.h"
-#include "input_reader.hpp"
+#include "input_reader_base.hpp"
 
+namespace kmercounter {
+namespace input_reader {
 template<class T>
 class XorwowGenerator : public InputReader<T> {
     XorwowGenerator() {
@@ -15,7 +17,9 @@ class XorwowGenerator : public InputReader<T> {
     }
 
 private:
-    xorwow_state xw_state;
+    xorwow_state _xw_state;
 };
+} // namespace input_reader
+} // namespace kmercounter
 
 #endif // INPUT_READER_XORWOW_HPP
