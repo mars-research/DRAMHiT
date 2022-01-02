@@ -9,7 +9,7 @@
 
 KSEQ_INIT(int, read)
 /// Read a file in fasta/fastq format.
-/// Return a KMer.
+/// Return a single KMer a time.
 template <class T>
 class FastxReader : public InputReader<T> {
  public:
@@ -21,6 +21,7 @@ class FastxReader : public InputReader<T> {
     this->seq = kseq_init(fd);
   }
 
+  // Return a kmer.
   std::optional<T> next() override {
     // Read a new sequence if the current sequence is exhausted.
     if (this->offset >= this->seq->seq.l) {
