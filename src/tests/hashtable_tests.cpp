@@ -59,7 +59,10 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   xorwow_init(&_xw_state);
   if (start == 0) count = 1;
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
+#ifndef LATENCY_COLLECTION
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
+#endif
+
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
@@ -201,6 +204,9 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 
   found += vp.first;
 #endif
+
+  collector.dump();
+
   return {duration, found};
 }
 
@@ -211,7 +217,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   OpTimings insert_times{};
 
   PLOG_INFO.printf("Synth test run: thread %u, ht size: %lu, insertions: %lu",
-         sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
+                   sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_times = synth_run(kmer_ht, sh->shard_idx);
@@ -237,8 +243,8 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
   if (find_times.op_count > 0)
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-           sh->shard_idx, find_times.op_count,
-           find_times.duration / find_times.op_count);
+                     sh->shard_idx, find_times.op_count,
+                     find_times.duration / find_times.op_count);
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
@@ -299,7 +305,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
 
   PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
-            << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
+             << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
@@ -334,7 +340,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
 #ifdef CALC_STATS
     PLOG_INFO.printf("Reprobes %lu soft_reprobes %lu", hashtable->num_reprobes,
-           hashtable->num_soft_reprobes);
+                     hashtable->num_soft_reprobes);
 #endif
   }
 
@@ -350,12 +356,12 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   if (num_finds.op_count > 0)
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-           shard->shard_idx, num_finds.op_count,
-           num_finds.duration / num_finds.op_count);
+                     shard->shard_idx, num_finds.op_count,
+                     num_finds.duration / num_finds.op_count);
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(shard, hashtable);
 #endif
 }
 
-}  // namespace kmercounter
+}  // namespace kvstore

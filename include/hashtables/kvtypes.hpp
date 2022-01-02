@@ -80,7 +80,11 @@ struct Kmer_queue {
 
 struct ItemQueue {
   uint64_t key;
-  uint64_t value; // NOTE: this is currently ignored @David
+#ifndef LATENCY_COLLECTION
+  uint64_t value;  // NOTE: this is currently ignored @David
+#else
+  uint64_t timer_id;
+#endif
   uint32_t key_id;
   uint32_t idx;
   uint32_t part_id;
@@ -457,6 +461,7 @@ struct KVPair {
   uint64_t value;
 } PACKED;
 
+#ifndef LATENCY_COLLECTION
 struct Item {
   KVPair kvpair;
 
@@ -672,7 +677,8 @@ struct Item {
     return found;
   };
 } PACKED;
+#endif
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __KV_TYPES_HPP__

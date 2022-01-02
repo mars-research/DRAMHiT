@@ -21,10 +21,6 @@
 #define BQ_TESTS_DEQUEUE_ARR_LENGTH 16
 
 namespace kvstore {
-#ifdef LATENCY_COLLECTION
-thread_local LatencyCollector<512> collector{};
-#endif
-
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 

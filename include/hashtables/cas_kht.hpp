@@ -2,7 +2,7 @@
 /// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
 /// Key and values are stored directly in the table.
 /// CASHashtable is not parititioned, meaning that there will be
-/// at max one instance of it. All threads will share the same 
+/// at max one instance of it. All threads will share the same
 /// instance.
 /// The original one is called the casht and the one we modified with
 /// batching + prefetching though is called casht++.
@@ -17,11 +17,11 @@
 #include <mutex>
 
 #include "constants.h"
-#include "plog/Log.h"
+#include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
+#include "plog/Log.h"
 #include "sync.h"
-#include "hasher.hpp"
 
 namespace kvstore {
 template <typename KV, typename KVQ>
@@ -45,7 +45,8 @@ class CASHashTable : public BaseHashTable {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
-        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd, true);
+        this->hashtable =
+            calloc_ht<KV>(this->capacity, this->id, &this->fd, true);
       }
       this->ref_cnt++;
     }
@@ -302,9 +303,7 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_tail;
   Hasher hasher_;
 
-  uint64_t hash(const void *k) {
-    return hasher_(k, this->key_length);
-  }
+  uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
@@ -357,9 +356,18 @@ class CASHashTable : public BaseHashTable {
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
 
+#ifdef LATENCY_COLLECTION
+      this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
+
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
+
+#ifdef LATENCY_COLLECTION
+    collector.end(__rdtsc(), q->timer_id);
+#endif
+
     return found;
   }
 
@@ -428,15 +436,20 @@ class CASHashTable : public BaseHashTable {
 #ifdef CALC_STATS
       ++this->num_soft_reprobes;
 #endif
-      goto try_insert; // FIXME: @David get rid of the goto for crying out loud
+      goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
     }
 
     prefetch(idx);
 
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
-    this->insert_queue[this->ins_head].value = q->value;
     this->insert_queue[this->ins_head].idx = idx;
+#ifndef LATENCY_COLLECTION
+    this->insert_queue[this->ins_head].value = q->value;
+#else
+    this->insert_queue[this->ins_head].timer_id = q->timer_id;
+#endif
+
     ++this->ins_head;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
@@ -477,6 +490,11 @@ class CASHashTable : public BaseHashTable {
 
   void add_to_find_queue(void *data) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
+
+#ifdef LATENCY_COLLECTION
+    const auto tid = collector.start(__rdtsc());
+#endif
+
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);  // modulo
 
@@ -488,6 +506,10 @@ class CASHashTable : public BaseHashTable {
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
     this->find_queue[this->find_head].key_id = key_data->id;
+
+#ifdef LATENCY_COLLECTION
+    this->find_queue[this->find_head].timer_id = tid;
+#endif
 
 #ifdef COMPARE_HASH
     this->queue[this->find_head].key_hash = hash;
@@ -507,5 +529,5 @@ std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
 
 template <class KV, class KVQ>
 uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
-}  // namespace kmercounter
-#endif // HASHTABLES_CAS_KHT_HPP
+}  // namespace kvstore
+#endif  // HASHTABLES_CAS_KHT_HPP
