@@ -333,7 +333,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t distance_from_bucket = 0;
 #endif
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash;
+    size_t idx = hash & (this->capacity - 1);  // modulo
     KV *curr = &this->hashtable[this->id][idx];
     bool found = false;
 
