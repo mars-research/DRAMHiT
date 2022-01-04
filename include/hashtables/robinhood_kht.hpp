@@ -1,6 +1,8 @@
 #ifndef _ROBINHOOD_SKHT_H
 #define _ROBINHOOD_SKHT_H
 
+#include <plog/Log.h>
+
 #include "base_kht.hpp"
 #include "helper.hpp"
 #include "types.hpp"
@@ -167,22 +169,22 @@ class RobinhoodKmerHashTable : public BaseHashTable {
   }
 
   void insert_noprefetch(const void *data) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
   }
 
   void insert_batch(KeyPairs &kp) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
   }
 
   void flush_insert_queue() override {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
   }
 
   void flush_find_queue(ValuePairs &vp) override {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
   }
 
@@ -192,7 +194,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
   }
 
   void *find_noprefetch(const void *data) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return NULL;
   }
@@ -270,7 +272,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     }
   }
   uint64_t read_hashtable_element(const void *data) override {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }

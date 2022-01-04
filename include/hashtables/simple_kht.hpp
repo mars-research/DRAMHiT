@@ -216,7 +216,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void insert_noprefetch(const void *data) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
   }
 

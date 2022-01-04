@@ -449,7 +449,7 @@ class CASHashTable : public BaseHashTable {
   void __insert_one(KVQ *q) { __insert_branched(q); }
 
   uint64_t read_hashtable_element(const void *data) override {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }
