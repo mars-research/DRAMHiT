@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string_view>
 #include <memory>
+#include <unordered_set>
 #include <gtest/gtest.h>
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
@@ -25,13 +26,13 @@ ABSL_FLAG(int, test_size, 1ull << 12,
 namespace kmercounter {
 namespace {
 // Test names.
-const char SYNCHRONOUS_TEST[] = "Synchronous";
+const char NO_PREFETCH_TEST[] = "No prefetch";
 const char ASYNCHRONOUS_TEST[] = "Asynchronous";
 const char FILL_SYNC_TEST[] = "Fill Sync";
 const char UNIT_FILL_TEST[] = "Unit Fill";
 const char OFF_BY_ONE_TEST[] = "Off By One";
 constexpr const char* TEST_FNS [] {
-  // SYNCHRONOUS_TEST,
+  NO_PREFETCH_TEST,
   // ASYNCHRONOUS_TEST,
   // FILL_SYNC_TEST,
   // UNIT_FILL_TEST,
@@ -41,120 +42,30 @@ constexpr const char* TEST_FNS [] {
 const char PARTITIONED_CAS_HT[] = "Partitioned CAS";
 const char CAS_HT[] = "CAS";
 constexpr const char* HTS [] {
-  // PARTITIONED_CAS_HT,
+  PARTITIONED_CAS_HT,
   CAS_HT,
 };
 
 
-// Tests finds of inserted elements after a flush is forced
-// Avoiding asynchronous effects
-// Note the off-by-one on found values
-void synchronous_test(BaseHashTable* ht) {
+/// Correctness test for insertion and lookup without prefetch.
+/// In other words, no queue is used.
+void no_prefetch_test(BaseHashTable* ht) {
   std::cerr << "[TEST] Synchronous\n";
 
   const auto size = absl::GetFlag(FLAGS_test_size);
-  ASSERT_EQ(size % HT_TESTS_BATCH_LENGTH, 0)
-                << "Test size is assumed to be a multiple of batch size";
-
-  static_assert(HT_TESTS_FIND_BATCH_LENGTH == HT_TESTS_BATCH_LENGTH,
-                "Test logic assumes these batch sizes are equal");
-
-  std::uint64_t n_inserted{};
-  std::uint64_t n_found{};
-  std::uint64_t count{};
-  for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
-    ++count;
-
-    std::array<Keys, HT_TESTS_FIND_BATCH_LENGTH> keys{};
-    std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
-    ValuePairs found{0, values.data()};
-    for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-      keys.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
-
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
-    n_inserted += items.first;
-    ht->insert_batch(items);
-    ht->flush_insert_queue();
-    ht->find_batch(items, found);
-    ASSERT_EQ(found.first, 0) << "Unexpected pending finds.";
-
-    ht->flush_find_queue(found);
-    n_found += found.first;
-    // std::cerr << "[TEST] Batch " << i << "\n";
-    // for (std::uint64_t j{}; j < found.first; ++j) {
-    //   auto& value = found.second[j];
-    //   std::cerr << "[TEST] (" << value.id << ", " << value.value << ")\n";
-    // }
-
-    ASSERT_EQ(n_found, n_inserted) << "Not all inserted values were found";
+  
+  for (std::uint64_t i{}; i < size; i++) {
+    ItemQueue data;
+    data.key = i;
+    data.value = i * i;
+    ht->insert_noprefetch(&data);
   }
 
-  std::cerr << "[TEST] Ran " << count << " iterations\n";
-}
-
-void asynchronous_test(BaseHashTable* ht) {
-  std::uint64_t n_inserted{};
-  std::uint64_t n_found{};
-  constexpr auto size = 1 << 12;
-  static_assert(size % HT_TESTS_BATCH_LENGTH == 0,
-                "Test size is assumed to be a multiple of batch size");
-
-  static_assert(HT_TESTS_FIND_BATCH_LENGTH == HT_TESTS_BATCH_LENGTH,
-                "Test logic assumes these batch sizes are equal");
-
-  for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
-    std::array<Keys, HT_TESTS_BATCH_LENGTH> keys{};
-
-    for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-      keys.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
-
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
-    ht->insert_batch(items);
-    n_inserted += HT_TESTS_BATCH_LENGTH;
-
-    ht->flush_insert_queue();
-
-    std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
-    ValuePairs found{0, values.data()};
-    ht->find_batch(items, found);
-    n_found += found.first;
-    found.first = 0;
-
-    ht->flush_find_queue(found);
-    n_found += found.first;
+  for (std::uint64_t i{}; i < size; i++) {
+    auto ptr = (KVType*)ht->find_noprefetch(&i);
+    EXPECT_FALSE(ptr->is_empty()) << "Cannot find " << i;
+    EXPECT_EQ(ptr->get_value(), i * i) << "Invalid value for key " << i;
   }
-
-  ASSERT_EQ(n_found, n_inserted) << "Not all inserted values were found";
-}
-
-void fill_test(BaseHashTable* ht) {
-  constexpr auto size = 1 << 8;
-  static_assert(size % HT_TESTS_BATCH_LENGTH == 0,
-                "Test size is assumed to be a multiple of batch size");
-
-  static_assert(HT_TESTS_FIND_BATCH_LENGTH == HT_TESTS_BATCH_LENGTH,
-                "Test logic assumes these batch sizes are equal");
-
-  std::uint64_t n_inserted{};
-  std::uint64_t count{};
-  for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
-    ++count;
-
-    std::array<Keys, size> keys{};
-    for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-      keys.at(j) = {
-          i + j + 1,
-          i + j + 1};  // Insert different values each time to force max fill
-
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
-    n_inserted += items.first;
-    ht->insert_batch(items);
-  }
-
-  ht->flush_insert_queue();
-
-  std::cerr << "[TEST] Ran " << count << " iterations\n";
-  ASSERT_EQ(ht->get_fill(), n_inserted) << "Not all values were inserted.";
 }
 
 // Test for presence of an off-by-one error in synchronous use
@@ -205,12 +116,8 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
 
   // Get test function.
   const auto test_fn = [test_name]() -> void (*)(kmercounter::BaseHashTable*) {
-    if (test_name == SYNCHRONOUS_TEST)
-      return kmercounter::synchronous_test;
-    else if (test_name == ASYNCHRONOUS_TEST)
-      return kmercounter::asynchronous_test;
-    else if (test_name == FILL_SYNC_TEST)
-      return kmercounter::fill_test;
+    if (test_name == NO_PREFETCH_TEST)
+      return kmercounter::no_prefetch_test;
     else if (test_name == UNIT_FILL_TEST)
       return kmercounter::single_insert_test;
     else if (test_name == OFF_BY_ONE_TEST)
