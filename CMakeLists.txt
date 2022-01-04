@@ -46,6 +46,7 @@ add_executable(kvstore
     "src/tests/hashtable_tests.cpp"
     "src/tests/prefetch_tests.cpp"
     "src/tests/cachemiss_test.cpp"
+    "src/tests/hashjoin_test.cpp"
     "src/misc_lib.cpp"
     "src/Application.cpp"
     "src/kvstore.cpp"
