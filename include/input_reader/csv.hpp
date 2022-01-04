@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <variant>
+#include <vector>
 
 #include "input_reader_base.hpp"
 
@@ -26,11 +27,12 @@ class CsvReader : public InputReader<uint64_t> {
     public:
     CsvReader(std::string_view filename, std::string_view delimiter) {
       // Read CSV line by line into memory.
-      std::fstream ifile(filename.data());
+      std::ifstream ifile(filename.data());
+      PLOG_FATAL_IF(ifile.fail()) << "Failed to open file " << filename;
       for (std::string line; std::getline(ifile, line); /*noop*/) {
         const std::string field_str = line.substr(0, line.find(delimiter));
         const uint64_t field = std::stoull(field_str);
-        data.push_back(field);
+        this->data.push_back(field);
       }
 
       this->iter = this->data.begin();
