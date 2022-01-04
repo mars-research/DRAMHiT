@@ -41,6 +41,10 @@
 #define CACHE_ALIGNED __attribute__((aligned(FIPC_CACHE_LINE_SIZE)))
 #endif
 
+#ifndef PACKED
+#define PACKED __attribute__((packed))
+#endif
+
 // Types
 typedef uint64_t data_t;
 
@@ -56,12 +60,12 @@ typedef struct node {
 #define OPTIMIZE_BACKTRACKING2
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
-#define Q_BATCH_HISTORY     q->cons_metadata->extra_metadata.batch_history
-#define Q_BACKTRACK_FLAG    q->cons_metadata->extra_metadata.backtrack_flag
-#define Q_HEAD              q->prod_metadata->head
-#define Q_BATCH_HEAD        q->prod_metadata->batch_head
-#define Q_TAIL              q->cons_metadata->tail
-#define Q_BATCH_TAIL        q->cons_metadata->batch_tail
+#define Q_BATCH_HISTORY     q->extra_metadata.batch_history
+#define Q_BACKTRACK_FLAG    q->extra_metadata.backtrack_flag
+#define Q_HEAD              q->head
+#define Q_BATCH_HEAD        q->batch_head
+#define Q_TAIL              q->tail
+#define Q_BATCH_TAIL        q->batch_tail
 #else
 #define Q_BATCH_HISTORY     q->batch_history
 #define Q_BACKTRACK_FLAG    q->backtrack_flag
@@ -72,61 +76,35 @@ typedef struct node {
 #endif
 
 #if defined(CONS_BATCH) || defined(PROD_BATCH)
-// Attempting to split the queue data and queue metadata
-// Producer metadata
-typedef struct {
-  volatile uint32_t head;
-  volatile uint32_t batch_head;
-} prod_metadata_t __attribute__((aligned));
 
 // Consumer metadata(extra) for backtracking
 typedef struct {
   // used for backtracking in the consumer
-  unsigned long batch_history;
-  uint64_t backtrack_count;
-  uint64_t backtrack_flag;
-} cons_extra_metadata_t __attribute__((aligned));
-
-// Consumer metadata
-typedef struct {
-  volatile uint32_t tail;
-  volatile uint32_t batch_tail;
-  cons_extra_metadata_t extra_metadata;
-} cons_metadata_t;
-
-typedef struct {
-  uint64_t num_enq_failures;
-  uint64_t num_deq_failures;
-} queue_stats_t;
-
-typedef struct queue_t {
-  queue_stats_t* qstats;
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-  // accessed by both producer and comsumer
-  data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
-  prod_metadata_t* prod_metadata;
-  cons_metadata_t* cons_metadata;
-#else
-  /* Mostly accessed by producer. */
-  volatile uint32_t head;
-  volatile uint32_t batch_head;
-
-  /* Mostly accessed by consumer. */
-  volatile uint32_t tail __attribute__((aligned(64)));
-  volatile uint32_t batch_tail;
-
-  unsigned long batch_history;
-
-  /* readonly data */
-  uint64_t start_c __attribute__((aligned(64)));
-  uint64_t stop_c;
-
-  uint64_t backtrack_count;
-  uint64_t backtrack_flag;
-  /* accessed by both producer and comsumer */
-  data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
+  uint16_t batch_history;
+  uint8_t backtrack_flag;
+#if defined(OPTIMIZE_BACKTRACKING)
+  uint32_t backtrack_count;
 #endif
-} __attribute__((aligned(64))) queue_t;
+} PACKED cons_extra_metadata_t;
+
+typedef struct {
+  data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
+} data_array_t;
+
+typedef struct {
+  volatile uint16_t head;
+  volatile uint16_t batch_head;
+  uint32_t num_enq_failures;
+  data_t *data;
+} PACKED prod_queue_t;
+
+typedef struct {
+  volatile uint16_t tail;
+  volatile uint16_t batch_tail;
+  cons_extra_metadata_t extra_metadata;
+  uint32_t num_deq_failures;
+  data_t *data;
+} PACKED cons_queue_t;
 
 #else
 
@@ -167,12 +145,10 @@ typedef struct CACHE_ALIGNED queue_t
 
 #endif
 
-int init_queue(queue_t* q);
-int free_queue(queue_t* q);
-int enqueue(queue_t* q, data_t d);
-int dequeue(queue_t* q, data_t* d);
-void prefetch_queue(queue_t* q);
-void prefetch_queue_data(queue_t* q, bool producer);
+int init_queue(cons_queue_t* q);
+int free_queue(cons_queue_t* q);
+int enqueue(prod_queue_t* q, data_t d);
+int dequeue(cons_queue_t* q, data_t* d);
 
 // Request Types
 #define MSG_ENQUEUE 1
