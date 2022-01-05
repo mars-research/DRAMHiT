@@ -149,6 +149,7 @@ struct Keys {
   uint64_t id;
   uint64_t part_id;
 };
+std::ostream& operator<<(std::ostream& os, const Keys& q);
 
 struct Values {
   uint64_t value;
