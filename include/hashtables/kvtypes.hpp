@@ -551,7 +551,7 @@ struct Item {
       goto exit;
     } else if (this->kvpair.key == elem->key) {
       found = true;
-      vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].id = elem->key;
       vp.second[vp.first].value = this->kvpair.value;
       vp.first++;
       goto exit;
@@ -676,6 +676,12 @@ struct Item {
     return found;
   };
 } PACKED;
+
+#ifdef NOAGGR
+using KVType = Item;
+#else
+using KVType = Aggr_KV;
+#endif
 
 }  // namespace kmercounter
 

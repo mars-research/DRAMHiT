@@ -466,6 +466,7 @@ class CASHashTable : public BaseHashTable {
     this->insert_queue[this->ins_head].idx = idx;
     this->insert_queue[this->ins_head].key = key_data->key;
     this->insert_queue[this->ins_head].key_id = key_data->id;
+    this->insert_queue[this->ins_head].value = key_data->id;
 
 #ifdef COMPARE_HASH
     this->insert_queue[this->ins_head].key_hash = hash;
