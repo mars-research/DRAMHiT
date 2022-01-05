@@ -204,6 +204,10 @@ class CASHashTable : public BaseHashTable {
   }
 
   void *find_noprefetch(const void *data) {
+#ifdef LATENCY_COLLECTION
+    const auto tid = collector.start(RDTSC_START());
+#endif
+
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
@@ -241,6 +245,11 @@ class CASHashTable : public BaseHashTable {
     if (!found) {
       curr = &this->empty_item;
     }
+
+#ifdef LATENCY_COLLECTION
+    collector.end(RDTSCP(), tid);
+#endif
+
     return curr;
   }
 
