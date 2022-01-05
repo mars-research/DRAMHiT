@@ -93,8 +93,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   // Allocate memory for stats
   sh->stats =
-      //(thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE,
-      // sizeof(thread_stats));
       (thread_stats *)calloc(1, sizeof(thread_stats));
   alignas(64) uint64_t k = 0;
 
@@ -156,7 +154,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
       "key_start %lu",
       this_prod_id, num_messages, n_cons, key_start);
 
+#if defined(HASH_HISTOGRAM)
   std::vector<unsigned int> hist(n_cons);
+#endif
 
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
@@ -228,6 +228,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
 #endif
+
   sh->stats->enqueue_cycles = (t_end - t_start);
   sh->stats->num_enqueues = transaction_id;
 
@@ -262,6 +263,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   // main thread will also increment this
   fipc_test_FAI(completed_producers);
 
+#if defined(HASH_HISTOGRAM)
   std::stringstream stream{};
   stream << "[";
   auto first = true;
@@ -274,6 +276,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   stream << "]";
   PLOG_INFO.printf("Producer %d histogram: %s", tid, stream.str().c_str());
+#endif
 }
 
 thread_local std::vector<unsigned int> hash_histogram(histogram_buckets);
@@ -461,6 +464,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_end = RDTSCP();
 
+#if defined(HASH_HISTOGRAM)
   std::stringstream stream{};
   stream << "Hash buckets: [";
   auto first = true;
@@ -472,6 +476,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   stream << "]\n";
   PLOG_INFO.printf("%s", stream.str().c_str());
+#endif
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
