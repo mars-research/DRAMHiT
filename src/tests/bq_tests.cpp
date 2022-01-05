@@ -35,14 +35,6 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 // Test Variables
 [[maybe_unused]] static uint64_t transactions = 100000000;
 
-uint32_t producer_count = 1;
-uint32_t consumer_count = 1;
-
-uint64_t batch_size = 1;
-
-uint64_t mem_pool_order = 16;
-uint64_t mem_pool_size;
-
 // for synchronization of threads
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
@@ -160,11 +152,10 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
-    if (next_cons_id >= consumer_count) {
-      next_cons_id -= consumer_count;
-    }
-    return next_cons_id;
+    if (next_cons_id >= n_cons) next_cons_id -= n_cons;
+    return std::min(next_cons_id, n_cons - 1);
   };
+
 #ifdef WITH_VTUNE_LIB
   static const auto event =
       __itt_event_create("message_enqueue", strlen("message_enqueue"));
@@ -213,7 +204,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
       transaction_id++;
 #ifdef CALC_STATS
-      if (transaction_id % (HT_TESTS_NUM_INSERTS * consumer_count / 10) == 0) {
+      if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
         PLOG_INFO.printf(
             "[prod:%u] transaction_id %lu | num_messages %lu (enq failures %u)",
             this_prod_id, transaction_id, num_messages,
@@ -349,16 +340,13 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   // Round-robin between 0..n_prod
   prod_id = 0;
 
-  while (finished_producers < producer_count) {
+  while (finished_producers < n_prod) {
     auto *q = cqueues[prod_id];
 
     auto get_next_prod = [&](auto inc) {
-      if (producer_count == 1) {
-        return 0u;
-      }
       auto next_prod_id = prod_id + inc;
       if (next_prod_id >= n_prod) next_prod_id -= n_prod;
-      return next_prod_id;
+      return std::min(next_prod_id, n_prod - 1);
     };
 
     auto submit_batch = [&](auto num_elements) {
@@ -457,7 +445,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     // reset the value of k
     // incase if the next dequeue fails, we will have a stale value of k
     k = 0;
-    if (++prod_id >= producer_count) {
+    if (++prod_id >= n_prod) {
       prod_id = 0;
     }
   }
@@ -824,9 +812,6 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
         this->cfg->n_prod, this->cfg->n_cons, num_cpus);
     exit(-1);
   }
-
-  producer_count = cfg->n_prod;
-  consumer_count = cfg->n_cons;
 
   PLOG_DEBUG.printf("Controller starting ... nprod: %u, ncons: %u", cfg->n_prod,
                     cfg->n_cons);
