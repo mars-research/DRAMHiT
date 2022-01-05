@@ -65,7 +65,8 @@ inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
   // threads are assigned as producers and they won't have any hash tables.
   // In the end, we want to compare M insertions in total for both bqueue and
   // non-bqueue setting.
-  auto ratio = static_cast<double>(n_prod / n_cons) + 1;
+  auto ratio = static_cast<double>(n_prod) / n_cons + 1;
+
   auto num_messages = HT_TESTS_NUM_INSERTS * ratio;
   // our HT has a notion of empty keys which is 0. So, no '0' key for now!
   uint64_t key_start =
@@ -84,8 +85,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   Shard *sh = &this->shards[tid];
 
   // Allocate memory for stats
-  sh->stats =
-      (thread_stats *)calloc(1, sizeof(thread_stats));
+  sh->stats = (thread_stats *)calloc(1, sizeof(thread_stats));
   alignas(64) uint64_t k = 0;
 
   uint8_t this_prod_id = sh->shard_idx;
@@ -171,11 +171,11 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #ifdef BQ_TESTS_INSERT_XORWOW_NEW
       k = xorwow(&xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)  // TODO: this is garbage
-    if (i % 8 == 0 && i + 16 < values.size())
-      prefetch_object<false>(&values.at(i + 16), 64);
-    k = values.at(transaction_id);
+      if (i % 8 == 0 && i + 16 < values.size())
+        prefetch_object<false>(&values.at(i + 16), 64);
+      k = values.at(transaction_id);
 #else
-    k = key_start++;
+      k = key_start++;
 #endif
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
@@ -291,8 +291,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   uint64_t k = 0;
   uint64_t transaction_id = 0;
   uint32_t prod_id = 0;
-  // TODO: Pass producer_count similar to how we pass cons_count in
-  // producer thread, instead of referring to global producer_count
+
   uint8_t this_cons_id = sh->shard_idx - n_prod;
   cons_queue_t *cqueues[n_prod];
   uint64_t inserted = 0u;
@@ -305,6 +304,8 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   // initialize the local queues array from queue_map
   for (auto i = 0u; i < n_prod; i++) {
+    PLOG_DEBUG.printf("[cons: %u] at tuple {%d, %d} shard_idx %d tid %u",
+                      this_cons_id, i, this_cons_id, sh->shard_idx, tid);
     cqueues[i] = cqueue_map.at(std::make_tuple(i, this_cons_id));
     PLOG_DEBUG.printf("[cons:%u] q[%d] -> %p (data %p) dq failures %lu",
                       this_cons_id, i, cqueues[i], cqueues[i]->data,
@@ -597,10 +598,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     }
 
 #ifdef CALC_STATS
-    // if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
-    //   PLOG_INFO.printf("Producer %u, transaction_id %lu\n", this_prod_id,
-    //          transaction_id);
-    // }
+    if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
+      PLOG_INFO.printf("Producer %u, transaction_id %lu\n", this_prod_id,
+             transaction_id);
+    }
 #endif
   }
   auto t_end = RDTSCP();
@@ -802,7 +803,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   uint32_t num_cpus = static_cast<uint32_t>(this->n->get_num_total_cpus());
 
   // Calculate total threads (Prod + cons)
-  cfg->num_threads = cfg->n_prod + cfg->n_prod;
+  cfg->num_threads = cfg->n_prod + cfg->n_cons;
 
   // bail out if n_prod + n_cons > num_cpus
   if (this->cfg->n_prod + this->cfg->n_cons > num_cpus) {
@@ -813,8 +814,9 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
     exit(-1);
   }
 
-  PLOG_DEBUG.printf("Controller starting ... nprod: %u, ncons: %u", cfg->n_prod,
-                    cfg->n_cons);
+  PLOG_DEBUG.printf(
+      "Controller starting ... nprod: %u, ncons: %u (num_threads %u)",
+      cfg->n_prod, cfg->n_cons, cfg->num_threads);
 
   // alloc shards array
   this->shards = (Shard *)calloc(sizeof(Shard), cfg->num_threads);
@@ -853,10 +855,10 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   // Spawn consumer threads
   i = cfg->n_prod;
   for (auto assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
-    PLOG_DEBUG.printf("i %d assigned cpu %d", i, assigned_cpu);
-
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
+
+    PLOG_DEBUG.printf("tid %d assigned cpu %d", i, assigned_cpu);
 
     auto _thread = std::thread(&BQueueTest::consumer_thread, this, i,
                                cfg->n_prod, cfg->n_cons, cfg->num_nops);
