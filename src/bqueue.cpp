@@ -27,7 +27,7 @@
 static data_t ELEMENT_ZERO = 0x0UL;
 
 int init_queue(cons_queue_t *q) {
-#if defined(CONS_BATCH)
+#if defined(CONS_BATCH) && defined(ADAPTIVE)
   Q_BATCH_HISTORY = CONS_BATCH_SIZE;
 #endif
   return 0;
@@ -94,9 +94,10 @@ static inline int backtracking(cons_queue_t *q) {
 #endif
 
 #if defined(BACKTRACKING)
-  unsigned long batch_size = Q_BATCH_HISTORY;
+  unsigned long batch_size = CONS_BATCH_SIZE;
 #if defined(OPTIMIZE_BACKTRACKING2)
   if ((!q->data[tmp_tail]) && !Q_BACKTRACK_FLAG) {
+    fipc_test_time_wait_ticks(CONS_CONGESTION_PENALTY);
     return -1;
   }
 #endif

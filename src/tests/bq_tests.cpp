@@ -204,9 +204,8 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
       }
 
       if (1) {
-        auto q = pqueues[get_next_cons(1)];
-        __builtin_prefetch(&q->data[Q_HEAD], 1, 3);
         if (((Q_HEAD + 4) & 7) == 0) {
+          auto q = pqueues[get_next_cons(1)];
           auto next_1 = (Q_HEAD + 8) & (QUEUE_SIZE - 1);
           __builtin_prefetch(&q->data[next_1], 1, 3);
         }
@@ -367,6 +366,9 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       cons_queue_t *ncq = cqueues[get_next_prod(3)];
       if ((ncq->tail + BQ_TESTS_BATCH_LENGTH_CONS - 1) == ncq->batch_tail) {
         auto tmp_tail = ncq->tail + BATCH_SIZE - 1;
+        if (tmp_tail >= QUEUE_SIZE) {
+          tmp_tail = 0;
+        }
         __builtin_prefetch(&ncq->data[tmp_tail], 0, 3);
       }
       auto next_1 = (ncq->tail + 8) & (QUEUE_SIZE - 1);
@@ -375,11 +377,10 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       __builtin_prefetch(&ncq->data[next_1], 1, 3);
       __builtin_prefetch(&ncq->data[next_2], 1, 3);
 
-      if (1) {
+      if (0) {
         auto n2q = cqueues[get_next_prod(5)];
         __builtin_prefetch(n2q, 1, 3);
       }
-
     }
 
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {

@@ -22,6 +22,7 @@
 #define BATCH_INCREMENT (BATCH_SIZE / 2)
 
 #define CONGESTION_PENALTY (1000) /* cycles */
+#define CONS_CONGESTION_PENALTY (CONGESTION_PENALTY / 2)
 // Try to move to the next queue instead of penalizing
 //#define CONGESTION_PENALTY (0) /* cycles */
 
@@ -52,16 +53,16 @@ typedef struct node {
   uint64_t field;
 } CACHE_ALIGNED node_t;
 
-#define ADAPTIVE 0
-#define BACKTRACKING 1
-#define PROD_BATCH 1
-#define CONS_BATCH 1
+// #define ADAPTIVE
+#define BACKTRACKING
+#define PROD_BATCH
+#define CONS_BATCH
 //#define OPTIMIZE_BACKTRACKING
 #define OPTIMIZE_BACKTRACKING2
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
 #define Q_BATCH_HISTORY     q->extra_metadata.batch_history
-#define Q_BACKTRACK_FLAG    q->extra_metadata.backtrack_flag
+#define Q_BACKTRACK_FLAG    q->backtrack_flag
 #define Q_HEAD              q->head
 #define Q_BATCH_HEAD        q->batch_head
 #define Q_TAIL              q->tail
@@ -80,8 +81,9 @@ typedef struct node {
 // Consumer metadata(extra) for backtracking
 typedef struct {
   // used for backtracking in the consumer
+#if defined(ADAPTIVE)
   uint16_t batch_history;
-  uint8_t backtrack_flag;
+#endif
 #if defined(OPTIMIZE_BACKTRACKING)
   uint32_t backtrack_count;
 #endif
@@ -91,6 +93,7 @@ typedef struct {
   data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
 } data_array_t;
 
+// 16 bytes | 4 elements in a cacheline
 typedef struct {
   volatile uint16_t head;
   volatile uint16_t batch_head;
@@ -98,11 +101,15 @@ typedef struct {
   data_t *data;
 } PACKED prod_queue_t;
 
+// 17 bytes
 typedef struct {
   volatile uint16_t tail;
   volatile uint16_t batch_tail;
+#if defined(ADAPTIVE) || defined(OPTIMIZE_BACKTRACKING)
   cons_extra_metadata_t extra_metadata;
+#endif
   uint32_t num_deq_failures;
+  uint8_t backtrack_flag;
   data_t *data;
 } PACKED cons_queue_t;
 
