@@ -86,7 +86,9 @@ const Configuration def = {
     .num_nops = 0,
     .K = 20,
     .ht_fill = 25,
-    .skew = 1.0};  // TODO enum
+    .skew = 1.0,
+    .hwprefetchers = false,
+};  // TODO enum
 
 // global config
 Configuration config;
@@ -467,7 +469,8 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
         "adjust hashtable fill ratio [0-100] ")(
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
-        "Zipfian skewness");
+        "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
+                                           ->default_value(def.hwprefetchers));
 
     papi_init();
 
@@ -480,6 +483,15 @@ int Application::process(int argc, char *argv[]) {
     // Enable verbose logging
     if (vm["v"].as<bool>()) {
       plog::get()->setMaxSeverity(plog::verbose);
+    }
+
+    // Control hw prefetcher msr
+    if (vm["hw-pref"].as<bool>()) {
+      // XXX: 0x1a4 is prefetch control;
+      // 0 - all enabled; f - all disabled
+      this->msr_ctrl->write_msr(0x1a4, 0x0);
+    } else {
+      this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
 
     if (config.mode == SYNTH) {
@@ -550,6 +562,15 @@ int Application::process(int argc, char *argv[]) {
       perror("drop caches");
     }
   }
+
+  // Dump hwprefetchers msr - Needs msr-safe driver
+  // (use scripts/enable_msr_safe.sh)
+  auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
+  printf("MSR 0x1a4 has: { ");
+  for (const auto &e : rdmsr_set) {
+    printf("0x%lx ", e);
+  }
+  printf("}\n");
 
   config.dump_configuration();
 

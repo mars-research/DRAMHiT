@@ -26,15 +26,14 @@
 
 static data_t ELEMENT_ZERO = 0x0UL;
 
-int init_queue(queue_t *q) {
-  memset(q->data, 0, QUEUE_SIZE * sizeof(data_t));
-#if defined(CONS_BATCH)
+int init_queue(cons_queue_t *q) {
+#if defined(CONS_BATCH) && defined(ADAPTIVE)
   Q_BATCH_HISTORY = CONS_BATCH_SIZE;
 #endif
   return 0;
 }
 
-int free_queue(queue_t *q) { return 0; }
+int free_queue(cons_queue_t *q) { return 0; }
 
 #if defined(PROD_BATCH) || defined(CONS_BATCH)
 inline int leqthan(volatile data_t point, volatile data_t batch_point) {
@@ -43,7 +42,7 @@ inline int leqthan(volatile data_t point, volatile data_t batch_point) {
 #endif
 
 #if defined(PROD_BATCH)
-int enqueue(queue_t *q, data_t value) {
+int enqueue(prod_queue_t *q, data_t value) {
   uint32_t tmp_head;
   if (Q_HEAD == Q_BATCH_HEAD) {
     tmp_head = Q_HEAD + PROD_BATCH_SIZE;
@@ -79,7 +78,7 @@ int enqueue(queue_t *q, data_t value) {
 
 #if defined(CONS_BATCH)
 
-static inline int backtracking(queue_t *q) {
+static inline int backtracking(cons_queue_t *q) {
   uint32_t tmp_tail;
   tmp_tail = Q_TAIL + CONS_BATCH_SIZE - 1;
   if (tmp_tail >= QUEUE_SIZE) {
@@ -95,9 +94,10 @@ static inline int backtracking(queue_t *q) {
 #endif
 
 #if defined(BACKTRACKING)
-  unsigned long batch_size = Q_BATCH_HISTORY;
+  unsigned long batch_size = CONS_BATCH_SIZE;
 #if defined(OPTIMIZE_BACKTRACKING2)
   if ((!q->data[tmp_tail]) && !Q_BACKTRACK_FLAG) {
+    fipc_test_time_wait_ticks(CONS_CONGESTION_PENALTY);
     return -1;
   }
 #endif
@@ -137,33 +137,7 @@ static inline int backtracking(queue_t *q) {
   return 0;
 }
 
-// Prefetch the queue itself
-// We observed cache misses for `q` on VTune
-void prefetch_queue(queue_t *q) { __builtin_prefetch(q, 1, 3); }
-
-// Prefetch the queue data
-void prefetch_queue_data(queue_t *q, bool producer) {
-  if (producer) {
-    __builtin_prefetch(&q->data[Q_HEAD + 4 * 0], 1, 3);
-    __builtin_prefetch(&q->data[Q_HEAD + 4 * 1], 1, 3);
-    __builtin_prefetch(&q->data[Q_HEAD + 4 * 2], 1, 3);
-    __builtin_prefetch(&q->data[Q_HEAD + 4 * 3], 1, 3);
-  } else {
-    uint32_t new_tail = (Q_TAIL + 8) & (QUEUE_SIZE - 1);
-    __builtin_prefetch(&q->data[Q_TAIL], 1, 3);
-    __builtin_prefetch(&q->data[new_tail], 1, 3);
-    new_tail = (Q_TAIL + 16) & (QUEUE_SIZE - 1);
-    __builtin_prefetch(&q->data[new_tail], 1, 3);
-    new_tail = (Q_TAIL + 24) & (QUEUE_SIZE - 1);
-    __builtin_prefetch(&q->data[new_tail], 1, 3);
-    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 0], 1, 3);
-    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 1], 1, 3);
-    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 2], 1, 3);
-    //__builtin_prefetch(&q->data[Q_TAIL + 4 * 3], 1, 3);
-  }
-}
-
-int dequeue(queue_t *q, data_t *value) {
+int dequeue(cons_queue_t *q, data_t *value) {
   if (Q_TAIL == Q_BATCH_TAIL) {
     if (backtracking(q) != 0) return BUFFER_EMPTY;
   }

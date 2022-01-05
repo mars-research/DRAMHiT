@@ -90,6 +90,7 @@ struct Configuration {
   uint32_t K;
   uint32_t ht_fill;
   double skew;
+  bool hwprefetchers;
 
   void dump_configuration() {
     printf("Run configuration{\n");
@@ -101,6 +102,7 @@ struct Configuration {
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
+    printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("}\n");
   }
 };
@@ -109,11 +111,13 @@ struct Configuration {
 struct thread_stats {
   uint64_t insertion_cycles;  // to be set by create_shards
   uint64_t num_inserts;
+  uint64_t num_enqueues;
   uint64_t find_cycles;
   uint64_t num_finds;
   uint64_t ht_fill;
   uint64_t ht_capacity;
   uint32_t max_count;
+  uint64_t enqueue_cycles;
   // uint64_t total_threads; // TODO add this back
 #ifdef CALC_STATS
   uint64_t num_reprobes;
