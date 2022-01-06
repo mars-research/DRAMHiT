@@ -38,6 +38,7 @@ add_library(ht_lib
     "src/hashtables/kvtypes.cpp"
 )
 target_include_directories(ht_lib PUBLIC include)
+target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash)
 
 # Build all the source files for the executable.
 add_executable(kvstore
@@ -55,7 +56,7 @@ add_executable(kvstore
 # Add subdirectory
 add_subdirectory(lib)
 target_link_directories(kvstore PRIVATE lib/)
-target_link_libraries(kvstore PRIVATE ht_lib fnv xxhash cityhash)
+target_link_libraries(kvstore PRIVATE ht_lib)
 
 # Declare include directory.
 include_directories(include/ lib/ lib/cityhash/src/ lib/plog/include/)
@@ -212,7 +213,7 @@ add_definitions(-DCONFIG_ALIGN_BQUEUE_METADATA)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 
-target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
+target_link_libraries(kvstore PRIVATE boost_program_options Threads::Threads)
 
 if (BUILD_TESTING)
     enable_testing()
