@@ -79,7 +79,7 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
   // Get input.
   const auto [test_name, ht_name] = GetParam();
   const auto hashtable_size = absl::GetFlag(FLAGS_hashtable_size);
-  PLOG_INFO << "Running test " << test_name << " with hashtable " << ht_name;
+  PLOG_INFO << "Running test <" << test_name << " with hashtable <" << ht_name << ">";
 
   // Get test function.
   const auto test_fn = [test_name]() -> void (*)(kmercounter::BaseHashTable*) {
