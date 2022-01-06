@@ -205,7 +205,9 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
   found += vp.first;
 #endif
 
+#ifdef LATENCY_COLLECTION
   collector.dump();
+#endif
 
   return {duration, found};
 }

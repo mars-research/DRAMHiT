@@ -496,7 +496,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   }
 
   get_ht_stats(sh, ktable);
+
+#ifdef LATENCY_COLLECTION
   collector.dump();
+#endif
 }
 
 void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {

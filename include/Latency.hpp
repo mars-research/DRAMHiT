@@ -1,6 +1,9 @@
 #ifndef _LATENCY_HPP
 #define _LATENCY_HPP
 
+#include <plog/Log.h>
+#include <x86intrin.h>
+
 #include <array>
 #include <cassert>
 #include <cstddef>
@@ -9,8 +12,6 @@
 #include <numeric>
 #include <sstream>
 #include <thread>
-
-#include <x86intrin.h>
 
 #include "sync.h"
 
@@ -23,9 +24,14 @@ class LatencyCollector {
  public:
   std::uint64_t start() {
     const auto time = __rdtsc();
-    _mm_lfence(); // Ensure that the later element loads occur after the timestamp read
+    _mm_lfence();  // Ensure that the later element loads occur after the
+                   // timestamp read
     const auto id = allocate();
-    if (id == sentinel) return id;
+    if (id == sentinel) {
+      PLOG_ERROR << "Invalid time id\n";
+      std::terminate();
+    }
+
     assert(timers.at(id) == 0);
     timers.at(id) = time;
     return id;
@@ -33,7 +39,8 @@ class LatencyCollector {
 
   void end(std::uint64_t id) {
     unsigned int aux;
-    const auto stop = __rdtscp(&aux); // all prior loads will have completed by now
+    const auto stop =
+        __rdtscp(&aux);  // all prior loads will have completed by now
     if (id == sentinel) return;
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
     assert(timers.at(id) != 0);
@@ -74,8 +81,19 @@ class LatencyCollector {
     for (; skipped < bitmap.size() && bitmap[skipped] == sentinel; ++skipped)
       ;
 
-    if (skipped == bitmap.size()) return sentinel;
-    const auto leftmost_zero = __builtin_ctzll(bitmap[skipped]) - 1;
+    if (skipped == bitmap.size()) std::terminate();
+    const auto leftmost_zero =
+        bitmap[skipped] ? __builtin_ctzll(bitmap[skipped]) - 1
+                        : 63;  // Mysteriously, this sometimes returns -1
+
+    // For some reason, the bitmap appears to start filling from the 31st--not the 63rd--bit
+    if (leftmost_zero < 0 || leftmost_zero > 63) {
+      PLOG_ERROR << "Leftmost zero was: " << leftmost_zero;
+      PLOG_ERROR << "Skipped was: " << skipped;
+      PLOG_ERROR << "Bitmap was: " << bitmap[skipped];
+      std::terminate();
+    }
+
     bitmap[skipped] |= 1ull << leftmost_zero;
 
     return skipped * 64 + leftmost_zero;
@@ -94,7 +112,8 @@ class LatencyCollector {
 };
 
 #ifdef LATENCY_COLLECTION
-extern thread_local LatencyCollector<512> collector;
+constexpr auto pool_size = 2048;
+extern thread_local LatencyCollector<pool_size> collector;
 #endif
 }  // namespace kvstore
 
