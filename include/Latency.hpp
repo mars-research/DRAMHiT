@@ -10,6 +10,10 @@
 #include <sstream>
 #include <thread>
 
+#include <x86intrin.h>
+
+#include "sync.h"
+
 namespace kvstore {
 template <std::size_t capacity>
 class LatencyCollector {
@@ -17,18 +21,24 @@ class LatencyCollector {
   static constexpr auto sentinel = std::numeric_limits<std::uint64_t>::max();
 
  public:
-  std::uint64_t start(std::uint64_t time) {
+  std::uint64_t start() {
+    const auto time = __rdtsc();
+    _mm_lfence(); // Ensure that the later element loads occur after the timestamp read
     const auto id = allocate();
     if (id == sentinel) return id;
+    assert(timers.at(id) == 0);
     timers.at(id) = time;
     return id;
   }
 
-  void end(std::uint64_t stop, std::uint64_t id) {
+  void end(std::uint64_t id) {
+    unsigned int aux;
+    const auto stop = __rdtscp(&aux); // all prior loads will have completed by now
     if (id == sentinel) return;
-
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
+    assert(timers.at(id) != 0);
     const auto time = stop - timers.at(id);
+    timers.at(id) = 0;
     free(id);
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }

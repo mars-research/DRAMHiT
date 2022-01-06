@@ -205,7 +205,7 @@ class CASHashTable : public BaseHashTable {
 
   void *find_noprefetch(const void *data) {
 #ifdef LATENCY_COLLECTION
-    const auto tid = collector.start(RDTSC_START());
+    const auto tid = collector.start();
 #endif
 
 #ifdef CALC_STATS
@@ -247,7 +247,7 @@ class CASHashTable : public BaseHashTable {
     }
 
 #ifdef LATENCY_COLLECTION
-    collector.end(RDTSCP(), tid);
+    collector.end(tid);
 #endif
 
     return curr;
@@ -374,7 +374,7 @@ class CASHashTable : public BaseHashTable {
     }
 
 #ifdef LATENCY_COLLECTION
-    collector.end(__rdtsc(), q->timer_id);
+    collector.end(q->timer_id);
 #endif
 
     return found;
@@ -501,7 +501,7 @@ class CASHashTable : public BaseHashTable {
     Keys *key_data = reinterpret_cast<Keys *>(data);
 
 #ifdef LATENCY_COLLECTION
-    const auto tid = collector.start(__rdtsc());
+    const auto tid = collector.start();
 #endif
 
     uint64_t hash = this->hash((const char *)&key_data->key);

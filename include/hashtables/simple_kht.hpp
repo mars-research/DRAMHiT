@@ -477,7 +477,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
 
 #ifdef LATENCY_COLLECTION
-    collector.end(__rdtsc(), q->timer_id);
+    collector.end(q->timer_id);
 #endif
 
     return found;
@@ -946,7 +946,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
 
 #ifdef LATENCY_COLLECTION
-    const auto timer_id = collector.start(__rdtsc());
+    const auto timer_id = collector.start();
 #endif
 
     size_t idx = hash & (this->capacity - 1);  // modulo
