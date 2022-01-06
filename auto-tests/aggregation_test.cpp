@@ -5,6 +5,7 @@
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
 
+#include "test_lib.hpp"
 #include "hashtable.h"
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/simple_kht.hpp"
@@ -15,11 +16,6 @@
   times a particular id occurs
     - independent of key?
 */
-
-ABSL_FLAG(int, hashtable_size, 1ull << 26,
-          "size of hashtable.");
-ABSL_FLAG(int, test_size, 1ull << 12,
-          "size of test(number of insertions/lookup).");
 
 namespace kmercounter {
 namespace {
@@ -244,9 +240,3 @@ INSTANTIATE_TEST_CASE_P(TestAllCombinations,
 
 }  // namespace
 }  // namespace kmercounter
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  absl::ParseCommandLine(argc, argv);
-  return RUN_ALL_TESTS();
-}

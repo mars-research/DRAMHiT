@@ -7,21 +7,10 @@
 #include <absl/flags/parse.h>
 #include <plog/Log.h>
 
+#include "test_lib.hpp"
 #include "hashtable.h"
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/simple_kht.hpp"
-
-/*
-  - Fill depends on the *distinct* key/id pairs
-  - find_batch() returns pairs of (id, count), where count is the number of
-  times a particular id occurs
-    - independent of key?
-*/
-
-ABSL_FLAG(int, hashtable_size, 1ull << 26,
-          "size of hashtable.");
-ABSL_FLAG(int, test_size, 1ull << 12,
-          "size of test(number of insertions/lookup).");
 
 namespace kmercounter {
 namespace {
@@ -136,8 +125,3 @@ INSTANTIATE_TEST_CASE_P(TestAllCombinations,
 }  // namespace
 }  // namespace kmercounter
 
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  absl::ParseCommandLine(argc, argv);
-  return RUN_ALL_TESTS();
-}
