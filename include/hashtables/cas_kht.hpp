@@ -335,11 +335,10 @@ class CASHashTable : public BaseHashTable {
     uint64_t retry;
     found = curr->find(q, &retry, vp);
 
-    //  printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found
-    //  =%ld, retry %ld\n",
-    //         __func__, q->key, vp.first, vp.second[(vp.first - 1) %
-    //                 PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
-    //                 % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
+    // printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found=%ld, retry %ld\n",
+    //          __func__, q->key, vp.first, vp.second[(vp.first - 1) %
+    //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
+    //                  % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
     if (retry) {
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run

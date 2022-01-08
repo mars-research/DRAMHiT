@@ -22,7 +22,9 @@ struct kmer {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
-uint64_t HT_TESTS_HT_SIZE = 1 << 26ULL;  // * 8ull;
+// default size for hashtable
+// when each element is 16 bytes (2 * uint64_t), this amounts to 64 GiB
+uint64_t HT_TESTS_HT_SIZE = (1ull << 26) * 64;
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
@@ -152,6 +154,10 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 
   std::uint64_t duration{};
 
+#ifdef NO_PREFETCH
+  auto t_start = RDTSC_START();
+#endif
+
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
     // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
 #if defined(SAME_KMER)
@@ -197,9 +203,12 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
   const auto t_start = RDTSC_START();
   ktable->flush_find_queue(vp);
   const auto t_end = RDTSCP();
-  duration += t_end - t_start;
+  // duration += t_end - t_start;
 
   found += vp.first;
+#else
+  auto t_end = RDTSCP();
+  duration = t_end - t_start;
 #endif
   return {duration, found};
 }
