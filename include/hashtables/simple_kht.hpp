@@ -127,7 +127,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void prefetch(uint64_t i) {
-    if (i > this->capacity) std::terminate();
+    if (i > this->capacity) {
+      PLOG_ERROR.printf("%u > %lu\n", i, this->capacity);
+      std::terminate();
+    }
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object<true /* write */>(&this->hashtable[this->id][i],
                                       sizeof(this->hashtable[this->id][i]));
@@ -836,7 +839,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // prepare for possible reprobe
     // point next idx (nidx) to the start of the next cacheline
     auto nidx = idx + KV_PER_CACHE_LINE - cidx;
-    nidx = nidx == this->capacity ? 0 : nidx;  // modulo
+    nidx = nidx >= this->capacity ? (nidx - this->capacity) : nidx;  // modulo
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
     this->insert_queue[this->ins_head].idx = nidx;
@@ -912,6 +915,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // The hashes have little to no upper-bit entropy _because of how they are
     // assigned to the queues_
     size_t idx = fastrange32(hash, this->capacity);  // modulo
+    if (idx > this->capacity) {
+      PLOG_ERROR.printf("%u > %lu\n", idx, this->capacity);
+      std::terminate();
+    }
     ++hash_histogram.at(idx & histogram_mask);
 
     // cout << " -- Adding " << key  << " at " << this->ins_head <<
