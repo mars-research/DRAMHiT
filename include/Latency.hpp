@@ -22,18 +22,11 @@ class LatencyCollector {
   static constexpr auto sentinel = std::numeric_limits<std::uint64_t>::max();
 
  public:
-  std::uint64_t start() {
-    const auto time = __rdtsc();
-    _mm_lfence();  // Ensure that the later element loads occur after the
-                   // timestamp read
+  std::uint64_t start() {    
     const auto id = allocate();
-    if (id == sentinel) {
-      PLOG_ERROR << "Invalid time id\n";
-      std::terminate();
-    }
-
-    assert(timers.at(id) == 0);
-    timers.at(id) = time;
+    const auto time = __rdtsc();
+    timers[id] = time;
+    _mm_lfence();
     return id;
   }
 
@@ -41,12 +34,11 @@ class LatencyCollector {
     unsigned int aux;
     const auto stop =
         __rdtscp(&aux);  // all prior loads will have completed by now
-    if (id == sentinel) return;
-    static constexpr auto max_time = std::numeric_limits<timer_type>::max();
-    assert(timers.at(id) != 0);
-    const auto time = stop - timers.at(id);
-    timers.at(id) = 0;
+
+    const auto time = stop - timers[id];
     free(id);
+    
+    static constexpr auto max_time = std::numeric_limits<timer_type>::max();
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
@@ -82,21 +74,20 @@ class LatencyCollector {
       ;
 
     if (skipped == bitmap.size()) std::terminate();
-    const auto leftmost_zero =
-        bitmap[skipped] ? __builtin_ctzll(bitmap[skipped]) - 1
-                        : 63;  // Mysteriously, this sometimes returns -1
+    const auto rightmost_zero = __builtin_ctzll(~bitmap[skipped]);
 
-    // For some reason, the bitmap appears to start filling from the 31st--not the 63rd--bit
-    if (leftmost_zero < 0 || leftmost_zero > 63) {
-      PLOG_ERROR << "Leftmost zero was: " << leftmost_zero;
+    // For some reason, the bitmap appears to start filling from the 31st--not
+    // the 63rd--bit
+    if (rightmost_zero < 0 || rightmost_zero > 63) {
+      PLOG_ERROR << "Rightmost zero was: " << rightmost_zero;
       PLOG_ERROR << "Skipped was: " << skipped;
       PLOG_ERROR << "Bitmap was: " << bitmap[skipped];
       std::terminate();
     }
 
-    bitmap[skipped] |= 1ull << leftmost_zero;
+    bitmap[skipped] |= 1ull << rightmost_zero;
 
-    return skipped * 64 + leftmost_zero;
+    return skipped * 64 + rightmost_zero;
   }
 
   void push(timer_type time) {
