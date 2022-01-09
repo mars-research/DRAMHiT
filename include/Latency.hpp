@@ -16,13 +16,14 @@
 #include "sync.h"
 
 namespace kvstore {
+using timer_type = std::uint16_t;
+
 template <std::size_t capacity>
 class LatencyCollector {
-  using timer_type = std::uint16_t;
   static constexpr auto sentinel = std::numeric_limits<std::uint64_t>::max();
 
  public:
-  std::uint64_t start() {    
+  std::uint64_t start() {
     const auto id = allocate();
     const auto time = __rdtsc();
     timers[id] = time;
@@ -37,7 +38,24 @@ class LatencyCollector {
 
     const auto time = stop - timers[id];
     free(id);
-    
+
+    static constexpr auto max_time = std::numeric_limits<timer_type>::max();
+    push(time <= max_time ? static_cast<timer_type>(time) : max_time);
+  }
+
+  std::uint64_t sync_start() {
+    const auto time = __rdtsc();
+    _mm_lfence();
+    return time;
+  }
+
+  void sync_end(std::uint64_t start) {
+    unsigned int aux;
+    const auto stop =
+        __rdtscp(&aux);  // all prior loads will have completed by now
+
+    const auto time = stop - start;
+
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }

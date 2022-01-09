@@ -205,7 +205,7 @@ class CASHashTable : public BaseHashTable {
 
   void *find_noprefetch(const void *data) {
 #ifdef LATENCY_COLLECTION
-    const auto tid = collector.start();
+    const auto start = collector.sync_start();
 #endif
 
 #ifdef CALC_STATS
@@ -247,7 +247,7 @@ class CASHashTable : public BaseHashTable {
     }
 
 #ifdef LATENCY_COLLECTION
-    collector.end(tid);
+    collector.sync_end(start);
 #endif
 
     return curr;
