@@ -20,8 +20,12 @@ class BQueueTest {
   NumaPolicyQueues *npq;
 
   std::vector<numa_node> nodes;
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
   std::map<std::tuple<int, int>, prod_queue_t *> pqueue_map;
   std::map<std::tuple<int, int>, cons_queue_t *> cqueue_map;
+#else
+  std::map<std::tuple<int, int>, queue_t *> queue_map;
+#endif
 
  public:
   void run_find_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);

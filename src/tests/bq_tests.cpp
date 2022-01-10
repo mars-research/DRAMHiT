@@ -94,15 +94,24 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint8_t this_prod_id = sh->shard_idx;
   uint32_t cons_id = 0;
   uint64_t transaction_id;
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
   prod_queue_t *pqueues[n_cons];
   cons_queue_t *cqueues[n_cons];
+#else
+  queue_t *queues[n_cons];
+#endif
 
   // initialize the local queues array from queue_map
   for (auto i = 0u; i < n_cons; i++) {
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
     pqueues[i] = pqueue_map.at(std::make_tuple(this_prod_id, i));
     cqueues[i] = cqueue_map.at(std::make_tuple(this_prod_id, i));
     PLOG_DEBUG.printf("[prod:%d] q[%d] -> %p (data %p)", this_prod_id, i,
                       pqueues[i], pqueues[i]->data);
+#else
+    queues[i] = queue_map.at(std::make_tuple(this_prod_id, i));
+    PLOG_DEBUG.printf("[prod:%d] q[%d] -> %p", this_prod_id, i, queues[i]);
+#endif
   }
 
 #ifdef WITH_VTUNE_LIB
@@ -184,7 +193,11 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
       // the hashing mechanism to have reduced overhead
       uint64_t hash_val = hasher(&k, sizeof(k));
       cons_id = hash_to_cpu(hash_val, n_cons);
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
       auto *q = pqueues[cons_id];
+#else
+      auto *q = queues[cons_id];
+#endif
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
       k |= (hash_val << 32);
@@ -193,10 +206,12 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
       if (enqueue(q, (data_t)k) != SUCCESS) {
         // At some point, we decided to retry immediately.
         // XXX: This could turn into an infinite loop in some corner cases
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
         q->num_enq_failures++;
+#endif
         goto retry;
       }
-
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
       if (1) {
         if (((Q_HEAD + 4) & 7) == 0) {
           auto q = pqueues[get_next_cons(1)];
@@ -204,7 +219,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
           __builtin_prefetch(&q->data[next_1], 1, 3);
         }
       }
-
+#endif
       transaction_id++;
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
@@ -226,6 +241,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   sh->stats->enqueue_cycles = (t_end - t_start);
   sh->stats->num_enqueues = transaction_id;
 
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_cons; ++i) {
     auto *q = pqueues[i];
     PLOG_INFO.printf("[prod:%u] q[%d] enq_failures %u | num_enqueues %lu",
@@ -237,14 +253,16 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
     auto *q = cqueues[cons_id];
     Q_BACKTRACK_FLAG = 1;
   };
-
+#endif
   // enqueue halt messages and the consumer automatically knows
   // when to stop
   for (cons_id = 0; cons_id < n_cons; cons_id++) {
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
     enable_backtracking(cons_id);
-
     auto *q = pqueues[cons_id];
-
+#else
+    auto *q = queues[cons_id];
+#endif
     while (enqueue(q, (data_t)BQ_MAGIC_64BIT) != SUCCESS)
       ;
     PLOG_DEBUG.printf(
@@ -296,7 +314,11 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   uint32_t prod_id = 0;
 
   uint8_t this_cons_id = sh->shard_idx - n_prod;
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
   cons_queue_t *cqueues[n_prod];
+#else
+  queue_t *queues[n_prod];
+#endif
   uint64_t inserted = 0u;
 
 #ifdef WITH_VTUNE_LIB
@@ -309,10 +331,15 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   for (auto i = 0u; i < n_prod; i++) {
     PLOG_DEBUG.printf("[cons: %u] at tuple {%d, %d} shard_idx %d tid %u",
                       this_cons_id, i, this_cons_id, sh->shard_idx, tid);
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
     cqueues[i] = cqueue_map.at(std::make_tuple(i, this_cons_id));
     PLOG_DEBUG.printf("[cons:%u] q[%d] -> %p (data %p) dq failures %lu",
                       this_cons_id, i, cqueues[i], cqueues[i]->data,
                       cqueues[i]->num_deq_failures);
+#else
+    queues[i] = queue_map.at(std::make_tuple(this_cons_id, i));
+    PLOG_DEBUG.printf("[prod:%d] q[%d] -> %p", this_cons_id, i, queues[i]);
+#endif
   }
 
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*n_cons];
@@ -346,8 +373,11 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   prod_id = 0;
 
   while (finished_producers < n_prod) {
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
     auto *q = cqueues[prod_id];
-
+#else
+    auto *q = queues[prod_id];
+#endif
     auto get_next_prod = [&](auto inc) {
       auto next_prod_id = prod_id + inc;
       if (next_prod_id >= n_prod) next_prod_id -= n_prod;
@@ -373,6 +403,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
     // | q0 ... | q1 ... |
     // prefetching logic to prefetch the data array elements
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
     if (1) {
       cons_queue_t *ncq = cqueues[get_next_prod(3)];
       if ((ncq->tail + BQ_TESTS_BATCH_LENGTH_CONS - 1) == ncq->batch_tail) {
@@ -393,13 +424,14 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         __builtin_prefetch(n2q, 1, 3);
       }
     }
-
+#endif
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
       if (dequeue(q, (data_t *)&k)) {
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
         // in case of failure, move on to next producer queue to dequeue
         q->num_deq_failures++;
-
+#endif
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
           if (data_idx > 0) {
             submit_batch(data_idx);
@@ -478,11 +510,13 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   sh->stats->num_inserts = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_prod; ++i) {
     auto *q = cqueues[i];
     PLOG_INFO.printf("[cons:%u] q[%d] deq_failures %u", this_cons_id, i,
                      q->num_deq_failures);
   }
+#endif
 
   PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
                    inserted);
@@ -632,6 +666,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   get_ht_stats(sh, ktable);
 }
 
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
 void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
   data_array_t *data_arrays = (data_array_t *)utils::zero_aligned_alloc(
       FIPC_CACHE_LINE_SIZE, nprod * ncons * sizeof(data_array_t));
@@ -647,7 +682,6 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
     }
   }
 
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
   // map queues and consumer_metadata
   for (auto c = 0u; c < ncons; c++) {
     cons_queue_t *cqueues = (cons_queue_t *)utils::zero_aligned_alloc(
@@ -659,7 +693,6 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
       cqueue_map.insert({std::make_tuple(p, c), cq});
     }
   }
-#endif
 
   for (auto p = 0u; p < nprod; p++) {
     for (auto c = 0u; c < ncons; c++) {
@@ -670,6 +703,20 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
     }
   }
 }
+#else
+void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
+  // Queue Allocation
+  queue_t *queues = (queue_t *)utils::zero_aligned_alloc(
+      FIPC_CACHE_LINE_SIZE, nprod * ncons * sizeof(queue_t));
+
+  for (auto c = 0u; c < ncons; c++) {
+    for (auto p = 0u; p < nprod; p++) {
+      queue_t *q = &queues[p * ncons + c];
+      queue_map.insert({std::make_tuple(p, c), q});
+    }
+  }
+}
+#endif
 
 void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
   [[maybe_unused]] uint64_t k = 0;
