@@ -216,6 +216,8 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 uint64_t seed2 = 123456789;
 inline uint64_t PREFETCH_STRIDE = 64;
 
+static uint64_t insert_done;
+
 void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   OpTimings insert_times{};
 
@@ -237,7 +239,11 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->insertion_cycles = insert_times.duration;
   sh->stats->num_inserts = insert_times.op_count;
 
-  sleep(1);
+  fipc_test_FAI(insert_done);
+
+  while (insert_done < config.num_threads) {
+    fipc_test_pause();
+  }
 
   const auto find_times = synth_run_get(kmer_ht, sh->shard_idx);
 
@@ -245,9 +251,10 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->num_finds = find_times.op_count;
 
   if (find_times.op_count > 0)
-    PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-                     sh->shard_idx, find_times.op_count,
-                     find_times.duration / find_times.op_count);
+    PLOG_INFO.printf(
+        "thread %u | num_finds %lu | rdtsc_diff %lu | cycles per get: %lu",
+        sh->shard_idx, find_times.op_count, find_times.duration,
+        find_times.duration / find_times.op_count);
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
