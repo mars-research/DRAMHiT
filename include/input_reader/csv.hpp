@@ -4,6 +4,7 @@
 #include <fstream>
 #include <variant>
 #include <vector>
+#include <plog/Log.h>
 
 #include "input_reader_base.hpp"
 
@@ -15,15 +16,18 @@ using Field = std::variant<uint8_t, uint16_t, uint32_t, uint64_t, float, double>
 
 /// A row in a table.
 // TODO: support other datatype
-class Row {
-public:
-  std::vector<uint64_t> fields;
-};
+// class Row {
+// public:
+//   std::vector<uint64_t> fields;
+// };
+
+/// The first field(key) of the row and the raw row itself.
+using Row = std::pair<uint64_t, std::string>;
 
 /// Read a CSV file.
 /// All data are cached in memory to save I/O.
 /// WIP; only reads the first integer column at this moment. 
-class CsvReader : public InputReader<uint64_t> {
+class CsvReader : public InputReader<Row*> {
     public:
     CsvReader(std::string_view filename, std::string_view delimiter) {
       // Read CSV line by line into memory.
@@ -32,23 +36,23 @@ class CsvReader : public InputReader<uint64_t> {
       for (std::string line; std::getline(ifile, line); /*noop*/) {
         const std::string field_str = line.substr(0, line.find(delimiter));
         const uint64_t field = std::stoull(field_str);
-        this->data.push_back(field);
+        this->data.push_back(std::make_pair(field, line));
       }
 
       this->iter = this->data.begin();
     }
 
-    std::optional<uint64_t> next() override {
+    std::optional<Row*> next() override {
         if (this->iter == this->data.end()) {
           return std::nullopt;
         } else {
-          return *(this->iter++);
+          return &*(this->iter++);
         }
     }
 
 private:
-    std::vector<uint64_t> data;
-    std::vector<uint64_t>::iterator iter;
+    std::vector<Row> data;
+    std::vector<Row>::iterator iter;
 };
 
 } // namespace input_reader

@@ -153,7 +153,7 @@ std::ostream& operator<<(std::ostream& os, const Keys& q);
 
 struct Values {
   uint64_t value;
-  uint64_t id;
+  uint64_t id; // for user to keep track of the transaction
 };
 std::ostream& operator<<(std::ostream& os, const Values& q);
 
