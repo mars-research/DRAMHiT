@@ -140,11 +140,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   return {duration, HT_TESTS_NUM_INSERTS};
 }
 
-OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
-  uint64_t count = HT_TESTS_NUM_INSERTS * start;
+OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
+  uint64_t count =
+      std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
   auto k = 0;
   uint64_t found = 0, not_found = 0;
-  if (start == 0) count = 1;
 
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
@@ -154,18 +154,17 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 
   std::uint64_t duration{};
 
-#ifdef NO_PREFETCH
-  auto t_start = RDTSC_START();
-#endif
+  const auto t_start = RDTSC_START();
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
-    // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
 #if defined(SAME_KMER)
     items[k].key = items[k].id = 32;
     k++;
 #else
     items[k].key = count;
     items[k].id = count;
+    // part_id is relevant only for partitioned ht
+    items[k].part_id = tid;
     count++;
 #endif
 
@@ -178,38 +177,30 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 #else
     if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
-      // printf("%s, calling find_batch i = %d\n", __func__, i);
 
-      const auto t_start = RDTSC_START();
       ktable->find_batch(kp, vp);
-      const auto t_end = RDTSCP();
-      duration += t_end - t_start;
 
       found += vp.first;
       vp.first = 0;
       k = 0;
       not_found += HT_TESTS_FIND_BATCH_LENGTH - found;
-      // printf("\t count %lu | found -> %lu | not_found -> %lu \n", count,
-      // found, not_found);
     }
 #endif  // NO_PREFETCH
-    // printf("\t count %lu | found -> %lu\n", count, found);
   }
+
 #if !defined(NO_PREFETCH)
   if (vp.first > 0) {
     vp.first = 0;
   }
 
-  const auto t_start = RDTSC_START();
   ktable->flush_find_queue(vp);
-  const auto t_end = RDTSCP();
-  // duration += t_end - t_start;
 
   found += vp.first;
-#else
-  auto t_end = RDTSCP();
-  duration = t_end - t_start;
 #endif
+
+  const auto t_end = RDTSCP();
+  duration = t_end - t_start;
+
   return {duration, found};
 }
 
