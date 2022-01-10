@@ -392,6 +392,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   BaseHashTable *ktable;
   uint64_t t_start, t_end;
   Hasher hasher;
+  auto &collector = collectors.at(tid);
 
   if (tid == 0) count = 1;
 
@@ -469,7 +470,12 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
       // printf("%s, calling find_batch i = %d\n", __func__, i);
       // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
-      ktable->find_batch(kp, vp);
+      ktable->find_batch(kp, vp
+#ifdef LATENCY_COLLECTION
+                         ,
+                         collector
+#endif
+      );
       found += vp.first;
       j = 0;
       not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
@@ -485,6 +491,16 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     // }
 #endif
   }
+
+  ktable->flush_find_queue(vp
+#ifdef LATENCY_COLLECTION
+                           ,
+                           collector
+#endif
+  );
+
+  found += vp.first;
+
   t_end = RDTSCP();
 
   sh->stats->find_cycles = (t_end - t_start);

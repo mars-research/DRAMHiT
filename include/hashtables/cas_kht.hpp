@@ -158,19 +158,41 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
+#ifdef LATENCY_COLLECTION
   void flush_find_queue(ValuePairs &vp) override {
+    PLOG_ERROR << "This hashtable did not implement flush_find_queue";
+    std::terminate();
+  }
+#endif
+
+  void flush_find_queue(ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                        ,
+                        decltype(collectors)::value_type &collector
+#endif
+                        ) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
     while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp
+#ifdef LATENCY_COLLECTION
+                 ,
+                 collector
+#endif
+      );
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
   }
 
-  void flush_if_needed(ValuePairs &vp) {
+  void flush_if_needed(ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                       ,
+                       decltype(collectors)::value_type &collector
+#endif
+  ) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     // make sure you return at most batch_sz (but can possibly return lesser
@@ -180,7 +202,12 @@ class CASHashTable : public BaseHashTable {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp
+#ifdef LATENCY_COLLECTION
+                 ,
+                 collector
+#endif
+      );
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -188,8 +215,25 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void find_batch(KeyPairs &kp, ValuePairs &values) {
-    this->flush_if_needed(values);
+#ifdef LATENCY_COLLECTION
+  virtual void find_batch(KeyPairs &kp, ValuePairs &vp) {
+    PLOG_ERROR << "This hashtable did not implement find_batch";
+    std::terminate();
+  };
+#endif
+
+  void find_batch(KeyPairs &kp, ValuePairs &values
+#ifdef LATENCY_COLLECTION
+                  ,
+                  decltype(collectors)::value_type &collector
+#endif
+  ) {
+    this->flush_if_needed(values
+#ifdef LATENCY_COLLECTION
+                          ,
+                          collector
+#endif
+    );
 
     Keys *keys;
     uint32_t batch_len;
@@ -197,13 +241,35 @@ class CASHashTable : public BaseHashTable {
 
     for (auto k = 0u; k < batch_len; k++) {
       void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data);
+      add_to_find_queue(data
+#ifdef LATENCY_COLLECTION
+                        ,
+                        collector
+#endif
+      );
     }
 
-    this->flush_if_needed(values);
+    this->flush_if_needed(values
+#ifdef LATENCY_COLLECTION
+                          ,
+                          collector
+#endif
+    );
   }
 
+#ifdef LATENCY_COLLECTION
   void *find_noprefetch(const void *data) {
+    PLOG_ERROR << "This hashtable did not implement find_noprefetch";
+    std::terminate();
+  };
+#endif
+
+  void *find_noprefetch(const void *data
+#ifdef LATENCY_COLLECTION
+                        ,
+                        decltype(collectors)::value_type &collector
+#endif
+  ) {
 #ifdef LATENCY_COLLECTION
     const auto start = collector.sync_start();
 #endif
@@ -333,7 +399,12 @@ class CASHashTable : public BaseHashTable {
         sizeof(this->hashtable[i & (this->capacity - 1)]));
   }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                           ,
+                           decltype(collectors)::value_type &collector
+#endif
+  ) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -380,7 +451,19 @@ class CASHashTable : public BaseHashTable {
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp) { return __find_branched(q, vp); }
+  auto __find_one(KVQ *q, ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                  ,
+                  decltype(collectors)::value_type &collector
+#endif
+  ) {
+    return __find_branched(q, vp
+#ifdef LATENCY_COLLECTION
+                           ,
+                           collector
+#endif
+    );
+  }
 
   void __insert_branched(KVQ *q) {
     // hashtable idx at which data is to be inserted
@@ -497,7 +580,12 @@ class CASHashTable : public BaseHashTable {
     if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
   }
 
-  void add_to_find_queue(void *data) {
+  void add_to_find_queue(void *data
+#ifdef LATENCY_COLLECTION
+                         ,
+                         decltype(collectors)::value_type &collector
+#endif
+  ) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
 
 #ifdef LATENCY_COLLECTION

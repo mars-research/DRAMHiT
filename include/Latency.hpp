@@ -145,7 +145,7 @@ class LatencyCollector {
 
 #ifdef LATENCY_COLLECTION
 constexpr auto pool_size = 2048;
-extern thread_local LatencyCollector<pool_size> collector;
+extern std::vector<LatencyCollector<pool_size>> collectors;
 #endif
 }  // namespace kvstore
 

@@ -2,6 +2,6 @@
 
 namespace kvstore {
 #ifdef LATENCY_COLLECTION
-thread_local LatencyCollector<pool_size> collector{};
+std::vector<LatencyCollector<pool_size>> collectors;
 #endif
 }  // namespace kvstore

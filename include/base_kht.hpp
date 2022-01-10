@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "Latency.hpp"
 #include "types.hpp"
 
 using namespace std;
@@ -33,9 +34,39 @@ class BaseHashTable {
   // Your inserts will be ignored if you do (we use these as empty markers)
   virtual void find_batch(KeyPairs &kp, ValuePairs &vp) = 0;
 
+#ifdef LATENCY_COLLECTION
+  virtual void find_batch(KeyPairs &kp, ValuePairs &vp,
+                          decltype(collectors)::value_type &collector) {
+    PLOG_ERROR
+        << "This hashtable did not implement instrumentation for find_batch";
+
+    std::terminate();
+  };
+#endif
+
   virtual void *find_noprefetch(const void *data) = 0;
 
+#ifdef LATENCY_COLLECTION
+  virtual void *find_noprefetch(const void *data,
+                               decltype(collectors)::value_type &collector) {
+    PLOG_ERROR << "This hashtable did not implement instrumentation for "
+                  "find_noprefetch";
+
+    std::terminate();
+  };
+#endif
+
   virtual void flush_find_queue(ValuePairs &vp) = 0;
+
+#ifdef LATENCY_COLLECTION
+  virtual void flush_find_queue(ValuePairs &vp,
+                                decltype(collectors)::value_type &collector) {
+    PLOG_ERROR << "This hashtable did not implement instrumentation for "
+                  "flush_find_queue";
+
+    std::terminate();
+  };
+#endif
 
   virtual void display() const = 0;
 

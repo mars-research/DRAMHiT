@@ -233,7 +233,7 @@ void Application::shard_thread(int tid, bool mainthread) {
     }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
     PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
-           outfile.c_str());
+                     outfile.c_str());
     kmer_ht->print_to_file(outfile);
   }
 
@@ -293,8 +293,8 @@ int Application::spawn_shard_threads() {
   if (config.num_threads >
       static_cast<uint32_t>(this->n->get_num_total_cpus())) {
     PLOGE.printf(
-            "More threads configured than cores available (Note: one "
-            "cpu assigned completely for synchronization)");
+        "More threads configured than cores available (Note: one "
+        "cpu assigned completely for synchronization)");
     exit(-1);
   }
 
@@ -357,13 +357,13 @@ int Application::spawn_shard_threads() {
 // TODO: Move me @David
 void papi_init() {
 #if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
-    if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
-      PLOGE.printf("Library initialization error! ");
-      exit(1);
-    }
-
-    PLOGI.printf("PAPI library initialized");
+  if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
+    PLOGE.printf("Library initialization error! ");
+    exit(1);
   }
+
+  PLOGI.printf("PAPI library initialized");
+}
 #endif
 }
 
@@ -461,22 +461,28 @@ int Application::process(int argc, char *argv[]) {
       plog::get()->setMaxSeverity(plog::verbose);
     }
 
+#ifdef LATENCY_COLLECTION
+    collectors.resize(config.mode == BQ_TESTS_YES_BQ
+                          ? config.n_cons + config.n_prod
+                          : config.num_threads);
+#endif
+
     if (config.mode == SYNTH) {
       PLOG_INFO.printf("Mode : SYNTH");
     } else if (config.mode == PREFETCH) {
       PLOG_INFO.printf("Mode : PREFETCH");
     } else if (config.mode == DRY_RUN) {
       PLOG_INFO.printf("Mode : Dry run ...");
-      PLOG_INFO.printf("base: %lu, mult: %u, uniq: %lu",
-             config.kmer_create_data_base, config.kmer_create_data_mult,
-             config.kmer_create_data_uniq);
+      PLOG_INFO.printf(
+          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == READ_FROM_DISK) {
       PLOG_INFO.printf("Mode : Reading kmers from disk ...");
     } else if (config.mode == WRITE_TO_DISK) {
       PLOG_INFO.printf("Mode : Writing kmers to disk ...");
-      PLOG_INFO.printf("base: %lu, mult: %u, uniq: %lu",
-             config.kmer_create_data_base, config.kmer_create_data_mult,
-             config.kmer_create_data_uniq);
+      PLOG_INFO.printf(
+          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == FASTQ_WITH_INSERT) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT");
       if (config.in_file.empty()) {
@@ -498,7 +504,8 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.ht_type == CAS_KHT) {
       PLOG_INFO.printf("Hashtable type : CASKmerHashTable");
     } else if (config.ht_type == STDMAP_KHT) {
-      PLOG_INFO.printf("Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
+      PLOG_INFO.printf(
+          "Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
       PLOG_INFO.printf("Exiting ... ");
       exit(0);
     }
@@ -563,4 +570,4 @@ int Application::process(int argc, char *argv[]) {
 
   return 0;
 }
-}  // namespace kmercounter
+}  // namespace kvstore

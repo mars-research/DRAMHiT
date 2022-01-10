@@ -86,10 +86,6 @@ else()
 endif()
 
 if (LATENCY_COLLECTION)
-    if (NOT BRANCH STREQUAL "simd")
-        message(FATAL_ERROR "Latency collection only supported on SIMD insert/find")
-    endif()
-
     message(WARNING "Latency collection enabled")
     add_definitions(-DLATENCY_COLLECTION)
 endif()

@@ -142,6 +142,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 }
 
 OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
+  auto &collector = collectors.at(start);
   uint64_t count = HT_TESTS_NUM_INSERTS * start;
   auto k = 0;
   uint64_t found = 0, not_found = 0;
@@ -171,7 +172,13 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 
 #ifdef NO_PREFETCH
     {
-      void *kv = ktable->find_noprefetch(&items[k]);
+      void *kv = ktable->find_noprefetch(&items[k]
+#ifdef LATENCY_COLLECTION
+                                         ,
+                                         collector
+#endif
+      );
+
       if (kv) found += 1;
       k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
     }
@@ -181,7 +188,12 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
       // printf("%s, calling find_batch i = %d\n", __func__, i);
 
       const auto t_start = RDTSC_START();
-      ktable->find_batch(kp, vp);
+      ktable->find_batch(kp, vp
+#ifdef LATENCY_COLLECTION
+                         ,
+                         collector
+#endif
+      );
       const auto t_end = RDTSCP();
       duration += t_end - t_start;
 
@@ -201,7 +213,12 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
   }
 
   const auto t_start = RDTSC_START();
-  ktable->flush_find_queue(vp);
+  ktable->flush_find_queue(vp
+#ifdef LATENCY_COLLECTION
+                           ,
+                           collector
+#endif
+  );
   const auto t_end = RDTSCP();
   duration += t_end - t_start;
 
