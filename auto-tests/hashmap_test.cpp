@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string_view>
 #include <memory>
-#include <unordered_set>
+#include <unordered_map>
 #include <gtest/gtest.h>
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
@@ -17,15 +17,17 @@ namespace {
 // Test names.
 const char NO_PREFETCH_TEST[] = "No prefetch";
 const char SIMPLE_BATCH_QUERY_TEST[] = "Simple batch query";
+const char BATCH_QUERY_TEST[] = "Batch query";
 constexpr const char* TEST_FNS [] {
-  NO_PREFETCH_TEST,
-  SIMPLE_BATCH_QUERY_TEST,
+  // NO_PREFETCH_TEST,
+  // SIMPLE_BATCH_QUERY_TEST,
+  BATCH_QUERY_TEST,
 };
 // Hashtable names.
 const char PARTITIONED_HT[] = "Partitioned HT";
 const char CAS_HT[] = "CAS HT";
 constexpr const char* HTS [] {
-  PARTITIONED_HT,
+  // PARTITIONED_HT,
   CAS_HT,
 };
 
@@ -35,16 +37,16 @@ constexpr const char* HTS [] {
 void no_prefetch_test(BaseHashTable* ht) {
   std::cerr << "[TEST] Synchronous\n";
 
-  const auto size = absl::GetFlag(FLAGS_test_size);
+  const auto test_size = absl::GetFlag(FLAGS_test_size);
   
-  for (std::uint64_t i{}; i < size; i++) {
+  for (uint64_t i = 1; i <= test_size; i++) {
     ItemQueue data;
     data.key = i;
     data.value = i * i;
     ht->insert_noprefetch(&data);
   }
 
-  for (std::uint64_t i{}; i < size; i++) {
+  for (uint64_t i = 1; i <= test_size; i++) {
     auto ptr = (KVType*)ht->find_noprefetch(&i);
     EXPECT_FALSE(ptr->is_empty()) << "Cannot find " << i;
     EXPECT_EQ(ptr->get_value(), i * i) << "Invalid value for key " << i;
@@ -72,6 +74,72 @@ void simple_batch_query_test(BaseHashTable* ht) {
   EXPECT_EQ(valuepairs.second[1].value, 256);
 }
 
+void batch_query_test(BaseHashTable* ht) {
+  // A known correct implementation of hashmap.
+  std::unordered_map<uint64_t, uint64_t> reference_map;
+
+  // Insert test data.
+  uint64_t k = 0;
+  Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  uint64_t test_size = absl::GetFlag(FLAGS_test_size);
+  for (uint64_t i = 1; i <= test_size; i++) {
+    const uint64_t key = i;
+    const uint64_t value = i * i;
+    const uint64_t id = 2 * i;
+    keys[k].key = key;
+    keys[k].id = value;
+    reference_map[value] = id;
+    if (++k == HT_TESTS_BATCH_LENGTH) {
+      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &keys[0]);
+      ht->insert_batch(kp);
+      k = 0;
+    }
+  }
+  ht->flush_insert_queue();
+
+  // Helper function for checking the result of the batch finds.
+  auto check_valuepairs = [&reference_map] (const ValuePairs& vp) {
+    for (uint32_t i = 0; i < vp.first; i++) {
+      const Values& value = vp.second[i];
+      auto iter = reference_map.find(value.value);
+      EXPECT_NE(iter, reference_map.end()) << "Found unexpected value: " << value;
+      if (iter != reference_map.end()) {
+        EXPECT_EQ(iter->second, value.id) << "Found unexpected id: " << value;
+        reference_map.erase(iter);
+      }
+    }
+  };
+
+  // Finds.
+  Values values[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  for (uint64_t i = 1; i <= test_size; i++) {
+    keys[k].key = i;
+    keys[k].id = 2 * i;
+    keys[k].part_id = 3 * i;
+    if (++k == HT_TESTS_BATCH_LENGTH) {
+      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, keys);
+      ValuePairs valuepairs{0, values};
+      ht->find_batch(kp, valuepairs);
+      check_valuepairs(valuepairs);
+      k = 0;
+    }
+  }
+
+  // Flush the rest of the queue.
+  ValuePairs valuepairs{0, values};
+  do {
+    valuepairs.first = 0;
+    ht->flush_find_queue(valuepairs);
+    check_valuepairs(valuepairs);
+  } while (valuepairs.first);
+
+  // Make sure we found all of them.
+  for (const auto pair : reference_map) {
+    EXPECT_TRUE(false) << "Couldn't find talue <" << pair.first << "> id <" << pair.second << "> pair";
+  }
+}
+  
+
 class CombinationsTest :
     public ::testing::TestWithParam<std::tuple<const char*, const char*>> {};
 
@@ -79,7 +147,7 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
   // Get input.
   const auto [test_name, ht_name] = GetParam();
   const auto hashtable_size = absl::GetFlag(FLAGS_hashtable_size);
-  PLOG_INFO << "Running test <" << test_name << " with hashtable <" << ht_name << ">";
+  PLOG_INFO << "Running test <" << test_name << "> with hashtable <" << ht_name << ">";
 
   // Get test function.
   const auto test_fn = [test_name]() -> void (*)(kmercounter::BaseHashTable*) {
@@ -87,6 +155,8 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
       return kmercounter::no_prefetch_test;
     else if (test_name == SIMPLE_BATCH_QUERY_TEST)
       return kmercounter::simple_batch_query_test;
+    else if (test_name == BATCH_QUERY_TEST)
+      return kmercounter::batch_query_test;
     else
       return nullptr;
   }();
