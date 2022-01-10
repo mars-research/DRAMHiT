@@ -155,6 +155,9 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 
   std::uint64_t duration{};
 
+#ifdef NO_PREFETCH
+  const auto t_start = RDTSC_START();
+#endif
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
     // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
 #if defined(SAME_KMER)
@@ -203,6 +206,9 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
   duration += t_end - t_start;
 
   found += vp.first;
+#else
+  const auto t_end = RDTSCP();
+  duration += t_end - t_start;
 #endif
 
 #ifdef LATENCY_COLLECTION

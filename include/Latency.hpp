@@ -13,6 +13,7 @@
 #include <sstream>
 #include <thread>
 
+#include "misc_lib.h"
 #include "sync.h"
 
 namespace kvstore {
@@ -24,14 +25,19 @@ class LatencyCollector {
 
  public:
   std::uint64_t start() {
+    if (reject_sample()) return sentinel;
+
     const auto id = allocate();
     const auto time = __rdtsc();
     timers[id] = time;
     _mm_lfence();
+
     return id;
   }
 
   void end(std::uint64_t id) {
+    if (id == sentinel) return;
+
     unsigned int aux;
     const auto stop =
         __rdtscp(&aux);  // all prior loads will have completed by now
@@ -44,12 +50,15 @@ class LatencyCollector {
   }
 
   std::uint64_t sync_start() {
+    if (reject_sample()) return sentinel;
     const auto time = __rdtsc();
     _mm_lfence();
     return time;
   }
 
   void sync_end(std::uint64_t start) {
+    if (start == sentinel) return;
+
     unsigned int aux;
     const auto stop =
         __rdtscp(&aux);  // all prior loads will have completed by now
@@ -64,8 +73,10 @@ class LatencyCollector {
     std::stringstream stream{};
     stream << "latencies/" << std::this_thread::get_id() << ".dat";
     std::ofstream stats{stream.str().c_str()};
-    for (const auto& line : log)
-      for (auto time : line) stats << static_cast<unsigned int>(time) << "\n";
+    for (auto i = 0u; i <= next_log_entry && i < log.size(); ++i) {
+      const auto length = i < next_log_entry ? log.front().size() : next_slot;
+      for (auto j = 0u; j < length; ++j) stats << static_cast<unsigned int>(log[i][j]) << "\n";
+    }
   }
 
  private:
@@ -79,6 +90,18 @@ class LatencyCollector {
   // cacheline
   alignas(64) std::uint8_t next_slot{};
   std::uint64_t next_log_entry{};
+
+  alignas(64) xorwow_state rand_state{[] {
+    xorwow_state state{};
+    xorwow_init(&state);
+    return state;
+  }()};
+
+  bool reject_sample() {
+    constexpr auto pow2 = 4u;
+    constexpr auto bitmask = (1ull << pow2) - 1;
+    return xorwow(&rand_state) & bitmask;
+  }
 
   void free(std::uint64_t id) {
     const auto i = id >> 6;
