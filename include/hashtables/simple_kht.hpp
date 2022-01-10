@@ -572,7 +572,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // index at which reprobe must begin
     size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-    ridx = ridx == this->capacity ? 0 : ridx;  // modulo
+    ridx = (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
+
     this->prefetch_read(ridx);
 
     this->find_queue[this->find_head].key = q->key;
@@ -893,9 +894,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       __builtin_prefetch(&this->insert_queue[_ins_head], 1, 3);
     } else if (qtype == QueueType::find_queue) {
       auto _find_head = this->find_head;
-      __builtin_prefetch(&this->insert_queue[_find_head], 1, 3);
+      __builtin_prefetch(&this->find_queue[_find_head], 1, 3);
       _find_head = this->find_head + (64 / sizeof(KVQ));
-      __builtin_prefetch(&this->insert_queue[_find_head], 1, 3);
+      __builtin_prefetch(&this->find_queue[_find_head], 1, 3);
     }
   }
 
@@ -915,14 +916,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // The hashes have little to no upper-bit entropy _because of how they are
     // assigned to the queues_
     size_t idx = fastrange32(hash, this->capacity);  // modulo
+
     if (idx > this->capacity) {
       PLOG_ERROR.printf("%u > %lu\n", idx, this->capacity);
       std::terminate();
     }
-    ++hash_histogram.at(idx & histogram_mask);
 
-    // cout << " -- Adding " << key  << " at " << this->ins_head <<
-    // endl;
+#if defined(HASH_HISTOGRAM)
+    ++hash_histogram.at(idx & histogram_mask);
+#endif
     this->prefetch(idx);
 
     if constexpr (experiment_inactive(experiment_type::prefetch_only)) {

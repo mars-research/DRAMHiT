@@ -67,7 +67,10 @@ inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
   // non-bqueue setting.
   auto ratio = static_cast<double>(n_prod) / n_cons + 1;
 
-  auto num_messages = HT_TESTS_NUM_INSERTS * ratio;
+  auto num_messages = HT_TESTS_NUM_INSERTS / n_prod;
+  if (tid == (n_prod - 1)) {
+    num_messages += HT_TESTS_NUM_INSERTS % n_prod;
+  }
   // our HT has a notion of empty keys which is 0. So, no '0' key for now!
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
@@ -314,14 +317,15 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   // bq_kmer[BQ_TESTS_BATCH_LENGTH*n_cons];
 
-  PLOG_DEBUG.printf(
-      "[cons:%u] init_ht id:%d size:%u", this_cons_id, sh->shard_idx,
-      HT_TESTS_HT_SIZE * (cfg->n_prod + cfg->n_cons) / cfg->n_cons);
+  auto ht_size = config.ht_size / n_cons;
+  // if (this_cons_id == (n_cons - 1)) {
+  //   ht_size += config.ht_size % n_cons;
+  // }
 
-  [[maybe_unused]] auto [ratio, num_messages, key_start] =
-      get_params(n_prod, n_cons, tid);
+  PLOG_INFO.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id,
+                   sh->shard_idx, ht_size);
 
-  kmer_ht = init_ht(HT_TESTS_HT_SIZE * ratio, sh->shard_idx);
+  kmer_ht = init_ht(ht_size, sh->shard_idx);
   (*this->ht_vec)[tid] = kmer_ht;
 
   fipc_test_FAI(ready_consumers);
@@ -504,11 +508,9 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
                              bool main_thread) {
   Shard *sh = &this->shards[tid];
   uint64_t found = 0, not_found = 0;
-  uint64_t count = HT_TESTS_NUM_INSERTS * tid;
+  uint64_t count = std::max(HT_TESTS_NUM_INSERTS * tid, (uint64_t)1);
   BaseHashTable *ktable;
   Hasher hasher;
-
-  if (tid == 0) count = 1;
 
   alignas(64) uint64_t k = 0;
 
@@ -520,13 +522,16 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   ktable = this->ht_vec->at(tid);
 
   if (ktable == nullptr) {
-    PLOG_INFO.printf("init_ht with %d", sh->shard_idx);
     // Both producer and consumer threads participate in find. However, the
     // producer threads do not have any <k,v> pairs to find. So, they queue the
     // find request to the actual partitions which hosts these keys.
     // Nevertheless, they need this ktable object to queue the find requests to
     // other partitions. So, just create a HT with 100 buckets.
-    ktable = init_ht(100, sh->shard_idx);
+
+    auto ht_size = config.ht_size / n_cons;
+    PLOG_INFO.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
+                     sh->shard_idx);
+    ktable = init_ht(ht_size, sh->shard_idx);
     this->ht_vec->at(tid) = ktable;
   }
 
@@ -546,9 +551,8 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     fipc_test_mfence();
   }
 
-  // HT_TESTS_NUM_INSERTS enqueues per consumer
-  auto ratio = static_cast<double>(n_prod / n_cons) + 1;
-  auto num_messages = HT_TESTS_NUM_INSERTS * ratio;
+  auto num_messages = HT_TESTS_NUM_INSERTS / (n_prod + n_cons);
+  // our HT has a notion of empty keys which is 0. So, no '0' key for now!
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
@@ -556,25 +560,26 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   ValuePairs vp = std::make_pair(0, values);
 
-  if (tid == 1) {
-    // return;
-  }
-  // printf("%s, mult_factor %f _num_messages %f | num_messages %lu\n",
-  // __func__,
-  //        mult_factor, _num_messages, num_messages);
-  if (key_start == 0) key_start = 1;
-  PLOG_INFO.printf("Finder %u starting. key_start %lu", tid, key_start);
+  PLOG_INFO.printf("Finder %u starting. key_start %lu | num_messages %lu", tid,
+                   key_start, num_messages);
 
   int partition;
   int j = 0;
 
+#ifdef WITH_VTUNE_LIB
+  static const auto event =
+      __itt_event_create("find_batch", strlen("find_batch"));
+  __itt_event_start(event);
+#endif
+
   auto t_start = RDTSC_START();
 
-  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+  for (auto i = 0u; i < num_messages; i++) {
     k = key_start++;
     uint64_t hash_val = hasher(&k, sizeof(k));
 
-    partition = hash_to_cpu(k, n_cons);
+    partition = hash_to_cpu(hash_val, n_cons);
+    // PLOGI.printf("partition %d", partition);
     // k has the computed hash in upper 32 bits
     // and the actual key value in lower 32 bits
     k |= (hash_val << 32);
@@ -584,34 +589,44 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     items[j].part_id = partition + n_prod;
     count++;
 
+    if (j == 0) {
+      ktable->prefetch_queue(QueueType::find_queue);
+    }
     if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
-      // printf("%s, calling find_batch i = %d\n", __func__, i);
+      // PLOGI.printf("calling find_batch i = %d", i);
       // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
       ktable->find_batch(kp, vp);
       found += vp.first;
       j = 0;
       not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
       vp.first = 0;
-      // printf("\t tid %lu count %lu | found -> %lu | not_found -> %lu \n",
-      // tid, count, found, not_found);
+      PLOGD.printf("tid %lu count %lu | found -> %lu | not_found -> %lu", tid,
+                   count, found, not_found);
     }
 
 #ifdef CALC_STATS
-    if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
-      PLOG_INFO.printf("Producer %u, transaction_id %lu\n", this_prod_id,
-             transaction_id);
+    if (i % (num_messages / 10) == 0) {
+      PLOG_INFO.printf(
+          "Finder %u, transaction_id %lu | (found %lu, not_found %lu)", tid, i,
+          found, not_found);
     }
 #endif
   }
   auto t_end = RDTSCP();
 
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(event);
+#endif
+
   sh->stats->find_cycles = (t_end - t_start);
   sh->stats->num_finds = found;
 
-  if (found > 0) {
-    PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu\n",
-                     sh->shard_idx, found, (t_end - t_start) / found);
+  if (found >= 0) {
+    PLOG_INFO.printf(
+        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu",
+        sh->shard_idx, found, not_found,
+        found > 0 ? (t_end - t_start) / found : 0);
   }
 
   get_ht_stats(sh, ktable);
@@ -716,7 +731,7 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   this->insert_with_bqueues(cfg, n, npq);
 
   // 2) spawn n_prod + n_cons threads for find
-  // this->run_find_test(cfg, n, npq);
+  this->run_find_test(cfg, n, npq);
 }
 
 void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
@@ -905,7 +920,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
 
   // TODO free everything
   // TODO: Move this stats to find after testing find
-  print_stats(this->shards, *cfg);
+  // print_stats(this->shards, *cfg);
 }
 
 }  // namespace kmercounter

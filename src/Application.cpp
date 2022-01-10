@@ -530,6 +530,7 @@ int Application::process(int argc, char *argv[]) {
 
     if (config.ht_type == SIMPLE_KHT) {
       PLOG_INFO.printf("Hashtable type : SimpleKmerHashTable");
+      config.ht_size /= config.num_threads;
     } else if (config.ht_type == ROBINHOOD_KHT) {
       PLOG_INFO.printf("Hashtable type : RobinhoodKmerHashTable");
     } else if (config.ht_type == CAS_KHT) {
@@ -543,7 +544,7 @@ int Application::process(int argc, char *argv[]) {
 
     if (config.ht_fill > 0 && config.ht_fill < 100) {
       HT_TESTS_NUM_INSERTS =
-          static_cast<double>(HT_TESTS_HT_SIZE) * config.ht_fill * 0.01;
+          static_cast<double>(config.ht_size) * config.ht_fill * 0.01;
     } else {
       PLOG_ERROR.printf("ht_fill should be in range [1, 99)");
     }
