@@ -392,7 +392,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   BaseHashTable *ktable;
   uint64_t t_start, t_end;
   Hasher hasher;
+
+#ifdef LATENCY_COLLECTION
   auto &collector = collectors.at(tid);
+#endif
 
   if (tid == 0) count = 1;
 

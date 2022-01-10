@@ -142,7 +142,10 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 }
 
 OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
+#ifdef LATENCY_COLLECTION
   auto &collector = collectors.at(start);
+#endif
+
   uint64_t count = HT_TESTS_NUM_INSERTS * start;
   auto k = 0;
   uint64_t found = 0, not_found = 0;

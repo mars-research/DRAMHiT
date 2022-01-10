@@ -26,45 +26,33 @@ class LatencyCollector {
  public:
   std::uint64_t start() {
     if (reject_sample()) return sentinel;
-
     const auto id = allocate();
-    const auto time = __rdtsc();
-    timers[id] = time;
-    _mm_lfence();
-
+    start_timed(timers[id]);
     return id;
   }
 
   void end(std::uint64_t id) {
     if (id == sentinel) return;
-
-    unsigned int aux;
-    const auto stop =
-        __rdtscp(&aux);  // all prior loads will have completed by now
-
+    std::uint64_t stop;
+    stop_timed(stop);
     const auto time = stop - timers[id];
     free(id);
-
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
   std::uint64_t sync_start() {
     if (reject_sample()) return sentinel;
-    const auto time = __rdtsc();
-    _mm_lfence();
+    std::uint64_t time{};
+    start_timed(time);
     return time;
   }
 
   void sync_end(std::uint64_t start) {
     if (start == sentinel) return;
-
-    unsigned int aux;
-    const auto stop =
-        __rdtscp(&aux);  // all prior loads will have completed by now
-
+    std::uint64_t stop{};
+    stop_timed(stop);
     const auto time = stop - start;
-
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
@@ -75,7 +63,8 @@ class LatencyCollector {
     std::ofstream stats{stream.str().c_str()};
     for (auto i = 0u; i <= next_log_entry && i < log.size(); ++i) {
       const auto length = i < next_log_entry ? log.front().size() : next_slot;
-      for (auto j = 0u; j < length; ++j) stats << static_cast<unsigned int>(log[i][j]) << "\n";
+      for (auto j = 0u; j < length; ++j)
+        stats << static_cast<unsigned int>(log[i][j]) << "\n";
     }
   }
 
@@ -97,8 +86,20 @@ class LatencyCollector {
     return state;
   }()};
 
+  void start_timed(std::uint64_t& save) {
+    const auto time = __rdtsc();
+    save = time;
+    _mm_lfence();
+  }
+
+  void stop_timed(std::uint64_t& save) {
+    unsigned int aux;
+    save = __rdtscp(&aux);
+  }
+
   bool reject_sample() {
-    constexpr auto pow2 = 4u;
+    // log[next_log_entry][next_slot] = 0; // touch line even during a rejection
+    constexpr auto pow2 = 5u;
     constexpr auto bitmask = (1ull << pow2) - 1;
     return xorwow(&rand_state) & bitmask;
   }
