@@ -13,7 +13,12 @@ std::ostream& operator<<(std::ostream& os, const ItemQueue& q) {
 #ifdef COMPARE_HASH
               << ",key_hash:" << q.key_hash
 #endif
+              << "}";
+}
+
+std::ostream &operator<<(std::ostream &os, const KVPair &x) {
+    return os << "{key: " << x.key
+              << ",value: " << x.value
               << "}" << std::endl;
-              ;
 }
 } // namespace kmercounter

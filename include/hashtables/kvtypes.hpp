@@ -458,6 +458,7 @@ struct KVPair {
   uint64_t key;
   uint64_t value;
 } PACKED;
+std::ostream &operator<<(std::ostream &strm, const KVPair &item);
 
 struct Item {
   KVPair kvpair;
@@ -467,7 +468,7 @@ struct Item {
   using queue = ItemQueue;
 
   friend std::ostream &operator<<(std::ostream &strm, const Item &item) {
-    return strm << item.kvpair.key << " : " << item.kvpair.value;
+    return strm << "{" << item.kvpair.key << ": " << item.kvpair.value << "}";
   }
 
   inline bool insert(queue *elem) {
