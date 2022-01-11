@@ -16,11 +16,13 @@ namespace kmercounter {
 namespace {
 // Test names.
 const char NO_PREFETCH_TEST[] = "No prefetch";
-const char SIMPLE_BATCH_QUERY_TEST[] = "Simple batch query";
+const char SIMPLE_BATCH_INSERT_TEST[] = "Simple batch insert";
+const char SIMPLE_BATCH_UPDATE_TEST[] = "Simple batch update";
 const char BATCH_QUERY_TEST[] = "Batch query";
 constexpr const char* TEST_FNS [] {
   // NO_PREFETCH_TEST,
-  // SIMPLE_BATCH_QUERY_TEST,
+  SIMPLE_BATCH_INSERT_TEST,
+  SIMPLE_BATCH_UPDATE_TEST,
   BATCH_QUERY_TEST,
 };
 // Hashtable names.
@@ -53,7 +55,7 @@ void no_prefetch_test(BaseHashTable* ht) {
   }
 }
 
-void simple_batch_query_test(BaseHashTable* ht) {
+void simple_batch_insert_test(BaseHashTable* ht) {
   // Insertion.
   std::array<Keys, 2> keys{Keys{1, 128}, Keys{2, 256}};
   KeyPairs keypairs{2, keys.data()};
@@ -61,6 +63,8 @@ void simple_batch_query_test(BaseHashTable* ht) {
   ht->flush_insert_queue();
 
   // Look up.
+  keys[0].id = 123;
+  keys[1].id = 321;
   std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht->find_batch(keypairs, valuepairs);
@@ -68,10 +72,38 @@ void simple_batch_query_test(BaseHashTable* ht) {
 
   // Check for correctness.
   EXPECT_EQ(valuepairs.first, 2);
-  EXPECT_EQ(valuepairs.second[0].id, 1);
+  EXPECT_EQ(valuepairs.second[0].id, 123);
   EXPECT_EQ(valuepairs.second[0].value, 128);
-  EXPECT_EQ(valuepairs.second[1].id, 2);
+  EXPECT_EQ(valuepairs.second[1].id, 321);
   EXPECT_EQ(valuepairs.second[1].value, 256);
+}
+
+void simple_batch_update_test(BaseHashTable* ht) {
+  // Insertion.
+  std::array<Keys, 2> keys{Keys{1, 128}, Keys{2, 256}};
+  KeyPairs keypairs{2, keys.data()};
+  ht->insert_batch(keypairs); 
+
+  // Update.
+  keys[0].id = 1025;
+  keys[1].id = 4097;
+  ht->insert_batch(keypairs); 
+  ht->flush_insert_queue();
+
+  // Look up.
+  keys[0].id = 123;
+  keys[1].id = 321;
+  std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
+  ValuePairs valuepairs{0, values.data()};
+  ht->find_batch(keypairs, valuepairs);
+  ht->flush_find_queue(valuepairs);
+
+  // Check for correctness.
+  EXPECT_EQ(valuepairs.first, 2);
+  EXPECT_EQ(valuepairs.second[0].id, 123);
+  EXPECT_EQ(valuepairs.second[0].value, 1025);
+  EXPECT_EQ(valuepairs.second[1].id, 321);
+  EXPECT_EQ(valuepairs.second[1].value, 4097);
 }
 
 void batch_query_test(BaseHashTable* ht) {
@@ -153,8 +185,10 @@ TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
   const auto test_fn = [test_name]() -> void (*)(kmercounter::BaseHashTable*) {
     if (test_name == NO_PREFETCH_TEST)
       return kmercounter::no_prefetch_test;
-    else if (test_name == SIMPLE_BATCH_QUERY_TEST)
-      return kmercounter::simple_batch_query_test;
+    else if (test_name == SIMPLE_BATCH_INSERT_TEST)
+      return kmercounter::simple_batch_insert_test;    
+    else if (test_name == SIMPLE_BATCH_UPDATE_TEST)
+      return kmercounter::simple_batch_update_test;
     else if (test_name == BATCH_QUERY_TEST)
       return kmercounter::batch_query_test;
     else
