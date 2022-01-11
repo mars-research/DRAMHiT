@@ -16,7 +16,7 @@ namespace input_reader {
 /// The file is sliced up evenly among the partitions
 class PartitionedFileReader : public InputReader<std::string> {
  public:
-  PartitionedFileReader(std::string_view filename, uint64_t num_partitions, uint64_t part_id)
+  PartitionedFileReader(std::string_view filename, uint64_t part_id, uint64_t num_parts)
       : input_file(filename.data()) {
     PLOG_FATAL_IF(this->input_file.fail()) << "Failed to open file " << filename;
 
@@ -25,15 +25,16 @@ class PartitionedFileReader : public InputReader<std::string> {
     input_file.seekg(0, std::ios::end);
     const uint64_t file_size = input_file.tellg();
     input_file.seekg(0);
-    const uint64_t part_start = (double)part_id / file_size * num_partitions;
+    const uint64_t part_start = (double)file_size / num_parts * part_id;
     this->part_end = [&]() -> uint64_t {
-      if (part_id == num_partitions) {
+      if (part_id == num_parts) {
         return std::numeric_limits<uint64_t>::max();
       } else {
         // This is same as `file_size` but I am worrying about error cause by floating precision.
-        return (double)file_size / num_partitions * (part_id + 1);
+        return (double)file_size / num_parts * (part_id + 1);
       }
     }();
+    PLOG_DEBUG << part_id << "/" << num_parts << ": " << part_start << ", " << part_end;
 
     // If `start` is not 0 and `start - 1` is not a newline,
     // seek to the next newline and start reading from there.
