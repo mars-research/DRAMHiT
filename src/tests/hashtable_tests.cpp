@@ -22,7 +22,9 @@ struct kmer {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
-uint64_t HT_TESTS_HT_SIZE = (1 << 26ULL);  // * 8ull;
+// default size for hashtable
+// when each element is 16 bytes (2 * uint64_t), this amounts to 64 GiB
+uint64_t HT_TESTS_HT_SIZE = (1ull << 26) * 64;
 uint64_t HT_TESTS_NUM_INSERTS;
 
 #define HT_TESTS_MAX_STRIDE 2
@@ -63,8 +65,10 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
+  std::string evt_name(ht_type_strings[config.ht_type]);
+  evt_name += "_insertions";
   static const auto event =
-      __itt_event_create("inserting", strlen("inserting"));
+      __itt_event_create(evt_name.c_str(), evt_name.length());
   __itt_event_start(event);
 #endif
 
@@ -86,8 +90,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     // *((uint64_t *)&kmers[k].data) = count;
     //*((uint64_t *)items[k].key()) = count;
     //*((uint64_t *)items[k].value()) = count;
+#ifdef NO_PREFETCH
     keys[k] = count;
+#endif
     _items[k].key = count;
+    _items[k].value = count;
 #endif
 
 #ifdef NO_PREFETCH
@@ -138,11 +145,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   return {duration, HT_TESTS_NUM_INSERTS};
 }
 
-OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
-  uint64_t count = HT_TESTS_NUM_INSERTS * start;
+OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
+  uint64_t count =
+      std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
   auto k = 0;
   uint64_t found = 0, not_found = 0;
-  if (start == 0) count = 1;
 
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
@@ -152,14 +159,25 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 
   std::uint64_t duration{};
 
+#ifdef WITH_VTUNE_LIB
+  std::string evt_name(ht_type_strings[config.ht_type]);
+  evt_name += "_finds";
+  static const auto event =
+      __itt_event_create(evt_name.c_str(), evt_name.length());
+  __itt_event_start(event);
+#endif
+
+  const auto t_start = RDTSC_START();
+
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
-    // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
 #if defined(SAME_KMER)
     items[k].key = items[k].id = 32;
     k++;
 #else
     items[k].key = count;
     items[k].id = count;
+    // part_id is relevant only for partitioned ht
+    items[k].part_id = tid;
     count++;
 #endif
 
@@ -172,46 +190,48 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t start) {
 #else
     if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
-      // printf("%s, calling find_batch i = %d\n", __func__, i);
 
-      const auto t_start = RDTSC_START();
       ktable->find_batch(kp, vp);
-      const auto t_end = RDTSCP();
-      duration += t_end - t_start;
 
       found += vp.first;
       vp.first = 0;
       k = 0;
       not_found += HT_TESTS_FIND_BATCH_LENGTH - found;
-      // printf("\t count %lu | found -> %lu | not_found -> %lu \n", count,
-      // found, not_found);
     }
 #endif  // NO_PREFETCH
-    // printf("\t count %lu | found -> %lu\n", count, found);
   }
+
 #if !defined(NO_PREFETCH)
   if (vp.first > 0) {
     vp.first = 0;
   }
 
-  const auto t_start = RDTSC_START();
   ktable->flush_find_queue(vp);
-  const auto t_end = RDTSCP();
-  duration += t_end - t_start;
 
   found += vp.first;
 #endif
+
+  const auto t_end = RDTSCP();
+
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(event);
+#endif
+
+  duration = t_end - t_start;
+
   return {duration, found};
 }
 
 uint64_t seed2 = 123456789;
 inline uint64_t PREFETCH_STRIDE = 64;
 
+static uint64_t insert_done;
+
 void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   OpTimings insert_times{};
 
   PLOG_INFO.printf("Synth test run: thread %u, ht size: %lu, insertions: %lu",
-         sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
+                   sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (auto i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_times = synth_run(kmer_ht, sh->shard_idx);
@@ -228,7 +248,11 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->insertion_cycles = insert_times.duration;
   sh->stats->num_inserts = insert_times.op_count;
 
-  sleep(1);
+  fipc_test_FAI(insert_done);
+
+  while (insert_done < config.num_threads) {
+    fipc_test_pause();
+  }
 
   const auto find_times = synth_run_get(kmer_ht, sh->shard_idx);
 
@@ -236,9 +260,10 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->num_finds = find_times.op_count;
 
   if (find_times.op_count > 0)
-    PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-           sh->shard_idx, find_times.op_count,
-           find_times.duration / find_times.op_count);
+    PLOG_INFO.printf(
+        "thread %u | num_finds %lu | rdtsc_diff %lu | cycles per get: %lu",
+        sh->shard_idx, find_times.op_count, find_times.duration,
+        find_times.duration / find_times.op_count);
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
@@ -299,7 +324,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
 
   PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
-            << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
+             << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
@@ -334,7 +359,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
 #ifdef CALC_STATS
     PLOG_INFO.printf("Reprobes %lu soft_reprobes %lu", hashtable->num_reprobes,
-           hashtable->num_soft_reprobes);
+                     hashtable->num_soft_reprobes);
 #endif
   }
 
@@ -350,8 +375,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   if (num_finds.op_count > 0)
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-           shard->shard_idx, num_finds.op_count,
-           num_finds.duration / num_finds.op_count);
+                     shard->shard_idx, num_finds.op_count,
+                     num_finds.duration / num_finds.op_count);
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(shard, hashtable);

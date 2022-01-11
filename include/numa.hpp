@@ -273,7 +273,7 @@ class NumaPolicyQueues : public Numa {
       std::cout << "cons_config: "
                 << "num_nodes_reqd: " << std::get<0>(cons_config) << ", "
                 << "num_cpus_reqd: " << std::get<1>(cons_config) << "\n";
-      assert(std::get<0>(prod_config) + std::get<0>(cons_config) <= num_nodes);
+      //assert(std::get<0>(prod_config) + std::get<0>(cons_config) <= num_nodes);
 
       for (auto i = 0u; i < this->config_num_prod; i++) {
         uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];

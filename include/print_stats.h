@@ -9,6 +9,7 @@ namespace kmercounter {
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
 inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
+  
   sh->stats->ht_fill = kmer_ht->get_fill();
   sh->stats->ht_capacity = kmer_ht->get_capacity();
   sh->stats->max_count = kmer_ht->get_max_count();
@@ -49,7 +50,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   for (; k < config.num_threads; k++) {
     printf(
         "Thread %2d: "
-        "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
+        "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) | (%lu cycles/enqueue) "
         "{ fill: %lu of %lu (%f %%) }"
 #ifdef CALC_STATS
         "["
@@ -71,6 +72,9 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         all_sh[k].stats->num_inserts == 0
             ? 0
             : all_sh[k].stats->insertion_cycles / all_sh[k].stats->num_inserts,
+        all_sh[k].stats->num_enqueues == 0
+            ? 0
+            : all_sh[k].stats->enqueue_cycles / all_sh[k].stats->num_enqueues,
         all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
         all_sh[k].stats->ht_capacity == 0
             ? 0

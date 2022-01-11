@@ -70,37 +70,58 @@ extern const char *ht_type_strings[];
 
 // Application configuration
 struct Configuration {
+  // kmer related stuff
   uint64_t kmer_create_data_base;
   uint32_t kmer_create_data_mult;
   uint64_t kmer_create_data_uniq;
-  uint32_t num_threads;
-  run_mode_t mode;
   std::string kmer_files_dir;
   bool alphanum_kmers;
-  uint32_t numa_split;
   std::string stats_file;
   std::string ht_file;
   std::string in_file;
-  uint32_t ht_type;
   uint64_t in_file_sz;
-  bool drop_caches;
+  uint32_t K;
+
+  // number of threads
+  uint32_t num_threads;
+  // run mode
+  run_mode_t mode;
+  // controls distribution of threads across numa nodes
+  uint32_t numa_split;
+
+  // hashtable configuration
+  // different hashtable types
+  uint32_t ht_type;
+  // controls load factor on the hashtable
+  uint32_t ht_fill;
+  // hashtable size
+  uint64_t ht_size;
+
+  // bqueue configuration
+  // prod/cons count
   uint32_t n_prod;
   uint32_t n_cons;
+  // number of nops (used once for bqueue debugging)
   uint32_t num_nops;
-  uint32_t K;
-  uint32_t ht_fill;
+
+  // controls zipfian dist
   double skew;
+  // used for kmer parsing from disk
+  bool drop_caches;
+  // enable/disable hw prefetchers (msr 0x1a4)
+  bool hwprefetchers;
 
   void dump_configuration() {
     printf("Run configuration{\n");
     printf("  num_threads %u\n", this->num_threads);
     printf("  numa_split %u\n", numa_split);
-    std::cout << "  stats_file " << stats_file << std::endl;
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
+    printf("  ht_size %lu (%llu GiB)\n", ht_size, ht_size/(1ull << 30));
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
+    printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("}\n");
   }
 };
@@ -109,11 +130,13 @@ struct Configuration {
 struct thread_stats {
   uint64_t insertion_cycles;  // to be set by create_shards
   uint64_t num_inserts;
+  uint64_t num_enqueues;
   uint64_t find_cycles;
   uint64_t num_finds;
   uint64_t ht_fill;
   uint64_t ht_capacity;
   uint32_t max_count;
+  uint64_t enqueue_cycles;
   // uint64_t total_threads; // TODO add this back
 #ifdef CALC_STATS
   uint64_t num_reprobes;
@@ -147,6 +170,7 @@ struct Shard {
 struct Keys {
   uint64_t key;
   uint64_t id;
+  uint64_t value;
   uint64_t part_id;
 };
 std::ostream& operator<<(std::ostream& os, const Keys& q);
