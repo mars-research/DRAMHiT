@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "input_reader_base.hpp"
+#include "zipf.h"
 
 namespace kmercounter {
 namespace input_reader {

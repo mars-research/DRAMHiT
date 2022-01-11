@@ -37,7 +37,7 @@ add_library(ht_lib
     "src/types.cpp"
     "src/hashtables/kvtypes.cpp"
 )
-target_include_directories(ht_lib PUBLIC include)
+target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
 target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash)
 
 # Build all the source files for the executable.
