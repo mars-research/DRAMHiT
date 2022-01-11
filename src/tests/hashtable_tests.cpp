@@ -65,8 +65,10 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
+  std::string evt_name(ht_type_strings[config.ht_type]);
+  evt_name += "_insertions";
   static const auto event =
-      __itt_event_create("inserting", strlen("inserting"));
+      __itt_event_create(evt_name.c_str(), evt_name.length());
   __itt_event_start(event);
 #endif
 
@@ -88,8 +90,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     // *((uint64_t *)&kmers[k].data) = count;
     //*((uint64_t *)items[k].key()) = count;
     //*((uint64_t *)items[k].value()) = count;
+#ifdef NO_PREFETCH
     keys[k] = count;
+#endif
     _items[k].key = count;
+    _items[k].value = count;
 #endif
 
 #ifdef NO_PREFETCH
@@ -154,6 +159,14 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   std::uint64_t duration{};
 
+#ifdef WITH_VTUNE_LIB
+  std::string evt_name(ht_type_strings[config.ht_type]);
+  evt_name += "_finds";
+  static const auto event =
+      __itt_event_create(evt_name.c_str(), evt_name.length());
+  __itt_event_start(event);
+#endif
+
   const auto t_start = RDTSC_START();
 
   for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
@@ -199,6 +212,11 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 #endif
 
   const auto t_end = RDTSCP();
+
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(event);
+#endif
+
   duration = t_end - t_start;
 
   return {duration, found};
