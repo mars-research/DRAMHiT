@@ -20,7 +20,7 @@ const char SIMPLE_BATCH_INSERT_TEST[] = "Simple batch insert";
 const char SIMPLE_BATCH_UPDATE_TEST[] = "Simple batch update";
 const char BATCH_QUERY_TEST[] = "Batch query";
 constexpr const char* TEST_FNS [] {
-  // NO_PREFETCH_TEST,
+  NO_PREFETCH_TEST,
   SIMPLE_BATCH_INSERT_TEST,
   SIMPLE_BATCH_UPDATE_TEST,
   BATCH_QUERY_TEST,
@@ -127,6 +127,11 @@ void batch_query_test(BaseHashTable* ht) {
       k = 0;
     }
   }
+  if (k != 0) {
+    KeyPairs kp = std::make_pair(k, &keys[0]);
+    ht->insert_batch(kp);
+    k = 0;
+  }
   ht->flush_insert_queue();
 
   // Helper function for checking the result of the batch finds.
@@ -155,6 +160,13 @@ void batch_query_test(BaseHashTable* ht) {
       check_valuepairs(valuepairs);
       k = 0;
     }
+  }
+  if (k != 0) {
+    KeyPairs kp = std::make_pair(k, keys);
+    ValuePairs valuepairs{0, values};
+    ht->find_batch(kp, valuepairs);
+    k = 0;
+    check_valuepairs(valuepairs);
   }
 
   // Flush the rest of the queue.
