@@ -89,17 +89,16 @@ class LatencyCollector {
   void start_timed(std::uint64_t& save) {
     const auto time = __rdtsc();
     save = time;
-    _mm_lfence();
+    //_mm_lfence();
   }
 
   void stop_timed(std::uint64_t& save) {
-    unsigned int aux;
-    save = __rdtscp(&aux);
+    //unsigned int aux;
+    save = __rdtsc();
   }
 
   bool reject_sample() {
-    // log[next_log_entry][next_slot] = 0; // touch line even during a rejection
-    constexpr auto pow2 = 5u;
+    constexpr auto pow2 = 10u;
     constexpr auto bitmask = (1ull << pow2) - 1;
     return xorwow(&rand_state) & bitmask;
   }
@@ -133,6 +132,9 @@ class LatencyCollector {
   }
 
   void push(timer_type time) {
+    if (next_slot == 0)
+      __builtin_prefetch(&log[next_log_entry + 1], 1);
+
     if (next_slot == log.front().size()) {
       if (next_log_entry == log.size() - 1) return;
 
