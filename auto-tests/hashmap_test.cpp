@@ -122,13 +122,13 @@ void batch_query_test(BaseHashTable* ht) {
     keys[k].id = value;
     reference_map[value] = id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &keys[0]);
+      KeyPairs kp = std::make_pair(k, keys);
       ht->insert_batch(kp);
       k = 0;
     }
   }
   if (k != 0) {
-    KeyPairs kp = std::make_pair(k, &keys[0]);
+    KeyPairs kp = std::make_pair(k, keys);
     ht->insert_batch(kp);
     k = 0;
   }
@@ -154,7 +154,7 @@ void batch_query_test(BaseHashTable* ht) {
     keys[k].id = 2 * i;
     keys[k].part_id = 3 * i;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, keys);
+      KeyPairs kp = std::make_pair(k, keys);
       ValuePairs valuepairs{0, values};
       ht->find_batch(kp, valuepairs);
       check_valuepairs(valuepairs);
