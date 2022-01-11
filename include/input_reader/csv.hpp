@@ -6,6 +6,7 @@
 #include <vector>
 #include <plog/Log.h>
 
+#include "file.hpp"
 #include "input_reader_base.hpp"
 
 namespace kmercounter {
@@ -31,9 +32,9 @@ class CsvReader : public InputReader<Row*> {
     public:
     CsvReader(std::string_view filename, std::string_view delimiter) {
       // Read CSV line by line into memory.
-      std::ifstream ifile(filename.data());
-      PLOG_FATAL_IF(ifile.fail()) << "Failed to open file " << filename;
-      for (std::string line; std::getline(ifile, line); /*noop*/) {
+      FileReader file(filename);
+      for (std::optional<std::string> line_op; line_op = file.next(); /*noop*/) {
+        std::string line = *line_op;
         const std::string field_str = line.substr(0, line.find(delimiter));
         const uint64_t field = std::stoull(field_str);
         this->data.push_back(std::make_pair(field, line));

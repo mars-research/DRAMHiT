@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <limits>
+#include <plog/Log.h>
 
 #include "input_reader_base.hpp"
 
@@ -13,14 +14,17 @@ namespace input_reader {
 
 /// Read file one whole line at a time within the partition.
 /// The file is sliced up evenly among the partitions
-class PartitionedFile : public InputReader<std::string> {
+class PartitionedFileReader : public InputReader<std::string> {
  public:
-  PartitionedFile(std::string_view filename, uint64_t num_partitions, uint64_t part_id)
+  PartitionedFileReader(std::string_view filename, uint64_t num_partitions, uint64_t part_id)
       : input_file(filename.data()) {
+    PLOG_FATAL_IF(this->input_file.fail()) << "Failed to open file " << filename;
+
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the parameter passing.
     input_file.seekg(0, std::ios::end);
     const uint64_t file_size = input_file.tellg();
+    input_file.seekg(0);
     const uint64_t part_start = (double)part_id / file_size * num_partitions;
     this->part_end = [&]() -> uint64_t {
       if (part_id == num_partitions) {
@@ -46,7 +50,7 @@ class PartitionedFile : public InputReader<std::string> {
 
   std::optional<std::string> next() override {
     std::string str;
-    if ((this->input_file.tellg() >= this->part_end) || std::getline(input_file, str)) {
+    if (((uint64_t)this->input_file.tellg() >= this->part_end) || !std::getline(input_file, str)) {
       return std::nullopt;
     } else {
       return str;
@@ -59,8 +63,9 @@ class PartitionedFile : public InputReader<std::string> {
 };
 
 /// Read one line at a time.
-class File : public PartitionedFile {
-  File(std::string_view filename) : PartitionedFile(filename, 1, 1) {}
+class FileReader : public PartitionedFileReader {
+public:
+  FileReader(std::string_view filename) : PartitionedFileReader(filename, 1, 1) {}
 };
 
 }  // namespace input_reader
