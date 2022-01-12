@@ -56,6 +56,10 @@ class PartitionedCsvReader : public InputReader<Row*> {
 
   uint64_t size() { return data.size(); }
 
+  const std::vector<Row>& rows() const {
+    return data;
+  }
+
  private:
   std::vector<Row> data;
   std::vector<Row>::iterator iter;
