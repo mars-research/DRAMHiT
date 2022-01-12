@@ -20,7 +20,7 @@ namespace kvstore {
 using timer_type = std::uint16_t;
 
 template <std::size_t capacity>
-class LatencyCollector {
+class alignas(64) LatencyCollector {
   static constexpr auto sentinel = std::numeric_limits<std::uint64_t>::max();
 
  public:
@@ -69,18 +69,13 @@ class LatencyCollector {
   }
 
  private:
-  alignas(64) std::array<std::uint64_t, capacity> timers{};
-  alignas(64) std::array<std::uint64_t, capacity / 64> bitmap{};
+  std::array<std::uint64_t, capacity> timers{};
+  std::array<std::uint64_t, capacity / 64> bitmap{};
 
-  // cachelines
-  alignas(64)
-      std::array<std::array<timer_type, 64 / sizeof(timer_type)>, 4096> log{};
-
-  // cacheline
-  alignas(64) std::uint8_t next_slot{};
+  std::array<std::array<timer_type, 64 / sizeof(timer_type)>, 4096> log{};
+  std::uint8_t next_slot{};
   std::uint64_t next_log_entry{};
-
-  alignas(64) xorwow_state rand_state{[] {
+  xorwow_state rand_state{[] {
     xorwow_state state{};
     xorwow_init(&state);
     return state;
@@ -93,7 +88,7 @@ class LatencyCollector {
   }
 
   void stop_timed(std::uint64_t& save) {
-    //unsigned int aux;
+    // unsigned int aux;
     save = __rdtsc();
   }
 
@@ -116,25 +111,12 @@ class LatencyCollector {
 
     if (skipped == bitmap.size()) std::terminate();
     const auto rightmost_zero = __builtin_ctzll(~bitmap[skipped]);
-
-    // For some reason, the bitmap appears to start filling from the 31st--not
-    // the 63rd--bit
-    if (rightmost_zero < 0 || rightmost_zero > 63) {
-      PLOG_ERROR << "Rightmost zero was: " << rightmost_zero;
-      PLOG_ERROR << "Skipped was: " << skipped;
-      PLOG_ERROR << "Bitmap was: " << bitmap[skipped];
-      std::terminate();
-    }
-
     bitmap[skipped] |= 1ull << rightmost_zero;
 
     return skipped * 64 + rightmost_zero;
   }
 
   void push(timer_type time) {
-    if (next_slot == 0)
-      __builtin_prefetch(&log[next_log_entry + 1], 1);
-
     if (next_slot == log.front().size()) {
       if (next_log_entry == log.size() - 1) return;
 
