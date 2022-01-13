@@ -1,10 +1,12 @@
 #ifndef INPUT_READER_FILE_HPP
 #define INPUT_READER_FILE_HPP
 
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <string_view>
 #include <limits>
+#include <memory>
 #include <plog/Log.h>
 
 #include "input_reader_base.hpp"
@@ -16,15 +18,21 @@ namespace input_reader {
 /// The file is sliced up evenly among the partitions
 class PartitionedFileReader : public InputReader<std::string> {
  public:
-  PartitionedFileReader(std::string_view filename, uint64_t part_id, uint64_t num_parts)
-      : input_file(filename.data()) {
-    PLOG_FATAL_IF(this->input_file.fail()) << "Failed to open file " << filename;
+  PartitionedFileReader(std::string_view filename, uint64_t part_id, uint64_t num_parts) 
+  :
+  PartitionedFileReader(std::make_unique<std::ifstream>(filename.data()), part_id, num_parts)
+  {
+    PLOG_FATAL_IF(this->input_file->fail()) << "Failed to open file " << filename;
+  }
+
+  PartitionedFileReader(std::unique_ptr<std::istream> input_file, uint64_t part_id, uint64_t num_parts)
+      : input_file(std::move(input_file)) {
 
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the parameter passing.
-    input_file.seekg(0, std::ios::end);
-    const uint64_t file_size = input_file.tellg();
-    input_file.seekg(0);
+    this->input_file->seekg(0, std::ios::end);
+    const uint64_t file_size = input_file->tellg();
+    input_file->seekg(0);
     const uint64_t part_start = (double)file_size / num_parts * part_id;
     this->part_end = [&]() -> uint64_t {
       if (part_id == num_parts) {
@@ -39,19 +47,19 @@ class PartitionedFileReader : public InputReader<std::string> {
     // If `start` is not 0 and `start - 1` is not a newline,
     // seek to the next newline and start reading from there.
     if (part_start != 0) {
-      this->input_file.seekg(part_start - 1);
+      this->input_file->seekg(part_start - 1);
       char c;
-      input_file >> c;
+      *this->input_file >> c;
       if (c != '\n') {
         std::string tmp;
-        std::getline(this->input_file, tmp);
+        std::getline(*this->input_file, tmp);
       }
     }
   }
 
   std::optional<std::string> next() override {
     std::string str;
-    if (((uint64_t)this->input_file.tellg() >= this->part_end) || !std::getline(input_file, str)) {
+    if (((uint64_t)this->input_file->tellg() >= this->part_end) || !std::getline(*this->input_file, str)) {
       return std::nullopt;
     } else {
       return str;
@@ -59,7 +67,7 @@ class PartitionedFileReader : public InputReader<std::string> {
   }
 
  private:
-  std::ifstream input_file;
+  std::unique_ptr<std::istream> input_file;
   uint64_t part_end;
 };
 
