@@ -21,7 +21,7 @@ find_package(Threads REQUIRED)
 find_package(Boost 1.67 REQUIRED program_options)
 
 # Set up toolchain
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -59,7 +59,7 @@ target_link_directories(kvstore PRIVATE lib/)
 target_link_libraries(kvstore PRIVATE ht_lib)
 
 # Declare include directory.
-include_directories(include/ lib/ lib/cityhash/src/ lib/plog/include/)
+include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
 option(BUILD_TESTING "Build tests." OFF)
