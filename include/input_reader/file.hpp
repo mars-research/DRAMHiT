@@ -31,8 +31,8 @@ class PartitionedFileReader : public InputReader<std::string> {
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the parameter passing.
     this->input_file->seekg(0, std::ios::end);
-    const uint64_t file_size = input_file->tellg();
-    input_file->seekg(0);
+    const uint64_t file_size = this->input_file->tellg();
+    this->input_file->seekg(0);
     const uint64_t part_start = (double)file_size / num_parts * part_id;
     this->part_end = [&]() -> uint64_t {
       if (part_id == num_parts) {
@@ -74,7 +74,8 @@ class PartitionedFileReader : public InputReader<std::string> {
 /// Read one line at a time.
 class FileReader : public PartitionedFileReader {
 public:
-  FileReader(std::string_view filename) : PartitionedFileReader(filename, 1, 1) {}
+  FileReader(std::string_view filename) : PartitionedFileReader(filename, 0, 1) {}
+  FileReader(std::unique_ptr<std::istream> input_file) : PartitionedFileReader(std::move(input_file), 0, 1) {}
 };
 
 }  // namespace input_reader
