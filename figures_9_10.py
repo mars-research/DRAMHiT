@@ -25,6 +25,10 @@ def run_synchronous(cwd: str, command: str, args: typing.List[str], log: int = o
         if state != 0:
             raise FatalError()
 
+def run_cmake(cwd: str, source: str, args: typing.List[str]):
+    run_synchronous(cwd, 'cmake', [source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DHASHER=crc'] + args)
+    run_synchronous(cwd, 'cmake', ['--build', '.'])
+
 
 if __name__ == '__main__':
     source = get_home()
@@ -40,33 +44,18 @@ if __name__ == '__main__':
 
     print('Building casht++', flush=True)
     cashtpp_home.mkdir(parents=True)
-    run_synchronous(cashtpp_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DPREFETCH=ON', '-DVTUNE=ON'])
-    run_synchronous(cashtpp_home, 'cmake', ['--build', '.'])
+    run_cmake(cashtpp_home, source, ['-DPREFETCH=ON'])    
 
     print('Building casht', flush=True)
     casht_home.mkdir(parents=True)
-    run_synchronous(casht_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DPREFETCH=OFF', '-DVTUNE=ON'])
-    run_synchronous(casht_home, 'cmake', ['--build', '.'])
+    run_cmake(casht_home, source, ['-DPREFETCH=OFF'])
 
     print('Building bq', flush=True)
     bq_home.mkdir(parents=True)
-    run_synchronous(bq_home, 'cmake', [
-                    source, '-GNinja', '-DCMAKE_BUILD_TYPE=Release', '-DPREFETCH=ON', '-DVTUNE=ON', '-DBRANCH=simd', '-DBQ_ZIPFIAN=ON'])
-    run_synchronous(bq_home, 'cmake', ['--build', '.'])
+    run_cmake(bq_home, source, ['-DPREFETCH=ON', '-DBRANCH=simd', '-DBQUEUE=ON', '-DBQ_ZIPFIAN=ON'])
 
-    scripts = source.joinpath('scripts')
-    hugepages = scripts.joinpath('enable_hugepages.sh')
-    constant_freq = scripts.joinpath('constant_freq.sh')
-    hyperthreading = scripts.joinpath('toggle_hyperthreading.sh')
-    prefetch = scripts.joinpath('prefetch_control.sh')
-    run_synchronous(source, 'sudo', [hugepages])
-    run_synchronous(source, 'sudo', [constant_freq])
-    run_synchronous(source, 'sudo', [hyperthreading, 'on'])
-    run_synchronous(source, 'sudo', [prefetch, 'off'])
-
-    for n in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]:
+    points = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
+    for n in points:
         print(f'Running cashtpp{n}', flush=True)
         run_synchronous(cashtpp_home, './kvstore', ['--mode=11', '--ht-fill=75',
                         f'--num-threads=64', '--ht-type=3', f'--skew={n}'], os.open(cashtpp_home.parent.joinpath(f'{n}.log'), os.O_RDWR | os.O_CREAT))

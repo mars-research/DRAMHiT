@@ -9,6 +9,8 @@ int main(int argc, char **argv) {
   Application application;
 
   PLOGI << "Starting kvstore";
+  for (auto i = 0; i < argc; ++i)
+    PLOGI << argv[i];
 
   application.process(argc, argv);
 
