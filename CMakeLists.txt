@@ -53,7 +53,6 @@ target_link_libraries(kvstore PRIVATE fnv xxhash cityhash)
 include_directories(include/ lib/ lib/cityhash/src/ lib/plog/include/)
 
 # Declare options
-option(BUILD_TESTING "Build tests." OFF)
 option(HUGEPAGES "Enable hugepages allocation." ON)
 option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
 option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
@@ -206,7 +205,4 @@ add_definitions(-DCONFIG_ALIGN_BQUEUE_METADATA)
 
 target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
 
-if (BUILD_TESTING)
-    enable_testing()
-    add_subdirectory(auto-tests)
-endif()
+add_subdirectory(gtest)

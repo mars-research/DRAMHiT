@@ -1,9 +1,9 @@
 #ifndef _MISC_LIB_H
 #define _MISC_LIB_H
 
-#include "types.hpp"
-
 #include <x86intrin.h>
+
+#include "types.hpp"
 
 extern "C" {
 #include "fcntl.h"
@@ -26,5 +26,20 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz);
 
 void xorwow_init(xorwow_state *);
 uint32_t xorwow(xorwow_state *);
+
+class xorwow_urbg {
+ public:
+  auto operator()() noexcept
+  {
+    return xorwow(&state);
+  }
+
+ private:
+  xorwow_state state{[] {
+    xorwow_state state;
+    xorwow_init(&state);
+    return state;
+  }()};
+};
 
 #endif  //_MISC_LIB_H

@@ -165,12 +165,10 @@ struct Shard {
   Kmer_s *pool;
 };
 
-// NEVER NEVER NEVER USE KEY OR ID 0
-// Your inserts will be ignored if you do (we use these as empty markers)
 struct Keys {
-  uint64_t key;
-  uint64_t id;
-  uint64_t value;
+  uint64_t key; // Key 0 is interpreted as empty
+  uint64_t id; // Optional tracking id (for recognizing asynchronous finds)
+  uint64_t value; // Ignored by Aggr_KV
   uint64_t part_id;
 };
 
