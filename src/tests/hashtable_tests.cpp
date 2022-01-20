@@ -60,9 +60,9 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 
   xorwow_init(&_xw_state);
   if (start == 0) count = 1;
-  __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
-  __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
-  __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
+  //__attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
+  //__attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
+  //__attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
   std::string evt_name(ht_type_strings[config.ht_type]);
@@ -259,11 +259,12 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->find_cycles = find_times.duration;
   sh->stats->num_finds = find_times.op_count;
 
-  if (find_times.op_count > 0)
+  if (find_times.op_count > 0) {
     PLOG_INFO.printf(
         "thread %u | num_finds %lu | rdtsc_diff %lu | cycles per get: %lu",
         sh->shard_idx, find_times.op_count, find_times.duration,
         find_times.duration / find_times.op_count);
+  }
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
@@ -373,10 +374,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   shard->stats->find_cycles = num_finds.duration;
   shard->stats->num_finds = num_finds.op_count;
 
-  if (num_finds.op_count > 0)
+  if (num_finds.op_count > 0) {
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
                      shard->shard_idx, num_finds.op_count,
                      num_finds.duration / num_finds.op_count);
+  }
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(shard, hashtable);

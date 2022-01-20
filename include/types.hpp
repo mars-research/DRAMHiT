@@ -1,6 +1,7 @@
 #ifndef __TYPES_HPP__
 #define __TYPES_HPP__
 
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <iostream>
@@ -54,6 +55,7 @@ typedef enum {
   BQ_TESTS_NO_BQ = 9,
   CACHE_MISS = 10,
   ZIPFIAN = 11,
+  RW_RATIO = 12
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -65,7 +67,20 @@ typedef enum {
   STDMAP_KHT = 5,
 } ht_type_t;
 
-extern const char *run_mode_strings[];
+constexpr std::array run_mode_strings{"",
+                                      "Dry run...",
+                                      "Reading kmers from disk...",
+                                      "Writing kmers to disk...",
+                                      "FASTQ_WITH_INSERT",
+                                      "FASTQ_NO_INSERT",
+                                      "SYNTH",
+                                      "PREFETCH",
+                                      "BQ_TESTS_YES_BQ",
+                                      "BQ_TESTS_NO_BQ",
+                                      "CACHE_MISS",
+                                      "ZIPFIAN",
+                                      "R/W ratio benchmark"};
+
 extern const char *ht_type_strings[];
 
 // Application configuration
@@ -117,7 +132,7 @@ struct Configuration {
     printf("  numa_split %u\n", numa_split);
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
-    printf("  ht_size %lu (%llu GiB)\n", ht_size, ht_size/(1ull << 30));
+    printf("  ht_size %lu (%llu GiB)\n", ht_size, ht_size / (1ull << 30));
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
@@ -166,9 +181,9 @@ struct Shard {
 };
 
 struct Keys {
-  uint64_t key; // Key 0 is interpreted as empty
-  uint64_t id; // Optional tracking id (for recognizing asynchronous finds)
-  uint64_t value; // Ignored by Aggr_KV
+  uint64_t key;    // Key 0 is interpreted as empty
+  uint64_t id;     // Optional tracking id (for recognizing asynchronous finds)
+  uint64_t value;  // Ignored by Aggr_KV
   uint64_t part_id;
 };
 

@@ -860,8 +860,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   this->nodes = this->n->get_node_config();
   this->npq = npq;
   this->cfg = cfg;
-
-  uint32_t num_nodes = static_cast<uint32_t>(this->n->get_num_nodes());
+  
   uint32_t num_cpus = static_cast<uint32_t>(this->n->get_num_total_cpus());
 
   // Calculate total threads (Prod + cons)

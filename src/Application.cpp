@@ -31,28 +31,8 @@
 #include <ittnotify.h>
 #endif
 
-const char *run_mode_strings[] = {
-    "",
-    "DRY_RUN",
-    "READ_FROM_DISK",
-    "WRITE_TO_DISK",
-    "FASTQ_WITH_INSERT",
-    "FASTQ_NO_INSERT",
-    "SYNTH",
-    "PREFETCH",
-    "BQ_TESTS_YES_BQ",
-    "BQ_TESTS_NO_BQ",
-    "CACHE_MISS",
-    "ZIPFIAN",
-};
-
 const char *ht_type_strings[] = {
-  "",
-  "PARTITIONED",
-  "ROBINHOOD",
-  "CAS",
-  "",
-  "STDMAP",
+    "", "PARTITIONED", "ROBINHOOD", "CAS", "", "STDMAP",
 };
 
 namespace kmercounter {
@@ -133,6 +113,15 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 void free_ht(BaseHashTable *kmer_ht) {
   PLOG_INFO.printf("freeing hashtable");
   delete kmer_ht;
+}
+
+void read_prefetchers(MsrHandler &msr_ctrl) {
+  // Dump hwprefetchers msr - Needs msr-safe driver
+  // (use scripts/enable_msr_safe.sh)
+  auto rdmsr_set = msr_ctrl.read_msr(0x1a4);
+  printf("MSR 0x1a4 has: { ");
+  for (const auto &e : rdmsr_set) printf("0x%lx ", e);
+  printf("}\n");
 }
 
 void Application::shard_thread(int tid, bool mainthread) {
@@ -392,7 +381,7 @@ void papi_init() {
   PLOGI.printf("PAPI library initialized");
 }
 #endif
-}
+}  // namespace kmercounter
 
 int Application::process(int argc, char *argv[]) {
   try {
@@ -409,7 +398,8 @@ int Application::process(int argc, char *argv[]) {
         "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
         "zipfian)\n"
         "10: Cache Miss test\n"
-        "11: Zipfian non-bqueue test")(
+        "11: Zipfian non-bqueue test"
+        "12: RW-Ratio benchmark")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -498,48 +488,53 @@ int Application::process(int argc, char *argv[]) {
       this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
 
-    if (config.mode == SYNTH) {
-      PLOG_INFO.printf("Mode : SYNTH");
-    } else if (config.mode == PREFETCH) {
-      PLOG_INFO.printf("Mode : PREFETCH");
-    } else if (config.mode == DRY_RUN) {
-      PLOG_INFO.printf("Mode : Dry run ...");
-      PLOG_INFO.printf(
-          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
-          config.kmer_create_data_mult, config.kmer_create_data_uniq);
-    } else if (config.mode == READ_FROM_DISK) {
-      PLOG_INFO.printf("Mode : Reading kmers from disk ...");
-    } else if (config.mode == WRITE_TO_DISK) {
-      PLOG_INFO.printf("Mode : Writing kmers to disk ...");
-      PLOG_INFO.printf(
-          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
-          config.kmer_create_data_mult, config.kmer_create_data_uniq);
-    } else if (config.mode == FASTQ_WITH_INSERT) {
-      PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT");
-      if (config.in_file.empty()) {
-        PLOG_ERROR.printf("Please provide input fasta file.");
-        exit(-1);
-      }
-    } else if (config.mode == FASTQ_NO_INSERT) {
-      PLOG_INFO.printf("Mode : FASTQ_NO_INSERT");
-      if (config.in_file.empty()) {
-        PLOG_ERROR.printf("Please provide input fasta file.");
-        exit(-1);
-      }
+    PLOG_INFO << run_mode_strings.at(config.mode);
+    switch (config.mode) {
+      case RW_RATIO:
+        PLOG_INFO << "With R/W = ";
+        break;
+
+      case DRY_RUN:
+      case WRITE_TO_DISK:
+        PLOG_INFO.printf(
+            "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+            config.kmer_create_data_mult, config.kmer_create_data_uniq);
+
+        break;
+
+      case FASTQ_WITH_INSERT:
+      case FASTQ_NO_INSERT:
+        if (config.in_file.empty()) {
+          PLOG_ERROR.printf("Please provide input fasta file.");
+          exit(-1);
+        }
+
+        break;
+
+      default:
+        break;
     }
 
-    if (config.ht_type == SIMPLE_KHT) {
-      PLOG_INFO.printf("Hashtable type : SimpleKmerHashTable");
-      config.ht_size /= config.num_threads;
-    } else if (config.ht_type == ROBINHOOD_KHT) {
-      PLOG_INFO.printf("Hashtable type : RobinhoodKmerHashTable");
-    } else if (config.ht_type == CAS_KHT) {
-      PLOG_INFO.printf("Hashtable type : CASKmerHashTable");
-    } else if (config.ht_type == STDMAP_KHT) {
-      PLOG_INFO.printf(
-          "Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
-      PLOG_INFO.printf("Exiting ... ");
-      exit(0);
+    switch (config.ht_type) {
+      case SIMPLE_KHT:
+        PLOG_INFO.printf("Hashtable type : SimpleKmerHashTable");
+        config.ht_size /= config.num_threads;
+        break;
+
+      case ROBINHOOD_KHT:
+        PLOG_INFO.printf("Hashtable type : RobinhoodKmerHashTable");
+        break;
+
+      case CAS_KHT:
+        PLOG_INFO.printf("Hashtable type : CASKmerHashTable");
+        break;
+
+      case STDMAP_KHT:
+        PLOG_INFO.printf(
+            "Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
+        PLOG_INFO.printf("Exiting ... ");
+        exit(0);
+        break;
     }
 
     if (config.ht_fill > 0 && config.ht_fill < 100) {
@@ -565,17 +560,8 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  // Dump hwprefetchers msr - Needs msr-safe driver
-  // (use scripts/enable_msr_safe.sh)
-  auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
-  printf("MSR 0x1a4 has: { ");
-  for (const auto &e : rdmsr_set) {
-    printf("0x%lx ", e);
-  }
-  printf("}\n");
-
+  read_prefetchers(*this->msr_ctrl);
   config.dump_configuration();
-
   if (config.mode == BQ_TESTS_YES_BQ) {
     switch (config.numa_split) {
       case PROD_CONS_SEPARATE_NODES:
@@ -602,10 +588,18 @@ int Application::process(int argc, char *argv[]) {
           new NumaPolicyThreads(config.num_threads, THREADS_ASSIGN_SEQUENTIAL);
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ) {
-    this->test.bqt.run_test(&config, this->n, this->npq);
-  } else {
-    this->spawn_shard_threads();
+  switch (config.mode) {
+    case BQ_TESTS_YES_BQ:
+      this->test.bqt.run_test(&config, this->n, this->npq);
+      break;
+
+    case RW_RATIO:
+      PLOG_INFO << "Not implemented!";
+      break;
+
+    default:
+      this->spawn_shard_threads();
+      break;
   }
 
   return 0;

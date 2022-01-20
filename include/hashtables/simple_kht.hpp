@@ -176,7 +176,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   PartitionedHashStore(uint64_t c, uint8_t id)
-      : id(id), find_head(0), find_tail(0), ins_head(0), ins_tail(0), capacity(c) {
+      : id(id),
+        capacity(c),
+        find_head(0),
+        find_tail(0),
+        ins_head(0),
+        ins_tail(0) {
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
@@ -745,6 +750,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       __m128i kv = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&q->key));
       return _mm512_maskz_broadcast_i32x2(mask, kv);
     };
+
+    // currently unused
+    static_cast<void>(load_kv_vector);
 
     auto load_cacheline = [this, cur_ht, idx, &cacheline_masks](size_t cidx) {
       const KV *cptr = &cur_ht[idx & ~(KV_PER_CACHE_LINE - 1)];
