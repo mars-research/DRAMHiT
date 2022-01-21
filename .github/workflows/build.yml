@@ -16,9 +16,8 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
       - run: > 
-          nix develop .#build --command "
-            mkdir build && 
-            cd build && 
-            cmake .. -G Ninja -DBUILD_TESTING=TRUE -DBRANCH=branched -DHUGEPAGES=FALSE"
+          mkdir build && 
+          cd build && 
+          nix develop .. .#build --command cmake .. -G Ninja -DBUILD_TESTING=TRUE -DBRANCH=branched -DHUGEPAGES=FALSE
       - run: nix develop .#build --command ninja -C build
       - run: nix develop .#build --command ctest -V --test-dir build
