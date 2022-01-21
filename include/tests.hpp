@@ -5,6 +5,7 @@
 #include "CacheMissTest.hpp"
 #include "ParserTest.hpp"
 #include "PrefetchTest.hpp"
+#include "RWRatioTest.hpp"
 #include "SynthTest.hpp"
 #include "ZipfianTest.hpp"
 
@@ -18,6 +19,7 @@ class Tests {
   BQueueTest bqt;
   CacheMissTest cmt;
   ZipfianTest zipf;
+  RWRatioTest rw_ratio;
 
   Tests() {}
 };

@@ -3,6 +3,8 @@
 
 #include <x86intrin.h>
 
+#include <limits>
+
 #include "types.hpp"
 
 extern "C" {
@@ -29,9 +31,16 @@ uint32_t xorwow(xorwow_state *);
 
 class xorwow_urbg {
  public:
-  auto operator()() noexcept
-  {
-    return xorwow(&state);
+  using result_type = decltype(xorwow(nullptr));
+
+  result_type operator()() noexcept { return xorwow(&state); }
+
+  constexpr auto min() noexcept {
+    return std::numeric_limits<result_type>::min();
+  }
+
+  constexpr auto max() noexcept {
+    return std::numeric_limits<result_type>::max();
   }
 
  private:

@@ -139,8 +139,10 @@ void Application::shard_thread(int tid, bool mainthread) {
       // kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
       //    HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
+
     case SYNTH:
     case ZIPFIAN:
+    case RW_RATIO:
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
@@ -149,6 +151,7 @@ void Application::shard_thread(int tid, bool mainthread) {
     case CACHE_MISS:
       kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
+
     default:
       PLOGF.printf("No config mode specified! cannot run");
       return;
@@ -237,6 +240,12 @@ void Application::shard_thread(int tid, bool mainthread) {
     case ZIPFIAN:
       this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
       break;
+
+    case RW_RATIO:
+      this->test.rw_ratio.run(
+          *sh, *kmer_ht, 1.0, 10'000,
+          config.ht_type == SIMPLE_KHT ? config.num_threads / 2 : 0);
+
     default:
       break;
   }
@@ -284,19 +293,27 @@ int Application::spawn_shard_threads() {
 
   size_t seg_sz = 0;
 
-  if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
-      (config.mode != PREFETCH) && (config.mode != CACHE_MISS)) {
-    config.in_file_sz = get_file_size(config.in_file.c_str());
-    PLOG_INFO.printf("File size: %lu bytes", config.in_file_sz);
-    seg_sz = config.in_file_sz / config.num_threads;
-    if (seg_sz < 4096) {
-      seg_sz = 4096;
-    }
+  switch (config.mode) {
+    case SYNTH:
+    case ZIPFIAN:
+    case PREFETCH:
+    case RW_RATIO:
+    case CACHE_MISS:
+      break;
+
+    default:
+      config.in_file_sz = get_file_size(config.in_file.c_str());
+      PLOG_INFO.printf("File size: %lu bytes", config.in_file_sz);
+      seg_sz = config.in_file_sz / config.num_threads;
+      if (seg_sz < 4096) {
+        seg_sz = 4096;
+      }
+
+      break;
   }
 
-  if (config.ht_type == CAS_KHT) {
+  if (config.ht_type == CAS_KHT)
     HT_TESTS_NUM_INSERTS /= (float)config.num_threads;
-  }
 
   /*   TODO don't spawn threads if f_start >= in_file_sz
     Not doing it now, as it has implications for num_threads,
@@ -591,10 +608,6 @@ int Application::process(int argc, char *argv[]) {
   switch (config.mode) {
     case BQ_TESTS_YES_BQ:
       this->test.bqt.run_test(&config, this->n, this->npq);
-      break;
-
-    case RW_RATIO:
-      PLOG_INFO << "Not implemented!";
       break;
 
     default:
