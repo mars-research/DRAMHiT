@@ -3,34 +3,19 @@ on:
   pull_request:
   push:
 jobs:
-  build:
+  build_and_test:
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.4
         with:
           submodules: 'recursive'
       - uses: cachix/install-nix-action@v16
-      - run: nix-build --arg cmakeFlags '["-DBUILD_TESTING=TRUE" "-DBRANCH=branched" "-DHUGEPAGES=FALSE"]'
-      - run: mkdir build-result
-      - run: cp -r result/* build-result/
-      - uses: actions/upload-artifact@v2
-        with:
-          name: build-result
-          path: build-result/
-
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v2.3.4
-      - uses: actions/download-artifact@v2
-        with:
-          name: build-result
-          path: ./build-result/
-      - uses: cachix/install-nix-action@v16
         with:
           install_url: https://releases.nixos.org/nix/nix-2.4/install
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - run: chmod +x ./build-result/bin/kvstore_test
-      - run: nix develop .#prod --command ./build-result/bin/kvstore_test --test_size=131072 --hashtable_size=262144
+      - run: nix develop .#build
+      - run: mkdir build && cd build && cmake .. -G Ninja -DBUILD_TESTING=TRUE -DBRANCH=branched -DHUGEPAGES=FALSE
+      - run: ninja
+      - run: ctest -V
