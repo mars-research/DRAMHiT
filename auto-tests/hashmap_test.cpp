@@ -49,7 +49,7 @@ void no_prefetch_test(BaseHashTable* ht) {
   }
 
   for (uint64_t i = 1; i <= test_size; i++) {
-    auto ptr = (KVType*)ht->find_noprefetch(&i);
+    auto ptr = (Item*)ht->find_noprefetch(&i);
     EXPECT_FALSE(ptr->is_empty()) << "Cannot find " << i;
     EXPECT_EQ(ptr->get_value(), i * i) << "Invalid value for key " << i;
   }
