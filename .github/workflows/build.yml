@@ -18,6 +18,6 @@ jobs:
       - run: > 
           mkdir build && 
           cd build && 
-          nix develop .. .#build --command cmake .. -G Ninja -DBUILD_TESTING=TRUE -DBRANCH=branched -DHUGEPAGES=FALSE
+          nix develop .#build .. --command cmake .. -G Ninja -DBUILD_TESTING=TRUE -DBRANCH=branched -DHUGEPAGES=FALSE
       - run: nix develop .#build --command ninja -C build
       - run: nix develop .#build --command ctest -V --test-dir build
