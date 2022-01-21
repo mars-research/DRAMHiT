@@ -1,6 +1,7 @@
 #ifndef __KV_TYPES_HPP__
 #define __KV_TYPES_HPP__
 
+#include <cassert>
 #include <cstring>
 
 #include "types.hpp"
@@ -88,6 +89,7 @@ struct ItemQueue {
   uint64_t key_hash;  // 8 bytes
 #endif
 } PACKED;
+std::ostream& operator<<(std::ostream& os, const ItemQueue& q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow
 struct Aggr_KV {
@@ -456,6 +458,7 @@ struct KVPair {
   uint64_t key;
   uint64_t value;
 } PACKED;
+std::ostream &operator<<(std::ostream &strm, const KVPair &item);
 
 struct Item {
   KVPair kvpair;
@@ -465,7 +468,7 @@ struct Item {
   using queue = ItemQueue;
 
   friend std::ostream &operator<<(std::ostream &strm, const Item &item) {
-    return strm << item.kvpair.key << " : " << item.kvpair.value;
+    return strm << "{" << item.kvpair.key << ": " << item.kvpair.value << "}";
   }
 
   inline bool insert(queue *elem) {
@@ -547,8 +550,8 @@ struct Item {
       goto exit;
     } else if (this->kvpair.key == elem->key) {
       found = true;
-      vp.second[vp.first].value = this->kvpair.value;
       vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].value = this->kvpair.value;
       vp.first++;
       goto exit;
     } else {
@@ -672,6 +675,12 @@ struct Item {
     return found;
   };
 } PACKED;
+
+#ifdef NOAGGR
+using KVType = Item;
+#else
+using KVType = Aggr_KV;
+#endif
 
 }  // namespace kmercounter
 

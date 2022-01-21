@@ -1,6 +1,8 @@
 #ifndef __PREFETCH_TEST_HPP__
 #define __PREFETCH_TEST_HPP__
 
+#include <plog/Log.h>
+
 #include "hashtables/simple_kht.hpp"
 #include "types.hpp"
 
@@ -31,13 +33,13 @@ struct Prefetch_KV {
   }
 
   inline bool insert_regular_v2(const void *data) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return false;
   }
 
   inline uint16_t insert_or_update_v2(const void *data) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }
@@ -56,21 +58,21 @@ struct Prefetch_KV {
   inline void update_brless(uint8_t cmp) {}
 
   inline uint64_t find_key_brless(const void *data, uint64_t *ret) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }
 
   inline uint64_t find_key_brless_v2(const void *data, uint64_t *retry,
                                      ValuePairs &vp) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }
 
   inline uint64_t find_key_regular_v2(const void *data, uint64_t *retry,
                                       ValuePairs &vp) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }

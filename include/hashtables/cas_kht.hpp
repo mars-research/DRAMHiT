@@ -448,7 +448,7 @@ class CASHashTable : public BaseHashTable {
   void __insert_one(KVQ *q) { __insert_branched(q); }
 
   uint64_t read_hashtable_element(const void *data) override {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }
@@ -466,6 +466,7 @@ class CASHashTable : public BaseHashTable {
     this->insert_queue[this->ins_head].key = key_data->key;
     this->insert_queue[this->ins_head].value = key_data->value;
     this->insert_queue[this->ins_head].key_id = key_data->id;
+    this->insert_queue[this->ins_head].value = key_data->id;
 
 #ifdef COMPARE_HASH
     this->insert_queue[this->ins_head].key_hash = hash;
