@@ -37,8 +37,6 @@ constexpr const char* HTS [] {
 /// Correctness test for insertion and lookup without prefetch.
 /// In other words, no queue is used.
 void no_prefetch_test(BaseHashTable* ht) {
-  std::cerr << "[TEST] Synchronous\n";
-
   const auto test_size = absl::GetFlag(FLAGS_test_size);
   
   for (uint64_t i = 1; i <= test_size; i++) {
