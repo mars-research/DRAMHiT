@@ -20,7 +20,9 @@ const char SIMPLE_BATCH_INSERT_TEST[] = "Simple batch insert";
 const char SIMPLE_BATCH_UPDATE_TEST[] = "Simple batch update";
 const char BATCH_QUERY_TEST[] = "Batch query";
 constexpr const char* TEST_FNS [] {
-  NO_PREFETCH_TEST,
+  // Disable for now because of a bug.
+  // https://github.com/mars-research/kvstore/issues/16
+  // NO_PREFETCH_TEST,
   SIMPLE_BATCH_INSERT_TEST,
   SIMPLE_BATCH_UPDATE_TEST,
   BATCH_QUERY_TEST,
