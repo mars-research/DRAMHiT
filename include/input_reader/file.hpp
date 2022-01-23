@@ -66,9 +66,19 @@ class PartitionedFileReader : public InputReader<std::string> {
     }
   }
 
+  uint64_t num_parts() {
+    return num_parts_;
+  }
+
+  uint64_t part_id() {
+    return part_id_;
+  }
+
  private:
   std::unique_ptr<std::istream> input_file;
   uint64_t part_end;
+  uint64_t part_id_;
+  uint64_t num_parts_;
 };
 
 /// Read one line at a time.
