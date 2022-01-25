@@ -9,6 +9,10 @@
 #include <hasher.hpp>
 #include <random>
 
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
+#endif
+
 namespace kmercounter {
 struct experiment_results {
   std::uint64_t insert_cycles;
@@ -241,6 +245,11 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, reads_per_write};
   experiment_results results{};
+#ifdef WITH_VTUNE_LIB
+  constexpr auto event_name = "rw_ratio_run";
+  static const auto event = __itt_event_create(event_name, strlen(event_name));
+  __itt_event_start(event);
+#endif
   if (!n_writers) {
     assert(config.ht_type != SIMPLE_KHT);
     results = experiment.run(total_ops);
@@ -252,6 +261,10 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
       results = experiment.run_bq_client(total_ops, producer_queues.at(bq_id),
                                          bq_id, n_readers, n_writers);
   }
+
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(event);
+#endif
 
   PLOG_INFO << "Executed " << results.n_reads << " reads / " << results.n_writes
             << " writes ("
