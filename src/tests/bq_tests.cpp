@@ -77,10 +77,6 @@ inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
   return std::make_tuple(ratio, num_messages, key_start);
 }
 
-auto hash_to_cpu(std::uint32_t hash, unsigned int count) {
-  return fastrange32(_mm_crc32_u32(0xffffffff, hash), count);
-};
-
 void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
                                  const uint32_t n_cons, const bool main_thread,
                                  const double skew) {

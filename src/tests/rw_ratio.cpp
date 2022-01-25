@@ -6,6 +6,7 @@
 #include <RWRatioTest.hpp>
 #include <array>
 #include <base_kht.hpp>
+#include <hasher.hpp>
 #include <random>
 
 namespace kmercounter {
@@ -32,6 +33,7 @@ class rw_experiment {
         timings{},
         prng{},
         sampler{rw_ratio / (1.0 + rw_ratio)},
+        next_key{1},
         write_batch{},
         writes{0, write_batch.data()},
         read_batch{},
@@ -58,9 +60,57 @@ class rw_experiment {
     return timings;
   }
 
-  experiment_results run_bq_client(unsigned int total_ops) { return timings; }
+  experiment_results run_bq_client(unsigned int total_ops,
+                                   std::vector<prod_queue_t>& queues,
+                                   unsigned int producer_id,
+                                   std::uint64_t n_producers,
+                                   std::uint64_t n_consumers) {
+    for (auto i = 0u; i < total_ops; ++i) {
+      if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
+      if (sampler(prng)) {
+        push_key(reads, std::uniform_int_distribution<std::uint64_t>{
+                            1, next_key - 1}(prng));
+      } else {
+        const auto key = next_key++;
+        const auto hash = Hasher{}(&key, sizeof(key));
+        auto& queue = queues.at(hash_to_cpu(hash, n_consumers));
+        while (enqueue(&queue, key)) _mm_pause();
+      }
+    }
 
-  experiment_results run_bq_server(unsigned int total_ops) { return timings; }
+    time_find();
+    time_flush_find();
+
+    for (auto& queue : queues)
+      while (enqueue(&queue, 0xdeadbeefdeadbeef)) _mm_pause();
+
+    return timings;
+  }
+
+  experiment_results run_bq_server(unsigned int total_ops,
+                                   std::vector<cons_queue_t>& queues,
+                                   unsigned int consumer_id,
+                                   std::uint64_t n_producers,
+                                   std::uint64_t n_consumers) {
+    unsigned int producer_id{};
+    while (true) {
+      if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
+      auto& queue = queues.at(producer_id);
+      data_t data;
+      if (!dequeue(&queue, &data)) {
+        if (data == 0xdeadbeefdeadbeef) break;
+        push_key(writes, data);
+      }
+
+      ++producer_id;
+      producer_id %= n_producers;
+    }
+
+    time_insert();
+    time_flush_insert();
+
+    return timings;
+  }
 
  private:
   BaseHashTable& hashtable;
@@ -116,22 +166,22 @@ class rw_experiment {
   }
 };
 
-template <typename type>
-auto& get(std::vector<type>& vector, unsigned int stride, unsigned int x,
-          unsigned int y) {
-  return vector.at(x * stride + y);
-}
-
 void RWRatioTest::init_queues(unsigned int n_clients, unsigned int n_writers) {
-  const auto queues = n_clients * n_writers;
-  data_arrays.resize(queues);
-  producer_queues.resize(queues);
-  consumer_queues.resize(queues);
+  data_arrays.resize(n_clients);
+  producer_queues.resize(n_clients);
+  consumer_queues.resize(n_writers);
+  for (auto i = 0u; i < n_clients; ++i) {
+    data_arrays.at(i).resize(n_writers);
+    producer_queues.at(i).resize(n_writers);
+  }
+
+  for (auto i = 0u; i < n_writers; ++i) consumer_queues.at(i).resize(n_clients);
+
   for (auto i = 0u; i < n_clients; ++i) {
     for (auto j = 0u; j < n_writers; ++j) {
-      auto& data = get(data_arrays, n_clients, i, j);
-      auto& producer = get(producer_queues, n_clients, i, j);
-      auto& consumer = get(consumer_queues, n_writers, j, i);
+      auto& data = data_arrays[i][j];
+      auto& producer = producer_queues[i][j];
+      auto& consumer = consumer_queues[j][i];
       init_queue(&consumer);
       consumer.data = data.data;
       producer.data = data.data;
@@ -139,10 +189,20 @@ void RWRatioTest::init_queues(unsigned int n_clients, unsigned int n_writers) {
   }
 }
 
+bool is_consumer_thread(NumaPolicyQueues& policy) {
+  const auto& consumers = policy.get_assigned_cpu_list_consumers();
+  cpu_set_t cpu_set;
+  assert(!pthread_getaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set));
+  for (const auto consumer : consumers) {
+    if (CPU_ISSET(consumer, &cpu_set)) return true;
+  }
+
+  return false;
+}
+
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                       double reads_per_write, unsigned int total_ops,
-                      const unsigned int n_writers,
-                      const unsigned int n_threads) {
+                      const unsigned int n_writers) {
 #ifdef BQ_TESTS_DO_HT_INSERTS
   PLOG_ERROR << "Please disable Bqueues option before running this test";
 #else
@@ -154,9 +214,16 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
       - Remove dependence on build flag for the stash-hash-in-upper-bits trick
      (don't want to force a rebuild every test)
   */
+
+  const auto n_readers = config.num_threads - n_writers;
+  static NumaPolicyQueues policy{
+      n_readers, n_writers, static_cast<numa_policy_queues>(config.numa_split)};
+
+  const auto is_consumer = is_consumer_thread(policy);
+  const auto bq_id = is_consumer ? next_consumer++ : next_producer++;
   if (shard.shard_idx == 0) {
-    if (n_writers) init_queues(n_threads - n_writers, n_writers);
-    while (ready < n_threads - 1) _mm_pause();
+    if (n_writers) init_queues(n_readers, n_writers);
+    while (ready < config.num_threads - 1) _mm_pause();
     start = true;
   } else {
     ++ready;
@@ -168,9 +235,16 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   experiment_results results{};
   if (!n_writers) {
     assert(config.ht_type != SIMPLE_KHT);
-    results = experiment.run(total_ops / n_threads);
+    results = experiment.run(total_ops / config.num_threads);
   } else {
-    results = experiment.run_bq_client(total_ops / n_threads);
+    if (is_consumer)
+      results = experiment.run_bq_server(total_ops / config.num_threads,
+                                         consumer_queues.at(bq_id), bq_id,
+                                         n_readers, n_writers);
+    else
+      results = experiment.run_bq_client(total_ops / config.num_threads,
+                                         producer_queues.at(bq_id), bq_id,
+                                         n_readers, n_writers);
   }
 
   PLOG_INFO << "Executed " << results.n_reads << " reads / " << results.n_writes

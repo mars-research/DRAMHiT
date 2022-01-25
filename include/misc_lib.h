@@ -5,6 +5,7 @@
 
 #include <limits>
 
+#include "fastrange.h"
 #include "types.hpp"
 
 extern "C" {
@@ -49,6 +50,10 @@ class xorwow_urbg {
     xorwow_init(&state);
     return state;
   }()};
+};
+
+inline auto hash_to_cpu(std::uint32_t hash, unsigned int count) {
+  return fastrange32(_mm_crc32_u32(0xffffffff, hash), count);
 };
 
 #endif  //_MISC_LIB_H

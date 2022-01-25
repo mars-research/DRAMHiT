@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 /**
 * Given a value "word", produces an integer in [0,p) without division.
 * The function is as fair as possible in the sense that if you iterate
