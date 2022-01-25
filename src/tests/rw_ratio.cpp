@@ -81,8 +81,10 @@ class rw_experiment {
     time_find();
     time_flush_find();
 
-    for (auto& queue : queues)
-      while (enqueue(&queue, 0xdeadbeefdeadbeef)) _mm_pause();
+    for (auto& queue : queues) {
+      for (auto i = 0u; i < CONS_BATCH_SIZE; ++i)
+        while (enqueue(&queue, 0xdeadbeefdeadbeef)) _mm_pause();
+    }
 
     return timings;
   }

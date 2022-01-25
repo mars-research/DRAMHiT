@@ -243,7 +243,7 @@ void Application::shard_thread(int tid, bool mainthread) {
 
     case RW_RATIO:
       this->test.rw_ratio.run(
-          *sh, *kmer_ht, 1.0, 1'000'000,
+          *sh, *kmer_ht, 1.0, 100'000'000,
           config.ht_type == SIMPLE_KHT ? config.num_threads / 2 : 0);
 
     default:
