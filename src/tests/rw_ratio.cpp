@@ -1,3 +1,4 @@
+#include <bqueue.h>
 #include <misc_lib.h>
 #include <plog/Log.h>
 #include <sync.h>
@@ -16,6 +17,14 @@ struct experiment_results {
   std::uint64_t n_found;
 };
 
+void push_key(KeyPairs& keys, std::uint64_t key) noexcept {
+  Keys key_struct{};
+  key_struct.key = key;
+  keys.second[keys.first++] = key_struct;
+}
+
+extern Configuration config;
+
 class rw_experiment {
  public:
   rw_experiment(BaseHashTable& hashtable, double rw_ratio)
@@ -31,12 +40,6 @@ class rw_experiment {
         results{0, result_batch.data()} {}
 
   experiment_results run(unsigned int total_ops) {
-    const auto push_key = [](KeyPairs& keys, std::uint64_t key) noexcept {
-      Keys key_struct{};
-      key_struct.key = key;
-      keys.second[keys.first++] = key_struct;
-    };
-
     for (auto i = 0u; i < total_ops; ++i) {
       if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
@@ -54,6 +57,10 @@ class rw_experiment {
 
     return timings;
   }
+
+  experiment_results run_bq_client(unsigned int total_ops) { return timings; }
+
+  experiment_results run_bq_server(unsigned int total_ops) { return timings; }
 
  private:
   BaseHashTable& hashtable;
@@ -109,9 +116,33 @@ class rw_experiment {
   }
 };
 
+template <typename type>
+auto& get(std::vector<type>& vector, unsigned int stride, unsigned int x,
+          unsigned int y) {
+  return vector.at(x * stride + y);
+}
+
+void RWRatioTest::init_queues(unsigned int n_clients, unsigned int n_writers) {
+  const auto queues = n_clients * n_writers;
+  data_arrays.resize(queues);
+  producer_queues.resize(queues);
+  consumer_queues.resize(queues);
+  for (auto i = 0u; i < n_clients; ++i) {
+    for (auto j = 0u; j < n_writers; ++j) {
+      auto& data = get(data_arrays, n_clients, i, j);
+      auto& producer = get(producer_queues, n_clients, i, j);
+      auto& consumer = get(consumer_queues, n_writers, j, i);
+      init_queue(&consumer);
+      consumer.data = data.data;
+      producer.data = data.data;
+    }
+  }
+}
+
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                       double reads_per_write, unsigned int total_ops,
-                      unsigned int bq_writer_count) {
+                      const unsigned int n_writers,
+                      const unsigned int n_threads) {
 #ifdef BQ_TESTS_DO_HT_INSERTS
   PLOG_ERROR << "Please disable Bqueues option before running this test";
 #else
@@ -123,10 +154,25 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
       - Remove dependence on build flag for the stash-hash-in-upper-bits trick
      (don't want to force a rebuild every test)
   */
+  if (shard.shard_idx == 0) {
+    if (n_writers) init_queues(n_threads - n_writers, n_writers);
+    while (ready < n_threads - 1) _mm_pause();
+    start = true;
+  } else {
+    ++ready;
+    while (!start) _mm_pause();
+  }
 
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, reads_per_write};
-  const auto results = experiment.run(total_ops);
+  experiment_results results{};
+  if (!n_writers) {
+    assert(config.ht_type != SIMPLE_KHT);
+    results = experiment.run(total_ops / n_threads);
+  } else {
+    results = experiment.run_bq_client(total_ops / n_threads);
+  }
+
   PLOG_INFO << "Executed " << results.n_reads << " reads / " << results.n_writes
             << " writes ("
             << static_cast<double>(results.n_reads) / results.n_writes
