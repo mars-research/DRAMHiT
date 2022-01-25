@@ -336,9 +336,12 @@ int Application::spawn_shard_threads() {
     if (assigned_cpu == 0) continue;
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
+    sh->core_id = assigned_cpu;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    auto _thread = std::thread(&Application::shard_thread, this, i, false);
+    auto _thread =
+        std::thread{[this, i] { shard_thread(i, false); }};
+
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -357,6 +360,7 @@ int Application::spawn_shard_threads() {
   {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
+    sh->core_id = 0;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
     this->shard_thread(i, true);

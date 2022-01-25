@@ -172,6 +172,7 @@ struct Kmer_s {
 
 struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
+  uint8_t core_id;
   off64_t f_start;    // start byte into file
   off64_t f_end;      // end byte into file
   thread_stats *stats;

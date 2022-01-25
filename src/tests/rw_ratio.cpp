@@ -82,8 +82,8 @@ class rw_experiment {
     time_flush_find();
 
     for (auto& queue : queues) {
-      for (auto i = 0u; i < CONS_BATCH_SIZE; ++i)
-        while (enqueue(&queue, 0xdeadbeefdeadbeef)) _mm_pause();
+      while (enqueue(&queue, 0xdeadbeefdeadbeef)) _mm_pause();
+      for (auto i = 0u; i < CONS_BATCH_SIZE; ++i) enqueue(&queue, 1);
     }
 
     return timings;
@@ -95,13 +95,16 @@ class rw_experiment {
                                    std::uint64_t n_producers,
                                    std::uint64_t n_consumers) {
     unsigned int producer_id{};
-    while (true) {
+    unsigned int live_producers{n_producers};
+    while (live_producers) {
       if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
       auto& queue = queues.at(producer_id);
       data_t data;
       if (!dequeue(&queue, &data)) {
-        if (data == 0xdeadbeefdeadbeef) break;
-        push_key(writes, data);
+        if (data == 0xdeadbeefdeadbeef)
+          --live_producers;
+        else
+          push_key(writes, data);
       }
 
       ++producer_id;
@@ -191,15 +194,10 @@ void RWRatioTest::init_queues(unsigned int n_clients, unsigned int n_writers) {
   }
 }
 
-bool is_consumer_thread(NumaPolicyQueues& policy) {
+bool is_consumer_thread(NumaPolicyQueues& policy, std::uint8_t core_id) {
   const auto& consumers = policy.get_assigned_cpu_list_consumers();
-  cpu_set_t cpu_set;
-  assert(!pthread_getaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set));
-  for (const auto consumer : consumers) {
-    if (CPU_ISSET(consumer, &cpu_set)) return true;
-  }
-
-  return false;
+  return std::find(consumers.begin(), consumers.end(), core_id) !=
+         consumers.end();
 }
 
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
@@ -221,8 +219,9 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   static NumaPolicyQueues policy{
       n_readers, n_writers, static_cast<numa_policy_queues>(config.numa_split)};
 
-  const auto is_consumer = is_consumer_thread(policy);
+  const auto is_consumer = is_consumer_thread(policy, shard.core_id);
   const auto bq_id = is_consumer ? next_consumer++ : next_producer++;
+  assert(next_consumer <= n_writers && next_producer <= n_readers);
   if (shard.shard_idx == 0) {
     if (n_writers) init_queues(n_readers, n_writers);
     while (ready < config.num_threads - 1) _mm_pause();
