@@ -243,7 +243,7 @@ void Application::shard_thread(int tid, bool mainthread) {
 
     case RW_RATIO:
       this->test.rw_ratio.run(
-          *sh, *kmer_ht, 1.0, 100'000'000,
+          *sh, *kmer_ht, 0.0, config.ht_fill * config.ht_size / 100.0,
           config.ht_type == SIMPLE_KHT ? config.num_threads / 2 : 0);
 
     default:
@@ -339,8 +339,7 @@ int Application::spawn_shard_threads() {
     sh->core_id = assigned_cpu;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    auto _thread =
-        std::thread{[this, i] { shard_thread(i, false); }};
+    auto _thread = std::thread{[this, i] { shard_thread(i, false); }};
 
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);

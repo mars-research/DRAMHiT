@@ -45,7 +45,7 @@ class rw_experiment {
     for (auto i = 0u; i < total_ops; ++i) {
       if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
-      if (sampler(prng))
+      if (false /*sampler(prng)*/)
         push_key(reads, std::uniform_int_distribution<std::uint64_t>{
                             1, next_key - 1}(prng));
       else
@@ -67,7 +67,7 @@ class rw_experiment {
                                    std::uint64_t n_consumers) {
     for (auto i = 0u; i < total_ops; ++i) {
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
-      if (sampler(prng)) {
+      if (false /*sampler(prng)*/) {
         push_key(reads, std::uniform_int_distribution<std::uint64_t>{
                             1, next_key - 1}(prng));
       } else {
@@ -89,6 +89,7 @@ class rw_experiment {
     return timings;
   }
 
+  // TODO: do we need insert batching?
   experiment_results run_bq_server(unsigned int total_ops,
                                    std::vector<cons_queue_t>& queues,
                                    unsigned int consumer_id,
@@ -133,12 +134,18 @@ class rw_experiment {
   std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> result_batch;
   ValuePairs results;
 
+  auto start_time() { return __rdtsc(); }
+  auto stop_time() {
+    unsigned int aux;
+    return __rdtscp(&aux);
+  }
+
   void time_insert() {
     timings.n_writes += writes.first;
 
-    const auto start = RDTSC_START();
+    const auto start = start_time();
     hashtable.insert_batch(writes);
-    timings.insert_cycles += RDTSCP() - start;
+    timings.insert_cycles += stop_time() - start;
 
     writes.first = 0;
   }
@@ -146,9 +153,9 @@ class rw_experiment {
   void time_find() {
     timings.n_reads += reads.first;
 
-    const auto start = RDTSC_START();
+    const auto start = start_time();
     hashtable.find_batch(reads, results);
-    timings.find_cycles += RDTSCP() - start;
+    timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
@@ -156,18 +163,18 @@ class rw_experiment {
   }
 
   void time_flush_find() {
-    const auto start = RDTSC_START();
+    const auto start = start_time();
     hashtable.flush_find_queue(results);
-    timings.find_cycles += RDTSCP() - start;
+    timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
   }
 
   void time_flush_insert() {
-    const auto start = RDTSC_START();
+    const auto start = start_time();
     hashtable.flush_insert_queue();
-    timings.insert_cycles += RDTSCP() - start;
+    timings.insert_cycles += stop_time() - start;
   }
 };
 
@@ -236,16 +243,14 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   experiment_results results{};
   if (!n_writers) {
     assert(config.ht_type != SIMPLE_KHT);
-    results = experiment.run(total_ops / config.num_threads);
+    results = experiment.run(total_ops);
   } else {
     if (is_consumer)
-      results = experiment.run_bq_server(total_ops / config.num_threads,
-                                         consumer_queues.at(bq_id), bq_id,
-                                         n_readers, n_writers);
+      results = experiment.run_bq_server(total_ops, consumer_queues.at(bq_id),
+                                         bq_id, n_readers, n_writers);
     else
-      results = experiment.run_bq_client(total_ops / config.num_threads,
-                                         producer_queues.at(bq_id), bq_id,
-                                         n_readers, n_writers);
+      results = experiment.run_bq_client(total_ops, producer_queues.at(bq_id),
+                                         bq_id, n_readers, n_writers);
   }
 
   PLOG_INFO << "Executed " << results.n_reads << " reads / " << results.n_writes
@@ -262,6 +267,8 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   shard.stats->num_inserts = results.n_writes;
   shard.stats->find_cycles = results.find_cycles;
   shard.stats->insertion_cycles = results.insert_cycles;
+  shard.stats->ht_capacity = hashtable.get_capacity();
+  shard.stats->ht_fill = hashtable.get_fill();
 #endif
 }
 }  // namespace kmercounter
