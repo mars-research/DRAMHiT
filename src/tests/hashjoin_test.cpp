@@ -64,7 +64,7 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
       const char* right_row = t2_rows[value.id].second.c_str();
       PLOG_INFO << "Left row " << left_row;
       PLOG_INFO << "Right row " << right_row;
-      output_file << left_row << "|" << right_row << std::endl;
+      output_file << left_row << "|" << right_row << "\n";
     }
   };
 
