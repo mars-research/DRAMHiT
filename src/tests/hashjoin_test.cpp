@@ -62,7 +62,7 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
   // std::ofstream output_file(std::to_string((int)sh->shard_idx) + "_join.tbl");
   const auto t2_rows = t2.rows();
   const auto t2_start = RDTSC_START();
-  auto join_rows = [&output_file, &t2_rows] (const ValuePairs& vp) {
+  auto join_rows = [&t2_rows] (const ValuePairs& vp) {
     PLOG_DEBUG << "Found " << vp.first << " keys";
     for (uint32_t i = 0; i < vp.first; i++) {
       const Values& value = vp.second[i];
