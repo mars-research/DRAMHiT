@@ -29,7 +29,7 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
   uint64_t k = 0;
   __attribute__((aligned(64))) Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   const auto t1_start = RDTSC_START();
-  for (std::optional<input_reader::Row*> pair; pair = t1.next();) {
+  for (std::optional<input_reader::Row*> pair; (pair = t1.next());) {
     const auto& [key, row] = **pair;
     keys[k].key = key;
     keys[k].id = (uint64_t)row.data();
