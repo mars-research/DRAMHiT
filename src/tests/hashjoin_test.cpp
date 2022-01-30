@@ -60,7 +60,7 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
 
   // Helper function for checking the result of the batch finds.
   // std::ofstream output_file(std::to_string((int)sh->shard_idx) + "_join.tbl");
-  const auto t2_rows = t2.rows();
+  const auto& t2_rows = t2.rows();
   const auto t2_start = RDTSC_START();
   auto join_rows = [&t2_rows] (const ValuePairs& vp) {
     PLOG_DEBUG << "Found " << vp.first << " keys";
