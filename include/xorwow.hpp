@@ -1,3 +1,5 @@
+/// Xorwow Random Number Generator
+
 #ifndef XORWOW_HPP
 #define XORWOW_HPP
 
