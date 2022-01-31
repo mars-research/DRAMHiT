@@ -22,7 +22,7 @@
 #include <mutex>
 #include <tuple>
 
-#include "constants.h"
+#include "constants.hpp"
 #include "experiments.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"

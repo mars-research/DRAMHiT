@@ -70,3 +70,14 @@ make -j
 ```
 ./kmercounter
 ```
+
+### Test
+Run all tests.
+```
+ctest
+```
+
+Run individual test binary.
+```
+./auto-tests/hashmap_test
+```

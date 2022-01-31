@@ -11,11 +11,12 @@
 #include <fstream>
 #include <atomic>
 
-#include "types.hpp"
+#include "constants.hpp"
 #include "base_kht.hpp"
 #include "input_reader/csv.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "sync.h"
+#include "types.hpp"
 
 namespace kmercounter {
 

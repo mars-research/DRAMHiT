@@ -4,6 +4,7 @@
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "types.hpp"
+#include "xorwow.hpp"
 
 namespace kmercounter {
 
