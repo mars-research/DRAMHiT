@@ -24,7 +24,7 @@ class FastxReader : public InputReader<T> {
   }
 
   // Return a kmer.
-  std::optional<T> next() override {
+  bool next(T *data) override {
     // Read a new sequence if the current sequence is exhausted.
     if (this->offset >= this->seq->seq.l) {
       read_new_sequence();
@@ -32,14 +32,16 @@ class FastxReader : public InputReader<T> {
 
     // Check if the file is exhausted.
     if (this->eof) {
-      return std::nullopt;
+      return false;
     }
 
     // Shift kmer by one and read in the next mer.
+    // TODO: maybe it's faster to copy without shifting.
     this->shl_kmer();
     *this->kmer.rbegin() = this->seq->seq.s[this->offset++];
 
-    return *(T*)kmer.data();
+    *data = *(T*)kmer.data();
+    return true;
   }
 
   ~FastxReader() { kseq_destroy(this->seq); }

@@ -36,8 +36,7 @@ class PartitionedCsvReader : public InputReader<Row*> {
                         std::string_view delimiter = ",") {
     // Read CSV line by line into memory.
     PartitionedFileReader file(filename, part_id, num_parts);
-    for (std::optional<std::string> line_op; line_op = file.next(); /*noop*/) {
-      std::string line = *line_op;
+    for (std::string line; file.next(&line); /*noop*/) {
       const std::string field_str = line.substr(0, line.find(delimiter));
       const uint64_t field = std::stoull(field_str);
       this->data.push_back(std::make_pair(field, line));
@@ -46,11 +45,12 @@ class PartitionedCsvReader : public InputReader<Row*> {
     this->iter = this->data.begin();
   }
 
-  std::optional<Row*> next() override {
+  bool next(Row **data) override {
     if (this->iter == this->data.end()) {
-      return std::nullopt;
+      return false;
     } else {
-      return &*(this->iter++);
+      *data = &*(this->iter++);
+      return true;
     }
   }
 
@@ -75,4 +75,4 @@ class CsvReader : public PartitionedCsvReader {
 }  // namespace input_reader
 }  // namespace kmercounter
 
-#endif  // INPUT_READER_CSV_HPP
+#endif /* INPUT_READER_CSV_HPP */

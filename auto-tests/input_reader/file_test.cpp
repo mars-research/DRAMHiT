@@ -19,7 +19,8 @@ namespace {
 template<typename T>
 size_t reader_size(InputReader<T> *reader) {
   size_t size = 0;
-  while (reader->next()) {
+  T tmp;
+  while (reader->next(&tmp)) {
     size++;
   }
   return size;

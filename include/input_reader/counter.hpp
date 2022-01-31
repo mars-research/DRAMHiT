@@ -9,14 +9,15 @@ namespace input_reader {
 template<class T>
 class Counter : public InputReader<T> {
     public:
-    Counter(T start) : data(start) {}
+    Counter(T start) : data_(start) {}
 
-    std::optional<T> next() override {
-        return data++;
+    bool next(T *data) override {
+        *data = data_++;
+        return true;
     }
 
 private:
-    T data;
+    T data_;
 };
 } // namespace input_reader
 } // namespace kmercounter

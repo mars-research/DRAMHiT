@@ -62,14 +62,9 @@ class PartitionedFileReader : public InputReader<std::string> {
     }
   }
 
-  std::optional<std::string> next() override {
-    std::string str;
-    if (((uint64_t)this->input_file->tellg() >= this->part_end) ||
-        !std::getline(*this->input_file, str)) {
-      return std::nullopt;
-    } else {
-      return str;
-    }
+  bool next(std::string *data) override {
+    return ((uint64_t)this->input_file->tellg() < this->part_end) 
+      && std::getline(*this->input_file, *data);
   }
 
   uint64_t num_parts() { return num_parts_; }

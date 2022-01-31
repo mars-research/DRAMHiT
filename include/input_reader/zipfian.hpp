@@ -21,11 +21,12 @@ public:
         this->iter = values.begin();
     }
 
-    std::optional<T> next() override {
+    bool next(T *data) override {
         if (this->iter == this->values.end()) {
-            return std::nullopt;
+            return false;
         }
-        return *(this->iter++);
+        *data = *(this->iter++);
+        return true;
     }
 
 private:
