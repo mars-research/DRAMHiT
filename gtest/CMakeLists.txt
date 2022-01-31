@@ -16,10 +16,14 @@ add_executable(
   ../src/misc_lib.cpp
 )
 
+target_link_directories(ht_tests PRIVATE ../lib/)
 target_link_libraries(
   ht_tests
   gtest_main
   numa
+  fnv
+  xxhash
+  cityhash
 )
 
 include(GoogleTest)

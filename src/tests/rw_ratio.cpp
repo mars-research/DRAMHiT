@@ -64,64 +64,6 @@ class rw_experiment {
     return timings;
   }
 
-  experiment_results run_bq_client(unsigned int total_ops,
-                                   std::vector<prod_queue_t>& queues,
-                                   unsigned int producer_id,
-                                   std::uint64_t n_producers,
-                                   std::uint64_t n_consumers) {
-    for (auto i = 0u; i < total_ops; ++i) {
-      if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
-      if (false /*sampler(prng)*/) {
-        push_key(reads, std::uniform_int_distribution<std::uint64_t>{
-                            1, next_key - 1}(prng));
-      } else {
-        const auto key = next_key++;
-        const auto hash = Hasher{}(&key, sizeof(key));
-        auto& queue = queues.at(hash_to_cpu(hash, n_consumers));
-        while (enqueue(&queue, key)) _mm_pause();
-      }
-    }
-
-    time_find();
-    time_flush_find();
-
-    for (auto& queue : queues) {
-      while (enqueue(&queue, 0xdeadbeefdeadbeef)) _mm_pause();
-      for (auto i = 0u; i < CONS_BATCH_SIZE; ++i) enqueue(&queue, 1);
-    }
-
-    return timings;
-  }
-
-  // TODO: do we need insert batching?
-  experiment_results run_bq_server(unsigned int total_ops,
-                                   std::vector<cons_queue_t>& queues,
-                                   unsigned int consumer_id,
-                                   std::uint64_t n_producers,
-                                   std::uint64_t n_consumers) {
-    unsigned int producer_id{};
-    unsigned int live_producers{n_producers};
-    while (live_producers) {
-      if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
-      auto& queue = queues.at(producer_id);
-      data_t data;
-      if (!dequeue(&queue, &data)) {
-        if (data == 0xdeadbeefdeadbeef)
-          --live_producers;
-        else
-          push_key(writes, data);
-      }
-
-      ++producer_id;
-      producer_id %= n_producers;
-    }
-
-    time_insert();
-    time_flush_insert();
-
-    return timings;
-  }
-
  private:
   BaseHashTable& hashtable;
   experiment_results timings;
@@ -244,23 +186,12 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
 
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, reads_per_write};
-  experiment_results results{};
 #ifdef WITH_VTUNE_LIB
   constexpr auto event_name = "rw_ratio_run";
   static const auto event = __itt_event_create(event_name, strlen(event_name));
   __itt_event_start(event);
 #endif
-  if (!n_writers) {
-    assert(config.ht_type != SIMPLE_KHT);
-    results = experiment.run(total_ops);
-  } else {
-    if (is_consumer)
-      results = experiment.run_bq_server(total_ops, consumer_queues.at(bq_id),
-                                         bq_id, n_readers, n_writers);
-    else
-      results = experiment.run_bq_client(total_ops, producer_queues.at(bq_id),
-                                         bq_id, n_readers, n_writers);
-  }
+  const auto results = experiment.run(total_ops);
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
