@@ -466,7 +466,6 @@ class CASHashTable : public BaseHashTable {
     this->insert_queue[this->ins_head].key = key_data->key;
     this->insert_queue[this->ins_head].value = key_data->value;
     this->insert_queue[this->ins_head].key_id = key_data->id;
-    this->insert_queue[this->ins_head].value = key_data->id;
 
 #ifdef COMPARE_HASH
     this->insert_queue[this->ins_head].key_hash = hash;
@@ -509,4 +508,4 @@ std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
 template <class KV, class KVQ>
 uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
 }  // namespace kmercounter
-#endif // HASHTABLES_CAS_KHT_HPP
+#endif /* HASHTABLES_CAS_KHT_HPP */
