@@ -30,6 +30,7 @@ add_compile_options(
     -mprefetchwt1
     -march=native
     -fcf-protection=none
+    -fno-stack-protector
 )
 
 # Build all the source files for the library.
@@ -78,7 +79,7 @@ option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
-set(HASHER "xxhash" CACHE STRING "Hasher")
+set(HASHER "crc" CACHE STRING "Hasher")
 set_property(CACHE HASHER PROPERTY STRINGS ${hasher_types})
 if (NOT HASHER IN_LIST hasher_types)
     message(FATAL_ERROR "hasher type must be one of: ${hasher_types}")
