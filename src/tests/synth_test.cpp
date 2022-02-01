@@ -85,6 +85,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 #warning "Xorwow rand kmer insert"
     const auto value = xorwow(&_xw_state);
     _items[k].key = value;
+    _items[k].value = value;
     keys[k] = value;
 #else
     // *((uint64_t *)&kmers[k].data) = count;
