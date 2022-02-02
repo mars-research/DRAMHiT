@@ -1,14 +1,66 @@
-#ifndef INPUT_READER_FASTX
-#define INPUT_READER_FASTX
+#ifndef INPUT_READER_FASTX_HPP
+#define INPUT_READER_FASTX_HPP
 
 #include <array>
+#include <istream>
+#include <memory>
 
+#include "file.hpp"
 #include "input_reader_base.hpp"
 #include "plog/Log.h"
 #include "readfq/kseq.h"
 
 namespace kmercounter {
 namespace input_reader {
+
+/// Find offset of the next find_next_sequence.
+/// Return current offset if `st` is at the beginning of a line.
+std::streampos find_next_sequence(std::istream& st, std::streampos offset) {
+  // Beginning of a file is the beginning of a line.
+  if (offset == 0) {
+    return offset;
+  }
+
+  // Save the current offset.
+  const auto old_state = st.rdstate();
+  const auto old_offset = st.tellg();
+  // Find the quality header from the `offset`.
+  st.seekg(offset);
+  for (std::string line; std::getline(st, line);) {
+    // Consume quality line after hitting the quality header.
+    // This will lead us to the next sequence.
+    if (line == "+") {
+      std::getline(st, line);
+    }
+  }
+  const auto next_seq = st.tellg();
+
+  // Restore the offset and return.
+  st.seekg(old_offset);
+  st.clear(old_state);
+  return next_seq;
+}
+
+class PartitionedFastqReader : public PartitionedFileReader {
+  /// Takes a istream and return the offset of the boundary base
+  /// on the corrent offset of the istream.
+  using find_bound_t =
+      std::function<std::streampos(std::istream& st, std::streampos offset)>;
+
+ public:
+  PartitionedFastqReader(std::string_view filename, uint64_t part_id,
+                         uint64_t num_parts,
+                         find_bound_t find_bound = find_next_sequence)
+      : PartitionedFastqReader(std::make_unique<std::ifstream>(filename.data()),
+                               part_id, num_parts, find_bound) {}
+
+  PartitionedFastqReader(std::unique_ptr<std::istream> input_file,
+                         uint64_t part_id, uint64_t num_parts,
+                         find_bound_t find_bound = find_next_line)
+      : PartitionedFileReader(std::move(input_file), part_id, num_parts,
+                              find_bound) {}
+};
+
 KSEQ_INIT(int, read)
 /// Read a file in fasta/fastq format.
 /// Return a single KMer a time.
@@ -24,7 +76,7 @@ class FastxReader : public InputReader<T> {
   }
 
   // Return a kmer.
-  bool next(T *data) override {
+  bool next(T* data) override {
     // Read a new sequence if the current sequence is exhausted.
     if (this->offset >= this->seq->seq.l) {
       read_new_sequence();
@@ -88,7 +140,7 @@ class FastxReader : public InputReader<T> {
   /// The kmer returned by the last `next()` call.
   std::array<uint8_t, K> kmer;
 };
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace input_reader
+}  // namespace kmercounter
 
-#endif /* INPUT_READER_FASTX */
+#endif  // INPUT_READER_FASTX_HPP
