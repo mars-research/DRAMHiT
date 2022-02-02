@@ -17,7 +17,6 @@ namespace kmercounter {
 namespace input_reader {
 
 /// Find offset of next line.
-/// Return current offset if `st` is at the beginning of a line.
 std::streampos find_next_line(std::istream& st, std::streampos offset) {
   // Beginning of a file is the beginning of a line.
   if (offset == 0) {
@@ -28,12 +27,9 @@ std::streampos find_next_line(std::istream& st, std::streampos offset) {
   const auto old_state = st.rdstate();
   const auto old_offset = st.tellg();
   // Check if we are already at the beginning of a line.
-  st.seekg(offset - std::streamoff(1));
-  char c = st.get();
-  if (c != '\n') {
-    std::string tmp;
-    std::getline(st, tmp);
-  }
+  st.seekg(offset);
+  std::string tmp;
+  std::getline(st, tmp);
   const auto next_line = st.tellg();
   // Restore the offset and return.
   st.seekg(old_offset);
