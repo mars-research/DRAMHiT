@@ -803,7 +803,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   uint32_t num_cpus = static_cast<uint32_t>(this->n->get_num_total_cpus());
 
   // Calculate total threads (Prod + cons)
-  cfg->num_threads = cfg->n_prod + cfg->n_prod;
+  cfg->num_threads = cfg->n_prod + cfg->n_cons;
 
   // bail out if n_prod + n_cons > num_cpus
   if (this->cfg->n_prod + this->cfg->n_cons > num_cpus) {
