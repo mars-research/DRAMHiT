@@ -14,6 +14,10 @@
 #include <papi.h>
 #endif
 
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
+#endif
+
 namespace kmercounter {
 namespace {
 struct kmer {
