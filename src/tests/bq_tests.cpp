@@ -138,10 +138,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   uint64_t read_count{};
   uint64_t found_count{};
-  std::vector<bool> reads(num_messages);
-  for (auto i = 0u; i < reads.size(); ++i) reads[i] = sampler(prng);
 
-  auto should_read_next = reads.cbegin();
+  auto ht_size = config.ht_size / n_cons;
+  const auto hashtable = init_ht(ht_size, sh->shard_idx);
 #endif
 
 #ifdef BQ_TESTS_INSERT_ZIPFIAN
@@ -202,9 +201,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #elif defined(BQ_TESTS_RW_RATIO)
       while (sampler(prng)) {
         if (find_keys.first == HT_TESTS_FIND_BATCH_LENGTH) {
-          this->ht_vec->at(find_keys.second[0].part_id)
-              ->find_batch(find_keys, results);
-
+          hashtable->find_batch(find_keys, results);
           find_keys.first = 0;
           found_count += results.first;
           results.first = 0;
