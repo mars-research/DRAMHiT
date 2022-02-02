@@ -24,15 +24,15 @@ constexpr const char* TEST_FNS [] {
   // https://github.com/mars-research/kvstore/issues/16
   // NO_PREFETCH_TEST,
   SIMPLE_BATCH_INSERT_TEST,
-  SIMPLE_BATCH_UPDATE_TEST,
-  BATCH_QUERY_TEST,
+  // SIMPLE_BATCH_UPDATE_TEST,
+  // BATCH_QUERY_TEST,
 };
 // Hashtable names.
 const char PARTITIONED_HT[] = "Partitioned HT";
 const char CAS_HT[] = "CAS HT";
 constexpr const char* HTS [] {
-  // PARTITIONED_HT,
-  CAS_HT,
+  PARTITIONED_HT,
+  // CAS_HT,
 };
 
 
@@ -152,7 +152,7 @@ void batch_query_test(BaseHashTable* ht) {
   for (uint64_t i = 1; i <= test_size; i++) {
     keys[k].key = i;
     keys[k].id = 2 * i;
-    keys[k].part_id = 3 * i;
+    keys[k].part_id = 0;
     if (++k == HT_TESTS_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(k, keys);
       ValuePairs valuepairs{0, values};
