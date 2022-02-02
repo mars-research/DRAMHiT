@@ -72,45 +72,45 @@ class FastxReader : public InputReader<T> {
 
   FastxReader(const std::string& file, uint32_t k) : offset(0) {
     int fd = open(file.c_str(), O_RDONLY);
-    this->seq = kseq_init(fd);
+    seq_ = kseq_init(fd);
   }
 
   // Return a kmer.
   bool next(T* data) override {
     // Read a new sequence if the current sequence is exhausted.
-    if (this->offset >= this->seq->seq.l) {
+    if (offset_ >= seq_->seq.l) {
       read_new_sequence();
     }
 
     // Check if the file is exhausted.
-    if (this->eof) {
+    if (eof_) {
       return false;
     }
 
     // Shift kmer by one and read in the next mer.
     // TODO: maybe it's faster to copy without shifting.
     this->shl_kmer();
-    *this->kmer.rbegin() = this->seq->seq.s[this->offset++];
+    *kmer_.rbegin() = seq_->seq.s[offset_++];
 
     *data = *(T*)kmer.data();
     return true;
   }
 
-  ~FastxReader() { kseq_destroy(this->seq); }
+  ~FastxReader() { kseq_destroy(seq_); }
 
  private:
   /// Read a new sequence.
   void read_new_sequence() {
     /// Read until found a seq with at least K in size.
     while (true) {
-      int len = kseq_read(this->seq);
+      int len = kseq_read(seq_);
       if (len < 0) {
-        this->eof = true;
+        eof_ = true;
         return;
       } else if (len < K) {
         PLOG_WARNING << "Skipping sequence with length " << len
                      << ", which is less than K=" << K << ": "
-                     << this->seq->seq.s;
+                     << seq_->seq.s;
       } else {
         break;
       }
@@ -119,28 +119,28 @@ class FastxReader : public InputReader<T> {
     // And prepare `kmer` for a new sequence by
     // reading K-1 mers into kmer[1, K].
     for (int i = 1; i < K; i++) {
-      this->kmer[i] = this->seq->seq.s[this->offset++];
+      kmer_[i] = seq_->seq.s[offset_++];
     }
   }
 
   /// Left shift the kmer by one mer.
   /// This is useful for reserving space for the next mer.
   void shl_kmer() {
-    for (int i = 0; i < this->kmer.size() - 1; i++) {
-      this->kmer[i] = this->kmer[i + 1];
+    for (int i = 0; i < kmer_.size() - 1; i++) {
+      kmer_[i] = kmer_[i + 1];
     }
   }
 
   /// Handle to the fastx parser.
-  kseq_t* seq;
+  kseq_t* seq_;
   /// Current offset into `seq->seq->s`.
-  size_t offset;
+  size_t offset_;
   /// Indicate that we have reached the end of the file.
-  bool eof;
+  bool eof_;
   /// The kmer returned by the last `next()` call.
-  std::array<uint8_t, K> kmer;
+  std::array<uint8_t, K> kmer_;
 };
 }  // namespace input_reader
 }  // namespace kmercounter
 
-#endif  // INPUT_READER_FASTX_HPP
+#endif // INPUT_READER_FASTX_HPP

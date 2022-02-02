@@ -52,39 +52,38 @@ class PartitionedFileReader : public InputReader<std::string> {
                         find_bound_t find_bound = find_next_line)
       : PartitionedFileReader(std::make_unique<std::ifstream>(filename.data()),
                               part_id, num_parts, find_bound) {
-    PLOG_FATAL_IF(this->input_file->fail())
-        << "Failed to open file " << filename;
+    PLOG_FATAL_IF(input_file_->fail()) << "Failed to open file " << filename;
   }
 
   PartitionedFileReader(std::unique_ptr<std::istream> input_file,
                         uint64_t part_id, uint64_t num_parts,
                         find_bound_t find_bound = find_next_line)
-      : input_file(std::move(input_file)),
+      : input_file_(std::move(input_file)),
         part_id_(part_id),
         num_parts_(num_parts) {
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the
     // parameter passing.
-    this->input_file->seekg(0, std::ios::end);
-    const uint64_t file_size = this->input_file->tellg();
-    this->input_file->seekg(0);
+    input_file_->seekg(0, std::ios::end);
+    const uint64_t file_size = input_file_->tellg();
+    input_file_->seekg(0);
     const uint64_t part_start = (double)file_size / num_parts * part_id;
-    this->part_end = (double)file_size / num_parts * (part_id + 1);
+    part_end_ = (double)file_size / num_parts * (part_id + 1);
     PLOG_DEBUG << part_id << "/" << num_parts << ": start " << part_start
-               << ", end " << this->part_end;
+               << ", end " << part_end_;
 
     // Adjust the partition end.
-    this->part_end = find_bound(*this->input_file, this->part_end);
+    part_end_ = find_bound(*input_file_, part_end_);
     // Adjust the current offset of the actual partition start.
-    const auto adjusted_part_start = find_bound(*this->input_file, part_start);
+    const auto adjusted_part_start = find_bound(*input_file_, part_start);
     PLOG_DEBUG << part_id << "/" << num_parts << ": adj_start "
-               << adjusted_part_start << ", adj_end " << this->part_end;
-    this->input_file->seekg(adjusted_part_start);
+               << adjusted_part_start << ", adj_end " << part_end_;
+    input_file_->seekg(adjusted_part_start);
   }
 
   bool next(std::string* data) override {
-    return ((uint64_t)this->input_file->tellg() < this->part_end) &&
-           std::getline(*this->input_file, *data);
+    return ((uint64_t)input_file_->tellg() < part_end_) &&
+           std::getline(*input_file_, *data);
   }
 
   uint64_t num_parts() { return num_parts_; }
@@ -92,8 +91,8 @@ class PartitionedFileReader : public InputReader<std::string> {
   uint64_t part_id() { return part_id_; }
 
  private:
-  std::unique_ptr<std::istream> input_file;
-  uint64_t part_end;
+  std::unique_ptr<std::istream> input_file_;
+  uint64_t part_end_;
   uint64_t part_id_;
   uint64_t num_parts_;
 };
@@ -110,4 +109,4 @@ class FileReader : public PartitionedFileReader {
 }  // namespace input_reader
 }  // namespace kmercounter
 
-#endif // INPUT_READER_FILE_HPP
+#endif  // INPUT_READER_FILE_HPP

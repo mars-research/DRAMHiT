@@ -13,17 +13,6 @@
 namespace kmercounter {
 namespace input_reader {
 
-/// A field in a row.
-using Field =
-    std::variant<uint8_t, uint16_t, uint32_t, uint64_t, float, double>;
-
-/// A row in a table.
-// TODO: support other datatype
-// class Row {
-// public:
-//   std::vector<uint64_t> fields;
-// };
-
 /// The first field(key) of the row and the raw row itself.
 using Row = std::pair<uint64_t, std::string>;
 
@@ -39,30 +28,30 @@ class PartitionedCsvReader : public InputReader<Row*> {
     for (std::string line; file.next(&line); /*noop*/) {
       const std::string field_str = line.substr(0, line.find(delimiter));
       const uint64_t field = std::stoull(field_str);
-      this->data.push_back(std::make_pair(field, line));
+      data_.push_back(std::make_pair(field, line));
     }
 
-    this->iter = this->data.begin();
+    iter_ = data_.begin();
   }
 
   bool next(Row **data) override {
-    if (this->iter == this->data.end()) {
+    if (iter_ == data_.end()) {
       return false;
     } else {
-      *data = &*(this->iter++);
+      *data = &*(iter_++);
       return true;
     }
   }
 
-  uint64_t size() { return data.size(); }
+  uint64_t size() { return data_.size(); }
 
   const std::vector<Row>& rows() const {
-    return data;
+    return data_;
   }
 
  private:
-  std::vector<Row> data;
-  std::vector<Row>::iterator iter;
+  std::vector<Row> data_;
+  std::vector<Row>::iterator iter_;
 };
 
 class CsvReader : public PartitionedCsvReader {

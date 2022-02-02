@@ -16,22 +16,22 @@ class ZipfianGenerator : public InputReader<T> {
 public:
     ZipfianGenerator(double skew, uint64_t keyrange_width, unsigned int seed, uint64_t buffsize) {
         zipf_distribution distribution{skew, keyrange_width, seed};
-        this->value = std::vector<T>(buffsize);
-        for (auto &value : this->values) value = distribution();
-        this->iter = values.begin();
+        values_ = std::vector<T>(buffsize);
+        for (auto &value : values_) value = distribution();
+        iter_ = values_.begin();
     }
 
     bool next(T *data) override {
-        if (this->iter == this->values.end()) {
+        if (iter_ == values_.end()) {
             return false;
         }
-        *data = *(this->iter++);
+        *data = *(iter_++);
         return true;
     }
 
 private:
-    std::vector<T> values;
-    typename std::vector<T>::iterator iter;
+    std::vector<T> values_;
+    typename std::vector<T>::iterator iter_;
 };
 } // namespace input_reader
 } // namespace kmercounter
