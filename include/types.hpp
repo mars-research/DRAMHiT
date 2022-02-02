@@ -121,6 +121,8 @@ struct Configuration {
 
   // controls zipfian dist
   double skew;
+  // R/W ratio for associated tests (modes 12 and 8)
+  double rw_ratio;
   // used for kmer parsing from disk
   bool drop_caches;
   // enable/disable hw prefetchers (msr 0x1a4)

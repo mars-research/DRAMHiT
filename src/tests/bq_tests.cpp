@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <random>
 #include <tuple>
 
 #include "BQueueTest.hpp"
@@ -115,6 +116,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   __itt_thread_set_name(thread_name.c_str());
 #endif
 
+  auto [ratio, num_messages, key_start] = get_params(n_prod, n_cons, tid);
+  Hasher hasher;
+
 #ifdef BQ_TESTS_INSERT_XORWOW_NEW
   struct xorwow_state xw_state;
   xorwow_init(&xw_state);
@@ -122,10 +126,24 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #warning "Zipfian Bqueues"
   zipf_distribution dist{skew, 192ull * (1ull << 20),
                          tid + 1};  // FIXME: magic numbers
-#endif
+#elif defined(BQ_TESTS_RW_RATIO)
+  std::array<Keys, HT_TESTS_FIND_BATCH_LENGTH> find_keys_buffer;
+  std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> found_keys_buffer;
+  KeyPairs find_keys{0, find_keys_buffer.data()};
+  ValuePairs results{0, found_keys_buffer.data()};
 
-  auto [ratio, num_messages, key_start] = get_params(n_prod, n_cons, tid);
-  Hasher hasher;
+  xorwow_urbg prng{};
+  std::bernoulli_distribution sampler{config.rw_ratio /
+                                      (1.0 + config.rw_ratio)};
+
+  uint64_t read_count{};
+  uint64_t found_count{};
+  std::vector<bool> reads(num_messages);
+  for (auto i = 0u; i < reads.size(); ++i) reads[i] = sampler(prng);
+
+  auto should_read_next = reads.cbegin();
+  auto &hashtable = this->ht_vec->at(tid);
+#endif
 
 #ifdef BQ_TESTS_INSERT_ZIPFIAN
   std::vector<uint64_t> values(num_messages);
@@ -176,12 +194,35 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
     // The idea is to batch messages upto BQ_TESTS_BATCH_LENGTH
     // for the same queue and then move on to next consumer
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH_PROD; i++) {
-#ifdef BQ_TESTS_INSERT_XORWOW_NEW
+#if defined(BQ_TESTS_INSERT_XORWOW_NEW)
       k = xorwow(&xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)  // TODO: this is garbage
       if (i % 8 == 0 && i + 16 < values.size())
         prefetch_object<false>(&values.at(i + 16), 64);
       k = values.at(transaction_id);
+#elif defined(BQ_TESTS_RW_RATIO)
+      while (*(should_read_next++)) {
+        if (find_keys.first == HT_TESTS_FIND_BATCH_LENGTH) {
+          hashtable->find_batch(find_keys, results);
+          find_keys.first = 0;
+          found_count += results.first;
+          results.first = 0;
+        }
+
+        auto find = k > 128 ? k - 128 : 1;
+        auto &slot = find_keys.second[find_keys.first++];
+        const auto hash_val = hasher(&find, sizeof(find));
+        const auto partition = hash_to_cpu(hash_val, n_cons);
+        // PLOGI.printf("partition %d", partition);
+        // k has the computed hash in upper 32 bits
+        // and the actual key value in lower 32 bits
+        find |= (hash_val << 32);
+        slot.key = find;
+        slot.id = read_count++;
+        slot.part_id = partition + n_prod;
+      }
+
+      k = key_start++;
 #else
       k = key_start++;
 #endif
@@ -236,6 +277,11 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   sh->stats->enqueue_cycles = (t_end - t_start);
   sh->stats->num_enqueues = transaction_id;
+
+#ifdef BQ_TESTS_RW_RATIO
+  sh->stats->find_cycles = (t_end - t_start);
+  sh->stats->num_finds = read_count;
+#endif
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_cons; ++i) {
@@ -773,8 +819,12 @@ void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   // 1) Insert using bqueues
   this->insert_with_bqueues(cfg, n, npq);
 
+#ifndef BQ_TESTS_RW_RATIO
   // 2) spawn n_prod + n_cons threads for find
   this->run_find_test(cfg, n, npq);
+#endif
+
+  print_stats(this->shards, *cfg);
 }
 
 void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
@@ -844,7 +894,6 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
     th.join();
   }
   PLOG_INFO.printf("Find done!");
-  print_stats(this->shards, *cfg);
 }
 
 void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
@@ -856,7 +905,7 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   this->nodes = this->n->get_node_config();
   this->npq = npq;
   this->cfg = cfg;
-  
+
   uint32_t num_cpus = static_cast<uint32_t>(this->n->get_num_total_cpus());
 
   // Calculate total threads (Prod + cons)

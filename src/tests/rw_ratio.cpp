@@ -32,11 +32,11 @@ extern Configuration config;
 
 class rw_experiment {
  public:
-  rw_experiment(BaseHashTable& hashtable, double rw_ratio)
+  rw_experiment(BaseHashTable& hashtable)
       : hashtable{hashtable},
         timings{},
         prng{},
-        sampler{rw_ratio / (1.0 + rw_ratio)},
+        sampler{config.rw_ratio / (1.0 + config.rw_ratio)},
         next_key{1},
         write_batch{},
         writes{0, write_batch.data()},
@@ -124,68 +124,13 @@ class rw_experiment {
   }
 };
 
-void RWRatioTest::init_queues(unsigned int n_clients, unsigned int n_writers) {
-  data_arrays.resize(n_clients);
-  producer_queues.resize(n_clients);
-  consumer_queues.resize(n_writers);
-  for (auto i = 0u; i < n_clients; ++i) {
-    data_arrays.at(i).resize(n_writers);
-    producer_queues.at(i).resize(n_writers);
-  }
-
-  for (auto i = 0u; i < n_writers; ++i) consumer_queues.at(i).resize(n_clients);
-
-  for (auto i = 0u; i < n_clients; ++i) {
-    for (auto j = 0u; j < n_writers; ++j) {
-      auto& data = data_arrays[i][j];
-      auto& producer = producer_queues[i][j];
-      auto& consumer = consumer_queues[j][i];
-      init_queue(&consumer);
-      consumer.data = data.data;
-      producer.data = data.data;
-    }
-  }
-}
-
-bool is_consumer_thread(NumaPolicyQueues& policy, std::uint8_t core_id) {
-  const auto& consumers = policy.get_assigned_cpu_list_consumers();
-  return std::find(consumers.begin(), consumers.end(), core_id) !=
-         consumers.end();
-}
-
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
-                      double reads_per_write, unsigned int total_ops,
-                      const unsigned int n_writers) {
+                      unsigned int total_ops) {
 #ifdef BQ_TESTS_DO_HT_INSERTS
   PLOG_ERROR << "Please disable Bqueues option before running this test";
 #else
-  /*
-      - Generate random bools in-place to avoid prefetching problems (but also
-     benchmark dry run i.e. max throughput with just bools)
-      - Submit batches of reads/writes only when full (bqueue consumers already
-     do this)
-      - Remove dependence on build flag for the stash-hash-in-upper-bits trick
-     (don't want to force a rebuild every test)
-  */
-
-  const auto n_readers = config.num_threads - n_writers;
-  static NumaPolicyQueues policy{
-      n_readers, n_writers, static_cast<numa_policy_queues>(config.numa_split)};
-
-  const auto is_consumer = is_consumer_thread(policy, shard.core_id);
-  const auto bq_id = is_consumer ? next_consumer++ : next_producer++;
-  assert(next_consumer <= n_writers && next_producer <= n_readers);
-  if (shard.shard_idx == 0) {
-    if (n_writers) init_queues(n_readers, n_writers);
-    while (ready < config.num_threads - 1) _mm_pause();
-    start = true;
-  } else {
-    ++ready;
-    while (!start) _mm_pause();
-  }
-
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
-  rw_experiment experiment{hashtable, reads_per_write};
+  rw_experiment experiment{hashtable};
 #ifdef WITH_VTUNE_LIB
   constexpr auto event_name = "rw_ratio_run";
   static const auto event = __itt_event_create(event_name, strlen(event_name));

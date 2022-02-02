@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 project(kvstore VERSION 0.1.0)
 
+include(CMakeDependentOption)
+
 # Ensure g++
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL GNU)
     message(FATAL_ERROR "Currently only gcc builds are supported")
@@ -56,7 +58,8 @@ option(AGGR "Use aggregation hashtable (histogram)" ON)
 option(PREFETCH "Enable prefetching" ON)
 option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
-option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
+cmake_dependent_option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF BQUEUE OFF)
+cmake_dependent_option(BQ_RW "Enable bqueue RW/ratio" OFF BQUEUE OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
@@ -104,6 +107,11 @@ endif()
 if(BQ_ZIPFIAN)
     message(WARNING "Zipfian Bqueues")
     add_definitions(-DBQ_TESTS_INSERT_ZIPFIAN)
+endif()
+
+if(BQ_RW)
+    message(WARNING "R/W Bqueues")
+    add_definitions(-DBQ_TESTS_RW_RATIO)
 endif()
 
 if(BRANCH STREQUAL "simd")
