@@ -5,10 +5,9 @@ RDMSR=$(which rdmsr)
 WRMSR=$(which wrmsr)
 
 get_rated_cpufreq() {
-	# lscpu reports the rated processor freq in %1.2f format. Since bash cannot natively do
-	# floating point arithmetic, cheat here a bit to get an integer freq. Note: There's bc!
-	CPU_FREQ_GHZ=$(lscpu | grep -o "[0-9\.]\+GHz" | grep -o "[0-9\.]\+" | sed 's/\.//')
-	CPU_FREQ_KHZ=$((${CPU_FREQ_GHZ}*10*1000))
+	# lscpu reports the rated processor freq in %1.2f format
+	CPU_FREQ_GHZ=$(lscpu | grep -o "[0-9\.]\+GHz" | grep -o "[0-9\.]\+")
+	CPU_FREQ_KHZ=$(printf "%.0f" $(echo "${CPU_FREQ_GHZ} * 10^9" | bc))
 	echo $CPU_FREQ_KHZ
 }
 
@@ -38,8 +37,9 @@ disable_turbo() {
 	fi
 
 	# disable turbo boost (bit 38 on 0x1a0 msr)
+	TURBO_BOOST_BIT=38
 	echo "Disabling turboboost"
-	sudo ${WRMSR} -a 0x1a0 $(printf "0x%x" $(($(sudo ${RDMSR} -d 0x1a0)|(1<<38))))
+	sudo ${WRMSR} -a 0x1a0 $(printf "0x%x" $(($(sudo ${RDMSR} -d 0x1a0)|(1<<${TURBO_BOOST_BIT}))))
 }
 
 set_const_freq() {

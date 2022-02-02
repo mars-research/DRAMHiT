@@ -19,7 +19,9 @@ namespace kmercounter {
  */
 
 #define FILE_NAME "/mnt/huge/hugepagefile%d"
-#define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
+
+#define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_1GB    (30 << MAP_HUGE_SHIFT)
 
 extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);

@@ -1,5 +1,5 @@
-#ifndef _BASE_KHT_H
-#define _BASE_KHT_H
+#ifndef BASE_KHT_HPP
+#define BASE_KHT_HPP
 
 #include <stdint.h>
 
@@ -9,14 +9,6 @@
 
 using namespace std;
 namespace kmercounter {
-
-const uint32_t PREFETCH_QUEUE_SIZE = 64;
-const uint32_t PREFETCH_FIND_QUEUE_SIZE = 64;
-
-// #define HT_TESTS_BATCH_LENGTH 32
-#define HT_TESTS_BATCH_LENGTH 16
-#define HT_TESTS_FIND_BATCH_LENGTH 16
-
 class BaseHashTable {
  public:
   virtual bool insert(const void *data) = 0;
@@ -65,4 +57,4 @@ class BaseHashTable {
 };
 
 }  // namespace kmercounter
-#endif  // _BASE_KHT_H
+#endif /* BASE_KHT_HPP */

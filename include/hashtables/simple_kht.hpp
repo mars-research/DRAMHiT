@@ -22,7 +22,7 @@
 #include <mutex>
 #include <tuple>
 
-#include "constants.h"
+#include "constants.hpp"
 #include "experiments.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"
@@ -127,7 +127,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void prefetch(uint64_t i) {
-    if (i > this->capacity) std::terminate();
+    if (i > this->capacity) {
+      PLOG_ERROR.printf("%u > %lu\n", i, this->capacity);
+      std::terminate();
+    }
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object<true /* write */>(&this->hashtable[this->id][i],
                                       sizeof(this->hashtable[this->id][i]));
@@ -222,7 +225,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void insert_noprefetch(const void *data) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
   }
 
@@ -339,7 +342,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t distance_from_bucket = 0;
 #endif
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash;
+    size_t idx = hash & (this->capacity - 1);  // modulo
     KV *curr = &this->hashtable[this->id][idx];
     bool found = false;
 
@@ -569,7 +572,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // index at which reprobe must begin
     size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-    ridx = ridx == this->capacity ? 0 : ridx;  // modulo
+    ridx = (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
+
     this->prefetch_read(ridx);
 
     this->find_queue[this->find_head].key = q->key;
@@ -836,7 +840,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // prepare for possible reprobe
     // point next idx (nidx) to the start of the next cacheline
     auto nidx = idx + KV_PER_CACHE_LINE - cidx;
-    nidx = nidx == this->capacity ? 0 : nidx;  // modulo
+    nidx = nidx >= this->capacity ? (nidx - this->capacity) : nidx;  // modulo
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
     this->insert_queue[this->ins_head].idx = nidx;
@@ -890,9 +894,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       __builtin_prefetch(&this->insert_queue[_ins_head], 1, 3);
     } else if (qtype == QueueType::find_queue) {
       auto _find_head = this->find_head;
-      __builtin_prefetch(&this->insert_queue[_find_head], 1, 3);
+      __builtin_prefetch(&this->find_queue[_find_head], 1, 3);
       _find_head = this->find_head + (64 / sizeof(KVQ));
-      __builtin_prefetch(&this->insert_queue[_find_head], 1, 3);
+      __builtin_prefetch(&this->find_queue[_find_head], 1, 3);
     }
   }
 
@@ -912,10 +916,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // The hashes have little to no upper-bit entropy _because of how they are
     // assigned to the queues_
     size_t idx = fastrange32(hash, this->capacity);  // modulo
-    ++hash_histogram.at(idx & histogram_mask);
 
-    // cout << " -- Adding " << key  << " at " << this->ins_head <<
-    // endl;
+    if (idx > this->capacity) {
+      PLOG_ERROR.printf("%u > %lu\n", idx, this->capacity);
+      std::terminate();
+    }
+
+#if defined(HASH_HISTOGRAM)
+    ++hash_histogram.at(idx & histogram_mask);
+#endif
     this->prefetch(idx);
 
     if constexpr (experiment_inactive(experiment_type::prefetch_only)) {

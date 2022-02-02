@@ -45,6 +45,7 @@
         buildInputs = with pkgs; [
           gdb
           linuxPackages.perf
+          clang-tools
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
       };

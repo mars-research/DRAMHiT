@@ -59,34 +59,31 @@ namespace kmercounter {
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
-#ifdef NOAGGR
-using KVType = Item;
-#else
-using KVType = Aggr_KV;
-#endif
-
 // default configuration
 const Configuration def = {
     .kmer_create_data_base = 524288,
     .kmer_create_data_mult = 1,
     .kmer_create_data_uniq = 1048576,
-    .num_threads = 1,
-    .mode = BQ_TESTS_YES_BQ,  // TODO enum
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
-    .numa_split = 3,
     .stats_file = std::string(""),
     .ht_file = std::string(""),
     .in_file = std::string("/local/devel/devel/datasets/turkey/myseq0.fa"),
-    .ht_type = 1,
     .in_file_sz = 0,
-    .drop_caches = true,
+    .K = 20,
+    .num_threads = 1,
+    .mode = BQ_TESTS_YES_BQ,  // TODO enum
+    .numa_split = 3,
+    .ht_type = 1,
+    .ht_fill = 75,
+    .ht_size = HT_TESTS_HT_SIZE,
     .n_prod = 1,
     .n_cons = 1,
     .num_nops = 0,
-    .K = 20,
-    .ht_fill = 25,
-    .skew = 1.0};  // TODO enum
+    .skew = 1.0,
+    .drop_caches = true,
+    .hwprefetchers = false,
+};  // TODO enum
 
 // global config
 Configuration config;
@@ -150,7 +147,7 @@ void Application::shard_thread(int tid, bool mainthread) {
     case SYNTH:
     case ZIPFIAN:
     case BQ_TESTS_NO_BQ:
-      kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
+      kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
     case FASTQ_NO_INSERT:
       break;
@@ -466,8 +463,12 @@ int Application::process(int argc, char *argv[]) {
         "ht-fill",
         po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
         "adjust hashtable fill ratio [0-100] ")(
+        "ht-size",
+        po::value<uint64_t>(&config.ht_size)->default_value(def.ht_size),
+        "adjust hashtable fill ratio [0-100] ")(
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
-        "Zipfian skewness");
+        "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
+                                           ->default_value(def.hwprefetchers));
 
     papi_init();
 
@@ -480,6 +481,15 @@ int Application::process(int argc, char *argv[]) {
     // Enable verbose logging
     if (vm["v"].as<bool>()) {
       plog::get()->setMaxSeverity(plog::verbose);
+    }
+
+    // Control hw prefetcher msr
+    if (vm["hw-pref"].as<bool>()) {
+      // XXX: 0x1a4 is prefetch control;
+      // 0 - all enabled; f - all disabled
+      this->msr_ctrl->write_msr(0x1a4, 0x0);
+    } else {
+      this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
 
     if (config.mode == SYNTH) {
@@ -514,6 +524,7 @@ int Application::process(int argc, char *argv[]) {
 
     if (config.ht_type == SIMPLE_KHT) {
       PLOG_INFO.printf("Hashtable type : SimpleKmerHashTable");
+      config.ht_size /= config.num_threads;
     } else if (config.ht_type == ROBINHOOD_KHT) {
       PLOG_INFO.printf("Hashtable type : RobinhoodKmerHashTable");
     } else if (config.ht_type == CAS_KHT) {
@@ -525,14 +536,11 @@ int Application::process(int argc, char *argv[]) {
       exit(0);
     }
 
-    if (config.ht_fill) {
-      if (config.ht_type == CAS_KHT) {
-        HT_TESTS_HT_SIZE *= config.num_threads;
-      }
-      if (config.ht_fill > 0 && config.ht_fill < 100) {
-        HT_TESTS_NUM_INSERTS =
-            static_cast<double>(HT_TESTS_HT_SIZE) * config.ht_fill * 0.01;
-      }
+    if (config.ht_fill > 0 && config.ht_fill < 100) {
+      HT_TESTS_NUM_INSERTS =
+          static_cast<double>(config.ht_size) * config.ht_fill * 0.01;
+    } else {
+      PLOG_ERROR.printf("ht_fill should be in range [1, 99)");
     }
 
     if (vm.count("help")) {
@@ -550,6 +558,15 @@ int Application::process(int argc, char *argv[]) {
       perror("drop caches");
     }
   }
+
+  // Dump hwprefetchers msr - Needs msr-safe driver
+  // (use scripts/enable_msr_safe.sh)
+  auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
+  printf("MSR 0x1a4 has: { ");
+  for (const auto &e : rdmsr_set) {
+    printf("0x%lx ", e);
+  }
+  printf("}\n");
 
   config.dump_configuration();
 
