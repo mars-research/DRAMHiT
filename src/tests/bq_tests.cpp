@@ -142,7 +142,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   for (auto i = 0u; i < reads.size(); ++i) reads[i] = sampler(prng);
 
   auto should_read_next = reads.cbegin();
-  auto &hashtable = this->ht_vec->at(tid);
 #endif
 
 #ifdef BQ_TESTS_INSERT_ZIPFIAN
@@ -201,9 +200,11 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
         prefetch_object<false>(&values.at(i + 16), 64);
       k = values.at(transaction_id);
 #elif defined(BQ_TESTS_RW_RATIO)
-      while (*(should_read_next++)) {
+      while (sampler(prng)) {
         if (find_keys.first == HT_TESTS_FIND_BATCH_LENGTH) {
-          hashtable->find_batch(find_keys, results);
+          this->ht_vec->at(find_keys.second[0].part_id)
+              ->find_batch(find_keys, results);
+
           find_keys.first = 0;
           found_count += results.first;
           results.first = 0;
