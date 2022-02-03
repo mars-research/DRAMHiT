@@ -4,6 +4,8 @@
 #include <array>
 #include <cstring>
 
+#include "plog/Log.h"
+
 namespace kmercounter {
 /// An always-full circular buffer.
 template <typename T, size_t N>
@@ -17,13 +19,25 @@ public:
     offset_ = (offset_ + 1) % N;
   }
 
+  void copy_to(std::array<T, N> &dst) {
+    copy_to(dst.data());
+  }
+
+  // For example, let `|` be the offset:
+  // N=3, offset_=2: [1 2 | 3] -> [3 1 2]
+  // N=3, offset_=0: [1 2 3 |] -> [1 2 3]
   void copy_to(T *dst) {
     // Copy first half.
-    const auto first_half_size = N - offset_ - 1;
-    memcpy(dst, data_.data() + offset, first_half_size * sizeof(T));
+    const auto first_half_size = N - offset_;
+    memcpy(dst, data_.data() + offset_, first_half_size * sizeof(T));
     // Copy second half.
     const auto second_half_size = N - first_half_size;
     memcpy(dst + first_half_size, data_.data(), second_half_size * sizeof(T));
+    // PLOG_INFO << "Offset " << offset_ << " first half " << first_half_size << " second half " << second_half_size;
+    // for (int i = 0 ; i < N; i ++ ) {
+    //   std::cerr << data_[i] << " "; 
+    // }
+    // std::cerr << std::endl;
   }
 
   uint32_t offset() {
