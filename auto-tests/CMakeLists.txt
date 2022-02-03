@@ -21,5 +21,6 @@ add_kvstore_test(aggregation_test)
 add_kvstore_test(hashmap_test)
 
 subdirs(input_reader)
+subdirs(utils)
 
 

@@ -1,0 +1,1 @@
+add_kvstore_test(circular_buffer_test)
