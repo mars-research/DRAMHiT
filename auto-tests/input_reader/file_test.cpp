@@ -1,10 +1,11 @@
+#include <array>
+#include <sstream>
+
 #include <absl/strings/str_join.h>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/irange.hpp>
 #include <boost/range/numeric.hpp>
 #include <gtest/gtest.h>
-#include <sstream>
-
 #include "input_reader/file.hpp"
 
 using boost::accumulate;
@@ -40,20 +41,6 @@ std::string generate_csv(uint64_t num_rows, uint64_t num_cols=3) {
   return csv;
 }
 
-/// Make a std::array without providing a size.
-/// CITE: https://stackoverflow.com/a/26351623
-template <typename... T>
-constexpr auto make_array(T&&... values) ->
-    std::array<
-       typename std::decay<
-           typename std::common_type<T...>::type>::type,
-       sizeof...(T)> {
-    return std::array<
-        typename std::decay<
-            typename std::common_type<T...>::type>::type,
-        sizeof...(T)>{std::forward<T>(values)...};
-}
-
 TEST(PartitionedFileTest, SimplePartitionTest) {
   const char* data = R"(line 1
     line 2
@@ -71,8 +58,8 @@ TEST(PartitionedFileTest, SimplePartitionTest) {
 }
 
 TEST(PartitionedFileTest, PartitionTest) {
-  constexpr auto num_liness = make_array(1, 2, 3, 4, 6, 9, 13, 17, 19, 21, 22, 24, 100, 1000);
-  constexpr auto num_partss = make_array(1, 2, 3, 4, 5, 6, 9, 13, 17, 19, 64);
+  constexpr auto num_liness = std::to_array({1, 2, 3, 4, 6, 9, 13, 17, 19, 21, 22, 24, 100, 1000});
+  constexpr auto num_partss = std::to_array({1, 2, 3, 4, 5, 6, 9, 13, 17, 19, 64});
 
   for (const auto num_lines : num_liness) {
     std::string csv = generate_csv(num_lines);
