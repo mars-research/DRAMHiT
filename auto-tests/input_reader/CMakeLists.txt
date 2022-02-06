@@ -1,1 +1,2 @@
 add_kvstore_test(file_test)
+add_kvstore_test(iterator_test)
