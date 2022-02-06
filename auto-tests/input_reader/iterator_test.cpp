@@ -11,7 +11,7 @@ namespace input_reader {
 
 namespace {
 
-TEST(IteratorReaderTest, SimpleTest) {
+TEST(IterReaderTest, SimpleTest) {
   std::vector vec{1, 3, 5, 7};
   {
     auto reader = std::make_unique<IterReader<decltype(vec.begin())>>(vec.begin(), vec.end());
