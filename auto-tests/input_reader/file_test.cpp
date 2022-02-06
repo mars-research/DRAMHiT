@@ -1,3 +1,5 @@
+#include "input_reader/file.hpp"
+
 #include <array>
 #include <sstream>
 
@@ -6,7 +8,6 @@
 #include <boost/range/irange.hpp>
 #include <boost/range/numeric.hpp>
 #include <gtest/gtest.h>
-#include "input_reader/file.hpp"
 
 using boost::accumulate;
 using boost::irange;

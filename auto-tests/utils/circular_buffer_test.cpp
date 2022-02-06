@@ -1,7 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "utils/circular_buffer.hpp"
 
+#include <gtest/gtest.h>
 
 namespace kmercounter {
 namespace input_reader {
