@@ -9,6 +9,8 @@
 #include <boost/range/numeric.hpp>
 #include <gtest/gtest.h>
 
+#include "input_reader_test_utils.hpp"
+
 using boost::accumulate;
 using boost::irange;
 using boost::adaptors::transformed;
@@ -17,17 +19,6 @@ namespace kmercounter {
 namespace input_reader {
 
 namespace {
-/// Consumes the reader and return the size of it.
-template<typename T>
-size_t reader_size(InputReader<T> *reader) {
-  size_t size = 0;
-  T tmp;
-  while (reader->next(&tmp)) {
-    size++;
-  }
-  return size;
-}
-
 /// Generate comma seperated a CSV file.
 std::string generate_csv(uint64_t num_rows, uint64_t num_cols=3) {
   std::string csv;
@@ -53,8 +44,8 @@ TEST(PartitionedFileTest, SimplePartitionTest) {
   // Test 1 partition.
   {
     std::unique_ptr<std::istream> file = std::make_unique<std::istringstream>(data);
-    PartitionedFileReader reader(std::move(file), 0, 1);
-    EXPECT_EQ(line_count, reader_size(&reader));
+    auto reader = std::make_unique<PartitionedFileReader>(std::move(file), 0, 1);
+    EXPECT_EQ(line_count, reader_size(std::move(reader)));
   }
 }
 
@@ -67,13 +58,12 @@ TEST(PartitionedFileTest, PartitionTest) {
     for (const auto num_parts : num_partss) {
       auto readers = irange(num_parts) | transformed([&csv, num_parts](uint64_t part_id) {
         std::unique_ptr<std::istream> file = std::make_unique<std::istringstream>(csv);
-        PartitionedFileReader reader(std::move(file), part_id, num_parts);
+        auto reader = std::make_unique<PartitionedFileReader>(std::move(file), part_id, num_parts);
         return reader;
       });
 
-      auto lines_read = readers | transformed([](PartitionedFileReader reader) {
-        const uint64_t lines_read = reader_size(&reader);
-        PLOG_DEBUG << "Reader " << reader.part_id() << " read " << lines_read << " lines.";
+      auto lines_read = readers | transformed([](auto reader) {
+        const uint64_t lines_read = reader_size(std::move(reader));
         return lines_read;
       });
 

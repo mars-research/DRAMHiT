@@ -9,6 +9,7 @@ namespace input_reader {
 template<class T>
 class InputReader {
 public:
+    using value_type = T;
     /// Copy the input into `data` and advance to the next input.
     /// Returns true if success, false if the input is exhausted.
     virtual bool next(T *data) = 0;
