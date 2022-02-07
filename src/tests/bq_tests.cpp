@@ -141,7 +141,8 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint64_t found_count{};
 
   auto ht_size = config.ht_size / n_cons;
-  const auto hashtable = init_ht(ht_size, sh->shard_idx);
+  const auto hashtable = new PartitionedHashStore<Aggr_KV, ItemQueue>(
+      ht_size, sh->shard_idx, true);
 #endif
 
 #ifdef BQ_TESTS_INSERT_ZIPFIAN
