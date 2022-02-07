@@ -1,7 +1,7 @@
 #ifndef INPUT_READER_ITERATOR_HPP
 #define INPUT_READER_ITERATOR_HPP
 
-#include "input_reader_base.hpp"
+#include "input_reader.hpp"
 
 #include <iterator>
 

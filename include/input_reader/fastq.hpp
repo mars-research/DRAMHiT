@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "file.hpp"
-#include "input_reader_base.hpp"
+#include "input_reader.hpp"
 #include "plog/Log.h"
 
 namespace kmercounter {

@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "file.hpp"
-#include "input_reader_base.hpp"
+#include "input_reader.hpp"
 
 namespace kmercounter {
 namespace input_reader {

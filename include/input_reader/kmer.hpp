@@ -1,7 +1,7 @@
 #ifndef INPUT_READER_KMER_HPP
 #define INPUT_READER_KMER_HPP
 
-#include "input_reader_base.hpp"
+#include "input_reader.hpp"
 
 #include <array>
 #include <memory>
