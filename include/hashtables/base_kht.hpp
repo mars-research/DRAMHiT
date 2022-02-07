@@ -1,5 +1,5 @@
-#ifndef BASE_KHT_HPP
-#define BASE_KHT_HPP
+#ifndef HASHTABLES_BASE_KHT_HPP
+#define HASHTABLES_BASE_KHT_HPP
 
 #include <stdint.h>
 
@@ -57,4 +57,4 @@ class BaseHashTable {
 };
 
 }  // namespace kmercounter
-#endif /* BASE_KHT_HPP */
+#endif // HASHTABLES_BASE_KHT_HPP

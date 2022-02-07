@@ -5,7 +5,7 @@
 #include <plog/Log.h>
 
 #include "constants.hpp"
-#include "base_kht.hpp"
+#include "hashtables/base_kht.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "print_stats.h"
 #include "sync.h"

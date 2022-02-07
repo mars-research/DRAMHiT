@@ -1,7 +1,7 @@
 #ifndef _PRINT_STATS_H
 #define _PRINT_STATS_H
 
-#include "base_kht.hpp"
+#include "hashtables/base_kht.hpp"
 
 namespace kmercounter {
 /*From /proc/cpuinfo*/
