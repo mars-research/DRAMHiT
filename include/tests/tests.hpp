@@ -3,7 +3,6 @@
 
 #include "BQueueTest.hpp"
 #include "CacheMissTest.hpp"
-#include "ParserTest.hpp"
 #include "PrefetchTest.hpp"
 #include "SynthTest.hpp"
 #include "ZipfianTest.hpp"
@@ -14,7 +13,6 @@ class Tests {
  public:
   SynthTest st;
   PrefetchTest pt;
-  ParserTest pat;
   BQueueTest bqt;
   CacheMissTest cmt;
   ZipfianTest zipf;

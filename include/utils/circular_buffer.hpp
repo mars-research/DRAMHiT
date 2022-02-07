@@ -19,6 +19,10 @@ public:
     offset_ = (offset_ + 1) % N;
   }
 
+  void copy_to(std::array<T, N> *dst) {
+    copy_to(*dst);
+  }
+
   void copy_to(std::array<T, N> &dst) {
     copy_to(dst.data());
   }

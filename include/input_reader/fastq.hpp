@@ -7,9 +7,11 @@
 #include <array>
 #include <istream>
 #include <memory>
+#include <utility>
 
 #include "file.hpp"
 #include "input_reader.hpp"
+#include "kmer.hpp"
 #include "plog/Log.h"
 
 namespace kmercounter {
@@ -108,6 +110,20 @@ class FastqReader : public FileReader {
     st.clear(old_state);
     return next_seq;
   }
+};
+
+template <size_t K>
+class FastqKMerReader : InputReader<std::array<uint8_t, K>> {
+public:
+  template <typename ...Args>
+  FastqKMerReader(Args && ...args) : reader_(std::make_unique<FastqReader>(std::forward<Args>(args)...)) {}
+
+  bool next(std::array<uint8_t, K>* data) override {
+    return reader_.next(data);
+  }
+
+private:
+  KMerSplitter<K> reader_;
 };
 }  // namespace input_reader
 }  // namespace kmercounter

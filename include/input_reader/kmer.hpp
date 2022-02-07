@@ -15,40 +15,55 @@ namespace input_reader {
 template <size_t K>
 class KMerSplitter : public InputReader<std::array<uint8_t, K>> {
  public:
-  KMerSplitter(std::unique_ptr<InputReader<std::string>> lines) : lines_(lines) {
+  KMerSplitter(std::unique_ptr<InputReader<std::string>> lines) : lines_(std::move(lines)) {
    PLOG_WARNING_IF(!lines_->next(&current_line_)) << "Empty input.";
-   current_line_iter_ = current_line_.begin();
-
-   // Intiialize the kmer buffer.
-   for (size_t i = 0; i < K; i++) {
-     if (current_line_iter_ == current_line_.end()) {
-       return;
-     }
-     kmer_.push(*(current_line_iter_++));
-   }
+   this->prep_new_line();
   }
 
   // Return the next kmer.
   bool next(std::array<uint8_t, K>* data) override {
+    if (eof_) {
+      return false;
+    }
+    kmer_.copy_to(data);
+
     if (current_line_iter_ == current_line_.end()) {
       // Fetch the next line.
-      if (!lines_->next(&current_line_)) {
+      if (!(lines_->next(&current_line_) && this->prep_new_line())) {
         // Run out of lines.
-        return false;
+        eof_ = true;
+      } else {
+        return true;
       }
     }
 
     kmer_.push(*(current_line_iter_++));
-    kmer_.copy_to(data);
     return true;
   }
 
 
  private:
+  bool prep_new_line() {
+    current_line_iter_ = current_line_.begin();
+
+    // Intiialize the kmer buffer.
+    for (size_t i = 0; i < K; i++) {
+      if (current_line_iter_ == current_line_.end()) {
+        eof_ = true;
+        return false;
+      }
+      kmer_.push(*(current_line_iter_++));
+    }
+    return true;
+  }
+
+
+
   std::unique_ptr<InputReader<std::string>> lines_;
   std::string current_line_;
   std::string::iterator current_line_iter_;
   CircularBuffer<uint8_t, K> kmer_;
+  bool eof_;
 };
 } // namespace input_reader
 } // namespace kmercounter
