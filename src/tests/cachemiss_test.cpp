@@ -1,4 +1,4 @@
-#include "tests.hpp"
+#include "tests/tests.hpp"
 
 namespace kmercounter {
 

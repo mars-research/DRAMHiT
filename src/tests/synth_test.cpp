@@ -1,4 +1,4 @@
-#include "SynthTest.hpp"
+#include "tests/SynthTest.hpp"
 
 #include <algorithm>
 #include <cstdint>

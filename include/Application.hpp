@@ -5,7 +5,7 @@
 
 #include "MsrHandler.hpp"
 #include "numa.hpp"
-#include "tests.hpp"
+#include "tests/tests.hpp"
 
 using namespace std;
 namespace kmercounter {
