@@ -42,23 +42,76 @@ std::streampos find_next_sequence(std::istream& st, std::streampos offset) {
 }
 
 class PartitionedFastqReader : public PartitionedFileReader {
-  /// Takes a istream and return the offset of the boundary base
-  /// on the corrent offset of the istream.
-  using find_bound_t =
-      std::function<std::streampos(std::istream& st, std::streampos offset)>;
-
  public:
-  PartitionedFastqReader(std::string_view filename, uint64_t part_id,
-                         uint64_t num_parts,
-                         find_bound_t find_bound = find_next_sequence)
+  PartitionedFastqReader(
+      std::string_view filename, uint64_t part_id, uint64_t num_parts,
+      PartitionedFileReader::find_bound_t find_bound = find_next_sequence)
       : PartitionedFastqReader(std::make_unique<std::ifstream>(filename.data()),
                                part_id, num_parts, find_bound) {}
 
-  PartitionedFastqReader(std::unique_ptr<std::istream> input_file,
-                         uint64_t part_id, uint64_t num_parts,
-                         find_bound_t find_bound = find_next_line)
+  PartitionedFastqReader(
+      std::unique_ptr<std::istream> input_file, uint64_t part_id,
+      uint64_t num_parts,
+      PartitionedFileReader::find_bound_t find_bound = find_next_sequence)
       : PartitionedFileReader(std::move(input_file), part_id, num_parts,
                               find_bound) {}
+
+  // Return the next sequence.
+  bool next(std::string* data) override {
+    // Skip over the first line(sequence identifier).
+    if (this->eof()) {
+      return false;
+    }
+    int next_char = this->peek();
+    if (next_char != '@') {
+      PLOG_WARNING << "Unexpected character " << next_char
+                   << ". Expecting sequence identifier "
+                      "line which begins with '@'.";
+      return false;
+    }
+    if (!PartitionedFileReader::next(nullptr)) {
+      return false;
+    }
+
+    // Copy the second line(sequence) to `data`
+    if (!PartitionedFileReader::next(data)) {
+      PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
+      return false;
+    }
+
+    // The parsing for this sequence is finished if the third line
+    // is not a quality header.
+    if (this->peek() != '+') {
+      return true;
+    }
+
+    // Skip over the third line(quality header).
+    PartitionedFileReader::input_file_->get();
+    next_char = PartitionedFileReader::input_file_->get();
+    if (next_char != '\n') {
+      PLOG_WARNING << "Unexpected character " << next_char
+                   << ". The quanlity header line should "
+                      "only be {'+', '\n'}.";
+      return false;
+    }
+
+    // Copy the second line(sequence) to `data`
+    if (!PartitionedFileReader::next(nullptr)) {
+      PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
+      return false;
+    }
+
+    return true;
+  }
+};
+
+class FastqReader : public PartitionedFastqReader {
+ public:
+  FastqReader(std::string_view filename)
+      : PartitionedFastqReader(filename, 0, 1) {}
+
+  FastqReader(std::unique_ptr<std::istream> input_file)
+      : PartitionedFastqReader(std::move(input_file), 0, 1) {}
 };
 
 KSEQ_INIT(int, read)
@@ -70,7 +123,7 @@ class FastxReader : public InputReader<T> {
   /// The size of the output. AKA, The `K` in KMer.
   static constexpr size_t K = sizeof(T);
 
-  FastxReader(const std::string& file, uint32_t k) : offset(0) {
+  FastxReader(const std::string& file, uint32_t k) : offset_(0) {
     int fd = open(file.c_str(), O_RDONLY);
     seq_ = kseq_init(fd);
   }
@@ -92,7 +145,7 @@ class FastxReader : public InputReader<T> {
     this->shl_kmer();
     *kmer_.rbegin() = seq_->seq.s[offset_++];
 
-    *data = *(T*)kmer.data();
+    *data = *(T*)kmer_.data();
     return true;
   }
 
@@ -109,8 +162,7 @@ class FastxReader : public InputReader<T> {
         return;
       } else if (len < K) {
         PLOG_WARNING << "Skipping sequence with length " << len
-                     << ", which is less than K=" << K << ": "
-                     << seq_->seq.s;
+                     << ", which is less than K=" << K << ": " << seq_->seq.s;
       } else {
         break;
       }
@@ -143,4 +195,4 @@ class FastxReader : public InputReader<T> {
 }  // namespace input_reader
 }  // namespace kmercounter
 
-#endif // INPUT_READER_FASTX_HPP
+#endif  // INPUT_READER_FASTX_HPP

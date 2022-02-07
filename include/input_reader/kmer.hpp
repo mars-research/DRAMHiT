@@ -16,7 +16,7 @@ template <size_t K>
 class KMerSplitter : public InputReader<std::array<uint8_t, K>> {
  public:
   KMerSplitter(std::unique_ptr<InputReader<std::string>> lines) : lines_(lines) {
-   PLOG_WARNING_IF(!lines_->next(&current_line_), "Empty input.");
+   PLOG_WARNING_IF(!lines_->next(&current_line_)) << "Empty input.";
    current_line_iter_ = current_line_.begin();
 
    // Intiialize the kmer buffer.

@@ -1,3 +1,4 @@
+add_kvstore_test(fastx_test)
 add_kvstore_test(file_test)
 add_kvstore_test(iterator_test)
 add_kvstore_test(string_view_test)

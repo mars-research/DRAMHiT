@@ -41,12 +41,12 @@ std::streampos find_next_line(std::istream& st, std::streampos offset) {
 /// The file is sliced up evenly among the partitions.
 /// `find_bound` is used to find the boundary of each partition.
 class PartitionedFileReader : public InputReader<std::string> {
+ public:
   /// Takes a istream and return the offset of the boundary base
   /// on the corrent offset of the istream.
   using find_bound_t =
       std::function<std::streampos(std::istream& st, std::streampos offset)>;
 
- public:
   PartitionedFileReader(std::string_view filename, uint64_t part_id,
                         uint64_t num_parts,
                         find_bound_t find_bound = find_next_line)
@@ -81,17 +81,43 @@ class PartitionedFileReader : public InputReader<std::string> {
     input_file_->seekg(adjusted_part_start);
   }
 
+  /// Copy the next line to `data` and advance the offset.
   bool next(std::string* data) override {
-    return ((uint64_t)input_file_->tellg() < part_end_) &&
-           std::getline(*input_file_, *data);
+    // Check if we reached end of partitioned.
+    if (this->eof()) {
+      return false;
+    }
+
+    // Skip the line instead of copying it if `data` is nullptr.
+    if (data == nullptr) {
+      return this->skip_to_next_line();
+    }
+
+    return (bool)std::getline(*input_file_, *data);
+  }
+
+  /// Skip to next line.
+  bool skip_to_next_line() {
+    return (bool)input_file_->ignore(
+        std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+
+  int peek() { return input_file_->peek(); }
+
+  bool good() { return input_file_->good(); }
+
+  bool eof() {
+    return ((uint64_t)input_file_->tellg() >= part_end_) || input_file_->eof();
   }
 
   uint64_t num_parts() { return num_parts_; }
 
   uint64_t part_id() { return part_id_; }
 
- private:
+ protected:
   std::unique_ptr<std::istream> input_file_;
+
+ private:
   uint64_t part_end_;
   uint64_t part_id_;
   uint64_t num_parts_;
