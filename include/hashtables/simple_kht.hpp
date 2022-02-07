@@ -175,7 +175,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return 0;
   };
 
-  PartitionedHashStore(uint64_t c, uint8_t id)
+  PartitionedHashStore(uint64_t c, uint8_t id, bool finder_only = false)
       : id(id),
         capacity(c),
         find_head(0),
@@ -202,8 +202,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     assert(this->hashtable[this->id] == nullptr);
 
     // Allocate for this id
-    this->hashtable[this->id] =
-        (KV *)calloc_ht<KV>(this->capacity, this->id, &this->fds[this->id]);
+    if (!finder_only) {
+      this->hashtable[this->id] =
+          (KV *)calloc_ht<KV>(this->capacity, this->id, &this->fds[this->id]);
+    }
+
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
@@ -223,8 +226,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   ~PartitionedHashStore() {
     free(find_queue);
     free(insert_queue);
-    free_mem<KV>(this->hashtable[this->id], this->capacity, this->id,
-                 this->fds[this->id]);
+
+    if (this->hashtable[this->id]) {
+      free_mem<KV>(this->hashtable[this->id], this->capacity, this->id,
+                   this->fds[this->id]);
+    }
   }
 
   void insert_noprefetch(const void *data) {
@@ -391,6 +397,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   size_t get_fill() const override {
     size_t count = 0;
     KV *ht = this->hashtable[this->id];
+    if (!ht) return 0;
+
     for (size_t i = 0; i < this->capacity; i++) {
       if (!ht[i].is_empty()) {
         count++;
@@ -404,6 +412,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   size_t get_max_count() const override {
     size_t count = 0;
     KV *ht = this->hashtable[this->id];
+    if (!ht) return 0;
+
     for (size_t i = 0; i < this->capacity; i++) {
       if (ht[i].get_value() > count) {
         count = ht[i].get_value();

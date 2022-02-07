@@ -606,7 +606,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     auto ht_size = config.ht_size / n_cons;
     PLOG_INFO.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
                      sh->shard_idx);
-    ktable = init_ht(ht_size, sh->shard_idx);
+
+    ktable = new PartitionedHashStore<KVType, ItemQueue>(ht_size, sh->shard_idx,
+                                                         true);
+
     this->ht_vec->at(tid) = ktable;
   }
 
