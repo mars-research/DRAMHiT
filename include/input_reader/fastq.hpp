@@ -1,7 +1,6 @@
 #ifndef INPUT_READER_FASTQ_HPP
 #define INPUT_READER_FASTQ_HPP
 
-
 #ifndef INPUT_READER_FASTX_HPP
 #define INPUT_READER_FASTX_HPP
 
@@ -16,48 +15,21 @@
 namespace kmercounter {
 namespace input_reader {
 
-/// Find offset of the next find_next_sequence.
-/// Return current offset if `st` is at the beginning of a line.
-std::streampos find_next_sequence(std::istream& st, std::streampos offset) {
-  // Beginning of a file is the beginning of a line.
-  if (offset == 0) {
-    return offset;
-  }
-
-  // Save the current offset.
-  const auto old_state = st.rdstate();
-  const auto old_offset = st.tellg();
-  // Find the quality header from the `offset`.
-  st.seekg(offset);
-  for (std::string line; std::getline(st, line);) {
-    // Consume quality line after hitting the quality header.
-    // This will lead us to the next sequence.
-    if (line == "+") {
-      std::getline(st, line);
-    }
-  }
-  const auto next_seq = st.tellg();
-
-  // Restore the offset and return.
-  st.seekg(old_offset);
-  st.clear(old_state);
-  return next_seq;
-}
-
-class PartitionedFastqReader : public PartitionedFileReader {
+class FastqReader : public FileReader {
  public:
-  PartitionedFastqReader(
-      std::string_view filename, uint64_t part_id, uint64_t num_parts,
-      PartitionedFileReader::find_bound_t find_bound = find_next_sequence)
-      : PartitionedFastqReader(std::make_unique<std::ifstream>(filename.data()),
-                               part_id, num_parts, find_bound) {}
+  FastqReader(std::string_view filename, uint64_t part_id, uint64_t num_parts)
+      : FileReader(filename, part_id, num_parts, find_next_sequence) {}
 
-  PartitionedFastqReader(
-      std::unique_ptr<std::istream> input_file, uint64_t part_id,
-      uint64_t num_parts,
-      PartitionedFileReader::find_bound_t find_bound = find_next_sequence)
-      : PartitionedFileReader(std::move(input_file), part_id, num_parts,
-                              find_bound) {}
+  FastqReader(std::unique_ptr<std::istream> input_file, uint64_t part_id,
+              uint64_t num_parts)
+      : FileReader(std::move(input_file), part_id, num_parts,
+                   find_next_sequence) {}
+
+  FastqReader(std::string_view filename)
+      : FastqReader(std::make_unique<std::ifstream>(filename.data())) {}
+
+  FastqReader(std::unique_ptr<std::istream> input_file)
+      : FastqReader(std::move(input_file), 0, 1) {}
 
   // Return the next sequence.
   bool next(std::string* data) override {
@@ -72,12 +44,12 @@ class PartitionedFastqReader : public PartitionedFileReader {
                       "line which begins with '@'.";
       return false;
     }
-    if (!PartitionedFileReader::next(nullptr)) {
+    if (!FileReader::next(nullptr)) {
       return false;
     }
 
     // Copy the second line(sequence) to `data`
-    if (!PartitionedFileReader::next(data)) {
+    if (!FileReader::next(data)) {
       PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
       return false;
     }
@@ -89,8 +61,8 @@ class PartitionedFastqReader : public PartitionedFileReader {
     }
 
     // Skip over the third line(quality header).
-    PartitionedFileReader::input_file_->get();
-    next_char = PartitionedFileReader::input_file_->get();
+    FileReader::input_file_->get();
+    next_char = FileReader::input_file_->get();
     if (next_char != '\n') {
       PLOG_WARNING << "Unexpected character " << next_char
                    << ". The quanlity header line should "
@@ -99,25 +71,45 @@ class PartitionedFastqReader : public PartitionedFileReader {
     }
 
     // Copy the second line(sequence) to `data`
-    if (!PartitionedFileReader::next(nullptr)) {
+    if (!FileReader::next(nullptr)) {
       PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
       return false;
     }
 
     return true;
   }
+
+ private:
+  /// Find offset of the next find_next_sequence.
+  /// Return current offset if `st` is at the beginning of a line.
+  static std::streampos find_next_sequence(std::istream& st,
+                                           std::streampos offset) {
+    // Beginning of a file is the beginning of a line.
+    if (offset == 0) {
+      return offset;
+    }
+
+    // Save the current offset.
+    const auto old_state = st.rdstate();
+    const auto old_offset = st.tellg();
+    // Find the quality header from the `offset`.
+    st.seekg(offset);
+    for (std::string line; std::getline(st, line);) {
+      // Consume quality line after hitting the quality header.
+      // This will lead us to the next sequence.
+      if (line == "+") {
+        std::getline(st, line);
+      }
+    }
+    const auto next_seq = st.tellg();
+
+    // Restore the offset and return.
+    st.seekg(old_offset);
+    st.clear(old_state);
+    return next_seq;
+  }
 };
-
-class FastqReader : public PartitionedFastqReader {
- public:
-  FastqReader(std::string_view filename)
-      : PartitionedFastqReader(filename, 0, 1) {}
-
-  FastqReader(std::unique_ptr<std::istream> input_file)
-      : PartitionedFastqReader(std::move(input_file), 0, 1) {}
-};
-
 }  // namespace input_reader
 }  // namespace kmercounter
 #endif  // INPUT_READER_FASTX_HPP
-#endif // INPUT_READER_FASTQ_HPP
+#endif  // INPUT_READER_FASTQ_HPP

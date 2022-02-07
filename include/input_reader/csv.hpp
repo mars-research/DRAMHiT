@@ -24,7 +24,7 @@ class PartitionedCsvReader : public InputReader<Row*> {
   PartitionedCsvReader(std::string_view filename, uint64_t part_id, uint64_t num_parts,
                         std::string_view delimiter = ",") {
     // Read CSV line by line into memory.
-    PartitionedFileReader file(filename, part_id, num_parts);
+    FileReader file(filename, part_id, num_parts);
     for (std::string line; file.next(&line); /*noop*/) {
       const std::string field_str = line.substr(0, line.find(delimiter));
       const uint64_t field = std::stoull(field_str);

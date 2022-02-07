@@ -15,49 +15,30 @@
 
 namespace kmercounter {
 namespace input_reader {
-
-/// Find offset of next line.
-std::streampos find_next_line(std::istream& st, std::streampos offset) {
-  // Beginning of a file is the beginning of a line.
-  if (offset == 0) {
-    return offset;
-  }
-
-  // Save the current offset.
-  const auto old_state = st.rdstate();
-  const auto old_offset = st.tellg();
-  // Check if we are already at the beginning of a line.
-  st.seekg(offset);
-  std::string tmp;
-  std::getline(st, tmp);
-  const auto next_line = st.tellg();
-  // Restore the offset and return.
-  st.seekg(old_offset);
-  st.clear(old_state);
-  return next_line;
-}
-
 /// Read file one whole line at a time within the partition.
 /// The file is sliced up evenly among the partitions.
 /// `find_bound` is used to find the boundary of each partition.
-class PartitionedFileReader : public InputReader<std::string> {
+class FileReader : public InputReader<std::string> {
  public:
   /// Takes a istream and return the offset of the boundary base
   /// on the corrent offset of the istream.
   using find_bound_t =
       std::function<std::streampos(std::istream& st, std::streampos offset)>;
 
-  PartitionedFileReader(std::string_view filename, uint64_t part_id,
-                        uint64_t num_parts,
-                        find_bound_t find_bound = find_next_line)
-      : PartitionedFileReader(std::make_unique<std::ifstream>(filename.data()),
-                              part_id, num_parts, find_bound) {
+  FileReader(std::string_view filename, uint64_t part_id, uint64_t num_parts,
+             find_bound_t find_bound = find_next_line)
+      : FileReader(std::make_unique<std::ifstream>(filename.data()), part_id,
+                   num_parts, find_bound) {
     PLOG_FATAL_IF(input_file_->fail()) << "Failed to open file " << filename;
   }
 
-  PartitionedFileReader(std::unique_ptr<std::istream> input_file,
-                        uint64_t part_id, uint64_t num_parts,
-                        find_bound_t find_bound = find_next_line)
+  FileReader(std::string_view filename) : FileReader(filename, 0, 1) {}
+
+  FileReader(std::unique_ptr<std::istream> input_file)
+      : FileReader(std::move(input_file), 0, 1) {}
+
+  FileReader(std::unique_ptr<std::istream> input_file, uint64_t part_id,
+             uint64_t num_parts, find_bound_t find_bound = find_next_line)
       : input_file_(std::move(input_file)),
         part_id_(part_id),
         num_parts_(num_parts) {
@@ -114,6 +95,28 @@ class PartitionedFileReader : public InputReader<std::string> {
 
   uint64_t part_id() { return part_id_; }
 
+ private:
+  /// Find offset of next line.
+  static std::streampos find_next_line(std::istream& st, std::streampos offset) {
+    // Beginning of a file is the beginning of a line.
+    if (offset == 0) {
+      return offset;
+    }
+
+    // Save the current offset.
+    const auto old_state = st.rdstate();
+    const auto old_offset = st.tellg();
+    // Check if we are already at the beginning of a line.
+    st.seekg(offset);
+    std::string tmp;
+    std::getline(st, tmp);
+    const auto next_line = st.tellg();
+    // Restore the offset and return.
+    st.seekg(old_offset);
+    st.clear(old_state);
+    return next_line;
+  }
+
  protected:
   std::unique_ptr<std::istream> input_file_;
 
@@ -121,15 +124,6 @@ class PartitionedFileReader : public InputReader<std::string> {
   uint64_t part_end_;
   uint64_t part_id_;
   uint64_t num_parts_;
-};
-
-/// Read one line at a time.
-class FileReader : public PartitionedFileReader {
- public:
-  FileReader(std::string_view filename)
-      : PartitionedFileReader(filename, 0, 1) {}
-  FileReader(std::unique_ptr<std::istream> input_file)
-      : PartitionedFileReader(std::move(input_file), 0, 1) {}
 };
 
 }  // namespace input_reader
