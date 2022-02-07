@@ -237,8 +237,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       break;
 
     case RW_RATIO:
-      this->test.rw_ratio.run(*sh, *kmer_ht,
-                              config.ht_fill * config.ht_size / 100.0);
+      this->test.rw_ratio.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
 
     default:
       break;
@@ -402,110 +401,85 @@ int Application::process(int argc, char *argv[]) {
     namespace po = boost::program_options;
     po::options_description desc("Program options");
 
-    desc.add_options()(
-      "help",
-      "produce help message"
-    )(
-      "mode",
-      po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
-      "1: Dry run \n"
-      // Huh? don't look at me. The numbers are not continuous for a reason.
-      // We stripped the kmer related stuff.
-      "6/7: Synth/Prefetch\n"
-      "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
-      "zipfian)\n"
-      "10: Cache Miss test\n"
-      "11: Zipfian non-bqueue test"
-      "12: RW-Ratio benchmark"
-    )(
-      "base",
-      po::value<uint64_t>(&config.kmer_create_data_base)->default_value(def.kmer_create_data_base),
-      "Number of base K-mers"
-    )(
-      "mult",
-      po::value<uint32_t>(&config.kmer_create_data_mult)->default_value(def.kmer_create_data_mult),
-      "Base multiplier for K-mers"
-    )(
-      "uniq",
-      po::value<uint64_t>(&config.kmer_create_data_uniq)->default_value(def.kmer_create_data_uniq),
-      "Number of unique K-mers (to control the ratio)"
-    )(
-      "num-threads",
-      po::value<uint32_t>(&config.num_threads)->default_value(def.num_threads),
-      "Number of threads"
-    )(
-      "files-dir",
-      po::value<std::string>(&config.kmer_files_dir)->default_value(def.kmer_files_dir),
-      "Directory of input files, files should be in format: '\\d{2}.bin'"
-    )(
-      "alphanum",
-      po::value<bool>(&config.alphanum_kmers)->default_value(def.alphanum_kmers),
-      "Use alphanum_kmers (for debugging)"\
-    )(
-      "numa-split",
-      po::value<uint32_t>(&config.numa_split)->default_value(def.numa_split),
-      "Split spawning threads between numa nodes"
-    )(
-      "stats",
-      po::value<std::string>(&config.stats_file)->default_value(def.stats_file),
-      "Stats file name."
-    )(
-      "ht-type",
-      po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
-      "1: SimpleKmerHashTable\n"
-      "2: RobinhoodKmerHashTable,\n"
-      "3: CASKmerHashTable\n"
-      "4. StdmapKmerHashTable"
-    )(
-      "out-file",
-      po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
-      "Hashtable output file name."
-    )(
-      "in-file",
-      po::value<std::string>(&config.in_file)->default_value(def.in_file),
-      "Input fasta file"
-    )(
-      "drop-caches",
-      po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
-      "drop page cache before run"
-    )(
-      "v",
-      po::bool_switch()->default_value(false), "enable verbose logging"
-    )(
-      "nprod",
-      po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
-      "for bqueues only"
-    )(
-      "ncons",
-      po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
-      "for bqueues only"
-    )(
-      "k",
-      po::value<uint32_t>(&config.K)->default_value(def.K),
-      "the value of 'k' in k-mer"
-    )(
-      "num_nops",
-      po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
-      "number of nops in bqueue cons thread"
-    )(
-      "ht-fill",
-      po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
-      "adjust hashtable fill ratio [0-100]"
-    )(
-      "ht-size",
-      po::value<uint64_t>(&config.ht_size)->default_value(def.ht_size),
-      "adjust hashtable fill ratio [0-100]"
-    )(
-      "skew",
-      po::value<double>(&config.skew)->default_value(def.skew),
-      "Zipfian skewness"
-    )(
-      "hw-pref",
-      po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers)
-    )(
-      "rw-ratio",
-      po::value<double>(&config.rw_ratio)->default_value(def.rw_ratio)
-    );
+    desc.add_options()("help", "produce help message")(
+        "mode",
+        po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
+        "1: Dry run \n"
+        // Huh? don't look at me. The numbers are not continuous for a reason.
+        // We stripped the kmer related stuff.
+        "6/7: Synth/Prefetch\n"
+        "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
+        "zipfian)\n"
+        "10: Cache Miss test\n"
+        "11: Zipfian non-bqueue test"
+        "12: RW-Ratio benchmark")(
+        "base",
+        po::value<uint64_t>(&config.kmer_create_data_base)
+            ->default_value(def.kmer_create_data_base),
+        "Number of base K-mers")(
+        "mult",
+        po::value<uint32_t>(&config.kmer_create_data_mult)
+            ->default_value(def.kmer_create_data_mult),
+        "Base multiplier for K-mers")(
+        "uniq",
+        po::value<uint64_t>(&config.kmer_create_data_uniq)
+            ->default_value(def.kmer_create_data_uniq),
+        "Number of unique K-mers (to control the ratio)")(
+        "num-threads",
+        po::value<uint32_t>(&config.num_threads)
+            ->default_value(def.num_threads),
+        "Number of threads")(
+        "files-dir",
+        po::value<std::string>(&config.kmer_files_dir)
+            ->default_value(def.kmer_files_dir),
+        "Directory of input files, files should be in format: '\\d{2}.bin'")(
+        "alphanum",
+        po::value<bool>(&config.alphanum_kmers)
+            ->default_value(def.alphanum_kmers),
+        "Use alphanum_kmers (for debugging)")(
+        "numa-split",
+        po::value<uint32_t>(&config.numa_split)->default_value(def.numa_split),
+        "Split spawning threads between numa nodes")(
+        "stats",
+        po::value<std::string>(&config.stats_file)
+            ->default_value(def.stats_file),
+        "Stats file name.")(
+        "ht-type",
+        po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
+        "1: SimpleKmerHashTable\n"
+        "2: RobinhoodKmerHashTable,\n"
+        "3: CASKmerHashTable\n"
+        "4. StdmapKmerHashTable")(
+        "out-file",
+        po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
+        "Hashtable output file name.")(
+        "in-file",
+        po::value<std::string>(&config.in_file)->default_value(def.in_file),
+        "Input fasta file")(
+        "drop-caches",
+        po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
+        "drop page cache before run")(
+        "v", po::bool_switch()->default_value(false), "enable verbose logging")(
+        "nprod", po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
+        "for bqueues only")(
+        "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
+        "for bqueues only")(
+        "k", po::value<uint32_t>(&config.K)->default_value(def.K),
+        "the value of 'k' in k-mer")(
+        "num_nops",
+        po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
+        "number of nops in bqueue cons thread")(
+        "ht-fill",
+        po::value<uint32_t>(&config.ht_fill)->default_value(def.ht_fill),
+        "adjust hashtable fill ratio [0-100]")(
+        "ht-size",
+        po::value<uint64_t>(&config.ht_size)->default_value(def.ht_size),
+        "adjust hashtable fill ratio [0-100]")(
+        "skew", po::value<double>(&config.skew)->default_value(def.skew),
+        "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
+                                           ->default_value(def.hwprefetchers))(
+        "rw-ratio",
+        po::value<double>(&config.rw_ratio)->default_value(def.rw_ratio));
 
     papi_init();
 

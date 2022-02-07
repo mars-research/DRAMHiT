@@ -34,12 +34,12 @@ extern Configuration config;
 
 class rw_experiment {
  public:
-  rw_experiment(BaseHashTable& hashtable)
+  rw_experiment(BaseHashTable& hashtable, unsigned int start_key)
       : hashtable{hashtable},
         timings{},
         prng{},
         sampler{config.rw_ratio / (1.0 + config.rw_ratio)},
-        next_key{1},
+        next_key{start_key},
         write_batch{},
         writes{0, write_batch.data()},
         read_batch{},
@@ -132,7 +132,7 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   PLOG_ERROR << "Please disable Bqueues option before running this test";
 #else
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
-  rw_experiment experiment{hashtable};
+  rw_experiment experiment{hashtable, shard.shard_idx * total_ops + 1};
 #ifdef WITH_VTUNE_LIB
   constexpr auto event_name = "rw_ratio_run";
   static const auto event = __itt_event_create(event_name, strlen(event_name));
