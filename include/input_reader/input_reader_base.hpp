@@ -9,9 +9,10 @@ namespace input_reader {
 template<class T>
 class InputReader {
 public:
-    /// Returns the next element from the input.
-    /// Returns `std::nullopt` if the input is exhausted.
-    virtual std::optional<T> next() = 0;
+    using value_type = T;
+    /// Copy the input into `data` and advance to the next input.
+    /// Returns true if success, false if the input is exhausted.
+    virtual bool next(T *data) = 0;
 };
 } // namespace input_reader
 } // namespace kmercounter

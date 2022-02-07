@@ -9,15 +9,16 @@ namespace input_reader {
 template<class T>
 class Repeater : public InputReader<T> {
 public:
-    Repeater(T data) : data(data) {}
+    Repeater(T data) : data_(data) {}
 
-    std::optional<T> next() override {
-        return data;
+    bool next(T *data) override {
+        *data = data_;
+        return true;
     }
 
 
 private:
-    T data;
+    T data_;
 };
 } // namespace input_reader
 } // namespace kmercounter

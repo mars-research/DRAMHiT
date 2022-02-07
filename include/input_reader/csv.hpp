@@ -13,17 +13,6 @@
 namespace kmercounter {
 namespace input_reader {
 
-/// A field in a row.
-using Field =
-    std::variant<uint8_t, uint16_t, uint32_t, uint64_t, float, double>;
-
-/// A row in a table.
-// TODO: support other datatype
-// class Row {
-// public:
-//   std::vector<uint64_t> fields;
-// };
-
 /// The first field(key) of the row and the raw row itself.
 using Row = std::pair<uint64_t, std::string>;
 
@@ -36,33 +25,33 @@ class PartitionedCsvReader : public InputReader<Row*> {
                         std::string_view delimiter = ",") {
     // Read CSV line by line into memory.
     PartitionedFileReader file(filename, part_id, num_parts);
-    for (std::optional<std::string> line_op; line_op = file.next(); /*noop*/) {
-      std::string line = *line_op;
+    for (std::string line; file.next(&line); /*noop*/) {
       const std::string field_str = line.substr(0, line.find(delimiter));
       const uint64_t field = std::stoull(field_str);
-      this->data.push_back(std::make_pair(field, line));
+      data_.push_back(std::make_pair(field, line));
     }
 
-    this->iter = this->data.begin();
+    iter_ = data_.begin();
   }
 
-  std::optional<Row*> next() override {
-    if (this->iter == this->data.end()) {
-      return std::nullopt;
+  bool next(Row **data) override {
+    if (iter_ == data_.end()) {
+      return false;
     } else {
-      return &*(this->iter++);
+      *data = &*(iter_++);
+      return true;
     }
   }
 
-  uint64_t size() { return data.size(); }
+  uint64_t size() { return data_.size(); }
 
   const std::vector<Row>& rows() const {
-    return data;
+    return data_;
   }
 
  private:
-  std::vector<Row> data;
-  std::vector<Row>::iterator iter;
+  std::vector<Row> data_;
+  std::vector<Row>::iterator iter_;
 };
 
 class CsvReader : public PartitionedCsvReader {
@@ -75,4 +64,4 @@ class CsvReader : public PartitionedCsvReader {
 }  // namespace input_reader
 }  // namespace kmercounter
 
-#endif  // INPUT_READER_CSV_HPP
+#endif /* INPUT_READER_CSV_HPP */

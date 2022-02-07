@@ -18,3 +18,5 @@ result
 .direnv/
 *.tbl
 tpch-dbgen/
+perf.data
+perf.data.*

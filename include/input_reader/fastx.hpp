@@ -1,14 +1,119 @@
-#ifndef INPUT_READER_FASTX
-#define INPUT_READER_FASTX
+#ifndef INPUT_READER_FASTX_HPP
+#define INPUT_READER_FASTX_HPP
 
 #include <array>
+#include <istream>
+#include <memory>
 
+#include "file.hpp"
 #include "input_reader_base.hpp"
 #include "plog/Log.h"
 #include "readfq/kseq.h"
 
 namespace kmercounter {
 namespace input_reader {
+
+/// Find offset of the next find_next_sequence.
+/// Return current offset if `st` is at the beginning of a line.
+std::streampos find_next_sequence(std::istream& st, std::streampos offset) {
+  // Beginning of a file is the beginning of a line.
+  if (offset == 0) {
+    return offset;
+  }
+
+  // Save the current offset.
+  const auto old_state = st.rdstate();
+  const auto old_offset = st.tellg();
+  // Find the quality header from the `offset`.
+  st.seekg(offset);
+  for (std::string line; std::getline(st, line);) {
+    // Consume quality line after hitting the quality header.
+    // This will lead us to the next sequence.
+    if (line == "+") {
+      std::getline(st, line);
+    }
+  }
+  const auto next_seq = st.tellg();
+
+  // Restore the offset and return.
+  st.seekg(old_offset);
+  st.clear(old_state);
+  return next_seq;
+}
+
+class PartitionedFastqReader : public PartitionedFileReader {
+ public:
+  PartitionedFastqReader(
+      std::string_view filename, uint64_t part_id, uint64_t num_parts,
+      PartitionedFileReader::find_bound_t find_bound = find_next_sequence)
+      : PartitionedFastqReader(std::make_unique<std::ifstream>(filename.data()),
+                               part_id, num_parts, find_bound) {}
+
+  PartitionedFastqReader(
+      std::unique_ptr<std::istream> input_file, uint64_t part_id,
+      uint64_t num_parts,
+      PartitionedFileReader::find_bound_t find_bound = find_next_sequence)
+      : PartitionedFileReader(std::move(input_file), part_id, num_parts,
+                              find_bound) {}
+
+  // Return the next sequence.
+  bool next(std::string* data) override {
+    // Skip over the first line(sequence identifier).
+    if (this->eof()) {
+      return false;
+    }
+    int next_char = this->peek();
+    if (next_char != '@') {
+      PLOG_WARNING << "Unexpected character " << next_char
+                   << ". Expecting sequence identifier "
+                      "line which begins with '@'.";
+      return false;
+    }
+    if (!PartitionedFileReader::next(nullptr)) {
+      return false;
+    }
+
+    // Copy the second line(sequence) to `data`
+    if (!PartitionedFileReader::next(data)) {
+      PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
+      return false;
+    }
+
+    // The parsing for this sequence is finished if the third line
+    // is not a quality header.
+    if (this->peek() != '+') {
+      return true;
+    }
+
+    // Skip over the third line(quality header).
+    PartitionedFileReader::input_file_->get();
+    next_char = PartitionedFileReader::input_file_->get();
+    if (next_char != '\n') {
+      PLOG_WARNING << "Unexpected character " << next_char
+                   << ". The quanlity header line should "
+                      "only be {'+', '\n'}.";
+      return false;
+    }
+
+    // Copy the second line(sequence) to `data`
+    if (!PartitionedFileReader::next(nullptr)) {
+      PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
+      return false;
+    }
+
+    return true;
+  }
+};
+
+class FastqReader : public PartitionedFastqReader {
+ public:
+  FastqReader(std::string_view filename)
+      : PartitionedFastqReader(filename, 0, 1) {}
+
+  FastqReader(std::unique_ptr<std::istream> input_file)
+      : PartitionedFastqReader(std::move(input_file), 0, 1) {}
+};
+
 KSEQ_INIT(int, read)
 /// Read a file in fasta/fastq format.
 /// Return a single KMer a time.
@@ -18,45 +123,46 @@ class FastxReader : public InputReader<T> {
   /// The size of the output. AKA, The `K` in KMer.
   static constexpr size_t K = sizeof(T);
 
-  FastxReader(const std::string& file, uint32_t k) : offset(0) {
+  FastxReader(const std::string& file, uint32_t k) : offset_(0) {
     int fd = open(file.c_str(), O_RDONLY);
-    this->seq = kseq_init(fd);
+    seq_ = kseq_init(fd);
   }
 
   // Return a kmer.
-  std::optional<T> next() override {
+  bool next(T* data) override {
     // Read a new sequence if the current sequence is exhausted.
-    if (this->offset >= this->seq->seq.l) {
+    if (offset_ >= seq_->seq.l) {
       read_new_sequence();
     }
 
     // Check if the file is exhausted.
-    if (this->eof) {
-      return std::nullopt;
+    if (eof_) {
+      return false;
     }
 
     // Shift kmer by one and read in the next mer.
+    // TODO: maybe it's faster to copy without shifting.
     this->shl_kmer();
-    *this->kmer.rbegin() = this->seq->seq.s[this->offset++];
+    *kmer_.rbegin() = seq_->seq.s[offset_++];
 
-    return *(T*)kmer.data();
+    *data = *(T*)kmer_.data();
+    return true;
   }
 
-  ~FastxReader() { kseq_destroy(this->seq); }
+  ~FastxReader() { kseq_destroy(seq_); }
 
  private:
   /// Read a new sequence.
   void read_new_sequence() {
     /// Read until found a seq with at least K in size.
     while (true) {
-      int len = kseq_read(this->seq);
+      int len = kseq_read(seq_);
       if (len < 0) {
-        this->eof = true;
+        eof_ = true;
         return;
       } else if (len < K) {
         PLOG_WARNING << "Skipping sequence with length " << len
-                     << ", which is less than K=" << K << ": "
-                     << this->seq->seq.s;
+                     << ", which is less than K=" << K << ": " << seq_->seq.s;
       } else {
         break;
       }
@@ -65,28 +171,28 @@ class FastxReader : public InputReader<T> {
     // And prepare `kmer` for a new sequence by
     // reading K-1 mers into kmer[1, K].
     for (int i = 1; i < K; i++) {
-      this->kmer[i] = this->seq->seq.s[this->offset++];
+      kmer_[i] = seq_->seq.s[offset_++];
     }
   }
 
   /// Left shift the kmer by one mer.
   /// This is useful for reserving space for the next mer.
   void shl_kmer() {
-    for (int i = 0; i < this->kmer.size() - 1; i++) {
-      this->kmer[i] = this->kmer[i + 1];
+    for (int i = 0; i < kmer_.size() - 1; i++) {
+      kmer_[i] = kmer_[i + 1];
     }
   }
 
   /// Handle to the fastx parser.
-  kseq_t* seq;
+  kseq_t* seq_;
   /// Current offset into `seq->seq->s`.
-  size_t offset;
+  size_t offset_;
   /// Indicate that we have reached the end of the file.
-  bool eof;
+  bool eof_;
   /// The kmer returned by the last `next()` call.
-  std::array<uint8_t, K> kmer;
+  std::array<uint8_t, K> kmer_;
 };
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace input_reader
+}  // namespace kmercounter
 
-#endif /* INPUT_READER_FASTX */
+#endif  // INPUT_READER_FASTX_HPP

@@ -46,6 +46,7 @@
           gdb
           linuxPackages.perf
           clang-tools
+          act
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
       };

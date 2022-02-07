@@ -15,6 +15,7 @@
 #include "base_kht.hpp"
 #include "input_reader/csv.hpp"
 #include "hashtables/kvtypes.hpp"
+#include "sync.h"
 #include "types.hpp"
 
 namespace kmercounter {
@@ -28,8 +29,9 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
   // Build hashtable from t1.
   uint64_t k = 0;
   __attribute__((aligned(64))) Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
-  for (std::optional<input_reader::Row*> pair; pair = t1.next();) {
-    const auto& [key, row] = **pair;
+  const auto t1_start = RDTSC_START();
+  for (input_reader::Row* pair; t1.next(&pair);) {
+    const auto& [key, row] = *pair;
     keys[k].key = key;
     keys[k].id = (uint64_t)row.data();
     PLOG_INFO << "Left " << keys[k] << (char*)keys[k].id;
@@ -46,17 +48,22 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
   }
   ht->flush_insert_queue();
 
+  {
+    const auto duration = RDTSCP() - t1_start;
+    std::cerr << "Thread " << (int)sh->shard_idx << " takes " << duration  << " to insert " << t1.size() << ". Avg " << duration / t1.size()  << std::endl;
+  }
+
   // Make sure insertions is finished before probing.
   thread_synker->fetch_add(1, std::memory_order_seq_cst);
   while (thread_synker->load(std::memory_order_seq_cst) < config->num_threads) {
-    // PLOG_INFO << thread_synker << " " << (int)thread_synker->load(std::memory_order_seq_cst);
     // spin
   } 
 
   // Helper function for checking the result of the batch finds.
-  std::ofstream output_file("join.tbl");
-  const auto t2_rows = t2.rows();
-  auto join_rows = [&output_file, &t2_rows] (const ValuePairs& vp) {
+  // std::ofstream output_file(std::to_string((int)sh->shard_idx) + "_join.tbl");
+  const auto& t2_rows = t2.rows();
+  const auto t2_start = RDTSC_START();
+  auto join_rows = [&t2_rows] (const ValuePairs& vp) {
     PLOG_DEBUG << "Found " << vp.first << " keys";
     for (uint32_t i = 0; i < vp.first; i++) {
       const Values& value = vp.second[i];
@@ -65,7 +72,7 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
       const char* right_row = t2_rows[value.id].second.c_str();
       PLOG_INFO << "Left row " << left_row;
       PLOG_INFO << "Right row " << right_row;
-      output_file << left_row << "|" << right_row << std::endl;
+      // output_file << left_row << "|" << right_row << "\n";
     }
   };
 
@@ -101,6 +108,17 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
     ht->flush_find_queue(valuepairs);
     join_rows(valuepairs);
   } while (valuepairs.first);
+
+  {
+    const auto duration = RDTSCP() - t2_start;
+    std::cerr << "Thread " << (int)sh->shard_idx << " takes " << duration << " to join " << t1.size() << ". Avg " << duration / t1.size() << std::endl;
+  }
+
+  {
+    const auto duration = RDTSCP() - t1_start;
+    std::cerr << "Thread " << (int)sh->shard_idx << " takes " << duration << " to output " << t1.size() << ". Avg " << duration / t1.size() << std::endl;
+  }
+
 }
 
 }  // namespace kmercounter
