@@ -13,9 +13,9 @@ namespace kmercounter {
 namespace input_reader {
 /// Generate KMer from a sequence.
 template <size_t K>
-class KMerSplitter : public InputReader<std::array<uint8_t, K>> {
+class KMerReader : public InputReader<std::array<uint8_t, K>> {
  public:
-  KMerSplitter(std::unique_ptr<InputReader<std::string>> lines) : lines_(std::move(lines)) {
+  KMerReader(std::unique_ptr<InputReader<std::string>> lines) : lines_(std::move(lines)), eof_(false) {
    PLOG_WARNING_IF(!lines_->next(&current_line_)) << "Empty input.";
    this->prep_new_line();
   }

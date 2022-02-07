@@ -123,7 +123,7 @@ public:
   }
 
 private:
-  KMerSplitter<K> reader_;
+  KMerReader<K> reader_;
 };
 }  // namespace input_reader
 }  // namespace kmercounter
