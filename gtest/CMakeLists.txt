@@ -16,6 +16,7 @@ add_executable(
   ../src/misc_lib.cpp
 )
 
+target_include_directories(ht_tests PRIVATE ../lib/plog/include/)
 target_link_directories(ht_tests PRIVATE ../lib/)
 target_link_libraries(
   ht_tests

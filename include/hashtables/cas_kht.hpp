@@ -2,7 +2,7 @@
 /// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
 /// Key and values are stored directly in the table.
 /// CASHashtable is not parititioned, meaning that there will be
-/// at max one instance of it. All threads will share the same 
+/// at max one instance of it. All threads will share the same
 /// instance.
 /// The original one is called the casht and the one we modified with
 /// batching + prefetching though is called casht++.
@@ -16,12 +16,12 @@
 #include <iostream>
 #include <mutex>
 
-#include "constants.h"
-#include "plog/Log.h"
+#include "constants.hpp"
+#include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
+#include "plog/Log.h"
 #include "sync.h"
-#include "hasher.hpp"
 
 namespace kmercounter {
 template <typename KV, typename KVQ>
@@ -45,7 +45,8 @@ class CASHashTable : public BaseHashTable {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
-        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd, true);
+        this->hashtable =
+            calloc_ht<KV>(this->capacity, this->id, &this->fd, true);
       }
       this->ref_cnt++;
     }
@@ -302,9 +303,7 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_tail;
   Hasher hasher_;
 
-  uint64_t hash(const void *k) {
-    return hasher_(k, this->key_length);
-  }
+  uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
@@ -335,10 +334,11 @@ class CASHashTable : public BaseHashTable {
     uint64_t retry;
     found = curr->find(q, &retry, vp);
 
-    // printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found=%ld, retry %ld\n",
+    // printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found=%ld,
+    // retry %ld\n",
     //          __func__, q->key, vp.first, vp.second[(vp.first - 1) %
-    //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
-    //                  % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
+    //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first -
+    //                  1) % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
     if (retry) {
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run
@@ -427,7 +427,7 @@ class CASHashTable : public BaseHashTable {
 #ifdef CALC_STATS
       ++this->num_soft_reprobes;
 #endif
-      goto try_insert; // FIXME: @David get rid of the goto for crying out loud
+      goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
     }
 
     prefetch(idx);
@@ -448,7 +448,7 @@ class CASHashTable : public BaseHashTable {
   void __insert_one(KVQ *q) { __insert_branched(q); }
 
   uint64_t read_hashtable_element(const void *data) override {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
   }
@@ -466,6 +466,7 @@ class CASHashTable : public BaseHashTable {
     this->insert_queue[this->ins_head].key = key_data->key;
     this->insert_queue[this->ins_head].value = key_data->value;
     this->insert_queue[this->ins_head].key_id = key_data->id;
+    this->insert_queue[this->ins_head].value = key_data->id;
 
 #ifdef COMPARE_HASH
     this->insert_queue[this->ins_head].key_hash = hash;
@@ -508,4 +509,4 @@ std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
 template <class KV, class KVQ>
 uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
 }  // namespace kmercounter
-#endif // HASHTABLES_CAS_KHT_HPP
+#endif  // HASHTABLES_CAS_KHT_HPP

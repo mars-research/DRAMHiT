@@ -6,8 +6,10 @@
 #include <RWRatioTest.hpp>
 #include <array>
 #include <base_kht.hpp>
+#include <constants.hpp>
 #include <hasher.hpp>
 #include <random>
+#include <xorwow.hpp>
 
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>

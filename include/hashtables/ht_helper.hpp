@@ -1,17 +1,17 @@
 #ifndef _HT_HELPER_H
 #define _HT_HELPER_H
 
-#include "base_kht.hpp"
-#include "hashtables/kvtypes.hpp"
-
 #include <fcntl.h>
 #include <numa.h>
 #include <numaif.h>
+#include <plog/Log.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <plog/Log.h>
 
 #include <cstring>
+
+#include "base_kht.hpp"
+#include "hashtables/kvtypes.hpp"
 
 namespace kmercounter {
 /* AB: 1GB page table code is from
@@ -20,8 +20,8 @@ namespace kmercounter {
 
 #define FILE_NAME "/mnt/huge/hugepagefile%d"
 
-#define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
-#define MAP_HUGE_1GB    (30 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
 extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
@@ -137,8 +137,8 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
                      MPOL_MF_MOVE | MPOL_MF_STRICT);
 
     PLOGI.printf("mmap_addr %p | len %zu", _addr, capacity * sizeof(T));
-    PLOGI.printf("calling mbind with addr %p | len %zu | nodemask %p", addr_split,
-           len_split, nodemask);
+    PLOGI.printf("calling mbind with addr %p | len %zu | nodemask %p",
+                 addr_split, len_split, nodemask);
     if (ret < 0) {
       perror("mbind");
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);

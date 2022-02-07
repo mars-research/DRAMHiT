@@ -12,6 +12,7 @@
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
+#include "xorwow.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"

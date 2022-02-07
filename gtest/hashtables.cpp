@@ -4,6 +4,7 @@
 #include <array>
 #include <hashtables/cas_kht.hpp>
 #include <hashtables/simple_kht.hpp>
+#include <xorwow.hpp>
 
 using namespace kmercounter;
 

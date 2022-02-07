@@ -17,7 +17,7 @@ find_package(Threads REQUIRED)
 find_package(Boost 1.67 REQUIRED program_options)
 
 # Set up toolchain
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -28,7 +28,15 @@ add_compile_options(
     -fcf-protection=none
 )
 
-# Build all the source files.
+# Build all the source files for the library.
+add_library(ht_lib
+    "src/types.cpp"
+    "src/hashtables/kvtypes.cpp"
+)
+target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
+target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash)
+
+# Build all the source files for the executable.
 add_executable(kvstore
     "src/bqueue.cpp"
     "src/tests/bq_tests.cpp"
@@ -36,18 +44,22 @@ add_executable(kvstore
     "src/tests/prefetch_tests.cpp"
     "src/tests/cachemiss_test.cpp"
     "src/tests/rw_ratio.cpp"
+    "src/tests/hashjoin_test.cpp"
+    "src/tests/synth_test.cpp"
     "src/misc_lib.cpp"
+    "src/xorwow.cpp"
     "src/Application.cpp"
     "src/kvstore.cpp"
 )
 
 # Add subdirectory
 add_subdirectory(lib)
+target_include_directories(kvstore PRIVATE lib/plog/include/)
 target_link_directories(kvstore PRIVATE lib/)
-target_link_libraries(kvstore PRIVATE fnv xxhash cityhash)
+target_link_libraries(kvstore PRIVATE ht_lib)
 
 # Declare include directory.
-include_directories(include/ lib/ lib/cityhash/src/ lib/plog/include/)
+include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
 option(HUGEPAGES "Enable hugepages allocation." ON)
@@ -206,6 +218,6 @@ add_definitions(-DCONFIG_ALIGN_BQUEUE_METADATA)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 
-target_link_libraries(kvstore PRIVATE boost_program_options numa Threads::Threads)
+target_link_libraries(kvstore PRIVATE boost_program_options Threads::Threads)
 
-add_subdirectory(gtest)
+# add_subdirectory(gtest)

@@ -22,7 +22,7 @@
 #include <mutex>
 #include <tuple>
 
-#include "constants.h"
+#include "constants.hpp"
 #include "experiments.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"
@@ -228,7 +228,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void insert_noprefetch(const void *data) {
-    cout << "Not implemented!" << endl;
+    PLOG_FATAL << "Not implemented";
     assert(false);
   }
 
@@ -345,7 +345,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t distance_from_bucket = 0;
 #endif
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash;
+    size_t idx = hash & (this->capacity - 1);  // modulo
     KV *curr = &this->hashtable[this->id][idx];
     bool found = false;
 
