@@ -18,3 +18,5 @@ result
 .direnv/
 *.tbl
 tpch-dbgen/
+*.pyc
+/__pycache__/

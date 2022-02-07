@@ -35,9 +35,9 @@ if __name__ == '__main__':
     bq_times = []
     ratios = [p / (1 - p) for p in (n * 0.1 for n in range(int(1 / 0.1)))]
 
-    for i in ratios:
+    for c_count in range(8, 57, 4):
         # cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{i}.log'))[0])
-        bq_times.append(get_times(bq_home.joinpath(f'{i}.log'))[0])
+        bq_times.append(get_times(bq_home.joinpath(f'{c_count}.log'))[0])
 
     print(f'Casht++: {cashtpp_times}')
     print(f'Casht: {casht_times}')

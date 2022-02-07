@@ -39,7 +39,7 @@ if __name__ == '__main__':
     run_synchronous(source, 'sudo', [prefetch, 'off'])
 
     ratios = [p / (1 - p) for p in (n * 0.1 for n in range(int(1 / 0.1)))]
-    for n in ratios:
+    for c_count in range(8, 57, 4):
         # print(f'Running cashtpp{n}', flush=True)
         # chtpp_log = os.open(cashtpp_home.parent.joinpath(
         #     f'{n}.log'), os.O_RDWR | os.O_CREAT)
@@ -47,9 +47,9 @@ if __name__ == '__main__':
         # run_synchronous(cashtpp_home, './kvstore', ['--mode=12', '--ht-fill=75',
         #                 f'--num-threads=64', '--ht-type=3', f'--rw-ratio={n}'], chtpp_log)
 
-        print(f'Running bq{n}', flush=True)
+        print(f'Running bq{c_count}', flush=True)
         bq_log = os.open(bq_home.parent.joinpath(
-            f'{n}.log'), os.O_RDWR | os.O_CREAT)
+            f'{c_count}.log'), os.O_RDWR | os.O_CREAT)
 
         run_synchronous(bq_home, './kvstore', ['--mode=8', '--ht-fill=75',
-                        '--ncons=32', '--nprod=32', '--ht-type=1', f'--rw-ratio={n}'], bq_log)
+                        f'--ncons={c_count}', f'--nprod={64 - c_count}', '--ht-type=1', '--rw-ratio=0.0'], bq_log)
