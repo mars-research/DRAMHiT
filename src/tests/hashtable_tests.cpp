@@ -8,7 +8,7 @@
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
-#include "tests.hpp"
+#include "tests/tests.hpp"
 #include "zipf.h"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI

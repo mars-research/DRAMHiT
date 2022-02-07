@@ -1,6 +1,6 @@
 #include <sched.h>
 
-#include "PrefetchTest.hpp"
+#include "tests/PrefetchTest.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "types.hpp"

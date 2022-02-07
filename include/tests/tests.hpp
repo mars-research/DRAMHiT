@@ -1,5 +1,5 @@
-#ifndef __TESTS_HPP__
-#define __TESTS_HPP__
+#ifndef TESTS_TESTS_HPP
+#define TESTS_TESTS_HPP
 
 #include "BQueueTest.hpp"
 #include "CacheMissTest.hpp"
@@ -24,4 +24,4 @@ class Tests {
 
 }  // namespace kmercounter
 
-#endif  // __TESTS_HPP__
+#endif // TESTS_TESTS_HPP

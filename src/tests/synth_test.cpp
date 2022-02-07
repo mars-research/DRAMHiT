@@ -1,17 +1,21 @@
-#include "SynthTest.hpp"
+#include "tests/SynthTest.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <plog/Log.h>
 
 #include "constants.hpp"
-#include "base_kht.hpp"
+#include "hashtables/base_kht.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "print_stats.h"
 #include "sync.h"
 #include "xorwow.hpp"
 #ifdef ENABLE_HIGH_LEVEL_PAPI
 #include <papi.h>
+#endif
+
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
 #endif
 
 namespace kmercounter {

@@ -3,7 +3,7 @@
 
 #include <thread>
 
-#include "base_kht.hpp"
+#include "hashtables/base_kht.hpp"
 #include "bqueue.h"
 #include "numa.hpp"
 #include "types.hpp"

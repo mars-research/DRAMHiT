@@ -1,7 +1,7 @@
 #ifndef __PARSER_TEST_HPP__
 #define __PARSER_TEST_HPP__
 
-#include "base_kht.hpp"
+#include "hashtables/base_kht.hpp"
 #include "types.hpp"
 
 namespace kmercounter {

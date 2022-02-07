@@ -3,7 +3,7 @@
 #include <cinttypes>
 #include <tuple>
 
-#include "BQueueTest.hpp"
+#include "tests/BQueueTest.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"
 #include "hashtables/simple_kht.hpp"
