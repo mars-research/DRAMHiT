@@ -25,6 +25,11 @@ TEST(IterReaderTest, SimpleTest) {
   }
 
   {
+    auto reader = std::make_unique<IterReader<decltype(vec.begin())>>(vec.begin() + 1, vec.end());
+    EXPECT_EQ(4, reader_size(std::move(reader)));
+  }
+
+  {
     auto reader = std::make_unique<IterReader<decltype(vec.begin())>>(vec.begin(), vec.end());
     for (auto expected_val : vec) {
       int val;
@@ -32,6 +37,7 @@ TEST(IterReaderTest, SimpleTest) {
       EXPECT_EQ(expected_val, val);
     }
   }
+
 }
 
 
