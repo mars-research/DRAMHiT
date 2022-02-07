@@ -1,4 +1,4 @@
-#include "input_reader/fastx.hpp"
+#include "input_reader/fastq.hpp"
 
 #include <absl/strings/str_join.h>
 #include <gtest/gtest.h>

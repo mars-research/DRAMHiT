@@ -3,7 +3,7 @@
 
 #include "counter.hpp"
 #include "csv.hpp"
-#include "fastx.hpp"
+#include "fastq.hpp"
 #include "file.hpp"
 #include "repeater.hpp"
 #include "xorwow.hpp"
