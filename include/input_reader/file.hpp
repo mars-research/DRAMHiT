@@ -27,10 +27,8 @@ class FileReader : public InputReader<std::string> {
 
   FileReader(std::string_view filename, uint64_t part_id, uint64_t num_parts,
              find_bound_t find_bound = find_next_line)
-      : FileReader(std::make_unique<std::ifstream>(filename.data()), part_id,
-                   num_parts, find_bound) {
-    PLOG_FATAL_IF(input_file_->fail()) << "Failed to open file " << filename;
-  }
+      : FileReader(std::make_unique<std::ifstream>(open_file(filename)),
+                   part_id, num_parts, find_bound) {}
 
   FileReader(std::string_view filename) : FileReader(filename, 0, 1) {}
 
@@ -96,8 +94,17 @@ class FileReader : public InputReader<std::string> {
   uint64_t part_id() { return part_id_; }
 
  private:
+  /// Creats a ifstream and log if fail.
+  static std::ifstream open_file(std::string_view filename) {
+    std::ifstream file(filename.data());
+    PLOG_FATAL_IF(file.fail())
+        << "Failed to open file " << filename << ": " << file.rdstate();
+    return file;
+  }
+
   /// Find offset of next line.
-  static std::streampos find_next_line(std::istream& st, std::streampos offset) {
+  static std::streampos find_next_line(std::istream& st,
+                                       std::streampos offset) {
     // Beginning of a file is the beginning of a line.
     if (offset == 0) {
       return offset;
