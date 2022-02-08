@@ -101,6 +101,7 @@ class FastqReader : public FileReader {
       // This will lead us to the next sequence.
       if (line == "+") {
         std::getline(st, line);
+        break;
       }
     }
     const auto next_seq = st.tellg();
