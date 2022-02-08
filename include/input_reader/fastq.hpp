@@ -63,8 +63,8 @@ class FastqReader : public FileReader {
     }
 
     // Skip over the third line(quality header).
-    FileReader::input_file_->get();
-    next_char = FileReader::input_file_->get();
+    this->get();
+    next_char = this->get();
     if (next_char != '\n') {
       PLOG_WARNING << "Unexpected character " << next_char
                    << ". The quanlity header line should "

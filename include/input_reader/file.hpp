@@ -117,6 +117,12 @@ class FileReader : public InputReader<std::string_view> {
 
   int peek() { return input_file_->peek(); }
 
+  int get() { 
+    int rtn = input_file_->get();
+    offset_ += input_file_->gcount();  
+    return rtn;
+  }
+
   bool good() { return input_file_->good(); }
 
   bool eof() {
@@ -157,10 +163,8 @@ class FileReader : public InputReader<std::string_view> {
     return next_line;
   }
 
- protected:
-  std::unique_ptr<std::istream> input_file_;
-
  private:
+  std::unique_ptr<std::istream> input_file_;
   uint64_t offset_;
   uint64_t part_end_;
   uint64_t part_id_;
