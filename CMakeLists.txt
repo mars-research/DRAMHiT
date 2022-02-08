@@ -12,7 +12,7 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
 endif()
 
 # Setup default build type to release with debug information
-if(NOT DEFINED ${CMAKE_BUILD_TYPE})
+if(NOT ${CMAKE_BUILD_TYPE})
     set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
