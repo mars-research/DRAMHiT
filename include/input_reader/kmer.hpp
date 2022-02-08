@@ -1,12 +1,11 @@
 #ifndef INPUT_READER_KMER_HPP
 #define INPUT_READER_KMER_HPP
 
-#include "input_reader.hpp"
-
 #include <array>
 #include <memory>
 #include <string>
 
+#include "input_reader.hpp"
 #include "utils/circular_buffer.hpp"
 
 namespace kmercounter {
@@ -15,9 +14,10 @@ namespace input_reader {
 template <size_t K>
 class KMerReader : public InputReader<std::array<uint8_t, K>> {
  public:
-  KMerReader(std::unique_ptr<InputReader<std::string>> lines) : lines_(std::move(lines)), eof_(false) {
-   PLOG_WARNING_IF(!lines_->next(&current_line_)) << "Empty input.";
-   this->prep_new_line();
+  KMerReader(std::unique_ptr<InputReader<std::string_view>> lines)
+      : lines_(std::move(lines)), eof_(false) {
+    PLOG_WARNING_IF(!lines_->next(&current_line_)) << "Empty input.";
+    this->prep_new_line();
   }
 
   // Return the next kmer.
@@ -41,7 +41,6 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
     return true;
   }
 
-
  private:
   bool prep_new_line() {
     current_line_iter_ = current_line_.begin();
@@ -57,15 +56,13 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
     return true;
   }
 
-
-
-  std::unique_ptr<InputReader<std::string>> lines_;
-  std::string current_line_;
-  std::string::iterator current_line_iter_;
+  std::unique_ptr<InputReader<std::string_view>> lines_;
+  std::string_view current_line_;
+  std::string_view::iterator current_line_iter_;
   CircularBuffer<uint8_t, K> kmer_;
   bool eof_;
 };
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace input_reader
+}  // namespace kmercounter
 
-#endif // INPUT_READER_KMER_HPP
+#endif  // INPUT_READER_KMER_HPP

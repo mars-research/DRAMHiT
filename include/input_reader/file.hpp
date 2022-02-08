@@ -3,6 +3,7 @@
 
 #include <plog/Log.h>
 
+#include <cassert>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -10,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "input_reader.hpp"
 
@@ -18,7 +20,7 @@ namespace input_reader {
 /// Read file one whole line at a time within the partition.
 /// The file is sliced up evenly among the partitions.
 /// `find_bound` is used to find the boundary of each partition.
-class FileReader : public InputReader<std::string> {
+class FileReader : public InputReader<std::string_view> {
  public:
   /// Takes a istream and return the offset of the boundary base
   /// on the corrent offset of the istream.
@@ -39,7 +41,8 @@ class FileReader : public InputReader<std::string> {
              uint64_t num_parts, find_bound_t find_bound = find_next_line)
       : input_file_(std::move(input_file)),
         part_id_(part_id),
-        num_parts_(num_parts) {
+        num_parts_(num_parts),
+        buffer_(4096) {
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the
     // parameter passing.
@@ -52,33 +55,64 @@ class FileReader : public InputReader<std::string> {
                << ", end " << part_end_;
 
     // Adjust the partition end.
-    part_end_ = find_bound(*input_file_, part_end_);
+    const auto adjusted_part_end = find_bound(*input_file_, part_end_);
+    part_end_ = std::min(uint64_t(adjusted_part_end),
+                         file_size);  // adjusted_part_end will be -1 if EOF.
     // Adjust the current offset of the actual partition start.
     const auto adjusted_part_start = find_bound(*input_file_, part_start);
     PLOG_DEBUG << part_id << "/" << num_parts << ": adj_start "
                << adjusted_part_start << ", adj_end " << part_end_;
     input_file_->seekg(adjusted_part_start);
+    offset_ = adjusted_part_start;
   }
 
-  /// Copy the next line to `data` and advance the offset.
-  bool next(std::string* data) override {
+  ~FileReader() {
+    PLOG_ERROR_IF(offset_ != part_end_)
+        << "Offset mismatch: expected " << part_end_ << "; actual: " << offset_;
+  }
+
+  /// Copy the next line to `output` and advance the offset.
+  bool next(std::string_view* output) override {
     // Check if we reached end of partitioned.
     if (this->eof()) {
       return false;
     }
 
-    // Skip the line instead of copying it if `data` is nullptr.
-    if (data == nullptr) {
+    // Skip the line instead of copying it if `output` is nullptr.
+    if (output == nullptr) {
       return this->skip_to_next_line();
     }
 
-    return (bool)std::getline(*input_file_, *data);
+    input_file_->getline(buffer_.data(), buffer_.size());
+    // Resize if doesn't fit.
+    // WARNING: not tested.
+    while (input_file_->fail()) {
+      const size_t old_size = buffer_.size();
+      PLOG_DEBUG << "Resizing buffer with old size " << old_size;
+      const size_t bytes_read_so_far = old_size - 1; 
+      buffer_.resize(old_size * 2);
+      input_file_->clear();
+      input_file_->getline(buffer_.data() + bytes_read_so_far, buffer_.size() - bytes_read_so_far);
+    }
+
+    const size_t bytes_read = input_file_->gcount();
+    // The last character is the terminator.
+    const char last_char = buffer_[bytes_read - 1];
+    if (last_char == '\n' || last_char == '\0') {
+      *output = std::string_view(const_cast<char*>(buffer_.data()), bytes_read - 1);
+    } else {
+      *output = std::string_view(const_cast<char*>(buffer_.data()), bytes_read);
+    }
+    offset_ += bytes_read;
+    return (bool)input_file_;
   }
 
   /// Skip to next line.
   bool skip_to_next_line() {
-    return (bool)input_file_->ignore(
+    input_file_->ignore(
         std::numeric_limits<std::streamsize>::max(), '\n');
+    offset_ += input_file_->gcount();
+    return (bool)input_file_;
   }
 
   int peek() { return input_file_->peek(); }
@@ -86,7 +120,7 @@ class FileReader : public InputReader<std::string> {
   bool good() { return input_file_->good(); }
 
   bool eof() {
-    return ((uint64_t)input_file_->tellg() >= part_end_) || input_file_->eof();
+    return (offset_ >= part_end_) || input_file_->eof();
   }
 
   uint64_t num_parts() { return num_parts_; }
@@ -115,8 +149,7 @@ class FileReader : public InputReader<std::string> {
     const auto old_offset = st.tellg();
     // Check if we are already at the beginning of a line.
     st.seekg(offset);
-    std::string tmp;
-    std::getline(st, tmp);
+    st.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     const auto next_line = st.tellg();
     // Restore the offset and return.
     st.seekg(old_offset);
@@ -128,12 +161,14 @@ class FileReader : public InputReader<std::string> {
   std::unique_ptr<std::istream> input_file_;
 
  private:
+  uint64_t offset_;
   uint64_t part_end_;
   uint64_t part_id_;
   uint64_t num_parts_;
+  std::vector<char> buffer_;
 };
 
 }  // namespace input_reader
 }  // namespace kmercounter
 
-#endif  // INPUT_READER_FILE_HPP
+#endif // INPUT_READER_FILE_HPP

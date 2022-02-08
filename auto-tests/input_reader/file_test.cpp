@@ -35,11 +35,10 @@ std::string generate_csv(uint64_t num_rows, uint64_t num_cols = 3) {
 
 TEST(FileTest, SimplePartitionTest) {
   const char* data = R"(line 1
-    line 2
-    line 3
-    line 4
-    line 5)";
-  const size_t line_count = 5;
+this is line 2
+3
+
+line 4 is me)";
 
   // Test 1 partition.
   {
@@ -47,7 +46,18 @@ TEST(FileTest, SimplePartitionTest) {
         std::make_unique<std::istringstream>(data);
     auto reader =
         std::make_unique<FileReader>(std::move(file), 0, 1);
-    EXPECT_EQ(line_count, reader_size(std::move(reader)));
+    std::string_view str;
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("line 1", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("this is line 2", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("3", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("line 4 is me", str);
+    EXPECT_FALSE(reader->next(&str));
   }
 }
 

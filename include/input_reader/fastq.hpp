@@ -34,7 +34,7 @@ class FastqReader : public FileReader {
       : FastqReader(std::move(input_file), 0, 1) {}
 
   // Return the next sequence.
-  bool next(std::string* data) override {
+  bool next(std::string_view* data) override {
     // Skip over the first line(sequence identifier).
     if (this->eof()) {
       return false;

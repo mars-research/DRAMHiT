@@ -6,6 +6,8 @@
 #include <fstream>
 #include <variant>
 #include <vector>
+#include <string_view>
+#include <charconv>
 
 #include "file.hpp"
 #include "input_reader.hpp"
@@ -14,7 +16,7 @@ namespace kmercounter {
 namespace input_reader {
 
 /// The first field(key) of the row and the raw row itself.
-using Row = std::pair<uint64_t, std::string>;
+using Row = std::pair<uint64_t, std::string_view>;
 
 /// Read a CSV file.
 /// All data are cached in memory to save I/O.
@@ -25,10 +27,11 @@ class PartitionedCsvReader : public InputReader<Row*> {
                         std::string_view delimiter = ",") {
     // Read CSV line by line into memory.
     FileReader file(filename, part_id, num_parts);
-    for (std::string line; file.next(&line); /*noop*/) {
-      const std::string field_str = line.substr(0, line.find(delimiter));
-      const uint64_t field = std::stoull(field_str);
-      data_.push_back(std::make_pair(field, line));
+    for (std::string_view line; file.next(&line); /*noop*/) {
+      const std::string_view key_str = line.substr(0, line.find(delimiter));
+      uint64_t key;
+      std::from_chars(key_str.begin(), key_str.end(), key);
+      data_.push_back(std::make_pair(key, line));
     }
 
     iter_ = data_.begin();
