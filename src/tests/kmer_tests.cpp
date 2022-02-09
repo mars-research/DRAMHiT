@@ -15,12 +15,12 @@ namespace kmercounter {
 OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert) {
   auto k = 0;
   uint64_t inserted = 0lu;
-  std::uint64_t duration{};
   constexpr uint64_t K = 4;
   std::array<uint8_t, K> kmer;
+  std::string tmp;
   input_reader::FastqKMerReader<K> reader("../ERR024163_1.fastq", sh->shard_idx, cfg.num_threads);
-
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+
   const auto t_start = RDTSC_START();
   if (insert) {
     for (; reader.next(&kmer);) {
@@ -41,13 +41,13 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
     }
   }
 
+  // input_reader::FastqReader freader("../ERR024163_1.fastq", sh->shard_idx, cfg.num_threads);
+  // for (; freader.next(&tmp);){inserted++;}
 
   const auto t_end = RDTSCP();
-
-
-  duration += t_end - t_start;
-  PLOG_INFO << "inserted "<< inserted << " items in " << duration << " cycles. " << duration / inserted << " cpo";
-
+  const auto duration = t_end - t_start;
+  PLOG_INFO << "inserted "<< inserted << " items in " << duration << " cycles. " << duration / std::max(1ul, inserted) << " cpo";
+  sh->stats->num_inserts = inserted;
   return {duration, inserted};
 }
 
