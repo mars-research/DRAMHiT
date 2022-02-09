@@ -14,7 +14,7 @@ public:
   CircularBuffer() : offset_(0) {}
   CircularBuffer(const std::array<T, N>& data) : data_(data), offset_(N - 1) {}
 
-  void push(T data) {
+  void push(const T& data) {
     data_[offset_] = data;
     offset_ = (offset_ + 1) % N;
   }
