@@ -63,7 +63,7 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
   std::string_view current_line_;
   std::string_view::iterator current_line_iter_;
   std::string_view::iterator current_line_end_;
-  CircularBuffer<uint8_t, K> kmer_;
+  CircularBufferMove<uint8_t, K> kmer_;
   bool eof_;
 };
 }  // namespace input_reader

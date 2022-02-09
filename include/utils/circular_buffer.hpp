@@ -8,6 +8,52 @@
 
 namespace kmercounter {
 /// An always-full circular buffer.
+/// Use memmove to keep the head at the beginning of the buffer.
+/// Maybe faster than the offset variant.
+template <typename T, size_t N>
+class CircularBufferMove {
+public:
+  CircularBufferMove() {}
+  CircularBufferMove(const std::array<T, N>& data) : data_(data) {}
+
+  void push(const T& data) {
+    this->shl();
+    data_[N - 1] = data;
+  }
+
+  void copy_to(std::array<T, N> *dst) {
+    copy_to(*dst);
+  }
+
+  void copy_to(std::array<T, N> &dst) {
+    dst = data_;
+  }
+
+  void copy_to(T *dst) {
+    memcpy(dst, data_.data(), N * sizeof(T));
+  }
+
+private:
+  /// Shift `data_` to the left by 1.
+  void shl() {
+    if constexpr (N == 1) {
+      return;
+    } else if constexpr (false && N == 4 && sizeof(T) == 1) {
+      // Possible issue with misalignment?
+      uint64_t *dst = (uint64_t*)(data_.data());
+      uint64_t *src = (uint64_t*)(data_.data() + 1);
+      *dst = *src;
+    } else {
+      memmove(data_.data(), data_.data() + 1, N - 1);
+    }
+  }
+
+  std::array<T, N> data_;
+};
+
+
+/// An always-full circular buffer.
+/// Use offset to keep track of head and tail.
 template <typename T, size_t N>
 class CircularBuffer {
 public:
