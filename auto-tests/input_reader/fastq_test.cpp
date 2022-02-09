@@ -1,4 +1,4 @@
-#include "input_reader/fastx.hpp"
+#include "input_reader/fastq.hpp"
 
 #include <absl/strings/str_join.h>
 #include <gtest/gtest.h>
@@ -53,7 +53,7 @@ std::string build_seqs(int n) {
   return str;
 }
 
-TEST(PartitionFastqReaderTest, SingleParition) {
+TEST(FastqReaderTest, SingleParition) {
   {
     std::unique_ptr<std::istream> input =
         std::make_unique<std::istringstream>(ONE_SEQ);
@@ -69,7 +69,7 @@ TEST(PartitionFastqReaderTest, SingleParition) {
   }
 }
 
-TEST(PartitionFastqReaderTest, MultiParition) {
+TEST(FastqReaderTest, MultiParition) {
   constexpr auto num_seqss =
       std::to_array({1, 2, 3, 4, 6, 9, 13, 17, 19, 21, 22, 24, 100, 1000});
   constexpr auto num_partss =
@@ -82,7 +82,7 @@ TEST(PartitionFastqReaderTest, MultiParition) {
           irange(num_parts) | transformed([&seqs, num_parts](uint64_t part_id) {
             std::unique_ptr<std::istream> file =
                 std::make_unique<std::istringstream>(seqs);
-            auto reader = std::make_unique<PartitionedFastqReader>(
+            auto reader = std::make_unique<FastqReader>(
                 std::move(file), part_id, num_parts);
             return reader;
           });

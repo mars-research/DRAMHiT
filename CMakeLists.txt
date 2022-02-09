@@ -12,7 +12,7 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
 endif()
 
 # Setup default build type to release with debug information
-if(NOT DEFINED ${CMAKE_BUILD_TYPE})
+if(NOT ${CMAKE_BUILD_TYPE})
     set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
@@ -47,6 +47,7 @@ add_executable(kvstore
     "src/tests/hashtable_tests.cpp"
     "src/tests/prefetch_tests.cpp"
     "src/tests/cachemiss_test.cpp"
+    "src/tests/kmer_tests.cpp"
     "src/tests/hashjoin_test.cpp"
     "src/tests/synth_test.cpp"
     "src/misc_lib.cpp"

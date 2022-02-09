@@ -3,15 +3,22 @@ include(GoogleTest)
 
 add_library(test_lib test_lib.cpp)
 target_link_libraries(test_lib PUBLIC
-  ht_lib
   absl::flags
   absl::flags_parse
   absl::strings
   Boost::boost
   gtest
 )
+target_include_directories(test_lib PUBLIC ../lib/plog/include/)
+
 
 function(add_kvstore_test test_name)
+  add_executable(${test_name} ${test_name}.cpp)
+  target_link_libraries(${test_name} test_lib ht_lib)
+  gtest_discover_tests(${test_name})
+endfunction()
+
+function(add_test1 test_name)
   add_executable(${test_name} ${test_name}.cpp)
   target_link_libraries(${test_name} test_lib)
   gtest_discover_tests(${test_name})

@@ -4,7 +4,7 @@
 #include <memory>
 #include <type_traits>
 
-#include "input_reader/input_reader_base.hpp"
+#include "input_reader/input_reader.hpp"
 
 namespace kmercounter {
 namespace input_reader {

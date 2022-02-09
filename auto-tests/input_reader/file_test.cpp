@@ -33,25 +33,35 @@ std::string generate_csv(uint64_t num_rows, uint64_t num_cols = 3) {
   return csv;
 }
 
-TEST(PartitionedFileTest, SimplePartitionTest) {
+TEST(FileTest, SimplePartitionTest) {
   const char* data = R"(line 1
-    line 2
-    line 3
-    line 4
-    line 5)";
-  const size_t line_count = 5;
+this is line 2
+3
+
+line 4 is me)";
 
   // Test 1 partition.
   {
     std::unique_ptr<std::istream> file =
         std::make_unique<std::istringstream>(data);
     auto reader =
-        std::make_unique<PartitionedFileReader>(std::move(file), 0, 1);
-    EXPECT_EQ(line_count, reader_size(std::move(reader)));
+        std::make_unique<FileReader>(std::move(file), 0, 1);
+    std::string_view str;
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("line 1", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("this is line 2", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("3", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("", str);
+    EXPECT_TRUE(reader->next(&str));
+    EXPECT_EQ("line 4 is me", str);
+    EXPECT_FALSE(reader->next(&str));
   }
 }
 
-TEST(PartitionedFileTest, PartitionTest) {
+TEST(FileTest, PartitionTest) {
   constexpr auto num_liness =
       std::to_array({1, 2, 3, 4, 6, 9, 13, 17, 19, 21, 22, 24, 100, 1000});
   constexpr auto num_partss =
@@ -64,7 +74,7 @@ TEST(PartitionedFileTest, PartitionTest) {
           irange(num_parts) | transformed([&csv, num_parts](uint64_t part_id) {
             std::unique_ptr<std::istream> file =
                 std::make_unique<std::istringstream>(csv);
-            auto reader = std::make_unique<PartitionedFileReader>(
+            auto reader = std::make_unique<FileReader>(
                 std::move(file), part_id, num_parts);
             return reader;
           });

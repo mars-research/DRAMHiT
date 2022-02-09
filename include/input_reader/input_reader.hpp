@@ -1,12 +1,20 @@
-#ifndef INPUT_READER_INPUT_READER_HPP
-#define INPUT_READER_INPUT_READER_HPP
+#ifndef INPUT_READER_INPUT_READER_BASE_HPP
+#define INPUT_READER_INPUT_READER_BASE_HPP
 
-#include "counter.hpp"
-#include "csv.hpp"
-#include "fastx.hpp"
-#include "file.hpp"
-#include "repeater.hpp"
-#include "xorwow.hpp"
-#include "zipfian.hpp"
+#include <optional>
 
-#endif // INPUT_READER_INPUT_READER_HPP
+namespace kmercounter {
+namespace input_reader {
+/// Base class for input ingestion.
+template<class T>
+class InputReader {
+public:
+    using value_type = T;
+    /// Copy the input into `data` and advance to the next input.
+    /// Returns true if success, false if the input is exhausted.
+    virtual bool next(T *data) = 0;
+};
+} // namespace input_reader
+} // namespace kmercounter
+
+#endif // INPUT_READER_INPUT_READER_BASE_HPP

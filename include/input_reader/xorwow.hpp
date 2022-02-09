@@ -2,7 +2,7 @@
 #define INPUT_READER_XORWOW_HPP
 
 #include "misc_lib.h"
-#include "input_reader_base.hpp"
+#include "input_reader.hpp"
 
 namespace kmercounter {
 namespace input_reader {
