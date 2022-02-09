@@ -32,14 +32,103 @@ class FileReader : public InputReader<std::string_view> {
       : FileReader(std::make_unique<std::ifstream>(open_file(filename)),
                    part_id, num_parts, find_bound) {}
 
-  FileReader(std::string_view filename) : FileReader(filename, 0, 1) {}
-
-  FileReader(std::unique_ptr<std::istream> input_file)
-      : FileReader(std::move(input_file), 0, 1) {}
+  FileReader(std::unique_ptr<std::ifstream> input_file, uint64_t part_id,
+             uint64_t num_parts, find_bound_t find_bound = find_next_line)
+      : FileReader(std::shared_ptr<std::ifstream>(std::move(input_file)),
+                   part_id, num_parts, find_bound) {}
 
   FileReader(std::unique_ptr<std::istream> input_file, uint64_t part_id,
              uint64_t num_parts, find_bound_t find_bound = find_next_line)
+      : FileReader(std::shared_ptr<std::istream>(std::move(input_file)),
+                   part_id, num_parts, find_bound) {}
+
+  /// Single partition variant.
+  FileReader(std::string_view filename) : FileReader(filename, 0, 1) {}
+
+  /// Single partition variant.
+  FileReader(std::unique_ptr<std::istream> input_file)
+      : FileReader(std::move(input_file), 0, 1) {}
+
+  ~FileReader() {
+    PLOG_ERROR_IF(offset_ != part_end_)
+        << "Offset mismatch: expected " << part_end_ << "; actual: " << offset_;
+  }
+
+  /// Copy the next line to `output` and advance the offset.
+  bool next(std::string_view* output) override {
+    // Check if we reached end of partitioned.
+    if (this->eof()) {
+      return false;
+    }
+
+    // Skip the line instead of copying it if `output` is nullptr.
+    if (output == nullptr) {
+      return this->skip_to_next_line();
+    }
+
+    input_file_->getline(buffer_.data(), buffer_.size());
+    // Resize if doesn't fit.
+    // WARNING: not tested.
+    while (input_file_->fail()) {
+      const size_t old_size = buffer_.size();
+      PLOG_DEBUG << "Resizing buffer with old size " << old_size;
+      const size_t bytes_read_so_far = old_size - 1;
+      buffer_.resize(old_size * 2);
+      input_file_->clear();
+      input_file_->getline(buffer_.data() + bytes_read_so_far,
+                           buffer_.size() - bytes_read_so_far);
+    }
+
+    const size_t bytes_read = input_file_->gcount();
+    // The last character is the terminator.
+    const char last_char = buffer_[bytes_read - 1];
+    if (last_char == '\n' || last_char == '\0') {
+      *output =
+          std::string_view(const_cast<char*>(buffer_.data()), bytes_read - 1);
+    } else {
+      *output = std::string_view(const_cast<char*>(buffer_.data()), bytes_read);
+    }
+    offset_ += bytes_read;
+    return (bool)input_file_;
+  }
+
+  /// Skip to next line.
+  bool skip_to_next_line() {
+    input_file_->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    offset_ += input_file_->gcount();
+    return (bool)input_file_;
+  }
+
+  int peek() { return input_file_->peek(); }
+
+  int get() {
+    int rtn = input_file_->get();
+    offset_ += input_file_->gcount();
+    return rtn;
+  }
+
+  bool good() { return input_file_->good(); }
+
+  bool eof() { return (offset_ >= part_end_) || input_file_->eof(); }
+
+  uint64_t num_parts() { return num_parts_; }
+
+  uint64_t part_id() { return part_id_; }
+
+private:
+  /// Helper constructor that sets the buffer for file I/O.
+  FileReader(std::shared_ptr<std::ifstream> input_file, uint64_t part_id,
+             uint64_t num_parts, find_bound_t find_bound = find_next_line)
+      : FileReader(std::shared_ptr<std::istream>(input_file), part_id,
+                   num_parts, find_bound) {
+    PLOG_INFO << "Setting IO buffer";
+    input_file_->rdbuf()->pubsetbuf(buffer_.data(), buffer_.size());
+  }
+
+  FileReader(std::shared_ptr<std::istream> input_file, uint64_t part_id,
+             uint64_t num_parts, find_bound_t find_bound = find_next_line)
       : input_file_(std::move(input_file)),
+        io_buffer_(64 * 1024 * 1024),
         part_id_(part_id),
         num_parts_(num_parts),
         buffer_(4096) {
@@ -66,74 +155,6 @@ class FileReader : public InputReader<std::string_view> {
     offset_ = adjusted_part_start;
   }
 
-  ~FileReader() {
-    PLOG_ERROR_IF(offset_ != part_end_)
-        << "Offset mismatch: expected " << part_end_ << "; actual: " << offset_;
-  }
-
-  /// Copy the next line to `output` and advance the offset.
-  bool next(std::string_view* output) override {
-    // Check if we reached end of partitioned.
-    if (this->eof()) {
-      return false;
-    }
-
-    // Skip the line instead of copying it if `output` is nullptr.
-    if (output == nullptr) {
-      return this->skip_to_next_line();
-    }
-
-    input_file_->getline(buffer_.data(), buffer_.size());
-    // Resize if doesn't fit.
-    // WARNING: not tested.
-    while (input_file_->fail()) {
-      const size_t old_size = buffer_.size();
-      PLOG_DEBUG << "Resizing buffer with old size " << old_size;
-      const size_t bytes_read_so_far = old_size - 1; 
-      buffer_.resize(old_size * 2);
-      input_file_->clear();
-      input_file_->getline(buffer_.data() + bytes_read_so_far, buffer_.size() - bytes_read_so_far);
-    }
-
-    const size_t bytes_read = input_file_->gcount();
-    // The last character is the terminator.
-    const char last_char = buffer_[bytes_read - 1];
-    if (last_char == '\n' || last_char == '\0') {
-      *output = std::string_view(const_cast<char*>(buffer_.data()), bytes_read - 1);
-    } else {
-      *output = std::string_view(const_cast<char*>(buffer_.data()), bytes_read);
-    }
-    offset_ += bytes_read;
-    return (bool)input_file_;
-  }
-
-  /// Skip to next line.
-  bool skip_to_next_line() {
-    input_file_->ignore(
-        std::numeric_limits<std::streamsize>::max(), '\n');
-    offset_ += input_file_->gcount();
-    return (bool)input_file_;
-  }
-
-  int peek() { return input_file_->peek(); }
-
-  int get() { 
-    int rtn = input_file_->get();
-    offset_ += input_file_->gcount();  
-    return rtn;
-  }
-
-  bool good() { return input_file_->good(); }
-
-  bool eof() {
-    return (offset_ >= part_end_) || input_file_->eof();
-  }
-
-  uint64_t num_parts() { return num_parts_; }
-
-  uint64_t part_id() { return part_id_; }
-
- private:
   /// Creats a ifstream and log if fail.
   static std::ifstream open_file(std::string_view filename) {
     std::ifstream file(filename.data());
@@ -164,15 +185,18 @@ class FileReader : public InputReader<std::string_view> {
   }
 
  private:
-  std::unique_ptr<std::istream> input_file_;
+  std::shared_ptr<std::istream> input_file_;
+  /// Buffer for file I/O.
+  std::vector<char> io_buffer_;
   uint64_t offset_;
   uint64_t part_end_;
   uint64_t part_id_;
   uint64_t num_parts_;
+  /// Buffer for return value.
   std::vector<char> buffer_;
 };
 
 }  // namespace input_reader
 }  // namespace kmercounter
 
-#endif // INPUT_READER_FILE_HPP
+#endif  // INPUT_READER_FILE_HPP
