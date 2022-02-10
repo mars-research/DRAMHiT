@@ -41,10 +41,14 @@ class CircularBufferMove {
       uint16_t *dst = (uint16_t *)(data_.data());
       uint16_t *src = (uint16_t *)(data_.data() + 1);
       *dst = *src;
-    } else if constexpr (sizeof(T) == 1 && N == 4) {
+    } else if constexpr (sizeof(T) == 1 && N <= 5) {
       // Possible issue with misalignment?
       uint32_t *dst = (uint32_t *)(data_.data());
       uint32_t *src = (uint32_t *)(data_.data() + 1);
+      *dst = *src;
+    } else if constexpr (sizeof(T) == 1 && N <= 9) {
+      uint64_t *dst = (uint64_t *)(data_.data());
+      uint64_t *src = (uint64_t *)(data_.data() + 1);
       *dst = *src;
     } else {
       // General case
