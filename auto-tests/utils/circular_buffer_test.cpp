@@ -1,5 +1,7 @@
 #include "utils/circular_buffer.hpp"
 
+#include <cstdint>
+
 #include <gtest/gtest.h>
 
 namespace kmercounter {
@@ -8,7 +10,7 @@ namespace {
 
 TEST(CircularBufferTest, PushTest) {
   {
-    CircularBufferU8<3> cb;
+    CircularBuffer<uint8_t, 3> cb;
     EXPECT_EQ(cb.offset(), 0);
     cb.push(0);
     EXPECT_EQ(cb.offset(), 1);
@@ -21,7 +23,7 @@ TEST(CircularBufferTest, PushTest) {
   }
 
   {
-    CircularBufferU8<4> cb;
+    CircularBuffer<uint8_t, 4> cb;
     EXPECT_EQ(cb.offset(), 0);
     cb.push(0);
     EXPECT_EQ(cb.offset(), 1);
@@ -38,31 +40,60 @@ TEST(CircularBufferTest, PushTest) {
 
 TEST(CircularBufferTest, CopyTest) {
   int iter = 1;
-  std::array<int, 3> buffer;
-  CircularBuffer<int, 3> cb;
+  std::array<uint8_t, 3> buffer;
+  CircularBuffer<uint8_t, 3> cb;
   cb.push(0);
   cb.push(0);
   cb.push(0);
   cb.copy_to(buffer);
-  EXPECT_EQ(std::to_array({0, 0, 0}), buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({0, 0, 0}), buffer);
   cb.push(iter++);
   cb.copy_to(buffer);
-  EXPECT_EQ(std::to_array({0, 0, 1}), buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({0, 0, 1}), buffer);
   cb.push(iter++);
   cb.copy_to(buffer);
-  EXPECT_EQ(std::to_array({0, 1, 2}), buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({0, 1, 2}), buffer);
   cb.push(iter++);
   cb.copy_to(buffer);
-  EXPECT_EQ(std::to_array({1, 2, 3}), buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({1, 2, 3}), buffer);
   cb.push(iter++);
   cb.copy_to(buffer);
-  EXPECT_EQ(std::to_array({2, 3, 4}), buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({2, 3, 4}), buffer);
   cb.push(iter++);
   cb.copy_to(buffer);
-  EXPECT_EQ(std::to_array({3, 4, 5}), buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({3, 4, 5}), buffer);
   cb.push(iter++);
   cb.copy_to(buffer);
-  EXPECT_EQ(std::to_array({4, 5, 6}), buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({4, 5, 6}), buffer);
+}
+
+TEST(CircularBufferMoveTest, PushCopyTest) {
+  int iter = 1;
+  std::array<uint8_t, 3> buffer;
+  CircularBufferMove<uint8_t, 3> cb;
+  cb.push(0);
+  cb.push(0);
+  cb.push(0);
+  cb.copy_to(buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({0, 0, 0}), buffer);
+  cb.push(iter++);
+  cb.copy_to(buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({0, 0, 1}), buffer);
+  cb.push(iter++);
+  cb.copy_to(buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({0, 1, 2}), buffer);
+  cb.push(iter++);
+  cb.copy_to(buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({1, 2, 3}), buffer);
+  cb.push(iter++);
+  cb.copy_to(buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({2, 3, 4}), buffer);
+  cb.push(iter++);
+  cb.copy_to(buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({3, 4, 5}), buffer);
+  cb.push(iter++);
+  cb.copy_to(buffer);
+  EXPECT_EQ(std::to_array<uint8_t>({4, 5, 6}), buffer);
 }
 
 
