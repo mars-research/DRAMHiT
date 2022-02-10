@@ -13,7 +13,7 @@ namespace kmercounter {
 template <typename T, size_t N>
 class CircularBufferMove {
  public:
-  CircularBufferMove() {}
+  CircularBufferMove() { data_.fill(T()); }
   CircularBufferMove(const std::array<T, N> &data) : data_(data) {}
 
   void push(const T &data) {
@@ -62,7 +62,7 @@ class CircularBufferMove {
 template <typename T, size_t N>
 class CircularBuffer {
  public:
-  CircularBuffer() : offset_(0) {}
+  CircularBuffer() : offset_(0) { data_.fill(T()); }
   CircularBuffer(const std::array<T, N> &data) : data_(data), offset_(N - 1) {}
 
   void push(const T &data) {
