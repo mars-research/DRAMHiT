@@ -32,11 +32,7 @@ class CircularBufferMove {
   void shl() {
     if constexpr (N == 1) {
       // noop
-    } else if constexpr (N == 2) {
-      T *dst = data_.data();
-      T *src = data_.data() + 1;
-      *dst = *src;
-    } else if constexpr (sizeof(T) == 1 && N == 3) {
+    } else if constexpr (sizeof(T) == 1 && N <= 3) {
       // optimization.
       uint16_t *dst = (uint16_t *)(data_.data());
       uint16_t *src = (uint16_t *)(data_.data() + 1);
