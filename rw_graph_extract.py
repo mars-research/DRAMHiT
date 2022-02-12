@@ -27,18 +27,25 @@ if __name__ == '__main__':
     if not tests_home.exists():
         exit()
 
-    #cashtpp_home = tests_home.joinpath('casht++')
+    cashtpp_home = tests_home.joinpath('casht++')
+    part_home = tests_home.joinpath('part')
     bq_home = tests_home.joinpath('bq')
 
-    casht_times = []
+    part_times = []
     cashtpp_times = []
     bq_times = []
     ratios = [p / (1 - p) for p in (n * 0.1 for n in range(int(1 / 0.1)))]
 
-    for c_count in range(8, 57, 4):
-        # cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{i}.log'))[0])
-        bq_times.append(get_times(bq_home.joinpath(f'{c_count}.log'))[0])
+    for r in ratios:
+        cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{r}.log'))[0])
+        part_times.append(get_times(part_home.joinpath(f'{r}.log'))[0])
+        tmp_list = []
+        for c_count in range(8, 57, 4):
+            tmp_list.append(get_times(bq_home.joinpath(f'{r}-{c_count}.log'))[0])
 
-    print(f'Casht++: {cashtpp_times}')
-    print(f'Casht: {casht_times}')
-    print(f'Bqueue: {bq_times}')
+        bq_times.append(max(tmp_list))
+
+    print(list(zip(ratios, cashtpp_times, part_times, bq_times)))
+    # print(f'Casht++: {cashtpp_times}')
+    # print(f'Casht: {casht_times}')
+    # print(f'Bqueue: {bq_times}')

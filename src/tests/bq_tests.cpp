@@ -280,7 +280,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
 #ifdef BQ_TESTS_RW_RATIO
   sh->stats->find_cycles = (t_end - t_start);
+  sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_finds = read_count;
+  sh->stats->num_inserts = read_count;
 #endif
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA

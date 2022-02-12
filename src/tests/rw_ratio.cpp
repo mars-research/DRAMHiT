@@ -45,13 +45,25 @@ class rw_experiment {
         read_batch{},
         reads{0, read_batch.data()},
         result_batch{},
-        results{0, result_batch.data()} {}
+        results{0, result_batch.data()} {
+    PLOG_INFO << "Using ratio " << config.rw_ratio
+              << " and P(read) = " << config.rw_ratio / (1.0 + config.rw_ratio)
+              << "\n";
+  }
+
+  auto start_time() { return __rdtsc(); }
+  auto stop_time() {
+    unsigned int aux;
+    return __rdtscp(&aux);
+  }
 
   experiment_results run(unsigned int total_ops) {
+    const auto start = start_time();
+
     for (auto i = 0u; i < total_ops; ++i) {
       if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
-      if (false /*sampler(prng)*/)
+      if (sampler(prng))
         push_key(reads, std::uniform_int_distribution<std::uint64_t>{
                             1, next_key - 1}(prng));
       else
@@ -62,6 +74,10 @@ class rw_experiment {
     time_find();
     time_flush_insert();
     time_flush_find();
+
+    const auto stop = stop_time();
+    timings.find_cycles = stop - start;
+    timings.insert_cycles = stop- start;
 
     return timings;
   }
@@ -82,18 +98,12 @@ class rw_experiment {
   std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> result_batch;
   ValuePairs results;
 
-  auto start_time() { return __rdtsc(); }
-  auto stop_time() {
-    unsigned int aux;
-    return __rdtscp(&aux);
-  }
-
   void time_insert() {
     timings.n_writes += writes.first;
 
-    const auto start = start_time();
+    //const auto start = start_time();
     hashtable.insert_batch(writes);
-    timings.insert_cycles += stop_time() - start;
+    //timings.insert_cycles += stop_time() - start;
 
     writes.first = 0;
   }
@@ -101,9 +111,9 @@ class rw_experiment {
   void time_find() {
     timings.n_reads += reads.first;
 
-    const auto start = start_time();
+    //const auto start = start_time();
     hashtable.find_batch(reads, results);
-    timings.find_cycles += stop_time() - start;
+    //timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
@@ -111,18 +121,18 @@ class rw_experiment {
   }
 
   void time_flush_find() {
-    const auto start = start_time();
+   /// const auto start = start_time();
     hashtable.flush_find_queue(results);
-    timings.find_cycles += stop_time() - start;
+    ///timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
   }
 
   void time_flush_insert() {
-    const auto start = start_time();
+    //const auto start = start_time();
     hashtable.flush_insert_queue();
-    timings.insert_cycles += stop_time() - start;
+    //timings.insert_cycles += stop_time() - start;
   }
 };
 
@@ -154,9 +164,10 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                  << " / " << results.n_found << ")";
   }
 
-  shard.stats->num_finds = results.n_reads;
-  shard.stats->num_inserts = results.n_writes;
-  shard.stats->find_cycles = results.find_cycles;
+  shard.stats->num_finds = results.n_writes + results.n_reads;
+  shard.stats->num_inserts = results.n_writes + results.n_reads;
+  // insert_cycles already has the total times!
+  shard.stats->find_cycles = results.insert_cycles;
   shard.stats->insertion_cycles = results.insert_cycles;
   shard.stats->ht_capacity = hashtable.get_capacity();
   shard.stats->ht_fill = hashtable.get_fill();
