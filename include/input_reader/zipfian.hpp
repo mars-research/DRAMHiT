@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "input_reader.hpp"
+#include "input_reader/container.hpp"
 #include "zipf.h"
 
 namespace kmercounter {
@@ -19,19 +20,16 @@ class ZipfianGenerator : public InputReader<T> {
     zipf_distribution distribution{skew, keyrange_width, seed};
     values_ = std::vector<T>(buffsize);
     for (auto &value : values_) value = distribution();
-    iter_ = values_.begin();
+    reader_ = VecReader(values);
   }
 
   bool next(T *data) override {
-    if (iter_ == values_.end()) {
-      return false;
-    }
-    *data = *(iter_++);
-    return true;
+    return reader_.next(data);
   }
 
  private:
   std::vector<T> values_;
+  VecReader<T> reader_;
   typename std::vector<T>::iterator iter_;
 };
 }  // namespace input_reader

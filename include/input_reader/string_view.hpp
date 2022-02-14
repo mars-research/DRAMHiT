@@ -5,7 +5,7 @@
 
 #include <string_view>
 
-#include "input_reader/iterator.hpp"
+#include "input_reader/container.hpp"
 
 namespace kmercounter {
 namespace input_reader {
@@ -24,7 +24,7 @@ public:
 
 private:
     std::basic_string_view<T> data_;
-    IterReader<decltype(data_.begin()), T> iter_;
+    RangeReader<decltype(data_.begin()), T> iter_;
 };
 } // namespace input_reader
 } // namespace kmercounter

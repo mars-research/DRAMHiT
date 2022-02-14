@@ -11,12 +11,13 @@
 
 #include "file.hpp"
 #include "input_reader.hpp"
+#include "input_reader/reservoir.hpp"
 #include "kmer.hpp"
 #include "plog/Log.h"
 
 namespace kmercounter {
 namespace input_reader {
-
+/// Parse a fastq file and produce sequencies from it.
 class FastqReader : public FileReader {
  public:
   FastqReader(std::string_view filename, uint64_t part_id, uint64_t num_parts)
@@ -115,15 +116,34 @@ class FastqReader : public FileReader {
 
 template <size_t K>
 class FastqKMerReader : InputReader<std::array<uint8_t, K>> {
-public:
-  template <typename ...Args>
-  FastqKMerReader(Args && ...args) : reader_(std::make_unique<FastqReader>(std::forward<Args>(args)...)) {}
+ public:
+  template <typename... Args>
+  FastqKMerReader(Args&&... args)
+      : reader_(std::make_unique<FastqReader>(std::forward<Args>(args)...)) {}
 
   bool next(std::array<uint8_t, K>* data) override {
     return reader_.next(data);
   }
 
-private:
+ private:
+  KMerReader<K> reader_;
+};
+
+/// Produce the same output as `FastqKMerReader` but the sequencies are parsed
+/// and stored in the memory before producing.
+template <size_t K>
+class FastqKMerPreloadReader : InputReader<std::array<uint8_t, K>> {
+ public:
+  template <typename... Args>
+  FastqKMerPreloadReader(Args&&... args)
+      : reader_(std::make_unique<Reservoir<std::string_view>>(
+            std::make_unique<FastqReader>(std::forward<Args>(args)...))) {}
+
+  bool next(std::array<uint8_t, K>* data) override {
+    return reader_.next(data);
+  }
+
+ private:
   KMerReader<K> reader_;
 };
 }  // namespace input_reader
