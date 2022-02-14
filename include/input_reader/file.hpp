@@ -121,7 +121,6 @@ private:
              uint64_t num_parts, find_bound_t find_bound = find_next_line)
       : FileReader(std::shared_ptr<std::istream>(input_file), part_id,
                    num_parts, find_bound) {
-    PLOG_INFO << "Setting IO buffer";
     input_file_->rdbuf()->pubsetbuf(buffer_.data(), buffer_.size());
   }
 
