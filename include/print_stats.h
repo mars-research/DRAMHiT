@@ -29,6 +29,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   double total_insert_ns{};
   OpTimings total_inserts{};
   OpTimings total_finds{};
+  OpTimings total_any{};
 
 #ifdef CALC_STATS
   uint64_t all_total_avg_read_length = 0;
@@ -91,6 +92,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     total_insert_ns +=
         (double)all_sh[k].stats->insertions.duration * one_cycle_ns;
     total_finds += all_sh[k].stats->finds;
+    total_any += all_sh[k].stats->any;
 
 #ifdef CALC_STATS
     all_total_num_sequences += all_sh[k].stats->num_sequences;
@@ -139,6 +141,16 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
           "===============================================================\n");
     }
 
+    if (total_any.op_count > 0) {
+      printf(
+          "===============================================================\n");
+      printf("Average  : %lu cycles for %lu ops (%lu cycles/op)\n",
+             total_any.duration / config.num_threads,
+             total_any.op_count / config.num_threads, cycles_per_op(total_any));
+      printf(
+          "===============================================================\n");
+    }
+
     unsigned long num_threads = config.num_threads;
     // for inserts, we only use n_cons
     if (config.mode == BQ_TESTS_YES_BQ) {
@@ -154,6 +166,8 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     find_mops = ((double)2600 / cycles_per_find) * num_threads;
     printf("%s, num_threads %lu\n", __func__, num_threads);
     printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
+    
+    printf("Number of total ops per sec (Mops/s): %.3f\n", ((double)2600 / cycles_per_op(total_any)) * num_threads);
   }
 
   printf("{ insertion: %.3f lookup: %.3f }\n", insert_mops, find_mops);

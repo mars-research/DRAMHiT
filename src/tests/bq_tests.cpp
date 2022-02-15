@@ -282,7 +282,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   sh->stats->finds.duration = t_end - t_start;
   sh->stats->finds.op_count = read_count;
   sh->stats->any.duration = t_end - t_start;
-  sh->stats->any.op_count = read_count + transaction_id;
+  sh->stats->any.op_count = read_count;
 #endif
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
@@ -552,6 +552,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 #endif
   sh->stats->insertions.duration = t_end - t_start;
   sh->stats->insertions.op_count = transaction_id;
+  sh->stats->any = sh->stats->insertions;
   get_ht_stats(sh, kmer_ht);
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
@@ -702,6 +703,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   sh->stats->finds.duration = t_end - t_start;
   sh->stats->finds.op_count = found;
+  sh->stats->any = sh->stats->finds;
 
   if (found >= 0) {
     PLOG_INFO.printf(
