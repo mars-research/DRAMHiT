@@ -275,14 +275,14 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   __itt_event_end(event);
 #endif
 
-  sh->stats->enqueue_cycles = (t_end - t_start);
-  sh->stats->num_enqueues = transaction_id;
+  sh->stats->enqueues.duration = t_end - t_start;
+  sh->stats->enqueues.op_count = transaction_id;
 
 #ifdef BQ_TESTS_RW_RATIO
-  sh->stats->find_cycles = (t_end - t_start);
-  sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_finds = read_count + transaction_id;
-  sh->stats->num_inserts = read_count + transaction_id;
+  sh->stats->finds.duration = t_end - t_start;
+  sh->stats->finds.op_count = read_count;
+  sh->stats->any.duration = t_end - t_start;
+  sh->stats->any.op_count = read_count + transaction_id;
 #endif
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
@@ -290,7 +290,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
     auto *q = pqueues[i];
     PLOG_INFO.printf("[prod:%u] q[%d] enq_failures %u | num_enqueues %lu",
                      this_prod_id, i, q->num_enq_failures,
-                     sh->stats->num_enqueues);
+                     sh->stats->enqueues.op_count);
   }
 
   auto enable_backtracking = [&](uint32_t cons_id) {
@@ -550,8 +550,8 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
 #endif
-  sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_inserts = transaction_id;
+  sh->stats->insertions.duration = t_end - t_start;
+  sh->stats->insertions.op_count = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
@@ -700,8 +700,8 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   __itt_event_end(event);
 #endif
 
-  sh->stats->find_cycles = (t_end - t_start);
-  sh->stats->num_finds = found;
+  sh->stats->finds.duration = t_end - t_start;
+  sh->stats->finds.op_count = found;
 
   if (found >= 0) {
     PLOG_INFO.printf(
@@ -808,8 +808,8 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
   }
 
   t_end = RDTSCP();
-  sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_inserts = transaction_id;
+  sh->stats->insertions.duration = t_end - t_start;
+  sh->stats->insertions.op_count = transaction_id;
   get_ht_stats(sh, kmer_ht);
 
   PLOG_INFO.printf(
@@ -879,7 +879,7 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
 
     PLOG_INFO.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
     PLOG_INFO.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
-                     sh->stats->insertion_cycles);
+                     sh->stats->insertions.duration);
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;

@@ -116,20 +116,16 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
   }
 
-  shard->stats->insertion_cycles = insert_timings.duration;
-  shard->stats->num_inserts = insert_timings.op_count;
+  shard->stats->insertions = insert_timings;
 
   sleep(1);
 
-  const auto num_finds = do_zipfian_gets(hashtable, shard->shard_idx);
-
-  shard->stats->find_cycles = num_finds.duration;
-  shard->stats->num_finds = num_finds.op_count;
-
-  if (num_finds.op_count > 0) {
+  const auto find_timings = do_zipfian_gets(hashtable, shard->shard_idx);
+  shard->stats->finds = find_timings;
+  if (find_timings.op_count > 0) {
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
-                     shard->shard_idx, num_finds.op_count,
-                     num_finds.duration / num_finds.op_count);
+                     shard->shard_idx, find_timings.op_count,
+                     find_timings.duration / find_timings.op_count);
   }
 
 #ifndef WITH_PAPI_LIB

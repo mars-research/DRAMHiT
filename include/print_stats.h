@@ -9,7 +9,6 @@ namespace kmercounter {
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
 inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
-  
   sh->stats->ht_fill = kmer_ht->get_fill();
   sh->stats->ht_capacity = kmer_ht->get_capacity();
   sh->stats->max_count = kmer_ht->get_max_count();
@@ -27,11 +26,9 @@ inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
 }
 
 inline void print_stats(Shard *all_sh, Configuration &config) {
-  uint64_t all_total_cycles = 0;
-  double all_total_time_ns = 0;
-  uint64_t all_total_num_inserts = 0;
-  uint64_t total_find_cycles = 0;
-  uint64_t total_finds = 0;
+  double total_insert_ns{};
+  OpTimings total_inserts{};
+  OpTimings total_finds{};
 
 #ifdef CALC_STATS
   uint64_t all_total_avg_read_length = 0;
@@ -42,15 +39,12 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 #endif
 
   size_t k = 0;
-  // if (config.mode == BQ_TESTS_YES_BQ) {
-  //  k = producer_count;
-  //}
-
   printf("===============================================================\n");
   for (; k < config.num_threads; k++) {
     printf(
         "Thread %2d: "
-        "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) | (%lu cycles/enqueue) "
+        "%lu cycles (%f ms) for %lu insertions (%lu cycles/insert) | (%lu "
+        "cycles/enqueue) "
         "{ fill: %lu of %lu (%f %%) }"
 #ifdef CALC_STATS
         "["
@@ -66,15 +60,17 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         "]"
 #endif  // CALC_STATS
         "\n",
-        all_sh[k].shard_idx, all_sh[k].stats->insertion_cycles,
-        (double)all_sh[k].stats->insertion_cycles * one_cycle_ns / 1000000.0,
-        all_sh[k].stats->num_inserts,
-        all_sh[k].stats->num_inserts == 0
+        all_sh[k].shard_idx, all_sh[k].stats->insertions.duration,
+        (double)all_sh[k].stats->insertions.duration * one_cycle_ns / 1000000.0,
+        all_sh[k].stats->insertions.op_count,
+        all_sh[k].stats->insertions.op_count == 0
             ? 0
-            : all_sh[k].stats->insertion_cycles / all_sh[k].stats->num_inserts,
-        all_sh[k].stats->num_enqueues == 0
+            : all_sh[k].stats->insertions.duration /
+                  all_sh[k].stats->insertions.op_count,
+        all_sh[k].stats->enqueues.op_count == 0
             ? 0
-            : all_sh[k].stats->enqueue_cycles / all_sh[k].stats->num_enqueues,
+            : all_sh[k].stats->enqueues.duration /
+                  all_sh[k].stats->enqueues.op_count,
         all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
         all_sh[k].stats->ht_capacity == 0
             ? 0
@@ -90,12 +86,11 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         all_sh[k].stats->avg_read_length, all_sh[k].stats->num_sequences
 #endif  // CALC_STATS
     );
-    all_total_cycles += all_sh[k].stats->insertion_cycles;
-    all_total_time_ns +=
-        (double)all_sh[k].stats->insertion_cycles * one_cycle_ns;
-    all_total_num_inserts += all_sh[k].stats->num_inserts;
-    total_finds += all_sh[k].stats->num_finds;
-    total_find_cycles += all_sh[k].stats->find_cycles;
+
+    total_inserts += all_sh[k].stats->insertions;
+    total_insert_ns +=
+        (double)all_sh[k].stats->insertions.duration * one_cycle_ns;
+    total_finds += all_sh[k].stats->finds;
 
 #ifdef CALC_STATS
     all_total_num_sequences += all_sh[k].stats->num_sequences;
@@ -105,15 +100,15 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         (double)all_sh[k].stats->find_cycles * one_cycle_ns;
 #endif  // CALC_STATS
   }
-  printf("%u %lu\n", config.num_threads, all_total_num_inserts);
+  printf("%u %lu\n", config.num_threads, total_inserts.op_count);
   printf("===============================================================\n");
   printf(
       "Average  : %lu cycles (%f ms) for %lu insertions (%lu cycles/insert) "
       "(fill = %u %%)\n",
-      all_total_cycles / config.num_threads,
-      (double)all_total_time_ns / 1000000.0 / config.num_threads,
-      all_total_num_inserts / config.num_threads,
-      all_total_cycles / all_total_num_inserts, config.ht_fill);
+      total_inserts.duration / config.num_threads,
+      (double)total_insert_ns / 1000000.0 / config.num_threads,
+      total_inserts.op_count / config.num_threads, cycles_per_op(total_inserts),
+      config.ht_fill);
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
   //     "find)\n",
@@ -123,22 +118,23 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   //     all_total_find_cycles / config.num_threads /
   //         kmer_big_pool_size_per_shard);
   printf("===============================================================\n");
-  printf("Total  : %lu cycles (%f ms) for %lu insertions\n", all_total_cycles,
-         (double)all_total_time_ns / 1000000.0, all_total_num_inserts);
+  printf("Total  : %lu cycles (%f ms) for %lu insertions\n",
+         total_inserts.duration, (double)total_insert_ns / 1000000.0,
+         total_inserts.op_count);
   double find_mops = 0.0, insert_mops = 0.0;
 
   {
-    unsigned long cycles_per_insert = all_total_cycles / all_total_num_inserts;
+    unsigned long cycles_per_insert = cycles_per_op(total_inserts);
 
     unsigned long cycles_per_find = 0;
 
-    if (total_finds > 0) {
-      cycles_per_find = total_find_cycles / total_finds;
+    if (total_finds.op_count > 0) {
+      cycles_per_find = cycles_per_op(total_finds);
       printf(
           "===============================================================\n");
       printf("Average  : %lu cycles for %lu finds (%lu cycles/find)\n",
-             total_find_cycles / config.num_threads,
-             total_finds / config.num_threads, cycles_per_find);
+             total_finds.duration / config.num_threads,
+             total_finds.op_count / config.num_threads, cycles_per_find);
       printf(
           "===============================================================\n");
     }

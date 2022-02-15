@@ -81,7 +81,7 @@ constexpr std::array run_mode_strings{"",
                                       "ZIPFIAN",
                                       "R/W ratio benchmark"};
 
-extern const char *ht_type_strings[];
+extern const char* ht_type_strings[];
 
 // Application configuration
 struct Configuration {
@@ -143,17 +143,30 @@ struct Configuration {
   }
 };
 
+struct OpTimings {
+  uint64_t duration;
+  uint64_t op_count;
+};
+
+inline OpTimings& operator+=(OpTimings& a, const OpTimings& b) {
+  a.duration += b.duration;
+  a.op_count += b.op_count;
+  return a;
+}
+
+inline auto cycles_per_op(const OpTimings& ops) {
+  return ops.duration / ops.op_count;
+}
+
 /* Thread stats */
 struct thread_stats {
-  uint64_t insertion_cycles;  // to be set by create_shards
-  uint64_t num_inserts;
-  uint64_t num_enqueues;
-  uint64_t find_cycles;
-  uint64_t num_finds;
+  OpTimings insertions;
+  OpTimings finds;
+  OpTimings enqueues;
+  OpTimings any;
   uint64_t ht_fill;
   uint64_t ht_capacity;
   uint32_t max_count;
-  uint64_t enqueue_cycles;
   // uint64_t total_threads; // TODO add this back
 #ifdef CALC_STATS
   uint64_t num_reprobes;
@@ -175,12 +188,12 @@ struct Kmer_s {
 struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
   uint8_t core_id;
-  off64_t f_start;    // start byte into file
-  off64_t f_end;      // end byte into file
-  thread_stats *stats;
-  Kmer_s *kmer_big_pool;
-  Kmer_s *kmer_small_pool;
-  Kmer_s *pool;
+  off64_t f_start;  // start byte into file
+  off64_t f_end;    // end byte into file
+  thread_stats* stats;
+  Kmer_s* kmer_big_pool;
+  Kmer_s* kmer_small_pool;
+  Kmer_s* pool;
 };
 
 struct Keys {
@@ -193,7 +206,7 @@ std::ostream& operator<<(std::ostream& os, const Keys& q);
 
 struct Values {
   uint64_t value;
-  uint64_t id; // for user to keep track of the transaction
+  uint64_t id;  // for user to keep track of the transaction
 };
 std::ostream& operator<<(std::ostream& os, const Values& q);
 
@@ -202,13 +215,8 @@ enum class QueueType {
   find_queue,
 };
 
-using ValuePairs = std::pair<uint32_t, Values *>;
-using KeyPairs = std::pair<uint32_t, Keys *>;
-
-struct OpTimings {
-  uint64_t duration;
-  uint64_t op_count;
-};
+using ValuePairs = std::pair<uint32_t, Values*>;
+using KeyPairs = std::pair<uint32_t, Keys*>;
 
 #endif  // __TYPES_HPP__
 

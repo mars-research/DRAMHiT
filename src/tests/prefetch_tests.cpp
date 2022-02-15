@@ -117,8 +117,8 @@ void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
       sh->shard_idx, PREFETCH_STRIDE, (t_end - t_start) / num_inserts);
   //}
 
-  sh->stats->insertion_cycles = (t_end - t_start);
-  sh->stats->num_inserts = num_inserts;
+  sh->stats->insertions.duration = t_end - t_start;
+  sh->stats->insertions.op_count = num_inserts;
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
 #endif

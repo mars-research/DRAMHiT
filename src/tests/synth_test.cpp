@@ -1,11 +1,11 @@
-#include "SynthTest.hpp"
+#include <plog/Log.h>
 
 #include <algorithm>
 #include <cstdint>
-#include <plog/Log.h>
 
-#include "constants.hpp"
+#include "SynthTest.hpp"
 #include "base_kht.hpp"
+#include "constants.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "print_stats.h"
 #include "sync.h"
@@ -44,7 +44,7 @@ void papi_end_region(const char *name) {
   papi_check(PAPI_hl_region_end(name));
 #endif
 }
-} // namespace
+}  // namespace
 
 extern Configuration config;
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -60,9 +60,6 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 
   xorwow_init(&_xw_state);
   if (start == 0) count = 1;
-  __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
-  __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
-  __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
   std::string evt_name(ht_type_strings[config.ht_type]);
@@ -245,8 +242,8 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
            kmer_ht->num_soft_reprobes);
 #endif
   }
-  sh->stats->insertion_cycles = insert_times.duration;
-  sh->stats->num_inserts = insert_times.op_count;
+
+  sh->stats->insertions = insert_times;
 
   fipc_test_FAI(insert_done);
 
@@ -255,15 +252,13 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   }
 
   const auto find_times = synth_run_get(kmer_ht, sh->shard_idx);
-
-  sh->stats->find_cycles = find_times.duration;
-  sh->stats->num_finds = find_times.op_count;
-
-  if (find_times.op_count > 0)
+  sh->stats->finds = find_times;
+  if (find_times.op_count > 0) {
     PLOG_INFO.printf(
         "thread %u | num_finds %lu | rdtsc_diff %lu | cycles per get: %lu",
         sh->shard_idx, find_times.op_count, find_times.duration,
         find_times.duration / find_times.op_count);
+  }
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);
@@ -271,4 +266,4 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
-}
+}  // namespace kmercounter
