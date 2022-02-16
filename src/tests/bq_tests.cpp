@@ -188,6 +188,29 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   __itt_event_start(event);
 #endif
 
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
+  auto enable_backtracking = [&cqueues](uint32_t cons_id) {
+    auto *q = cqueues[cons_id];
+    Q_BACKTRACK_FLAG = 1;
+  };
+#endif
+
+  for (cons_id = 0; cons_id < n_cons; cons_id++) {
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
+    enable_backtracking(cons_id);
+    auto *q = pqueues[cons_id];
+#else
+    auto *q = queues[cons_id];
+#endif
+    while (enqueue(q, 0xdeadbeef) != SUCCESS)
+      ;
+
+    PLOG_DEBUG.printf(
+        "q %p Prod %d Sending START_TIMER message to cons %d (transaction %u)",
+        q, this_prod_id, cons_id, transaction_id);
+    transaction_id++;
+  }
+
   auto t_start = RDTSC_START();
 
   for (transaction_id = 0u; transaction_id < num_messages;) {
@@ -293,10 +316,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
                      sh->stats->enqueues.op_count);
   }
 
-  auto enable_backtracking = [&](uint32_t cons_id) {
-    auto *q = cqueues[cons_id];
-    Q_BACKTRACK_FLAG = 1;
-  };
 #endif
   // enqueue halt messages and the consumer automatically knows
   // when to stop
@@ -411,7 +430,11 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   __itt_event_start(event);
 #endif
 
-  auto t_start = RDTSC_START();
+#ifdef BQ_TESTS_RW_RATIO
+  uint64_t t_start{};
+#else
+  const auto t_start = RDTSC_START();
+#endif
 
   // Round-robin between 0..n_prod
   prod_id = 0;
@@ -503,6 +526,11 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
         PLOG_DEBUG.printf("Consumer received %" PRIu64, count);
       }
+
+#ifdef BQ_TESTS_RW_RATIO
+      // Start timer, initial inserts are done
+      if ((data_t)k == 0xdeadbeef && !t_start) t_start = RDTSC_START();
+#endif
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
         _items[data_idx].key = _items[data_idx].id = k;
