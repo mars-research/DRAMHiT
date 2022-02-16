@@ -13,12 +13,10 @@ def get_home() -> pathlib.Path:
 def get_times(logfile: pathlib.Path):
     file = open(logfile)
     text = ''.join(file.readlines())
-    file.close()
-    insert = float(re.search(
-        r'Number of insertions per sec \(Mops/s\): (?P<mops>(?:[0-9]*\.[0-9]*)|inf)', text)['mops'])
-    find = float(re.search(
-        r'Number of finds per sec \(Mops/s\): (?P<mops>(?:[0-9]*\.[0-9]*)|inf)', text)['mops'])
-    return insert, find
+    print(text)
+    times = eval(text)
+    file.close()    
+    return times['any']
 
 
 if __name__ == '__main__':
@@ -37,11 +35,11 @@ if __name__ == '__main__':
     ratios = [p / (1 - p) for p in (n * 0.1 for n in range(int(1 / 0.1)))]
 
     for r in ratios:
-        cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{r}.log'))[0])
-        part_times.append(get_times(part_home.joinpath(f'{r}.log'))[0])
+        cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{r}.log')))
+        part_times.append(get_times(part_home.joinpath(f'{r}.log')))
         tmp_list = []
         for c_count in range(8, 57, 4):
-            tmp_list.append(get_times(bq_home.joinpath(f'{r}-{c_count}.log'))[0])
+            tmp_list.append(get_times(bq_home.joinpath(f'{r}-{c_count}.log')))
 
         bq_times.append(max(tmp_list))
 

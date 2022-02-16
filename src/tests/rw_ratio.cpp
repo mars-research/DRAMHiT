@@ -17,8 +17,7 @@
 
 namespace kmercounter {
 struct experiment_results {
-  std::uint64_t insert_cycles;
-  std::uint64_t find_cycles;
+  std::uint64_t cycles;
   std::uint64_t n_reads;
   std::uint64_t n_writes;
   std::uint64_t n_found;
@@ -76,8 +75,7 @@ class rw_experiment {
     time_flush_find();
 
     const auto stop = stop_time();
-    timings.find_cycles = stop - start;
-    timings.insert_cycles = stop- start;
+    timings.cycles = stop - start;
 
     return timings;
   }
@@ -164,11 +162,15 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                  << " / " << results.n_found << ")";
   }
 
-  shard.stats->num_finds = results.n_writes + results.n_reads;
-  shard.stats->num_inserts = results.n_writes + results.n_reads;
-  // insert_cycles already has the total times!
-  shard.stats->find_cycles = results.insert_cycles;
-  shard.stats->insertion_cycles = results.insert_cycles;
+  shard.stats->finds.op_count = results.n_reads;
+  shard.stats->finds.duration = results.cycles;
+
+  shard.stats->insertions.op_count = results.n_writes;
+  shard.stats->insertions.duration = results.cycles;
+
+  shard.stats->any.op_count = results.n_reads + results.n_writes;
+  shard.stats->any.duration = results.cycles;
+
   shard.stats->ht_capacity = hashtable.get_capacity();
   shard.stats->ht_fill = hashtable.get_fill();
 #endif

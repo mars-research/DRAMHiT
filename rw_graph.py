@@ -50,23 +50,14 @@ if __name__ == '__main__':
     ratios = [p / (1 - p) for p in (n * 0.1 for n in range(int(1 / 0.1)))]
     for r in ratios:
         print(f'Running cashtpp{r}', flush=True)
-        chtpp_log = os.open(cashtpp_home.parent.joinpath(
-            f'{r}.log'), os.O_RDWR | os.O_CREAT)
-
         run_synchronous(cashtpp_home, './kvstore', ['--mode=12', '--ht-fill=75',
-                        f'--num-threads=64', '--ht-type=3', f'--rw-ratio={r}'], chtpp_log)
+                        f'--num-threads=64', '--ht-type=3', f'--rw-ratio={r}', f'--stats={r}.log'])
 
         print(f'Running part{r}', flush=True)
-        part_log = os.open(part_home.parent.joinpath(
-            f'{r}.log'), os.O_RDWR | os.O_CREAT)
-
         run_synchronous(part_home, './kvstore', ['--mode=12', '--ht-fill=75',
-                                                 f'--num-threads=64', '--ht-type=1', f'--rw-ratio={r}'], part_log)
+                        f'--num-threads=64', '--ht-type=1', f'--rw-ratio={r}', f'--stats={r}.log'])
 
         for c_count in range(8, 57, 4):
             print(f'Running bq{r}-{c_count}', flush=True)
-            bq_log = os.open(bq_home.parent.joinpath(
-                f'{r}-{c_count}.log'), os.O_RDWR | os.O_CREAT)
-
             run_synchronous(bq_home, './kvstore', ['--mode=8', '--ht-fill=75',
-                            f'--ncons={c_count}', f'--nprod={64 - c_count}', '--ht-type=1', f'--rw-ratio={r}'], bq_log)
+                            f'--ncons={c_count}', f'--nprod={64 - c_count}', '--ht-type=1', f'--rw-ratio={r}', f'--stats={r}-{c_count}.log'])

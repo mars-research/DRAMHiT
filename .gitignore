@@ -20,3 +20,4 @@ result
 tpch-dbgen/
 *.pyc
 /__pycache__/
+*.json

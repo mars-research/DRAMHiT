@@ -1,6 +1,8 @@
 #ifndef _PRINT_STATS_H
 #define _PRINT_STATS_H
 
+#include <cmath>
+
 #include "base_kht.hpp"
 
 namespace kmercounter {
@@ -123,7 +125,10 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   printf("Total  : %lu cycles (%f ms) for %lu insertions\n",
          total_inserts.duration, (double)total_insert_ns / 1000000.0,
          total_inserts.op_count);
-  double find_mops = 0.0, insert_mops = 0.0;
+
+  double find_mops{};
+  double insert_mops{};
+  double total_mops{};
 
   {
     unsigned long cycles_per_insert = cycles_per_op(total_inserts);
@@ -166,20 +171,23 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     find_mops = ((double)2600 / cycles_per_find) * num_threads;
     printf("%s, num_threads %lu\n", __func__, num_threads);
     printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
-    
-    printf("Number of total ops per sec (Mops/s): %.3f\n", ((double)2600 / cycles_per_op(total_any)) * num_threads);
+
+    total_mops = ((double)2600 / cycles_per_op(total_any)) * num_threads;
+    printf("Number of total ops per sec (Mops/s): %.3f\n", total_mops);
   }
 
-  printf("{ insertion: %.3f lookup: %.3f }\n", insert_mops, find_mops);
+  const auto json{fopen(config.stats_file.c_str(), "w")};
+  if (json) {
+    fprintf(
+        json,
+        "{\n\t\"insertion\": %.3f,\n\t\"lookup\": %.3f,\n\t\"any\": %.3f\n}\n",
+        isfinite(insert_mops) ? insert_mops : 0.0,
+        isfinite(find_mops) ? find_mops : 0.0,
+        isfinite(total_mops) ? total_mops : 0.0);
 
-  // printf(
-  //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
-  //     "find)\n",
-  //     all_total_find_cycles / config.num_threads,
-  //     (double)all_total_find_time_ns * one_cycle_ns / 1000,
-  //     kmer_big_pool_size_per_shard,
-  //     all_total_find_cycles / config.num_threads /
-  //         kmer_big_pool_size_per_shard);
+    fclose(json);
+  }
+
   printf("===============================================================\n");
 }
 
