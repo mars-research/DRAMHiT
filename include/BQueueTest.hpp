@@ -35,8 +35,16 @@ class BQueueTest {
   void producer_thread(const uint32_t tid, const uint32_t n_prod,
                        const uint32_t n_cons, const bool main_thread,
                        const double skew);
+
   void consumer_thread(const uint32_t tid, const uint32_t n_prod,
                        const uint32_t n_cons, const uint32_t num_nops);
+
+  void consumer_thread_main(uint64_t cons_id, BaseHashTable &kmer_ht,
+                            Shard &shard,
+                            const std::vector<cons_queue_t *> &queues,
+                            const uint32_t n_prod, const uint32_t n_cons,
+                            const uint32_t num_nops, bool last_test);
+                            
   void find_thread(int tid, int n_prod, int n_cons, bool main_thread);
   void init_queues(uint32_t nprod, uint32_t ncons);
 };

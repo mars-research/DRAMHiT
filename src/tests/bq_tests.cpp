@@ -195,11 +195,31 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   std::vector<unsigned int> hist(n_cons);
 #endif
 
+  auto enable_backtracking = [&](uint32_t cons_id) {
+    auto *q = cqueues[cons_id];
+    q->backtrack_flag = 1;
+  };
+
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
     if (next_cons_id >= n_cons) next_cons_id -= n_cons;
     return std::min(next_cons_id, n_cons - 1);
   };
+
+  for (cons_id = 0; cons_id < n_cons; cons_id++) {
+#ifdef CONFIG_ALIGN_BQUEUE_METADATA
+    enable_backtracking(cons_id);
+    auto *q = pqueues[cons_id];
+#else
+    auto *q = queues[cons_id];
+#endif
+    while (enqueue(q, (data_t)BQ_MAGIC_64BIT) != SUCCESS)
+      ;
+    PLOG_DEBUG.printf(
+        "q %p Prod %d Sending END message to cons %d (transaction %u)", q,
+        this_prod_id, cons_id, transaction_id);
+    transaction_id++;
+  }
 
 #ifdef WITH_VTUNE_LIB
   static const vtune_event event{"message_enqueue"};
@@ -307,11 +327,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
                      this_prod_id, i, q->num_enq_failures,
                      sh->stats->enqueues.op_count);
   }
-
-  auto enable_backtracking = [&](uint32_t cons_id) {
-    auto *q = cqueues[cons_id];
-    Q_BACKTRACK_FLAG = 1;
-  };
 #endif
   // enqueue halt messages and the consumer automatically knows
   // when to stop
@@ -329,6 +344,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
         this_prod_id, cons_id, transaction_id);
     transaction_id++;
   }
+
   PLOG_DEBUG.printf("Producer %d -> Sending end messages to all consumers",
                     this_prod_id);
   // main thread will also increment this
@@ -390,53 +406,31 @@ void write_hashtable_to_file(const BaseHashTable &kmer_ht,
   }
 }
 
-void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
-                                 const uint32_t n_cons,
-                                 const uint32_t num_nops) {
+void BQueueTest::consumer_thread_main(uint64_t cons_id, BaseHashTable &kmer_ht,
+                                      Shard &shard,
+                                      const std::vector<cons_queue_t *> &queues,
+                                      const uint32_t n_prod,
+                                      const uint32_t n_cons,
+                                      const uint32_t num_nops, bool last_test) {
 #ifndef CONFIG_ALIGN_BQUEUE_METADATA
 #error "David nuked this codepath on this branch"
 #endif
 
-  const auto shard = &this->shards[tid];
-  shard->stats = std::make_unique<thread_stats>();
-
-  const auto this_cons_id = shard->shard_idx - n_prod;
   uint64_t inserted{};
-
-#ifdef WITH_VTUNE_LIB
-  set_vtune_thread_name("consumer_thread" + std::to_string(tid));
-#endif
-
-  const auto queues =
-      get_consumer_queues(cqueue_map, n_prod, this_cons_id, *shard, tid);
-
-  const auto ht_size = config.ht_size / n_cons;
-  PLOG_INFO.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id,
-                   shard->shard_idx, ht_size);
-
-  std::unique_ptr<BaseHashTable> kmer_ht{init_ht(ht_size, shard->shard_idx)};
-  this->ht_vec.at(tid) = kmer_ht.get();
-
-  fipc_test_FAI(ready_consumers);
-  while (!test_ready) fipc_test_pause();
-  fipc_test_mfence();
-
-  PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
 #ifdef WITH_VTUNE_LIB
   static const vtune_event event{"message_dequeue"};
   event.start();
 #endif
 
-  const auto submit_batch = [&hashtable = *kmer_ht,
-                             &inserted](auto num_elements) {
+  const auto submit_batch = [&kmer_ht, &inserted](auto num_elements) {
     KeyPairs kp = std::make_pair(num_elements, &item_batch[0]);
 
     // TODO: Revisit after enabling HT_INSERTS
     // prefetch_queue(q[get_next_prod(2)]);
     // prefetch_queue_data(q[get_next_prod(1)], false);
 
-    hashtable.insert_batch(kp);
+    kmer_ht.insert_batch(kp);
     inserted += kp.first;
 
     data_idx = 0;
@@ -451,7 +445,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     const auto queue = queues[prod_id];
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert)
-      kmer_ht->prefetch_queue(QueueType::insert_queue);
+      kmer_ht.prefetch_queue(QueueType::insert_queue);
 
     // | q0 ... | q1 ... |
     // prefetching logic to prefetch the data array elements
@@ -483,15 +477,16 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       // STOP condition. On receiving this magic message, the consumers stop
       // dequeuing from the queues
       if ((data_t)next_key == BQ_MAGIC_64BIT) {
+        queue->backtrack_flag = 0;
         fipc_test_FAI(finished_producers);
         PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u",
-            this_cons_id, prod_id, finished_producers);
+            cons_id, prod_id, finished_producers);
 
         PLOG_DEBUG.printf("Consumer experienced %" PRIu64 " reprobes, %" PRIu64
                           " soft",
-                          kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
+                          kmer_ht.num_reprobes, kmer_ht.num_soft_reprobes);
       }
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
@@ -505,7 +500,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
         PLOG_INFO.printf("[cons:%u] transaction_id %lu deq_failures %lu",
-                         this_cons_id, transaction_id, q->num_deq_failures);
+                         cons_id, transaction_id, q->num_deq_failures);
       }
 #endif
     }
@@ -522,42 +517,81 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   event.stop();
 #endif
 
+  if (last_test) {
 #ifdef HASH_HISTOGRAM
-  std::stringstream stream{};
-  stream << "Hash buckets: [";
-  auto first = true;
-  for (auto n : hash_histogram) {
-    if (!first) stream << ", ";
-    stream << n;
-    first = false;
-  }
+    std::stringstream stream{};
+    stream << "Hash buckets: [";
+    auto first = true;
+    for (auto n : hash_histogram) {
+      if (!first) stream << ", ";
+      stream << n;
+      first = false;
+    }
 
-  stream << "]\n";
-  PLOG_INFO.printf("%s", stream.str().c_str());
+    stream << "]\n";
+    PLOG_INFO.printf("%s", stream.str().c_str());
 #endif
 
-  shard->stats->insertions.duration = t_end - t_start;
-  shard->stats->insertions.op_count = transaction_id;
-  shard->stats->any = shard->stats->insertions;
-  get_ht_stats(shard, kmer_ht.get());
+    shard.stats->insertions.duration = t_end - t_start;
+    shard.stats->insertions.op_count = transaction_id;
+    shard.stats->any = shard.stats->insertions;
+    get_ht_stats(&shard, &kmer_ht);
 
-  for (auto i = 0u; i < n_prod; ++i) {
-    const auto queue = queues.at(i);
-    PLOG_INFO.printf("[cons:%u] q[%d] deq_failures %u", this_cons_id, i,
-                     queue->num_deq_failures);
+    for (auto i = 0u; i < n_prod; ++i) {
+      const auto queue = queues.at(i);
+      PLOG_INFO.printf("[cons:%u] q[%d] deq_failures %u", cons_id, i,
+                       queue->num_deq_failures);
+    }
+
+    PLOG_INFO.printf("cons_id %d | inserted %lu elements", cons_id, inserted);
+
+    PLOG_INFO.printf(
+        "Quick Stats: Consumer %u finished, receiving %lu messages "
+        "(cycles per message %lu) prod_count %u | finished %u",
+        cons_id, transaction_id, (t_end - t_start) / transaction_id, n_prod,
+        finished_producers);
+
+    // Write to file
+    write_hashtable_to_file(kmer_ht, *this->cfg, shard.shard_idx);
   }
+}
 
-  PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
-                   inserted);
+void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
+                                 const uint32_t n_cons,
+                                 const uint32_t num_nops) {
+  const auto shard = &this->shards[tid];
+  shard->stats = std::make_unique<thread_stats>();
 
-  PLOG_INFO.printf(
-      "Quick Stats: Consumer %u finished, receiving %lu messages "
-      "(cycles per message %lu) prod_count %u | finished %u",
-      this_cons_id, transaction_id, (t_end - t_start) / transaction_id, n_prod,
-      finished_producers);
+  const auto this_cons_id = shard->shard_idx - n_prod;
 
-  // Write to file
-  write_hashtable_to_file(*kmer_ht, *this->cfg, shard->shard_idx);
+#ifdef WITH_VTUNE_LIB
+  set_vtune_thread_name("consumer_thread" + std::to_string(tid));
+#endif
+
+  const auto queues =
+      get_consumer_queues(cqueue_map, n_prod, this_cons_id, *shard, tid);
+
+  const auto ht_size = config.ht_size / n_cons;
+  PLOG_INFO.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id,
+                   shard->shard_idx, ht_size);
+
+  // TODO: move me
+  std::unique_ptr<BaseHashTable> kmer_ht{init_ht(ht_size, shard->shard_idx)};
+  this->ht_vec.at(tid) = kmer_ht.get();
+
+  fipc_test_FAI(ready_consumers);
+  while (!test_ready) fipc_test_pause();
+  fipc_test_mfence();
+
+  PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
+
+#ifdef BQ_TESTS_RW_RATIO
+  consumer_thread_main(this_cons_id, *kmer_ht, *shard, queues, n_prod, n_cons,
+                       num_nops, false);
+#endif
+
+  consumer_thread_main(this_cons_id, *kmer_ht, *shard, queues, n_prod, n_cons,
+                       num_nops, true);
 
   // End test
   fipc_test_FAI(completed_consumers);
