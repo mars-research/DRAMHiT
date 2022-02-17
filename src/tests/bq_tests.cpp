@@ -206,6 +206,38 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
     return std::min(next_cons_id, n_cons - 1);
   };
 
+#ifdef BQ_TESTS_RW_RATIO
+  auto insert_key = key_start;
+  for (transaction_id = 0u; transaction_id < num_messages;) {
+    // The idea is to batch messages upto BQ_TESTS_BATCH_LENGTH
+    // for the same queue and then move on to next consumer
+    for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH_PROD; i++) {
+      next_key = insert_key++;
+
+      // XXX: if we are testing without insertions, make sure to pick CRC as
+      // the hashing mechanism to have reduced overhead
+      const auto hash_val = hasher(&next_key, sizeof(next_key));
+      cons_id = hash_to_cpu(hash_val, n_cons);
+      auto *q = pqueues[cons_id];
+
+      // k has the computed hash in upper 32 bits
+      // and the actual key value in lower 32 bits
+      next_key |= (hash_val << 32);
+      // *((uint64_t *)&kmers[i].data) = k;
+      while (enqueue(q, (data_t)next_key) != SUCCESS)
+        ;
+
+      if (((Q_HEAD + 4) & 7) == 0) {
+        auto q = pqueues[get_next_cons(1)];
+        auto next_1 = (Q_HEAD + 8) & (QUEUE_SIZE - 1);
+        __builtin_prefetch(&q->data[next_1], 1, 3);
+      }
+
+      transaction_id++;
+    }
+  }
+#endif
+
   for (cons_id = 0; cons_id < n_cons; cons_id++) {
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
     enable_backtracking(cons_id);
@@ -296,7 +328,8 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
         PLOG_INFO.printf(
-            "[prod:%u] transaction_id %lu | num_messages %lu (enq failures %u)",
+            "[prod:%u] transaction_id %lu | num_messages %lu (enq failures "
+            "%u)",
             this_prod_id, transaction_id, num_messages,
             q->qstats->num_enq_failures);
       }
@@ -616,10 +649,10 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 
   if (ktable == nullptr) {
     // Both producer and consumer threads participate in find. However, the
-    // producer threads do not have any <k,v> pairs to find. So, they queue the
-    // find request to the actual partitions which hosts these keys.
-    // Nevertheless, they need this ktable object to queue the find requests to
-    // other partitions. So, just create a HT with 100 buckets.
+    // producer threads do not have any <k,v> pairs to find. So, they queue
+    // the find request to the actual partitions which hosts these keys.
+    // Nevertheless, they need this ktable object to queue the find requests
+    // to other partitions. So, just create a HT with 100 buckets.
 
     auto ht_size = config.ht_size / n_cons;
     PLOG_INFO.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
