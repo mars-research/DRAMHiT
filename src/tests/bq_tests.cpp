@@ -79,6 +79,25 @@ inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
   return std::make_tuple(ratio, num_messages, key_start);
 }
 
+#ifdef WITH_VTUNE_LIB
+void set_vtune_thread_name(std::string_view thread_name) {
+  PLOG_VERBOSE.printf("thread_name %s", thread_name.data());
+  __itt_thread_set_name(thread_name.data());
+}
+
+class vtune_event {
+ public:
+  vtune_event(std::string_view name)
+      : event{__itt_event_create(name.data(), name.size())} {}
+
+  void start() const { __itt_event_start(event); }
+  void stop() const { __itt_event_end(event); }
+
+ private:
+  int event;
+};
+#endif
+
 void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
                                  const uint32_t n_cons, const bool main_thread,
                                  const double skew) {
@@ -87,11 +106,11 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   // Allocate memory for stats
   sh->stats.reset((thread_stats *)calloc(1, sizeof(thread_stats)));
-  alignas(64) uint64_t k = 0;
+  alignas(64) uint64_t next_key = 0;
 
-  uint8_t this_prod_id = sh->shard_idx;
-  uint32_t cons_id = 0;
-  uint64_t transaction_id;
+  const auto this_prod_id{sh->shard_idx};
+  uint32_t cons_id{};
+  uint64_t transaction_id{};
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   prod_queue_t *pqueues[n_cons];
   cons_queue_t *cqueues[n_cons];
@@ -113,8 +132,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   }
 
 #ifdef WITH_VTUNE_LIB
-  std::string thread_name("producer_thread" + std::to_string(tid));
-  __itt_thread_set_name(thread_name.c_str());
+  set_vtune_thread_name("producer_thread" + std::to_string(tid));
 #endif
 
   auto [ratio, num_messages, key_start] = get_params(n_prod, n_cons, tid);
@@ -141,8 +159,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint64_t found_count{};
 
   auto ht_size = config.ht_size / n_cons;
-  const auto hashtable = new PartitionedHashStore<Aggr_KV, ItemQueue>(
-      ht_size, sh->shard_idx, true);
+  const auto hashtable =
+      std::make_unique<PartitionedHashStore<Aggr_KV, ItemQueue> >(
+          ht_size, sh->shard_idx, true);
 #endif
 
 #ifdef BQ_TESTS_INSERT_ZIPFIAN
@@ -183,23 +202,21 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   };
 
 #ifdef WITH_VTUNE_LIB
-  static const auto event =
-      __itt_event_create("message_enqueue", strlen("message_enqueue"));
-  __itt_event_start(event);
+  static const vtune_event event{"message_enqueue"};
+  event.start();
 #endif
 
-  auto t_start = RDTSC_START();
-
+  const auto t_start = RDTSC_START();
   for (transaction_id = 0u; transaction_id < num_messages;) {
     // The idea is to batch messages upto BQ_TESTS_BATCH_LENGTH
     // for the same queue and then move on to next consumer
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH_PROD; i++) {
 #if defined(BQ_TESTS_INSERT_XORWOW_NEW)
-      k = xorwow(&xw_state);
+      next_key = xorwow(&xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)  // TODO: this is garbage
       if (i % 8 == 0 && i + 16 < values.size())
         prefetch_object<false>(&values.at(i + 16), 64);
-      k = values.at(transaction_id);
+      next_key = values.at(transaction_id);
 #elif defined(BQ_TESTS_RW_RATIO)
       while (sampler(prng)) {
         if (find_keys.first == HT_TESTS_FIND_BATCH_LENGTH) {
@@ -209,26 +226,26 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
           results.first = 0;
         }
 
-        auto find = k > 128 ? k - 128 : 1;
+        const auto find = next_key > 128 ? next_key - 128 : 1;
         auto &slot = find_keys.second[find_keys.first++];
         const auto hash_val = hasher(&find, sizeof(find));
         const auto partition = hash_to_cpu(hash_val, n_cons);
         // PLOGI.printf("partition %d", partition);
         // k has the computed hash in upper 32 bits
         // and the actual key value in lower 32 bits
-        find |= (hash_val << 32);
-        slot.key = find;
+        slot.key = find | (hash_val << 32);
         slot.id = read_count++;
         slot.part_id = partition + n_prod;
       }
 
-      k = key_start++;
+      next_key = key_start++;
 #else
-      k = key_start++;
+      next_key = key_start++;
 #endif
+
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
-      uint64_t hash_val = hasher(&k, sizeof(k));
+      const auto hash_val = hasher(&next_key, sizeof(next_key));
       cons_id = hash_to_cpu(hash_val, n_cons);
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
       auto *q = pqueues[cons_id];
@@ -237,26 +254,24 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #endif
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      k |= (hash_val << 32);
+      next_key |= (hash_val << 32);
       // *((uint64_t *)&kmers[i].data) = k;
-    retry:
-      if (enqueue(q, (data_t)k) != SUCCESS) {
+      while (enqueue(q, (data_t)next_key) != SUCCESS) {
         // At some point, we decided to retry immediately.
         // XXX: This could turn into an infinite loop in some corner cases
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
         q->num_enq_failures++;
 #endif
-        goto retry;
       }
+
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
-      if (1) {
-        if (((Q_HEAD + 4) & 7) == 0) {
-          auto q = pqueues[get_next_cons(1)];
-          auto next_1 = (Q_HEAD + 8) & (QUEUE_SIZE - 1);
-          __builtin_prefetch(&q->data[next_1], 1, 3);
-        }
+      if (((Q_HEAD + 4) & 7) == 0) {
+        auto q = pqueues[get_next_cons(1)];
+        auto next_1 = (Q_HEAD + 8) & (QUEUE_SIZE - 1);
+        __builtin_prefetch(&q->data[next_1], 1, 3);
       }
 #endif
+
       transaction_id++;
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
@@ -269,10 +284,10 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
     }
   }
 
-  auto t_end = RDTSCP();
+  const auto t_end = RDTSCP();
 
 #ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
+  event.stop();
 #endif
 
   sh->stats->enqueues.duration = t_end - t_start;
@@ -337,25 +352,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
 thread_local std::vector<unsigned int> hash_histogram(histogram_buckets);
 
-#ifdef WITH_VTUNE_LIB
-void set_vtune_thread_name(std::string_view thread_name) {
-  PLOG_VERBOSE.printf("thread_name %s", thread_name.data());
-  __itt_thread_set_name(thread_name.data());
-}
-
-class vtune_event {
- public:
-  vtune_event(std::string_view name)
-      : event{__itt_event_create(name.data(), name.size())} {}
-
-  void start() const { __itt_event_start(event); }
-  void stop() const { __itt_event_end(event); }
-
- private:
-  int event;
-};
-#endif
-
 auto get_consumer_queues(
     const std::map<std::tuple<int, int>, cons_queue_t *> &consumer_queues,
     std::uint64_t n_prod, std::uint64_t this_cons_id, Shard &shard,
@@ -414,7 +410,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   const auto queues =
       get_consumer_queues(cqueue_map, n_prod, this_cons_id, *shard, tid);
 
-  auto ht_size = config.ht_size / n_cons;
+  const auto ht_size = config.ht_size / n_cons;
   PLOG_INFO.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id,
                    shard->shard_idx, ht_size);
 
