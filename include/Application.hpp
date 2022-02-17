@@ -16,7 +16,7 @@ class Application {
   NumaPolicyQueues *npq;
   Tests test;
   std::vector<std::thread> threads;
-  Shard *shards;
+  std::vector<Shard> shards;
   MsrHandler *msr_ctrl;
 
  public:

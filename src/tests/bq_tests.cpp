@@ -54,7 +54,7 @@ struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 __thread int data_idx = 0;
 __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 __attribute__((
-    aligned(64))) __thread Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+    aligned(64))) __thread Keys item_batch[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
                                                          uint32_t n_cons,
@@ -86,7 +86,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   Shard *sh = &this->shards[tid];
 
   // Allocate memory for stats
-  sh->stats = (thread_stats *)calloc(1, sizeof(thread_stats));
+  sh->stats.reset((thread_stats *)calloc(1, sizeof(thread_stats)));
   alignas(64) uint64_t k = 0;
 
   uint8_t this_prod_id = sh->shard_idx;
@@ -337,67 +337,89 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
 thread_local std::vector<unsigned int> hash_histogram(histogram_buckets);
 
+#ifdef WITH_VTUNE_LIB
+void set_vtune_thread_name(std::string_view thread_name) {
+  PLOG_VERBOSE.printf("thread_name %s", thread_name.data());
+  __itt_thread_set_name(thread_name.data());
+}
+
+class vtune_event {
+ public:
+  vtune_event(std::string_view name)
+      : event{__itt_event_create(name.data(), name.size())} {}
+
+  void start() const { __itt_event_start(event); }
+  void stop() const { __itt_event_end(event); }
+
+ private:
+  int event;
+};
+#endif
+
+auto get_consumer_queues(
+    const std::map<std::tuple<int, int>, cons_queue_t *> &consumer_queues,
+    std::uint64_t n_prod, std::uint64_t this_cons_id, Shard &shard,
+    std::uint64_t tid) {
+  // initialize the local queues array from queue_map
+  std::vector<cons_queue_t *> queues(n_prod);
+  for (auto i = 0u; i < n_prod; i++) {
+    PLOG_DEBUG.printf("[cons: %u] at tuple {%d, %d} shard_idx %d tid %u",
+                      this_cons_id, i, this_cons_id, shard.shard_idx, tid);
+
+    auto &queue_ptr = queues.at(i);
+    queue_ptr = consumer_queues.at(std::make_tuple(i, this_cons_id));
+    PLOG_DEBUG.printf("[cons:%u] q[%d] -> %p (data %p) dq failures %lu",
+                      this_cons_id, i, queue_ptr, queue_ptr->data,
+                      queue_ptr->num_deq_failures);
+  }
+
+  return queues;
+}
+
+auto get_next_prod(unsigned int inc, std::uint64_t prod_id,
+                   std::uint64_t n_prod) {
+  auto next_prod_id = prod_id + inc;
+  if (next_prod_id >= n_prod) next_prod_id -= n_prod;
+  return std::min(next_prod_id, n_prod - 1);
+};
+
+void write_hashtable_to_file(const BaseHashTable &kmer_ht,
+                             const Configuration &cfg, std::uint64_t shard_id) {
+  if (!cfg.ht_file.empty()) {
+    const auto outfile = cfg.ht_file + std::to_string(shard_id);
+    PLOG_INFO.printf("Shard %u: Printing to file: %s", shard_id,
+                     outfile.c_str());
+
+    kmer_ht.print_to_file(outfile.c_str());
+  }
+}
+
 void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
                                  const uint32_t n_cons,
                                  const uint32_t num_nops) {
-  // Get shard pointer from the shards array
-  Shard *sh = &this->shards[tid];
-
-  // Allocate memory for stats
-  sh->stats =
-      //(thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE,
-      // sizeof(thread_stats));
-      (thread_stats *)calloc(1, sizeof(thread_stats));
-
-  std::uint64_t count{};
-  BaseHashTable *kmer_ht = NULL;
-  uint8_t finished_producers = 0;
-  // alignas(64)
-  uint64_t k = 0;
-  uint64_t transaction_id = 0;
-  uint32_t prod_id = 0;
-
-  uint8_t this_cons_id = sh->shard_idx - n_prod;
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-  cons_queue_t *cqueues[n_prod];
-#else
-  queue_t *queues[n_prod];
+#ifndef CONFIG_ALIGN_BQUEUE_METADATA
+#error "David nuked this codepath on this branch"
 #endif
-  uint64_t inserted = 0u;
+
+  const auto shard = &this->shards[tid];
+  shard->stats = std::make_unique<thread_stats>();
+
+  const auto this_cons_id = shard->shard_idx - n_prod;
+  uint64_t inserted{};
 
 #ifdef WITH_VTUNE_LIB
-  std::string thread_name("consumer_thread" + std::to_string(tid));
-  PLOG_VERBOSE.printf("thread_name %s", thread_name.c_str());
-  __itt_thread_set_name(thread_name.c_str());
+  set_vtune_thread_name("consumer_thread" + std::to_string(tid));
 #endif
 
-  // initialize the local queues array from queue_map
-  for (auto i = 0u; i < n_prod; i++) {
-    PLOG_DEBUG.printf("[cons: %u] at tuple {%d, %d} shard_idx %d tid %u",
-                      this_cons_id, i, this_cons_id, sh->shard_idx, tid);
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-    cqueues[i] = cqueue_map.at(std::make_tuple(i, this_cons_id));
-    PLOG_DEBUG.printf("[cons:%u] q[%d] -> %p (data %p) dq failures %lu",
-                      this_cons_id, i, cqueues[i], cqueues[i]->data,
-                      cqueues[i]->num_deq_failures);
-#else
-    queues[i] = queue_map.at(std::make_tuple(this_cons_id, i));
-    PLOG_DEBUG.printf("[prod:%d] q[%d] -> %p", this_cons_id, i, queues[i]);
-#endif
-  }
-
-  // bq_kmer[BQ_TESTS_BATCH_LENGTH*n_cons];
+  const auto queues =
+      get_consumer_queues(cqueue_map, n_prod, this_cons_id, *shard, tid);
 
   auto ht_size = config.ht_size / n_cons;
-  // if (this_cons_id == (n_cons - 1)) {
-  //   ht_size += config.ht_size % n_cons;
-  // }
-
   PLOG_INFO.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id,
-                   sh->shard_idx, ht_size);
+                   shard->shard_idx, ht_size);
 
-  kmer_ht = init_ht(ht_size, sh->shard_idx);
-  (*this->ht_vec)[tid] = kmer_ht;
+  std::unique_ptr<BaseHashTable> kmer_ht{init_ht(ht_size, shard->shard_idx)};
+  this->ht_vec.at(tid) = kmer_ht.get();
 
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
@@ -406,91 +428,65 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
 #ifdef WITH_VTUNE_LIB
-  static const auto event =
-      __itt_event_create("message_dequeue", strlen("message_dequeue"));
-  __itt_event_start(event);
+  static const vtune_event event{"message_dequeue"};
+  event.start();
 #endif
 
-  auto t_start = RDTSC_START();
+  const auto submit_batch = [&hashtable = *kmer_ht,
+                             &inserted](auto num_elements) {
+    KeyPairs kp = std::make_pair(num_elements, &item_batch[0]);
 
-  // Round-robin between 0..n_prod
-  prod_id = 0;
+    // TODO: Revisit after enabling HT_INSERTS
+    // prefetch_queue(q[get_next_prod(2)]);
+    // prefetch_queue_data(q[get_next_prod(1)], false);
 
+    hashtable.insert_batch(kp);
+    inserted += kp.first;
+
+    data_idx = 0;
+  };
+
+  const auto t_start = RDTSC_START();
+  uint64_t transaction_id{};
+  uint64_t next_key{};
+  uint32_t prod_id{};
+  uint8_t finished_producers{};
   while (finished_producers < n_prod) {
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-    auto *q = cqueues[prod_id];
-#else
-    auto *q = queues[prod_id];
-#endif
-    auto get_next_prod = [&](auto inc) {
-      auto next_prod_id = prod_id + inc;
-      if (next_prod_id >= n_prod) next_prod_id -= n_prod;
-      return std::min(next_prod_id, n_prod - 1);
-    };
+    const auto queue = queues[prod_id];
 
-    auto submit_batch = [&](auto num_elements) {
-      KeyPairs kp = std::make_pair(num_elements, &_items[0]);
-
-      // TODO: Revisit after enabling HT_INSERTS
-      // prefetch_queue(q[get_next_prod(2)]);
-      // prefetch_queue_data(q[get_next_prod(1)], false);
-
-      kmer_ht->insert_batch(kp);
-      inserted += kp.first;
-
-      data_idx = 0;
-    };
-
-    if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+    if constexpr (bq_load == BQUEUE_LOAD::HtInsert)
       kmer_ht->prefetch_queue(QueueType::insert_queue);
-    }
 
     // | q0 ... | q1 ... |
     // prefetching logic to prefetch the data array elements
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-    if (1) {
-      cons_queue_t *ncq = cqueues[get_next_prod(3)];
-      if ((ncq->tail + BQ_TESTS_BATCH_LENGTH_CONS - 1) == ncq->batch_tail) {
-        auto tmp_tail = ncq->tail + BATCH_SIZE - 1;
-        if (tmp_tail >= QUEUE_SIZE) {
-          tmp_tail = 0;
-        }
-        __builtin_prefetch(&ncq->data[tmp_tail], 0, 3);
-      }
-      auto next_1 = (ncq->tail + 8) & (QUEUE_SIZE - 1);
-      auto next_2 = (ncq->tail + 16) & (QUEUE_SIZE - 1);
-      __builtin_prefetch(&ncq->data[Q_TAIL], 1, 3);
-      __builtin_prefetch(&ncq->data[next_1], 1, 3);
-      __builtin_prefetch(&ncq->data[next_2], 1, 3);
-
-      if (0) {
-        auto n2q = cqueues[get_next_prod(5)];
-        __builtin_prefetch(n2q, 1, 3);
-      }
+    cons_queue_t *next_queue = queues[get_next_prod(3, prod_id, n_prod)];
+    if ((next_queue->tail + BQ_TESTS_BATCH_LENGTH_CONS - 1) ==
+        next_queue->batch_tail) {
+      auto tmp_tail = next_queue->tail + BATCH_SIZE - 1;
+      if (tmp_tail >= QUEUE_SIZE) tmp_tail = 0;
+      __builtin_prefetch(&next_queue->data[tmp_tail], 0, 3);
     }
-#endif
+
+    const auto next_1 = (next_queue->tail + 8) & (QUEUE_SIZE - 1);
+    const auto next_2 = (next_queue->tail + 16) & (QUEUE_SIZE - 1);
+    __builtin_prefetch(&next_queue->data[queue->tail], 1, 3);
+    __builtin_prefetch(&next_queue->data[next_1], 1, 3);
+    __builtin_prefetch(&next_queue->data[next_2], 1, 3);
+
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      if (dequeue(q, (data_t *)&k)) {
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
+      if (dequeue(queue, (data_t *)&next_key)) {
         // in case of failure, move on to next producer queue to dequeue
-        q->num_deq_failures++;
-#endif
-        if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-          if (data_idx > 0) {
-            submit_batch(data_idx);
-          }
-        }
-        goto pick_next_msg;
-      }
-      // PLOG_INFO.printf("%s[%d], dequeing from q[%d] = %p\n", __func__,
-      // this_cons_id, prod_id, queues[prod_id]);
+        queue->num_deq_failures++;
+        if constexpr (bq_load == BQUEUE_LOAD::HtInsert)
+          if (data_idx > 0) submit_batch(data_idx);
 
-      //++count;
+        break;
+      }
 
       // STOP condition. On receiving this magic message, the consumers stop
       // dequeuing from the queues
-      if ((data_t)k == BQ_MAGIC_64BIT) {
+      if ((data_t)next_key == BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
         PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
@@ -500,18 +496,13 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         PLOG_DEBUG.printf("Consumer experienced %" PRIu64 " reprobes, %" PRIu64
                           " soft",
                           kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
-
-        PLOG_DEBUG.printf("Consumer received %" PRIu64, count);
       }
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-        _items[data_idx].key = _items[data_idx].id = k;
-
-        // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
-
-        if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
+        item_batch[data_idx].key = next_key;
+        item_batch[data_idx].id = next_key;
+        if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH)
           submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
-        }
       }
 
       transaction_id++;
@@ -522,18 +513,20 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       }
 #endif
     }
-  pick_next_msg:
+
     // reset the value of k
     // incase if the next dequeue fails, we will have a stale value of k
-    k = 0;
-    if (++prod_id >= n_prod) {
-      prod_id = 0;
-    }
+    next_key = 0;
+    if (++prod_id >= n_prod) prod_id = 0;
   }
 
-  auto t_end = RDTSCP();
+  const auto t_end = RDTSCP();
 
-#if defined(HASH_HISTOGRAM)
+#ifdef WITH_VTUNE_LIB
+  event.stop();
+#endif
+
+#ifdef HASH_HISTOGRAM
   std::stringstream stream{};
   stream << "Hash buckets: [";
   auto first = true;
@@ -547,24 +540,20 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   PLOG_INFO.printf("%s", stream.str().c_str());
 #endif
 
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
-#endif
-  sh->stats->insertions.duration = t_end - t_start;
-  sh->stats->insertions.op_count = transaction_id;
-  sh->stats->any = sh->stats->insertions;
-  get_ht_stats(sh, kmer_ht);
+  shard->stats->insertions.duration = t_end - t_start;
+  shard->stats->insertions.op_count = transaction_id;
+  shard->stats->any = shard->stats->insertions;
+  get_ht_stats(shard, kmer_ht.get());
 
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_prod; ++i) {
-    auto *q = cqueues[i];
+    const auto queue = queues.at(i);
     PLOG_INFO.printf("[cons:%u] q[%d] deq_failures %u", this_cons_id, i,
-                     q->num_deq_failures);
+                     queue->num_deq_failures);
   }
-#endif
 
   PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
                    inserted);
+
   PLOG_INFO.printf(
       "Quick Stats: Consumer %u finished, receiving %lu messages "
       "(cycles per message %lu) prod_count %u | finished %u",
@@ -572,12 +561,7 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       finished_producers);
 
   // Write to file
-  if (!this->cfg->ht_file.empty()) {
-    std::string outfile = this->cfg->ht_file + std::to_string(sh->shard_idx);
-    PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
-                     outfile.c_str());
-    kmer_ht->print_to_file(outfile);
-  }
+  write_hashtable_to_file(*kmer_ht, *this->cfg, shard->shard_idx);
 
   // End test
   fipc_test_FAI(completed_consumers);
@@ -598,7 +582,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   __itt_thread_set_name(thread_name.c_str());
 #endif
 
-  ktable = this->ht_vec->at(tid);
+  ktable = this->ht_vec.at(tid);
 
   if (ktable == nullptr) {
     // Both producer and consumer threads participate in find. However, the
@@ -614,7 +598,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     ktable = new PartitionedHashStore<KVType, ItemQueue>(ht_size, sh->shard_idx,
                                                          true);
 
-    this->ht_vec->at(tid) = ktable;
+    this->ht_vec.at(tid) = ktable;
   }
 
   Values *values;
@@ -821,8 +805,7 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
 }
 
 void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
-  this->ht_vec =
-      new std::vector<BaseHashTable *>(cfg->n_prod + cfg->n_cons, nullptr);
+  this->ht_vec.resize(cfg->n_prod + cfg->n_cons);
   // 1) Insert using bqueues
   this->insert_with_bqueues(cfg, n, npq);
 

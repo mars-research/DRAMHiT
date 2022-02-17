@@ -422,10 +422,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return count;
   }
 
-  void print_to_file(std::string &outfile) const override {
+  void print_to_file(const char* outfile) const override {
     std::ofstream f(outfile);
     if (!f) {
-      PLOG_ERROR.printf("Could not open outfile %s", outfile.c_str());
+      PLOG_ERROR.printf("Could not open outfile %s", outfile);
       return;
     }
     KV *ht = this->hashtable[this->id];

@@ -4,9 +4,9 @@
 #include <plog/Log.h>
 
 #include "base_kht.hpp"
+#include "hasher.hpp"
 #include "helper.hpp"
 #include "types.hpp"
-#include "hasher.hpp"
 // #include "kmer_struct.h"
 
 /*
@@ -48,9 +48,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
   uint32_t queue_idx;      // pointer to head of queue
   Hasher hasher_;
 
-  uint64_t __hash(const void *k) {
-    return hasher_(k, KMER_DATA_LENGTH);
-  }
+  uint64_t __hash(const void *k) { return hasher_(k, KMER_DATA_LENGTH); }
 
   /* Insert items from queue into hash table, interpreting "queue"
   as an array of size queue_sz*/
@@ -203,8 +201,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t cityhash_new =
-        hasher_((const char *)kmer_data, KMER_DATA_LENGTH);
+    uint64_t cityhash_new = hasher_((const char *)kmer_data, KMER_DATA_LENGTH);
 
     size_t idx = cityhash_new & (this->capacity - 1);  // modulo
 
@@ -262,7 +259,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
     return count;
   }
 
-  void print_to_file(std::string &outfile) const override {
+  void print_to_file(const char *outfile) const override {
     std::ofstream f;
     f.open(outfile);
     for (size_t i = 0; i < this->get_capacity(); i++) {

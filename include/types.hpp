@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -185,12 +186,12 @@ struct Kmer_s {
   char data[KMER_DATA_LENGTH];
 };
 
-struct Shard {
+struct alignas(CACHE_LINE_SIZE) Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
   uint8_t core_id;
   off64_t f_start;  // start byte into file
   off64_t f_end;    // end byte into file
-  thread_stats* stats;
+  std::unique_ptr<thread_stats> stats;
   Kmer_s* kmer_big_pool;
   Kmer_s* kmer_small_pool;
   Kmer_s* pool;

@@ -123,8 +123,8 @@ void Application::shard_thread(int tid, bool mainthread) {
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
-  sh->stats =
-      (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
+  sh->stats.reset((thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE,
+                                                     sizeof(thread_stats)));
 
   switch (config.mode) {
     case FASTQ_WITH_INSERT:
@@ -249,10 +249,11 @@ void Application::shard_thread(int tid, bool mainthread) {
     if ((config.ht_type == CAS_KHT) && (sh->shard_idx > 0)) {
       goto done;
     }
-    std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
+
+    const auto outfile = config.ht_file + std::to_string(sh->shard_idx);
     PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
                      outfile.c_str());
-    kmer_ht->print_to_file(outfile);
+    kmer_ht->print_to_file(outfile.c_str());
   }
 
   // free_ht(kmer_ht);
@@ -279,11 +280,7 @@ done:
 int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
 
-  this->shards = (Shard *)std::aligned_alloc(
-      CACHE_LINE_SIZE, sizeof(Shard) * config.num_threads);
-
-  memset(this->shards, 0, sizeof(Shard) * config.num_threads);
-
+  this->shards.resize(config.num_threads);
   size_t seg_sz = 0;
 
   switch (config.mode) {
@@ -372,13 +369,11 @@ int Application::spawn_shard_threads() {
   while (ready_threads) fipc_test_pause();
 
   for (auto &th : this->threads) {
-    if (th.joinable()) {
+    if (th.joinable())
       th.join();
-    }
   }
-  if (config.mode != CACHE_MISS) print_stats(this->shards, config);
 
-  std::free(this->shards);
+  if (config.mode != CACHE_MISS) print_stats(this->shards.data(), config);
 
   return 0;
 }

@@ -13,7 +13,7 @@ namespace kmercounter {
 class BQueueTest {
   std::vector<std::thread> prod_threads;
   std::vector<std::thread> cons_threads;
-  std::vector<BaseHashTable *> *ht_vec;
+  std::vector<BaseHashTable *> ht_vec;
   Shard *shards;
   Configuration *cfg;
   Numa *n;

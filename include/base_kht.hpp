@@ -37,7 +37,7 @@ class BaseHashTable {
 
   virtual size_t get_max_count() const = 0;
 
-  virtual void print_to_file(std::string &outfile) const = 0;
+  virtual void print_to_file(const char* outfile) const = 0;
 
   virtual uint64_t read_hashtable_element(const void *data) = 0;
 
