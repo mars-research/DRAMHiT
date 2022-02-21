@@ -259,7 +259,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   const auto t_start = RDTSC_START();
   transaction_id = 0u;
-  for (auto j = 0; j < num_messages;) {
+  for (auto j = 0u; j < num_messages;) {
     // The idea is to batch messages upto BQ_TESTS_BATCH_LENGTH
     // for the same queue and then move on to next consumer
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH_PROD; i++) {
@@ -522,22 +522,16 @@ void BQueueTest::consumer_thread_main(uint64_t cons_id, BaseHashTable &kmer_ht,
         PLOG_DEBUG.printf("Consumer experienced %" PRIu64 " reprobes, %" PRIu64
                           " soft",
                           kmer_ht.num_reprobes, kmer_ht.num_soft_reprobes);
-      }
+      } else {
+        if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+          item_batch[data_idx].key = next_key;
+          item_batch[data_idx].id = next_key;
+          if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH)
+            submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
+        }
 
-      if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-        item_batch[data_idx].key = next_key;
-        item_batch[data_idx].id = next_key;
-        if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH)
-          submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
+        transaction_id++;
       }
-
-      transaction_id++;
-#ifdef CALC_STATS
-      if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
-        PLOG_INFO.printf("[cons:%u] transaction_id %lu deq_failures %lu",
-                         cons_id, transaction_id, q->num_deq_failures);
-      }
-#endif
     }
 
     // reset the value of k
@@ -583,7 +577,8 @@ void BQueueTest::consumer_thread_main(uint64_t cons_id, BaseHashTable &kmer_ht,
     PLOG_INFO.printf(
         "Quick Stats: Consumer %u finished, receiving %lu messages "
         "(cycles per message %lu) prod_count %u | finished %u",
-        cons_id, transaction_id, (t_end - t_start) / transaction_id, n_prod,
+        cons_id, transaction_id,
+        transaction_id ? (t_end - t_start) / transaction_id : 0, n_prod,
         finished_producers);
 
     // Write to file
