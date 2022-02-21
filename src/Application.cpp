@@ -61,7 +61,7 @@ const Configuration def = {
     .n_cons = 1,
     .num_nops = 0,
     .skew = 1.0,
-    .rw_ratio = 0.0,
+    .pread = 0.0,
     .drop_caches = true,
     .hwprefetchers = false,
 };  // TODO enum
@@ -369,8 +369,7 @@ int Application::spawn_shard_threads() {
   while (ready_threads) fipc_test_pause();
 
   for (auto &th : this->threads) {
-    if (th.joinable())
-      th.join();
+    if (th.joinable()) th.join();
   }
 
   if (config.mode != CACHE_MISS) print_stats(this->shards.data(), config);
@@ -473,8 +472,8 @@ int Application::process(int argc, char *argv[]) {
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
         "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
                                            ->default_value(def.hwprefetchers))(
-        "rw-ratio",
-        po::value<double>(&config.rw_ratio)->default_value(def.rw_ratio));
+        "p-read", po::value<double>(&config.pread)->default_value(def.pread),
+        "Read probability");
 
     papi_init();
 

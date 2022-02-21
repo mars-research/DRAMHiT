@@ -152,8 +152,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   ValuePairs results{0, found_keys_buffer.data()};
 
   xorwow_urbg prng{};
-  std::bernoulli_distribution sampler{config.rw_ratio /
-                                      (1.0 + config.rw_ratio)};
+  std::bernoulli_distribution sampler{config.pread};
 
   uint64_t read_count{};
   uint64_t found_count{};
@@ -259,7 +258,8 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #endif
 
   const auto t_start = RDTSC_START();
-  for (transaction_id = 0u; transaction_id < num_messages;) {
+  transaction_id = 0u;
+  for (auto j = 0; j < num_messages;) {
     // The idea is to batch messages upto BQ_TESTS_BATCH_LENGTH
     // for the same queue and then move on to next consumer
     for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH_PROD; i++) {
@@ -270,7 +270,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
         prefetch_object<false>(&values.at(i + 16), 64);
       next_key = values.at(transaction_id);
 #elif defined(BQ_TESTS_RW_RATIO)
-      while (sampler(prng)) {
+      while (j < num_messages && sampler(prng)) {
         if (find_keys.first == HT_TESTS_FIND_BATCH_LENGTH) {
           hashtable->find_batch(find_keys, results);
           find_keys.first = 0;
@@ -288,6 +288,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
         slot.key = find | (hash_val << 32);
         slot.id = read_count++;
         slot.part_id = partition + n_prod;
+        ++j;
       }
 
       next_key = key_start++;
@@ -324,6 +325,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
       }
 #endif
 
+      ++j;
       transaction_id++;
 #ifdef CALC_STATS
       if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {

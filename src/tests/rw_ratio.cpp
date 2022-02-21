@@ -37,7 +37,7 @@ class rw_experiment {
       : hashtable{hashtable},
         timings{},
         prng{},
-        sampler{config.rw_ratio / (1.0 + config.rw_ratio)},
+        sampler{config.pread},
         next_key{start_key},
         write_batch{},
         writes{0, write_batch.data()},
@@ -45,9 +45,7 @@ class rw_experiment {
         reads{0, read_batch.data()},
         result_batch{},
         results{0, result_batch.data()} {
-    PLOG_INFO << "Using ratio " << config.rw_ratio
-              << " and P(read) = " << config.rw_ratio / (1.0 + config.rw_ratio)
-              << "\n";
+    PLOG_INFO << "Using P(read) = " << config.pread << "\n";
   }
 
   auto start_time() { return __rdtsc(); }
@@ -99,9 +97,9 @@ class rw_experiment {
   void time_insert() {
     timings.n_writes += writes.first;
 
-    //const auto start = start_time();
+    // const auto start = start_time();
     hashtable.insert_batch(writes);
-    //timings.insert_cycles += stop_time() - start;
+    // timings.insert_cycles += stop_time() - start;
 
     writes.first = 0;
   }
@@ -109,9 +107,9 @@ class rw_experiment {
   void time_find() {
     timings.n_reads += reads.first;
 
-    //const auto start = start_time();
+    // const auto start = start_time();
     hashtable.find_batch(reads, results);
-    //timings.find_cycles += stop_time() - start;
+    // timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
@@ -119,18 +117,18 @@ class rw_experiment {
   }
 
   void time_flush_find() {
-   /// const auto start = start_time();
+    /// const auto start = start_time();
     hashtable.flush_find_queue(results);
-    ///timings.find_cycles += stop_time() - start;
+    /// timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
   }
 
   void time_flush_insert() {
-    //const auto start = start_time();
+    // const auto start = start_time();
     hashtable.flush_insert_queue();
-    //timings.insert_cycles += stop_time() - start;
+    // timings.insert_cycles += stop_time() - start;
   }
 };
 
