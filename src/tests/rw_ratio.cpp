@@ -55,8 +55,18 @@ class rw_experiment {
   }
 
   experiment_results run(unsigned int total_ops) {
-    const auto start = start_time();
+    std::array<Keys, HT_TESTS_BATCH_LENGTH> inserts{};
+    KeyPairs insert_pairs{0, inserts.data()};
+    for (auto i = 0u; i < total_ops; ++i) {
+      if (insert_pairs.first == HT_TESTS_BATCH_LENGTH) {
+        hashtable.insert_batch(insert_pairs);
+        insert_pairs.first = 0;
+      }
 
+      insert_pairs.second[insert_pairs.first++].key = next_key + i;
+    }
+
+    const auto start = start_time();
     for (auto i = 0u; i < total_ops; ++i) {
       if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
