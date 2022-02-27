@@ -23,6 +23,8 @@ class BQueueTest {
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   std::map<std::tuple<int, int>, prod_queue_t *> pqueue_map;
   std::map<std::tuple<int, int>, cons_queue_t *> cqueue_map;
+#elif defined(CONFIG_BQUEUE_SECTION)
+  std::map<std::tuple<int, int>, queue_section_t *> queue_map;
 #else
   std::map<std::tuple<int, int>, queue_t *> queue_map;
 #endif

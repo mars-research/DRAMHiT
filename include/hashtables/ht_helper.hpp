@@ -44,18 +44,19 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
 
 template <bool WRITE>
 inline void prefetch_object(const void *addr, uint64_t size) {
-  uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
+  //uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
 
 #if defined(PREFETCH_TWO_LINE)
-  uint64_t cache_line2_addr =
-      cache_block_aligned_addr((uint64_t)addr + size - 1);
+  //uint64_t cache_line2_addr =
+  //    cache_block_aligned_addr((uint64_t)addr + size - 1);
 #endif
 
   // 1 -- prefetch for write (vs 0 -- read)
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
-  __builtin_prefetch((const void *)cache_line1_addr, WRITE, 3);
+  //__builtin_prefetch((const void *)cache_line1_addr, WRITE, 3);
+  __builtin_prefetch((const void *)addr, WRITE, 3);
 
   //__builtin_prefetch(addr, 1, 0);
 #if defined(PREFETCH_TWO_LINE)
@@ -127,7 +128,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
 
   // Special handling for CAS that does NOT depend on global config state
   // Which it shouldn't have in the first place...
-  if (is_cas_a_special_snowflake) {
+  if (is_cas_a_special_snowflake && (config.numa_split != 2)) {
     void *_addr = addr;
     size_t len_split = ((capacity * sizeof(T)) >> 1);
     void *addr_split = (char *)_addr + len_split;

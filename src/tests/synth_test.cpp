@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <plog/Log.h>
-
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
+#endif
 #include "constants.hpp"
 #include "hashtables/base_kht.hpp"
 #include "hashtables/kvtypes.hpp"

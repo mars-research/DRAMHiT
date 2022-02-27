@@ -31,6 +31,11 @@ add_compile_options(
     -march=native
     -fcf-protection=none
     -fno-stack-protector
+    #    -fsanitize=address
+)
+
+add_link_options(
+  #    -fsanitize=address
 )
 
 # Build all the source files for the library.
@@ -162,7 +167,7 @@ endif ()
 
 if (VTUNE)
     if (NOT VTUNE_ROOT)
-        set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
+        set(VTUNE_ROOT "/local/devel/intel/oneapi/vtune/latest/")
     endif ()
 
     message(WARNING "Using VTUNE_ROOT: ${VTUNE_ROOT}")
@@ -203,7 +208,9 @@ endif()
 add_definitions(-D__MMAP_FILE)
 add_definitions(-DSERIAL_SCAN)
 add_definitions(-DPREFETCH_WITH_PREFETCH_INSTR)
-add_definitions(-DCONFIG_ALIGN_BQUEUE_METADATA)
+#add_definitions(-DCONFIG_ALIGN_BQUEUE_METADATA)
+add_definitions(-DCONFIG_BQUEUE_SECTION)
+# add_definitions(-DCONFIG_NUMA_AFFINITY)
 # add_definitions(-DXX_HASH)
 # add_definitions(-DTOUCH_DEPENDENCY)
 # add_definitions(-DXORWOW_SCAN)

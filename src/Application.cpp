@@ -588,12 +588,19 @@ int Application::process(int argc, char *argv[]) {
         break;
     }
   } else {
-    if (config.numa_split)
-      this->np = new NumaPolicyThreads(config.num_threads,
-                                       THREADS_SPLIT_SEPARATE_NODES);
-    else
-      this->np =
-          new NumaPolicyThreads(config.num_threads, THREADS_ASSIGN_SEQUENTIAL);
+    switch (config.numa_split) {
+      case THREADS_SPLIT_SEPARATE_NODES:
+        this->np = new NumaPolicyThreads(config.num_threads,
+                                         THREADS_SPLIT_SEPARATE_NODES);
+        break;
+      case THREADS_ASSIGN_SEQUENTIAL:
+        this->np = new NumaPolicyThreads(config.num_threads,
+                                         THREADS_ASSIGN_SEQUENTIAL);
+        break;
+      default:
+        PLOGE.printf("Unknown numa policy. Exiting");
+        exit(-1);
+    }
   }
 
   if (config.mode == BQ_TESTS_YES_BQ) {

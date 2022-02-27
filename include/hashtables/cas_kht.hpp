@@ -374,6 +374,7 @@ class CASHashTable : public BaseHashTable {
     // printf("Thread %lu, grabbing lock: %lu\n", this->thread_id, pidx);
     // Compare with empty element
     if (curr->is_empty()) {
+      //std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
       bool cas_res = curr->insert_cas(q);
       if (cas_res) {
 #ifdef CALC_STATS
@@ -458,8 +459,7 @@ class CASHashTable : public BaseHashTable {
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);  // modulo
 
-    // cout << " -- Adding " << key_data->key  << " at " << this->ins_head <<
-    // endl;
+    //std::cout << " -- Adding " << key_data->key  << " : " << key_data->value << endl;
     this->prefetch(idx);
 
     this->insert_queue[this->ins_head].idx = idx;

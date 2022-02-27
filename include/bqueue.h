@@ -74,15 +74,16 @@ static inline void fipc_test_time_wait_ticks(uint64_t ticks) {
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
 
-#define QUEUE_SIZE (2048)  // 8192
-#define BATCH_SIZE 512
+#define QUEUE_SIZE (2048 * 2)  // 8192
+#define BATCH_SIZE (512 * 2)
 
 #define CONS_BATCH_SIZE BATCH_SIZE  // 512
 #define PROD_BATCH_SIZE BATCH_SIZE  // 512
 #define BATCH_INCREMENT (BATCH_SIZE / 2)
 
-#define CONGESTION_PENALTY (1000) /* cycles */
-#define CONS_CONGESTION_PENALTY (CONGESTION_PENALTY / 2)
+#define CONGESTION_PENALTY (250) /* cycles */
+//#define CONS_CONGESTION_PENALTY (CONGESTION_PENALTY / 2)
+#define CONS_CONGESTION_PENALTY (250)
 
 // #define ADAPTIVE
 #define BACKTRACKING
@@ -95,12 +96,13 @@ typedef struct {
   data_t data[QUEUE_SIZE] __attribute__((aligned(64)));
 } data_array_t;
 
-// 16 bytes | 4 elements in a cacheline
+// 16 bytes
 typedef struct {
-  volatile uint16_t head;
-  volatile uint16_t batch_head;
+  volatile uint32_t head;
+  volatile uint32_t batch_head;
   uint32_t num_enq_failures;
   data_t* data;
+//} __attribute__((aligned(128))) PACKED prod_queue_t;
 } PACKED prod_queue_t;
 
 // 17 bytes
@@ -117,6 +119,7 @@ typedef struct {
   uint32_t num_deq_failures;
   uint8_t backtrack_flag;
   data_t* data;
+//} __attribute__((aligned(128))) PACKED cons_queue_t;
 } PACKED cons_queue_t;
 
 int init_queue(cons_queue_t* q);
@@ -127,6 +130,36 @@ int dequeue(cons_queue_t* q, data_t* d);
 // Request Types
 #define MSG_ENQUEUE 1
 #define MSG_HALT 2
+
+#elif defined(CONFIG_BQUEUE_SECTION)
+
+#define NUM_SECTIONS  64
+#define QUEUE_SIZE (8192 * NUM_SECTIONS)
+#define SECTION_SIZE  (QUEUE_SIZE / NUM_SECTIONS)
+
+typedef struct {
+  data_t *enqPtr;
+  data_t *deqLocalPtr;
+
+  CACHE_ALIGNED data_t *deqPtr;
+  data_t *enqLocalPtr;
+
+  CACHE_ALIGNED data_t *enqSharedPtr;
+  data_t *deqSharedPtr;
+  bool backtrack_flag;
+
+  size_t ROTATE_MASK;
+  size_t SECTION_MASK;
+
+  //size_t numEnqueues;
+  //size_t numDequeues;
+  data_t *data;
+} CACHE_ALIGNED queue_section_t;
+
+int init_queue(queue_section_t* q);
+int free_queue(queue_section_t* q);
+int enqueue(queue_section_t* q, data_t d);
+int dequeue(queue_section_t* q, data_t* d);
 
 #else  // CONFIG_ALIGN_BQUEUE_METADATA
 

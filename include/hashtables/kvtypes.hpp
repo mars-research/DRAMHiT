@@ -549,6 +549,7 @@ struct Item {
     if (this->is_empty()) {
       goto exit;
     } else if (this->kvpair.key == elem->key) {
+      //printf("k = %lu v = %lu\n", this->kvpair.key, this->kvpair.value);
       found = true;
       vp.second[vp.first].id = elem->key_id;
       vp.second[vp.first].value = this->kvpair.value;

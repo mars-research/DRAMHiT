@@ -15,7 +15,7 @@ fi
 echo ${USER}:${GROUP}
 sudo rmmod msr-safe
 pushd ../tools/msr-safe
-make && \
+make clean && make && \
 sudo insmod msr-safe.ko && \
 sudo sh -c "cat allowlists/al_kvstore > /dev/cpu/msr_allowlist" && \
 sudo chown ${USER}:${GROUP} /dev/cpu/*/msr_safe
