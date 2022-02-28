@@ -65,7 +65,6 @@ target_link_libraries(kvstore PRIVATE ht_lib)
 include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
-option(DEBUG "Build in debug mode." OFF)
 option(BUILD_TESTING "Build tests." OFF)
 option(HUGEPAGES "Enable hugepages allocation." ON)
 option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
