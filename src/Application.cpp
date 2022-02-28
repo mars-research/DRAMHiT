@@ -56,6 +56,8 @@ const char *ht_type_strings[] = {
 };
 
 namespace kmercounter {
+
+class LynxQueue;
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -604,7 +606,7 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == BQ_TESTS_YES_BQ) {
-    this->test.bqt.run_test(&config, this->n, this->npq);
+    this->test.qt.run_test(&config, this->n, this->npq);
   } else {
     this->spawn_shard_threads();
   }

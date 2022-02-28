@@ -6,18 +6,23 @@
 #include "PrefetchTest.hpp"
 #include "SynthTest.hpp"
 #include "ZipfianTest.hpp"
+#include "QueueTest.hpp"
 
 namespace kmercounter {
+
+class LynxQueue;
 
 class Tests {
  public:
   SynthTest st;
   PrefetchTest pt;
   BQueueTest bqt;
+  QueueTest<kmercounter::LynxQueue> qt;
   CacheMissTest cmt;
   ZipfianTest zipf;
 
-  Tests() {}
+  Tests() {
+  }
 };
 
 }  // namespace kmercounter

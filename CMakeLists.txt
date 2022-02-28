@@ -25,17 +25,23 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+
 add_compile_options(
+    -O3
     -Wall
     -mprefetchwt1
     -march=native
     -fcf-protection=none
     -fno-stack-protector
-    #    -fsanitize=address
+    -funroll-all-loops
+    -flto
+    #-fsanitize=address
+    -g
+    -rdynamic
 )
 
 add_link_options(
-  #    -fsanitize=address
+  #-fsanitize=address
 )
 
 # Build all the source files for the library.
@@ -44,12 +50,13 @@ add_library(ht_lib
     "src/hashtables/kvtypes.cpp"
 )
 target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
-target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash)
+target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone)
 
 # Build all the source files for the executable.
 add_executable(kvstore
     "src/bqueue.cpp"
     "src/tests/bq_tests.cpp"
+    "src/tests/queue_tests.cpp"
     "src/tests/hashtable_tests.cpp"
     "src/tests/prefetch_tests.cpp"
     "src/tests/cachemiss_test.cpp"

@@ -22,9 +22,9 @@ More information about Lynx can be found at
 https://www.repository.cam.ac.uk/handle/1810/255384
 */
 
-#ifndef LYNXQ_H
-#define LYNXQ_H
+#pragma once
 
+#include <execinfo.h>
 #include <unistd.h>		/* sysconf() */
 #include <sys/mman.h>		/* mprotect() */
 #include <signal.h>
@@ -36,14 +36,17 @@ https://www.repository.cam.ac.uk/handle/1810/255384
 #include <time.h>		/* clock_t */
 #include <pthread.h>
 #include <set>
+#include <map>
 #include "queue.hpp"
 
 #define COMPILER_BARRIER asm volatile("" ::: "memory")
 
+namespace kmercounter {
+
 struct lynxQ;
 typedef struct lynxQ *lynxQ_t;
 typedef std::set<lynxQ_t> qset_t;
-qset_t all_queues_created; 
+qset_t all_queues_created;
 
 struct lynxQ;
 typedef struct lynxQ queue_t;
@@ -152,7 +155,7 @@ struct lynxQ {
   long cacheBuf8[7];
   char *pop_index;
   long cacheBuf9[7];
-  size_t PAGE_SIZE;
+  size_t _PAGE_SIZE;
   size_t queue_size;
   size_t REDZONE_SIZE;
   size_t QUEUE_SECTION_SIZE;
@@ -223,7 +226,7 @@ void lynxQ::dump(void) {
   fprintf (stderr, "redzone1:       %p\n", redzone1);
   fprintf (stderr, "redzone2:       %p\n", redzone2);
   fprintf (stderr, "redzone_end:    %p\n", redzone_end);
-  fprintf (stderr, "PAGE_SIZE:      0x%lx\n", PAGE_SIZE);
+  fprintf (stderr, "_PAGE_SIZE:      0x%lx\n", _PAGE_SIZE);
   fprintf (stderr, "queue_size:     0x%lx\n", queue_size);
   fprintf (stderr, "REDZONE_SIZE:   0x%lx\n", REDZONE_SIZE);
   fprintf (stderr, "QUEUE_SECTION_SIZE:  0x%lx\n", QUEUE_SECTION_SIZE);
@@ -241,7 +244,24 @@ void lynxQ::dump(void) {
 const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
   assert (cond == ON || cond == OFF && "Bad COND");
   int prot = (cond == ON) ? PROT_NONE : (PROT_READ| PROT_WRITE | PROT_EXEC);
-  size_t size = PAGE_SIZE;
+  size_t size = _PAGE_SIZE;
+  if (!addr) {
+        void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+  
+  // print out all the frames to stderr
+    char **strings = backtrace_symbols(array, size);
+    if (strings != NULL)
+  {
+
+    printf ("Obtained %d stack frames.\n", size);
+    for (auto i = 0; i < size; i++)
+      printf ("%s\n", strings[i]);
+  }
+  }
   if (mprotect(addr, size, prot) == -1) {
     fatal_error("mprotect error: addr:%p, size:0x%lx, prot:%d\n", 
 		addr, size, prot);
@@ -460,13 +480,14 @@ static inline bool is_expected_redzone (char *index, char *redzone) {
 }
 
 lynxQ::lynxQ(size_t qsize) {
+  printf("Creating LynxQ of size %zu | this %p\n", qsize, this);
   /* Add queue into the set of all the queues created so far */
   all_queues_created.insert(this);
   all_queues_set = &all_queues_created;
 
   /* Get the system's page size */
-  PAGE_SIZE = sysconf (_SC_PAGE_SIZE);
-  if (PAGE_SIZE == -1) fatal_error("sysconf: Error getting page size\n");
+  _PAGE_SIZE = sysconf (_SC_PAGE_SIZE);
+  if (_PAGE_SIZE == -1) fatal_error("sysconf: Error getting page size\n");
 
   /* The size of the queue must be a power of the page size*/
   queue_size = qsize;
@@ -488,7 +509,7 @@ lynxQ::lynxQ(size_t qsize) {
   QUEUE_ALIGN = queue_size << 1;
 
   /* We use the minimum redzone possible */
-  REDZONE_SIZE = PAGE_SIZE;
+  REDZONE_SIZE = _PAGE_SIZE;
 
   /* Allocate QUEUE */
   char *Q;
@@ -802,16 +823,22 @@ class LynxQueue { //: public Queue<uint64_t> {
     queue_t ***queues;
 
   public:
+    static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
 
     explicit LynxQueue(int nprod, int ncons, size_t queue_size) {
 
-      this->queues = (queue_t ***)aligned_alloc(64, sizeof(queue_t**));
+      printf("%s, lynx queue init\n", __func__);
+      this->queues = (queue_t ***)calloc(1, nprod * sizeof(queue_t*));
 
       for (auto p = 0u; p < nprod; p++) {
 
-        this->queues[p] = (queue_t **)aligned_alloc(
-            FIPC_CACHE_LINE_SIZE, ncons * sizeof(queue_t*));
+        //this->queues[p] = (queue_t **)aligned_alloc(
+        //    FIPC_CACHE_LINE_SIZE, ncons * sizeof(queue_t*));
+
+        this->queues[p] = (queue_t **)calloc(1, ncons * sizeof(queue_t*));
+        printf("allocating %zu bytes %p\n", ncons * sizeof(queue_t*), this->queues[p]);
         for (auto c = 0u; c < ncons; c++) {
+          printf("%s, &queues[%d][%d] %p\n", __func__, p, c, &queues[p][c]);
           queues[p][c] = new queue_t(queue_size);
           //queue_map.insert({std::make_tuple(p, c), q});
         }
@@ -834,8 +861,10 @@ class LynxQueue { //: public Queue<uint64_t> {
       return SUCCESS;
     }
 
-    void push_done(int p, int c) {
+    inline void push_done(int p, int c) {
       auto q = queues[p][c];
+
+      q->push(BQ_MAGIC_64BIT);
       q->push_done();
     }
 
@@ -854,4 +883,4 @@ class LynxQueue { //: public Queue<uint64_t> {
       return q->get_time();
     }
 };
-#endif 
+} // namespace
