@@ -69,7 +69,9 @@ const Configuration def = {
     .skew = 1.0,
     .drop_caches = true,
     .hwprefetchers = false,
-    .p_read = 0.0};  // TODO enum
+    .p_read = 0.0,
+    .bq_writers = -1,
+};  // TODO enum
 
 // global config
 Configuration config;
@@ -479,7 +481,9 @@ int Application::process(int argc, char *argv[]) {
         "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
                                            ->default_value(def.hwprefetchers))(
         "p-read", po::value<double>(&config.p_read)->default_value(def.p_read),
-        "P(read)");
+        "P(read)")(
+        "bq-writers",
+        po::value<int>(&config.bq_writers)->default_value(def.bq_writers));
 
     papi_init();
 

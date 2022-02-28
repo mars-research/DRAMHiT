@@ -10,6 +10,20 @@
 #include "types.hpp"
 
 namespace kmercounter {
+struct queues {
+  std::vector<std::vector<data_array_t>> data_arrays{};
+  std::vector<std::vector<prod_queue_t>> producer_queues{};
+  std::vector<std::vector<cons_queue_t>> consumer_queues{};
+
+  cons_queue_t& get_source(unsigned int producer, unsigned int consumer) {
+    return consumer_queues.at(consumer).at(producer);
+  }
+
+  prod_queue_t& get_sink(unsigned int producer, unsigned int consumer) {
+    return producer_queues.at(producer).at(consumer);
+  }
+};
+
 class RWRatioTest {
  public:
   void run(Shard& shard, BaseHashTable& hashtable, unsigned int total_ops);
@@ -19,11 +33,12 @@ class RWRatioTest {
   std::atomic_uint16_t next_consumer{};
   std::atomic_bool start{};
   std::atomic_uint16_t ready{};
-  std::vector<std::vector<data_array_t>> data_arrays{};
-  std::vector<std::vector<prod_queue_t>> producer_queues{};
-  std::vector<std::vector<cons_queue_t>> consumer_queues{};
 
-  void init_queues(unsigned int n_clients, unsigned int n_writers);
+  queues rw_queues{};
+  queues insert_queues{};
+
+  void init_rw_queues(unsigned int n_clients, unsigned int n_writers);
+  void init_insert_queues(unsigned int n_threads);
 };
 }  // namespace kmercounter
 

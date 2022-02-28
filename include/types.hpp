@@ -127,6 +127,7 @@ struct Configuration {
   bool hwprefetchers;
 
   double p_read;
+  int bq_writers;
 
   void dump_configuration() {
     printf("Run configuration{\n");

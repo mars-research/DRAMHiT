@@ -4,6 +4,7 @@
 #include <sync.h>
 
 #include <RWRatioTest.hpp>
+#include <algorithm>
 #include <array>
 #include <base_kht.hpp>
 #include <hasher.hpp>
@@ -42,30 +43,12 @@ class rw_experiment {
         result_batch{},
         results{0, result_batch.data()} {}
 
-  experiment_results run() {
-    insert_all();
-
-    const auto start = start_time();
-    std::uint64_t next_write_key{base_key};
-    std::uint64_t next_read_key{base_key};
-    for (auto i = 0u; i < per_thread_inserts; ++i) {
-      if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
-      if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) find();
-      if (sampler(prng))
-        push_key(reads, next_read_key++);
-      else
-        push_key(writes, next_write_key++);
-    }
-
-    insert();
-    find();
-    flush_insert();
-    flush_find();
-    const auto stop = stop_time();
-    timings.insert_cycles = stop - start;
-    timings.find_cycles = stop - start;
-
-    return timings;
+  experiment_results run(int n_writers, queues& insert_queues,
+                         queues& rw_queues) {
+    if (n_writers < 0)
+      return run_no_bq();
+    else
+      return run_bq(n_writers, insert_queues, rw_queues);
   }
 
  private:
@@ -129,29 +112,131 @@ class rw_experiment {
     key_struct.part_id = shard_id;
     keys.second[keys.first++] = key_struct;
   }
-};
 
-void RWRatioTest::init_queues(unsigned int n_clients, unsigned int n_writers) {
-  data_arrays.resize(n_clients);
-  producer_queues.resize(n_clients);
-  consumer_queues.resize(n_writers);
-  for (auto i = 0u; i < n_clients; ++i) {
-    data_arrays.at(i).resize(n_writers);
-    producer_queues.at(i).resize(n_writers);
+  experiment_results run_no_bq() {
+    insert_all();
+
+    const auto start = start_time();
+    std::uint64_t next_write_key{base_key};
+    std::uint64_t next_read_key{base_key};
+    for (auto i = 0u; i < per_thread_inserts; ++i) {
+      if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
+      if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) find();
+      if (sampler(prng))
+        push_key(reads, next_read_key++);
+      else
+        push_key(writes, next_write_key++);
+    }
+
+    insert();
+    find();
+    flush_insert();
+    flush_find();
+    const auto stop = stop_time();
+    timings.insert_cycles = stop - start;
+    timings.find_cycles = stop - start;
+
+    return timings;
   }
 
-  for (auto i = 0u; i < n_writers; ++i) consumer_queues.at(i).resize(n_clients);
+  experiment_results run_bq(int n_writers, queues& insert_queues,
+                            queues& rw_queues) {
+    static NumaPolicyQueues insert_policy{
+        config.num_threads / 2, config.num_threads / 2,
+        static_cast<numa_policy_queues>(config.numa_split)};
+
+    static NumaPolicyQueues rw_policy{
+        n_writers, config.num_threads - n_writers,
+        static_cast<numa_policy_queues>(config.numa_split)};
+
+    static const auto& insert_writers =
+        insert_policy.get_assigned_cpu_list_consumers();
+
+    static const auto& insert_clients =
+        insert_policy.get_assigned_cpu_list_producers();
+
+    static const auto& rw_writers = rw_policy.get_assigned_cpu_list_consumers();
+
+    const auto self_id = get_cpu();
+    const auto insert_writer =
+        std::find(insert_writers.begin(), insert_writers.end(), self_id);
+
+    const auto rw_writer =
+        std::find(rw_writers.begin(), rw_writers.end(), self_id);
+
+    if (insert_writer != insert_writers.end()) {
+      run_server(insert_writer - insert_writers.begin(), config.num_threads / 2,
+                 insert_queues);
+    } else {
+      run_client(
+          std::find(insert_clients.begin(), insert_clients.end(), self_id) -
+              insert_clients.begin(),
+          config.num_threads / 2, rw_queues);
+    }
+
+    return timings;
+  }
+
+  unsigned int get_cpu() {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    pthread_getaffinity_np(pthread_self(), sizeof(cpuset), &cpuset);
+    assert(CPU_COUNT(&cpuset) == 1);
+    for (auto i = 0u; i < CPU_SETSIZE; ++i)
+      if (CPU_ISSET(i, &cpuset)) return i;
+
+    assert(false);
+  }
+
+  void run_server(unsigned int self_id, unsigned int n_clients,
+                  queues& queues) {
+    std::vector<cons_queue_t*> sources(n_clients);
+    for (auto i = 0u; i < n_clients; ++i)
+      sources.at(i) = &queues.get_source(i, self_id);
+  }
+
+  void run_client(unsigned int self_id, unsigned int n_servers,
+                  queues& queues) {
+    std::vector<prod_queue_t*> sinks(n_servers);
+    for (auto i = 0u; i < n_servers; ++i)
+      sinks.at(i) = &queues.get_sink(self_id, i);
+  }
+};
+
+void init_queues(queues& queues, unsigned int n_clients,
+                 unsigned int n_writers) {
+  queues.data_arrays.resize(n_clients);
+  queues.producer_queues.resize(n_clients);
+  queues.consumer_queues.resize(n_writers);
+  for (auto i = 0u; i < n_clients; ++i) {
+    queues.data_arrays.at(i).resize(n_writers);
+    queues.producer_queues.at(i).resize(n_writers);
+  }
+
+  for (auto i = 0u; i < n_writers; ++i)
+    queues.consumer_queues.at(i).resize(n_clients);
 
   for (auto i = 0u; i < n_clients; ++i) {
     for (auto j = 0u; j < n_writers; ++j) {
-      auto& data = data_arrays[i][j];
-      auto& producer = producer_queues[i][j];
-      auto& consumer = consumer_queues[j][i];
+      auto& data = queues.data_arrays[i][j];
+      auto& producer = queues.producer_queues[i][j];
+      auto& consumer = queues.consumer_queues[j][i];
       init_queue(&consumer);
       consumer.data = data.data;
       producer.data = data.data;
     }
   }
+}
+
+void RWRatioTest::init_rw_queues(unsigned int n_clients,
+                                 unsigned int n_writers) {
+  init_queues(rw_queues, n_clients, n_writers);
+}
+
+void RWRatioTest::init_insert_queues(unsigned int n_threads) {
+  const auto n_writers = n_threads / 2;
+  const auto n_clients = n_threads / 2;
+  init_queues(insert_queues, n_clients, n_writers);
 }
 
 bool is_consumer_thread(NumaPolicyQueues& policy, std::uint8_t core_id) {
@@ -175,6 +260,11 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   */
 
   if (shard.shard_idx == 0) {
+    if (config.bq_writers >= 0) {
+      init_rw_queues(config.num_threads - config.bq_writers, config.bq_writers);
+      init_insert_queues(config.num_threads);
+    }
+
     while (ready < config.num_threads - 1) _mm_pause();
     start = true;
   } else {
@@ -192,7 +282,8 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   static const auto event = __itt_event_create(event_name, strlen(event_name));
   __itt_event_start(event);
 #endif
-  const auto results = experiment.run();
+  const auto results =
+      experiment.run(config.bq_writers, insert_queues, rw_queues);
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
