@@ -1,14 +1,15 @@
-#include <iostream>
-#include <string_view>
-#include <memory>
-#include <gtest/gtest.h>
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
+#include <gtest/gtest.h>
 
-#include "test_lib.hpp"
+#include <iostream>
+#include <memory>
+#include <string_view>
+
 #include "hashtable.h"
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/simple_kht.hpp"
+#include "test_lib.hpp"
 
 /*
   - Fill depends on the *distinct* key/id pairs
@@ -21,10 +22,10 @@ namespace kmercounter {
 namespace {
 // Hashtable names.
 const char PARTITIONED_HT[] = "Partitioned HT";
-const char CAS_HT[] = "CAS HT";
-constexpr const char* HTS [] {
-  PARTITIONED_HT,
-  CAS_HT,
+const char CAS_HT[] = "CAS";
+constexpr const char* HTS[]{
+    PARTITIONED_HT,
+    CAS_HT,
 };
 
 class AggregationTest : public ::testing::TestWithParam<const char*> {
@@ -37,9 +38,10 @@ class AggregationTest : public ::testing::TestWithParam<const char*> {
         [ht_name, hashtable_size]() -> kmercounter::BaseHashTable* {
           if (ht_name == PARTITIONED_HT)
             return new kmercounter::PartitionedHashStore<
-                kmercounter::Item, kmercounter::ItemQueue>{hashtable_size, 0};
+                kmercounter::Aggr_KV, kmercounter::ItemQueue>{hashtable_size,
+                                                              0};
           else if (ht_name == CAS_HT)
-            return new kmercounter::CASHashTable<kmercounter::Item,
+            return new kmercounter::CASHashTable<kmercounter::Aggr_KV,
                                                  kmercounter::ItemQueue>{
                 hashtable_size};
           else
@@ -50,7 +52,6 @@ class AggregationTest : public ::testing::TestWithParam<const char*> {
 
   std::unique_ptr<kmercounter::BaseHashTable> ht_;
 };
-
 
 // Tests finds of inserted elements after a flush is forced
 // Avoiding asynchronous effects
@@ -188,10 +189,8 @@ TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
   ASSERT_EQ(valuepairs.second[1].value, 1);
 }
 
-INSTANTIATE_TEST_CASE_P(TestAllHashtables,
-                        AggregationTest,
-                        ::testing::ValuesIn(HTS)
-);
+INSTANTIATE_TEST_CASE_P(TestAllCombinations, AggregationTest,
+                        ::testing::ValuesIn(HTS));
 
 }  // namespace
 }  // namespace kmercounter
