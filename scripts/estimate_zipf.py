@@ -42,6 +42,7 @@ def plot_zipf(file, title, output):
   plt.legend()
   plt.title(title)
   plt.savefig(output)
+  plt.clf()
   return a
 
 def zipf_from_kmer(file, k, output):
@@ -59,7 +60,7 @@ def zipf_from_kmer(file, k, output):
   subprocess.run(args).check_returncode()
 
   a = plot_zipf(histo_file, f'{k}-mer histogram from {file}', output)
-  print(f'a={a} for K={k} in {file}')
+  print(f'a={a:.2f} for K={k} in {file}')
 
 
 if __name__ == "__main__":
