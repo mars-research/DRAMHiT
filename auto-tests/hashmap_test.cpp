@@ -80,7 +80,7 @@ void simple_batch_insert_test(BaseHashTable* ht) {
 
 void simple_batch_update_test(BaseHashTable* ht) {
   // Insertion.
-  std::array<Keys, 2> keys{Keys{key: 12, value: 128}, Keys{key: 23, value: 256}};
+  std::array<Keys, 2> keys{Keys{key: 12, value: 128, part_id: 0}, Keys{key: 23, value: 256, part_id: 0}};
   KeyPairs keypairs{2, keys.data()};
   ht->insert_batch(keypairs); 
 
@@ -120,6 +120,7 @@ void batch_query_test(BaseHashTable* ht) {
     const uint64_t id = 2 * i;
     keys[k].key = key;
     keys[k].value = value;
+    keys[k].part_id = 0;
     reference_map[value] = id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(k, keys);
@@ -152,7 +153,7 @@ void batch_query_test(BaseHashTable* ht) {
   for (uint64_t i = 1; i <= test_size; i++) {
     keys[k].key = i;
     keys[k].id = 2 * i;
-    keys[k].part_id = 3 * i;
+    keys[k].part_id = 0;
     if (++k == HT_TESTS_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(k, keys);
       ValuePairs valuepairs{0, values};
