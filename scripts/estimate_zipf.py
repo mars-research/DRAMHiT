@@ -21,6 +21,6 @@ print(estimated)
 a = estimated.x[0]
 x = np.arange(1., float(size))
 y = x**(-a) / special.zetac(a)
-plt.plot(x, y, linewidth=2, color='r')
+plt.plot(x, y/max(y), linewidth=2, color='r')
 plt.bar(np.arange(1,size+1), arr/max(arr))
 plt.savefig('hist.jpg')
