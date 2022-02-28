@@ -222,6 +222,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     free(insert_queue);
     free_mem<KV>(this->hashtable[this->id], this->capacity, this->id,
                  this->fds[this->id]);
+    this->hashtable[this->id] = nullptr;
   }
 
   void insert_noprefetch(const void *data) {
