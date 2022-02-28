@@ -12,9 +12,9 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
 endif()
 
 # Setup default build type to release with debug information
-if(NOT ${CMAKE_BUILD_TYPE})
-    set(CMAKE_BUILD_TYPE RelWithDebInfo)
-endif()
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "" FORCE)
+  endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 find_package(Threads REQUIRED)
@@ -65,6 +65,7 @@ target_link_libraries(kvstore PRIVATE ht_lib)
 include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
+option(DEBUG "Build in debug mode." OFF)
 option(BUILD_TESTING "Build tests." OFF)
 option(HUGEPAGES "Enable hugepages allocation." ON)
 option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
