@@ -22,22 +22,19 @@ struct experiment_results {
   std::uint64_t n_found;
 };
 
-void push_key(KeyPairs& keys, std::uint64_t key) noexcept {
-  Keys key_struct{};
-  key_struct.key = key;
-  keys.second[keys.first++] = key_struct;
-}
-
 extern Configuration config;
 
 class rw_experiment {
  public:
-  rw_experiment(BaseHashTable& hashtable, double rw_ratio)
+  rw_experiment(BaseHashTable& hashtable, double p_read, unsigned int shard_id,
+                unsigned int per_thread_ops)
       : hashtable{hashtable},
         timings{},
         prng{},
-        sampler{rw_ratio / (1.0 + rw_ratio)},
-        next_key{1},
+        sampler{p_read},
+        base_key{1 + shard_id * per_thread_ops},
+        shard_id{shard_id},
+        per_thread_inserts{per_thread_ops},
         write_batch{},
         writes{0, write_batch.data()},
         read_batch{},
@@ -45,21 +42,28 @@ class rw_experiment {
         result_batch{},
         results{0, result_batch.data()} {}
 
-  experiment_results run(unsigned int total_ops) {
-    for (auto i = 0u; i < total_ops; ++i) {
-      if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
-      if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
-      if (false /*sampler(prng)*/)
-        push_key(reads, std::uniform_int_distribution<std::uint64_t>{
-                            1, next_key - 1}(prng));
+  experiment_results run() {
+    insert_all();
+
+    const auto start = start_time();
+    std::uint64_t next_write_key{base_key};
+    std::uint64_t next_read_key{base_key};
+    for (auto i = 0u; i < per_thread_inserts; ++i) {
+      if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
+      if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) find();
+      if (sampler(prng))
+        push_key(reads, next_read_key++);
       else
-        push_key(writes, next_key++);
+        push_key(writes, next_write_key++);
     }
 
-    time_insert();
-    time_find();
-    time_flush_insert();
-    time_flush_find();
+    insert();
+    find();
+    flush_insert();
+    flush_find();
+    const auto stop = stop_time();
+    timings.insert_cycles = stop - start;
+    timings.find_cycles = stop - start;
 
     return timings;
   }
@@ -69,7 +73,9 @@ class rw_experiment {
   experiment_results timings;
   xorwow_urbg prng;
   std::bernoulli_distribution sampler;
-  std::uint64_t next_key;
+  const std::uint64_t base_key;
+  const std::uint64_t shard_id;
+  const unsigned int per_thread_inserts;
 
   std::array<Keys, HT_TESTS_BATCH_LENGTH> write_batch;
   KeyPairs writes;
@@ -80,47 +86,48 @@ class rw_experiment {
   std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> result_batch;
   ValuePairs results;
 
-  auto start_time() { return __rdtsc(); }
-  auto stop_time() {
+  std::uint64_t start_time() { return __rdtsc(); }
+  std::uint64_t stop_time() {
     unsigned int aux;
     return __rdtscp(&aux);
   }
 
-  void time_insert() {
-    timings.n_writes += writes.first;
-
-    const auto start = start_time();
+  void insert(bool no_count = false) {
+    if (!no_count) timings.n_writes += writes.first;
     hashtable.insert_batch(writes);
-    timings.insert_cycles += stop_time() - start;
-
     writes.first = 0;
   }
 
-  void time_find() {
+  void find() {
     timings.n_reads += reads.first;
-
-    const auto start = start_time();
     hashtable.find_batch(reads, results);
-    timings.find_cycles += stop_time() - start;
-
     timings.n_found += results.first;
     results.first = 0;
     reads.first = 0;
   }
 
-  void time_flush_find() {
-    const auto start = start_time();
+  void flush_find() {
     hashtable.flush_find_queue(results);
-    timings.find_cycles += stop_time() - start;
-
     timings.n_found += results.first;
     results.first = 0;
   }
 
-  void time_flush_insert() {
-    const auto start = start_time();
-    hashtable.flush_insert_queue();
-    timings.insert_cycles += stop_time() - start;
+  void flush_insert() { hashtable.flush_insert_queue(); }
+
+  void insert_all() {
+    std::uint64_t next_key{base_key};
+    for (auto i = 0u; i < per_thread_inserts; ++i) {
+      if (writes.first == HT_TESTS_BATCH_LENGTH) insert(true);
+      push_key(writes, next_key++);
+    }
+  }
+
+  void push_key(KeyPairs& keys, std::uint64_t key) noexcept {
+    Keys key_struct{};
+    key_struct.key = key;
+    key_struct.id = key;
+    key_struct.part_id = shard_id;
+    keys.second[keys.first++] = key_struct;
   }
 };
 
@@ -154,8 +161,7 @@ bool is_consumer_thread(NumaPolicyQueues& policy, std::uint8_t core_id) {
 }
 
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
-                      double reads_per_write, unsigned int total_ops,
-                      const unsigned int n_writers) {
+                      unsigned int per_thread_inserts) {
 #ifdef BQ_TESTS_DO_HT_INSERTS
   PLOG_ERROR << "Please disable Bqueues option before running this test";
 #else
@@ -168,15 +174,7 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
      (don't want to force a rebuild every test)
   */
 
-  const auto n_readers = config.num_threads - n_writers;
-  static NumaPolicyQueues policy{
-      n_readers, n_writers, static_cast<numa_policy_queues>(config.numa_split)};
-
-  const auto is_consumer = is_consumer_thread(policy, shard.core_id);
-  const auto bq_id = is_consumer ? next_consumer++ : next_producer++;
-  assert(next_consumer <= n_writers && next_producer <= n_readers);
   if (shard.shard_idx == 0) {
-    if (n_writers) init_queues(n_readers, n_writers);
     while (ready < config.num_threads - 1) _mm_pause();
     start = true;
   } else {
@@ -184,14 +182,17 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
     while (!start) _mm_pause();
   }
 
-  PLOG_INFO << "Starting RW thread " << shard.shard_idx;
-  rw_experiment experiment{hashtable, reads_per_write};
+  PLOG_INFO << "Starting RW thread "
+            << static_cast<unsigned int>(shard.shard_idx);
+
+  rw_experiment experiment{hashtable, config.p_read, shard.shard_idx,
+                           per_thread_inserts};
 #ifdef WITH_VTUNE_LIB
   constexpr auto event_name = "rw_ratio_run";
   static const auto event = __itt_event_create(event_name, strlen(event_name));
   __itt_event_start(event);
 #endif
-  const auto results = experiment.run(total_ops);
+  const auto results = experiment.run();
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);

@@ -126,6 +126,8 @@ struct Configuration {
   // enable/disable hw prefetchers (msr 0x1a4)
   bool hwprefetchers;
 
+  double p_read;
+
   void dump_configuration() {
     printf("Run configuration{\n");
     printf("  num_threads %u\n", this->num_threads);

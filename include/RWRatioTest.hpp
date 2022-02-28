@@ -12,8 +12,7 @@
 namespace kmercounter {
 class RWRatioTest {
  public:
-  void run(Shard& shard, BaseHashTable& hashtable, double reads_per_write,
-           unsigned int total_ops, unsigned int n_consumers);
+  void run(Shard& shard, BaseHashTable& hashtable, unsigned int total_ops);
 
  private:
   std::atomic_uint16_t next_producer{};

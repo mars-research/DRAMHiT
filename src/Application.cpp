@@ -69,7 +69,7 @@ const Configuration def = {
     .skew = 1.0,
     .drop_caches = true,
     .hwprefetchers = false,
-};  // TODO enum
+    .p_read = 0.0};  // TODO enum
 
 // global config
 Configuration config;
@@ -242,9 +242,8 @@ void Application::shard_thread(int tid, bool mainthread) {
       break;
 
     case RW_RATIO:
-      this->test.rw_ratio.run(
-          *sh, *kmer_ht, 0.0, config.ht_fill * config.ht_size / 100.0,
-          config.ht_type == SIMPLE_KHT ? config.num_threads / 2 : 0);
+      this->test.rw_ratio.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
+      break;
 
     default:
       break;
@@ -411,15 +410,9 @@ int Application::process(int argc, char *argv[]) {
     desc.add_options()("help", "produce help message")(
         "mode",
         po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
-        "1: Dry run \n"
-        // Huh? don't look at me. The numbers are not continuous for a reason.
-        // We stripped the kmer related stuff.
-        "6/7: Synth/Prefetch\n"
-        "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
-        "zipfian)\n"
-        "10: Cache Miss test\n"
-        "11: Zipfian non-bqueue test"
-        "12: RW-Ratio benchmark")(
+        "1: Dry run \n 6/7: Synth/Prefetch\n8/9: Bqueue tests: with "
+        "bqueues/without bequeues (can be built with zipfian)\n10: Cache Miss "
+        "test\n11: Zipfian non-bqueue test12: RW-Ratio benchmark")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -484,7 +477,9 @@ int Application::process(int argc, char *argv[]) {
         "adjust hashtable fill ratio [0-100] ")(
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
         "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
-                                           ->default_value(def.hwprefetchers));
+                                           ->default_value(def.hwprefetchers))(
+        "p-read", po::value<double>(&config.p_read)->default_value(def.p_read),
+        "P(read)");
 
     papi_init();
 
