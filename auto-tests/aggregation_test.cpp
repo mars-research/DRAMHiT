@@ -19,34 +19,43 @@
 
 namespace kmercounter {
 namespace {
-// Test names.
-const char SYNCHRONOUS_TEST[] = "Synchronous";
-const char ASYNCHRONOUS_TEST[] = "Asynchronous";
-const char FILL_SYNC_TEST[] = "Fill Sync";
-const char UNIT_FILL_TEST[] = "Unit Fill";
-const char OFF_BY_ONE_TEST[] = "Off By One";
-constexpr const char* TEST_FNS [] {
-  SYNCHRONOUS_TEST,
-  ASYNCHRONOUS_TEST,
-  FILL_SYNC_TEST,
-  UNIT_FILL_TEST,
-  OFF_BY_ONE_TEST,
-};
 // Hashtable names.
-const char PARTITIONED_CAS_HT[] = "Partitioned CAS";
-const char CAS_HT[] = "CAS";
+const char PARTITIONED_HT[] = "Partitioned HT";
+const char CAS_HT[] = "CAS HT";
 constexpr const char* HTS [] {
-  PARTITIONED_CAS_HT,
+  PARTITIONED_HT,
   CAS_HT,
+};
+
+class AggregationTest : public ::testing::TestWithParam<const char*> {
+ protected:
+  void SetUp() override {
+    const auto ht_name = GetParam();
+    const auto hashtable_size = absl::GetFlag(FLAGS_hashtable_size);
+    // Get hashtable.
+    ht_ = std::unique_ptr<kmercounter::BaseHashTable>(
+        [ht_name, hashtable_size]() -> kmercounter::BaseHashTable* {
+          if (ht_name == PARTITIONED_HT)
+            return new kmercounter::PartitionedHashStore<
+                kmercounter::Item, kmercounter::ItemQueue>{hashtable_size, 0};
+          else if (ht_name == CAS_HT)
+            return new kmercounter::CASHashTable<kmercounter::Item,
+                                                 kmercounter::ItemQueue>{
+                hashtable_size};
+          else
+            return nullptr;
+        }());
+    ASSERT_NE(ht_, nullptr) << "Invalid hashtable type: " << ht_name;
+  }
+
+  std::unique_ptr<kmercounter::BaseHashTable> ht_;
 };
 
 
 // Tests finds of inserted elements after a flush is forced
 // Avoiding asynchronous effects
 // Note the off-by-one on found values
-void synchronous_test(BaseHashTable* ht) {
-  std::cerr << "[TEST] Synchronous\n";
-
+TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
   const auto size = absl::GetFlag(FLAGS_test_size);
   ASSERT_EQ(size % HT_TESTS_BATCH_LENGTH, 0)
                 << "Test size is assumed to be a multiple of batch size";
@@ -68,12 +77,12 @@ void synchronous_test(BaseHashTable* ht) {
 
     KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
     n_inserted += items.first;
-    ht->insert_batch(items);
-    ht->flush_insert_queue();
-    ht->find_batch(items, found);
+    ht_->insert_batch(items);
+    ht_->flush_insert_queue();
+    ht_->find_batch(items, found);
     ASSERT_EQ(found.first, 0) << "Unexpected pending finds.";
 
-    ht->flush_find_queue(found);
+    ht_->flush_find_queue(found);
     n_found += found.first;
     // std::cerr << "[TEST] Batch " << i << "\n";
     // for (std::uint64_t j{}; j < found.first; ++j) {
@@ -83,11 +92,9 @@ void synchronous_test(BaseHashTable* ht) {
 
     ASSERT_EQ(n_found, n_inserted) << "Not all inserted values were found";
   }
-
-  std::cerr << "[TEST] Ran " << count << " iterations\n";
 }
 
-void asynchronous_test(BaseHashTable* ht) {
+TEST_P(AggregationTest, ASYNCHRONOUS_TEST) {
   std::uint64_t n_inserted{};
   std::uint64_t n_found{};
   constexpr auto size = 1 << 12;
@@ -104,25 +111,25 @@ void asynchronous_test(BaseHashTable* ht) {
       keys.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
     KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
-    ht->insert_batch(items);
+    ht_->insert_batch(items);
     n_inserted += HT_TESTS_BATCH_LENGTH;
 
-    ht->flush_insert_queue();
+    ht_->flush_insert_queue();
 
     std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
     ValuePairs found{0, values.data()};
-    ht->find_batch(items, found);
+    ht_->find_batch(items, found);
     n_found += found.first;
     found.first = 0;
 
-    ht->flush_find_queue(found);
+    ht_->flush_find_queue(found);
     n_found += found.first;
   }
 
   ASSERT_EQ(n_found, n_inserted) << "Not all inserted values were found";
 }
 
-void fill_test(BaseHashTable* ht) {
+TEST_P(AggregationTest, FILL_SYNC_TEST) {
   constexpr auto size = 1 << 8;
   static_assert(size % HT_TESTS_BATCH_LENGTH == 0,
                 "Test size is assumed to be a multiple of batch size");
@@ -143,40 +150,35 @@ void fill_test(BaseHashTable* ht) {
 
     KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
     n_inserted += items.first;
-    ht->insert_batch(items);
+    ht_->insert_batch(items);
   }
 
-  ht->flush_insert_queue();
+  ht_->flush_insert_queue();
 
-  std::cerr << "[TEST] Ran " << count << " iterations\n";
-  ASSERT_EQ(ht->get_fill(), n_inserted) << "Not all values were inserted.";
+  ASSERT_EQ(ht_->get_fill(), n_inserted) << "Not all values were inserted.";
 }
 
 // Test for presence of an off-by-one error in synchronous use
-void single_insert_test(BaseHashTable* ht) {
+TEST_P(AggregationTest, SINGLE_INSERT_TEST) {
   Keys pair{1, 128};
   KeyPairs keys{1ull, &pair};
-  ht->insert_batch(keys);
-  ht->flush_insert_queue();
-  std::cerr << "[TEST] Fill was: " << ht->get_fill() << "\n";
-  ASSERT_EQ(ht->get_fill(), 1);
+  ht_->insert_batch(keys);
+  ht_->flush_insert_queue();
+  ASSERT_EQ(ht_->get_fill(), 1);
 }
 
 // Test demonstrating the nonintuitive difference in the interpretation of batch
 // lengths between find/insert
 // NOTE: also noted a very strange use of the value field
-void off_by_one_test(BaseHashTable* ht) {
+TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
   std::array<Keys, 2> keys{Keys{1, 128}, Keys{0xdeadbeef, 256}};
   KeyPairs keypairs{2, keys.data()};
-  ht->insert_batch(keypairs);
-  ht->flush_insert_queue();
+  ht_->insert_batch(keypairs);
+  ht_->flush_insert_queue();
   std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
-  ht->find_batch(keypairs, valuepairs);
-  ht->flush_find_queue(valuepairs);
-  std::cerr << "[TEST] Found " << valuepairs.first << ": {"
-            << valuepairs.second->id << ", " << valuepairs.second->value
-            << "}\n";
+  ht_->find_batch(keypairs, valuepairs);
+  ht_->flush_find_queue(valuepairs);
 
   // Note that we only insert 256 *once*, so the "value" should be 1
   ASSERT_EQ(valuepairs.first, 2);
@@ -186,56 +188,9 @@ void off_by_one_test(BaseHashTable* ht) {
   ASSERT_EQ(valuepairs.second[1].value, 1);
 }
 
-class CombinationsTest :
-    public ::testing::TestWithParam<std::tuple<const char*, const char*>> {};
-
-TEST_P(CombinationsTest, TestFnAndHashtableCombination) {
-  // Get input.
-  const auto [test_name, ht_name] = GetParam();
-  const auto hashtable_size = absl::GetFlag(FLAGS_hashtable_size);
-
-  // Get test function.
-  const auto test_fn = [test_name]() -> void (*)(kmercounter::BaseHashTable*) {
-    if (test_name == SYNCHRONOUS_TEST)
-      return kmercounter::synchronous_test;
-    else if (test_name == ASYNCHRONOUS_TEST)
-      return kmercounter::asynchronous_test;
-    else if (test_name == FILL_SYNC_TEST)
-      return kmercounter::fill_test;
-    else if (test_name == UNIT_FILL_TEST)
-      return kmercounter::single_insert_test;
-    else if (test_name == OFF_BY_ONE_TEST)
-      return kmercounter::off_by_one_test;
-    else
-      return nullptr;
-  }();
-  ASSERT_NE(test_fn, nullptr) << "Invalid test type: " << test_name;
-
-  // Get hashtable.
-  const auto ht = std::unique_ptr<kmercounter::BaseHashTable>([ht_name, hashtable_size]() -> kmercounter::BaseHashTable* {
-    if (ht_name == PARTITIONED_CAS_HT)
-      return new kmercounter::PartitionedHashStore<kmercounter::Aggr_KV,
-                                                   kmercounter::ItemQueue>{
-          hashtable_size, 0};
-    else if (ht_name == CAS_HT)
-      return new kmercounter::CASHashTable<kmercounter::Aggr_KV,
-                                           kmercounter::ItemQueue>{
-          hashtable_size};
-    else
-      return nullptr;
-  }());
-  ASSERT_NE(ht, nullptr) << "Invalid hashtable type: " << ht_name;
-
-  // Run test and clean up.
-  ASSERT_NO_THROW(test_fn(ht.get()));
-}
-
-INSTANTIATE_TEST_CASE_P(TestAllCombinations,
-                        CombinationsTest,
-                        ::testing::Combine(
-                          ::testing::ValuesIn(TEST_FNS),
-                          ::testing::ValuesIn(HTS)
-                        )
+INSTANTIATE_TEST_CASE_P(TestAllHashtables,
+                        AggregationTest,
+                        ::testing::ValuesIn(HTS)
 );
 
 }  // namespace
