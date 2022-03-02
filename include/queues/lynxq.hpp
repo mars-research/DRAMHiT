@@ -102,28 +102,28 @@ typedef struct Queue_state
 
 
 #define DEFINE_PUSH_OVERLOADED(TYPE, MOV)				\
-  inline void push(TYPE data)						\
+  inline void push(TYPE data, prod_queue_t *pq)						\
   {									\
-    char *push_index_tmp = push_index;					\
+    char *push_index_tmp = pq->push_index;					\
     asm(MOV" %0, (%1, %2)"						\
     	:	/* no outputs */					\
-    	: "r" (data), "r" (free_push_reg), "r" ((TYPE*)push_index_tmp) /* inputs */ \
+    	: "r" (data), "r" (pq->free_push_reg), "r" ((TYPE*)push_index_tmp) /* inputs */ \
     	: "1" );							\
     push_index_tmp = (char *)((uint64_t)push_index_tmp + sizeof(TYPE));		\
-    push_index = push_index_tmp;					\
+    pq->push_index = push_index_tmp;					\
   }
 
 #define DEFINE_POP(TYPE, MOV)						\
-  inline TYPE pop_##TYPE (void)						\
+  inline TYPE pop_##TYPE (cons_queue_t *cq)						\
   {									\
     TYPE data;								\
-    char *pop_index_tmp = pop_index;					\
+    char *pop_index_tmp = cq->pop_index;					\
     asm(MOV" (%1, %2), %0"						\
     	: "=&r" (data)							\
-    	: "r" (free_pop_reg), "r" ((TYPE *)pop_index_tmp) 	/* inputs */ \
+    	: "r" (cq->free_pop_reg), "r" ((TYPE *)pop_index_tmp) 	/* inputs */ \
     	: "1" );							\
     pop_index_tmp += sizeof(TYPE);					\
-    pop_index = pop_index_tmp;						\
+    cq->pop_index = pop_index_tmp;						\
     return data;							\
   }
 
@@ -132,6 +132,18 @@ enum on_or_off_enum {
   ON = 1,
 };
 typedef enum on_or_off_enum on_or_off_t;
+
+typedef struct {
+  char *QUEUE;
+  char *push_index;
+  uint64_t free_push_reg;
+} prod_queue_t;
+
+typedef struct {
+  char *QUEUE;
+  char *pop_index;
+  uint64_t free_pop_reg;
+} cons_queue_t;
 
 struct lynxQ {
   char *QUEUE;
@@ -147,14 +159,16 @@ struct lynxQ {
   clock_t time_end;
   double queue_time;
   long cacheBuf5[7];
-  uint64_t free_push_reg;
-  long cacheBuf6[7];
-  uint64_t free_pop_reg;
-  long cacheBuf7[7];
-  char *push_index;
-  long cacheBuf8[7];
-  char *pop_index;
-  long cacheBuf9[7];
+  prod_queue_t *pq_state;
+  cons_queue_t *cq_state;
+  //uint64_t free_push_reg;
+  //long cacheBuf6[7];
+  //uint64_t free_pop_reg;
+  //long cacheBuf7[7];
+  //char *push_index;
+  //long cacheBuf8[7];
+  //char *pop_index;
+  //long cacheBuf9[7];
   size_t _PAGE_SIZE;
   size_t queue_size;
   size_t REDZONE_SIZE;
@@ -196,10 +210,10 @@ struct lynxQ {
   DEFINE_POP(long, "movq")
   DEFINE_POP(uint64_t, "movq")
 
-  lynxQ(size_t qsize);
+  lynxQ(size_t qsize, prod_queue_t *pq, cons_queue_t *cq);
   double get_time(void);
   void finalize(void);
-  
+
   const char *config_red_zone(on_or_off_t cond, void *addr);
   inline char *get_new_redzone_left (char *curr_redzone);
 
@@ -273,8 +287,8 @@ const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
 inline void lynxQ::push_done (void)
 {
   /* Notify pop() that we are done */
-  push((uint64_t) 0xDEADBEEF);
-  push((uint64_t) 0xFEEBDAED);
+  push((uint64_t) 0xDEADBEEF, pq_state);
+  push((uint64_t) 0xFEEBDAED, pq_state);
 
   /* Clear the last redzone */
   config_red_zone (OFF, push_last_rz);
@@ -479,7 +493,7 @@ static inline bool is_expected_redzone (char *index, char *redzone) {
   return (index == redzone); 
 }
 
-lynxQ::lynxQ(size_t qsize) {
+lynxQ::lynxQ(size_t qsize, prod_queue_t *pq, cons_queue_t *cq) {
   printf("Creating LynxQ of size %zu | this %p\n", qsize, this);
   /* Add queue into the set of all the queues created so far */
   all_queues_created.insert(this);
@@ -492,7 +506,7 @@ lynxQ::lynxQ(size_t qsize) {
   /* The size of the queue must be a power of the page size*/
   queue_size = qsize;
 
-/* We need the addresses to be aligned with a larger alignment than queue_size.
+  /* We need the addresses to be aligned with a larger alignment than queue_size.
    This is to allow for the circular address optimization:
    Example: Assuming a queue of size 4, QUEUE_ALIGN is 8.
             Therefore the addresses always have a '0' just before the index part
@@ -553,11 +567,14 @@ lynxQ::lynxQ(size_t qsize) {
   qstate.redzone1_state = FREE;
   qstate.redzone2_state = FREE;
 
-  push_index = QUEUE;
+  this->pq_state = pq;
+  this->cq_state = cq;
+  pq->QUEUE = cq->QUEUE = QUEUE;
+  pq->push_index = QUEUE;
   allow_rotate = false;
-  pop_index = QUEUE + queue_size;;
-  free_push_reg = 0;
-  free_pop_reg = 0;
+  cq->pop_index = QUEUE + queue_size;;
+  pq->free_push_reg = 0;
+  cq->free_pop_reg = 0;
 
   qstate.sstate0 = POP_READY;
   qstate.sstate1 = POP_READY;
@@ -755,12 +772,12 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
       if (memo.mem_type == STORE_TYPE) {
-	queue->push_index = queue->QUEUE;
-	queue->free_push_reg -= queue->queue_size;
+	queue->pq_state->push_index = queue->QUEUE;
+	queue->pq_state->free_push_reg -= queue->queue_size;
       }
       else if (memo.mem_type == LOAD_TYPE) {
-	queue->pop_index = queue->QUEUE;
-	queue->free_pop_reg -= queue->queue_size;
+	queue->cq_state->pop_index = queue->QUEUE;
+	queue->cq_state->free_pop_reg -= queue->queue_size;
       }
       else {
 	fprintf (stderr, "ERROR: Can't determine which thread it is\n");
@@ -819,27 +836,71 @@ class LynxQueue {
     int nprod;
     int ncons;
 
+    std::map<std::tuple<int, int>, prod_queue_t*> pqueue_map;
+    std::map<std::tuple<int, int>, cons_queue_t*> cqueue_map;
     std::map<std::tuple<int, int>, queue_t*> queue_map;
+    prod_queue_t **all_pqueues;
+    cons_queue_t **all_cqueues;
     queue_t ***queues;
 
   public:
     static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
 
+    void init_prod_queues() {
+      // map queues and producer_metadata
+      for (auto p = 0u; p < nprod; p++) {
+        // Queue Allocation
+        auto pqueues = (prod_queue_t *)utils::zero_aligned_alloc(
+            FIPC_CACHE_LINE_SIZE, ncons * sizeof(prod_queue_t));
+        all_pqueues[p] = pqueues;
+        for (auto c = 0u; c < ncons; c++) {
+          prod_queue_t *pq = &pqueues[c];
+          pqueue_map.insert({std::make_tuple(p, c), pq});
+        }
+      }
+    }
+
+    void init_cons_queues() {
+      // map queues and consumer_metadata
+      for (auto c = 0u; c < ncons; c++) {
+        auto cqueues = (cons_queue_t *)utils::zero_aligned_alloc(
+            FIPC_CACHE_LINE_SIZE, nprod * sizeof(cons_queue_t));
+        all_cqueues[c] = cqueues;
+        for (auto p = 0u; p < nprod; p++) {
+          cons_queue_t *cq = &cqueues[p];
+          cqueue_map.insert({std::make_tuple(p, c), cq});
+        }
+      }
+    }
+
+
     explicit LynxQueue(int nprod, int ncons, size_t queue_size) {
 
       printf("%s, lynx queue init\n", __func__);
+
+      this->nprod = nprod;
+      this->ncons = ncons;
+      this->all_pqueues = (prod_queue_t **)utils::zero_aligned_alloc(
+        FIPC_CACHE_LINE_SIZE, nprod * sizeof(prod_queue_t*));
+
+      this->all_cqueues = (cons_queue_t **)utils::zero_aligned_alloc(
+        FIPC_CACHE_LINE_SIZE, ncons * sizeof(cons_queue_t*));
+
+      this->init_prod_queues();
+      this->init_cons_queues();
+
       this->queues = (queue_t ***)calloc(1, nprod * sizeof(queue_t*));
 
       for (auto p = 0u; p < nprod; p++) {
-
         //this->queues[p] = (queue_t **)aligned_alloc(
         //    FIPC_CACHE_LINE_SIZE, ncons * sizeof(queue_t*));
-
         this->queues[p] = (queue_t **)calloc(1, ncons * sizeof(queue_t*));
         printf("allocating %zu bytes %p\n", ncons * sizeof(queue_t*), this->queues[p]);
         for (auto c = 0u; c < ncons; c++) {
           printf("%s, &queues[%d][%d] %p\n", __func__, p, c, &queues[p][c]);
-          queues[p][c] = new queue_t(queue_size);
+          auto pq = pqueue_map.at(std::make_tuple(p, c));
+          auto cq = cqueue_map.at(std::make_tuple(p, c));
+          queues[p][c] = new queue_t(queue_size, pq, cq);
           //queue_map.insert({std::make_tuple(p, c), q});
         }
       }
@@ -848,7 +909,7 @@ class LynxQueue {
     inline int enqueue(int p, int c, data_t value)  {
       auto q = queues[p][c];
 
-      q->push(value);
+      q->push(value, q->pq_state);
 
       return SUCCESS;
     }
@@ -856,7 +917,7 @@ class LynxQueue {
     inline int dequeue(int p, int c, data_t *value) { //override {
       auto q = queues[p][c];
 
-      *value = q->pop_long();
+      *value = q->pop_long(q->cq_state);
 
       return SUCCESS;
     }
@@ -864,7 +925,7 @@ class LynxQueue {
     inline void push_done(int p, int c) {
       auto q = queues[p][c];
 
-      q->push(BQ_MAGIC_64BIT);
+      q->push(BQ_MAGIC_64BIT, q->pq_state);
       q->push_done();
     }
 
