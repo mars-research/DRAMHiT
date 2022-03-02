@@ -143,10 +143,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       k = key_start++;
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
-      uint64_t hash_val = hasher(&k, sizeof(k));
-      cons_id = hash_to_cpu(hash_val, n_cons);
-      //cons_id++;
-      //if (cons_id >= n_cons) cons_id = 0;
+      //uint64_t hash_val = hasher(&k, sizeof(k));
+      //cons_id = hash_to_cpu(hash_val, n_cons);
+      cons_id++;
+      if (cons_id >= n_cons) cons_id = 0;
 
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits

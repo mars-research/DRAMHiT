@@ -11,6 +11,7 @@ typedef uint64_t data_t;
 
 #define CACHE_ALIGNED __attribute__((aligned(FIPC_CACHE_LINE_SIZE)))
 
+/*
 template <typename T>
 class Queue {
   public:
@@ -20,3 +21,4 @@ class Queue {
   virtual void pop_done(int, int) = 0;
   virtual ~Queue() { }
 };
+*/

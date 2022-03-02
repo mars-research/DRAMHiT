@@ -9,7 +9,7 @@
 
 #define OPTIMIZE_BACKTRACKING2
 
-class BQueueAligned : public Queue<data_t> {
+class BQueueAligned {
   public:
   const uint64_t CONGESTION_PENALTY = 250 / 2;
   static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;

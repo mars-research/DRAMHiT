@@ -813,7 +813,7 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
   }
 }
 
-class LynxQueue { //: public Queue<uint64_t> {
+class LynxQueue {
   private:
     size_t queue_size;
     int nprod;
