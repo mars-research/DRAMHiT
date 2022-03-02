@@ -6,7 +6,7 @@ from collections import Counter
 from multiprocessing import cpu_count
 import subprocess
 
-size = 100
+SIZE = 100
 
 def estimate_zipf(arr):
   N = len(arr)
@@ -18,7 +18,7 @@ def estimate_zipf(arr):
   return result.x[0]
 
 def cross_check(a):
-  arr = np.random.zipf(a, size * 10000)
+  arr = np.random.zipf(a, SIZE * 10000)
   arr = Counter(arr)
   arr = np.array([x[1] for x in arr.most_common()])
   estimated_a = estimate_zipf(arr)
@@ -29,6 +29,7 @@ def plot_zipf(file, title, output):
   a = estimate_zipf(arr)
 
   # Plot regression line
+  size = min(SIZE, len(arr))
   x = np.arange(1.,size+1.)
   y = x**(-a) / special.zetac(a)
   y = np.abs(y)
