@@ -8,6 +8,7 @@
 #include <array>
 #include <base_kht.hpp>
 #include <hasher.hpp>
+#include <hashtables/kvtypes.hpp>
 #include <random>
 
 #ifdef WITH_VTUNE_LIB
@@ -15,6 +16,30 @@
 #endif
 
 namespace kmercounter {
+class partition {
+ public:
+  // May just need key/hash, not the entire itemqueue (since the ID is implicit)
+  Values& find_one(const ItemQueue& queue_entry);
+  void insert_one(const ItemQueue& queue_entry);
+  void* address(const ItemQueue& item); // Needed by prefetching queue
+};
+
+class prefetch_queue {
+ public:
+  prefetch_queue(const std::vector<partition>& tables);
+  void dispatch(const ItemQueue& item);
+};
+
+class write_queue {
+ public:
+  void dispatch(const KeyPairs& inserts);
+};
+
+class read_queue {
+ public:
+  ValuePairs dispatch(const KeyPairs& finds);
+};
+
 struct experiment_results {
   std::uint64_t insert_cycles;
   std::uint64_t find_cycles;
@@ -139,40 +164,46 @@ class rw_experiment {
     return timings;
   }
 
+  struct role_assignments {
+    std::vector<bool> is_server;
+    std::vector<unsigned int> queue_id;
+  };
+
+  auto get_roles(NumaPolicyQueues& policy) {
+    const auto& clients = policy.get_assigned_cpu_list_producers();
+    const auto& servers = policy.get_assigned_cpu_list_consumers();
+    const auto n_threads = clients.size() + servers.size();
+    role_assignments roles{};
+    roles.is_server.resize(n_threads);
+    roles.queue_id.resize(n_threads);
+    auto client_id = 0u;
+    for (auto n : clients) roles.queue_id.at(n) = client_id++;
+
+    auto server_id = 0u;
+    for (auto n : servers) {
+      roles.is_server.at(n) = true;
+      roles.queue_id.at(n) = server_id++;
+    }
+
+    return roles;
+  }
+
   experiment_results run_bq(int n_writers, queues& insert_queues,
                             queues& rw_queues) {
-    static NumaPolicyQueues insert_policy{
-        config.num_threads / 2, config.num_threads / 2,
-        static_cast<numa_policy_queues>(config.numa_split)};
-
-    static NumaPolicyQueues rw_policy{
-        n_writers, config.num_threads - n_writers,
-        static_cast<numa_policy_queues>(config.numa_split)};
-
-    static const auto& insert_writers =
-        insert_policy.get_assigned_cpu_list_consumers();
-
-    static const auto& insert_clients =
-        insert_policy.get_assigned_cpu_list_producers();
-
-    static const auto& rw_writers = rw_policy.get_assigned_cpu_list_consumers();
-
+    const auto half_threads = static_cast<int>(config.num_threads / 2);
+    const auto policy = static_cast<numa_policy_queues>(config.numa_split);
+    const auto n_clients = static_cast<int>(config.num_threads) - n_writers;
+    static NumaPolicyQueues insert_policy{half_threads, half_threads, policy};
+    static NumaPolicyQueues rw_policy{n_writers, n_clients, policy};
+    static const auto insert_roles = get_roles(insert_policy);
+    static const auto rw_roles = get_roles(rw_policy);
+    static_cast<void>(rw_roles);
     const auto self_id = get_cpu();
-    const auto insert_writer =
-        std::find(insert_writers.begin(), insert_writers.end(), self_id);
-
-    const auto rw_writer =
-        std::find(rw_writers.begin(), rw_writers.end(), self_id);
-
-    if (insert_writer != insert_writers.end()) {
-      run_server(insert_writer - insert_writers.begin(), config.num_threads / 2,
-                 insert_queues);
-    } else {
-      run_client(
-          std::find(insert_clients.begin(), insert_clients.end(), self_id) -
-              insert_clients.begin(),
-          config.num_threads / 2, rw_queues);
-    }
+    const auto insert_queue_id = insert_roles.queue_id.at(self_id);
+    if (insert_roles.is_server.at(self_id))
+      run_server(insert_queue_id, half_threads, insert_queues);
+    else
+      run_client(insert_queue_id, half_threads, insert_queues);
 
     return timings;
   }
@@ -235,7 +266,7 @@ void RWRatioTest::init_rw_queues(unsigned int n_clients,
 
 void RWRatioTest::init_insert_queues(unsigned int n_threads) {
   const auto n_writers = n_threads / 2;
-  const auto n_clients = n_threads / 2;
+  const auto n_clients = n_writers;
   init_queues(insert_queues, n_clients, n_writers);
 }
 
