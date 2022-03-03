@@ -66,6 +66,7 @@ include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
 option(BUILD_TESTING "Build tests." OFF)
+option(BUILD_EXAMPLE "Build examples." OFF)
 option(HUGEPAGES "Enable hugepages allocation." ON)
 option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
 option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
@@ -221,4 +222,8 @@ target_link_libraries(kvstore PRIVATE boost_program_options Threads::Threads)
 if (BUILD_TESTING)
     enable_testing()
     add_subdirectory(auto-tests)
+endif()
+
+if (BUILD_EXAMPLE)
+    add_subdirectory(examples)
 endif()

@@ -21,3 +21,7 @@ tpch-dbgen/
 perf.data
 perf.data.*
 Testing/
+*.histo
+*.jf
+*.jpg
+*.data

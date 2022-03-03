@@ -6,7 +6,7 @@ from collections import Counter
 from multiprocessing import cpu_count
 import subprocess
 
-SIZE = 100
+SIZE = 1000
 
 def estimate_zipf(arr):
   N = len(arr)
@@ -65,7 +65,9 @@ def zipf_from_kmer(file, k, output):
 
 
 if __name__ == "__main__":
-  homo_file = '../SRR077487.2.fastq'
-  K = [15, 21, 31, 63]
-  for k in K:
-    zipf_from_kmer(homo_file, k, f'homo_{k}.jpg')
+  # homo_file = '../SRR077487.2.fastq'
+  # K = [15, 21, 31, 63]
+  # for k in K:
+  #   zipf_from_kmer(homo_file, k, f'homo_{k}.jpg')
+
+  zipf_from_kmer("../SRR072006.fastq", 31, f'straw_8.jpg')
