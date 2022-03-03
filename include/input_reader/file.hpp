@@ -131,6 +131,7 @@ private:
         part_id_(part_id),
         num_parts_(num_parts),
         buffer_(4096) {
+    PLOG_FATAL_IF(part_id >= num_parts) << "part_id(" << part_id << " ) >= num_parts(" << num_parts << ")";
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the
     // parameter passing.
