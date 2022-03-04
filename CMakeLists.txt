@@ -36,13 +36,8 @@ add_compile_options(
     -funroll-all-loops
     -flto
     -ffat-lto-objects
-    #-fsanitize=address
     -g
-    -rdynamic
-)
-
-add_link_options(
-  #-fsanitize=address
+    #-rdynamic
 )
 
 # Build all the source files for the library.
@@ -79,6 +74,7 @@ target_link_libraries(kvstore PRIVATE ht_lib)
 include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
+option(SANITIZE "Enable ASAN." OFF)
 option(BUILD_TESTING "Build tests." OFF)
 option(HUGEPAGES "Enable hugepages allocation." ON)
 option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
@@ -210,6 +206,12 @@ endif()
 if (CALC_STATS)
     message(WARNING "Enabling CALC_STATS")
     add_definitions(-DCALC_STATS)
+endif()
+
+if (SANITIZE)
+    message(WARNING "Enabling ASAN")
+    add_compile_options(-fsanitize=address)
+    add_link_options(-fsanitize=address)
 endif()
 
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32

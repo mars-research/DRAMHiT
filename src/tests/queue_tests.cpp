@@ -18,9 +18,7 @@
 #include "zipf.h"
 #endif
 
-#ifdef WITH_VTUNE_LIB
-#include <ittnotify.h>
-#endif
+#include "utils/vtune.hpp"
 
 namespace kmercounter {
 
@@ -97,6 +95,7 @@ static auto mbind_buffer_local(void *buf, ssize_t sz) {
   return ret;
 }
 
+
 template <typename T>
 void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
                                  const uint32_t n_cons, const bool main_thread,
@@ -111,6 +110,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint8_t this_prod_id = sh->shard_idx;
   uint32_t cons_id = 0;
   uint64_t transaction_id;
+
+  vtune::set_threadname("producer_thread" + std::to_string(tid));
 
   auto [ratio, num_messages, key_start] = get_params(n_prod, n_cons, tid);
   Hasher hasher;
@@ -137,6 +138,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       "key_start %lu",
       this_prod_id, num_messages, n_cons, key_start);
 
+  static const auto event = vtune::event_start("message_enq");
+
   auto t_start = RDTSC_START();
 
   for (transaction_id = 0u; transaction_id < num_messages;) {
@@ -145,20 +148,29 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       // the hashing mechanism to have reduced overhead
       //uint64_t hash_val = hasher(&k, sizeof(k));
       //cons_id = hash_to_cpu(hash_val, n_cons);
-      cons_id++;
-      if (cons_id >= n_cons) cons_id = 0;
-
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
       //k |= (hash_val << 32);
 
-      //PLOG_VERBOSE.printf("prod_id %d | cons_id %d | value %llu", this_prod_id, cons_id, k & ((1 << 31) - 1));
+      cons_id++;
+      if (cons_id >= n_cons) cons_id = 0;
+
+      /*
+      IF_PLOG(plog::verbose) {
+        PLOG_VERBOSE.printf("prod_id %d | cons_id %d | value %llu",
+            this_prod_id, cons_id, k & ((1 << 31) - 1));
+      }*/
       this->queues->enqueue(this_prod_id, cons_id, (data_t)k);
+
+      if (0)
+      this->queues->prefetch(this_prod_id, cons_id, true);
 
       transaction_id++;
   }
 
   auto t_end = RDTSCP();
+
+  vtune::event_end(event);
 
   sh->stats->enqueue_cycles = (t_end - t_start);
   sh->stats->num_enqueues = transaction_id;
@@ -203,11 +215,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   uint8_t this_cons_id = sh->shard_idx - n_prod;
   uint64_t inserted = 0u;
 
-#ifdef WITH_VTUNE_LIB
-  std::string thread_name("consumer_thread" + std::to_string(tid));
-  PLOG_VERBOSE.printf("thread_name %s", thread_name.c_str());
-  __itt_thread_set_name(thread_name.c_str());
-#endif
+  vtune::set_threadname("consumer_thread" + std::to_string(tid));
 
   auto ht_size = config.ht_size / n_cons;
 
@@ -224,11 +232,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
-#ifdef WITH_VTUNE_LIB
-  static const auto event =
-      __itt_event_create("message_dequeue", strlen("message_dequeue"));
-  __itt_event_start(event);
-#endif
+  static const auto event = vtune::event_start("message_deq");
 
   auto t_start = RDTSC_START();
 
@@ -249,6 +253,13 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       kmer_ht->prefetch_queue(QueueType::insert_queue);
     }
 
+    if (0)
+    {
+      auto next_prod_id = prod_id + 1;
+      if (next_prod_id >= n_prod) next_prod_id = 0;
+      this->queues->prefetch(next_prod_id, this_cons_id, false);
+    }
+
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
       this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k);
@@ -258,16 +269,18 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         }
       }
 
-      PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %llu",
+      /*
+      IF_PLOG(plog::verbose) {
+        PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %llu",
                     prod_id, this_cons_id, k & ((1 << 31) - 1));
-
+      }*/
       //++count;
 
       // STOP condition. On receiving this magic message, the consumers stop
       // dequeuing from the queues
       if ((data_t)k == QueueTest::BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
-        PLOG_DEBUG.printf(
+        /*PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u",
             this_cons_id, prod_id, finished_producers);
@@ -277,11 +290,12 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
                           kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
 
         PLOG_DEBUG.printf("Consumer received %" PRIu64, count);
+        */
       }
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
         _items[data_idx].key = _items[data_idx].id = k;
-        _items[data_idx].value = k & 0xffffffff; 
+        _items[data_idx].value = k & 0xffffffff;
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
@@ -309,12 +323,14 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_end = RDTSCP();
 
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
-#endif
+  vtune::event_end(event);
+
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = transaction_id;
-  //get_ht_stats(sh, kmer_ht);
+
+  if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+    get_ht_stats(sh, kmer_ht);
+  }
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_prod; ++i) {
@@ -355,10 +371,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   alignas(64) uint64_t k = 0;
 
-#ifdef WITH_VTUNE_LIB
-  std::string thread_name("find_thread" + std::to_string(tid));
-  __itt_thread_set_name(thread_name.c_str());
-#endif
+  vtune::set_threadname("find_thread" + std::to_string(tid));
 
   ktable = this->ht_vec->at(tid);
 
@@ -407,11 +420,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   int partition;
   int j = 0;
 
-#ifdef WITH_VTUNE_LIB
-  static const auto event =
-      __itt_event_create("find_batch", strlen("find_batch"));
-  __itt_event_start(event);
-#endif
+  static const auto event = vtune::event_start("find_batch");
 
   auto t_start = RDTSC_START();
 
@@ -456,9 +465,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   }
   auto t_end = RDTSCP();
 
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
-#endif
+  vtune::event_end(event);
 
   sh->stats->find_cycles = (t_end - t_start);
   sh->stats->num_finds = found;

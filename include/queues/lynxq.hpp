@@ -83,21 +83,17 @@ typedef enum Redzone_state redzone_state_t;
 
 typedef struct Queue_state
 {
-  long int fsbuf0[8];
-  section_state_t sstate0;
-  long int fsbuf1[8];
-  section_state_t sstate1;
-  long int fsbuf2[8];
-  char *last_pop_r15;
-  long int fsbuf3[8];
-  int push_done;
+  //long int fsbuf0[8];
+  CACHE_ALIGNED section_state_t sstate0;
+  CACHE_ALIGNED section_state_t sstate1;
+  CACHE_ALIGNED char *last_pop_r15;
+  CACHE_ALIGNED int push_done;
   int last_red_zone;
   void *label;
-  long fsbuf4[8];
-  redzone_state_t redzone1_state;
-  long fsbuf5[8];
-  redzone_state_t redzone2_state;
-  long fsbuf6[8];
+  CACHE_ALIGNED redzone_state_t redzone1_state;
+  CACHE_ALIGNED redzone_state_t redzone2_state;
+  CACHE_ALIGNED uint64_t num_push;
+  CACHE_ALIGNED uint64_t num_pop;
 } queue_state_t;
 
 
@@ -146,20 +142,15 @@ typedef struct {
 } cons_queue_t;
 
 struct lynxQ {
-  char *QUEUE;
-  long cacheBuf1[7];
-  char *redzone1;
-  long cacheBuf2[7];
-  char *redzone2;
-  long cacheBuf3[7];
-  char *redzone_end;
-  long cacheBuf4[7];
-  bool allow_rotate;
+  CACHE_ALIGNED char *QUEUE;
+  CACHE_ALIGNED char *redzone1;
+  CACHE_ALIGNED char *redzone2;
+  CACHE_ALIGNED char *redzone_end;
+  CACHE_ALIGNED bool allow_rotate;
   clock_t time_begin;
   clock_t time_end;
   double queue_time;
-  long cacheBuf5[7];
-  prod_queue_t *pq_state;
+  CACHE_ALIGNED prod_queue_t *pq_state;
   cons_queue_t *cq_state;
   //uint64_t free_push_reg;
   //long cacheBuf6[7];
@@ -177,13 +168,10 @@ struct lynxQ {
   size_t QUEUE_ALIGN_MASK;
   size_t QUEUE_CIRCULAR_MASK;
   qset_t *all_queues_set;
-  long fsbuf1[8];
-  volatile queue_state_t qstate;
-  long fsbuf2[8];
-  char *push_expected_rz;
+  CACHE_ALIGNED volatile queue_state_t qstate;
+  CACHE_ALIGNED char *push_expected_rz;
   char *pop_expected_rz;
-  long fsbuf4[8];
-  char *push_last_rz;		/* The last redzone created by push */
+  CACHE_ALIGNED char *push_last_rz;		/* The last redzone created by push */
   char *pop_last_rz;		/* The last redzone created by pop */
   volatile section_state_t *last_push_state;
   volatile section_state_t *last_pop_state;
@@ -240,7 +228,8 @@ void lynxQ::dump(void) {
   fprintf (stderr, "redzone1:       %p\n", redzone1);
   fprintf (stderr, "redzone2:       %p\n", redzone2);
   fprintf (stderr, "redzone_end:    %p\n", redzone_end);
-  fprintf (stderr, "_PAGE_SIZE:      0x%lx\n", _PAGE_SIZE);
+  fprintf (stderr, "queue_end:      %p\n", QUEUE + queue_size);
+  fprintf (stderr, "PAGE_SIZE:      0x%lx\n", PAGE_SIZE);
   fprintf (stderr, "queue_size:     0x%lx\n", queue_size);
   fprintf (stderr, "REDZONE_SIZE:   0x%lx\n", REDZONE_SIZE);
   fprintf (stderr, "QUEUE_SECTION_SIZE:  0x%lx\n", QUEUE_SECTION_SIZE);
@@ -252,6 +241,12 @@ void lynxQ::dump(void) {
 
   fprintf (stderr, "push_last_rz: %p\n", push_last_rz);
   fprintf (stderr, "pop_last_rz:  %p\n", pop_last_rz);
+
+  fprintf (stderr, "num_push:     %ld\n", qstate.num_push);
+  fprintf (stderr, "num_pop:      %ld\n", qstate.num_pop);
+
+  fprintf (stderr, "push_index:   %p\n", pq_state->push_index);
+  fprintf (stderr, "pop_index:    %p\n", cq_state->pop_index);
 }
 
 /* Set or Unset redzone REDZONE at ADDR depending on boolean ON_OFF */
@@ -277,6 +272,7 @@ const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
   }
   }
   if (mprotect(addr, size, prot) == -1) {
+	  dump();
     fatal_error("mprotect error: addr:%p, size:0x%lx, prot:%d\n", 
 		addr, size, prot);
   }
@@ -566,6 +562,7 @@ lynxQ::lynxQ(size_t qsize, prod_queue_t *pq, cons_queue_t *cq) {
   qstate.sstate0 = PUSH_WRITES;
   qstate.redzone1_state = FREE;
   qstate.redzone2_state = FREE;
+  qstate.num_push = qstate.num_pop = 0;
 
   this->pq_state = pq;
   this->cq_state = cq;
@@ -702,8 +699,31 @@ struct Memoize_mem_op {
 typedef struct Memoize_mem_op Memoize_mem_op_t;
 
 
+#include <execinfo.h>
+void
+print_trace (void)
+{
+  void *array[10];
+  char **strings;
+  int size, i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+  if (strings != NULL)
+  {
+
+    printf ("Obtained %d stack frames.\n", size);
+    for (i = 0; i < size; i++)
+      printf ("%s\n", strings[i]);
+  }
+
+  free (strings);
+}
+
 /* Raise segmentation fualt signal */
 static void segfault (const char *msg, char *index) {
+
+  print_trace();
   fprintf (stderr, msg, index);
   struct sigaction act;
   act.sa_handler = SIG_DFL;
@@ -850,8 +870,10 @@ class LynxQueue {
       // map queues and producer_metadata
       for (auto p = 0u; p < nprod; p++) {
         // Queue Allocation
-        auto pqueues = (prod_queue_t *)utils::zero_aligned_alloc(
-            FIPC_CACHE_LINE_SIZE, ncons * sizeof(prod_queue_t));
+        //auto pqueues = (prod_queue_t *)utils::zero_aligned_alloc(
+        //    FIPC_CACHE_LINE_SIZE, ncons * sizeof(prod_queue_t));
+        auto pqueues = (prod_queue_t *)calloc(
+            1, ncons * sizeof(prod_queue_t));
         all_pqueues[p] = pqueues;
         for (auto c = 0u; c < ncons; c++) {
           prod_queue_t *pq = &pqueues[c];
@@ -863,8 +885,10 @@ class LynxQueue {
     void init_cons_queues() {
       // map queues and consumer_metadata
       for (auto c = 0u; c < ncons; c++) {
-        auto cqueues = (cons_queue_t *)utils::zero_aligned_alloc(
-            FIPC_CACHE_LINE_SIZE, nprod * sizeof(cons_queue_t));
+        //auto cqueues = (cons_queue_t *)utils::zero_aligned_alloc(
+        //    FIPC_CACHE_LINE_SIZE, nprod * sizeof(cons_queue_t));
+        auto cqueues = (cons_queue_t *)calloc(
+            1, nprod * sizeof(cons_queue_t));
         all_cqueues[c] = cqueues;
         for (auto p = 0u; p < nprod; p++) {
           cons_queue_t *cq = &cqueues[p];
@@ -876,15 +900,22 @@ class LynxQueue {
 
     explicit LynxQueue(int nprod, int ncons, size_t queue_size) {
 
-      printf("%s, lynx queue init\n", __func__);
+      printf("%s, lynx queue init | queue_sz %zu\n", __func__, queue_size);
 
+      this->queue_size = queue_size;
       this->nprod = nprod;
       this->ncons = ncons;
-      this->all_pqueues = (prod_queue_t **)utils::zero_aligned_alloc(
-        FIPC_CACHE_LINE_SIZE, nprod * sizeof(prod_queue_t*));
+      //this->all_pqueues = (prod_queue_t **)utils::zero_aligned_alloc(
+      //  FIPC_CACHE_LINE_SIZE, nprod * sizeof(prod_queue_t*));
 
-      this->all_cqueues = (cons_queue_t **)utils::zero_aligned_alloc(
-        FIPC_CACHE_LINE_SIZE, ncons * sizeof(cons_queue_t*));
+      this->all_pqueues = (prod_queue_t **)calloc(
+        1, nprod * sizeof(prod_queue_t*));
+
+      //this->all_cqueues = (cons_queue_t **)utils::zero_aligned_alloc(
+      //  FIPC_CACHE_LINE_SIZE, ncons * sizeof(cons_queue_t*));
+
+      this->all_cqueues = (cons_queue_t **)calloc(
+        1, ncons * sizeof(cons_queue_t*));
 
       this->init_prod_queues();
       this->init_cons_queues();
@@ -904,6 +935,30 @@ class LynxQueue {
           //queue_map.insert({std::make_tuple(p, c), q});
         }
       }
+      queues[0][0]->dump();
+    }
+
+    inline void prefetch(int p, int c, bool is_prod)  {
+      auto q = queues[p][c];
+      if (is_prod) {
+        auto pq = q->pq_state;
+        if (((uint64_t)pq->push_index & 0x3f) == 0) {
+          __builtin_prefetch(pq->push_index + 64, 1, 3);
+        }
+        auto nc = ((c + 1) >= ncons) ? 0: (c + 1);
+        auto npq = queues[p][nc];
+        __builtin_prefetch(npq->pq_state, 1, 3);
+      } else {
+        auto cq = q->cq_state;
+        auto np = ((p + 1) >= nprod) ? 0: (p + 1);
+        auto ncq = queues[np][c];
+        __builtin_prefetch(ncq->cq_state, 1, 3);
+        if (cq->pop_index != q->redzone_end) {
+        __builtin_prefetch(cq->pop_index + 0, 1, 3);
+        __builtin_prefetch(cq->pop_index + 64, 1, 3);
+        __builtin_prefetch(cq->pop_index + 128, 1, 3);
+        }
+      }
     }
 
     inline int enqueue(int p, int c, data_t value)  {
@@ -911,6 +966,7 @@ class LynxQueue {
 
       q->push(value, q->pq_state);
 
+      //q->qstate.num_push++;
       return SUCCESS;
     }
 
@@ -918,6 +974,7 @@ class LynxQueue {
       auto q = queues[p][c];
 
       *value = q->pop_long(q->cq_state);
+      //q->qstate.num_pop++;
 
       return SUCCESS;
     }
