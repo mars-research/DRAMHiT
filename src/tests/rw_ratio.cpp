@@ -21,7 +21,7 @@ class partition {
   // May just need key/hash, not the entire itemqueue (since the ID is implicit)
   Values& find_one(const ItemQueue& queue_entry);
   void insert_one(const ItemQueue& queue_entry);
-  void* address(const ItemQueue& item); // Needed by prefetching queue
+  void* address(const ItemQueue& item);  // Needed by prefetching queue
 };
 
 class prefetch_queue {
@@ -222,8 +222,22 @@ class rw_experiment {
   void run_server(unsigned int self_id, unsigned int n_clients,
                   queues& queues) {
     std::vector<cons_queue_t*> sources(n_clients);
-    for (auto i = 0u; i < n_clients; ++i)
-      sources.at(i) = &queues.get_source(i, self_id);
+    for (auto i = 0u; i < n_clients; ++i) {
+      auto& source = queues.get_source(i, self_id);
+      source.backtrack_flag = 1;  // TODO: should backtracking be always-on?
+      sources.at(i) = &source;
+    }
+
+    std::uint64_t iteration{};
+    auto live_clients = sources.size();
+    while (live_clients) {
+      const auto source = sources.at(iteration);
+      data_t data;
+      while (dequeue(source, &data) != SUCCESS) _mm_pause();
+      if (data == 0xdeadbeef) --live_clients;
+      ++iteration;
+      iteration = iteration < sources.size() ? iteration : 0;
+    }
   }
 
   void run_client(unsigned int self_id, unsigned int n_servers,
@@ -231,6 +245,10 @@ class rw_experiment {
     std::vector<prod_queue_t*> sinks(n_servers);
     for (auto i = 0u; i < n_servers; ++i)
       sinks.at(i) = &queues.get_sink(self_id, i);
+
+    for (const auto sink : sinks) {
+      while (enqueue(sink, 0xdeadbeef) != SUCCESS) _mm_pause();
+    }
   }
 };
 
