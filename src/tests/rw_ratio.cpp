@@ -267,7 +267,7 @@ class rw_experiment {
 
     Hasher hash_key{};
     for (auto i = 0u; i < per_thread_inserts; ++i) {
-      const auto key = base_key + 1;
+      const auto key = base_key + i;
       const auto hash = hash_key(&key, sizeof(key));
       const auto queue_id =
           fastrange32(_mm_crc32_u32(0xffffffff, hash), n_servers);
