@@ -16,8 +16,7 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
  public:
   KMerReader(std::unique_ptr<InputReader<std::string_view>> lines)
       : lines_(std::move(lines)), eof_(false) {
-    PLOG_WARNING_IF(!lines_->next(&current_line_)) << "Empty input.";
-    this->prep_new_line();
+    PLOG_WARNING_IF(!this->fetch_and_prep_new_line()) << "Empty input.";
   }
 
   // Return the next kmer.
@@ -29,39 +28,53 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
 
     if (current_line_iter_ == current_line_end_) {
       // This sequence is exhausted. Fetch the next sequence.
-      if (!(lines_->next(&current_line_) && this->prep_new_line())) {
+      if (!(this->fetch_and_prep_new_line())) {
         // All sequences are exhausted.
         eof_ = true;
+        return true;
       } else {
         // Successfully fetched a new sequence and refill the buffer.
         return true;
       }
     }
 
+    // Update the buffer for next kmer.
     uint8_t mer = *current_line_iter_;
     current_line_iter_++;
     if (mer == 'N') {
-      return refill_buffer();
+      if (refill_buffer()) {
+        // Successfully refilled a buffer
+        return true;
+      } else {
+        // Failed to refill a buffer.
+        // Try to fetch a new sequence and try again.
+        fetch_and_prep_new_line();
+        // Either fetched a new line and the buffer is refilled successfully
+        // or it failed. `eof_` is set according in `fetch_and_prep_new_line()`
+        return true;
+      }
     }
     kmer_.push(mer);
     return true;
   }
 
  private:
-  bool prep_new_line() {
-    current_line_iter_ = current_line_.begin();
-    current_line_end_ = current_line_.end();
+  // Fetch a newline and refill buffer.
+  // Repeat until the buffer is fully refilled.
+  bool fetch_and_prep_new_line() {
+    while (lines_->next(&current_line_)) {
+      current_line_iter_ = current_line_.begin();
+      current_line_end_ = current_line_.end();
 
-    // Intiialize the kmer buffer.
-    for (size_t i = 0; i < K; i++) {
-      if (current_line_iter_ == current_line_end_) {
-        eof_ = true;
-        return false;
+      // Refill the kmer buffer.
+      if (!refill_buffer()) {
+        continue;
       }
-      kmer_.push(*current_line_iter_);
-      current_line_iter_++;
+      return true;
     }
-    return true;
+    // All seqs are exhausted.
+    eof_ = true;
+    return false;
   }
 
   // Refill the buffer because of a new sequence or a 'N'.
@@ -72,11 +85,11 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
         return false;
       }
       const uint8_t mer = *current_line_iter_;
+      current_line_iter_++;
       if (mer == 'N') {
         return refill_buffer();
       }
       kmer_.insert(i, mer);
-      current_line_iter_++;
     }
     return true;
   }
