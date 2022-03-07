@@ -23,6 +23,12 @@ AGGAGGTAA
 +
 EFFDEFFFF
 )";
+// A small sequence with 'N'
+const char SMALL_SEQ_N[] = R"(@ERR024163.1 EAS51_210:1:1:1072:4554/1
+AGGNNAGGTANA
++
+EFFDEFFFFFFF
+)";
 const char ONE_SEQ[] = R"(@ERR024163.1 EAS51_210:1:1:1072:4554/1
 AGGAGGTAAATCTATCTTGAGCNAGTNAGNTNNNNNNNNAGGCATTATNNNANCTGACTTCAANATATATAACACAGCTATAGNAATCANNANANCNTNN
 +
@@ -132,6 +138,7 @@ TEST(FastqKmerReaderTest, SinglePartitionTest) {
     EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
     EXPECT_TRUE(reader->next(&kmer));
     EXPECT_EQ(std::to_array<uint8_t>({'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_FALSE(reader->next(&kmer));
   }
 
   // 8mers
@@ -146,6 +153,7 @@ TEST(FastqKmerReaderTest, SinglePartitionTest) {
     EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), kmer);
     EXPECT_TRUE(reader->next(&kmer));
     EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_FALSE(reader->next(&kmer));
   }
 }
 
@@ -170,6 +178,7 @@ TEST(FastqKMerPreloadReader, SinglePartitionTest) {
     EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
     EXPECT_TRUE(reader->next(&kmer));
     EXPECT_EQ(std::to_array<uint8_t>({'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_FALSE(reader->next(&kmer));
   }
 
   // 8mers
@@ -184,6 +193,35 @@ TEST(FastqKMerPreloadReader, SinglePartitionTest) {
     EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), kmer);
     EXPECT_TRUE(reader->next(&kmer));
     EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_FALSE(reader->next(&kmer));
+  }
+}
+
+TEST(FastqKMerPreloadReader, ParseNTest) {
+  // 4mers
+  {
+    constexpr size_t K = 4;
+    std::unique_ptr<std::istream> input =
+          std::make_unique<std::istringstream>(SMALL_SEQ_N);
+    auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
+    std::array<uint8_t, K> kmer;
+    // AGGNNAGGTANA
+    EXPECT_TRUE(reader->next(&kmer));
+    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    EXPECT_TRUE(reader->next(&kmer));
+    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_FALSE(reader->next(&kmer));
+  }
+
+  // 8mers
+  {
+    constexpr size_t K = 8;
+    std::unique_ptr<std::istream> input =
+          std::make_unique<std::istringstream>(SMALL_SEQ);
+    auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
+    std::array<uint8_t, K> kmer;
+    // AGGNNAGGTANA
+    EXPECT_FALSE(reader->next(&kmer));
   }
 }
 

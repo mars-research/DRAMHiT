@@ -21,6 +21,11 @@ class CircularBufferMove {
     data_[N - 1] = data;
   }
 
+  // Insert the data without shifting
+  void insert(const size_t i, const T& data) {
+    data_[i] = data;
+  }
+
   void copy_to(std::array<T, N> *dst) { copy_to(*dst); }
 
   void copy_to(std::array<T, N> &dst) { dst = data_; }
