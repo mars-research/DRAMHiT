@@ -217,6 +217,8 @@ class rw_experiment {
       if (CPU_ISSET(i, &cpuset)) return i;
 
     assert(false);
+
+    return 0;
   }
 
   void run_server(unsigned int self_id, unsigned int n_clients,
@@ -224,31 +226,64 @@ class rw_experiment {
     std::vector<cons_queue_t*> sources(n_clients);
     for (auto i = 0u; i < n_clients; ++i) {
       auto& source = queues.get_source(i, self_id);
-      source.backtrack_flag = 1;  // TODO: should backtracking be always-on?
       sources.at(i) = &source;
     }
 
     std::uint64_t iteration{};
     auto live_clients = sources.size();
+    const auto start = start_time();
     while (live_clients) {
       const auto source = sources.at(iteration);
       data_t data;
-      while (dequeue(source, &data) != SUCCESS) _mm_pause();
-      if (data == 0xdeadbeef) --live_clients;
-      ++iteration;
-      iteration = iteration < sources.size() ? iteration : 0;
+      if (dequeue(source, &data) == SUCCESS) {
+        if (data == 0xdeadbeef) {
+          PLOG_WARNING << "Received stop from client " << iteration;
+          --live_clients;
+        } else {
+          if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
+          push_key(writes, data);
+        }
+      } else {
+        ++iteration;
+        iteration = iteration < sources.size() ? iteration : 0;
+      }
     }
+
+    insert();
+    flush_insert();
+    timings.insert_cycles = stop_time() - start;
+
+    PLOG_WARNING << "Stopped server " << self_id;
   }
 
   void run_client(unsigned int self_id, unsigned int n_servers,
                   queues& queues) {
     std::vector<prod_queue_t*> sinks(n_servers);
-    for (auto i = 0u; i < n_servers; ++i)
+    std::vector<cons_queue_t*> source_ends(n_servers);
+    for (auto i = 0u; i < n_servers; ++i) {
       sinks.at(i) = &queues.get_sink(self_id, i);
-
-    for (const auto sink : sinks) {
-      while (enqueue(sink, 0xdeadbeef) != SUCCESS) _mm_pause();
+      source_ends.at(i) = &queues.get_source(self_id, i);
     }
+
+    Hasher hash_key{};
+    for (auto i = 0u; i < per_thread_inserts; ++i) {
+      const auto key = base_key + 1;
+      const auto hash = hash_key(&key, sizeof(key));
+      const auto queue_id =
+          fastrange32(_mm_crc32_u32(0xffffffff, hash), n_servers);
+
+      const auto sink = sinks.at(queue_id);
+      while (enqueue(sink, key) != SUCCESS) _mm_pause();
+    }
+
+    for (auto i = 0u; i < n_servers; ++i) {
+      const auto sink = sinks.at(i);
+      source_ends.at(i)->backtrack_flag = 1;
+      while (enqueue(sink, 0xdeadbeef) != SUCCESS) _mm_pause();
+      PLOG_WARNING << "Sent stop to server " << i;
+    }
+
+    PLOG_WARNING << "Client " << self_id << " signalled stop";
   }
 };
 
