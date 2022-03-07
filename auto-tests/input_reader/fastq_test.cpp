@@ -24,8 +24,29 @@ AGGAGGTAA
 EFFDEFFFF
 )";
 // A small sequence with 'N'
-const char SMALL_SEQ_N[] = R"(@ERR024163.1 EAS51_210:1:1:1072:4554/1
+const char SMALL_SEQ_N[] = R"(@seq
 AGGNNAGGTANA
++
+EFFDEFFFFFFF
+)";
+const char FIVE_SEQS_N[] = R"(@seq0
+AGGNNAGGTANA
++
+EFFDEFFFFFFF
+@seq1
+ANANANANANAN
++
+EFFDEFFFFFFF
+@seq2
+NNNNNNNNNNNN
++
+EFFDEFFFFFFF
+@seq3
+AGGNNAGGTANA
++
+EFFDEFFFFFFF
+@seq4
+NNNNNNNNNNNN
 +
 EFFDEFFFFFFF
 )";
@@ -221,6 +242,36 @@ TEST(FastqKMerPreloadReader, ParseNTest) {
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
     std::array<uint8_t, K> kmer;
     // AGGNNAGGTANA
+    EXPECT_FALSE(reader->next(&kmer));
+  }
+}
+
+TEST(FastqKMerPreloadReader, MultiseqParseNTest) {
+  // 4mers
+  {
+    constexpr size_t K = 4;
+    std::unique_ptr<std::istream> input =
+          std::make_unique<std::istringstream>(FIVE_SEQS_N);
+    auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
+    std::array<uint8_t, K> kmer;
+    ASSERT_TRUE(reader->next(&kmer));
+    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    ASSERT_TRUE(reader->next(&kmer));
+    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    ASSERT_TRUE(reader->next(&kmer));
+    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    ASSERT_TRUE(reader->next(&kmer));
+    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    ASSERT_TRUE(reader->next(&kmer));
+  }
+
+  // 8mers
+  {
+    constexpr size_t K = 8;
+    std::unique_ptr<std::istream> input =
+          std::make_unique<std::istringstream>(FIVE_SEQS_N);
+    auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
+    std::array<uint8_t, K> kmer;
     EXPECT_FALSE(reader->next(&kmer));
   }
 }

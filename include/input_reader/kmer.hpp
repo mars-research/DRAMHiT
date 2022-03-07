@@ -11,10 +11,10 @@
 namespace kmercounter {
 namespace input_reader {
 /// Generate KMer from a sequence.
-template <size_t K>
+template <size_t K, class Input=std::string>
 class KMerReader : public InputReader<std::array<uint8_t, K>> {
  public:
-  KMerReader(std::unique_ptr<InputReader<std::string_view>> lines)
+  KMerReader(std::unique_ptr<InputReader<Input>> lines)
       : lines_(std::move(lines)), eof_(false) {
     PLOG_WARNING_IF(!this->fetch_and_prep_new_line()) << "Empty input.";
   }
@@ -94,10 +94,10 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
     return true;
   }
 
-  std::unique_ptr<InputReader<std::string_view>> lines_;
-  std::string_view current_line_;
-  std::string_view::iterator current_line_iter_;
-  std::string_view::iterator current_line_end_;
+  std::unique_ptr<InputReader<Input>> lines_;
+  Input current_line_;
+  Input::iterator current_line_iter_;
+  Input::iterator current_line_end_;
   CircularBufferMove<uint8_t, K> kmer_;
   bool eof_;
 };

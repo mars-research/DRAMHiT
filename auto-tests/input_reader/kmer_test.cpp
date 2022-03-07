@@ -20,7 +20,7 @@ POG
       std::make_unique<std::istringstream>(data);
   auto file_reader =
       std::make_unique<FileReader>(std::move(file), 0, 1);
-  KMerReader<2> kmer_reader(std::move(file_reader));
+  KMerReader<2, std::string_view> kmer_reader(std::move(file_reader));
   std::array<uint8_t, 2> kmer;
   EXPECT_TRUE(kmer_reader.next(&kmer));
   EXPECT_EQ(std::to_array<uint8_t>({'A', 'B'}), kmer);

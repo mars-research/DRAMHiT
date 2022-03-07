@@ -11,6 +11,7 @@
 
 #include "file.hpp"
 #include "input_reader.hpp"
+#include "input_reader/adaptor.hpp"
 #include "input_reader/reservoir.hpp"
 #include "kmer.hpp"
 #include "plog/Log.h"
@@ -126,7 +127,7 @@ class FastqKMerReader : InputReader<std::array<uint8_t, K>> {
   }
 
  private:
-  KMerReader<K> reader_;
+  KMerReader<K, std::string_view> reader_;
 };
 
 /// Produce the same output as `FastqKMerReader` but the sequencies are parsed
@@ -136,8 +137,9 @@ class FastqKMerPreloadReader : InputReader<std::array<uint8_t, K>> {
  public:
   template <typename... Args>
   FastqKMerPreloadReader(Args&&... args)
-      : reader_(std::make_unique<Reservoir<std::string_view>>(
-            std::make_unique<FastqReader>(std::forward<Args>(args)...))) {}
+      : reader_(std::make_unique<Reservoir<std::string>>(
+            std::make_unique<Adaptor<std::string_view, std::string>>(
+                std::make_unique<FastqReader>(std::forward<Args>(args)...)))) {}
 
   bool next(std::array<uint8_t, K>* data) override {
     return reader_.next(data);
