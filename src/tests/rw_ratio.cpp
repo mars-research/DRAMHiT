@@ -234,19 +234,42 @@ class rw_experiment {
     const auto start = start_time();
     while (live_clients) {
       const auto source = sources.at(iteration);
-      data_t data;
-      if (dequeue(source, &data) == SUCCESS) {
-        if (data == 0xdeadbeef) {
-          PLOG_WARNING << "Received stop from client " << iteration;
-          --live_clients;
-        } else {
-          if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
-          push_key(writes, data);
-        }
-      } else {
-        ++iteration;
-        iteration = iteration < sources.size() ? iteration : 0;
+      const auto lookahead = iteration + 3;
+      const auto lookahead_index =
+          lookahead - (lookahead >= n_clients ? n_clients : 0);
+
+      cons_queue_t* next_queue = sources.at(lookahead_index);
+      if ((next_queue->tail + 15) == next_queue->batch_tail) {
+        auto tmp_tail = next_queue->tail + BATCH_SIZE - 1;
+        if (tmp_tail >= QUEUE_SIZE) tmp_tail = 0;
+        __builtin_prefetch(&next_queue->data[tmp_tail], 0, 3);
       }
+
+      const auto block1 = (next_queue->tail + 8) & (QUEUE_SIZE - 1);
+      const auto block2 = (next_queue->tail + 16) & (QUEUE_SIZE - 1);
+      __builtin_prefetch(&next_queue->data[source->tail], 1, 3);
+      __builtin_prefetch(&next_queue->data[block1], 1, 3);
+      __builtin_prefetch(&next_queue->data[block2], 1, 3);
+
+      data_t data;
+      for (auto i = 0u; i < HT_TESTS_BATCH_LENGTH;) {
+        if (dequeue(source, &data) == SUCCESS) {
+          if (data == 0xdeadbeef) {
+            PLOG_WARNING << "Received stop from client " << iteration;
+            --live_clients;
+          } else {
+            if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
+            push_key(writes, data);
+          }
+
+          ++i;
+        } else {
+          break;
+        }
+      }
+
+      ++iteration;
+      iteration = iteration < sources.size() ? iteration : 0;
     }
 
     insert();
