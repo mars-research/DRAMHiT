@@ -68,7 +68,7 @@ class rw_experiment {
         result_batch{},
         results{0, result_batch.data()} {}
 
-  experiment_results run(int n_writers, queues& insert_queues,
+  experiment_results run(unsigned int n_writers, queues& insert_queues,
                          queues& rw_queues) {
     if (n_writers < 0)
       return run_no_bq();
@@ -100,8 +100,9 @@ class rw_experiment {
     return __rdtscp(&aux);
   }
 
-  void insert(bool no_count = false) {
-    if (!no_count) timings.n_writes += writes.first;
+  template <bool no_count>
+  void insert() {
+    if constexpr (!no_count) timings.n_writes += writes.first;
     hashtable.insert_batch(writes);
     writes.first = 0;
   }
@@ -125,7 +126,7 @@ class rw_experiment {
   void insert_all() {
     std::uint64_t next_key{base_key};
     for (auto i = 0u; i < per_thread_inserts; ++i) {
-      if (writes.first == HT_TESTS_BATCH_LENGTH) insert(true);
+      if (writes.first == HT_TESTS_BATCH_LENGTH) insert<true>();
       push_key(writes, next_key++);
     }
   }
@@ -145,7 +146,7 @@ class rw_experiment {
     std::uint64_t next_write_key{base_key};
     std::uint64_t next_read_key{base_key};
     for (auto i = 0u; i < per_thread_inserts; ++i) {
-      if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
+      if (writes.first == HT_TESTS_BATCH_LENGTH) insert<false>();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) find();
       if (sampler(prng))
         push_key(reads, next_read_key++);
@@ -153,7 +154,7 @@ class rw_experiment {
         push_key(writes, next_write_key++);
     }
 
-    insert();
+    insert<false>();
     find();
     flush_insert();
     flush_find();
@@ -188,22 +189,38 @@ class rw_experiment {
     return roles;
   }
 
-  experiment_results run_bq(int n_writers, queues& insert_queues,
+  void run_bq_work(const role_assignments& roles, queues& queues,
+                   unsigned int n_servers, unsigned int n_clients,
+                   unsigned int self_id, bool no_count) {
+    const auto queue_id = roles.queue_id.at(self_id);
+    if (roles.is_server.at(self_id)) {
+      if (no_count)
+        run_server<true>(queue_id, n_servers, queues);
+      else
+        run_server<false>(queue_id, n_servers, queues);
+    } else {
+      run_client(queue_id, n_clients, queues);
+    }
+  }
+
+  NumaPolicyQueues make_policy(unsigned int n_clients, unsigned int n_servers) {
+    return {static_cast<int>(n_servers), static_cast<int>(n_clients),
+            static_cast<numa_policy_queues>(config.numa_split)};
+  }
+
+  experiment_results run_bq(unsigned int n_writers, queues& insert_queues,
                             queues& rw_queues) {
-    const auto half_threads = static_cast<int>(config.num_threads / 2);
-    const auto policy = static_cast<numa_policy_queues>(config.numa_split);
-    const auto n_clients = static_cast<int>(config.num_threads) - n_writers;
-    static NumaPolicyQueues insert_policy{half_threads, half_threads, policy};
-    static NumaPolicyQueues rw_policy{n_writers, n_clients, policy};
-    static const auto insert_roles = get_roles(insert_policy);
-    static const auto rw_roles = get_roles(rw_policy);
-    static_cast<void>(rw_roles);
+    const auto total_threads = static_cast<unsigned int>(config.num_threads);
+    const auto half_threads = total_threads / 2;
+    const auto n_clients = total_threads - n_writers;
+    static auto insert_policy = make_policy(half_threads, half_threads);
+    static auto rw_policy = make_policy(n_writers, n_clients);
     const auto self_id = get_cpu();
-    const auto insert_queue_id = insert_roles.queue_id.at(self_id);
-    if (insert_roles.is_server.at(self_id))
-      run_server(insert_queue_id, half_threads, insert_queues);
-    else
-      run_client(insert_queue_id, half_threads, insert_queues);
+    run_bq_work(get_roles(insert_policy), insert_queues, half_threads,
+                half_threads, self_id, true);
+
+    run_bq_work(get_roles(rw_policy), rw_queues, n_writers, n_clients, self_id,
+                false);
 
     return timings;
   }
@@ -221,6 +238,7 @@ class rw_experiment {
     return 0;
   }
 
+  template <bool no_count>
   void run_server(unsigned int self_id, unsigned int n_clients,
                   queues& queues) {
     std::vector<cons_queue_t*> sources(n_clients);
@@ -258,7 +276,7 @@ class rw_experiment {
             PLOG_WARNING << "Received stop from client " << iteration;
             --live_clients;
           } else {
-            if (writes.first == HT_TESTS_BATCH_LENGTH) insert();
+            if (writes.first == HT_TESTS_BATCH_LENGTH) insert<no_count>();
             push_key(writes, data);
           }
 
@@ -272,7 +290,7 @@ class rw_experiment {
       iteration = iteration < sources.size() ? iteration : 0;
     }
 
-    insert();
+    insert<no_count>();
     flush_insert();
     timings.insert_cycles = stop_time() - start;
 
