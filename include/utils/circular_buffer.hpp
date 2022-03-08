@@ -3,10 +3,83 @@
 
 #include <array>
 #include <cstring>
+#include <cstdint>
 
 #include "plog/Log.h"
 
 namespace kmercounter {
+// A KMer.
+// Left-most 
+template <size_t K>
+class KMer {
+public:
+  KMer() : buffer_{} {}
+
+  // Push a character mer into the buffer.
+  // Does nothing and returns false if it's not a valid mer.
+  bool push(const uint8_t mer) {
+    const uint8_t code = ENCODE_MAP[mer];
+    if (code < 0) {
+      return false;
+    }
+
+    // Shift left and insert the mer in the right-most entry.
+    this->shift_left();
+    buffer_ |= code;
+    return true;
+  }
+
+
+  constexpr static uint8_t MER_MASK = 0b11;
+  // Size of a mer in bits
+  constexpr static size_t MER_SIZE = 2; 
+  // Max number of mers that a byte can hold.
+  constexpr static size_t MER_PER_BYTE = sizeof(uint8_t) / MER_SIZE;
+  // Size of buffer to holder the kmer in bytes.
+  constexpr static size_t BUFFER_LEN = (K + 7) / MER_PER_BYTE; 
+
+private:
+  // Shift left by one mer and refil the tag bit.
+  void shift_left() {
+    buffer_ <<= MER_SIZE;
+  }
+
+  uint64_t buffer_; 
+  static_assert(K < 32, "K >= 32 is not yet implemented");
+
+  // Borrowed from https://github.com/gmarcais/Jellyfish/blob/master/include/jellyfish/mer_dna.hpp
+  enum Code {
+    R = -1,
+    I = -2,
+    O = -3,
+    A = 0,
+    C = 1,
+    G = 2,
+    T = 3,
+  };
+
+  constexpr static int ENCODE_MAP[256] = {
+    O, O, O, O, O, O, O, O, O, O, I, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, R, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, A, R, C, R, O, O, G, R, O, O, R, O, R, R, O,
+    O, O, R, R, T, O, R, R, R, R, O, O, O, O, O, O,
+    O, A, R, C, R, O, O, G, R, O, O, R, O, R, R, O,
+    O, O, R, R, T, O, R, R, R, R, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O
+  };
+
+ constexpr static uint8_t DECODE_MAP[4] = { 'A', 'C', 'G', 'T' };
+};
+
 /// An always-full circular buffer.
 /// Use memmove to keep the head at the beginning of the buffer.
 /// Maybe faster than the offset variant.

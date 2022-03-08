@@ -8,7 +8,7 @@
 
 namespace kmercounter {
 namespace input_reader {
-
+// Convert one InputReader to another.
 template <class From, class To>
 class Adaptor : public InputReader<To> {
 public:
