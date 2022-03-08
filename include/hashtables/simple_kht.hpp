@@ -126,14 +126,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     free(ptr);
   }
 
-  void prefetch(uint64_t i) {
+  void prefetch(uint64_t i, unsigned int part_id) {
     if (i > this->capacity) {
       PLOG_ERROR.printf("%u > %lu\n", i, this->capacity);
       std::terminate();
     }
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
-    prefetch_object<true /* write */>(&this->hashtable[this->id][i],
-                                      sizeof(this->hashtable[this->id][i]));
+    prefetch_object<true /* write */>(&this->hashtable[part_id][i],
+                                      sizeof(this->hashtable[part_id][i]));
     // true /* write */);
 #endif
 
@@ -602,7 +602,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void __insert_branched(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
-    KV *cur_ht = this->hashtable[this->id];
+    KV *cur_ht = this->hashtable[q->part_id];
   try_insert:
     KV *curr = &cur_ht[idx];
     auto retry = false;
@@ -631,12 +631,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         goto try_insert;
       }
 
-      prefetch(idx);
+      prefetch(idx, q->part_id);
 
       this->insert_queue[this->ins_head].key = q->key;
       this->insert_queue[this->ins_head].key_id = q->key_id;
       this->insert_queue[this->ins_head].value = q->value;
       this->insert_queue[this->ins_head].idx = idx;
+      this->insert_queue[this->ins_head].part_id = q->part_id;
       ++this->ins_head;
       this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
@@ -850,6 +851,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
     this->insert_queue[this->ins_head].idx = nidx;
+    this->insert_queue[this->ins_head].part_id = q->part_id;
     auto queue_idx_inc = 1;
     // if kv_mask != 0, insert succeeded; reprobe unnecessary
     asm volatile(
@@ -864,7 +866,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         : "rcx");
 
     // issue prefetch
-    prefetch(nidx);
+    prefetch(nidx, q->part_id);
     this->ins_head += queue_idx_inc;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
@@ -931,12 +933,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #if defined(HASH_HISTOGRAM)
     ++hash_histogram.at(idx & histogram_mask);
 #endif
-    this->prefetch(idx);
+    this->prefetch(idx, key_data->part_id);
 
     if constexpr (experiment_inactive(experiment_type::prefetch_only)) {
       this->insert_queue[this->ins_head].idx = idx;
       this->insert_queue[this->ins_head].key = key;
       this->insert_queue[this->ins_head].key_id = key_data->id;
+      this->insert_queue[this->ins_head].part_id = key_data->part_id;
 
 #ifdef COMPARE_HASH
       this->insert_queue[this->ins_head].key_hash = hash;

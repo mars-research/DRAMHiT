@@ -50,6 +50,51 @@ struct experiment_results {
 
 extern Configuration config;
 
+struct role_assignments {
+  std::vector<bool> is_server;
+  std::vector<unsigned int> queue_id;
+  std::vector<unsigned int> exclusive_writers;
+};
+
+auto get_roles(NumaPolicyQueues& policy) {
+  const auto& clients = policy.get_assigned_cpu_list_producers();
+  const auto& servers = policy.get_assigned_cpu_list_consumers();
+  const auto n_threads = clients.size() + servers.size();
+  role_assignments roles{};
+  roles.is_server.resize(n_threads);
+  roles.queue_id.resize(n_threads);
+  roles.exclusive_writers.resize(n_threads);
+  auto client_id = 0u;
+  for (auto n : clients) roles.queue_id.at(n) = client_id++;
+
+  auto server_id = 0u;
+  for (auto n : servers) {
+    roles.is_server.at(n) = true;
+    roles.queue_id.at(n) = server_id++;
+  }
+
+  auto owner_id = 0u;
+  for (auto& part : roles.exclusive_writers) {
+    part = owner_id++;
+    owner_id = owner_id < servers.size() ? owner_id : 0;
+  }
+
+  std::stringstream message{};
+  message << '[';
+  auto first = true;
+  for (auto part : roles.exclusive_writers) {
+    if (!first) message << ", ";
+    message << part;
+    first = false;
+  }
+
+  message << ']';
+
+  PLOG_WARNING << "Partmap: " << message.str();
+
+  return roles;
+}
+
 class rw_experiment {
  public:
   rw_experiment(BaseHashTable& hashtable, double p_read, unsigned int shard_id,
@@ -78,7 +123,7 @@ class rw_experiment {
 
  private:
   BaseHashTable& hashtable;
-  experiment_results timings;
+  experiment_results timings;  // TODO: I should not be here :(
   xorwow_urbg prng;
   std::bernoulli_distribution sampler;
   const std::uint64_t base_key;
@@ -123,24 +168,25 @@ class rw_experiment {
 
   void flush_insert() { hashtable.flush_insert_queue(); }
 
-  void insert_all() {
+  void insert_all(unsigned int shard) {
     std::uint64_t next_key{base_key};
     for (auto i = 0u; i < per_thread_inserts; ++i) {
       if (writes.first == HT_TESTS_BATCH_LENGTH) insert<true>();
-      push_key(writes, next_key++);
+      push_key(writes, next_key++, shard);
     }
   }
 
-  void push_key(KeyPairs& keys, std::uint64_t key) noexcept {
+  void push_key(KeyPairs& keys, std::uint64_t key,
+                unsigned int shard) noexcept {
     Keys key_struct{};
     key_struct.key = key;
     key_struct.id = key;
-    key_struct.part_id = shard_id;
+    key_struct.part_id = shard;
     keys.second[keys.first++] = key_struct;
   }
 
   experiment_results run_no_bq() {
-    insert_all();
+    insert_all(shard_id);
 
     const auto start = start_time();
     std::uint64_t next_write_key{base_key};
@@ -149,9 +195,9 @@ class rw_experiment {
       if (writes.first == HT_TESTS_BATCH_LENGTH) insert<false>();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) find();
       if (sampler(prng))
-        push_key(reads, next_read_key++);
+        push_key(reads, next_read_key++, shard_id);
       else
-        push_key(writes, next_write_key++);
+        push_key(writes, next_write_key++, shard_id);
     }
 
     insert<false>();
@@ -165,41 +211,17 @@ class rw_experiment {
     return timings;
   }
 
-  struct role_assignments {
-    std::vector<bool> is_server;
-    std::vector<unsigned int> queue_id;
-  };
-
-  auto get_roles(NumaPolicyQueues& policy) {
-    const auto& clients = policy.get_assigned_cpu_list_producers();
-    const auto& servers = policy.get_assigned_cpu_list_consumers();
-    const auto n_threads = clients.size() + servers.size();
-    role_assignments roles{};
-    roles.is_server.resize(n_threads);
-    roles.queue_id.resize(n_threads);
-    auto client_id = 0u;
-    for (auto n : clients) roles.queue_id.at(n) = client_id++;
-
-    auto server_id = 0u;
-    for (auto n : servers) {
-      roles.is_server.at(n) = true;
-      roles.queue_id.at(n) = server_id++;
-    }
-
-    return roles;
-  }
-
   void run_bq_work(const role_assignments& roles, queues& queues,
                    unsigned int n_servers, unsigned int n_clients,
                    unsigned int self_id, bool no_count) {
     const auto queue_id = roles.queue_id.at(self_id);
     if (roles.is_server.at(self_id)) {
       if (no_count)
-        run_server<true>(queue_id, n_servers, queues);
+        run_server<true>(queue_id, n_clients, queues, roles.exclusive_writers);
       else
-        run_server<false>(queue_id, n_servers, queues);
+        run_server<false>(queue_id, n_clients, queues, roles.exclusive_writers);
     } else {
-      run_client(queue_id, n_clients, queues);
+      run_client(queue_id, n_servers, queues, roles.exclusive_writers);
     }
   }
 
@@ -239,8 +261,8 @@ class rw_experiment {
   }
 
   template <bool no_count>
-  void run_server(unsigned int self_id, unsigned int n_clients,
-                  queues& queues) {
+  void run_server(unsigned int self_id, unsigned int n_clients, queues& queues,
+                  const std::vector<unsigned int>& part_assignments) {
     std::vector<cons_queue_t*> sources(n_clients);
     for (auto i = 0u; i < n_clients; ++i) {
       auto& source = queues.get_source(i, self_id);
@@ -269,15 +291,20 @@ class rw_experiment {
       __builtin_prefetch(&next_queue->data[block1], 1, 3);
       __builtin_prefetch(&next_queue->data[block2], 1, 3);
 
-      data_t data;
+      Hasher hash_key{};
       for (auto i = 0u; i < HT_TESTS_BATCH_LENGTH;) {
+        data_t data;
         if (dequeue(source, &data) == SUCCESS) {
           if (data == 0xdeadbeef) {
-            PLOG_WARNING << "Received stop from client " << iteration;
             --live_clients;
           } else {
+            const auto part_id = fastrange32(
+                _mm_crc32_u32(0xffffffff, hash_key(&data, sizeof(data))),
+                config.num_threads);
+
+            if (part_assignments.at(part_id) != self_id) std::terminate();
             if (writes.first == HT_TESTS_BATCH_LENGTH) insert<no_count>();
-            push_key(writes, data);
+            push_key(writes, data, part_id);
           }
 
           ++i;
@@ -293,12 +320,10 @@ class rw_experiment {
     insert<no_count>();
     flush_insert();
     timings.insert_cycles = stop_time() - start;
-
-    PLOG_WARNING << "Stopped server " << self_id;
   }
 
-  void run_client(unsigned int self_id, unsigned int n_servers,
-                  queues& queues) {
+  void run_client(unsigned int self_id, unsigned int n_servers, queues& queues,
+                  const std::vector<unsigned int>& part_assignments) {
     std::vector<prod_queue_t*> sinks(n_servers);
     std::vector<cons_queue_t*> source_ends(n_servers);
     for (auto i = 0u; i < n_servers; ++i) {
@@ -310,21 +335,26 @@ class rw_experiment {
     for (auto i = 0u; i < per_thread_inserts; ++i) {
       const auto key = base_key + i;
       const auto hash = hash_key(&key, sizeof(key));
-      const auto queue_id =
-          fastrange32(_mm_crc32_u32(0xffffffff, hash), n_servers);
+      const std::uint64_t part_id{
+          fastrange32(_mm_crc32_u32(0xffffffff, hash), config.num_threads)};
 
+      const auto queue_id = part_assignments.at(part_id);
       const auto sink = sinks.at(queue_id);
       while (enqueue(sink, key) != SUCCESS) _mm_pause();
+
+      if (((sink->head + 4) & 7) == 0) {
+        const auto next_sink = queue_id + 1;
+        const auto q = sinks.at(next_sink < n_servers ? next_sink : 0);
+        const auto next_1 = (q->head + 8) & (QUEUE_SIZE - 1);
+        __builtin_prefetch(&q->data[next_1], 1, 3);
+      }
     }
 
     for (auto i = 0u; i < n_servers; ++i) {
       const auto sink = sinks.at(i);
       source_ends.at(i)->backtrack_flag = 1;
       while (enqueue(sink, 0xdeadbeef) != SUCCESS) _mm_pause();
-      PLOG_WARNING << "Sent stop to server " << i;
     }
-
-    PLOG_WARNING << "Client " << self_id << " signalled stop";
   }
 };
 
