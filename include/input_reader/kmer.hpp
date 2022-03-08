@@ -81,7 +81,6 @@ class KMerReader : public InputReader<std::array<uint8_t, K>> {
   bool refill_buffer() {
     for (size_t i = 0; i < K; i++) {
       if (current_line_iter_ == current_line_end_) {
-        eof_ = true;
         return false;
       }
       const uint8_t mer = *current_line_iter_;

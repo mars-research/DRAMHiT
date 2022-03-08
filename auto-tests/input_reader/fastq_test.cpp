@@ -262,7 +262,7 @@ TEST(FastqKMerPreloadReader, MultiseqParseNTest) {
     EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
     ASSERT_TRUE(reader->next(&kmer));
     EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
-    ASSERT_TRUE(reader->next(&kmer));
+    ASSERT_FALSE(reader->next(&kmer));
   }
 
   // 8mers
