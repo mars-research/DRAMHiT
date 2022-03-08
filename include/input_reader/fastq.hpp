@@ -65,18 +65,14 @@ class FastqReader : public FileReader {
     }
 
     // Skip over the third line(quality header).
-    this->get();
-    next_char = this->get();
-    if (next_char != '\n') {
-      PLOG_WARNING << "Unexpected character " << next_char
-                   << ". The quanlity header line should "
-                      "only be {'+', '\n'}.";
+    if (!FileReader::next(nullptr)) {
+      PLOG_WARNING << "Unexpected EOF. Expecting quality header.";
       return false;
     }
 
     // Copy the second line(sequence) to `data`
     if (!FileReader::next(nullptr)) {
-      PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
+      PLOG_WARNING << "Unexpected EOF. Expecting quality.";
       return false;
     }
 
@@ -101,7 +97,7 @@ class FastqReader : public FileReader {
     for (std::string line; std::getline(st, line);) {
       // Consume quality line after hitting the quality header.
       // This will lead us to the next sequence.
-      if (line == "+") {
+      if (!line.empty() && line.at(0) == '+') {
         std::getline(st, line);
         break;
       }
