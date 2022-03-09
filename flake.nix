@@ -22,6 +22,7 @@
         propagatedBuildInputs = with pkgs; [
           abseil-cpp-17
           boost
+          capstone
           numactl
           zlib
           gtest
