@@ -9,17 +9,19 @@
 
 #define OPTIMIZE_BACKTRACKING2
 
-class BQueueAligned {
-  public:
-  const uint64_t CONGESTION_PENALTY = 250 / 2;
-  static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
+namespace kmercounter {
 
+class BQueueAligned {
   private:
     size_t batch_size;
     size_t queue_size;
     clock_t start_time;
     clock_t end_time;
     double queue_time;
+
+  public:
+    const uint64_t CONGESTION_PENALTY = 250 / 2;
+    static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
 
     typedef struct {
       volatile uint32_t head;
@@ -42,7 +44,6 @@ class BQueueAligned {
       uint8_t backtrack_flag;
       data_t* data;
     } cons_queue_t;
-
 
     std::map<std::tuple<int, int>, prod_queue_t*> pqueue_map;
     std::map<std::tuple<int, int>, cons_queue_t*> cqueue_map;
@@ -83,7 +84,7 @@ class BQueueAligned {
       for (auto p = 0u; p < nprod; p++) {
         for (auto c = 0u; c < ncons; c++) {
           data_t *data =
-            (data_array_t *)utils::zero_aligned_alloc(4096, sizeof(data_array_t));
+            (data_t *)utils::zero_aligned_alloc(4096, this->queue_size * sizeof(data_t));
 
           auto it = pqueue_map.find(std::make_tuple(p, c));
           if (it != pqueue_map.end()) {
@@ -125,7 +126,7 @@ class BQueueAligned {
       this->all_pqueues = (prod_queue_t **)utils::zero_aligned_alloc(
         FIPC_CACHE_LINE_SIZE, nprod * sizeof(prod_queue_t*));
 
-      this->all_cqueues = (cons_queue_t *)utils::zero_aligned_alloc(
+      this->all_cqueues = (cons_queue_t **)utils::zero_aligned_alloc(
         FIPC_CACHE_LINE_SIZE, ncons * sizeof(cons_queue_t*));
 
       this->init_prod_queues();
@@ -134,29 +135,46 @@ class BQueueAligned {
       this->start_time = clock();
     }
 
-    int enqueue(int p, int c, data_t value) override {
+    int enqueue(int p, int c, data_t value) {
       auto pq = &this->all_pqueues[p][c];
-
       uint32_t tmp_head;
       if (pq->head == pq->batch_head) {
         tmp_head = pq->head + this->batch_size;
         if (tmp_head >= this->queue_size) tmp_head = 0;
 
         if (pq->data[tmp_head]) {
-          //fipc_test_time_wait_ticks(CONGESTION_PENALTY);
-          return -1;
+          fipc_test_time_wait_ticks(CONGESTION_PENALTY);
+          return RETRY;
         }
-
         pq->batch_head = tmp_head;
       }
+
       //printf("enqueuing at pq->head %u | val %lu\n", pq->head, value);
       pq->data[pq->head] = value;
-      pq->head++;
-      if (pq->head >= this->queue_size) {
+      if (++pq->head >= this->queue_size) {
         pq->head = 0;
       }
 
       return SUCCESS;
+    }
+
+    inline void prefetch(int p, int c, bool is_prod) {
+      if (is_prod) {
+        auto pq = &this->all_pqueues[p][c];
+        if (((pq->head + 4) & 7) == 0) {
+          auto next_1 = (pq->head + 8) & (this->queue_size - 1);
+          __builtin_prefetch(&pq->data[next_1], 1, 3);
+        }
+      } else {
+        if (p >= nprod) p = 0;
+        auto ncq = &this->all_cqueues[c][p];
+
+        auto next_1 = (ncq->tail + 8) & (queue_size - 1);
+        auto next_2 = (ncq->tail + 16) & (queue_size - 1);
+        __builtin_prefetch(&ncq->data[ncq->tail], 1, 3);
+        __builtin_prefetch(&ncq->data[next_1], 1, 3);
+        __builtin_prefetch(&ncq->data[next_2], 1, 3);
+      }
     }
 
     inline int backtracking(cons_queue_t *q) {
@@ -169,7 +187,7 @@ class BQueueAligned {
       unsigned long batch_size = this->batch_size;
 #if defined(OPTIMIZE_BACKTRACKING2)
       if ((!q->data[tmp_tail]) && !q->backtrack_flag) {
-        //fipc_test_time_wait_ticks(CONGESTION_PENALTY);
+        fipc_test_time_wait_ticks(CONGESTION_PENALTY);
         return -1;
       }
 #endif
@@ -204,7 +222,7 @@ class BQueueAligned {
       auto cq = &this->all_cqueues[c][p];
 
       if (cq->tail == cq->batch_tail) {
-        if (backtracking(cq) != 0) return -1;
+        if (backtracking(cq) != 0) return RETRY;
       }
 
       *value = cq->data[cq->tail];
@@ -242,3 +260,5 @@ class BQueueAligned {
     }
 
 };
+
+} // namespace
