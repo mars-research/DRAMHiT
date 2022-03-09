@@ -35,6 +35,7 @@ add_compile_options(
     -fno-stack-protector
     -funroll-all-loops
     -flto
+    -ffat-lto-objects
     #-fsanitize=address
     -g
     -rdynamic
