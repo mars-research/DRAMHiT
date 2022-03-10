@@ -125,7 +125,7 @@ typedef struct Queue_state
 
 
 #define DEFINE_PUSH_OVERLOADED(TYPE, MOV)				\
-  inline void push(TYPE data, prod_queue_t *pq)						\
+  inline void push(TYPE data, struct prod_queue *pq)						\
   {									\
     char *push_index_tmp = pq->push_index;					\
     asm(MOV" %0, (%1, %2)"						\
@@ -137,7 +137,7 @@ typedef struct Queue_state
   }
 
 #define DEFINE_POP(TYPE, MOV)						\
-  inline TYPE pop_##TYPE (cons_queue_t *cq)						\
+  inline TYPE pop_##TYPE (struct cons_queue *cq)						\
   {									\
     TYPE data;								\
     char *pop_index_tmp = cq->pop_index;					\
@@ -156,21 +156,21 @@ enum on_or_off_enum {
 };
 typedef enum on_or_off_enum on_or_off_t;
 
-typedef struct {
+struct prod_queue {
   char *QUEUE;
   char *push_index;
   uint64_t free_push_reg;
 
   DEFINE_PUSH_OVERLOADED_NEW(long, "movq")
-} prod_queue_t;
+};
 
-typedef struct {
+struct cons_queue {
   char *QUEUE;
   char *pop_index;
   uint64_t free_pop_reg;
   bool in_redzone;
   DEFINE_POP_NEW(long, "movq")
-} cons_queue_t;
+};
 
 struct lynxQ {
   CACHE_ALIGNED char *QUEUE;
@@ -181,8 +181,8 @@ struct lynxQ {
   clock_t time_begin;
   clock_t time_end;
   double queue_time;
-  CACHE_ALIGNED prod_queue_t *pq_state;
-  cons_queue_t *cq_state;
+  CACHE_ALIGNED struct prod_queue *pq_state;
+  struct cons_queue *cq_state;
   //uint64_t free_push_reg;
   //long cacheBuf6[7];
   //uint64_t free_pop_reg;
@@ -229,7 +229,7 @@ struct lynxQ {
   DEFINE_POP(long, "movq")
   DEFINE_POP(uint64_t, "movq")
 
-  lynxQ(size_t qsize, prod_queue_t *pq, cons_queue_t *cq);
+  lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq);
   double get_time(void);
   void finalize(void);
 
@@ -522,7 +522,7 @@ static inline bool is_expected_redzone (char *index, char *redzone) {
   return (index == redzone); 
 }
 
-lynxQ::lynxQ(size_t qsize, prod_queue_t *pq, cons_queue_t *cq) {
+lynxQ::lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq) {
   printf("Creating LynxQ of size %zu | this %p\n", qsize, this);
   /* Add queue into the set of all the queues created so far */
   all_queues_created.insert(this);
@@ -893,6 +893,10 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
 }
 
 class LynxQueue {
+  public:
+    typedef struct prod_queue prod_queue_t;
+    typedef struct cons_queue cons_queue_t;
+
   private:
     size_t queue_size;
     int nprod;
