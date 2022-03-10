@@ -235,7 +235,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
     }
   }
-#endif
 
   for (cons_id = 0; cons_id < n_cons; cons_id++) {
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
@@ -251,6 +250,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
         this_prod_id, cons_id, transaction_id);
     transaction_id++;
   }
+#endif
 
 #ifdef WITH_VTUNE_LIB
   static const vtune_event event{"message_enqueue"};

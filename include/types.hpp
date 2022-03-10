@@ -150,7 +150,7 @@ struct OpTimings {
 };
 
 inline OpTimings& operator+=(OpTimings& a, const OpTimings& b) {
-  a.duration = std::max(a.duration, b.duration);
+  a.duration += b.duration;
   a.op_count += b.op_count;
   return a;
 }

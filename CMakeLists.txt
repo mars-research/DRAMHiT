@@ -13,6 +13,8 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
     message(FATAL_ERROR "g++ must be version 8.0 or above")
 endif()
 
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 find_package(Threads REQUIRED)
 find_package(Boost 1.67 REQUIRED program_options)
 
