@@ -183,14 +183,6 @@ struct lynxQ {
   double queue_time;
   CACHE_ALIGNED struct prod_queue *pq_state;
   struct cons_queue *cq_state;
-  //uint64_t free_push_reg;
-  //long cacheBuf6[7];
-  //uint64_t free_pop_reg;
-  //long cacheBuf7[7];
-  //char *push_index;
-  //long cacheBuf8[7];
-  //char *pop_index;
-  //long cacheBuf9[7];
   size_t _PAGE_SIZE;
   size_t queue_size;
   size_t REDZONE_SIZE;
