@@ -32,7 +32,8 @@ class QueueTest {
 
 
  public:
-  const unsigned _QUEUE_SIZE = (1 << 21);
+  //const unsigned _QUEUE_SIZE = (1 << 23);
+  const unsigned _QUEUE_SIZE = 4096;
   static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
 
   void run_find_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);

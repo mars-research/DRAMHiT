@@ -12,6 +12,7 @@
 #include "print_stats.h"
 #include "sync.h"
 #include "queues/lynxq.hpp"
+#include "queues/bqueue_aligned.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"
@@ -110,6 +111,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint8_t this_prod_id = sh->shard_idx;
   uint32_t cons_id = 0;
   uint64_t transaction_id;
+  typename T::prod_queue_t *pqueues[n_cons];
+  //prod_queue_t *pqueues[n_cons];
 
   vtune::set_threadname("producer_thread" + std::to_string(tid));
 
@@ -138,7 +141,18 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       "key_start %lu",
       this_prod_id, num_messages, n_cons, key_start);
 
+  // initialize the local queues array from queue_map
+  for (auto i = 0u; i < n_cons; i++) {
+    pqueues[i] = &this->queues->all_pqueues[this_prod_id][i];
+  }
   static const auto event = vtune::event_start("message_enq");
+
+  auto get_next_cons = [&](auto inc) {
+    auto next_cons_id = cons_id + inc;
+    if (next_cons_id >= n_cons) next_cons_id -= n_cons;
+    //return std::min(next_cons_id, n_cons - 1);
+    return next_cons_id;
+  };
 
   auto t_start = RDTSC_START();
 
@@ -146,24 +160,29 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       k = key_start++;
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
-      //uint64_t hash_val = hasher(&k, sizeof(k));
-      //cons_id = hash_to_cpu(hash_val, n_cons);
+      uint64_t hash_val = hasher(&k, sizeof(k));
+      cons_id = hash_to_cpu(hash_val, n_cons);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      //k |= (hash_val << 32);
+      k |= (hash_val << 32);
 
-      cons_id++;
-      if (cons_id >= n_cons) cons_id = 0;
+      //if (++cons_id >= n_cons) cons_id = 0;
 
+      auto q = pqueues[cons_id];
       /*
       IF_PLOG(plog::verbose) {
         PLOG_VERBOSE.printf("prod_id %d | cons_id %d | value %llu",
             this_prod_id, cons_id, k & ((1 << 31) - 1));
       }*/
-      this->queues->enqueue(this_prod_id, cons_id, (data_t)k);
+      //q->push(k);
+      while (this->queues->enqueue(this_prod_id, cons_id, (data_t)k) != SUCCESS) ;
 
-      if (0)
-      this->queues->prefetch(this_prod_id, cons_id, true);
+      /*if (1) {
+        if (((uint64_t)q->push_index & 0x3f) == 0) {
+          __builtin_prefetch(q->push_index + 64, 1, 3);
+        }
+      }*/
+      //this->queues->prefetch(this_prod_id, cons_id, true);
 
       transaction_id++;
   }
@@ -214,7 +233,13 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   uint8_t this_cons_id = sh->shard_idx - n_prod;
   uint64_t inserted = 0u;
+  typename T::cons_queue_t *cqueues[n_prod];
+  //cons_queue_t *cqueues[n_prod];
 
+  // initialize the local queues array from queue_map
+  for (auto i = 0u; i < n_prod; i++) {
+    cqueues[i] = &this->queues->all_cqueues[this_cons_id][i];
+  }
   vtune::set_threadname("consumer_thread" + std::to_string(tid));
 
   auto ht_size = config.ht_size / n_cons;
@@ -249,24 +274,43 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       data_idx = 0;
     };
 
+    auto get_next_prod = [&](auto inc) {
+      auto next_prod_id = prod_id + inc;
+      if (next_prod_id >= n_prod) next_prod_id -= n_prod;
+      return std::min(next_prod_id, n_prod - 1);
+    };
+
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
       kmer_ht->prefetch_queue(QueueType::insert_queue);
     }
 
-    if (0)
+#if 0
+    if (1)
     {
-      auto next_prod_id = prod_id + 1;
-      if (next_prod_id >= n_prod) next_prod_id = 0;
-      this->queues->prefetch(next_prod_id, this_cons_id, false);
-    }
+      typename T::cons_queue_t *cq = cqueues[get_next_prod(1)];
+      __builtin_prefetch(cq->pop_index + 0, 1, 3);
+      __builtin_prefetch(cq->pop_index + 64, 1, 3);
+      __builtin_prefetch(cq->pop_index + 128, 1, 3);
 
+      //auto next_prod_id = prod_id + 1;
+      //if (next_prod_id >= n_prod) next_prod_id = 0;
+    }
+#endif
+    auto next_prod_id = prod_id + 1;
+    //this->queues->prefetch(next_prod_id, this_cons_id, false);
+
+    auto q = cqueues[prod_id];
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k);
-      if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-        if (data_idx > 0) {
-          submit_batch(data_idx);
+      if (this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k)) {
+
+        //k = q->pop_long();
+        if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+          if (data_idx > 0) {
+            submit_batch(data_idx);
+          }
         }
+        goto pick_next_msg;
       }
 
       /*
@@ -688,5 +732,6 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   print_stats(this->shards, *cfg);
 }
 
-template class QueueTest<LynxQueue>;
+//template class QueueTest<LynxQueue>;
+template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter

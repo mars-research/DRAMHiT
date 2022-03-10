@@ -8,6 +8,7 @@ typedef uint64_t data_t;
 
 #define FIPC_CACHE_LINE_SIZE  64
 #define SUCCESS   0
+#define RETRY    (-1)
 
 #define CACHE_ALIGNED __attribute__((aligned(FIPC_CACHE_LINE_SIZE)))
 

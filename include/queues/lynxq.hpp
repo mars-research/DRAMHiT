@@ -97,6 +97,33 @@ typedef struct Queue_state
 } queue_state_t;
 
 
+#define DEFINE_PUSH_OVERLOADED_NEW(TYPE, MOV)				\
+  inline void push(TYPE data)						\
+  {									\
+    char *push_index_tmp = push_index;					\
+    asm(MOV" %0, (%1, %2)"						\
+    	:	/* no outputs */					\
+    	: "r" (data), "r" (free_push_reg), "r" ((TYPE*)push_index_tmp) /* inputs */ \
+    	: "1" );							\
+    push_index_tmp = (char *)((uint64_t)push_index_tmp + sizeof(TYPE));		\
+    push_index = push_index_tmp;					\
+  }
+
+#define DEFINE_POP_NEW(TYPE, MOV)						\
+  inline TYPE pop_##TYPE (void)						\
+  {									\
+    TYPE data;								\
+    char *pop_index_tmp = pop_index;					\
+    asm(MOV" (%1, %2), %0"						\
+    	: "=&r" (data)							\
+    	: "r" (free_pop_reg), "r" ((TYPE *)pop_index_tmp) 	/* inputs */ \
+    	: "1" );							\
+    pop_index_tmp += sizeof(TYPE);					\
+    pop_index = pop_index_tmp;						\
+    return data;							\
+  }
+
+
 #define DEFINE_PUSH_OVERLOADED(TYPE, MOV)				\
   inline void push(TYPE data, prod_queue_t *pq)						\
   {									\
@@ -133,12 +160,16 @@ typedef struct {
   char *QUEUE;
   char *push_index;
   uint64_t free_push_reg;
+
+  DEFINE_PUSH_OVERLOADED_NEW(long, "movq")
 } prod_queue_t;
 
 typedef struct {
   char *QUEUE;
   char *pop_index;
   uint64_t free_pop_reg;
+  bool in_redzone;
+  DEFINE_POP_NEW(long, "movq")
 } cons_queue_t;
 
 struct lynxQ {
@@ -254,27 +285,29 @@ const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
   assert (cond == ON || cond == OFF && "Bad COND");
   int prot = (cond == ON) ? PROT_NONE : (PROT_READ| PROT_WRITE | PROT_EXEC);
   size_t size = _PAGE_SIZE;
-  if (!addr) {
-        void *array[10];
-  size_t size;
 
-  // get void*'s for all entries on the stack
-  size = backtrace(array, 10);
-  
-  // print out all the frames to stderr
+  if (!addr) {
+    void *array[10];
+    size_t size;
+
+    // get void*'s for all entries on the stack
+    size = backtrace(array, 10);
+
+    // print out all the frames to stderr
     char **strings = backtrace_symbols(array, size);
     if (strings != NULL)
-  {
+    {
 
-    printf ("Obtained %d stack frames.\n", size);
-    for (auto i = 0; i < size; i++)
-      printf ("%s\n", strings[i]);
+      printf ("Obtained %d stack frames.\n", size);
+      for (auto i = 0; i < size; i++)
+        printf ("%s\n", strings[i]);
+    }
   }
-  }
+
   if (mprotect(addr, size, prot) == -1) {
-	  dump();
+    dump();
     fatal_error("mprotect error: addr:%p, size:0x%lx, prot:%d\n", 
-		addr, size, prot);
+        addr, size, prot);
   }
   return (char *)addr;
 }
@@ -744,6 +777,7 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
   lynxQ_t queue = get_beginning_of_queue (index);
 
   if (! queue) {
+    //queue->dump();
     segfault ("Index: %p is not in any queue!. "
 	      "Probably a segmentation fault of program\n", index);
   }
@@ -826,11 +860,19 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
       int si = 0;
       if (queue->allow_rotate) {
 	if (index_is_in_redzone(index, queue->redzone1)) {
+          if (! (queue->qstate.sstate1 & (PUSH_READY | PUSH_EXITED))) {
+            queue->cq_state->in_redzone = true;
+            return;
+          }
 	  redzone_do_pop("REDZONE 1", index,
 			 &queue->qstate.sstate0, &queue->qstate.sstate1,
 			 &queue->redzone1, queue->QUEUE, queue);
 	}
 	else if (index_is_in_redzone(index, queue->redzone2)) {
+          if (! (queue->qstate.sstate0 & (PUSH_READY | PUSH_EXITED))) {
+            queue->cq_state->in_redzone = true;
+            return;
+          }
 	  redzone_do_pop("REDZONE 2", index,
 			 &queue->qstate.sstate1, &queue->qstate.sstate0,
 			 &queue->redzone2, queue->QUEUE, queue);
@@ -859,11 +901,12 @@ class LynxQueue {
     std::map<std::tuple<int, int>, prod_queue_t*> pqueue_map;
     std::map<std::tuple<int, int>, cons_queue_t*> cqueue_map;
     std::map<std::tuple<int, int>, queue_t*> queue_map;
-    prod_queue_t **all_pqueues;
-    cons_queue_t **all_cqueues;
     queue_t ***queues;
 
   public:
+    prod_queue_t **all_pqueues;
+    cons_queue_t **all_cqueues;
+
     static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
 
     void init_prod_queues() {
@@ -941,18 +984,19 @@ class LynxQueue {
     inline void prefetch(int p, int c, bool is_prod)  {
       auto q = queues[p][c];
       if (is_prod) {
-        auto pq = q->pq_state;
+        auto pq = &all_pqueues[p][c];
         if (((uint64_t)pq->push_index & 0x3f) == 0) {
           __builtin_prefetch(pq->push_index + 64, 1, 3);
         }
         auto nc = ((c + 1) >= ncons) ? 0: (c + 1);
         auto npq = queues[p][nc];
-        __builtin_prefetch(npq->pq_state, 1, 3);
+        __builtin_prefetch(npq->pq_state, 0, 3);
       } else {
-        auto cq = q->cq_state;
-        auto np = ((p + 1) >= nprod) ? 0: (p + 1);
-        auto ncq = queues[np][c];
-        __builtin_prefetch(ncq->cq_state, 1, 3);
+        // auto cq = q->cq_state;
+        //auto np = ((p + 1) >= nprod) ? 0: (p + 1);
+        //auto ncq = queues[np][c];
+        //__builtin_prefetch(ncq->cq_state, 0, 3);
+        auto cq = &all_cqueues[c][p];
         if (cq->pop_index != q->redzone_end) {
         __builtin_prefetch(cq->pop_index + 0, 1, 3);
         __builtin_prefetch(cq->pop_index + 64, 1, 3);
@@ -962,6 +1006,14 @@ class LynxQueue {
     }
 
     inline int enqueue(int p, int c, data_t value)  {
+      auto pq = &all_pqueues[p][c];
+
+      pq->push(value);
+
+      return SUCCESS;
+    }
+
+    inline int enqueue_old(int p, int c, data_t value)  {
       auto q = queues[p][c];
 
       q->push(value, q->pq_state);
@@ -971,6 +1023,17 @@ class LynxQueue {
     }
 
     inline int dequeue(int p, int c, data_t *value) { //override {
+      int ret = SUCCESS;
+      auto cq = &all_cqueues[c][p];
+      *value = cq->pop_long();
+      if (cq->in_redzone) {
+        ret = RETRY;
+        cq->in_redzone = false;
+      }
+      return ret;
+    }
+
+    inline int dequeue_old(int p, int c, data_t *value) { //override {
       auto q = queues[p][c];
 
       *value = q->pop_long(q->cq_state);
