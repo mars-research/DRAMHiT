@@ -112,7 +112,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint32_t cons_id = 0;
   uint64_t transaction_id;
   typename T::prod_queue_t *pqueues[n_cons];
-  //prod_queue_t *pqueues[n_cons];
 
   vtune::set_threadname("producer_thread" + std::to_string(tid));
 
@@ -234,7 +233,6 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   uint8_t this_cons_id = sh->shard_idx - n_prod;
   uint64_t inserted = 0u;
   typename T::cons_queue_t *cqueues[n_prod];
-  //cons_queue_t *cqueues[n_prod];
 
   // initialize the local queues array from queue_map
   for (auto i = 0u; i < n_prod; i++) {
@@ -527,7 +525,12 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 template <typename T>
 void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
   PLOG_DEBUG.printf("Initializing queues");
-  this->queues = new T(nprod, ncons, QueueTest::_QUEUE_SIZE);
+  if (std::is_same<T, kmercounter::LynxQueue>::value) {
+    this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
+  } else if(std::is_same<T, kmercounter::BQueueAligned>::value) {
+    this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
+  }
+  this->queues = new T(nprod, ncons, this->QUEUE_SIZE);
 }
 
 template <typename T>

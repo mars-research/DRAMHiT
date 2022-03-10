@@ -235,9 +235,6 @@ void Application::shard_thread(int tid, bool mainthread) {
     case PREFETCH:
       this->test.pt.prefetch_test_run_exec(sh, config, kmer_ht);
       break;
-    case BQ_TESTS_NO_BQ:
-      this->test.bqt.no_bqueues(sh, kmer_ht);
-      break;
     case CACHE_MISS:
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;

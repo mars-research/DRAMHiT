@@ -1,7 +1,6 @@
 #ifndef TESTS_TESTS_HPP
 #define TESTS_TESTS_HPP
 
-#include "BQueueTest.hpp"
 #include "CacheMissTest.hpp"
 #include "PrefetchTest.hpp"
 #include "SynthTest.hpp"
@@ -17,9 +16,8 @@ class Tests {
  public:
   SynthTest st;
   PrefetchTest pt;
-  BQueueTest bqt;
-  QueueTest<kmercounter::BQueueAligned> qt;
-  //QueueTest<kmercounter::LynxQueue> qt;
+  //QueueTest<kmercounter::BQueueAligned> qt;
+  QueueTest<kmercounter::LynxQueue> qt;
   CacheMissTest cmt;
   ZipfianTest zipf;
 
