@@ -12,7 +12,6 @@
 #include <fstream>
 
 #include "./hashtables/cas_kht.hpp"
-#include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "tests/PrefetchTest.hpp"
 #include "misc_lib.h"
@@ -109,9 +108,6 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   switch (config.ht_type) {
     case SIMPLE_KHT:
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
-      break;
-    case ROBINHOOD_KHT:
-      kmer_ht = new RobinhoodKmerHashTable(sz);
       break;
     case CAS_KHT:
       /* For the CAS Hash table, size is the same as
