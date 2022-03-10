@@ -278,7 +278,7 @@ class rw_experiment {
       const auto lookahead_index =
           lookahead - (lookahead >= n_clients ? n_clients : 0);
 
-      cons_queue_t* next_queue = sources.at(lookahead_index);
+      cons_queue_t* next_queue = sources[lookahead_index];
       if ((next_queue->tail + 15) == next_queue->batch_tail) {
         auto tmp_tail = next_queue->tail + BATCH_SIZE - 1;
         if (tmp_tail >= QUEUE_SIZE) tmp_tail = 0;
@@ -302,7 +302,6 @@ class rw_experiment {
                 _mm_crc32_u32(0xffffffff, hash_key(&data, sizeof(data))),
                 config.num_threads);
 
-            if (part_assignments.at(part_id) != self_id) std::terminate();
             if (writes.first == HT_TESTS_BATCH_LENGTH) insert<no_count>();
             push_key(writes, data, part_id);
           }
@@ -339,12 +338,12 @@ class rw_experiment {
           fastrange32(_mm_crc32_u32(0xffffffff, hash), config.num_threads)};
 
       const auto queue_id = part_assignments.at(part_id);
-      const auto sink = sinks.at(queue_id);
+      const auto sink = sinks[queue_id];
       while (enqueue(sink, key) != SUCCESS) _mm_pause();
 
       if (((sink->head + 4) & 7) == 0) {
         const auto next_sink = queue_id + 1;
-        const auto q = sinks.at(next_sink < n_servers ? next_sink : 0);
+        const auto q = sinks[next_sink < n_servers ? next_sink : 0];
         const auto next_1 = (q->head + 8) & (QUEUE_SIZE - 1);
         __builtin_prefetch(&q->data[next_1], 1, 3);
       }
