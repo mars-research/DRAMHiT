@@ -16,8 +16,8 @@ class Tests {
  public:
   SynthTest st;
   PrefetchTest pt;
-  //QueueTest<kmercounter::BQueueAligned> qt;
-  QueueTest<kmercounter::LynxQueue> qt;
+  QueueTest<kmercounter::BQueueAligned> qt;
+  //QueueTest<kmercounter::LynxQueue> qt;
   CacheMissTest cmt;
   ZipfianTest zipf;
 

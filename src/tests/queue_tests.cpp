@@ -181,7 +181,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
           __builtin_prefetch(q->push_index + 64, 1, 3);
         }
       }*/
-      //this->queues->prefetch(this_prod_id, cons_id, true);
+      this->queues->prefetch(this_prod_id, cons_id, true);
 
       transaction_id++;
   }
@@ -295,7 +295,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     }
 #endif
     auto next_prod_id = prod_id + 1;
-    //this->queues->prefetch(next_prod_id, this_cons_id, false);
+    this->queues->prefetch(next_prod_id, this_cons_id, false);
 
     auto q = cqueues[prod_id];
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
