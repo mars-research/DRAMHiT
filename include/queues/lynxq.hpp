@@ -327,11 +327,11 @@ void lynxQ::pop_done(void) {
 }
 
 
-static inline uint8_t * get_err_ip(ucontext_t * uc){
+static inline uint8_t * get_err_ip(const ucontext_t * uc){
     return (uint8_t *)(uc->uc_mcontext.gregs[REG_RIP]);
 }
 
-static inline uint64_t get_reg_value(ucontext_t * uc, int regid){
+static inline uint64_t get_reg_value(const ucontext_t * uc, int regid){
     switch (regid) {
         case X86_REG_RAX:
             return (uint64_t)(uc->uc_mcontext.gregs[REG_RAX]);
@@ -481,7 +481,7 @@ typedef struct Regs Regs;
 
 /* Collect the register ids and their values into REGS */
 static inline void collect_regs (Regs *regs, cs_x86_op *mem_op, csh handle, 
-				 ucontext_t *context) {
+				 const ucontext_t *context) {
   regs->reg_base = mem_op->mem.base;
   regs->reg_index = mem_op->mem.index;
   regs->reg_segment = mem_op->mem.segment;
@@ -721,8 +721,8 @@ struct Memoize_mem_op {
   cs_x86_op *mem_op;
   mem_type_t mem_type;
 };
-typedef struct Memoize_mem_op Memoize_mem_op_t;
 
+typedef struct Memoize_mem_op Memoize_mem_op_t;
 
 #include <execinfo.h>
 void
@@ -755,6 +755,48 @@ static void segfault (const char *msg, char *index) {
   sigaction (SIGSEGV, &act, 0);
 }
 
+std::tuple<uint64_t, uint64_t, csh> get_mem_base(lynxQ_t queue, const ucontext_t *context, Memoize_mem_op_t *memo, char *base_addr) {
+  cs_x86_op *mem_op = NULL;
+  csh handle;
+
+  const uint8_t *ip = get_err_ip(context);
+
+  if (ip != memo->ip) {
+    if (cs_open(CS_ARCH_X86, CS_MODE_64, &handle) != CS_ERR_OK)
+      handle_error("capstone cs_open failed");
+    cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
+    cs_insn instobj, * insn = &instobj;
+    int count = cs_disasm(handle, ip, 8/*code_size*/, 0x0/*addr*/, 1/*num to disasm*/, &insn);
+    if (count == 0)
+      handle_error("cs_disasm failed.");
+
+    /* Find the memory operand */
+    mem_op = get_mem_op (insn, handle, &memo->mem_type);
+    /* Memoize */
+    memo->ip = ip;
+    memo->mem_op = mem_op;
+  }
+  else {
+    mem_op = memo->mem_op;
+  }
+
+  Regs regs;
+  collect_regs(&regs, mem_op, handle, context);
+
+  unsigned int reg_base_to_update = regs.reg_base;
+  assert (reg_base_to_update != X86_REG_INVALID && "ASM supposed to force this");
+  uint64_t reg_value = get_reg_value (context, reg_base_to_update);
+
+  uint64_t new_base_value = (uint64_t) base_addr - regs.reg_segment_value -
+    regs.mem_disp - regs.reg_index_value * regs.scale;
+
+  uint64_t sum = regs.mem_disp + new_base_value + regs.reg_index_value *
+    regs.scale + regs.reg_segment_value;
+  assert (sum == (uint64_t) base_addr);
+
+  return std::make_tuple(new_base_value, reg_base_to_update, handle);
+}
+
 static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
 {
   static __thread Memoize_mem_op_t memo;
@@ -780,38 +822,8 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
            inside redzone_end and therefore the index does not match the 
            pop expected redzone. */
   if (index >= queue->QUEUE + queue->queue_size) {
-    cs_x86_op *mem_op = NULL;
-    csh handle;
-    if (ip != memo.ip) {
-      if (cs_open(CS_ARCH_X86, CS_MODE_64, &handle) != CS_ERR_OK)
-	handle_error("capstone cs_open failed");
-      cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
-      cs_insn instobj, * insn = &instobj;
-      int count = cs_disasm(handle, ip, 8/*code_size*/, 0x0/*addr*/, 1/*num to disasm*/, &insn);
-      if (count == 0)
-	handle_error("cs_disasm failed.");
-
-      /* Find the memory operand */
-      mem_op = get_mem_op (insn, handle, &memo.mem_type);
-      /* Memoize */
-      memo.ip = ip;
-      memo.mem_op = mem_op;
-    }
-    else {
-      mem_op = memo.mem_op;
-    }
-
-    Regs regs;
-    collect_regs(&regs, mem_op, handle, context);
-
-    unsigned int reg_base_to_update = regs.reg_base;
-    assert (reg_base_to_update != X86_REG_INVALID && "ASM supposed to force this");
-    uint64_t reg_value = get_reg_value (context, reg_base_to_update);
-
-    uint64_t new_base_value = (uint64_t) queue->QUEUE - regs.reg_segment_value - regs.mem_disp - regs.reg_index_value * regs.scale;
-    uint64_t sum = regs.mem_disp + new_base_value + regs.reg_index_value * regs.scale + regs.reg_segment_value;
-    assert (sum == (uint64_t) queue->QUEUE);
-
+    auto [new_base_value, reg_base_to_update, handle] =
+              get_mem_base(queue, context, &memo, queue->QUEUE);
     /* Initially the pop thread is trapped at the end of the queue, until
        the push thread has reached the first redzone. */
     if (queue->allow_rotate) {
