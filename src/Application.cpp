@@ -599,7 +599,10 @@ int Application::process(int argc, char *argv[]) {
 
   switch (config.mode) {
     case BQ_TESTS_YES_BQ:
+#ifdef BQ_TESTS_RW_RATIO
       this->test.bqt.run_test(&config, this->n, this->npq);
+#endif
+      this->test.bqt_rw.run_test(&config, this->n, this->npq);
       break;
 
     default:

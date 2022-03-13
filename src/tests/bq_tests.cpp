@@ -29,6 +29,9 @@
 #define BQ_TESTS_DEQUEUE_ARR_LENGTH 16
 
 namespace kmercounter {
+template class BQueueTest<true>;
+template class BQueueTest<false>;
+
 using namespace std;
 
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -98,9 +101,12 @@ class vtune_event {
 };
 #endif
 
-void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
-                                 const uint32_t n_cons, const bool main_thread,
-                                 const double skew) {
+template <bool init_contents>
+void BQueueTest<init_contents>::producer_thread(const uint32_t tid,
+                                                const uint32_t n_prod,
+                                                const uint32_t n_cons,
+                                                const bool main_thread,
+                                                const double skew) {
   // Get shard pointer from the shards array
   Shard *sh = &this->shards[tid];
 
@@ -158,9 +164,8 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint64_t found_count{};
 
   auto ht_size = config.ht_size / n_cons;
-  const auto hashtable =
-      std::make_unique<PartitionedHashStore<Aggr_KV, ItemQueue> >(
-          ht_size, sh->shard_idx, true);
+  const auto hashtable = new PartitionedHashStore<Aggr_KV, ItemQueue>{
+      ht_size, sh->shard_idx, true};
 #endif
 
 #ifdef BQ_TESTS_INSERT_ZIPFIAN
@@ -204,53 +209,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
     if (next_cons_id >= n_cons) next_cons_id -= n_cons;
     return std::min(next_cons_id, n_cons - 1);
   };
-
-#ifdef BQ_TESTS_RW_RATIO
-  auto insert_key = key_start;
-  for (transaction_id = 0u; transaction_id < num_messages;) {
-    // The idea is to batch messages upto BQ_TESTS_BATCH_LENGTH
-    // for the same queue and then move on to next consumer
-    for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH_PROD; i++) {
-      next_key = insert_key++;
-
-      // XXX: if we are testing without insertions, make sure to pick CRC as
-      // the hashing mechanism to have reduced overhead
-      const auto hash_val = hasher(&next_key, sizeof(next_key));
-      cons_id = hash_to_cpu(hash_val, n_cons);
-      auto *q = pqueues[cons_id];
-
-      // k has the computed hash in upper 32 bits
-      // and the actual key value in lower 32 bits
-      next_key |= (hash_val << 32);
-      // *((uint64_t *)&kmers[i].data) = k;
-      while (enqueue(q, (data_t)next_key) != SUCCESS)
-        ;
-
-      if (((Q_HEAD + 4) & 7) == 0) {
-        auto q = pqueues[get_next_cons(1)];
-        auto next_1 = (Q_HEAD + 8) & (QUEUE_SIZE - 1);
-        __builtin_prefetch(&q->data[next_1], 1, 3);
-      }
-
-      transaction_id++;
-    }
-  }
-
-  for (cons_id = 0; cons_id < n_cons; cons_id++) {
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-    enable_backtracking(cons_id);
-    auto *q = pqueues[cons_id];
-#else
-    auto *q = queues[cons_id];
-#endif
-    while (enqueue(q, (data_t)BQ_MAGIC_64BIT) != SUCCESS)
-      ;
-    PLOG_DEBUG.printf(
-        "q %p Prod %d Sending END message to cons %d (transaction %u)", q,
-        this_prod_id, cons_id, transaction_id);
-    transaction_id++;
-  }
-#endif
 
 #ifdef WITH_VTUNE_LIB
   static const vtune_event event{"message_enqueue"};
@@ -345,15 +303,17 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   event.stop();
 #endif
 
-  sh->stats->enqueues.duration = t_end - t_start;
-  sh->stats->enqueues.op_count = transaction_id;
+  if (!init_contents) {
+    sh->stats->enqueues.duration = t_end - t_start;
+    sh->stats->enqueues.op_count = transaction_id;
 
 #ifdef BQ_TESTS_RW_RATIO
-  sh->stats->finds.duration = t_end - t_start;
-  sh->stats->finds.op_count = read_count;
-  sh->stats->any.duration = t_end - t_start;
-  sh->stats->any.op_count = read_count;
+    sh->stats->finds.duration = t_end - t_start;
+    sh->stats->finds.op_count = read_count;
+    sh->stats->any.duration = t_end - t_start;
+    sh->stats->any.op_count = read_count;
 #endif
+  }
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_cons; ++i) {
@@ -441,12 +401,11 @@ void write_hashtable_to_file(const BaseHashTable &kmer_ht,
   }
 }
 
-void BQueueTest::consumer_thread_main(uint64_t cons_id, BaseHashTable &kmer_ht,
-                                      Shard &shard,
-                                      const std::vector<cons_queue_t *> &queues,
-                                      const uint32_t n_prod,
-                                      const uint32_t n_cons,
-                                      const uint32_t num_nops, bool last_test) {
+template <bool init_contents>
+void BQueueTest<init_contents>::consumer_thread_main(
+    uint64_t cons_id, BaseHashTable &kmer_ht, Shard &shard,
+    const std::vector<cons_queue_t *> &queues, const uint32_t n_prod,
+    const uint32_t n_cons, const uint32_t num_nops, bool last_test) {
 #ifndef CONFIG_ALIGN_BQUEUE_METADATA
 #error "David nuked this codepath on this branch"
 #endif
@@ -586,9 +545,11 @@ void BQueueTest::consumer_thread_main(uint64_t cons_id, BaseHashTable &kmer_ht,
   }
 }
 
-void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
-                                 const uint32_t n_cons,
-                                 const uint32_t num_nops) {
+template <bool init_contents>
+void BQueueTest<init_contents>::consumer_thread(const uint32_t tid,
+                                                const uint32_t n_prod,
+                                                const uint32_t n_cons,
+                                                const uint32_t num_nops) {
   const auto shard = &this->shards[tid];
   shard->stats = std::make_unique<thread_stats>();
 
@@ -606,8 +567,13 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
                    shard->shard_idx, ht_size);
 
   // TODO: move me
-  std::unique_ptr<BaseHashTable> kmer_ht{init_ht(ht_size, shard->shard_idx)};
-  this->ht_vec.at(tid) = kmer_ht.get();
+  BaseHashTable *kmer_ht{};
+  if (!this->ht_vec.at(tid)) {
+    kmer_ht = init_ht(ht_size, shard->shard_idx);
+    this->ht_vec.at(tid) = kmer_ht;
+  } else {
+    kmer_ht = this->ht_vec.at(tid);  // probably doesn't work lol
+  }
 
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
@@ -615,20 +581,16 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
-#ifdef BQ_TESTS_RW_RATIO
   consumer_thread_main(this_cons_id, *kmer_ht, *shard, queues, n_prod, n_cons,
-                       num_nops, false);
-#endif
-
-  consumer_thread_main(this_cons_id, *kmer_ht, *shard, queues, n_prod, n_cons,
-                       num_nops, true);
+                       num_nops, !init_contents);
 
   // End test
   fipc_test_FAI(completed_consumers);
 }
 
-void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
-                             bool main_thread) {
+template <bool init_contents>
+void BQueueTest<init_contents>::find_thread(int tid, int n_prod, int n_cons,
+                                            bool main_thread) {
   Shard *sh = &this->shards[tid];
   uint64_t found = 0, not_found = 0;
   uint64_t count = std::max(HT_TESTS_NUM_INSERTS * tid, (uint64_t)1);
@@ -760,7 +722,8 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
 }
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
-void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
+template <bool init_contents>
+void BQueueTest<init_contents>::init_queues(uint32_t nprod, uint32_t ncons) {
   data_array_t *data_arrays = (data_array_t *)utils::zero_aligned_alloc(
       FIPC_CACHE_LINE_SIZE, nprod * ncons * sizeof(data_array_t));
 
@@ -811,7 +774,8 @@ void BQueueTest::init_queues(uint32_t nprod, uint32_t ncons) {
 }
 #endif
 
-void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
+template <bool init_contents>
+void BQueueTest<init_contents>::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
   [[maybe_unused]] uint64_t k = 0;
   // uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
@@ -864,21 +828,26 @@ void BQueueTest::no_bqueues(Shard *sh, BaseHashTable *kmer_ht) {
       sh->shard_idx, transaction_id, (t_end - t_start) / transaction_id);
 }
 
-void BQueueTest::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
+template <bool init_contents>
+void BQueueTest<init_contents>::run_test(Configuration *cfg, Numa *n,
+                                         NumaPolicyQueues *npq) {
   this->ht_vec.resize(cfg->n_prod + cfg->n_cons);
   // 1) Insert using bqueues
   this->insert_with_bqueues(cfg, n, npq);
 
+  if constexpr (!init_contents) {
 #ifndef BQ_TESTS_RW_RATIO
-  // 2) spawn n_prod + n_cons threads for find
-  this->run_find_test(cfg, n, npq);
+    // 2) spawn n_prod + n_cons threads for find
+    this->run_find_test(cfg, n, npq);
 #endif
 
-  print_stats(this->shards, *cfg);
+    print_stats(this->shards, *cfg);
+  }
 }
 
-void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
-                               NumaPolicyQueues *npq) {
+template <bool init_contents>
+void BQueueTest<init_contents>::run_find_test(Configuration *cfg, Numa *n,
+                                              NumaPolicyQueues *npq) {
   uint32_t i = 0, j = 0;
   cpu_set_t cpuset;
   // Spawn threads that will perform find operation
@@ -946,8 +915,9 @@ void BQueueTest::run_find_test(Configuration *cfg, Numa *n,
   PLOG_INFO.printf("Find done!");
 }
 
-void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
-                                     NumaPolicyQueues *npq) {
+template <bool init_contents>
+void BQueueTest<init_contents>::insert_with_bqueues(Configuration *cfg, Numa *n,
+                                                    NumaPolicyQueues *npq) {
   cpu_set_t cpuset;
   uint32_t i = 0, j = 0;
 

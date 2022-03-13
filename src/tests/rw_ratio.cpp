@@ -16,6 +16,7 @@
 #endif
 
 namespace kmercounter {
+
 struct experiment_results {
   std::uint64_t cycles;
   std::uint64_t n_reads;
@@ -71,8 +72,7 @@ class rw_experiment {
       if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
       if (sampler(prng))
-        push_key(reads, std::uniform_int_distribution<std::uint64_t>{
-                            1, next_key - 1}(prng));
+        push_key(reads, next_key++);
       else
         push_key(writes, next_key++);
     }

@@ -16,7 +16,8 @@ class Tests {
   SynthTest st;
   PrefetchTest pt;
   ParserTest pat;
-  BQueueTest bqt;
+  BQueueTest<false> bqt_rw;
+  BQueueTest<true> bqt;
   CacheMissTest cmt;
   ZipfianTest zipf;
   RWRatioTest rw_ratio;
