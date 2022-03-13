@@ -52,6 +52,7 @@ struct lynxQ;
 typedef struct lynxQ queue_t;
 
 static void lynxQ_handler(int, siginfo_t *, void *);
+static void lynxQ_nomprotect_handler(int, siginfo_t *, void *);
 
 enum section_state {
   /* Boiler plate */
@@ -342,11 +343,11 @@ inline void lynxQ::push_done (void)
   //push((uint64_t) 0xFEEBDAED, pq_state);
 
   /* Clear the last redzone */
-  config_red_zone (OFF, push_last_rz);
+  //config_red_zone (OFF, push_last_rz);
   /* Make sure that a segfault does not belong to a push */
-  printf("-------------------PUSH DONE!-----------------\n");
-  printf("push_expected_rz %p | pop_expected_rz %p | push_last_rz %p\n",
-        push_expected_rz, pop_expected_rz, push_last_rz);
+  //printf("-------------------PUSH DONE!-----------------\n");
+  //printf("push_expected_rz %p | pop_expected_rz %p | push_last_rz %p\n",
+  //      push_expected_rz, pop_expected_rz, push_last_rz);
   push_expected_rz = NULL;
 
   /* Set the special state */
@@ -354,7 +355,7 @@ inline void lynxQ::push_done (void)
   //config_red_zone (OFF, pop_last_rz);
   //pop_expected_rz = NULL;
   allow_rotate = true;
-  dump();
+  //dump();
 }
 
 
@@ -493,7 +494,7 @@ static inline cs_x86_op *get_mem_op (cs_insn *insn, csh handle,
       }
     }
   assert (mem_op && "No memory operand?");
-  printf("Instruction: %s\t%s\n", insn[0].mnemonic, insn[0].op_str);
+  //printf("Instruction: %s\t%s\n", insn[0].mnemonic, insn[0].op_str);
   unsigned mem_op_membase = mem_op->mem.base;
   if (mem_op_membase == X86_REG_INVALID){
     printf("Instruction: %s\t%s\n", insn[0].mnemonic, insn[0].op_str);
@@ -609,7 +610,8 @@ lynxQ::lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq) {
   sigset_t sa_mask;
   sigemptyset (&sa_mask);
   act.sa_handler = NULL;
-  act.sa_sigaction = lynxQ_handler;
+  //act.sa_sigaction = lynxQ_handler;
+  act.sa_sigaction = lynxQ_nomprotect_handler;
   act.sa_mask = sa_mask;
   act.sa_flags = SA_SIGINFO;
   act.sa_restorer = NULL;
@@ -878,12 +880,12 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
       if (memo.mem_type == STORE_TYPE) {
+        //printf("PUSH queue wrap around\n");
 	queue->pq_state->push_index = queue->QUEUE;
-	queue->pq_state->free_push_reg -= queue->queue_size;
       }
       else if (memo.mem_type == LOAD_TYPE) {
+        //printf("POP queue wrap around\n");
 	queue->cq_state->pop_index = queue->QUEUE;
-	queue->cq_state->free_pop_reg -= queue->queue_size;
       }
       else {
 	fprintf (stderr, "ERROR: Can't determine which thread it is\n");
@@ -891,15 +893,19 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
     }
   } else if (memo.mem_type == STORE_TYPE) {
     if (index_is_in_redzone(index, queue->redzone1)) {
+      //printf("Push RZ1\n");
       // - Check if we can progress to the next section
       // - If so, move and announce that we are in the next section
       // - If not, return RETRY?
+
+      // release previous section
+      queue->qstate.sstate0 = PUSH_READY;
+
       // wait for the next section to be ready
       while (queue->qstate.sstate1 != POP_READY) ;
       // claim next section
       queue->qstate.sstate1 = PUSH_WRITES;
-      // release previous section
-      queue->qstate.sstate0 = PUSH_READY;
+      queue->last_push_state = &queue->qstate.sstate1;
       // move the index pointer past the redzone
       char *new_index = queue->redzone1 + queue->REDZONE_SIZE;
 
@@ -908,16 +914,23 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
 
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
-      if (memo.mem_type == STORE_TYPE) {
-        queue->pq_state->push_index = new_index;
-        queue->pq_state->free_push_reg -= queue->queue_size;
-      } else {
-        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
+      queue->pq_state->push_index = new_index;
+
+      if (! queue->allow_rotate) {
+        queue->allow_rotate = true;
       }
     }
     else if (index_is_in_redzone(index, queue->redzone2)) {
+      //printf("Push RZ2\n");
+
+      queue->qstate.sstate1 = PUSH_READY;
+
       while (queue->qstate.sstate0 != POP_READY) ;
-      queue->qstate.sstate0 = PUSH_READY;
+
+      queue->qstate.sstate0 = PUSH_WRITES;
+
+      queue->last_push_state = &queue->qstate.sstate0;
+
       char *new_index = queue->redzone2 + queue->REDZONE_SIZE;
 
       auto [new_base_value, reg_base_to_update] = get_mem_base(context, &memo,
@@ -925,11 +938,10 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
 
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
-      if (memo.mem_type == STORE_TYPE) {
-        queue->pq_state->push_index = new_index;
-        queue->pq_state->free_push_reg -= queue->queue_size;
-      } else {
-        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
+      queue->pq_state->push_index = new_index;
+
+      if (! queue->allow_rotate) {
+        queue->allow_rotate = true;
       }
     }
     else {
@@ -939,8 +951,13 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
     }
   } else if (memo.mem_type == LOAD_TYPE) {
     if (index_is_in_redzone(index, queue->redzone1)) {
-      while (! (queue->qstate.sstate1 & (PUSH_READY | PUSH_EXITED))) ;
+      //printf("Pop RZ1\n");
       queue->qstate.sstate0 = POP_READY;
+
+      while (! (queue->qstate.sstate1 & (PUSH_READY | PUSH_EXITED))) ;
+
+      queue->qstate.sstate1 = POP_READS;
+
       char *new_index = queue->redzone1 + queue->REDZONE_SIZE;
 
       auto [new_base_value, reg_base_to_update] = get_mem_base(
@@ -948,16 +965,13 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
 
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
-      if (memo.mem_type == LOAD_TYPE) {
-        queue->cq_state->pop_index = new_index;
-        queue->cq_state->free_pop_reg -= queue->queue_size;
-      } else {
-        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
-      }
+      queue->cq_state->pop_index = new_index;
     }
     else if (index_is_in_redzone(index, queue->redzone2)) {
-      while (! (queue->qstate.sstate0 & (PUSH_READY | PUSH_EXITED))) ;
+      //printf("Pop RZ2\n");
       queue->qstate.sstate1 = POP_READY;
+      while (! (queue->qstate.sstate0 & (PUSH_READY | PUSH_EXITED))) ;
+      queue->qstate.sstate0 = POP_READS;
       char *new_index = queue->redzone2 + queue->REDZONE_SIZE;
 
       auto [new_base_value, reg_base_to_update] = get_mem_base(
@@ -965,13 +979,7 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
 
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
-      if (memo.mem_type == LOAD_TYPE) {
-        queue->cq_state->pop_index = new_index;
-        queue->cq_state->free_pop_reg -= queue->queue_size;
-      } else {
-        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
-      }
-
+      queue->cq_state->pop_index = new_index;
     }
     /* The index is not in the queue's red zone. This is a program bug. */
     else {
@@ -1029,8 +1037,8 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
       else if (memo.mem_type == LOAD_TYPE) {
         auto old_pop_reg = queue->cq_state->free_pop_reg;
 	queue->cq_state->free_pop_reg -= queue->queue_size;
-        printf("free_pop_reg old: %lx | new %lx pop_index 0x%p\n",
-              old_pop_reg, queue->cq_state->free_pop_reg, queue->cq_state->pop_index);
+        //printf("free_pop_reg old: %lx | new %lx pop_index 0x%p\n",
+        //      old_pop_reg, queue->cq_state->free_pop_reg, queue->cq_state->pop_index);
 	queue->cq_state->pop_index = queue->QUEUE;
       }
       else {
@@ -1218,10 +1226,10 @@ class LynxQueue {
       auto pq = &all_pqueues[p][c];
       auto q = queues[p][c];
 
-#if 1
+#if 0
       if (!((uint64_t)pq->push_index & ((1 << 13) - 1)))
-      printf("pq->push_index 0x%lx | push_reg 0x%lx\n",
-            pq->push_index, pq->free_push_reg);
+      printf("pq->push_index 0x%lx | push_reg 0x%lx | value %lu\n",
+            pq->push_index, pq->free_push_reg, value);
 #endif
       pq->push(value);
 
@@ -1243,7 +1251,7 @@ class LynxQueue {
       auto q = queues[p][c];
 
       *value = cq->pop_long();
-#if 1
+#if 0
       if (!((uint64_t)cq->pop_index & ((1 << 12) - 1)))
         printf("cq->pop_index 0x%lx | pop_reg 0x%lx | ea 0x%lx | value %lu\n",
                 cq->pop_index, cq->free_pop_reg,
