@@ -109,6 +109,33 @@ typedef struct Queue_state
     push_index = push_index_tmp;					\
   }
 
+#define DEFINE_PUSH_OVERLOADED_1OP(TYPE, MOV)				\
+  inline void push(TYPE data)						\
+  {									\
+    char *push_index_tmp = push_index;					\
+    asm(MOV" %0, (%1)"						\
+    	:	/* no outputs */					\
+    	: "r" (data),  "r" ((TYPE*)push_index_tmp) /* inputs */ \
+    	: "1" );							\
+    push_index = (char *)((uint64_t)push_index + sizeof(TYPE));		\
+  }
+
+
+#define DEFINE_POP_1OP(TYPE, MOV)						\
+  inline TYPE pop_##TYPE (void)						\
+  {									\
+    TYPE data;								\
+    char *pop_index_tmp = pop_index;					\
+    asm(MOV" (%1), %0"						\
+    	: "=&r" (data)							\
+    	: "r" ((TYPE *)pop_index_tmp) 	/* inputs */ \
+    	: "1" );							\
+    pop_index_tmp += sizeof(TYPE);						\
+    pop_index = pop_index_tmp;                \
+    return data;							\
+  }
+
+
 #define DEFINE_POP_NEW(TYPE, MOV)						\
   inline TYPE pop_##TYPE (void)						\
   {									\
@@ -154,6 +181,7 @@ enum on_or_off_enum {
   OFF = 0,
   ON = 1,
 };
+
 typedef enum on_or_off_enum on_or_off_t;
 
 struct prod_queue {
@@ -161,7 +189,8 @@ struct prod_queue {
   char *push_index;
   uint64_t free_push_reg;
 
-  DEFINE_PUSH_OVERLOADED_NEW(long, "movq")
+  DEFINE_PUSH_OVERLOADED_1OP(long, "movq")
+  //DEFINE_PUSH_OVERLOADED_NEW(long, "movq")
 };
 
 struct cons_queue {
@@ -169,7 +198,8 @@ struct cons_queue {
   char *pop_index;
   uint64_t free_pop_reg;
   bool in_redzone;
-  DEFINE_POP_NEW(long, "movq")
+  DEFINE_POP_1OP(long, "movq")
+  //DEFINE_POP_NEW(long, "movq")
 };
 
 struct lynxQ {
@@ -308,17 +338,23 @@ const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
 inline void lynxQ::push_done (void)
 {
   /* Notify pop() that we are done */
-  push((uint64_t) 0xDEADBEEF, pq_state);
-  push((uint64_t) 0xFEEBDAED, pq_state);
+  //push((uint64_t) 0xDEADBEEF, pq_state);
+  //push((uint64_t) 0xFEEBDAED, pq_state);
 
   /* Clear the last redzone */
   config_red_zone (OFF, push_last_rz);
   /* Make sure that a segfault does not belong to a push */
+  printf("-------------------PUSH DONE!-----------------\n");
+  printf("push_expected_rz %p | pop_expected_rz %p | push_last_rz %p\n",
+        push_expected_rz, pop_expected_rz, push_last_rz);
   push_expected_rz = NULL;
+
   /* Set the special state */
- 
   *last_push_state = PUSH_READY;
+  //config_red_zone (OFF, pop_last_rz);
+  //pop_expected_rz = NULL;
   allow_rotate = true;
+  dump();
 }
 
 
@@ -457,6 +493,7 @@ static inline cs_x86_op *get_mem_op (cs_insn *insn, csh handle,
       }
     }
   assert (mem_op && "No memory operand?");
+  printf("Instruction: %s\t%s\n", insn[0].mnemonic, insn[0].op_str);
   unsigned mem_op_membase = mem_op->mem.base;
   if (mem_op_membase == X86_REG_INVALID){
     printf("Instruction: %s\t%s\n", insn[0].mnemonic, insn[0].op_str);
@@ -679,6 +716,7 @@ static void redzone_do_push(const char *redzone_str,
   queue->config_red_zone (OFF, index);
   COMPILER_BARRIER;
   *sstate_next = PUSH_WRITES;
+  printf("Passing RZ %s | push_expected_rz %p\n", redzone_str, queue->push_expected_rz);
 }
 
 static void redzone_do_pop(const char *redzone_str,
@@ -714,6 +752,7 @@ static void redzone_do_pop(const char *redzone_str,
   queue->config_red_zone (OFF, index);
   COMPILER_BARRIER;
   *sstate_next = POP_READS;
+  printf("Passing RZ %s | pop_expected_rz %p\n", redzone_str, queue->pop_expected_rz);
 }
 
 struct Memoize_mem_op {
@@ -755,7 +794,7 @@ static void segfault (const char *msg, char *index) {
   sigaction (SIGSEGV, &act, 0);
 }
 
-std::tuple<uint64_t, uint64_t, csh> get_mem_base(lynxQ_t queue, const ucontext_t *context, Memoize_mem_op_t *memo, char *base_addr) {
+std::tuple<csh, cs_x86_op*> decode_insn(const ucontext_t *context, Memoize_mem_op_t *memo) {
   cs_x86_op *mem_op = NULL;
   csh handle;
 
@@ -779,7 +818,15 @@ std::tuple<uint64_t, uint64_t, csh> get_mem_base(lynxQ_t queue, const ucontext_t
   else {
     mem_op = memo->mem_op;
   }
+  return std::make_pair(handle, mem_op);
+}
 
+std::tuple<uint64_t, uint64_t> get_mem_base(
+    const ucontext_t *context,
+    Memoize_mem_op_t *memo,
+    char *base_addr,
+    csh handle,
+    cs_x86_op *mem_op) {
   Regs regs;
   collect_regs(&regs, mem_op, handle, context);
 
@@ -794,7 +841,149 @@ std::tuple<uint64_t, uint64_t, csh> get_mem_base(lynxQ_t queue, const ucontext_t
     regs.scale + regs.reg_segment_value;
   assert (sum == (uint64_t) base_addr);
 
-  return std::make_tuple(new_base_value, reg_base_to_update, handle);
+  return std::make_tuple(new_base_value, reg_base_to_update);
+}
+
+static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
+{
+  static __thread Memoize_mem_op_t memo;
+  ucontext_t *context = (ucontext_t *)cxt;
+
+  /* Find which register is the index register */
+  const uint8_t *ip = get_err_ip(context);
+
+  /* The address that caused the fault. */
+  char *index = (char *)info->si_addr;
+
+  lynxQ_t queue = get_beginning_of_queue (index);
+
+  if (! queue) {
+    //queue->dump();
+    segfault ("Index: %p is not in any queue!. "
+	      "Probably a segmentation fault of program\n", index);
+  }
+
+  auto [handle, mem_op] = decode_insn(context, &memo);
+
+  /* If we are at the end of the QUEUE, rewind the index to the begining. */
+  /* NOTE: this has to run first because in the beginning pop() is trapped
+           inside redzone_end and therefore the index does not match the 
+           pop expected redzone. */
+  if (index >= queue->QUEUE + queue->queue_size) {
+    auto [new_base_value, reg_base_to_update] =
+              get_mem_base(context, &memo, queue->QUEUE, handle, mem_op);
+    /* Initially the pop thread is trapped at the end of the queue, until
+       the push thread has reached the first redzone. */
+    if (queue->allow_rotate) {
+      set_reg_value (context, reg_base_to_update, new_base_value, handle);
+
+      if (memo.mem_type == STORE_TYPE) {
+	queue->pq_state->push_index = queue->QUEUE;
+	queue->pq_state->free_push_reg -= queue->queue_size;
+      }
+      else if (memo.mem_type == LOAD_TYPE) {
+	queue->cq_state->pop_index = queue->QUEUE;
+	queue->cq_state->free_pop_reg -= queue->queue_size;
+      }
+      else {
+	fprintf (stderr, "ERROR: Can't determine which thread it is\n");
+      }
+    }
+  } else if (memo.mem_type == STORE_TYPE) {
+    if (index_is_in_redzone(index, queue->redzone1)) {
+      // - Check if we can progress to the next section
+      // - If so, move and announce that we are in the next section
+      // - If not, return RETRY?
+      // wait for the next section to be ready
+      while (queue->qstate.sstate1 != POP_READY) ;
+      // claim next section
+      queue->qstate.sstate1 = PUSH_WRITES;
+      // release previous section
+      queue->qstate.sstate0 = PUSH_READY;
+      // move the index pointer past the redzone
+      char *new_index = queue->redzone1 + queue->REDZONE_SIZE;
+
+      auto [new_base_value, reg_base_to_update] = get_mem_base(context, &memo,
+                new_index, handle, mem_op);
+
+      set_reg_value (context, reg_base_to_update, new_base_value, handle);
+
+      if (memo.mem_type == STORE_TYPE) {
+        queue->pq_state->push_index = new_index;
+        queue->pq_state->free_push_reg -= queue->queue_size;
+      } else {
+        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
+      }
+    }
+    else if (index_is_in_redzone(index, queue->redzone2)) {
+      while (queue->qstate.sstate0 != POP_READY) ;
+      queue->qstate.sstate0 = PUSH_READY;
+      char *new_index = queue->redzone2 + queue->REDZONE_SIZE;
+
+      auto [new_base_value, reg_base_to_update] = get_mem_base(context, &memo,
+                new_index, handle, mem_op);
+
+      set_reg_value (context, reg_base_to_update, new_base_value, handle);
+
+      if (memo.mem_type == STORE_TYPE) {
+        queue->pq_state->push_index = new_index;
+        queue->pq_state->free_push_reg -= queue->queue_size;
+      } else {
+        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
+      }
+    }
+    else {
+      fprintf(stderr, "\n\n");
+      queue->dump();
+      segfault("*** PUSH: Index %p not in red-zone. This is a program bug ***\n", index);
+    }
+  } else if (memo.mem_type == LOAD_TYPE) {
+    if (index_is_in_redzone(index, queue->redzone1)) {
+      while (! (queue->qstate.sstate1 & (PUSH_READY | PUSH_EXITED))) ;
+      queue->qstate.sstate0 = POP_READY;
+      char *new_index = queue->redzone1 + queue->REDZONE_SIZE;
+
+      auto [new_base_value, reg_base_to_update] = get_mem_base(
+          context, &memo, new_index, handle, mem_op);
+
+      set_reg_value (context, reg_base_to_update, new_base_value, handle);
+
+      if (memo.mem_type == LOAD_TYPE) {
+        queue->cq_state->pop_index = new_index;
+        queue->cq_state->free_pop_reg -= queue->queue_size;
+      } else {
+        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
+      }
+    }
+    else if (index_is_in_redzone(index, queue->redzone2)) {
+      while (! (queue->qstate.sstate0 & (PUSH_READY | PUSH_EXITED))) ;
+      queue->qstate.sstate1 = POP_READY;
+      char *new_index = queue->redzone2 + queue->REDZONE_SIZE;
+
+      auto [new_base_value, reg_base_to_update] = get_mem_base(
+          context, &memo, new_index, handle, mem_op);
+
+      set_reg_value (context, reg_base_to_update, new_base_value, handle);
+
+      if (memo.mem_type == LOAD_TYPE) {
+        queue->cq_state->pop_index = new_index;
+        queue->cq_state->free_pop_reg -= queue->queue_size;
+      } else {
+        fprintf (stderr, "ERROR: Can't determine which thread it is\n");
+      }
+
+    }
+    /* The index is not in the queue's red zone. This is a program bug. */
+    else {
+      fprintf(stderr, "\n\n");
+      queue->dump();
+      segfault ("*** POP: Index %p not in red-zone. This is a program bug. ***\n", index);
+    }
+  } else {
+    fprintf (stderr, "Not push() or pop()!!!\n");
+    queue->dump();
+    segfault("*** Cannot detemine if %p is in push_expected_rz or pop_expected_rz. ***\n", index);
+  }
 }
 
 static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
@@ -822,20 +1011,27 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
            inside redzone_end and therefore the index does not match the 
            pop expected redzone. */
   if (index >= queue->QUEUE + queue->queue_size) {
-    auto [new_base_value, reg_base_to_update, handle] =
-              get_mem_base(queue, context, &memo, queue->QUEUE);
+    auto [handle, mem_op] = decode_insn(context, &memo);
+    auto [new_base_value, reg_base_to_update] =
+              get_mem_base(context, &memo, queue->QUEUE, handle, mem_op);
     /* Initially the pop thread is trapped at the end of the queue, until
        the push thread has reached the first redzone. */
     if (queue->allow_rotate) {
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
       if (memo.mem_type == STORE_TYPE) {
+        auto old_push_reg = queue->pq_state->free_push_reg;
+//        printf("free_push_reg old: %lx | new %lx push_index 0x%p\n",
+ //             old_push_reg, queue->pq_state->free_push_reg, queue->pq_state->push_index);
 	queue->pq_state->push_index = queue->QUEUE;
 	queue->pq_state->free_push_reg -= queue->queue_size;
       }
       else if (memo.mem_type == LOAD_TYPE) {
-	queue->cq_state->pop_index = queue->QUEUE;
+        auto old_pop_reg = queue->cq_state->free_pop_reg;
 	queue->cq_state->free_pop_reg -= queue->queue_size;
+        printf("free_pop_reg old: %lx | new %lx pop_index 0x%p\n",
+              old_pop_reg, queue->cq_state->free_pop_reg, queue->cq_state->pop_index);
+	queue->cq_state->pop_index = queue->QUEUE;
       }
       else {
 	fprintf (stderr, "ERROR: Can't determine which thread it is\n");
@@ -844,6 +1040,7 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
   }
   else if (is_expected_redzone (index, queue->push_expected_rz)) {
       int fi=0;
+      // |   S I
       if (index_is_in_redzone(index, queue->redzone1)) {
 	redzone_do_push("REDZONE 1", index,
 			&queue->qstate.sstate0, &queue->qstate.sstate1,
@@ -864,19 +1061,23 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
       int si = 0;
       if (queue->allow_rotate) {
 	if (index_is_in_redzone(index, queue->redzone1)) {
+#if 0
           if (! (queue->qstate.sstate1 & (PUSH_READY | PUSH_EXITED))) {
             queue->cq_state->in_redzone = true;
             return;
           }
+#endif
 	  redzone_do_pop("REDZONE 1", index,
 			 &queue->qstate.sstate0, &queue->qstate.sstate1,
 			 &queue->redzone1, queue->QUEUE, queue);
 	}
 	else if (index_is_in_redzone(index, queue->redzone2)) {
+#if 0
           if (! (queue->qstate.sstate0 & (PUSH_READY | PUSH_EXITED))) {
             queue->cq_state->in_redzone = true;
             return;
           }
+#endif
 	  redzone_do_pop("REDZONE 2", index,
 			 &queue->qstate.sstate1, &queue->qstate.sstate0,
 			 &queue->redzone2, queue->QUEUE, queue);
@@ -1015,7 +1216,13 @@ class LynxQueue {
 
     inline int enqueue(int p, int c, data_t value)  {
       auto pq = &all_pqueues[p][c];
+      auto q = queues[p][c];
 
+#if 1
+      if (!((uint64_t)pq->push_index & ((1 << 13) - 1)))
+      printf("pq->push_index 0x%lx | push_reg 0x%lx\n",
+            pq->push_index, pq->free_push_reg);
+#endif
       pq->push(value);
 
       return SUCCESS;
@@ -1033,11 +1240,22 @@ class LynxQueue {
     inline int dequeue(int p, int c, data_t *value) { //override {
       int ret = SUCCESS;
       auto cq = &all_cqueues[c][p];
+      auto q = queues[p][c];
+
       *value = cq->pop_long();
+#if 1
+      if (!((uint64_t)cq->pop_index & ((1 << 12) - 1)))
+        printf("cq->pop_index 0x%lx | pop_reg 0x%lx | ea 0x%lx | value %lu\n",
+                cq->pop_index, cq->free_pop_reg,
+                (uint64_t)cq->pop_index + cq->free_pop_reg,
+                *value);
+#endif
+#if 0
       if (cq->in_redzone) {
         ret = RETRY;
         cq->in_redzone = false;
       }
+#endif
       return ret;
     }
 
@@ -1053,7 +1271,8 @@ class LynxQueue {
     inline void push_done(int p, int c) {
       auto q = queues[p][c];
 
-      q->push(BQ_MAGIC_64BIT, q->pq_state);
+      enqueue(p, c, BQ_MAGIC_64BIT);
+      //q->push(BQ_MAGIC_64BIT, q->pq_state);
       q->push_done();
     }
 
