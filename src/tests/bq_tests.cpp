@@ -205,53 +205,6 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
     return std::min(next_cons_id, n_cons - 1);
   };
 
-#ifdef BQ_TESTS_RW_RATIO
-  auto insert_key = key_start;
-  for (transaction_id = 0u; transaction_id < num_messages;) {
-    // The idea is to batch messages upto BQ_TESTS_BATCH_LENGTH
-    // for the same queue and then move on to next consumer
-    for (auto i = 0u; i < BQ_TESTS_BATCH_LENGTH_PROD; i++) {
-      next_key = insert_key++;
-
-      // XXX: if we are testing without insertions, make sure to pick CRC as
-      // the hashing mechanism to have reduced overhead
-      const auto hash_val = hasher(&next_key, sizeof(next_key));
-      cons_id = hash_to_cpu(hash_val, n_cons);
-      auto *q = pqueues[cons_id];
-
-      // k has the computed hash in upper 32 bits
-      // and the actual key value in lower 32 bits
-      next_key |= (hash_val << 32);
-      // *((uint64_t *)&kmers[i].data) = k;
-      while (enqueue(q, (data_t)next_key) != SUCCESS)
-        ;
-
-      if (((Q_HEAD + 4) & 7) == 0) {
-        auto q = pqueues[get_next_cons(1)];
-        auto next_1 = (Q_HEAD + 8) & (QUEUE_SIZE - 1);
-        __builtin_prefetch(&q->data[next_1], 1, 3);
-      }
-
-      transaction_id++;
-    }
-  }
-
-  for (cons_id = 0; cons_id < n_cons; cons_id++) {
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-    enable_backtracking(cons_id);
-    auto *q = pqueues[cons_id];
-#else
-    auto *q = queues[cons_id];
-#endif
-    while (enqueue(q, (data_t)BQ_MAGIC_64BIT) != SUCCESS)
-      ;
-    PLOG_DEBUG.printf(
-        "q %p Prod %d Sending END message to cons %d (transaction %u)", q,
-        this_prod_id, cons_id, transaction_id);
-    transaction_id++;
-  }
-#endif
-
 #ifdef WITH_VTUNE_LIB
   static const vtune_event event{"message_enqueue"};
   event.start();
@@ -609,16 +562,31 @@ void BQueueTest::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   std::unique_ptr<BaseHashTable> kmer_ht{init_ht(ht_size, shard->shard_idx)};
   this->ht_vec.at(tid) = kmer_ht.get();
 
+#ifdef BQ_TESTS_RW_RATIO
+  auto [ratio, num_messages, key_start] = get_params(n_prod, n_cons, 0);
+  Hasher hasher{};
+  std::array<Keys, HT_TESTS_BATCH_LENGTH> buffer{};
+  KeyPairs batch{0, buffer.data()};
+  for (std::uint64_t i{}; i < num_messages; ++i) {
+    if (batch.first == HT_TESTS_BATCH_LENGTH) {
+      kmer_ht->insert_batch(batch);
+      batch.first = 0;
+    }
+
+    const auto hash = hasher(&i, sizeof(i));
+    if (hash_to_cpu(hash, n_cons) == this_cons_id) {
+      const auto packed = hash << 32 | i;
+      batch.second[batch.first++].key = packed;
+      batch.second[batch.first++].id = packed;
+    }
+  }
+#endif
+
   fipc_test_FAI(ready_consumers);
   while (!test_ready) fipc_test_pause();
   fipc_test_mfence();
 
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
-
-#ifdef BQ_TESTS_RW_RATIO
-  consumer_thread_main(this_cons_id, *kmer_ht, *shard, queues, n_prod, n_cons,
-                       num_nops, false);
-#endif
 
   consumer_thread_main(this_cons_id, *kmer_ht, *shard, queues, n_prod, n_cons,
                        num_nops, true);
