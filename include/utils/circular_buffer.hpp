@@ -4,21 +4,22 @@
 #include <array>
 #include <cstring>
 #include <cstdint>
+#include <iterator>
 
 #include "plog/Log.h"
 
 namespace kmercounter {
-// A KMer.
-// Left-most 
+// A DNA KMer.
 template <size_t K>
-class KMer {
+class DNAKMer {
 public:
-  KMer() : buffer_{} {}
+  DNAKMer() : buffer_{} {}
 
   // Push a character mer into the buffer.
   // Does nothing and returns false if it's not a valid mer.
   bool push(const uint8_t mer) {
-    const uint8_t code = ENCODE_MAP[mer];
+    const auto code = ENCODE_MAP[mer];
+    // LOG_INFO << "code " << (int)code
     if (code < 0) {
       return false;
     }
@@ -29,21 +30,45 @@ public:
     return true;
   }
 
-
-  constexpr static uint8_t MER_MASK = 0b11;
-  // Size of a mer in bits
-  constexpr static size_t MER_SIZE = 2; 
-  // Max number of mers that a byte can hold.
-  constexpr static size_t MER_PER_BYTE = sizeof(uint8_t) / MER_SIZE;
-  // Size of buffer to holder the kmer in bytes.
-  constexpr static size_t BUFFER_LEN = (K + 7) / MER_PER_BYTE; 
-
-private:
-  // Shift left by one mer and refil the tag bit.
-  void shift_left() {
-    buffer_ <<= MER_SIZE;
+  uint64_t data() const {
+    return buffer_;
   }
 
+  std::string to_string() const {
+    std::string str;
+    uint64_t mask = MER_MASK << ((K - 1) * MER_SIZE); 
+    for (int i = K; i > 0; i--) {
+      const auto mer = (buffer_ & mask) >> ((i-1) * MER_SIZE);
+      const uint8_t decoded_mer = DECODE_MAP[mer];
+      str.push_back(decoded_mer);
+      mask >>= MER_SIZE;
+    }
+    return str;
+  }
+
+  // Size of a mer in bits
+  constexpr static size_t MER_SIZE = 2; 
+  // Size of the kmer in bits
+  constexpr static size_t KMER_SIZE = 2 * K;
+  // Max number of mers that a byte can hold.
+  constexpr static size_t MER_PER_BYTE = 8 / MER_SIZE;
+  static_assert(MER_PER_BYTE == 4);
+  // Size of buffer to holder the kmer in bytes.
+  constexpr static size_t BUFFER_LEN = (K + MER_PER_BYTE - 1) / MER_PER_BYTE; 
+  static_assert(BUFFER_LEN <= sizeof(uint64_t), "Large K support is not implemented");
+  // Mask to obtain one mer.
+  constexpr static uint8_t MER_MASK = 0b11;
+  // Mask to remove unused bits of a kmer.
+  constexpr static uint64_t KMER_MASK = ~((uint64_t)(0ull) - (1 << KMER_SIZE));
+
+private:
+  // Shift left by one mer.
+  void shift_left() {
+    buffer_ <<= MER_SIZE;
+    buffer_ &= KMER_MASK;
+  }
+
+  // Currently assumes only uint64_t for simplicity.
   uint64_t buffer_; 
   static_assert(K < 32, "K >= 32 is not yet implemented");
 
@@ -79,6 +104,13 @@ private:
 
  constexpr static uint8_t DECODE_MAP[4] = { 'A', 'C', 'G', 'T' };
 };
+static_assert(DNAKMer<3>::BUFFER_LEN == 1);
+static_assert(DNAKMer<4>::BUFFER_LEN == 1);
+static_assert(DNAKMer<5>::BUFFER_LEN == 2);
+static_assert(DNAKMer<1>::KMER_MASK == 0b11);
+static_assert(DNAKMer<2>::KMER_MASK == 0b1111);
+static_assert(DNAKMer<3>::KMER_MASK == 0b111111);
+static_assert(DNAKMer<4>::KMER_MASK == 0b11111111);
 
 /// An always-full circular buffer.
 /// Use memmove to keep the head at the beginning of the buffer.

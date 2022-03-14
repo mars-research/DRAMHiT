@@ -5,7 +5,6 @@
 #include <gtest/gtest.h>
 
 namespace kmercounter {
-namespace input_reader {
 namespace {
 
 TEST(CircularBufferTest, PushTest) {
@@ -123,7 +122,34 @@ TEST(CircularBufferMoveTest, CrossCheck) {
   cross_check_for_size<10>();
 }
 
+TEST(DNAKmer, PushTest) {
+  {
+    DNAKMer<3> kmer;
+    EXPECT_TRUE(kmer.push('A'));
+    EXPECT_TRUE(kmer.push('T'));
+    EXPECT_TRUE(kmer.push('C'));
+    EXPECT_EQ(kmer.to_string(), "ATC");
+    EXPECT_TRUE(kmer.push('G'));
+    EXPECT_EQ(kmer.to_string(), "TCG");
+    EXPECT_FALSE(kmer.push('N'));
+    EXPECT_EQ(kmer.to_string(), "TCG");
+    EXPECT_TRUE(kmer.push('G'));
+    EXPECT_EQ(kmer.to_string(), "CGG");
+  }
+  {
+    DNAKMer<4> kmer;
+    EXPECT_TRUE(kmer.push('A'));
+    EXPECT_TRUE(kmer.push('T'));
+    EXPECT_TRUE(kmer.push('C'));
+    EXPECT_TRUE(kmer.push('G'));
+    EXPECT_EQ(kmer.to_string(), "ATCG");
+    EXPECT_FALSE(kmer.push('N'));
+    EXPECT_EQ(kmer.to_string(), "ATCG");
+    EXPECT_TRUE(kmer.push('G'));
+    EXPECT_EQ(kmer.to_string(), "TCGG");
+  }
+}
+
 
 } // namespace
-} // namespace input_reader
 } // namespace kmercounter
