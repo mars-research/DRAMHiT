@@ -10,7 +10,6 @@
 
 namespace kmercounter {
 
-template <bool init_contents>
 class BQueueTest {
   std::vector<std::thread> prod_threads;
   std::vector<std::thread> cons_threads;
@@ -45,7 +44,7 @@ class BQueueTest {
                             const std::vector<cons_queue_t *> &queues,
                             const uint32_t n_prod, const uint32_t n_cons,
                             const uint32_t num_nops, bool last_test);
-
+                            
   void find_thread(int tid, int n_prod, int n_cons, bool main_thread);
   void init_queues(uint32_t nprod, uint32_t ncons);
 };
