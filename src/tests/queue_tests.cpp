@@ -25,6 +25,8 @@ namespace kmercounter {
 
 using namespace std;
 
+void setup_signal_handler(void);
+
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -144,6 +146,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   for (auto i = 0u; i < n_cons; i++) {
     pqueues[i] = &this->queues->all_pqueues[this_prod_id][i];
   }
+
+  setup_signal_handler();
+
   static const auto event = vtune::event_start("message_enq");
 
   auto get_next_cons = [&](auto inc) {
@@ -159,13 +164,13 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       k = key_start++;
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
-      uint64_t hash_val = hasher(&k, sizeof(k));
-      cons_id = hash_to_cpu(hash_val, n_cons);
+      //uint64_t hash_val = hasher(&k, sizeof(k));
+      //cons_id = hash_to_cpu(hash_val, n_cons);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      k |= (hash_val << 32);
+      //k |= (hash_val << 32);
 
-      //if (++cons_id >= n_cons) cons_id = 0;
+      if (++cons_id >= n_cons) cons_id = 0;
 
       auto q = pqueues[cons_id];
       /*
@@ -181,7 +186,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
           __builtin_prefetch(q->push_index + 64, 1, 3);
         }
       }*/
-      this->queues->prefetch(this_prod_id, cons_id, true);
+      //this->queues->prefetch(this_prod_id, cons_id, true);
 
       transaction_id++;
   }
@@ -255,6 +260,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
+  setup_signal_handler();
+
   static const auto event = vtune::event_start("message_deq");
 
   auto t_start = RDTSC_START();
@@ -295,7 +302,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     }
 #endif
     auto next_prod_id = prod_id + 1;
-    this->queues->prefetch(next_prod_id, this_cons_id, false);
+    //this->queues->prefetch(next_prod_id, this_cons_id, false);
 
     auto q = cqueues[prod_id];
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
@@ -322,6 +329,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       // dequeuing from the queues
       if ((data_t)k == QueueTest::BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
+        printf("Got MAGIC bit. stopping consumer\n");
         /*PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u",
@@ -735,6 +743,6 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   print_stats(this->shards, *cfg);
 }
 
-//template class QueueTest<LynxQueue>;
+template class QueueTest<LynxQueue>;
 template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter

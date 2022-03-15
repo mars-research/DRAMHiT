@@ -24,6 +24,8 @@ https://www.repository.cam.ac.uk/handle/1810/255384
 
 #pragma once
 
+#define OPERATOR_NEW
+
 #include <execinfo.h>
 #include <unistd.h>		/* sysconf() */
 #include <sys/mman.h>		/* mprotect() */
@@ -203,7 +205,7 @@ struct cons_queue {
   //DEFINE_POP_NEW(long, "movq")
 };
 
-struct lynxQ {
+struct alignas(4096) lynxQ {
   CACHE_ALIGNED char *QUEUE;
   CACHE_ALIGNED char *redzone1;
   CACHE_ALIGNED char *redzone2;
@@ -256,8 +258,35 @@ struct lynxQ {
   double get_time(void);
   void finalize(void);
 
+  void *operator new(std::size_t size,
+     // std::align_val_t align,
+      size_t qsize
+      //,struct prod_queue *pq, struct cons_queue *cq
+      ) {
+    auto queue_align = (1 << 21);
+    auto ptr = aligned_alloc(static_cast<std::size_t>(queue_align), size + qsize + (1 << 12));
+
+    //printf("size %zu | align %zu | qsize %zu\n", size, align, qsize);
+    printf("size %zu | qsize %zu | ptr %p | sz %zu\n", size, qsize, ptr, sizeof(lynxQ));
+
+    if (!ptr) throw std::bad_alloc{};
+
+    //PLOGI << "Allocating " << size
+    //      << ", align: " << static_cast<std::size_t>(align) << ", ptr: " << ptr;
+    return ptr;
+  }
+
+  void operator delete(void *ptr, std::size_t size,
+                       std::size_t qsize) noexcept {
+    PLOGI << "deleting " << size
+          << ", ptr : " << ptr;
+    free(ptr);
+  }
+
+
   const char *config_red_zone(on_or_off_t cond, void *addr);
   inline char *get_new_redzone_left (char *curr_redzone);
+  //void setup_signal_handler(void);
 
   ~lynxQ() {
   }
@@ -552,6 +581,21 @@ static inline bool is_expected_redzone (char *index, char *redzone) {
   return (index == redzone); 
 }
 
+void setup_signal_handler() {
+  /* Set up signal handler */
+  struct sigaction act;
+  sigset_t sa_mask;
+  sigemptyset (&sa_mask);
+  act.sa_handler = NULL;
+  //act.sa_sigaction = lynxQ_handler;
+  act.sa_sigaction = lynxQ_nomprotect_handler;
+  act.sa_mask = sa_mask;
+  act.sa_flags = SA_SIGINFO;
+  act.sa_restorer = NULL;
+  sigaction(SIGSEGV, &act, NULL);
+}
+
+#ifdef OPERATOR_NEW
 lynxQ::lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq) {
   printf("Creating LynxQ of size %zu | this %p\n", qsize, this);
   /* Add queue into the set of all the queues created so far */
@@ -579,7 +623,95 @@ lynxQ::lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq) {
             In this way, when the Index part overflows (e.g. 1011 1 00)
             masking resets it to the beginning:              1011 0 00
    This is the computation: ADDR = (ADDR + 1) & QUEUE_CIRCULAR_MASK */
-  QUEUE_ALIGN = queue_size << 1;
+  //QUEUE_ALIGN = queue_size << 1;
+  QUEUE_ALIGN = (1 << 12);
+
+  /* We use the minimum redzone possible */
+  REDZONE_SIZE = _PAGE_SIZE;
+
+  /* Allocate QUEUE */
+  char *Q;
+  Q = (char*) this + _PAGE_SIZE;
+
+  QUEUE = Q;
+
+  printf("q %p | q->QUEUE %p\n", this, Q);
+  /* Sanity checks */
+  if (! (queue_size >= 4 * REDZONE_SIZE)) {
+    fatal_error ("Queue (=0x%lx) too small compared to redzone (=0x%lx)\n"
+		 "Must be at least 4 * REDZONE_SIZE (=0x%lx)\n",
+		 queue_size, REDZONE_SIZE, 4 * REDZONE_SIZE);
+  }
+
+  /* Each section is a redzone smaller than half the queue */
+  QUEUE_SECTION_SIZE = queue_size / 2 - REDZONE_SIZE;
+  QUEUE_ALIGN_MASK = QUEUE_ALIGN - 1;
+  QUEUE_CIRCULAR_MASK = (~queue_size);
+
+  //setup_signal_handler();
+
+  /* Set up red zones */
+  redzone1 = (char *) config_red_zone (ON, QUEUE + QUEUE_SECTION_SIZE);
+  redzone2 = (char *) config_red_zone (ON, QUEUE + 2 * QUEUE_SECTION_SIZE + REDZONE_SIZE);
+  redzone_end = (char *) config_red_zone (ON, QUEUE + queue_size);
+
+  /* Initialize queue state */
+  qstate.sstate0 = PUSH_WRITES;
+  qstate.redzone1_state = FREE;
+  qstate.redzone2_state = FREE;
+  qstate.num_push = qstate.num_pop = 0;
+
+  this->pq_state = pq;
+  this->cq_state = cq;
+  pq->QUEUE = cq->QUEUE = QUEUE;
+  pq->push_index = QUEUE;
+  allow_rotate = false;
+  cq->pop_index = QUEUE + queue_size;;
+  pq->free_push_reg = 0;
+  cq->free_pop_reg = 0;
+
+  qstate.sstate0 = POP_READY;
+  qstate.sstate1 = POP_READY;
+
+  push_expected_rz = redzone1;
+  pop_expected_rz = redzone1 - REDZONE_SIZE;
+
+  /* Initialize timer */
+  time_begin = clock();
+
+  push_last_rz = NULL;
+  pop_last_rz = NULL;
+}
+#else
+lynxQ::lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq) {
+  printf("Creating LynxQ of size %zu | this %p\n", qsize, this);
+  /* Add queue into the set of all the queues created so far */
+  all_queues_created.insert(this);
+  all_queues_set = &all_queues_created;
+
+  /* Get the system's page size */
+  _PAGE_SIZE = sysconf (_SC_PAGE_SIZE);
+  if (_PAGE_SIZE == -1) fatal_error("sysconf: Error getting page size\n");
+
+  /* The size of the queue must be a power of the page size*/
+  queue_size = qsize;
+
+  /* We need the addresses to be aligned with a larger alignment than queue_size.
+   This is to allow for the circular address optimization:
+   Example: Assuming a queue of size 4, QUEUE_ALIGN is 8.
+            Therefore the addresses always have a '0' just before the index part
+            to allow for overflow without modifying the rest of the bits.
+                              v
+            For example addr= 1011 0 01
+                             |----|-|--|
+                             Address|Index
+                                    |
+            The         mask= 1111 0 11
+            In this way, when the Index part overflows (e.g. 1011 1 00)
+            masking resets it to the beginning:              1011 0 00
+   This is the computation: ADDR = (ADDR + 1) & QUEUE_CIRCULAR_MASK */
+  //QUEUE_ALIGN = queue_size << 1;
+  QUEUE_ALIGN = (1 << 21);
 
   /* We use the minimum redzone possible */
   REDZONE_SIZE = _PAGE_SIZE;
@@ -649,6 +781,7 @@ lynxQ::lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq) {
   push_last_rz = NULL;
   pop_last_rz = NULL;
 }
+#endif
 
 void lynxQ::finalize(void) {
   /* Timer */
@@ -857,7 +990,12 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
   /* The address that caused the fault. */
   char *index = (char *)info->si_addr;
 
+#if 0
   lynxQ_t queue = get_beginning_of_queue (index);
+#else
+  lynxQ_t queue = (lynxQ_t)((uint64_t)index & ~((1 << 21) - 1));
+  //printf("index %p | queue %p\n", index, queue);
+#endif
 
   if (! queue) {
     //queue->dump();
@@ -970,7 +1108,9 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
     else if (index_is_in_redzone(index, queue->redzone2)) {
       //printf("Pop RZ2\n");
       queue->qstate.sstate1 = POP_READY;
+
       while (! (queue->qstate.sstate0 & (PUSH_READY | PUSH_EXITED))) ;
+
       queue->qstate.sstate0 = POP_READS;
       char *new_index = queue->redzone2 + queue->REDZONE_SIZE;
 
@@ -1191,7 +1331,9 @@ class LynxQueue {
           printf("%s, &queues[%d][%d] %p\n", __func__, p, c, &queues[p][c]);
           auto pq = pqueue_map.at(std::make_tuple(p, c));
           auto cq = cqueue_map.at(std::make_tuple(p, c));
-          queues[p][c] = new queue_t(queue_size, pq, cq);
+         // queues[p][c] = new queue_t(queue_size, pq, cq);
+
+          queues[p][c] = new(queue_size) queue_t(queue_size, pq, cq);
           //queue_map.insert({std::make_tuple(p, c), q});
         }
       }
