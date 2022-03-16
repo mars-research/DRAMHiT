@@ -216,7 +216,7 @@ struct alignas(4096) lynxQ {
   double queue_time;
   CACHE_ALIGNED struct prod_queue *pq_state;
   struct cons_queue *cq_state;
-  size_t _PAGE_SIZE;
+  long _PAGE_SIZE;
   size_t queue_size;
   size_t REDZONE_SIZE;
   size_t QUEUE_SECTION_SIZE;
@@ -312,7 +312,7 @@ void lynxQ::dump(void) {
   fprintf (stderr, "redzone2:       %p\n", redzone2);
   fprintf (stderr, "redzone_end:    %p\n", redzone_end);
   fprintf (stderr, "queue_end:      %p\n", QUEUE + queue_size);
-  fprintf (stderr, "PAGE_SIZE:      0x%lx\n", PAGE_SIZE);
+  fprintf (stderr, "PAGE_SIZE:      0x%x\n", PAGE_SIZE);
   fprintf (stderr, "queue_size:     0x%lx\n", queue_size);
   fprintf (stderr, "REDZONE_SIZE:   0x%lx\n", REDZONE_SIZE);
   fprintf (stderr, "QUEUE_SECTION_SIZE:  0x%lx\n", QUEUE_SECTION_SIZE);
@@ -334,7 +334,7 @@ void lynxQ::dump(void) {
 
 /* Set or Unset redzone REDZONE at ADDR depending on boolean ON_OFF */
 const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
-  assert (cond == ON || cond == OFF && "Bad COND");
+  assert ((cond == ON) || (cond == OFF) && "Bad COND");
   int prot = (cond == ON) ? PROT_NONE : (PROT_READ| PROT_WRITE | PROT_EXEC);
   size_t size = _PAGE_SIZE;
 
@@ -350,8 +350,8 @@ const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
     if (strings != NULL)
     {
 
-      printf ("Obtained %d stack frames.\n", size);
-      for (auto i = 0; i < size; i++)
+      printf ("Obtained %zu stack frames.\n", size);
+      for (auto i = 0u; i < size; i++)
         printf ("%s\n", strings[i]);
     }
   }
@@ -509,7 +509,6 @@ static inline cs_x86_op *get_mem_op (cs_insn *insn, csh handle,
 				     mem_type_t *mem_type) {
   cs_detail *detail = insn->detail;
   if(!detail)handle_error("capstone detail failed.");
-  int num_operands = 0;
   assert (detail->x86.op_count == 2 && "Why more than one operand?");
   cs_x86_op *mem_op = NULL;
   uint8_t op_i;
@@ -659,7 +658,8 @@ lynxQ::lynxQ(size_t qsize, struct prod_queue *pq, struct cons_queue *cq) {
   qstate.sstate0 = PUSH_WRITES;
   qstate.redzone1_state = FREE;
   qstate.redzone2_state = FREE;
-  qstate.num_push = qstate.num_pop = 0;
+  qstate.num_push = 0;
+  qstate.num_pop = 0;
 
   this->pq_state = pq;
   this->cq_state = cq;
@@ -967,7 +967,6 @@ std::tuple<uint64_t, uint64_t> get_mem_base(
 
   unsigned int reg_base_to_update = regs.reg_base;
   assert (reg_base_to_update != X86_REG_INVALID && "ASM supposed to force this");
-  uint64_t reg_value = get_reg_value (context, reg_base_to_update);
 
   uint64_t new_base_value = (uint64_t) base_addr - regs.reg_segment_value -
     regs.mem_disp - regs.reg_index_value * regs.scale;
@@ -983,9 +982,6 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
 {
   static __thread Memoize_mem_op_t memo;
   ucontext_t *context = (ucontext_t *)cxt;
-
-  /* Find which register is the index register */
-  const uint8_t *ip = get_err_ip(context);
 
   /* The address that caused the fault. */
   char *index = (char *)info->si_addr;
@@ -1168,14 +1164,14 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
       set_reg_value (context, reg_base_to_update, new_base_value, handle);
 
       if (memo.mem_type == STORE_TYPE) {
-        auto old_push_reg = queue->pq_state->free_push_reg;
+        //auto old_push_reg = queue->pq_state->free_push_reg;
 //        printf("free_push_reg old: %lx | new %lx push_index 0x%p\n",
  //             old_push_reg, queue->pq_state->free_push_reg, queue->pq_state->push_index);
 	queue->pq_state->push_index = queue->QUEUE;
 	queue->pq_state->free_push_reg -= queue->queue_size;
       }
       else if (memo.mem_type == LOAD_TYPE) {
-        auto old_pop_reg = queue->cq_state->free_pop_reg;
+        //auto old_pop_reg = queue->cq_state->free_pop_reg;
 	queue->cq_state->free_pop_reg -= queue->queue_size;
         //printf("free_pop_reg old: %lx | new %lx pop_index 0x%p\n",
         //      old_pop_reg, queue->cq_state->free_pop_reg, queue->cq_state->pop_index);
@@ -1187,8 +1183,6 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
     }
   }
   else if (is_expected_redzone (index, queue->push_expected_rz)) {
-      int fi=0;
-      // |   S I
       if (index_is_in_redzone(index, queue->redzone1)) {
 	redzone_do_push("REDZONE 1", index,
 			&queue->qstate.sstate0, &queue->qstate.sstate1,
@@ -1206,7 +1200,6 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
       }
     }
   else if (is_expected_redzone (index, queue->pop_expected_rz)) {
-      int si = 0;
       if (queue->allow_rotate) {
 	if (index_is_in_redzone(index, queue->redzone1)) {
 #if 0
@@ -1252,8 +1245,8 @@ class LynxQueue {
 
   private:
     size_t queue_size;
-    int nprod;
-    int ncons;
+    uint32_t nprod;
+    uint32_t ncons;
 
     std::map<std::tuple<int, int>, prod_queue_t*> pqueue_map;
     std::map<std::tuple<int, int>, cons_queue_t*> cqueue_map;
@@ -1298,7 +1291,7 @@ class LynxQueue {
     }
 
 
-    explicit LynxQueue(int nprod, int ncons, size_t queue_size) {
+    explicit LynxQueue(uint32_t nprod, uint32_t ncons, size_t queue_size) {
 
       printf("%s, lynx queue init | queue_sz %zu\n", __func__, queue_size);
 
@@ -1340,7 +1333,7 @@ class LynxQueue {
       queues[0][0]->dump();
     }
 
-    inline void prefetch(int p, int c, bool is_prod)  {
+    inline void prefetch(uint32_t p, uint32_t c, bool is_prod)  {
       auto q = queues[p][c];
       if (is_prod) {
         auto pq = &all_pqueues[p][c];
@@ -1364,7 +1357,7 @@ class LynxQueue {
       }
     }
 
-    inline int enqueue(int p, int c, data_t value)  {
+    inline int enqueue(uint32_t p, uint32_t c, data_t value)  {
       auto pq = &all_pqueues[p][c];
       auto q = queues[p][c];
 
@@ -1378,16 +1371,7 @@ class LynxQueue {
       return SUCCESS;
     }
 
-    inline int enqueue_old(int p, int c, data_t value)  {
-      auto q = queues[p][c];
-
-      q->push(value, q->pq_state);
-
-      //q->qstate.num_push++;
-      return SUCCESS;
-    }
-
-    inline int dequeue(int p, int c, data_t *value) { //override {
+    inline int dequeue(uint32_t p, uint32_t c, data_t *value) {
       int ret = SUCCESS;
       auto cq = &all_cqueues[c][p];
       auto q = queues[p][c];
@@ -1409,16 +1393,7 @@ class LynxQueue {
       return ret;
     }
 
-    inline int dequeue_old(int p, int c, data_t *value) { //override {
-      auto q = queues[p][c];
-
-      *value = q->pop_long(q->cq_state);
-      //q->qstate.num_pop++;
-
-      return SUCCESS;
-    }
-
-    inline void push_done(int p, int c) {
+    inline void push_done(uint32_t p, uint32_t c) {
       auto q = queues[p][c];
 
       enqueue(p, c, BQ_MAGIC_64BIT);
@@ -1426,17 +1401,17 @@ class LynxQueue {
       q->push_done();
     }
 
-    void pop_done(int p, int c) {
+    void pop_done(uint32_t p, uint32_t c) {
       auto q = queues[p][c];
       q->pop_done();
     }
 
-    void finalize(int p, int c) {
+    void finalize(uint32_t p, uint32_t c) {
       auto q = queues[p][c];
       q->finalize();
     }
 
-    double get_time(int p, int c) {
+    double get_time(uint32_t p, uint32_t c) {
       auto q = queues[p][c];
       return q->get_time();
     }

@@ -12,6 +12,7 @@
 #include "print_stats.h"
 #include "sync.h"
 #include "queues/lynxq.hpp"
+#include "queues/lynxq_section.hpp"
 #include "queues/bqueue_aligned.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
@@ -51,10 +52,10 @@ struct bq_kmer {
 static struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 
 // thread-local since we have multiple consumers
-__thread static int data_idx = 0;
-__thread static uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
+static __thread int data_idx = 0;
+static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 __attribute__((
-    aligned(64))) __thread static Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+    aligned(64))) static __thread Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
                                                          uint32_t n_cons,
@@ -147,7 +148,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     pqueues[i] = &this->queues->all_pqueues[this_prod_id][i];
   }
 
-  setup_signal_handler();
+  //setup_signal_handler();
 
   static const auto event = vtune::event_start("message_enq");
 
@@ -158,19 +159,20 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     return next_cons_id;
   };
 
+  //sleep(2);
   auto t_start = RDTSC_START();
 
   for (transaction_id = 0u; transaction_id < num_messages;) {
       k = key_start++;
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
-      //uint64_t hash_val = hasher(&k, sizeof(k));
-      //cons_id = hash_to_cpu(hash_val, n_cons);
+      uint64_t hash_val = hasher(&k, sizeof(k));
+      cons_id = hash_to_cpu(hash_val, n_cons);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      //k |= (hash_val << 32);
+      k |= (hash_val << 32);
 
-      if (++cons_id >= n_cons) cons_id = 0;
+      //if (++cons_id >= n_cons) cons_id = 0;
 
       auto q = pqueues[cons_id];
       /*
@@ -186,7 +188,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
           __builtin_prefetch(q->push_index + 64, 1, 3);
         }
       }*/
-      //this->queues->prefetch(this_prod_id, cons_id, true);
+      this->queues->prefetch(this_prod_id, cons_id, true);
 
       transaction_id++;
   }
@@ -260,7 +262,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
-  setup_signal_handler();
+  //setup_signal_handler();
 
   static const auto event = vtune::event_start("message_deq");
 
@@ -301,13 +303,14 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       //if (next_prod_id >= n_prod) next_prod_id = 0;
     }
 #endif
-    auto next_prod_id = prod_id + 1;
-    //this->queues->prefetch(next_prod_id, this_cons_id, false);
+    //auto next_prod_id = prod_id + 1;
+    this->queues->prefetch(prod_id, this_cons_id, false);
 
     auto q = cqueues[prod_id];
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      if (this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k)) {
+      auto ret = this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k);
+      if (ret == RETRY) {
 
         //k = q->pop_long();
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
@@ -316,6 +319,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
           }
         }
         goto pick_next_msg;
+      } else if (ret == -2) {
+        break;
       }
 
       /*
@@ -330,6 +335,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       if ((data_t)k == QueueTest::BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
         printf("Got MAGIC bit. stopping consumer\n");
+        this->queues->pop_done(prod_id, this_cons_id);
         /*PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u",
@@ -537,6 +543,8 @@ void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
     this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
   } else if(std::is_same<T, kmercounter::BQueueAligned>::value) {
     this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
+  } else if (std::is_same<T, kmercounter::LynxSectionQueue>::value) {
+    this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
   }
   this->queues = new T(nprod, ncons, this->QUEUE_SIZE);
 }
@@ -744,5 +752,6 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 }
 
 template class QueueTest<LynxQueue>;
+template class QueueTest<LynxSectionQueue>;
 template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter

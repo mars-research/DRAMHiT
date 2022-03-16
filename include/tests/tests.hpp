@@ -10,6 +10,7 @@
 namespace kmercounter {
 
 class LynxQueue;
+class LynxSectionQueue;
 class BQueueAligned;
 
 class Tests {
@@ -17,7 +18,8 @@ class Tests {
   SynthTest st;
   PrefetchTest pt;
   //QueueTest<kmercounter::BQueueAligned> qt;
-  QueueTest<kmercounter::LynxQueue> qt;
+  // QueueTest<kmercounter::LynxQueue> qt;
+  QueueTest<kmercounter::LynxSectionQueue> qt;
   CacheMissTest cmt;
   ZipfianTest zipf;
 

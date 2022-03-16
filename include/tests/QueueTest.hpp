@@ -3,7 +3,6 @@
 #include <thread>
 
 #include "hashtables/base_kht.hpp"
-//#include "queues/queue.hpp"
 #include "numa.hpp"
 #include "types.hpp"
 
