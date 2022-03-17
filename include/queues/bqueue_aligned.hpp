@@ -259,6 +259,8 @@ class BQueueAligned {
     ~BQueueAligned() {
       teardown_all_queues();
     }
+    void dump_stats(uint32_t p, uint32_t c) {
+    }
 
 };
 

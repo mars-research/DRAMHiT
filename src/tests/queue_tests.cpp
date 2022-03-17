@@ -13,6 +13,7 @@
 #include "sync.h"
 #include "queues/lynxq.hpp"
 #include "queues/lynxq_section.hpp"
+#include "queues/section_queues.hpp"
 #include "queues/bqueue_aligned.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
@@ -193,6 +194,18 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
   }
 
+  // enqueue halt messages and the consumer automatically knows
+  // when to stop
+  for (cons_id = 0; cons_id < n_cons; cons_id++) {
+    this->queues->push_done(this_prod_id, cons_id);
+
+    /*PLOG_DEBUG.printf(
+        "Prod %d Sending END message to cons %d (transaction %u)",
+        this_prod_id, cons_id, transaction_id);
+    transaction_id++;
+    */
+  }
+
   auto t_end = RDTSCP();
 
   vtune::event_end(event);
@@ -200,16 +213,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   sh->stats->enqueue_cycles = (t_end - t_start);
   sh->stats->num_enqueues = transaction_id;
 
-  // enqueue halt messages and the consumer automatically knows
-  // when to stop
-  for (cons_id = 0; cons_id < n_cons; cons_id++) {
-    this->queues->push_done(this_prod_id, cons_id);
-
-    PLOG_DEBUG.printf(
-        "Prod %d Sending END message to cons %d (transaction %u)",
-        this_prod_id, cons_id, transaction_id);
-    transaction_id++;
-  }
   PLOG_DEBUG.printf("Producer %d -> Sending end messages to all consumers",
                     this_prod_id);
   // main thread will also increment this
@@ -304,23 +307,25 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     }
 #endif
     //auto next_prod_id = prod_id + 1;
+    //if (next_prod_id >= n_prod) next_prod_id = 0;
     this->queues->prefetch(prod_id, this_cons_id, false);
 
-    auto q = cqueues[prod_id];
+    //auto q = cqueues[prod_id];
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
       auto ret = this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k);
-      if (ret == RETRY) {
-
-        //k = q->pop_long();
-        if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-          if (data_idx > 0) {
-            submit_batch(data_idx);
+      if (ret != SUCCESS) {
+        if (ret == RETRY) {
+          //k = q->pop_long();
+          if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+            if (data_idx > 0) {
+              submit_batch(data_idx);
+            }
           }
+          goto pick_next_msg;
+        } else if (ret == -2) {
+          break;
         }
-        goto pick_next_msg;
-      } else if (ret == -2) {
-        break;
       }
 
       /*
@@ -334,7 +339,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       // dequeuing from the queues
       if ((data_t)k == QueueTest::BQ_MAGIC_64BIT) {
         fipc_test_FAI(finished_producers);
-        printf("Got MAGIC bit. stopping consumer\n");
+        //printf("Got MAGIC bit. stopping consumer\n");
         this->queues->pop_done(prod_id, this_cons_id);
         /*PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
@@ -388,6 +393,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     get_ht_stats(sh, kmer_ht);
   }
 
+  for (auto i = 0u; i < n_prod; ++i) {
+    this->queues->dump_stats(i, this_cons_id);
+  }
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_prod; ++i) {
     auto *q = cqueues[i];
@@ -545,6 +553,8 @@ void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
     this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
   } else if (std::is_same<T, kmercounter::LynxSectionQueue>::value) {
     this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
+  } else if (std::is_same<T, kmercounter::SectionQueue>::value) {
+    this->QUEUE_SIZE = 4;
   }
   this->queues = new T(nprod, ncons, this->QUEUE_SIZE);
 }
@@ -751,6 +761,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   print_stats(this->shards, *cfg);
 }
 
+template class QueueTest<SectionQueue>;
 template class QueueTest<LynxQueue>;
 template class QueueTest<LynxSectionQueue>;
 template class QueueTest<BQueueAligned>;

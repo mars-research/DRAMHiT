@@ -1415,5 +1415,8 @@ class LynxQueue {
       auto q = queues[p][c];
       return q->get_time();
     }
+
+    void dump_stats(uint32_t p, uint32_t c) {
+    }
 };
 } // namespace
