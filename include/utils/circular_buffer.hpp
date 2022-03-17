@@ -13,7 +13,8 @@ namespace kmercounter {
 template <size_t K>
 class DNAKMer {
 public:
-  DNAKMer() : buffer_{} {}
+  DNAKMer() : DNAKMer(uint64_t{}) {}
+  DNAKMer(uint64_t kmer) : buffer_{kmer} {}
 
   // Push a character mer into the buffer.
   // Does nothing and returns false if it's not a valid mer.
@@ -44,6 +45,10 @@ public:
       mask >>= MER_SIZE;
     }
     return str;
+  }
+
+  static std::string decode(uint64_t kmer) {
+    return DNAKMer(kmer).to_string();
   }
 
   // Size of a mer in bits

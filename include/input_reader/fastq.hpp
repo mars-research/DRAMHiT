@@ -112,13 +112,13 @@ class FastqReader : public FileReader {
 };
 
 template <size_t K>
-class FastqKMerReader : InputReader<std::array<uint8_t, K>> {
+class FastqKMerReader : InputReader<uint64_t> {
  public:
   template <typename... Args>
   FastqKMerReader(Args&&... args)
       : reader_(std::make_unique<FastqReader>(std::forward<Args>(args)...)) {}
 
-  bool next(std::array<uint8_t, K>* data) override {
+  bool next(uint64_t* data) override {
     return reader_.next(data);
   }
 
@@ -129,7 +129,7 @@ class FastqKMerReader : InputReader<std::array<uint8_t, K>> {
 /// Produce the same output as `FastqKMerReader` but the sequencies are parsed
 /// and stored in the memory before producing.
 template <size_t K>
-class FastqKMerPreloadReader : InputReader<std::array<uint8_t, K>> {
+class FastqKMerPreloadReader : InputReader<uint64_t> {
  public:
   template <typename... Args>
   FastqKMerPreloadReader(Args&&... args)
@@ -137,7 +137,7 @@ class FastqKMerPreloadReader : InputReader<std::array<uint8_t, K>> {
             std::make_unique<Adaptor<std::string_view, std::string>>(
                 std::make_unique<FastqReader>(std::forward<Args>(args)...)))) {}
 
-  bool next(std::array<uint8_t, K>* data) override {
+  bool next(uint64_t* data) override {
     return reader_.next(data);
   }
 

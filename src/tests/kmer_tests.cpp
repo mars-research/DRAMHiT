@@ -16,16 +16,16 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
   auto k = 0;
   uint64_t inserted = 0lu;
   constexpr uint64_t K = 4;
-  std::array<uint8_t, K> kmer;
+  uint64_t kmer;
   std::string tmp;
-  input_reader::FastqKMerReader<K> reader("../ERR024163_1.fastq", sh->shard_idx, cfg.num_threads);
+  input_reader::FastqKMerPreloadReader<K> reader("../SRR077487.2.fastq", sh->shard_idx, cfg.num_threads);
   __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
   const auto t_start = RDTSC_START();
   if (insert) {
     for (; reader.next(&kmer);) {
       inserted++;
-      _items[k].key = *(uint*)kmer.data();
+      _items[k].key = kmer;
 
       if (++k == HT_TESTS_BATCH_LENGTH) {
         KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &_items[0]);

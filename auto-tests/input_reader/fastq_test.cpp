@@ -175,20 +175,20 @@ TEST(FastqKmerReaderTest, SinglePartitionTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     // AGGAGGTAA
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'A'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'A', 'G'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'A', 'G'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'A', 'G', 'G'}), kmer);
+    EXPECT_EQ(std::string({'G', 'A', 'G', 'G'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'T'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'T', 'A', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_FALSE(reader->next(&kmer));
   }
 
@@ -198,12 +198,12 @@ TEST(FastqKmerReaderTest, SinglePartitionTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     // AGGAGGTAA
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_FALSE(reader->next(&kmer));
   }
 }
@@ -215,20 +215,20 @@ TEST(FastqKMerPreloadReader, SinglePartitionTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     // AGGAGGTAA
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'A'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'A', 'G'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'A', 'G'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'A', 'G', 'G'}), kmer);
+    EXPECT_EQ(std::string({'G', 'A', 'G', 'G'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'T'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'T', 'A', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_FALSE(reader->next(&kmer));
   }
 
@@ -238,12 +238,12 @@ TEST(FastqKMerPreloadReader, SinglePartitionTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     // AGGAGGTAA
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_FALSE(reader->next(&kmer));
   }
 }
@@ -255,12 +255,12 @@ TEST(FastqKMerPreloadReader, ParseNTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(SMALL_SEQ_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     // AGGNNAGGTANA
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'T'}), DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
     EXPECT_FALSE(reader->next(&kmer));
   }
 
@@ -270,7 +270,7 @@ TEST(FastqKMerPreloadReader, ParseNTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(SMALL_SEQ_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     // AGGNNAGGTANA
     EXPECT_FALSE(reader->next(&kmer));
   }
@@ -283,15 +283,15 @@ TEST(FastqKMerPreloadReader, MultiseqParseNTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(FIVE_SEQS_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     ASSERT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'T'}), DNAKMer<K>::decode(kmer));
     ASSERT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
     ASSERT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'A', 'G', 'G', 'T'}), kmer);
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'T'}), DNAKMer<K>::decode(kmer));
     ASSERT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::to_array<uint8_t>({'G', 'G', 'T', 'A'}), kmer);
+    EXPECT_EQ(std::string({'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
     ASSERT_FALSE(reader->next(&kmer));
   }
 
@@ -301,7 +301,7 @@ TEST(FastqKMerPreloadReader, MultiseqParseNTest) {
     std::unique_ptr<std::istream> input =
           std::make_unique<std::istringstream>(FIVE_SEQS_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
-    std::array<uint8_t, K> kmer;
+    uint64_t kmer;
     EXPECT_FALSE(reader->next(&kmer));
   }
 }
