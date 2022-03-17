@@ -39,9 +39,9 @@ class KMerReader : public InputReader<uint64_t> {
     }
 
     // Update the buffer for next kmer.
-    uint8_t mer = *current_line_iter_;
+    const uint8_t mer = *current_line_iter_;
     current_line_iter_++;
-    if (mer == 'N') {
+    if (!kmer_.push(mer)) {
       if (refill_buffer()) {
         // Successfully refilled a buffer
         return true;
@@ -54,7 +54,6 @@ class KMerReader : public InputReader<uint64_t> {
         return true;
       }
     }
-    kmer_.push(mer);
     return true;
   }
 
