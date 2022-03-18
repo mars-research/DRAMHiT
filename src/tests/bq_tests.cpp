@@ -231,7 +231,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
           results.first = 0;
         }
 
-        const auto find = next_key > 128 ? next_key - 128 : 1;
+        const auto find = key_start++;
         auto &slot = find_keys.second[find_keys.first++];
         const auto hash_val = hasher(&find, sizeof(find));
         const auto partition = hash_to_cpu(hash_val, n_cons);
