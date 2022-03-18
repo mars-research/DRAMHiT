@@ -64,7 +64,7 @@ public:
   // Mask to obtain one mer.
   constexpr static uint8_t MER_MASK = 0b11;
   // Mask to remove unused bits of a kmer.
-  constexpr static uint64_t KMER_MASK = ~((uint64_t)(0ull) - (1 << KMER_SIZE));
+  constexpr static uint64_t KMER_MASK = ~((uint64_t)(0ull) - ((K == 32) ? 0 : (1ull << KMER_SIZE)));
 
 private:
   // Shift left by one mer.
@@ -75,7 +75,7 @@ private:
 
   // Currently assumes only uint64_t for simplicity.
   uint64_t buffer_; 
-  static_assert(K < 32, "K >= 32 is not yet implemented");
+  static_assert(K <= 32, "K > 32 is not yet implemented");
 
   // Borrowed from https://github.com/gmarcais/Jellyfish/blob/master/include/jellyfish/mer_dna.hpp
   enum Code {
@@ -114,8 +114,10 @@ static_assert(DNAKMer<4>::BUFFER_LEN == 1);
 static_assert(DNAKMer<5>::BUFFER_LEN == 2);
 static_assert(DNAKMer<1>::KMER_MASK == 0b11);
 static_assert(DNAKMer<2>::KMER_MASK == 0b1111);
-static_assert(DNAKMer<3>::KMER_MASK == 0b111111);
-static_assert(DNAKMer<4>::KMER_MASK == 0b11111111);
+static_assert(DNAKMer<3>::KMER_MASK == 0b11'1111);
+static_assert(DNAKMer<4>::KMER_MASK == 0b1111'1111);
+static_assert(DNAKMer<31>::KMER_MASK == 0x3FFF'FFFF'FFFF'FFFF);
+static_assert(DNAKMer<32>::KMER_MASK == 0xFFFF'FFFF'FFFF'FFFF);
 
 /// An always-full circular buffer.
 /// Use memmove to keep the head at the beginning of the buffer.
