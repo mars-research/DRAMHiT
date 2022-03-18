@@ -21,6 +21,7 @@
 #include <iostream>
 #include <mutex>
 #include <tuple>
+#include <type_traits>
 
 #include "constants.hpp"
 #include "experiments.hpp"
@@ -105,6 +106,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   static int *fds;
   int id;
   size_t data_length, key_length;
+  /// A dedicated slot for the empty value.
+  uint64_t empty_slot_;
+  /// True if the empty value is inserted.
+  bool empty_slot_exists_;
 
   // https://www.bfilipek.com/2019/08/newnew-align.html
   void *operator new(std::size_t size, std::align_val_t align) {
@@ -587,6 +592,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   auto __find_one(KVQ *q, ValuePairs &vp) {
+  if (q->key == this->empty_item.get_key()) {
+      return __find_empty(q, vp);
+    }
+
     if constexpr (branching == BRANCHKIND::WithBranch) {
       return __find_branched(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
@@ -595,6 +604,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // return __find_branchless_simd(q, vp);
       return __find_branched(q, vp);
     }
+  }
+
+  /// Update or increment the empty key.
+  uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
+    if (empty_slot_exists_) {
+      vp.second[vp.first].id = q->key_id;
+      vp.second[vp.first].value = empty_slot_;
+      vp.first++;
+    }
+    return empty_slot_;
   }
 
   void __insert_branched(KVQ *q) {
@@ -867,6 +886,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void __insert_one(KVQ *q) {
+    if (q->key == this->empty_item.get_key()) {
+      return __insert_empty(q);
+    }
+
     if constexpr (experiment_inactive(experiment_type::nop_insert)) {
       if constexpr (branching == BRANCHKIND::WithBranch) {
         __insert_branched(q);
@@ -876,6 +899,18 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         __insert_branchless_simd(q);
       }
     }
+  }
+
+  /// Update or increment the empty key.
+  void __insert_empty(KVQ *q) {
+    if constexpr (std::is_same_v<KV, Item>) {
+      empty_slot_ = q->value;
+    } else if constexpr (std::is_same_v<KV, Aggr_KV>) {
+      empty_slot_ += q->value;
+    } else {
+      assert(false && "Invalid template type");
+    }
+    empty_slot_exists_ = true;
   }
 
   uint64_t read_hashtable_element(const void *data) {

@@ -55,14 +55,14 @@ TEST_P(HashtableTest, NO_PREFETCH_TEST) {
   GTEST_SKIP();
 
   const auto test_size = absl::GetFlag(FLAGS_test_size);
-  for (uint64_t i = 1; i <= test_size; i++) {
+  for (uint64_t i = 0; i < test_size; i++) {
     ItemQueue data;
     data.key = i;
     data.value = i * i;
     ht_->insert_noprefetch(&data);
   }
 
-  for (uint64_t i = 1; i <= test_size; i++) {
+  for (uint64_t i = 0; i < test_size; i++) {
     auto ptr = (Item*)ht_->find_noprefetch(&i);
     EXPECT_FALSE(ptr->is_empty()) << "Cannot find " << i;
     EXPECT_EQ(ptr->get_value(), i * i) << "Invalid value for key " << i;
@@ -130,7 +130,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   uint64_t k = 0;
   Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   uint64_t test_size = absl::GetFlag(FLAGS_test_size);
-  for (uint64_t i = 1; i <= test_size; i++) {
+  for (uint64_t i = 0; i < test_size; i++) {
     const uint64_t key = i;
     const uint64_t value = i * i;
     const uint64_t id = 2 * i;
@@ -167,7 +167,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
 
   // Finds.
   Values values[HT_TESTS_FIND_BATCH_LENGTH] = {0};
-  for (uint64_t i = 1; i <= test_size; i++) {
+  for (uint64_t i = 0; i < test_size; i++) {
     keys[k].key = i;
     keys[k].id = 2 * i;
     keys[k].part_id = 0;
