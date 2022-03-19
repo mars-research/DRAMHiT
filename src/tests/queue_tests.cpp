@@ -274,6 +274,12 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   // Round-robin between 0..n_prod
   prod_id = 0;
 
+  auto active_qmask = 0;
+
+  for (auto i = 0u; i < n_prod; i++) {
+    active_qmask |= (1 << i);
+  }
+
   while (finished_producers < n_prod) {
     auto submit_batch = [&](auto num_elements) {
       KeyPairs kp = std::make_pair(num_elements, &_items[0]);
@@ -310,11 +316,19 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     //if (next_prod_id >= n_prod) next_prod_id = 0;
     this->queues->prefetch(prod_id, this_cons_id, false);
 
+    if (!(active_qmask & (1 << prod_id))) {
+      goto pick_next_msg;
+    }
+
     //auto q = cqueues[prod_id];
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      auto ret = this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k);
-      if (ret != SUCCESS) {
+      auto ret =
+      this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k);
+      if (ret == RETRY) {
+        goto pick_next_msg;
+      }
+      /*if (ret != SUCCESS) {
         if (ret == RETRY) {
           //k = q->pop_long();
           if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
@@ -326,7 +340,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         } else if (ret == -2) {
           break;
         }
-      }
+      }*/
 
       /*
       IF_PLOG(plog::verbose) {
@@ -341,6 +355,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         fipc_test_FAI(finished_producers);
         //printf("Got MAGIC bit. stopping consumer\n");
         this->queues->pop_done(prod_id, this_cons_id);
+        active_qmask &= ~(1 << prod_id);
         /*PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u",

@@ -23,16 +23,13 @@ struct SectionQueueInner {
       CACHE_ALIGNED data_t *deqPtr;
       data_t * volatile enqLocalPtr;
       data_t *data;
-      bool pop_done;
-
-      CACHE_ALIGNED data_t *queue_end;
+      data_t *queue_end;
 
       CACHE_ALIGNED data_t * volatile enqSharedPtr;
-      //CACHE_ALIGNED data_t * volatile deqSharedPtr;
       data_t * volatile deqSharedPtr;
 
       //CACHE_ALIGNED size_t numEnqueueSpins;
-      //CACHE_ALIGNED size_t numDequeueSpins;
+      CACHE_ALIGNED size_t numDequeueSpins;
     };
 
     data_t *QUEUE;
@@ -126,9 +123,7 @@ class SectionQueue {
       for (auto p = 0u; p < nprod; p++) {
         for (auto c = 0u; c < ncons; c++) {
           data_t *data =
-            (data_t *)utils::zero_aligned_alloc(queue_size << 1, this->queue_size);// * sizeof(data_t));
-            //(data_t *)utils::zero_aligned_alloc(queue_size << 1, this->queue_size * sizeof(data_t));
-            //(data_t *)utils::zero_aligned_alloc((queue_size * sizeof(data_t)) << 1, this->queue_size * sizeof(data_t));
+            (data_t *)utils::zero_aligned_alloc(queue_size << 1, this->queue_size);
 
           auto it = pqueue_map.find(std::make_tuple(p, c));
           if (it != pqueue_map.end()) {
@@ -144,13 +139,8 @@ class SectionQueue {
             cq->deqPtr = data;
             cq->deqSharedPtr = data;
 
-            //cq->ROTATE_MASK = (size_t)data + (this->queue_size * sizeof(data_t) - 1);
-            //cq->SECTION_MASK = this->section_size - 1;
             PLOG_INFO.printf("enqPtr %p | deqPtr %p | data %p | section_mask %lx",
                 pq->enqPtr, cq->deqPtr, cq->data, SECTION_MASK);
-                //pq->enqPtr, cq->deqPtr, cq->data, cq->ROTATE_MASK, cq->SECTION_MASK);
-
-
           } else {
             for (auto &e : pqueue_map) {
               auto &[p, c] = e.first;
@@ -197,19 +187,16 @@ class SectionQueue {
 
       this->queues = (queue_t ***)calloc(1, nprod * sizeof(queue_t*));
       for (auto p = 0u; p < nprod; p++) {
-        //this->queues[p] = (queue_t **)aligned_alloc(
-        //    FIPC_CACHE_LINE_SIZE, ncons * sizeof(queue_t*));
         this->queues[p] = (queue_t **)calloc(1, ncons * sizeof(queue_t*));
-        printf("allocating %zu bytes %p\n", ncons * sizeof(queue_t*), this->queues[p]);
+        PLOGD.printf("allocating %zu bytes %p", ncons * sizeof(queue_t*), this->queues[p]);
         for (auto c = 0u; c < ncons; c++) {
-          printf("%s, &queues[%d][%d] %p\n", __func__, p, c, &queues[p][c]);
+          PLOGD.printf("queues[%d][%d] %p", p, c, &queues[p][c]);
           prod_queue_t *pq = pqueue_map.at(std::make_tuple(p, c));
           cons_queue_t *cq = cqueue_map.at(std::make_tuple(p, c));
           queues[p][c] = new queue_t(queue_size, pq, cq);
         }
       }
       queues[0][0]->dump();
-
     }
 
     int enqueue(uint32_t p, uint32_t c, data_t value) {
@@ -218,7 +205,7 @@ class SectionQueue {
       *pq->enqPtr = value;
       pq->enqPtr += 1;
 
-      if (((data_t)pq->enqPtr & SECTION_MASK) == 0) {
+      if (((data_t)pq->enqPtr & SECTION_MASK) == 0) [[unlikely]] {
 
         if (pq->enqPtr == pq->queue_end) {
           pq->enqPtr = pq->data;
@@ -228,7 +215,6 @@ class SectionQueue {
         while (pq->enqPtr == pq->deqLocalPtr) {
           pq->deqLocalPtr = cq->deqSharedPtr;
           //pq->numEnqueueSpins++;
-          //asm volatile("" ::: "memory");
           asm volatile("pause");
         }
 
@@ -240,11 +226,7 @@ class SectionQueue {
     int dequeue(uint32_t p, uint32_t c, data_t *value) {
       auto cq = &this->all_cqueues[c][p];
 
-      if ((((data_t)cq->deqPtr & SECTION_MASK) == 0) || (cq->pop_done)) {
-        if (cq->pop_done) {
-          return -2;
-        }
-
+      if (((data_t)cq->deqPtr & SECTION_MASK) == 0) {
         if (cq->deqPtr == cq->queue_end) {
           cq->deqPtr = cq->data;
         }
@@ -252,14 +234,14 @@ class SectionQueue {
         cq->deqSharedPtr = cq->deqPtr;
         while (cq->deqPtr == cq->enqLocalPtr) {
           cq->enqLocalPtr = cq->enqSharedPtr;
-          /*if (cq->enqLocalPtr == (data_t*) 0xdeadbeef) {
+          if (cq->enqLocalPtr == (data_t*) 0xdeadbeef) {
             cq->numDequeueSpins++;
-          }*/
-          asm volatile("pause");
+          }
+          //asm volatile("pause");
+          return RETRY;
         }
       }
       *value = *((data_t *) cq->deqPtr);
-      //cq->numDequeues++;
       cq->deqPtr += 1;
 
       return SUCCESS;
@@ -267,24 +249,28 @@ class SectionQueue {
 
     void dump_stats(uint32_t p, uint32_t c) {
       auto cq = &all_cqueues[c][p];
-      //printf("[%u][%u] numdequeue spins %lu | enqLocalPtr %p\n", p, c, cq->numDequeueSpins, cq->enqLocalPtr);
+      printf("[%u][%u] numdequeue spins %lu | enqLocalPtr %p\n", p, c, cq->numDequeueSpins, cq->enqLocalPtr);
     }
 #define CACHELINE_SIZE  64
 #define CACHELINE_MASK (CACHELINE_SIZE - 1)
     inline void prefetch(uint32_t p, uint32_t c, bool is_prod)  {
       if (is_prod) {
-        auto pq = &all_pqueues[p][c];
+        auto nc = ((c + 1) >= ncons) ? 0 : (c + 1);
+        //auto nc1 = ((nc + 1) >= ncons) ? 0 : (nc + 1);
+        auto pq = &all_pqueues[p][nc];
         if (((uint64_t)pq->enqPtr & CACHELINE_MASK) == 0) {
           __builtin_prefetch(pq->enqPtr + 8, 1, 3);
         }
+        //auto pq1 = &all_pqueues[p][nc1];
+        //__builtin_prefetch(pq1, 1, 3);
       } else {
-        auto np = ((p + 1) >= nprod) ? 0 : (p + 1);
+        auto np = ((p + 2) >= nprod) ? 0 : (p + 2);
         auto np1 = ((np + 1) >= nprod) ? 0 : (np + 1);
-        auto cq = &all_cqueues[c][np];
-        __builtin_prefetch(cq, 1, 3);
-
         auto cq1 = &all_cqueues[c][np1];
-        auto addr = cq1->deqPtr;
+        __builtin_prefetch(cq1, 1, 3);
+
+        auto cq = &all_cqueues[c][np];
+        auto addr = cq->deqPtr;
         __builtin_prefetch(addr +  0, 1, 3);
         __builtin_prefetch(addr +  8, 1, 3);
       }
@@ -299,7 +285,7 @@ class SectionQueue {
 
     void pop_done(uint32_t p, uint32_t c) {
       auto cq = &this->all_cqueues[c][p];
-      cq->pop_done = true;
+      //cq->pop_done = true;
     }
 
     ~SectionQueue() {
