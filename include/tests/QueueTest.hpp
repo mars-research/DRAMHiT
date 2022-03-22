@@ -1,16 +1,16 @@
-#ifndef __BQUEUE_TEST_HPP__
-#define __BQUEUE_TEST_HPP__
+#pragma once
 
 #include <thread>
 
 #include "hashtables/base_kht.hpp"
-#include "bqueue.h"
+//#include "queues/queue.hpp"
 #include "numa.hpp"
 #include "types.hpp"
 
 namespace kmercounter {
 
-class BQueueTest {
+template <typename T>
+class QueueTest {
   std::vector<std::thread> prod_threads;
   std::vector<std::thread> cons_threads;
   std::vector<BaseHashTable *> *ht_vec;
@@ -19,28 +19,38 @@ class BQueueTest {
   Numa *n;
   NumaPolicyQueues *npq;
 
+  T *queues;
+
   std::vector<numa_node> nodes;
-#ifdef CONFIG_ALIGN_BQUEUE_METADATA
-  std::map<std::tuple<int, int>, prod_queue_t *> pqueue_map;
-  std::map<std::tuple<int, int>, cons_queue_t *> cqueue_map;
-#else
-  std::map<std::tuple<int, int>, queue_t *> queue_map;
-#endif
+
+  uint64_t completed_producers = 0;
+  uint64_t completed_consumers = 0;
+  uint64_t ready_consumers = 0;
+  uint64_t ready_producers = 0;
+  uint64_t test_ready = 0;
+  uint64_t test_finished = 0;
+  uint64_t QUEUE_SIZE = 0;
 
  public:
+  const unsigned LYNX_QUEUE_SIZE = (1 << 23);
+  const unsigned BQ_QUEUE_SIZE = 4096;
+  static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
+
   void run_find_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
-  void insert_with_bqueues(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
-  void no_bqueues(Shard *sh, BaseHashTable *kmer_ht);
+
   void run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
+
+  void insert_with_queues(Configuration *cfg, Numa *n, NumaPolicyQueues *npq);
+
   void producer_thread(const uint32_t tid, const uint32_t n_prod,
                        const uint32_t n_cons, const bool main_thread,
                        const double skew);
+
   void consumer_thread(const uint32_t tid, const uint32_t n_prod,
                        const uint32_t n_cons, const uint32_t num_nops);
   void find_thread(int tid, int n_prod, int n_cons, bool main_thread);
+
   void init_queues(uint32_t nprod, uint32_t ncons);
 };
 
 }  // namespace kmercounter
-
-#endif  // __BQUEUE_TEST_HPP__

@@ -38,6 +38,7 @@ in stdenv.mkDerivation {
     zlib
     boost
     gtest
+    capstone
   ];
 
   NIX_CFLAGS_COMPILE = "-march=native";

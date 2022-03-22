@@ -12,7 +12,6 @@
 #include <fstream>
 
 #include "./hashtables/cas_kht.hpp"
-#include "./hashtables/robinhood_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "tests/PrefetchTest.hpp"
 #include "misc_lib.h"
@@ -56,6 +55,8 @@ const char *ht_type_strings[] = {
 };
 
 namespace kmercounter {
+
+class LynxQueue;
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -107,9 +108,6 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   switch (config.ht_type) {
     case SIMPLE_KHT:
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
-      break;
-    case ROBINHOOD_KHT:
-      kmer_ht = new RobinhoodKmerHashTable(sz);
       break;
     case CAS_KHT:
       /* For the CAS Hash table, size is the same as
@@ -232,9 +230,6 @@ void Application::shard_thread(int tid, bool mainthread) {
       break;
     case PREFETCH:
       this->test.pt.prefetch_test_run_exec(sh, config, kmer_ht);
-      break;
-    case BQ_TESTS_NO_BQ:
-      this->test.bqt.no_bqueues(sh, kmer_ht);
       break;
     case CACHE_MISS:
       this->test.cmt.cache_miss_run(sh, kmer_ht);
@@ -588,16 +583,23 @@ int Application::process(int argc, char *argv[]) {
         break;
     }
   } else {
-    if (config.numa_split)
-      this->np = new NumaPolicyThreads(config.num_threads,
-                                       THREADS_SPLIT_SEPARATE_NODES);
-    else
-      this->np =
-          new NumaPolicyThreads(config.num_threads, THREADS_ASSIGN_SEQUENTIAL);
+    switch (config.numa_split) {
+      case THREADS_SPLIT_SEPARATE_NODES:
+        this->np = new NumaPolicyThreads(config.num_threads,
+                                         THREADS_SPLIT_SEPARATE_NODES);
+        break;
+      case THREADS_ASSIGN_SEQUENTIAL:
+        this->np = new NumaPolicyThreads(config.num_threads,
+                                         THREADS_ASSIGN_SEQUENTIAL);
+        break;
+      default:
+        PLOGE.printf("Unknown numa policy. Exiting");
+        exit(-1);
+    }
   }
 
   if (config.mode == BQ_TESTS_YES_BQ) {
-    this->test.bqt.run_test(&config, this->n, this->npq);
+    this->test.qt.run_test(&config, this->n, this->npq);
   } else {
     this->spawn_shard_threads();
   }

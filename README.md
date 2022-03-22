@@ -57,27 +57,26 @@ sudo apt install libnuma-dev libboost-program-options-dev cmake
 ### Build
 * Setup build directory
 ```
-mkdir build
-cd build && cmake ..
+cmake -S . -B build
 ```
 
 * Build
 ```
-make -j
+cmake --build build/
 ```
 
 ### Run
 ```
-./kmercounter
+./build/kmercounter
 ```
 
 ### Test
 Run all tests.
 ```
-ctest
+ctest --test-dir=build
 ```
 
 Run individual test binary.
 ```
-./auto-tests/hashmap_test
+./build/auto-tests/hashmap_test
 ```

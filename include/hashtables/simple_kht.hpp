@@ -132,7 +132,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void prefetch(uint64_t i) {
-    if (i > this->capacity) {
+    if (i > this->capacity) [[unlikely]] {
       PLOG_ERROR.printf("%u > %lu\n", i, this->capacity);
       std::terminate();
     }
@@ -148,7 +148,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   void prefetch_partition(uint64_t idx, int _part_id, bool write) {
-    if (idx > this->capacity) std::terminate();
+
+    if (idx > this->capacity) [[unlikely]] {
+      std::terminate();
+    }
+
     auto p = _part_id;
     if (write) {
       prefetch_object<true>((void *)&this->hashtable[p][idx],
@@ -160,10 +164,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   void prefetch_read(uint64_t i) {
-    if (i > this->capacity) std::terminate();
+    if (i > this->capacity) [[unlikely]] {
+      PLOG_ERROR.printf("%u > %lu\n", i, this->capacity);
+      std::terminate();
+    }
+
     prefetch_object<false /* write */>(&this->hashtable[i],
                                        sizeof(this->hashtable[i]));
-    // false /* write */);
   }
 
   inline uint8_t touch(uint64_t i) {
@@ -623,13 +630,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   try_insert:
     KV *curr = &cur_ht[idx];
     auto retry = false;
-    if constexpr (experiment_inactive(experiment_type::insert_dry_run,
-                                      experiment_type::aggr_kv_write_key_only))
-      retry = curr->insert(q);
+    //if constexpr (experiment_inactive(experiment_type::insert_dry_run,
+    //                                  experiment_type::aggr_kv_write_key_only))
+    retry = curr->insert(q);
 
-    if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only)) {
-      curr->key = q->key;
-    }
+    //if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only)) {
+    // curr->key = q->key;
+    //}
 
     if (retry) {
       // FIXME: we *really* need an insert_to_queue() subroutine, this is too
@@ -963,9 +970,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
     this->prefetch(idx);
 
-    if constexpr (experiment_inactive(experiment_type::prefetch_only)) {
+    //if constexpr (experiment_inactive(experiment_type::prefetch_only)) {
       this->insert_queue[this->ins_head].idx = idx;
       this->insert_queue[this->ins_head].key = key;
+      this->insert_queue[this->ins_head].value = key_data->value;
       this->insert_queue[this->ins_head].key_id = key_data->id;
 
 #ifdef COMPARE_HASH
@@ -973,7 +981,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
 
       this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
-    }
+    //}
   }
 
   void add_to_find_queue(void *data) {

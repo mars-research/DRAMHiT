@@ -25,11 +25,19 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+
 add_compile_options(
+    -O3
     -Wall
     -mprefetchwt1
     -march=native
     -fcf-protection=none
+    -fno-stack-protector
+    -funroll-all-loops
+    -flto
+    -ffat-lto-objects
+    -g
+    #-rdynamic
 )
 
 # Build all the source files for the library.
@@ -38,12 +46,11 @@ add_library(ht_lib
     "src/hashtables/kvtypes.cpp"
 )
 target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
-target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash)
+target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone)
 
 # Build all the source files for the executable.
 add_executable(kvstore
-    "src/bqueue.cpp"
-    "src/tests/bq_tests.cpp"
+    "src/tests/queue_tests.cpp"
     "src/tests/hashtable_tests.cpp"
     "src/tests/prefetch_tests.cpp"
     "src/tests/cachemiss_test.cpp"
@@ -65,6 +72,7 @@ target_link_libraries(kvstore PRIVATE ht_lib)
 include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare options
+option(SANITIZE "Enable ASAN." OFF)
 option(BUILD_TESTING "Build tests." OFF)
 option(BUILD_EXAMPLE "Build examples." OFF)
 option(HUGEPAGES "Enable hugepages allocation." ON)
@@ -79,7 +87,7 @@ option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
-set(HASHER "xxhash" CACHE STRING "Hasher")
+set(HASHER "crc" CACHE STRING "Hasher")
 set_property(CACHE HASHER PROPERTY STRINGS ${hasher_types})
 if (NOT HASHER IN_LIST hasher_types)
     message(FATAL_ERROR "hasher type must be one of: ${hasher_types}")
@@ -162,7 +170,7 @@ endif ()
 
 if (VTUNE)
     if (NOT VTUNE_ROOT)
-        set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
+        set(VTUNE_ROOT "/local/devel/intel/oneapi/vtune/latest/")
     endif ()
 
     message(WARNING "Using VTUNE_ROOT: ${VTUNE_ROOT}")
@@ -199,11 +207,19 @@ if (CALC_STATS)
     add_definitions(-DCALC_STATS)
 endif()
 
+if (SANITIZE)
+    message(WARNING "Enabling ASAN")
+    add_compile_options(-fsanitize=address)
+    add_link_options(-fsanitize=address)
+endif()
+
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
 add_definitions(-D__MMAP_FILE)
 add_definitions(-DSERIAL_SCAN)
 add_definitions(-DPREFETCH_WITH_PREFETCH_INSTR)
-add_definitions(-DCONFIG_ALIGN_BQUEUE_METADATA)
+#add_definitions(-DCONFIG_ALIGN_BQUEUE_METADATA)
+add_definitions(-DCONFIG_BQUEUE_SECTION)
+# add_definitions(-DCONFIG_NUMA_AFFINITY)
 # add_definitions(-DXX_HASH)
 # add_definitions(-DTOUCH_DEPENDENCY)
 # add_definitions(-DXORWOW_SCAN)
