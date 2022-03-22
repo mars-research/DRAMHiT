@@ -12,9 +12,10 @@
 #include "input_reader/fastq.hpp"
 #include "input_reader/counter.hpp"
 #include "types.hpp"
+#include "print_stats.h"
 
 namespace kmercounter {
-OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert, input_reader::FastqKMerPreloadReader<K> reader) {
+OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert, input_reader::FastqKMerPreloadReader<KMER_LEN> reader) {
   auto k = 0;
   uint64_t inserted = 0lu;
   uint64_t kmer;
@@ -50,6 +51,7 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
   PLOG_INFO << "inserted "<< inserted << " items in " << duration << " cycles. " << duration / std::max(1ul, inserted) << " cpo";
   sh->stats->num_inserts = inserted;
   sh->stats->insertion_cycles = duration;
+  get_ht_stats(sh, kmer_ht);
   return {duration, inserted};
 }
 

@@ -9,10 +9,9 @@
 
 namespace kmercounter {
 
-constexpr size_t K = 32;
 class KmerTest {
  public:
-  static OpTimings shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert, input_reader::FastqKMerPreloadReader<K> reader);
+  static OpTimings shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert, input_reader::FastqKMerPreloadReader<KMER_LEN> reader);
 };
 
 }  // namespace kmercounter

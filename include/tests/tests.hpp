@@ -6,6 +6,7 @@
 #include "SynthTest.hpp"
 #include "ZipfianTest.hpp"
 #include "QueueTest.hpp"
+#include "KmerTest.hpp"
 
 namespace kmercounter {
 
@@ -20,6 +21,7 @@ class Tests {
   //QueueTest<kmercounter::LynxQueue> qt;
   CacheMissTest cmt;
   ZipfianTest zipf;
+  KmerTest kmer;
 
   Tests() {
   }

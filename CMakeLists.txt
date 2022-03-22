@@ -117,6 +117,9 @@ else()
     add_definitions(-DKVSTORE_ACTIVE_EXPERIMENT=experiment_type::${experiment})
 endif()
 
+set(KMER_LEN "8" CACHE STRING "The K in KMer")
+add_definitions(-DKMER_LEN=${KMER_LEN})
+
 if (HUGEPAGES)
     message(WARNING "Enabling hugepages allocation.")
     add_definitions(-DHUGE_1GB_PAGES)
