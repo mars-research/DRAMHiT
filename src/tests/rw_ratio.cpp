@@ -2,6 +2,7 @@
 #include <misc_lib.h>
 #include <plog/Log.h>
 #include <sync.h>
+#include <zipf.h>
 
 #include <RWRatioTest.hpp>
 #include <array>
@@ -55,6 +56,11 @@ class rw_experiment {
   }
 
   experiment_results run(unsigned int total_ops) {
+    const auto keyrange = config.num_threads * total_ops;
+    zipf_distribution distribution{
+        config.skew, keyrange,
+        next_key};  // next_key is being used purely as a seed here
+
     std::array<Keys, HT_TESTS_BATCH_LENGTH> inserts{};
     KeyPairs insert_pairs{0, inserts.data()};
     for (auto i = 0u; i < total_ops; ++i) {
@@ -66,14 +72,26 @@ class rw_experiment {
       insert_pairs.second[insert_pairs.first++].key = next_key + i;
     }
 
+    std::vector<decltype(distribution())> values(total_ops);
+    for (auto& key : values) key = distribution() + 1;
+
+#ifdef WITH_VTUNE_LIB
+    constexpr auto event_name = "rw_ratio_run";
+    static const auto event =
+        __itt_event_create(event_name, strlen(event_name));
+    __itt_event_start(event);
+#endif
+
     const auto start = start_time();
     for (auto i = 0u; i < total_ops; ++i) {
+      if (i % 8 == 0 && i + 16 < keyrange) __builtin_prefetch(&values[i + 16]);
+
       if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
       if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
       if (sampler(prng))
-        push_key(reads, next_key++);
+        push_key(reads, values[i]);
       else
-        push_key(writes, next_key++);
+        push_key(writes, values[i]);
     }
 
     time_insert();
@@ -83,6 +101,10 @@ class rw_experiment {
 
     const auto stop = stop_time();
     timings.cycles = stop - start;
+
+#ifdef WITH_VTUNE_LIB
+    __itt_event_end(event);
+#endif
 
     return timings;
   }
@@ -148,17 +170,7 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
 #else
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, shard.shard_idx * total_ops + 1};
-#ifdef WITH_VTUNE_LIB
-  constexpr auto event_name = "rw_ratio_run";
-  static const auto event = __itt_event_create(event_name, strlen(event_name));
-  __itt_event_start(event);
-#endif
   const auto results = experiment.run(total_ops);
-
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
-#endif
-
   PLOG_INFO << "Executed " << results.n_reads << " reads / " << results.n_writes
             << " writes ("
             << static_cast<double>(results.n_reads) / results.n_writes
