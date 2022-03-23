@@ -1,5 +1,6 @@
 *.swp
 build/
+out/
 *.o
 *.d
 kmercounter
@@ -25,3 +26,4 @@ Testing/
 *.jf
 *.jpg
 *.data
+*.png
