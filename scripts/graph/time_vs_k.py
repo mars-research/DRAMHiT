@@ -32,9 +32,11 @@ def run_test(extra_build_args, extra_kvstore_args, outpath):
     return get_avg_insert_cycle(outpath)
 
 if __name__ == '__main__':
-    Ks = list(range(4, 32))
+    Ks = list(range(4, 33))
+    # Ks = [15] * 10
     OUTPATH = 'out'
     FASTQ_FILE = '../memfs/SRR077487.2.fastq'
+    # FASTQ_FILE = '../memfs/SRR072006.fastq'
 
     # Run CASHT++
     casht_cycles = []
@@ -48,11 +50,10 @@ if __name__ == '__main__':
         print(f'cycles {rtn}')
         casht_cycles.append(rtn)
     print(f'{test_type}: {casht_cycles}')
-    
 
     # Run PartitionedHT
     partitionedht_cycles = []
-    test_type = 'CASHT'
+    test_type = 'PARTITIONEDHT'
     run_subprocess(f'mkdir -p {OUTPATH}/{test_type}')
     for K in Ks:
         print(f'Running {test_type} K={K}')
