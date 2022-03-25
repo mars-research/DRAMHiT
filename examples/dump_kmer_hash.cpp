@@ -27,7 +27,7 @@ void dump_hashes(const std::string_view input_file, const std::string_view outpu
   std::bernoulli_distribution sampler(sample_rate);
 
   kmercounter::Hasher hasher;
-  kmercounter::input_reader::FastqKMerPreloadReader<KMER_LEN> reader(input_file);
+  kmercounter::input_reader::FastqKMerReader<KMER_LEN> reader(input_file);
   std::ostream *ofile;
   if (output_file.empty()) {
     ofile = &std::cout;
