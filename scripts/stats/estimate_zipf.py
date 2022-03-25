@@ -9,8 +9,9 @@ import subprocess
 SIZE = 1000
 
 def estimate_zipf(arr):
+  arr = arr.astype(np.double)
   N = len(arr)
-  one_to_N = np.arange(1, N+1)
+  one_to_N = np.arange(1, N+1).astype(np.double)
   p = arr / np.sum(arr)
   lzipf = lambda s: -s * np.log(one_to_N) - np.log(np.sum(1/np.power(one_to_N, s)))
   min_f = lambda s: np.sum(np.power(np.log(p) - lzipf(s[0]), 2))
@@ -25,7 +26,8 @@ def cross_check(a):
   print(f"Expected: {a:.2f}, actual: {estimated_a:.2f}")
 
 def plot_zipf(file, title, output):
-  arr = np.genfromtxt(open(file, 'r'), dtype=int, delimiter=' ')[:,1]
+  arr = np.genfromtxt(open(file, 'r'), dtype=int, delimiter=' ')
+  arr = arr[:,1] # Only take the second column
   a = estimate_zipf(arr)
 
   # Plot regression line
@@ -33,6 +35,7 @@ def plot_zipf(file, title, output):
   x = np.arange(1.,size+1.)
   y = x**(-a) / special.zetac(a)
   y = np.abs(y)
+  y = y/max(y)
   y = y*max(arr)
   plt.plot(x, y, linewidth=2, color='r', label=f'zipf(a={a:.2f})')
   # Plot actual data
@@ -65,9 +68,8 @@ def zipf_from_kmer(file, k, output):
 
 
 if __name__ == "__main__":
-  # homo_file = '../SRR077487.2.fastq'
-  # K = [15, 21, 31, 63]
-  # for k in K:
-  #   zipf_from_kmer(homo_file, k, f'homo_{k}.jpg')
-
-  zipf_from_kmer("../SRR072006.fastq", 31, f'straw_8.jpg')
+  name, file = ['homo', '../SRR077487.2.fastq']
+  # name, file = ['straw', '../SRR072006.fastq']
+  K = list(range(8, 32))
+  for k in K:
+    zipf_from_kmer(file, k, f'{name}_{k}.jpg')

@@ -27,3 +27,4 @@ Testing/
 *.jpg
 *.data
 *.png
+*.pyc
