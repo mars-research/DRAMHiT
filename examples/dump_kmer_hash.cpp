@@ -8,7 +8,6 @@
 
 #include "hasher.hpp"
 #include "fastrange.h"
-#include "logger.h"
 #include "input_reader/fastq.hpp"
 
 ABSL_FLAG(std::string, input_file, "../SRR072006.fastq",
@@ -18,6 +17,8 @@ ABSL_FLAG(std::string, output_file, "hashes.data",
 ABSL_FLAG(double, sample_rate, 1.0, "Fraction of output sampled. 1.0 being sampling all output.");
 
 void dump_hashes(const std::string_view input_file, const std::string_view output_file, double sample_rate) {
+  std::cerr << "Reading from " << input_file << " writing to " << output_file << " with sampling rate " << sample_rate << " with K=" << KMER_LEN << std::endl;
+
   if (sample_rate > 1.0 || sample_rate < 0.0) {
     std::cerr << "Invalid sample rate " << sample_rate << std::endl;
     throw "Invalid sample rate";
@@ -42,7 +43,7 @@ void dump_hashes(const std::string_view input_file, const std::string_view outpu
     }
     // const uint64_t hash = hasher(&kmer, sizeof(uint64_t));
     const uint64_t hash = kmer;
-    std::cout.write((char*)&hash, sizeof(uint64_t));
+    ofile->write((char*)&hash, sizeof(uint64_t));
   }
   if (!output_file.empty()) {
     delete ofile;
@@ -51,7 +52,6 @@ void dump_hashes(const std::string_view input_file, const std::string_view outpu
 }
 
 int main(int argc, char **argv) {
-  initializeLogger();
   absl::ParseCommandLine(argc, argv);
   dump_hashes(absl::GetFlag(FLAGS_input_file), absl::GetFlag(FLAGS_output_file), absl::GetFlag(FLAGS_sample_rate));
   return 0;
