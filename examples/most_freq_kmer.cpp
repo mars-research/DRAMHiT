@@ -37,20 +37,27 @@ void most_freq_kmer(const std::string_view input_file, const size_t limit,
     return most_freq_kmer<MAX_K - 1>(input_file, limit, K);
   }
 
-  // Count the KMers
-  std::cout << "Reading from " << input_file << " with K=" << K << std::endl;
-  kmercounter::input_reader::FastqKMerReader<MAX_K> reader(input_file);
-  std::unordered_map<uint64_t, uint64_t> counter;
-  uint64_t kmer{};
-  while (reader.next(&kmer)) {
-    counter[kmer]++;
-  }
+  // Build a priority queu.
+  // Do it in a lambda so it takes less memory.
+  auto build_pq = [&]() {
+    // Count the KMers
+    std::cout << "Reading from " << input_file << " with K=" << K << std::endl;
+    kmercounter::input_reader::FastqKMerReader<MAX_K> reader(input_file);
+    std::unordered_map<uint64_t, uint64_t> counter;
+    uint64_t kmer{};
+    while (reader.next(&kmer)) {
+      counter[kmer]++;
+    }
 
-  // Initialize a pq over counts
-  std::priority_queue<std::tuple<uint64_t, uint64_t>> pq;
-  for (const auto& [kmer, count] : counter) {
-    pq.push({count, kmer});
-  }
+    // Initialize a pq over counts
+    std::priority_queue<std::tuple<uint64_t, uint64_t>> pq;
+    for (const auto& [kmer, count] : counter) {
+      pq.push({count, kmer});
+    }
+    return pq;
+  };
+  auto pq = build_pq();
+  
 
   // Output the top `limit` KMers.
   for (size_t i = 0; i < limit && !pq.empty(); i++) {
