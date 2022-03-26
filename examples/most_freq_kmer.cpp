@@ -17,10 +17,16 @@
 ABSL_FLAG(std::string, input_file, "../SRR072006.fastq",
           "A fastq file that we read the input from.");
 ABSL_FLAG(size_t, limit, 20, "Max number of output.");
-ABSL_FLAG(std::vector<std::string>, K,
-          std::vector<std::string>({"4", "5", "6", "7", "8", "9", "10", "11",
-                                    "12", "13", "14", "15", "16", "17", "18"}),
-          "A vector `K`s to run.");
+ABSL_FLAG(std::vector<std::string>, K, {},
+          "A vector `K`s to run. K=[4, 32] if not set.");
+
+std::vector<std::string> default_Ks() {
+  std::vector<std::string> rtn;
+  for (int i = 4; i <= 32; i++) {
+    rtn.push_back(std::to_string(i));
+  }
+  return rtn;
+}
 
 // Pass the max value that K could be to use it.
 // This function will recursively decrease the `MAX_K` until it finds the right
@@ -79,7 +85,11 @@ int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
   const auto input_file = absl::GetFlag(FLAGS_input_file);
   const auto limit = absl::GetFlag(FLAGS_limit);
-  for (const auto& K : absl::GetFlag(FLAGS_K)) {
+  auto Ks = absl::GetFlag(FLAGS_K);
+  if (Ks.empty()) {
+    Ks = default_Ks();
+  }
+  for (const auto& K : Ks) {
     most_freq_kmer<32>(input_file, limit, std::stoul(K));
   }
   return 0;
