@@ -13,6 +13,8 @@ namespace kmercounter {
 template <size_t K>
 class DNAKMer {
 public:
+  static_assert(K > 0);
+
   DNAKMer() : DNAKMer(uint64_t{}) {}
   DNAKMer(uint64_t kmer) : buffer_{kmer} {}
 
@@ -37,7 +39,7 @@ public:
 
   std::string to_string() const {
     std::string str;
-    uint64_t mask = MER_MASK << ((K - 1) * MER_SIZE); 
+    uint64_t mask = (uint64_t)MER_MASK << ((K - 1) * MER_SIZE); 
     for (int i = K; i > 0; i--) {
       const auto mer = (buffer_ & mask) >> ((i-1) * MER_SIZE);
       const uint8_t decoded_mer = DECODE_MAP[mer];
