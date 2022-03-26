@@ -913,8 +913,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t key = 0;
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      hash = key_data->key >> 32;
-      key = key_data->key & 0xFFFFFFFF;
+      //hash = key_data->key >> 32;
+      hash = this->hash((const char *)&key_data->key);
+      //key = key_data->key & 0xFFFFFFFF;
+      key = key_data->key;
     } else {
       hash = this->hash((const char *)&key_data->key);
       key = key_data->key & 0xFFFFFFFF;
