@@ -8,10 +8,10 @@ echo always > /sys/kernel/mm/transparent_hugepage/defrag
 # https://www.kernel.org/doc/html/latest/admin-guide/mm/hugetlbpage.html
 
 # Dynamically reserve 1GB pages (40GBs on node0)
-echo 80 > /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
+echo 128 > /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
 # Don't reserver hugepages for node1 if node1 doesn't exist(e.g., Github CI)
 if [ -d /sys/devices/system/node/node1 ]; then
-  echo 80 > /sys/devices/system/node/node1/hugepages/hugepages-1048576kB/nr_hugepages
+  echo 128 > /sys/devices/system/node/node1/hugepages/hugepages-1048576kB/nr_hugepages
 fi
 
 if [ ! -d /mnt/huge ]; then
