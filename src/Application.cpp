@@ -78,6 +78,7 @@ const Configuration def = {
     .ht_type = 1,
     .ht_fill = 75,
     .ht_size = HT_TESTS_HT_SIZE,
+    .insert_factor = 1,
     .n_prod = 1,
     .n_cons = 1,
     .num_nops = 0,
@@ -298,6 +299,11 @@ int Application::spawn_shard_threads() {
     HT_TESTS_NUM_INSERTS /= (float)config.num_threads;
   }
 
+  if (config.insert_factor > 1) {
+    PLOGI.printf("Insert factor %lu, Effective num insertions %lu", config.insert_factor,
+        HT_TESTS_NUM_INSERTS * config.insert_factor);
+  }
+
   /*   TODO don't spawn threads if f_start >= in_file_sz
     Not doing it now, as it has implications for num_threads,
     which is used in calculating stats */
@@ -415,6 +421,10 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint32_t>(&config.num_threads)
             ->default_value(def.num_threads),
         "Number of threads")(
+        "insert-factor",
+        po::value<uint64_t>(&config.insert_factor)
+            ->default_value(def.insert_factor),
+        "Insert X times the size of hashtable")(
         "files-dir",
         po::value<std::string>(&config.kmer_files_dir)
             ->default_value(def.kmer_files_dir),

@@ -96,6 +96,8 @@ struct Configuration {
   uint32_t ht_fill;
   // hashtable size
   uint64_t ht_size;
+  // insert factor
+  uint64_t insert_factor;
 
   // bqueue configuration
   // prod/cons count
