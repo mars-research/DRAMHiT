@@ -170,7 +170,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_start = RDTSC_START();
 
-  for (transaction_id = 0u; transaction_id < num_messages;) {
+  auto key_start_orig = key_start;
+
+  for (auto j = 0u; j < config.insert_factor; j++) {
+    key_start = key_start_orig;
+    for (transaction_id = 0u; transaction_id < num_messages;) {
       k = key_start++;
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
@@ -193,6 +197,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       }
 
       transaction_id++;
+    }
   }
 
   // enqueue halt messages and the consumer automatically knows
@@ -479,9 +484,10 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   }
 
   auto num_messages = HT_TESTS_NUM_INSERTS / (n_prod + n_cons);
+
   // our HT has a notion of empty keys which is 0. So, no '0' key for now!
   uint64_t key_start =
-      std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
+    std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
@@ -497,44 +503,48 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   auto t_start = RDTSC_START();
 
-  for (auto i = 0u; i < num_messages; i++) {
-    k = key_start++;
-    uint64_t hash_val = hasher(&k, sizeof(k));
+  for (auto j = 0u; j < config.insert_factor; j++) {
+    key_start =
+      std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
+    for (auto i = 0u; i < num_messages; i++) {
+      k = key_start++;
+      uint64_t hash_val = hasher(&k, sizeof(k));
 
-    partition = hash_to_cpu(hash_val, n_cons);
-    // PLOGI.printf("partition %d", partition);
-    // k has the computed hash in upper 32 bits
-    // and the actual key value in lower 32 bits
-    k |= (hash_val << 32);
+      partition = hash_to_cpu(hash_val, n_cons);
+      // PLOGI.printf("partition %d", partition);
+      // k has the computed hash in upper 32 bits
+      // and the actual key value in lower 32 bits
+      k |= (hash_val << 32);
 
-    items[j].key = k;
-    items[j].id = count;
-    items[j].part_id = partition + n_prod;
-    count++;
+      items[j].key = k;
+      items[j].id = count;
+      items[j].part_id = partition + n_prod;
+      count++;
 
-    if (j == 0) {
-      ktable->prefetch_queue(QueueType::find_queue);
-    }
-    if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
-      // PLOGI.printf("calling find_batch i = %d", i);
-      // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
-      ktable->find_batch(kp, vp);
-      found += vp.first;
-      j = 0;
-      not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
-      vp.first = 0;
-      PLOGD.printf("tid %lu count %lu | found -> %lu | not_found -> %lu", tid,
-                   count, found, not_found);
-    }
+      if (j == 0) {
+        ktable->prefetch_queue(QueueType::find_queue);
+      }
+      if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
+        KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
+        // PLOGI.printf("calling find_batch i = %d", i);
+        // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
+        ktable->find_batch(kp, vp);
+        found += vp.first;
+        j = 0;
+        not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
+        vp.first = 0;
+        PLOGD.printf("tid %lu count %lu | found -> %lu | not_found -> %lu", tid,
+            count, found, not_found);
+      }
 
 #ifdef CALC_STATS
-    if (i % (num_messages / 10) == 0) {
-      PLOG_INFO.printf(
-          "Finder %u, transaction_id %lu | (found %lu, not_found %lu)", tid, i,
-          found, not_found);
-    }
+      if (i % (num_messages / 10) == 0) {
+        PLOG_INFO.printf(
+            "Finder %u, transaction_id %lu | (found %lu, not_found %lu)", tid, i,
+            found, not_found);
+      }
 #endif
+    }
   }
   auto t_end = RDTSCP();
 
@@ -576,7 +586,7 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) 
   this->insert_with_queues(cfg, n, npq);
 
   // 2) spawn n_prod + n_cons threads for find
-  //this->run_find_test(cfg, n, npq);
+  this->run_find_test(cfg, n, npq);
 }
 
 template <typename T>
@@ -767,7 +777,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 
   // TODO free everything
   // TODO: Move this stats to find after testing find
-  print_stats(this->shards, *cfg);
+  //print_stats(this->shards, *cfg);
 }
 
 template class QueueTest<SectionQueue>;

@@ -149,8 +149,6 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 }
 
 OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
-  uint64_t count =
-      std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
   auto k = 0;
   uint64_t found = 0, not_found = 0;
 
@@ -172,36 +170,40 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   const auto t_start = RDTSC_START();
 
-  for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+  for (auto j = 0u; j < config.insert_factor; j++) {
+    uint64_t count =
+      std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
+    for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
-    items[k].key = items[k].id = 32;
-    k++;
+      items[k].key = items[k].id = 32;
+      k++;
 #else
-    items[k].key = count;
-    items[k].id = count;
-    // part_id is relevant only for partitioned ht
-    items[k].part_id = tid;
-    count++;
+      items[k].key = count;
+      items[k].id = count;
+      // part_id is relevant only for partitioned ht
+      items[k].part_id = tid;
+      count++;
 #endif
 
 #ifdef NO_PREFETCH
-    {
-      void *kv = ktable->find_noprefetch(&items[k]);
-      if (kv) found += 1;
-      k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
-    }
+      {
+        void *kv = ktable->find_noprefetch(&items[k]);
+        if (kv) found += 1;
+        k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+      }
 #else
-    if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
+      if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
+        KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
 
-      ktable->find_batch(kp, vp);
+        ktable->find_batch(kp, vp);
 
-      found += vp.first;
-      vp.first = 0;
-      k = 0;
-      not_found += HT_TESTS_FIND_BATCH_LENGTH - found;
-    }
+        found += vp.first;
+        vp.first = 0;
+        k = 0;
+        not_found += HT_TESTS_FIND_BATCH_LENGTH - found;
+      }
 #endif  // NO_PREFETCH
+    }
   }
 
 #if !defined(NO_PREFETCH)
