@@ -569,8 +569,6 @@ void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
     this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
   } else if(std::is_same<T, kmercounter::BQueueAligned>::value) {
     this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
-  } else if (std::is_same<T, kmercounter::LynxSectionQueue>::value) {
-    this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
   } else if (std::is_same<T, kmercounter::SectionQueue>::value) {
     this->QUEUE_SIZE = 4;
   }
@@ -781,7 +779,6 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 
 template class QueueTest<SectionQueue>;
 /*template class QueueTest<LynxQueue>;
-template class QueueTest<LynxSectionQueue>;
 template class QueueTest<BQueueAligned>;
 */
 }  // namespace kmercounter
