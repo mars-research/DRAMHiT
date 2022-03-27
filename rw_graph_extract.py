@@ -25,26 +25,29 @@ if __name__ == '__main__':
         exit()
 
     cashtpp_home = tests_home.joinpath('casht++/build')
-    part_home = tests_home.joinpath('part/build')
     bq_home = tests_home.joinpath('bq/build')
-
-    part_times = []
-    cashtpp_times = []
-    bq_times = []
     ratios = [0.0, 0.25, 0.5, 0.75, 1.0]
+    skews = [0.0, 0.5, 0.95]
 
-    for r in ratios:
-        cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{r}.log')))
-        part_times.append(get_times(part_home.joinpath(f'{r}.log')))
-        tmp_list = []
-        for c_count in range(2, 58, 4):
-            tmp_list.append((get_times(bq_home.joinpath(f'{r}-{c_count}.log')), c_count))
+    print('{')
+    for s in skews:
+        cashtpp_times = []
+        bq_times = []
+        opt = []
+        for r in ratios:
+            cashtpp_times.append(get_times(cashtpp_home.joinpath(f'{r}-{s}.log')))
+            tmp_list = []
+            for c_count in range(2, 58, 4):
+                tmp_list.append((get_times(bq_home.joinpath(f'{r}-{s}-{c_count}.log')), c_count))
 
-        best = max(tmp_list, key=lambda t : t[0])
-        print(f'{r}: {best[1]}')
-        bq_times.append(best[0])
+            best = max(tmp_list, key=lambda t : t[0])
+            #print(f'{r}: {best[1]}')
+            bq_times.append(best[0])
+            opt.append(best[1])
 
-    print(list(zip(ratios, cashtpp_times, part_times, bq_times)))
+        print(f'\t{s}: {list(zip(ratios, cashtpp_times, bq_times, opt))},')
+    
+    print('}')
     # print(f'Casht++: {cashtpp_times}')
     # print(f'Casht: {casht_times}')
     # print(f'Bqueue: {bq_times}')

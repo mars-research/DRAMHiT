@@ -7,17 +7,14 @@
 #include "BQueueTest.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"
+#include "hashtables/ht_helper.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "helper.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
 #include "xorwow.hpp"
-
-#if defined(BQ_TESTS_INSERT_ZIPFIAN)
-#include "hashtables/ht_helper.hpp"
 #include "zipf.h"
-#endif
 
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
@@ -146,6 +143,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
   zipf_distribution dist{skew, 192ull * (1ull << 20),
                          tid + 1};  // FIXME: magic numbers
 #elif defined(BQ_TESTS_RW_RATIO)
+  zipf_distribution dist{config.skew, num_messages * config.n_prod,
+                         key_start};  // Using key_start as seed
+
   std::array<Keys, HT_TESTS_FIND_BATCH_LENGTH> find_keys_buffer;
   std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> found_keys_buffer;
   KeyPairs find_keys{0, find_keys_buffer.data()};
@@ -163,9 +163,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
           ht_size, sh->shard_idx, true);
 #endif
 
-#ifdef BQ_TESTS_INSERT_ZIPFIAN
+#if defined(BQ_TESTS_INSERT_ZIPFIAN) || defined(BQ_TESTS_RW_RATIO)
   std::vector<uint64_t> values(num_messages);
-  for (auto &value : values) value = dist();
+  for (auto &value : values) value = dist() + 1;
 #endif
 
   if (main_thread) {
@@ -224,6 +224,9 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
       next_key = values.at(transaction_id);
 #elif defined(BQ_TESTS_RW_RATIO)
       while (j < num_messages && sampler(prng)) {
+        if (j % 8 == 0 && j + 16 < values.size())
+          prefetch_object<false>(&values[j + 16], 64);
+
         if (find_keys.first == HT_TESTS_FIND_BATCH_LENGTH) {
           hashtable->find_batch(find_keys, results);
           find_keys.first = 0;
@@ -231,7 +234,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
           results.first = 0;
         }
 
-        const auto find = key_start++;
+        const auto find = values[j];
         auto &slot = find_keys.second[find_keys.first++];
         const auto hash_val = hasher(&find, sizeof(find));
         const auto partition = hash_to_cpu(hash_val, n_cons);
@@ -244,7 +247,7 @@ void BQueueTest::producer_thread(const uint32_t tid, const uint32_t n_prod,
         ++j;
       }
 
-      next_key = key_start++;
+      next_key = values[j];
 #else
       next_key = key_start++;
 #endif
