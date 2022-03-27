@@ -50,8 +50,8 @@ class BQueueAligned {
 
     prod_queue_t **all_pqueues;
     cons_queue_t **all_cqueues;
-    int nprod;
-    int ncons;
+    uint32_t nprod;
+    uint32_t ncons;
 
     void init_prod_queues() {
       // map queues and producer_metadata
@@ -116,7 +116,7 @@ class BQueueAligned {
 
 
   public:
-    explicit BQueueAligned(int nprod, int ncons, size_t queue_size) {
+    explicit BQueueAligned(uint32_t nprod, uint32_t ncons, size_t queue_size) {
       assert((queue_size & (queue_size - 1)) == 0);
       this->queue_size = queue_size;
       this->batch_size = this->queue_size / 16;
@@ -135,7 +135,7 @@ class BQueueAligned {
       this->start_time = clock();
     }
 
-    int enqueue(int p, int c, data_t value) {
+    int enqueue(uint32_t p, uint32_t c, data_t value) {
       auto pq = &this->all_pqueues[p][c];
       uint32_t tmp_head;
       if (pq->head == pq->batch_head) {
@@ -151,14 +151,15 @@ class BQueueAligned {
 
       //printf("enqueuing at pq->head %u | val %lu\n", pq->head, value);
       pq->data[pq->head] = value;
-      if (++pq->head >= this->queue_size) {
+      pq->head = pq->head + 1;
+      if (pq->head >= this->queue_size) {
         pq->head = 0;
       }
 
       return SUCCESS;
     }
 
-    inline void prefetch(int p, int c, bool is_prod) {
+    inline void prefetch(uint32_t p, uint32_t c, bool is_prod) {
       if (is_prod) {
         auto pq = &this->all_pqueues[p][c];
         if (((pq->head + 4) & 7) == 0) {
@@ -218,7 +219,7 @@ class BQueueAligned {
       } while (current_time < time);
     }
 
-    int dequeue(int p, int c, data_t *value) {
+    int dequeue(uint32_t p, uint32_t c, data_t *value) {
       auto cq = &this->all_cqueues[c][p];
 
       if (cq->tail == cq->batch_tail) {
@@ -228,13 +229,13 @@ class BQueueAligned {
       *value = cq->data[cq->tail];
       //printf("dequeuing at cq->head %u | val %lu\n", cq->tail, *value);
       cq->data[cq->tail] = 0;
-      cq->tail++;
+      cq->tail = cq->tail + 1;
       if (cq->tail >= this->queue_size) cq->tail = 0;
 
       return SUCCESS;
     }
 
-    void push_done(int p, int c) {
+    void push_done(uint32_t p, uint32_t c) {
       auto pq = &this->all_pqueues[p][c];
       auto cq = &this->all_cqueues[c][p];
 
@@ -245,18 +246,20 @@ class BQueueAligned {
 
     }
 
-    void pop_done(int p, int c) { }
+    void pop_done(uint32_t p, uint32_t c) { }
 
-    void finalize(int p, int c) {
+    void finalize(uint32_t p, uint32_t c) {
       this->end_time = clock();
       this->queue_time = (double)(end_time - start_time) / (2 * CLOCKS_PER_SEC);
 
     }
 
-    uint64_t get_time(int p, int c) { return this->queue_time; }
+    uint64_t get_time(uint32_t p, uint32_t c) { return this->queue_time; }
 
     ~BQueueAligned() {
       teardown_all_queues();
+    }
+    void dump_stats(uint32_t p, uint32_t c) {
     }
 
 };

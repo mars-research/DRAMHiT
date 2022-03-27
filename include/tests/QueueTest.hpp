@@ -3,7 +3,6 @@
 #include <thread>
 
 #include "hashtables/base_kht.hpp"
-//#include "queues/queue.hpp"
 #include "numa.hpp"
 #include "types.hpp"
 
@@ -32,7 +31,7 @@ class QueueTest {
   uint64_t QUEUE_SIZE = 0;
 
  public:
-  const unsigned LYNX_QUEUE_SIZE = (1 << 23);
+  const unsigned LYNX_QUEUE_SIZE = (1 << 12) * 8;
   const unsigned BQ_QUEUE_SIZE = 4096;
   static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
 

@@ -12,6 +12,8 @@
 #include "print_stats.h"
 #include "sync.h"
 #include "queues/lynxq.hpp"
+#include "queues/lynxq_section.hpp"
+#include "queues/section_queues.hpp"
 #include "queues/bqueue_aligned.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
@@ -21,9 +23,17 @@
 
 #include "utils/vtune.hpp"
 
+#define PGROUNDDOWN(x)  (x & ~(PAGESIZE - 1))
+
 namespace kmercounter {
 
 using namespace std;
+
+const uint64_t CACHELINE_SIZE = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+const uint64_t CACHELINE_MASK = CACHELINE_SIZE - 1;
+const uint64_t PAGESIZE = sysconf(_SC_PAGESIZE);
+
+void setup_signal_handler(void);
 
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
@@ -49,10 +59,10 @@ struct bq_kmer {
 static struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 
 // thread-local since we have multiple consumers
-__thread static int data_idx = 0;
-__thread static uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
+static __thread int data_idx = 0;
+static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 __attribute__((
-    aligned(64))) __thread static Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+    aligned(64))) static __thread Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
                                                          uint32_t n_cons,
@@ -112,11 +122,21 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   uint32_t cons_id = 0;
   uint64_t transaction_id;
   typename T::prod_queue_t *pqueues[n_cons];
+  typename T::cons_queue_t *cqueues[n_cons];
 
   vtune::set_threadname("producer_thread" + std::to_string(tid));
 
   auto [ratio, num_messages, key_start] = get_params(n_prod, n_cons, tid);
   Hasher hasher;
+#define CONFIG_NUMA_AFFINITY
+
+  for (auto i = 0u; i < n_cons; i++) {
+    pqueues[i] = &this->queues->all_pqueues[this_prod_id][i];
+#ifdef CONFIG_NUMA_AFFINITY
+    mbind_buffer_local((void*)PGROUNDDOWN((uint64_t)pqueues[i]), sizeof(typename T::prod_queue_t));
+    //mbind_buffer_local(pqueues[i]->data, this->queues->queue_size);
+#endif
+   }
 
   if (main_thread) {
     // Wait for threads to be ready for test
@@ -140,16 +160,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       "key_start %lu",
       this_prod_id, num_messages, n_cons, key_start);
 
-  // initialize the local queues array from queue_map
-  for (auto i = 0u; i < n_cons; i++) {
-    pqueues[i] = &this->queues->all_pqueues[this_prod_id][i];
-  }
   static const auto event = vtune::event_start("message_enq");
 
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
-    if (next_cons_id >= n_cons) next_cons_id -= n_cons;
-    //return std::min(next_cons_id, n_cons - 1);
+    if (next_cons_id >= n_cons) next_cons_id = 0;
     return next_cons_id;
   };
 
@@ -167,31 +182,18 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
       //if (++cons_id >= n_cons) cons_id = 0;
 
-      auto q = pqueues[cons_id];
-      /*
-      IF_PLOG(plog::verbose) {
-        PLOG_VERBOSE.printf("prod_id %d | cons_id %d | value %llu",
-            this_prod_id, cons_id, k & ((1 << 31) - 1));
-      }*/
-      //q->push(k);
-      while (this->queues->enqueue(this_prod_id, cons_id, (data_t)k) != SUCCESS) ;
+      auto pq = pqueues[cons_id];
+      this->queues->enqueue_new(pq, this_prod_id, cons_id, (data_t)k);
 
-      /*if (1) {
-        if (((uint64_t)q->push_index & 0x3f) == 0) {
-          __builtin_prefetch(q->push_index + 64, 1, 3);
+      auto npq = pqueues[get_next_cons(1)];
+      if (1) {
+        if (((uint64_t)npq->enqPtr & 0x3f) == 0) {
+          __builtin_prefetch(npq->enqPtr + 8, 1, 3);
         }
-      }*/
-      this->queues->prefetch(this_prod_id, cons_id, true);
+      }
 
       transaction_id++;
   }
-
-  auto t_end = RDTSCP();
-
-  vtune::event_end(event);
-
-  sh->stats->enqueue_cycles = (t_end - t_start);
-  sh->stats->num_enqueues = transaction_id;
 
   // enqueue halt messages and the consumer automatically knows
   // when to stop
@@ -203,6 +205,14 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
         this_prod_id, cons_id, transaction_id);
     transaction_id++;
   }
+
+  auto t_end = RDTSCP();
+
+  vtune::event_end(event);
+
+  sh->stats->enqueue_cycles = (t_end - t_start);
+  sh->stats->num_enqueues = transaction_id;
+
   PLOG_DEBUG.printf("Producer %d -> Sending end messages to all consumers",
                     this_prod_id);
   // main thread will also increment this
@@ -237,6 +247,10 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   // initialize the local queues array from queue_map
   for (auto i = 0u; i < n_prod; i++) {
     cqueues[i] = &this->queues->all_cqueues[this_cons_id][i];
+#ifdef CONFIG_NUMA_AFFINITY
+    mbind_buffer_local((void*)PGROUNDDOWN((uint64_t)cqueues[i]), sizeof(typename T::cons_queue_t));
+    //mbind_buffer_local(cqueues[i]->data, this->queues->queue_size);
+#endif
   }
   vtune::set_threadname("consumer_thread" + std::to_string(tid));
 
@@ -255,12 +269,23 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
+  unsigned int cpu, node;
+  getcpu(&cpu, &node);
+
+  PLOGI.printf("[cons:%u] starting tid %u | cpu %u\n", this_cons_id, gettid(), cpu);
+
   static const auto event = vtune::event_start("message_deq");
 
   auto t_start = RDTSC_START();
 
   // Round-robin between 0..n_prod
   prod_id = 0;
+
+  auto active_qmask = 0;
+
+  for (auto i = 0u; i < n_prod; i++) {
+    active_qmask |= (1 << i);
+  }
 
   while (finished_producers < n_prod) {
     auto submit_batch = [&](auto num_elements) {
@@ -274,35 +299,34 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
     auto get_next_prod = [&](auto inc) {
       auto next_prod_id = prod_id + inc;
-      if (next_prod_id >= n_prod) next_prod_id -= n_prod;
-      return std::min(next_prod_id, n_prod - 1);
+      if (next_prod_id >= n_prod) next_prod_id = 0;
+      return next_prod_id;
     };
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
       kmer_ht->prefetch_queue(QueueType::insert_queue);
     }
+    auto cq = cqueues[prod_id];
 
-#if 0
-    if (1)
     {
-      typename T::cons_queue_t *cq = cqueues[get_next_prod(1)];
-      __builtin_prefetch(cq->pop_index + 0, 1, 3);
-      __builtin_prefetch(cq->pop_index + 64, 1, 3);
-      __builtin_prefetch(cq->pop_index + 128, 1, 3);
+      auto np1 = get_next_prod(1);
+      typename T::cons_queue_t *cq1 = cqueues[np1];
+      __builtin_prefetch(cq1->deqPtr + 0, 1, 3);
+      __builtin_prefetch(cq1->deqPtr + 8, 1, 3);
 
-      //auto next_prod_id = prod_id + 1;
-      //if (next_prod_id >= n_prod) next_prod_id = 0;
+      auto np2 = get_next_prod(np1 + 1);
+      typename T::cons_queue_t *cq2 = cqueues[np2];
+      __builtin_prefetch(cq2, 1, 3);
     }
-#endif
-    auto next_prod_id = prod_id + 1;
-    this->queues->prefetch(next_prod_id, this_cons_id, false);
 
-    auto q = cqueues[prod_id];
+    if (!(active_qmask & (1 << prod_id))) {
+      goto pick_next_msg;
+    }
+
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      if (this->queues->dequeue(prod_id, this_cons_id, (data_t *)&k)) {
-
-        //k = q->pop_long();
+      auto ret = this->queues->dequeue_new(cq, prod_id, this_cons_id, (data_t *)&k);
+      if (ret == RETRY) {
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
           if (data_idx > 0) {
             submit_batch(data_idx);
@@ -310,29 +334,33 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         }
         goto pick_next_msg;
       }
-
       /*
       IF_PLOG(plog::verbose) {
         PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %llu",
                     prod_id, this_cons_id, k & ((1 << 31) - 1));
       }*/
-      //++count;
+      ++count;
 
       // STOP condition. On receiving this magic message, the consumers stop
       // dequeuing from the queues
-      if ((data_t)k == QueueTest::BQ_MAGIC_64BIT) {
+      if ((data_t)k == QueueTest::BQ_MAGIC_64BIT) [[unlikely]] {
         fipc_test_FAI(finished_producers);
+        //printf("Got MAGIC bit. stopping consumer\n");
+        this->queues->pop_done(prod_id, this_cons_id);
+        active_qmask &= ~(1 << prod_id);
         /*PLOG_DEBUG.printf(
             "Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u",
             this_cons_id, prod_id, finished_producers);
+         */
 
+#ifdef CALC_STATS
         PLOG_DEBUG.printf("Consumer experienced %" PRIu64 " reprobes, %" PRIu64
                           " soft",
                           kmer_ht->num_reprobes, kmer_ht->num_soft_reprobes);
+#endif
 
         PLOG_DEBUG.printf("Consumer received %" PRIu64, count);
-        */
       }
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
@@ -348,10 +376,10 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
       transaction_id++;
 #ifdef CALC_STATS
-      if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
+      /*if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
         PLOG_INFO.printf("[cons:%u] transaction_id %lu deq_failures %lu",
                          this_cons_id, transaction_id, q->num_deq_failures);
-      }
+      }*/
 #endif
     }
   pick_next_msg:
@@ -374,6 +402,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     get_ht_stats(sh, kmer_ht);
   }
 
+  for (auto i = 0u; i < n_prod; ++i) {
+    this->queues->dump_stats(i, this_cons_id);
+  }
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
   for (auto i = 0u; i < n_prod; ++i) {
     auto *q = cqueues[i];
@@ -529,8 +560,12 @@ void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
     this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
   } else if(std::is_same<T, kmercounter::BQueueAligned>::value) {
     this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
+  } else if (std::is_same<T, kmercounter::LynxSectionQueue>::value) {
+    this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
+  } else if (std::is_same<T, kmercounter::SectionQueue>::value) {
+    this->QUEUE_SIZE = 4;
   }
-  this->queues = new T(nprod, ncons, this->QUEUE_SIZE);
+  this->queues = new T(nprod, ncons, this->QUEUE_SIZE, this->npq);
 }
 
 template <typename T>
@@ -665,7 +700,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
     this->prod_threads.push_back(std::move(_thread));
-    PLOG_DEBUG.printf("Thread producer_thread: %u, affinity: %u", i,
+    PLOG_INFO.printf("Thread producer_thread: %u, affinity: %u", i,
                       assigned_cpu);
     i += 1;
   }
@@ -695,7 +730,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
-    PLOG_DEBUG.printf("Thread consumer_thread: %u, affinity: %u", i,
+    PLOG_INFO.printf("Thread consumer_thread: %u, affinity: %u", i,
                       assigned_cpu);
 
     this->cons_threads.push_back(std::move(_thread));
@@ -735,6 +770,9 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   print_stats(this->shards, *cfg);
 }
 
-//template class QueueTest<LynxQueue>;
+template class QueueTest<SectionQueue>;
+/*template class QueueTest<LynxQueue>;
+template class QueueTest<LynxSectionQueue>;
 template class QueueTest<BQueueAligned>;
+*/
 }  // namespace kmercounter

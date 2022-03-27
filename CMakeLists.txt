@@ -96,7 +96,7 @@ else()
 endif()
 
 set(branch_types simd cmov branched)
-set(BRANCH simd CACHE STRING "Branch style")
+set(BRANCH branched CACHE STRING "Branch style")
 set_property(CACHE BRANCH PROPERTY STRINGS ${branch_types})
 if (NOT BRANCH IN_LIST branch_types)
     message(FATAL_ERROR "branching type must be one of: ${branch_types}")

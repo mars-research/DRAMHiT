@@ -146,16 +146,18 @@ class NumaPolicyQueues : public Numa {
   }
 
   friend std::ostream &operator<<(std::ostream &os, const NumaPolicyQueues &n) {
-    std::cout << "assigned_cpu_list_producers: ";
+    std::ostringstream os_str;
+    os_str << "assigned_cpu_list_producers: ";
     for (auto i : n.assigned_cpu_list_producers) {
-      std::cout << i << ' ';
+      os_str << i << ' ';
     }
-    std::cout << "\n";
-    std::cout << "assigned_cpu_list_consumers: ";
+    os_str << "\n";
+    os_str << "assigned_cpu_list_consumers: ";
     for (auto i : n.assigned_cpu_list_consumers) {
-      std::cout << i << ' ';
+      os_str << i << ' ';
     }
-    std::cout << "\n";
+    os_str << "\n";
+    PLOGI << os_str.str();
     return os;
   }
 
