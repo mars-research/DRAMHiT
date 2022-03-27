@@ -12,7 +12,6 @@
 #include "print_stats.h"
 #include "sync.h"
 #include "queues/lynxq.hpp"
-#include "queues/lynxq_section.hpp"
 #include "queues/section_queues.hpp"
 #include "queues/bqueue_aligned.hpp"
 
