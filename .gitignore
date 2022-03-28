@@ -28,3 +28,4 @@ Testing/
 *.data
 *.png
 *.pyc
+*.patch

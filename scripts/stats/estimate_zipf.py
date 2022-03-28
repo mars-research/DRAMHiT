@@ -1,5 +1,6 @@
-from scipy.optimize import minimize
+from scipy.optimize import minimize, Bounds
 from scipy import special
+from scipy.stats import describe
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
@@ -10,12 +11,14 @@ SIZE = 1000
 
 def estimate_zipf(arr):
   arr = arr.astype(np.double)
+  arr += 1
   N = len(arr)
   one_to_N = np.arange(1, N+1).astype(np.double)
   p = arr / np.sum(arr)
   lzipf = lambda s: -s * np.log(one_to_N) - np.log(np.sum(1/np.power(one_to_N, s)))
   min_f = lambda s: np.sum(np.power(np.log(p) - lzipf(s[0]), 2))
-  result = minimize(min_f, np.array([0.5]))
+  bnds = Bounds([0], [np.inf])
+  result = minimize(min_f, (0.5), method='SLSQP', bounds=bnds)
   return result.x[0]
 
 def cross_check(a):
