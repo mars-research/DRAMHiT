@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import subprocess
 from estimate_zipf import estimate_zipf
 
+SAMPLE_RATE=0.5
+
 def run_subprocess(cmd):
     print(f'Running <{cmd}>')
     return subprocess.check_output(cmd, shell=True)
@@ -20,26 +22,43 @@ def gen_values(K, inpath, outpath):
     run_subprocess(f'ninja -C {build_dir} > {outpath}.build.log')
 
     # Run dumper
-    return run_subprocess(f'{build_dir}/examples/dump_kmer_hash --input_file={inpath} --output_file="" --sample_rate=0.05 > {outpath}.log')
+    return run_subprocess(f'{build_dir}/examples/dump_kmer_hash --input_file={inpath} --output_file="" --sample_rate={SAMPLE_RATE}')
 
-def hist_from_values(inputfile, title, outputfile):
-  with open(inputfile, 'rb') as f:
-    print(f'Loading data from {inputfile}')
-    nums = f.read()
-    nums = np.frombuffer(nums, dtype=np.uint64)
-    print(f"Finish load data from {inputfile}; size of data: {len(nums)}")
+def hist_from_values(data, title, outputfile, skew):
+  # Load data
+  print(f'Loading data with size {len(data)}')
+  nums = np.frombuffer(data, dtype=np.uint64)
+  print(f"Finish load data; size of data: {len(nums)}")
+
+  # Gen histo
+  hist, _ = np.histogram(nums, 2000)
+  hist[::-1].sort()
+  if skew:
+    # Calc skew
     print(f"Estimating skew")
     skew = estimate_zipf(nums)
     print(f'Skew={skew}')
-    hist, _ = np.histogram(nums, 2000)
-    hist[::-1].sort()
-    plt.bar(np.arange(len(hist)), hist)
-    # plt.title(f'{title}')
-    plt.title(f'{title} Skew={skew}')
-    fig = plt.gcf()
-    fig.set_size_inches(20, 20)
-    fig.savefig(outputfile)
-    fig.clf()
+    title += f' Skew={skew}'
+  
+  # Plot histo
+  plt.bar(np.arange(len(hist)), hist)
+  plt.title(title)
+  fig = plt.gcf()
+  fig.set_size_inches(20, 20)
+  fig.savefig(outputfile)
+  fig.clf()
+
+  # Plot log-log
+  plt.scatter(np.arange(len(hist)), hist)
+  plt.title(f'Log-log {title}')
+  # plt.xscale('log')
+  plt.yscale('log')
+  fig = plt.gcf()
+  fig.set_size_inches(20, 20)
+  fig.savefig(f'{outputfile}_loglog.jpg')
+  fig.clf()
+
+  plt.clf()
 
 if __name__ == "__main__":
   INPUT_DIR = "../memfs"
@@ -47,7 +66,8 @@ if __name__ == "__main__":
   # INPUT_FILE = "SRR072006.fastq"
   INPUT_PATH = f'{INPUT_DIR}/{INPUT_FILE}'
   OUTDIR = f"out/hist/{INPUT_FILE}"
-  Ks = range(4, 33)
+  # Ks = range(4, 33)
+  Ks = [9]
   for K in Ks:
     # Create output directory
     outdir = f'{OUTDIR}/{K}'
@@ -57,4 +77,4 @@ if __name__ == "__main__":
     values = gen_values(K, INPUT_PATH, f'{outdir}/values')
 
     # Generate histogram
-    hist_from_values(values, f'Histogram K={K} file={INPUT_FILE}', f'{outdir}/histo.jpg')
+    hist_from_values(values, f'Histogram K={K} file={INPUT_FILE}', f'{outdir}/histo.jpg', skew=False)
