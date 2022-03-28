@@ -121,7 +121,6 @@ private:
              uint64_t num_parts, find_bound_t find_bound = find_next_line)
       : FileReader(std::shared_ptr<std::istream>(input_file), part_id,
                    num_parts, find_bound) {
-    PLOG_INFO << "Setting IO buffer";
     input_file_->rdbuf()->pubsetbuf(buffer_.data(), buffer_.size());
   }
 
@@ -132,6 +131,7 @@ private:
         part_id_(part_id),
         num_parts_(num_parts),
         buffer_(4096) {
+    PLOG_FATAL_IF(part_id >= num_parts) << "part_id(" << part_id << " ) >= num_parts(" << num_parts << ")";
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the
     // parameter passing.

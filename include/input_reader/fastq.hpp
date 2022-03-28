@@ -11,12 +11,14 @@
 
 #include "file.hpp"
 #include "input_reader.hpp"
+#include "input_reader/adaptor.hpp"
+#include "input_reader/reservoir.hpp"
 #include "kmer.hpp"
 #include "plog/Log.h"
 
 namespace kmercounter {
 namespace input_reader {
-
+/// Parse a fastq file and produce sequencies from it.
 class FastqReader : public FileReader {
  public:
   FastqReader(std::string_view filename, uint64_t part_id, uint64_t num_parts)
@@ -63,18 +65,14 @@ class FastqReader : public FileReader {
     }
 
     // Skip over the third line(quality header).
-    this->get();
-    next_char = this->get();
-    if (next_char != '\n') {
-      PLOG_WARNING << "Unexpected character " << next_char
-                   << ". The quanlity header line should "
-                      "only be {'+', '\n'}.";
+    if (!FileReader::next(nullptr)) {
+      PLOG_WARNING << "Unexpected EOF. Expecting quality header.";
       return false;
     }
 
     // Copy the second line(sequence) to `data`
     if (!FileReader::next(nullptr)) {
-      PLOG_WARNING << "Unexpected EOF. Expecting sequence.";
+      PLOG_WARNING << "Unexpected EOF. Expecting quality.";
       return false;
     }
 
@@ -99,7 +97,7 @@ class FastqReader : public FileReader {
     for (std::string line; std::getline(st, line);) {
       // Consume quality line after hitting the quality header.
       // This will lead us to the next sequence.
-      if (line == "+") {
+      if (!line.empty() && line.at(0) == '+') {
         std::getline(st, line);
         break;
       }
@@ -114,16 +112,36 @@ class FastqReader : public FileReader {
 };
 
 template <size_t K>
-class FastqKMerReader : InputReader<std::array<uint8_t, K>> {
-public:
-  template <typename ...Args>
-  FastqKMerReader(Args && ...args) : reader_(std::make_unique<FastqReader>(std::forward<Args>(args)...)) {}
+class FastqKMerReader : InputReader<uint64_t> {
+ public:
+  template <typename... Args>
+  FastqKMerReader(Args&&... args)
+      : reader_(std::make_unique<FastqReader>(std::forward<Args>(args)...)) {}
 
-  bool next(std::array<uint8_t, K>* data) override {
+  bool next(uint64_t* data) override {
     return reader_.next(data);
   }
 
-private:
+ private:
+  KMerReader<K, std::string_view> reader_;
+};
+
+/// Produce the same output as `FastqKMerReader` but the sequencies are parsed
+/// and stored in the memory before producing.
+template <size_t K>
+class FastqKMerPreloadReader : InputReader<uint64_t> {
+ public:
+  template <typename... Args>
+  FastqKMerPreloadReader(Args&&... args)
+      : reader_(std::make_unique<Reservoir<std::string>>(
+            std::make_unique<Adaptor<std::string_view, std::string>>(
+                std::make_unique<FastqReader>(std::forward<Args>(args)...)))) {}
+
+  bool next(uint64_t* data) override {
+    return reader_.next(data);
+  }
+
+ private:
   KMerReader<K> reader_;
 };
 }  // namespace input_reader

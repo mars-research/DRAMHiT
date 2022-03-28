@@ -1,0 +1,7 @@
+# Dataset from kerind https://github.com/mars-research/kmer_wiki/blob/master/papers/bioinformatics/kmerind-acm-tcbb.pdf
+# Get the tools from here https://github.com/ncbi/sra-tools/wiki/02.-Installing-SRA-Toolkit
+# then `fastq-dump ${FILE}` to generate fastq files
+
+# Homosapien
+# https://www.ncbi.nlm.nih.gov/sra/SRX033191[accn]
+https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos1/sra-pub-run-1/SRR077487/SRR077487.2

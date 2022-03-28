@@ -1,9 +1,12 @@
 #include "input_reader/kmer.hpp"
 
-#include <vector>
-#include <array>
-
 #include <gtest/gtest.h>
+
+#include <array>
+#include <memory>
+#include <sstream>
+#include <string_view>
+#include <vector>
 
 #include "input_reader/file.hpp"
 #include "input_reader_test_utils.hpp"
@@ -12,29 +15,31 @@ namespace kmercounter {
 namespace input_reader {
 namespace {
 TEST(KmerTest, SimpleTest) {
-  const char* data = R"(ABCD
-POG
+  const char* data = R"(ATCG
+TAGNAC
 )";
 
+  const size_t K = 2;
   std::unique_ptr<std::istream> file =
       std::make_unique<std::istringstream>(data);
-  auto file_reader =
-      std::make_unique<FileReader>(std::move(file), 0, 1);
-  KMerReader<2> kmer_reader(std::move(file_reader));
-  std::array<uint8_t, 2> kmer;
+  auto file_reader = std::make_unique<FileReader>(std::move(file), 0, 1);
+  KMerReader<2, std::string_view> kmer_reader(std::move(file_reader));
+  uint64_t kmer;
   EXPECT_TRUE(kmer_reader.next(&kmer));
-  EXPECT_EQ(std::to_array<uint8_t>({'A', 'B'}), kmer);
+  EXPECT_EQ("AT", DNAKMer<K>::decode(kmer));
   EXPECT_TRUE(kmer_reader.next(&kmer));
-  EXPECT_EQ(std::to_array<uint8_t>({'B', 'C'}), kmer);
+  EXPECT_EQ("TC", DNAKMer<K>::decode(kmer));
   EXPECT_TRUE(kmer_reader.next(&kmer));
-  EXPECT_EQ(std::to_array<uint8_t>({'C', 'D'}), kmer);
+  EXPECT_EQ("CG", DNAKMer<K>::decode(kmer));
   EXPECT_TRUE(kmer_reader.next(&kmer));
-  EXPECT_EQ(std::to_array<uint8_t>({'P', 'O'}), kmer);
+  EXPECT_EQ("TA", DNAKMer<K>::decode(kmer));
   EXPECT_TRUE(kmer_reader.next(&kmer));
-  EXPECT_EQ(std::to_array<uint8_t>({'O', 'G'}), kmer);
+  EXPECT_EQ("AG", DNAKMer<K>::decode(kmer));
+  EXPECT_TRUE(kmer_reader.next(&kmer));
+  EXPECT_EQ("AC", DNAKMer<K>::decode(kmer));
   EXPECT_FALSE(kmer_reader.next(&kmer));
 }
 
-} // namespace
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace
+}  // namespace input_reader
+}  // namespace kmercounter

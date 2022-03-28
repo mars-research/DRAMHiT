@@ -15,6 +15,6 @@ jobs:
           install_url: https://releases.nixos.org/nix/nix-2.4/install
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - run: nix develop .#build --command -- sh -c "mkdir build && cd build && cmake .. -G Ninja -DBUILD_TESTING=TRUE -DBRANCH=branched -DHUGEPAGES=FALSE"
+      - run: nix develop .#build --command cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DBRANCH=branched -DHUGEPAGES=OFF
       - run: nix develop .#build --command ninja -C build
       - run: nix develop .#build --command ctest -V --test-dir build

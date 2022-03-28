@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
+#include <type_traits>
 
 #include "constants.hpp"
 #include "plog/Log.h"
@@ -29,18 +30,18 @@ class CASHashTable : public BaseHashTable {
  public:
   /// The global instance is shared by all threads.
   static KV *hashtable;
+  /// A dedicated slot for the empty value.
+  static uint64_t empty_slot_;
+  /// True if the empty value is inserted.
+  static bool empty_slot_exists_;
   /// File descriptor backs the memory
   int fd;
   int id;
   size_t data_length, key_length;
 
-  // static std::vector<std::mutex> hashtable_mutexes;
-  // uint32_t thread_id;
-
   CASHashTable(uint64_t c)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
-    // this->ht_init_mutex.lock();
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
@@ -61,11 +62,6 @@ class CASHashTable : public BaseHashTable {
 
     printf("[INFO] Hashtable size: %lu\n", this->capacity);
     printf("%s, data_length %lu\n", __func__, this->data_length);
-
-    // this->ht_init_mutex.unlock();
-    // this->thread_id = t;
-    // std::vector<std::mutex> __ hashtable_mutexes (this->capacity);
-    // hashtable_mutexes.swap(__// hashtable_mutexes);
   }
 
   ~CASHashTable() {
@@ -362,7 +358,23 @@ class CASHashTable : public BaseHashTable {
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp) { return __find_branched(q, vp); }
+  auto __find_one(KVQ *q, ValuePairs &vp) { 
+    if (q->key == this->empty_item.get_key()) {
+      __find_empty(q, vp);
+    } else {
+      __find_branched(q, vp);
+    }
+  }
+
+    /// Update or increment the empty key.
+  uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
+    if (empty_slot_exists_) {
+      vp.second[vp.first].id = q->key_id;
+      vp.second[vp.first].value = empty_slot_;
+      vp.first++;
+    }
+    return empty_slot_;
+  }
 
   void __insert_branched(KVQ *q) {
     // hashtable idx at which data is to be inserted
@@ -446,7 +458,25 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void __insert_one(KVQ *q) { __insert_branched(q); }
+  void __insert_one(KVQ *q) {
+    if (q->key == this->empty_item.get_key()) {
+      __insert_empty(q);
+    } else {
+      __insert_branched(q);
+    }
+  }
+
+  /// Update or increment the empty key.
+  void __insert_empty(KVQ *q) {
+    if constexpr (std::is_same_v<KV, Item>) {
+      empty_slot_ = q->value;
+    } else if constexpr (std::is_same_v<KV, Aggr_KV>) {
+      empty_slot_ += q->value;
+    } else {
+      assert(false && "Invalid template type");
+    }
+    empty_slot_exists_ = true;
+  }
 
   uint64_t read_hashtable_element(const void *data) override {
     PLOG_FATAL << "Not implemented";
@@ -501,6 +531,12 @@ class CASHashTable : public BaseHashTable {
 /// Static variables
 template <class KV, class KVQ>
 KV *CASHashTable<KV, KVQ>::hashtable = nullptr;
+
+template <class KV, class KVQ>
+uint64_t CASHashTable<KV, KVQ>::empty_slot_ = 0;
+
+template <class KV, class KVQ>
+bool CASHashTable<KV, KVQ>::empty_slot_exists_ = false;
 
 template <class KV, class KVQ>
 std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;

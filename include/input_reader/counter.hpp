@@ -6,20 +6,20 @@
 namespace kmercounter {
 namespace input_reader {
 /// Sequentially incrementin counter.
-template<class T>
+template <class T>
 class Counter : public InputReader<T> {
-    public:
-    Counter(T start) : data_(start) {}
+ public:
+  Counter(T start) : data_(start) {}
 
-    bool next(T *data) override {
-        *data = data_++;
-        return true;
-    }
+  bool next(T *data) override {
+    *data = data_++;
+    return true;
+  }
 
-private:
-    T data_;
+ private:
+  T data_;
 };
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace input_reader
+}  // namespace kmercounter
 
-#endif // INPUT_READER_COUNTER_HPP
+#endif  // INPUT_READER_COUNTER_HPP

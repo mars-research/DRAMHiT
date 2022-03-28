@@ -6,21 +6,20 @@
 namespace kmercounter {
 namespace input_reader {
 /// Repeat the same value over and over again.
-template<class T>
+template <class T>
 class Repeater : public InputReader<T> {
-public:
-    Repeater(T data) : data_(data) {}
+ public:
+  Repeater(T data) : data_(data) {}
 
-    bool next(T *data) override {
-        *data = data_;
-        return true;
-    }
+  bool next(T *data) override {
+    *data = data_;
+    return true;
+  }
 
-
-private:
-    T data_;
+ private:
+  T data_;
 };
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace input_reader
+}  // namespace kmercounter
 
-#endif // INPUT_READER_REPEATER_HPP
+#endif  // INPUT_READER_REPEATER_HPP

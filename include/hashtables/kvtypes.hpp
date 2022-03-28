@@ -156,6 +156,7 @@ struct Aggr_KV {
         : "rbx");
   }
 
+  inline uint64_t get_key() const { return this->key; }
   inline uint16_t get_value() const { return this->count; }
 
   inline constexpr size_t data_length() const { return sizeof(Aggr_KV); }
@@ -528,6 +529,7 @@ struct Item {
     this->kvpair.value = elem->value;
   }
 
+  inline uint64_t get_key() const { return this->kvpair.key; }
   inline uint64_t get_value() const { return this->kvpair.value; }
 
   inline Item get_empty_key() {
