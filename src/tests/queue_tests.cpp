@@ -502,7 +502,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   auto t_start = RDTSC_START();
 
-  for (auto j = 0u; j < config.insert_factor; j++) {
+  for (auto m = 0u; m < config.insert_factor; m++) {
     key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
     for (auto i = 0u; i < num_messages; i++) {

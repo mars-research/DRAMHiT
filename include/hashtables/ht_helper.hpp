@@ -102,6 +102,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
 #ifdef HUGE_1GB_PAGES
   int fd;
   char mmap_path[256] = {0};
+  auto alloc_sz = capacity * sizeof(T);
 
   snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
 
@@ -115,8 +116,8 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
     PLOGI.printf("opened file %s", mmap_path);
   }
 
-  PLOGI.printf("requesting to mmap %lu bytes", capacity * sizeof(T));
-  addr = (T *)mmap(ADDR, /* 256*1024*1024*/ capacity * sizeof(T), PROT_RW,
+  PLOGI.printf("requesting to mmap %lu bytes", alloc_sz);
+  addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
                    MAP_FLAGS, fd, 0);
   if (addr == MAP_FAILED) {
     perror("mmap");
@@ -126,11 +127,14 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
     PLOGD.printf("mmap returns %p", addr);
   }
 
+  if (alloc_sz < (1 << 30)) {
+    goto skip_mbind;
+  }
   // Special handling for CAS that does NOT depend on global config state
   // Which it shouldn't have in the first place...
   if (is_cas_a_special_snowflake && (config.numa_split != 2)) {
     void *_addr = addr;
-    size_t len_split = ((capacity * sizeof(T)) >> 1);
+    size_t len_split = alloc_sz >> 1;
     void *addr_split = (char *)_addr + len_split;
     unsigned long nodemask[4096] = {0};
     nodemask[0] = 1 << 1;
@@ -145,6 +149,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
+skip_mbind:
   *out_fd = fd;
 #else
   addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
