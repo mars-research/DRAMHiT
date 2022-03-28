@@ -27,9 +27,10 @@ in stdenv.mkDerivation {
     };
   };
 
-  nativeBuildInputs = with pkgs; [ 
+  nativeBuildInputs = with pkgs; [
     cmake
     ninja
+    python310
   ];
 
   buildInputs = with pkgs; [
