@@ -14,3 +14,12 @@ target_link_libraries(most_freq_kmer
   absl::flags
   absl::flags_parse
 )
+
+add_executable(num_unique_kmer num_unique_kmer.cpp)
+target_link_libraries(num_unique_kmer 
+  ht_lib 
+  absl::flat_hash_map
+  absl::flags
+  absl::flags_parse
+  Boost::boost
+)
