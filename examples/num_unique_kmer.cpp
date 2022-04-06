@@ -1,4 +1,4 @@
-#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
 
@@ -18,7 +18,7 @@
 #include "input_reader/fastq.hpp"
 #include "utils/circular_buffer.hpp"
 
-ABSL_FLAG(std::string, input_file, "../SRR072006.fastq",
+ABSL_FLAG(std::string, input_file, "../memfs/SRR072006.fastq",
           "A fastq file that we read the input from.");
 ABSL_FLAG(std::vector<std::string>, K, {},
           "A vector `K`s to run. K=[4, 32] if not set.");
@@ -35,7 +35,7 @@ std::vector<std::string> default_Ks() {
 // This function will recursively decrease the `MAX_K` until it finds the right
 // K.
 template <size_t MAX_K>
-void most_freq_kmer(const std::string_view input_file, const size_t limit,
+void num_uniq_kmer(const std::string_view input_file,
                     const size_t K) {
   // Sanity check
   if (K > MAX_K || MAX_K <= 0) {
@@ -43,42 +43,26 @@ void most_freq_kmer(const std::string_view input_file, const size_t limit,
   }
   // Check if we are at the right K. Go down if now.
   if (K != MAX_K) {
-    return most_freq_kmer<MAX_K - 1>(input_file, limit, K);
+    return num_uniq_kmer<MAX_K - 1>(input_file, K);
   }
 
-  // Build a priority queu.
-  // Do it in a lambda so it takes less memory.
-  auto build_pq = [&]() {
-    // Count the KMers
-    std::cout << "Reading from " << input_file << " with K=" << K << std::endl;
-    kmercounter::input_reader::FastqKMerReader<MAX_K> reader(input_file);
-    absl::flat_hash_map<uint64_t, uint64_t> counter(
-        1 << 30);  // 1GB initial size.
-    uint64_t kmer{};
-    while (reader.next(&kmer)) {
-      counter[kmer]++;
-    }
 
-    // Initialize a pq over counts
-    std::priority_queue<std::tuple<uint64_t, uint64_t>> pq;
-    for (const auto& [kmer, count] : counter) {
-      pq.push({count, kmer});
-    }
-    return pq;
-  };
-  auto pq = build_pq();
-
-  // Output the top `limit` KMers.
-  for (size_t i = 0; i < limit && !pq.empty(); i++) {
-    const auto [count, kmer] = pq.top();
-    pq.pop();
-    std::cout << kmercounter::DNAKMer<MAX_K>::decode(kmer) << ": " << count
-              << std::endl;
+  // Count the KMers
+  std::cout << "Reading from " << input_file << " with K=" << K << std::endl;
+  kmercounter::input_reader::FastqKMerReader<MAX_K> reader(input_file);
+  absl::flat_hash_set<uint64_t> counter(
+      1 << 30);  // 1GB initial size.
+  uint64_t kmer{};
+  while (reader.next(&kmer)) {
+    counter.insert(kmer);
   }
+
+  // Output size.
+  std::cout << MAX_K << ": " << counter.size() << std::endl;
 }
 
 template <>
-void most_freq_kmer<0>(const std::string_view input_file, const size_t limit,
+void num_uniq_kmer<0>(const std::string_view input_file,
                        const size_t K) {
   std::cerr << "Invalid K: " << K << ";, MAX_K: " << 0 << std::endl;
   throw -1;
@@ -91,11 +75,14 @@ int main(int argc, char** argv) {
   if (Ks.empty()) {
     Ks = default_Ks();
   }
-  boost::asio::thread_pool pool(4); // 4 threads
+  // boost::asio::thread_pool pool(4); // 4 threads
+  // for (const auto& K : Ks) {
+  //   boost::asio::post(pool, [] {});
+  //   num_uniq_kmer<32>(input_file, std::stoul(K));
+  // }
+  // pool.join();
   for (const auto& K : Ks) {
-    boost::asio::post(pool, [] {});
-    most_freq_kmer<32>(input_file, limit, std::stoul(K));
+    num_uniq_kmer<32>(input_file, std::stoul(K));
   }
-  pool.join();
   return 0;
 }
