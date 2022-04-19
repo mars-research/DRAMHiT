@@ -52,14 +52,16 @@ extern Configuration config;
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
+__thread struct xorwow_state _xw_state, init_state;
+
 OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   auto k = 0;
-  struct xorwow_state _xw_state, init_state;
   auto inserted = 0lu;
   std::uint64_t duration{};
 
   xorwow_init(&_xw_state);
   init_state = _xw_state;
+
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
@@ -91,9 +93,6 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       _items[k].value = value;
       keys[k] = value;
 #else
-      // *((uint64_t *)&kmers[k].data) = count;
-      //*((uint64_t *)items[k].key()) = count;
-      //*((uint64_t *)items[k].value()) = count;
 #ifdef NO_PREFETCH
       keys[k] = count;
 #endif
@@ -106,6 +105,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       ktable->insert_noprefetch((void *)&keys[k]);
       k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
       count++;
+      inserted++;
 #else
 
       // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
@@ -129,7 +129,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       count++;
 #endif
     }
-    PLOG_INFO.printf("inserted %lu items", inserted);
+    //PLOG_INFO.printf("inserted %lu items", inserted);
     // flush the last batch explicitly
     // printf("%s calling flush queue\n", __func__);
 #if !defined(NO_PREFETCH)
@@ -154,6 +154,8 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
   auto k = 0;
   uint64_t found = 0, not_found = 0;
 
+  _xw_state = init_state;
+
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
   Values *values;
@@ -175,10 +177,17 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
   for (auto j = 0u; j < config.insert_factor; j++) {
     uint64_t count =
       std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
+    _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
       items[k].key = items[k].id = 32;
       k++;
+#elif defined(XORWOW)
+#warning "Xorwow rand kmer insert"
+      const auto value = xorwow(&_xw_state);
+      items[k].key = value;
+      items[k].id = value;
+      items[k].part_id = tid;
 #else
       items[k].key = count;
       items[k].id = count;
@@ -226,6 +235,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   duration = t_end - t_start;
 
+  PLOGE.printf("%s, not found %lu", __func__, not_found);
   return {duration, found};
 }
 
