@@ -54,11 +54,12 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 
 OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   auto k = 0;
-  struct xorwow_state _xw_state;
+  struct xorwow_state _xw_state, init_state;
   auto inserted = 0lu;
   std::uint64_t duration{};
 
   xorwow_init(&_xw_state);
+  init_state = _xw_state;
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
@@ -75,6 +76,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   const auto t_start = RDTSC_START();
   for (auto j = 0u; j < config.insert_factor; j++) {
     uint64_t count = std::max(static_cast<uint64_t>(1), HT_TESTS_NUM_INSERTS * start);
+    _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
 #if defined(SAME_KMER)
       //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
