@@ -14,6 +14,7 @@
 #include "queues/lynxq.hpp"
 #include "queues/section_queues.hpp"
 #include "queues/bqueue_aligned.hpp"
+#include "xorwow.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"
@@ -169,12 +170,23 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_start = RDTSC_START();
 
+  struct xorwow_state _xw_state, init_state;
   auto key_start_orig = key_start;
+
+  xorwow_init(&_xw_state);
+  init_state = _xw_state;
 
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
+    _xw_state = init_state;
     for (transaction_id = 0u; transaction_id < num_messages;) {
+#if defined(XORWOW)
+#warning "Xorwow rand kmer insert"
+      const auto value = xorwow(&_xw_state);
+      k = value;
+#else
       k = key_start++;
+#endif
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
       uint64_t hash_val = hasher(&k, sizeof(k));
@@ -446,6 +458,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   BaseHashTable *ktable;
   Hasher hasher;
 
+  struct xorwow_state _xw_state, init_state;
+
+  xorwow_init(&_xw_state);
+  init_state = _xw_state;
+
   alignas(64) uint64_t k = 0;
 
   vtune::set_threadname("find_thread" + std::to_string(tid));
@@ -505,8 +522,13 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   for (auto m = 0u; m < config.insert_factor; m++) {
     key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
+    _xw_state = init_state;
     for (auto i = 0u; i < num_messages; i++) {
+#if defined(XORWOW)
+      k = xorwow(&_xw_state);
+#else
       k = key_start++;
+#endif
       uint64_t hash_val = hasher(&k, sizeof(k));
 
       partition = hash_to_cpu(hash_val, n_cons);
