@@ -61,6 +61,7 @@ add_executable(kvstore
     "src/xorwow.cpp"
     "src/Application.cpp"
     "src/kvstore.cpp"
+    "src/zipf_distribution.cpp"
 )
 
 # Add subdirectory
@@ -85,6 +86,7 @@ option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
 option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
+option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
 set(HASHER "crc" CACHE STRING "Hasher")
@@ -119,6 +121,11 @@ endif()
 
 set(KMER_LEN "8" CACHE STRING "The K in KMer")
 add_definitions(-DKMER_LEN=${KMER_LEN})
+
+if(ZIPF_FAST)
+    message(WARNING "Using fast zipfian")
+    add_definitions(-DZIPF_FAST)
+endif()
 
 if (HUGEPAGES)
     message(WARNING "Enabling hugepages allocation.")

@@ -19,6 +19,7 @@
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"
 #include "zipf.h"
+#include "zipf_distribution.hpp"
 #endif
 
 #include "utils/vtune.hpp"
@@ -138,6 +139,32 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #endif
    }
 
+  struct xorwow_state _xw_state, init_state;
+  auto key_start_orig = key_start;
+
+#if defined(BQ_TESTS_INSERT_ZIPFIAN)
+  constexpr auto keyrange_width = (1ull << 31);  // 192 * (1 << 20);
+#ifdef ZIPF_FAST
+  zipf_distribution_apache distribution(keyrange_width, skew);
+#else
+  zipf_distribution distribution{skew, num_messages, this_prod_id + 1};
+#endif
+
+  std::vector<std::uint64_t> values(num_messages);
+  for (auto &value : values) {
+#ifdef ZIPF_FAST
+    value = distribution.sample();
+#else
+    value = distribution();
+#endif
+  }
+#endif
+
+#if defined(XORWOW)
+  xorwow_init(&_xw_state);
+  init_state = _xw_state;
+#endif
+
   if (main_thread) {
     // Wait for threads to be ready for test
     while (ready_consumers < n_cons) fipc_test_pause();
@@ -170,20 +197,22 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_start = RDTSC_START();
 
-  struct xorwow_state _xw_state, init_state;
-  auto key_start_orig = key_start;
-
-  xorwow_init(&_xw_state);
-  init_state = _xw_state;
-
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
+#if defined(XORWOW)
     _xw_state = init_state;
+#endif
     for (transaction_id = 0u; transaction_id < num_messages;) {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
       const auto value = xorwow(&_xw_state);
       k = value;
+#elif defined(BQ_TESTS_INSERT_ZIPFIAN)
+#warning "Zipfian insertion"
+      if (transaction_id % 8 == 0 && transaction_id + 16 < values.size())
+        prefetch_object<false>(&values.at(transaction_id + 16), 64);
+
+      k = values.at(transaction_id);
 #else
       k = key_start++;
 #endif

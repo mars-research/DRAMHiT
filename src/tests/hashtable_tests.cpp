@@ -10,6 +10,7 @@
 #include "sync.h"
 #include "tests/tests.hpp"
 #include "zipf.h"
+#include "zipf_distribution.hpp"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI
 #include <papi.h>
@@ -26,15 +27,29 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
                              unsigned int count, unsigned int id) {
-  constexpr auto keyrange_width = 64ull * (1ull << 26);  // 192 * (1 << 20);
+  constexpr auto keyrange_width = (1ull << 31);  // 192 * (1 << 20);
+#ifdef ZIPF_FAST
+  zipf_distribution_apache distribution(keyrange_width, skew);
+#else
   zipf_distribution distribution{skew, keyrange_width, id + 1};
+#endif
   std::uint64_t duration{};
 
+  const auto _start = RDTSC_START();
   static std::atomic_uint fence{};
   std::vector<std::uint64_t> values(HT_TESTS_NUM_INSERTS);
-  for (auto &value : values) value = distribution();
+  for (auto &value : values) {
+#ifdef ZIPF_FAST
+    value = distribution.sample();
+#else
+    value = distribution();
+#endif
+  }
   ++fence;
   while (fence < count) _mm_pause();
+  const auto _end = RDTSCP();
+  PLOGI.printf("generation took %llu cycles (per element %llu cycles)",
+        _end-_start, (_end-_start)/HT_TESTS_NUM_INSERTS);
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -44,6 +59,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
 #ifdef NO_PREFETCH
 #warning "Zipfian no-prefetch"
+  PLOGI.printf("Starting insertion test");
   const auto start = RDTSC_START();
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
     if (n % 8 == 0 && n + 16 < values.size())
