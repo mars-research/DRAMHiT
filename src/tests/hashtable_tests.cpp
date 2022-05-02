@@ -116,7 +116,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   PLOG_INFO.printf(
       "Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
       "%f",
-      shard->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS, skew);
+      shard->shard_idx, config.ht_size, HT_TESTS_NUM_INSERTS, skew);
 
   for (uint32_t i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_timings =

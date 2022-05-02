@@ -164,7 +164,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   xorwow_init(&_xw_state);
   init_state = _xw_state;
 #endif
-
+  static auto event = -1;
   if (main_thread) {
     // Wait for threads to be ready for test
     while (ready_consumers < n_cons) fipc_test_pause();
@@ -176,6 +176,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     // Signal begin
     test_ready = 1;
     fipc_test_mfence();
+    event = vtune::event_start("message_enq");
   } else {
     fipc_test_FAI(ready_producers);
     while (!test_ready) fipc_test_pause();
@@ -186,8 +187,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       "[prod:%u] started! Sending %lu messages to %d consumers | "
       "key_start %lu",
       this_prod_id, num_messages, n_cons, key_start);
-
-  static const auto event = vtune::event_start("message_enq");
 
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
@@ -253,7 +252,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_end = RDTSCP();
 
-  vtune::event_end(event);
+  if (main_thread) {
+    vtune::event_end(event);
+  }
 
   sh->stats->enqueue_cycles = (t_end - t_start);
   sh->stats->num_enqueues = transaction_id;
@@ -319,7 +320,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOGI.printf("[cons:%u] starting tid %u | cpu %u\n", this_cons_id, gettid(), cpu);
 
-  static const auto event = vtune::event_start("message_deq");
+  static auto event = -1;
+  if (tid == n_prod)
+    event = vtune::event_start("message_deq");
 
   auto t_start = RDTSC_START();
 
@@ -438,7 +441,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_end = RDTSCP();
 
-  vtune::event_end(event);
+  if (tid == n_prod)
+    vtune::event_end(event);
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = transaction_id;
