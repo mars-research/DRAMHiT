@@ -27,7 +27,7 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
                              unsigned int count, unsigned int id) {
-  constexpr auto keyrange_width = (1ull << 31);  // 192 * (1 << 20);
+  auto keyrange_width = (1ull << 63);
 #ifdef ZIPF_FAST
   zipf_distribution_apache distribution(keyrange_width, skew);
 #else
@@ -75,7 +75,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   const auto start = RDTSC_START();
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-    if (n % 8 == 0 && n + 16 < values.size())
+    if (n & 7 == 0 && n + 16 < values.size())
       prefetch_object<false>(&values.at(n + 16), 64);
 
     items[key] = {values.at(n), n};

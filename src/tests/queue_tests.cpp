@@ -208,7 +208,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       k = value;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
-      if (transaction_id % 8 == 0 && transaction_id + 16 < values.size())
+      if (transaction_id & 7 == 0 && transaction_id + 16 < values.size())
         prefetch_object<false>(&values.at(transaction_id + 16), 64);
 
       k = values.at(transaction_id);

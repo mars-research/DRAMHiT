@@ -31,15 +31,15 @@ namespace kmercounter {
 
 class zipf_distribution_apache {
 public:
-  zipf_distribution_apache(unsigned num_elements, double exponent);
-  unsigned sample();
+  zipf_distribution_apache(uint64_t num_elements, double exponent);
+  uint64_t sample();
 private:
   static constexpr double TAYLOR_THRESHOLD = 1e-8;
   static constexpr double F_1_2 = 0.5;
   static constexpr double F_1_3 = 1.0 / 3.0;
   static constexpr double F_1_4 = 0.25;
 
-  const unsigned num_elements;
+  const uint64_t num_elements;
   const double exponent;
   const double h_integral_x1;
   const double h_integral_num_elements;

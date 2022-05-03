@@ -30,7 +30,7 @@
 
 namespace kmercounter {
 
-zipf_distribution_apache::zipf_distribution_apache(unsigned num_elements, double exponent):
+zipf_distribution_apache::zipf_distribution_apache(uint64_t num_elements, double exponent):
 num_elements(num_elements),
 exponent(exponent),
 h_integral_x1(h_integral(1.5) - 1),
@@ -42,11 +42,11 @@ distribution(0, 1)
   if (exponent <= 0) throw std::invalid_argument("exponent must be positive");
 }
 
-unsigned zipf_distribution_apache::sample() {
+uint64_t zipf_distribution_apache::sample() {
   while (true) {
     const double u = h_integral_num_elements + distribution(generator) * (h_integral_x1 - h_integral_num_elements);
     double x = h_integral_inverse(u);
-    unsigned k = x + F_1_2;
+    uint64_t k = x + F_1_2;
     if (k < 1) {
       k = 1;
     } else if (k > num_elements) {
