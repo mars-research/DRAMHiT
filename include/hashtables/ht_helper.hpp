@@ -99,8 +99,10 @@ template <class T>
 T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   T *addr;
   auto alloc_sz = capacity * sizeof(T);
+  auto current_node = numa_node_of_cpu(sched_getcpu());
 
   if (alloc_sz < ONEGB_PAGE_SZ) {
+    PLOGI.printf("Allocating memory on node %d", current_node);
     addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
     if (!addr) {
       perror("aligned_alloc:");
@@ -141,7 +143,11 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     size_t len_split = alloc_sz >> 1;
     void *addr_split = (char *)_addr + len_split;
     unsigned long nodemask[4096] = {0};
-    nodemask[0] = 1 << 1;
+
+    nodemask[0] = 1 << (!current_node);
+
+    PLOGI.printf("Moving half the memory to node %d", !current_node);
+
     long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
         MPOL_MF_MOVE | MPOL_MF_STRICT);
 
