@@ -19,6 +19,14 @@ target_link_libraries(dump_zipf
   absl::flags_parse
 )
 
+add_executable(dump_zipf_freq dump_zipf_freq.cpp)
+target_link_libraries(dump_zipf_freq 
+  ht_lib 
+  absl::flat_hash_map
+  absl::flags
+  absl::flags_parse
+)
+
 add_executable(most_freq_kmer most_freq_kmer.cpp)
 target_link_libraries(most_freq_kmer 
   ht_lib 
