@@ -376,9 +376,11 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       auto ret = this->queues->dequeue_new(cq, prod_id, this_cons_id, (data_t *)&k);
       if (ret == RETRY) {
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+#ifndef NO_PREFETCH
           if (data_idx > 0) {
             submit_batch(data_idx);
           }
+#endif
         }
         goto pick_next_msg;
       }
@@ -417,9 +419,15 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
+#ifdef NO_PREFETCH
+#warning "No prefetch partitioned"
+          kmer_ht->insert_noprefetch(&k);
+          inserted++;
+#else
         if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
           submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
         }
+#endif
       }
 
       transaction_id++;
