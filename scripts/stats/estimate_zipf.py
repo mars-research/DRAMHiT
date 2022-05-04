@@ -28,11 +28,9 @@ def cross_check(a):
   estimated_a = estimate_zipf(arr)
   print(f"Expected: {a:.2f}, actual: {estimated_a:.2f}")
 
-def plot_zipf(file, title, output):
-  arr = np.genfromtxt(open(file, 'r'), dtype=int, delimiter=' ')
-  arr = arr[:,1] # Only take the second column
+def plot_zipf(arr, title, output):
+  # Estimate zipf
   a = estimate_zipf(arr)
-
   # Plot regression line
   size = min(SIZE, len(arr))
   x = np.arange(1.,size+1.)
@@ -52,6 +50,11 @@ def plot_zipf(file, title, output):
   plt.clf()
   return a
 
+def freq_from_jellyhist(file):
+  arr = np.genfromtxt(open(file, 'r'), dtype=int, delimiter=' ')
+  arr = arr[:,1] # Only take the second column
+  return arr
+
 def zipf_from_kmer(file, k, output):
   # Count kmer
   cmd = f'jellyfish count -m {k} -s 1G -t {cpu_count()} -C {file}'
@@ -66,7 +69,8 @@ def zipf_from_kmer(file, k, output):
   args = ['bash', '-c', cmd]
   subprocess.run(args).check_returncode()
 
-  a = plot_zipf(histo_file, f'{k}-mer histogram from {file}', output)
+  freq = freq_from_jellyhist(histo_file)
+  a = plot_zipf(freq, f'{k}-mer histogram from {file}', output)
   print(f'a={a:.2f} for K={k} in {file}')
 
 
