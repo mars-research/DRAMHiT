@@ -1,7 +1,19 @@
 find_package(absl REQUIRED)
 
+# Check g++ version
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+    message(FATAL_ERROR "gcc11 or above is needed.")
+endif()
+
 add_executable(dump_kmer_hash dump_kmer_hash.cpp)
 target_link_libraries(dump_kmer_hash 
+  ht_lib 
+  absl::flags
+  absl::flags_parse
+)
+
+add_executable(dump_zipf dump_zipf.cpp)
+target_link_libraries(dump_zipf 
   ht_lib 
   absl::flags
   absl::flags_parse

@@ -28,6 +28,7 @@ in stdenv.mkDerivation {
   };
 
   nativeBuildInputs = with pkgs; [ 
+    gcc11
     cmake
     ninja
   ];

@@ -33,6 +33,9 @@
         inputsFrom = [
           devShells.prod
         ];
+        nativeBuildInputs = with pkgs; [ 
+          gcc11
+        ];
         buildInputs = with pkgs; [
           cmake
           ninja
