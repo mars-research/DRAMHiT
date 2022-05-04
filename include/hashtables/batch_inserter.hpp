@@ -4,6 +4,7 @@
 #include "base_kht.hpp"
 #include "types.hpp"
 
+namespace kmercounter {
 template <size_t N>
 class HTBatchInserter {
  public:
@@ -50,5 +51,5 @@ class HTBatchInserter {
   // Sanity checks
   static_assert(N > 0);
 };
-
+} // namespace kmercounter
 #endif  // HASHTABLES_BATCH_INSERTER_HPP
