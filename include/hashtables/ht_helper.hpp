@@ -28,7 +28,7 @@ constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
 constexpr auto MAP_FLAGS =
     MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
-constexpr auto LENGTH = 1ULL * 1024 * 1024 * 1024;
+constexpr auto ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
 
 constexpr uint64_t CACHE_BLOCK_BITS = 6;
 constexpr uint64_t CACHE_BLOCK_MASK = (1ULL << CACHE_BLOCK_BITS) - 1;
@@ -96,88 +96,86 @@ static inline void prefetch_with_write(Kmer_KV *k) {
 }
 
 template <class T>
-T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd,
-             bool is_cas_a_special_snowflake = false) {
+T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   T *addr;
-#ifdef HUGE_1GB_PAGES
-  int fd;
-  char mmap_path[256] = {0};
   auto alloc_sz = capacity * sizeof(T);
 
-  snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
-
-  fd = open(mmap_path, O_CREAT | O_RDWR, 0755);
-
-  if (fd < 0) {
-    PLOGE.printf("Couldn't open file %s:", mmap_path);
-    perror("");
-    exit(1);
+  if (alloc_sz < ONEGB_PAGE_SZ) {
+    addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
+    if (!addr) {
+      perror("aligned_alloc:");
+      exit(1);
+    }
+    if (alloc_sz < (2 * PAGE_SIZE)) {
+      goto skip_mbind;
+    }
   } else {
-    PLOGI.printf("opened file %s", mmap_path);
-  }
+    int fd;
+    char mmap_path[256] = {0};
+    snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
 
-  PLOGI.printf("requesting to mmap %lu bytes", alloc_sz);
-  addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
-                   MAP_FLAGS, fd, 0);
-  if (addr == MAP_FAILED) {
-    perror("mmap");
-    unlink(mmap_path);
-    exit(1);
-  } else {
-    PLOGD.printf("mmap returns %p", addr);
-  }
+    fd = open(mmap_path, O_CREAT | O_RDWR, 0755);
 
-  if (alloc_sz < (1 << 30)) {
-    goto skip_mbind;
+    if (fd < 0) {
+      PLOGE.printf("Couldn't open file %s:", mmap_path);
+      perror("");
+      exit(1);
+    } else {
+      PLOGI.printf("opened file %s", mmap_path);
+    }
+
+    PLOGI.printf("requesting to mmap %lu bytes", alloc_sz);
+    addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
+        MAP_FLAGS, fd, 0);
+    if (addr == MAP_FAILED) {
+      perror("mmap");
+      unlink(mmap_path);
+      exit(1);
+    } else {
+      PLOGD.printf("mmap returns %p", addr);
+    }
+    *out_fd = fd;
   }
-  // Special handling for CAS that does NOT depend on global config state
-  // Which it shouldn't have in the first place...
-  if (is_cas_a_special_snowflake && (config.numa_split != 2)) {
+  if (config.ht_type == CAS_KHT && (config.numa_split != 2)) {
     void *_addr = addr;
     size_t len_split = alloc_sz >> 1;
     void *addr_split = (char *)_addr + len_split;
     unsigned long nodemask[4096] = {0};
     nodemask[0] = 1 << 1;
     long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
-                     MPOL_MF_MOVE | MPOL_MF_STRICT);
+        MPOL_MF_MOVE | MPOL_MF_STRICT);
 
     PLOGI.printf("mmap_addr %p | len %zu", _addr, capacity * sizeof(T));
     PLOGI.printf("calling mbind with addr %p | len %zu | nodemask %p", addr_split,
-           len_split, nodemask);
+        len_split, nodemask);
     if (ret < 0) {
       perror("mbind");
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
 skip_mbind:
-  *out_fd = fd;
-#else
-  addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
-  if (!addr) {
-    perror("aligned_alloc:");
-    exit(1);
-  }
-#endif
   memset(addr, 0, capacity * sizeof(T));
   return addr;
 }
 
 template <class T>
 void free_mem(T *addr, uint64_t capacity, int id, int fd) {
-#ifdef HUGE_1GB_PAGES
-  char mmap_path[256] = {0};
-  PLOGI.printf("Entering!");
-  snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
-  if (addr) {
-    munmap(addr, capacity * sizeof(T));
+  auto alloc_sz = capacity * sizeof(T);
+
+  if (alloc_sz < ONEGB_PAGE_SZ) {
+    free(addr);
+  } else {
+    char mmap_path[256] = {0};
+    PLOGI.printf("Entering!");
+    snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
+    if (addr) {
+      munmap(addr, capacity * sizeof(T));
+    }
+    if (fd > 0) {
+      close(fd);
+    }
+    unlink(FILE_NAME);
   }
-  if (fd > 0) {
-    close(fd);
-  }
-  unlink(FILE_NAME);
-#else
-  free(addr);
-#endif
 }
 
 }  // namespace kmercounter

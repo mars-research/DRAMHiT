@@ -117,7 +117,8 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
     default:
-      PLOG_ERROR.printf("STDMAP_KHT Not implemented");
+      PLOG_FATAL.printf("HT type not implemented");
+      exit(-1);
       break;
   }
   return kmer_ht;
