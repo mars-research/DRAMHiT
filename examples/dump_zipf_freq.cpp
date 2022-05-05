@@ -21,8 +21,8 @@
 
 ABSL_FLAG(std::string, output_file, "", "Output file path");
 ABSL_FLAG(uint, num_threads, 1, "Number of threads for generation.");
-ABSL_FLAG(double, sample_rate, 0.5,
-          "Fraction of output sampled. 1.0 being sampling all output.");
+ABSL_FLAG(double, skew, 0.5,
+          "skew of zipf dist.");
 ABSL_FLAG(uint64_t, num_output, (1ull << 26) * 64,
           "Number of zipfians being generated and dumped. This will be divided "
           "equally among all threads.");
@@ -96,6 +96,6 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
 int main(int argc, char **argv) {
   absl::ParseCommandLine(argc, argv);
   dump_zipf(absl::GetFlag(FLAGS_num_threads), absl::GetFlag(FLAGS_output_file),
-            absl::GetFlag(FLAGS_sample_rate), absl::GetFlag(FLAGS_num_output));
+            absl::GetFlag(FLAGS_skew), absl::GetFlag(FLAGS_num_output));
   return 0;
 }
