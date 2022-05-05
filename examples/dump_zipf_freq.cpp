@@ -23,7 +23,7 @@ ABSL_FLAG(std::string, output_file, "", "Output file path");
 ABSL_FLAG(uint, num_threads, 1, "Number of threads for generation.");
 ABSL_FLAG(double, skew, 0.5,
           "skew of zipf dist.");
-ABSL_FLAG(uint64_t, num_output, (1ull << 26) * 64,
+ABSL_FLAG(uint64_t, num_output, 64E7,
           "Number of zipfians being generated and dumped. This will be divided "
           "equally among all threads.");
 
@@ -34,9 +34,8 @@ Counter dump_zipf_worker(const double skew, const uint tid, const uint64_t num_o
   std::cerr << "Starting worker " << tid << std::endl;
 
   // Initialize input reader
-  constexpr auto keyrange_width = 64ull * (1ull << 26);
   kmercounter::input_reader::ZipfianGenerator<uint64_t> reader{
-      skew, keyrange_width, tid + 1};
+      skew, num_output, tid + 1};
 
   // Count freq.
   Counter counter;

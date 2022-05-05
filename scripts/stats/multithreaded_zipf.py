@@ -1,6 +1,8 @@
 from multiprocessing import cpu_count
 from estimate_zipf import plot_zipf
+from scipy import stats
 import subprocess
+import numpy as np
 
 OUTDIR = "out/zipf_est"
 
@@ -14,7 +16,9 @@ def gen_freqs(num_thread, skew):
 
 def dump_and_mle(num_thread, skew, output):
   # Generate zipfian
-  freqs = gen_freqs(num_thread, skew)
+  data = gen_freqs(num_thread, skew)
+  freqs = np.frombuffer(data, dtype=np.uint64)
+  print(f"Received frequencies with stats {stats.describe(freqs)}.")
 
   a = plot_zipf(freqs, f'num_thread={num_thread} skew={skew}', output)
   print(f'a={a:.2f} for num_thread={num_thread} skew={skew}')
@@ -36,5 +40,5 @@ if __name__ == "__main__":
   num_threads = [1, 2, 8, 16, 64]
   for skew in skews:
     for num_thread in num_threads:
-      dump_and_mle(num_thread, skew, f'{num_thread}_{skew:.2f}.jpg')
+      dump_and_mle(num_thread, skew, f'{OUTDIR}/{num_thread}_{skew:.2f}.jpg')
 
