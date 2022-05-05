@@ -11,6 +11,7 @@
 #include "tests/tests.hpp"
 #include "zipf.h"
 #include "zipf_distribution.hpp"
+#include "utils/hugepage_allocator.hpp"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI
 #include <papi.h>
@@ -37,7 +38,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
   const auto _start = RDTSC_START();
   static std::atomic_uint fence{};
-  std::vector<std::uint64_t> values(HT_TESTS_NUM_INSERTS);
+  std::vector<std::uint64_t, huge_page_allocator<uint64_t>> values(HT_TESTS_NUM_INSERTS);
   for (auto &value : values) {
 #ifdef ZIPF_FAST
     value = distribution.sample();
@@ -62,7 +63,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   PLOGI.printf("Starting insertion test");
   const auto start = RDTSC_START();
   for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-    if (n % 8 == 0 && n + 16 < values.size())
+    if (!(n & 7) && n + 16 < values.size()) {
       prefetch_object<false>(&values.at(n + 16), 64);
 
     hashtable->insert_noprefetch(&values.at(n));
@@ -74,16 +75,19 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   unsigned int key{};
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   const auto start = RDTSC_START();
-  for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-    if (n & 7 == 0 && n + 16 < values.size())
-      prefetch_object<false>(&values.at(n + 16), 64);
+  for (auto j = 0u; j < config.insert_factor; j++) {
+    for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+      if (!(n & 7) && n + 16 < values.size()) {
+        prefetch_object<false>(&values.at(n + 16), 64);
+      }
 
-    items[key] = {values.at(n), n};
+      items[key] = {values.at(n), n};
 
-    if (++key == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
-      hashtable->insert_batch(keypairs);
-      key = 0;
+      if (++key == HT_TESTS_BATCH_LENGTH) {
+        KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
+        hashtable->insert_batch(keypairs);
+        key = 0;
+      }
     }
   }
 
@@ -99,7 +103,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   __itt_event_end(event);
 #endif
 
-  return {duration, HT_TESTS_NUM_INSERTS};
+  return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
 OpTimings do_zipfian_gets(BaseHashTable *kmer_ht, unsigned int id) {
