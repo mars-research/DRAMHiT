@@ -36,7 +36,7 @@ def hist_from_values(data, title, outputfile, skew):
   if skew:
     # Calc skew
     print(f"Estimating skew")
-    skew = estimate_zipf(nums)
+    skew = estimate_zipf(hist)
     print(f'Skew={skew}')
     title += f' Skew={skew}'
   
