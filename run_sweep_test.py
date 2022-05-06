@@ -9,6 +9,7 @@ import sys
 import typing
 
 TEST_BUILD_DIR='test/sweep_test';
+NPROC=1
 
 def get_home() -> pathlib.Path:
     return pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -47,8 +48,11 @@ def get_additional_args(n: int, args: argparse.Namespace):
         extra_cmdline_args += [f'--ht-size={ht_size}'] #, f'--insert-factor={n}']
     if args.skew:
         extra_cmdline_args += [f'--skew={args.skew}']
-        if args.ht_type != 1:
+        if not args.bq:
             extra_cmdline_args += [ '--mode=11']
+    if args.no_prefetch:
+        extra_cmdline_args += [ '--no-prefetch=1' ]
+
     return extra_cmdline_args
 
 def get_insert_find_mops(logfile: pathlib.Path):
@@ -64,16 +68,16 @@ def get_insert_find_mops(logfile: pathlib.Path):
 def dumplog(log_dir: str):
     with open(log_dir.parent.joinpath('summary.csv'), 'w') as csv:
         csv.write(f'num threads, set mops/s, get mops/s\n')
-        num_threads = 64 + 1
-        if log_dir == part_home:
+        num_threads = NPROC + 1
+        if log_dir == part_home and args.bq:
             num_threads = 32 + 1
         for n in range(1, num_threads):
-            if log_dir == part_home:
+            if log_dir == part_home and args.bq:
                 logfile = log_dir.parent.joinpath(f'p{n}-n{n}.log')
             else:
                 logfile = log_dir.parent.joinpath(f'{n}.log')
             set, get = get_insert_find_mops(logfile)
-            if log_dir == part_home:
+            if log_dir == part_home and args.bq:
                 format_str = f'{n}-{n}, {set}, {get}'
             else:
                 format_str = f'{n}, {set}, {get}'
@@ -81,7 +85,7 @@ def dumplog(log_dir: str):
             csv.write(format_str + '\n')
 
 
-def run_partitioned(build_dir: str, args: argparse.Namespace):
+def run_partitioned_with_queues(build_dir: str, args: argparse.Namespace):
     print('Running partitioned', flush=True)
     for n in range(1, 33):
         partitioned_args = ['--mode=8', f'--nprod={n}', f'--ncons={n}', '--ht-type=1']
@@ -91,9 +95,21 @@ def run_partitioned(build_dir: str, args: argparse.Namespace):
         run_synchronous(build_dir, './kvstore', partitioned_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
     dumplog(build_dir)
 
+def run_partitioned_no_queues(build_dir: str, args: argparse.Namespace):
+    print('Running partitioned without queues', flush=True)
+    for n in range(1, NPROC + 1):
+        partitioned_args = [f'--num-threads={n}', '--ht-type=1', '--numa-split=1']
+        if not args.skew:
+            partitioned_args += [ '--mode=6' ]
+        partitioned_args += get_additional_args(n, args)
+        logfile = build_dir.parent.joinpath(f'{n}.log')
+        print(f'Running partitioned_no_queues{n} with {partitioned_args}', flush=True)
+        run_synchronous(build_dir, './kvstore', partitioned_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
+    dumplog(build_dir)
+
 def run_cashtpp(build_dir: str, args: argparse.Namespace):
     print(f'Running cashtpp', flush=True)
-    for n in range(1, 64 + 1):
+    for n in range(1, NPROC + 1):
         cashtpp_args = [f'--num-threads={n}', '--ht-type=3', '--numa-split=1']
         if not args.skew:
             cashtpp_args += [ '--mode=6' ]
@@ -106,10 +122,10 @@ def run_cashtpp(build_dir: str, args: argparse.Namespace):
 
 def run_casht(build_dir: str, args: argparse.Namespace):
     print(f'Running casht', flush=True)
-    for n in range(1, 64 + 1):
+    for n in range(1, NPROC + 1):
         casht_args = [f'--num-threads={n}', '--ht-type=3', '--numa-split=1']
-        #if args.skew:
-        #    casht_args += ['--mode=6']
+        if not args.skew:
+            casht_args += ['--mode=6']
         casht_args += get_additional_args(n, args)
         logfile = casht_home.parent.joinpath(f'{n}.log')
         print(f'Running casht{n} with {casht_args}', flush=True)
@@ -124,8 +140,12 @@ if __name__ == '__main__':
     parser.add_argument('--xorwow', action='store_true', help='Insert random keys (generated using xorwow)')
     parser.add_argument('--dumplog', action='store_true', help='Dump the log without running')
     parser.add_argument('--skew', nargs='?', type=float, help='Skew for zipfian')
+    parser.add_argument('--bq', action='store_true', help='Enable prodcuer/consumer with partitioned HT')
+    parser.add_argument('--no_prefetch', action='store_true', default=False, help='Disable prefetch engine')
 
     args = parser.parse_args()
+
+    NPROC = os.cpu_count()
 
     source = get_home()
     tests_home = source.joinpath(TEST_BUILD_DIR)
@@ -167,16 +187,24 @@ if __name__ == '__main__':
         case 1:
             print('Building partitioned', flush=True)
             part_home.mkdir(parents=True, exist_ok=True)
-            run_synchronous(part_home, 'cmake', [
-                            source, '-GNinja', '-DPREFETCH=ON', '-DBRANCH=branched', '-DBQUEUE=ON'] + additional_build_args)
+            if args.bq:
+                run_synchronous(part_home, 'cmake', [
+                                source, '-GNinja', '-DBRANCH=branched', '-DBQUEUE=ON'] + additional_build_args)
+            else:
+                run_synchronous(part_home, 'cmake', [
+                                source, '-GNinja', '-DBRANCH=branched'] + additional_build_args)
+
             run_synchronous(part_home, 'cmake', ['--build', '.'])
-            run_partitioned(part_home, args)
+            if args.bq:
+                run_partitioned_with_queues(part_home, args)
+            else:
+                run_partitioned_no_queues(part_home, args);
 
         case 2:
             print('Building casht', flush=True)
             casht_home.mkdir(parents=True, exist_ok=True)
             run_synchronous(casht_home, 'cmake', [
-                            source, '-GNinja', '-DPREFETCH=OFF'] + additional_build_args)
+                            source, '-GNinja' ] + additional_build_args)
             run_synchronous(casht_home, 'cmake', ['--build', '.'])
             run_casht(casht_home, args)
 
@@ -184,7 +212,7 @@ if __name__ == '__main__':
             print('Building casht++', flush=True)
             cashtpp_home.mkdir(parents=True, exist_ok=True)
             run_synchronous(cashtpp_home, 'cmake', [
-                            source, '-GNinja', '-DPREFETCH=ON'] + additional_build_args)
+                            source, '-GNinja'] + additional_build_args)
             run_synchronous(cashtpp_home, 'cmake', ['--build', '.'])
 
             run_cashtpp(cashtpp_home, args)
