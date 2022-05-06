@@ -67,17 +67,17 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
       if (!(n & 7) && n + 16 < values.size()) {
         prefetch_object<false>(&values.at(n + 16), 64);
+      }
 
-        if (config.no_prefetch) {
-          hashtable->insert_noprefetch(&values.at(n));
-        } else {
-          items[key] = {values.at(n), n};
+      if (config.no_prefetch) {
+        hashtable->insert_noprefetch(&values.at(n));
+      } else {
+        items[key] = {values.at(n), n};
 
-          if (++key == HT_TESTS_BATCH_LENGTH) {
-            KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
-            hashtable->insert_batch(keypairs);
-            key = 0;
-          }
+        if (++key == HT_TESTS_BATCH_LENGTH) {
+          KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
+          hashtable->insert_batch(keypairs);
+          key = 0;
         }
       }
     }
