@@ -73,7 +73,7 @@ const Configuration def = {
     .num_threads = 1,
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
     .numa_split = 3,
-    .ht_type = 1,
+    .ht_type = 0,
     .ht_fill = 75,
     .ht_size = HT_TESTS_HT_SIZE,
     .insert_factor = 1,
@@ -538,8 +538,8 @@ int Application::process(int argc, char *argv[]) {
         PLOG_INFO.printf("Hashtable type : Cas HT");
         break;
       default:
-        PLOG_INFO.printf(
-            "Unknown Hashtable type");
+        PLOGE.printf(
+            "Unknown HT type %u! Specify using --ht-type", config.ht_type);
         PLOG_INFO.printf("Exiting");
         exit(0);
     }
