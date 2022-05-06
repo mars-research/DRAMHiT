@@ -48,10 +48,8 @@ const char *run_mode_strings[] = {
 const char *ht_type_strings[] = {
   "",
   "PARTITIONED",
-  "ROBINHOOD",
-  "CAS",
   "",
-  "STDMAP",
+  "CASHT++",
 };
 
 namespace kmercounter {
@@ -85,6 +83,7 @@ const Configuration def = {
     .skew = 1.0,
     .drop_caches = true,
     .hwprefetchers = false,
+    .no_prefetch = false,
 };  // TODO enum
 
 // global config
@@ -107,10 +106,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   switch (config.ht_type) {
-    case SIMPLE_KHT:
+    case PARTITIONED_HT:
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
       break;
-    case CAS_KHT:
+    case CASHTPP:
       /* For the CAS Hash table, size is the same as
           size of one partitioned ht * number of threads */
       kmer_ht =
@@ -246,7 +245,7 @@ void Application::shard_thread(int tid, bool mainthread) {
   // Write to file
   if (!config.ht_file.empty()) {
     // for CAS hashtable, not every thread has to write to file
-    if ((config.ht_type == CAS_KHT) && (sh->shard_idx > 0)) {
+    if (config.ht_type == CASHTPP && (sh->shard_idx > 0)) {
       goto done;
     }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
@@ -296,7 +295,9 @@ int Application::spawn_shard_threads() {
     }
   }
 
-  if (config.ht_type == CAS_KHT) {
+  // split the num inserts equally among threads for a
+  // non-partitioned hashtable
+  if (config.ht_type == CASHTPP) {
     HT_TESTS_NUM_INSERTS /= (float)config.num_threads;
   }
 
@@ -443,10 +444,8 @@ int Application::process(int argc, char *argv[]) {
         "Stats file name.")(
         "ht-type",
         po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
-        "1: SimpleKmerHashTable\n"
-        "2: RobinhoodKmerHashTable,\n"
-        "3: CASKmerHashTable\n"
-        "4. StdmapKmerHashTable")(
+        "1: Partitioned HT\n"
+        "3: Casht++\n")(
         "out-file",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
         "Hashtable output file name.")(
@@ -473,8 +472,10 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint64_t>(&config.ht_size)->default_value(def.ht_size),
         "adjust hashtable fill ratio [0-100] ")(
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
-        "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
-                                           ->default_value(def.hwprefetchers));
+        "Zipfian skewness")("hw-pref",
+        po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers))
+        ("no-prefetch",
+        po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch));
 
     papi_init();
 
@@ -528,18 +529,19 @@ int Application::process(int argc, char *argv[]) {
       }
     }
 
-    if (config.ht_type == SIMPLE_KHT) {
-      PLOG_INFO.printf("Hashtable type : SimpleKmerHashTable");
-      config.ht_size /= config.num_threads;
-    } else if (config.ht_type == ROBINHOOD_KHT) {
-      PLOG_INFO.printf("Hashtable type : RobinhoodKmerHashTable");
-    } else if (config.ht_type == CAS_KHT) {
-      PLOG_INFO.printf("Hashtable type : CASKmerHashTable");
-    } else if (config.ht_type == STDMAP_KHT) {
-      PLOG_INFO.printf(
-          "Hashtable type : StdmapKmerHashTable (NOT IMPLEMENTED)");
-      PLOG_INFO.printf("Exiting ... ");
-      exit(0);
+    switch (config.ht_type) {
+      case PARTITIONED_HT:
+        PLOG_INFO.printf("Hashtable type : Paritioned HT");
+        config.ht_size /= config.num_threads;
+        break;
+      case CASHTPP:
+        PLOG_INFO.printf("Hashtable type : Cas HT");
+        break;
+      default:
+        PLOG_INFO.printf(
+            "Unknown Hashtable type");
+        PLOG_INFO.printf("Exiting");
+        exit(0);
     }
 
     if (config.ht_fill > 0 && config.ht_fill < 100) {

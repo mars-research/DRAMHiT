@@ -63,9 +63,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   init_state = _xw_state;
 
   __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
-  __attribute__((aligned(64))) struct Item items[HT_TESTS_BATCH_LENGTH] = {0};
-  __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
-  __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
   std::string evt_name(ht_type_strings[config.ht_type]);
   evt_name += "_insertions";
@@ -80,51 +78,32 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     uint64_t count = std::max(static_cast<uint64_t>(1), HT_TESTS_NUM_INSERTS * start);
     _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+      std::uint64_t value{};
 #if defined(SAME_KMER)
-      //*((uint64_t *)&kmers[k].data) = count & (32 - 1);
-      *((uint64_t *)&kmers[k].data) = 32;
-      items[k].kvpair.key = 32;
-      items[k].kvpair.value = 32;
-      keys[k] = 32;
+      value = 32;
 #elif defined(XORWOW)
 #warning "Xorwow rand kmer insert"
-      const auto value = xorwow(&_xw_state);
-      _items[k].key = value;
-      _items[k].value = value;
-      keys[k] = value;
+      value = xorwow(&_xw_state);
 #else
-#ifdef NO_PREFETCH
-      keys[k] = count;
+      value = count;
 #endif
-      _items[k].key = count;
-      _items[k].value = count;
-#endif
+      items[k].key = items[k].value = value;
 
-#ifdef NO_PREFETCH
-#warning "Compiling no prefetch"
-      ktable->insert_noprefetch((void *)&keys[k]);
-      k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
-      count++;
-      inserted++;
-#else
+      if (config.no_prefetch) {
+        ktable->insert_noprefetch((void *)&items[k]);
+        k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
+        count++;
+        inserted++;
+      } else {
+        count++;
+        if (++k == HT_TESTS_BATCH_LENGTH) {
+          KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, items);
+          ktable->insert_batch(kp);
 
-      // printf("[%s:%d] inserting i= %d, data %lu\n", __func__, start, i, count);
-      // printf("%s, inserting i= %d\n", __func__, i);
-      // ktable->insert((void *)&kmers[k]);
-      // printf("->Inserting %lu\n", count);
-      count++;
-      // k++;
-      // ktable->insert((void *)&items[k]);
-      // ktable->insert((void *)&items[k]);
-      if (++k == HT_TESTS_BATCH_LENGTH) {
-        KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &_items[0]);
-        ktable->insert_batch(kp);
-
-        k = 0;
-        inserted += kp.first;
+          k = 0;
+          inserted += kp.first;
+        }
       }
-#endif  // NO_PREFETCH
-      // k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
 #if defined(SAME_KMER)
       count++;
 #endif
@@ -132,11 +111,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
     //PLOG_INFO.printf("inserted %lu items", inserted);
     // flush the last batch explicitly
     // printf("%s calling flush queue\n", __func__);
-#if !defined(NO_PREFETCH)
-    ktable->flush_insert_queue();
-#endif
-
+    if (!config.no_prefetch) {
+      ktable->flush_insert_queue();
+    }
   }
+
   const auto t_end = RDTSCP();
   papi_end_region("synthetic_insertions");
 
@@ -179,53 +158,48 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
       std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
     _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
+      std::uint64_t value{};
 #if defined(SAME_KMER)
-      items[k].key = items[k].id = 32;
-      k++;
+      value = 32;
 #elif defined(XORWOW)
 #warning "Xorwow rand kmer insert"
-      const auto value = xorwow(&_xw_state);
+      value = xorwow(&_xw_state);
+#else
+      value = count;
+      count++;
+#endif
       items[k].key = value;
       items[k].id = value;
       items[k].part_id = tid;
-#else
-      items[k].key = count;
-      items[k].id = count;
-      // part_id is relevant only for partitioned ht
-      items[k].part_id = tid;
-      count++;
-#endif
 
-#ifdef NO_PREFETCH
-      {
+      if (config.no_prefetch) {
         void *kv = ktable->find_noprefetch(&items[k]);
         if (kv) found += 1;
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
-      }
-#else
-      if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
-        KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
+      } else {
+        if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
+          KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, items);
 
-        ktable->find_batch(kp, vp);
+          ktable->find_batch(kp, vp);
 
-        found += vp.first;
-        vp.first = 0;
-        k = 0;
-        not_found += HT_TESTS_FIND_BATCH_LENGTH - found;
+          found += vp.first;
+          vp.first = 0;
+          k = 0;
+          //not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
+        }
       }
-#endif  // NO_PREFETCH
     }
   }
 
-#if !defined(NO_PREFETCH)
-  if (vp.first > 0) {
-    vp.first = 0;
+  if (!config.no_prefetch) {
+    if (vp.first > 0) {
+      vp.first = 0;
+    }
+
+    ktable->flush_find_queue(vp);
+
+    found += vp.first;
   }
-
-  ktable->flush_find_queue(vp);
-
-  found += vp.first;
-#endif
 
   const auto t_end = RDTSCP();
 
@@ -235,7 +209,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   duration = t_end - t_start;
 
-  PLOGE.printf("%s, not found %lu", __func__, not_found);
+  PLOGI.printf("found %lu", found);
   return {duration, found};
 }
 

@@ -138,7 +138,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     }
     *out_fd = fd;
   }
-  if (config.ht_type == CAS_KHT && (config.numa_split != 2)) {
+  if (config.ht_type == CASHTPP && (config.numa_split != 2)) {
     void *_addr = addr;
     size_t len_split = alloc_sz >> 1;
     void *addr_split = (char *)_addr + len_split;

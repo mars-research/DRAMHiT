@@ -58,43 +58,36 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   __itt_event_start(event);
 #endif
 
-#ifdef NO_PREFETCH
-#warning "Zipfian no-prefetch"
   PLOGI.printf("Starting insertion test");
-  const auto start = RDTSC_START();
-  for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-    if (!(n & 7) && n + 16 < values.size()) {
-      prefetch_object<false>(&values.at(n + 16), 64);
-
-    hashtable->insert_noprefetch(&values.at(n));
-  }
-
-  const auto end = RDTSCP();
-  duration += end - start;
-#else
-  unsigned int key{};
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
+
   const auto start = RDTSC_START();
+  std::uint64_t key{};
   for (auto j = 0u; j < config.insert_factor; j++) {
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
       if (!(n & 7) && n + 16 < values.size()) {
         prefetch_object<false>(&values.at(n + 16), 64);
-      }
 
-      items[key] = {values.at(n), n};
+        if (config.no_prefetch) {
+          hashtable->insert_noprefetch(&values.at(n));
+        } else {
+          items[key] = {values.at(n), n};
 
-      if (++key == HT_TESTS_BATCH_LENGTH) {
-        KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
-        hashtable->insert_batch(keypairs);
-        key = 0;
+          if (++key == HT_TESTS_BATCH_LENGTH) {
+            KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
+            hashtable->insert_batch(keypairs);
+            key = 0;
+          }
+        }
       }
     }
   }
+  if (!config.no_prefetch) {
+    hashtable->flush_insert_queue();
+  }
 
-  hashtable->flush_insert_queue();
   const auto end = RDTSCP();
   duration += end - start;
-#endif
 
   PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
              << ", Soft Reprobes: " << hashtable->num_soft_reprobes;

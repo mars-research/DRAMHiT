@@ -42,9 +42,9 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 // Test Variables
 [[maybe_unused]] static uint64_t transactions = 100000000;
 
-const unsigned BQ_TESTS_DEQUEUE_ARR_LENGTH = 16;
+const unsigned BQ_TESTS_DEQUEUE_ARR_LENGTH = HT_TESTS_BATCH_LENGTH;
 const unsigned BQ_TESTS_BATCH_LENGTH_PROD = 1;
-const unsigned BQ_TESTS_BATCH_LENGTH_CONS = 16;
+const unsigned BQ_TESTS_BATCH_LENGTH_CONS = BQ_TESTS_DEQUEUE_ARR_LENGTH;
 
 // for synchronization of threads
 static uint64_t ready = 0;
@@ -376,11 +376,11 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       auto ret = this->queues->dequeue_new(cq, prod_id, this_cons_id, (data_t *)&k);
       if (ret == RETRY) {
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-#ifndef NO_PREFETCH
-          if (data_idx > 0) {
-            submit_batch(data_idx);
+          if (!config.no_prefetch) {
+            if (data_idx > 0) {
+              submit_batch(data_idx);
+            }
           }
-#endif
         }
         goto pick_next_msg;
       }
@@ -419,15 +419,14 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
-#ifdef NO_PREFETCH
-#warning "No prefetch partitioned"
+        if (config.no_prefetch) {
           kmer_ht->insert_noprefetch(&k);
           inserted++;
-#else
-        if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
-          submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
+        } else {
+          if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
+            submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
+          }
         }
-#endif
       }
 
       transaction_id++;
