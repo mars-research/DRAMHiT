@@ -485,6 +485,11 @@ int Application::process(int argc, char *argv[]) {
 
     plog::get()->setMaxSeverity(plog::info);
 
+    if (vm.count("help")) {
+      cout << desc << "\n";
+      return 1;
+    }
+
     // Enable verbose logging
     if (vm["v"].as<bool>()) {
       plog::get()->setMaxSeverity(plog::verbose);
@@ -551,10 +556,6 @@ int Application::process(int argc, char *argv[]) {
       PLOG_ERROR.printf("ht_fill should be in range [1, 99)");
     }
 
-    if (vm.count("help")) {
-      cout << desc << "\n";
-      return 1;
-    }
   } catch (std::exception &e) {
     std::cout << e.what() << "\n";
     exit(-1);

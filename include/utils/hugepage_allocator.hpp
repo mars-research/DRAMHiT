@@ -13,7 +13,7 @@ template <typename T> struct huge_page_allocator {
   template <class U>
   constexpr huge_page_allocator(const huge_page_allocator<U> &) noexcept {}
 
-  size_t round_to_huge_page_size(size_t n, bool is_1gb) {
+  uint64_t round_to_huge_page_size(size_t n, bool is_1gb) {
     if (is_1gb) {
       return (((n - 1) / huge_page_size_1gb) + 1) * huge_page_size_1gb;
     }
@@ -22,7 +22,7 @@ template <typename T> struct huge_page_allocator {
 
   std::pair<bool, size_t> get_rounded_alloc_size(size_t raw_alloc_sz) {
     auto is_1gb = false;
-    auto alloc_sz = 0;
+    uint64_t alloc_sz = 0;
     // FIXME: Preallocate enough 2MiB pages instead of transparent pages
     // somehow it fails to allocate even 100+ 2MiB pages through mmap.
     // maybe mmap doesn't do transparent and expects preconfigured pages.
@@ -49,7 +49,7 @@ template <typename T> struct huge_page_allocator {
     auto MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB
         | (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
 
-    PLOGI.printf("n = %lu raw_alloc_sz %zu | alloc_sze %zu", n, raw_alloc_sz, alloc_sz);
+    PLOGI.printf("n = %lu raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n, raw_alloc_sz, alloc_sz, is_1gb);
     auto p = static_cast<T *>(mmap( nullptr, alloc_sz, PROT_READ | PROT_WRITE,
           MAP_FLAGS, -1, 0));
 
