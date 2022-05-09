@@ -8,7 +8,7 @@ def run_subprocess(cmd):
 
 def gen_cdf(skew, outfile):
     # Run dumper
-    return run_subprocess(f'{build_dir}/examples/dump_zipf_freq --output_file="{outfile}" --skew={skew}')
+    return run_subprocess(f'{build_dir}/examples/dump_zipf_cdf --output_file="{outfile}" --skew={skew}')
 
 
 if __name__ == "__main__":
