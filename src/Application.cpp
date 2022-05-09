@@ -86,9 +86,6 @@ const Configuration def = {
     .no_prefetch = false,
 };  // TODO enum
 
-// global config
-Configuration config;
-
 // for synchronization of threads
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
