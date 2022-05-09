@@ -25,7 +25,39 @@ def run_test(run_args, outpath):
     return get_insert_cycle_and_throughput(outpath)
 
 # Do stuff for K
-def run_test_suite(ht_type, K, build_args, run_args, num_prods, outpath):
+def run_partitioned_test_suite(ht_type, K, build_args, run_args, num_cons, num_prods, outpath):
+    print(f"Running test suite for {ht_type} K={K}")
+
+    # Config build
+    build_cmd = f'cmake -S . -B {BUILD_DIR} -G Ninja {build_args} -DKMER_LEN={K} > {outpath}.cmake.log'
+    run_subprocess(build_cmd)
+    
+    # Build
+    run_subprocess(f'ninja -C {BUILD_DIR} > {outpath}.build.log')
+
+    # Run tests
+    configs = []
+    cycles = []
+    throughputs = []
+    for num_prod, num_con in zip(num_prods, num_cons):
+        cycle, throughput = run_test(f'{run_args} --ncons {num_con} --nprod {num_prod}', f'{outpath}/cons{num_con}_prod{num_prod}')
+        configs.append(f"{num_con}x{num_prod}")
+        cycles.append(cycle)
+        throughputs.append(throughput)
+
+    # Print result
+    print(f"Finished running test suite for {ht_type} K={K}")
+    print('Configs:')
+    for config in configs:
+        print(config)
+    print('Cycles:')
+    for cycle in cycles:
+        print(cycle)
+    print('throughput:')
+    for throughput in throughputs:
+        print(throughput)
+
+def run_cashtpp_test_suite(ht_type, K, build_args, run_args, num_threads, outpath):
     print(f"Running test suite for {ht_type} K={K}")
 
     # Config build
@@ -38,8 +70,8 @@ def run_test_suite(ht_type, K, build_args, run_args, num_prods, outpath):
     # Run tests
     cycles = []
     throughputs = []
-    for num_prod in num_prods:
-        cycle, throughput = run_test(f'{run_args} --nprod {num_prod} --ncons 32', f'{outpath}/nprod_{num_prod}')
+    for num_thread in num_threads:
+        cycle, throughput = run_test(f'{run_args} --num-threads={num_thread}', f'{outpath}/cashtpp_{num_thread}')
         cycles.append(cycle)
         throughputs.append(throughput)
 
@@ -54,7 +86,9 @@ def run_test_suite(ht_type, K, build_args, run_args, num_prods, outpath):
 
 if __name__ == '__main__':
     Ks = [5, 10, 15]
-    NUM_CONS = list(range(10, 33))
+    NUM_CONS = list(range(32, 64, 2))
+    NUM_PRODS = [64 - con for con in NUM_CONS]
+    NUM_THREADS = list(range(1, 65))
     OUTPATH = 'out/vary_threads'
     FASTQ_FILE = '../memfs/SRR077487.2.fastq'
     # FASTQ_FILE = '../memfs/SRR072006.fastq'
@@ -67,6 +101,14 @@ if __name__ == '__main__':
         run_subprocess(f'mkdir -p {outpath}')
         build_args = f'-DBQUEUE=ON'
         run_args = f'--mode=8 --ht-type=1 --in-file={FASTQ_FILE}'
-        run_test_suite(ht_type, K, build_args, run_args, NUM_CONS, outpath)
+        run_partitioned_test_suite(ht_type, K, build_args, run_args, NUM_CONS, NUM_PRODS, outpath)
+
+    # ht_type = 'CASHTPP'    
+    # for K in Ks:
+    #     outpath = f'{OUTPATH}/{ht_type}/K_{K}'
+    #     run_subprocess(f'mkdir -p {outpath}')
+    #     build_args = f'-DBQUEUE=OFF'
+    #     run_args = f'--mode=6 --ht-type=3 --numa-split=1 --in-file={FASTQ_FILE}'
+    #     run_cashtpp_test_suite(ht_type, K, build_args, run_args, NUM_THREADS, outpath)
 
     
