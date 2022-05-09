@@ -1,8 +1,4 @@
-from multiprocessing import cpu_count
-from estimate_zipf import plot_zipf
-from scipy import stats
 import subprocess
-import numpy as np
 
 OUTDIR = "out/zipf_cdf"
 
