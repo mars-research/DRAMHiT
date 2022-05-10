@@ -31,6 +31,7 @@ in stdenv.mkDerivation {
     gcc11
     cmake
     ninja
+    python310
   ];
 
   buildInputs = with pkgs; [

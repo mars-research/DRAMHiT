@@ -59,10 +59,8 @@ typedef enum {
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
 // src/Application.cpp
 typedef enum {
-  SIMPLE_KHT = 1,
-  ROBINHOOD_KHT = 2,
-  CAS_KHT = 3,
-  STDMAP_KHT = 5,
+  PARTITIONED_HT = 1,
+  CASHTPP = 3,
 } ht_type_t;
 
 extern const char *run_mode_strings[];
@@ -112,6 +110,8 @@ struct Configuration {
   bool drop_caches;
   // enable/disable hw prefetchers (msr 0x1a4)
   bool hwprefetchers;
+  // disable prefetching
+  bool no_prefetch;
 
   void dump_configuration() {
     printf("Run configuration{\n");
@@ -124,6 +124,7 @@ struct Configuration {
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
+    printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("}\n");
   }
 };

@@ -238,8 +238,33 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void insert_noprefetch(const void *data) {
-    PLOG_FATAL << "Not implemented";
-    assert(false);
+    KVQ *key_data = const_cast<KVQ*>(reinterpret_cast<const KVQ *>(data));
+    uint64_t hash = 0;
+    uint64_t key = 0;
+
+    hash = this->hash((const char *)&key_data->key);
+    key = key_data->key;
+
+    size_t idx = fastrange32(hash, this->capacity);
+
+    KV *cur_ht = this->hashtable[this->id];
+
+    for (auto i = 0u; i < this->capacity; i++) {
+      KV *curr = &cur_ht[idx];
+      auto retry = false;
+
+      retry = curr->insert(key_data);
+
+      if (retry) {
+        idx++;
+        idx = idx == this->capacity ? 0 : idx;  // modulo
+#ifdef CALC_STATS
+        this->num_reprobes++;
+#endif
+      } else {
+        break;
+      }
+    }
   }
 
   // insert a batch

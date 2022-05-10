@@ -14,10 +14,12 @@
 #include "queues/lynxq.hpp"
 #include "queues/section_queues.hpp"
 #include "queues/bqueue_aligned.hpp"
+#include "xorwow.hpp"
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN)
 #include "hashtables/ht_helper.hpp"
 #include "zipf.h"
+#include "zipf_distribution.hpp"
 #endif
 
 #include "utils/vtune.hpp"
@@ -40,9 +42,9 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 // Test Variables
 [[maybe_unused]] static uint64_t transactions = 100000000;
 
-const unsigned BQ_TESTS_DEQUEUE_ARR_LENGTH = 16;
+const unsigned BQ_TESTS_DEQUEUE_ARR_LENGTH = HT_TESTS_BATCH_LENGTH;
 const unsigned BQ_TESTS_BATCH_LENGTH_PROD = 1;
-const unsigned BQ_TESTS_BATCH_LENGTH_CONS = 16;
+const unsigned BQ_TESTS_BATCH_LENGTH_CONS = BQ_TESTS_DEQUEUE_ARR_LENGTH;
 
 // for synchronization of threads
 static uint64_t ready = 0;
@@ -137,6 +139,32 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #endif
    }
 
+  struct xorwow_state _xw_state, init_state;
+  auto key_start_orig = key_start;
+
+#if defined(BQ_TESTS_INSERT_ZIPFIAN)
+  constexpr auto keyrange_width = (1ull << 31);  // 192 * (1 << 20);
+#ifdef ZIPF_FAST
+  zipf_distribution_apache distribution(keyrange_width, skew);
+#else
+  zipf_distribution distribution{skew, num_messages, this_prod_id + 1};
+#endif
+
+  std::vector<std::uint64_t> values(num_messages);
+  for (auto &value : values) {
+#ifdef ZIPF_FAST
+    value = distribution.sample();
+#else
+    value = distribution();
+#endif
+  }
+#endif
+
+#if defined(XORWOW)
+  xorwow_init(&_xw_state);
+  init_state = _xw_state;
+#endif
+  static auto event = -1;
   if (main_thread) {
     // Wait for threads to be ready for test
     while (ready_consumers < n_cons) fipc_test_pause();
@@ -148,6 +176,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     // Signal begin
     test_ready = 1;
     fipc_test_mfence();
+    event = vtune::event_start("message_enq");
   } else {
     fipc_test_FAI(ready_producers);
     while (!test_ready) fipc_test_pause();
@@ -159,8 +188,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       "key_start %lu",
       this_prod_id, num_messages, n_cons, key_start);
 
-  static const auto event = vtune::event_start("message_enq");
-
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
     if (next_cons_id >= n_cons) next_cons_id = 0;
@@ -169,12 +196,25 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_start = RDTSC_START();
 
-  auto key_start_orig = key_start;
-
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
+#if defined(XORWOW)
+    _xw_state = init_state;
+#endif
     for (transaction_id = 0u; transaction_id < num_messages;) {
+#if defined(XORWOW)
+#warning "Xorwow rand kmer insert"
+      const auto value = xorwow(&_xw_state);
+      k = value;
+#elif defined(BQ_TESTS_INSERT_ZIPFIAN)
+#warning "Zipfian insertion"
+      if (transaction_id & 7 == 0 && transaction_id + 16 < values.size())
+        prefetch_object<false>(&values.at(transaction_id + 16), 64);
+
+      k = values.at(transaction_id);
+#else
       k = key_start++;
+#endif
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
       uint64_t hash_val = hasher(&k, sizeof(k));
@@ -212,7 +252,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_end = RDTSCP();
 
-  vtune::event_end(event);
+  if (main_thread) {
+    vtune::event_end(event);
+  }
 
   sh->stats->enqueue_cycles = (t_end - t_start);
   sh->stats->num_enqueues = transaction_id;
@@ -278,7 +320,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOGI.printf("[cons:%u] starting tid %u | cpu %u\n", this_cons_id, gettid(), cpu);
 
-  static const auto event = vtune::event_start("message_deq");
+  static auto event = -1;
+  if (tid == n_prod)
+    event = vtune::event_start("message_deq");
 
   auto t_start = RDTSC_START();
 
@@ -332,8 +376,10 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       auto ret = this->queues->dequeue_new(cq, prod_id, this_cons_id, (data_t *)&k);
       if (ret == RETRY) {
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-          if (data_idx > 0) {
-            submit_batch(data_idx);
+          if (!config.no_prefetch) {
+            if (data_idx > 0) {
+              submit_batch(data_idx);
+            }
           }
         }
         goto pick_next_msg;
@@ -373,8 +419,13 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
-        if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
-          submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
+        if (config.no_prefetch) {
+          kmer_ht->insert_noprefetch(&k);
+          inserted++;
+        } else {
+          if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
+            submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
+          }
         }
       }
 
@@ -397,7 +448,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_end = RDTSCP();
 
-  vtune::event_end(event);
+  if (tid == n_prod)
+    vtune::event_end(event);
 
   sh->stats->insertion_cycles = (t_end - t_start);
   sh->stats->num_inserts = transaction_id;
@@ -445,6 +497,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   uint64_t count = std::max(HT_TESTS_NUM_INSERTS * tid, (uint64_t)1);
   BaseHashTable *ktable;
   Hasher hasher;
+
+  struct xorwow_state _xw_state, init_state;
+
+  xorwow_init(&_xw_state);
+  init_state = _xw_state;
 
   alignas(64) uint64_t k = 0;
 
@@ -502,11 +559,16 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   auto t_start = RDTSC_START();
 
-  for (auto j = 0u; j < config.insert_factor; j++) {
+  for (auto m = 0u; m < config.insert_factor; m++) {
     key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
+    _xw_state = init_state;
     for (auto i = 0u; i < num_messages; i++) {
+#if defined(XORWOW)
+      k = xorwow(&_xw_state);
+#else
       k = key_start++;
+#endif
       uint64_t hash_val = hasher(&k, sizeof(k));
 
       partition = hash_to_cpu(hash_val, n_cons);

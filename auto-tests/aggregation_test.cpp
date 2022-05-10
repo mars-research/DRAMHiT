@@ -6,7 +6,6 @@
 #include <memory>
 #include <string_view>
 
-#include "hashtable.h"
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "test_lib.hpp"

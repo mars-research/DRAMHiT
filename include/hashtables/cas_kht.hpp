@@ -46,7 +46,7 @@ class CASHashTable : public BaseHashTable {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
-        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd, true);
+        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
       }
       this->ref_cnt++;
     }

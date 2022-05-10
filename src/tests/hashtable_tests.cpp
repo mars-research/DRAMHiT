@@ -10,6 +10,8 @@
 #include "sync.h"
 #include "tests/tests.hpp"
 #include "zipf.h"
+#include "zipf_distribution.hpp"
+#include "utils/hugepage_allocator.hpp"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI
 #include <papi.h>
@@ -26,15 +28,29 @@ uint64_t HT_TESTS_NUM_INSERTS;
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
                              unsigned int count, unsigned int id) {
-  constexpr auto keyrange_width = 64ull * (1ull << 26);  // 192 * (1 << 20);
+  auto keyrange_width = (1ull << 63);
+#ifdef ZIPF_FAST
+  zipf_distribution_apache distribution(keyrange_width, skew);
+#else
   zipf_distribution distribution{skew, keyrange_width, id + 1};
+#endif
   std::uint64_t duration{};
 
+  const auto _start = RDTSC_START();
   static std::atomic_uint fence{};
-  std::vector<std::uint64_t> values(HT_TESTS_NUM_INSERTS);
-  for (auto &value : values) value = distribution();
+  std::vector<std::uint64_t, huge_page_allocator<uint64_t>> values(HT_TESTS_NUM_INSERTS);
+  for (auto &value : values) {
+#ifdef ZIPF_FAST
+    value = distribution.sample();
+#else
+    value = distribution();
+#endif
+  }
   ++fence;
   while (fence < count) _mm_pause();
+  const auto _end = RDTSCP();
+  PLOGI.printf("generation took %llu cycles (per element %llu cycles)",
+        _end-_start, (_end-_start)/HT_TESTS_NUM_INSERTS);
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -42,39 +58,36 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   __itt_event_start(event);
 #endif
 
-#ifdef NO_PREFETCH
-#warning "Zipfian no-prefetch"
-  const auto start = RDTSC_START();
-  for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-    if (n % 8 == 0 && n + 16 < values.size())
-      prefetch_object<false>(&values.at(n + 16), 64);
-
-    hashtable->insert_noprefetch(&values.at(n));
-  }
-
-  const auto end = RDTSCP();
-  duration += end - start;
-#else
-  unsigned int key{};
+  PLOGI.printf("Starting insertion test");
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
+
   const auto start = RDTSC_START();
-  for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-    if (n % 8 == 0 && n + 16 < values.size())
-      prefetch_object<false>(&values.at(n + 16), 64);
+  std::uint64_t key{};
+  for (auto j = 0u; j < config.insert_factor; j++) {
+    for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+      if (!(n & 7) && n + 16 < values.size()) {
+        prefetch_object<false>(&values.at(n + 16), 64);
+      }
 
-    items[key] = {values.at(n), n};
+      if (config.no_prefetch) {
+        hashtable->insert_noprefetch(&values.at(n));
+      } else {
+        items[key] = {values.at(n), n};
 
-    if (++key == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
-      hashtable->insert_batch(keypairs);
-      key = 0;
+        if (++key == HT_TESTS_BATCH_LENGTH) {
+          KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
+          hashtable->insert_batch(keypairs);
+          key = 0;
+        }
+      }
     }
   }
+  if (!config.no_prefetch) {
+    hashtable->flush_insert_queue();
+  }
 
-  hashtable->flush_insert_queue();
   const auto end = RDTSCP();
   duration += end - start;
-#endif
 
   PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
              << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
@@ -83,7 +96,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   __itt_event_end(event);
 #endif
 
-  return {duration, HT_TESTS_NUM_INSERTS};
+  return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
 OpTimings do_zipfian_gets(BaseHashTable *kmer_ht, unsigned int id) {
@@ -100,7 +113,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   PLOG_INFO.printf(
       "Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
       "%f",
-      shard->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS, skew);
+      shard->shard_idx, config.ht_size, HT_TESTS_NUM_INSERTS, skew);
 
   for (uint32_t i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_timings =

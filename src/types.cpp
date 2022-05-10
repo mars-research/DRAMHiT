@@ -16,3 +16,8 @@ std::ostream& operator<<(std::ostream& os, const Values& x) {
           << "}" << std::endl;
           ;
 }
+
+namespace kmercounter {
+// Global config. This is a temporary dirty hack.
+Configuration config;
+} // namespace kmercounter
