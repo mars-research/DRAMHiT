@@ -19,7 +19,7 @@ namespace {
 const char PARTITIONED_HT[] = "Partitioned HT";
 const char CAS_HT[] = "CAS HT";
 constexpr const char* HTS[]{
-    // PARTITIONED_HT,
+    PARTITIONED_HT,
     CAS_HT,
 };
 

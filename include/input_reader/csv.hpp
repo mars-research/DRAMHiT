@@ -29,7 +29,7 @@ class PartitionedCsvReader : public InputReader<Row*> {
     FileReader file(filename, part_id, num_parts);
     for (std::string_view line; file.next(&line); /*noop*/) {
       const std::string_view key_str = line.substr(0, line.find(delimiter));
-      uint64_t key;
+      uint64_t key{};
       std::from_chars(key_str.begin(), key_str.end(), key);
       data_.push_back(std::make_pair(key, line));
     }

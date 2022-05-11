@@ -1,6 +1,3 @@
-import pathlib
-import os
-import shutil
 import re
 import subprocess
 
@@ -8,12 +5,14 @@ def run_subprocess(cmd):
     print(f'Running <{cmd}>')
     subprocess.run(cmd, check=True, shell=True)
 
-def get_avg_insert_cycle(file):
+def get_insert_cycle_and_throughput(file):
     with open(file, 'r') as f:
         text = f.read()
         cycles = int(re.search(
             r'Average  : .* cycles \(.* ms\) for .* insertions \((?P<cycles>(?:[0-9]*)) cycles/insert\) \(fill = .* %\)', text)['cycles'])
-        return cycles
+        throughput = float(re.search(
+        r'Number of insertions per sec \(Mops/s\): (?P<mops>(?:[0-9]*\.[0-9]*)|inf)', text)['mops'])
+        return (cycles, throughput)
             
 
 def run_test(extra_build_args, extra_kvstore_args, outpath):
@@ -29,7 +28,7 @@ def run_test(extra_build_args, extra_kvstore_args, outpath):
     run_subprocess(f'{build_dir}/kvstore {extra_kvstore_args} > {outpath}')
 
     # Extract cycle count
-    return get_avg_insert_cycle(outpath)
+    return get_insert_cycle_and_throughput(outpath)
 
 if __name__ == '__main__':
     Ks = list(range(4, 33))
@@ -50,6 +49,19 @@ if __name__ == '__main__':
         print(f'cycles {rtn}')
         casht_cycles.append(rtn)
     print(f'{test_type}: {casht_cycles}')
+
+    # Run CASHT++ 32
+    casht32_cycles = []
+    test_type = 'CASHT'
+    run_subprocess(f'mkdir -p {OUTPATH}/{test_type}')
+    for K in Ks:
+        print(f'Running {test_type} K={K}')
+        build_args = f'-DBQUEUE=OFF -DKMER_LEN={K}'
+        kvstore_args = f'--num-threads=32 --mode=6 --ht-type=3 --numa-split=1 --in-file={FASTQ_FILE}'
+        rtn = run_test(build_args, kvstore_args, f'{OUTPATH}/{test_type}/{K}.log')
+        print(f'cycles {rtn}')
+        casht32_cycles.append(rtn)
+    print(f'{test_type}: {casht32_cycles}')
 
     # Run PartitionedHT
     partitionedht_cycles = []

@@ -29,6 +29,8 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_compile_options(
     -O3
     -Wall
+    -g
+    -fdiagnostics-color=always
     -mprefetchwt1
     -march=native
     -fcf-protection=none
@@ -36,7 +38,6 @@ add_compile_options(
     -funroll-all-loops
     -flto
     -ffat-lto-objects
-    -g
     #-rdynamic
 )
 

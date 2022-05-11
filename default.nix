@@ -27,7 +27,8 @@ in stdenv.mkDerivation {
     };
   };
 
-  nativeBuildInputs = with pkgs; [
+  nativeBuildInputs = with pkgs; [ 
+    gcc11
     cmake
     ninja
     python310
