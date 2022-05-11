@@ -407,22 +407,24 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       __mmask8 val_mask = key_mask << 1;
       __mmask8 kv_mask = key_mask | val_mask;
 
-      if constexpr (std::is_same_v<KV, Aggr_KV>) {
-        blend(cacheline, kv_vector, copy_mask);
-        increment_count(cacheline, val_mask);
-        // write the cacheline back; just the KV pair that was modified
-        store_cacheline(cacheline, kv_mask);
-      } else {
-        store_cacheline(kv_vector, kv_mask);
-      }
-
       if (!kv_mask) {
         auto inc_idx =  KV_PER_CACHE_LINE - cidx;
         auto nidx = idx + inc_idx;
         nidx = nidx >= this->capacity ? (nidx - this->capacity) : nidx;  // modulo
         idx = nidx;
         i += inc_idx;
+#ifdef CALC_STATS
+        this->num_reprobes++;
+#endif
       } else {
+        if constexpr (std::is_same_v<KV, Aggr_KV>) {
+          blend(cacheline, kv_vector, copy_mask);
+          increment_count(cacheline, val_mask);
+          // write the cacheline back; just the KV pair that was modified
+          store_cacheline(cacheline, kv_mask);
+        } else {
+          store_cacheline(kv_vector, kv_mask);
+        }
         break;
       }
     }
@@ -1080,6 +1082,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     __mmask8 val_mask = key_mask << 1;
     __mmask8 kv_mask = key_mask | val_mask;
 
+#ifdef PURE_BRANCHLESS
     if constexpr (std::is_same_v<KV, Aggr_KV>) {
       blend(cacheline, kv_vector, copy_mask);
       increment_count(cacheline, val_mask);
@@ -1113,7 +1116,28 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     prefetch(nidx);
     this->ins_head += queue_idx_inc;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
-
+#else
+    if (!kv_mask) {
+      auto nidx = idx + KV_PER_CACHE_LINE - cidx;
+      nidx = nidx >= this->capacity ? (nidx - this->capacity) : nidx;  // modulo
+      prefetch(nidx);
+      this->insert_queue[this->ins_head].key = q->key;
+      this->insert_queue[this->ins_head].key_id = q->key_id;
+      this->insert_queue[this->ins_head].value = q->value;
+      this->insert_queue[this->ins_head].idx = nidx;
+      this->ins_head++;// += queue_idx_inc;
+      this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
+    } else {
+      if constexpr (std::is_same_v<KV, Aggr_KV>) {
+        blend(cacheline, kv_vector, copy_mask);
+        increment_count(cacheline, val_mask);
+        // write the cacheline back; just the KV pair that was modified
+        store_cacheline(cacheline, kv_mask);
+      } else {
+        store_cacheline(kv_vector, kv_mask);
+      }
+    }
+#endif
     return;
   }
 
