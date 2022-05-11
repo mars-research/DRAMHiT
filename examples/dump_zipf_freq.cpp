@@ -34,7 +34,7 @@ Counter dump_zipf_worker(const double skew, const uint tid, const uint64_t num_o
   std::cerr << "Starting worker " << tid << std::endl;
 
   // Initialize input reader
-  kmercounter::input_reader::ZipfianGenerator<uint64_t> reader{
+  kmercounter::input_reader::ZipfianGenerator reader{
       skew, num_output, tid + 1};
 
   // Count freq.

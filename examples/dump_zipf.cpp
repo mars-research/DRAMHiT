@@ -27,7 +27,7 @@ ABSL_FLAG(uint64_t, output_size, (1ull << 26) * 64,
 void dump_zipf_worker(std::osyncstream os, const double skew, const uint tid) {
   // Initialize input reader
   constexpr auto keyrange_width = 64ull * (1ull << 26);
-  kmercounter::input_reader::ZipfianGenerator<uint64_t> reader{
+  kmercounter::input_reader::ZipfianGenerator reader{
       skew, keyrange_width, tid + 1};
 
   // Batch 4K write per flush.

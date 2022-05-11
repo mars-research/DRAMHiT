@@ -1,4 +1,5 @@
 import subprocess
+from multiprocessing.pool import Pool
 
 OUTDIR = "out/zipf_cdf"
 
@@ -6,8 +7,9 @@ def run_subprocess(cmd):
     print(f'Running <{cmd}>')
     return subprocess.check_output(cmd, shell=True)
 
-def gen_cdf(skew, outfile):
+def gen_cdf(skew):
     # Run dumper
+    outfile = f'{OUTDIR}/cdf_{skew:.2f}.csv'
     return run_subprocess(f'{build_dir}/examples/dump_zipf_cdf --output_file="{outfile}" --skew={skew}')
 
 
@@ -23,7 +25,10 @@ if __name__ == "__main__":
   # Build
   run_subprocess(f'ninja -C {build_dir} > {OUTDIR}/build.log')
 
-  skews = [0.2, 0.5, 0.8]
-  for skew in skews:
-    gen_cdf(skew, f'{OUTDIR}/cdf_{skew:.2f}.csv')
+  # RUn jobs
+  pool = Pool(8)
+  skews = [0.8 + 0.01 * i for i in range(20)]
+  pool.map(gen_cdf, skews)
+  pool.close()
+  pool.join()
 
