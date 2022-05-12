@@ -16,7 +16,7 @@
 #include "misc_lib.h"
 #include "sync.h"
 
-namespace kvstore {
+namespace kmercounter {
 using timer_type = std::uint16_t;
 
 template <std::size_t capacity>

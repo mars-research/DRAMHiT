@@ -9,7 +9,7 @@
 #include "types.hpp"
 
 using namespace std;
-namespace kvstore {
+namespace kmercounter {
 
 const uint32_t PREFETCH_QUEUE_SIZE = 64;
 const uint32_t PREFETCH_FIND_QUEUE_SIZE = 64;

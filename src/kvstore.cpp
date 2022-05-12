@@ -1,7 +1,7 @@
 #include "Application.hpp"
 #include "logger.h"
 
-using namespace kvstore;
+using namespace kmercounter;
 
 int main(int argc, char **argv) {
   initializeLogger();

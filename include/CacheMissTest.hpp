@@ -4,7 +4,7 @@
 #include "base_kht.hpp"
 #include "types.hpp"
 
-namespace kvstore {
+namespace kmercounter {
 
 class CacheMissTest {
  public:

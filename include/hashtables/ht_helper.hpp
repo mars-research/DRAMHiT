@@ -13,7 +13,7 @@
 
 #include <cstring>
 
-namespace kvstore {
+namespace kmercounter {
 /* AB: 1GB page table code is from
  * https://github.com/torvalds/linux/blob/master/tools/testing/selftests/vm/hugepage-mmap.c
  */

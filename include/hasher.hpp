@@ -11,7 +11,7 @@
 #include "cityhash/src/citycrc.h"
 
 
-namespace kvstore {
+namespace kmercounter {
 class Hasher {
 public:
 

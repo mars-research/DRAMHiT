@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace kvstore {
+namespace kmercounter {
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>

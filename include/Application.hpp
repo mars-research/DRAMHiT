@@ -7,7 +7,7 @@
 #include "tests.hpp"
 
 using namespace std;
-namespace kvstore {
+namespace kmercounter {
 
 class Application {
   Numa *n;

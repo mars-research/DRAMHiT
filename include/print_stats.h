@@ -3,7 +3,7 @@
 
 #include "base_kht.hpp"
 
-namespace kvstore {
+namespace kmercounter {
 /*From /proc/cpuinfo*/
 #define CPUFREQ_MHZ (2200.0)
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);

@@ -14,7 +14,7 @@ Each cache_record spills over a queue line for now, queue-align later
 
 // 2^21
 
-namespace kvstore {
+namespace kmercounter {
 typedef struct {
   char kmer_data[KMER_DATA_LENGTH];  // 50 bytes
   uint16_t kmer_count;  // 2 bytes // TODO seems too long, max count is ~14
@@ -128,7 +128,7 @@ class RobinhoodKmerHashTable : public BaseHashTable {
   RobinhoodKmerHashTable(uint64_t c) {
     // TODO static cast
     // TODO power of 2 hashtable size for ease of mod operations
-    this->capacity = kvstore::next_pow2(c);
+    this->capacity = kmercounter::next_pow2(c);
     this->hashtable =
         (RH_Kmer_r *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(RH_Kmer_r)));
     memset(hashtable, 0, capacity * sizeof(RH_Kmer_r));
