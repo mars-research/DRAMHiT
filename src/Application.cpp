@@ -388,7 +388,6 @@ void papi_init() {
   }
 
   PLOGI.printf("PAPI library initialized");
-}
 #endif
 }
 
