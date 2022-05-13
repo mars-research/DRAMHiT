@@ -139,10 +139,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   shard->stats->find_cycles = num_finds.duration;
   shard->stats->num_finds = num_finds.op_count;
 
-  if (num_finds.op_count > 0)
+  if (num_finds.op_count > 0) {
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
                      shard->shard_idx, num_finds.op_count,
                      num_finds.duration / num_finds.op_count);
+  }
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(shard, hashtable);

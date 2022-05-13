@@ -1,30 +1,41 @@
 /// This file implements Hash Join.
 // Relevant resources:
 // * Hash join: https://dev.mysql.com/worklog/task/?id=2241
-// * Add support for hash outer, anti and semi join: https://dev.mysql.com/worklog/task/?id=13377
-// * Optimize hash table in hash join: https://dev.mysql.com/worklog/task/?id=13459
+// * Add support for hash outer, anti and semi join:
+// https://dev.mysql.com/worklog/task/?id=13377
+// * Optimize hash table in hash join:
+// https://dev.mysql.com/worklog/task/?id=13459
 
-#include <optional>
-#include <iostream>
-#include <plog/Log.h>
-#include <unordered_set>
-#include <fstream>
+#include "tests/HashjoinTest.hpp"
+
 #include <atomic>
+#include <barrier>
+#include <fstream>
+#include <iostream>
+#include <optional>
+#include <unordered_set>
 
 #include "constants.hpp"
 #include "hashtables/base_kht.hpp"
-#include "input_reader/csv.hpp"
 #include "hashtables/kvtypes.hpp"
+#include "input_reader/csv.hpp"
+#include "plog/Log.h"
 #include "sync.h"
 #include "types.hpp"
 
 namespace kmercounter {
 
 // Only primary-foreign key join is supported.
-void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std::atomic_uint8_t* thread_synker) {
-  input_reader::PartitionedCsvReader t1("part.tbl", sh->shard_idx, config->num_threads, "|");
-  input_reader::PartitionedCsvReader t2("partsupp.tbl", sh->shard_idx, config->num_threads, "|");
-  PLOG_INFO << "Shard " << (int)sh->shard_idx << "/" << config->num_threads << " t1 " << t1.size() << " t2 " << t2.size(); 
+void HashjoinTest::part_join_partsupp(const Shard& sh,
+                                      const Configuration& config,
+                                      BaseHashTable* ht,
+                                      std::barrier<>* barrier) {
+  input_reader::PartitionedCsvReader t1("part.tbl", sh.shard_idx,
+                                        config.num_threads, "|");
+  input_reader::PartitionedCsvReader t2("partsupp.tbl", sh.shard_idx,
+                                        config.num_threads, "|");
+  PLOG_INFO << "Shard " << (int)sh.shard_idx << "/" << config.num_threads
+            << " t1 " << t1.size() << " t2 " << t2.size();
 
   // Build hashtable from t1.
   uint64_t k = 0;
@@ -50,20 +61,20 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
 
   {
     const auto duration = RDTSCP() - t1_start;
-    std::cerr << "Thread " << (int)sh->shard_idx << " takes " << duration  << " to insert " << t1.size() << ". Avg " << duration / t1.size()  << std::endl;
+    std::cerr << "Thread " << (int)sh.shard_idx << " takes " << duration
+              << " to insert " << t1.size() << ". Avg " << duration / t1.size()
+              << std::endl;
   }
 
   // Make sure insertions is finished before probing.
-  thread_synker->fetch_add(1, std::memory_order_seq_cst);
-  while (thread_synker->load(std::memory_order_seq_cst) < config->num_threads) {
-    // spin
-  } 
+  barrier->arrive_and_wait();
 
   // Helper function for checking the result of the batch finds.
-  // std::ofstream output_file(std::to_string((int)sh->shard_idx) + "_join.tbl");
+  // std::ofstream output_file(std::to_string((int)sh->shard_idx) +
+  // "_join.tbl");
   const auto& t2_rows = t2.rows();
   const auto t2_start = RDTSC_START();
-  auto join_rows = [&t2_rows] (const ValuePairs& vp) {
+  auto join_rows = [&t2_rows](const ValuePairs& vp) {
     PLOG_DEBUG << "Found " << vp.first << " keys";
     for (uint32_t i = 0; i < vp.first; i++) {
       const Values& value = vp.second[i];
@@ -111,14 +122,17 @@ void part_join_partsupp(Shard *sh, Configuration *config, BaseHashTable *ht, std
 
   {
     const auto duration = RDTSCP() - t2_start;
-    std::cerr << "Thread " << (int)sh->shard_idx << " takes " << duration << " to join " << t1.size() << ". Avg " << duration / t1.size() << std::endl;
+    std::cerr << "Thread " << (int)sh.shard_idx << " takes " << duration
+              << " to join " << t1.size() << ". Avg " << duration / t1.size()
+              << std::endl;
   }
 
   {
     const auto duration = RDTSCP() - t1_start;
-    std::cerr << "Thread " << (int)sh->shard_idx << " takes " << duration << " to output " << t1.size() << ". Avg " << duration / t1.size() << std::endl;
+    std::cerr << "Thread " << (int)sh.shard_idx << " takes " << duration
+              << " to output " << t1.size() << ". Avg " << duration / t1.size()
+              << std::endl;
   }
-
 }
 
 }  // namespace kmercounter

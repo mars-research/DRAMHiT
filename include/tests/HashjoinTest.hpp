@@ -10,7 +10,8 @@ namespace kmercounter {
 
 class HashjoinTest {
  public:
-  void part_join_partsupp(const Shard *sh, const Configuration *config, BaseHashTable *ht, std::barrier<> *barrier);
+  void part_join_partsupp(const Shard &sh, const Configuration &config,
+                          BaseHashTable *ht, std::barrier<> *barrier);
 };
 
 }  // namespace kmercounter
