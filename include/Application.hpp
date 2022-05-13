@@ -33,6 +33,6 @@ class Application {
   }
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __APPLICATION_HPP__

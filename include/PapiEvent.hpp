@@ -116,5 +116,5 @@ class PapiEvent {
     PLOG_INFO.printf("--------------------------------------------");
   }
 };
-}  // namespace kmercounter
+}  // namespace kvstore
 #endif  // __PAPIEVENT_HPP__

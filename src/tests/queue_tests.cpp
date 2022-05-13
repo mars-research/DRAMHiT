@@ -27,7 +27,6 @@
 #define PGROUNDDOWN(x)  (x & ~(PAGESIZE - 1))
 
 namespace kmercounter {
-
 using namespace std;
 
 const uint64_t CACHELINE_SIZE = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);

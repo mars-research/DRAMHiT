@@ -24,6 +24,7 @@
 #include <type_traits>
 
 #include "constants.hpp"
+#include "Latency.hpp"
 #include "experiments.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"
@@ -98,6 +99,9 @@ constexpr auto histogram_bits = 6;
 constexpr std::uint32_t histogram_buckets{1 << histogram_bits};
 constexpr std::uint32_t histogram_mask{histogram_buckets - 1};
 extern thread_local std::vector<unsigned int> hash_histogram;
+#ifdef LATENCY_COLLECTION
+extern thread_local LatencyCollector<512> collector;
+#endif
 
 template <typename KV, typename KVQ>
 class alignas(64) PartitionedHashStore : public BaseHashTable {
@@ -514,19 +518,41 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
+#ifdef LATENCY_COLLECTION
   void flush_find_queue(ValuePairs &vp) override {
+    PLOG_ERROR << "This hashtable did not implement flush_find_queue";
+    std::terminate();
+  }
+#endif
+
+  void flush_find_queue(ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                        ,
+                        decltype(collectors)::value_type &collector
+#endif
+                        ) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
     while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp
+#ifdef LATENCY_COLLECTION
+                 ,
+                 collector
+#endif
+      );
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
   }
 
-  void flush_if_needed(ValuePairs &vp) {
+  void flush_if_needed(ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                       ,
+                       decltype(collectors)::value_type &collector
+#endif
+  ) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     // make sure you return at most batch_sz (but can possibly return lesser
@@ -536,7 +562,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp
+#ifdef LATENCY_COLLECTION
+                 ,
+                 collector
+#endif
+      );
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -544,7 +575,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void find_batch(KeyPairs &kp, ValuePairs &values) {
+#ifdef LATENCY_COLLECTION
+  virtual void find_batch(KeyPairs &kp, ValuePairs &vp) {
+    PLOG_ERROR << "This hashtable did not implement find_batch";
+    std::terminate();
+  };
+#endif
+
+  void find_batch(KeyPairs &kp, ValuePairs &values
+#ifdef LATENCY_COLLECTION
+                  ,
+                  decltype(collectors)::value_type &collector
+#endif
+  ) {
     // What's the size of the prefetch queue size?
     // pfq_sz = 4 * 64;
     // flush_threshold = 128;
@@ -557,7 +600,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // cout << "-> flush_before head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
-    this->flush_if_needed(values);
+    this->flush_if_needed(values
+#ifdef LATENCY_COLLECTION
+                          ,
+                          collector
+#endif
+    );
     // cout << "== > post flush_before head: " << this->find_head << " tail: "
     // << this->find_tail << endl;
 
@@ -567,12 +615,23 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     for (auto k = 0u; k < batch_len; k++) {
       void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data);
+      add_to_find_queue(data
+
+#ifdef LATENCY_COLLECTION
+                        ,
+                        collector
+#endif
+      );
     }
 
     // cout << "-> flush_after head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
-    this->flush_if_needed(values);
+    this->flush_if_needed(values
+#ifdef LATENCY_COLLECTION
+                          ,
+                          collector
+#endif
+    );
     // cout << "== > post flush_after head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
   }
@@ -678,7 +737,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                           ,
+                           decltype(collectors)::value_type &collector
+#endif
+  ) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -711,6 +775,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       this->prefetch_partition(idx, q->part_id, false);
 
+#ifdef LATENCY_COLLECTION
+      this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
+
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
@@ -719,6 +787,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
+
+#ifdef LATENCY_COLLECTION
+    collector.end(q->timer_id);
+#endif
+
     return found;
   }
 
@@ -825,12 +898,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp) {
-  if (q->key == this->empty_item.get_key()) {
+  auto __find_one(KVQ *q, ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                  ,
+                  decltype(collectors)::value_type &collector
+#endif
+  ) {
+#ifndef LATENCY_COLLECTION
+    if (q->key == this->empty_item.get_key()) {
       return __find_empty(q, vp);
-    }
-
-    if constexpr (branching == BRANCHKIND::WithBranch) {
+    } else if constexpr (branching == BRANCHKIND::WithBranch) {
       return __find_branched(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       return __find_branchless_cmov(q, vp);
@@ -838,6 +915,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // return __find_branchless_simd(q, vp);
       return __find_branched(q, vp);
     }
+#else
+    static_assert(branching == BRANCHKIND::WithBranch,
+                  "branchless is not supporte with latency collection");
+
+    return __find_branched(q, vp, collector);
+#endif
   }
 
   /// Update or increment the empty key.
@@ -886,7 +969,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       this->insert_queue[this->ins_head].key = q->key;
       this->insert_queue[this->ins_head].key_id = q->key_id;
+
+#ifndef LATENCY_COLLECTION
       this->insert_queue[this->ins_head].value = q->value;
+#endif
+
       this->insert_queue[this->ins_head].idx = idx;
       ++this->ins_head;
       this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
@@ -1235,7 +1322,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     //}
   }
 
-  void add_to_find_queue(void *data) {
+  void add_to_find_queue(void *data
+#ifdef LATENCY_COLLECTION
+                         ,
+                         decltype(collectors)::value_type &collector
+#endif
+  ) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
@@ -1250,7 +1342,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key & 0xFFFFFFFF;
     }
 
+#ifdef LATENCY_COLLECTION
+    const auto timer_id = collector.start();
+#endif
+
     size_t idx = fastrange32(hash, this->capacity);  // modulo
+
     this->prefetch_partition(idx, key_data->part_id, false);
 
     // unsigned int cpu, node;
@@ -1259,6 +1356,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     /*if (cpu == 0)
     cout << "[" << cpu << "] -- Adding " << key << " partid : " <<
     key_data->part_id << " at " << this->find_head << endl;*/
+
+#ifdef LATENCY_COLLECTION
+    this->find_queue[this->find_head].timer_id = timer_id;
+#endif
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key;
@@ -1287,5 +1388,5 @@ int *PartitionedHashStore<KV, KVQ>::fds;
 
 // TODO bloom filters for high frequency kmers?
 
-}  // namespace kmercounter
+}  // namespace kvstore
 #endif /* _SKHT_H_ */

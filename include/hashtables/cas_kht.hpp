@@ -2,7 +2,7 @@
 /// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
 /// Key and values are stored directly in the table.
 /// CASHashtable is not parititioned, meaning that there will be
-/// at max one instance of it. All threads will share the same 
+/// at max one instance of it. All threads will share the same
 /// instance.
 /// The original one is called the casht and the one we modified with
 /// batching + prefetching though is called casht++.
@@ -18,11 +18,11 @@
 #include <type_traits>
 
 #include "constants.hpp"
-#include "plog/Log.h"
+#include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
+#include "plog/Log.h"
 #include "sync.h"
-#include "hasher.hpp"
 
 namespace kmercounter {
 template <typename KV, typename KVQ>
@@ -46,7 +46,8 @@ class CASHashTable : public BaseHashTable {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
-        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+        this->hashtable =
+            calloc_ht<KV>(this->capacity, this->id, &this->fd);
       }
       this->ref_cnt++;
     }
@@ -153,19 +154,41 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
+#ifdef LATENCY_COLLECTION
   void flush_find_queue(ValuePairs &vp) override {
+    PLOG_ERROR << "This hashtable did not implement flush_find_queue";
+    std::terminate();
+  }
+#endif
+
+  void flush_find_queue(ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                        ,
+                        decltype(collectors)::value_type &collector
+#endif
+                        ) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
     while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp
+#ifdef LATENCY_COLLECTION
+                 ,
+                 collector
+#endif
+      );
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
   }
 
-  void flush_if_needed(ValuePairs &vp) {
+  void flush_if_needed(ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                       ,
+                       decltype(collectors)::value_type &collector
+#endif
+  ) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     // make sure you return at most batch_sz (but can possibly return lesser
@@ -175,7 +198,12 @@ class CASHashTable : public BaseHashTable {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp
+#ifdef LATENCY_COLLECTION
+                 ,
+                 collector
+#endif
+      );
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -183,8 +211,25 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void find_batch(KeyPairs &kp, ValuePairs &values) {
-    this->flush_if_needed(values);
+#ifdef LATENCY_COLLECTION
+  virtual void find_batch(KeyPairs &kp, ValuePairs &vp) {
+    PLOG_ERROR << "This hashtable did not implement find_batch";
+    std::terminate();
+  };
+#endif
+
+  void find_batch(KeyPairs &kp, ValuePairs &values
+#ifdef LATENCY_COLLECTION
+                  ,
+                  decltype(collectors)::value_type &collector
+#endif
+  ) {
+    this->flush_if_needed(values
+#ifdef LATENCY_COLLECTION
+                          ,
+                          collector
+#endif
+    );
 
     Keys *keys;
     uint32_t batch_len;
@@ -192,13 +237,39 @@ class CASHashTable : public BaseHashTable {
 
     for (auto k = 0u; k < batch_len; k++) {
       void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data);
+      add_to_find_queue(data
+#ifdef LATENCY_COLLECTION
+                        ,
+                        collector
+#endif
+      );
     }
 
-    this->flush_if_needed(values);
+    this->flush_if_needed(values
+#ifdef LATENCY_COLLECTION
+                          ,
+                          collector
+#endif
+    );
   }
 
+#ifdef LATENCY_COLLECTION
   void *find_noprefetch(const void *data) {
+    PLOG_ERROR << "This hashtable did not implement find_noprefetch";
+    std::terminate();
+  };
+#endif
+
+  void *find_noprefetch(const void *data
+#ifdef LATENCY_COLLECTION
+                        ,
+                        decltype(collectors)::value_type &collector
+#endif
+  ) {
+#ifdef LATENCY_COLLECTION
+    const auto start = collector.sync_start();
+#endif
+
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
@@ -236,6 +307,11 @@ class CASHashTable : public BaseHashTable {
     if (!found) {
       curr = &this->empty_item;
     }
+
+#ifdef LATENCY_COLLECTION
+    collector.sync_end(start);
+#endif
+
     return curr;
   }
 
@@ -298,9 +374,7 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_tail;
   Hasher hasher_;
 
-  uint64_t hash(const void *k) {
-    return hasher_(k, this->key_length);
-  }
+  uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
@@ -321,7 +395,12 @@ class CASHashTable : public BaseHashTable {
         sizeof(this->hashtable[i & (this->capacity - 1)]));
   }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                           ,
+                           decltype(collectors)::value_type &collector
+#endif
+  ) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -331,10 +410,11 @@ class CASHashTable : public BaseHashTable {
     uint64_t retry;
     found = curr->find(q, &retry, vp);
 
-    // printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found=%ld, retry %ld\n",
+    // printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found=%ld,
+    // retry %ld\n",
     //          __func__, q->key, vp.first, vp.second[(vp.first - 1) %
-    //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
-    //                  % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
+    //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first -
+    //                  1) % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
     if (retry) {
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run
@@ -352,21 +432,40 @@ class CASHashTable : public BaseHashTable {
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
 
+#ifdef LATENCY_COLLECTION
+      this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
+
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
+
+#ifdef LATENCY_COLLECTION
+    collector.end(q->timer_id);
+#endif
+
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp) { 
+  auto __find_one(KVQ *q, ValuePairs &vp
+#ifdef LATENCY_COLLECTION
+                  ,
+                  decltype(collectors)::value_type &collector
+#endif
+  ) {
     if (q->key == this->empty_item.get_key()) {
       __find_empty(q, vp);
     } else {
-      __find_branched(q, vp);
+      __find_branched(q, vp
+#ifdef LATENCY_COLLECTION
+                      ,
+                      collector
+#endif
+      );
     }
   }
 
-    /// Update or increment the empty key.
+  /// Update or increment the empty key.
   uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
     if (empty_slot_exists_) {
       vp.second[vp.first].id = q->key_id;
@@ -386,7 +485,7 @@ class CASHashTable : public BaseHashTable {
     // printf("Thread %lu, grabbing lock: %lu\n", this->thread_id, pidx);
     // Compare with empty element
     if (curr->is_empty()) {
-      //std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
+      // std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
       bool cas_res = curr->insert_cas(q);
       if (cas_res) {
 #ifdef CALC_STATS
@@ -440,15 +539,20 @@ class CASHashTable : public BaseHashTable {
 #ifdef CALC_STATS
       ++this->num_soft_reprobes;
 #endif
-      goto try_insert; // FIXME: @David get rid of the goto for crying out loud
+      goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
     }
 
     prefetch(idx);
 
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
-    this->insert_queue[this->ins_head].value = q->value;
     this->insert_queue[this->ins_head].idx = idx;
+#ifndef LATENCY_COLLECTION
+    this->insert_queue[this->ins_head].value = q->value;
+#else
+    this->insert_queue[this->ins_head].timer_id = q->timer_id;
+#endif
+
     ++this->ins_head;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
@@ -489,7 +593,8 @@ class CASHashTable : public BaseHashTable {
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);  // modulo
 
-    //std::cout << " -- Adding " << key_data->key  << " : " << key_data->value << endl;
+    // std::cout << " -- Adding " << key_data->key  << " : " << key_data->value
+    // << endl;
     this->prefetch(idx);
 
     this->insert_queue[this->ins_head].idx = idx;
@@ -505,8 +610,18 @@ class CASHashTable : public BaseHashTable {
     if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
   }
 
-  void add_to_find_queue(void *data) {
+  void add_to_find_queue(void *data
+#ifdef LATENCY_COLLECTION
+                         ,
+                         decltype(collectors)::value_type &collector
+#endif
+  ) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
+
+#ifdef LATENCY_COLLECTION
+    const auto tid = collector.start();
+#endif
+
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);  // modulo
 
@@ -518,6 +633,10 @@ class CASHashTable : public BaseHashTable {
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
     this->find_queue[this->find_head].key_id = key_data->id;
+
+#ifdef LATENCY_COLLECTION
+    this->find_queue[this->find_head].timer_id = tid;
+#endif
 
 #ifdef COMPARE_HASH
     this->queue[this->find_head].key_hash = hash;
