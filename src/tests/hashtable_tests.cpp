@@ -28,6 +28,9 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 // when each element is 16 bytes (2 * uint64_t), this amounts to 16 GiB
 uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
+const uint64_t max_possible_threads = 128;
+
+std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 
 __thread std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *values;
 
@@ -56,6 +59,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   const auto _end = RDTSCP();
   PLOGI.printf("generation took %llu cycles (per element %llu cycles)",
         _end-_start, (_end-_start)/HT_TESTS_NUM_INSERTS);
+
+  zipf_gen_timings[id] = _end - _start;
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =

@@ -61,6 +61,8 @@ thread_local LatencyCollector<512> collector {};
 
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
+extern const uint64_t max_possible_threads = 128;
+extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 
 // default configuration
 const Configuration def = {
