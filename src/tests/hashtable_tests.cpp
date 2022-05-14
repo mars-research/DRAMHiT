@@ -25,8 +25,8 @@ struct kmer {
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
 // default size for hashtable
-// when each element is 16 bytes (2 * uint64_t), this amounts to 64 GiB
-uint64_t HT_TESTS_HT_SIZE = (1ull << 26) * 64;
+// when each element is 16 bytes (2 * uint64_t), this amounts to 16 GiB
+uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 
 __thread std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *values;
