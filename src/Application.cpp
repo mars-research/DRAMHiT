@@ -555,7 +555,7 @@ int Application::process(int argc, char *argv[]) {
         exit(0);
     }
 
-    if (config.ht_fill > 0 && config.ht_fill < 100) {
+    if (config.ht_fill > 0 && config.ht_fill < 200) {
       HT_TESTS_NUM_INSERTS =
           static_cast<double>(config.ht_size) * config.ht_fill * 0.01;
     } else {
