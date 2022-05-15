@@ -1,6 +1,7 @@
 /// Generate two relations, R and S.
 /// R is be the primary key table and S is the foreign key table.
-///
+/// Each table has two column: the key column and the value column.
+/// The value is `key/2` in relation R and `key*2` in relation S.
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/flags/flag.h>
