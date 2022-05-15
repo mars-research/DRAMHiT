@@ -35,6 +35,12 @@ target_link_libraries(dump_zipf_freq
   absl::flags_parse
 )
 
+add_executable(generate_dataset generate_dataset.cpp)
+target_link_libraries(generate_dataset 
+  absl::flags
+  absl::flags_parse
+)
+
 add_executable(most_freq_kmer most_freq_kmer.cpp)
 target_link_libraries(most_freq_kmer 
   ht_lib 

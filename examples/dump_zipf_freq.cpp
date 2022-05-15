@@ -1,12 +1,12 @@
 // Dump the frequencies of zipfians generated from multiple threads
 // in binary array format.
 
-#include <absl/flags/flag.h>
 #include <absl/container/flat_hash_map.h>
+#include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
 
-#include <future>
 #include <fstream>
+#include <future>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -21,8 +21,7 @@
 
 ABSL_FLAG(std::string, output_file, "", "Output file path");
 ABSL_FLAG(uint, num_threads, 1, "Number of threads for generation.");
-ABSL_FLAG(double, skew, 0.5,
-          "skew of zipf dist.");
+ABSL_FLAG(double, skew, 0.5, "skew of zipf dist.");
 ABSL_FLAG(uint64_t, num_output, 64E7,
           "Number of zipfians being generated and dumped. This will be divided "
           "equally among all threads.");
@@ -30,12 +29,12 @@ ABSL_FLAG(uint64_t, num_output, 64E7,
 using Counter = absl::flat_hash_map<uint64_t, uint64_t>;
 
 // Worker thread for generating and dumping zipfian numbers.
-Counter dump_zipf_worker(const double skew, const uint tid, const uint64_t num_output) {
+Counter dump_zipf_worker(const double skew, const uint tid,
+                         const uint64_t num_output) {
   std::cerr << "Starting worker " << tid << std::endl;
 
   // Initialize input reader
-  kmercounter::input_reader::ZipfianGenerator<uint64_t> reader{
-      skew, num_output, tid + 1};
+  kmercounter::input_reader::ApacheZipfianGenerator reader{skew, num_output};
 
   // Count freq.
   Counter counter;
@@ -68,21 +67,22 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
   std::vector<std::future<Counter>> futures;
   futures.reserve(num_threads);
   for (uint tid = 0; tid < num_threads; tid++) {
-    std::future<Counter> future = std::async(dump_zipf_worker, skew, tid, num_output_pre_thread);
+    std::future<Counter> future =
+        std::async(dump_zipf_worker, skew, tid, num_output_pre_thread);
     futures.push_back(std::move(future));
   }
 
   // Join worker threads.
   Counter main_counter;
   for (auto &future : futures) {
-    for (auto&& [key, count] : future.get()) {
+    for (auto &&[key, count] : future.get()) {
       main_counter[key] += count;
     }
   }
 
   // Dump frequencies
-  for (auto&& [_, count] : main_counter) {
-    ofile.write((char*)&count, sizeof(uint64_t));
+  for (auto &&[_, count] : main_counter) {
+    ofile.write((char *)&count, sizeof(uint64_t));
   }
 
   // Cleanup

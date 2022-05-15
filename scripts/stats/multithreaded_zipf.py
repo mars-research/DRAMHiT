@@ -1,4 +1,4 @@
-from multiprocessing import cpu_count
+from multiprocessing import Pool
 from estimate_zipf import plot_zipf
 from scipy import stats
 import subprocess
@@ -20,7 +20,7 @@ def dump_and_mle(num_thread, skew, output):
   freqs = np.frombuffer(data, dtype=np.uint64)
   print(f"Received frequencies with stats {stats.describe(freqs)}.")
 
-  a = plot_zipf(freqs, f'num_thread={num_thread} skew={skew}', output)
+  a = plot_zipf(skew, freqs, f'num_thread={num_thread} skew={skew}', output)
   print(f'a={a:.2f} for num_thread={num_thread} skew={skew}')
 
 
@@ -36,9 +36,13 @@ if __name__ == "__main__":
   # Build
   run_subprocess(f'ninja -C {build_dir} > {OUTDIR}/build.log')
 
-  skews = [0.2, 0.5, 0.8]
-  num_threads = [1, 2, 8, 16, 64]
+
+  # Run jobs
+  pool = Pool(8)
+  skews = [1.09]
+  num_threads = [1, 4, 16, 64]
   for skew in skews:
     for num_thread in num_threads:
-      dump_and_mle(num_thread, skew, f'{OUTDIR}/{num_thread}_{skew:.2f}.jpg')
-
+      pool.apply_async(dump_and_mle, args=(num_thread, skew, f'{OUTDIR}/{num_thread}_{skew:.3f}.jpg'))
+  pool.close()
+  pool.join()

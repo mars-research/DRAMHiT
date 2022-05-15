@@ -1,11 +1,11 @@
 // Dump the cdf of zipfian distribution.
 
-#include <absl/flags/flag.h>
 #include <absl/container/flat_hash_map.h>
+#include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
 
-#include <future>
 #include <fstream>
+#include <future>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -20,8 +20,7 @@
 
 ABSL_FLAG(std::string, output_file, "", "Output file path");
 ABSL_FLAG(uint, num_threads, 1, "Number of threads for generation.");
-ABSL_FLAG(double, skew, 0.5,
-          "skew of zipf dist.");
+ABSL_FLAG(double, skew, 0.5, "skew of zipf dist.");
 ABSL_FLAG(uint64_t, num_output, 64E7,
           "Number of zipfians being generated and dumped. This will be divided "
           "equally among all threads.");
@@ -29,12 +28,12 @@ ABSL_FLAG(uint64_t, num_output, 64E7,
 using Counter = absl::flat_hash_map<uint64_t, uint64_t>;
 
 // Worker thread for generating and dumping zipfian numbers.
-Counter dump_zipf_worker(const double skew, const uint tid, const uint64_t num_output) {
+Counter dump_zipf_worker(const double skew, const uint tid,
+                         const uint64_t num_output) {
   std::cerr << "Starting worker " << tid << std::endl;
 
   // Initialize input reader
-  kmercounter::input_reader::ZipfianGenerator<uint64_t> reader{
-      skew, num_output, tid + 1};
+  kmercounter::input_reader::ApacheZipfianGenerator reader{skew, num_output};
 
   // Count freq.
   Counter counter;
@@ -67,7 +66,8 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
   std::vector<std::future<Counter>> futures;
   futures.reserve(num_threads);
   for (uint tid = 0; tid < num_threads; tid++) {
-    std::future<Counter> future = std::async(dump_zipf_worker, skew, tid, num_output_pre_thread);
+    std::future<Counter> future =
+        std::async(dump_zipf_worker, skew, tid, num_output_pre_thread);
     futures.push_back(std::move(future));
   }
 
@@ -75,7 +75,7 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
   Counter main_counter;
   uint64_t total_count = 0;
   for (auto &future : futures) {
-    for (auto&& [key, count] : future.get()) {
+    for (auto &&[key, count] : future.get()) {
       main_counter[key] += count;
       total_count += count;
     }
@@ -84,7 +84,7 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
   // Sort the frequencies
   std::vector<uint64_t> freqs;
   freqs.reserve(main_counter.size());
-  for (const auto& [_, freq] : main_counter) {
+  for (const auto &[_, freq] : main_counter) {
     freqs.push_back(freq);
   }
   std::sort(freqs.begin(), freqs.end(), std::greater<uint64_t>());
@@ -95,7 +95,7 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
   // Dump frequencies in batches
   // If we get more than 1 percent of the values, it's a batch.
   double total_val_percentage = 0.0;
-  double current_val_percentage = 0.0; // Current percentage of this batch
+  double current_val_percentage = 0.0;  // Current percentage of this batch
   for (size_t i = 0; i < freqs.size(); i++) {
     const auto freq = freqs[i];
     const double percentage = (double)freq / total_count * 100.0;
@@ -104,7 +104,8 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
     if (current_val_percentage >= 1.0) {
       total_val_percentage += current_val_percentage;
       current_val_percentage = 0.0;
-      const double total_key_percentage = (double)(i+1) / freqs.size() * 100.0;
+      const double total_key_percentage =
+          (double)(i + 1) / freqs.size() * 100.0;
       ofile << total_key_percentage << "," << total_val_percentage << std::endl;
     }
   }
@@ -112,7 +113,7 @@ void dump_zipf(const uint num_threads, const std::string_view output_file,
   if (current_val_percentage >= 1.0) {
     total_val_percentage += current_val_percentage;
     current_val_percentage = 0.0;
-    const double total_key_percentage =  100.0;
+    const double total_key_percentage = 100.0;
     ofile << total_key_percentage << "," << total_val_percentage << std::endl;
   }
 

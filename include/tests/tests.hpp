@@ -7,6 +7,7 @@
 #include "ZipfianTest.hpp"
 #include "QueueTest.hpp"
 #include "KmerTest.hpp"
+#include "HashjoinTest.hpp"
 
 namespace kmercounter {
 
@@ -24,6 +25,7 @@ class Tests {
   CacheMissTest cmt;
   ZipfianTest zipf;
   KmerTest kmer;
+  HashjoinTest hj;
 
   Tests() {
   }

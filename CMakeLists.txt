@@ -45,6 +45,7 @@ add_compile_options(
 add_library(ht_lib
     "src/types.cpp"
     "src/hashtables/kvtypes.cpp"
+    "src/zipf_distribution.cpp"
 )
 target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
 target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone)

@@ -26,6 +26,10 @@ class Reservoir : public InputReader<T> {
     return reader_.next(output);
   }
 
+  size_t size() {
+    return reservoir_.size();
+  }
+
  private:
   std::vector<T> reservoir_;
   VecReader<T> reader_;

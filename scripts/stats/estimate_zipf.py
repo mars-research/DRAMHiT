@@ -28,7 +28,7 @@ def cross_check(a):
   estimated_a = estimate_zipf(arr)
   print(f"Expected: {a:.2f}, actual: {estimated_a:.2f}")
 
-def plot_zipf(arr, title, output):
+def plot_zipf(expected_skew, arr, title, output):
   # Estimate zipf
   a = estimate_zipf(arr)
   # Plot regression line
@@ -38,7 +38,14 @@ def plot_zipf(arr, title, output):
   y = np.abs(y)
   y = y/max(y)
   y = y*max(arr)
-  plt.plot(x, y, linewidth=2, color='r', label=f'zipf(a={a:.2f})')
+  plt.plot(x, y, "--", linewidth=1, color='r', label=f'zipf(a={a:.3f})')
+  # Plot expected  
+  a = expected_skew
+  y = x**(-a) / special.zetac(a)
+  y = np.abs(y)
+  y = y/max(y)
+  y = y*max(arr)
+  plt.plot(x, y, "--", linewidth=1, color='g', label=f'zipf(expected_a={a:.3f})')
   # Plot actual data
   y = sorted(arr, reverse=True)
   y = y[:size]
@@ -46,6 +53,8 @@ def plot_zipf(arr, title, output):
   # Finalize image
   plt.legend()
   plt.title(title)
+  fig = plt.gcf()
+  fig.set_size_inches(20, 20)
   plt.savefig(output)
   plt.clf()
   return a
@@ -70,7 +79,7 @@ def zipf_from_kmer(file, k, output):
   subprocess.run(args).check_returncode()
 
   freq = freq_from_jellyhist(histo_file)
-  a = plot_zipf(freq, f'{k}-mer histogram from {file}', output)
+  a = plot_zipf(0, freq, f'{k}-mer histogram from {file}', output)
   print(f'a={a:.2f} for K={k} in {file}')
 
 

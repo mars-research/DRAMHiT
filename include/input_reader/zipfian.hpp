@@ -6,19 +6,19 @@
 #include "input_reader.hpp"
 #include "input_reader/container.hpp"
 #include "zipf.h"
+#include "zipf_distribution.hpp"
 
 namespace kmercounter {
 namespace input_reader {
 /// Generate numbers in zipfian distribution.
 /// The numbers are pre-generated and buffered in the
 /// constructor.
-template <class T>
-class ZipfianGenerator : public InputReader<T> {
+class ZipfianGenerator : public InputReader<uint64_t> {
  public:
   ZipfianGenerator(double skew, uint64_t keyrange_width, unsigned int seed)
       : distribution_(zipf_distribution{skew, keyrange_width, seed}) {}
 
-  bool next(T *data) override {
+  bool next(uint64_t *data) override {
     *data = distribution_();
     return true;
   }
@@ -26,6 +26,21 @@ class ZipfianGenerator : public InputReader<T> {
  private:
   zipf_distribution distribution_;
 };
+
+class ApacheZipfianGenerator : public InputReader<uint64_t> {
+ public:
+  ApacheZipfianGenerator(double skew, uint64_t keyrange_width)
+      : distribution_(keyrange_width, skew) {}
+
+  bool next(uint64_t *data) override {
+    *data = distribution_.sample();
+    return true;
+  }
+
+ private:
+  zipf_distribution_apache distribution_;
+};
+
 }  // namespace input_reader
 }  // namespace kmercounter
 
