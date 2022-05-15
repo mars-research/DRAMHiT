@@ -20,7 +20,7 @@ def dump_and_mle(num_thread, skew, output):
   freqs = np.frombuffer(data, dtype=np.uint64)
   print(f"Received frequencies with stats {stats.describe(freqs)}.")
 
-  a = plot_zipf(freqs, f'num_thread={num_thread} skew={skew}', output)
+  a = plot_zipf(skew, freqs, f'num_thread={num_thread} skew={skew}', output)
   print(f'a={a:.2f} for num_thread={num_thread} skew={skew}')
 
 
