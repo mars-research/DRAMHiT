@@ -225,14 +225,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       //if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
-      this->queues->enqueue_new(pq, this_prod_id, cons_id, (data_t)k);
+      this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
 
       auto npq = pqueues[get_next_cons(1)];
-      if (1) {
-        if (((uint64_t)npq->enqPtr & 0x3f) == 0) {
-          __builtin_prefetch(npq->enqPtr + 8, 1, 3);
-        }
-      }
+
+      this->queues->prefetch(this_prod_id, get_next_cons(1), true);
 
       transaction_id++;
     }
@@ -355,16 +352,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     }
     auto cq = cqueues[prod_id];
 
-    {
-      auto np1 = get_next_prod(1);
-      typename T::cons_queue_t *cq1 = cqueues[np1];
-      __builtin_prefetch(cq1->deqPtr + 0, 1, 3);
-      __builtin_prefetch(cq1->deqPtr + 8, 1, 3);
+    auto np1 = get_next_prod(1);
+    this->queues->prefetch(np1, this_cons_id, false);
 
-      auto np2 = get_next_prod(np1 + 1);
-      typename T::cons_queue_t *cq2 = cqueues[np2];
-      __builtin_prefetch(cq2, 1, 3);
-    }
 
     if (!(active_qmask & (1 << prod_id))) {
       goto pick_next_msg;
@@ -372,7 +362,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      auto ret = this->queues->dequeue_new(cq, prod_id, this_cons_id, (data_t *)&k);
+      auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&k);
       if (ret == RETRY) {
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
           if (!config.no_prefetch) {
