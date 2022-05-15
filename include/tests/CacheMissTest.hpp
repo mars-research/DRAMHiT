@@ -11,6 +11,6 @@ class CacheMissTest {
   void cache_miss_run(Shard *sh, BaseHashTable *kmer_ht);
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __CACHEMISS_TEST_HPP__

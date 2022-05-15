@@ -13,6 +13,6 @@ class SynthTest {
   OpTimings synth_run_get(BaseHashTable *ktable, uint8_t start);
 };
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __SYNTH_TEST_HPP__

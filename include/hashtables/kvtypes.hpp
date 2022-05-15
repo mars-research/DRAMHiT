@@ -15,8 +15,8 @@ struct Kmer_base {
 
 struct Kmer_KV {
   Kmer_base kb;              // 20 + 2 bytes
-  uint64_t kmer_hash;        // 8 bytes
   volatile char padding[2];  // 2 bytes
+  uint64_t kmer_hash;        // 8 bytes
 
   friend std::ostream &operator<<(std::ostream &strm, const Kmer_KV &k) {
     // return strm << std::string(k.kb.kmer.data, KMER_DATA_LENGTH) << " : "
@@ -81,7 +81,11 @@ struct Kmer_queue {
 
 struct ItemQueue {
   uint64_t key;
-  uint64_t value; // NOTE: this is currently ignored @David
+#ifndef LATENCY_COLLECTION
+  uint64_t value;  // NOTE: this is currently ignored @David
+#else
+  uint64_t timer_id;
+#endif
   uint32_t key_id;
   uint32_t idx;
   uint32_t part_id;
@@ -461,6 +465,7 @@ struct KVPair {
 } PACKED;
 std::ostream &operator<<(std::ostream &strm, const KVPair &item);
 
+#ifndef LATENCY_COLLECTION
 struct Item {
   KVPair kvpair;
 
@@ -678,6 +683,7 @@ struct Item {
     return found;
   };
 } PACKED;
+#endif
 
 #ifdef NOAGGR
 using KVType = Item;
@@ -685,6 +691,6 @@ using KVType = Item;
 using KVType = Aggr_KV;
 #endif
 
-}  // namespace kmercounter
+}  // namespace kvstore
 
 #endif  // __KV_TYPES_HPP__
