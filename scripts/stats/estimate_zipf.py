@@ -39,6 +39,15 @@ def plot_zipf(arr, title, output):
   y = y/max(y)
   y = y*max(arr)
   plt.plot(x, y, linewidth=2, color='r', label=f'zipf(a={a:.2f})')
+  # Plot regression line
+  a = 1.09
+  size = min(SIZE, len(arr))
+  x = np.arange(1.,size+1.)
+  y = x**(-a) / special.zetac(a)
+  y = np.abs(y)
+  y = y/max(y)
+  y = y*max(arr)
+  plt.plot(x, y, linewidth=2, color='r', label=f'zipf(expected_a={a:.2f})')
   # Plot actual data
   y = sorted(arr, reverse=True)
   y = y[:size]
