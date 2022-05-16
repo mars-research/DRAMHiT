@@ -835,8 +835,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       return __find_branchless_cmov(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      // return __find_branchless_simd(q, vp);
-      return __find_branched(q, vp);
+      return __find_branchless_simd(q, vp);
     }
   }
 

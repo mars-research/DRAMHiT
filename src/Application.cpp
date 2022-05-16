@@ -57,6 +57,8 @@ namespace kmercounter {
 class LynxQueue;
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
+extern const uint64_t max_possible_threads = 128;
+extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 
 // default configuration
 const Configuration def = {
@@ -88,7 +90,7 @@ const Configuration def = {
 
 // for synchronization of threads
 static uint64_t ready = 0;
-static uint64_t ready_threads = 0;
+static std::atomic_uint num_entered{};
 
 #ifdef WITH_PAPI_LIB
 PapiEvent pr(6);
@@ -155,18 +157,16 @@ void Application::shard_thread(int tid, bool mainthread) {
       return;
   }
 
-#ifndef WITH_PAPI_LIB
-  if (!mainthread) {
-    fipc_test_FAI(ready_threads);
-  }
-#else
-  fipc_test_FAI(ready_threads);
+  num_entered++;
+
+#ifdef WITH_PAPI_LIB
   auto retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self));
+  std::uint64_t papi_event_start{};
   if (retval != PAPI_OK) {
     PLOGE.printf("PAPI Thread init failed");
   }
 
-  if (ready_threads == config.num_threads) {
+  if (num_entered == config.num_threads) {
     pr.init_event(0);
     pr1.init_event(1);
 
@@ -201,24 +201,15 @@ void Application::shard_thread(int tid, bool mainthread) {
     pw1.start();
 
     ready = 1;
+    papi_event_start = RDTSC_START();
   }
 #endif
 
-  std::atomic_uint entered_threads{config.num_threads};
-  if (mainthread) {
-    while (ready_threads < (config.num_threads - 1)) {
-      fipc_test_pause();
-    }
-#if !defined(WITH_PAPI_LIB)
-    ready = 1;
-#else
-    // If papi is enabled, main thread has to wait as well until ready is
-    // signalled. ready is signalled by the last enetering thread.
-    while (!ready) fipc_test_pause();
+  while (num_entered != config.num_threads) _mm_pause();
+
+#ifdef WITH_PAPI_LIB
+  while (!ready) _mm_pause();
 #endif
-  } else {
-    while (!ready) fipc_test_pause();
-  }
 
   // fipc_test_mfence();
   /* Begin insert loops */
@@ -255,18 +246,29 @@ void Application::shard_thread(int tid, bool mainthread) {
 
 done:
 
-#ifndef WITH_PAPI_LIB
-  if (!mainthread) {
-    fipc_test_FAD(ready_threads);
-  }
-#else
-  fipc_test_FAD(ready_threads);
-  if (ready_threads == 0) {
+  num_entered--;
+#ifdef WITH_PAPI_LIB
+  std::uint64_t papi_event_end{};
+  if (num_entered == 0) {
+    papi_event_end = RDTSCP();
     pr.stop();
     pw.stop();
 
     pr1.stop();
     pw1.stop();
+
+    std::set<uint64_t> zipf_timings;
+
+    for (auto &t : zipf_gen_timings) {
+      zipf_timings.insert(t);
+    }
+    auto zipf_max_rdtsc = *zipf_timings.rbegin();
+    auto papi_event_diff = (papi_event_end - papi_event_start) - zipf_max_rdtsc;
+
+    PLOGI.printf("Zipf gen took %llu cycles (%f secs)",
+        zipf_max_rdtsc, zipf_max_rdtsc / (2.6 * 1000 * 1000 * 1000));
+    PLOGI.printf("Papi events took %llu cycles (%f secs)",
+        papi_event_diff, papi_event_diff / (2.6 * 1000 * 1000 * 1000));
   }  // PapiEvent scope
 #endif
   return;
@@ -350,19 +352,6 @@ int Application::spawn_shard_threads() {
     this->shard_thread(i, true);
   }
 
-#if 0
-  while (ready_threads < config.num_threads) {
-    fipc_test_pause();
-  }
-
-#if !defined(WITH_PAPI_LIB)
-  ready = 1;
-#endif
-#endif  // if 0
-
-  /* TODO thread join vs sync on atomic variable*/
-  while (ready_threads) fipc_test_pause();
-
   for (auto &th : this->threads) {
     if (th.joinable()) {
       th.join();
@@ -384,7 +373,6 @@ void papi_init() {
   }
 
   PLOGI.printf("PAPI library initialized");
-}
 #endif
 }
 
@@ -546,7 +534,7 @@ int Application::process(int argc, char *argv[]) {
         exit(0);
     }
 
-    if (config.ht_fill > 0 && config.ht_fill < 100) {
+    if (config.ht_fill > 0 && config.ht_fill < 200) {
       HT_TESTS_NUM_INSERTS =
           static_cast<double>(config.ht_size) * config.ht_fill * 0.01;
     } else {

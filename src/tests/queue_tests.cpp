@@ -16,13 +16,14 @@
 #include "queues/bqueue_aligned.hpp"
 #include "xorwow.hpp"
 
-#if defined(BQ_TESTS_INSERT_ZIPFIAN)
+#if defined(BQ_TESTS_INSERT_ZIPFIAN) || defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
 #include "hashtables/ht_helper.hpp"
 #include "zipf.h"
 #include "zipf_distribution.hpp"
 #endif
 
 #include "utils/vtune.hpp"
+#include "utils/hugepage_allocator.hpp"
 
 #define PGROUNDDOWN(x)  (x & ~(PAGESIZE - 1))
 
@@ -64,6 +65,23 @@ static __thread int data_idx = 0;
 static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 __attribute__((
     aligned(64))) static __thread Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+
+std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
+
+void init_zipfian_dist(double skew) {
+  constexpr auto keyrange_width = (1ull << 63);
+
+#if defined(BQ_TESTS_INSERT_ZIPFIAN)
+  zipf_values = new std::vector<uint64_t, huge_page_allocator<uint64_t>>(HT_TESTS_NUM_INSERTS);
+  zipf_distribution_apache distribution(keyrange_width, skew);
+  PLOGI.printf("Initializing global zipf with skew %f", skew);
+
+  for (auto &value : *zipf_values) {
+    value = distribution.sample();
+  }
+  PLOGI.printf("Zipfian dist generated. size %zu", zipf_values->size());
+#endif
+}
 
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
                                                          uint32_t n_cons,
@@ -142,21 +160,14 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   struct xorwow_state _xw_state, init_state;
   auto key_start_orig = key_start;
 
-#if defined(BQ_TESTS_INSERT_ZIPFIAN)
-  constexpr auto keyrange_width = (1ull << 31);  // 192 * (1 << 20);
-#ifdef ZIPF_FAST
+#if defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
+#warning LOCAL ZIPFIAN
+  constexpr auto keyrange_width = (1ull << 63);  // 192 * (1 << 20);
   zipf_distribution_apache distribution(keyrange_width, skew);
-#else
-  zipf_distribution distribution{skew, num_messages, this_prod_id + 1};
-#endif
 
   std::vector<std::uint64_t> values(num_messages);
   for (auto &value : values) {
-#ifdef ZIPF_FAST
     value = distribution.sample();
-#else
-    value = distribution();
-#endif
   }
 #endif
 
@@ -198,6 +209,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
+    auto zipf_idx = key_start == 1 ? 0: key_start;
 #if defined(XORWOW)
     _xw_state = init_state;
 #endif
@@ -208,9 +220,13 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       k = value;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
-      if (transaction_id & 7 == 0 && transaction_id + 16 < values.size())
-        prefetch_object<false>(&values.at(transaction_id + 16), 64);
+      if (!(transaction_id & 7) && zipf_idx + 16 < zipf_values->size())
+        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
+      k = zipf_values->at(zipf_idx);
+      //printf("zipf_values[%lu] = %lu\n", zipf_idx, k);
+      zipf_idx++;
+#elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
 #else
       k = key_start++;
@@ -226,14 +242,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       //if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
-      this->queues->enqueue_new(pq, this_prod_id, cons_id, (data_t)k);
+      this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
 
       auto npq = pqueues[get_next_cons(1)];
-      if (1) {
-        if (((uint64_t)npq->enqPtr & 0x3f) == 0) {
-          __builtin_prefetch(npq->enqPtr + 8, 1, 3);
-        }
-      }
+
+      this->queues->prefetch(this_prod_id, get_next_cons(1), true);
 
       transaction_id++;
     }
@@ -356,16 +369,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     }
     auto cq = cqueues[prod_id];
 
-    {
-      auto np1 = get_next_prod(1);
-      typename T::cons_queue_t *cq1 = cqueues[np1];
-      __builtin_prefetch(cq1->deqPtr + 0, 1, 3);
-      __builtin_prefetch(cq1->deqPtr + 8, 1, 3);
+    auto np1 = get_next_prod(1);
+    this->queues->prefetch(np1, this_cons_id, false);
 
-      auto np2 = get_next_prod(np1 + 1);
-      typename T::cons_queue_t *cq2 = cqueues[np2];
-      __builtin_prefetch(cq2, 1, 3);
-    }
 
     if (!(active_qmask & (1 << prod_id))) {
       goto pick_next_msg;
@@ -373,7 +379,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      auto ret = this->queues->dequeue_new(cq, prod_id, this_cons_id, (data_t *)&k);
+      auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&k);
       if (ret == RETRY) {
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
           if (!config.no_prefetch) {
@@ -562,10 +568,17 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   for (auto m = 0u; m < config.insert_factor; m++) {
     key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
+    auto zipf_idx = key_start == 1 ? 0: key_start;
     _xw_state = init_state;
     for (auto i = 0u; i < num_messages; i++) {
 #if defined(XORWOW)
       k = xorwow(&_xw_state);
+#elif defined(BQ_TESTS_INSERT_ZIPFIAN)
+#warning "Zipfian finds"
+      if (!(i & 7) && zipf_idx + 16 < zipf_values->size())
+        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+
+      k = zipf_values->at(zipf_idx);
 #else
       k = key_start++;
 #endif
@@ -641,6 +654,8 @@ template <typename T>
 void QueueTest<T>::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
   this->ht_vec =
       new std::vector<BaseHashTable *>(cfg->n_prod + cfg->n_cons, nullptr);
+
+  init_zipfian_dist(cfg->skew);
   // 1) Insert using bqueues
   this->insert_with_queues(cfg, n, npq);
 

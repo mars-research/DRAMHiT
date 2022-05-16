@@ -22,9 +22,14 @@ namespace kmercounter {
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
 // default size for hashtable
-// when each element is 16 bytes (2 * uint64_t), this amounts to 64 GiB
-uint64_t HT_TESTS_HT_SIZE = (1ull << 26) * 64;
+// when each element is 16 bytes (2 * uint64_t), this amounts to 16 GiB
+uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
+const uint64_t max_possible_threads = 128;
+
+std::array<uint64_t, max_possible_threads> zipf_gen_timings;
+
+__thread std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *values;
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
                              unsigned int count, unsigned int id) {
@@ -38,8 +43,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
   const auto _start = RDTSC_START();
   static std::atomic_uint fence{};
-  std::vector<std::uint64_t, huge_page_allocator<uint64_t>> values(HT_TESTS_NUM_INSERTS);
-  for (auto &value : values) {
+  values = new std::vector<uint64_t, huge_page_allocator<uint64_t>>(HT_TESTS_NUM_INSERTS);
+  for (auto &value : *values) {
 #ifdef ZIPF_FAST
     value = distribution.sample();
 #else
@@ -51,6 +56,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   const auto _end = RDTSCP();
   PLOGI.printf("generation took %llu cycles (per element %llu cycles)",
         _end-_start, (_end-_start)/HT_TESTS_NUM_INSERTS);
+
+  zipf_gen_timings[id] = _end - _start;
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -65,15 +72,16 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   std::uint64_t key{};
   for (auto j = 0u; j < config.insert_factor; j++) {
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-      if (!(n & 7) && n + 16 < values.size()) {
-        prefetch_object<false>(&values.at(n + 16), 64);
+      if (!(n & 7) && n + 16 < values->size()) {
+        prefetch_object<false>(&values->at(n + 16), 64);
       }
 
-      if (config.no_prefetch) {
-        hashtable->insert_noprefetch(&values.at(n));
-      } else {
-        items[key] = {values.at(n), n};
+      items[key].key = items[key].value = values->at(n);
+      items[key].id = n;
 
+      if (config.no_prefetch) {
+        hashtable->insert_noprefetch(&items[key]);
+      } else {
         if (++key == HT_TESTS_BATCH_LENGTH) {
           KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
           hashtable->insert_batch(keypairs);
@@ -99,9 +107,57 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
-OpTimings do_zipfian_gets(BaseHashTable *kmer_ht, unsigned int id) {
-  PLOG_WARNING.printf("Zipfian gets not implemented yet");
-  return {0, 1};
+
+OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, unsigned int id) {
+  static std::atomic_uint fence{};
+  std::uint64_t duration{};
+  std::uint64_t found = 0;
+
+  ++fence;
+  while (fence < num_threads) _mm_pause();
+
+  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
+  Values *k_values;
+  k_values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, k_values);
+
+  const auto start = RDTSC_START();
+  std::uint64_t key{};
+  for (auto j = 0u; j < config.insert_factor; j++) {
+    for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+      if (!(n & 7) && n + 16 < values->size()) {
+        prefetch_object<false>(&values->at(n + 16), 64);
+      }
+
+      if (config.no_prefetch) {
+        auto ret = hashtable->find_noprefetch(&values->at(n));
+        if (ret) found += 1;
+      } else {
+        items[key] = {values->at(n), n};
+
+        if (++key == HT_TESTS_FIND_BATCH_LENGTH) {
+          KeyPairs keypairs{HT_TESTS_FIND_BATCH_LENGTH, items};
+          hashtable->find_batch(keypairs, vp);
+          found += vp.first;
+          vp.first = 0;
+          key = 0;
+        }
+      }
+    }
+  }
+  if (!config.no_prefetch) {
+    if (vp.first > 0) {
+      vp.first = 0;
+    }
+
+    hashtable->flush_find_queue(vp);
+    found += vp.first;
+  }
+
+  const auto end = RDTSCP();
+  duration += end - start;
+
+  return {duration, found};
 }
 
 void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
@@ -134,7 +190,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   sleep(1);
 
-  const auto num_finds = do_zipfian_gets(hashtable, shard->shard_idx);
+  const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx);
 
   shard->stats->find_cycles = num_finds.duration;
   shard->stats->num_finds = num_finds.op_count;
