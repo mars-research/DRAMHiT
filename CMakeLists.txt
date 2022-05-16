@@ -64,7 +64,6 @@ add_executable(kvstore
     "src/Application.cpp"
     "src/kvstore.cpp"
     "src/zipf_distribution.cpp"
-    "src/Latency.cpp"
 )
 
 # Add subdirectory
@@ -88,7 +87,6 @@ option(XORWOW "Xorwow" OFF)
 option(BQ_ZIPFIAN "Enable bqueue zipfian generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
 option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
-option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
 set(HASHER "crc" CACHE STRING "Hasher")
@@ -106,11 +104,6 @@ if (NOT BRANCH IN_LIST branch_types)
     message(FATAL_ERROR "branching type must be one of: ${branch_types}")
 else()
     message(WARNING "Branch type selected was: ${BRANCH}")
-endif()
-
-if (LATENCY_COLLECTION)
-    message(WARNING "Latency collection enabled")
-    add_definitions(-DLATENCY_COLLECTION)
 endif()
 
 set(experiments none prefetch_only nop_insert insert_dry_run aggr_kv_write_key_only)

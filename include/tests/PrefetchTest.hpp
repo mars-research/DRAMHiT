@@ -119,6 +119,6 @@ class PrefetchTest {
       PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue> *ktable);
 };
 
-}  // namespace kvstore
+}  // namespace kmercounter
 
 #endif  // __PREFETCH_TEST_HPP__

@@ -55,10 +55,6 @@ const char *ht_type_strings[] = {
 namespace kmercounter {
 
 class LynxQueue;
-#ifdef LATENCY_COLLECTION
-thread_local LatencyCollector<512> collector {};
-#endif
-
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 
@@ -504,12 +500,6 @@ int Application::process(int argc, char *argv[]) {
     } else {
       this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
-    
-#ifdef LATENCY_COLLECTION
-    collectors.resize(config.mode == BQ_TESTS_YES_BQ
-                          ? config.n_cons + config.n_prod
-                          : config.num_threads);
-#endif
 
     if (config.mode == SYNTH) {
       PLOG_INFO.printf("Mode : SYNTH");
@@ -627,4 +617,4 @@ int Application::process(int argc, char *argv[]) {
 
   return 0;
 }
-}  // namespace kvstore
+}  // namespace kmercounter

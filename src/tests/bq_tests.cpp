@@ -8,8 +8,6 @@
 #include "hasher.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "helper.hpp"
-#include "Latency.hpp"
-#include "hasher.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
@@ -33,9 +31,6 @@
 
 namespace kmercounter {
 using namespace std;
-#ifdef LATENCY_COLLECTION
-thread_local LatencyCollector<512> collector{};
-#endif
 
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
@@ -647,10 +642,6 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   BaseHashTable *ktable;
   Hasher hasher;
 
-#ifdef LATENCY_COLLECTION
-  auto &collector = collectors.at(tid);
-#endif
-
   alignas(64) uint64_t k = 0;
 
 #ifdef WITH_VTUNE_LIB
@@ -735,12 +726,7 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
       KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
       // PLOGI.printf("calling find_batch i = %d", i);
       // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
-      ktable->find_batch(kp, vp
-#ifdef LATENCY_COLLECTION
-                         ,
-                         collector
-#endif
-      );
+      ktable->find_batch(kp, vp);
       found += vp.first;
       j = 0;
       not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
@@ -757,15 +743,6 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
     }
 #endif
   }
-
-  ktable->flush_find_queue(vp
-#ifdef LATENCY_COLLECTION
-                           ,
-                           collector
-#endif
-  );
-
-  found += vp.first;
   auto t_end = RDTSCP();
 
 #ifdef WITH_VTUNE_LIB
@@ -783,10 +760,6 @@ void BQueueTest::find_thread(int tid, int n_prod, int n_cons,
   }
 
   get_ht_stats(sh, ktable);
-
-#ifdef LATENCY_COLLECTION
-  collector.dump();
-#endif
 }
 
 #ifdef CONFIG_ALIGN_BQUEUE_METADATA
@@ -1146,4 +1119,4 @@ void BQueueTest::insert_with_bqueues(Configuration *cfg, Numa *n,
   print_stats(this->shards, *cfg);
 }
 
-}  // namespace kvstore
+}  // namespace kmercounter

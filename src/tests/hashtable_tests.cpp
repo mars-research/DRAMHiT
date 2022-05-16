@@ -18,9 +18,6 @@
 #endif
 
 namespace kmercounter {
-struct kmer {
-  char data[KMER_DATA_LENGTH];
-};
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
 
@@ -153,4 +150,4 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
 }
 
-}  // namespace kvstore
+}  // namespace kmercounter
