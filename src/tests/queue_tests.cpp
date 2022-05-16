@@ -97,12 +97,13 @@ inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
   auto ratio = static_cast<double>(n_prod) / n_cons + 1;
 
   auto num_messages = HT_TESTS_NUM_INSERTS / n_prod;
-  if (tid == (n_prod - 1)) {
-    num_messages += HT_TESTS_NUM_INSERTS % n_prod;
-  }
   // our HT has a notion of empty keys which is 0. So, no '0' key for now!
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
+
+  if (tid == (n_prod - 1)) {
+    num_messages += HT_TESTS_NUM_INSERTS % n_prod;
+  }
   return std::make_tuple(ratio, num_messages, key_start);
 }
 
@@ -194,10 +195,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     fipc_test_mfence();
   }
 
-  PLOG_DEBUG.printf(
+  PLOGI.printf(
       "[prod:%u] started! Sending %lu messages to %d consumers | "
-      "key_start %lu",
-      this_prod_id, num_messages, n_cons, key_start);
+      "key_start %lu key_end %lu",
+      this_prod_id, num_messages, n_cons, key_start, key_start + num_messages);
 
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
@@ -316,7 +317,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   auto ht_size = config.ht_size / n_cons;
 
   if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-    PLOG_INFO.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id,
+    PLOGV.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id,
                    sh->shard_idx, ht_size);
     kmer_ht = init_ht(ht_size, sh->shard_idx);
     (*this->ht_vec)[tid] = kmer_ht;
@@ -331,7 +332,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   unsigned int cpu, node;
   getcpu(&cpu, &node);
 
-  PLOGI.printf("[cons:%u] starting tid %u | cpu %u\n", this_cons_id, gettid(), cpu);
+  PLOGV.printf("[cons:%u] starting tid %u | cpu %u", this_cons_id, gettid(), cpu);
 
   static auto event = -1;
   if (tid == n_prod)
@@ -680,7 +681,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
     this->prod_threads.push_back(std::move(_thread));
-    PLOG_INFO.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
+    PLOGV.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
     i += 1;
   }
 
@@ -691,7 +692,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
   uint32_t last_cpu = 0;
   CPU_SET(last_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  PLOG_INFO.printf("Thread 'controller': affinity: %u", last_cpu);
+  PLOGV.printf("Thread 'controller': affinity: %u", last_cpu);
 
   // Spawn find threads
   i = cfg->n_prod;
@@ -709,7 +710,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
-    PLOG_INFO.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
+    PLOGV.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
     PLOG_INFO.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
                      sh->stats->insertion_cycles);
 
@@ -784,7 +785,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
     this->prod_threads.push_back(std::move(_thread));
-    PLOG_INFO.printf("Thread producer_thread: %u, affinity: %u", i,
+    PLOGV.printf("Thread producer_thread: %u, affinity: %u", i,
                       assigned_cpu);
     i += 1;
   }
