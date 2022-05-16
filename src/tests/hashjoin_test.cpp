@@ -6,13 +6,13 @@
 // * Optimize hash table in hash join:
 // https://dev.mysql.com/worklog/task/?id=13459
 
-#include "tests/HashjoinTest.hpp"
-
 #include <atomic>
 #include <barrier>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <optional>
+#include <syncstream>
 #include <unordered_set>
 
 #include "constants.hpp"
@@ -21,6 +21,7 @@
 #include "input_reader/csv.hpp"
 #include "plog/Log.h"
 #include "sync.h"
+#include "tests/HashjoinTest.hpp"
 #include "types.hpp"
 
 namespace kmercounter {
@@ -136,17 +137,16 @@ void HashjoinTest::part_join_partsupp(const Shard& sh,
 }
 
 // Only primary-foreign key join is supported.
-void HashjoinTest::join_r_s(const Shard& sh,
-                                      const Configuration& config,
-                                      BaseHashTable* ht,
-                                      std::barrier<>* barrier) {
+void HashjoinTest::join_r_s(const Shard& sh, const Configuration& config,
+                            BaseHashTable* ht,
+                            std::barrier<std::function<void()>>* barrier) {
   input_reader::TwoColumnCsvPreloadReader t1("r.tbl", sh.shard_idx,
-                                        config.num_threads, "|");
+                                             config.num_threads, "|");
   input_reader::TwoColumnCsvPreloadReader t2("s.tbl", sh.shard_idx,
-                                        config.num_threads, "|");
+                                             config.num_threads, "|");
   PLOG_INFO << "Shard " << (int)sh.shard_idx << "/" << config.num_threads
             << " t1 " << t1.size() << " t2 " << t2.size();
-  
+
   // Wait for preload to finish.
   barrier->arrive_and_wait();
 
@@ -174,9 +174,10 @@ void HashjoinTest::join_r_s(const Shard& sh,
 
   {
     const auto duration = RDTSCP() - t1_start;
-    std::cerr << "Thread " << (int)sh.shard_idx << " takes " << duration
-              << " to insert " << t1.size() << ". Avg " << duration / t1.size()
-              << std::endl;
+    std::osyncstream(std::cerr)
+        << "Thread " << (int)sh.shard_idx << " takes " << duration
+        << " to insert " << t1.size() << ". Avg " << duration / t1.size()
+        << std::endl;
   }
 
   // Make sure insertions is finished before probing.
@@ -186,15 +187,17 @@ void HashjoinTest::join_r_s(const Shard& sh,
   // std::ofstream output_file(std::to_string((int)sh->shard_idx) +
   // "_join.tbl");
   const auto t2_start = RDTSC_START();
-  auto join_rows = [](const ValuePairs& vp) {
-    PLOG_DEBUG << "Found " << vp.first << " keys";
+  uint64_t num_output = 0;
+  auto join_rows = [&num_output](const ValuePairs& vp) {
+    // PLOG_DEBUG << "Found " << vp.first << " keys";
     for (uint32_t i = 0; i < vp.first; i++) {
       const Values& value = vp.second[i];
-      PLOG_INFO << "We found " << value;
-      const uint64_t left_row = value.value;
-      const uint64_t right_row = value.id;
-      PLOG_INFO << "Left row " << left_row;
-      PLOG_INFO << "Right row " << right_row;
+      // PLOG_INFO << "We found " << value;
+      // const uint64_t left_row = value.value;
+      // const uint64_t right_row = value.id;
+      // PLOG_INFO << "Left row " << left_row;
+      // PLOG_INFO << "Right row " << right_row;
+      num_output++;
       // output_file << left_row << "|" << right_row << "\n";
     }
   };
@@ -233,16 +236,11 @@ void HashjoinTest::join_r_s(const Shard& sh,
 
   {
     const auto duration = RDTSCP() - t2_start;
-    std::cerr << "Thread " << (int)sh.shard_idx << " takes " << duration
-              << " to join " << t1.size() << ". Avg " << duration / t1.size()
-              << std::endl;
-  }
-
-  {
-    const auto duration = RDTSCP() - t1_start;
-    std::cerr << "Thread " << (int)sh.shard_idx << " takes " << duration
-              << " to output " << t1.size() << ". Avg " << duration / t1.size()
-              << std::endl;
+    std::osyncstream(std::cerr)
+        << "Thread " << (int)sh.shard_idx << " takes " << duration
+        << " to join t2 with size" << t2.size() << ". Output " << num_output
+        << " rows. Average " << duration / num_output << " cycles per output"
+        << std::endl;
   }
 }
 
