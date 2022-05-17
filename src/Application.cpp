@@ -59,6 +59,7 @@ extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
+extern void init_zipfian_dist(double skew);
 
 // default configuration
 const Configuration def = {
@@ -595,6 +596,10 @@ int Application::process(int argc, char *argv[]) {
         PLOGE.printf("Unknown numa policy. Exiting");
         exit(-1);
     }
+  }
+
+  if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN) {
+    init_zipfian_dist(config.skew);
   }
 
   if (config.mode == BQ_TESTS_YES_BQ) {

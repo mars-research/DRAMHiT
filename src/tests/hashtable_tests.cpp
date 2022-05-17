@@ -29,7 +29,8 @@ const uint64_t max_possible_threads = 128;
 
 std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 
-__thread std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *values;
+
+extern std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
                              unsigned int count, unsigned int id) {
@@ -41,23 +42,9 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
   std::uint64_t duration{};
 
-  const auto _start = RDTSC_START();
   static std::atomic_uint fence{};
-  values = new std::vector<uint64_t, huge_page_allocator<uint64_t>>(HT_TESTS_NUM_INSERTS);
-  for (auto &value : *values) {
-#ifdef ZIPF_FAST
-    value = distribution.sample();
-#else
-    value = distribution();
-#endif
-  }
   ++fence;
   while (fence < count) _mm_pause();
-  const auto _end = RDTSCP();
-  PLOGI.printf("generation took %llu cycles (per element %llu cycles)",
-        _end-_start, (_end-_start)/HT_TESTS_NUM_INSERTS);
-
-  zipf_gen_timings[id] = _end - _start;
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -70,15 +57,23 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
   const auto start = RDTSC_START();
   std::uint64_t key{};
+
+  uint64_t key_start =
+      std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+
+  PLOGV.printf("id: %u | key_start %lu", id, key_start);
+
   for (auto j = 0u; j < config.insert_factor; j++) {
+    auto zipf_idx = key_start == 1 ? 0: key_start;
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-      if (!(n & 7) && n + 16 < values->size()) {
-        prefetch_object<false>(&values->at(n + 16), 64);
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
+        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
       }
 
-      items[key].key = items[key].value = values->at(n);
+      items[key].key = items[key].value = zipf_values->at(zipf_idx);
       items[key].id = n;
 
+      zipf_idx++;
       if (config.no_prefetch) {
         hashtable->insert_noprefetch(&items[key]);
       } else {
@@ -121,19 +116,22 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
   k_values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
   ValuePairs vp = std::make_pair(0, k_values);
 
+  uint64_t key_start =
+      std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
   const auto start = RDTSC_START();
   std::uint64_t key{};
   for (auto j = 0u; j < config.insert_factor; j++) {
+    auto zipf_idx = key_start == 1 ? 0: key_start;
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
-      if (!(n & 7) && n + 16 < values->size()) {
-        prefetch_object<false>(&values->at(n + 16), 64);
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
+        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
       }
 
       if (config.no_prefetch) {
-        auto ret = hashtable->find_noprefetch(&values->at(n));
+        auto ret = hashtable->find_noprefetch(&zipf_values->at(zipf_idx));
         if (ret) found += 1;
       } else {
-        items[key] = {values->at(n), n};
+        items[key] = {zipf_values->at(zipf_idx), n};
 
         if (++key == HT_TESTS_FIND_BATCH_LENGTH) {
           KeyPairs keypairs{HT_TESTS_FIND_BATCH_LENGTH, items};
@@ -143,6 +141,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
           key = 0;
         }
       }
+
+      zipf_idx++;
     }
   }
   if (!config.no_prefetch) {

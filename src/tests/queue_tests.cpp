@@ -221,7 +221,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       k = value;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
-      if (!(transaction_id & 7) && zipf_idx + 16 < zipf_values->size())
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
       k = zipf_values->at(zipf_idx);
@@ -656,7 +656,6 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) 
   this->ht_vec =
       new std::vector<BaseHashTable *>(cfg->n_prod + cfg->n_cons, nullptr);
 
-  init_zipfian_dist(cfg->skew);
   // 1) Insert using bqueues
   this->insert_with_queues(cfg, n, npq);
 
