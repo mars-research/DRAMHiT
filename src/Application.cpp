@@ -93,14 +93,6 @@ const Configuration def = {
 static uint64_t ready = 0;
 static std::atomic_uint num_entered{};
 
-#ifdef WITH_PAPI_LIB
-PapiEvent pr(6);
-PapiEvent pw(6);
-
-PapiEvent pr1(6);
-PapiEvent pw1(6);
-#endif
-
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
 
@@ -162,58 +154,13 @@ void Application::shard_thread(int tid, bool mainthread) {
 
 #ifdef WITH_PAPI_LIB
   auto retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self));
-  std::uint64_t papi_event_start{};
   if (retval != PAPI_OK) {
     PLOGE.printf("PAPI Thread init failed");
-  }
-
-  if (num_entered == config.num_threads) {
-    pr.init_event(0);
-    pr1.init_event(1);
-
-    pw.init_event(0);
-    pw1.init_event(1);
-
-    std::string cha_box("skx_unc_cha");
-    std::string imc_box("skx_unc_imc");
-
-    std::string req_read("UNC_C_REQUESTS:READS");
-    std::string req_wr("UNC_C_IMC_WRITES_COUNT:FULL");
-
-    std::string cas_rd("UNC_M_CAS_COUNT:RD");
-    std::string cas_wr("UNC_M_CAS_COUNT:WR");
-
-    // pr.add_event(req_read, cha_box);
-    // pr1.add_event(req_read, cha_box);
-
-    // pw.add_event(req_wr, cha_box);
-    // pw1.add_event(req_wr, cha_box);
-
-    pr.add_event(cas_rd, imc_box);
-    pr1.add_event(cas_rd, imc_box);
-
-    pw.add_event(cas_wr, imc_box);
-    pw1.add_event(cas_wr, imc_box);
-
-    pr.start();
-    pw.start();
-
-    pr1.start();
-    pw1.start();
-
-    ready = 1;
-    papi_event_start = RDTSC_START();
   }
 #endif
 
   while (num_entered != config.num_threads) _mm_pause();
 
-#ifdef WITH_PAPI_LIB
-  while (!ready) _mm_pause();
-#endif
-
-  // fipc_test_mfence();
-  /* Begin insert loops */
   switch (config.mode) {
     case SYNTH:
       this->test.st.synth_run_exec(sh, kmer_ht);
@@ -246,32 +193,6 @@ void Application::shard_thread(int tid, bool mainthread) {
   // free_ht(kmer_ht);
 
 done:
-
-  num_entered--;
-#ifdef WITH_PAPI_LIB
-  std::uint64_t papi_event_end{};
-  if (num_entered == 0) {
-    papi_event_end = RDTSCP();
-    pr.stop();
-    pw.stop();
-
-    pr1.stop();
-    pw1.stop();
-
-    std::set<uint64_t> zipf_timings;
-
-    for (auto &t : zipf_gen_timings) {
-      zipf_timings.insert(t);
-    }
-    auto zipf_max_rdtsc = *zipf_timings.rbegin();
-    auto papi_event_diff = (papi_event_end - papi_event_start) - zipf_max_rdtsc;
-
-    PLOGI.printf("Zipf gen took %llu cycles (%f secs)",
-        zipf_max_rdtsc, zipf_max_rdtsc / (2.6 * 1000 * 1000 * 1000));
-    PLOGI.printf("Papi events took %llu cycles (%f secs)",
-        papi_event_diff, papi_event_diff / (2.6 * 1000 * 1000 * 1000));
-  }  // PapiEvent scope
-#endif
   return;
 }
 

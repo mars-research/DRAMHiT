@@ -17,6 +17,10 @@
 #include <papi.h>
 #endif
 
+#ifdef WITH_PAPI_LIB
+#include "mem_bw_papi.hpp"
+#endif
+
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -39,9 +43,14 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
   std::uint64_t duration{};
 
-  static std::atomic_uint fence{};
-  ++fence;
-  while (fence < count) _mm_pause();
+#if defined(WITH_PAPI_LIB)
+  static std::atomic_uint num_entered{};
+  static MemoryBwCounters bw_counters{2};
+  if(++num_entered == config.num_threads) {
+    bw_counters.start();
+  }
+  while (num_entered < count) _mm_pause();
+#endif
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -96,17 +105,28 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   __itt_event_end(event);
 #endif
 
+#if defined(WITH_PAPI_LIB)
+  if (--num_entered == 0) {
+    bw_counters.stop();
+    bw_counters.compute_mem_bw();
+  }
+#endif
   return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, unsigned int id) {
-  static std::atomic_uint fence{};
   std::uint64_t duration{};
   std::uint64_t found = 0;
 
-  ++fence;
-  while (fence < num_threads) _mm_pause();
+#if defined(WITH_PAPI_LIB)
+  static std::atomic_uint num_entered{};
+  static MemoryBwCounters bw_counters{2};
+  if(++num_entered == config.num_threads) {
+    bw_counters.start();
+  }
+  while (num_entered < num_threads) _mm_pause();
+#endif
 
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   Values *k_values;
@@ -154,6 +174,13 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
   const auto end = RDTSCP();
   duration += end - start;
 
+#if defined(WITH_PAPI_LIB)
+  if (--num_entered == 0) {
+    bw_counters.stop();
+    bw_counters.compute_mem_bw();
+  }
+#endif
+
   return {duration, found};
 }
 
@@ -198,9 +225,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
                      num_finds.duration / num_finds.op_count);
   }
 
-#ifndef WITH_PAPI_LIB
   get_ht_stats(shard, hashtable);
-#endif
 }
 
 }  // namespace kmercounter
