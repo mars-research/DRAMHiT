@@ -10,6 +10,7 @@
 #include <cmath>
 #include <ctime>
 #include <fstream>
+#include <functional>
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
@@ -43,6 +44,7 @@ const char *run_mode_strings[] = {
     "BQ_TESTS_NO_BQ",
     "CACHE_MISS",
     "ZIPFIAN",
+    "HASHJOIN",
 };
 
 const char *ht_type_strings[] = {
@@ -129,7 +131,7 @@ void free_ht(BaseHashTable *kmer_ht) {
   delete kmer_ht;
 }
 
-void Application::shard_thread(int tid, bool mainthread) {
+void Application::shard_thread(int tid, bool mainthread, std::barrier<std::function<void()>>* barrier) {
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -146,6 +148,7 @@ void Application::shard_thread(int tid, bool mainthread) {
       break;
     case SYNTH:
     case ZIPFIAN:
+    case HASHJOIN:
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
@@ -239,6 +242,8 @@ void Application::shard_thread(int tid, bool mainthread) {
     case ZIPFIAN:
       this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
       break;
+    case HASHJOIN:
+      this->test.hj.join_r_s(*sh, config, kmer_ht, barrier);
     default:
       break;
   }
@@ -287,7 +292,8 @@ int Application::spawn_shard_threads() {
   size_t seg_sz = 0;
 
   if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
-      (config.mode != PREFETCH) && (config.mode != CACHE_MISS)) {
+      (config.mode != PREFETCH) && (config.mode != CACHE_MISS) &&
+      (config.mode != HASHJOIN)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     PLOG_INFO.printf("File size: %lu bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -323,6 +329,8 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
+  std::function<void()> on_completetion = []() noexcept { PLOG_INFO << "Phase completed."; };
+  std::barrier barrier(config.num_threads, on_completetion);
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;
@@ -330,7 +338,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    auto _thread = std::thread(&Application::shard_thread, this, i, false);
+    auto _thread = std::thread(&Application::shard_thread, this, i, false, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -351,7 +359,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    this->shard_thread(i, true);
+    this->shard_thread(i, true, &barrier);
   }
 
 #if 0
@@ -407,7 +415,8 @@ int Application::process(int argc, char *argv[]) {
         "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
         "zipfian)\n"
         "10: Cache Miss test\n"
-        "11: Zipfian non-bqueue test")(
+        "11: Zipfian non-bqueue test\n"
+        "12: Hashjoin")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),

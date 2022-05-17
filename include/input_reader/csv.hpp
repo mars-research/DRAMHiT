@@ -58,10 +58,6 @@ class TwoColumnCsvPreloadReader : public Reservoir<TwoColumnRow> {
   TwoColumnCsvPreloadReader(Args &&...args)
       : Reservoir<TwoColumnRow>(
             std::make_unique<TwoColumnCsvReader>(std::forward<Args>(args)...)) {}
-
-  // bool next(TwoColumnRow *data) override {
-  //   return Reservoir<TwoColumnRow>::next(data);
-  // }
 };
 
 /// The first field(key) of the row and the raw row itself.
