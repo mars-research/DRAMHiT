@@ -27,9 +27,6 @@ uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 
-std::array<uint64_t, max_possible_threads> zipf_gen_timings;
-
-
 extern std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,

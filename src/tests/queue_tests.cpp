@@ -16,11 +16,9 @@
 #include "queues/bqueue_aligned.hpp"
 #include "xorwow.hpp"
 
-#if defined(BQ_TESTS_INSERT_ZIPFIAN) || defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
 #include "hashtables/ht_helper.hpp"
 #include "zipf.h"
 #include "zipf_distribution.hpp"
-#endif
 
 #include "utils/vtune.hpp"
 #include "utils/hugepage_allocator.hpp"
@@ -71,7 +69,6 @@ std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 void init_zipfian_dist(double skew) {
   constexpr auto keyrange_width = (1ull << 63);
 
-#if defined(BQ_TESTS_INSERT_ZIPFIAN)
   zipf_values = new std::vector<uint64_t, huge_page_allocator<uint64_t>>(HT_TESTS_NUM_INSERTS);
   zipf_distribution_apache distribution(keyrange_width, skew);
   PLOGI.printf("Initializing global zipf with skew %f", skew);
@@ -80,7 +77,6 @@ void init_zipfian_dist(double skew) {
     value = distribution.sample();
   }
   PLOGI.printf("Zipfian dist generated. size %zu", zipf_values->size());
-#endif
 }
 
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
