@@ -217,7 +217,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-    PLOG_WARNING << "Empty item: " << this->empty_item;
+    PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =

@@ -216,12 +216,12 @@ class SectionQueue {
             pcq->enqSharedPtr = data;
             pcq->deqSharedPtr = data;
 
-            PLOG_INFO.printf("enqPtr %p | deqPtr %p | data %p | section_mask %lx",
+            PLOGV.printf("enqPtr %p | deqPtr %p | data %p | section_mask %lx",
                 pq->enqPtr, cq->deqPtr, cq->data, SECTION_MASK);
           } else {
             for (auto &e : pqueue_map) {
               auto &[p, c] = e.first;
-              PLOGI.printf("p %u c %u pq %p", p, c, e.second);
+              PLOGV.printf("p %u c %u pq %p", p, c, e.second);
             }
             exit(-1);
           }
