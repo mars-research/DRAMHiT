@@ -157,7 +157,7 @@ void HashjoinTest::join_r_s(const Shard& sh, const Configuration& config,
   for (input_reader::TwoColumnRow row; t1.next(&row);) {
     const auto& [key, value] = row;
     keys[k].key = key;
-    keys[k].id = value;
+    keys[k].value = value;
     // PLOG_INFO << "Left " << keys[k] << keys[k].id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(k, keys);
@@ -204,12 +204,12 @@ void HashjoinTest::join_r_s(const Shard& sh, const Configuration& config,
 
   // Probe.
   __attribute__((aligned(64))) Values values[HT_TESTS_FIND_BATCH_LENGTH] = {0};
-  for (input_reader::TwoColumnRow row; t1.next(&row);) {
+  for (input_reader::TwoColumnRow row; t2.next(&row);) {
     const auto& [key, value] = row;
     keys[k].key = key;
     keys[k].id = value;
     // keys[k].part_id = (uint64_t)row.c_str();
-    PLOG_INFO << "Right " << keys[k];
+    // PLOG_INFO << "Right " << keys[k];
     if (++k == HT_TESTS_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, keys);
       ValuePairs valuepairs{0, values};
@@ -238,8 +238,8 @@ void HashjoinTest::join_r_s(const Shard& sh, const Configuration& config,
     const auto duration = RDTSCP() - t2_start;
     std::osyncstream(std::cerr)
         << "Thread " << (int)sh.shard_idx << " takes " << duration
-        << " to join t2 with size" << t2.size() << ". Output " << num_output
-        << " rows. Average " << duration / num_output << " cycles per output"
+        << " to join t2 with size " << t2.size() << ". Output " << num_output
+        << " rows. Average " << duration / std::max(1ul, num_output) << " cycles per output in probe phase."
         << std::endl;
   }
 }
