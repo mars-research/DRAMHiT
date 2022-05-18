@@ -64,6 +64,7 @@ add_executable(kvstore
     "src/Application.cpp"
     "src/kvstore.cpp"
     "src/zipf_distribution.cpp"
+    "src/Latency.cpp"
 )
 
 # Add subdirectory
@@ -88,6 +89,7 @@ option(BQ_ZIPFIAN "Enable global zipfian distribution generation" OFF)
 option(BQ_ZIPFIAN_LOCAL "Enable local zipfian distribution generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
 option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
+option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
 set(HASHER "crc" CACHE STRING "Hasher")
@@ -222,6 +224,11 @@ if (SANITIZE)
     message(WARNING "Enabling ASAN")
     add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)
+endif()
+
+if (LATENCY_COLLECTION)
+    message(WARNING "Latency collection enabled")
+    add_definitions(-DLATENCY_COLLECTION)
 endif()
 
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
