@@ -581,9 +581,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash & (this->capacity - 1);  // modulo
-    KV *curr = &this->hashtable[this->id][idx];
+    const Keys *item = reinterpret_cast<const Keys *>(data);
+    uint64_t hash = this->hash((const char *)&item->key);
+
+    size_t idx = fastrange32(hash, this->capacity);
+    KV *curr = &this->hashtable[item->part_id][idx];
+
     bool found = false;
 
     for (auto i = 0u; i < this->capacity; i++) {
@@ -611,7 +614,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   exit:
     // return empty_element if nothing is found
     if (!found) {
-      curr = &this->empty_item;
+      curr = nullptr;
     }
     return curr;
   }

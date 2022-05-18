@@ -234,7 +234,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       cons_id = hash_to_cpu(hash_val, n_cons);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      k |= (hash_val << 32);
+      //k |= (hash_val << 32);
 
       //if (++cons_id >= n_cons) cons_id = 0;
 
@@ -362,7 +362,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     };
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      kmer_ht->prefetch_queue(QueueType::insert_queue);
+      if (!config.no_prefetch) {
+        kmer_ht->prefetch_queue(QueueType::insert_queue);
+      }
     }
     auto cq = cqueues[prod_id];
 
@@ -572,10 +574,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       k = xorwow(&_xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian finds"
-      if (!(i & 7) && zipf_idx + 16 < zipf_values->size())
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
       k = zipf_values->at(zipf_idx);
+      zipf_idx++;
 #else
       k = key_start++;
 #endif
@@ -585,27 +588,35 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       // PLOGI.printf("partition %d", partition);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      k |= (hash_val << 32);
+      //k |= (hash_val << 32);
 
       items[j].key = k;
       items[j].id = count;
       items[j].part_id = partition + n_prod;
       count++;
 
-      if (j == 0) {
-        ktable->prefetch_queue(QueueType::find_queue);
+      if (!config.no_prefetch) {
+        if (j == 0) {
+          ktable->prefetch_queue(QueueType::find_queue);
+        }
       }
-      if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
-        KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
-        // PLOGI.printf("calling find_batch i = %d", i);
-        // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
-        ktable->find_batch(kp, vp);
-        found += vp.first;
-        j = 0;
-        not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
-        vp.first = 0;
-        PLOGD.printf("tid %lu count %lu | found -> %lu | not_found -> %lu", tid,
-            count, found, not_found);
+
+      if (config.no_prefetch) {
+        auto ret = ktable->find_noprefetch(&items[0]);
+        if (ret != nullptr) found++;
+      } else {
+        if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
+          KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
+          // PLOGI.printf("calling find_batch i = %d", i);
+          // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
+          ktable->find_batch(kp, vp);
+          found += vp.first;
+          j = 0;
+          not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
+          vp.first = 0;
+          //PLOGD.printf("tid %lu count %lu | found -> %lu | not_found -> %lu", tid,
+          //    count, found, not_found);
+        }
       }
 
 #ifdef CALC_STATS
