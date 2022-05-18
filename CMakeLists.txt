@@ -64,6 +64,7 @@ add_executable(kvstore
     "src/Application.cpp"
     "src/kvstore.cpp"
     "src/zipf_distribution.cpp"
+    "src/Latency.cpp"
 )
 
 # Add subdirectory
