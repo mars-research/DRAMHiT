@@ -600,6 +600,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t distance_from_bucket = 0;
 #endif
     Keys *item = const_cast<Keys *>(reinterpret_cast<const Keys *>(data));
+
+#ifdef LATENCY_COLLECTION
+    const auto start_time = collector->sync_start();
+#endif
+
     uint64_t hash = this->hash((const char *)&item->key);
 
     size_t idx = fastrange32(hash, this->capacity);
@@ -631,6 +636,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
     this->sum_distance_from_bucket += distance_from_bucket;
 #endif
+
+#ifdef LATENCY_COLLECTION
+    collector->sync_end(start_time);
+#endif
+
   exit:
     // return empty_element if nothing is found
     if (!found) {

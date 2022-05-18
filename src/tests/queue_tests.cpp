@@ -507,7 +507,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   fipc_test_FAI(completed_consumers);
 
 #ifdef LATENCY_COLLECTION
-  collector->dump(tid);
+  collector->dump("insert", tid);
 #endif
 }
 
@@ -519,6 +519,13 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   uint64_t count = std::max(HT_TESTS_NUM_INSERTS * tid, (uint64_t)1);
   BaseHashTable *ktable;
   Hasher hasher;
+
+#ifdef LATENCY_COLLECTION
+  const auto collector = &collectors.at(tid);
+  collector->claim();
+#else
+  collector_type* const collector {};
+#endif
 
   struct xorwow_state _xw_state, init_state;
 
@@ -621,7 +628,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       }
 
       if (config.no_prefetch) {
-        auto ret = ktable->find_noprefetch(&items[0]);
+        auto ret = ktable->find_noprefetch(&items[0], collector);
         if (ret) found++;
         else {
           not_found++;
@@ -666,6 +673,10 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   }
 
   get_ht_stats(sh, ktable);
+
+#ifdef LATENCY_COLLECTION
+  collector->dump("find", tid);
+#endif
 }
 
 template <typename T>
@@ -693,6 +704,11 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) 
 
   // 1) Insert using bqueues
   this->insert_with_queues(cfg, n, npq);
+
+#ifdef LATENCY_COLLECTION
+  collectors.clear();
+  collectors.resize(thread_count);
+#endif
 
   // 2) spawn n_prod + n_cons threads for find
   this->run_find_test(cfg, n, npq);

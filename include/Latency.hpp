@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <memory>
 #include <numeric>
 #include <sstream>
 #include <thread>
@@ -25,10 +26,10 @@ class alignas(64) LatencyCollector {
   static constexpr auto sentinel = std::numeric_limits<std::uint32_t>::max();
 
  public:
-  void claim() {
-    if (is_claimed) std::terminate();
+  ~LatencyCollector() { claim_lock->unlock(); }
 
-    is_claimed = true;
+  void claim() {
+    if (!claim_lock->try_lock()) std::terminate();
   }
 
   std::uint32_t start() {
@@ -64,10 +65,10 @@ class alignas(64) LatencyCollector {
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
-  void dump(unsigned int id) {
+  void dump(const char* name, unsigned int id) {
     if (next_log_entry) {
       std::stringstream stream{};
-      stream << "./latencies/" << id << ".dat";
+      stream << "./latencies/" << name << '_' << id << ".dat";
       std::ofstream stats{stream.str().c_str()};
       for (auto i = 0u; i <= next_log_entry && i < log.size(); ++i) {
         const auto length = i < next_log_entry ? log.front().size() : next_slot;
@@ -85,7 +86,7 @@ class alignas(64) LatencyCollector {
   std::uint8_t next_slot{};
   std::uint64_t next_log_entry{};
 
-  bool is_claimed{};
+  std::shared_ptr<std::mutex> claim_lock{std::make_shared<std::mutex>()};
 
   xorwow_state rand_state{[] {
     xorwow_state state{};
@@ -143,6 +144,7 @@ class alignas(64) LatencyCollector {
 constexpr auto pool_size = 2048;
 using collector_type = LatencyCollector<pool_size>;
 extern std::vector<collector_type> collectors;
+extern std::mutex collector_lock;
 
 }  // namespace kmercounter
 
