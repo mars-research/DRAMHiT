@@ -120,7 +120,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, unsigned int id) {
   std::uint64_t duration{};
-  std::uint64_t found = 0;
+  std::uint64_t found = 0, not_found = 0;
 
   static std::atomic_uint num_entered{};
   num_entered++;
@@ -150,7 +150,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
 
       if (config.no_prefetch) {
         auto ret = hashtable->find_noprefetch(&zipf_values->at(zipf_idx));
-        if (ret != nullptr) found += 1;
+        if (ret) found++;
+        else not_found++;
       } else {
         items[key] = {zipf_values->at(zipf_idx), n};
 
@@ -185,6 +186,12 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
   }
 #endif
 
+  if (found >= 0) {
+    PLOG_INFO.printf(
+        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu",
+        id, found, not_found,
+        found > 0 ? duration / found : 0);
+  }
   return {duration, found};
 }
 

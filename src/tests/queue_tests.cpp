@@ -234,7 +234,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       cons_id = hash_to_cpu(hash_val, n_cons);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      //k |= (hash_val << 32);
+      // k |= (hash_val << 32);
 
       //if (++cons_id >= n_cons) cons_id = 0;
 
@@ -416,6 +416,12 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 #endif
 
         PLOG_DEBUG.printf("Consumer received %" PRIu64, count);
+        if (!config.no_prefetch) {
+          if (data_idx > 0) {
+            submit_batch(data_idx);
+          }
+        }
+        goto pick_next_msg;
       }
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
@@ -425,7 +431,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
-          kmer_ht->insert_noprefetch(&k);
+          kmer_ht->insert_noprefetch(&_items[data_idx]);
           inserted++;
         } else {
           if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
@@ -568,7 +574,9 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
     key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0: key_start;
+#if defined(XORWOW)
     _xw_state = init_state;
+#endif
     for (auto i = 0u; i < num_messages; i++) {
 #if defined(XORWOW)
       k = xorwow(&_xw_state);
@@ -588,7 +596,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       // PLOGI.printf("partition %d", partition);
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      //k |= (hash_val << 32);
+      // k |= (hash_val << 32);
 
       items[j].key = k;
       items[j].id = count;
@@ -603,7 +611,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
       if (config.no_prefetch) {
         auto ret = ktable->find_noprefetch(&items[0]);
-        if (ret != nullptr) found++;
+        if (ret) found++;
+        else {
+          not_found++;
+          //printf("key %llu not found | zipf_idx %llu\n", k, zipf_idx - 1);
+        }
       } else {
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
           KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);

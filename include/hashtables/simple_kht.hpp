@@ -437,7 +437,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t key = 0;
 
     hash = this->hash((const char *)&key_data->key);
-    key = key_data->key;
 
     size_t idx = fastrange32(hash, this->capacity);
 
@@ -456,6 +455,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         this->num_reprobes++;
 #endif
       } else {
+        if (0) {
+          printf("inserted key %llu at idx %zu | hash %llu\n", key_data->key, idx, hash);
+        }
         break;
       }
     }
@@ -581,16 +583,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    const Keys *item = reinterpret_cast<const Keys *>(data);
+    Keys *item = const_cast<Keys*>(reinterpret_cast<const Keys *>(data));
     uint64_t hash = this->hash((const char *)&item->key);
 
     size_t idx = fastrange32(hash, this->capacity);
-    KV *curr = &this->hashtable[item->part_id][idx];
+    KV *cur_ht = this->hashtable[item->part_id];
+    KV *curr;
 
     bool found = false;
 
     for (auto i = 0u; i < this->capacity; i++) {
-      idx = idx == this->capacity ? 0 : idx;
+      curr = &cur_ht[idx];
 
       if (curr->is_empty()) {
         found = false;
@@ -604,6 +607,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       distance_from_bucket++;
 #endif
       idx++;
+      idx = idx == this->capacity ? 0 : idx;
     }
 #ifdef CALC_STATS
     if (distance_from_bucket > this->max_distance_from_bucket) {
@@ -614,6 +618,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   exit:
     // return empty_element if nothing is found
     if (!found) {
+      printf("key %llu not found at idx %llu | hash %llu\n", item->key, idx, hash);
       curr = nullptr;
     }
     return curr;

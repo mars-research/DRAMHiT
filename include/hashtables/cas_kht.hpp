@@ -204,6 +204,7 @@ class CASHashTable : public BaseHashTable {
 #endif
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash;
+    Keys *item = const_cast<Keys*>(reinterpret_cast<const Keys *>(data));
     KV *curr;
     bool found = false;
 
@@ -234,6 +235,7 @@ class CASHashTable : public BaseHashTable {
   exit:
     // return empty_element if nothing is found
     if (!found) {
+      printf("key %llu not found at idx %llu | hash %llu\n", item->key, idx, hash);
       curr = nullptr;
     }
     return curr;
