@@ -43,14 +43,15 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
   std::uint64_t duration{};
 
-#if defined(WITH_PAPI_LIB)
   static std::atomic_uint num_entered{};
+  num_entered++;
+#if defined(WITH_PAPI_LIB)
   static MemoryBwCounters bw_counters{2};
-  if(++num_entered == config.num_threads) {
+  if(num_entered == config.num_threads) {
     bw_counters.start();
   }
-  while (num_entered < count) _mm_pause();
 #endif
+  while (num_entered < count) _mm_pause();
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -76,9 +77,11 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
       }
 
-      items[key].key = items[key].value = zipf_values->at(zipf_idx);
+      auto value = zipf_values->at(zipf_idx);
+      items[key].key = items[key].value = value;
       items[key].id = n;
 
+      //printf("zipf_values[%d] = %llu\n", zipf_idx, value);
       zipf_idx++;
       if (config.no_prefetch) {
         hashtable->insert_noprefetch(&items[key]);
@@ -119,14 +122,15 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
   std::uint64_t duration{};
   std::uint64_t found = 0;
 
-#if defined(WITH_PAPI_LIB)
   static std::atomic_uint num_entered{};
+  num_entered++;
+#if defined(WITH_PAPI_LIB)
   static MemoryBwCounters bw_counters{2};
-  if(++num_entered == config.num_threads) {
+  if(num_entered == config.num_threads) {
     bw_counters.start();
   }
-  while (num_entered < num_threads) _mm_pause();
 #endif
+  while (num_entered < num_threads) _mm_pause();
 
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   Values *k_values;
@@ -146,7 +150,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
 
       if (config.no_prefetch) {
         auto ret = hashtable->find_noprefetch(&zipf_values->at(zipf_idx));
-        if (ret) found += 1;
+        if (ret != nullptr) found += 1;
       } else {
         items[key] = {zipf_values->at(zipf_idx), n};
 

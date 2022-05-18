@@ -234,7 +234,7 @@ class CASHashTable : public BaseHashTable {
   exit:
     // return empty_element if nothing is found
     if (!found) {
-      curr = &this->empty_item;
+      curr = nullptr;
     }
     return curr;
   }
