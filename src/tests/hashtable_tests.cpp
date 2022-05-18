@@ -42,14 +42,16 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   zipf_distribution distribution{skew, keyrange_width, id + 1};
 #endif
   std::uint64_t duration{};
-
   static std::atomic_uint num_entered{};
-  num_entered++;
+
 #if defined(WITH_PAPI_LIB)
   static MemoryBwCounters bw_counters{2};
-  if(num_entered == config.num_threads) {
+  if(++num_entered == config.num_threads) {
+    PLOGI.printf("Starting counters %u", num_entered.load());
     bw_counters.start();
   }
+#else
+  ++num_entered;
 #endif
   while (num_entered < count) _mm_pause();
 
@@ -110,6 +112,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
 #if defined(WITH_PAPI_LIB)
   if (--num_entered == 0) {
+    PLOGI.printf("Stopping counters %u", num_entered.load());
     bw_counters.stop();
     bw_counters.compute_mem_bw();
   }

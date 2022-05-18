@@ -158,9 +158,11 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     find_mops = ((double)2600 / cycles_per_find) * num_threads;
     printf("%s, num_threads %lu\n", __func__, num_threads);
     printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
+
+    printf("{ set_cycles : %llu, get_cycles : %llu,", cycles_per_insert, cycles_per_find);
+    printf(" set_mops : %.3f, get_mops : %.3f }\n", insert_mops, find_mops);
   }
 
-  printf("{ insertion: %.3f lookup: %.3f }\n", insert_mops, find_mops);
 
   // printf(
   //     "Average (find): %lu cycles (%f ms) for %lu finds (%lu cycles per "
