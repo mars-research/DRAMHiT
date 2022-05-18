@@ -64,10 +64,10 @@ class alignas(64) LatencyCollector {
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
-  void dump() {
+  void dump(unsigned int id) {
     if (next_log_entry) {
       std::stringstream stream{};
-      stream << "./latencies/" << std::this_thread::get_id() << ".dat";
+      stream << "./latencies/" << id << ".dat";
       std::ofstream stats{stream.str().c_str()};
       for (auto i = 0u; i <= next_log_entry && i < log.size(); ++i) {
         const auto length = i < next_log_entry ? log.front().size() : next_slot;
@@ -105,7 +105,7 @@ class alignas(64) LatencyCollector {
   }
 
   bool reject_sample() {
-    constexpr auto pow2 = 1u;
+    constexpr auto pow2 = 10u;
     constexpr auto bitmask = (1ull << pow2) - 1;
     return xorwow(&rand_state) & bitmask;
   }

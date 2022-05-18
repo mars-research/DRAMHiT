@@ -507,7 +507,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   fipc_test_FAI(completed_consumers);
 
 #ifdef LATENCY_COLLECTION
-  collector->dump();
+  collector->dump(tid);
 #endif
 }
 
