@@ -87,6 +87,7 @@ const Configuration def = {
     .drop_caches = true,
     .hwprefetchers = false,
     .no_prefetch = false,
+    .run_both = false,
 };  // TODO enum
 
 // for synchronization of threads
@@ -386,7 +387,9 @@ int Application::process(int argc, char *argv[]) {
         "Zipfian skewness")("hw-pref",
         po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers))
         ("no-prefetch",
-        po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch));
+        po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))
+        ("run-both",
+        po::value<bool>(&config.run_both)->default_value(def.run_both));
 
     papi_init();
 
@@ -533,6 +536,18 @@ int Application::process(int argc, char *argv[]) {
     this->spawn_shard_threads();
   }
 
+  // If we start to run casht, reset the num_inserts and no_prefetch
+  // to run cashtpp
+  if (config.run_both) {
+    PLOGI.printf("Running cashtpp now with the same configuration");
+    if ((config.ht_type == CASHTPP) && config.no_prefetch && (config.mode == ZIPFIAN)){
+      HT_TESTS_NUM_INSERTS = config.ht_size * config.ht_fill * 0.01;
+
+      config.no_prefetch = 0;
+
+      this->spawn_shard_threads();
+    }
+  }
   return 0;
 }
 }  // namespace kmercounter

@@ -113,6 +113,9 @@ struct Configuration {
   // disable prefetching
   bool no_prefetch;
 
+  // Run both casht/cashtpp
+  bool run_both;
+
   void dump_configuration() {
     printf("Run configuration{\n");
     printf("  num_threads %u\n", this->num_threads);
@@ -125,6 +128,7 @@ struct Configuration {
     printf("ZIPFIAN:\n  skew: %f\n", skew);
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
+    printf("  Run both %s\n", run_both ? "enabled" : "disabled");
     printf("}\n");
   }
 };
