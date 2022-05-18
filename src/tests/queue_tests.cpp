@@ -282,6 +282,13 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   // Get shard pointer from the shards array
   Shard *sh = &this->shards[tid];
 
+#ifdef LATENCY_COLLECTION
+  const auto collector = &collectors.at(tid);
+  collector->claim();
+#else
+  collector_type* const collector {};
+#endif
+
   // Allocate memory for stats
   sh->stats =
       //(thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE,
@@ -349,7 +356,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     auto submit_batch = [&](auto num_elements) {
       KeyPairs kp = std::make_pair(num_elements, &_items[0]);
 
-      kmer_ht->insert_batch(kp);
+      kmer_ht->insert_batch(kp, collector);
       inserted += kp.first;
 
       data_idx = 0;
@@ -431,7 +438,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
-          kmer_ht->insert_noprefetch(&_items[data_idx]);
+          kmer_ht->insert_noprefetch(&_items[data_idx], collector);
           inserted++;
         } else {
           if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
@@ -498,6 +505,10 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   // End test
   fipc_test_FAI(completed_consumers);
+
+#ifdef LATENCY_COLLECTION
+  collector->dump();
+#endif
 }
 
 template <typename T>
@@ -672,8 +683,13 @@ void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
 
 template <typename T>
 void QueueTest<T>::run_test(Configuration *cfg, Numa *n, NumaPolicyQueues *npq) {
+  const auto thread_count = cfg->n_prod + cfg->n_cons;
   this->ht_vec =
-      new std::vector<BaseHashTable *>(cfg->n_prod + cfg->n_cons, nullptr);
+      new std::vector<BaseHashTable *>(thread_count, nullptr);
+
+#ifdef LATENCY_COLLECTION
+  collectors.resize(thread_count);
+#endif
 
   // 1) Insert using bqueues
   this->insert_with_queues(cfg, n, npq);

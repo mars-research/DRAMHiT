@@ -80,7 +80,7 @@ class CASHashTable : public BaseHashTable {
 
   void prefetch_queue(QueueType qtype) override {}
 
-  void insert_noprefetch(const void *data) {
+  void insert_noprefetch(const void *data, collector_type* collector) override {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo
 
@@ -113,7 +113,7 @@ class CASHashTable : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(KeyPairs &kp) override {
+  void insert_batch(KeyPairs &kp, collector_type* collector) override {
     this->flush_if_needed();
 
     Keys *keys;
@@ -141,7 +141,7 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void flush_insert_queue() override {
+  void flush_insert_queue(collector_type* collector) override {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
 
@@ -153,7 +153,7 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
-  void flush_find_queue(ValuePairs &vp) override {
+  void flush_find_queue(ValuePairs &vp, collector_type* collector) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
@@ -183,7 +183,7 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void find_batch(KeyPairs &kp, ValuePairs &values) {
+  void find_batch(KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
     this->flush_if_needed(values);
 
     Keys *keys;
@@ -198,7 +198,7 @@ class CASHashTable : public BaseHashTable {
     this->flush_if_needed(values);
   }
 
-  void *find_noprefetch(const void *data) {
+  void *find_noprefetch(const void *data, collector_type* collector) override {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
