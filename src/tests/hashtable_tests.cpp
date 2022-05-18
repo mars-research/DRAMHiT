@@ -42,15 +42,18 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   zipf_distribution distribution{skew, keyrange_width, id + 1};
 #endif
   std::uint64_t duration{};
+  static std::atomic_uint num_entered{};
 
 #if defined(WITH_PAPI_LIB)
-  static std::atomic_uint num_entered{};
   static MemoryBwCounters bw_counters{2};
   if(++num_entered == config.num_threads) {
+    PLOGI.printf("Starting counters %u", num_entered.load());
     bw_counters.start();
   }
-  while (num_entered < count) _mm_pause();
+#else
+  ++num_entered;
 #endif
+  while (num_entered < count) _mm_pause();
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -76,9 +79,11 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
       }
 
-      items[key].key = items[key].value = zipf_values->at(zipf_idx);
+      auto value = zipf_values->at(zipf_idx);
+      items[key].key = items[key].value = value;
       items[key].id = n;
 
+      //printf("zipf_values[%d] = %llu\n", zipf_idx, value);
       zipf_idx++;
       if (config.no_prefetch) {
         hashtable->insert_noprefetch(&items[key]);
@@ -107,6 +112,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
 #if defined(WITH_PAPI_LIB)
   if (--num_entered == 0) {
+    PLOGI.printf("Stopping counters %u", num_entered.load());
     bw_counters.stop();
     bw_counters.compute_mem_bw();
   }
@@ -117,16 +123,17 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, unsigned int id) {
   std::uint64_t duration{};
-  std::uint64_t found = 0;
+  std::uint64_t found = 0, not_found = 0;
 
-#if defined(WITH_PAPI_LIB)
   static std::atomic_uint num_entered{};
+  num_entered++;
+#if defined(WITH_PAPI_LIB)
   static MemoryBwCounters bw_counters{2};
-  if(++num_entered == config.num_threads) {
+  if(num_entered == config.num_threads) {
     bw_counters.start();
   }
-  while (num_entered < num_threads) _mm_pause();
 #endif
+  while (num_entered < num_threads) _mm_pause();
 
   alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
   Values *k_values;
@@ -146,7 +153,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
 
       if (config.no_prefetch) {
         auto ret = hashtable->find_noprefetch(&zipf_values->at(zipf_idx));
-        if (ret) found += 1;
+        if (ret) found++;
+        else not_found++;
       } else {
         items[key] = {zipf_values->at(zipf_idx), n};
 
@@ -181,6 +189,12 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads, un
   }
 #endif
 
+  if (found >= 0) {
+    PLOG_INFO.printf(
+        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu",
+        id, found, not_found,
+        found > 0 ? duration / found : 0);
+  }
   return {duration, found};
 }
 
