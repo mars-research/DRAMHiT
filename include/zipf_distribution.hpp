@@ -45,7 +45,7 @@ private:
   const double h_integral_num_elements;
   const double s;
 
-  std::default_random_engine generator;
+  std::mt19937_64 generator;
   std::uniform_real_distribution<double> distribution;
 
   double h(double x);

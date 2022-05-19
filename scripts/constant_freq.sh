@@ -28,6 +28,8 @@ disable_turbo() {
 	if ! [ -x "$(command -v ${RDMSR})" ]; then
 		echo "Installing msr-tools ..."
 		sudo apt install msr-tools
+		RDMSR=$(which rdmsr)
+		WRMSR=$(which wrmsr)
 	fi
 
 	# make sure we have this module loaded

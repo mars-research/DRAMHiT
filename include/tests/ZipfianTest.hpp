@@ -11,6 +11,6 @@ class ZipfianTest {
   void run(Shard *sh, BaseHashTable *kmer_ht, double skew, unsigned int count);
 };
 
-}  // namespace kvstore
+}  // namespace kmercounter
 
 #endif  // __SYNTH_TEST_HPP__

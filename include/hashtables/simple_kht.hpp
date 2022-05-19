@@ -24,7 +24,6 @@
 #include <type_traits>
 
 #include "constants.hpp"
-#include "Latency.hpp"
 #include "experiments.hpp"
 #include "fastrange.h"
 #include "hasher.hpp"
@@ -99,9 +98,6 @@ constexpr auto histogram_bits = 6;
 constexpr std::uint32_t histogram_buckets{1 << histogram_bits};
 constexpr std::uint32_t histogram_mask{histogram_buckets - 1};
 extern thread_local std::vector<unsigned int> hash_histogram;
-#ifdef LATENCY_COLLECTION
-extern thread_local LatencyCollector<512> collector;
-#endif
 
 template <typename KV, typename KVQ>
 class alignas(64) PartitionedHashStore : public BaseHashTable {
@@ -152,7 +148,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   };
 
   void prefetch_partition(uint64_t idx, int _part_id, bool write) {
-
     if (idx > this->capacity) [[unlikely]] {
       std::terminate();
     }
@@ -221,7 +216,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-    PLOG_WARNING << "Empty item: " << this->empty_item;
+    PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
@@ -243,7 +238,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   // FIXME: shares a lot of code with __insert_branchless_simd
   void __insert_noprefetch_simd(const void *data) {
-    KVQ *q = const_cast<KVQ*>(reinterpret_cast<const KVQ *>(data));
+    KVQ *q = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
     uint64_t hash = 0;
     uint64_t key = 0;
 
@@ -275,27 +270,27 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       // a vector of 1s that is used for incrementing a value
       constexpr __m512i INCREMENT_VECTOR = {
-        0ULL, 1ULL,  // KVP0
-        0ULL, 1ULL,  // KVP1
-        0ULL, 1ULL,  // KVP2
-        0ULL, 1ULL,  // KVP3
+          0ULL, 1ULL,  // KVP0
+          0ULL, 1ULL,  // KVP1
+          0ULL, 1ULL,  // KVP2
+          0ULL, 1ULL,  // KVP3
       };
 
       // cacheline_masks is indexed by q->idx % KV_PER_CACHE_LINE
       constexpr std::array<__mmask8, KV_PER_CACHE_LINE> cacheline_masks = {
-        KVP3 | KVP2 | KVP1 | KVP0,  // load all KV pairs in the cacheline
-        KVP3 | KVP2 | KVP1,         // skip the first KV pair
-        KVP3 | KVP2,                // skip the first two KV pairs
-        KVP3,                       // load only the last KV pair
+          KVP3 | KVP2 | KVP1 | KVP0,  // load all KV pairs in the cacheline
+          KVP3 | KVP2 | KVP1,         // skip the first KV pair
+          KVP3 | KVP2,                // skip the first two KV pairs
+          KVP3,                       // load only the last KV pair
       };
       // key_cmp_masks are indexed by cidx, the index of an entry in a cacheline
       // the masks are used to mask irrelevant bits of the result of 4-way SIMD
       // key comparisons
       constexpr std::array<__mmask8, KV_PER_CACHE_LINE> key_cmp_masks = {
-        KEY3 | KEY2 | KEY1 | KEY0,  // cidx: 0; all key comparisons valid
-        KEY3 | KEY2 | KEY1,  // cidx: 1; only last three comparisons valid
-        KEY3 | KEY2,         // cidx: 2; only last two comparisons valid
-        KEY3,                // cidx: 3; only last comparison valid
+          KEY3 | KEY2 | KEY1 | KEY0,  // cidx: 0; all key comparisons valid
+          KEY3 | KEY2 | KEY1,  // cidx: 1; only last three comparisons valid
+          KEY3 | KEY2,         // cidx: 2; only last two comparisons valid
+          KEY3,                // cidx: 3; only last comparison valid
       };
       // key_copy_masks are indexed by the return value of the BSF instruction,
       // executed on the mask returned by a search for empty keys in a
@@ -305,21 +300,22 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // bits: ||  0     1      2     3      4     5      6     7  ||
       // the only possible indices are: 0, 2, 4, 6
       constexpr std::array<__mmask8, 8> key_copy_masks = {
-        KEY0,  // bit 0 set; choose first key
-        0,
-        KEY1,  // bit 2 set; choose second
-        0,
-        KEY2,  // bit 4 set; choose third
-        0,
-        KEY3,  // bit 6 set; choose last
-        0,
+          KEY0,  // bit 0 set; choose first key
+          0,
+          KEY1,  // bit 2 set; choose second
+          0,
+          KEY2,  // bit 4 set; choose third
+          0,
+          KEY3,  // bit 6 set; choose last
+          0,
       };
 
       auto load_key_vector = [q]() {
         // we want to load only the keys into a ZMM register, as two 32-bit
         // integers. 0b0011 matches the first 64 bits of a KV pair -- the key
         __mmask16 mask{0b0011001100110011};
-        __m128i kv = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&q->key));
+        __m128i kv =
+            _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&q->key));
         return _mm512_maskz_broadcast_i32x2(mask, kv);
       };
 
@@ -327,7 +323,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         // we want to load only the key value pair into a ZMM register, as four
         // 4-byte integers. 0b1111 matches the entire KV pair
         __mmask16 mask{0b1111111111111111};
-        __m128i kv = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&q->key));
+        __m128i kv =
+            _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&q->key));
         return _mm512_maskz_broadcast_i32x2(mask, kv);
       };
 
@@ -337,13 +334,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       };
 
       auto store_cacheline = [this, cur_ht, idx](__m512i cacheline,
-          __mmask8 kv_mask) {
+                                                 __mmask8 kv_mask) {
         KV *cptr = &cur_ht[idx & ~(KV_PER_CACHE_LINE - 1)];
         _mm512_mask_store_epi64(cptr, kv_mask, cacheline);
       };
 
       auto key_cmp = [&key_cmp_masks](__m512i cacheline, __m512i key_vector,
-          size_t cidx) {
+                                      size_t cidx) {
         __mmask8 cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector);
         // zmm registers are compared as 8 uint64_t
         // mask irrelevant results before returning
@@ -358,8 +355,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         return cmp & key_cmp_masks[cidx];
       };
 
-      auto key_copy_mask = [&empty_cmp, &key_copy_masks](
-          __m512i cacheline, uint32_t eq_cmp, size_t cidx) {
+      auto key_copy_mask = [&empty_cmp, &key_copy_masks](__m512i cacheline,
+                                                         uint32_t eq_cmp,
+                                                         size_t cidx) {
         uint32_t locations = empty_cmp(cacheline, cidx);
         __mmask16 copy_mask = 1 << _bit_scan_forward(locations);
         // if locations == 0, _bit_scan_forward(locations) is undefined
@@ -379,9 +377,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       };
 
       auto increment_count = [INCREMENT_VECTOR](__m512i &cacheline,
-          __mmask8 val_mask) {
+                                                __mmask8 val_mask) {
         cacheline = _mm512_mask_add_epi64(cacheline, val_mask, cacheline,
-            INCREMENT_VECTOR);
+                                          INCREMENT_VECTOR);
       };
 
       // compute index within the cacheline
@@ -412,9 +410,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       __mmask8 kv_mask = key_mask | val_mask;
 
       if (!kv_mask) {
-        auto inc_idx =  KV_PER_CACHE_LINE - cidx;
+        auto inc_idx = KV_PER_CACHE_LINE - cidx;
         auto nidx = idx + inc_idx;
-        nidx = nidx >= this->capacity ? (nidx - this->capacity) : nidx;  // modulo
+        nidx =
+            nidx >= this->capacity ? (nidx - this->capacity) : nidx;  // modulo
         idx = nidx;
         i += inc_idx;
 #ifdef CALC_STATS
@@ -435,13 +434,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void __insert_noprefetch_branched(const void *data) {
-    KVQ *key_data = const_cast<KVQ*>(reinterpret_cast<const KVQ *>(data));
+  void __insert_noprefetch_branched(const void *data, collector_type* collector) {
+    KVQ *key_data = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
     uint64_t hash = 0;
     uint64_t key = 0;
 
+#ifdef LATENCY_COLLECTION
+    const auto start_time = collector->sync_start();
+#endif
+
     hash = this->hash((const char *)&key_data->key);
-    key = key_data->key;
 
     size_t idx = fastrange32(hash, this->capacity);
 
@@ -460,22 +462,34 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         this->num_reprobes++;
 #endif
       } else {
+#ifdef LATENCY_COLLECTION
+        collector->sync_end(start_time);
+#endif
+
+        if (0) {
+          printf("inserted key %llu at idx %zu | hash %llu\n", key_data->key,
+                 idx, hash);
+        }
         break;
       }
     }
   }
 
-  void insert_noprefetch(const void *data) {
+  void insert_noprefetch(const void *data, collector_type* collector) override {
+#ifdef LATENCY_COLLECTION
+    static_assert(branching == BRANCHKIND::WithBranch, "Latency collection only supported with branched insertion");
+#endif
+
     if constexpr (branching == BRANCHKIND::WithBranch) {
-      __insert_noprefetch_branched(data);
+      __insert_noprefetch_branched(data, collector);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
       __insert_noprefetch_simd(data);
     }
   }
 
   // insert a batch
-  void insert_batch(KeyPairs &kp) override {
-    this->flush_if_needed();
+  void insert_batch(KeyPairs &kp, collector_type* collector) override {
+    this->flush_if_needed(collector);
 
     Keys *keys;
     uint32_t batch_len;
@@ -483,10 +497,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     for (auto k = 0u; k < batch_len; k++) {
       void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_insert_queue(data);
+      add_to_insert_queue(data, collector);
     }
 
-    this->flush_if_needed();
+    this->flush_if_needed(collector);
   }
 
   bool insert(const void *data) { return false; }
@@ -494,11 +508,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   // TODO: static_assert for queue pow2
 
   // overridden function for insertion
-  void flush_if_needed(void) {
+  void flush_if_needed(collector_type* collector) {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
-      __insert_one(&this->insert_queue[this->ins_tail]);
+      __insert_one(&this->insert_queue[this->ins_tail], collector);
       this->ins_tail = (this->ins_tail + 1) & (PREFETCH_QUEUE_SIZE - 1);
       curr_queue_sz =
           (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
@@ -506,53 +520,31 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void flush_insert_queue() override {
+  void flush_insert_queue(collector_type* collector) override {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
 
     while (curr_queue_sz != 0) {
-      __insert_one(&this->insert_queue[this->ins_tail]);
+      __insert_one(&this->insert_queue[this->ins_tail], collector);
       this->ins_tail = (this->ins_tail + 1) & (PREFETCH_QUEUE_SIZE - 1);
       curr_queue_sz =
           (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     }
   }
 
-#ifdef LATENCY_COLLECTION
-  void flush_find_queue(ValuePairs &vp) override {
-    PLOG_ERROR << "This hashtable did not implement flush_find_queue";
-    std::terminate();
-  }
-#endif
-
-  void flush_find_queue(ValuePairs &vp
-#ifdef LATENCY_COLLECTION
-                        ,
-                        decltype(collectors)::value_type &collector
-#endif
-                        ) override {
+  void flush_find_queue(ValuePairs &vp, collector_type* collector) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
     while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
-      __find_one(&this->find_queue[this->find_tail], vp
-#ifdef LATENCY_COLLECTION
-                 ,
-                 collector
-#endif
-      );
+      __find_one(&this->find_queue[this->find_tail], vp);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
   }
 
-  void flush_if_needed(ValuePairs &vp
-#ifdef LATENCY_COLLECTION
-                       ,
-                       decltype(collectors)::value_type &collector
-#endif
-  ) {
+  void flush_if_needed(ValuePairs &vp) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     // make sure you return at most batch_sz (but can possibly return lesser
@@ -562,12 +554,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
-      __find_one(&this->find_queue[this->find_tail], vp
-#ifdef LATENCY_COLLECTION
-                 ,
-                 collector
-#endif
-      );
+      __find_one(&this->find_queue[this->find_tail], vp);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -575,19 +562,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-#ifdef LATENCY_COLLECTION
-  virtual void find_batch(KeyPairs &kp, ValuePairs &vp) {
-    PLOG_ERROR << "This hashtable did not implement find_batch";
-    std::terminate();
-  };
-#endif
-
-  void find_batch(KeyPairs &kp, ValuePairs &values
-#ifdef LATENCY_COLLECTION
-                  ,
-                  decltype(collectors)::value_type &collector
-#endif
-  ) {
+  void find_batch(KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
     // What's the size of the prefetch queue size?
     // pfq_sz = 4 * 64;
     // flush_threshold = 128;
@@ -600,12 +575,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // cout << "-> flush_before head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
-    this->flush_if_needed(values
-#ifdef LATENCY_COLLECTION
-                          ,
-                          collector
-#endif
-    );
+    this->flush_if_needed(values);
     // cout << "== > post flush_before head: " << this->find_head << " tail: "
     // << this->find_tail << endl;
 
@@ -615,38 +585,36 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     for (auto k = 0u; k < batch_len; k++) {
       void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data
-
-#ifdef LATENCY_COLLECTION
-                        ,
-                        collector
-#endif
-      );
+      add_to_find_queue(data);
     }
 
     // cout << "-> flush_after head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
-    this->flush_if_needed(values
-#ifdef LATENCY_COLLECTION
-                          ,
-                          collector
-#endif
-    );
+    this->flush_if_needed(values);
     // cout << "== > post flush_after head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
   }
 
-  void *find_noprefetch(const void *data) override {
+  void *find_noprefetch(const void *data, collector_type* collector) override {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash & (this->capacity - 1);  // modulo
-    KV *curr = &this->hashtable[this->id][idx];
+    Keys *item = const_cast<Keys *>(reinterpret_cast<const Keys *>(data));
+
+#ifdef LATENCY_COLLECTION
+    const auto start_time = collector->sync_start();
+#endif
+
+    uint64_t hash = this->hash((const char *)&item->key);
+
+    size_t idx = fastrange32(hash, this->capacity);
+    KV *cur_ht = this->hashtable[item->part_id];
+    KV *curr;
+
     bool found = false;
 
     for (auto i = 0u; i < this->capacity; i++) {
-      idx = idx == this->capacity ? 0 : idx;
+      curr = &cur_ht[idx];
 
       if (curr->is_empty()) {
         found = false;
@@ -660,6 +628,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       distance_from_bucket++;
 #endif
       idx++;
+      idx = idx == this->capacity ? 0 : idx;
     }
 #ifdef CALC_STATS
     if (distance_from_bucket > this->max_distance_from_bucket) {
@@ -667,10 +636,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
     this->sum_distance_from_bucket += distance_from_bucket;
 #endif
+
+#ifdef LATENCY_COLLECTION
+    collector->sync_end(start_time);
+#endif
+
   exit:
     // return empty_element if nothing is found
     if (!found) {
-      curr = &this->empty_item;
+      printf("key %llu not found at idx %llu | hash %llu\n", item->key, idx,
+             hash);
+      curr = nullptr;
     }
     return curr;
   }
@@ -737,12 +713,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp
-#ifdef LATENCY_COLLECTION
-                           ,
-                           decltype(collectors)::value_type &collector
-#endif
-  ) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -775,10 +746,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       this->prefetch_partition(idx, q->part_id, false);
 
-#ifdef LATENCY_COLLECTION
-      this->find_queue[this->find_head].timer_id = q->timer_id;
-#endif
-
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
@@ -787,11 +754,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
-
-#ifdef LATENCY_COLLECTION
-    collector.end(q->timer_id);
-#endif
-
     return found;
   }
 
@@ -898,29 +860,18 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp
-#ifdef LATENCY_COLLECTION
-                  ,
-                  decltype(collectors)::value_type &collector
-#endif
-  ) {
-#ifndef LATENCY_COLLECTION
+  auto __find_one(KVQ *q, ValuePairs &vp) {
     if (q->key == this->empty_item.get_key()) {
       return __find_empty(q, vp);
-    } else if constexpr (branching == BRANCHKIND::WithBranch) {
+    }
+
+    if constexpr (branching == BRANCHKIND::WithBranch) {
       return __find_branched(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       return __find_branchless_cmov(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      // return __find_branchless_simd(q, vp);
-      return __find_branched(q, vp);
+      return __find_branchless_simd(q, vp);
     }
-#else
-    static_assert(branching == BRANCHKIND::WithBranch,
-                  "branchless is not supporte with latency collection");
-
-    return __find_branched(q, vp, collector);
-#endif
   }
 
   /// Update or increment the empty key.
@@ -933,20 +884,21 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return empty_slot_;
   }
 
-  void __insert_branched(KVQ *q) {
+  void __insert_branched(KVQ *q, collector_type* collector) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
     KV *cur_ht = this->hashtable[this->id];
   try_insert:
     KV *curr = &cur_ht[idx];
     auto retry = false;
-    //if constexpr (experiment_inactive(experiment_type::insert_dry_run,
-    //                                  experiment_type::aggr_kv_write_key_only))
+    // if constexpr (experiment_inactive(experiment_type::insert_dry_run,
+    //                                   experiment_type::aggr_kv_write_key_only))
     retry = curr->insert(q);
 
-    //if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only)) {
-    // curr->key = q->key;
-    //}
+    // if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only))
+    // {
+    //  curr->key = q->key;
+    // }
 
     if (retry) {
       // FIXME: we *really* need an insert_to_queue() subroutine, this is too
@@ -969,17 +921,22 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       this->insert_queue[this->ins_head].key = q->key;
       this->insert_queue[this->ins_head].key_id = q->key_id;
-
-#ifndef LATENCY_COLLECTION
       this->insert_queue[this->ins_head].value = q->value;
+      this->insert_queue[this->ins_head].idx = idx;
+
+#ifdef LATENCY_COLLECTION
+      this->insert_queue[this->ins_head].timer_id = q->timer_id;
 #endif
 
-      this->insert_queue[this->ins_head].idx = idx;
       ++this->ins_head;
       this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
 #ifdef CALC_STATS
       this->num_reprobes++;
+#endif
+    } else {
+#ifdef LATENCY_COLLECTION
+      collector->end(q->timer_id);
 #endif
     }
   }
@@ -1212,7 +1169,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->insert_queue[this->ins_head].key_id = q->key_id;
       this->insert_queue[this->ins_head].value = q->value;
       this->insert_queue[this->ins_head].idx = nidx;
-      this->ins_head++;// += queue_idx_inc;
+      this->ins_head++;  // += queue_idx_inc;
       this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
     } else {
       if constexpr (std::is_same_v<KV, Aggr_KV>) {
@@ -1228,14 +1185,18 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void __insert_one(KVQ *q) {
+  void __insert_one(KVQ *q, collector_type* collector) {
     if (q->key == this->empty_item.get_key()) {
       return __insert_empty(q);
     }
 
+#ifdef LATENCY_COLLECTION
+    static_assert(branching == BRANCHKIND::WithBranch, "Latency collection only supported with branched insertion");
+#endif
+
     if constexpr (experiment_inactive(experiment_type::nop_insert)) {
       if constexpr (branching == BRANCHKIND::WithBranch) {
-        __insert_branched(q);
+        __insert_branched(q, collector);
       } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
         __insert_branchless_cmov(q);
       } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
@@ -1279,15 +1240,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
-  void add_to_insert_queue(void *data) {
+  void add_to_insert_queue(void *data, collector_type* collector) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
 
+#ifdef LATENCY_COLLECTION
+    const auto timer_id = collector->start();
+#endif
+
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      //hash = key_data->key >> 32;
+      // hash = key_data->key >> 32;
       hash = this->hash((const char *)&key_data->key);
-      //key = key_data->key & 0xFFFFFFFF;
+      // key = key_data->key & 0xFFFFFFFF;
       key = key_data->key;
     } else {
       hash = this->hash((const char *)&key_data->key);
@@ -1308,46 +1273,40 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
     this->prefetch(idx);
 
-    //if constexpr (experiment_inactive(experiment_type::prefetch_only)) {
-      this->insert_queue[this->ins_head].idx = idx;
-      this->insert_queue[this->ins_head].key = key;
-      this->insert_queue[this->ins_head].value = key_data->value;
-      this->insert_queue[this->ins_head].key_id = key_data->id;
+    // if constexpr (experiment_inactive(experiment_type::prefetch_only)) {
+    this->insert_queue[this->ins_head].idx = idx;
+    this->insert_queue[this->ins_head].key = key;
+    this->insert_queue[this->ins_head].value = key_data->value;
+    this->insert_queue[this->ins_head].key_id = key_data->id;
 
-#ifdef COMPARE_HASH
-      this->insert_queue[this->ins_head].key_hash = hash;
+#ifdef LATENCY_COLLECTION
+    this->insert_queue[this->ins_head].timer_id = timer_id;
 #endif
 
-      this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
+#ifdef COMPARE_HASH
+    this->insert_queue[this->ins_head].key_hash = hash;
+#endif
+
+    this->ins_head = (this->ins_head + 1) & (PREFETCH_QUEUE_SIZE - 1);
     //}
   }
 
-  void add_to_find_queue(void *data
-#ifdef LATENCY_COLLECTION
-                         ,
-                         decltype(collectors)::value_type &collector
-#endif
-  ) {
+  void add_to_find_queue(void *data) {
     Keys *key_data = reinterpret_cast<Keys *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      //hash = key_data->key >> 32;
+      // hash = key_data->key >> 32;
       hash = this->hash((const char *)&key_data->key);
-      //key = key_data->key & 0xFFFFFFFF;
+      // key = key_data->key & 0xFFFFFFFF;
       key = key_data->key;
     } else {
       hash = this->hash((const char *)&key_data->key);
       key = key_data->key & 0xFFFFFFFF;
     }
 
-#ifdef LATENCY_COLLECTION
-    const auto timer_id = collector.start();
-#endif
-
     size_t idx = fastrange32(hash, this->capacity);  // modulo
-
     this->prefetch_partition(idx, key_data->part_id, false);
 
     // unsigned int cpu, node;
@@ -1356,10 +1315,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     /*if (cpu == 0)
     cout << "[" << cpu << "] -- Adding " << key << " partid : " <<
     key_data->part_id << " at " << this->find_head << endl;*/
-
-#ifdef LATENCY_COLLECTION
-    this->find_queue[this->find_head].timer_id = timer_id;
-#endif
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key;
@@ -1388,5 +1343,5 @@ int *PartitionedHashStore<KV, KVQ>::fds;
 
 // TODO bloom filters for high frequency kmers?
 
-}  // namespace kvstore
+}  // namespace kmercounter
 #endif /* _SKHT_H_ */

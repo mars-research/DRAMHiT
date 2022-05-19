@@ -216,12 +216,12 @@ class SectionQueue {
             pcq->enqSharedPtr = data;
             pcq->deqSharedPtr = data;
 
-            PLOG_INFO.printf("enqPtr %p | deqPtr %p | data %p | section_mask %lx",
+            PLOGV.printf("enqPtr %p | deqPtr %p | data %p | section_mask %lx",
                 pq->enqPtr, cq->deqPtr, cq->data, SECTION_MASK);
           } else {
             for (auto &e : pqueue_map) {
               auto &[p, c] = e.first;
-              PLOGI.printf("p %u c %u pq %p", p, c, e.second);
+              PLOGV.printf("p %u c %u pq %p", p, c, e.second);
             }
             exit(-1);
           }
@@ -295,8 +295,8 @@ class SectionQueue {
       queues[0][0]->dump();
     }
 
-     int
-       enqueue_new(prod_queue_t *pq, uint32_t p, uint32_t c, data_t value) {
+     inline int
+       enqueue(prod_queue_t *pq, uint32_t p, uint32_t c, data_t value) {
       *pq->enqPtr = value;
       pq->enqPtr += 1;
 
@@ -321,8 +321,8 @@ class SectionQueue {
       return SUCCESS;
     }
 
-    int
-      dequeue_new(cons_queue_t *cq, uint32_t p, uint32_t c, data_t *value) {
+    inline int
+      dequeue(cons_queue_t *cq, uint32_t p, uint32_t c, data_t *value) {
       if (((data_t)cq->deqPtr & SECTION_MASK) == 0) {
         if (cq->deqPtr == cq->queue_end) {
           cq->deqPtr = cq->data;
@@ -373,7 +373,7 @@ class SectionQueue {
         //auto pq1 = &all_pqueues[p][nc1];
         //__builtin_prefetch(pq1, 1, 3);
       } else {
-        auto np = ((p + 2) >= nprod) ? 0 : (p + 2);
+        auto np = ((p + 1) >= nprod) ? 0 : (p + 1);
         auto np1 = ((np + 1) >= nprod) ? 0 : (np + 1);
         auto cq1 = &all_cqueues[c][np1];
         __builtin_prefetch(cq1, 1, 3);
@@ -389,7 +389,7 @@ class SectionQueue {
       //PLOGD.printf("PUSH DONE");
       auto pcq = &this->all_pc_queues[p][c];
       auto pq = &this->all_pqueues[p][c];
-      enqueue_new(pq, p, c, BQ_MAGIC_64BIT);
+      enqueue(pq, p, c, BQ_MAGIC_64BIT);
       pcq->enqSharedPtr = (data_t*)0xdeadbeef;
     }
 

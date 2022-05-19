@@ -114,6 +114,9 @@ struct Configuration {
   // disable prefetching
   bool no_prefetch;
 
+  // Run both casht/cashtpp
+  bool run_both;
+
   void dump_configuration() {
     printf("Run configuration{\n");
     printf("  num_threads %u\n", this->num_threads);
@@ -126,6 +129,7 @@ struct Configuration {
     printf("ZIPFIAN:\n  skew: %f\n", skew);
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
+    printf("  Run both %s\n", run_both ? "enabled" : "disabled");
     printf("}\n");
   }
 };
@@ -173,8 +177,8 @@ struct Shard {
 // Your inserts will be ignored if you do (we use these as empty markers)
 struct Keys {
   uint64_t key;
-  uint64_t id;
   uint64_t value;
+  uint64_t id;
   uint64_t part_id;
 };
 std::ostream& operator<<(std::ostream& os, const Keys& q);

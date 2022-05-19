@@ -57,12 +57,11 @@ const char *ht_type_strings[] = {
 namespace kmercounter {
 
 class LynxQueue;
-#ifdef LATENCY_COLLECTION
-thread_local LatencyCollector<512> collector {};
-#endif
-
 extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
+extern const uint64_t max_possible_threads = 128;
+extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
+extern void init_zipfian_dist(double skew);
 
 // default configuration
 const Configuration def = {
@@ -90,19 +89,12 @@ const Configuration def = {
     .drop_caches = true,
     .hwprefetchers = false,
     .no_prefetch = false,
+    .run_both = false,
 };  // TODO enum
 
 // for synchronization of threads
 static uint64_t ready = 0;
-static uint64_t ready_threads = 0;
-
-#ifdef WITH_PAPI_LIB
-PapiEvent pr(6);
-PapiEvent pw(6);
-
-PapiEvent pr1(6);
-PapiEvent pw1(6);
-#endif
+static std::atomic_uint num_entered{};
 
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
@@ -162,73 +154,17 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
       return;
   }
 
-#ifndef WITH_PAPI_LIB
-  if (!mainthread) {
-    fipc_test_FAI(ready_threads);
-  }
-#else
-  fipc_test_FAI(ready_threads);
+  num_entered++;
+
+#ifdef WITH_PAPI_LIB
   auto retval = PAPI_thread_init((unsigned long (*)(void))(pthread_self));
   if (retval != PAPI_OK) {
     PLOGE.printf("PAPI Thread init failed");
   }
-
-  if (ready_threads == config.num_threads) {
-    pr.init_event(0);
-    pr1.init_event(1);
-
-    pw.init_event(0);
-    pw1.init_event(1);
-
-    std::string cha_box("skx_unc_cha");
-    std::string imc_box("skx_unc_imc");
-
-    std::string req_read("UNC_C_REQUESTS:READS");
-    std::string req_wr("UNC_C_IMC_WRITES_COUNT:FULL");
-
-    std::string cas_rd("UNC_M_CAS_COUNT:RD");
-    std::string cas_wr("UNC_M_CAS_COUNT:WR");
-
-    // pr.add_event(req_read, cha_box);
-    // pr1.add_event(req_read, cha_box);
-
-    // pw.add_event(req_wr, cha_box);
-    // pw1.add_event(req_wr, cha_box);
-
-    pr.add_event(cas_rd, imc_box);
-    pr1.add_event(cas_rd, imc_box);
-
-    pw.add_event(cas_wr, imc_box);
-    pw1.add_event(cas_wr, imc_box);
-
-    pr.start();
-    pw.start();
-
-    pr1.start();
-    pw1.start();
-
-    ready = 1;
-  }
 #endif
 
-  std::atomic_uint entered_threads{config.num_threads};
-  if (mainthread) {
-    while (ready_threads < (config.num_threads - 1)) {
-      fipc_test_pause();
-    }
-#if !defined(WITH_PAPI_LIB)
-    ready = 1;
-#else
-    // If papi is enabled, main thread has to wait as well until ready is
-    // signalled. ready is signalled by the last enetering thread.
-    while (!ready) fipc_test_pause();
-#endif
-  } else {
-    while (!ready) fipc_test_pause();
-  }
+  while (num_entered != config.num_threads) _mm_pause();
 
-  // fipc_test_mfence();
-  /* Begin insert loops */
   switch (config.mode) {
     case SYNTH:
       this->test.st.synth_run_exec(sh, kmer_ht);
@@ -263,21 +199,7 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
   // free_ht(kmer_ht);
 
 done:
-
-#ifndef WITH_PAPI_LIB
-  if (!mainthread) {
-    fipc_test_FAD(ready_threads);
-  }
-#else
-  fipc_test_FAD(ready_threads);
-  if (ready_threads == 0) {
-    pr.stop();
-    pw.stop();
-
-    pr1.stop();
-    pw1.stop();
-  }  // PapiEvent scope
-#endif
+  --num_entered;
   return;
 }
 
@@ -305,7 +227,10 @@ int Application::spawn_shard_threads() {
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
   if (config.ht_type == CASHTPP) {
-    HT_TESTS_NUM_INSERTS /= (float)config.num_threads;
+    auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
+    HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
+    PLOGV.printf("Total inserts %llu | num_threads %u | scaled inserts per thread %llu",
+          orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
 
   if (config.insert_factor > 1) {
@@ -365,19 +290,6 @@ int Application::spawn_shard_threads() {
     this->shard_thread(i, true, &barrier);
   }
 
-#if 0
-  while (ready_threads < config.num_threads) {
-    fipc_test_pause();
-  }
-
-#if !defined(WITH_PAPI_LIB)
-  ready = 1;
-#endif
-#endif  // if 0
-
-  /* TODO thread join vs sync on atomic variable*/
-  while (ready_threads) fipc_test_pause();
-
   for (auto &th : this->threads) {
     if (th.joinable()) {
       th.join();
@@ -399,7 +311,6 @@ void papi_init() {
   }
 
   PLOGI.printf("PAPI library initialized");
-}
 #endif
 }
 
@@ -488,7 +399,9 @@ int Application::process(int argc, char *argv[]) {
         "Zipfian skewness")("hw-pref",
         po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers))
         ("no-prefetch",
-        po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch));
+        po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))
+        ("run-both",
+        po::value<bool>(&config.run_both)->default_value(def.run_both));
 
     papi_init();
 
@@ -516,12 +429,6 @@ int Application::process(int argc, char *argv[]) {
     } else {
       this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
-    
-#ifdef LATENCY_COLLECTION
-    collectors.resize(config.mode == BQ_TESTS_YES_BQ
-                          ? config.n_cons + config.n_prod
-                          : config.num_threads);
-#endif
 
     if (config.mode == SYNTH) {
       PLOG_INFO.printf("Mode : SYNTH");
@@ -568,7 +475,7 @@ int Application::process(int argc, char *argv[]) {
         exit(0);
     }
 
-    if (config.ht_fill > 0 && config.ht_fill < 100) {
+    if (config.ht_fill > 0 && config.ht_fill < 200) {
       HT_TESTS_NUM_INSERTS =
           static_cast<double>(config.ht_size) * config.ht_fill * 0.01;
     } else {
@@ -631,12 +538,28 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
+  if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN) {
+    init_zipfian_dist(config.skew);
+  }
+
   if (config.mode == BQ_TESTS_YES_BQ) {
     this->test.qt.run_test(&config, this->n, this->npq);
   } else {
     this->spawn_shard_threads();
   }
 
+  // If we start to run casht, reset the num_inserts and no_prefetch
+  // to run cashtpp
+  if (config.run_both) {
+    PLOGI.printf("Running cashtpp now with the same configuration");
+    if ((config.ht_type == CASHTPP) && config.no_prefetch && (config.mode == ZIPFIAN)){
+      HT_TESTS_NUM_INSERTS = config.ht_size * config.ht_fill * 0.01;
+
+      config.no_prefetch = 0;
+
+      this->spawn_shard_threads();
+    }
+  }
   return 0;
 }
-}  // namespace kvstore
+}  // namespace kmercounter

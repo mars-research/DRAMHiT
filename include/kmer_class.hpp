@@ -95,5 +95,5 @@ size_t hash_to_cpu(Kmer &k, uint32_t threadIdx, uint32_t numCons) {
   // send_to_queue(queueNo, threadIdx, k);
 }
 
-}  // namespace kvstore
+}  // namespace kmercounter
 #endif /* _KMER_H_ */

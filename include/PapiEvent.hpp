@@ -65,7 +65,7 @@ class PapiEvent {
     return 0;
   }
 
-  int add_event(std::string& event_name, std::string& uncore_base) {
+  int add_event(const std::string& event_name, const std::string& uncore_base) {
     auto retval = 0;
     for (auto i = 0; i < this->num_events; i++) {
       std::ostringstream out;
@@ -96,9 +96,9 @@ class PapiEvent {
     return retval;
   }
 
-  void stop() {
+  std::uint64_t stop() {
     auto retval = 0;
-    auto sum = 0llu;
+    std::uint64_t sum{};
     // Stop PAPI
     for (auto i = 0; i < uncore_events.size(); i++) {
       retval |= PAPI_stop(this->event_set[i], &values[i]);
@@ -114,7 +114,8 @@ class PapiEvent {
            this->uncore_events[0].c_str(), sum,
            static_cast<float>(sum) / 1000000.0);
     PLOG_INFO.printf("--------------------------------------------");
+    return sum;
   }
 };
-}  // namespace kvstore
+}  // namespace kmercounter
 #endif  // __PAPIEVENT_HPP__

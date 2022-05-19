@@ -57,6 +57,25 @@ template <typename T> struct huge_page_allocator {
       printf("map failed %d\n", errno);
       perror("mmap");
       throw std::bad_alloc();
+    } else {
+      size_t len_split = alloc_sz >> 1;
+      void *addr_split = (char *)p + len_split;
+      unsigned long nodemask[4096] = {0};
+      auto current_node = numa_node_of_cpu(sched_getcpu());
+
+      nodemask[0] = 1 << (!current_node);
+
+      PLOGI.printf("Moving half the memory to node %d", !current_node);
+
+      long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
+          MPOL_MF_MOVE | MPOL_MF_STRICT);
+
+      PLOGI.printf("calling mbind with addr %p | len %zu | nodemask %p",
+            addr_split, len_split, nodemask);
+      if (ret < 0) {
+        perror("mbind");
+        PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+      }
     }
     return p;
   }
