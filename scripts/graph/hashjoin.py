@@ -43,7 +43,7 @@ if __name__ == '__main__':
   cycles = []
   test_type = 'CASHTPP'
   run_subprocess(f'mkdir -p {OUTPATH}/{test_type}')
-  kvstore_args = f'--num-threads=64 --mode=12 --ht-type=3 --numa-split=1 --ht-size=4096'
+  kvstore_args = f'--num-threads=64 --mode=12 --ht-type=3 --numa-split=1'
   for data_size in data_sizes:
     # Generate dataset
     print(f'Running size={data_size}')

@@ -37,6 +37,8 @@ target_link_libraries(dump_zipf_freq
 
 add_executable(generate_dataset generate_dataset.cpp)
 target_link_libraries(generate_dataset 
+  ht_lib 
+  absl::flat_hash_set
   absl::flags
   absl::flags_parse
 )

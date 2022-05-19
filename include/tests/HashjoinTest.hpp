@@ -13,8 +13,8 @@ class HashjoinTest {
  public:
   void part_join_partsupp(const Shard &sh, const Configuration &config,
                           BaseHashTable *ht, std::barrier<> *barrier);
-  void join_r_s(const Shard &sh, const Configuration &config,
-                    BaseHashTable *ht, std::barrier<std::function<void()>> *barrier);
+  void join_r_s(Shard *sh, const Configuration &config, BaseHashTable *ht,
+                std::barrier<std::function<void()>> *barrier);
 };
 
 }  // namespace kmercounter
