@@ -137,14 +137,14 @@ void HashjoinTest::part_join_partsupp(const Shard& sh,
 }
 
 // Only primary-foreign key join is supported.
-void HashjoinTest::join_r_s(const Shard& sh, const Configuration& config,
+void HashjoinTest::join_r_s(Shard* sh, const Configuration& config,
                             BaseHashTable* ht,
                             std::barrier<std::function<void()>>* barrier) {
-  input_reader::TwoColumnCsvPreloadReader t1("r.tbl", sh.shard_idx,
+  input_reader::TwoColumnCsvPreloadReader t1("r.tbl", sh->shard_idx,
                                              config.num_threads, "|");
-  input_reader::TwoColumnCsvPreloadReader t2("s.tbl", sh.shard_idx,
+  input_reader::TwoColumnCsvPreloadReader t2("s.tbl", sh->shard_idx,
                                              config.num_threads, "|");
-  PLOG_INFO << "Shard " << (int)sh.shard_idx << "/" << config.num_threads
+  PLOG_INFO << "Shard " << (int)sh->shard_idx << "/" << config.num_threads
             << " t1 " << t1.size() << " t2 " << t2.size();
 
   // Wait for preload to finish.
@@ -174,10 +174,8 @@ void HashjoinTest::join_r_s(const Shard& sh, const Configuration& config,
 
   {
     const auto duration = RDTSCP() - t1_start;
-    std::osyncstream(std::cerr)
-        << "Thread " << (int)sh.shard_idx << " takes " << duration
-        << " to insert " << t1.size() << ". Avg " << duration / t1.size()
-        << std::endl;
+    sh->stats->num_inserts = t1.size();
+    sh->stats->insertion_cycles = duration;
   }
 
   // Make sure insertions is finished before probing.
@@ -235,12 +233,20 @@ void HashjoinTest::join_r_s(const Shard& sh, const Configuration& config,
   } while (valuepairs.first);
 
   {
-    const auto duration = RDTSCP() - t2_start;
-    std::osyncstream(std::cerr)
-        << "Thread " << (int)sh.shard_idx << " takes " << duration
+    const auto t2_end = RDTSCP();
+    const auto duration = t2_end - t2_start;
+    const auto total_duration = t2_end - t1_start;
+
+    // Piggy back the total on find.
+    sh->stats->num_finds = num_output;
+    sh->stats->find_cycles = total_duration;
+
+    std::osyncstream(std::cout)
+        << "Thread " << (int)sh->shard_idx << " takes " << duration
         << " to join t2 with size " << t2.size() << ". Output " << num_output
-        << " rows. Average " << duration / std::max(1ul, num_output) << " cycles per output in probe phase."
-        << std::endl;
+        << " rows. Average " << duration / std::max(1ul, num_output)
+        << " cycles per probe, " << total_duration / std::max(1ul, num_output)
+        << " cycles per output." << std::endl;
   }
 }
 
