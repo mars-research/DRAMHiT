@@ -35,12 +35,17 @@ std::pair<Keys, Keys> gen_keys(const uint64_t num_keys, const uint ratio) {
   std::mt19937 gen{rd()};
 
   // Generate primary keys and shuffle them
-  kmercounter::zipf_distribution_apache dist(1ull<<63, 0.01);
-  absl::flat_hash_set<uint64_t> key_set;
-  while (key_set.size() < num_keys) {
-    key_set.insert(dist.sample());
+  // kmercounter::zipf_distribution_apache dist(1ull<<63, 0.01);
+  // absl::flat_hash_set<uint64_t> key_set;
+  // while (key_set.size() < num_keys) {
+  //   key_set.insert(dist.sample());
+  // }
+  // Keys keys(key_set.begin(), key_set.end());
+  Keys keys;
+  keys.reserve(num_keys);
+  for (uint64_t key = 0; key < num_keys; key++) {
+    keys.push_back(key);
   }
-  Keys keys(key_set.begin(), key_set.end());
   std::ranges::shuffle(keys, gen);
 
   // Generate primary keys and shuffle them
