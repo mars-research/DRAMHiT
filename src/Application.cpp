@@ -243,7 +243,7 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
       this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
       break;
     case HASHJOIN:
-      this->test.hj.join_r_s(*sh, config, kmer_ht, barrier);
+      this->test.hj.join_r_s(sh, config, kmer_ht, barrier);
     default:
       break;
   }
@@ -329,7 +329,10 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
-  std::function<void()> on_completetion = []() noexcept { PLOG_INFO << "Phase completed."; };
+  std::function<void()> on_completetion = []() noexcept {
+    // For debugging
+    // PLOG_INFO << "Phase completed."; 
+  };
   std::barrier barrier(config.num_threads, on_completetion);
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
