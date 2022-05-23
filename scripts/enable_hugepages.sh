@@ -1,26 +1,29 @@
 #!/usr/bin/env bash
 
+NUM_2MB_PAGES_PERNODE=2048
+NUM_1GB_PAGES_PERNODE=128
+
 # Enable 2MB pages
-echo always > /sys/kernel/mm/transparent_hugepage/enabled
-echo always > /sys/kernel/mm/transparent_hugepage/defrag
+echo always | sudo tee /sys/kernel/mm/transparent_hugepage/enabled &> /dev/null
+echo always | sudo tee /sys/kernel/mm/transparent_hugepage/defrag  &> /dev/null
 
-# Enable 1GB pages
+NODE_START=$(cat /sys/devices/system/node/online | cut -d'-' -f1)
+NODE_END=$(cat /sys/devices/system/node/online | cut -d'-' -f2)
+
 # https://www.kernel.org/doc/html/latest/admin-guide/mm/hugetlbpage.html
+for n in $(seq ${NODE_START} ${NODE_END}); do
+  echo "Reserving hugepages for node ${n}";
+  echo ${NUM_2MB_PAGES_PERNODE} | sudo tee "/sys/devices/system/node/node${n}/hugepages/hugepages-2048kB/nr_hugepages" &> /dev/null
+  echo ${NUM_1GB_PAGES_PERNODE} | sudo tee "/sys/devices/system/node/node${n}/hugepages/hugepages-1048576kB/nr_hugepages" &> /dev/null
+done
 
-# Dynamically reserve 1GB pages (40GBs on node0)
-echo 2048 > /sys/devices/system/node/node0/hugepages/hugepages-2048kB/nr_hugepages
-echo 128 > /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
-# Don't reserver hugepages for node1 if node1 doesn't exist(e.g., Github CI)
-if [ -d /sys/devices/system/node/node1 ]; then
-  echo 2048 > /sys/devices/system/node/node1/hugepages/hugepages-2048kB/nr_hugepages
-  echo 128 > /sys/devices/system/node/node1/hugepages/hugepages-1048576kB/nr_hugepages
+MOUNT_POINT="/mnt/huge"
+
+if [ ! -d ${MOUNT_POINT} ]; then
+  sudo mkdir -p ${MOUNT_POINT}
 fi
 
-if [ ! -d /mnt/huge ]; then
-	sudo mkdir -p /mnt/huge
-fi
-
-sudo mount -t hugetlbfs nodev /mnt/huge
+sudo mount -t hugetlbfs nodev ${MOUNT_POINT}
 
 USER=${SUDO_USER}
 
@@ -34,10 +37,11 @@ else
   GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
 fi
 
-echo ${USER}:${GROUP}
+echo "Chowning ${MOUNT_POINT} to ${USER}:${GROUP}"
 
 sudo chown -R ${USER}:${GROUP} /mnt/huge
 
 # Check how many pages are allocated
+echo "Reserved memory"
 echo "2MiB pages: $(cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages)"
 echo "1GiB pages: $(cat /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages)"

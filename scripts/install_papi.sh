@@ -2,7 +2,9 @@
 
 PROJ_ROOT=$(pwd)
 
-PAPI_SRC_DIR=./papi/src
+PARENT_PATH=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+
+PAPI_SRC_DIR=${PARENT_PATH}/../papi/src
 
 
 install_papi() {
