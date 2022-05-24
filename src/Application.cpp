@@ -25,6 +25,7 @@
 
 #ifdef WITH_PAPI_LIB
 #include "PapiEvent.hpp"
+#include "mem_bw_papi.hpp"
 #endif
 
 #ifdef WITH_VTUNE_LIB
@@ -39,6 +40,8 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew);
+
+void sync_complete(void);
 
 // default configuration
 const Configuration def = {
@@ -79,6 +82,28 @@ const Configuration def = {
 static uint64_t ready = 0;
 static std::atomic_uint num_entered{};
 
+#if defined(WITH_PAPI_LIB)
+static MemoryBwCounters *bw_counters;
+#endif
+extern bool stop_sync;
+
+void sync_complete(void) {
+#if defined(WITH_PAPI_LIB)
+  if (stop_sync) {
+    PLOGI.printf("Stopping counters");
+    bw_counters->stop();
+    bw_counters->compute_mem_bw();
+    stop_sync = false;
+  } else {
+    PLOGI.printf("Starting counters");
+    if (!bw_counters)
+      bw_counters = new MemoryBwCounters(2);
+    bw_counters->start();
+  }
+#endif
+  PLOGI.printf("Sync phase done!");
+}
+
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
 
@@ -106,7 +131,7 @@ void free_ht(BaseHashTable *kmer_ht) {
   delete kmer_ht;
 }
 
-void Application::shard_thread(int tid, bool mainthread, std::barrier<std::function<void()>>* barrier) {
+void Application::shard_thread(int tid, std::barrier<std::function<void()>>* barrier) {
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -160,7 +185,7 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
-      this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
+      this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads, barrier);
       break;
     case RW_RATIO:
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
@@ -191,7 +216,7 @@ done:
   return;
 }
 
-int Application::spawn_shard_threads() {
+int Application::spawn_shard_threads(auto sync_barrier) {
   cpu_set_t cpuset;
 
   this->shards = (Shard *)std::aligned_alloc(
@@ -242,11 +267,12 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
-  std::function<void()> on_completetion = []() noexcept {
+  std::function<void()> on_completion = []() noexcept {
     // For debugging
-    // PLOG_INFO << "Phase completed."; 
+    // PLOG_INFO << "Phase completed.";
   };
-  std::barrier barrier(config.num_threads, on_completetion);
+
+  std::barrier barrier(config.num_threads, on_completion);
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;
@@ -254,7 +280,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    auto _thread = std::thread(&Application::shard_thread, this, i, false, &barrier);
+    auto _thread = std::thread(&Application::shard_thread, this, i, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -275,7 +301,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    this->shard_thread(i, true, &barrier);
+    this->shard_thread(i, &barrier);
   }
 
   for (auto &th : this->threads) {
