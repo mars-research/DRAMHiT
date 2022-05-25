@@ -63,8 +63,8 @@ typedef enum {
   CASHTPP = 3,
 } ht_type_t;
 
-extern const char *run_mode_strings[];
-extern const char *ht_type_strings[];
+extern const char* run_mode_strings[];
+extern const char* ht_type_strings[];
 
 // Application configuration
 struct Configuration {
@@ -106,6 +106,8 @@ struct Configuration {
 
   // controls zipfian dist
   double skew;
+  // R/W ratio for associated tests (modes 12 and 8)
+  double pread;
   // used for kmer parsing from disk
   bool drop_caches;
   // enable/disable hw prefetchers (msr 0x1a4)
@@ -122,7 +124,7 @@ struct Configuration {
     printf("  numa_split %u\n", numa_split);
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
-    printf("  ht_size %lu (%llu GiB)\n", ht_size, ht_size/(1ull << 30));
+    printf("  ht_size %lu (%llu GiB)\n", ht_size, ht_size / (1ull << 30));
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
@@ -133,17 +135,30 @@ struct Configuration {
   }
 };
 
+struct OpTimings {
+  uint64_t duration;
+  uint64_t op_count;
+};
+
+inline OpTimings& operator+=(OpTimings& a, const OpTimings& b) {
+  a.duration += b.duration;
+  a.op_count += b.op_count;
+  return a;
+}
+
+inline auto cycles_per_op(const OpTimings& ops) {
+  return ops.duration / ops.op_count;
+}
+
 /* Thread stats */
 struct thread_stats {
-  uint64_t insertion_cycles;  // to be set by create_shards
-  uint64_t num_inserts;
-  uint64_t num_enqueues;
-  uint64_t find_cycles;
-  uint64_t num_finds;
+  OpTimings insertions;
+  OpTimings finds;
+  OpTimings enqueues;
+  OpTimings any;
   uint64_t ht_fill;
   uint64_t ht_capacity;
   uint32_t max_count;
-  uint64_t enqueue_cycles;
   // uint64_t total_threads; // TODO add this back
 #ifdef CALC_STATS
   uint64_t num_reprobes;
@@ -166,10 +181,10 @@ struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
   off64_t f_start;    // start byte into file
   off64_t f_end;      // end byte into file
-  thread_stats *stats;
-  Kmer_s *kmer_big_pool;
-  Kmer_s *kmer_small_pool;
-  Kmer_s *pool;
+  thread_stats* stats;
+  Kmer_s* kmer_big_pool;
+  Kmer_s* kmer_small_pool;
+  Kmer_s* pool;
 };
 
 // NEVER NEVER NEVER USE KEY OR ID 0
@@ -184,7 +199,7 @@ std::ostream& operator<<(std::ostream& os, const Keys& q);
 
 struct Values {
   uint64_t value;
-  uint64_t id; // for user to keep track of the transaction
+  uint64_t id;  // for user to keep track of the transaction
 };
 std::ostream& operator<<(std::ostream& os, const Values& q);
 
@@ -193,13 +208,8 @@ enum class QueueType {
   find_queue,
 };
 
-using ValuePairs = std::pair<uint32_t, Values *>;
-using KeyPairs = std::pair<uint32_t, Keys *>;
-
-struct OpTimings {
-  uint64_t duration;
-  uint64_t op_count;
-};
+using ValuePairs = std::pair<uint32_t, Values*>;
+using KeyPairs = std::pair<uint32_t, Keys*>;
 
 #endif  // __TYPES_HPP__
 

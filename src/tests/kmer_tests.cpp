@@ -49,8 +49,8 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
   const auto t_end = RDTSCP();
   const auto duration = t_end - t_start;
   PLOG_INFO << "inserted "<< inserted << " items in " << duration << " cycles. " << duration / std::max(1ul, inserted) << " cpo";
-  sh->stats->num_inserts = inserted;
-  sh->stats->insertion_cycles = duration;
+  sh->stats->insertions.op_count = inserted;
+  sh->stats->insertions.duration = duration;
   get_ht_stats(sh, kmer_ht);
   return {duration, inserted};
 }

@@ -59,6 +59,7 @@ add_executable(kvstore
     "src/tests/kmer_tests.cpp"
     "src/tests/hashjoin_test.cpp"
     "src/tests/synth_test.cpp"
+    "src/tests/rw_ratio.cpp"
     "src/misc_lib.cpp"
     "src/xorwow.cpp"
     "src/Application.cpp"

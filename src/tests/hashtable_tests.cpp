@@ -171,7 +171,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       }
 
       if (config.no_prefetch) {
-        auto ret = hashtable->find_noprefetch(&zipf_values->at(zipf_idx), collector);
+        auto ret =
+            hashtable->find_noprefetch(&zipf_values->at(zipf_idx), collector);
         if (ret)
           found++;
         else
@@ -233,7 +234,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
 #ifdef LATENCY_COLLECTION
   {
-    std::lock_guard lock {collector_lock};
+    std::lock_guard lock{collector_lock};
     if (step == 0) {
       collectors.resize(config.num_threads);
       step = 1;
@@ -260,12 +261,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
   }
 
-  shard->stats->insertion_cycles = insert_timings.duration;
-  shard->stats->num_inserts = insert_timings.op_count;
+  shard->stats->insertions = insert_timings;
 
 #ifdef LATENCY_COLLECTION
   {
-    std::lock_guard lock {collector_lock};
+    std::lock_guard lock{collector_lock};
     if (step == 1) {
       collectors.clear();
       collectors.resize(config.num_threads);
@@ -277,9 +277,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   sleep(1);
 
   const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx);
-
-  shard->stats->find_cycles = num_finds.duration;
-  shard->stats->num_finds = num_finds.op_count;
+  shard->stats->finds = num_finds;
 
   if (num_finds.op_count > 0) {
     PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
@@ -291,7 +289,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
 #ifdef LATENCY_COLLECTION
   {
-    std::lock_guard lock {collector_lock};
+    std::lock_guard lock{collector_lock};
     if (step == 2) {
       collectors.clear();
       step = 3;

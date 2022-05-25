@@ -1,8 +1,9 @@
-#include "tests/SynthTest.hpp"
+#include <plog/Log.h>
 
 #include <algorithm>
 #include <cstdint>
-#include <plog/Log.h>
+
+#include "tests/SynthTest.hpp"
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
 #endif
@@ -46,7 +47,7 @@ void papi_end_region(const char *name) {
   papi_check(PAPI_hl_region_end(name));
 #endif
 }
-} // namespace
+}  // namespace
 
 extern Configuration config;
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -75,7 +76,8 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   papi_start_region("synthetic_insertions");
   const auto t_start = RDTSC_START();
   for (auto j = 0u; j < config.insert_factor; j++) {
-    uint64_t count = std::max(static_cast<uint64_t>(1), HT_TESTS_NUM_INSERTS * start);
+    uint64_t count =
+        std::max(static_cast<uint64_t>(1), HT_TESTS_NUM_INSERTS * start);
     _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
       std::uint64_t value{};
@@ -108,9 +110,9 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       count++;
 #endif
     }
-    //PLOG_INFO.printf("inserted %lu items", inserted);
-    // flush the last batch explicitly
-    // printf("%s calling flush queue\n", __func__);
+    // PLOG_INFO.printf("inserted %lu items", inserted);
+    //  flush the last batch explicitly
+    //  printf("%s calling flush queue\n", __func__);
     if (!config.no_prefetch) {
       ktable->flush_insert_queue();
     }
@@ -155,7 +157,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   for (auto j = 0u; j < config.insert_factor; j++) {
     uint64_t count =
-      std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
+        std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
     _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
       std::uint64_t value{};
@@ -185,7 +187,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
           found += vp.first;
           vp.first = 0;
           k = 0;
-          //not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
+          // not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
         }
       }
     }
@@ -236,8 +238,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
            kmer_ht->num_soft_reprobes);
 #endif
   }
-  sh->stats->insertion_cycles = insert_times.duration;
-  sh->stats->num_inserts = insert_times.op_count;
+  sh->stats->insertions = insert_times;
 
   fipc_test_FAI(insert_done);
 
@@ -246,9 +247,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   }
 
   const auto find_times = synth_run_get(kmer_ht, sh->shard_idx);
-
-  sh->stats->find_cycles = find_times.duration;
-  sh->stats->num_finds = find_times.op_count;
+  sh->stats->finds = find_times;
 
   if (find_times.op_count > 0)
     PLOG_INFO.printf(
@@ -262,4 +261,4 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
-}
+}  // namespace kmercounter

@@ -84,6 +84,7 @@ const Configuration def = {
     .n_cons = 1,
     .num_nops = 0,
     .skew = 1.0,
+    .pread = 0.0,
     .drop_caches = true,
     .hwprefetchers = false,
     .no_prefetch = false,
