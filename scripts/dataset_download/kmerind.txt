@@ -4,4 +4,4 @@
 
 # Homosapien
 # https://www.ncbi.nlm.nih.gov/sra/SRX033191[accn]
-https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos1/sra-pub-run-1/SRR077487/SRR077487.2
+https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR077487/SRR077487
