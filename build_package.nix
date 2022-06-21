@@ -51,7 +51,7 @@ in stdenv.mkDerivation {
   installPhase = ''
     mkdir -p $out/bin
     cp kvstore $out/bin/
-    find auto-tests/ -executable -type f -exec cp {} $out/bin/ \;
+    find unittests/ -executable -type f -exec cp {} $out/bin/ \;
   '';
 }
 
