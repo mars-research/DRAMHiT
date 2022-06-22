@@ -22,4 +22,4 @@
 	branch = kvstore
 [submodule "lib/eth_hashjoin"]
 	path = lib/eth_hashjoin
-	url = git@github.com:mars-research/eth-hashjoin.git
+	url = git@github.com:mars-research/vldb13-eth-hashjoin.git
