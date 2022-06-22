@@ -60,8 +60,8 @@ class CASHashTable : public BaseHashTable {
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
-    printf("[INFO] Hashtable size: %lu\n", this->capacity);
-    printf("%s, data_length %lu\n", __func__, this->data_length);
+    printf("[INFO] Hashtable size: %" PRIu64 "\n", this->capacity);
+    printf("%s, data_length %" PRIu64 "\n", __func__, this->data_length);
   }
 
   ~CASHashTable() {
@@ -220,7 +220,7 @@ class CASHashTable : public BaseHashTable {
     KV *curr;
     bool found = false;
 
-    // printf("Thread %lu: Trying memcmp at: %lu\n", this->thread_id, idx);
+    // printf("Thread %" PRIu64 ": Trying memcmp at: %" PRIu64 "\n", this->thread_id, idx);
     for (auto i = 0u; i < this->capacity; i++) {
       idx = idx & (this->capacity - 1);
       curr = &this->hashtable[idx];
@@ -252,7 +252,7 @@ class CASHashTable : public BaseHashTable {
 
     // return empty_element if nothing is found
     if (!found) {
-      printf("key %llu not found at idx %llu | hash %llu\n", item->key, idx, hash);
+      printf("key %" PRIu64 " not found at idx %" PRIu64 " | hash %" PRIu64 "\n", item->key, idx, hash);
       curr = nullptr;
     }
 
@@ -351,7 +351,7 @@ class CASHashTable : public BaseHashTable {
     uint64_t retry;
     found = curr->find(q, &retry, vp);
 
-    // printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found=%ld, retry %ld\n",
+    // printf("%s, key = %" PRIu64 " | num_values %u, value %" PRIu64 " (id = %" PRIu64 ") | found=%ld, retry %ld\n",
     //          __func__, q->key, vp.first, vp.second[(vp.first - 1) %
     //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
     //                  % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
@@ -411,7 +411,7 @@ class CASHashTable : public BaseHashTable {
     KV *curr = &this->hashtable[idx];
 
     // hashtable_mutexes[pidx].lock();
-    // printf("Thread %lu, grabbing lock: %lu\n", this->thread_id, pidx);
+    // printf("Thread %" PRIu64 ", grabbing lock: %" PRIu64 "\n", this->thread_id, pidx);
     // Compare with empty element
     if (curr->is_empty()) {
       //std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
@@ -432,9 +432,9 @@ class CASHashTable : public BaseHashTable {
         return;
       }
       // hashtable_mutexes[pidx].unlock();
-      // printf("Thread %lu, released lock: %lu\n", this->thread_id,
+      // printf("Thread %" PRIu64 ", released lock: %" PRIu64 "\n", this->thread_id,
       // pidx);
-      // printf("%lu: %d | %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
+      // printf("%" PRIu64 ": %d | %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
       // If CAS fails, we need to see if someother thread has updated the same
       // <k,v> onto the position we were trying to insert. If so, we need to
       // update the value instead of inserting new. Just fall-through to check!

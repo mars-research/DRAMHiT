@@ -133,7 +133,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void prefetch(uint64_t i) {
     if (i > this->capacity) [[unlikely]] {
-      PLOG_ERROR.printf("%u > %lu\n", i, this->capacity);
+      PLOG_ERROR.printf("%u > %" PRIu64 "\n", i, this->capacity);
       std::terminate();
     }
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
@@ -164,7 +164,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void prefetch_read(uint64_t i) {
     if (i > this->capacity) [[unlikely]] {
-      PLOG_ERROR.printf("%u > %lu\n", i, this->capacity);
+      PLOG_ERROR.printf("%u > %" PRIu64 "\n", i, this->capacity);
       std::terminate();
     }
 
@@ -224,7 +224,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
                       this->insert_queue, this->find_queue);
-    PLOG_INFO.printf("Hashtable size: %lu | data_length %lu", this->capacity,
+    PLOG_INFO.printf("Hashtable size: %" PRIu64 " | data_length %" PRIu64 "", this->capacity,
                      this->data_length);
   }
 
@@ -437,7 +437,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void __insert_noprefetch_branched(const void *data, collector_type* collector) {
     KVQ *key_data = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
     uint64_t hash = 0;
-    uint64_t key = 0;
 
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
@@ -467,7 +466,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
 
         if (0) {
-          printf("inserted key %llu at idx %zu | hash %llu\n", key_data->key,
+          printf("inserted key %" PRIu64 " at idx %zu | hash %" PRIu64 "\n", key_data->key,
                  idx, hash);
         }
         break;
@@ -607,7 +606,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     uint64_t hash = this->hash((const char *)&item->key);
 
-    size_t idx = fastrange32(hash, this->capacity);
+    uint32_t idx = fastrange32(hash, this->capacity);
     KV *cur_ht = this->hashtable[item->part_id];
     KV *curr;
 
@@ -644,7 +643,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   exit:
     // return empty_element if nothing is found
     if (!found) {
-      printf("key %llu not found at idx %llu | hash %llu\n", item->key, idx,
+      printf("key %" PRIu64 " not found at idx %" PRIu32 " | hash %" PRIu64 "\n", item->key, idx,
              hash);
       curr = nullptr;
     }
@@ -727,8 +726,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t retry;
     found = curr->find(q, &retry, vp);
 
-    // printf("%s, key = %lu | found = %d\n", __func__, q->key, found);
-    //  printf("%s, key = %lu | num_values %u, value %lu (id = %lu) | found
+    // printf("%s, key = %" PRIu64 " | found = %d\n", __func__, q->key, found);
+    //  printf("%s, key = %" PRIu64 " | num_values %u, value %" PRIu64 " (id = %" PRIu64 ") | found
     //  =%ld, retry %ld\n",
     //         __func__, q->key, vp.first, vp.second[(vp.first - 1) %
     //                 PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
@@ -1264,7 +1263,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t idx = fastrange32(hash, this->capacity);  // modulo
 
     if (idx > this->capacity) {
-      PLOG_ERROR.printf("%u > %lu\n", idx, this->capacity);
+      PLOG_ERROR.printf("%u > %" PRIu64 "\n", idx, this->capacity);
       std::terminate();
     }
 

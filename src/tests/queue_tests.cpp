@@ -136,7 +136,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   uint8_t this_prod_id = sh->shard_idx;
   uint32_t cons_id = 0;
-  uint64_t transaction_id;
+  uint64_t transaction_id{};
   typename T::prod_queue_t *pqueues[n_cons];
   typename T::cons_queue_t *cqueues[n_cons];
 
@@ -192,8 +192,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   }
 
   PLOGI.printf(
-      "[prod:%u] started! Sending %lu messages to %d consumers | "
-      "key_start %lu key_end %lu",
+      "[prod:%u] started! Sending %" PRIu64 " messages to %d consumers | "
+      "key_start %" PRIu64 " key_end %" PRIu64 "",
       this_prod_id, num_messages, n_cons, key_start, key_start + num_messages);
 
   auto get_next_cons = [&](auto inc) {
@@ -221,7 +221,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
       k = zipf_values->at(zipf_idx);
-      //printf("zipf_values[%lu] = %lu\n", zipf_idx, k);
+      //printf("zipf_values[%" PRIu64 "] = %" PRIu64 "\n", zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
@@ -398,7 +398,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       }
       /*
       IF_PLOG(plog::verbose) {
-        PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %llu",
+        PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %" PRIu64 "",
                     prod_id, this_cons_id, k & ((1 << 31) - 1));
       }*/
       ++count;
@@ -450,7 +450,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
 #ifdef CALC_STATS
       /*if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
-        PLOG_INFO.printf("[cons:%u] transaction_id %lu deq_failures %lu",
+        PLOG_INFO.printf("[cons:%u] transaction_id %" PRIu64 " deq_failures %" PRIu64 "",
                          this_cons_id, transaction_id, q->num_deq_failures);
       }*/
 #endif
@@ -487,11 +487,11 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   }
 #endif
 
-  PLOG_INFO.printf("cons_id %d | inserted %lu elements", this_cons_id,
+  PLOG_INFO.printf("cons_id %d | inserted %" PRIu64 " elements", this_cons_id,
                    inserted);
   PLOG_INFO.printf(
-      "Quick Stats: Consumer %u finished, receiving %lu messages "
-      "(cycles per message %lu) prod_count %u | finished %u",
+      "Quick Stats: Consumer %u finished, receiving %" PRIu64 " messages "
+      "(cycles per message %" PRIu64 ") prod_count %u | finished %u",
       this_cons_id, transaction_id, (t_end - t_start) / transaction_id, n_prod,
       finished_producers);
 
@@ -578,7 +578,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   ValuePairs vp = std::make_pair(0, values);
 
-  PLOG_INFO.printf("Finder %u starting. key_start %lu | num_messages %lu", tid,
+  PLOG_INFO.printf("Finder %u starting. key_start %" PRIu64 " | num_messages %" PRIu64 "", tid,
                    key_start, num_messages);
 
   int partition;
@@ -632,7 +632,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         if (ret) found++;
         else {
           not_found++;
-          //printf("key %llu not found | zipf_idx %llu\n", k, zipf_idx - 1);
+          //printf("key %" PRIu64 " not found | zipf_idx %" PRIu64 "\n", k, zipf_idx - 1);
         }
       } else {
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
@@ -644,7 +644,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
           vp.first = 0;
-          //PLOGD.printf("tid %lu count %lu | found -> %lu | not_found -> %lu", tid,
+          //PLOGD.printf("tid %" PRIu64 " count %" PRIu64 " | found -> %" PRIu64 " | not_found -> %" PRIu64 "", tid,
           //    count, found, not_found);
         }
       }
@@ -652,7 +652,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 #ifdef CALC_STATS
       if (i % (num_messages / 10) == 0) {
         PLOG_INFO.printf(
-            "Finder %u, transaction_id %lu | (found %lu, not_found %lu)", tid, i,
+            "Finder %u, transaction_id %" PRIu64 " | (found %" PRIu64 ", not_found %" PRIu64 ")", tid, i,
             found, not_found);
       }
 #endif
@@ -667,7 +667,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   if (found >= 0) {
     PLOG_INFO.printf(
-        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu",
+        "thread %u | num_finds %" PRIu64 " (not_found %" PRIu64 ") | cycles per get: %" PRIu64 "",
         sh->shard_idx, found, not_found,
         found > 0 ? (t_end - t_start) / found : 0);
   }
@@ -761,7 +761,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
     PLOGV.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
-    PLOG_INFO.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
+    PLOG_INFO.printf("[%d] sh->insertion_cycles %" PRIu64 "", sh->shard_idx,
                      sh->stats->insertion_cycles);
 
     this->cons_threads.push_back(std::move(_thread));

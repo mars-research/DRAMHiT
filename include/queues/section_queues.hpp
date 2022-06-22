@@ -351,7 +351,7 @@ class SectionQueue {
       auto cq = &all_cqueues[c][p];
       auto pcq = &all_pc_queues[p][c];
 #ifdef CALC_STATS
-      printf("[%u][%u] enq spins %lu | numdequeue spins %lu | enqLocalPtr %p\n",
+      printf("[%u][%u] enq spins %" PRIu64 " | numdequeue spins %" PRIu64 " | enqLocalPtr %p\n",
             p, c, pcq->numEnqueueSpins, pcq->numDequeueSpins, cq->enqLocalPtr);
 #endif
     }

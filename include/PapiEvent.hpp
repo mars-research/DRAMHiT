@@ -110,7 +110,7 @@ class PapiEvent {
       sum += values[i];
     }
     PLOG_INFO.printf("--------------------------------------------");
-    PLOG_INFO.printf("TOTAL(cpu %d)  %s: %llu (%f)", this->cpu,
+    PLOG_INFO.printf("TOTAL(cpu %d)  %s: %" PRIu64 " (%f)", this->cpu,
            this->uncore_events[0].c_str(), sum,
            static_cast<float>(sum) / 1000000.0);
     PLOG_INFO.printf("--------------------------------------------");

@@ -149,7 +149,7 @@ class BQueueAligned {
         pq->batch_head = tmp_head;
       }
 
-      //printf("enqueuing at pq->head %u | val %lu\n", pq->head, value);
+      //printf("enqueuing at pq->head %u | val %" PRIu64 "\n", pq->head, value);
       pq->data[pq->head] = value;
       pq->head = pq->head + 1;
       if (pq->head >= this->queue_size) {
@@ -227,7 +227,7 @@ class BQueueAligned {
       }
 
       *value = cq->data[cq->tail];
-      //printf("dequeuing at cq->head %u | val %lu\n", cq->tail, *value);
+      //printf("dequeuing at cq->head %u | val %" PRIu64 "\n", cq->tail, *value);
       cq->data[cq->tail] = 0;
       cq->tail = cq->tail + 1;
       if (cq->tail >= this->queue_size) cq->tail = 0;

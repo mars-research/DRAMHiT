@@ -26,14 +26,14 @@ struct kmer {
   char data[KMER_DATA_LENGTH];
 };
 
-void papi_check(int code) {
 #ifdef ENABLE_HIGH_LEVEL_PAPI
+void papi_check(int code) {
   if (code != PAPI_OK) {
     PLOG_ERROR << "PAPI call failed with code " << code;
     std::terminate();
   }
-#endif
 }
+#endif
 
 void papi_start_region(const char *name) {
 #ifdef ENABLE_HIGH_LEVEL_PAPI
@@ -62,7 +62,6 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   xorwow_init(&_xw_state);
   init_state = _xw_state;
 
-  __attribute__((aligned(64))) struct kmer kmers[HT_TESTS_BATCH_LENGTH] = {0};
   __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
   std::string evt_name(ht_type_strings[config.ht_type]);
@@ -108,7 +107,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       count++;
 #endif
     }
-    //PLOG_INFO.printf("inserted %lu items", inserted);
+    //PLOG_INFO.printf("inserted %" PRIu64 " items", inserted);
     // flush the last batch explicitly
     // printf("%s calling flush queue\n", __func__);
     if (!config.no_prefetch) {
@@ -131,7 +130,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
 
 OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
   auto k = 0;
-  uint64_t found = 0, not_found = 0;
+  uint64_t found = 0;
 
   _xw_state = init_state;
 
@@ -209,7 +208,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   duration = t_end - t_start;
 
-  PLOGI.printf("found %lu", found);
+  PLOGI.printf("found %" PRIu64 "", found);
   return {duration, found};
 }
 
@@ -221,18 +220,18 @@ static uint64_t insert_done;
 void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   OpTimings insert_times{};
 
-  PLOG_INFO.printf("Synth test run: thread %u, ht size: %lu, insertions: %lu",
+  PLOG_INFO.printf("Synth test run: thread %u, ht size: %" PRIu64 ", insertions: %" PRIu64 "",
                    sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   for (uint32_t i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_times = synth_run(kmer_ht, sh->shard_idx);
     PLOG_INFO.printf(
         "Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu",
+        "insertion:%" PRIu64 "",
         sh->shard_idx, i, insert_times.duration / insert_times.op_count);
 
 #ifdef CALC_STATS
-    printf(" Reprobes %lu soft_reprobes %lu\n", kmer_ht->num_reprobes,
+    printf(" Reprobes %" PRIu64 " soft_reprobes %" PRIu64 "\n", kmer_ht->num_reprobes,
            kmer_ht->num_soft_reprobes);
 #endif
   }
@@ -250,11 +249,12 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->find_cycles = find_times.duration;
   sh->stats->num_finds = find_times.op_count;
 
-  if (find_times.op_count > 0)
+  if (find_times.op_count > 0) {
     PLOG_INFO.printf(
-        "thread %u | num_finds %lu | rdtsc_diff %lu | cycles per get: %lu",
+        "thread %u | num_finds %" PRIu64 " | rdtsc_diff %" PRIu64 " | cycles per get: %" PRIu64 "",
         sh->shard_idx, find_times.op_count, find_times.duration,
         find_times.duration / find_times.op_count);
+  }
 
 #ifndef WITH_PAPI_LIB
   get_ht_stats(sh, kmer_ht);

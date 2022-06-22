@@ -222,7 +222,7 @@ int Application::spawn_shard_threads() {
       (config.mode != PREFETCH) && (config.mode != CACHE_MISS) &&
       (config.mode != HASHJOIN)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
-    PLOG_INFO.printf("File size: %lu bytes", config.in_file_sz);
+    PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
     if (seg_sz < 4096) {
       seg_sz = 4096;
@@ -234,12 +234,12 @@ int Application::spawn_shard_threads() {
   if (config.ht_type == CASHTPP) {
     auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
     HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
-    PLOGV.printf("Total inserts %llu | num_threads %u | scaled inserts per thread %llu",
+    PLOGV.printf("Total inserts %" PRIu64 " | num_threads %u | scaled inserts per thread %" PRIu64 "",
           orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
 
   if (config.insert_factor > 1) {
-    PLOGI.printf("Insert factor %lu, Effective num insertions %lu", config.insert_factor,
+    PLOGI.printf("Insert factor %" PRIu64 ", Effective num insertions %" PRIu64 "", config.insert_factor,
         HT_TESTS_NUM_INSERTS * config.insert_factor);
   }
 
@@ -452,14 +452,14 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.mode == DRY_RUN) {
       PLOG_INFO.printf("Mode : Dry run ...");
       PLOG_INFO.printf(
-          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          "base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "", config.kmer_create_data_base,
           config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == READ_FROM_DISK) {
       PLOG_INFO.printf("Mode : Reading kmers from disk ...");
     } else if (config.mode == WRITE_TO_DISK) {
       PLOG_INFO.printf("Mode : Writing kmers to disk ...");
       PLOG_INFO.printf(
-          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          "base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "", config.kmer_create_data_base,
           config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == FASTQ_WITH_INSERT) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT");

@@ -126,7 +126,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
       PLOGI.printf("opened file %s", mmap_path);
     }
 
-    PLOGI.printf("requesting to mmap %lu bytes", alloc_sz);
+    PLOGI.printf("requesting to mmap %" PRIu64 " bytes", alloc_sz);
     addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
         MAP_FLAGS, fd, 0);
     if (addr == MAP_FAILED) {

@@ -2,6 +2,7 @@
 #define __TYPES_HPP__
 
 #include <atomic>
+#include <cinttypes>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -135,7 +136,7 @@ struct Configuration {
     printf("  numa_split %u\n", numa_split);
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
-    printf("  ht_size %lu (%llu GiB)\n", ht_size, ht_size/(1ull << 30));
+    printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size, ht_size/(1ul << 30));
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
@@ -144,8 +145,8 @@ struct Configuration {
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
     printf("  relation_r %s\n", relation_r.c_str());
     printf("  relation_s %s\n", relation_r.c_str());
-    printf("  relation_r_size %ull\n", relation_r_size);
-    printf("  relation_s_size %ull\n", relation_s_size);
+    printf("  relation_r_size %" PRIu64 "\n", relation_r_size);
+    printf("  relation_s_size %" PRIu64 "\n", relation_s_size);
     printf("  delimitor %s\n", delimitor.c_str());
     printf("}\n");
   }

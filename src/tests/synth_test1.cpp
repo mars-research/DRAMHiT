@@ -67,7 +67,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 
   if (find_times.op_count > 0)
     PLOG_INFO.printf(
-        "thread %u | num_finds %lu | rdtsc_diff %lu | cycles per get: %lu",
+        "thread %u | num_finds %" PRIu64 " | rdtsc_diff %" PRIu64 " | cycles per get: %" PRIu64 "",
         sh->shard_idx, find_times.op_count, find_times.duration,
         find_times.duration / find_times.op_count);
 
