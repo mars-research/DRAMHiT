@@ -171,7 +171,7 @@ TEST_P(AggregationTest, SINGLE_INSERT_TEST) {
 // lengths between find/insert
 // NOTE: also noted a very strange use of the value field
 TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
-  std::array<Keys, 2> keys{Keys{1, 128}, Keys{0xdeadbeef, 256}};
+  std::array<Keys, 2> keys{Keys{key: 1, id: 128}, Keys{key: 0xdeadbeef, id: 256}};
   KeyPairs keypairs{2, keys.data()};
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();
