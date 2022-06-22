@@ -10,7 +10,7 @@
 namespace kmercounter {
 namespace input_reader {
 template<class T>
-class StringViewReader : public InputReader<T> {
+class StringViewReader : public SizedInputReader<T> {
 public:
     StringViewReader(std::basic_string_view<T> data) : data_(data), iter_(data_.begin(), data_.end()) {}
 
@@ -18,7 +18,7 @@ public:
         return iter_.next(data);
     }
 
-    size_t size() {
+    size_t size() override {
         return data_.size();
     }
 

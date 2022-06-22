@@ -189,6 +189,11 @@ struct Values {
 };
 std::ostream& operator<<(std::ostream& os, const Values& q);
 
+struct KeyValuePair {
+  uint64_t key;
+  uint64_t value;
+};
+
 enum class QueueType {
   insert_queue,
   find_queue,

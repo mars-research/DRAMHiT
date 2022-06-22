@@ -19,6 +19,7 @@
 #include "hashtables/base_kht.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "input_reader/csv.hpp"
+#include "input_reader/eth_rel_gen.hpp"
 #include "plog/Log.h"
 #include "sync.h"
 #include "tests/HashjoinTest.hpp"
@@ -244,6 +245,111 @@ void HashjoinTest::join_r_s(Shard* sh, const Configuration& config,
     std::osyncstream(std::cout)
         << "Thread " << (int)sh->shard_idx << " takes " << duration
         << " to join t2 with size " << t2.size() << ". Output " << num_output
+        << " rows. Average " << duration / std::max(1ul, num_output)
+        << " cycles per probe, " << total_duration / std::max(1ul, num_output)
+        << " cycles per output." << std::endl;
+  }
+}
+
+/// Perform hashjoin on relation `t1` and `t2`.
+/// `t1` is the primary key relation and `t2` is the foreign key relation.
+void hashjoin(Shard* sh, const Configuration& config,
+                            input_reader::SizedInputReader<KeyValuePair>* t1,
+                            input_reader::SizedInputReader<KeyValuePair>* t2,
+                            BaseHashTable* ht,
+                            std::barrier<std::function<void()>>* barrier) {
+  // Build hashtable from t1.
+  uint64_t k = 0;
+  __attribute__((aligned(64))) Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  const auto t1_start = RDTSC_START();
+  for (KeyValuePair kv; t1->next(&kv);) {
+    keys[k].key = kv.key;
+    keys[k].value = kv.value;
+    // PLOG_INFO << "Left " << keys[k] << keys[k].id;
+    if (++k == HT_TESTS_BATCH_LENGTH) {
+      KeyPairs kp = std::make_pair(k, keys);
+      ht->insert_batch(kp);
+      k = 0;
+    }
+  }
+  if (k != 0) {
+    KeyPairs kp = std::make_pair(k, keys);
+    ht->insert_batch(kp);
+    k = 0;
+  }
+  ht->flush_insert_queue();
+
+  {
+    const auto duration = RDTSCP() - t1_start;
+    sh->stats->num_inserts = t1->size();
+    sh->stats->insertion_cycles = duration;
+  }
+
+  // Make sure insertions is finished before probing.
+  barrier->arrive_and_wait();
+
+  // Helper function for checking the result of the batch finds.
+  // std::ofstream output_file(std::to_string((int)sh->shard_idx) +
+  // "_join.tbl");
+  const auto t2_start = RDTSC_START();
+  uint64_t num_output = 0;
+  auto join_rows = [&num_output](const ValuePairs& vp) {
+    // PLOG_DEBUG << "Found " << vp.first << " keys";
+    for (uint32_t i = 0; i < vp.first; i++) {
+      const Values& value = vp.second[i];
+      // PLOG_INFO << "We found " << value;
+      // const uint64_t left_row = value.value;
+      // const uint64_t right_row = value.id;
+      // PLOG_INFO << "Left row " << left_row;
+      // PLOG_INFO << "Right row " << right_row;
+      num_output++;
+      // output_file << left_row << "|" << right_row << "\n";
+    }
+  };
+
+  // Probe.
+  __attribute__((aligned(64))) Values values[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  for (KeyValuePair kv; t2->next(&kv);) {
+    keys[k].key = kv.key;
+    keys[k].id = kv.value;
+    // keys[k].part_id = (uint64_t)row.c_str();
+    // PLOG_INFO << "Right " << keys[k];
+    if (++k == HT_TESTS_BATCH_LENGTH) {
+      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, keys);
+      ValuePairs valuepairs{0, values};
+      ht->find_batch(kp, valuepairs);
+      join_rows(valuepairs);
+      k = 0;
+    }
+  }
+  if (k != 0) {
+    KeyPairs kp = std::make_pair(k, keys);
+    ValuePairs valuepairs{0, values};
+    ht->find_batch(kp, valuepairs);
+    k = 0;
+    join_rows(valuepairs);
+  }
+
+  // Flush the rest of the queue.
+  ValuePairs valuepairs{0, values};
+  do {
+    valuepairs.first = 0;
+    ht->flush_find_queue(valuepairs);
+    join_rows(valuepairs);
+  } while (valuepairs.first);
+
+  {
+    const auto t2_end = RDTSCP();
+    const auto duration = t2_end - t2_start;
+    const auto total_duration = t2_end - t1_start;
+
+    // Piggy back the total on find.
+    sh->stats->num_finds = num_output;
+    sh->stats->find_cycles = total_duration;
+
+    std::osyncstream(std::cout)
+        << "Thread " << (int)sh->shard_idx << " takes " << duration
+        << " to join t2 with size " << t2->size() << ". Output " << num_output
         << " rows. Average " << duration / std::max(1ul, num_output)
         << " cycles per probe, " << total_duration / std::max(1ul, num_output)
         << " cycles per output." << std::endl;

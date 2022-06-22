@@ -94,8 +94,8 @@ class KMerReader : public InputReaderU64 {
 
   std::unique_ptr<InputReader<Input>> lines_;
   Input current_line_;
-  Input::iterator current_line_iter_;
-  Input::iterator current_line_end_;
+  typename Input::iterator current_line_iter_;
+  typename Input::iterator current_line_end_;
   DNAKMer<K> kmer_;
   bool eof_;
 };

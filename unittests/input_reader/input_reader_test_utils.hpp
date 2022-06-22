@@ -11,7 +11,7 @@ namespace input_reader {
 
 /// Consumes the reader and return the size of it.
 // TODO: add constrains that looks like `requires std::is_base_of_v<InputReader<T>, InputReader_t>`
-template<typename InputReader_t, typename T = InputReader_t::value_type>
+template<typename InputReader_t, typename T = typename InputReader_t::value_type>
 size_t reader_size(std::unique_ptr<InputReader_t> reader) {
   size_t size = 0;
   T tmp;

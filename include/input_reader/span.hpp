@@ -9,7 +9,7 @@
 namespace kmercounter {
 namespace input_reader {
 template <class T>
-class SpanReader : public InputReader<T> {
+class SpanReader : public SizedInputReader<T> {
  public:
  SpanReader()
       : SpanReader(nullptr, 0) {}
@@ -20,7 +20,7 @@ class SpanReader : public InputReader<T> {
 
   bool next(T* data) override { return iter_.next(data); }
 
-  size_t size() { return data_.size(); }
+  size_t size() override { return data_.size(); }
 
  private:
   std::span<T> data_;
