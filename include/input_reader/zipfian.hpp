@@ -13,7 +13,7 @@ namespace input_reader {
 /// Generate numbers in zipfian distribution.
 /// The numbers are pre-generated and buffered in the
 /// constructor.
-class ZipfianGenerator : public InputReader<uint64_t> {
+class ZipfianGenerator : public InputReaderU64 {
  public:
   ZipfianGenerator(double skew, uint64_t keyrange_width, unsigned int seed)
       : distribution_(zipf_distribution{skew, keyrange_width, seed}) {}
@@ -27,7 +27,7 @@ class ZipfianGenerator : public InputReader<uint64_t> {
   zipf_distribution distribution_;
 };
 
-class ApacheZipfianGenerator : public InputReader<uint64_t> {
+class ApacheZipfianGenerator : public InputReaderU64 {
  public:
   ApacheZipfianGenerator(double skew, uint64_t keyrange_width)
       : distribution_(keyrange_width, skew) {}
