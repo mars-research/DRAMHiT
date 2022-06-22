@@ -90,6 +90,11 @@ const Configuration def = {
     .hwprefetchers = false,
     .no_prefetch = false,
     .run_both = false,
+    .relation_r = "r.tbl",
+    .relation_s = "s.tbl",
+    .relation_r_size = 128000000,
+    .relation_s_size = 128000000,
+    .delimitor = "|",
 };  // TODO enum
 
 // for synchronization of threads
@@ -401,7 +406,17 @@ int Application::process(int argc, char *argv[]) {
         ("no-prefetch",
         po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))
         ("run-both",
-        po::value<bool>(&config.run_both)->default_value(def.run_both));
+        po::value<bool>(&config.run_both)->default_value(def.run_both))
+        ("relation_r",
+        po::value(&config.relation_r)->default_value(def.relation_r), "Path to relation R.")
+        ("relation_s",
+        po::value(&config.relation_s)->default_value(def.relation_s), "Path to relation S.")
+        ("relation_r_size",
+        po::value(&config.relation_r_size)->default_value(def.relation_r_size), "Number of elements in relation R. Only used when the relations are generated.")
+        ("relation_s_size",
+        po::value(&config.relation_s_size)->default_value(def.relation_s_size), "Number of elements in relation S. Only used when the relations are generated.")
+        ("delimitor",
+        po::value(&config.delimitor)->default_value(def.delimitor), "CSV delimitor for relation files.");
 
     papi_init();
 

@@ -117,6 +117,18 @@ struct Configuration {
   // Run both casht/cashtpp
   bool run_both;
 
+  // Hashjoin specific configs.
+  // Path to relation R.
+  std::string relation_r;
+  // Path to relation S.
+  std::string relation_s;
+  // Number of elements in relation R. Only used when the relations are generated.
+  uint64_t relation_r_size;
+  // Number of elements in relation S. Only used when the relations are generated.
+  uint64_t relation_s_size;
+  // CSV delimitor for relation files.
+  std::string delimitor;
+
   void dump_configuration() {
     printf("Run configuration{\n");
     printf("  num_threads %u\n", this->num_threads);
@@ -130,6 +142,11 @@ struct Configuration {
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
+    printf("  relation_r %s\n", relation_r.c_str());
+    printf("  relation_s %s\n", relation_r.c_str());
+    printf("  relation_r_size %ull\n", relation_r_size);
+    printf("  relation_s_size %ull\n", relation_s_size);
+    printf("  delimitor %s\n", delimitor.c_str());
     printf("}\n");
   }
 };
