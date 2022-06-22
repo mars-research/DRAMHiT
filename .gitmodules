@@ -12,7 +12,7 @@
 	url = https://github.com/wangyi-fudan/wyhash.git
 [submodule "lib/cityhash"]
 	path = lib/cityhash
-	url = https://github.com/google/cityhash.git
+	url = git@github.com:mars-research/cityhash.git
 [submodule "plog"]
 	path = lib/plog
 	url = https://github.com/SergiusTheBest/plog.git
