@@ -23,3 +23,6 @@
 	path = tools/msr-safe
 	url = git@github.com:mars-research/msr-safe.git
 	branch = kvstore
+[submodule "lib/eth_hashjoin"]
+	path = lib/eth_hashjoin
+	url = git@github.com:mars-research/eth-hashjoin.git
