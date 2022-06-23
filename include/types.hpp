@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cinttypes>
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -224,6 +225,9 @@ struct OpTimings {
   uint64_t duration;
   uint64_t op_count;
 };
+
+// Can be use for, let's say, cleanup functions.
+using VoidFn = std::function<void()>;
 
 #endif  // __TYPES_HPP__
 

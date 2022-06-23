@@ -52,6 +52,7 @@ target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone)
 
 # Build all the source files for the executable.
 add_executable(kvstore
+    "src/logging.cpp"
     "src/tests/queue_tests.cpp"
     "src/tests/hashtable_tests.cpp"
     "src/tests/prefetch_tests.cpp"

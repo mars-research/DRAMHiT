@@ -184,7 +184,7 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
       this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
       break;
     case HASHJOIN:
-      this->test.hj.join_r_s(sh, config, kmer_ht, barrier);
+      this->test.hj.join_relations_generated(sh, config, kmer_ht, barrier);
     default:
       break;
   }

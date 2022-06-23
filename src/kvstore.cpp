@@ -1,5 +1,5 @@
 #include "Application.hpp"
-#include "logger.h"
+#include "logging.hpp"
 
 using namespace kmercounter;
 

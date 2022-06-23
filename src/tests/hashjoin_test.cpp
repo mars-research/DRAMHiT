@@ -131,26 +131,27 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 }
 }  // namespace
 
-/// Join two tables and use the pointers as the values in the hashtable.
-/// Only primary-foreign key join is supported.
-[[deprecated(
-    "We don't really need benchmarks for joining non-two-column ")]] void
-HashjoinTest::part_join_partsupp(const Shard& sh, const Configuration& config,
-                                 BaseHashTable* ht, std::barrier<>* barrier) {
-  input_reader::PartitionedCsvReader t1(config.relation_r, sh.shard_idx,
-                                        config.num_threads, "|");
-  input_reader::PartitionedCsvReader t2(config.relation_s, sh.shard_idx,
-                                        config.num_threads, "|");
-  PLOG_INFO << "Shard " << (int)sh.shard_idx << "/" << config.num_threads
-            << " t1 " << t1.size() << " t2 " << t2.size();
+void HashjoinTest::join_relations_generated(Shard* sh,
+                                            const Configuration& config,
+                                            BaseHashTable* ht,
+                                            std::barrier<VoidFn>* barrier) {
+  // TODO: use paritioned generator
+  input_reader::EthRelationGenerator t1(DEFAULT_R_SEED, config.relation_r_size,
+                                        config.num_threads);
+  input_reader::EthRelationGenerator t2(DEFAULT_S_SEED, config.relation_r_size,
+                                        config.num_threads);
 
-  // TODO: write an adapter then call `hashjoin`.
+  // Wait for all readers finish initializing.
+  barrier->arrive_and_wait();
+
+  // Run hashjoin
+  hashjoin(sh, &t1, &t2, ht, barrier);
 }
 
-/// Load and join two tables from filesystem.
-void HashjoinTest::join_r_s(Shard* sh, const Configuration& config,
-                            BaseHashTable* ht,
-                            std::barrier<std::function<void()>>* barrier) {
+void HashjoinTest::join_relations_from_files(Shard* sh,
+                                             const Configuration& config,
+                                             BaseHashTable* ht,
+                                             std::barrier<VoidFn>* barrier) {
   input_reader::KeyValueCsvPreloadReader t1(config.relation_r, sh->shard_idx,
                                             config.num_threads, "|");
   input_reader::KeyValueCsvPreloadReader t2(config.relation_s, sh->shard_idx,

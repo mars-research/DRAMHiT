@@ -2,7 +2,7 @@
 #include <absl/flags/parse.h>
 #include <gtest/gtest.h>
 
-#include "logger.h"
+#include "logging.hpp"
 
 ABSL_FLAG(uint64_t, hashtable_size, 1ull << 11, "size of hashtable.");
 ABSL_FLAG(uint64_t, test_size, 1ull << 10,
