@@ -1,8 +1,8 @@
 #include "utils/circular_buffer.hpp"
 
-#include <cstdint>
-
 #include <gtest/gtest.h>
+
+#include <cstdint>
 
 namespace kmercounter {
 namespace {
@@ -106,7 +106,8 @@ void cross_check_for_size() {
     cbm.push(i);
     cb.copy_to(buffer);
     cbm.copy_to(bufferm);
-    EXPECT_EQ(buffer, bufferm) << "Cross check failed; size=" << size << "; i=" << i;
+    EXPECT_EQ(buffer, bufferm)
+        << "Cross check failed; size=" << size << "; i=" << i;
   }
 }
 
@@ -150,6 +151,5 @@ TEST(DNAKmer, PushTest) {
   }
 }
 
-
-} // namespace
-} // namespace kmercounter
+}  // namespace
+}  // namespace kmercounter

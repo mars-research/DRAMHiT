@@ -1363,7 +1363,7 @@ class LynxQueue {
 
 #if 0
       if (!((uint64_t)pq->push_index & ((1 << 13) - 1)))
-      printf("pq->push_index 0x%lx | push_reg 0x%lx | value %lu\n",
+      printf("pq->push_index 0x%lx | push_reg 0x%lx | value %" PRIu64 "\n",
             pq->push_index, pq->free_push_reg, value);
 #endif
       pq->push(value);
@@ -1379,7 +1379,7 @@ class LynxQueue {
       *value = cq->pop_long();
 #if 0
       if (!((uint64_t)cq->pop_index & ((1 << 12) - 1)))
-        printf("cq->pop_index 0x%lx | pop_reg 0x%lx | ea 0x%lx | value %lu\n",
+        printf("cq->pop_index 0x%lx | pop_reg 0x%lx | ea 0x%lx | value %" PRIu64 "\n",
                 cq->pop_index, cq->free_pop_reg,
                 (uint64_t)cq->pop_index + cq->free_pop_reg,
                 *value);

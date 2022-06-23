@@ -1,9 +1,9 @@
 #include "input_reader/string_view.hpp"
 
+#include <gtest/gtest.h>
+
 #include <string_view>
 #include <vector>
-
-#include <gtest/gtest.h>
 
 #include "input_reader_test_utils.hpp"
 
@@ -39,7 +39,6 @@ TEST(StringViewReaderTest, SimpleTest) {
   }
 }
 
-
-} // namespace
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace
+}  // namespace input_reader
+}  // namespace kmercounter

@@ -49,7 +49,7 @@ template <typename T> struct huge_page_allocator {
     auto MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB
         | (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
 
-    PLOGI.printf("n = %lu raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n, raw_alloc_sz, alloc_sz, is_1gb);
+    PLOGI.printf("n = %" PRIu64 " raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n, raw_alloc_sz, alloc_sz, is_1gb);
     auto p = static_cast<T *>(mmap( nullptr, alloc_sz, PROT_READ | PROT_WRITE,
           MAP_FLAGS, -1, 0));
 

@@ -1,6 +1,7 @@
 #ifndef __APPLICATION_HPP__
 #define __APPLICATION_HPP__
 
+#include <functional>
 #include <thread>
 
 #include "MsrHandler.hpp"
@@ -24,7 +25,7 @@ class Application {
   int process(int argc, char **argv);
   int spawn_shard_threads_bqueues();
   int spawn_shard_threads();
-  void shard_thread(int tid, bool mainthread);
+  void shard_thread(int tid, bool mainthread, std::barrier<std::function<void()>>* barrier);
 
   Application() {
     this->n = new Numa();

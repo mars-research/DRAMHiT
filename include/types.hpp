@@ -2,6 +2,7 @@
 #define __TYPES_HPP__
 
 #include <atomic>
+#include <cinttypes>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -54,7 +55,8 @@ typedef enum {
   BQ_TESTS_NO_BQ = 9,
   CACHE_MISS = 10,
   ZIPFIAN = 11,
-  RW_RATIO = 12
+  RW_RATIO = 12,
+  HASHJOIN = 13,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -119,19 +121,36 @@ struct Configuration {
   // Run both casht/cashtpp
   bool run_both;
 
+  // Hashjoin specific configs.
+  // Path to relation R.
+  std::string relation_r;
+  // Path to relation S.
+  std::string relation_s;
+  // Number of elements in relation R. Only used when the relations are generated.
+  uint64_t relation_r_size;
+  // Number of elements in relation S. Only used when the relations are generated.
+  uint64_t relation_s_size;
+  // CSV delimitor for relation files.
+  std::string delimitor;
+
   void dump_configuration() {
     printf("Run configuration{\n");
     printf("  num_threads %u\n", this->num_threads);
     printf("  numa_split %u\n", numa_split);
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
-    printf("  ht_size %lu (%llu GiB)\n", ht_size, ht_size / (1ull << 30));
+    printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size, ht_size/(1ul << 30));
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n", skew);
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
+    printf("  relation_r %s\n", relation_r.c_str());
+    printf("  relation_s %s\n", relation_r.c_str());
+    printf("  relation_r_size %" PRIu64 "\n", relation_r_size);
+    printf("  relation_s_size %" PRIu64 "\n", relation_s_size);
+    printf("  delimitor %s\n", delimitor.c_str());
     printf("}\n");
   }
 };
@@ -203,6 +222,11 @@ struct Values {
   uint64_t id;  // for user to keep track of the transaction
 };
 std::ostream& operator<<(std::ostream& os, const Values& q);
+
+struct KeyValuePair {
+  uint64_t key;
+  uint64_t value;
+};
 
 enum class QueueType {
   insert_queue,

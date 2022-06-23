@@ -189,7 +189,7 @@ int init_queue(queue_section_t *q) {
 int enqueue(queue_section_t *q, data_t value) {
   *q->enqPtr = value;
   //q->numEnqueues++;
-  PLOG_DEBUG.printf("enqueueing %lu at %p", value, q->enqPtr);
+  PLOG_DEBUG.printf("enqueueing %" PRIu64 " at %p", value, q->enqPtr);
   q->enqPtr += 1;
   if (q->enqPtr > (q->data + QUEUE_SIZE)) {
     q->enqPtr = q->data;

@@ -49,7 +49,8 @@ void most_freq_kmer(const std::string_view input_file, const size_t limit,
     // Count the KMers
     std::cout << "Reading from " << input_file << " with K=" << K << std::endl;
     kmercounter::input_reader::FastqKMerReader<MAX_K> reader(input_file);
-    absl::flat_hash_map<uint64_t, uint64_t> counter(1 << 30); // 1GB initial size.
+    absl::flat_hash_map<uint64_t, uint64_t> counter(
+        1 << 30);  // 1GB initial size.
     uint64_t kmer{};
     while (reader.next(&kmer)) {
       counter[kmer]++;
@@ -63,7 +64,6 @@ void most_freq_kmer(const std::string_view input_file, const size_t limit,
     return pq;
   };
   auto pq = build_pq();
-  
 
   // Output the top `limit` KMers.
   for (size_t i = 0; i < limit && !pq.empty(); i++) {

@@ -1,5 +1,6 @@
-/// readfq library adaptor.
-/// Recommend using fastq.hpp instead.
+/// readfq library adaptor for https://github.com/lh3/readfq.
+/// Deprecated.
+/// Use fastq.hpp instead.
 
 #ifndef INPUT_READER_FASTX_HPP
 #define INPUT_READER_FASTX_HPP

@@ -256,7 +256,7 @@ target_link_libraries(kvstore PRIVATE boost_program_options Threads::Threads)
 
 if (BUILD_TESTING)
     enable_testing()
-    add_subdirectory(auto-tests)
+    add_subdirectory(unittests)
 endif()
 
 if (BUILD_EXAMPLE)

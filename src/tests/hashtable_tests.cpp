@@ -77,7 +77,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
 
-  PLOGV.printf("id: %u | key_start %lu", id, key_start);
+  PLOGV.printf("id: %u | key_start %" PRIu64 "", id, key_start);
 
   for (auto j = 0u; j < config.insert_factor; j++) {
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -90,7 +90,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
       items[key].key = items[key].value = value;
       items[key].id = n;
 
-      // printf("zipf_values[%d] = %llu\n", zipf_idx, value);
+      // printf("zipf_values[%d] = %" PRIu64 "\n", zipf_idx, value);
       zipf_idx++;
       if (config.no_prefetch) {
         hashtable->insert_noprefetch(&items[key], collector);
@@ -213,7 +213,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   if (found >= 0) {
     PLOG_INFO.printf(
-        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu", id,
+        "thread %u | num_finds %" PRIu64 " (not_found %" PRIu64 ") | cycles per get: %" PRIu64 "", id,
         found, not_found, found > 0 ? duration / found : 0);
   }
 
@@ -230,9 +230,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   static_assert(HT_TESTS_MAX_STRIDE - 1 ==
                 1);  // Otherwise timing logic is wrong
 
-  static auto step = 0;
-
 #ifdef LATENCY_COLLECTION
+  static auto step = 0;
   {
     std::lock_guard lock{collector_lock};
     if (step == 0) {
@@ -243,7 +242,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
 
   PLOG_INFO.printf(
-      "Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
+      "Zipfian test run: thread %u, ht size: %" PRIu64 ", insertions: %" PRIu64 ", skew "
       "%f",
       shard->shard_idx, config.ht_size, HT_TESTS_NUM_INSERTS, skew);
 
@@ -252,11 +251,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
         do_zipfian_inserts(hashtable, skew, count, shard->shard_idx);
     PLOG_INFO.printf(
         "Quick stats: thread %u, Batch size: %d, cycles per "
-        "insertion:%lu",
+        "insertion:%" PRIu64 "",
         shard->shard_idx, i, insert_timings.duration / insert_timings.op_count);
 
 #ifdef CALC_STATS
-    PLOG_INFO.printf("Reprobes %lu soft_reprobes %lu", hashtable->num_reprobes,
+    PLOG_INFO.printf("Reprobes %" PRIu64 " soft_reprobes %" PRIu64 "", hashtable->num_reprobes,
                      hashtable->num_soft_reprobes);
 #endif
   }
@@ -280,7 +279,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   shard->stats->finds = num_finds;
 
   if (num_finds.op_count > 0) {
-    PLOG_INFO.printf("thread %u | num_finds %lu | cycles per get: %lu",
+    PLOG_INFO.printf("thread %u | num_finds %" PRIu64 " | cycles per get: %" PRIu64 "",
                      shard->shard_idx, num_finds.op_count,
                      num_finds.duration / num_finds.op_count);
   }

@@ -76,7 +76,7 @@ Run all tests.
 ctest --test-dir=build
 ```
 
-Run individual test binary.
+Run individual test binary. For example, the hashmap test:
 ```
-./build/auto-tests/hashmap_test
+./build/unittests/hashmap_test
 ```

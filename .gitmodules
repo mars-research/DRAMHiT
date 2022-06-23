@@ -12,10 +12,7 @@
 	url = https://github.com/wangyi-fudan/wyhash.git
 [submodule "lib/cityhash"]
 	path = lib/cityhash
-	url = https://github.com/google/cityhash.git
-[submodule "lib/readfq"]
-	path = lib/readfq
-	url = https://github.com/lh3/readfq.git
+	url = git@github.com:mars-research/cityhash.git
 [submodule "plog"]
 	path = lib/plog
 	url = https://github.com/SergiusTheBest/plog.git
@@ -23,3 +20,6 @@
 	path = tools/msr-safe
 	url = git@github.com:mars-research/msr-safe.git
 	branch = kvstore
+[submodule "lib/eth_hashjoin"]
+	path = lib/eth_hashjoin
+	url = git@github.com:mars-research/vldb13-eth-hashjoin.git

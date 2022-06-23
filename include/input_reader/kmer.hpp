@@ -11,8 +11,8 @@
 namespace kmercounter {
 namespace input_reader {
 /// Generate KMer from a sequence.
-template <size_t K, class Input=std::string>
-class KMerReader : public InputReader<uint64_t> {
+template <size_t K, class Input = std::string>
+class KMerReader : public InputReaderU64 {
  public:
   KMerReader(std::unique_ptr<InputReader<Input>> lines)
       : lines_(std::move(lines)), eof_(false) {
@@ -94,8 +94,8 @@ class KMerReader : public InputReader<uint64_t> {
 
   std::unique_ptr<InputReader<Input>> lines_;
   Input current_line_;
-  Input::iterator current_line_iter_;
-  Input::iterator current_line_end_;
+  typename Input::iterator current_line_iter_;
+  typename Input::iterator current_line_end_;
   DNAKMer<K> kmer_;
   bool eof_;
 };

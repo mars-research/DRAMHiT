@@ -13,7 +13,7 @@ namespace input_reader {
 /// This is good for preloading the dataset into memory
 /// before running experiments.
 template <typename T>
-class Reservoir : public InputReader<T> {
+class Reservoir : public SizedInputReader<T> {
  public:
   Reservoir(std::unique_ptr<InputReader<T>> reader) : reader_(reservoir_) {
     for (T data; reader->next(&data);) {
@@ -22,13 +22,9 @@ class Reservoir : public InputReader<T> {
     reader_ = VecReader<T>(reservoir_);
   }
 
-  bool next(T *output) override {
-    return reader_.next(output);
-  }
+  bool next(T *output) override { return reader_.next(output); }
 
-  size_t size() {
-    return reservoir_.size();
-  }
+  size_t size() override { return reservoir_.size(); }
 
  private:
   std::vector<T> reservoir_;

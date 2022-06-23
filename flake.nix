@@ -15,17 +15,17 @@
       cxxStandard = "17";
     };
     in rec {
+      defaultPackage = packages.kvstore;
+      packages.kvstore = pkgs.callPackage ./build_package.nix {
+        # override any parameters here
+        cmakeFlags = [];
+      };
       devShells.prod = pkgs.mkShell {
+        inputsFrom = [
+          packages.kvstore
+        ];
         buildInputs = with pkgs; [
           msr-tools
-        ];
-        propagatedBuildInputs = with pkgs; [
-          abseil-cpp-17
-          boost
-          capstone
-          numactl
-          zlib
-          gtest
         ];
         NIX_CFLAGS_COMPILE = "-march=native";
       };
@@ -51,6 +51,12 @@
           linuxPackages.perf
           clang-tools
           act
+
+          # Python packages for evals plotting.
+          python310
+          python310Packages.numpy
+          python310Packages.scipy
+          python310Packages.matplotlib
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
       };

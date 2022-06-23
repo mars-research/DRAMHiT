@@ -30,7 +30,7 @@ uint64_t PrefetchTest::prefetch_test_run(
   auto sum = 0;
   [[maybe_unused]] auto k = 0;
 
-  printf("NUM inserts %lu\n", HT_TESTS_NUM_INSERTS);
+  printf("NUM inserts %" PRIu64 "\n", HT_TESTS_NUM_INSERTS);
 
   // seed2 = seed;
 
@@ -42,7 +42,7 @@ uint64_t PrefetchTest::prefetch_test_run(
     // k = rand(&seed2);
     k = xorwow(&xw_state2);
 
-    // printf("p: %lu\n", k);
+    // printf("p: %" PRIu64 "\n", k);
     ktable->prefetch(k);
   }
 #endif  // XORWOW_SCAN
@@ -72,7 +72,7 @@ uint64_t PrefetchTest::prefetch_test_run(
 
     k = xorwow(&xw_state);
 
-    // printf("t: %lu\n", k);
+    // printf("t: %" PRIu64 "\n", k);
     ktable->touch(k);
 #endif
 
@@ -85,7 +85,7 @@ uint64_t PrefetchTest::prefetch_test_run(
 #ifdef XORWOW_SCAN
     // k = rand(&seed2);
     k = xorwow(&xw_state2);
-    // printf("p: %lu\n", k);
+    // printf("p: %" PRIu64 "\n", k);
     ktable->prefetch(k);
 #endif
     count++;
@@ -98,7 +98,7 @@ void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("[INFO] Prefetch test run: thread %u, ht size:%lu, insertions:%lu\n",
+  printf("[INFO] Prefetch test run: thread %u, ht size:%" PRIu64 ", insertions:%" PRIu64 "\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
 #ifdef XORWOW_SCAN
@@ -112,8 +112,8 @@ void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
       (PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue> *)kmer_ht);
   t_end = RDTSCP();
   printf(
-      "[INFO] Quick stats: thread %u, Prefetch stride: %lu, cycles per "
-      "insertion:%lu\n",
+      "[INFO] Quick stats: thread %u, Prefetch stride: %" PRIu64 ", cycles per "
+      "insertion:%" PRIu64 "\n",
       sh->shard_idx, PREFETCH_STRIDE, (t_end - t_start) / num_inserts);
   //}
 

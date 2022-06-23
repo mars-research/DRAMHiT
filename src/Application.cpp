@@ -10,6 +10,7 @@
 #include <cmath>
 #include <ctime>
 #include <fstream>
+#include <functional>
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
@@ -42,7 +43,9 @@ const char *run_mode_strings[] = {"",
                                   "BQ_TESTS_NO_BQ",
                                   "CACHE_MISS",
                                   "ZIPFIAN",
-                                  "RW_RATIO"};
+                                  "RW_RATIO",
+                                  "HASHJOIN",
+                                  };
 
 const char *ht_type_strings[] = {
     "",
@@ -88,6 +91,11 @@ const Configuration def = {
     .hwprefetchers = false,
     .no_prefetch = false,
     .run_both = false,
+    .relation_r = "r.tbl",
+    .relation_s = "s.tbl",
+    .relation_r_size = 128000000,
+    .relation_s_size = 128000000,
+    .delimitor = "|",
 };  // TODO enum
 
 // for synchronization of threads
@@ -121,7 +129,7 @@ void free_ht(BaseHashTable *kmer_ht) {
   delete kmer_ht;
 }
 
-void Application::shard_thread(int tid, bool mainthread) {
+void Application::shard_thread(int tid, bool mainthread, std::barrier<std::function<void()>>* barrier) {
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -139,6 +147,7 @@ void Application::shard_thread(int tid, bool mainthread) {
     case SYNTH:
     case RW_RATIO:
     case ZIPFIAN:
+    case HASHJOIN:
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
@@ -180,6 +189,8 @@ void Application::shard_thread(int tid, bool mainthread) {
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
       this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
       break;
+    case HASHJOIN:
+      this->test.hj.join_r_s(sh, config, kmer_ht, barrier);
     default:
       break;
   }
@@ -215,9 +226,9 @@ int Application::spawn_shard_threads() {
 
   if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
       (config.mode != PREFETCH) && (config.mode != CACHE_MISS) &&
-      (config.mode != RW_RATIO)) {
+      (config.mode != RW_RATIO) && (config.mode != HASHJOIN)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
-    PLOG_INFO.printf("File size: %lu bytes", config.in_file_sz);
+    PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
     if (seg_sz < 4096) {
       seg_sz = 4096;
@@ -229,15 +240,13 @@ int Application::spawn_shard_threads() {
   if (config.ht_type == CASHTPP) {
     auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
     HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
-    PLOGV.printf(
-        "Total inserts %llu | num_threads %u | scaled inserts per thread %llu",
-        orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
+    PLOGV.printf("Total inserts %" PRIu64 " | num_threads %u | scaled inserts per thread %" PRIu64 "",
+          orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
 
   if (config.insert_factor > 1) {
-    PLOGI.printf("Insert factor %lu, Effective num insertions %lu",
-                 config.insert_factor,
-                 HT_TESTS_NUM_INSERTS * config.insert_factor);
+    PLOGI.printf("Insert factor %" PRIu64 ", Effective num insertions %" PRIu64 "", config.insert_factor,
+        HT_TESTS_NUM_INSERTS * config.insert_factor);
   }
 
   /*   TODO don't spawn threads if f_start >= in_file_sz
@@ -256,6 +265,11 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
+  std::function<void()> on_completetion = []() noexcept {
+    // For debugging
+    // PLOG_INFO << "Phase completed."; 
+  };
+  std::barrier barrier(config.num_threads, on_completetion);
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;
@@ -263,7 +277,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    auto _thread = std::thread(&Application::shard_thread, this, i, false);
+    auto _thread = std::thread(&Application::shard_thread, this, i, false, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -284,7 +298,7 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    this->shard_thread(i, true);
+    this->shard_thread(i, true, &barrier);
   }
 
   for (auto &th : this->threads) {
@@ -326,11 +340,13 @@ int Application::process(int argc, char *argv[]) {
         "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
         "zipfian)\n"
         "10: Cache Miss test\n"
-        "11: Zipfian non-bqueue test"
-        "12: RW-ratio test")("base",
-                             po::value<uint64_t>(&config.kmer_create_data_base)
-                                 ->default_value(def.kmer_create_data_base),
-                             "Number of base K-mers")(
+        "11: Zipfian non-bqueue test\n"
+        "12: RW-ratio test\n"
+        "13: Hashjoin")(
+        "base",
+        po::value<uint64_t>(&config.kmer_create_data_base)
+            ->default_value(def.kmer_create_data_base),
+        "Number of base K-mers")(
         "mult",
         po::value<uint32_t>(&config.kmer_create_data_mult)
             ->default_value(def.kmer_create_data_mult),
@@ -398,7 +414,17 @@ int Application::process(int argc, char *argv[]) {
         "run-both",
         po::value<bool>(&config.run_both)->default_value(def.run_both))(
         "p-read",
-        po::value<double>(&config.pread)->default_value(def.pread));
+        po::value<double>(&config.pread)->default_value(def.pread))
+        ("relation_r",
+        po::value(&config.relation_r)->default_value(def.relation_r), "Path to relation R.")
+        ("relation_s",
+        po::value(&config.relation_s)->default_value(def.relation_s), "Path to relation S.")
+        ("relation_r_size",
+        po::value(&config.relation_r_size)->default_value(def.relation_r_size), "Number of elements in relation R. Only used when the relations are generated.")
+        ("relation_s_size",
+        po::value(&config.relation_s_size)->default_value(def.relation_s_size), "Number of elements in relation S. Only used when the relations are generated.")
+        ("delimitor",
+        po::value(&config.delimitor)->default_value(def.delimitor), "CSV delimitor for relation files.");
 
     papi_init();
 
@@ -434,14 +460,14 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.mode == DRY_RUN) {
       PLOG_INFO.printf("Mode : Dry run ...");
       PLOG_INFO.printf(
-          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          "base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "", config.kmer_create_data_base,
           config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == READ_FROM_DISK) {
       PLOG_INFO.printf("Mode : Reading kmers from disk ...");
     } else if (config.mode == WRITE_TO_DISK) {
       PLOG_INFO.printf("Mode : Writing kmers to disk ...");
       PLOG_INFO.printf(
-          "base: %lu, mult: %u, uniq: %lu", config.kmer_create_data_base,
+          "base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "", config.kmer_create_data_base,
           config.kmer_create_data_mult, config.kmer_create_data_uniq);
     } else if (config.mode == FASTQ_WITH_INSERT) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT");
