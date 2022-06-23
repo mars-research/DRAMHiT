@@ -2,16 +2,15 @@
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
 
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/bind.hpp>
 #include <fstream>
 #include <iostream>
 #include <queue>
 #include <random>
 #include <string>
 #include <vector>
-
-#include <boost/asio/thread_pool.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/bind.hpp>
 
 #include "fastrange.h"
 #include "hasher.hpp"
@@ -35,8 +34,7 @@ std::vector<std::string> default_Ks() {
 // This function will recursively decrease the `MAX_K` until it finds the right
 // K.
 template <size_t MAX_K>
-void num_uniq_kmer(const std::string_view input_file,
-                    const size_t K) {
+void num_uniq_kmer(const std::string_view input_file, const size_t K) {
   // Sanity check
   if (K > MAX_K || MAX_K <= 0) {
     std::cerr << "Invalid K: " << K << ";, MAX_K: " << MAX_K << std::endl;
@@ -46,12 +44,10 @@ void num_uniq_kmer(const std::string_view input_file,
     return num_uniq_kmer<MAX_K - 1>(input_file, K);
   }
 
-
   // Count the KMers
   std::cout << "Reading from " << input_file << " with K=" << K << std::endl;
   kmercounter::input_reader::FastqKMerReader<MAX_K> reader(input_file);
-  absl::flat_hash_set<uint64_t> counter(
-      1 << 30);  // 1GB initial size.
+  absl::flat_hash_set<uint64_t> counter(1 << 30);  // 1GB initial size.
   uint64_t kmer{};
   while (reader.next(&kmer)) {
     counter.insert(kmer);
@@ -62,8 +58,7 @@ void num_uniq_kmer(const std::string_view input_file,
 }
 
 template <>
-void num_uniq_kmer<0>(const std::string_view input_file,
-                       const size_t K) {
+void num_uniq_kmer<0>(const std::string_view input_file, const size_t K) {
   std::cerr << "Invalid K: " << K << ";, MAX_K: " << 0 << std::endl;
   throw -1;
 }

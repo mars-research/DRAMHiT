@@ -11,7 +11,7 @@
 namespace kmercounter {
 namespace input_reader {
 /// Generate KMer from a sequence.
-template <size_t K, class Input=std::string>
+template <size_t K, class Input = std::string>
 class KMerReader : public InputReaderU64 {
  public:
   KMerReader(std::unique_ptr<InputReader<Input>> lines)

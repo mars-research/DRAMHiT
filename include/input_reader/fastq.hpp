@@ -118,9 +118,7 @@ class FastqKMerReader : InputReaderU64 {
   FastqKMerReader(Args&&... args)
       : reader_(std::make_unique<FastqReader>(std::forward<Args>(args)...)) {}
 
-  bool next(uint64_t* data) override {
-    return reader_.next(data);
-  }
+  bool next(uint64_t* data) override { return reader_.next(data); }
 
  private:
   KMerReader<K, std::string_view> reader_;
@@ -137,9 +135,7 @@ class FastqKMerPreloadReader : InputReaderU64 {
             std::make_unique<Adaptor<std::string_view, std::string>>(
                 std::make_unique<FastqReader>(std::forward<Args>(args)...)))) {}
 
-  bool next(uint64_t* data) override {
-    return reader_.next(data);
-  }
+  bool next(uint64_t* data) override { return reader_.next(data); }
 
  private:
   KMerReader<K> reader_;

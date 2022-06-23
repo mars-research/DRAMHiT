@@ -115,7 +115,7 @@ class FileReader : public InputReader<std::string_view> {
 
   uint64_t part_id() { return part_id_; }
 
-private:
+ private:
   /// Helper constructor that sets the buffer for file I/O.
   FileReader(std::shared_ptr<std::ifstream> input_file, uint64_t part_id,
              uint64_t num_parts, find_bound_t find_bound = find_next_line)
@@ -131,7 +131,8 @@ private:
         part_id_(part_id),
         num_parts_(num_parts),
         buffer_(4096) {
-    PLOG_FATAL_IF(part_id >= num_parts) << "part_id(" << part_id << " ) >= num_parts(" << num_parts << ")";
+    PLOG_FATAL_IF(part_id >= num_parts)
+        << "part_id(" << part_id << " ) >= num_parts(" << num_parts << ")";
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the
     // parameter passing.

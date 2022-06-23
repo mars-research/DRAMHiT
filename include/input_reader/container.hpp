@@ -10,7 +10,8 @@ namespace kmercounter {
 namespace input_reader {
 /// Produce the values within the iterators [begin, end).
 template <class ForwardIterator,
-          typename T = typename std::iterator_traits<ForwardIterator>::value_type>
+          typename T =
+              typename std::iterator_traits<ForwardIterator>::value_type>
 class RangeReader : public SizedInputReader<T> {
  public:
   RangeReader(ForwardIterator begin, ForwardIterator end)
@@ -23,10 +24,8 @@ class RangeReader : public SizedInputReader<T> {
     *data = *(curr_++);
     return true;
   }
-  
-  size_t size() override {
-    return size_;
-  }
+
+  size_t size() override { return size_; }
 
  private:
   ForwardIterator curr_;

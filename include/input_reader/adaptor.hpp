@@ -11,8 +11,9 @@ namespace input_reader {
 // Convert one InputReader to another.
 template <class From, class To>
 class Adaptor : public InputReader<To> {
-public:
-  Adaptor(std::unique_ptr<InputReader<From>> reader) : reader_(std::move(reader)) {}
+ public:
+  Adaptor(std::unique_ptr<InputReader<From>> reader)
+      : reader_(std::move(reader)) {}
 
   bool next(To *data) override {
     From tmp;
@@ -23,7 +24,7 @@ public:
     return true;
   }
 
-private:
+ private:
   std::unique_ptr<InputReader<From>> reader_;
 };
 }  // namespace input_reader

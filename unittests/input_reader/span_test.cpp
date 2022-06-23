@@ -1,8 +1,8 @@
 #include "input_reader/span.hpp"
 
-#include <vector>
-
 #include <gtest/gtest.h>
+
+#include <vector>
 
 #include "input_reader_test_utils.hpp"
 
@@ -35,7 +35,6 @@ TEST(StringViewReaderTest, SimpleTest) {
   }
 }
 
-
-} // namespace
-} // namespace input_reader
-} // namespace kmercounter
+}  // namespace
+}  // namespace input_reader
+}  // namespace kmercounter

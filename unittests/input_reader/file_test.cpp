@@ -44,8 +44,7 @@ line 4 is me)";
   {
     std::unique_ptr<std::istream> file =
         std::make_unique<std::istringstream>(data);
-    auto reader =
-        std::make_unique<FileReader>(std::move(file), 0, 1);
+    auto reader = std::make_unique<FileReader>(std::move(file), 0, 1);
     std::string_view str;
     EXPECT_TRUE(reader->next(&str));
     EXPECT_EQ("line 1", str);
@@ -74,8 +73,8 @@ TEST(FileTest, PartitionTest) {
           irange(num_parts) | transformed([&csv, num_parts](uint64_t part_id) {
             std::unique_ptr<std::istream> file =
                 std::make_unique<std::istringstream>(csv);
-            auto reader = std::make_unique<FileReader>(
-                std::move(file), part_id, num_parts);
+            auto reader = std::make_unique<FileReader>(std::move(file), part_id,
+                                                       num_parts);
             return reader;
           });
 

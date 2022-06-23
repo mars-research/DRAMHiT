@@ -58,7 +58,7 @@ class AggregationTest : public ::testing::TestWithParam<const char*> {
 TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
   const auto size = absl::GetFlag(FLAGS_test_size);
   ASSERT_EQ(size % HT_TESTS_BATCH_LENGTH, 0)
-                << "Test size is assumed to be a multiple of batch size";
+      << "Test size is assumed to be a multiple of batch size";
 
   static_assert(HT_TESTS_FIND_BATCH_LENGTH == HT_TESTS_BATCH_LENGTH,
                 "Test logic assumes these batch sizes are equal");
@@ -171,7 +171,8 @@ TEST_P(AggregationTest, SINGLE_INSERT_TEST) {
 // lengths between find/insert
 // NOTE: also noted a very strange use of the value field
 TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
-  std::array<Keys, 2> keys{Keys{key: 1, id: 128}, Keys{key: 0xdeadbeef, id: 256}};
+  std::array<Keys, 2> keys{Keys{key : 1, id : 128},
+                           Keys{key : 0xdeadbeef, id : 256}};
   KeyPairs keypairs{2, keys.data()};
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();

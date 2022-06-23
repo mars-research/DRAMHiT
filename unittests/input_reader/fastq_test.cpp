@@ -50,7 +50,8 @@ NNNNNNNNNNNN
 +
 EFFDEFFFFFFF
 )";
-const char ONE_SEQ[] = R"(@SRR077487.2.1 HWUSI-EAS635_105240777:5:1:943:17901 length=200
+const char ONE_SEQ[] =
+    R"(@SRR077487.2.1 HWUSI-EAS635_105240777:5:1:943:17901 length=200
 NAGGAGAAAAAAGAGGCAATCAGAAAAGGGCATGGTTTGACTNNNTTTGAATGTGGTTTCGTTGGCAGCAAATGTGTCTTCACTTTTTAATGAAAAAGTCAGATACTTTGTCACCAGGCAGAGGGCAATATCCTGTCTGTTATGACAAATGCTAATTGACAGCTCCCCCACAGGAAGTCGTCTGTCCTGGTGTGGGGGGG
 +SRR077487.2.1 HWUSI-EAS635_105240777:5:1:943:17901 length=200
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!!!%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@D?GGG=EGGBGDDB@:D:GB<EEEGD:@8>EEEDA7BB36B?:=A?+;>=:7>7B3D>,?3?=BB<DAADD8;+?%%%%%%%%%%%%%%%%%%%%%%%%
@@ -76,7 +77,8 @@ GATTAATCTTTGGACCACCACANCACNGCCANNNNNNNNTAGATAAAANNNANTTGGATTGAANAGGACTGAATTACTCA
 +
 A?:A>@D@DDC?C=A-?;9A;>!7>?!?###!!!!!!!!#########!!!#!##########!###################!#####!!#!#!#!#!!
 )";
-const char HOMO_FIVE_SEQS[] = R"(@SRR077487.2.1 HWUSI-EAS635_105240777:5:1:943:17901 length=200
+const char HOMO_FIVE_SEQS[] =
+    R"(@SRR077487.2.1 HWUSI-EAS635_105240777:5:1:943:17901 length=200
 NAGGAGAAAAAAGAGGCAATCAGAAAAGGGCATGGTTTGACTNNNTTTGAATGTGGTTTCGTTGGCAGCAAATGTGTCTTCACTTTTTAATGAAAAAGTCAGATACTTTGTCACCAGGCAGAGGGCAATATCCTGTCTGTTATGACAAATGCTAATTGACAGCTCCCCCACAGGAAGTCGTCTGTCCTGGTGTGGGGGGG
 +SRR077487.2.1 HWUSI-EAS635_105240777:5:1:943:17901 length=200
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!!!%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@D?GGG=EGGBGDDB@:D:GB<EEEGD:@8>EEEDA7BB36B?:=A?+;>=:7>7B3D>,?3?=BB<DAADD8;+?%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,8 +145,8 @@ TEST(FastqReaderTest, MultiParition) {
           irange(num_parts) | transformed([&seqs, num_parts](uint64_t part_id) {
             std::unique_ptr<std::istream> file =
                 std::make_unique<std::istringstream>(seqs);
-            auto reader = std::make_unique<FastqReader>(
-                std::move(file), part_id, num_parts);
+            auto reader = std::make_unique<FastqReader>(std::move(file),
+                                                        part_id, num_parts);
             return reader;
           });
 
@@ -173,7 +175,7 @@ TEST(FastqKmerReaderTest, SinglePartitionTest) {
   {
     constexpr size_t K = 4;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(SMALL_SEQ);
+        std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerReader<K>>(std::move(input));
     uint64_t kmer;
     // AGGAGGTAA
@@ -196,14 +198,16 @@ TEST(FastqKmerReaderTest, SinglePartitionTest) {
   {
     constexpr size_t K = 8;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(SMALL_SEQ);
+        std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerReader<K>>(std::move(input));
     uint64_t kmer;
     // AGGAGGTAA
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::string({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}),
+              DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::string({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), DNAKMer<K>::decode(kmer));
+    EXPECT_EQ(std::string({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}),
+              DNAKMer<K>::decode(kmer));
     EXPECT_FALSE(reader->next(&kmer));
   }
 }
@@ -213,7 +217,7 @@ TEST(FastqKMerPreloadReader, SinglePartitionTest) {
   {
     constexpr size_t K = 4;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(SMALL_SEQ);
+        std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
     uint64_t kmer;
     // AGGAGGTAA
@@ -236,14 +240,16 @@ TEST(FastqKMerPreloadReader, SinglePartitionTest) {
   {
     constexpr size_t K = 8;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(SMALL_SEQ);
+        std::make_unique<std::istringstream>(SMALL_SEQ);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
     uint64_t kmer;
     // AGGAGGTAA
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::string({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}), DNAKMer<K>::decode(kmer));
+    EXPECT_EQ(std::string({'A', 'G', 'G', 'A', 'G', 'G', 'T', 'A'}),
+              DNAKMer<K>::decode(kmer));
     EXPECT_TRUE(reader->next(&kmer));
-    EXPECT_EQ(std::string({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}), DNAKMer<K>::decode(kmer));
+    EXPECT_EQ(std::string({'G', 'G', 'A', 'G', 'G', 'T', 'A', 'A'}),
+              DNAKMer<K>::decode(kmer));
     EXPECT_FALSE(reader->next(&kmer));
   }
 }
@@ -253,7 +259,7 @@ TEST(FastqKMerPreloadReader, ParseNTest) {
   {
     constexpr size_t K = 4;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(SMALL_SEQ_N);
+        std::make_unique<std::istringstream>(SMALL_SEQ_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
     uint64_t kmer;
     // AGGNNAGGTANA
@@ -268,7 +274,7 @@ TEST(FastqKMerPreloadReader, ParseNTest) {
   {
     constexpr size_t K = 8;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(SMALL_SEQ_N);
+        std::make_unique<std::istringstream>(SMALL_SEQ_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
     uint64_t kmer;
     // AGGNNAGGTANA
@@ -281,7 +287,7 @@ TEST(FastqKMerPreloadReader, MultiseqParseNTest) {
   {
     constexpr size_t K = 4;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(FIVE_SEQS_N);
+        std::make_unique<std::istringstream>(FIVE_SEQS_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
     uint64_t kmer;
     ASSERT_TRUE(reader->next(&kmer));
@@ -299,7 +305,7 @@ TEST(FastqKMerPreloadReader, MultiseqParseNTest) {
   {
     constexpr size_t K = 8;
     std::unique_ptr<std::istream> input =
-          std::make_unique<std::istringstream>(FIVE_SEQS_N);
+        std::make_unique<std::istringstream>(FIVE_SEQS_N);
     auto reader = std::make_unique<FastqKMerPreloadReader<K>>(std::move(input));
     uint64_t kmer;
     EXPECT_FALSE(reader->next(&kmer));

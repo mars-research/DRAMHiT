@@ -20,7 +20,7 @@ namespace input_reader {
 class KeyValueCsvReader : public InputReader<KeyValuePair> {
  public:
   KeyValueCsvReader(std::string_view filename, uint64_t part_id,
-                     uint64_t num_parts, std::string_view delimiter = ",")
+                    uint64_t num_parts, std::string_view delimiter = ",")
       : file_(filename, part_id, num_parts), delimiter_(delimiter) {}
 
   bool next(KeyValuePair *data) override {

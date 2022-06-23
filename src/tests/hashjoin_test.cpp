@@ -133,11 +133,10 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 
 /// Join two tables and use the pointers as the values in the hashtable.
 /// Only primary-foreign key join is supported.
-[[deprecated("We don't really need benchmarks for joining non-two-column ")]]
-void HashjoinTest::part_join_partsupp(const Shard& sh,
-                                      const Configuration& config,
-                                      BaseHashTable* ht,
-                                      std::barrier<>* barrier) {
+[[deprecated(
+    "We don't really need benchmarks for joining non-two-column ")]] void
+HashjoinTest::part_join_partsupp(const Shard& sh, const Configuration& config,
+                                 BaseHashTable* ht, std::barrier<>* barrier) {
   input_reader::PartitionedCsvReader t1(config.relation_r, sh.shard_idx,
                                         config.num_threads, "|");
   input_reader::PartitionedCsvReader t2(config.relation_s, sh.shard_idx,
@@ -153,9 +152,9 @@ void HashjoinTest::join_r_s(Shard* sh, const Configuration& config,
                             BaseHashTable* ht,
                             std::barrier<std::function<void()>>* barrier) {
   input_reader::KeyValueCsvPreloadReader t1(config.relation_r, sh->shard_idx,
-                                             config.num_threads, "|");
+                                            config.num_threads, "|");
   input_reader::KeyValueCsvPreloadReader t2(config.relation_s, sh->shard_idx,
-                                             config.num_threads, "|");
+                                            config.num_threads, "|");
   PLOG_INFO << "Shard " << (int)sh->shard_idx << "/" << config.num_threads
             << " t1 " << t1.size() << " t2 " << t2.size();
 
