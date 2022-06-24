@@ -8,24 +8,24 @@
 
 namespace kmercounter {
 namespace input_reader {
-// Convert one InputReader to another.
-template <class From, class To>
-class Adaptor : public InputReader<To> {
+// Convert one InputReader to another via memcpy.
+// TODO: use concept to constrain base class.
+template <class FromReader, class ToValue>
+class Adaptor : public InputReader<ToValue> {
  public:
-  Adaptor(std::unique_ptr<InputReader<From>> reader)
-      : reader_(std::move(reader)) {}
+  Adaptor(FromReader&& reader) : reader_(reader) {}
 
-  bool next(To *data) override {
-    From tmp;
-    if (!reader_->next(&tmp)) {
+  bool next(ToValue* data) override {
+    if (!reader_.next(&tmp_)) {
       return false;
     }
-    *data = tmp;
+    *data = tmp_;
     return true;
   }
 
  private:
-  std::unique_ptr<InputReader<From>> reader_;
+  FromReader reader_;
+  FromReader::value_type tmp_;
 };
 }  // namespace input_reader
 }  // namespace kmercounter
