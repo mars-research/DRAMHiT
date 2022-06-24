@@ -5,8 +5,6 @@
 
 #include <atomic>
 
-void initializeLogger();
-
 // Log only once.
 #define PLOG_ONCE_IF(severity, condition)         \
   static std::atomic_int __plog_once_counter__{}; \

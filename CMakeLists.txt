@@ -62,7 +62,6 @@ add_compile_options(
 # Build all the source files for the library.
 add_library(ht_lib
     "src/hashtables/kvtypes.cpp"
-    "src/logging.cpp"
     "src/types.cpp"
     "src/zipf_distribution.cpp"
 )
