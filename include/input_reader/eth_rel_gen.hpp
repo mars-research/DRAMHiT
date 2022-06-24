@@ -4,10 +4,16 @@
 #ifndef INPUT_READER_ETH_REL_GEN_HPP
 #define INPUT_READER_ETH_REL_GEN_HPP
 
+#include <mutex>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+
 #include "eth_hashjoin/src/generator64.hpp"
 #include "input_reader.hpp"
 #include "input_reader/span.hpp"
 #include "logging.hpp"
+#include "types.hpp"
 
 namespace kmercounter {
 namespace input_reader {
@@ -68,13 +74,50 @@ class PartitionedRelation {
   relation_t relation_;
 };
 
-class ParitionedEthRelationReader : public PartitionedRelation,
+class PartitionedEthRelationReader : public PartitionedRelation,
                                     public EthRelationReader {
  public:
-  ParitionedEthRelationReader(relation_t relation, uint64_t part_id,
+  PartitionedEthRelationReader(relation_t relation, uint64_t part_id,
                               uint64_t num_parts)
       : PartitionedRelation(relation, part_id, num_parts),
         EthRelationReader(PartitionedRelation::relation_) {}
+};
+
+/// Helper class ensuring the same relation only get created once.
+class SingletonEthRelationGenerator {
+ public:
+  SingletonEthRelationGenerator(std::string_view identifier, unsigned int seed,
+                                uint64_t ntuples, uint32_t nthreads) {
+    const std::string id(identifier);
+    std::lock_guard guard(mutex_);
+    if (!relations_.contains(id)) {
+      relation_t relation;
+      seed_generator(seed);
+      parallel_create_relation(&relation, ntuples, nthreads, ntuples);
+      relations_[id] = relation;
+    }
+    relation_ = relations_[id];
+  }
+
+  relation_t relation_;
+
+ private:
+  static std::mutex mutex_;
+  static std::unordered_map<std::string, relation_t> relations_;
+};
+
+/// Generate one relation per unique `identifier`.
+/// Each relation is generated with `num_parts` number of threads. 
+// TODO: the relations generated are not cleaned up after.
+class PartitionedEthRelationGenerator : private SingletonEthRelationGenerator,
+                                       public PartitionedEthRelationReader {
+ public:
+  PartitionedEthRelationGenerator(std::string_view identifier, unsigned int seed,
+                                 uint64_t ntuples, uint64_t part_id,
+                                 uint64_t num_parts)
+      : SingletonEthRelationGenerator(identifier, seed, ntuples, num_parts),
+        PartitionedEthRelationReader(SingletonEthRelationGenerator::relation_,
+                                    part_id, num_parts) {}
 };
 
 }  // namespace input_reader

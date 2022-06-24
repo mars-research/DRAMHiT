@@ -48,10 +48,11 @@ add_library(ht_lib
     "src/zipf_distribution.cpp"
 )
 target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
-target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone)
+target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone eth_hashjoin)
 
 # Build all the source files for the executable.
 add_executable(kvstore
+    "src/input_reader/eth_rel_gen.cpp"
     "src/logging.cpp"
     "src/tests/queue_tests.cpp"
     "src/tests/hashtable_tests.cpp"

@@ -135,11 +135,12 @@ void HashjoinTest::join_relations_generated(Shard* sh,
                                             const Configuration& config,
                                             BaseHashTable* ht,
                                             std::barrier<VoidFn>* barrier) {
-  // TODO: use paritioned generator
-  input_reader::EthRelationGenerator t1(DEFAULT_R_SEED, config.relation_r_size,
-                                        config.num_threads);
-  input_reader::EthRelationGenerator t2(DEFAULT_S_SEED, config.relation_r_size,
-                                        config.num_threads);
+  input_reader::PartitionedEthRelationGenerator t1(
+      "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
+      config.num_threads);
+  input_reader::PartitionedEthRelationGenerator t2(
+      "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
+      config.num_threads);
 
   // Wait for all readers finish initializing.
   barrier->arrive_and_wait();
