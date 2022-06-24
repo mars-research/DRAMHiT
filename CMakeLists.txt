@@ -3,6 +3,7 @@ project(kvstore VERSION 0.1.0)
 
 # Declare options
 option(SANITIZE "Enable ASAN." OFF)
+option(SANITIZE_TESTING "Enable ASAN for tests." OFF)
 option(BUILD_APP "Build the main application, kvstore." ON)
 option(BUILD_TESTING "Build tests." OFF)
 option(BUILD_EXAMPLE "Build examples." OFF)

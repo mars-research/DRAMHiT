@@ -67,7 +67,12 @@
     "map": "cpp",
     "set": "cpp",
     "mutex": "cpp",
-    "typeindex": "cpp"
+    "typeindex": "cpp",
+    "any": "cpp",
+    "codecvt": "cpp",
+    "csignal": "cpp",
+    "forward_list": "cpp",
+    "future": "cpp"
   },
   "C/C++ Include Guard.Auto Update Path Blocklist": [
     "lib/"
