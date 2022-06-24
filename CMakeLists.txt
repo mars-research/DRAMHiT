@@ -1,6 +1,23 @@
 cmake_minimum_required(VERSION 3.13)
 project(kvstore VERSION 0.1.0)
 
+# Declare options
+option(SANITIZE "Enable ASAN." OFF)
+option(BUILD_APP "Build the main application, kvstore." ON)
+option(BUILD_TESTING "Build tests." OFF)
+option(BUILD_EXAMPLE "Build examples." OFF)
+option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
+option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
+option(VTUNE "Use VTUNE to do performance monitering." OFF)
+option(AGGR "Use aggregation hashtable (histogram)" OFF)
+option(BQUEUE "Enable bqueue tests" OFF)
+option(XORWOW "Xorwow" OFF)
+option(BQ_ZIPFIAN "Enable global zipfian distribution generation" OFF)
+option(BQ_ZIPFIAN_LOCAL "Enable local zipfian distribution generation" OFF)
+option(CALC_STATS "Enable hashtable statistics" OFF)
+option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
+option(LATENCY_COLLECTION "Enable latency data collection" OFF)
+
 # Ensure g++
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL GNU)
     message(FATAL_ERROR "Currently only gcc builds are supported")
@@ -49,50 +66,37 @@ add_library(ht_lib
     "src/zipf_distribution.cpp"
 )
 target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
+target_link_libraries(ht_lib PUBLIC fnv xxhash cityhash capstone eth_hashjoin)
 target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone eth_hashjoin)
 
-# Build all the source files for the executable.
-add_executable(kvstore
-    "src/input_reader/eth_rel_gen.cpp"
-    "src/tests/queue_tests.cpp"
-    "src/tests/hashtable_tests.cpp"
-    "src/tests/prefetch_tests.cpp"
-    "src/tests/cachemiss_test.cpp"
-    "src/tests/kmer_tests.cpp"
-    "src/tests/hashjoin_test.cpp"
-    "src/tests/synth_test.cpp"
-    "src/misc_lib.cpp"
-    "src/xorwow.cpp"
-    "src/Application.cpp"
-    "src/kvstore.cpp"
-    "src/zipf_distribution.cpp"
-    "src/Latency.cpp"
-)
+if(BUILD_APP)
+    # Build all the source files for the executable.
+    add_executable(kvstore
+        "src/input_reader/eth_rel_gen.cpp"
+        "src/tests/queue_tests.cpp"
+        "src/tests/hashtable_tests.cpp"
+        "src/tests/prefetch_tests.cpp"
+        "src/tests/cachemiss_test.cpp"
+        "src/tests/kmer_tests.cpp"
+        "src/tests/hashjoin_test.cpp"
+        "src/tests/synth_test.cpp"
+        "src/misc_lib.cpp"
+        "src/xorwow.cpp"
+        "src/Application.cpp"
+        "src/kvstore.cpp"
+        "src/zipf_distribution.cpp"
+        "src/Latency.cpp"
+    )
 
-# Add subdirectory
-add_subdirectory(lib)
-target_link_directories(kvstore PRIVATE lib/)
-target_link_libraries(kvstore PRIVATE ht_lib)
+    # Add subdirectory
+    target_link_directories(kvstore PRIVATE lib/)
+    target_link_libraries(kvstore PRIVATE ht_lib boost_program_options Threads::Threads)
+endif()
 
 # Declare include directory.
 include_directories(include/ lib/ lib/cityhash/src/)
 
-# Declare options
-option(SANITIZE "Enable ASAN." OFF)
-option(BUILD_TESTING "Build tests." OFF)
-option(BUILD_EXAMPLE "Build examples." OFF)
-option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
-option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
-option(VTUNE "Use VTUNE to do performance monitering." OFF)
-option(AGGR "Use aggregation hashtable (histogram)" OFF)
-option(BQUEUE "Enable bqueue tests" OFF)
-option(XORWOW "Xorwow" OFF)
-option(BQ_ZIPFIAN "Enable global zipfian distribution generation" OFF)
-option(BQ_ZIPFIAN_LOCAL "Enable local zipfian distribution generation" OFF)
-option(CALC_STATS "Enable hashtable statistics" OFF)
-option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
-option(LATENCY_COLLECTION "Enable latency data collection" OFF)
-
+# Declare string type options.
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
 set(HASHER "crc" CACHE STRING "Hasher")
 set_property(CACHE HASHER PROPERTY STRINGS ${hasher_types})
@@ -253,7 +257,8 @@ add_definitions(-DCONFIG_BQUEUE_SECTION)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 
-target_link_libraries(kvstore PRIVATE boost_program_options Threads::Threads)
+# Import 3p libraries
+add_subdirectory(lib)
 
 if (BUILD_TESTING)
     enable_testing()
