@@ -21,6 +21,6 @@ int main(int argc, char **argv) {
 
   ::testing::InitGoogleTest(&argc, argv);
   absl::ParseCommandLine(argc, argv);
-  plog::get()->setMaxSeverity(plog::info);
+  plog::get()->setMaxSeverity((plog::Severity)absl::GetFlag(FLAGS_log_level));
   return RUN_ALL_TESTS();
 }

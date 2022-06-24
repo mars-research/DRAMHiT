@@ -30,3 +30,5 @@ Testing/
 *.pyc
 *.patch
 /latencies/
+*.svg
+*.fold

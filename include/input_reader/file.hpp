@@ -121,13 +121,13 @@ class FileReader : public InputReader<std::string_view> {
              uint64_t num_parts, find_bound_t find_bound = find_next_line)
       : FileReader(std::shared_ptr<std::istream>(input_file), part_id,
                    num_parts, find_bound) {
-    input_file_->rdbuf()->pubsetbuf(buffer_.data(), buffer_.size());
+    // input_file_->rdbuf()->pubsetbuf(io_buffer_.data(), io_buffer_.size());
   }
 
   FileReader(std::shared_ptr<std::istream> input_file, uint64_t part_id,
              uint64_t num_parts, find_bound_t find_bound = find_next_line)
       : input_file_(std::move(input_file)),
-        io_buffer_(64 * 1024 * 1024),
+        // io_buffer_(64 * 1024 * 1024),
         part_id_(part_id),
         num_parts_(num_parts),
         buffer_(4096) {
@@ -188,7 +188,8 @@ class FileReader : public InputReader<std::string_view> {
  private:
   std::shared_ptr<std::istream> input_file_;
   /// Buffer for file I/O.
-  std::vector<char> io_buffer_;
+  /// Currently unused since our benchmark reads from memory.
+  // std::vector<char> io_buffer_;
   uint64_t offset_;
   uint64_t part_end_;
   uint64_t part_id_;
