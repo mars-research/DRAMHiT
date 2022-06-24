@@ -2,7 +2,9 @@
 #include <absl/flags/parse.h>
 #include <gtest/gtest.h>
 
-#include "logging.hpp"
+#include <plog/Appenders/ColorConsoleAppender.h>
+#include <plog/Formatters/TxtFormatter.h>
+#include <plog/Init.h>
 
 ABSL_FLAG(uint64_t, hashtable_size, 1ull << 11, "size of hashtable.");
 ABSL_FLAG(uint64_t, test_size, 1ull << 10,
@@ -14,7 +16,9 @@ ABSL_FLAG(
     "for more options");
 
 int main(int argc, char **argv) {
-  initializeLogger();
+  plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
+  plog::init(plog::debug, &consoleAppender);
+
   ::testing::InitGoogleTest(&argc, argv);
   absl::ParseCommandLine(argc, argv);
   plog::get()->setMaxSeverity(plog::info);

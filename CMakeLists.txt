@@ -43,8 +43,9 @@ add_compile_options(
 
 # Build all the source files for the library.
 add_library(ht_lib
-    "src/types.cpp"
     "src/hashtables/kvtypes.cpp"
+    "src/logging.cpp"
+    "src/types.cpp"
     "src/zipf_distribution.cpp"
 )
 target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
@@ -53,7 +54,6 @@ target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone eth_hashj
 # Build all the source files for the executable.
 add_executable(kvstore
     "src/input_reader/eth_rel_gen.cpp"
-    "src/logging.cpp"
     "src/tests/queue_tests.cpp"
     "src/tests/hashtable_tests.cpp"
     "src/tests/prefetch_tests.cpp"

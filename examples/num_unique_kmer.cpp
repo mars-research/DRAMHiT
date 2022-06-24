@@ -4,7 +4,7 @@
 
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <fstream>
 #include <iostream>
 #include <queue>
