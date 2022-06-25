@@ -19,13 +19,8 @@ option(CALC_STATS "Enable hashtable statistics" OFF)
 option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 
-# Ensure g++
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-    message(FATAL_ERROR "Currently only gcc builds are supported")
-endif()
-
 # Check g++ version
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
     message(FATAL_ERROR "g++ must be version 8.0 or above")
 endif()
 
@@ -43,6 +38,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+
+# Export compile commands for clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_options(
     -O3
