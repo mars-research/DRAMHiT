@@ -31,29 +31,6 @@
 #include <ittnotify.h>
 #endif
 
-const char *run_mode_strings[] = {
-    "",
-    "DRY_RUN",
-    "READ_FROM_DISK",
-    "WRITE_TO_DISK",
-    "FASTQ_WITH_INSERT",
-    "FASTQ_NO_INSERT",
-    "SYNTH",
-    "PREFETCH",
-    "BQ_TESTS_YES_BQ",
-    "BQ_TESTS_NO_BQ",
-    "CACHE_MISS",
-    "ZIPFIAN",
-    "HASHJOIN",
-};
-
-const char *ht_type_strings[] = {
-  "",
-  "PARTITIONED",
-  "",
-  "CASHT++",
-};
-
 namespace kmercounter {
 
 class LynxQueue;

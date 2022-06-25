@@ -18,7 +18,9 @@
 #define KEY_SIZE 8
 #define VALUE_SIZE 8
 
-extern const uint32_t PREFETCH_QUEUE_SIZE;
+// Forward declaration of `eth_hashjoin::tuple_t`.
+namespace eth_hashjoin { struct tuple_t; }
+namespace kmercounter {
 
 enum class BRANCHKIND { WithBranch, NoBranch_Cmove, NoBranch_Simd };
 
@@ -211,6 +213,9 @@ std::ostream& operator<<(std::ostream& os, const Values& q);
 struct KeyValuePair {
   uint64_t key;
   uint64_t value;
+
+  KeyValuePair();
+  KeyValuePair(const struct eth_hashjoin::tuple_t& tuple);
 };
 
 enum class QueueType {
@@ -229,6 +234,7 @@ struct OpTimings {
 // Can be use for, let's say, cleanup functions.
 using VoidFn = std::function<void()>;
 
+} //namespace kmercounter
 #endif  // __TYPES_HPP__
 
 // X mmap, no inserts, 1 thread
