@@ -2,7 +2,7 @@
 
 namespace kmercounter {
 namespace input_reader {
-std::unordered_map<std::string, relation_t>
+std::unordered_map<std::string, eth_hashjoin::relation_t>
     SingletonEthRelationGenerator::relations_;
 std::mutex SingletonEthRelationGenerator::mutex_;
 }  // namespace input_reader
