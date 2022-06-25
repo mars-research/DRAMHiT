@@ -54,10 +54,10 @@ add_compile_options(
     -fcf-protection=none
     -fno-stack-protector
     -funroll-all-loops
-    -flto
-    -ffat-lto-objects
     #-rdynamic
 )
+# Enable lto
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 # Build all the source files for the library.
 add_library(ht_lib
