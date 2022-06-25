@@ -25,4 +25,4 @@ size_t reader_size(std::unique_ptr<InputReader_t> reader) {
 
 }  // namespace input_reader
 }  // namespace kmercounter
-#endif // INPUT_READER_INPUT_READER_TEST_UTILS_HPP
+#endif  // INPUT_READER_INPUT_READER_TEST_UTILS_HPP

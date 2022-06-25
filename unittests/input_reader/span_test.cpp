@@ -2,11 +2,11 @@
 
 #include <gtest/gtest.h>
 
-#include <vector>
 #include <array>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/irange.hpp>
 #include <boost/range/numeric.hpp>
+#include <vector>
 
 #include "input_reader_test_utils.hpp"
 
@@ -54,19 +54,17 @@ TEST(PartitionedSpanReaderTest, SizeTest) {
       std::span<uint8_t> data((uint8_t*)nullptr, num_elements);
       auto readers =
           irange(num_parts) | transformed([&data, num_parts](uint64_t part_id) {
-            auto reader = std::make_unique<PartitionedSpanReader<uint8_t>>(data, part_id,
-                                                       num_parts);
+            auto reader = std::make_unique<PartitionedSpanReader<uint8_t>>(
+                data, part_id, num_parts);
             return reader;
           });
 
-      auto partition_sizes = readers | transformed([](auto reader) {
-                          return reader->size();
-                        });
+      auto partition_sizes =
+          readers | transformed([](auto reader) { return reader->size(); });
 
       const uint64_t actual_total_elements = accumulate(partition_sizes, 0ul);
       ASSERT_EQ(num_elements, actual_total_elements)
-          << "Incorrect number of elements for " << num_parts
-          << " partitions.";
+          << "Incorrect number of elements for " << num_parts << " partitions.";
     }
   }
 }
