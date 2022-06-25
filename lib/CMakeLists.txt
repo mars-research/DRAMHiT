@@ -16,11 +16,17 @@ add_custom_command(
   OUTPUT ${ETH_HASHJOIN_CONFIG_H}
   COMMAND ./configure --enable-key8B=yes
 )
-add_library(eth_hashjoin 
-${ETH_HASHJOIN_CONFIG_H}
+set(ETH_SOURCE_FILES
   "eth_hashjoin/src/cpu_mapping.c"
-  "eth_hashjoin/src/generator.c" 
+  "eth_hashjoin/src/generator.c"
 )
+# Set the source files to c++ files to avoid linkage errors.
+set_source_files_properties(${ETH_SOURCE_FILES} PROPERTIES LANGUAGE CXX)
+add_library(eth_hashjoin 
+  ${ETH_HASHJOIN_CONFIG_H}
+  ${ETH_SOURCE_FILES} 
+)
+target_compile_options(eth_hashjoin PRIVATE -DKEY_8B)
 
 # Add FNV
 add_library(fnv "fnv/fnv.c")
