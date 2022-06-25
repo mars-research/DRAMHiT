@@ -8,12 +8,12 @@
 
 namespace kmercounter {
 namespace input_reader {
-// Convert one InputReader to another via memcpy.
+// Convert one InputReader to another via casting.
 // TODO: use concept to constrain base class.
 template <class FromReader, class ToValue>
-class Adaptor : public InputReader<ToValue> {
+class MemcpyAdaptor : public InputReader<ToValue> {
  public:
-  Adaptor(FromReader&& reader) : reader_(reader) {}
+  MemcpyAdaptor(FromReader&& reader) : reader_(reader) {}
 
   bool next(ToValue* data) override {
     if (!reader_.next(&tmp_)) {
@@ -25,7 +25,25 @@ class Adaptor : public InputReader<ToValue> {
 
  private:
   FromReader reader_;
-  FromReader::value_type tmp_;
+  typename FromReader::value_type tmp_;
+};
+
+// Convert one InputReader to another via pointer cast.
+// TODO: use concept to constrain base class.
+template <class FromReader, class ToValue, typename... Bases>
+class PointerAdaptor : public Bases... {
+ public:
+  using FromValue = typename FromReader::value_type;
+
+  template <typename... Args>
+  PointerAdaptor(Args&&... args) : reader_(args...) {}
+
+  PointerAdaptor(FromReader&& reader) : reader_(reader) {}
+
+  bool next(ToValue* data) override { return reader_.next((FromValue*)data); }
+
+ private:
+  FromReader reader_;
 };
 }  // namespace input_reader
 }  // namespace kmercounter
