@@ -72,7 +72,10 @@
     "codecvt": "cpp",
     "csignal": "cpp",
     "forward_list": "cpp",
-    "future": "cpp"
+    "future": "cpp",
+    "types.h": "c",
+    "genzipf.h": "c",
+    "generator.h": "c"
   },
   "C/C++ Include Guard.Auto Update Path Blocklist": [
     "lib/"
