@@ -14,13 +14,18 @@
     abseil-cpp-17 = pkgs.abseil-cpp.override {
       cxxStandard = "17";
     };
+    stdenv = pkgs.gcc12.stdenv;
+    mkShell = pkgs.mkShell.override {
+      inherit stdenv;
+    };
     in rec {
       defaultPackage = packages.kvstore;
       packages.kvstore = pkgs.callPackage ./build_package.nix {
         # override any parameters here
+        inherit stdenv;
         cmakeFlags = [];
       };
-      devShells.prod = pkgs.mkShell {
+      devShells.prod = mkShell {
         inputsFrom = [
           packages.kvstore
         ];
@@ -29,11 +34,13 @@
         ];
         NIX_CFLAGS_COMPILE = "-march=native";
       };
-      devShells.build = pkgs.mkShell {
+      devShells.build = mkShell {
         inputsFrom = [
           devShells.prod
         ];
         nativeBuildInputs = with pkgs; [ 
+          clang_14
+          llvmPackages_14.libllvm
           gcc11
         ];
         buildInputs = with pkgs; [
@@ -42,15 +49,15 @@
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
       };
-      devShell = pkgs.mkShell {
+      devShell = mkShell {
         inputsFrom = [
           devShells.build
         ];
         buildInputs = with pkgs; [
+          act
+          clang-tools
           gdb
           linuxPackages.perf
-          clang-tools
-          act
 
           # Python packages for evals plotting.
           python310
