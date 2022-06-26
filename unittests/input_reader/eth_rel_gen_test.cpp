@@ -8,8 +8,8 @@
 #include <boost/range/numeric.hpp>
 #include <vector>
 
-#include "input_reader_test_utils.hpp"
 #include "eth_hashjoin/src/types.h"
+#include "input_reader_test_utils.hpp"
 
 using boost::accumulate;
 using boost::irange;

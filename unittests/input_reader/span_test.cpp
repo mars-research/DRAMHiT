@@ -16,7 +16,6 @@ using boost::adaptors::transformed;
 
 namespace kmercounter {
 namespace input_reader {
-
 namespace {
 
 TEST(SpanReaderTest, SimpleTest) {

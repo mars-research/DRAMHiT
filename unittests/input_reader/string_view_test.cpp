@@ -9,7 +9,6 @@
 
 namespace kmercounter {
 namespace input_reader {
-
 namespace {
 
 TEST(StringViewReaderTest, SimpleTest) {

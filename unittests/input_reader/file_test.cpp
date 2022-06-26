@@ -17,7 +17,6 @@ using boost::adaptors::transformed;
 
 namespace kmercounter {
 namespace input_reader {
-
 namespace {
 /// Generate comma seperated a CSV file.
 std::string generate_csv(uint64_t num_rows, uint64_t num_cols = 3) {

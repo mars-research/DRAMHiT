@@ -31,17 +31,19 @@ class MemcpyAdaptor : public InputReader<ToValue> {
 // Convert one InputReader to another via pointer cast.
 // TODO: use concept to constrain base class.
 template <class FromReader, typename ToReader>
-class 
-[[deprecated("This doesn't work since there's no way to have FromReader's constructor relies on ToReader without modification.")]]
-PointerAdaptor : public ToReader {
+class [[deprecated(
+    "This doesn't work since there's no way to have FromReader's constructor "
+    "relies on ToReader without modification.")]] PointerAdaptor
+    : public ToReader {
  public:
   using FromValue = typename FromReader::value_type;
   using ToValue = typename ToReader::value_type;
 
   template <typename... Args>
-  PointerAdaptor(FromReader&& reader, Args&&... args) : ToReader(args...), reader_(reader) {}
+  PointerAdaptor(FromReader && reader, Args && ... args)
+      : ToReader(args...), reader_(reader) {}
 
-  bool next(ToValue* data) override { return reader_.next((FromValue*)data); }
+  bool next(ToValue * data) override { return reader_.next((FromValue*)data); }
 
  private:
   FromReader reader_;
