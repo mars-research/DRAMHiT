@@ -57,20 +57,22 @@ add_compile_options(
 # Enable lto
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-# Build all the source files for the library.
-add_library(ht_lib
+# A standalone library without any of the benchmarking/application code.
+add_library(kvstore_lib
     "src/hashtables/kvtypes.cpp"
+    "src/input_reader/eth_rel_gen.cpp"
     "src/types.cpp"
     "src/zipf_distribution.cpp"
 )
-target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
-target_link_libraries(ht_lib PUBLIC fnv xxhash cityhash capstone eth_hashjoin)
-target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone eth_hashjoin)
+target_include_directories(kvstore_lib PUBLIC include lib/plog/include/ lib)
+target_link_libraries(kvstore_lib PRIVATE 
+    eth_hashjoin
+    numa
+)
 
 if(BUILD_APP)
     # Build all the source files for the executable.
     add_executable(kvstore
-        "src/input_reader/eth_rel_gen.cpp"
         "src/tests/queue_tests.cpp"
         "src/tests/hashtable_tests.cpp"
         "src/tests/prefetch_tests.cpp"
@@ -88,7 +90,15 @@ if(BUILD_APP)
 
     # Add subdirectory
     target_link_directories(kvstore PRIVATE lib/)
-    target_link_libraries(kvstore PRIVATE ht_lib boost_program_options Threads::Threads)
+    target_link_libraries(kvstore PRIVATE
+        kvstore_lib
+        fnv
+        xxhash
+        cityhash
+        capstone
+        boost_program_options
+        Threads::Threads
+    )
 endif()
 
 # Declare include directory.

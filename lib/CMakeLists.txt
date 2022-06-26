@@ -19,6 +19,7 @@ add_custom_command(
 set(ETH_SOURCE_FILES
   "eth_hashjoin/src/cpu_mapping.c"
   "eth_hashjoin/src/generator.c"
+  "eth_hashjoin/src/genzipf.c"
 )
 # Set the source files to c++ files to avoid linkage errors.
 set_source_files_properties(${ETH_SOURCE_FILES} PROPERTIES LANGUAGE CXX)
