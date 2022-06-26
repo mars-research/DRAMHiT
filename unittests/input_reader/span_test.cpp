@@ -37,7 +37,7 @@ TEST(SpanReaderTest, SimpleTest) {
   }
 
   {
-    auto reader = std::make_unique<SpanReader<int>>();
+    auto reader = std::make_unique<SpanReader<int>>(nullptr, 0);
     EXPECT_EQ(0, reader_size(std::move(reader)));
   }
 }
