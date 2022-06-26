@@ -6,33 +6,33 @@
 
 namespace kmercounter {
 std::ostream& operator<<(std::ostream& os, const Keys& x) {
-  return os << "{key: " << x.key
-        << ", id: " << x.id
-        << ", part_id: " << x.part_id
-        << "}" << std::endl;
-        ;
+  return os << "{key: " << x.key << ", id: " << x.id
+            << ", part_id: " << x.part_id << "}" << std::endl;
+  ;
 }
 
 std::ostream& operator<<(std::ostream& os, const Values& x) {
-  return os << "{value: " << x.value
-          << ", id: " << x.id
-          << "}" << std::endl;
-          ;
+  return os << "{value: " << x.value << ", id: " << x.id << "}" << std::endl;
+  ;
 }
 
-KeyValuePair::KeyValuePair(const eth_hashjoin::tuple_t& tuple) : key(tuple.key), value(tuple.payload) {}
+Values::Values() : Values(0, 0) {}
+Values::Values(uint64_t id, uint64_t value) : id(id), value(value) {}
+
+KeyValuePair::KeyValuePair(const eth_hashjoin::tuple_t& tuple)
+    : key(tuple.key), value(tuple.payload) {}
 KeyValuePair::KeyValuePair() : key(0), value(0) {}
 
 // Global config. This is a temporary dirty hack.
 Configuration config;
 // Extern stuff
-const char *ht_type_strings[] = {
-  "",
-  "PARTITIONED",
-  "",
-  "CASHT++",
+const char* ht_type_strings[] = {
+    "",
+    "PARTITIONED",
+    "",
+    "CASHT++",
 };
-const char *run_mode_strings[] = {
+const char* run_mode_strings[] = {
     "",
     "DRY_RUN",
     "READ_FROM_DISK",
@@ -47,4 +47,4 @@ const char *run_mode_strings[] = {
     "ZIPFIAN",
     "HASHJOIN",
 };
-} // namespace kmercounter
+}  // namespace kmercounter
