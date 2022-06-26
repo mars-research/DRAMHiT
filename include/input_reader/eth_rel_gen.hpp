@@ -20,19 +20,15 @@
 namespace kmercounter {
 namespace input_reader {
 
-class EthRelationTupleReader : public SpanReader<eth_hashjoin::tuple_t> {
+class EthRelationReader : public SpanReader<KeyValuePair> {
  public:
-  EthRelationTupleReader()
-      : EthRelationTupleReader(eth_hashjoin::relation_t{nullptr, 0}) {}
-
-  EthRelationTupleReader(eth_hashjoin::relation_t relation)
-      : SpanReader<eth_hashjoin::tuple_t>(relation) {}
+  EthRelationReader(eth_hashjoin::relation_t relation)
+      : SpanReader<KeyValuePair>((KeyValuePair*)relation.tuples,
+                                 relation.num_tuples) {}
 };
 
 // Static assert that we can do a direct cast between `tuple_t*` and
 // `KeyValuePair*`.
-using EthRelationReader = PointerAdaptor<EthRelationTupleReader, KeyValuePair,
-                                         SpanReader<KeyValuePair>>;
 static_assert(sizeof(eth_hashjoin::tuple_t) == sizeof(KeyValuePair));
 static_assert(offsetof(eth_hashjoin::tuple_t, key) ==
               offsetof(KeyValuePair, key));
@@ -45,15 +41,15 @@ static_assert(sizeof(eth_hashjoin::tuple_t::payload) ==
 class PartitionedEthRelationReader
     : public PartitionedSpanReader<eth_hashjoin::tuple_t>,
       public EthRelationReader {
- private:
-  using relation_t = eth_hashjoin::relation_t;
-
  public:
   PartitionedEthRelationReader(eth_hashjoin::relation_t relation,
                                uint64_t part_id, uint64_t num_parts)
       : PartitionedSpanReader<eth_hashjoin::tuple_t>(relation, part_id,
                                                      num_parts),
         EthRelationReader(partitioned_span_) {}
+
+  // Explicit implementatio here to resolve ambiguitiy.
+  size_t size() override { return EthRelationReader::size(); }
 };
 
 /// Helper class ensuring the same relation only get created once.

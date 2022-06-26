@@ -39,7 +39,6 @@ class PartitionedSpan {
 template <class T>
 class SpanReader : public SizedInputReader<T> {
  public:
-  SpanReader() : SpanReader(nullptr, 0) {}
   SpanReader(T* data, size_t size) : SpanReader(std::span<T>(data, size)) {}
   SpanReader(const std::span<T>& data)
       : data_(data), iter_(data_.begin(), data_.end()) {}
