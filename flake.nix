@@ -18,11 +18,12 @@
     mkShell = pkgs.mkShell.override {
       inherit stdenv;
     };
+    gtest = pkgs.callPackage ./gtest {};
     in rec {
       defaultPackage = packages.kvstore;
       packages.kvstore = pkgs.callPackage ./build_package.nix {
         # override any parameters here
-        inherit stdenv;
+        inherit stdenv gtest;
         cmakeFlags = [];
       };
       devShells.prod = mkShell {
