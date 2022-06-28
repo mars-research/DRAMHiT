@@ -30,9 +30,7 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
       _items[k].key = kmer;
 
       if (++k == HT_TESTS_BATCH_LENGTH) {
-        KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &_items[0]);
-        kmer_ht->insert_batch(kp);
-
+        kmer_ht->insert_batch(KeyPairs(_items));
         k = 0;
       }
     }

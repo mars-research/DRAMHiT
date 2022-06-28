@@ -96,11 +96,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       } else {
         count++;
         if (++k == HT_TESTS_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, items);
+          KeyPairs kp(items);
           ktable->insert_batch(kp);
 
           k = 0;
-          inserted += kp.first;
+          inserted += kp.size();
         }
       }
 #if defined(SAME_KMER)
@@ -176,8 +176,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
       } else {
         if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, items);
-
+          KeyPairs kp(items);
           ktable->find_batch(kp, vp);
 
           found += vp.first;

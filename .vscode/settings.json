@@ -75,7 +75,12 @@
     "future": "cpp",
     "types.h": "c",
     "genzipf.h": "c",
-    "generator.h": "c"
+    "generator.h": "c",
+    "cfenv": "cpp",
+    "algorithm": "cpp",
+    "iterator": "cpp",
+    "memory_resource": "cpp",
+    "random": "cpp"
   },
   "C/C++ Include Guard.Auto Update Path Blocklist": [
     "lib/"

@@ -42,14 +42,13 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
     arguments[k].value = kv.value;
     // PLOG_INFO << "Left " << arguments[k] << arguments[k].id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(k, arguments);
-      ht->insert_batch(kp);
+      ht->insert_batch(KeyPairs(arguments));
       k = 0;
     }
   }
+  // Insert any remaining values.
   if (k != 0) {
-    KeyPairs kp = std::make_pair(k, arguments);
-    ht->insert_batch(kp);
+    ht->insert_batch(KeyPairs(arguments, k));
     k = 0;
   }
   ht->flush_insert_queue();
@@ -83,24 +82,24 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   };
 
   // Probe.
-  __attribute__((aligned(64))) FindResult results[HT_TESTS_FIND_BATCH_LENGTH] = {};
+  __attribute__((aligned(64)))
+  FindResult results[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (KeyValuePair kv; t2->next(&kv);) {
     arguments[k].key = kv.key;
     arguments[k].id = kv.value;
     // arguments[k].part_id = (uint64_t)row.c_str();
     // PLOG_INFO << "Right " << arguments[k];
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, arguments);
       ValuePairs valuepairs{0, results};
-      ht->find_batch(kp, valuepairs);
+      ht->find_batch(KeyPairs(arguments), valuepairs);
       join_rows(valuepairs);
       k = 0;
     }
   }
+  // Find any remaining values.
   if (k != 0) {
-    KeyPairs kp = std::make_pair(k, arguments);
     ValuePairs valuepairs{0, results};
-    ht->find_batch(kp, valuepairs);
+    ht->find_batch(KeyPairs(arguments, k), valuepairs);
     k = 0;
     join_rows(valuepairs);
   }

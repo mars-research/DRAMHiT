@@ -121,16 +121,11 @@ class CASHashTable : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(KeyPairs &kp, collector_type* collector) override {
+  void insert_batch(const KeyPairs &kp, collector_type* collector) override {
     this->flush_if_needed(collector);
 
-    InsertFindArgument *keys;
-    uint32_t batch_len;
-    std::tie(batch_len, keys) = kp;
-
-    for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_insert_queue(data, collector);
+    for (auto &data : kp) {
+      add_to_insert_queue(&data, collector);
     }
 
     this->flush_if_needed(collector);
@@ -191,16 +186,11 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void find_batch(KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
+  void find_batch(const KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
     this->flush_if_needed(values, collector);
 
-    InsertFindArgument *keys;
-    uint32_t batch_len;
-    std::tie(batch_len, keys) = kp;
-
-    for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data, collector);
+    for (auto &data : kp) {
+      add_to_find_queue(&data, collector);
     }
 
     this->flush_if_needed(values, collector);
@@ -605,4 +595,4 @@ std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
 template <class KV, class KVQ>
 uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
 }  // namespace kmercounter
-#endif /* HASHTABLES_CAS_KHT_HPP */
+#endif // HASHTABLES_CAS_KHT_HPP

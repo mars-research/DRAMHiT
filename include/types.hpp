@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <span>
 #include <string>
 #include <utility>
 
@@ -211,6 +212,9 @@ struct InsertFindArgument {
 };
 std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
 
+/// A span of `InsertFindArgument`s.
+using KeyPairs = std::span<InsertFindArgument>;
+
 /// The result of a find operation on a hashtable.
 struct FindResult {
   /// The id of the find operation.
@@ -225,6 +229,9 @@ struct FindResult {
 };
 std::ostream& operator<<(std::ostream& os, const FindResult& q);
 
+/// A span of `FindResult`s.
+using ValuePairs = std::pair<uint32_t, FindResult *>;
+
 struct KeyValuePair {
   uint64_t key;
   uint64_t value;
@@ -237,9 +244,6 @@ enum class QueueType {
   insert_queue,
   find_queue,
 };
-
-using ValuePairs = std::pair<uint32_t, FindResult *>;
-using KeyPairs = std::pair<uint32_t, InsertFindArgument *>;
 
 struct OpTimings {
   uint64_t duration;

@@ -354,10 +354,10 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   while (finished_producers < n_prod) {
     auto submit_batch = [&](auto num_elements) {
-      KeyPairs kp = std::make_pair(num_elements, &_items[0]);
+      KeyPairs kp(_items, num_elements);
 
       kmer_ht->insert_batch(kp, collector);
-      inserted += kp.first;
+      inserted += kp.size();
 
       data_idx = 0;
     };
@@ -635,10 +635,9 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         }
       } else {
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
           // PLOGI.printf("calling find_batch i = %d", i);
           // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
-          ktable->find_batch(kp, vp);
+          ktable->find_batch(KeyPairs(items), vp);
           found += vp.first;
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;

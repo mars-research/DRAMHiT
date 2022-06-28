@@ -487,16 +487,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(KeyPairs &kp, collector_type* collector) override {
+  void insert_batch(const KeyPairs &kp, collector_type* collector) override {
     this->flush_if_needed(collector);
 
-    InsertFindArgument *keys;
-    uint32_t batch_len;
-    std::tie(batch_len, keys) = kp;
-
-    for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_insert_queue(data, collector);
+    for (auto &data : kp) {
+      add_to_insert_queue(&data, collector);
     }
 
     this->flush_if_needed(collector);
@@ -561,7 +556,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void find_batch(KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
+  void find_batch(const KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
     // What's the size of the prefetch queue size?
     // pfq_sz = 4 * 64;
     // flush_threshold = 128;
@@ -578,13 +573,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // cout << "== > post flush_before head: " << this->find_head << " tail: "
     // << this->find_tail << endl;
 
-    InsertFindArgument *keys;
-    uint32_t batch_len;
-    std::tie(batch_len, keys) = kp;
-
-    for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data);
+    for (auto &data : kp) {
+      add_to_find_queue(&data);
     }
 
     // cout << "-> flush_after head: " << this->find_head << " tail: " <<

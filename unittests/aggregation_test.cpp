@@ -75,8 +75,8 @@ TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
     for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
       arguments.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, arguments.data()};
-    n_inserted += items.first;
+    KeyPairs items(arguments);
+    n_inserted += items.size();
     ht_->insert_batch(items);
     ht_->flush_insert_queue();
     ht_->find_batch(items, found);
@@ -110,7 +110,7 @@ TEST_P(AggregationTest, ASYNCHRONOUS_TEST) {
     for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
       arguments.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, arguments.data()};
+    KeyPairs items(arguments);
     ht_->insert_batch(items);
     n_inserted += HT_TESTS_BATCH_LENGTH;
 
@@ -148,8 +148,8 @@ TEST_P(AggregationTest, FILL_SYNC_TEST) {
           i + j + 1,
           i + j + 1};  // Insert different values each time to force max fill
 
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, arguments.data()};
-    n_inserted += items.first;
+    KeyPairs items(arguments);
+    n_inserted += items.size();
     ht_->insert_batch(items);
   }
 
@@ -160,8 +160,8 @@ TEST_P(AggregationTest, FILL_SYNC_TEST) {
 
 // Test for presence of an off-by-one error in synchronous use
 TEST_P(AggregationTest, SINGLE_INSERT_TEST) {
-  InsertFindArgument argument{1, 128};
-  KeyPairs keys{1ull, &argument};
+  InsertFindArgument argument[] = {{1, 128}};
+  KeyPairs keys{argument};
   ht_->insert_batch(keys);
   ht_->flush_insert_queue();
   ASSERT_EQ(ht_->get_fill(), 1);
@@ -174,7 +174,7 @@ TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
   std::array<InsertFindArgument, 2> arguments{
       InsertFindArgument{key : 1, id : 128},
       InsertFindArgument{key : 0xdeadbeef, id : 256}};
-  KeyPairs keypairs{2, arguments.data()};
+  KeyPairs keypairs(arguments);
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();
   std::array<FindResult, HT_TESTS_BATCH_LENGTH> values{};
