@@ -32,3 +32,4 @@ Testing/
 /latencies/
 *.svg
 *.fold
+.cache/

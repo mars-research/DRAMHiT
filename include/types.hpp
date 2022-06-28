@@ -1,5 +1,5 @@
-#ifndef __TYPES_HPP__
-#define __TYPES_HPP__
+#ifndef TYPES_HPP
+#define TYPES_HPP
 
 #include <atomic>
 #include <cinttypes>
@@ -194,18 +194,31 @@ struct Shard {
   Kmer_s *pool;
 };
 
+/// Argument for one hashtable operation(insert/find).
 // NEVER NEVER NEVER USE KEY OR ID 0
 // Your inserts will be ignored if you do (we use these as empty markers)
+// TODO: rename this to `InsertFindArgument`.
 struct Keys {
+  /// The key we try to insert/find.
   uint64_t key;
+  /// The value we try to insert.
   uint64_t value;
+  /// A user-provided value for the user to keep track of this operation.
+  /// This is returned as `FindResult::id`.
   uint64_t id;
+  /// The id of the partition that will be handling this operation.
+  /// Might not be used depends on the configuration/kind of operation. 
   uint64_t part_id;
 };
 std::ostream& operator<<(std::ostream& os, const Keys& q);
 
+/// The result of a find operation on a hashtable.
+// TODO: rename this to `FindResult`.
 struct Values {
-  uint64_t id; // for user to keep track of the transaction
+  /// The id of the find operation.
+  /// This matches the `InsertFindArgument::id`.
+  uint64_t id;
+  /// The value of the key of the find operation.
   uint64_t value;
 
   constexpr Values() = default;
@@ -239,7 +252,7 @@ struct OpTimings {
 using VoidFn = std::function<void()>;
 
 } //namespace kmercounter
-#endif  // __TYPES_HPP__
+#endif // TYPES_HPP
 
 // X mmap, no inserts, 1 thread
 // X mmap, no inserts, 10 threads
