@@ -142,11 +142,11 @@ TEST_P(AggregationTest, FILL_SYNC_TEST) {
   for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
     ++count;
 
-    std::array<InsertFindArgument, size> arguments{};
-    for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-      arguments.at(j) = {
-          i + j + 1,
-          i + j + 1};  // Insert different values each time to force max fill
+    std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> arguments{};
+    for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j) {
+      // Insert different values each time to force max fill
+      arguments.at(j) = {i + j + 1, i + j + 1};
+    }
 
     KeyPairs items(arguments);
     n_inserted += items.size();

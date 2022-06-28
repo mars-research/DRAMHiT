@@ -80,7 +80,8 @@
     "algorithm": "cpp",
     "iterator": "cpp",
     "memory_resource": "cpp",
-    "random": "cpp"
+    "random": "cpp",
+    "*.ipp": "cpp"
   },
   "C/C++ Include Guard.Auto Update Path Blocklist": [
     "lib/"
