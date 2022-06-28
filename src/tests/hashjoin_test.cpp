@@ -69,6 +69,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   uint64_t num_output = 0;
   auto join_rows = [&num_output](const ValuePairs& vp) {
     // PLOG_DEBUG << "Found " << vp.first << " keys";
+    num_output += vp.first;
     for (uint32_t i = 0; i < vp.first; i++) {
       // const Values& value = vp.second[i];
       // PLOG_INFO << "We found " << value;
@@ -76,13 +77,12 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
       // const uint64_t right_row = value.id;
       // PLOG_INFO << "Left row " << left_row;
       // PLOG_INFO << "Right row " << right_row;
-      num_output++;
       // output_file << left_row << "|" << right_row << "\n";
     }
   };
 
   // Probe.
-  __attribute__((aligned(64))) Values values[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) Values values[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (KeyValuePair kv; t2->next(&kv);) {
     keys[k].key = kv.key;
     keys[k].id = kv.value;
