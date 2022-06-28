@@ -5,7 +5,7 @@
 #include "eth_hashjoin/src/types64.hpp"
 
 namespace kmercounter {
-std::ostream& operator<<(std::ostream& os, const Keys& x) {
+std::ostream& operator<<(std::ostream& os, const InsertFindArgument& x) {
   return os << "{key: " << x.key << ", id: " << x.id
             << ", part_id: " << x.part_id << "}" << std::endl;
   ;

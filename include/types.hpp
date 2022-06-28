@@ -197,8 +197,7 @@ struct Shard {
 /// Argument for one hashtable operation(insert/find).
 // NEVER NEVER NEVER USE KEY OR ID 0
 // Your inserts will be ignored if you do (we use these as empty markers)
-// TODO: rename this to `InsertFindArgument`.
-struct Keys {
+struct InsertFindArgument {
   /// The key we try to insert/find.
   uint64_t key;
   /// The value we try to insert.
@@ -210,7 +209,7 @@ struct Keys {
   /// Might not be used depends on the configuration/kind of operation. 
   uint64_t part_id;
 };
-std::ostream& operator<<(std::ostream& os, const Keys& q);
+std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
 
 /// The result of a find operation on a hashtable.
 // TODO: rename this to `FindResult`.
@@ -241,7 +240,7 @@ enum class QueueType {
 };
 
 using ValuePairs = std::pair<uint32_t, Values *>;
-using KeyPairs = std::pair<uint32_t, Keys *>;
+using KeyPairs = std::pair<uint32_t, InsertFindArgument *>;
 
 struct OpTimings {
   uint64_t duration;

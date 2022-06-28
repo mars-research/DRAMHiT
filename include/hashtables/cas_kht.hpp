@@ -124,7 +124,7 @@ class CASHashTable : public BaseHashTable {
   void insert_batch(KeyPairs &kp, collector_type* collector) override {
     this->flush_if_needed(collector);
 
-    Keys *keys;
+    InsertFindArgument *keys;
     uint32_t batch_len;
     std::tie(batch_len, keys) = kp;
 
@@ -194,7 +194,7 @@ class CASHashTable : public BaseHashTable {
   void find_batch(KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
     this->flush_if_needed(values, collector);
 
-    Keys *keys;
+    InsertFindArgument *keys;
     uint32_t batch_len;
     std::tie(batch_len, keys) = kp;
 
@@ -216,7 +216,7 @@ class CASHashTable : public BaseHashTable {
 
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash;
-    Keys *item = const_cast<Keys*>(reinterpret_cast<const Keys *>(data));
+    InsertFindArgument *item = const_cast<InsertFindArgument*>(reinterpret_cast<const InsertFindArgument *>(data));
     KV *curr;
     bool found = false;
 
@@ -528,7 +528,7 @@ class CASHashTable : public BaseHashTable {
   }
 
   void add_to_insert_queue(void *data, collector_type* collector) {
-    Keys *key_data = reinterpret_cast<Keys *>(data);
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 
 #ifdef LATENCY_COLLECTION
     const auto timer = collector->start();
@@ -558,7 +558,7 @@ class CASHashTable : public BaseHashTable {
   }
 
   void add_to_find_queue(void *data, collector_type* collector) {
-    Keys *key_data = reinterpret_cast<Keys *>(data);
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 
 #ifdef LATENCY_COLLECTION
     const auto timer = collector->start();

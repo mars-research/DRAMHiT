@@ -69,7 +69,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
 
   PLOGI.printf("Starting insertion test");
-  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
+  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
 
   const auto start = RDTSC_START();
   std::uint64_t key{};
@@ -154,7 +154,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 #endif
   while (num_entered < num_threads) _mm_pause();
 
-  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
+  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
   Values *k_values;
   k_values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
   ValuePairs vp = std::make_pair(0, k_values);

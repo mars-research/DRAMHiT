@@ -76,15 +76,16 @@ TEST_P(HashtableTest, NO_PREFETCH_TEST) {
 
 TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   // Insertion.
-  std::array<Keys, 2> keys{Keys{key : 12, value : 128},
-                           Keys{key : 23, value : 256}};
-  KeyPairs keypairs{2, keys.data()};
+  std::array<InsertFindArgument, 2> arguments{
+      InsertFindArgument{key : 12, value : 128},
+      InsertFindArgument{key : 23, value : 256}};
+  KeyPairs keypairs{2, arguments.data()};
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();
 
   // Look up.
-  keys[0] = Keys{key : 12, id : 123};
-  keys[1] = Keys{key : 23, id : 321};
+  arguments[0] = InsertFindArgument{key : 12, id : 123};
+  arguments[1] = InsertFindArgument{key : 23, id : 321};
   std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht_->find_batch(keypairs, valuepairs);
@@ -100,20 +101,21 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
 
 TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
   // Insertion.
-  std::array<Keys, 2> keys{Keys{key : 12, value : 128, part_id : 0},
-                           Keys{key : 23, value : 256, part_id : 0}};
-  KeyPairs keypairs{2, keys.data()};
+  std::array<InsertFindArgument, 2> arguments{
+      InsertFindArgument{key : 12, value : 128, part_id : 0},
+      InsertFindArgument{key : 23, value : 256, part_id : 0}};
+  KeyPairs keypairs{2, arguments.data()};
   ht_->insert_batch(keypairs);
 
   // Update.
-  keys[0].value = 1025;
-  keys[1].value = 4097;
+  arguments[0].value = 1025;
+  arguments[1].value = 4097;
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();
 
   // Look up.
-  keys[0].id = 123;
-  keys[1].id = 321;
+  arguments[0].id = 123;
+  arguments[1].id = 321;
   std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht_->find_batch(keypairs, valuepairs);
@@ -133,24 +135,24 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
 
   // Insert test data.
   uint64_t k = 0;
-  Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  InsertFindArgument arguments[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   uint64_t test_size = absl::GetFlag(FLAGS_test_size);
   for (uint64_t i = 0; i < test_size; i++) {
     const uint64_t key = i;
     const uint64_t value = i * i;
     const uint64_t id = 2 * i;
-    keys[k].key = key;
-    keys[k].value = value;
-    keys[k].part_id = 0;
+    arguments[k].key = key;
+    arguments[k].value = value;
+    arguments[k].part_id = 0;
     reference_map[value] = id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(k, keys);
+      KeyPairs kp = std::make_pair(k, arguments);
       ht_->insert_batch(kp);
       k = 0;
     }
   }
   if (k != 0) {
-    KeyPairs kp = std::make_pair(k, keys);
+    KeyPairs kp = std::make_pair(k, arguments);
     ht_->insert_batch(kp);
     k = 0;
   }
@@ -173,11 +175,11 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   // Finds.
   Values values[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (uint64_t i = 0; i < test_size; i++) {
-    keys[k].key = i;
-    keys[k].id = 2 * i;
-    keys[k].part_id = 0;
+    arguments[k].key = i;
+    arguments[k].id = 2 * i;
+    arguments[k].part_id = 0;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(k, keys);
+      KeyPairs kp = std::make_pair(k, arguments);
       ValuePairs valuepairs{0, values};
       ht_->find_batch(kp, valuepairs);
       check_valuepairs(valuepairs);
@@ -185,7 +187,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
     }
   }
   if (k != 0) {
-    KeyPairs kp = std::make_pair(k, keys);
+    KeyPairs kp = std::make_pair(k, arguments);
     ValuePairs valuepairs{0, values};
     ht_->find_batch(kp, valuepairs);
     k = 0;

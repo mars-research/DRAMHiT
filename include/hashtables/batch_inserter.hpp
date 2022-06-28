@@ -43,8 +43,8 @@ class HTBatchInserter {
 
   // Target hashtable.
   BaseHashTable* ht_;
-  // Buffer to hold the values for batch insertion.
-  __attribute__((aligned(64))) Keys buffer_[N];
+  // Buffer to hold the arguments for batch insertion.
+  __attribute__((aligned(64))) InsertFindArgument buffer_[N];
   // Current size of the buffer.
   size_t buffer_size_;
 

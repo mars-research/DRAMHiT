@@ -490,7 +490,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void insert_batch(KeyPairs &kp, collector_type* collector) override {
     this->flush_if_needed(collector);
 
-    Keys *keys;
+    InsertFindArgument *keys;
     uint32_t batch_len;
     std::tie(batch_len, keys) = kp;
 
@@ -578,7 +578,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // cout << "== > post flush_before head: " << this->find_head << " tail: "
     // << this->find_tail << endl;
 
-    Keys *keys;
+    InsertFindArgument *keys;
     uint32_t batch_len;
     std::tie(batch_len, keys) = kp;
 
@@ -598,7 +598,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    Keys *item = const_cast<Keys *>(reinterpret_cast<const Keys *>(data));
+    InsertFindArgument *item = const_cast<InsertFindArgument *>(reinterpret_cast<const InsertFindArgument *>(data));
 
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
@@ -1240,7 +1240,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void add_to_insert_queue(void *data, collector_type* collector) {
-    Keys *key_data = reinterpret_cast<Keys *>(data);
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
 
@@ -1291,7 +1291,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void add_to_find_queue(void *data) {
-    Keys *key_data = reinterpret_cast<Keys *>(data);
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
 

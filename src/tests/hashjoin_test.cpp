@@ -34,20 +34,21 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
               BaseHashTable* ht, std::barrier<std::function<void()>>* barrier) {
   // Build hashtable from t1.
   uint64_t k = 0;
-  __attribute__((aligned(64))) Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64)))
+  InsertFindArgument arguments[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   const auto t1_start = RDTSC_START();
   for (KeyValuePair kv; t1->next(&kv);) {
-    keys[k].key = kv.key;
-    keys[k].value = kv.value;
-    // PLOG_INFO << "Left " << keys[k] << keys[k].id;
+    arguments[k].key = kv.key;
+    arguments[k].value = kv.value;
+    // PLOG_INFO << "Left " << arguments[k] << arguments[k].id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(k, keys);
+      KeyPairs kp = std::make_pair(k, arguments);
       ht->insert_batch(kp);
       k = 0;
     }
   }
   if (k != 0) {
-    KeyPairs kp = std::make_pair(k, keys);
+    KeyPairs kp = std::make_pair(k, arguments);
     ht->insert_batch(kp);
     k = 0;
   }
@@ -68,7 +69,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   const auto t2_start = RDTSC_START();
   uint64_t num_output = 0;
   auto join_rows = [&num_output](const ValuePairs& vp) {
-    // PLOG_DEBUG << "Found " << vp.first << " keys";
+    // PLOG_DEBUG << "Found " << vp.first << " arguments";
     num_output += vp.first;
     for (uint32_t i = 0; i < vp.first; i++) {
       // const Values& value = vp.second[i];
@@ -84,12 +85,12 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   // Probe.
   __attribute__((aligned(64))) Values values[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (KeyValuePair kv; t2->next(&kv);) {
-    keys[k].key = kv.key;
-    keys[k].id = kv.value;
-    // keys[k].part_id = (uint64_t)row.c_str();
-    // PLOG_INFO << "Right " << keys[k];
+    arguments[k].key = kv.key;
+    arguments[k].id = kv.value;
+    // arguments[k].part_id = (uint64_t)row.c_str();
+    // PLOG_INFO << "Right " << arguments[k];
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, keys);
+      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, arguments);
       ValuePairs valuepairs{0, values};
       ht->find_batch(kp, valuepairs);
       join_rows(valuepairs);
@@ -97,7 +98,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
     }
   }
   if (k != 0) {
-    KeyPairs kp = std::make_pair(k, keys);
+    KeyPairs kp = std::make_pair(k, arguments);
     ValuePairs valuepairs{0, values};
     ht->find_batch(kp, valuepairs);
     k = 0;
