@@ -18,7 +18,7 @@
     mkShell = pkgs.mkShell.override {
       inherit stdenv;
     };
-    gtest = pkgs.callPackage ./gtest {};
+    gtest = pkgs.callPackage ./lib/gtest {};
     in rec {
       defaultPackage = packages.kvstore;
       packages.kvstore = pkgs.callPackage ./build_package.nix {
