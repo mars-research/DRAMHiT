@@ -79,5 +79,10 @@
   },
   "C/C++ Include Guard.Auto Update Path Blocklist": [
     "lib/"
+  ],
+  "cmake.configureArgs": [
+    "-DBUILD_TESTING=ON",
+    "-DBUILD_EXAMPLE=ON",
+    "-DHUGEPAGES=OFF"
   ]
 }

@@ -10,7 +10,7 @@
             "cStandard": "gnu17",
             "cppStandard": "c++20",
             "intelliSenseMode": "linux-gcc-x64",
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4
