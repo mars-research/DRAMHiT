@@ -136,9 +136,8 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
-  Values *values;
-  values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
-  ValuePairs vp = std::make_pair(0, values);
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, results);
 
   std::uint64_t duration{};
 

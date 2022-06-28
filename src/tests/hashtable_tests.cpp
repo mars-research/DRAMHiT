@@ -155,9 +155,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   while (num_entered < num_threads) _mm_pause();
 
   alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
-  Values *k_values;
-  k_values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
-  ValuePairs vp = std::make_pair(0, k_values);
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, results);
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);

@@ -11,7 +11,7 @@ std::ostream& operator<<(std::ostream& os, const InsertFindArgument& x) {
   ;
 }
 
-std::ostream& operator<<(std::ostream& os, const Values& x) {
+std::ostream& operator<<(std::ostream& os, const FindResult& x) {
   return os << "{value: " << x.value << ", id: " << x.id << "}" << std::endl;
   ;
 }

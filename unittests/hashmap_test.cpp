@@ -86,16 +86,16 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   // Look up.
   arguments[0] = InsertFindArgument{key : 12, id : 123};
   arguments[1] = InsertFindArgument{key : 23, id : 321};
-  std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
-  ValuePairs valuepairs{0, values.data()};
+  std::array<FindResult, HT_TESTS_BATCH_LENGTH> results{};
+  ValuePairs valuepairs{0, results.data()};
   ht_->find_batch(keypairs, valuepairs);
   ht_->flush_find_queue(valuepairs);
 
   // Check for correctness.
   ASSERT_EQ(valuepairs.first, 2);
-  constexpr auto expected_values =
-      std::to_array({Values(123, 128), Values(321, 256)});
-  ASSERT_THAT(expected_values,
+  constexpr auto expected_results =
+      std::to_array({FindResult(123, 128), FindResult(321, 256)});
+  ASSERT_THAT(expected_results,
               testing::UnorderedElementsAreArray(valuepairs.second, 2));
 }
 
@@ -116,7 +116,7 @@ TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
   // Look up.
   arguments[0].id = 123;
   arguments[1].id = 321;
-  std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
+  std::array<FindResult, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht_->find_batch(keypairs, valuepairs);
   ht_->flush_find_queue(valuepairs);
@@ -161,7 +161,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   // Helper function for checking the result of the batch finds.
   auto check_valuepairs = [&reference_map](const ValuePairs& vp) {
     for (uint32_t i = 0; i < vp.first; i++) {
-      const Values& value = vp.second[i];
+      const FindResult& value = vp.second[i];
       auto iter = reference_map.find(value.value);
       EXPECT_NE(iter, reference_map.end())
           << "Found unexpected value: " << value;
@@ -173,7 +173,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   };
 
   // Finds.
-  Values values[HT_TESTS_FIND_BATCH_LENGTH] = {};
+  FindResult values[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (uint64_t i = 0; i < test_size; i++) {
     arguments[k].key = i;
     arguments[k].id = 2 * i;

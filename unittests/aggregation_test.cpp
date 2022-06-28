@@ -70,8 +70,8 @@ TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
     ++count;
 
     std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> arguments{};
-    std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
-    ValuePairs found{0, values.data()};
+    std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> results{};
+    ValuePairs found{0, results.data()};
     for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
       arguments.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
@@ -116,7 +116,7 @@ TEST_P(AggregationTest, ASYNCHRONOUS_TEST) {
 
     ht_->flush_insert_queue();
 
-    std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
+    std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> values{};
     ValuePairs found{0, values.data()};
     ht_->find_batch(items, found);
     n_found += found.first;
@@ -177,7 +177,7 @@ TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
   KeyPairs keypairs{2, arguments.data()};
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();
-  std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
+  std::array<FindResult, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht_->find_batch(keypairs, valuepairs);
   ht_->flush_find_queue(valuepairs);

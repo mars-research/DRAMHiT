@@ -552,8 +552,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
     this->ht_vec->at(tid) = ktable;
   }
 
-  Values *values;
-  values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
 
   if (main_thread) {
     // Wait for threads to be ready for test
@@ -576,7 +575,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
-  ValuePairs vp = std::make_pair(0, values);
+  ValuePairs vp = std::make_pair(0, results);
 
   PLOG_INFO.printf("Finder %u starting. key_start %" PRIu64 " | num_messages %" PRIu64 "", tid,
                    key_start, num_messages);

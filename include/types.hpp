@@ -212,19 +212,18 @@ struct InsertFindArgument {
 std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
 
 /// The result of a find operation on a hashtable.
-// TODO: rename this to `FindResult`.
-struct Values {
+struct FindResult {
   /// The id of the find operation.
   /// This matches the `InsertFindArgument::id`.
   uint64_t id;
   /// The value of the key of the find operation.
   uint64_t value;
 
-  constexpr Values() = default;
-  constexpr Values(uint64_t id, uint64_t value) : id(id), value(value) {}
-  bool operator==(Values const&) const = default;
+  constexpr FindResult() = default;
+  constexpr FindResult(uint64_t id, uint64_t value) : id(id), value(value) {}
+  bool operator==(FindResult const&) const = default;
 };
-std::ostream& operator<<(std::ostream& os, const Values& q);
+std::ostream& operator<<(std::ostream& os, const FindResult& q);
 
 struct KeyValuePair {
   uint64_t key;
@@ -239,7 +238,7 @@ enum class QueueType {
   find_queue,
 };
 
-using ValuePairs = std::pair<uint32_t, Values *>;
+using ValuePairs = std::pair<uint32_t, FindResult *>;
 using KeyPairs = std::pair<uint32_t, InsertFindArgument *>;
 
 struct OpTimings {

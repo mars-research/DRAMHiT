@@ -83,7 +83,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   };
 
   // Probe.
-  __attribute__((aligned(64))) Values values[HT_TESTS_FIND_BATCH_LENGTH] = {};
+  __attribute__((aligned(64))) FindResult results[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (KeyValuePair kv; t2->next(&kv);) {
     arguments[k].key = kv.key;
     arguments[k].id = kv.value;
@@ -91,7 +91,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
     // PLOG_INFO << "Right " << arguments[k];
     if (++k == HT_TESTS_BATCH_LENGTH) {
       KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, arguments);
-      ValuePairs valuepairs{0, values};
+      ValuePairs valuepairs{0, results};
       ht->find_batch(kp, valuepairs);
       join_rows(valuepairs);
       k = 0;
@@ -99,14 +99,14 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   }
   if (k != 0) {
     KeyPairs kp = std::make_pair(k, arguments);
-    ValuePairs valuepairs{0, values};
+    ValuePairs valuepairs{0, results};
     ht->find_batch(kp, valuepairs);
     k = 0;
     join_rows(valuepairs);
   }
 
   // Flush the rest of the queue.
-  ValuePairs valuepairs{0, values};
+  ValuePairs valuepairs{0, results};
   do {
     valuepairs.first = 0;
     ht->flush_find_queue(valuepairs);
