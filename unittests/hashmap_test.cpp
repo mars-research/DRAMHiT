@@ -83,8 +83,8 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   ht_->flush_insert_queue();
 
   // Look up.
-  keys[0] = Keys{key : 12, value : 128, id : 123};
-  keys[1] = Keys{key : 23, value : 256, id : 321};
+  keys[0] = Keys{key : 12, id : 123};
+  keys[1] = Keys{key : 23, id : 321};
   std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht_->find_batch(keypairs, valuepairs);
