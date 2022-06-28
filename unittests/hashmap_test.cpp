@@ -1,10 +1,12 @@
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <plog/Log.h>
 
 #include <iostream>
 #include <memory>
+#include <span>
 #include <string_view>
 #include <unordered_map>
 
@@ -15,6 +17,9 @@
 
 namespace kmercounter {
 namespace {
+
+using testing::UnorderedElementsAre;
+
 // Hashtable names.
 const char PARTITIONED_HT[] = "Partitioned HT";
 const char CAS_HT[] = "CAS HT";
@@ -78,19 +83,19 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   ht_->flush_insert_queue();
 
   // Look up.
-  keys[0].id = 123;
-  keys[1].id = 321;
+  keys[0] = Keys{key : 12, value : 128, id : 123};
+  keys[1] = Keys{key : 23, value : 256, id : 321};
   std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht_->find_batch(keypairs, valuepairs);
   ht_->flush_find_queue(valuepairs);
 
   // Check for correctness.
-  EXPECT_EQ(valuepairs.first, 2);
-  EXPECT_EQ(valuepairs.second[0].id, 123);
-  EXPECT_EQ(valuepairs.second[0].value, 128);
-  EXPECT_EQ(valuepairs.second[1].id, 321);
-  EXPECT_EQ(valuepairs.second[1].value, 256);
+  ASSERT_EQ(valuepairs.first, 2);
+  constexpr auto expected_values =
+      std::to_array({Values(123, 128), Values(321, 256)});
+  ASSERT_THAT(expected_values,
+              testing::UnorderedElementsAreArray(valuepairs.second, 2));
 }
 
 TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
@@ -166,7 +171,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   };
 
   // Finds.
-  Values values[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  Values values[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (uint64_t i = 0; i < test_size; i++) {
     keys[k].key = i;
     keys[k].id = 2 * i;

@@ -208,8 +208,8 @@ struct Values {
   uint64_t id; // for user to keep track of the transaction
   uint64_t value;
 
-  Values();
-  Values(uint64_t id, uint64_t value);
+  constexpr Values() = default;
+  constexpr Values(uint64_t id, uint64_t value) : id(id), value(value) {}
   bool operator==(Values const&) const = default;
 };
 std::ostream& operator<<(std::ostream& os, const Values& q);

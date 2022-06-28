@@ -16,9 +16,6 @@ std::ostream& operator<<(std::ostream& os, const Values& x) {
   ;
 }
 
-Values::Values() : Values(0, 0) {}
-Values::Values(uint64_t id, uint64_t value) : id(id), value(value) {}
-
 KeyValuePair::KeyValuePair(const eth_hashjoin::tuple_t& tuple)
     : key(tuple.key), value(tuple.payload) {}
 KeyValuePair::KeyValuePair() : key(0), value(0) {}

@@ -7,6 +7,7 @@ target_link_libraries(test_lib PUBLIC
   absl::flags_parse
   absl::strings
   Boost::boost
+  gmock
   gtest
 )
 target_include_directories(test_lib PUBLIC ../lib/plog/include/)
