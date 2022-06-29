@@ -96,7 +96,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
         hashtable->insert_noprefetch(&items[key], collector);
       } else {
         if (++key == HT_TESTS_BATCH_LENGTH) {
-          KeyPairs keypairs(items);
+          InsertFindArguments keypairs(items);
           hashtable->insert_batch(keypairs, collector);
           key = 0;
         }
@@ -179,7 +179,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
         items[key] = {zipf_values->at(zipf_idx), n};
 
         if (++key == HT_TESTS_FIND_BATCH_LENGTH) {
-          hashtable->find_batch(KeyPairs(items), vp, collector);
+          hashtable->find_batch(InsertFindArguments(items), vp, collector);
           found += vp.first;
           vp.first = 0;
           key = 0;

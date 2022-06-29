@@ -36,7 +36,7 @@ class HTBatchInserter {
  private:
   // Flush without checking `buffer_size_`.
   void flush_() {
-    KeyPairs kp = std::make_pair(buffer_size_, buffer_);
+    InsertFindArguments kp = std::make_pair(buffer_size_, buffer_);
     ht->insert_batch(kp);
     buffer_size_ = 0;
   }

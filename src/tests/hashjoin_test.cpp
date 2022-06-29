@@ -42,13 +42,13 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
     arguments[k].value = kv.value;
     // PLOG_INFO << "Left " << arguments[k] << arguments[k].id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      ht->insert_batch(KeyPairs(arguments));
+      ht->insert_batch(InsertFindArguments(arguments));
       k = 0;
     }
   }
   // Insert any remaining values.
   if (k != 0) {
-    ht->insert_batch(KeyPairs(arguments, k));
+    ht->insert_batch(InsertFindArguments(arguments, k));
     k = 0;
   }
   ht->flush_insert_queue();
@@ -91,7 +91,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
     // PLOG_INFO << "Right " << arguments[k];
     if (++k == HT_TESTS_BATCH_LENGTH) {
       ValuePairs valuepairs{0, results};
-      ht->find_batch(KeyPairs(arguments), valuepairs);
+      ht->find_batch(InsertFindArguments(arguments), valuepairs);
       join_rows(valuepairs);
       k = 0;
     }
@@ -99,7 +99,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   // Find any remaining values.
   if (k != 0) {
     ValuePairs valuepairs{0, results};
-    ht->find_batch(KeyPairs(arguments, k), valuepairs);
+    ht->find_batch(InsertFindArguments(arguments, k), valuepairs);
     k = 0;
     join_rows(valuepairs);
   }

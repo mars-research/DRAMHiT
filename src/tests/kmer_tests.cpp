@@ -30,7 +30,7 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
       _items[k].key = kmer;
 
       if (++k == HT_TESTS_BATCH_LENGTH) {
-        kmer_ht->insert_batch(KeyPairs(_items));
+        kmer_ht->insert_batch(InsertFindArguments(_items));
         k = 0;
       }
     }

@@ -121,7 +121,7 @@ class CASHashTable : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(const KeyPairs &kp, collector_type* collector) override {
+  void insert_batch(const InsertFindArguments &kp, collector_type* collector) override {
     this->flush_if_needed(collector);
 
     for (auto &data : kp) {
@@ -186,7 +186,7 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void find_batch(const KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values, collector_type* collector) override {
     this->flush_if_needed(values, collector);
 
     for (auto &data : kp) {

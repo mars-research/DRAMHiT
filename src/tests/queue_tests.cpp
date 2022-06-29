@@ -354,7 +354,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   while (finished_producers < n_prod) {
     auto submit_batch = [&](auto num_elements) {
-      KeyPairs kp(_items, num_elements);
+      InsertFindArguments kp(_items, num_elements);
 
       kmer_ht->insert_batch(kp, collector);
       inserted += kp.size();
@@ -637,7 +637,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
           // PLOGI.printf("calling find_batch i = %d", i);
           // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
-          ktable->find_batch(KeyPairs(items), vp);
+          ktable->find_batch(InsertFindArguments(items), vp);
           found += vp.first;
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;

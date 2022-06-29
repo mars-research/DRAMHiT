@@ -79,7 +79,7 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   std::array<InsertFindArgument, 2> arguments{
       InsertFindArgument{key : 12, value : 128},
       InsertFindArgument{key : 23, value : 256}};
-  KeyPairs keypairs(arguments);
+  InsertFindArguments keypairs(arguments);
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();
 
@@ -104,8 +104,8 @@ TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
   std::array<InsertFindArgument, 2> arguments{
       InsertFindArgument{key : 12, value : 128, part_id : 0},
       InsertFindArgument{key : 23, value : 256, part_id : 0}};
-  KeyPairs keypairs(arguments);
-  ht_->insert_batch(KeyPairs(arguments));
+  InsertFindArguments keypairs(arguments);
+  ht_->insert_batch(InsertFindArguments(arguments));
 
   // Update.
   arguments[0].value = 1025;
@@ -146,12 +146,12 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
     arguments[k].part_id = 0;
     reference_map[value] = id;
     if (++k == HT_TESTS_BATCH_LENGTH) {
-      ht_->insert_batch(KeyPairs(arguments));
+      ht_->insert_batch(InsertFindArguments(arguments));
       k = 0;
     }
   }
   if (k != 0) {
-    ht_->insert_batch(KeyPairs(arguments, k));
+    ht_->insert_batch(InsertFindArguments(arguments, k));
     k = 0;
   }
   ht_->flush_insert_queue();
@@ -178,14 +178,14 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
     arguments[k].part_id = 0;
     if (++k == HT_TESTS_BATCH_LENGTH) {
       ValuePairs valuepairs{0, values};
-      ht_->find_batch(KeyPairs(arguments), valuepairs);
+      ht_->find_batch(InsertFindArguments(arguments), valuepairs);
       check_valuepairs(valuepairs);
       k = 0;
     }
   }
   if (k != 0) {
     ValuePairs valuepairs{0, values};
-    ht_->find_batch(KeyPairs(arguments, k), valuepairs);
+    ht_->find_batch(InsertFindArguments(arguments, k), valuepairs);
     k = 0;
     check_valuepairs(valuepairs);
   }

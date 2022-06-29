@@ -213,7 +213,7 @@ struct InsertFindArgument {
 std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
 
 /// A span of `InsertFindArgument`s.
-using KeyPairs = std::span<InsertFindArgument>;
+using InsertFindArguments = std::span<InsertFindArgument>;
 
 /// The result of a find operation on a hashtable.
 struct FindResult {

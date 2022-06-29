@@ -487,7 +487,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(const KeyPairs &kp, collector_type* collector) override {
+  void insert_batch(const InsertFindArguments &kp, collector_type* collector) override {
     this->flush_if_needed(collector);
 
     for (auto &data : kp) {
@@ -556,7 +556,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void find_batch(const KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values, collector_type* collector) override {
     // What's the size of the prefetch queue size?
     // pfq_sz = 4 * 64;
     // flush_threshold = 128;
