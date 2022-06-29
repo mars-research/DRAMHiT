@@ -6,6 +6,6 @@ for folder in examples unittests include/input_reader src/input_reader; do
 done 
 
 # Format files
-for file in include/tests/HashjoinTest.hpp src/tests/hashjoin_test.cpp; do
+for file in include/tests/HashjoinTest.hpp src/tests/hashjoin_test.cpp include/hashtables/batch_inserter.hpp; do
   clang-format -style=file -i $file
 done 

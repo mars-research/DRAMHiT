@@ -205,6 +205,7 @@ struct InsertFindArgument {
   uint64_t value;
   /// A user-provided value for the user to keep track of this operation.
   /// This is returned as `FindResult::id`.
+  /// In aggregation mode, this is the "key". Don't ask why.
   uint64_t id;
   /// The id of the partition that will be handling this operation.
   /// Might not be used depends on the configuration/kind of operation. 
@@ -221,6 +222,7 @@ struct FindResult {
   /// This matches the `InsertFindArgument::id`.
   uint64_t id;
   /// The value of the key of the find operation.
+  /// This is the number of occurrences in aggregation mode. 
   uint64_t value;
 
   constexpr FindResult() = default;

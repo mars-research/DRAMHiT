@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "hashtable.h"
+#include "hashtables/batch_inserter.hpp"
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "test_lib.hpp"
@@ -47,9 +48,11 @@ class HashtableTest : public ::testing::TestWithParam<const char*> {
             return nullptr;
         }());
     ASSERT_NE(ht_, nullptr) << "Invalid hashtable type: " << ht_name;
+    inserter_ = HTBatchInserter<>(ht_.get());
   }
 
   std::unique_ptr<kmercounter::BaseHashTable> ht_;
+  HTBatchInserter<> inserter_;
 };
 
 /// Correctness test for insertion and lookup without prefetch.
@@ -76,19 +79,17 @@ TEST_P(HashtableTest, NO_PREFETCH_TEST) {
 
 TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   // Insertion.
-  std::array<InsertFindArgument, 2> arguments{
-      InsertFindArgument{key : 12, value : 128},
-      InsertFindArgument{key : 23, value : 256}};
-  InsertFindArguments keypairs(arguments);
-  ht_->insert_batch(keypairs);
-  ht_->flush_insert_queue();
+  inserter_.insert(12, 128);
+  inserter_.insert(23, 256);
+  inserter_.flush();
 
   // Look up.
-  arguments[0] = InsertFindArgument{key : 12, id : 123};
-  arguments[1] = InsertFindArgument{key : 23, id : 321};
+  std::array<InsertFindArgument, 2> arguments{
+      InsertFindArgument{key : 12, id : 123},
+      InsertFindArgument{key : 23, id : 321}};
   std::array<FindResult, HT_TESTS_BATCH_LENGTH> results{};
   ValuePairs valuepairs{0, results.data()};
-  ht_->find_batch(keypairs, valuepairs);
+  ht_->find_batch(arguments, valuepairs);
   ht_->flush_find_queue(valuepairs);
 
   // Check for correctness.
@@ -101,24 +102,22 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
 
 TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
   // Insertion.
-  std::array<InsertFindArgument, 2> arguments{
-      InsertFindArgument{key : 12, value : 128, part_id : 0},
-      InsertFindArgument{key : 23, value : 256, part_id : 0}};
-  InsertFindArguments keypairs(arguments);
-  ht_->insert_batch(InsertFindArguments(arguments));
+  inserter_.insert(12, 128);
+  inserter_.insert(23, 256);
+  inserter_.flush();
 
   // Update.
-  arguments[0].value = 1025;
-  arguments[1].value = 4097;
-  ht_->insert_batch(keypairs);
-  ht_->flush_insert_queue();
+  inserter_.insert(12, 1025);
+  inserter_.insert(23, 4097);
+  inserter_.flush();
 
   // Look up.
-  arguments[0].id = 123;
-  arguments[1].id = 321;
+  std::array<InsertFindArgument, 2> arguments{
+      InsertFindArgument{key : 12, id : 123},
+      InsertFindArgument{key : 23, id : 321}};
   std::array<FindResult, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
-  ht_->find_batch(keypairs, valuepairs);
+  ht_->find_batch(arguments, valuepairs);
   ht_->flush_find_queue(valuepairs);
 
   // Check for correctness.
@@ -141,20 +140,10 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
     const uint64_t key = i;
     const uint64_t value = i * i;
     const uint64_t id = 2 * i;
-    arguments[k].key = key;
-    arguments[k].value = value;
-    arguments[k].part_id = 0;
+    inserter_.insert(key, value);
     reference_map[value] = id;
-    if (++k == HT_TESTS_BATCH_LENGTH) {
-      ht_->insert_batch(InsertFindArguments(arguments));
-      k = 0;
-    }
   }
-  if (k != 0) {
-    ht_->insert_batch(InsertFindArguments(arguments, k));
-    k = 0;
-  }
-  ht_->flush_insert_queue();
+  inserter_.flush();
 
   // Helper function for checking the result of the batch finds.
   auto check_valuepairs = [&reference_map](const ValuePairs& vp) {
@@ -175,7 +164,6 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   for (uint64_t i = 0; i < test_size; i++) {
     arguments[k].key = i;
     arguments[k].id = 2 * i;
-    arguments[k].part_id = 0;
     if (++k == HT_TESTS_BATCH_LENGTH) {
       ValuePairs valuepairs{0, values};
       ht_->find_batch(InsertFindArguments(arguments), valuepairs);
