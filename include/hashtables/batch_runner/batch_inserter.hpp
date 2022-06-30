@@ -1,8 +1,8 @@
 #ifndef HASHTABLES_BATCH_INSERTER_HPP
 #define HASHTABLES_BATCH_INSERTER_HPP
 
-#include "base_kht.hpp"
 #include "constants.hpp"
+#include "hashtables/base_kht.hpp"
 #include "types.hpp"
 
 namespace kmercounter {
@@ -22,16 +22,16 @@ class HTBatchInserter {
 
     // Flush if `buffer_` is full.
     if (buffer_size_ >= N) {
-      flush_buffer_();
+      flush_buffer();
     }
   }
 
   // Flush everything to the hashtable and flush the hashtable insert queue.
   void flush() {
     if (buffer_size_ > 0) {
-      flush_buffer_();
+      flush_buffer();
     }
-    flush_ht_();
+    flush_ht();
   }
 
   // Returns the number of elements flushed.
@@ -39,14 +39,14 @@ class HTBatchInserter {
 
  private:
   // Flush the insertion buffer without checking `buffer_size_`.
-  void flush_buffer_() {
+  void flush_buffer() {
     ht_->insert_batch(InsertFindArguments(buffer_, buffer_size_));
     num_flushed_ += buffer_size_;
     buffer_size_ = 0;
   }
 
   // Issue a flush to the hashtable.
-  void flush_ht_() { ht_->flush_insert_queue(); }
+  void flush_ht() { ht_->flush_insert_queue(); }
 
   // Target hashtable.
   BaseHashTable* ht_;
