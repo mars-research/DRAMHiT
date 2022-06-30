@@ -199,8 +199,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       if (!this->hashtable) {
         // Allocate placeholder for hashtable pointers
+        const auto hashtable_size = MAX_PARTITIONS * sizeof(KV *);
         this->hashtable =
-            (KV **)(aligned_alloc(64, MAX_PARTITIONS * sizeof(KV *)));
+            (KV **)(aligned_alloc(64, hashtable_size));
+        // Zero the hashtable pointers
+        memset(this->hashtable, 0, hashtable_size);
       }
     }
 
