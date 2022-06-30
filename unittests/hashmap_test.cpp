@@ -1,17 +1,20 @@
+#include <absl/container/flat_hash_set.h>
 #include <absl/flags/flag.h>
 #include <absl/flags/parse.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <plog/Log.h>
 
+#include <cassert>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <span>
 #include <string_view>
-#include <unordered_map>
+#include <utility>
 
 #include "hashtable.h"
-#include "hashtables/batch_inserter.hpp"
+#include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "test_lib.hpp"
@@ -27,6 +30,29 @@ const char CAS_HT[] = "CAS HT";
 constexpr const char* HTS[]{
     PARTITIONED_HT,
     CAS_HT,
+};
+
+// Helper for checking the find results.
+class FindResultChecker {
+ public:
+  FindResultChecker() = default;
+  FindResultChecker(std::initializer_list<kmercounter::FindResult> init)
+      : set_(init) {
+    // Ensure keys are unique.
+    assert(init.size() == set_.size());
+  }
+  ~FindResultChecker() { assert(set_.empty()); }
+
+  void check(const kmercounter::FindResult& result) {
+    ASSERT_EQ(set_.erase(result), 1);
+  }
+
+  kmercounter::HTBatchRunner<>::FindCallback checker() {
+    return [this](const kmercounter::FindResult& result) { check(result); };
+  }
+
+ private:
+  absl::flat_hash_set<kmercounter::FindResult> set_;
 };
 
 class HashtableTest : public ::testing::TestWithParam<const char*> {
@@ -48,11 +74,11 @@ class HashtableTest : public ::testing::TestWithParam<const char*> {
             return nullptr;
         }());
     ASSERT_NE(ht_, nullptr) << "Invalid hashtable type: " << ht_name;
-    inserter_ = HTBatchInserter<>(ht_.get());
+    batch_runner_ = HTBatchRunner<>(ht_.get());
   }
 
   std::unique_ptr<kmercounter::BaseHashTable> ht_;
-  HTBatchInserter<> inserter_;
+  HTBatchRunner<> batch_runner_;
 };
 
 /// Correctness test for insertion and lookup without prefetch.
@@ -78,38 +104,31 @@ TEST_P(HashtableTest, NO_PREFETCH_TEST) {
 }
 
 TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
+  // Setup checker.
+  FindResultChecker checker({FindResult(123, 128), FindResult(321, 256)});
+  batch_runner_.set_callback(checker.checker());
+
   // Insertion.
-  inserter_.insert(12, 128);
-  inserter_.insert(23, 256);
-  inserter_.flush();
+  batch_runner_.insert(12, 128);
+  batch_runner_.insert(23, 256);
+  batch_runner_.flush_insert();
 
   // Look up.
-  std::array<InsertFindArgument, 2> arguments{
-      InsertFindArgument{key : 12, id : 123},
-      InsertFindArgument{key : 23, id : 321}};
-  std::array<FindResult, HT_TESTS_BATCH_LENGTH> results{};
-  ValuePairs valuepairs{0, results.data()};
-  ht_->find_batch(arguments, valuepairs);
-  ht_->flush_find_queue(valuepairs);
-
-  // Check for correctness.
-  ASSERT_EQ(valuepairs.first, 2);
-  constexpr auto expected_results =
-      std::to_array({FindResult(123, 128), FindResult(321, 256)});
-  ASSERT_THAT(expected_results,
-              testing::UnorderedElementsAreArray(valuepairs.second, 2));
+  batch_runner_.find(12, 123);
+  batch_runner_.find(23, 321);
+  batch_runner_.flush_find();
 }
 
 TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
   // Insertion.
-  inserter_.insert(12, 128);
-  inserter_.insert(23, 256);
-  inserter_.flush();
+  batch_runner_.insert(12, 128);
+  batch_runner_.insert(23, 256);
+  batch_runner_.flush();
 
   // Update.
-  inserter_.insert(12, 1025);
-  inserter_.insert(23, 4097);
-  inserter_.flush();
+  batch_runner_.insert(12, 1025);
+  batch_runner_.insert(23, 4097);
+  batch_runner_.flush();
 
   // Look up.
   std::array<InsertFindArgument, 2> arguments{
@@ -140,10 +159,10 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
     const uint64_t key = i;
     const uint64_t value = i * i;
     const uint64_t id = 2 * i;
-    inserter_.insert(key, value);
+    batch_runner_.insert(key, value);
     reference_map[value] = id;
   }
-  inserter_.flush();
+  batch_runner_.flush();
 
   // Helper function for checking the result of the batch finds.
   auto check_valuepairs = [&reference_map](const ValuePairs& vp) {

@@ -228,6 +228,11 @@ struct FindResult {
   constexpr FindResult() = default;
   constexpr FindResult(uint64_t id, uint64_t value) : id(id), value(value) {}
   bool operator==(FindResult const&) const = default;
+
+  template <typename H>
+  friend H AbslHashValue(H h, const FindResult& x) {
+    return H::combine(std::move(h), x.id, x.value);
+  }
 };
 std::ostream& operator<<(std::ostream& os, const FindResult& q);
 

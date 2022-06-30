@@ -1,6 +1,8 @@
 #ifndef __KV_TYPES_HPP__
 #define __KV_TYPES_HPP__
 
+#include <plog/Log.h>
+
 #include <cassert>
 #include <cstring>
 
@@ -554,6 +556,7 @@ struct Item {
     } else if (this->kvpair.key == elem->key) {
       //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
       found = true;
+      PLOG_WARNING << vp.first;
       vp.second[vp.first].id = elem->key_id;
       vp.second[vp.first].value = this->kvpair.value;
       vp.first++;
