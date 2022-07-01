@@ -12,7 +12,7 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
  public:
   using FindCallback = HTBatchFinder<N>::FindCallback;
 
-  HTBatchRunner() = default;
+  HTBatchRunner() : HTBatchRunner(nullptr) {}
   HTBatchRunner(BaseHashTable* ht) : HTBatchRunner(ht, nullptr) {}
   HTBatchRunner(BaseHashTable* ht, FindCallback find_callback)
       : HTBatchInserter<N>(ht), HTBatchFinder<N>(ht, find_callback) {}

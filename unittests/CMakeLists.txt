@@ -6,6 +6,7 @@ target_link_libraries(test_lib PUBLIC
   absl::flags
   absl::flags_parse
   absl::strings
+  absl::flat_hash_map
   Boost::boost
   gmock
   gtest

@@ -49,13 +49,13 @@ class HTBatchInserter {
   void flush_ht() { ht_->flush_insert_queue(); }
 
   // Target hashtable.
-  BaseHashTable* ht_;
+  BaseHashTable* ht_ = nullptr;
   // Buffer to hold the arguments for batch insertion.
-  __attribute__((aligned(64))) InsertFindArgument buffer_[N];
+  __attribute__((aligned(64))) InsertFindArgument buffer_[N] = {};
   // Current size of the buffer.
-  size_t buffer_size_;
+  size_t buffer_size_ = 0;
   // Total number of elements flushed.
-  size_t num_flushed_;
+  size_t num_flushed_ = 0;
 
   // Sanity checks
   static_assert(N > 0);

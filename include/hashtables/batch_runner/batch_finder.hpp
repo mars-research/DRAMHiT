@@ -1,6 +1,8 @@
 #ifndef BATCH_RUNNER_BATCH_FINDER_HPP
 #define BATCH_RUNNER_BATCH_FINDER_HPP
 
+#include <plog/Log.h>
+
 #include <functional>
 #include <span>
 
@@ -21,7 +23,11 @@ class HTBatchFinder {
         buffer_size_(0),
         results_(0, result_buffer_),
         callback_fn_(callback_fn) {}
-  ~HTBatchFinder() { flush(); }
+  ~HTBatchFinder() {
+    if (ht_ != nullptr) {
+      flush();
+    }
+  }
 
   /// Find a key. `id` is used to track the find operation.
   /// Set `parition_id` to the actual partition if you have more than one
@@ -74,23 +80,25 @@ class HTBatchFinder {
     for (const auto& result : std::span(results_.second, results_.first)) {
       callback_fn_(result);
     }
-    results_.first = 0;
+    // The hashtable might pollute the `results_` with buffers from other
+    // finders.
+    results_ = {0, result_buffer_};
   }
 
   // Target hashtable.
-  BaseHashTable* ht_;
+  BaseHashTable* ht_ = nullptr;
   // Buffer to hold the arguments for batch insertion.
-  __attribute__((aligned(64))) InsertFindArgument buffer_[N];
+  __attribute__((aligned(64))) InsertFindArgument buffer_[N] = {};
   // Current size of the buffer.
-  size_t buffer_size_;
+  size_t buffer_size_ = 0;
   // Total number of elements flushed.
-  size_t num_flushed_;
+  size_t num_flushed_ = 0;
   // The buffer for storing the results.
-  __attribute__((alignas(64))) FindResult result_buffer_[N];
+  __attribute__((aligned(64))) FindResult result_buffer_[N] = {};
   // The results of finds.
-  ValuePairs results_;
+  ValuePairs results_ = {0, nullptr};
   // A user provided function for processing a result
-  FindCallback callback_fn_;
+  FindCallback callback_fn_ = nullptr;
 
   // Sanity checks
   static_assert(N > 0);
