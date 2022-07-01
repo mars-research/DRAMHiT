@@ -35,32 +35,37 @@ constexpr const char* HTS[]{
 // Helper for checking the find results.
 class FindResultChecker {
  public:
-  FindResultChecker() = default;
+  FindResultChecker() : FindResultChecker({}) {}
   FindResultChecker(std::initializer_list<kmercounter::FindResult> init)
-      : set_(init) {
+      : set_(std::make_shared<absl::flat_hash_set<kmercounter::FindResult>>(
+            init)) {
     // Ensure keys are unique.
-    assert(init.size() == set_.size());
+    assert(init.size() == set_->size());
   }
-  ~FindResultChecker() { assert(set_.empty()); }
+  ~FindResultChecker() { assert(set_->empty()); }
 
   void add(const kmercounter::FindResult& result) {
-    ASSERT_TRUE(set_.insert(result).second);
+    ASSERT_TRUE(set_->insert(result).second);
   }
 
-  void check(const kmercounter::FindResult& result) {
-    // Could've done it with `set_.erase(result)` but it gives me a
-    // 'stack-buffer-overflow' error.
-    auto iter = set_.find(result);
-    ASSERT_NE(iter, set_.end());
-    set_.erase(iter);
+  void add(uint64_t id, uint64_t value) { this->add(FindResult(id, value)); }
+
+  void add(std::initializer_list<kmercounter::FindResult> list) {
+    // Write a for-loop here to ensure the values are added.
+    for (const auto& e : list) {
+      this->add(e);
+    }
   }
 
   kmercounter::HTBatchRunner<>::FindCallback checker() {
-    return [this](const kmercounter::FindResult& result) { check(result); };
+    return [set = set_](const kmercounter::FindResult& result) {
+      ASSERT_EQ(set->erase(result), 1)
+          << set->size() << "Result not found: " << result;
+    };
   }
 
  private:
-  absl::flat_hash_set<kmercounter::FindResult> set_;
+  std::shared_ptr<absl::flat_hash_set<kmercounter::FindResult>> set_;
 };
 
 class HashtableTest : public ::testing::TestWithParam<const char*> {
@@ -113,7 +118,7 @@ TEST_P(HashtableTest, NO_PREFETCH_TEST) {
 
 TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   // Setup checker.
-  FindResultChecker checker({FindResult(123, 128), FindResult(321, 256)});
+  FindResultChecker checker{FindResult(123, 128), FindResult(321, 256)};
   batch_runner_.set_callback(checker.checker());
 
   // Insertion.
@@ -148,6 +153,28 @@ TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
   batch_runner_.flush_find();
 }
 
+TEST_P(HashtableTest, SIMPLE_FIND_AGAIN_TEST) {
+  // Setup checker.
+  FindResultChecker checker{FindResult(123, 128), FindResult(321, 256)};
+  batch_runner_.set_callback(checker.checker());
+
+  // Insertion.
+  batch_runner_.insert(12, 128);
+  batch_runner_.insert(23, 256);
+  batch_runner_.flush_insert();
+
+  // Look up.
+  batch_runner_.find(12, 123);
+  batch_runner_.find(23, 321);
+  batch_runner_.flush_find();
+
+  // Look up again.
+  checker.add({FindResult(123, 128), FindResult(321, 256)});
+  batch_runner_.find(12, 123);
+  batch_runner_.find(23, 321);
+  batch_runner_.flush_find();
+}
+
 TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   // Setup checker
   FindResultChecker checker;
@@ -160,7 +187,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
     const uint64_t value = i * i;
     const uint64_t id = 2 * i;
     batch_runner_.insert(key, value);
-    checker.add(FindResult(id, value));
+    checker.add(id, value);
   }
   batch_runner_.flush_insert();
 
