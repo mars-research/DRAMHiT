@@ -157,7 +157,7 @@ TEST(FastqReaderTest, MultiParition) {
                        });
 
       const uint64_t total_seqs_read = accumulate(seqs_read, 0ul);
-      LOG_INFO << "Read " << total_seqs_read << " seqs in total";
+      LOG_DEBUG << "Read " << total_seqs_read << " seqs in total";
       ASSERT_EQ(num_seqs, total_seqs_read)
           << "Incorrect number of seqs read for " << num_parts
           << " partitions.";

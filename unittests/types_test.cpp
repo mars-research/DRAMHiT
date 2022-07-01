@@ -1,9 +1,7 @@
 #include "types.hpp"
 
-#include <gtest/gtest.h>
-
-
 #include <absl/hash/hash_testing.h>
+#include <gtest/gtest.h>
 
 namespace kmercounter {
 namespace {

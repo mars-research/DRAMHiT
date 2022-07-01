@@ -48,7 +48,8 @@ class FindResultChecker {
   }
 
   void check(const kmercounter::FindResult& result) {
-    // Could've done it with `set_.erase(result)` but it gives me a 'stack-buffer-overflow' error.
+    // Could've done it with `set_.erase(result)` but it gives me a
+    // 'stack-buffer-overflow' error.
     auto iter = set_.find(result);
     ASSERT_NE(iter, set_.end());
     set_.erase(iter);

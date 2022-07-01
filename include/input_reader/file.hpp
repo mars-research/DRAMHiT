@@ -50,7 +50,7 @@ class FileReader : public InputReader<std::string_view> {
       : FileReader(std::move(input_file), 0, 1) {}
 
   ~FileReader() {
-    PLOG_ERROR_IF(offset_ != part_end_)
+    PLOG_INFO_IF(offset_ != part_end_)
         << "Offset mismatch: expected " << part_end_ << "; actual: " << offset_;
   }
 
