@@ -1,6 +1,8 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include <absl/hash/hash.h>
+
 #include <atomic>
 #include <cinttypes>
 #include <cstdint>

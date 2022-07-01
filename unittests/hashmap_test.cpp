@@ -43,8 +43,15 @@ class FindResultChecker {
   }
   ~FindResultChecker() { assert(set_.empty()); }
 
+  void add(const kmercounter::FindResult& result) {
+    ASSERT_TRUE(set_.insert(result).second);
+  }
+
   void check(const kmercounter::FindResult& result) {
-    ASSERT_EQ(set_.erase(result), 1);
+    // Could've done it with `set_.erase(result)` but it gives me a 'stack-buffer-overflow' error.
+    auto iter = set_.find(result);
+    ASSERT_NE(iter, set_.end());
+    set_.erase(iter);
   }
 
   kmercounter::HTBatchRunner<>::FindCallback checker() {
@@ -120,96 +127,49 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
 }
 
 TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
+  // Setup checker.
+  FindResultChecker checker({FindResult(123, 1025), FindResult(321, 4097)});
+  batch_runner_.set_callback(checker.checker());
+
   // Insertion.
   batch_runner_.insert(12, 128);
   batch_runner_.insert(23, 256);
-  batch_runner_.flush();
+  batch_runner_.flush_insert();
 
   // Update.
   batch_runner_.insert(12, 1025);
   batch_runner_.insert(23, 4097);
-  batch_runner_.flush();
+  batch_runner_.flush_insert();
 
   // Look up.
-  std::array<InsertFindArgument, 2> arguments{
-      InsertFindArgument{key : 12, id : 123},
-      InsertFindArgument{key : 23, id : 321}};
-  std::array<FindResult, HT_TESTS_BATCH_LENGTH> values{};
-  ValuePairs valuepairs{0, values.data()};
-  ht_->find_batch(arguments, valuepairs);
-  ht_->flush_find_queue(valuepairs);
-
-  // Check for correctness.
-  EXPECT_EQ(valuepairs.first, 2);
-  EXPECT_EQ(valuepairs.second[0].id, 123);
-  EXPECT_EQ(valuepairs.second[0].value, 1025);
-  EXPECT_EQ(valuepairs.second[1].id, 321);
-  EXPECT_EQ(valuepairs.second[1].value, 4097);
+  batch_runner_.find(12, 123);
+  batch_runner_.find(23, 321);
+  batch_runner_.flush_find();
 }
 
 TEST_P(HashtableTest, BATCH_QUERY_TEST) {
-  // A known correct implementation of hashmap.
-  std::unordered_map<uint64_t, uint64_t> reference_map;
+  // Setup checker
+  FindResultChecker checker;
+  batch_runner_.set_callback(checker.checker());
 
   // Insert test data.
-  uint64_t k = 0;
-  InsertFindArgument arguments[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   uint64_t test_size = absl::GetFlag(FLAGS_test_size);
   for (uint64_t i = 0; i < test_size; i++) {
     const uint64_t key = i;
     const uint64_t value = i * i;
     const uint64_t id = 2 * i;
     batch_runner_.insert(key, value);
-    reference_map[value] = id;
+    checker.add(FindResult(id, value));
   }
-  batch_runner_.flush();
-
-  // Helper function for checking the result of the batch finds.
-  auto check_valuepairs = [&reference_map](const ValuePairs& vp) {
-    for (uint32_t i = 0; i < vp.first; i++) {
-      const FindResult& value = vp.second[i];
-      auto iter = reference_map.find(value.value);
-      EXPECT_NE(iter, reference_map.end())
-          << "Found unexpected value: " << value;
-      if (iter != reference_map.end()) {
-        EXPECT_EQ(iter->second, value.id) << "Found unexpected id: " << value;
-        reference_map.erase(iter);
-      }
-    }
-  };
+  batch_runner_.flush_insert();
 
   // Finds.
-  FindResult values[HT_TESTS_FIND_BATCH_LENGTH] = {};
   for (uint64_t i = 0; i < test_size; i++) {
-    arguments[k].key = i;
-    arguments[k].id = 2 * i;
-    if (++k == HT_TESTS_BATCH_LENGTH) {
-      ValuePairs valuepairs{0, values};
-      ht_->find_batch(InsertFindArguments(arguments), valuepairs);
-      check_valuepairs(valuepairs);
-      k = 0;
-    }
+    const auto key = i;
+    const auto id = 2 * i;
+    batch_runner_.find(key, id);
   }
-  if (k != 0) {
-    ValuePairs valuepairs{0, values};
-    ht_->find_batch(InsertFindArguments(arguments, k), valuepairs);
-    k = 0;
-    check_valuepairs(valuepairs);
-  }
-
-  // Flush the rest of the queue.
-  ValuePairs valuepairs{0, values};
-  do {
-    valuepairs.first = 0;
-    ht_->flush_find_queue(valuepairs);
-    check_valuepairs(valuepairs);
-  } while (valuepairs.first);
-
-  // Make sure we found all of them.
-  for (const auto pair : reference_map) {
-    EXPECT_TRUE(false) << "Couldn't find talue <" << pair.first << "> id <"
-                       << pair.second << "> pair";
-  }
+  batch_runner_.flush_find();
 }
 
 INSTANTIATE_TEST_CASE_P(TestAllHashtables, HashtableTest,
