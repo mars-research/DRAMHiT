@@ -109,8 +109,12 @@ TEST_P(HashtableTest, NO_PREFETCH_TEST) {
     ht_->insert_noprefetch(&data);
   }
 
+  InsertFindArgument argument;
+  argument.part_id = 0;
   for (uint64_t i = 0; i < test_size; i++) {
-    auto ptr = (Item*)ht_->find_noprefetch(&i);
+    argument.key = i;
+    auto ptr = (Item*)ht_->find_noprefetch(&argument);
+    ASSERT_NE(ptr, nullptr);
     EXPECT_FALSE(ptr->is_empty()) << "Cannot find " << i;
     EXPECT_EQ(ptr->get_value(), i * i) << "Invalid value for key " << i;
   }
