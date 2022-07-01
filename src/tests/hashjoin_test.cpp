@@ -17,6 +17,7 @@
 
 #include "constants.hpp"
 #include "hashtables/base_kht.hpp"
+#include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "input_reader/csv.hpp"
 #include "input_reader/eth_rel_gen.hpp"
@@ -33,25 +34,12 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
               input_reader::SizedInputReader<KeyValuePair>* t2,
               BaseHashTable* ht, std::barrier<std::function<void()>>* barrier) {
   // Build hashtable from t1.
-  uint64_t k = 0;
-  __attribute__((aligned(64)))
-  InsertFindArgument arguments[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  HTBatchRunner batch_runner(ht);
   const auto t1_start = RDTSC_START();
   for (KeyValuePair kv; t1->next(&kv);) {
-    arguments[k].key = kv.key;
-    arguments[k].value = kv.value;
-    // PLOG_INFO << "Left " << arguments[k] << arguments[k].id;
-    if (++k == HT_TESTS_BATCH_LENGTH) {
-      ht->insert_batch(InsertFindArguments(arguments));
-      k = 0;
-    }
+    batch_runner.insert(kv);
   }
-  // Insert any remaining values.
-  if (k != 0) {
-    ht->insert_batch(InsertFindArguments(arguments, k));
-    k = 0;
-  }
-  ht->flush_insert_queue();
+  batch_runner.flush_insert();
 
   {
     const auto duration = RDTSCP() - t1_start;
@@ -63,66 +51,29 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   barrier->arrive_and_wait();
 
   // Helper function for checking the result of the batch finds.
-  // std::ofstream output_file(std::to_string((int)sh->shard_idx) +
-  // "_join.tbl");
-  const auto t2_start = RDTSC_START();
   uint64_t num_output = 0;
-  auto join_rows = [&num_output](const ValuePairs& vp) {
-    // PLOG_DEBUG << "Found " << vp.first << " arguments";
-    num_output += vp.first;
-    for (uint32_t i = 0; i < vp.first; i++) {
-      // const Values& value = vp.second[i];
-      // PLOG_INFO << "We found " << value;
-      // const uint64_t left_row = value.value;
-      // const uint64_t right_row = value.id;
-      // PLOG_INFO << "Left row " << left_row;
-      // PLOG_INFO << "Right row " << right_row;
-      // output_file << left_row << "|" << right_row << "\n";
-    }
-  };
+  auto join_row = [&num_output](const FindResult& _result) { num_output++; };
+  batch_runner.set_callback(join_row);
 
   // Probe.
-  __attribute__((aligned(64)))
-  FindResult results[HT_TESTS_FIND_BATCH_LENGTH] = {};
+  const auto t2_start = RDTSC_START();
   for (KeyValuePair kv; t2->next(&kv);) {
-    arguments[k].key = kv.key;
-    arguments[k].id = kv.value;
-    // arguments[k].part_id = (uint64_t)row.c_str();
-    // PLOG_INFO << "Right " << arguments[k];
-    if (++k == HT_TESTS_BATCH_LENGTH) {
-      ValuePairs valuepairs{0, results};
-      ht->find_batch(InsertFindArguments(arguments), valuepairs);
-      join_rows(valuepairs);
-      k = 0;
-    }
+    batch_runner.find(kv.key, kv.value);
   }
-  // Find any remaining values.
-  if (k != 0) {
-    ValuePairs valuepairs{0, results};
-    ht->find_batch(InsertFindArguments(arguments, k), valuepairs);
-    k = 0;
-    join_rows(valuepairs);
-  }
-
-  // Flush the rest of the queue.
-  ValuePairs valuepairs{0, results};
-  do {
-    valuepairs.first = 0;
-    ht->flush_find_queue(valuepairs);
-    join_rows(valuepairs);
-  } while (valuepairs.first);
+  batch_runner.flush_find();
 
   {
     const auto t2_end = RDTSCP();
     const auto duration = t2_end - t2_start;
     const auto total_duration = t2_end - t1_start;
+    num_output = t2->size();
 
     // Piggy back the total on find.
     sh->stats->num_finds = num_output;
     sh->stats->find_cycles = total_duration;
 
     std::osyncstream(std::cout)
-        << "Thread " << (int)sh->shard_idx << " takes " << duration
+        << "Thread " << (int)sh->shard_idx << " took " << duration
         << " to join t2 with size " << t2->size() << ". Output " << num_output
         << " rows. Average " << duration / std::max(1ul, num_output)
         << " cycles per probe, " << total_duration / std::max(1ul, num_output)

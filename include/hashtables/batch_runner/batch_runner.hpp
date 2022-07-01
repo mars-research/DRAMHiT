@@ -23,6 +23,9 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
     HTBatchInserter<N>::insert(key, value);
   }
 
+  /// Insert one kv pair.
+  void insert(const KeyValuePair& kv) { this->insert(kv.key, kv.value); }
+
   /// Flush both insert and find queue.
   void flush() {
     flush_insert();
