@@ -199,8 +199,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       if (!this->hashtable) {
         // Allocate placeholder for hashtable pointers
+        const auto hashtable_size = MAX_PARTITIONS * sizeof(KV *);
         this->hashtable =
-            (KV **)(aligned_alloc(64, MAX_PARTITIONS * sizeof(KV *)));
+            (KV **)(aligned_alloc(64, hashtable_size));
+        // Zero the hashtable pointers
+        memset(this->hashtable, 0, hashtable_size);
       }
     }
 
@@ -487,16 +490,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(KeyPairs &kp, collector_type* collector) override {
+  void insert_batch(const InsertFindArguments &kp, collector_type* collector) override {
     this->flush_if_needed(collector);
 
-    Keys *keys;
-    uint32_t batch_len;
-    std::tie(batch_len, keys) = kp;
-
-    for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_insert_queue(data, collector);
+    for (auto &data : kp) {
+      add_to_insert_queue(&data, collector);
     }
 
     this->flush_if_needed(collector);
@@ -561,7 +559,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void find_batch(KeyPairs &kp, ValuePairs &values, collector_type* collector) override {
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values, collector_type* collector) override {
     // What's the size of the prefetch queue size?
     // pfq_sz = 4 * 64;
     // flush_threshold = 128;
@@ -578,13 +576,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // cout << "== > post flush_before head: " << this->find_head << " tail: "
     // << this->find_tail << endl;
 
-    Keys *keys;
-    uint32_t batch_len;
-    std::tie(batch_len, keys) = kp;
-
-    for (auto k = 0u; k < batch_len; k++) {
-      void *data = reinterpret_cast<void *>(&keys[k]);
-      add_to_find_queue(data);
+    for (auto &data : kp) {
+      add_to_find_queue(&data);
     }
 
     // cout << "-> flush_after head: " << this->find_head << " tail: " <<
@@ -598,7 +591,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    Keys *item = const_cast<Keys *>(reinterpret_cast<const Keys *>(data));
+    InsertFindArgument *item = const_cast<InsertFindArgument *>(reinterpret_cast<const InsertFindArgument *>(data));
 
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
@@ -1240,7 +1233,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void add_to_insert_queue(void *data, collector_type* collector) {
-    Keys *key_data = reinterpret_cast<Keys *>(data);
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
 
@@ -1291,7 +1284,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   void add_to_find_queue(void *data) {
-    Keys *key_data = reinterpret_cast<Keys *>(data);
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
 

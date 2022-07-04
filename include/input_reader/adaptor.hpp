@@ -8,24 +8,45 @@
 
 namespace kmercounter {
 namespace input_reader {
-// Convert one InputReader to another.
-template <class From, class To>
-class Adaptor : public InputReader<To> {
+// Convert one InputReader to another via casting.
+// TODO: use concept to constrain base class.
+template <class FromReader, class ToValue>
+class MemcpyAdaptor : public InputReader<ToValue> {
  public:
-  Adaptor(std::unique_ptr<InputReader<From>> reader)
-      : reader_(std::move(reader)) {}
+  MemcpyAdaptor(FromReader&& reader) : reader_(reader) {}
 
-  bool next(To *data) override {
-    From tmp;
-    if (!reader_->next(&tmp)) {
+  bool next(ToValue* data) override {
+    if (!reader_.next(&tmp_)) {
       return false;
     }
-    *data = tmp;
+    *data = tmp_;
     return true;
   }
 
  private:
-  std::unique_ptr<InputReader<From>> reader_;
+  FromReader reader_;
+  typename FromReader::value_type tmp_;
+};
+
+// Convert one InputReader to another via pointer cast.
+// TODO: use concept to constrain base class.
+template <class FromReader, typename ToReader>
+class [[deprecated(
+    "This doesn't work since there's no way to have FromReader's constructor "
+    "relies on ToReader without modification.")]] PointerAdaptor
+    : public ToReader {
+ public:
+  using FromValue = typename FromReader::value_type;
+  using ToValue = typename ToReader::value_type;
+
+  template <typename... Args>
+  PointerAdaptor(FromReader && reader, Args && ... args)
+      : ToReader(args...), reader_(reader) {}
+
+  bool next(ToValue * data) override { return reader_.next((FromValue*)data); }
+
+ private:
+  FromReader reader_;
 };
 }  // namespace input_reader
 }  // namespace kmercounter

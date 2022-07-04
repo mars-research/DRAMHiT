@@ -142,7 +142,7 @@ class CircularBufferMove {
 
   void copy_to(std::array<T, N> *dst) { copy_to(*dst); }
 
-  void copy_to(std::array<T, N> &dst) { dst = data_; }
+  void copy_to(std::array<T, N> &dst) { dst = *(std::array<T, N>*)&data_; }
 
   void copy_to(T *dst) { memcpy(dst, data_.data(), N * sizeof(T)); }
 
@@ -171,9 +171,8 @@ class CircularBufferMove {
     }
   }
 
-  std::array<T, N> data_;
-  // One more element to reserve memory for the shl optimization.
-  T dummy_;
+  // Allocate for size at least 16 for possible optimization. 
+  std::array<T, std::max((decltype(N))16, N)> data_;
 };
 
 /// An always-full circular buffer.

@@ -31,29 +31,6 @@
 #include <ittnotify.h>
 #endif
 
-const char *run_mode_strings[] = {"",
-                                  "DRY_RUN",
-                                  "READ_FROM_DISK",
-                                  "WRITE_TO_DISK",
-                                  "FASTQ_WITH_INSERT",
-                                  "FASTQ_NO_INSERT",
-                                  "SYNTH",
-                                  "PREFETCH",
-                                  "BQ_TESTS_YES_BQ",
-                                  "BQ_TESTS_NO_BQ",
-                                  "CACHE_MISS",
-                                  "ZIPFIAN",
-                                  "RW_RATIO",
-                                  "HASHJOIN",
-                                  };
-
-const char *ht_type_strings[] = {
-    "",
-    "PARTITIONED",
-    "",
-    "CASHT++",
-};
-
 namespace kmercounter {
 
 class LynxQueue;
@@ -190,7 +167,7 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
       this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
       break;
     case HASHJOIN:
-      this->test.hj.join_r_s(sh, config, kmer_ht, barrier);
+      this->test.hj.join_relations_generated(sh, config, kmer_ht, barrier);
     default:
       break;
   }

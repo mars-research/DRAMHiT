@@ -63,7 +63,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   xorwow_init(&_xw_state);
   init_state = _xw_state;
 
-  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
   std::string evt_name(ht_type_strings[config.ht_type]);
   evt_name += "_insertions";
@@ -98,11 +98,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       } else {
         count++;
         if (++k == HT_TESTS_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, items);
+          InsertFindArguments kp(items);
           ktable->insert_batch(kp);
 
           k = 0;
-          inserted += kp.first;
+          inserted += kp.size();
         }
       }
 #if defined(SAME_KMER)
@@ -136,11 +136,10 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   _xw_state = init_state;
 
-  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
-  Values *values;
-  values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
-  ValuePairs vp = std::make_pair(0, values);
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, results);
 
   std::uint64_t duration{};
 
@@ -179,8 +178,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
       } else {
         if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, items);
-
+          InsertFindArguments kp(items);
           ktable->find_batch(kp, vp);
 
           found += vp.first;

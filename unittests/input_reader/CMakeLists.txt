@@ -1,3 +1,5 @@
+add_kvstore_test(eth_rel_gen_test)
+
 add_test1(container_test)
 add_test1(fastq_test)
 add_test1(file_test)

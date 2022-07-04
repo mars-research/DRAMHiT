@@ -1,6 +1,8 @@
 #ifndef __KV_TYPES_HPP__
 #define __KV_TYPES_HPP__
 
+#include <plog/Log.h>
+
 #include <cassert>
 #include <cstring>
 

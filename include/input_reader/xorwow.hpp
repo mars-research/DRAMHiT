@@ -8,6 +8,7 @@ namespace kmercounter {
 namespace input_reader {
 template <class T>
 class XorwowGenerator : public InputReader<T> {
+ public:
   XorwowGenerator() { xorwow_init(&this->xw_state_); }
 
   bool next(T *data) override {

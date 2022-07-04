@@ -69,7 +69,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
 
   PLOGI.printf("Starting insertion test");
-  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
+  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
 
   const auto start = RDTSC_START();
   std::uint64_t key{};
@@ -96,7 +96,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
         hashtable->insert_noprefetch(&items[key], collector);
       } else {
         if (++key == HT_TESTS_BATCH_LENGTH) {
-          KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
+          InsertFindArguments keypairs(items);
           hashtable->insert_batch(keypairs, collector);
           key = 0;
         }
@@ -154,10 +154,9 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 #endif
   while (num_entered < num_threads) _mm_pause();
 
-  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
-  Values *k_values;
-  k_values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
-  ValuePairs vp = std::make_pair(0, k_values);
+  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, results);
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
@@ -181,8 +180,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
         items[key] = {zipf_values->at(zipf_idx), n};
 
         if (++key == HT_TESTS_FIND_BATCH_LENGTH) {
-          KeyPairs keypairs{HT_TESTS_FIND_BATCH_LENGTH, items};
-          hashtable->find_batch(keypairs, vp, collector);
+          hashtable->find_batch(InsertFindArguments(items), vp, collector);
           found += vp.first;
           vp.first = 0;
           key = 0;

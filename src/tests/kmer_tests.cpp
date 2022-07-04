@@ -20,7 +20,7 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
   uint64_t inserted = 0lu;
   uint64_t kmer;
   std::string tmp;
-  __attribute__((aligned(64))) Keys _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) InsertFindArgument _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
   // input_reader::Counter<uint64_t> reader(1 << sh->shard_idx);
 
   const auto t_start = RDTSC_START();
@@ -30,9 +30,7 @@ OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTa
       _items[k].key = kmer;
 
       if (++k == HT_TESTS_BATCH_LENGTH) {
-        KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, &_items[0]);
-        kmer_ht->insert_batch(kp);
-
+        kmer_ht->insert_batch(InsertFindArguments(_items));
         k = 0;
       }
     }

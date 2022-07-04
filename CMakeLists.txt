@@ -1,13 +1,26 @@
 cmake_minimum_required(VERSION 3.13)
 project(kvstore VERSION 0.1.0)
 
-# Ensure g++
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-    message(FATAL_ERROR "Currently only gcc builds are supported")
-endif()
+# Declare options
+option(SANITIZE "Enable ASAN." OFF)
+option(SANITIZE_TESTING "Enable ASAN for tests." ON)
+option(BUILD_APP "Build the main application, kvstore." ON)
+option(BUILD_TESTING "Build tests." OFF)
+option(BUILD_EXAMPLE "Build examples." OFF)
+option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
+option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
+option(VTUNE "Use VTUNE to do performance monitering." OFF)
+option(AGGR "Use aggregation hashtable (histogram)" OFF)
+option(BQUEUE "Enable bqueue tests" OFF)
+option(XORWOW "Xorwow" OFF)
+option(BQ_ZIPFIAN "Enable global zipfian distribution generation" OFF)
+option(BQ_ZIPFIAN_LOCAL "Enable local zipfian distribution generation" OFF)
+option(CALC_STATS "Enable hashtable statistics" OFF)
+option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
+option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 
 # Check g++ version
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
     message(FATAL_ERROR "g++ must be version 8.0 or above")
 endif()
 
@@ -26,6 +39,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Export compile commands for clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_compile_options(
     -O3
     -Wall
@@ -36,62 +52,60 @@ add_compile_options(
     -fcf-protection=none
     -fno-stack-protector
     -funroll-all-loops
-    -flto
-    -ffat-lto-objects
     #-rdynamic
 )
+# Enable lto
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-# Build all the source files for the library.
-add_library(ht_lib
-    "src/types.cpp"
+# A standalone library without any of the benchmarking/application code.
+add_library(kvstore_lib
     "src/hashtables/kvtypes.cpp"
+    "src/input_reader/eth_rel_gen.cpp"
+    "src/types.cpp"
     "src/zipf_distribution.cpp"
 )
-target_include_directories(ht_lib PUBLIC include lib/plog/include/ lib)
-target_link_libraries(ht_lib PRIVATE numa fnv xxhash cityhash capstone)
-
-# Build all the source files for the executable.
-add_executable(kvstore
-    "src/tests/queue_tests.cpp"
-    "src/tests/hashtable_tests.cpp"
-    "src/tests/prefetch_tests.cpp"
-    "src/tests/cachemiss_test.cpp"
-    "src/tests/kmer_tests.cpp"
-    "src/tests/hashjoin_test.cpp"
-    "src/tests/synth_test.cpp"
-    "src/tests/rw_ratio.cpp"
-    "src/misc_lib.cpp"
-    "src/xorwow.cpp"
-    "src/Application.cpp"
-    "src/kvstore.cpp"
-    "src/zipf_distribution.cpp"
-    "src/Latency.cpp"
+target_include_directories(kvstore_lib PUBLIC include lib/plog/include/ lib)
+target_link_libraries(kvstore_lib PRIVATE 
+    eth_hashjoin
+    numa
 )
 
-# Add subdirectory
-add_subdirectory(lib)
-target_link_directories(kvstore PRIVATE lib/)
-target_link_libraries(kvstore PRIVATE ht_lib)
+if(BUILD_APP)
+    # Build all the source files for the executable.
+    add_executable(kvstore
+        "src/tests/queue_tests.cpp"
+        "src/tests/hashtable_tests.cpp"
+        "src/tests/prefetch_tests.cpp"
+        "src/tests/cachemiss_test.cpp"
+        "src/tests/kmer_tests.cpp"
+        "src/tests/hashjoin_test.cpp"
+        "src/tests/rw_ratio.cpp"
+        "src/tests/synth_test.cpp"
+        "src/misc_lib.cpp"
+        "src/xorwow.cpp"
+        "src/Application.cpp"
+        "src/kvstore.cpp"
+        "src/zipf_distribution.cpp"
+        "src/Latency.cpp"
+    )
+
+    # Add subdirectory
+    target_link_directories(kvstore PRIVATE lib/)
+    target_link_libraries(kvstore PRIVATE
+        kvstore_lib
+        fnv
+        xxhash
+        cityhash
+        capstone
+        boost_program_options
+        Threads::Threads
+    )
+endif()
 
 # Declare include directory.
 include_directories(include/ lib/ lib/cityhash/src/)
 
-# Declare options
-option(SANITIZE "Enable ASAN." OFF)
-option(BUILD_TESTING "Build tests." OFF)
-option(BUILD_EXAMPLE "Build examples." OFF)
-option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
-option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
-option(VTUNE "Use VTUNE to do performance monitering." OFF)
-option(AGGR "Use aggregation hashtable (histogram)" OFF)
-option(BQUEUE "Enable bqueue tests" OFF)
-option(XORWOW "Xorwow" OFF)
-option(BQ_ZIPFIAN "Enable global zipfian distribution generation" OFF)
-option(BQ_ZIPFIAN_LOCAL "Enable local zipfian distribution generation" OFF)
-option(CALC_STATS "Enable hashtable statistics" OFF)
-option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
-option(LATENCY_COLLECTION "Enable latency data collection" OFF)
-
+# Declare string type options.
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
 set(HASHER "crc" CACHE STRING "Hasher")
 set_property(CACHE HASHER PROPERTY STRINGS ${hasher_types})
@@ -252,7 +266,8 @@ add_definitions(-DCONFIG_BQUEUE_SECTION)
 # add_definitions(-DBQ_TESTS_USE_HALT)
 # add_definitions(-DUSE_ATOMICS)
 
-target_link_libraries(kvstore PRIVATE boost_program_options Threads::Threads)
+# Import 3p libraries
+add_subdirectory(lib)
 
 if (BUILD_TESTING)
     enable_testing()

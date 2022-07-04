@@ -59,8 +59,8 @@ static struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 // thread-local since we have multiple consumers
 static __thread int data_idx = 0;
 static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-__attribute__((aligned(
-    64))) static __thread Keys _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+__attribute__((
+    aligned(64))) static __thread InsertFindArgument _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
 std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 
@@ -353,10 +353,10 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   while (finished_producers < n_prod) {
     auto submit_batch = [&](auto num_elements) {
-      KeyPairs kp = std::make_pair(num_elements, &_items[0]);
+      InsertFindArguments kp(_items, num_elements);
 
       kmer_ht->insert_batch(kp, collector);
-      inserted += kp.first;
+      inserted += kp.size();
 
       data_idx = 0;
     };
@@ -549,8 +549,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
     this->ht_vec->at(tid) = ktable;
   }
 
-  Values *values;
-  values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
 
   if (main_thread) {
     // Wait for threads to be ready for test
@@ -571,9 +570,9 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
-  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
-  ValuePairs vp = std::make_pair(0, values);
+  ValuePairs vp = std::make_pair(0, results);
 
   PLOG_INFO.printf("Finder %u starting. key_start %" PRIu64 " | num_messages %" PRIu64 "", tid,
                    key_start, num_messages);
@@ -634,10 +633,9 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         }
       } else {
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, &items[0]);
           // PLOGI.printf("calling find_batch i = %d", i);
-          // ktable->find_batch((Keys *)items, HT_TESTS_FIND_BATCH_LENGTH);
-          ktable->find_batch(kp, vp);
+          // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
+          ktable->find_batch(InsertFindArguments(items), vp);
           found += vp.first;
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;

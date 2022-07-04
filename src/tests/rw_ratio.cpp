@@ -11,6 +11,7 @@
 #include <xorwow.hpp>
 
 #include "hashtables/base_kht.hpp"
+#include "hashtables/ht_helper.hpp"
 
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
@@ -24,14 +25,6 @@ struct experiment_results {
   std::uint64_t n_found;
 };
 
-void push_key(KeyPairs& keys, std::uint64_t key) noexcept {
-  Keys key_struct{};
-  key_struct.key = key;
-  keys.second[keys.first++] = key_struct;
-}
-
-extern Configuration config;
-
 class rw_experiment {
  public:
   rw_experiment(BaseHashTable& hashtable, unsigned int start_key)
@@ -41,9 +34,9 @@ class rw_experiment {
         sampler{config.pread},
         next_key{start_key},
         write_batch{},
-        writes{0, write_batch.data()},
+        write_buffer_len{},
         read_batch{},
-        reads{0, read_batch.data()},
+        read_buffer_len{},
         result_batch{},
         results{0, result_batch.data()} {
     PLOG_INFO << "Using P(read) = " << config.pread << "\n";
@@ -61,16 +54,18 @@ class rw_experiment {
         config.skew, keyrange,
         next_key};  // next_key is being used purely as a seed here
 
-    std::array<Keys, HT_TESTS_BATCH_LENGTH> inserts{};
-    KeyPairs insert_pairs{0, inserts.data()};
-    for (auto i = 0u; i < total_ops; ++i) {
-      if (insert_pairs.first == HT_TESTS_BATCH_LENGTH) {
-        hashtable.insert_batch(insert_pairs);
-        insert_pairs.first = 0;
+    std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> args{};
+    uint64_t k{};
+    for (auto i = 0u; i < total_ops; ++i,++k) {
+      if (k == HT_TESTS_BATCH_LENGTH) {
+        hashtable.insert_batch(args);
+        k = 0;
       }
 
-      insert_pairs.second[insert_pairs.first++].key = next_key + i;
+      args[k].key = next_key + i;
     }
+    // TODO: flush the rest in there.
+
 
     std::vector<decltype(distribution())> values(total_ops);
     for (auto& key : values) key = distribution() + 1;
@@ -86,12 +81,13 @@ class rw_experiment {
     for (auto i = 0u; i < total_ops; ++i) {
       if (i % 8 == 0 && i + 16 < keyrange) __builtin_prefetch(&values[i + 16]);
 
-      if (writes.first == HT_TESTS_BATCH_LENGTH) time_insert();
-      if (reads.first == HT_TESTS_FIND_BATCH_LENGTH) time_find();
-      if (sampler(prng))
-        push_key(reads, values[i]);
-      else
-        push_key(writes, values[i]);
+      if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert();
+      if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find();
+      if (sampler(prng)) {
+        read_batch[read_buffer_len++].key = values[i]; 
+      } else {
+        write_batch[write_buffer_len++].key = values[i]; 
+      }
     }
 
     time_insert();
@@ -116,35 +112,35 @@ class rw_experiment {
   std::bernoulli_distribution sampler;
   std::uint64_t next_key;
 
-  std::array<Keys, HT_TESTS_BATCH_LENGTH> write_batch;
-  KeyPairs writes;
+  std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> write_batch;
+  size_t write_buffer_len;
 
-  std::array<Keys, HT_TESTS_FIND_BATCH_LENGTH> read_batch;
-  KeyPairs reads;
+  std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> read_batch;
+  size_t read_buffer_len;
 
-  std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> result_batch;
+  std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> result_batch;
   ValuePairs results;
 
   void time_insert() {
-    timings.n_writes += writes.first;
+    timings.n_writes += write_buffer_len;
 
     // const auto start = start_time();
-    hashtable.insert_batch(writes);
+    hashtable.insert_batch(InsertFindArguments(write_batch.data(), write_buffer_len));
     // timings.insert_cycles += stop_time() - start;
 
-    writes.first = 0;
+    write_buffer_len = 0;
   }
 
   void time_find() {
-    timings.n_reads += reads.first;
+    timings.n_reads += read_buffer_len;
 
     // const auto start = start_time();
-    hashtable.find_batch(reads, results);
+    hashtable.find_batch(InsertFindArguments(read_batch.data(), read_buffer_len), results);
     // timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
-    reads.first = 0;
+    read_buffer_len = 0;
   }
 
   void time_flush_find() {
