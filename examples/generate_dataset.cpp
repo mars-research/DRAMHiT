@@ -27,10 +27,10 @@ ABSL_FLAG(uint, ratio, 1, "|S| to |R| ratio. For example, ");
 ABSL_FLAG(std::string, delimitor, "|", "Column seperator.");
 
 using Key = uint64_t;
-using Keys = std::vector<Key>;
+using InsertFindArgument = std::vector<Key>;
 
 // Generated shuffled primary keys and foreign keys.
-std::pair<Keys, Keys> gen_keys(const uint64_t num_keys, const uint ratio) {
+std::pair<InsertFindArgument, InsertFindArgument> gen_keys(const uint64_t num_keys, const uint ratio) {
   std::random_device rd;
   std::mt19937 gen{rd()};
 
@@ -40,8 +40,8 @@ std::pair<Keys, Keys> gen_keys(const uint64_t num_keys, const uint ratio) {
   // while (key_set.size() < num_keys) {
   //   key_set.insert(dist.sample());
   // }
-  // Keys keys(key_set.begin(), key_set.end());
-  Keys keys;
+  // InsertFindArgument keys(key_set.begin(), key_set.end());
+  InsertFindArgument keys;
   keys.reserve(num_keys);
   for (uint64_t key = 0; key < num_keys; key++) {
     keys.push_back(key);
@@ -49,7 +49,7 @@ std::pair<Keys, Keys> gen_keys(const uint64_t num_keys, const uint ratio) {
   std::ranges::shuffle(keys, gen);
 
   // Generate primary keys and shuffle them
-  Keys foreign_keys;
+  InsertFindArgument foreign_keys;
   foreign_keys.reserve(num_keys * ratio);
   for (uint i = 0; i < ratio; i++) {
     foreign_keys.insert(foreign_keys.end(), keys.begin(), keys.end());
@@ -61,7 +61,7 @@ std::pair<Keys, Keys> gen_keys(const uint64_t num_keys, const uint ratio) {
 
 // Write dataset file. `value_fn` is used to generate the value for a key.
 void write_dataset(const std::string path, const ::std::string delimitor,
-                   Keys keys, const std::function<Key(Key)> value_fn) {
+                   InsertFindArgument keys, const std::function<Key(Key)> value_fn) {
   // Open files for writing
   std::ofstream ofile(path);
   if (ofile.fail()) {

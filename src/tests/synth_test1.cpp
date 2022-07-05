@@ -56,14 +56,14 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
   ;
   
-  sh->stats->insertion_cycles = insert_times.duration;
+  sh->stats->insertions.duration = insert_times.duration;
   sh->stats->num_inserts = insert_times.op_count;
 
 
   const auto find_times = synth_run_get(kmer_ht, sh->shard_idx);
 
-  sh->stats->find_cycles = find_times.duration;
-  sh->stats->num_finds = find_times.op_count;
+  sh->finds.duration = find_times.duration;
+  sh->finds.op_count = find_times.op_count;
 
   if (find_times.op_count > 0)
     PLOG_INFO.printf(

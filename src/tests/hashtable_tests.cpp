@@ -69,7 +69,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
 
   PLOGI.printf("Starting insertion test");
-  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
+  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
 
   const auto start = RDTSC_START();
   std::uint64_t key{};
@@ -96,7 +96,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
         hashtable->insert_noprefetch(&items[key], collector);
       } else {
         if (++key == HT_TESTS_BATCH_LENGTH) {
-          KeyPairs keypairs{HT_TESTS_BATCH_LENGTH, items};
+          InsertFindArguments keypairs(items);
           hashtable->insert_batch(keypairs, collector);
           key = 0;
         }
@@ -154,10 +154,9 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 #endif
   while (num_entered < num_threads) _mm_pause();
 
-  alignas(64) Keys items[HT_TESTS_BATCH_LENGTH]{};
-  Values *k_values;
-  k_values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
-  ValuePairs vp = std::make_pair(0, k_values);
+  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, results);
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
@@ -171,7 +170,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       }
 
       if (config.no_prefetch) {
-        auto ret = hashtable->find_noprefetch(&zipf_values->at(zipf_idx), collector);
+        auto ret =
+            hashtable->find_noprefetch(&zipf_values->at(zipf_idx), collector);
         if (ret)
           found++;
         else
@@ -180,8 +180,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
         items[key] = {zipf_values->at(zipf_idx), n};
 
         if (++key == HT_TESTS_FIND_BATCH_LENGTH) {
-          KeyPairs keypairs{HT_TESTS_FIND_BATCH_LENGTH, items};
-          hashtable->find_batch(keypairs, vp, collector);
+          hashtable->find_batch(InsertFindArguments(items), vp, collector);
           found += vp.first;
           vp.first = 0;
           key = 0;
@@ -232,7 +231,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #ifdef LATENCY_COLLECTION
   static auto step = 0;
   {
-    std::lock_guard lock {collector_lock};
+    std::lock_guard lock{collector_lock};
     if (step == 0) {
       collectors.resize(config.num_threads);
       step = 1;
@@ -259,12 +258,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
   }
 
-  shard->stats->insertion_cycles = insert_timings.duration;
-  shard->stats->num_inserts = insert_timings.op_count;
+  shard->stats->insertions = insert_timings;
 
 #ifdef LATENCY_COLLECTION
   {
-    std::lock_guard lock {collector_lock};
+    std::lock_guard lock{collector_lock};
     if (step == 1) {
       collectors.clear();
       collectors.resize(config.num_threads);
@@ -276,9 +274,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   sleep(1);
 
   const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx);
-
-  shard->stats->find_cycles = num_finds.duration;
-  shard->stats->num_finds = num_finds.op_count;
+  shard->stats->finds = num_finds;
 
   if (num_finds.op_count > 0) {
     PLOG_INFO.printf("thread %u | num_finds %" PRIu64 " | cycles per get: %" PRIu64 "",
@@ -290,7 +286,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
 #ifdef LATENCY_COLLECTION
   {
-    std::lock_guard lock {collector_lock};
+    std::lock_guard lock{collector_lock};
     if (step == 2) {
       collectors.clear();
       step = 3;

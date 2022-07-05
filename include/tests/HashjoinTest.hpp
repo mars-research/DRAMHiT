@@ -11,10 +11,14 @@ namespace kmercounter {
 
 class HashjoinTest {
  public:
-  void part_join_partsupp(const Shard &sh, const Configuration &config,
-                          BaseHashTable *ht, std::barrier<> *barrier);
-  void join_r_s(Shard *sh, const Configuration &config, BaseHashTable *ht,
-                std::barrier<std::function<void()>> *barrier);
+  /// Generate and join two relations.
+  void join_relations_generated(Shard *sh, const Configuration &config,
+                                BaseHashTable *ht,
+                                std::barrier<VoidFn> *barrier);
+  /// Load and join two tables from filesystem.
+  void join_relations_from_files(Shard *sh, const Configuration &config,
+                                 BaseHashTable *ht,
+                                 std::barrier<VoidFn> *barrier);
 };
 
 }  // namespace kmercounter

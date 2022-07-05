@@ -17,6 +17,7 @@
 
 #include "constants.hpp"
 #include "hashtables/base_kht.hpp"
+#include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "input_reader/csv.hpp"
 #include "input_reader/eth_rel_gen.hpp"
@@ -33,96 +34,46 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
               input_reader::SizedInputReader<KeyValuePair>* t2,
               BaseHashTable* ht, std::barrier<std::function<void()>>* barrier) {
   // Build hashtable from t1.
-  uint64_t k = 0;
-  __attribute__((aligned(64))) Keys keys[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  HTBatchRunner batch_runner(ht);
   const auto t1_start = RDTSC_START();
   for (KeyValuePair kv; t1->next(&kv);) {
-    keys[k].key = kv.key;
-    keys[k].value = kv.value;
-    // PLOG_INFO << "Left " << keys[k] << keys[k].id;
-    if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(k, keys);
-      ht->insert_batch(kp);
-      k = 0;
-    }
+    batch_runner.insert(kv);
   }
-  if (k != 0) {
-    KeyPairs kp = std::make_pair(k, keys);
-    ht->insert_batch(kp);
-    k = 0;
-  }
-  ht->flush_insert_queue();
+  batch_runner.flush_insert();
 
   {
     const auto duration = RDTSCP() - t1_start;
-    sh->stats->num_inserts = t1->size();
-    sh->stats->insertion_cycles = duration;
+    sh->stats->insertions.op_count = t1->size();
+    sh->stats->insertions.duration = duration;
   }
 
   // Make sure insertions is finished before probing.
   barrier->arrive_and_wait();
 
   // Helper function for checking the result of the batch finds.
-  // std::ofstream output_file(std::to_string((int)sh->shard_idx) +
-  // "_join.tbl");
-  const auto t2_start = RDTSC_START();
   uint64_t num_output = 0;
-  auto join_rows = [&num_output](const ValuePairs& vp) {
-    // PLOG_DEBUG << "Found " << vp.first << " keys";
-    for (uint32_t i = 0; i < vp.first; i++) {
-      // const Values& value = vp.second[i];
-      // PLOG_INFO << "We found " << value;
-      // const uint64_t left_row = value.value;
-      // const uint64_t right_row = value.id;
-      // PLOG_INFO << "Left row " << left_row;
-      // PLOG_INFO << "Right row " << right_row;
-      num_output++;
-      // output_file << left_row << "|" << right_row << "\n";
-    }
-  };
+  auto join_row = [&num_output](const FindResult& _result) { num_output++; };
+  batch_runner.set_callback(join_row);
 
   // Probe.
-  __attribute__((aligned(64))) Values values[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  const auto t2_start = RDTSC_START();
   for (KeyValuePair kv; t2->next(&kv);) {
-    keys[k].key = kv.key;
-    keys[k].id = kv.value;
-    // keys[k].part_id = (uint64_t)row.c_str();
-    // PLOG_INFO << "Right " << keys[k];
-    if (++k == HT_TESTS_BATCH_LENGTH) {
-      KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, keys);
-      ValuePairs valuepairs{0, values};
-      ht->find_batch(kp, valuepairs);
-      join_rows(valuepairs);
-      k = 0;
-    }
+    batch_runner.find(kv.key, kv.value);
   }
-  if (k != 0) {
-    KeyPairs kp = std::make_pair(k, keys);
-    ValuePairs valuepairs{0, values};
-    ht->find_batch(kp, valuepairs);
-    k = 0;
-    join_rows(valuepairs);
-  }
-
-  // Flush the rest of the queue.
-  ValuePairs valuepairs{0, values};
-  do {
-    valuepairs.first = 0;
-    ht->flush_find_queue(valuepairs);
-    join_rows(valuepairs);
-  } while (valuepairs.first);
+  batch_runner.flush_find();
 
   {
     const auto t2_end = RDTSCP();
     const auto duration = t2_end - t2_start;
     const auto total_duration = t2_end - t1_start;
+    num_output = t2->size();
 
     // Piggy back the total on find.
-    sh->stats->num_finds = num_output;
-    sh->stats->find_cycles = total_duration;
+    sh->stats->finds.op_count = num_output;
+    sh->stats->finds.duration = total_duration;
 
     std::osyncstream(std::cout)
-        << "Thread " << (int)sh->shard_idx << " takes " << duration
+        << "Thread " << (int)sh->shard_idx << " took " << duration
         << " to join t2 with size " << t2->size() << ". Output " << num_output
         << " rows. Average " << duration / std::max(1ul, num_output)
         << " cycles per probe, " << total_duration / std::max(1ul, num_output)
@@ -131,26 +82,28 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 }
 }  // namespace
 
-/// Join two tables and use the pointers as the values in the hashtable.
-/// Only primary-foreign key join is supported.
-[[deprecated(
-    "We don't really need benchmarks for joining non-two-column ")]] void
-HashjoinTest::part_join_partsupp(const Shard& sh, const Configuration& config,
-                                 BaseHashTable* ht, std::barrier<>* barrier) {
-  input_reader::PartitionedCsvReader t1(config.relation_r, sh.shard_idx,
-                                        config.num_threads, "|");
-  input_reader::PartitionedCsvReader t2(config.relation_s, sh.shard_idx,
-                                        config.num_threads, "|");
-  PLOG_INFO << "Shard " << (int)sh.shard_idx << "/" << config.num_threads
-            << " t1 " << t1.size() << " t2 " << t2.size();
+void HashjoinTest::join_relations_generated(Shard* sh,
+                                            const Configuration& config,
+                                            BaseHashTable* ht,
+                                            std::barrier<VoidFn>* barrier) {
+  input_reader::PartitionedEthRelationGenerator t1(
+      "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
+      config.num_threads);
+  input_reader::PartitionedEthRelationGenerator t2(
+      "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
+      config.num_threads);
 
-  // TODO: write an adapter then call `hashjoin`.
+  // Wait for all readers finish initializing.
+  barrier->arrive_and_wait();
+
+  // Run hashjoin
+  hashjoin(sh, &t1, &t2, ht, barrier);
 }
 
-/// Load and join two tables from filesystem.
-void HashjoinTest::join_r_s(Shard* sh, const Configuration& config,
-                            BaseHashTable* ht,
-                            std::barrier<std::function<void()>>* barrier) {
+void HashjoinTest::join_relations_from_files(Shard* sh,
+                                             const Configuration& config,
+                                             BaseHashTable* ht,
+                                             std::barrier<VoidFn>* barrier) {
   input_reader::KeyValueCsvPreloadReader t1(config.relation_r, sh->shard_idx,
                                             config.num_threads, "|");
   input_reader::KeyValueCsvPreloadReader t2(config.relation_s, sh->shard_idx,

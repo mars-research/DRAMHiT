@@ -8,7 +8,6 @@
 
 namespace kmercounter {
 namespace input_reader {
-
 namespace {
 
 TEST(RangeReader, SimpleTest) {

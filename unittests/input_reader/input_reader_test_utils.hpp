@@ -10,7 +10,7 @@ namespace kmercounter {
 namespace input_reader {
 
 /// Consumes the reader and return the size of it.
-// TODO: add constrains that looks like `requires
+// TODO: add concept constrains that looks like `requires
 // std::is_base_of_v<InputReader<T>, InputReader_t>`
 template <typename InputReader_t,
           typename T = typename InputReader_t::value_type>

@@ -30,7 +30,6 @@ void dump_hashes(const std::string_view input_file,
   std::mt19937 rand_gen(rd());
   std::bernoulli_distribution sampler(sample_rate);
 
-  kmercounter::Hasher hasher;
   kmercounter::input_reader::FastqKMerReader<KMER_LEN> reader(input_file);
   std::ostream *ofile;
   if (output_file.empty()) {
@@ -40,7 +39,6 @@ void dump_hashes(const std::string_view input_file,
         new std::ofstream(output_file.data(), std::ios::out | std::ios::binary);
   }
   uint64_t kmer{};
-  uint64_t i = 0;
   while (reader.next(&kmer)) {
     if (!sampler(rand_gen)) {
       continue;

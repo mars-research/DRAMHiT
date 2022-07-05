@@ -1,10 +1,14 @@
-#ifndef __TYPES_HPP__
-#define __TYPES_HPP__
+#ifndef TYPES_HPP
+#define TYPES_HPP
+
+#include <absl/hash/hash.h>
 
 #include <atomic>
 #include <cinttypes>
 #include <cstdint>
+#include <functional>
 #include <iostream>
+#include <span>
 #include <string>
 #include <utility>
 
@@ -17,7 +21,9 @@
 #define KEY_SIZE 8
 #define VALUE_SIZE 8
 
-extern const uint32_t PREFETCH_QUEUE_SIZE;
+// Forward declaration of `eth_hashjoin::tuple_t`.
+namespace eth_hashjoin { struct tuple_t; }
+namespace kmercounter {
 
 enum class BRANCHKIND { WithBranch, NoBranch_Cmove, NoBranch_Simd };
 
@@ -55,7 +61,8 @@ typedef enum {
   BQ_TESTS_NO_BQ = 9,
   CACHE_MISS = 10,
   ZIPFIAN = 11,
-  HASHJOIN = 12,
+  RW_RATIO = 12,
+  HASHJOIN = 13,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -65,8 +72,8 @@ typedef enum {
   CASHTPP = 3,
 } ht_type_t;
 
-extern const char *run_mode_strings[];
-extern const char *ht_type_strings[];
+extern const char* run_mode_strings[];
+extern const char* ht_type_strings[];
 
 // Application configuration
 struct Configuration {
@@ -108,6 +115,8 @@ struct Configuration {
 
   // controls zipfian dist
   double skew;
+  // R/W ratio for associated tests (modes 12 and 8)
+  double pread;
   // used for kmer parsing from disk
   bool drop_caches;
   // enable/disable hw prefetchers (msr 0x1a4)
@@ -152,17 +161,30 @@ struct Configuration {
   }
 };
 
+struct OpTimings {
+  uint64_t duration;
+  uint64_t op_count;
+};
+
+inline OpTimings& operator+=(OpTimings& a, const OpTimings& b) {
+  a.duration += b.duration;
+  a.op_count += b.op_count;
+  return a;
+}
+
+inline auto cycles_per_op(const OpTimings& ops) {
+  return ops.duration / ops.op_count;
+}
+
 /* Thread stats */
 struct thread_stats {
-  uint64_t insertion_cycles;  // to be set by create_shards
-  uint64_t num_inserts;
-  uint64_t num_enqueues;
-  uint64_t find_cycles;
-  uint64_t num_finds;
+  OpTimings insertions;
+  OpTimings finds;
+  OpTimings enqueues;
+  OpTimings any;
   uint64_t ht_fill;
   uint64_t ht_capacity;
   uint32_t max_count;
-  uint64_t enqueue_cycles;
   // uint64_t total_threads; // TODO add this back
 #ifdef CALC_STATS
   uint64_t num_reprobes;
@@ -185,31 +207,62 @@ struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
   off64_t f_start;    // start byte into file
   off64_t f_end;      // end byte into file
-  thread_stats *stats;
-  Kmer_s *kmer_big_pool;
-  Kmer_s *kmer_small_pool;
-  Kmer_s *pool;
+  thread_stats* stats;
+  Kmer_s* kmer_big_pool;
+  Kmer_s* kmer_small_pool;
+  Kmer_s* pool;
 };
 
+/// Argument for one hashtable operation(insert/find).
 // NEVER NEVER NEVER USE KEY OR ID 0
 // Your inserts will be ignored if you do (we use these as empty markers)
-struct Keys {
+struct InsertFindArgument {
+  /// The key we try to insert/find.
   uint64_t key;
+  /// The value we try to insert.
   uint64_t value;
+  /// A user-provided value for the user to keep track of this operation.
+  /// This is returned as `FindResult::id`.
+  /// In aggregation mode, this is the "key". Don't ask why.
   uint64_t id;
+  /// The id of the partition that will be handling this operation.
+  /// Might not be used depends on the configuration/kind of operation. 
   uint64_t part_id;
 };
-std::ostream& operator<<(std::ostream& os, const Keys& q);
+std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
 
-struct Values {
+/// A span of `InsertFindArgument`s.
+using InsertFindArguments = std::span<InsertFindArgument>;
+
+/// The result of a find operation on a hashtable.
+struct FindResult {
+  /// The id of the find operation.
+  /// This matches the `InsertFindArgument::id`.
+  uint64_t id;
+  /// The value of the key of the find operation.
+  /// This is the number of occurrences in aggregation mode. 
   uint64_t value;
-  uint64_t id; // for user to keep track of the transaction
+
+  constexpr FindResult() = default;
+  constexpr FindResult(uint64_t id, uint64_t value) : id(id), value(value) {}
+  bool operator==(FindResult const&) const = default;
+
+  template <typename H>
+  friend H AbslHashValue(H h, const FindResult& x) {
+    return H::combine(std::move(h), x.id, x.value);
+  }
 };
-std::ostream& operator<<(std::ostream& os, const Values& q);
+std::ostream& operator<<(std::ostream& os, const FindResult& q);
+
+/// A span of `FindResult`s.
+using ValuePairs = std::pair<uint32_t, FindResult *>;
 
 struct KeyValuePair {
   uint64_t key;
   uint64_t value;
+
+  KeyValuePair();
+  KeyValuePair(const struct eth_hashjoin::tuple_t& tuple);
 };
 
 enum class QueueType {
@@ -217,15 +270,11 @@ enum class QueueType {
   find_queue,
 };
 
-using ValuePairs = std::pair<uint32_t, Values *>;
-using KeyPairs = std::pair<uint32_t, Keys *>;
+// Can be use for, let's say, cleanup functions.
+using VoidFn = std::function<void()>;
 
-struct OpTimings {
-  uint64_t duration;
-  uint64_t op_count;
-};
-
-#endif  // __TYPES_HPP__
+} //namespace kmercounter
+#endif // TYPES_HPP
 
 // X mmap, no inserts, 1 thread
 // X mmap, no inserts, 10 threads

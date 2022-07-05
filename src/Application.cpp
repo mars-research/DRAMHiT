@@ -14,9 +14,9 @@
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
-#include "tests/PrefetchTest.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
+#include "tests/PrefetchTest.hpp"
 #include "types.hpp"
 
 #if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
@@ -30,29 +30,6 @@
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
 #endif
-
-const char *run_mode_strings[] = {
-    "",
-    "DRY_RUN",
-    "READ_FROM_DISK",
-    "WRITE_TO_DISK",
-    "FASTQ_WITH_INSERT",
-    "FASTQ_NO_INSERT",
-    "SYNTH",
-    "PREFETCH",
-    "BQ_TESTS_YES_BQ",
-    "BQ_TESTS_NO_BQ",
-    "CACHE_MISS",
-    "ZIPFIAN",
-    "HASHJOIN",
-};
-
-const char *ht_type_strings[] = {
-  "",
-  "PARTITIONED",
-  "",
-  "CASHT++",
-};
 
 namespace kmercounter {
 
@@ -86,6 +63,7 @@ const Configuration def = {
     .n_cons = 1,
     .num_nops = 0,
     .skew = 1.0,
+    .pread = 0.0,
     .drop_caches = true,
     .hwprefetchers = false,
     .no_prefetch = false,
@@ -144,6 +122,7 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
       //    HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
     case SYNTH:
+    case RW_RATIO:
     case ZIPFIAN:
     case HASHJOIN:
     case BQ_TESTS_NO_BQ:
@@ -183,8 +162,12 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
     case ZIPFIAN:
       this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
       break;
+    case RW_RATIO:
+      PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
+      this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
+      break;
     case HASHJOIN:
-      this->test.hj.join_r_s(sh, config, kmer_ht, barrier);
+      this->test.hj.join_relations_generated(sh, config, kmer_ht, barrier);
     default:
       break;
   }
@@ -220,7 +203,7 @@ int Application::spawn_shard_threads() {
 
   if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
       (config.mode != PREFETCH) && (config.mode != CACHE_MISS) &&
-      (config.mode != HASHJOIN)) {
+      (config.mode != RW_RATIO) && (config.mode != HASHJOIN)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -335,7 +318,8 @@ int Application::process(int argc, char *argv[]) {
         "zipfian)\n"
         "10: Cache Miss test\n"
         "11: Zipfian non-bqueue test\n"
-        "12: Hashjoin")(
+        "12: RW-ratio test\n"
+        "13: Hashjoin")(
         "base",
         po::value<uint64_t>(&config.kmer_create_data_base)
             ->default_value(def.kmer_create_data_base),
@@ -351,11 +335,10 @@ int Application::process(int argc, char *argv[]) {
         "num-threads",
         po::value<uint32_t>(&config.num_threads)
             ->default_value(def.num_threads),
-        "Number of threads")(
-        "insert-factor",
-        po::value<uint64_t>(&config.insert_factor)
-            ->default_value(def.insert_factor),
-        "Insert X times the size of hashtable")(
+        "Number of threads")("insert-factor",
+                             po::value<uint64_t>(&config.insert_factor)
+                                 ->default_value(def.insert_factor),
+                             "Insert X times the size of hashtable")(
         "files-dir",
         po::value<std::string>(&config.kmer_files_dir)
             ->default_value(def.kmer_files_dir),
@@ -401,12 +384,14 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint64_t>(&config.ht_size)->default_value(def.ht_size),
         "adjust hashtable fill ratio [0-100] ")(
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
-        "Zipfian skewness")("hw-pref",
-        po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers))
-        ("no-prefetch",
-        po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))
-        ("run-both",
-        po::value<bool>(&config.run_both)->default_value(def.run_both))
+        "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
+                                           ->default_value(def.hwprefetchers))(
+        "no-prefetch",
+        po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))(
+        "run-both",
+        po::value<bool>(&config.run_both)->default_value(def.run_both))(
+        "p-read",
+        po::value<double>(&config.pread)->default_value(def.pread))
         ("relation_r",
         po::value(&config.relation_r)->default_value(def.relation_r), "Path to relation R.")
         ("relation_s",
@@ -484,8 +469,8 @@ int Application::process(int argc, char *argv[]) {
         PLOG_INFO.printf("Hashtable type : Cas HT");
         break;
       default:
-        PLOGE.printf(
-            "Unknown HT type %u! Specify using --ht-type", config.ht_type);
+        PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
+                     config.ht_type);
         PLOG_INFO.printf("Exiting");
         exit(0);
     }
@@ -567,7 +552,8 @@ int Application::process(int argc, char *argv[]) {
   // to run cashtpp
   if (config.run_both) {
     PLOGI.printf("Running cashtpp now with the same configuration");
-    if ((config.ht_type == CASHTPP) && config.no_prefetch && (config.mode == ZIPFIAN)){
+    if ((config.ht_type == CASHTPP) && config.no_prefetch &&
+        (config.mode == ZIPFIAN)) {
       HT_TESTS_NUM_INSERTS = config.ht_size * config.ht_fill * 0.01;
 
       config.no_prefetch = 0;

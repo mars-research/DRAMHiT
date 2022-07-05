@@ -132,8 +132,8 @@ class FastqKMerPreloadReader : InputReaderU64 {
   template <typename... Args>
   FastqKMerPreloadReader(Args&&... args)
       : reader_(std::make_unique<Reservoir<std::string>>(
-            std::make_unique<Adaptor<std::string_view, std::string>>(
-                std::make_unique<FastqReader>(std::forward<Args>(args)...)))) {}
+            std::make_unique<MemcpyAdaptor<FastqReader, std::string>>(
+                FastqReader(std::forward<Args>(args)...)))) {}
 
   bool next(uint64_t* data) override { return reader_.next(data); }
 

@@ -69,14 +69,14 @@ TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
   for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
     ++count;
 
-    std::array<Keys, HT_TESTS_FIND_BATCH_LENGTH> keys{};
-    std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
-    ValuePairs found{0, values.data()};
+    std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> arguments{};
+    std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> results{};
+    ValuePairs found{0, results.data()};
     for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-      keys.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
+      arguments.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
-    n_inserted += items.first;
+    InsertFindArguments items(arguments);
+    n_inserted += items.size();
     ht_->insert_batch(items);
     ht_->flush_insert_queue();
     ht_->find_batch(items, found);
@@ -105,18 +105,18 @@ TEST_P(AggregationTest, ASYNCHRONOUS_TEST) {
                 "Test logic assumes these batch sizes are equal");
 
   for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
-    std::array<Keys, HT_TESTS_BATCH_LENGTH> keys{};
+    std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> arguments{};
 
     for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-      keys.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
+      arguments.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
+    InsertFindArguments items(arguments);
     ht_->insert_batch(items);
     n_inserted += HT_TESTS_BATCH_LENGTH;
 
     ht_->flush_insert_queue();
 
-    std::array<Values, HT_TESTS_FIND_BATCH_LENGTH> values{};
+    std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> values{};
     ValuePairs found{0, values.data()};
     ht_->find_batch(items, found);
     n_found += found.first;
@@ -142,14 +142,14 @@ TEST_P(AggregationTest, FILL_SYNC_TEST) {
   for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
     ++count;
 
-    std::array<Keys, size> keys{};
-    for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j)
-      keys.at(j) = {
-          i + j + 1,
-          i + j + 1};  // Insert different values each time to force max fill
+    std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> arguments{};
+    for (std::uint64_t j{}; j < HT_TESTS_BATCH_LENGTH; ++j) {
+      // Insert different values each time to force max fill
+      arguments.at(j) = {i + j + 1, i + j + 1};
+    }
 
-    KeyPairs items{HT_TESTS_BATCH_LENGTH, keys.data()};
-    n_inserted += items.first;
+    InsertFindArguments items(arguments);
+    n_inserted += items.size();
     ht_->insert_batch(items);
   }
 
@@ -160,8 +160,8 @@ TEST_P(AggregationTest, FILL_SYNC_TEST) {
 
 // Test for presence of an off-by-one error in synchronous use
 TEST_P(AggregationTest, SINGLE_INSERT_TEST) {
-  Keys pair{1, 128};
-  KeyPairs keys{1ull, &pair};
+  InsertFindArgument argument[] = {{1, 128}};
+  InsertFindArguments keys{argument};
   ht_->insert_batch(keys);
   ht_->flush_insert_queue();
   ASSERT_EQ(ht_->get_fill(), 1);
@@ -171,12 +171,13 @@ TEST_P(AggregationTest, SINGLE_INSERT_TEST) {
 // lengths between find/insert
 // NOTE: also noted a very strange use of the value field
 TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
-  std::array<Keys, 2> keys{Keys{key : 1, id : 128},
-                           Keys{key : 0xdeadbeef, id : 256}};
-  KeyPairs keypairs{2, keys.data()};
+  std::array<InsertFindArgument, 2> arguments{
+      InsertFindArgument{key : 1, id : 128},
+      InsertFindArgument{key : 0xdeadbeef, id : 256}};
+  InsertFindArguments keypairs(arguments);
   ht_->insert_batch(keypairs);
   ht_->flush_insert_queue();
-  std::array<Values, HT_TESTS_BATCH_LENGTH> values{};
+  std::array<FindResult, HT_TESTS_BATCH_LENGTH> values{};
   ValuePairs valuepairs{0, values.data()};
   ht_->find_batch(keypairs, valuepairs);
   ht_->flush_find_queue(valuepairs);

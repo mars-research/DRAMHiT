@@ -1,8 +1,9 @@
-#include "tests/SynthTest.hpp"
+#include <plog/Log.h>
 
 #include <algorithm>
 #include <cstdint>
-#include <plog/Log.h>
+
+#include "tests/SynthTest.hpp"
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
 #endif
@@ -46,7 +47,7 @@ void papi_end_region(const char *name) {
   papi_check(PAPI_hl_region_end(name));
 #endif
 }
-} // namespace
+}  // namespace
 
 extern Configuration config;
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -62,7 +63,7 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   xorwow_init(&_xw_state);
   init_state = _xw_state;
 
-  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 #ifdef WITH_VTUNE_LIB
   std::string evt_name(ht_type_strings[config.ht_type]);
   evt_name += "_insertions";
@@ -74,7 +75,8 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
   papi_start_region("synthetic_insertions");
   const auto t_start = RDTSC_START();
   for (auto j = 0u; j < config.insert_factor; j++) {
-    uint64_t count = std::max(static_cast<uint64_t>(1), HT_TESTS_NUM_INSERTS * start);
+    uint64_t count =
+        std::max(static_cast<uint64_t>(1), HT_TESTS_NUM_INSERTS * start);
     _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
       std::uint64_t value{};
@@ -96,11 +98,11 @@ OpTimings SynthTest::synth_run(BaseHashTable *ktable, uint8_t start) {
       } else {
         count++;
         if (++k == HT_TESTS_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_BATCH_LENGTH, items);
+          InsertFindArguments kp(items);
           ktable->insert_batch(kp);
 
           k = 0;
-          inserted += kp.first;
+          inserted += kp.size();
         }
       }
 #if defined(SAME_KMER)
@@ -134,11 +136,10 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   _xw_state = init_state;
 
-  __attribute__((aligned(64))) Keys items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
-  Values *values;
-  values = new Values[HT_TESTS_FIND_BATCH_LENGTH];
-  ValuePairs vp = std::make_pair(0, values);
+  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  ValuePairs vp = std::make_pair(0, results);
 
   std::uint64_t duration{};
 
@@ -154,7 +155,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
 
   for (auto j = 0u; j < config.insert_factor; j++) {
     uint64_t count =
-      std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
+        std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
     _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {
       std::uint64_t value{};
@@ -177,14 +178,13 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
         k = (k + 1) & (HT_TESTS_BATCH_LENGTH - 1);
       } else {
         if (++k == HT_TESTS_FIND_BATCH_LENGTH) {
-          KeyPairs kp = std::make_pair(HT_TESTS_FIND_BATCH_LENGTH, items);
-
+          InsertFindArguments kp(items);
           ktable->find_batch(kp, vp);
 
           found += vp.first;
           vp.first = 0;
           k = 0;
-          //not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
+          // not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
         }
       }
     }
@@ -235,8 +235,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
            kmer_ht->num_soft_reprobes);
 #endif
   }
-  sh->stats->insertion_cycles = insert_times.duration;
-  sh->stats->num_inserts = insert_times.op_count;
+  sh->stats->insertions = insert_times;
 
   fipc_test_FAI(insert_done);
 
@@ -245,9 +244,7 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
   }
 
   const auto find_times = synth_run_get(kmer_ht, sh->shard_idx);
-
-  sh->stats->find_cycles = find_times.duration;
-  sh->stats->num_finds = find_times.op_count;
+  sh->stats->finds = find_times;
 
   if (find_times.op_count > 0) {
     PLOG_INFO.printf(
@@ -262,4 +259,4 @@ void SynthTest::synth_run_exec(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
-}
+}  // namespace kmercounter

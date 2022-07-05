@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <fstream>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <sstream>
 #include <thread>

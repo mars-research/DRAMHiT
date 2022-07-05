@@ -1,5 +1,5 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
+#ifndef CONSTANTS_HPP
+#define CONSTANTS_HPP
 
 #include <cstdint>
 
@@ -16,4 +16,4 @@ constexpr uint32_t HT_TESTS_FIND_BATCH_LENGTH = 16;
 constexpr uint32_t HT_TESTS_MAX_STRIDE = 2;
 } // namespace kmercounter
 
-#endif /* CONSTANTS_H */
+#endif /* CONSTANTS_HPP */
