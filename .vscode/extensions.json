@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "eamodio.gitlens",
+    "arrterian.nix-env-selector",
+    "ms-vscode.cpptools-extension-pack",
+    "xaver.clang-format",
+    "ms-python.python",
+    "bbenoist.Nix"
+  ]
+}
