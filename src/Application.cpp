@@ -68,11 +68,6 @@ const Configuration def = {
     .hwprefetchers = false,
     .no_prefetch = false,
     .run_both = false,
-    .relation_r = "r.tbl",
-    .relation_s = "s.tbl",
-    .relation_r_size = 128000000,
-    .relation_s_size = 128000000,
-    .delimitor = "|",
 };  // TODO enum
 
 // for synchronization of threads
@@ -308,6 +303,8 @@ int Application::process(int argc, char *argv[]) {
     po::options_description desc("Program options");
 
     desc.add_options()("help", "produce help message")(
+        "command", po::value<std::string>(), "Subcommand to execute")(
+        // "subargs", po::value<std::vector<std::string>>(), "Arguments for subcommand")(
         "mode",
         po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
         "1: Dry run \n"
@@ -391,23 +388,55 @@ int Application::process(int argc, char *argv[]) {
         "run-both",
         po::value<bool>(&config.run_both)->default_value(def.run_both))(
         "p-read",
-        po::value<double>(&config.pread)->default_value(def.pread))
-        ("relation_r",
-        po::value(&config.relation_r)->default_value(def.relation_r), "Path to relation R.")
-        ("relation_s",
-        po::value(&config.relation_s)->default_value(def.relation_s), "Path to relation S.")
-        ("relation_r_size",
-        po::value(&config.relation_r_size)->default_value(def.relation_r_size), "Number of elements in relation R. Only used when the relations are generated.")
-        ("relation_s_size",
-        po::value(&config.relation_s_size)->default_value(def.relation_s_size), "Number of elements in relation S. Only used when the relations are generated.")
-        ("delimitor",
-        po::value(&config.delimitor)->default_value(def.delimitor), "CSV delimitor for relation files.");
+        po::value<double>(&config.pread)->default_value(def.pread));
 
     papi_init();
 
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
+
+    po::positional_options_description pos;
+    pos.add("command", 1);
+        // add("subargs", -1);
+
+    po::parsed_options parsed = po::command_line_parser(argc, argv).
+        options(desc).
+        positional(pos).
+        allow_unregistered().
+        run();
+
+    po::store(parsed, vm);
     po::notify(vm);
+
+    std::vector<std::string> unrecognized_opts = po::collect_unrecognized(parsed.options, po::include_positional);
+    if (vm.count("command")) {
+      // Get the commandline options for this subcommand.
+      std::string cmd = vm["command"].as<std::string>();
+      std::unique_ptr<po::options_description> subdesc;
+      run_mode_t mode;
+
+      if (cmd == "hashjoin") {
+        subdesc = config.hashjoin.build_opt_desc();
+        mode = HASHJOIN;
+      } else {
+        PLOG_FATAL << "Unrecognized subcommand <" << cmd << ">";
+      }
+
+      // Parse subcommand arguments
+      unrecognized_opts.erase(unrecognized_opts.begin());
+      po::store(po::command_line_parser(unrecognized_opts).options(*subdesc).run(), vm);
+      po::notify(vm);
+
+      // Set mode after notify. It will get overwritten otherwise.
+      config.mode = mode;
+
+      // Handle help.
+      if (vm.count("help")) {
+        std::cout << *subdesc << std::endl;
+        return 0;
+      }
+    } else {
+      PLOG_FATAL_IF(!unrecognized_opts.empty()) << "Unrecognized options: " << unrecognized_opts;
+    }
 
     plog::get()->setMaxSeverity(plog::info);
 

@@ -5,6 +5,7 @@
     "ms-vscode.cpptools-extension-pack",
     "xaver.clang-format",
     "ms-python.python",
-    "bbenoist.Nix"
+    "bbenoist.nix",
+    "akiramiyakoda.cppincludeguard"
   ]
 }

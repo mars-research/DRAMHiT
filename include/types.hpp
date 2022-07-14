@@ -12,6 +12,8 @@
 #include <string>
 #include <utility>
 
+#include "argparse/hashjoin.hpp"
+
 #define CACHE_LINE_SIZE 64
 #define PAGE_SIZE 4096
 #define ALPHA 0.15
@@ -128,16 +130,7 @@ struct Configuration {
   bool run_both;
 
   // Hashjoin specific configs.
-  // Path to relation R.
-  std::string relation_r;
-  // Path to relation S.
-  std::string relation_s;
-  // Number of elements in relation R. Only used when the relations are generated.
-  uint64_t relation_r_size;
-  // Number of elements in relation S. Only used when the relations are generated.
-  uint64_t relation_s_size;
-  // CSV delimitor for relation files.
-  std::string delimitor;
+  HashjoinOptions hashjoin;
 
   void dump_configuration() {
     printf("Run configuration{\n");
@@ -152,11 +145,7 @@ struct Configuration {
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
-    printf("  relation_r %s\n", relation_r.c_str());
-    printf("  relation_s %s\n", relation_r.c_str());
-    printf("  relation_r_size %" PRIu64 "\n", relation_r_size);
-    printf("  relation_s_size %" PRIu64 "\n", relation_s_size);
-    printf("  delimitor %s\n", delimitor.c_str());
+    std::cout << this->hashjoin << "\n";
     printf("}\n");
   }
 };

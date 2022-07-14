@@ -87,10 +87,10 @@ void HashjoinTest::join_relations_generated(Shard* sh,
                                             BaseHashTable* ht,
                                             std::barrier<VoidFn>* barrier) {
   input_reader::PartitionedEthRelationGenerator t1(
-      "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
+      "r.tbl", DEFAULT_R_SEED, config.hashjoin.relation_r_size, sh->shard_idx,
       config.num_threads);
   input_reader::PartitionedEthRelationGenerator t2(
-      "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
+      "s.tbl", DEFAULT_S_SEED, config.hashjoin.relation_r_size, sh->shard_idx,
       config.num_threads);
 
   // Wait for all readers finish initializing.
@@ -104,9 +104,9 @@ void HashjoinTest::join_relations_from_files(Shard* sh,
                                              const Configuration& config,
                                              BaseHashTable* ht,
                                              std::barrier<VoidFn>* barrier) {
-  input_reader::KeyValueCsvPreloadReader t1(config.relation_r, sh->shard_idx,
+  input_reader::KeyValueCsvPreloadReader t1(config.hashjoin.relation_r, sh->shard_idx,
                                             config.num_threads, "|");
-  input_reader::KeyValueCsvPreloadReader t2(config.relation_s, sh->shard_idx,
+  input_reader::KeyValueCsvPreloadReader t2(config.hashjoin.relation_s, sh->shard_idx,
                                             config.num_threads, "|");
   PLOG_INFO << "Shard " << (int)sh->shard_idx << "/" << config.num_threads
             << " t1 " << t1.size() << " t2 " << t2.size();
