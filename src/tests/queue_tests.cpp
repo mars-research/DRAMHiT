@@ -203,6 +203,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto t_start = RDTSC_START();
 
+  auto& collector = collectors.at(tid);
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -238,7 +239,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       // if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
+      
+      const auto timer = collector.sync_start();
       this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
+      collector.sync_end(timer);
 
       auto npq = pqueues[get_next_cons(1)];
 
@@ -266,6 +270,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   sh->stats->enqueues.duration = (t_end - t_start);
   sh->stats->enqueues.op_count = transaction_id;
+
+#ifdef LATENCY_COLLECTION
+  collector.dump("insert", tid);
+#endif
 
   PLOG_DEBUG.printf("Producer %d -> Sending end messages to all consumers",
                     this_prod_id);
@@ -502,10 +510,6 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   // End test
   fipc_test_FAI(completed_consumers);
-
-#ifdef LATENCY_COLLECTION
-  collector->dump("insert", tid);
-#endif
 }
 
 template <typename T>

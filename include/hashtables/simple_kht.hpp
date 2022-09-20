@@ -926,10 +926,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef CALC_STATS
       this->num_reprobes++;
 #endif
-    } else {
-#ifdef LATENCY_COLLECTION
-      collector->end(q->timer_id);
-#endif
     }
   }
 
@@ -1237,10 +1233,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = 0;
     uint64_t key = 0;
 
-#ifdef LATENCY_COLLECTION
-    const auto timer_id = collector->start();
-#endif
-
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
       // hash = key_data->key >> 32;
       hash = this->hash((const char *)&key_data->key);
@@ -1270,10 +1262,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->insert_queue[this->ins_head].key = key;
     this->insert_queue[this->ins_head].value = key_data->value;
     this->insert_queue[this->ins_head].key_id = key_data->id;
-
-#ifdef LATENCY_COLLECTION
-    this->insert_queue[this->ins_head].timer_id = timer_id;
-#endif
 
 #ifdef COMPARE_HASH
     this->insert_queue[this->ins_head].key_hash = hash;

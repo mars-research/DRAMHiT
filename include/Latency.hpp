@@ -71,6 +71,7 @@ class alignas(64) LatencyCollector {
       std::stringstream stream{};
       stream << "./latencies/" << name << '_' << id << ".dat";
       std::ofstream stats{stream.str().c_str()};
+      stats.exceptions(stats.badbit | stats.failbit);
       for (auto i = 0u; i <= next_log_entry && i < log.size(); ++i) {
         const auto length = i < next_log_entry ? log.front().size() : next_slot;
         for (auto j = 0u; j < length; ++j)
@@ -80,6 +81,8 @@ class alignas(64) LatencyCollector {
   }
 
  private:
+  static constexpr bool use_rejections{false};
+
   std::array<std::uint64_t, capacity> timers{};
   std::array<std::uint64_t, capacity / 64> bitmap{};
 
@@ -107,9 +110,13 @@ class alignas(64) LatencyCollector {
   }
 
   bool reject_sample() {
-    constexpr auto pow2 = 10u;
-    constexpr auto bitmask = (1ull << pow2) - 1;
-    return xorwow(&rand_state) & bitmask;
+    if constexpr (use_rejections) {
+      constexpr auto pow2 = 10u;
+      constexpr auto bitmask = (1ull << pow2) - 1;
+      return xorwow(&rand_state) & bitmask;
+    } else {
+      return false;
+    }
   }
 
   void free(std::uint32_t id) {
