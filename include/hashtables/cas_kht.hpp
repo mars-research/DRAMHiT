@@ -525,7 +525,10 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)&key_data->key);
-    size_t idx = hash & (this->capacity - 1);  // modulo
+    // Since we use fastrange for partitioned HT, use it
+    // for this HT too for a fair comparison
+    size_t idx = fastrange32(hash, this->capacity);  // modulo
+    //size_t idx = hash & (this->capacity - 1);
 
     //std::cout << " -- Adding " << key_data->key  << " : " << key_data->value << endl;
     this->prefetch(idx);
@@ -555,7 +558,10 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)&key_data->key);
-    size_t idx = hash & (this->capacity - 1);  // modulo
+    // Since we use fastrange for partitioned HT, use it
+    // for this HT too for a fair comparison
+    size_t idx = fastrange32(hash, this->capacity);  // modulo
+    //size_t idx = hash & (this->capacity - 1);
 
     this->prefetch_read(idx);
 
