@@ -228,6 +228,7 @@ endif ()
 if (BQUEUE)
     message(WARNING "Enabling bqueues")
     add_definitions(-DBQ_TESTS_DO_HT_INSERTS)
+    add_definitions(-DBQ_KEY_UPPER_BITS_HAS_HASH)
 endif()
 
 if (CALC_STATS)

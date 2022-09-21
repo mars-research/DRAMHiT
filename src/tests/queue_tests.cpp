@@ -231,11 +231,13 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       // the hashing mechanism to have reduced overhead
       uint64_t hash_val = hasher(&k, sizeof(k));
       cons_id = hash_to_cpu(hash_val, n_cons);
+
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      // k |= (hash_val << 32);
-
-      // if (++cons_id >= n_cons) cons_id = 0;
+      k |= (hash_val << 32);
+#endif
+      //if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
       this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
@@ -608,9 +610,12 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
       partition = hash_to_cpu(hash_val, n_cons);
       // PLOGI.printf("partition %d", partition);
+
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      // k |= (hash_val << 32);
+      k |= (hash_val << 32);
+#endif
 
       items[j].key = k;
       items[j].id = count;

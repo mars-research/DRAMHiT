@@ -1243,13 +1243,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      // hash = key_data->key >> 32;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+      hash = key_data->key >> 32;
+      key = key_data->key & 0xFFFFFFFF;
+#else
       hash = this->hash((const char *)&key_data->key);
-      // key = key_data->key & 0xFFFFFFFF;
       key = key_data->key;
+#endif
     } else {
       hash = this->hash((const char *)&key_data->key);
-      key = key_data->key & 0xFFFFFFFF;
+      key = key_data->key;
     }
 
     // The hashes have little to no upper-bit entropy _because of how they are
@@ -1291,13 +1294,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t key = 0;
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      // hash = key_data->key >> 32;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+      hash = key_data->key >> 32;
+      key = key_data->key & 0xFFFFFFFF;
+#else
       hash = this->hash((const char *)&key_data->key);
-      // key = key_data->key & 0xFFFFFFFF;
       key = key_data->key;
+#endif
     } else {
       hash = this->hash((const char *)&key_data->key);
-      key = key_data->key & 0xFFFFFFFF;
+      key = key_data->key;
     }
 
     size_t idx = fastrange32(hash, this->capacity);  // modulo
