@@ -608,12 +608,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     for (auto i = 0u; i < this->capacity; i++) {
       curr = &cur_ht[idx];
 
-      if (curr->is_empty()) {
-        found = false;
-        goto exit;
-      } else if (curr->compare_key(data)) {
+      if (curr->compare_key(item)) {
         found = true;
         break;
+      } else if (curr->is_empty()) {
+        goto exit;
       }
 
 #ifdef CALC_STATS

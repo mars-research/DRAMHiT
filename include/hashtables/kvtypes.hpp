@@ -84,10 +84,10 @@ struct Kmer_queue {
 struct ItemQueue {
   uint64_t key;
   uint64_t value;
-  uint32_t timer_id;
-  uint32_t key_id;
-  uint32_t idx;
   uint32_t part_id;
+  uint32_t key_id;
+  uint32_t timer_id;
+  uint32_t idx;
 #ifdef COMPARE_HASH
   uint64_t key_hash;  // 8 bytes
 #endif
