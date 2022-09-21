@@ -27,9 +27,14 @@ class alignas(64) LatencyCollector {
   static constexpr auto sentinel = std::numeric_limits<std::uint32_t>::max();
 
  public:
-  ~LatencyCollector() { claim_lock->unlock(); }
+  ~LatencyCollector() {
+    claim_lock->unlock();
+    // for (const auto t : hack)
+    //   PLOG_INFO << "[TIME]" << t;
+  }
 
   void claim() {
+    hack.reserve(1'000);
     if (!claim_lock->try_lock()) std::terminate();
   }
 
@@ -63,10 +68,16 @@ class alignas(64) LatencyCollector {
     stop_timed(stop);
     const auto time = stop - start;
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
+
+    ++hacky_count;
+    if (hacky_count > 1'000'000 && hacky_count < 1'000'000 + 1'000)
+      hack.push_back(time);
+
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
   void dump(const char* name, unsigned int id) {
+    return;
     if (next_log_entry) {
       std::stringstream stream{};
       stream << "./latencies/" << name << '_' << id << ".dat";
@@ -82,6 +93,9 @@ class alignas(64) LatencyCollector {
 
  private:
   static constexpr bool use_rejections{false};
+
+  std::uint64_t hacky_count {};
+  std::vector<std::uint64_t> hack {};
 
   std::array<std::uint64_t, capacity> timers{};
   std::array<std::uint64_t, capacity / 64> bitmap{};
@@ -105,7 +119,7 @@ class alignas(64) LatencyCollector {
   }
 
   void stop_timed(std::uint64_t& save) {
-    // unsigned int aux;
+    //unsigned int aux;
     save = __rdtsc();
   }
 

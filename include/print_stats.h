@@ -102,8 +102,8 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     all_total_num_sequences += all_sh[k].stats->num_sequences;
     all_total_avg_read_length += all_sh[k].stats->avg_read_length;
     all_total_reprobes += all_sh[k].stats->num_reprobes;
-    all_total_find_time_ns =
-        (double)all_sh[k].finds.duration * one_cycle_ns;
+    //all_total_find_time_ns =
+        //(double)all_sh[k].finds.duration * one_cycle_ns;
 #endif  // CALC_STATS
   }
   printf("%u %" PRIu64 "\n", config.num_threads, all_total_num_inserts);
