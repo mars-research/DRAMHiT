@@ -711,6 +711,13 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
   collectors.resize(thread_count);
 #endif
 
+  // HACK: Usually, we disable prefetching for smaller sized HTs. For some
+  // unknown reason, we observed that inserts on casht++ with smaller
+  // hashtables performed better when prefetching was turned on, but finds were
+  // OK with the original config (prefetch = off). The weird hack was to enable
+  // prefetching for insertions and turn it off for finds. Revisit this - vn
+  // cfg->no_prefetch = 0;
+
   // 2) spawn n_prod + n_cons threads for find
   this->run_find_test(cfg, n, npq);
 }
