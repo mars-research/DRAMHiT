@@ -133,7 +133,7 @@ run_test() {
         LOG_FILE="${LOG_PREFIX}/${i}.log"
         THREAD_ARGS=" --num-threads ${i}"
         echo "Running kvstore with ${ARGS} ${THREAD_ARGS}" > ${LOG_FILE}
-        ./build/kvstore ${ARGS} ${THREAD_ARGS} 2>&1 > ${LOG_FILE}
+        ./build/kvstore ${ARGS} ${THREAD_ARGS} 2>&1 >> ${LOG_FILE}
       fi
 
       if [[ "${HT_TYPE}" == "casht_cashtpp" ]];then

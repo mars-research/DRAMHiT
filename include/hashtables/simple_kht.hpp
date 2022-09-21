@@ -117,7 +117,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     if (!ptr) throw std::bad_alloc{};
 
-    PLOGI << "Allocating " << size
+    PLOGV << "Allocating " << size
           << ", align: " << static_cast<std::size_t>(align) << ", ptr: " << ptr;
 
     return ptr;
@@ -125,7 +125,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void operator delete(void *ptr, std::size_t size,
                        std::align_val_t align) noexcept {
-    PLOGI << "deleting " << size
+    PLOGV << "deleting " << size
           << ", align: " << static_cast<std::size_t>(align)
           << ", ptr : " << ptr;
     free(ptr);
@@ -227,7 +227,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
                       this->insert_queue, this->find_queue);
-    PLOG_INFO.printf("Hashtable size: %" PRIu64 " | data_length %" PRIu64 "", this->capacity,
+    PLOGV.printf("Hashtable size: %lu | data_length %lu", this->capacity,
                      this->data_length);
   }
 
@@ -885,6 +885,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     auto retry = false;
     // if constexpr (experiment_inactive(experiment_type::insert_dry_run,
     //                                   experiment_type::aggr_kv_write_key_only))
+    PLOGV.printf("Inserting key %lu", q->key);
     retry = curr->insert(q);
 
     // if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only))
@@ -1255,6 +1256,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // assigned to the queues_
     size_t idx = fastrange32(hash, this->capacity);  // modulo
 
+    PLOGD.printf("Getting idx %zu", idx);
     if (idx > this->capacity) {
       PLOG_ERROR.printf("%u > %" PRIu64 "\n", idx, this->capacity);
       std::terminate();

@@ -181,8 +181,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   sync_barrier->arrive_and_wait();
 
   if (found >= 0) {
-    PLOG_INFO.printf(
-        "thread %u | num_finds %" PRIu64 " (not_found %" PRIu64 ") | cycles per get: %" PRIu64 "", id,
+    PLOGV.printf(
+        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu", id,
         found, not_found, found > 0 ? duration / found : 0);
   }
 

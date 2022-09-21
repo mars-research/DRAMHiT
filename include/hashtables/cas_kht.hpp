@@ -54,14 +54,14 @@ class CASHashTable : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-    PLOG_WARNING << "Empty item: " << this->empty_item;
+    PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
-    printf("[INFO] Hashtable size: %" PRIu64 "\n", this->capacity);
-    printf("%s, data_length %" PRIu64 "\n", __func__, this->data_length);
+    PLOGV.printf("[INFO] Hashtable size: %lu\n", this->capacity);
+    PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
   }
 
   ~CASHashTable() {

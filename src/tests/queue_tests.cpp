@@ -190,9 +190,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     fipc_test_mfence();
   }
 
-  PLOGI.printf(
-      "[prod:%u] started! Sending %" PRIu64 " messages to %d consumers | "
-      "key_start %" PRIu64 " key_end %" PRIu64 "",
+  PLOGV.printf(
+      "[prod:%u] started! Sending %lu messages to %d consumers | "
+      "key_start %lu key_end %lu",
       this_prod_id, num_messages, n_cons, key_start, key_start + num_messages);
 
   auto get_next_cons = [&](auto inc) {
@@ -484,11 +484,11 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   }
 #endif
 
-  PLOG_INFO.printf("cons_id %d | inserted %" PRIu64 " elements", this_cons_id,
+  PLOGV.printf("cons_id %d | inserted %lu elements", this_cons_id,
                    inserted);
-  PLOG_INFO.printf(
-      "Quick Stats: Consumer %u finished, receiving %" PRIu64 " messages "
-      "(cycles per message %" PRIu64 ") prod_count %u | finished %u",
+  PLOGV.printf(
+      "Quick Stats: Consumer %u finished, receiving %lu messages "
+      "(cycles per message %lu) prod_count %u | finished %u",
       this_cons_id, transaction_id, (t_end - t_start) / transaction_id, n_prod,
       finished_producers);
 
@@ -543,7 +543,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
     // other partitions. So, just create a HT with 100 buckets.
 
     auto ht_size = config.ht_size / n_cons;
-    PLOG_INFO.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
+    PLOGV.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
                      sh->shard_idx);
     ktable = init_ht(ht_size, sh->shard_idx);
     this->ht_vec->at(tid) = ktable;
@@ -574,7 +574,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   ValuePairs vp = std::make_pair(0, results);
 
-  PLOG_INFO.printf("Finder %u starting. key_start %" PRIu64 " | num_messages %" PRIu64 "", tid,
+  PLOGV.printf("Finder %u starting. key_start %lu | num_messages %lu", tid,
                    key_start, num_messages);
 
   int partition;
@@ -662,8 +662,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   sh->stats->finds.op_count = found;
 
   if (found >= 0) {
-    PLOG_INFO.printf(
-        "thread %u | num_finds %" PRIu64 " (not_found %" PRIu64 ") | cycles per get: %" PRIu64 "",
+    PLOGV.printf(
+        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu",
         sh->shard_idx, found, not_found,
         found > 0 ? (t_end - t_start) / found : 0);
   }
@@ -731,7 +731,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     i += 1;
   }
 
-  PLOG_INFO.printf("creating cons threads i %d ", i);
+  PLOGV.printf("creating cons threads i %d ", i);
   Shard *main_sh = &this->shards[i];
   main_sh->shard_idx = i;
   CPU_ZERO(&cpuset);
@@ -743,7 +743,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
   // Spawn find threads
   i = cfg->n_prod;
   for (auto assigned_cpu : this->npq->get_assigned_cpu_list_consumers()) {
-    PLOG_INFO.printf("i %d assigned cpu %d", i, assigned_cpu);
+    PLOGV.printf("i %d assigned cpu %d", i, assigned_cpu);
 
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
@@ -757,8 +757,8 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
     PLOGV.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
-    PLOG_INFO.printf("[%d] sh->insertions.duration %" PRIu64 "", sh->shard_idx,
-                     sh->stats->insertions.duration);
+    PLOGV.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
+                     sh->stats->insertion_cycles);
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
@@ -860,8 +860,8 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
-    PLOG_INFO.printf("Thread consumer_thread: %u, affinity: %u", i,
-                     assigned_cpu);
+    PLOGV.printf("Thread consumer_thread: %u, affinity: %u", i,
+                      assigned_cpu);
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
@@ -869,7 +869,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   }
 
   {
-    PLOG_DEBUG.printf("Running master thread with id %d", main_sh->shard_idx);
+    PLOGV.printf("Running master thread with id %d", main_sh->shard_idx);
     this->producer_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true,
                           cfg->skew);
   }

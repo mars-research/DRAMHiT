@@ -284,7 +284,7 @@ int Application::spawn_shard_threads(auto sync_barrier) {
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    PLOG_INFO.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
+    PLOGV.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
     this->threads.push_back(std::move(_thread));
     i += 1;
   }
@@ -293,9 +293,9 @@ int Application::spawn_shard_threads(auto sync_barrier) {
   CPU_ZERO(&cpuset);
   CPU_SET(0, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  PLOG_INFO.printf("Thread 'main': affinity: %u", 0);
+  PLOGV.printf("Thread 'main': affinity: %u", 0);
 
-  PLOG_INFO.printf("Running master thread with id %d", i);
+  PLOGV.printf("Running master thread with id %d", i);
   {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
