@@ -216,7 +216,7 @@ done:
   return;
 }
 
-int Application::spawn_shard_threads(auto sync_barrier) {
+int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
 
   this->shards = (Shard *)std::aligned_alloc(

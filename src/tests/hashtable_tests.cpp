@@ -194,7 +194,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 }
 
 void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
-                      unsigned int count, std::barrier<void (*)()> *sync_barrier) {
+                      unsigned int count, std::barrier<std::function<void ()>> *sync_barrier) {
   OpTimings insert_timings{};
   static_assert(HT_TESTS_MAX_STRIDE - 1 ==
                 1);  // Otherwise timing logic is wrong
@@ -246,8 +246,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
 
-  shard->stats->find_cycles = num_finds.duration;
-  shard->stats->num_finds = num_finds.op_count;
+  shard->stats->finds.duration = num_finds.duration;
+  shard->stats->finds.op_count = num_finds.op_count;
 
   if (num_finds.op_count > 0) {
     PLOG_INFO.printf("thread %u | num_finds %" PRIu64 " | cycles per get: %" PRIu64 "",

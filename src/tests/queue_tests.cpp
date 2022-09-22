@@ -770,7 +770,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 
     PLOGV.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
     PLOGV.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
-                     sh->stats->insertion_cycles);
+                     cycles_per_op(sh->stats->insertions));
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
