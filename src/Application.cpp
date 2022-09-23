@@ -71,6 +71,7 @@ const Configuration def = {
     .hwprefetchers = false,
     .no_prefetch = false,
     .run_both = false,
+    .materialize = false,
     .relation_r = "r.tbl",
     .relation_s = "s.tbl",
     .relation_r_size = 128000000,
@@ -192,7 +193,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
       break;
     case HASHJOIN:
-      this->test.hj.join_relations_generated(sh, config, kmer_ht, barrier);
+      this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);
     default:
       break;
   }
@@ -418,6 +419,9 @@ int Application::process(int argc, char *argv[]) {
         po::value<bool>(&config.run_both)->default_value(def.run_both))(
         "p-read",
         po::value<double>(&config.pread)->default_value(def.pread))
+        ("materialize",
+        po::value<bool>(&config.materialize)->default_value(def.materialize),
+        "Materialize the hashjoin output")
         ("relation_r",
         po::value(&config.relation_r)->default_value(def.relation_r), "Path to relation R.")
         ("relation_s",
@@ -484,6 +488,14 @@ int Application::process(int argc, char *argv[]) {
         PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
       }
+    } else if (config.mode == HASHJOIN) {
+      // In our hashjoin tests, we always have equisize R and S tables, but
+      // that need not be the case
+      std::uint64_t max_join_size = std::max(config.relation_r_size, config.relation_s_size);
+
+      // We need a hashtable that is 75% full. So, increase the size of the HT
+      config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
+      PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
     }
 
     switch (config.ht_type) {

@@ -128,6 +128,8 @@ struct Configuration {
   bool run_both;
 
   // Hashjoin specific configs.
+  // Whether to materialize the join output
+  bool materialize;
   // Path to relation R.
   std::string relation_r;
   // Path to relation S.

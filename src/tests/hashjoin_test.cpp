@@ -28,11 +28,18 @@
 
 namespace kmercounter {
 namespace {
+
+using JoinArrayElement = std::array<uint64_t, 3>;
+
+using MaterializeVector = std::vector<JoinArrayElement>;
+
 /// Perform hashjoin on relation `t1` and `t2`.
 /// `t1` is the primary key relation and `t2` is the foreign key relation.
 void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
               input_reader::SizedInputReader<KeyValuePair>* t2,
-              BaseHashTable* ht, std::barrier<std::function<void()>>* barrier) {
+              BaseHashTable* ht,
+              MaterializeVector* mvec,
+              bool materialize, std::barrier<std::function<void()>>* barrier) {
   // Build hashtable from t1.
   HTBatchRunner batch_runner(ht);
   const auto t1_start = RDTSC_START();
@@ -41,6 +48,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   }
   batch_runner.flush_insert();
 
+  if (0)
   {
     const auto duration = RDTSCP() - t1_start;
     sh->stats->insertions.op_count = t1->size();
@@ -52,7 +60,15 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 
   // Helper function for checking the result of the batch finds.
   uint64_t num_output = 0;
-  auto join_row = [&num_output](const FindResult& _result) { num_output++; };
+
+  auto join_row = [&num_output, &mvec, &materialize](const FindResult& res) {
+    //MaterializeTable mt{res.id, res.value, res.value};
+    if (materialize) {
+      JoinArrayElement elem = {res.id, res.value, res.value};
+      mvec->push_back(elem);
+    }
+    num_output++;
+  };
   batch_runner.set_callback(join_row);
 
   // Probe.
@@ -62,6 +78,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   }
   batch_runner.flush_find();
 
+  if (0)
   {
     const auto t2_end = RDTSCP();
     const auto duration = t2_end - t2_start;
@@ -85,6 +102,7 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 void HashjoinTest::join_relations_generated(Shard* sh,
                                             const Configuration& config,
                                             BaseHashTable* ht,
+                                            bool materialize,
                                             std::barrier<VoidFn>* barrier) {
   input_reader::PartitionedEthRelationGenerator t1(
       "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
@@ -93,11 +111,28 @@ void HashjoinTest::join_relations_generated(Shard* sh,
       "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
       config.num_threads);
 
+  std::uint64_t start {}, end {};
+
+  MaterializeVector *mt{};
+  if (materialize)
+    mt = new MaterializeVector(t1.size());
+
   // Wait for all readers finish initializing.
   barrier->arrive_and_wait();
 
+  if (sh->shard_idx == 0) {
+    start = _rdtsc();
+  }
+
   // Run hashjoin
-  hashjoin(sh, &t1, &t2, ht, barrier);
+  hashjoin(sh, &t1, &t2, ht, mt, materialize, barrier);
+
+  barrier->arrive_and_wait();
+
+  if (sh->shard_idx == 0) {
+    end = _rdtsc();
+    PLOG_INFO.printf("Hashjoin took %llu cycles\n", end - start);
+  }
 }
 
 void HashjoinTest::join_relations_from_files(Shard* sh,
@@ -115,7 +150,7 @@ void HashjoinTest::join_relations_from_files(Shard* sh,
   barrier->arrive_and_wait();
 
   // Run hashjoin
-  hashjoin(sh, &t1, &t2, ht, barrier);
+  hashjoin(sh, &t1, &t2, ht, NULL, false, barrier);
 }
 
 }  // namespace kmercounter
