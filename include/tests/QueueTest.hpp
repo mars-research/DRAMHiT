@@ -1,5 +1,6 @@
 #pragma once
 
+#include <barrier>
 #include <thread>
 
 #include "hashtables/base_kht.hpp"
@@ -22,12 +23,6 @@ class QueueTest {
 
   std::vector<numa_node> nodes;
 
-  uint64_t completed_producers = 0;
-  uint64_t completed_consumers = 0;
-  uint64_t ready_consumers = 0;
-  uint64_t ready_producers = 0;
-  uint64_t test_ready = 0;
-  uint64_t test_finished = 0;
   uint64_t QUEUE_SIZE = 0;
 
  public:
@@ -43,11 +38,16 @@ class QueueTest {
 
   void producer_thread(const uint32_t tid, const uint32_t n_prod,
                        const uint32_t n_cons, const bool main_thread,
-                       const double skew);
+                       const double skew,
+                       std::barrier<std::function<void()>>* barrier
+                       );
 
   void consumer_thread(const uint32_t tid, const uint32_t n_prod,
-                       const uint32_t n_cons, const uint32_t num_nops);
-  void find_thread(int tid, int n_prod, int n_cons, bool main_thread);
+                       const uint32_t n_cons, const uint32_t num_nops,
+                       std::barrier<std::function<void()>>* barrier
+                       );
+  void find_thread(int tid, int n_prod, int n_cons,
+                       std::barrier<std::function<void()>>* barrier);
 
   void init_queues(uint32_t nprod, uint32_t ncons);
 };

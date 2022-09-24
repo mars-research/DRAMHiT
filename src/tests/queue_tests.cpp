@@ -122,9 +122,13 @@ static auto mbind_buffer_local(void *buf, ssize_t sz) {
 }
 
 template <typename T>
-void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
+void QueueTest<T>::producer_thread(const uint32_t tid,
+                                   const uint32_t n_prod,
                                    const uint32_t n_cons,
-                                   const bool main_thread, const double skew) {
+                                   const bool main_thread,
+                                   const double skew,
+                                   std::barrier<std::function<void()>>* barrier
+                                   ) {
   // Get shard pointer from the shards array
   Shard *sh = &this->shards[tid];
 
@@ -172,23 +176,13 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   init_state = _xw_state;
 #endif
   static auto event = -1;
+
+
   if (main_thread) {
-    // Wait for threads to be ready for test
-    while (ready_consumers < n_cons) fipc_test_pause();
-    // main thread is a producer, but won't increment!
-    while (ready_producers < (n_prod - 1)) fipc_test_pause();
-
-    fipc_test_mfence();
-
-    // Signal begin
-    test_ready = 1;
-    fipc_test_mfence();
     event = vtune::event_start("message_enq");
-  } else {
-    fipc_test_FAI(ready_producers);
-    while (!test_ready) fipc_test_pause();
-    fipc_test_mfence();
   }
+
+  barrier->arrive_and_wait();
 
   PLOGV.printf(
       "[prod:%u] started! Sending %lu messages to %d consumers | "
@@ -271,14 +265,14 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
   PLOG_DEBUG.printf("Producer %d -> Sending end messages to all consumers",
                     this_prod_id);
-  // main thread will also increment this
-  fipc_test_FAI(completed_producers);
 }
 
 template <typename T>
 void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
                                    const uint32_t n_cons,
-                                   const uint32_t num_nops) {
+                                   const uint32_t num_nops,
+                                   std::barrier<std::function<void()>>* barrier
+                                   ) {
   // Get shard pointer from the shards array
   Shard *sh = &this->shards[tid];
 
@@ -327,9 +321,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     (*this->ht_vec)[tid] = kmer_ht;
   }
 
-  fipc_test_FAI(ready_consumers);
-  while (!test_ready) fipc_test_pause();
-  fipc_test_mfence();
+  barrier->arrive_and_wait();
 
   PLOG_DEBUG.printf("[cons:%u] starting", this_cons_id);
 
@@ -502,9 +494,6 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     kmer_ht->print_to_file(outfile);
   }
 
-  // End test
-  fipc_test_FAI(completed_consumers);
-
 #ifdef LATENCY_COLLECTION
   collector->dump("insert", tid);
 #endif
@@ -512,7 +501,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
 template <typename T>
 void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
-                               bool main_thread) {
+                               std::barrier<std::function<void()>>* barrier) {
   Shard *sh = &this->shards[tid];
   uint64_t found = 0, not_found = 0;
   uint64_t count = std::max(HT_TESTS_NUM_INSERTS * tid, (uint64_t)1);
@@ -553,18 +542,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
 
-  if (main_thread) {
-    // Wait for threads to be ready for test
-    while (ready_threads < (uint64_t)(n_prod + n_cons - 1)) fipc_test_pause();
-
-    // Signal begin
-    ready = 1;
-    fipc_test_mfence();
-  } else {
-    fipc_test_FAI(ready_threads);
-    while (!ready) fipc_test_pause();
-    fipc_test_mfence();
-  }
+  barrier->arrive_and_wait();
 
   auto num_messages = HT_TESTS_NUM_INSERTS / (n_prod + n_cons);
 
@@ -727,6 +705,15 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
                                  NumaPolicyQueues *npq) {
   uint32_t i = 0, j = 0;
   cpu_set_t cpuset;
+
+  std::function<void()> on_completion = []() noexcept {
+    // For debugging
+    PLOG_INFO << "Sync completed. Starting Find threads!";
+  };
+
+  std::barrier barrier(cfg->n_prod + cfg->n_cons, on_completion);
+
+
   // Spawn threads that will perform find operation
   for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
     // skip the first CPU, we'll launch it later
@@ -734,7 +721,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     auto _thread = std::thread(&QueueTest::find_thread, this, i, cfg->n_prod,
-                               cfg->n_cons, false);
+                               cfg->n_cons, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -761,7 +748,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     sh->shard_idx = i;
 
     auto _thread = std::thread(&QueueTest::find_thread, this, i, cfg->n_prod,
-                               cfg->n_cons, false);
+                               cfg->n_cons, &barrier);
 
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
@@ -779,7 +766,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 
   {
     PLOG_VERBOSE.printf("Running master thread with id %d", main_sh->shard_idx);
-    this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true);
+    this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, &barrier);
   }
 
   for (auto &th : this->prod_threads) {
@@ -829,7 +816,12 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   // Init queues
   this->init_queues(cfg->n_prod, cfg->n_cons);
 
-  fipc_test_mfence();
+  std::function<void()> on_completion = []() noexcept {
+    // For debugging
+    PLOG_INFO << "Sync completed. Starting prod/cons threads!";
+  };
+
+  std::barrier barrier(cfg->n_prod + cfg->n_cons, on_completion);
 
   // Spawn producer threads
   for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
@@ -838,7 +830,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     auto _thread = std::thread(&QueueTest<T>::producer_thread, this, i,
-                               cfg->n_prod, cfg->n_cons, false, cfg->skew);
+                               cfg->n_prod, cfg->n_cons, false, cfg->skew, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -865,7 +857,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
     PLOG_DEBUG.printf("tid %d assigned cpu %d", i, assigned_cpu);
 
     auto _thread = std::thread(&QueueTest<T>::consumer_thread, this, i,
-                               cfg->n_prod, cfg->n_cons, cfg->num_nops);
+                               cfg->n_prod, cfg->n_cons, cfg->num_nops, &barrier);
 
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
@@ -883,18 +875,8 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   {
     PLOGV.printf("Running master thread with id %d", main_sh->shard_idx);
     this->producer_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true,
-                          cfg->skew);
+                          cfg->skew, &barrier);
   }
-
-  // Wait for producers to complete
-  while (completed_producers < cfg->n_prod) fipc_test_pause();
-
-  fipc_test_mfence();
-
-  // Wait for consumers to complete
-  while (completed_consumers < cfg->n_cons) fipc_test_pause();
-
-  fipc_test_mfence();
 
   for (auto &th : this->prod_threads) {
     th.join();
@@ -913,7 +895,6 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 }
 
 template class QueueTest<SectionQueue>;
-/*template class QueueTest<LynxQueue>;
-template class QueueTest<BQueueAligned>;
-*/
+//template class QueueTest<LynxQueue>;
+//template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter
