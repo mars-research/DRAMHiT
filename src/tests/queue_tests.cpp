@@ -8,6 +8,10 @@
 #include "hashtables/ht_helper.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "helper.hpp"
+
+#include "input_reader/csv.hpp"
+#include "input_reader/eth_rel_gen.hpp"
+
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "queues/bqueue_aligned.hpp"
@@ -127,6 +131,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
                                    const uint32_t n_cons,
                                    const bool main_thread,
                                    const double skew,
+                                   bool is_join,
                                    std::barrier<std::function<void()>>* barrier
                                    ) {
   // Get shard pointer from the shards array
@@ -182,6 +187,13 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
     event = vtune::event_start("message_enq");
   }
 
+  input_reader::PartitionedEthRelationGenerator t1(
+      "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
+      n_prod);
+  input_reader::SizedInputReader<KeyValuePair>* r_table = &t1;
+  PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
+      sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
+
   barrier->arrive_and_wait();
 
   PLOGV.printf(
@@ -195,6 +207,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
     return next_cons_id;
   };
 
+  KeyValuePair kv{};
   auto t_start = RDTSC_START();
 
   for (auto j = 0u; j < config.insert_factor; j++) {
@@ -205,6 +218,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
     _xw_state = init_state;
 #endif
     for (transaction_id = 0u; transaction_id < num_messages;) {
+      if (is_join) {
+        r_table->next(&kv);
+        k = kv.key;
+      } else {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
       const auto value = xorwow(&_xw_state);
@@ -223,6 +240,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #else
       k = key_start++;
 #endif
+      }
       // XXX: if we are testing without insertions, make sure to pick CRC as
       // the hashing mechanism to have reduced overhead
       uint64_t hash_val = hasher(&k, sizeof(k));
@@ -505,6 +523,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
 template <typename T>
 void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
+                               bool is_join,
                                std::barrier<std::function<void()>>* barrier) {
   Shard *sh = &this->shards[tid];
   uint64_t found = 0, not_found = 0;
@@ -545,6 +564,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   }
 
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  input_reader::PartitionedEthRelationGenerator t2(
+      "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
+      n_prod + n_cons);
+
+  input_reader::SizedInputReader<KeyValuePair>* s_table = &t2;
 
   barrier->arrive_and_wait();
 
@@ -576,6 +600,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
     _xw_state = init_state;
 #endif
     for (auto i = 0u; i < num_messages; i++) {
+      if (is_join) {
+        KeyValuePair kv;
+        s_table->next(&kv);
+        k = kv.key;
+      } else {
 #if defined(XORWOW)
       k = xorwow(&_xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
@@ -588,6 +617,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 #else
       k = key_start++;
 #endif
+      }
       uint64_t hash_val = hasher(&k, sizeof(k));
 
       partition = hash_to_cpu(hash_val, n_cons);
@@ -677,6 +707,7 @@ void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
 
 template <typename T>
 void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
+                            bool is_join,
                             NumaPolicyQueues *npq) {
   const auto thread_count = cfg->n_prod + cfg->n_cons;
   this->ht_vec = new std::vector<BaseHashTable *>(thread_count, nullptr);
@@ -686,7 +717,7 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
 #endif
 
   // 1) Insert using bqueues
-  this->insert_with_queues(cfg, n, npq);
+  this->insert_with_queues(cfg, n, is_join, npq);
 
 #ifdef LATENCY_COLLECTION
   collectors.clear();
@@ -701,11 +732,12 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
   // cfg->no_prefetch = 0;
 
   // 2) spawn n_prod + n_cons threads for find
-  this->run_find_test(cfg, n, npq);
+  this->run_find_test(cfg, n, is_join, npq);
 }
 
 template <typename T>
 void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
+                                 bool is_join,
                                  NumaPolicyQueues *npq) {
   uint32_t i = 0, j = 0;
   cpu_set_t cpuset;
@@ -725,7 +757,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     auto _thread = std::thread(&QueueTest::find_thread, this, i, cfg->n_prod,
-                               cfg->n_cons, &barrier);
+                               cfg->n_cons, is_join, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -752,7 +784,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     sh->shard_idx = i;
 
     auto _thread = std::thread(&QueueTest::find_thread, this, i, cfg->n_prod,
-                               cfg->n_cons, &barrier);
+                               cfg->n_cons, is_join, &barrier);
 
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
@@ -770,7 +802,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 
   {
     PLOG_VERBOSE.printf("Running master thread with id %d", main_sh->shard_idx);
-    this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, &barrier);
+    this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, is_join, &barrier);
   }
 
   for (auto &th : this->prod_threads) {
@@ -786,6 +818,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 
 template <class T>
 void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
+                                      bool is_join,
                                       NumaPolicyQueues *npq) {
   cpu_set_t cpuset;
   uint32_t i = 0, j = 0;
@@ -834,7 +867,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     auto _thread = std::thread(&QueueTest<T>::producer_thread, this, i,
-                               cfg->n_prod, cfg->n_cons, false, cfg->skew, &barrier);
+                               cfg->n_prod, cfg->n_cons, false, cfg->skew, is_join, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -879,7 +912,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
   {
     PLOGV.printf("Running master thread with id %d", main_sh->shard_idx);
     this->producer_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, true,
-                          cfg->skew, &barrier);
+                          cfg->skew, is_join, &barrier);
   }
 
   for (auto &th : this->prod_threads) {
