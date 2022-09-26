@@ -8,7 +8,12 @@
 
 #include "queue.hpp"
 
+#include "../types.hpp"
+
 namespace kmercounter {
+
+// data_t represents a k,v pair (2*8B = 16B)
+typedef KeyValuePair data_t;
 
 class SectionQueue;
 
@@ -94,6 +99,7 @@ class SectionQueue {
   cons_queue_t **all_cqueues;
   pc_queue_t **all_pc_queues;
   static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
+  static const KeyValuePair BQ_MAGIC_KV;
   static const uint64_t SECTION_MASK = SECTION_SIZE - 1;
 
   size_t queue_size;
@@ -306,7 +312,7 @@ class SectionQueue {
     *pq->enqPtr = value;
     pq->enqPtr += 1;
 
-    if (((data_t)pq->enqPtr & SECTION_MASK) == 0) {
+    if (((uint64_t)pq->enqPtr & SECTION_MASK) == 0) {
       if (pq->enqPtr == pq->queue_end) {
         pq->enqPtr = pq->data;
       }
@@ -327,7 +333,7 @@ class SectionQueue {
   }
 
   inline int dequeue(cons_queue_t *cq, uint32_t p, uint32_t c, data_t *value) {
-    if (((data_t)cq->deqPtr & SECTION_MASK) == 0) {
+    if (((uint64_t)cq->deqPtr & SECTION_MASK) == 0) {
       if (cq->deqPtr == cq->queue_end) {
         cq->deqPtr = cq->data;
       }
@@ -393,7 +399,7 @@ class SectionQueue {
     // PLOGD.printf("PUSH DONE");
     auto pcq = &this->all_pc_queues[p][c];
     auto pq = &this->all_pqueues[p][c];
-    enqueue(pq, p, c, BQ_MAGIC_64BIT);
+    enqueue(pq, p, c, BQ_MAGIC_KV);
     pcq->enqSharedPtr = (data_t *)0xdeadbeef;
   }
 

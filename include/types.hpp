@@ -264,7 +264,12 @@ struct KeyValuePair {
   uint64_t value;
 
   KeyValuePair();
+  KeyValuePair(uint64_t, uint64_t);
   KeyValuePair(const struct eth_hashjoin::tuple_t& tuple);
+
+  bool operator ==(const KeyValuePair &b) const {
+    return (this->key == b.key) && (this->value == b.value);
+  }
 };
 
 enum class QueueType {

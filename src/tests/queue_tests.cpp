@@ -200,6 +200,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
+    KeyValuePair kv;
 #if defined(XORWOW)
     _xw_state = init_state;
 #endif
@@ -213,7 +214,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
-      k = zipf_values->at(zipf_idx);
+      kv.key = k = zipf_values->at(zipf_idx);
+      kv.value = k;
       //printf("zipf_values[%" PRIu64 "] = %" PRIu64 "\n", zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
@@ -234,7 +236,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       //if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
-      this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
+      this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)kv);
 
       auto npq = pqueues[get_next_cons(1)];
 
@@ -294,6 +296,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   uint8_t finished_producers = 0;
   // alignas(64)
   uint64_t k = 0;
+  KeyValuePair kv{};
   uint64_t transaction_id = 0;
   uint32_t prod_id = 0;
 
@@ -377,7 +380,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&k);
+      auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&kv);
       if (ret == RETRY) {
         if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
           if (!config.no_prefetch) {
@@ -397,7 +400,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
       // STOP condition. On receiving this magic message, the consumers stop
       // dequeuing from the queues
-      if ((data_t)k == QueueTest::BQ_MAGIC_64BIT) [[unlikely]] {
+      if ((data_t)kv == T::BQ_MAGIC_KV) [[unlikely]] {
         fipc_test_FAI(finished_producers);
         // printf("Got MAGIC bit. stopping consumer\n");
         this->queues->pop_done(prod_id, this_cons_id);
@@ -424,8 +427,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       }
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-        _items[data_idx].key = _items[data_idx].id = k;
-        _items[data_idx].value = k & 0xffffffff;
+        _items[data_idx].key = _items[data_idx].id = kv.key;
+        //_items[data_idx].value = k & 0xffffffff;
+        _items[data_idx].value = kv.value;
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
@@ -895,6 +899,9 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 }
 
 template class QueueTest<SectionQueue>;
+const KeyValuePair SectionQueue::BQ_MAGIC_KV = KeyValuePair(
+      SectionQueue::BQ_MAGIC_64BIT, SectionQueue::BQ_MAGIC_64BIT);
+
 //template class QueueTest<LynxQueue>;
 //template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter
