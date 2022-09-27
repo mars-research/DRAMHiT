@@ -115,6 +115,8 @@ struct Configuration {
 
   // controls zipfian dist
   double skew;
+  // seed for zipf dist generation
+  int64_t seed;
   // R/W ratio for associated tests (modes 12 and 8)
   double pread;
   // used for kmer parsing from disk
@@ -150,7 +152,7 @@ struct Configuration {
     printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size, ht_size/(1ul << 30));
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
-    printf("ZIPFIAN:\n  skew: %f\n", skew);
+    printf("ZIPFIAN:\n  skew: %f\n  seed: %ld\n", skew, seed);
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");

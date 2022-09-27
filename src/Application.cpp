@@ -39,7 +39,7 @@ extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
-extern void init_zipfian_dist(double skew, uint64_t seed);
+extern void init_zipfian_dist(double skew, int64_t seed);
 
 void sync_complete(void);
 
@@ -66,6 +66,7 @@ const Configuration def = {
     .n_cons = 1,
     .num_nops = 0,
     .skew = 1.0,
+    .seed = std::chrono::system_clock::now().time_since_epoch().count(),
     .pread = 0.0,
     .drop_caches = true,
     .hwprefetchers = false,
@@ -186,7 +187,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
-      this->test.zipf.run(sh, kmer_ht, config.skew, 123456, config.num_threads, barrier);
+      this->test.zipf.run(sh, kmer_ht, config.skew, config.seed, config.num_threads, barrier);
       break;
     case RW_RATIO:
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
@@ -411,8 +412,10 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint64_t>(&config.ht_size)->default_value(def.ht_size),
         "adjust hashtable fill ratio [0-100] ")(
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
-        "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
-                                           ->default_value(def.hwprefetchers))(
+        "Zipfian skewness")(
+        "seed", po::value<int64_t>(&config.seed)->default_value(def.seed),
+        "Zipfian distribution generation seed")(
+        "hw-pref", po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers))(
         "no-prefetch",
         po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))(
         "run-both",
@@ -577,7 +580,7 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN) {
-    init_zipfian_dist(config.skew, 123456);
+    init_zipfian_dist(config.skew, config.seed);
   }
 
   if (config.mode == HASHJOIN) {

@@ -33,9 +33,9 @@ bool stop_sync = false;
 
 extern std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 
-OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
+OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed,
                              unsigned int count, unsigned int id,
-                             std::barrier<std::function<void()>> *sync_barrier, uint64_t seed) {
+                             std::barrier<std::function<void()>> *sync_barrier) {
   auto keyrange_width = (1ull << 63);
   zipf_distribution_apache distribution(keyrange_width, skew, seed);
 
@@ -193,7 +193,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   return {duration, found};
 }
 
-void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, uint64_t zipf_seed,
+void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, int64_t zipf_seed,
                       unsigned int count, std::barrier<std::function<void ()>> *sync_barrier) {
   OpTimings insert_timings{};
   static_assert(HT_TESTS_MAX_STRIDE - 1 ==
@@ -217,7 +217,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, uint6
 
   for (uint32_t i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_timings =
-        do_zipfian_inserts(hashtable, skew, count, shard->shard_idx, sync_barrier, zipf_seed);
+        do_zipfian_inserts(hashtable, skew, zipf_seed, count, shard->shard_idx, sync_barrier);
     PLOG_INFO.printf(
         "Quick stats: thread %u, Batch size: %d, cycles per "
         "insertion:%" PRIu64 "",
