@@ -68,13 +68,13 @@ __attribute__((
 
 std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 
-void init_zipfian_dist(double skew) {
+void init_zipfian_dist(double skew, int64_t seed) {
   constexpr auto keyrange_width = (1ull << 63);
 
   zipf_values = new std::vector<uint64_t, huge_page_allocator<uint64_t>>(
       HT_TESTS_NUM_INSERTS);
-  zipf_distribution_apache distribution(keyrange_width, skew);
-  PLOGI.printf("Initializing global zipf with skew %f", skew);
+  zipf_distribution_apache distribution(keyrange_width, skew, seed);
+  PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);
 
   for (auto &value : *zipf_values) {
     value = distribution.sample();
