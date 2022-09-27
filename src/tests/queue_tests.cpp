@@ -68,18 +68,25 @@ __attribute__((
 
 std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 
-void init_zipfian_dist(double skew) {
+void init_zipfian_dist(double skew, uint64_t seed) {
   constexpr auto keyrange_width = (1ull << 63);
 
   zipf_values = new std::vector<uint64_t, huge_page_allocator<uint64_t>>(
       HT_TESTS_NUM_INSERTS);
-  zipf_distribution_apache distribution(keyrange_width, skew);
-  PLOGI.printf("Initializing global zipf with skew %f", skew);
+  zipf_distribution_apache distribution(keyrange_width, skew, seed);
+  PLOGI.printf("Initializing global zipf with skew %f, seed %d", skew, seed);
 
   for (auto &value : *zipf_values) {
     value = distribution.sample();
   }
   PLOGI.printf("Zipfian dist generated. size %zu", zipf_values->size());
+
+  int n_sanity_check_vals = zipf_values->size() >= 10 ? 10 : zipf_values->size();
+  PLOGI.printf("First %d generated Zipfian dist values:", n_sanity_check_vals);
+
+  for (int i = 0; i < n_sanity_check_vals; ++i) {
+    PLOGI.printf("Zipfian value %d: %d", i, zipf_values->at(i));
+  }
 }
 
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,

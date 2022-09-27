@@ -30,13 +30,13 @@
 
 namespace kmercounter {
 
-zipf_distribution_apache::zipf_distribution_apache(uint64_t num_elements, double exponent):
+zipf_distribution_apache::zipf_distribution_apache(uint64_t num_elements, double exponent, uint64_t seed):
 num_elements(num_elements),
 exponent(exponent),
 h_integral_x1(h_integral(1.5) - 1),
 h_integral_num_elements(h_integral(num_elements + F_1_2)),
 s(2 - h_integral_inverse(h_integral(2.5) - h(2))),
-generator(std::chrono::system_clock::now().time_since_epoch().count()),
+generator(seed), // std::chrono::system_clock::now().time_since_epoch().count()
 distribution(0, 1)
 {
   if (exponent <= 0) throw std::invalid_argument("exponent must be positive");

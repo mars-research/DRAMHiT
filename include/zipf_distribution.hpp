@@ -31,7 +31,7 @@ namespace kmercounter {
 
 class zipf_distribution_apache {
 public:
-  zipf_distribution_apache(uint64_t num_elements, double exponent);
+  zipf_distribution_apache(uint64_t num_elements, double exponent, uint64_t seed);
   uint64_t sample();
 private:
   static constexpr double TAYLOR_THRESHOLD = 1e-8;

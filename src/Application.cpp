@@ -39,7 +39,7 @@ extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
-extern void init_zipfian_dist(double skew);
+extern void init_zipfian_dist(double skew, uint64_t seed);
 
 void sync_complete(void);
 
@@ -186,7 +186,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
-      this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads, barrier);
+      this->test.zipf.run(sh, kmer_ht, config.skew, 123456, config.num_threads, barrier);
       break;
     case RW_RATIO:
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
@@ -577,7 +577,7 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN) {
-    init_zipfian_dist(config.skew);
+    init_zipfian_dist(config.skew, 123456);
   }
 
   if (config.mode == HASHJOIN) {
