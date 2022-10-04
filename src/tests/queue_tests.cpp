@@ -716,6 +716,10 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
   const auto thread_count = cfg->n_prod + cfg->n_cons;
   this->ht_vec = new std::vector<BaseHashTable *>(thread_count, nullptr);
 
+  std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+
+  start_ts = std::chrono::steady_clock::now();
+
 #ifdef LATENCY_COLLECTION
   collectors.resize(thread_count);
 #endif
@@ -737,6 +741,11 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
 
   // 2) spawn n_prod + n_cons threads for find
   this->run_find_test(cfg, n, is_join, npq);
+
+  end_ts = std::chrono::steady_clock::now();
+
+  PLOG_INFO.printf("Hashjoin took %llu us",
+      chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count());
 }
 
 template <typename T>

@@ -159,8 +159,14 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   if (sh->shard_idx == 0) {
     end = _rdtsc();
     end_ts = std::chrono::steady_clock::now();
-    PLOG_INFO.printf("Hashjoin took %llu cycles (%llu us)", end - start,
-        chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count());
+    PLOG_INFO.printf("Hashjoin took %llu us (%llu cycles)",
+        chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
+        end - start);
+    if (mt) {
+      for (const auto &e: *mt) {
+        PLOGV.printf("k: %llu, v1: %llu, v2: %llu\n", e.at(0), e.at(1), e.at(2));
+      }
+    }
   }
 }
 
