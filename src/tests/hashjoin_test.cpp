@@ -25,10 +25,12 @@
 #include "sync.h"
 #include "tests/HashjoinTest.hpp"
 #include "types.hpp"
+#include <chrono>
 
 namespace kmercounter {
 namespace {
 
+using namespace std;
 using JoinArrayElement = std::array<uint64_t, 3>;
 
 using MaterializeVector = std::vector<JoinArrayElement>;
@@ -43,6 +45,13 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   // Build hashtable from t1.
   HTBatchRunner batch_runner(ht);
   const auto t1_start = RDTSC_START();
+
+  std::chrono::time_point<std::chrono::steady_clock> start_build_ts, end_build_ts, end_probe_ts;
+
+  if (sh->shard_idx == 0) {
+    start_build_ts = std::chrono::steady_clock::now();
+  }
+
   for (KeyValuePair kv; t1->next(&kv);) {
     batch_runner.insert(kv);
   }
@@ -57,6 +66,10 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 
   // Make sure insertions is finished before probing.
   barrier->arrive_and_wait();
+
+  if (sh->shard_idx == 0) {
+    end_build_ts = std::chrono::steady_clock::now();
+  }
 
   // Helper function for checking the result of the batch finds.
   uint64_t num_output = 0;
@@ -77,6 +90,18 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
     batch_runner.find(kv.key, kv.value);
   }
   batch_runner.flush_find();
+
+  // Make sure insertions is finished before probing.
+  barrier->arrive_and_wait();
+
+
+  if (sh->shard_idx == 0) {
+    end_probe_ts = std::chrono::steady_clock::now();
+
+    PLOG_INFO.printf("Build phase took %llu us, probe phase took %llu us",
+        chrono::duration_cast<chrono::microseconds>(end_build_ts - start_build_ts).count(),
+        chrono::duration_cast<chrono::microseconds>(end_probe_ts - end_build_ts).count());
+  }
 
   if (0)
   {
@@ -112,6 +137,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
       config.num_threads);
 
   std::uint64_t start {}, end {};
+  std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
 
   MaterializeVector *mt{};
   if (materialize)
@@ -122,6 +148,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
 
   if (sh->shard_idx == 0) {
     start = _rdtsc();
+    start_ts = std::chrono::steady_clock::now();
   }
 
   // Run hashjoin
@@ -131,7 +158,9 @@ void HashjoinTest::join_relations_generated(Shard* sh,
 
   if (sh->shard_idx == 0) {
     end = _rdtsc();
-    PLOG_INFO.printf("Hashjoin took %llu cycles\n", end - start);
+    end_ts = std::chrono::steady_clock::now();
+    PLOG_INFO.printf("Hashjoin took %llu cycles (%llu us)", end - start,
+        chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count());
   }
 }
 
