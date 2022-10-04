@@ -494,7 +494,7 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.mode == HASHJOIN) {
       // In our hashjoin tests, we always have equisize R and S tables, but
       // that need not be the case
-      std::uint64_t max_join_size = std::max(config.relation_r_size, config.relation_s_size);
+      std::uint64_t max_join_size = config.relation_r_size;
 
       // We need a hashtable that is 75% full. So, increase the size of the HT
       config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
