@@ -27,7 +27,11 @@ public:
     hash_val = XXH3_64bits(buff, len);
 #elif defined(CRC_HASH)
     assert(len == sizeof(std::uint64_t));
-    hash_val = _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t *>(buff));
+    if (len == sizeof(std::uint32_t)) {
+      hash_val = _mm_crc32_u32(0xffffffff, *static_cast<const std::uint32_t *>(buff));
+    } else if (len == sizeof(std::uint64_t)) {
+      hash_val = _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t *>(buff));
+    }
 #elif defined(CITY_CRC_HASH)
     hash_val = CityHashCrc128((const char *)buff, len);
 #elif defined(WYHASH)

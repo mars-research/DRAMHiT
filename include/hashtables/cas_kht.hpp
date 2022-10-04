@@ -88,7 +88,8 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash & (this->capacity - 1);  // modulo
+    //size_t idx = hash & (this->capacity - 1);  // modulo
+    size_t idx = fastrange32(hash, this->capacity);  // modulo
 
     KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
 
@@ -207,7 +208,8 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash;
+    //size_t idx = hash;
+    size_t idx = fastrange32(hash, this->capacity);  // modulo
     InsertFindArgument *item = const_cast<InsertFindArgument*>(reinterpret_cast<const InsertFindArgument *>(data));
     KV *curr;
     bool found = false;

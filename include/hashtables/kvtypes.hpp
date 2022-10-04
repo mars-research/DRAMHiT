@@ -15,6 +15,14 @@ struct Kmer_base {
   uint16_t count;
 } PACKED;
 
+#if (KEY_LEN == 4)
+using key_type = std::uint32_t;
+#elif (KEY_LEN == 8)
+using key_type = std::uint64_t;
+#endif
+
+using value_type = key_type;
+
 struct Kmer_KV {
   Kmer_base kb;              // 20 + 2 bytes
   uint64_t kmer_hash;        // 8 bytes
@@ -82,8 +90,8 @@ struct Kmer_queue {
 } PACKED;
 
 struct ItemQueue {
-  uint64_t key;
-  uint64_t value;
+  key_type key;
+  value_type value;
   uint32_t part_id;
   uint32_t key_id;
   uint32_t timer_id;
@@ -96,8 +104,6 @@ std::ostream& operator<<(std::ostream& os, const ItemQueue& q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow
 struct Aggr_KV {
-  using key_type = uint64_t;
-  using value_type = uint64_t;
   using queue = ItemQueue;
 
   key_type key;
@@ -459,16 +465,15 @@ struct Aggr_KV {
 } PACKED;
 
 struct KVPair {
-  uint64_t key;
-  uint64_t value;
+  key_type key;
+  value_type value;
 } PACKED;
+
 std::ostream &operator<<(std::ostream &strm, const KVPair &item);
 
 struct Item {
   KVPair kvpair;
 
-  using key_type = uint64_t;
-  using value_type = uint64_t;
   using queue = ItemQueue;
 
   friend std::ostream &operator<<(std::ostream &strm, const Item &item) {

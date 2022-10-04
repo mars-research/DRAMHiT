@@ -31,14 +31,11 @@ const uint64_t max_possible_threads = 128;
 void sync_complete(void);
 bool stop_sync = false;
 
-extern std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
+extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
 OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed,
                              unsigned int count, unsigned int id,
                              std::barrier<std::function<void()>> *sync_barrier) {
-  auto keyrange_width = (1ull << 63);
-  zipf_distribution_apache distribution(keyrange_width, skew, seed);
-
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
   collector->claim();
@@ -61,7 +58,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed
   alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
 
   const auto start = RDTSC_START();
-  std::uint64_t key{};
+  key_type key{};
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);

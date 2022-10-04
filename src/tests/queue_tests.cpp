@@ -66,12 +66,16 @@ static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 __attribute__((
     aligned(64))) static __thread InsertFindArgument _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
-std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
+std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
 void init_zipfian_dist(double skew, int64_t seed) {
-  constexpr auto keyrange_width = (1ull << 63);
+  std::uint64_t keyrange_width = (1ull << 63);
 
-  zipf_values = new std::vector<uint64_t, huge_page_allocator<uint64_t>>(
+  if constexpr (std::is_same_v<key_type, std::uint32_t>) {
+    keyrange_width = (1ull << 31);
+  }
+
+  zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(
       HT_TESTS_NUM_INSERTS);
   zipf_distribution_apache distribution(keyrange_width, skew, seed);
   PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);

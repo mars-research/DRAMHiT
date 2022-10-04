@@ -137,6 +137,9 @@ else()
     add_definitions(-DKVSTORE_ACTIVE_EXPERIMENT=experiment_type::${experiment})
 endif()
 
+set(KEY_LEN "4" CACHE STRING "Size of key/value for join benchmarks in bytes")
+add_definitions(-DKEY_LEN=${KEY_LEN})
+
 set(KMER_LEN "8" CACHE STRING "The K in KMer")
 add_definitions(-DKMER_LEN=${KMER_LEN})
 
