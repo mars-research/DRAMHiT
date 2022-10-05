@@ -1,6 +1,7 @@
 #ifndef _LATENCY_HPP
 #define _LATENCY_HPP
 
+#include <cpuid.h>
 #include <plog/Log.h>
 #include <x86intrin.h>
 
@@ -16,6 +17,7 @@
 #include <thread>
 
 #include "misc_lib.h"
+#include "queues/section_queues.hpp"
 #include "sync.h"
 #include "xorwow.hpp"
 
@@ -55,29 +57,30 @@ class alignas(64) LatencyCollector {
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
-  std::uint64_t sync_start() {
+  std::uint64_t sync_start(uint32_t p, const SectionQueue& q) {
     if (reject_sample()) return sentinel;
     std::uint64_t time{};
-    start_timed(time);
+    time = q.timestamp(p);
+    // start_timed(time, p);
     return time;
   }
 
-  void sync_end(std::uint64_t start) {
+  void sync_end(std::uint64_t start, uint32_t p, const SectionQueue& q) {
     if (start == sentinel) return;
     std::uint64_t stop{};
-    stop_timed(stop);
+    // stop_timed(stop, p);
+    stop = q.timestamp(p);
     const auto time = stop - start;
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
 
-    ++hacky_count;
-    if (hacky_count > 1'000'000 && hacky_count < 1'000'000 + 1'000)
-      hack.push_back(time);
+    // ++hacky_count;
+    // if (hacky_count > 1'000'000 && hacky_count < 1'000'000 + 1'000)
+    //   hack.push_back(time);
 
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
   void dump(const char* name, unsigned int id) {
-    return;
     if (next_log_entry) {
       std::stringstream stream{};
       stream << "./latencies/" << name << '_' << id << ".dat";
@@ -94,8 +97,8 @@ class alignas(64) LatencyCollector {
  private:
   static constexpr bool use_rejections{false};
 
-  std::uint64_t hacky_count {};
-  std::vector<std::uint64_t> hack {};
+  std::uint64_t hacky_count{};
+  std::vector<std::uint64_t> hack{};
 
   std::array<std::uint64_t, capacity> timers{};
   std::array<std::uint64_t, capacity / 64> bitmap{};
@@ -113,14 +116,17 @@ class alignas(64) LatencyCollector {
   }()};
 
   void start_timed(std::uint64_t& save) {
+    unsigned int aux;
+    __cpuid(0, aux, aux, aux, aux);
     const auto time = __rdtsc();
     save = time;
-    //_mm_lfence();
   }
 
   void stop_timed(std::uint64_t& save) {
-    //unsigned int aux;
-    save = __rdtsc();
+    unsigned int aux;
+    _mm_sfence();
+    save = __rdtscp(&aux);
+    //__cpuid(0, aux, aux, aux, aux);
   }
 
   bool reject_sample() {

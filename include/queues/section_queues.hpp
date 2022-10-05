@@ -1,14 +1,18 @@
 #pragma once
 
 #include <assert.h>
+#include <numaif.h>
 
 #include <map>
 #include <numa.hpp>
 #include <tuple>
 
+#include "helper.hpp"
 #include "queue.hpp"
 
 namespace kmercounter {
+
+extern Configuration config;
 
 class SectionQueue;
 
@@ -303,6 +307,14 @@ class SectionQueue {
     queues[0][0]->dump();
   }
 
+  inline auto timestamp(uint32_t p) const {
+    auto total = 0ull;
+    for (auto i = 0u; i < config.n_cons; ++i)
+      total += all_pc_queues[p][i].numEnqueueSpins;
+
+    return total;
+  }
+
   inline int enqueue(prod_queue_t *pq, uint32_t p, uint32_t c, data_t value) {
     *pq->enqPtr = value;
     pq->enqPtr += 1;
@@ -356,8 +368,9 @@ class SectionQueue {
     auto cq = &all_cqueues[c][p];
     auto pcq = &all_pc_queues[p][c];
 #ifdef CALC_STATS
-      printf("[%u][%u] enq spins %" PRIu64 " | numdequeue spins %" PRIu64 " | enqLocalPtr %p\n",
-            p, c, pcq->numEnqueueSpins, pcq->numDequeueSpins, cq->enqLocalPtr);
+    printf("[%u][%u] enq spins %" PRIu64 " | numdequeue spins %" PRIu64
+           " | enqLocalPtr %p\n",
+           p, c, pcq->numEnqueueSpins, pcq->numDequeueSpins, cq->enqLocalPtr);
 #endif
   }
 

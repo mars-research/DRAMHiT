@@ -240,9 +240,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
       auto pq = pqueues[cons_id];
       
-      const auto timer = collector.sync_start();
+      const auto timer = collector.sync_start(this_prod_id, *this->queues);
       this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
-      collector.sync_end(timer);
+      collector.sync_end(timer, this_prod_id, *this->queues);
 
       auto npq = pqueues[get_next_cons(1)];
 

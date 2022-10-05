@@ -442,7 +442,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = 0;
 
 #ifdef LATENCY_COLLECTION
-    const auto start_time = collector->sync_start();
+    //const auto start_time = collector->sync_start();
 #endif
 
     hash = this->hash((const char *)&key_data->key);
@@ -465,7 +465,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
       } else {
 #ifdef LATENCY_COLLECTION
-        collector->sync_end(start_time);
+        //collector->sync_end(start_time);
 #endif
 
         if (0) {
@@ -594,7 +594,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     InsertFindArgument *item = const_cast<InsertFindArgument *>(reinterpret_cast<const InsertFindArgument *>(data));
 
 #ifdef LATENCY_COLLECTION
-    const auto start_time = collector->sync_start();
+    //const auto start_time = collector->sync_start();
 #endif
 
     uint64_t hash = this->hash((const char *)&item->key);
@@ -630,7 +630,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
 
 #ifdef LATENCY_COLLECTION
-    collector->sync_end(start_time);
+    //collector->sync_end(start_time);
 #endif
 
   exit:
