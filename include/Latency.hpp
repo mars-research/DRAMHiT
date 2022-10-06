@@ -57,19 +57,28 @@ class alignas(64) LatencyCollector {
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
+  static constexpr auto is_weird = false;
+
   std::uint64_t sync_start(uint32_t p, const SectionQueue& q) {
     if (reject_sample()) return sentinel;
-    std::uint64_t time{};
-    time = q.timestamp(p);
-    // start_timed(time, p);
-    return time;
+
+    const auto a = q.timestamp(p);
+
+    std::uint64_t b{};
+    start_timed(b);
+
+    return is_weird ? a : b;
   }
 
   void sync_end(std::uint64_t start, uint32_t p, const SectionQueue& q) {
     if (start == sentinel) return;
-    std::uint64_t stop{};
-    // stop_timed(stop, p);
-    stop = q.timestamp(p);
+
+    std::uint64_t a{};
+    stop_timed(a);
+
+    const auto b = q.timestamp(p);
+
+    const auto stop = is_weird ? b : a;
     const auto time = stop - start;
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
 
