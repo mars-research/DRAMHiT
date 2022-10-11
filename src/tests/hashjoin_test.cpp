@@ -39,6 +39,8 @@ using MaterializeVector = std::vector<JoinArrayElement>;
 /// `t1` is the primary key relation and `t2` is the foreign key relation.
 void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
               input_reader::SizedInputReader<KeyValuePair>* t2,
+              std::tuple<KeyValuePair*, uint32_t> relation_r,
+              std::tuple<KeyValuePair*, uint32_t> relation_s,
               BaseHashTable* ht,
               MaterializeVector* mvec,
               bool materialize, std::barrier<std::function<void()>>* barrier) {
@@ -52,7 +54,17 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
     start_build_ts = std::chrono::steady_clock::now();
   }
 
+  collector_type *const collector{};
+  auto [rel_r, rel_r_size] = relation_r;
+  auto [rel_s, rel_s_size] = relation_s;
+
+#ifdef ITERATOR
   for (KeyValuePair kv; t1->next(&kv);) {
+#else
+  for (auto i = 0; i < rel_r_size; i++) {
+    KeyValuePair kv = rel_r[i];
+#endif
+    PLOGV.printf("inserting k: %lu, v: %lu", kv.key, kv.value);
     batch_runner.insert(kv);
   }
   batch_runner.flush_insert();
@@ -86,8 +98,16 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 
   // Probe.
   const auto t2_start = RDTSC_START();
+#ifdef ITERATOR
   for (KeyValuePair kv; t2->next(&kv);) {
-    batch_runner.find(kv.key, kv.value);
+#else
+  for (auto i = 0; i < rel_s_size; i++) {
+    KeyValuePair kv = rel_s[i];
+#endif
+    value_type val = kv.value;
+    KeyValuePair *f_kv = (KeyValuePair*) batch_runner.find(kv);
+    if (f_kv)
+      PLOGV.printf("finding key %llu value1 %llu | value2 %llu", kv.key, kv.value, f_kv->value);
   }
   batch_runner.flush_find();
 
@@ -136,6 +156,48 @@ void HashjoinTest::join_relations_generated(Shard* sh,
       "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
       config.num_threads, config.relation_r_size);
 
+#ifndef ITERATOR
+  input_reader::SizedInputReader<KeyValuePair>* _t2 = &t2;
+  input_reader::SizedInputReader<KeyValuePair>* _t1 = &t1;
+  auto s = _rdtsc();
+  auto sum = 0;
+
+  std::tuple<KeyValuePair*, uint32_t> relation_r;
+  std::tuple<KeyValuePair*, uint32_t> relation_s;
+
+  KeyValuePair *rel_r;
+  posix_memalign((void **)&rel_r, 64, t1.size() * sizeof(KeyValuePair));
+
+  KeyValuePair *rel_s;
+  posix_memalign((void **)&rel_s, 64, t2.size() * sizeof(KeyValuePair));
+
+  auto i = 0u;
+
+  for (KeyValuePair kv; _t2->next(&kv);) {
+    rel_s[i].key = kv.key;
+    rel_s[i].value = kv.value;
+    i++;
+  }
+
+  i = 0;
+
+  for (KeyValuePair kv; _t1->next(&kv);) {
+    rel_r[i].key = kv.key;
+    rel_r[i].value = kv.value;
+    i++;
+  }
+
+  relation_r = std::make_tuple(rel_r, t1.size());
+  relation_s = std::make_tuple(rel_s, t2.size());
+#else
+
+  std::tuple<KeyValuePair*, uint32_t> relation_r;
+  std::tuple<KeyValuePair*, uint32_t> relation_s;
+
+  relation_r = std::make_tuple(nullptr, t1.size());
+  relation_s = std::make_tuple(nullptr, t2.size());
+#endif
+
   std::uint64_t start {}, end {};
   std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
 
@@ -152,7 +214,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   }
 
   // Run hashjoin
-  hashjoin(sh, &t1, &t2, ht, mt, materialize, barrier);
+  hashjoin(sh, &t1, &t2, relation_r, relation_s, ht, mt, materialize, barrier);
 
   barrier->arrive_and_wait();
 
@@ -164,7 +226,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
         end - start);
     if (mt) {
       for (const auto &e: *mt) {
-        PLOGV.printf("k: %llu, v1: %llu, v2: %llu\n", e.at(0), e.at(1), e.at(2));
+        PLOGV.printf("k: %llu, v1: %llu, v2: %llu", e.at(0), e.at(1), e.at(2));
       }
     }
   }
@@ -185,7 +247,10 @@ void HashjoinTest::join_relations_from_files(Shard* sh,
   barrier->arrive_and_wait();
 
   // Run hashjoin
-  hashjoin(sh, &t1, &t2, ht, NULL, false, barrier);
+  hashjoin(sh, &t1, &t2,
+      std::make_tuple(nullptr, t1.size()),
+      std::make_tuple(nullptr, t2.size()),
+      ht, NULL, false, barrier);
 }
 
 }  // namespace kmercounter
