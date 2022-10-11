@@ -30,6 +30,7 @@ const char* ht_type_strings[] = {
     "PARTITIONED",
     "",
     "CASHT++",
+    "ARRAY_HT",
 };
 const char* run_mode_strings[] = {
     "",

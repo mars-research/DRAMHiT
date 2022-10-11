@@ -79,6 +79,7 @@ typedef enum {
 typedef enum {
   PARTITIONED_HT = 1,
   CASHTPP = 3,
+  ARRAY_HT = 4,
 } ht_type_t;
 
 extern const char* run_mode_strings[];

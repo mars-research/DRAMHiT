@@ -687,6 +687,67 @@ struct Item {
   };
 } PACKED;
 
+struct Value {
+  value_type value;
+
+  using queue = ItemQueue;
+
+  friend std::ostream &operator<<(std::ostream &strm, const Value &v) {
+    return strm << "{" << v.value << "}";
+  }
+
+  inline bool insert(queue *elem) {
+    this->value = elem->value;
+    return true;
+  }
+
+  inline bool update(queue *elem) {
+    this->value = elem->value;
+    return true;
+  }
+
+  inline constexpr size_t data_length() const { return sizeof(Value); }
+
+  inline constexpr size_t key_length() const { return sizeof(Value); }
+
+  inline uint64_t get_key() const { return this->value; }
+
+  inline uint64_t get_value() const { return this->value; }
+
+  inline Value get_empty_key() {
+    Value empty;
+    empty.value = 0;
+    return empty;
+  }
+
+  inline bool is_empty() {
+    Value empty = this->get_empty_key();
+    return this->value == empty.value;
+  }
+
+  inline uint64_t find(const void *data, uint64_t *retry, ValuePairs &vp) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    auto found = false;
+    *retry = 0;
+    if (this->is_empty()) {
+      goto exit;
+    } else {
+      //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
+      found = true;
+      vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].value = this->value;
+      vp.first++;
+      goto exit;
+    }
+  exit:
+    return found;
+  }
+
+} PACKED;
+
+
 #ifdef NOAGGR
 using KVType = Item;
 #else

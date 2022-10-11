@@ -14,6 +14,7 @@
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
+#include "./hashtables/array_kht.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "tests/PrefetchTest.hpp"
@@ -119,6 +120,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
           size of one partitioned ht * number of threads */
       kmer_ht =
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
+      break;
+    case ARRAY_HT:
+      kmer_ht =
+          new ArrayHashTable<Value, ItemQueue>(sz);
       break;
     default:
       PLOG_FATAL.printf("HT type not implemented");
@@ -385,7 +390,8 @@ int Application::process(int argc, char *argv[]) {
         "ht-type",
         po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
         "1: Partitioned HT\n"
-        "3: Casht++\n")(
+        "3: Casht++\n"
+        "4: Arrayht\n")(
         "out-file",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
         "Hashtable output file name.")(
@@ -497,7 +503,8 @@ int Application::process(int argc, char *argv[]) {
       std::uint64_t max_join_size = config.relation_r_size;
 
       // We need a hashtable that is 75% full. So, increase the size of the HT
-      config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
+      //config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
+      config.ht_size = max_join_size;
       PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
     }
 
@@ -508,6 +515,9 @@ int Application::process(int argc, char *argv[]) {
         break;
       case CASHTPP:
         PLOG_INFO.printf("Hashtable type : Cas HT");
+        break;
+      case ARRAY_HT:
+        PLOG_INFO.printf("Hashtable type : Array HT");
         break;
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
@@ -587,7 +597,7 @@ int Application::process(int argc, char *argv[]) {
     // for hashjoin, ht-type determines how we spawn threads
     if (config.ht_type == PARTITIONED_HT) {
       this->test.qt.run_test(&config, this->n, true, this->npq);
-    } else if (config.ht_type == CASHTPP) {
+    } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT)) {
       this->spawn_shard_threads();
     }
   } else if (config.mode == BQ_TESTS_YES_BQ) {
