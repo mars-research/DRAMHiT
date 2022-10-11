@@ -193,7 +193,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
   input_reader::PartitionedEthRelationGenerator t1(
       "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
-      n_prod);
+      n_prod, config.relation_r_size);
   input_reader::SizedInputReader<KeyValuePair>* r_table = &t1;
   PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
       sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
@@ -570,7 +570,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
   input_reader::PartitionedEthRelationGenerator t2(
       "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
-      n_prod + n_cons);
+      n_prod + n_cons, config.relation_r_size);
 
   input_reader::SizedInputReader<KeyValuePair>* s_table = &t2;
 

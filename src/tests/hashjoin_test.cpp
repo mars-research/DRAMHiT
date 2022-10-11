@@ -131,10 +131,10 @@ void HashjoinTest::join_relations_generated(Shard* sh,
                                             std::barrier<VoidFn>* barrier) {
   input_reader::PartitionedEthRelationGenerator t1(
       "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
-      config.num_threads);
+      config.num_threads, config.relation_r_size);
   input_reader::PartitionedEthRelationGenerator t2(
-      "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
-      config.num_threads);
+      "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
+      config.num_threads, config.relation_r_size);
 
   std::uint64_t start {}, end {};
   std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
