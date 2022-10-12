@@ -23,3 +23,6 @@
 [submodule "lib/eth_hashjoin"]
 	path = lib/eth_hashjoin
 	url = git@github.com:mars-research/vldb13-eth-hashjoin.git
+[submodule "lib/growt"]
+	path = lib/growt
+	url = git@github.com:mars-research/growt.git
