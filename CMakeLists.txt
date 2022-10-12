@@ -90,6 +90,7 @@ if(BUILD_APP)
     )
 
     # Add subdirectory
+    target_include_directories(kvstore PRIVATE lib/growt/)
     target_link_directories(kvstore PRIVATE lib/)
     target_link_libraries(kvstore PRIVATE
         kvstore_lib
