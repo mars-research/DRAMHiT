@@ -15,42 +15,46 @@
 #include "print_stats.h"
 
 namespace kmercounter {
-OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert, input_reader::FastqKMerPreloadReader<KMER_LEN> reader) {
-  auto k = 0;
-  uint64_t inserted = 0lu;
-  uint64_t kmer;
-  std::string tmp;
-  __attribute__((aligned(64))) InsertFindArgument _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
-  // input_reader::Counter<uint64_t> reader(1 << sh->shard_idx);
+void KmerTest::count_kmer(Shard* sh,
+                              const Configuration& config,
+                              BaseHashTable* ht,
+                              std::barrier<VoidFn>* barrier){
+  // Be care of the `K` here; it's a compile time constant.
+  input_reader::FastqKMerPreloadReader<K> reader(
+      config.in_file, sh->shard_idx, config.num_threads);
+  HTBatchRunner batch_runner(ht);
 
-  const auto t_start = RDTSC_START();
-  if (insert) {
-    for (; reader.next(&kmer);) {
-      inserted++;
-      _items[k].key = kmer;
+  // Wait for all readers finish initializing.
+  barrier->arrive_and_wait();
 
-      if (++k == HT_TESTS_BATCH_LENGTH) {
-        kmer_ht->insert_batch(InsertFindArguments(_items));
-        k = 0;
-      }
-    }
-    kmer_ht->flush_insert_queue();
-  } else {
-    for (; reader.next(&kmer);) {
-      inserted++;
-    }
+  // start timers
+  std::uint64_t start {}, end {};
+  std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+  if (sh->shard_idx == 0) {
+    start = _rdtsc();
+    start_ts = std::chrono::steady_clock::now();
   }
 
-  // input_reader::FastqReader freader("../ERR024163_1.fastq", sh->shard_idx, cfg.num_threads);
-  // for (; freader.next(&tmp);){inserted++;}
+  // Inser Kmers into hashtable
+  for (KeyValuePair kv; t1->next(&kv);) {
+    batch_runner.insert(kv);
+  }
+  batch_runner.flush_insert();
+  barrier->arrive_and_wait();
 
-  const auto t_end = RDTSCP();
-  const auto duration = t_end - t_start;
-  PLOG_INFO << "inserted "<< inserted << " items in " << duration << " cycles. " << duration / std::max(1ul, inserted) << " cpo";
-  sh->stats->insertions.op_count = inserted;
-  sh->stats->insertions.duration = duration;
-  get_ht_stats(sh, kmer_ht);
-  return {duration, inserted};
+  // done; calc stats
+  if (sh->shard_idx == 0) {
+    end = _rdtsc();
+    end_ts = std::chrono::steady_clock::now();
+    PLOG_INFO.printf("Kmer insertion took %llu us (%llu cycles)",
+        chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
+        end - start);
+    if (mt) {
+      for (const auto &e: *mt) {
+        PLOGV.printf("k: %llu, v1: %llu, v2: %llu\n", e.at(0), e.at(1), e.at(2));
+      }
+    }
+  }
 }
 
 } // namespace kmercounter

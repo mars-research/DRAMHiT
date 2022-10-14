@@ -11,7 +11,9 @@ namespace kmercounter {
 
 class KmerTest {
  public:
-  static OpTimings shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert, input_reader::FastqKMerPreloadReader<KMER_LEN> reader);
+  void count_kmer(Shard *sh, const Configuration &config,
+                  BaseHashTable *ht,
+                  std::barrier<VoidFn> *barrier);
 };
 
 }  // namespace kmercounter
