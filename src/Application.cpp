@@ -14,6 +14,7 @@
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
+#include "./hashtables/growt/folklore_ht.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "tests/PrefetchTest.hpp"
@@ -120,6 +121,8 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       kmer_ht =
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
+    case FOLKLORE_HT:
+      kmer_ht = new FolkloreHashTable(sz);
     default:
       PLOG_FATAL.printf("HT type not implemented");
       exit(-1);
@@ -385,7 +388,8 @@ int Application::process(int argc, char *argv[]) {
         "ht-type",
         po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
         "1: Partitioned HT\n"
-        "3: Casht++\n")(
+        "3: Casht++\n"
+        "4: Folklore\n")(
         "out-file",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
         "Hashtable output file name.")(
@@ -508,6 +512,9 @@ int Application::process(int argc, char *argv[]) {
         break;
       case CASHTPP:
         PLOG_INFO.printf("Hashtable type : Cas HT");
+        break;
+      case FOLKLORE_HT:
+        PLOG_INFO.printf("Hashtable type : Folklore HT");
         break;
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
