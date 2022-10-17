@@ -316,7 +316,9 @@ int Application::spawn_shard_threads() {
       th.join();
     }
   }
-  if (config.mode != CACHE_MISS) print_stats(this->shards, config);
+  if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
+    print_stats(this->shards, config);
+  }
 
   std::free(this->shards);
 
