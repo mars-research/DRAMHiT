@@ -22,7 +22,7 @@
 #include "xorwow.hpp"
 
 namespace kmercounter {
-using timer_type = std::uint16_t;
+using timer_type = std::uint32_t;
 
 template <std::size_t capacity>
 class alignas(64) LatencyCollector {
@@ -126,14 +126,14 @@ class alignas(64) LatencyCollector {
 
   void start_timed(std::uint64_t& save) {
     unsigned int aux;
-    __cpuid(0, aux, aux, aux, aux);
+    //__cpuid(0, aux, aux, aux, aux);
     const auto time = __rdtsc();
     save = time;
   }
 
   void stop_timed(std::uint64_t& save) {
+    //_mm_sfence();
     unsigned int aux;
-    _mm_sfence();
     save = __rdtscp(&aux);
     //__cpuid(0, aux, aux, aux, aux);
   }
