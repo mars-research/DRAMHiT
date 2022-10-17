@@ -88,29 +88,17 @@ class ArrayHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)data);
-    //size_t idx = hash & (this->capacity - 1);  // modulo
     size_t idx = hash;
-    //size_t idx = fastrange32(hash, this->capacity);  // modulo
 
     KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
 
-    //for (auto i = 0u; i < this->capacity; i++) {
-      KV *curr = &this->hashtable[idx];
-    retry:
-      if (curr->is_empty()) {
-        PLOGV.printf("inserting key %llu at idx %llu", elem->key, idx);
-        bool cas_res = curr->insert(elem);
-        //if (!cas_res) {
-          //break;
-        //}
-      } else {
-        curr->update(elem);
-        //break;
-      } /*else {
-        PLOGE.printf("Bin occupied. likely an error! idx %zu, curr->value %llu",
-            idx, curr->value);
-      }*/
-    //}
+    KV *curr = &this->hashtable[idx];
+    if (curr->is_empty()) {
+      PLOGV.printf("inserting key %llu at idx %llu", elem->key, idx);
+      bool cas_res = curr->insert(elem);
+    } else {
+      curr->update(elem);
+    }
 
 #ifdef LATENCY_COLLECTION
     collector->sync_end(timer_start);
@@ -125,38 +113,25 @@ class ArrayHashTable : public BaseHashTable {
 
   // insert a batch
   void insert_batch(const InsertFindArguments &kp, collector_type* collector) override {
-    this->flush_if_needed(collector);
 
     for (auto &data : kp) {
-      add_to_insert_queue(&data, collector);
+      uint64_t idx = this->hash((const char *)&data.key);
+      this->prefetch(idx);
     }
 
-    this->flush_if_needed(collector);
+    for (auto &data : kp) {
+      KVQ q;
+      q.idx = this->hash((const char *)&data.key);
+      q.value = data.value;
+      __insert_one(&q, collector);
+    }
   }
 
   // overridden function for insertion
   void flush_if_needed(collector_type* collector) {
-    size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-    while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
-      __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
-      curr_queue_sz =
-          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-    }
-    return;
   }
 
   void flush_insert_queue(collector_type* collector) override {
-    size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-
-    while (curr_queue_sz != 0) {
-      __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
-      curr_queue_sz =
-          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-    }
   }
 
   void flush_find_queue(ValuePairs &vp, collector_type* collector) override {
@@ -190,6 +165,7 @@ class ArrayHashTable : public BaseHashTable {
   }
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &values, collector_type* collector) override {
+#if 0
     this->flush_if_needed(values, collector);
 
     for (auto &data : kp) {
@@ -197,6 +173,20 @@ class ArrayHashTable : public BaseHashTable {
     }
 
     this->flush_if_needed(values, collector);
+#endif
+    for (auto &data : kp) {
+      uint64_t idx = this->hash((const char *)&data.key);
+      this->prefetch_read(idx);
+    }
+
+    for (auto &data : kp) {
+      //add_to_insert_queue(&data, collector);
+      KVQ q;
+      q.idx = this->hash((const char *)&data.key);
+      q.value = data.value;
+      q.key_id = data.id;
+      __find_one(&q, values, collector);
+    }
   }
 
   void *find_noprefetch(const void *data, collector_type* collector) override {
