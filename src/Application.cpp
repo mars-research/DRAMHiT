@@ -122,7 +122,9 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
     case FOLKLORE_HT:
+      PLOG_DEBUG.printf("about to init folklore with size %d", sz);
       kmer_ht = new FolkloreHashTable(sz);
+      break;
     default:
       PLOG_FATAL.printf("HT type not implemented");
       exit(-1);
@@ -142,6 +144,8 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
 
   sh->stats =
       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
+
+  PLOG_DEBUG.printf("about to init ht");
 
   switch (config.mode) {
     case FASTQ_WITH_INSERT:
@@ -168,6 +172,8 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       return;
   }
 
+  PLOG_DEBUG.printf("Finished init ht");
+
   num_entered++;
 
 #ifdef WITH_PAPI_LIB
@@ -190,6 +196,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
+      PLOG_DEBUG << "Running zipf test";
       this->test.zipf.run(sh, kmer_ht, config.skew, config.seed, config.num_threads, barrier);
       break;
     case RW_RATIO:
@@ -306,8 +313,11 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
+    PLOGV.printf("about to shard");
     this->shard_thread(i, &barrier);
   }
+
+  PLOGV.printf("right before the join loop");
 
   for (auto &th : this->threads) {
     if (th.joinable()) {
@@ -515,6 +525,7 @@ int Application::process(int argc, char *argv[]) {
         break;
       case FOLKLORE_HT:
         PLOG_INFO.printf("Hashtable type : Folklore HT");
+        config.no_prefetch = true;
         break;
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",

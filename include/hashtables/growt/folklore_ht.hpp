@@ -19,7 +19,7 @@ namespace kmercounter {
 class FolkloreHashTable : public BaseHashTable {
  public:
   FolkloreHashTable(uint64_t capacity)
-   : table(capacity) {}
+   : table(capacity), ht(table.get_handle()) {}
 
   bool insert(const void *data) {
     return false; // TODO
@@ -30,17 +30,15 @@ class FolkloreHashTable : public BaseHashTable {
   void insert_batch(const InsertFindArguments &kp, collector_type* collector = nullptr) {
     // TODO
     // NEED FOR TEST
+    for (auto& mapping : kp) {
+      ht.insert(mapping.key, mapping.value);
+    }
   }
 
   void insert_noprefetch(const void *data, collector_type* collector = nullptr) {
-    // TODO
-    // NEED FOR TEST
-    const InsertFindArgument* kp = reinterpret_cast<const InsertFindArgument*>(data);
-    
-    FolkloreHashTable::handle_type ht = table.get_handle();
+    PLOG_DEBUG.printf("folklore insert");
+    const InsertFindArgument* kp = reinterpret_cast<const InsertFindArgument*>(data);    
     ht.insert(kp->key, kp->value);
-
-    throw std::invalid_argument("stop right there");
   }
 
   void flush_insert_queue(collector_type* collector = nullptr) {
@@ -56,8 +54,11 @@ class FolkloreHashTable : public BaseHashTable {
   }
 
   void *find_noprefetch(const void *data, collector_type* collector = nullptr) {
-    // NEED FOR TEST
-    return nullptr; // TODO
+    PLOG_DEBUG.printf("folklore insert");
+    const kmercounter::key_type* key = reinterpret_cast<const kmercounter::key_type*>(data);
+    auto val = ht.find(*key);
+    // return some kind of pointer purely for the purposes of the test (it doesn't actually use the pointer)
+    return val != ht.end() ? &val : nullptr;
   }
 
   void flush_find_queue(ValuePairs &vp, collector_type* collector = nullptr) {
@@ -115,6 +116,7 @@ private:
   using handle_type = table_type::handle_type;
 
   alignas(64) table_type table;
+  handle_type ht;
 };
 
 }
