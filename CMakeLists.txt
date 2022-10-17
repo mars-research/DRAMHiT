@@ -90,7 +90,7 @@ if(BUILD_APP)
     )
 
     # Add subdirectory
-    target_include_directories(kvstore PRIVATE lib/growt/)
+    include_directories(lib/growt)
     target_link_directories(kvstore PRIVATE lib/)
     target_link_libraries(kvstore PRIVATE
         kvstore_lib
@@ -100,6 +100,7 @@ if(BUILD_APP)
         capstone
         boost_program_options
         Threads::Threads
+        tbb # No, I do not have the patience to get this to play nice with nix rn
     )
 endif()
 

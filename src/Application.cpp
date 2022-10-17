@@ -125,6 +125,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       PLOG_DEBUG.printf("about to init folklore with size %d", sz);
       kmer_ht = new FolkloreHashTable(sz);
       break;
+    case TBB_HT:
+      PLOG_DEBUG.printf("about to init TBB_UM with size %d", sz);
+      kmer_ht = new TbbHashTable(sz);
+      break;
     default:
       PLOG_FATAL.printf("HT type not implemented");
       exit(-1);

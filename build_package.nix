@@ -13,6 +13,7 @@
   boost,
   gtest,
   capstone,
+  tbb,
 }: let
   abseil-cpp-17 = abseil-cpp.override {
     cxxStandard = "17";
@@ -44,6 +45,7 @@ in stdenv.mkDerivation {
     boost
     gtest
     capstone
+    tbb
   ];
 
   NIX_CFLAGS_COMPILE = "-march=native";

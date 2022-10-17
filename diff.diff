@@ -1,0 +1,1384 @@
+diff --git a/.gitmodules b/.gitmodules
+index 8fb7b69..9a0461c 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -23,6 +23,3 @@
+ [submodule "lib/eth_hashjoin"]
+ 	path = lib/eth_hashjoin
+ 	url = git@github.com:mars-research/vldb13-eth-hashjoin.git
+-[submodule "lib/growt"]
+-	path = lib/growt
+-	url = git@github.com:mars-research/growt.git
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c6f428f..d1df170 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -90,7 +90,6 @@ if(BUILD_APP)
+     )
+ 
+     # Add subdirectory
+-    target_include_directories(kvstore PRIVATE lib/growt/)
+     target_link_directories(kvstore PRIVATE lib/)
+     target_link_libraries(kvstore PRIVATE
+         kvstore_lib
+@@ -107,8 +106,9 @@ endif()
+ include_directories(include/ lib/ lib/cityhash/src/)
+ 
+ # Declare string type options.
+-set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv)
+-set(HASHER "crc" CACHE STRING "Hasher")
++set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv direct_index)
++#set(HASHER "crc" CACHE STRING "Hasher")
++set(HASHER "direct_index" CACHE STRING "Hasher")
+ set_property(CACHE HASHER PROPERTY STRINGS ${hasher_types})
+ if (NOT HASHER IN_LIST hasher_types)
+     message(FATAL_ERROR "hasher type must be one of: ${hasher_types}; but get ${HASHER}")
+@@ -183,6 +183,8 @@ elseif(HASHER STREQUAL "fnv")
+     add_definitions(-DFNV_HASH)
+ elseif(HASHER STREQUAL "crc")
+     add_definitions(-DCRC_HASH)
++elseif(HASHER STREQUAL "direct_index")
++    add_definitions(-DDIRECT_INDEX)
+ elseif(HASHER STREQUAL "citycrc")
+     add_definitions(-DCITY_CRC_HASH)
+ elseif(HASHER STREQUAL "wyhash")
+diff --git a/include/constants.hpp b/include/constants.hpp
+index 82849fe..1181032 100644
+--- a/include/constants.hpp
++++ b/include/constants.hpp
+@@ -11,8 +11,13 @@ constexpr int KV_SIZE = 16;  // 8-byte key + 8-byte value
+ constexpr uint32_t PREFETCH_QUEUE_SIZE = 64;
+ constexpr uint32_t PREFETCH_FIND_QUEUE_SIZE = 64;
+ 
++#if defined(DIRECT_INDEX)
++constexpr uint32_t HT_TESTS_BATCH_LENGTH = 256;
++constexpr uint32_t HT_TESTS_FIND_BATCH_LENGTH = 256;
++#else
+ constexpr uint32_t HT_TESTS_BATCH_LENGTH = 16;
+ constexpr uint32_t HT_TESTS_FIND_BATCH_LENGTH = 16;
++#endif
+ constexpr uint32_t HT_TESTS_MAX_STRIDE = 2;
+ } // namespace kmercounter
+ 
+diff --git a/include/hasher.hpp b/include/hasher.hpp
+index 073229b..3183053 100644
+--- a/include/hasher.hpp
++++ b/include/hasher.hpp
+@@ -12,6 +12,13 @@
+ 
+ 
+ namespace kmercounter {
++
++#if (KEY_LEN == 4)
++using key_type = std::uint32_t;
++#elif (KEY_LEN == 8)
++using key_type = std::uint64_t;
++#endif
++
+ class Hasher {
+ public:
+ 
+@@ -36,6 +43,8 @@ public:
+     hash_val = CityHashCrc128((const char *)buff, len);
+ #elif defined(WYHASH)
+     hash_val = wyhash((const char *)buff, len, 0, _wyp);
++#elif defined(DIRECT_INDEX)
++    hash_val = *((key_type*) buff);
+ #else
+     static_assert(false, "Hasher is not specified.");
+ #endif
+diff --git a/include/hashtables/array_kht.hpp b/include/hashtables/array_kht.hpp
+new file mode 100644
+index 0000000..184efbd
+--- /dev/null
++++ b/include/hashtables/array_kht.hpp
+@@ -0,0 +1,536 @@
++/// Compare-and-swap(CAS) with linear probing hashtable based off of
++/// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
++/// Key and values are stored directly in the table.
++/// CASHashtable is not parititioned, meaning that there will be
++/// at max one instance of it. All threads will share the same 
++/// instance.
++/// The original one is called the casht and the one we modified with
++/// batching + prefetching though is called casht++.
++// TODO bloom filters for high frequency kmers?
++
++#ifndef HASHTABLES_CAS_ARRAY_KHT_HPP
++#define HASHTABLES_CAS_ARRAY_KHT_HPP
++
++#include <cassert>
++#include <fstream>
++#include <iostream>
++#include <mutex>
++#include <type_traits>
++
++#include "constants.hpp"
++#include "plog/Log.h"
++#include "helper.hpp"
++#include "ht_helper.hpp"
++#include "sync.h"
++#include "hasher.hpp"
++
++namespace kmercounter {
++template <typename KV, typename KVQ>
++class ArrayHashTable : public BaseHashTable {
++ public:
++  /// The global instance is shared by all threads.
++  static KV *hashtable;
++  /// A dedicated slot for the empty value.
++  static uint64_t empty_slot_;
++  /// True if the empty value is inserted.
++  static bool empty_slot_exists_;
++  /// File descriptor backs the memory
++  int fd;
++  int id;
++  size_t data_length, key_length;
++  const static uint64_t CACHELINE_SIZE = 64;
++  const static uint64_t KEYS_IN_CACHELINE_MASK = (CACHELINE_SIZE / sizeof(KV)) - 1;
++
++  ArrayHashTable(uint64_t c)
++      : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
++    this->capacity = kmercounter::utils::next_pow2(c);
++    {
++      const std::lock_guard<std::mutex> lock(ht_init_mutex);
++      if (!this->hashtable) {
++        assert(this->ref_cnt == 0);
++        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
++      }
++      this->ref_cnt++;
++    }
++    this->empty_item = this->empty_item.get_empty_key();
++    this->key_length = empty_item.key_length();
++    this->data_length = empty_item.data_length();
++
++    PLOGV << "Empty item: " << this->empty_item;
++    this->insert_queue =
++        (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
++    this->find_queue =
++        (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
++
++    PLOGV.printf("[INFO] Hashtable size: %lu\n", this->capacity);
++    PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
++  }
++
++  ~ArrayHashTable() {
++    free(find_queue);
++    free(insert_queue);
++    // Deallocate the global hashtable if ref_cnt goes down to zero.
++    {
++      const std::lock_guard<std::mutex> lock(ht_init_mutex);
++      this->ref_cnt--;
++      if (this->ref_cnt == 0) {
++        free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
++        this->hashtable = nullptr;
++      }
++    }
++  }
++
++  void prefetch_queue(QueueType qtype) override {}
++
++  void insert_noprefetch(const void *data, collector_type* collector) override {
++#ifdef LATENCY_COLLECTION
++    const auto timer_start = collector->sync_start();
++#endif
++
++    uint64_t hash = this->hash((const char *)data);
++    size_t idx = hash;
++
++    KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
++
++    KV *curr = &this->hashtable[idx];
++    if (curr->is_empty()) {
++      PLOGV.printf("inserting key %llu at idx %llu", elem->key, idx);
++      bool cas_res = curr->insert(elem);
++    } else {
++      curr->update(elem);
++    }
++
++#ifdef LATENCY_COLLECTION
++    collector->sync_end(timer_start);
++#endif
++  }
++
++  bool insert(const void *data) {
++    cout << "Not implemented!" << endl;
++    assert(false);
++    return false;
++  }
++
++  // insert a batch
++  void insert_batch(const InsertFindArguments &kp, collector_type* collector) override {
++
++    for (auto &data : kp) {
++      uint64_t idx = this->hash((const char *)&data.key);
++      this->prefetch(idx);
++    }
++
++    for (auto &data : kp) {
++      KVQ q;
++      q.idx = this->hash((const char *)&data.key);
++      q.value = data.value;
++      __insert_one(&q, collector);
++    }
++  }
++
++  // overridden function for insertion
++  void flush_if_needed(collector_type* collector) {
++  }
++
++  void flush_insert_queue(collector_type* collector) override {
++  }
++
++  void flush_find_queue(ValuePairs &vp, collector_type* collector) override {
++    size_t curr_queue_sz =
++        (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
++
++    while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
++      __find_one(&this->find_queue[this->find_tail], vp, collector);
++      if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
++      curr_queue_sz =
++          (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
++    }
++  }
++
++  void flush_if_needed(ValuePairs &vp, collector_type* collector) {
++    size_t curr_queue_sz =
++        (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
++    // make sure you return at most batch_sz (but can possibly return lesser
++    // number of elements)
++    while ((curr_queue_sz > FLUSH_THRESHOLD) &&
++           (vp.first < HT_TESTS_FIND_BATCH_LENGTH)) {
++      // cout << "Finding value for key " <<
++      // this->find_queue[this->find_tail].key << " at tail : " <<
++      // this->find_tail << endl;
++      __find_one(&this->find_queue[this->find_tail], vp, collector);
++      if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
++      curr_queue_sz =
++          (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
++    }
++    return;
++  }
++
++  void find_batch(const InsertFindArguments &kp, ValuePairs &values, collector_type* collector) override {
++#if 0
++    this->flush_if_needed(values, collector);
++
++    for (auto &data : kp) {
++      add_to_find_queue(&data, collector);
++    }
++
++    this->flush_if_needed(values, collector);
++#endif
++    for (auto &data : kp) {
++      uint64_t idx = this->hash((const char *)&data.key);
++      this->prefetch_read(idx);
++    }
++
++    for (auto &data : kp) {
++      //add_to_insert_queue(&data, collector);
++      KVQ q;
++      q.idx = this->hash((const char *)&data.key);
++      q.value = data.value;
++      q.key_id = data.id;
++      __find_one(&q, values, collector);
++    }
++  }
++
++  void *find_noprefetch(const void *data, collector_type* collector) override {
++#ifdef CALC_STATS
++    uint64_t distance_from_bucket = 0;
++#endif
++#ifdef LATENCY_COLLECTION
++    const auto timer_start = collector->sync_start();
++#endif
++
++    uint64_t hash = this->hash((const char *)data);
++    size_t idx = hash & (this->capacity - 1);
++    //size_t idx = fastrange32(hash, this->capacity);  // modulo
++    //InsertFindArgument *item = const_cast<InsertFindArgument*>(reinterpret_cast<const InsertFindArgument *>(data));
++    KV *curr;
++    KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
++    bool found = false;
++
++    // printf("Thread %" PRIu64 ": Trying memcmp at: %" PRIu64 "\n", this->thread_id, idx);
++    //for (auto i = 0u; i < this->capacity; i++) {
++      curr = &this->hashtable[idx];
++
++      PLOGV.printf("finding key %llu at idx %llu", elem->key, idx);
++      if (curr->is_empty()) {
++        found = false;
++        PLOGV.printf("empty value at idx %llu", idx);
++        goto exit;
++      } else {
++        found = true;
++        PLOGV.printf("found %llu", curr->value);
++        //break;
++      }
++#ifdef CALC_STATS
++      //distance_from_bucket++;
++#endif
++      //idx++;
++    //}
++
++#ifdef CALC_STATS
++    if (distance_from_bucket > this->max_distance_from_bucket) {
++      this->max_distance_from_bucket = distance_from_bucket;
++    }
++    this->sum_distance_from_bucket += distance_from_bucket;
++#endif
++  exit:
++#ifdef LATENCY_COLLECTION
++    collector->sync_end(timer_start);
++#endif
++
++
++    // return empty_element if nothing is found
++    if (!found) {
++      //printf("key %" PRIu64 " not found at idx %" PRIu64 " | hash %" PRIu64 "\n", item->key, idx, hash);
++      curr = nullptr;
++    }
++
++    return curr;
++  }
++
++  void display() const override {
++    for (size_t i = 0; i < this->capacity; i++) {
++      if (!this->hashtable[i].is_empty()) {
++        cout << this->hashtable[i] << endl;
++      }
++    }
++  }
++
++  size_t get_fill() const override {
++    size_t count = 0;
++    for (size_t i = 0; i < this->capacity; i++) {
++      if (!this->hashtable[i].is_empty()) {
++        count++;
++      }
++    }
++    return count;
++  }
++
++  size_t get_capacity() const override { return this->capacity; }
++
++  size_t get_max_count() const override {
++    size_t count = 0;
++    for (size_t i = 0; i < this->capacity; i++) {
++      if (this->hashtable[i].get_value() > count) {
++        count = this->hashtable[i].get_value();
++      }
++    }
++    return count;
++  }
++
++  void print_to_file(std::string &outfile) const override {
++    std::ofstream f(outfile);
++    if (!f) {
++      PLOG_ERROR.printf("Could not open outfile %s", outfile.c_str());
++      return;
++    }
++
++    for (size_t i = 0; i < this->get_capacity(); i++) {
++      if (!this->hashtable[i].is_empty()) {
++        f << this->hashtable[i] << std::endl;
++      }
++    }
++  }
++
++ private:
++  /// Assure thread-safety in constructor and destructor.
++  static std::mutex ht_init_mutex;
++  /// Reference counter of the global `hashtable`.
++  static uint32_t ref_cnt;
++  uint64_t capacity;
++  KV empty_item;
++  KVQ *find_queue;
++  KVQ *insert_queue;
++  uint32_t find_head;
++  uint32_t find_tail;
++  uint32_t ins_head;
++  uint32_t ins_tail;
++  Hasher hasher_;
++
++  uint64_t hash(const void *k) {
++    return hasher_(k, this->key_length);
++  }
++
++  void prefetch(uint64_t i) {
++#if defined(PREFETCH_WITH_PREFETCH_INSTR)
++    prefetch_object<true /* write */>(
++        &this->hashtable[i & (this->capacity - 1)],
++        sizeof(this->hashtable[i & (this->capacity - 1)]));
++    // true /*write*/);
++#endif
++
++#if defined(PREFETCH_WITH_WRITE)
++    prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
++#endif
++  };
++
++  void prefetch_read(uint64_t i) {
++    prefetch_object<false /* write */>(
++        &this->hashtable[i & (this->capacity - 1)],
++        sizeof(this->hashtable[i & (this->capacity - 1)]));
++  }
++
++  uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type* collector) {
++    // hashtable idx where the data should be found
++    size_t idx = q->idx;
++    uint64_t found = 0;
++
++    KV *curr = &this->hashtable[idx];
++    uint64_t retry;
++    found = curr->find(q, &retry, vp);
++
++#ifdef LATENCY_COLLECTION
++    collector->end(q->timer_id);
++#endif
++
++    return found;
++  }
++
++  auto __find_one(KVQ *q, ValuePairs &vp, collector_type* collector) {
++    if (q->key == this->empty_item.get_key()) {
++      __find_empty(q, vp);
++    } else {
++      __find_branched(q, vp, collector);
++    }
++  }
++
++    /// Update or increment the empty key.
++  uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
++    if (empty_slot_exists_) {
++      vp.second[vp.first].id = q->key_id;
++      vp.second[vp.first].value = empty_slot_;
++      vp.first++;
++    }
++    return empty_slot_;
++  }
++
++  void __insert_branched(KVQ *q, collector_type* collector) {
++    // hashtable idx at which data is to be inserted
++    size_t idx = q->idx;
++
++    KV *curr = &this->hashtable[idx];
++
++    // hashtable_mutexes[pidx].lock();
++    // printf("Thread %" PRIu64 ", grabbing lock: %" PRIu64 "\n", this->thread_id, pidx);
++    // Compare with empty element
++    if (curr->is_empty()) {
++      //std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
++      bool cas_res = curr->insert(q);
++      if (cas_res) {
++#ifdef CALC_STATS
++        this->num_memcpys++;
++#endif
++
++#ifdef COMPARE_HASH
++        hashtable[pidx].key_hash = q->key_hash;
++#endif
++
++#ifdef LATENCY_COLLECTION
++        collector->end(q->timer_id);
++#endif
++
++        return;
++      }
++      // hashtable_mutexes[pidx].unlock();
++      // printf("Thread %" PRIu64 ", released lock: %" PRIu64 "\n", this->thread_id,
++      // pidx);
++      // printf("%" PRIu64 ": %d | %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
++      // If CAS fails, we need to see if someother thread has updated the same
++      // <k,v> onto the position we were trying to insert. If so, we need to
++      // update the value instead of inserting new. Just fall-through to check!
++    }
++
++#ifdef CALC_STATS
++    this->num_hashcmps++;
++#endif
++
++#ifdef COMPARE_HASH
++    if (this->hashtable[pidx].key_hash == q->key_hash)
++#endif
++    {
++#ifdef CALC_STATS
++      this->num_memcmps++;
++#endif
++      curr->update(q);
++      // hashtable[pidx].kmer_count++;
++      // hashtable_mutexes[pidx].unlock();
++
++#ifdef LATENCY_COLLECTION
++      collector->end(q->timer_id);
++#endif
++    }
++
++    return;
++  }
++
++  void __insert_one(KVQ *q, collector_type* collector) {
++    if (q->key == this->empty_item.get_key()) {
++      __insert_empty(q);
++    } else {
++      __insert_branched(q, collector);
++    }
++  }
++
++  /// Update or increment the empty key.
++  void __insert_empty(KVQ *q) {
++    if constexpr (std::is_same_v<KV, Item>) {
++      empty_slot_ = q->value;
++    } else if constexpr (std::is_same_v<KV, Aggr_KV>) {
++      empty_slot_ += q->value;
++    } else {
++      assert(false && "Invalid template type");
++    }
++    empty_slot_exists_ = true;
++  }
++
++  uint64_t read_hashtable_element(const void *data) override {
++    PLOG_FATAL << "1. Not implemented";
++    assert(false);
++    return -1;
++  }
++
++  void add_to_insert_queue(void *data, collector_type* collector) {
++    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
++
++#ifdef LATENCY_COLLECTION
++    const auto timer = collector->start();
++#endif
++
++    uint64_t hash = this->hash((const char *)&key_data->key);
++    // Since we use fastrange for partitioned HT, use it
++    // for this HT too for a fair comparison
++    size_t idx = hash;
++    //size_t idx = fastrange32(hash, this->capacity);  // modulo
++    //size_t idx = hash & (this->capacity - 1);
++
++    //std::cout << " -- Adding " << key_data->key  << " : " << key_data->value << endl;
++    this->prefetch(idx);
++
++    this->insert_queue[this->ins_head].idx = idx;
++    this->insert_queue[this->ins_head].key = key_data->key;
++    this->insert_queue[this->ins_head].value = key_data->value;
++    this->insert_queue[this->ins_head].key_id = key_data->id;
++
++#ifdef LATENCY_COLLECTION
++    this->insert_queue[this->ins_head].timer_id = timer;
++#endif
++
++#ifdef COMPARE_HASH
++    this->insert_queue[this->ins_head].key_hash = hash;
++#endif
++
++    this->ins_head++;
++    if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
++  }
++
++  void add_to_find_queue(void *data, collector_type* collector) {
++    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
++
++#ifdef LATENCY_COLLECTION
++    const auto timer = collector->start();
++#endif
++
++    uint64_t hash = this->hash((const char *)&key_data->key);
++    // Since we use fastrange for partitioned HT, use it
++    // for this HT too for a fair comparison
++    size_t idx = hash;
++    //size_t idx = fastrange32(hash, this->capacity);  // modulo
++    //size_t idx = hash & (this->capacity - 1);
++
++    this->prefetch_read(idx);
++
++    // cout << " -- Adding " << key_data->key  << " at " << this->find_head <<
++    // endl;
++
++    this->find_queue[this->find_head].idx = idx;
++    this->find_queue[this->find_head].key = key_data->key;
++    this->find_queue[this->find_head].key_id = key_data->id;
++
++#ifdef LATENCY_COLLECTION
++    this->find_queue[this->find_head].timer_id = timer;
++#endif
++
++#ifdef COMPARE_HASH
++    this->queue[this->find_head].key_hash = hash;
++#endif
++
++    this->find_head++;
++    if (this->find_head >= PREFETCH_FIND_QUEUE_SIZE) this->find_head = 0;
++  }
++};
++
++/// Static variables
++template <class KV, class KVQ>
++KV *ArrayHashTable<KV, KVQ>::hashtable = nullptr;
++
++template <class KV, class KVQ>
++uint64_t ArrayHashTable<KV, KVQ>::empty_slot_ = 0;
++
++template <class KV, class KVQ>
++bool ArrayHashTable<KV, KVQ>::empty_slot_exists_ = false;
++
++template <class KV, class KVQ>
++std::mutex ArrayHashTable<KV, KVQ>::ht_init_mutex;
++
++template <class KV, class KVQ>
++uint32_t ArrayHashTable<KV, KVQ>::ref_cnt = 0;
++}  // namespace kmercounter
++#endif // HASHTABLES_CAS_ARRAY_KHT_HPP
+diff --git a/include/hashtables/batch_runner/batch_finder.hpp b/include/hashtables/batch_runner/batch_finder.hpp
+index 8147829..5a3ca6b 100644
+--- a/include/hashtables/batch_runner/batch_finder.hpp
++++ b/include/hashtables/batch_runner/batch_finder.hpp
+@@ -46,6 +46,10 @@ class HTBatchFinder {
+     }
+   }
+ 
++  void *find_noprefetch(const KeyValuePair &kv) {
++    return ht_->find_noprefetch((void*) &kv);
++  }
++
+   /// Flush everything to the hashtable and flush the hashtable find queue.
+   void flush() {
+     if (buffer_size_ > 0) {
+diff --git a/include/hashtables/batch_runner/batch_inserter.hpp b/include/hashtables/batch_runner/batch_inserter.hpp
+index a777e25..d8a5c4b 100644
+--- a/include/hashtables/batch_runner/batch_inserter.hpp
++++ b/include/hashtables/batch_runner/batch_inserter.hpp
+@@ -14,7 +14,7 @@ class HTBatchInserter {
+   ~HTBatchInserter() { flush(); }
+ 
+   // Insert one kv pair.
+-  void insert(const uint64_t key, const uint64_t value) {
++  inline void insert(const uint64_t key, const uint64_t value) {
+     // Append kv to `buffer_`
+     buffer_[buffer_size_].key = key;
+     buffer_[buffer_size_].value = value;
+@@ -26,8 +26,12 @@ class HTBatchInserter {
+     }
+   }
+ 
++  inline void insert_noprefetch(const KeyValuePair &kv) {
++    ht_->insert_noprefetch((void*) &kv);
++  }
++
+   // Flush everything to the hashtable and flush the hashtable insert queue.
+-  void flush() {
++  inline void flush() {
+     if (buffer_size_ > 0) {
+       flush_buffer();
+     }
+diff --git a/include/hashtables/batch_runner/batch_runner.hpp b/include/hashtables/batch_runner/batch_runner.hpp
+index d1c34a3..3005543 100644
+--- a/include/hashtables/batch_runner/batch_runner.hpp
++++ b/include/hashtables/batch_runner/batch_runner.hpp
+@@ -6,6 +6,7 @@
+ #include "hashtables/base_kht.hpp"
+ 
+ namespace kmercounter {
++extern Configuration config;
+ /// A wrapper around `HTBatchInserter` and `HTBatchFinder`.
+ template <size_t N = HT_TESTS_BATCH_LENGTH>
+ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
+@@ -24,7 +25,23 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
+   }
+ 
+   /// Insert one kv pair.
+-  void insert(const KeyValuePair& kv) { this->insert(kv.key, kv.value); }
++  inline void insert(const KeyValuePair& kv) {
++    if (config.no_prefetch) {
++      HTBatchInserter<N>::insert_noprefetch(kv);
++    } else {
++      //this->insert(kv.key, kv.value);
++      HTBatchInserter<N>::insert(kv.key, kv.value);
++    }
++  }
++
++  void *find(const KeyValuePair &kv) {
++    if (config.no_prefetch) {
++      return HTBatchFinder<N>::find_noprefetch(kv);
++    } else {
++      HTBatchFinder<N>::find(kv.key, kv.value);
++      return nullptr;
++    }
++  }
+ 
+   /// Flush both insert and find queue.
+   void flush() {
+@@ -33,10 +50,16 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
+   }
+ 
+   /// Flush insert queue.
+-  void flush_insert() { HTBatchInserter<N>::flush(); }
++  void flush_insert() {
++    if (!config.no_prefetch)
++      HTBatchInserter<N>::flush();
++  }
+ 
+   /// Flush find queue.
+-  void flush_find() { HTBatchFinder<N>::flush(); }
++  void flush_find() {
++    if (!config.no_prefetch)
++      HTBatchFinder<N>::flush();
++  }
+ 
+   /// Returns the number of inserts flushed.
+   size_t num_insert_flushed() { return HTBatchInserter<N>::num_flushed(); }
+diff --git a/include/hashtables/growt/folklore_ht.hpp b/include/hashtables/growt/folklore_ht.hpp
+deleted file mode 100644
+index 1d0c16d..0000000
+--- a/include/hashtables/growt/folklore_ht.hpp
++++ /dev/null
+@@ -1,124 +0,0 @@
+-#ifndef KVSTORE_FOLKLORE_HT_HEADER
+-#define KVSTORE_FOLKLORE_HT_HEADER
+-
+-#include "constants.hpp"
+-#include "plog/Log.h"
+-#include "helper.hpp"
+-#include "hashtables/ht_helper.hpp"
+-#include "sync.h"
+-#include "hasher.hpp"
+-
+-#include "data-structures/table_config.hpp"
+-#include "utils/default_hash.hpp"
+-#include "allocator/alignedallocator.hpp"
+-
+-#include <stdexcept>
+-
+-namespace kmercounter {
+-
+-class FolkloreHashTable : public BaseHashTable {
+- public:
+-  FolkloreHashTable(uint64_t capacity)
+-   : table(capacity), ht(table.get_handle()) {}
+-
+-  bool insert(const void *data) {
+-    return false; // TODO
+-  }
+-
+-  // NEVER NEVER NEVER USE KEY OR ID 0
+-  // Your inserts will be ignored if you do (we use these as empty markers)
+-  void insert_batch(const InsertFindArguments &kp, collector_type* collector = nullptr) {
+-    // TODO
+-    // NEED FOR TEST
+-    for (auto& mapping : kp) {
+-      ht.insert(mapping.key, mapping.value);
+-    }
+-  }
+-
+-  void insert_noprefetch(const void *data, collector_type* collector = nullptr) {
+-    PLOG_DEBUG.printf("folklore insert");
+-    const InsertFindArgument* kp = reinterpret_cast<const InsertFindArgument*>(data);    
+-    ht.insert(kp->key, kp->value);
+-  }
+-
+-  void flush_insert_queue(collector_type* collector = nullptr) {
+-    // TODO
+-    // NEED FOR TEST
+-  }
+-
+-  // NEVER NEVER NEVER USE KEY OR ID 0
+-  // Your inserts will be ignored if you do (we use these as empty markers)
+-  void find_batch(const InsertFindArguments &kp, ValuePairs &vp, collector_type* collector = nullptr) {
+-    // TODO
+-    // NEED FOR TEST
+-  }
+-
+-  void *find_noprefetch(const void *data, collector_type* collector = nullptr) {
+-    PLOG_DEBUG.printf("folklore insert");
+-    const kmercounter::key_type* key = reinterpret_cast<const kmercounter::key_type*>(data);
+-    auto val = ht.find(*key);
+-    // return some kind of pointer purely for the purposes of the test (it doesn't actually use the pointer)
+-    return val != ht.end() ? &val : nullptr;
+-  }
+-
+-  void flush_find_queue(ValuePairs &vp, collector_type* collector = nullptr) {
+-    // TODO
+-    // NEED FOR TEST
+-  }
+-
+-  void display() const {
+-    // TODO
+-  }
+-
+-  size_t get_fill() const {
+-    return 0; // TODO
+-  }
+-
+-  size_t get_capacity() const {
+-    return 0; // TODO
+-  }
+-
+-  size_t get_max_count() const {
+-    return 0; // TODO
+-  }
+-
+-  void print_to_file(std::string &outfile) const {
+-    // TODO
+-  }
+-
+-  uint64_t read_hashtable_element(const void *data) {
+-    return 0; // TODO
+-  }
+-
+-  void prefetch_queue(QueueType qtype) {
+-    // TODO
+-  }
+-
+-  // uhh?
+-  // uint64_t num_reprobes = 0;
+-  // uint64_t num_soft_reprobes = 0;
+-  // uint64_t num_memcmps = 0;
+-  // uint64_t num_memcpys = 0;
+-  // uint64_t num_hashcmps = 0;
+-  // uint64_t num_queue_flushes = 0;
+-  // uint64_t sum_distance_from_bucket = 0;
+-  // uint64_t max_distance_from_bucket = 0;
+-  // uint64_t num_swaps = 0;
+-
+-private:
+-  using table_config = typename growt::table_config<
+-    kmercounter::key_type, 
+-    kmercounter::value_type, 
+-    utils_tm::hash_tm::default_hash, 
+-    growt::AlignedAllocator<>
+-  >;
+-  using table_type = table_config::table_type;
+-  using handle_type = table_type::handle_type;
+-
+-  alignas(64) table_type table;
+-  handle_type ht;
+-};
+-
+-}
+-
+-#endif
+\ No newline at end of file
+diff --git a/include/hashtables/growt/tbb_um_ht.hpp b/include/hashtables/growt/tbb_um_ht.hpp
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/include/hashtables/kvtypes.hpp b/include/hashtables/kvtypes.hpp
+index 9801e44..1af7d6d 100644
+--- a/include/hashtables/kvtypes.hpp
++++ b/include/hashtables/kvtypes.hpp
+@@ -687,6 +687,67 @@ struct Item {
+   };
+ } PACKED;
+ 
++struct Value {
++  value_type value;
++
++  using queue = ItemQueue;
++
++  friend std::ostream &operator<<(std::ostream &strm, const Value &v) {
++    return strm << "{" << v.value << "}";
++  }
++
++  inline bool insert(queue *elem) {
++    this->value = elem->value;
++    return true;
++  }
++
++  inline bool update(queue *elem) {
++    this->value = elem->value;
++    return true;
++  }
++
++  inline constexpr size_t data_length() const { return sizeof(Value); }
++
++  inline constexpr size_t key_length() const { return sizeof(Value); }
++
++  inline uint64_t get_key() const { return this->value; }
++
++  inline uint64_t get_value() const { return this->value; }
++
++  inline Value get_empty_key() {
++    Value empty;
++    empty.value = 0;
++    return empty;
++  }
++
++  inline bool is_empty() {
++    Value empty = this->get_empty_key();
++    return this->value == empty.value;
++  }
++
++  inline uint64_t find(const void *data, uint64_t *retry, ValuePairs &vp) {
++    ItemQueue *elem =
++        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
++
++    auto found = false;
++    *retry = 0;
++    if (this->is_empty()) {
++      goto exit;
++    } else {
++      //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
++      found = true;
++      vp.second[vp.first].id = elem->key_id;
++      vp.second[vp.first].value = this->value;
++      vp.first++;
++      goto exit;
++    }
++  exit:
++    return found;
++  }
++
++} PACKED;
++
++
+ #ifdef NOAGGR
+ using KVType = Item;
+ #else
+diff --git a/include/input_reader/eth_rel_gen.hpp b/include/input_reader/eth_rel_gen.hpp
+index c86acb6..a2bdc77 100644
+--- a/include/input_reader/eth_rel_gen.hpp
++++ b/include/input_reader/eth_rel_gen.hpp
+@@ -56,14 +56,14 @@ class PartitionedEthRelationReader
+ class SingletonEthRelationGenerator {
+  public:
+   SingletonEthRelationGenerator(std::string_view identifier, unsigned int seed,
+-                                uint64_t ntuples, uint32_t nthreads) {
++                                uint64_t ntuples, uint32_t nthreads, uint64_t max_id) {
+     const std::string id(identifier);
+     std::lock_guard guard(mutex_);
+     if (!relations_.contains(id)) {
+       eth_hashjoin::relation_t relation;
+       eth_hashjoin::seed_generator(seed);
+       eth_hashjoin::parallel_create_relation(&relation, ntuples, nthreads,
+-                                             ntuples);
++                                             max_id);
+       relations_[id] = relation;
+     }
+     relation_ = relations_[id];
+@@ -84,8 +84,8 @@ class PartitionedEthRelationGenerator : private SingletonEthRelationGenerator,
+  public:
+   PartitionedEthRelationGenerator(std::string_view identifier,
+                                   unsigned int seed, uint64_t ntuples,
+-                                  uint64_t part_id, uint64_t num_parts)
+-      : SingletonEthRelationGenerator(identifier, seed, ntuples, num_parts),
++                                  uint64_t part_id, uint64_t num_parts, uint64_t max_id)
++      : SingletonEthRelationGenerator(identifier, seed, ntuples, num_parts, max_id),
+         PartitionedEthRelationReader(SingletonEthRelationGenerator::relation_,
+                                      part_id, num_parts) {}
+ };
+diff --git a/include/types.hpp b/include/types.hpp
+index 4e6036b..5019d74 100644
+--- a/include/types.hpp
++++ b/include/types.hpp
+@@ -79,7 +79,7 @@ typedef enum {
+ typedef enum {
+   PARTITIONED_HT = 1,
+   CASHTPP = 3,
+-  FOLKLORE_HT = 4,
++  ARRAY_HT = 4,
+ } ht_type_t;
+ 
+ extern const char* run_mode_strings[];
+diff --git a/lib/growt b/lib/growt
+deleted file mode 160000
+index 82ade4a..0000000
+--- a/lib/growt
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 82ade4a9f6e84e9766a6abc138d96770050525fe
+diff --git a/run_test.sh b/run_test.sh
+index 523c751..297e8f8 100755
+--- a/run_test.sh
++++ b/run_test.sh
+@@ -179,6 +179,73 @@ run_test() {
+   done
+ }
+ 
++run_join_test() {
++  if [ $# -eq 4 ]; then
++    TEST_TYPE=$1
++    RUNS=$2
++    PREFETCHER=$3
++    MAX_THREADS=$4
++  fi
++
++
++  HT_TYPE=$(echo ${TEST_TYPE} | awk -F'-' '{print $1}')
++  MODE=$(echo ${TEST_TYPE} | awk -F'-' '{print $2}')
++  R_SIZE=$(echo ${TEST_TYPE} | awk -F'-' '{print $3}')
++  S_SIZE=$(echo ${TEST_TYPE} | awk -F'-' '{print $4}')
++
++  case ${HT_TYPE} in
++    "casht")
++      ARGS="--ht-type 3 --numa-split 1 --no-prefetch 1"
++      ;;
++    "cashtpp")
++      ARGS="--ht-type 3 --numa-split 1 --no-prefetch 0"
++      ;;
++    "part")
++      ARGS="--ht-type 1 --numa-split 3"
++      START_THREAD=4
++      ;;
++    "arrayht")
++      ARGS="--ht-type 4 --numa-split 1 --no-prefetch 1"
++      ;;
++    "arrayhtpp")
++      ARGS="--ht-type 4 --numa-split 1 --no-prefetch 0"
++      ;;
++    *)
++      echo "Unknown hashtable type ${HT_TYPE}"
++      exit;
++  esac
++
++  case ${MODE} in
++    "join")
++      ARGS+=" --mode 13"
++      ;;
++    *)
++      echo "Unknown mode ${MODE}"
++      exit;
++  esac
++
++  R_SIZE_MIL=$((${R_SIZE} * 1000000))
++  S_SIZE_MIL=$((${S_SIZE} * 1000000))
++  ARGS+=" --relation_r_size ${R_SIZE_MIL} --relation_s_size ${S_SIZE_MIL}"
++  ARGS+=" --num-threads ${MAX_THREADS}"
++
++  for run in ${RUNS}; do
++    LOG_PREFIX="esys22-logs/${TEST_TYPE}/run${run}/"
++    LOG_FILE="${LOG_PREFIX}/${MAX_THREADS}.log"
++
++    if [ ! -d ${LOG_PREFIX} ]; then
++      mkdir -p ${LOG_PREFIX}
++    fi
++    ./build/kvstore ${ARGS} 2>&1 >> ${LOG_FILE}
++
++    NUM_TUPLES=$(((${R_SIZE} + ${S_SIZE})*1000000))
++    JOIN_USEC=$(grep -o "Hashjoin took [0-9]\+ us" ${LOG_FILE} | awk '{ print $(NF-1) }')
++    TUPLES_PER_SEC=$(echo ${NUM_TUPLES} / ${JOIN_USEC} | bc -l)
++
++    printf "%d, %f\n" ${R_SIZE} ${TUPLES_PER_SEC} | tee -a ${LOG_PREFIX}/summary_run${run}.csv
++  done
++}
++
+ MLC_BIN=/local/devel/mlc/mlc
+ run_mlc_test() {
+   if [ $# -eq 3 ]; then
+@@ -242,13 +309,13 @@ HW_PREF_OFF=0
+ #  run_test "cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+ #done
+ 
+-for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+-   run_test "casht_cashtpp-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+-done
++#for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
++#   run_test "casht_cashtpp-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
++#done
+ 
+-for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+-   run_test "casht_cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+-done
++#for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
++#   run_test "casht_cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
++#done
+ 
+ #for s in 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+ #  run_test "part-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
+@@ -264,3 +331,11 @@ done
+ ## MLC tests
+ #run_mlc_test "max-bw-all" ${NUM_RUNS} ${MAX_THREADS_CASHT}
+ # -------
++
++for rsize in 1 4 16 64 128 256 384 512; do
++  s_size=$((${rsize}*10))
++  #run_join_test "casht-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
++  #run_join_test "cashtpp-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
++  #run_join_test "arrayht-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
++  run_join_test "arrayhtpp-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
++done
+diff --git a/src/Application.cpp b/src/Application.cpp
+index 3de10ea..ce23633 100644
+--- a/src/Application.cpp
++++ b/src/Application.cpp
+@@ -14,7 +14,7 @@
+ 
+ #include "./hashtables/cas_kht.hpp"
+ #include "./hashtables/simple_kht.hpp"
+-#include "./hashtables/growt/folklore_ht.hpp"
++#include "./hashtables/array_kht.hpp"
+ #include "misc_lib.h"
+ #include "print_stats.h"
+ #include "tests/PrefetchTest.hpp"
+@@ -121,9 +121,9 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
+       kmer_ht =
+           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
+       break;
+-    case FOLKLORE_HT:
+-      PLOG_DEBUG.printf("about to init folklore with size %d", sz);
+-      kmer_ht = new FolkloreHashTable(sz);
++    case ARRAY_HT:
++      kmer_ht =
++          new ArrayHashTable<Value, ItemQueue>(sz);
+       break;
+     default:
+       PLOG_FATAL.printf("HT type not implemented");
+@@ -145,8 +145,6 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
+   sh->stats =
+       (thread_stats *)std::aligned_alloc(CACHE_LINE_SIZE, sizeof(thread_stats));
+ 
+-  PLOG_DEBUG.printf("about to init ht");
+-
+   switch (config.mode) {
+     case FASTQ_WITH_INSERT:
+       kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
+@@ -172,8 +170,6 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
+       return;
+   }
+ 
+-  PLOG_DEBUG.printf("Finished init ht");
+-
+   num_entered++;
+ 
+ #ifdef WITH_PAPI_LIB
+@@ -196,7 +192,6 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
+       this->test.cmt.cache_miss_run(sh, kmer_ht);
+       break;
+     case ZIPFIAN:
+-      PLOG_DEBUG << "Running zipf test";
+       this->test.zipf.run(sh, kmer_ht, config.skew, config.seed, config.num_threads, barrier);
+       break;
+     case RW_RATIO:
+@@ -313,18 +308,17 @@ int Application::spawn_shard_threads() {
+     sh->shard_idx = i;
+     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
+     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
+-    PLOGV.printf("about to shard");
+     this->shard_thread(i, &barrier);
+   }
+ 
+-  PLOGV.printf("right before the join loop");
+-
+   for (auto &th : this->threads) {
+     if (th.joinable()) {
+       th.join();
+     }
+   }
+-  if (config.mode != CACHE_MISS) print_stats(this->shards, config);
++  if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
++    print_stats(this->shards, config);
++  }
+ 
+   std::free(this->shards);
+ 
+@@ -399,7 +393,7 @@ int Application::process(int argc, char *argv[]) {
+         po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
+         "1: Partitioned HT\n"
+         "3: Casht++\n"
+-        "4: Folklore\n")(
++        "4: Arrayht\n")(
+         "out-file",
+         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
+         "Hashtable output file name.")(
+@@ -511,7 +505,11 @@ int Application::process(int argc, char *argv[]) {
+       std::uint64_t max_join_size = config.relation_r_size;
+ 
+       // We need a hashtable that is 75% full. So, increase the size of the HT
+-      config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
++      if (config.ht_type == ARRAY_HT) {
++        config.ht_size = max_join_size;
++      } else {
++        config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
++      }
+       PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
+     }
+ 
+@@ -523,9 +521,8 @@ int Application::process(int argc, char *argv[]) {
+       case CASHTPP:
+         PLOG_INFO.printf("Hashtable type : Cas HT");
+         break;
+-      case FOLKLORE_HT:
+-        PLOG_INFO.printf("Hashtable type : Folklore HT");
+-        config.no_prefetch = true;
++      case ARRAY_HT:
++        PLOG_INFO.printf("Hashtable type : Array HT");
+         break;
+       default:
+         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
+@@ -605,7 +602,7 @@ int Application::process(int argc, char *argv[]) {
+     // for hashjoin, ht-type determines how we spawn threads
+     if (config.ht_type == PARTITIONED_HT) {
+       this->test.qt.run_test(&config, this->n, true, this->npq);
+-    } else if (config.ht_type == CASHTPP) {
++    } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT)) {
+       this->spawn_shard_threads();
+     }
+   } else if (config.mode == BQ_TESTS_YES_BQ) {
+diff --git a/src/tests/hashjoin_test.cpp b/src/tests/hashjoin_test.cpp
+index 7b33e12..bab33d6 100644
+--- a/src/tests/hashjoin_test.cpp
++++ b/src/tests/hashjoin_test.cpp
+@@ -39,6 +39,8 @@ using MaterializeVector = std::vector<JoinArrayElement>;
+ /// `t1` is the primary key relation and `t2` is the foreign key relation.
+ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
+               input_reader::SizedInputReader<KeyValuePair>* t2,
++              std::tuple<KeyValuePair*, uint32_t> relation_r,
++              std::tuple<KeyValuePair*, uint32_t> relation_s,
+               BaseHashTable* ht,
+               MaterializeVector* mvec,
+               bool materialize, std::barrier<std::function<void()>>* barrier) {
+@@ -52,7 +54,17 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
+     start_build_ts = std::chrono::steady_clock::now();
+   }
+ 
++  collector_type *const collector{};
++  auto [rel_r, rel_r_size] = relation_r;
++  auto [rel_s, rel_s_size] = relation_s;
++
++#ifdef ITERATOR
+   for (KeyValuePair kv; t1->next(&kv);) {
++#else
++  for (auto i = 0; i < rel_r_size; i++) {
++    KeyValuePair kv = rel_r[i];
++#endif
++    PLOGV.printf("inserting k: %lu, v: %lu", kv.key, kv.value);
+     batch_runner.insert(kv);
+   }
+   batch_runner.flush_insert();
+@@ -86,8 +98,16 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
+ 
+   // Probe.
+   const auto t2_start = RDTSC_START();
++#ifdef ITERATOR
+   for (KeyValuePair kv; t2->next(&kv);) {
+-    batch_runner.find(kv.key, kv.value);
++#else
++  for (auto i = 0; i < rel_s_size; i++) {
++    KeyValuePair kv = rel_s[i];
++#endif
++    value_type val = kv.value;
++    KeyValuePair *f_kv = (KeyValuePair*) batch_runner.find(kv);
++    if (f_kv)
++      PLOGV.printf("finding key %llu value1 %llu | value2 %llu", kv.key, kv.value, f_kv->value);
+   }
+   batch_runner.flush_find();
+ 
+@@ -131,10 +151,52 @@ void HashjoinTest::join_relations_generated(Shard* sh,
+                                             std::barrier<VoidFn>* barrier) {
+   input_reader::PartitionedEthRelationGenerator t1(
+       "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
+-      config.num_threads);
++      config.num_threads, config.relation_r_size);
+   input_reader::PartitionedEthRelationGenerator t2(
+-      "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
+-      config.num_threads);
++      "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
++      config.num_threads, config.relation_r_size);
++
++#ifndef ITERATOR
++  input_reader::SizedInputReader<KeyValuePair>* _t2 = &t2;
++  input_reader::SizedInputReader<KeyValuePair>* _t1 = &t1;
++  auto s = _rdtsc();
++  auto sum = 0;
++
++  std::tuple<KeyValuePair*, uint32_t> relation_r;
++  std::tuple<KeyValuePair*, uint32_t> relation_s;
++
++  KeyValuePair *rel_r;
++  posix_memalign((void **)&rel_r, 64, t1.size() * sizeof(KeyValuePair));
++
++  KeyValuePair *rel_s;
++  posix_memalign((void **)&rel_s, 64, t2.size() * sizeof(KeyValuePair));
++
++  auto i = 0u;
++
++  for (KeyValuePair kv; _t2->next(&kv);) {
++    rel_s[i].key = kv.key;
++    rel_s[i].value = kv.value;
++    i++;
++  }
++
++  i = 0;
++
++  for (KeyValuePair kv; _t1->next(&kv);) {
++    rel_r[i].key = kv.key;
++    rel_r[i].value = kv.value;
++    i++;
++  }
++
++  relation_r = std::make_tuple(rel_r, t1.size());
++  relation_s = std::make_tuple(rel_s, t2.size());
++#else
++
++  std::tuple<KeyValuePair*, uint32_t> relation_r;
++  std::tuple<KeyValuePair*, uint32_t> relation_s;
++
++  relation_r = std::make_tuple(nullptr, t1.size());
++  relation_s = std::make_tuple(nullptr, t2.size());
++#endif
+ 
+   std::uint64_t start {}, end {};
+   std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+@@ -152,7 +214,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
+   }
+ 
+   // Run hashjoin
+-  hashjoin(sh, &t1, &t2, ht, mt, materialize, barrier);
++  hashjoin(sh, &t1, &t2, relation_r, relation_s, ht, mt, materialize, barrier);
+ 
+   barrier->arrive_and_wait();
+ 
+@@ -164,7 +226,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
+         end - start);
+     if (mt) {
+       for (const auto &e: *mt) {
+-        PLOGV.printf("k: %llu, v1: %llu, v2: %llu\n", e.at(0), e.at(1), e.at(2));
++        PLOGV.printf("k: %llu, v1: %llu, v2: %llu", e.at(0), e.at(1), e.at(2));
+       }
+     }
+   }
+@@ -185,7 +247,10 @@ void HashjoinTest::join_relations_from_files(Shard* sh,
+   barrier->arrive_and_wait();
+ 
+   // Run hashjoin
+-  hashjoin(sh, &t1, &t2, ht, NULL, false, barrier);
++  hashjoin(sh, &t1, &t2,
++      std::make_tuple(nullptr, t1.size()),
++      std::make_tuple(nullptr, t2.size()),
++      ht, NULL, false, barrier);
+ }
+ 
+ }  // namespace kmercounter
+diff --git a/src/tests/queue_tests.cpp b/src/tests/queue_tests.cpp
+index 5a23ed6..d887edb 100644
+--- a/src/tests/queue_tests.cpp
++++ b/src/tests/queue_tests.cpp
+@@ -193,7 +193,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
+ 
+   input_reader::PartitionedEthRelationGenerator t1(
+       "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
+-      n_prod);
++      n_prod, config.relation_r_size);
+   input_reader::SizedInputReader<KeyValuePair>* r_table = &t1;
+   PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
+       sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
+@@ -570,7 +570,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
+   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+   input_reader::PartitionedEthRelationGenerator t2(
+       "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
+-      n_prod + n_cons);
++      n_prod + n_cons, config.relation_r_size);
+ 
+   input_reader::SizedInputReader<KeyValuePair>* s_table = &t2;
+ 
+diff --git a/src/types.cpp b/src/types.cpp
+index bc33195..2309fbc 100644
+--- a/src/types.cpp
++++ b/src/types.cpp
+@@ -30,7 +30,7 @@ const char* ht_type_strings[] = {
+     "PARTITIONED",
+     "",
+     "CASHT++",
+-    "FOLKLORE",
++    "ARRAY_HT",
+ };
+ const char* run_mode_strings[] = {
+     "",
