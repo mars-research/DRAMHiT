@@ -1,6 +1,7 @@
 #ifndef TESTS_KMERTEST_HPP
 #define TESTS_KMERTEST_HPP
 
+#include <barrier>
 #include <memory>
 
 #include "hashtables/base_kht.hpp"

@@ -55,6 +55,10 @@ public:
 
   // Size of a mer in bits
   constexpr static size_t MER_SIZE = 2; 
+  // Maximun K, aka the number of mers, that we can hold.
+  constexpr static size_t MAX_K = sizeof(uint64_t) * 8 / MER_SIZE;
+  static_assert(MAX_K == 32, "Unexpected value of MAX_K");
+  static_assert(K <= MAX_K, "Large K support is not implemented");
   // Size of the kmer in bits
   constexpr static size_t KMER_SIZE = 2 * K;
   // Max number of mers that a byte can hold.

@@ -72,6 +72,7 @@ typedef enum {
   ZIPFIAN = 11,
   RW_RATIO = 12,
   HASHJOIN = 13,
+  KMER = 14,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
