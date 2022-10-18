@@ -147,7 +147,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
 
   switch (config.mode) {
     case FASTQ_WITH_INSERT:
-      kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
+      kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
     case PREFETCH:
       // kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
@@ -348,8 +348,10 @@ int Application::process(int argc, char *argv[]) {
         "mode",
         po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
         "1: Dry run \n"
-        // Huh? don't look at me. The numbers are not continuous for a reason.
-        // We stripped the kmer related stuff.
+        "2: Read from disk (Saved HT?)\n"
+        "3: write to disk (Save KMER HT to disk?)\n"
+        "4: Fastq with insert (for kmer test)\n"
+        "5: Fastq without insert (you don't want this)\n"
         "6/7: Synth/Prefetch\n"
         "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
         "zipfian)\n"

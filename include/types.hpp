@@ -154,12 +154,13 @@ struct Configuration {
   std::string delimitor;
 
   void dump_configuration() {
-    printf("Run configuration{\n");
+    printf("Run configuration {\n");
     printf("  num_threads %u\n", this->num_threads);
     printf("  numa_split %u\n", numa_split);
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
     printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size, ht_size/(1ul << 30));
+    printf("  K %" PRIu64 "\n", K);
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n  seed: %ld\n", skew, seed);
