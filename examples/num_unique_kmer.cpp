@@ -35,6 +35,7 @@ std::vector<std::string> default_Ks() {
 // K.
 template <size_t MAX_K>
 void num_uniq_kmer(const std::string_view input_file, const size_t K) {
+  std::uint64_t num_kmers{};
   // Sanity check
   if (K > MAX_K || MAX_K <= 0) {
     std::cerr << "Invalid K: " << K << ";, MAX_K: " << MAX_K << std::endl;
@@ -46,15 +47,17 @@ void num_uniq_kmer(const std::string_view input_file, const size_t K) {
 
   // Count the KMers
   std::cout << "Reading from " << input_file << " with K=" << K << std::endl;
-  kmercounter::input_reader::FastqKMerReader<MAX_K> reader(input_file);
+  kmercounter::input_reader::FastqKMerPreloadReader<MAX_K> reader(input_file);
   absl::flat_hash_set<uint64_t> counter(1 << 30);  // 1GB initial size.
   uint64_t kmer{};
   while (reader.next(&kmer)) {
     counter.insert(kmer);
+     num_kmers++;
   }
 
   // Output size.
-  std::cout << MAX_K << ": " << counter.size() << std::endl;
+  std::cout << MAX_K << ": " << counter.size()
+            <<  ", num_kmers " << num_kmers << std::endl;
 }
 
 template <>
