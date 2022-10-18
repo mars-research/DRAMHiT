@@ -123,11 +123,11 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
     case FOLKLORE_HT:
       PLOG_DEBUG.printf("about to init folklore with size %d", sz);
-      kmer_ht = new FolkloreHashTable(sz);
+      kmer_ht = new FolkloreHashTable(sz >> 2);
       break;
     case TBB_HT:
       PLOG_DEBUG.printf("about to init TBB_UM with size %d", sz);
-      kmer_ht = new TbbHashTable(sz);
+      kmer_ht = new TbbHashTable(sz >> 2);
       break;
     default:
       PLOG_FATAL.printf("HT type not implemented");
@@ -528,6 +528,10 @@ int Application::process(int argc, char *argv[]) {
         PLOG_INFO.printf("Hashtable type : Cas HT");
         break;
       case FOLKLORE_HT:
+        PLOG_INFO.printf("Hashtable type : Folklore HT");
+        config.no_prefetch = true;
+        break;
+      case TBB_HT:
         PLOG_INFO.printf("Hashtable type : Folklore HT");
         config.no_prefetch = true;
         break;

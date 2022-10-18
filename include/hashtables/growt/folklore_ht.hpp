@@ -1,6 +1,7 @@
 #ifndef KVSTORE_FOLKLORE_HT_HEADER
 #define KVSTORE_FOLKLORE_HT_HEADER
 
+#include <memory>
 #include <stdexcept>
 
 #include "allocator/alignedallocator.hpp"
@@ -27,8 +28,17 @@ using tbb_config =
 
 template <typename table_config>
 class GrowTHashTable : public BaseHashTable {
+  using table_type = table_config::table_type;
+  using handle_type = table_type::handle_type;
+
  public:
-  GrowTHashTable(uint64_t capacity) : table(capacity), ht(table.get_handle()) {}
+  GrowTHashTable(uint64_t capacity) {
+    std::lock_guard {mutex};
+    if (!initialized) {
+      table = std::make_unique<table_type>(capacity);
+      initialized = true;
+    }
+  }
 
   bool insert(const void *data) {
     return false;  // TODO
@@ -40,6 +50,7 @@ class GrowTHashTable : public BaseHashTable {
                     collector_type *collector = nullptr) {
     // TODO
     // NEED FOR TEST
+    auto& ht = table->get_handle();
     for (auto &mapping : kp) {
       ht.insert(mapping.key, mapping.value);
     }
@@ -50,6 +61,7 @@ class GrowTHashTable : public BaseHashTable {
     PLOG_DEBUG.printf("folklore insert");
     const InsertFindArgument *kp =
         reinterpret_cast<const InsertFindArgument *>(data);
+    auto& ht = table->get_handle();
     ht.insert(kp->key, kp->value);
   }
 
@@ -70,6 +82,7 @@ class GrowTHashTable : public BaseHashTable {
     PLOG_DEBUG.printf("folklore insert");
     const kmercounter::key_type *key =
         reinterpret_cast<const kmercounter::key_type *>(data);
+    auto& ht = table->get_handle();
     auto val = ht.find(*key);
     // return some kind of pointer purely for the purposes of the test (it
     // doesn't actually use the pointer)
@@ -121,15 +134,22 @@ class GrowTHashTable : public BaseHashTable {
   // uint64_t num_swaps = 0;
 
  private:
-  using table_type = table_config::table_type;
-  using handle_type = table_type::handle_type;
-
-  alignas(64) table_type table;
-  handle_type ht;
+  static std::unique_ptr<table_type> table;
+  static std::mutex mutex;
+  static bool initialized;
 };
 
 using FolkloreHashTable = GrowTHashTable<growt_config>;
 using TbbHashTable = GrowTHashTable<tbb_config>;
+
+template <typename config>
+std::unique_ptr<typename GrowTHashTable<config>::table_type> GrowTHashTable<config>::table{};
+
+template <typename config>
+bool GrowTHashTable<config>::initialized{};
+
+template <typename config>
+std::mutex GrowTHashTable<config>::mutex{};
 
 }  // namespace kmercounter
 
