@@ -82,7 +82,7 @@ class CASHashTable : public BaseHashTable {
 
   void insert_noprefetch(const void *data, collector_type* collector) override {
 #ifdef LATENCY_COLLECTION
-    //const auto timer_start = collector->sync_start();
+    const auto timer_start = collector->sync_start();
 #endif
 
     uint64_t hash = this->hash((const char *)data);
@@ -110,7 +110,7 @@ class CASHashTable : public BaseHashTable {
     }
 
 #ifdef LATENCY_COLLECTION
-    //collector->sync_end(timer_start);
+    collector->sync_end(timer_start);
 #endif
   }
 
@@ -201,7 +201,7 @@ class CASHashTable : public BaseHashTable {
     uint64_t distance_from_bucket = 0;
 #endif
 #ifdef LATENCY_COLLECTION
-    //const auto timer_start = collector->sync_start();
+    const auto timer_start = collector->sync_start();
 #endif
 
     uint64_t hash = this->hash((const char *)data);
@@ -236,7 +236,7 @@ class CASHashTable : public BaseHashTable {
 #endif
   exit:
 #ifdef LATENCY_COLLECTION
-    //collector->sync_end(timer_start);
+    collector->sync_end(timer_start);
 #endif
 
 

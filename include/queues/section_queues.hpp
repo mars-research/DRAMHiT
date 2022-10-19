@@ -307,6 +307,7 @@ class SectionQueue {
     queues[0][0]->dump();
   }
 
+#ifdef CALC_STATS
   inline auto timestamp(uint32_t p) const {
     auto total = 0ull;
     for (auto i = 0u; i < config.n_cons; ++i)
@@ -314,6 +315,7 @@ class SectionQueue {
 
     return total;
   }
+#endif
 
   inline int enqueue(prod_queue_t *pq, uint32_t p, uint32_t c, data_t value) {
     *pq->enqPtr = value;
