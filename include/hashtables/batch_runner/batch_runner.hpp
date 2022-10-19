@@ -21,7 +21,14 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
 
   /// Insert one kv pair.
   void insert(const uint64_t key, const uint64_t value) {
-    HTBatchInserter<N>::insert(key, value);
+    if (config.no_prefetch) {
+      KeyValuePair kv;
+      kv.key = key;
+      kv.value = value;
+      HTBatchInserter<N>::insert_noprefetch(kv);
+    } else {
+      HTBatchInserter<N>::insert(key, value);
+    }
   }
 
   /// Insert one kv pair.
