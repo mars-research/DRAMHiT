@@ -11,6 +11,7 @@
 
 #include "input_reader/csv.hpp"
 #include "input_reader/eth_rel_gen.hpp"
+#include "input_reader/fastq.hpp"
 
 #include "misc_lib.h"
 #include "print_stats.h"
@@ -191,12 +192,18 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
     event = vtune::event_start("message_enq");
   }
 
+#if 0
   input_reader::PartitionedEthRelationGenerator t1(
       "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
       n_prod, config.relation_r_size);
   input_reader::SizedInputReader<KeyValuePair>* r_table = &t1;
-  PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
-      sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
+#endif
+
+  auto reader = input_reader::MakeFastqKMerPreloadReader(config.K,
+              config.in_file, sh->shard_idx, n_prod);
+
+  //PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
+  //    sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
 
   barrier->arrive_and_wait();
 
@@ -213,18 +220,22 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
   KeyValuePair kv{};
   auto t_start = RDTSC_START();
+  //std::uint64_t num_kmers{};
 
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
     KeyValuePair kv;
+    std::uint64_t kmer{};
 #if defined(XORWOW)
     _xw_state = init_state;
 #endif
-    for (transaction_id = 0u; transaction_id < num_messages;) {
+    //for (transaction_id = 0u; transaction_id < num_messages;) {
+    for (;reader->next(&kmer);) {
       if (is_join) {
-        r_table->next(&kv);
-        k = kv.key;
+        //num_kmers++;
+        kv.key = k = kmer;
+        kv.value = 0;
       } else {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
@@ -740,12 +751,14 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
   // cfg->no_prefetch = 0;
 
   // 2) spawn n_prod + n_cons threads for find
-  this->run_find_test(cfg, n, is_join, npq);
+  if (!is_join)
+    this->run_find_test(cfg, n, is_join, npq);
 
   end_ts = std::chrono::steady_clock::now();
 
-  PLOG_INFO.printf("Hashjoin took %llu us",
+  PLOG_INFO.printf("Kmer insertion took %llu us",
       chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count());
+  print_stats(this->shards, *cfg);
 }
 
 template <typename T>

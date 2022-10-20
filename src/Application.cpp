@@ -512,7 +512,7 @@ int Application::process(int argc, char *argv[]) {
       if (config.ht_type == ARRAY_HT) {
         config.ht_size = max_join_size;
       } else {
-        config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
+        //config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
       }
       PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
     }
