@@ -79,7 +79,7 @@ typedef enum {
 typedef enum {
   PARTITIONED_HT = 1,
   CASHTPP = 3,
-  FOLKLORE_HT = 4,
+  FOLKLORE_HT = 6,
   TBB_HT = 5,
 } ht_type_t;
 

@@ -33,10 +33,10 @@ class GrowTHashTable : public BaseHashTable {
 
  public:
   GrowTHashTable(uint64_t capacity) {
-    std::lock_guard {mutex};
+    std::lock_guard literally_just_needs_a_name{mutex};
     if (!initialized) {
-      table = std::make_unique<table_type>(capacity);
       initialized = true;
+      table = std::make_unique<table_type>(capacity);
     }
   }
 

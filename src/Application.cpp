@@ -123,7 +123,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
     case FOLKLORE_HT:
       PLOG_DEBUG.printf("about to init folklore with size %d", sz);
-      kmer_ht = new FolkloreHashTable(sz >> 2);
+      kmer_ht = new FolkloreHashTable(sz);
       break;
     case TBB_HT:
       PLOG_DEBUG.printf("about to init TBB_UM with size %d", sz);
