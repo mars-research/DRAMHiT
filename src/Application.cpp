@@ -42,7 +42,7 @@ extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew, int64_t seed);
 
-void sync_complete(void);
+//void sync_complete(void);
 
 // default configuration
 const Configuration def = {
@@ -281,7 +281,9 @@ int Application::spawn_shard_threads() {
     // PLOG_INFO << "Phase completed.";
   };
 
-  std::barrier barrier(config.num_threads, on_completion);
+  std::function<void()> on_sync_complete = sync_complete;
+
+  std::barrier barrier(config.num_threads, on_sync_complete);
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;

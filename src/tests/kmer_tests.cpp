@@ -61,7 +61,7 @@ void KmerTest::count_kmer(Shard* sh,
   }
   PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, num_kmers);
 
-  //get_ht_stats(sh, ht);
+  get_ht_stats(sh, ht);
 }
 
 } // namespace kmercounter
