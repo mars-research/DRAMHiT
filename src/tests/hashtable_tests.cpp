@@ -126,7 +126,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 #endif
 
 #ifdef LATENCY_COLLECTION
-  collector->dump("insert", id);
+  collector->dump("async_insert", id);
 #endif
 
   return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};

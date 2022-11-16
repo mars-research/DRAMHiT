@@ -272,7 +272,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   sh->stats->enqueues.op_count = transaction_id;
 
 #ifdef LATENCY_COLLECTION
-  collector.dump("insert", tid);
+  collector.dump("sync_insert", tid);
 #endif
 
   PLOG_DEBUG.printf("Producer %d -> Sending end messages to all consumers",
@@ -639,7 +639,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
           // PLOGI.printf("calling find_batch i = %d", i);
           // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
-          ktable->find_batch(InsertFindArguments(items), vp);
+          ktable->find_batch(InsertFindArguments(items), vp, collector);
           found += vp.first;
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;

@@ -534,14 +534,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
     while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
   }
 
-  void flush_if_needed(ValuePairs &vp) {
+  void flush_if_needed(ValuePairs &vp, collector_type* collector) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     // make sure you return at most batch_sz (but can possibly return lesser
@@ -551,7 +551,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
-      __find_one(&this->find_queue[this->find_tail], vp);
+      __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
@@ -572,17 +572,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // cout << "-> flush_before head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
-    this->flush_if_needed(values);
+    this->flush_if_needed(values, collector);
     // cout << "== > post flush_before head: " << this->find_head << " tail: "
     // << this->find_tail << endl;
 
     for (auto &data : kp) {
-      add_to_find_queue(&data);
+      add_to_find_queue(&data, collector);
     }
 
     // cout << "-> flush_after head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
-    this->flush_if_needed(values);
+    this->flush_if_needed(values, collector);
     // cout << "== > post flush_after head: " << this->find_head << " tail: " <<
     // this->find_tail << endl;
   }
@@ -705,7 +705,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type* collector) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -742,10 +742,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
       this->find_queue[this->find_head].part_id = q->part_id;
+      this->find_queue[this->find_head].timer_id = q->timer_id;
 
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+    } else {
+      collector->end(q->timer_id);
     }
+
     return found;
   }
 
@@ -852,13 +856,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp) {
+  auto __find_one(KVQ *q, ValuePairs &vp, collector_type* collector) {
     if (q->key == this->empty_item.get_key()) {
       return __find_empty(q, vp);
     }
 
     if constexpr (branching == BRANCHKIND::WithBranch) {
-      return __find_branched(q, vp);
+      return __find_branched(q, vp, collector);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       return __find_branchless_cmov(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
@@ -1271,10 +1275,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     //}
   }
 
-  void add_to_find_queue(void *data) {
+  void add_to_find_queue(void *data, collector_type* collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
+
+    const auto time = collector->start();
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
       // hash = key_data->key >> 32;
@@ -1300,6 +1306,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->find_queue[this->find_head].key = key;
     this->find_queue[this->find_head].key_id = key_data->id;
     this->find_queue[this->find_head].part_id = key_data->part_id;
+    this->find_queue[this->find_head].timer_id = time;
 
 #ifdef COMPARE_HASH
     this->queue[this->find_head].key_hash = hash;

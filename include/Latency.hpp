@@ -48,7 +48,8 @@ class alignas(64) LatencyCollector {
   }
 
   void end(std::uint32_t id) {
-    if (id == sentinel) return;
+    //__builtin_trap();
+    if (id == sentinel) __builtin_trap();
     std::uint64_t stop;
     stop_timed(stop);
     const auto time = stop - timers[id];
