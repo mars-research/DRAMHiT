@@ -33,3 +33,4 @@ Testing/
 *.svg
 *.fold
 .cache/
+.vscode/
