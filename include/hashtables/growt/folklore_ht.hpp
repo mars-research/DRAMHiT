@@ -36,7 +36,7 @@ class GrowTHashTable : public BaseHashTable {
     std::lock_guard literally_just_needs_a_name{mutex};
     if (!initialized) {
       initialized = true;
-      table = std::make_unique<table_type>(capacity);
+      table = table_type(capacity);// std::make_unique<table_type>(capacity);
     }
   }
 
@@ -50,7 +50,7 @@ class GrowTHashTable : public BaseHashTable {
                     collector_type *collector = nullptr) {
     // TODO
     // NEED FOR TEST
-    auto& ht = table->get_handle();
+    handle_type& ht = table.get_handle();
     for (auto &mapping : kp) {
       ht.insert(mapping.key, mapping.value);
     }
@@ -61,7 +61,7 @@ class GrowTHashTable : public BaseHashTable {
     PLOG_DEBUG.printf("folklore insert");
     const InsertFindArgument *kp =
         reinterpret_cast<const InsertFindArgument *>(data);
-    auto& ht = table->get_handle();
+    handle_type& ht = table.get_handle();
     ht.insert(kp->key, kp->value);
   }
 
@@ -82,7 +82,7 @@ class GrowTHashTable : public BaseHashTable {
     PLOG_DEBUG.printf("folklore insert");
     const kmercounter::key_type *key =
         reinterpret_cast<const kmercounter::key_type *>(data);
-    auto& ht = table->get_handle();
+    handle_type& ht = table.get_handle();
     auto val = ht.find(*key);
     // return some kind of pointer purely for the purposes of the test (it
     // doesn't actually use the pointer)
@@ -134,7 +134,8 @@ class GrowTHashTable : public BaseHashTable {
   // uint64_t num_swaps = 0;
 
  private:
-  static std::unique_ptr<table_type> table;
+  // static std::unique_ptr<table_type> table;
+  alignas(64) static table_type table;
   static std::mutex mutex;
   static bool initialized;
 };
@@ -143,7 +144,7 @@ using FolkloreHashTable = GrowTHashTable<growt_config>;
 using TbbHashTable = GrowTHashTable<tbb_config>;
 
 template <typename config>
-std::unique_ptr<typename GrowTHashTable<config>::table_type> GrowTHashTable<config>::table{};
+GrowTHashTable<config>::table_type GrowTHashTable<config>::table{};
 
 template <typename config>
 bool GrowTHashTable<config>::initialized{};
