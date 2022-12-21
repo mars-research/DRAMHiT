@@ -201,8 +201,22 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     return next_cons_id;
   };
 
-  auto t_start = RDTSC_START();
+  for (auto j = 0u; j < config.insert_factor; j++) {
+    key_start = key_start_orig;
+    auto zipf_idx = key_start == 1 ? 0 : key_start;
+    for (transaction_id = 0u; transaction_id < num_messages;) {
+      k = key_start++;
+      uint64_t hash_val = hasher(&k, sizeof(k));
+      cons_id = hash_to_cpu(hash_val, n_cons);
+      auto pq = pqueues[cons_id];
+      this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
+      auto npq = pqueues[get_next_cons(1)];
+      this->queues->prefetch(this_prod_id, get_next_cons(1), true);
+      transaction_id++;
+    }
+  }
 
+  auto t_start = RDTSC_START();
   auto& collector = collectors.at(tid);
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
