@@ -1,5 +1,4 @@
 {
-  "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
   "files.associations": {
     "string_view": "cpp",
     "array": "cpp",
@@ -91,5 +90,7 @@
     "-DBUILD_EXAMPLE=ON",
     "-DHUGEPAGES=OFF"
   ],
-  "cmake.configureOnOpen": true
+  "cmake.configureOnOpen": true,
+  "nixEnvSelector.suggestion": false,
+  "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix"
 }

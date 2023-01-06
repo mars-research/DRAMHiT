@@ -216,6 +216,16 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     }
   }
 
+  // Both producer and consumer threads participate in find. However, the
+  // producer threads do not have any <k,v> pairs to find. So, they queue the
+  // find request to the actual partitions which hosts these keys.
+  // Nevertheless, they need this ktable object to queue the find requests to
+  // other partitions.
+
+  auto ht_size = config.ht_size / n_cons;
+  const auto ktable = init_ht(ht_size, sh->shard_idx);
+  this->ht_vec->at(tid) = ktable;
+
   auto t_start = RDTSC_START();
   auto& collector = collectors.at(tid);
   for (auto j = 0u; j < config.insert_factor; j++) {
@@ -224,6 +234,12 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 #if defined(XORWOW)
     _xw_state = init_state;
 #endif
+
+    auto next_item = 0u;
+    auto item_id = 0u;
+    std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> items {};
+    std::bernoulli_distribution coin {0.5};
+    xorwow_urbg urbg {};
     for (transaction_id = 0u; transaction_id < num_messages;) {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
@@ -252,15 +268,33 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
       // if (++cons_id >= n_cons) cons_id = 0;
 
-      auto pq = pqueues[cons_id];
-      
-      const auto timer = collector.sync_start();
-      this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
-      collector.sync_end(timer);
+      if (true) { // TODO
+        auto pq = pqueues[cons_id];
+        
+        const auto timer = collector.sync_start();
+        this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
+        collector.sync_end(timer);
 
-      auto npq = pqueues[get_next_cons(1)];
+        auto npq = pqueues[get_next_cons(1)];
 
-      this->queues->prefetch(this_prod_id, get_next_cons(1), true);
+        this->queues->prefetch(this_prod_id, get_next_cons(1), true);
+      } else {
+        auto& item = items[next_item];
+        items[next_item].key = k;
+        items[next_item].id = item_id++;
+        items[next_item].part_id = cons_id + n_prod;
+        if (next_item == 0)
+          ktable->prefetch_queue(QueueType::find_queue);
+
+        ++next_item;
+        if (next_item == HT_TESTS_FIND_BATCH_LENGTH) {
+          next_item = 0;
+          InsertFindArguments kp {items};
+          std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> results {};
+          ValuePairs vp {0, results.data()};
+          ktable->find_batch(kp, vp, &collector);
+        }
+      }
 
       transaction_id++;
     }
@@ -537,7 +571,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(tid);
-  collector->claim();
+  //collector->claim();
 #else
   collector_type *const collector{};
 #endif
@@ -550,22 +584,6 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   alignas(64) uint64_t k = 0;
 
   vtune::set_threadname("find_thread" + std::to_string(tid));
-
-  ktable = this->ht_vec->at(tid);
-
-  if (ktable == nullptr) {
-    // Both producer and consumer threads participate in find. However, the
-    // producer threads do not have any <k,v> pairs to find. So, they queue the
-    // find request to the actual partitions which hosts these keys.
-    // Nevertheless, they need this ktable object to queue the find requests to
-    // other partitions. So, just create a HT with 100 buckets.
-
-    auto ht_size = config.ht_size / n_cons;
-    PLOG_INFO.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
-                     sh->shard_idx);
-    ktable = init_ht(ht_size, sh->shard_idx);
-    this->ht_vec->at(tid) = ktable;
-  }
 
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
 
@@ -726,7 +744,8 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
 #endif
 
   // 2) spawn n_prod + n_cons threads for find
-  this->run_find_test(cfg, n, npq);
+  //this->run_find_test(cfg, n, npq);
+  print_stats(this->shards, *cfg);
 }
 
 template <typename T>
@@ -797,7 +816,6 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
     th.join();
   }
   PLOG_INFO.printf("Find done!");
-  print_stats(this->shards, *cfg);
 }
 
 template <class T>
