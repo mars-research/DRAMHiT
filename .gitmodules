@@ -12,14 +12,14 @@
 	url = https://github.com/wangyi-fudan/wyhash.git
 [submodule "lib/cityhash"]
 	path = lib/cityhash
-	url = git@github.com:mars-research/cityhash.git
+	url = https://github.com/mars-research/cityhash.git
 [submodule "plog"]
 	path = lib/plog
 	url = https://github.com/SergiusTheBest/plog.git
 [submodule "tools/msr-safe"]
 	path = tools/msr-safe
-	url = git@github.com:mars-research/msr-safe.git
+	url = https://github.com/mars-research/msr-safe.git
 	branch = kvstore
 [submodule "lib/eth_hashjoin"]
 	path = lib/eth_hashjoin
-	url = git@github.com:mars-research/vldb13-eth-hashjoin.git
+	url = https://github.com/mars-research/vldb13-eth-hashjoin.git

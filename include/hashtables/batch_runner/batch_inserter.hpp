@@ -14,7 +14,7 @@ class HTBatchInserter {
   ~HTBatchInserter() { flush(); }
 
   // Insert one kv pair.
-  void insert(const uint64_t key, const uint64_t value) {
+  inline void insert(const uint64_t key, const uint64_t value) {
     // Append kv to `buffer_`
     buffer_[buffer_size_].key = key;
     buffer_[buffer_size_].value = value;
@@ -26,8 +26,12 @@ class HTBatchInserter {
     }
   }
 
+  inline void insert_noprefetch(const KeyValuePair &kv) {
+    ht_->insert_noprefetch((void*) &kv);
+  }
+
   // Flush everything to the hashtable and flush the hashtable insert queue.
-  void flush() {
+  inline void flush() {
     if (buffer_size_ > 0) {
       flush_buffer();
     }

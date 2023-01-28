@@ -59,21 +59,44 @@ def plot_zipf(expected_skew, arr, title, output):
   plt.clf()
   return a
 
+dataset_home='/opt/dataset_memfs/'
+dataset_temp='/opt/hist_temp/'
+chtkc_build='/local/devel2/chtkc/build/'
+COUNT_TOOL='chtkc'
+
 def freq_from_jellyhist(file):
-  arr = np.genfromtxt(open(file, 'r'), dtype=int, delimiter=' ')
+  if COUNT_TOOL == "jellyfish":
+    delimiter=' '
+  elif COUNT_TOOL == "chtkc":
+    delimiter='\t'
+  arr = np.genfromtxt(open(file, 'r'), dtype=int, delimiter=delimiter)
+  print(file)
+  print(arr)
   arr = arr[:,1] # Only take the second column
   return arr
 
-def zipf_from_kmer(file, k, output):
-  # Count kmer
-  cmd = f'jellyfish count -m {k} -s 1G -t {cpu_count()} -C {file}'
+def zipf_from_kmer(file, k, output, tool):
+
+  fastq_name = file.split('/')[-1]
+  out_file=dataset_temp + '/' + fastq_name + '.out'
+
+  if tool == "jellyfish":
+    cmd = f'jellyfish count -m {k} -s 1G -t {cpu_count()} -C {file}'
+  elif tool == "chtkc":
+    cmd = f'{chtkc_build}/chtkc count -m 128G -k {k} -t {cpu_count()} --fq {file} -o {out_file}'
+
   print(f"Counting kmer: {cmd}")
   args = ['bash', '-c', cmd]
   subprocess.run(args).check_returncode()
 
   # Get histogram
-  histo_file = f'{file}_{k}mer.histo'
-  cmd = f'jellyfish histo mer_counts.jf > {histo_file}'
+  histo_file = f'{dataset_temp}/{fastq_name}_{k}mer.histo'
+
+  if tool == "jellyfish":
+    cmd = f'jellyfish histo mer_counts.jf > {histo_file}'
+  elif tool == "chtkc":
+    cmd = f'/local/devel2/chtkc/build/chtkc histo {out_file} -o {histo_file}'
+
   print(f"Generating histogram: {cmd}")
   args = ['bash', '-c', cmd]
   subprocess.run(args).check_returncode()
@@ -84,8 +107,10 @@ def zipf_from_kmer(file, k, output):
 
 
 if __name__ == "__main__":
-  name, file = ['homo', '../SRR077487.2.fastq']
-  # name, file = ['straw', '../SRR072006.fastq']
-  K = list(range(8, 32))
+  name, file = ['d_mela', '/opt/dataset_memfs/ERR4846928.fastq']
+  name1, file1 = ['f_vesca', '/opt/dataset_memfs/SRR1513870.fastq']
+  K = list(range(20, 32))
+  K = [32]
   for k in K:
-    zipf_from_kmer(file, k, f'{name}_{k}.jpg')
+    zipf_from_kmer(file, k, f'{name}_{k}.jpg', COUNT_TOOL)
+    zipf_from_kmer(file1, k, f'{name1}_{k}.jpg', COUNT_TOOL)

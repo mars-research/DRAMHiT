@@ -25,6 +25,15 @@
 namespace eth_hashjoin { struct tuple_t; }
 namespace kmercounter {
 
+#if (KEY_LEN == 4)
+using key_type = std::uint32_t;
+#elif (KEY_LEN == 8)
+using key_type = std::uint64_t;
+#endif
+
+using value_type = key_type;
+
+
 enum class BRANCHKIND { WithBranch, NoBranch_Cmove, NoBranch_Simd };
 
 #if defined(BRANCHLESS_CMOVE)
@@ -70,6 +79,7 @@ typedef enum {
 typedef enum {
   PARTITIONED_HT = 1,
   CASHTPP = 3,
+  ARRAY_HT = 4,
 } ht_type_t;
 
 extern const char* run_mode_strings[];
@@ -115,6 +125,8 @@ struct Configuration {
 
   // controls zipfian dist
   double skew;
+  // seed for zipf dist generation
+  int64_t seed;
   // R/W ratio for associated tests (modes 12 and 8)
   double pread;
   // used for kmer parsing from disk
@@ -128,6 +140,8 @@ struct Configuration {
   bool run_both;
 
   // Hashjoin specific configs.
+  // Whether to materialize the join output
+  bool materialize;
   // Path to relation R.
   std::string relation_r;
   // Path to relation S.
@@ -140,15 +154,16 @@ struct Configuration {
   std::string delimitor;
 
   void dump_configuration() {
-    printf("Run configuration{\n");
+    printf("Run configuration {\n");
     printf("  num_threads %u\n", this->num_threads);
     printf("  numa_split %u\n", numa_split);
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
     printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size, ht_size/(1ul << 30));
+    printf("  K %" PRIu64 "\n", K);
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
-    printf("ZIPFIAN:\n  skew: %f\n", skew);
+    printf("ZIPFIAN:\n  skew: %f\n  seed: %ld\n", skew, seed);
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
@@ -218,16 +233,16 @@ struct Shard {
 // Your inserts will be ignored if you do (we use these as empty markers)
 struct InsertFindArgument {
   /// The key we try to insert/find.
-  uint64_t key;
+  kmercounter::key_type key;
   /// The value we try to insert.
-  uint64_t value;
+  kmercounter::value_type value;
   /// A user-provided value for the user to keep track of this operation.
   /// This is returned as `FindResult::id`.
   /// In aggregation mode, this is the "key". Don't ask why.
-  uint64_t id;
+  uint32_t id;
   /// The id of the partition that will be handling this operation.
   /// Might not be used depends on the configuration/kind of operation. 
-  uint64_t part_id;
+  uint32_t part_id;
 };
 std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
 
@@ -238,13 +253,13 @@ using InsertFindArguments = std::span<InsertFindArgument>;
 struct FindResult {
   /// The id of the find operation.
   /// This matches the `InsertFindArgument::id`.
-  uint64_t id;
+  uint32_t id;
   /// The value of the key of the find operation.
   /// This is the number of occurrences in aggregation mode. 
-  uint64_t value;
+  value_type value;
 
   constexpr FindResult() = default;
-  constexpr FindResult(uint64_t id, uint64_t value) : id(id), value(value) {}
+  constexpr FindResult(uint32_t id, uint32_t value) : id(id), value(value) {}
   bool operator==(FindResult const&) const = default;
 
   template <typename H>
@@ -258,11 +273,20 @@ std::ostream& operator<<(std::ostream& os, const FindResult& q);
 using ValuePairs = std::pair<uint32_t, FindResult *>;
 
 struct KeyValuePair {
-  uint64_t key;
-  uint64_t value;
+  key_type key;
+  value_type value;
 
   KeyValuePair();
+  KeyValuePair(uint64_t, uint64_t);
   KeyValuePair(const struct eth_hashjoin::tuple_t& tuple);
+
+  bool operator ==(const KeyValuePair &b) const {
+    return (this->key == b.key) && (this->value == b.value);
+  }
+
+  operator bool() const {
+    return *this == decltype(*this){};
+  }
 };
 
 enum class QueueType {

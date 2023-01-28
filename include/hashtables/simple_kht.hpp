@@ -117,7 +117,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     if (!ptr) throw std::bad_alloc{};
 
-    PLOGI << "Allocating " << size
+    PLOGV << "Allocating " << size
           << ", align: " << static_cast<std::size_t>(align) << ", ptr: " << ptr;
 
     return ptr;
@@ -125,7 +125,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   void operator delete(void *ptr, std::size_t size,
                        std::align_val_t align) noexcept {
-    PLOGI << "deleting " << size
+    PLOGV << "deleting " << size
           << ", align: " << static_cast<std::size_t>(align)
           << ", ptr : " << ptr;
     free(ptr);
@@ -227,7 +227,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
                       this->insert_queue, this->find_queue);
-    PLOG_INFO.printf("Hashtable size: %" PRIu64 " | data_length %" PRIu64 "", this->capacity,
+    PLOGV.printf("Hashtable size: %lu | data_length %lu", this->capacity,
                      this->data_length);
   }
 
@@ -608,12 +608,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     for (auto i = 0u; i < this->capacity; i++) {
       curr = &cur_ht[idx];
 
-      if (curr->is_empty()) {
-        found = false;
-        goto exit;
-      } else if (curr->compare_key(data)) {
+      if (curr->compare_key(item)) {
         found = true;
         break;
+      } else if (curr->is_empty()) {
+        goto exit;
       }
 
 #ifdef CALC_STATS
@@ -889,6 +888,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     auto retry = false;
     // if constexpr (experiment_inactive(experiment_type::insert_dry_run,
     //                                   experiment_type::aggr_kv_write_key_only))
+    PLOGV.printf("Inserting key %lu", q->key);
     retry = curr->insert(q);
 
     // if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only))
@@ -1238,19 +1238,23 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t key = 0;
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      // hash = key_data->key >> 32;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+      hash = key_data->key >> 32;
+      key = key_data->key & 0xFFFFFFFF;
+#else
       hash = this->hash((const char *)&key_data->key);
-      // key = key_data->key & 0xFFFFFFFF;
       key = key_data->key;
+#endif
     } else {
       hash = this->hash((const char *)&key_data->key);
-      key = key_data->key & 0xFFFFFFFF;
+      key = key_data->key;
     }
 
     // The hashes have little to no upper-bit entropy _because of how they are
     // assigned to the queues_
     size_t idx = fastrange32(hash, this->capacity);  // modulo
 
+    PLOGD.printf("Getting idx %zu", idx);
     if (idx > this->capacity) {
       PLOG_ERROR.printf("%u > %" PRIu64 "\n", idx, this->capacity);
       std::terminate();
@@ -1283,13 +1287,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     const auto time = collector->start();
 
     if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-      // hash = key_data->key >> 32;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+      hash = key_data->key >> 32;
+      key = key_data->key & 0xFFFFFFFF;
+#else
       hash = this->hash((const char *)&key_data->key);
-      // key = key_data->key & 0xFFFFFFFF;
       key = key_data->key;
+#endif
     } else {
       hash = this->hash((const char *)&key_data->key);
-      key = key_data->key & 0xFFFFFFFF;
+      key = key_data->key;
     }
 
     size_t idx = fastrange32(hash, this->capacity);  // modulo

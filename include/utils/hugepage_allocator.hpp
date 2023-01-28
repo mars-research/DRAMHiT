@@ -49,13 +49,12 @@ template <typename T> struct huge_page_allocator {
     auto MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB
         | (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
 
-    PLOGI.printf("n = %" PRIu64 " raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n, raw_alloc_sz, alloc_sz, is_1gb);
+    PLOGV.printf("n = %lu raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n, raw_alloc_sz, alloc_sz, is_1gb);
     auto p = static_cast<T *>(mmap( nullptr, alloc_sz, PROT_READ | PROT_WRITE,
           MAP_FLAGS, -1, 0));
 
     if (p == MAP_FAILED) {
-      printf("map failed %d\n", errno);
-      perror("mmap");
+      PLOGE.printf("map failed %d", errno);
       throw std::bad_alloc();
     } else {
       size_t len_split = alloc_sz >> 1;
@@ -65,15 +64,14 @@ template <typename T> struct huge_page_allocator {
 
       nodemask[0] = 1 << (!current_node);
 
-      PLOGI.printf("Moving half the memory to node %d", !current_node);
+      PLOGV.printf("Moving half the memory to node %d", !current_node);
 
       long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
           MPOL_MF_MOVE | MPOL_MF_STRICT);
 
-      PLOGI.printf("calling mbind with addr %p | len %zu | nodemask %p",
+      PLOGV.printf("calling mbind with addr %p | len %zu | nodemask %p",
             addr_split, len_split, nodemask);
       if (ret < 0) {
-        perror("mbind");
         PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
       }
     }

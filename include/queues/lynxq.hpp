@@ -1376,7 +1376,7 @@ class LynxQueue {
       auto cq = &all_cqueues[c][p];
       auto q = queues[p][c];
 
-      *value = cq->pop_long();
+      *value = {cq->pop_long(), 0};
 #if 0
       if (!((uint64_t)cq->pop_index & ((1 << 12) - 1)))
         printf("cq->pop_index 0x%lx | pop_reg 0x%lx | ea 0x%lx | value %" PRIu64 "\n",
@@ -1396,7 +1396,7 @@ class LynxQueue {
     inline void push_done(uint32_t p, uint32_t c) {
       auto q = queues[p][c];
 
-      enqueue(p, c, BQ_MAGIC_64BIT);
+      enqueue(p, c, {BQ_MAGIC_64BIT, 0});
       //q->push(BQ_MAGIC_64BIT, q->pq_state);
       q->push_done();
     }

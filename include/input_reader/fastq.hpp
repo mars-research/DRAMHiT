@@ -111,8 +111,9 @@ class FastqReader : public FileReader {
   }
 };
 
+/// Reads KMers from a Fastq file.  
 template <size_t K>
-class FastqKMerReader : InputReaderU64 {
+class FastqKMerReader : public InputReaderU64 {
  public:
   template <typename... Args>
   FastqKMerReader(Args&&... args)
@@ -127,7 +128,7 @@ class FastqKMerReader : InputReaderU64 {
 /// Produce the same output as `FastqKMerReader` but the sequencies are parsed
 /// and stored in the memory before producing.
 template <size_t K>
-class FastqKMerPreloadReader : InputReaderU64 {
+class FastqKMerPreloadReader : public InputReaderU64 {
  public:
   template <typename... Args>
   FastqKMerPreloadReader(Args&&... args)
@@ -140,6 +141,50 @@ class FastqKMerPreloadReader : InputReaderU64 {
  private:
   KMerReader<K> reader_;
 };
+
+/// Helper for instantiating a `FastqKMerReader` from a runtime `K`.
+template <uint32_t CurrentK=DNAKMer<1>::MAX_K, typename... Args>
+std::unique_ptr<InputReaderU64> MakeFastqKMerReader(uint32_t K, Args&&... args) {
+  // Safety check.
+  if (K > DNAKMer<1>::MAX_K || K < 1) {
+    PLOG_FATAL << "K=" << K << " is not a valid value";
+    return nullptr;
+  }
+
+  // Found the right K.
+  if (K == CurrentK) {
+    return std::make_unique<FastqKMerReader<CurrentK>>(std::forward<Args>(args)...);
+  }
+
+  // Recurse until we found the right K.
+  // Constexpr is necessary here; the compiler will go into an infinite loop otherwise.
+  if constexpr (CurrentK > 1) {
+    return MakeFastqKMerReader<CurrentK-1, Args...>(K, std::forward<Args>(args)...);
+  }
+  return nullptr;
+}
+
+/// Helper for instantiating a `FastqKMerPreloadReader` from a runtime `K`.
+template <uint32_t CurrentK=DNAKMer<1>::MAX_K, typename... Args>
+std::unique_ptr<InputReaderU64> MakeFastqKMerPreloadReader(uint32_t K, Args&&... args) {
+  // Safety check.
+  if (K > DNAKMer<1>::MAX_K || K < 1) {
+    PLOG_FATAL << "K=" << K << " is not a valid value";
+    return nullptr;
+  }
+
+  // Found the right K.
+  if (K == CurrentK) {
+    return std::make_unique<FastqKMerPreloadReader<CurrentK>>(std::forward<Args>(args)...);
+  }
+
+  // Recurse until we found the right K.
+  // Constexpr is necessary here; the compiler will go into an infinite loop otherwise.
+  if constexpr (CurrentK > 1) {
+    return MakeFastqKMerPreloadReader<CurrentK-1, Args...>(K, std::forward<Args>(args)...);
+  }
+  return nullptr;
+}
 }  // namespace input_reader
 }  // namespace kmercounter
 #endif  // INPUT_READER_FASTX_HPP

@@ -56,14 +56,14 @@ class PartitionedEthRelationReader
 class SingletonEthRelationGenerator {
  public:
   SingletonEthRelationGenerator(std::string_view identifier, unsigned int seed,
-                                uint64_t ntuples, uint32_t nthreads) {
+                                uint64_t ntuples, uint32_t nthreads, uint64_t max_id) {
     const std::string id(identifier);
     std::lock_guard guard(mutex_);
     if (!relations_.contains(id)) {
       eth_hashjoin::relation_t relation;
       eth_hashjoin::seed_generator(seed);
       eth_hashjoin::parallel_create_relation(&relation, ntuples, nthreads,
-                                             ntuples);
+                                             max_id);
       relations_[id] = relation;
     }
     relation_ = relations_[id];
@@ -84,8 +84,8 @@ class PartitionedEthRelationGenerator : private SingletonEthRelationGenerator,
  public:
   PartitionedEthRelationGenerator(std::string_view identifier,
                                   unsigned int seed, uint64_t ntuples,
-                                  uint64_t part_id, uint64_t num_parts)
-      : SingletonEthRelationGenerator(identifier, seed, ntuples, num_parts),
+                                  uint64_t part_id, uint64_t num_parts, uint64_t max_id)
+      : SingletonEthRelationGenerator(identifier, seed, ntuples, num_parts, max_id),
         PartitionedEthRelationReader(SingletonEthRelationGenerator::relation_,
                                      part_id, num_parts) {}
 };

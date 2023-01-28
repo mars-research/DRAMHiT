@@ -11,8 +11,13 @@ constexpr int KV_SIZE = 16;  // 8-byte key + 8-byte value
 constexpr uint32_t PREFETCH_QUEUE_SIZE = 64;
 constexpr uint32_t PREFETCH_FIND_QUEUE_SIZE = 64;
 
+#if defined(DIRECT_INDEX)
+constexpr uint32_t HT_TESTS_BATCH_LENGTH = 256;
+constexpr uint32_t HT_TESTS_FIND_BATCH_LENGTH = 256;
+#else
 constexpr uint32_t HT_TESTS_BATCH_LENGTH = 16;
 constexpr uint32_t HT_TESTS_FIND_BATCH_LENGTH = 16;
+#endif
 constexpr uint32_t HT_TESTS_MAX_STRIDE = 2;
 } // namespace kmercounter
 
