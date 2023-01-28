@@ -231,8 +231,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #if defined(XORWOW)
     _xw_state = init_state;
 #endif
-    //for (transaction_id = 0u; transaction_id < num_messages;) {
-    for (;reader->next(&kmer);) {
+    for (transaction_id = 0u; transaction_id < num_messages;) {
+    //for (;reader->next(&kmer);) {
       if (is_join) {
         //num_kmers++;
         kv.key = k = kmer;

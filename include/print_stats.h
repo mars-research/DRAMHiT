@@ -106,6 +106,9 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         //(double)all_sh[k].finds.duration * one_cycle_ns;
 #endif  // CALC_STATS
   }
+
+  const volatile auto a = config.num_threads;
+  const volatile auto b = all_total_num_inserts;
   printf("%u %" PRIu64 "\n", config.num_threads, all_total_num_inserts);
   printf("===============================================================\n");
   printf(
