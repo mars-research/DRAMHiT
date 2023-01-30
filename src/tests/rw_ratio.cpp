@@ -161,9 +161,6 @@ class rw_experiment {
 
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                       unsigned int total_ops) {
-#ifdef BQ_TESTS_DO_HT_INSERTS
-  PLOG_ERROR << "Please disable Bqueues option before running this test";
-#else
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, shard.shard_idx * total_ops + 1};
 
@@ -199,6 +196,5 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   shard.stats->ht_fill = hashtable.get_fill();
 
   collector->dump("unified", shard.shard_idx);
-#endif
 }
 }  // namespace kmercounter
