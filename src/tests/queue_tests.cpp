@@ -199,8 +199,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
   input_reader::SizedInputReader<KeyValuePair>* r_table = &t1;
 #endif
 
+#if defined(BQUEUE_KMER_TEST)
   auto reader = input_reader::MakeFastqKMerPreloadReader(config.K,
               config.in_file, sh->shard_idx, n_prod);
+#endif
 
   //PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
   //    sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
@@ -230,8 +232,12 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #if defined(XORWOW)
     _xw_state = init_state;
 #endif
-    //for (transaction_id = 0u; transaction_id < num_messages;) {
+
+#if defined(BQUEUE_KMER_TEST)
     for (;reader->next(&kmer);) {
+#else
+    for (transaction_id = 0u; transaction_id < num_messages;) {
+#endif
       if (is_join) {
         //num_kmers++;
         kv.key = k = kmer;
@@ -248,7 +254,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
       kv.key = k = zipf_values->at(zipf_idx);
       kv.value = k;
-      //printf("zipf_values[%" PRIu64 "] = %" PRIu64 "\n", zipf_idx, k);
+      PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
@@ -269,6 +275,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       //if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
+      PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
       this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)kv);
 
       auto npq = pqueues[get_next_cons(1)];
@@ -424,6 +431,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         }
         goto pick_next_msg;
       }
+      PLOGV.printf("Dequeuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
       /*
       IF_PLOG(plog::verbose) {
         PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %" PRIu64 "",
@@ -460,13 +468,17 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       }
 
       if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
-        _items[data_idx].key = _items[data_idx].id = kv.key;
+        _items[data_idx].key = kv.key;
+        _items[data_idx].id = kv.key;
+        PLOGV.printf("sizeof items %zu | size of kv.key %zu",
+                  sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
         _items[data_idx].value = kv.value;
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
+          PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
           kmer_ht->insert_noprefetch(&_items[data_idx], collector);
           inserted++;
         } else {
@@ -628,6 +640,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
       k = zipf_values->at(zipf_idx);
+      PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #else
       k = key_start++;
@@ -656,6 +669,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       }
 
       if (config.no_prefetch) {
+        PLOGV.printf("Finding key %llu", items[0].key);
         auto ret = ktable->find_noprefetch(&items[0], collector);
         if (ret)
           found++;
