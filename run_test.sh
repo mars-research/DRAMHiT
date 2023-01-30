@@ -97,9 +97,9 @@ run_test() {
 
 
   if [[ -n "${PART_RATIO}" ]];then
-    SEQ_START=${MAX_THREADS}
-    SEQ_STEP=-1
-    SEQ_END=4
+    SEQ_START=4
+    SEQ_STEP=1
+    SEQ_END=${MAX_THREADS}
   fi
 
   HWP_ARGS=" --hw-pref ${PREFETCHER}"
@@ -111,7 +111,7 @@ run_test() {
   for run in ${RUNS}; do
     ONCE=0
     for i in $(seq ${SEQ_START} ${SEQ_STEP} ${SEQ_END}); do
-      LOG_PREFIX="esys22-logs/${TEST_TYPE}/run${run}/"
+      LOG_PREFIX="esys23-ae/${TEST_TYPE}/run${run}/"
       if [ ! -d ${LOG_PREFIX} ]; then
         mkdir -p ${LOG_PREFIX}
       fi
@@ -149,15 +149,21 @@ run_test() {
         CASHT_GET_MOPS=$(rg "get_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
         CASHTPP_GET_MOPS=$(rg "get_mops : [0-9\.]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
       else
-        INS_CYCLES=$(rg "[0-9]+ cycles/insert" -o  ${LOG_FILE} | tail -1 | awk '{print $1}');
-        FIND_CYCLES=$(rg "[0-9]+ cycles/find" -o  ${LOG_FILE} | tail -1 | awk '{print $1}');
-        INS_MOPS=$(rg "insertions per sec \(Mops/s\)" ${LOG_FILE} | cut -d':' -f2);
-        FIND_MOPS=$(rg "finds per sec \(Mops/s\)" ${LOG_FILE} | cut -d':' -f2);
+        INS_CYCLES=$(rg "set_cycles : [0-9]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
+        FIND_CYCLES=$(rg "get_cycles : [0-9]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
+        INS_MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
+        FIND_MOPS=$(rg "get_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
       fi
 
       if [ ${ONCE} == 0 ]; then
         if [[ "${HT_TYPE}" == "part" ]];then
-          printf "nprod-ncons, ins-cycles, ins mops/s, find-cycles, find mops/s\n" | tee -a ${LOG_PREFIX}/summary_run${run}.csv;
+          printf "nprod-ncons, ins-cycles, ins mops/s, find-cycles, find mops/s\n" | tee -a ${LOG_PREFIX}/part_run${run}.csv;
+          # add empty csv lines to plot dummy data for the first few datapoints
+          if [[ -n ${PART_RATIO} ]]; then
+            for i in $(seq 1 $((${NPROD}+${NCONS}-1))); do
+              echo ", , , ," | tee -a ${LOG_PREFIX}/part_run${run}.csv;
+            done
+          fi
         elif [[ "${HT_TYPE}" == "casht_cashtpp" ]];then
           printf "num_threads, set-cycles, casht-set-${HT_SIZE}, get-cycles, casht-get-${HT_SIZE}\n" | tee -a ${LOG_PREFIX}/casht_run${run}.csv;
           printf "num_threads, set-cycles, cashtpp-set-${HT_SIZE}, get-cycles, cashtpp-get-${HT_SIZE}\n" | tee -a ${LOG_PREFIX}/cashtpp_run${run}.csv;
@@ -168,7 +174,7 @@ run_test() {
       fi
 
       if [[ "${HT_TYPE}" == "part" ]];then
-        printf "%s, %s, %.0f, %s, %.0f\n" ${NPROD}-${NCONS} ${INS_CYCLES} $(echo ${INS_MOPS} | bc) ${FIND_CYCLES} $(echo ${FIND_MOPS} | bc) | tee -a ${LOG_PREFIX}/summary_run${run}.csv;
+        printf "%s, %s, %.0f, %s, %.0f\n" ${NPROD}-${NCONS} ${INS_CYCLES} $(echo ${INS_MOPS} | bc) ${FIND_CYCLES} $(echo ${FIND_MOPS} | bc) | tee -a ${LOG_PREFIX}/part_run${run}.csv;
       elif [[ "${HT_TYPE}" == "casht_cashtpp" ]];then
         printf "%s, %s, %.0f, %s, %.0f\n" ${i} ${CASHT_SET_CYCLES} $(echo ${CASHT_SET_MOPS} | bc) ${CASHT_GET_CYCLES} $(echo ${CASHT_GET_MOPS} | bc) | tee -a ${LOG_PREFIX}/casht_run${run}.csv;
         printf "%s, %s, %.0f, %s, %.0f\n" ${i} ${CASHTPP_SET_CYCLES} $(echo ${CASHTPP_SET_MOPS} | bc) ${CASHTPP_GET_CYCLES} $(echo ${CASHTPP_GET_MOPS} | bc) | tee -a ${LOG_PREFIX}/cashtpp_run${run}.csv;
@@ -309,21 +315,22 @@ HW_PREF_OFF=0
 #  run_test "cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 #done
 
+# AE figs 7-14
 #for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
 #   run_test "casht_cashtpp-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 #done
-
+#
 #for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
 #   run_test "casht_cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 #done
 
-#for s in 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
-#  run_test "part-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
-#  run_test "part-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
-#done
-#
 #run_test "part-zipfian-small-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 #run_test "part-zipfian-large-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+
+for s in 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+  run_test "part-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
+  run_test "part-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
+done
 
 #run_test "part-zipfian-small-0.01" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
 #run_test "part-zipfian-large-0.01" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
@@ -332,10 +339,10 @@ HW_PREF_OFF=0
 #run_mlc_test "max-bw-all" ${NUM_RUNS} ${MAX_THREADS_CASHT}
 # -------
 
-for rsize in 1 4 16 64 128 256 384 512; do
-  s_size=$((${rsize}*10))
+#for rsize in 1 4 16 64 128 256 384 512; do
+#  s_size=$((${rsize}*10))
   #run_join_test "casht-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   #run_join_test "cashtpp-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   #run_join_test "arrayht-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-  run_join_test "arrayhtpp-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-done
+#  run_join_test "arrayhtpp-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+#done
