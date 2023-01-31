@@ -1,6 +1,7 @@
 #ifndef _LATENCY_HPP
 #define _LATENCY_HPP
 
+#include <cpuid.h>
 #include <plog/Log.h>
 #include <x86intrin.h>
 
@@ -16,20 +17,26 @@
 #include <thread>
 
 #include "misc_lib.h"
+#include "queues/section_queues.hpp"
 #include "sync.h"
 #include "xorwow.hpp"
 
 namespace kmercounter {
-using timer_type = std::uint16_t;
+using timer_type = std::uint32_t;
 
 template <std::size_t capacity>
 class alignas(64) LatencyCollector {
   static constexpr auto sentinel = std::numeric_limits<std::uint32_t>::max();
 
  public:
-  ~LatencyCollector() { claim_lock->unlock(); }
+  ~LatencyCollector() {
+    claim_lock->unlock();
+    // for (const auto t : hack)
+    //   PLOG_INFO << "[TIME]" << t;
+  }
 
   void claim() {
+    hack.reserve(1'000);
     if (!claim_lock->try_lock()) std::terminate();
   }
 
@@ -41,7 +48,8 @@ class alignas(64) LatencyCollector {
   }
 
   void end(std::uint32_t id) {
-    if (id == sentinel) return;
+    //__builtin_trap();
+    if (id == sentinel) __builtin_trap();
     std::uint64_t stop;
     stop_timed(stop);
     const auto time = stop - timers[id];
@@ -52,17 +60,27 @@ class alignas(64) LatencyCollector {
 
   std::uint64_t sync_start() {
     if (reject_sample()) return sentinel;
-    std::uint64_t time{};
-    start_timed(time);
-    return time;
+
+    std::uint64_t b{};
+    start_timed(b);
+
+    return b;
   }
 
   void sync_end(std::uint64_t start) {
     if (start == sentinel) return;
-    std::uint64_t stop{};
-    stop_timed(stop);
+
+    std::uint64_t a{};
+    stop_timed(a);
+
+    const auto stop = a;
     const auto time = stop - start;
     static constexpr auto max_time = std::numeric_limits<timer_type>::max();
+
+    // ++hacky_count;
+    // if (hacky_count > 1'000'000 && hacky_count < 1'000'000 + 1'000)
+    //   hack.push_back(time);
+
     push(time <= max_time ? static_cast<timer_type>(time) : max_time);
   }
 
@@ -71,6 +89,7 @@ class alignas(64) LatencyCollector {
       std::stringstream stream{};
       stream << "./latencies/" << name << '_' << id << ".dat";
       std::ofstream stats{stream.str().c_str()};
+      stats.exceptions(stats.badbit | stats.failbit);
       for (auto i = 0u; i <= next_log_entry && i < log.size(); ++i) {
         const auto length = i < next_log_entry ? log.front().size() : next_slot;
         for (auto j = 0u; j < length; ++j)
@@ -80,6 +99,11 @@ class alignas(64) LatencyCollector {
   }
 
  private:
+  static constexpr bool use_rejections{false};
+
+  std::uint64_t hacky_count{};
+  std::vector<std::uint64_t> hack{};
+
   std::array<std::uint64_t, capacity> timers{};
   std::array<std::uint64_t, capacity / 64> bitmap{};
 
@@ -96,20 +120,27 @@ class alignas(64) LatencyCollector {
   }()};
 
   void start_timed(std::uint64_t& save) {
+    unsigned int aux;
+    //__cpuid(0, aux, aux, aux, aux);
     const auto time = __rdtsc();
     save = time;
-    //_mm_lfence();
   }
 
   void stop_timed(std::uint64_t& save) {
-    // unsigned int aux;
-    save = __rdtsc();
+    //_mm_sfence();
+    unsigned int aux;
+    save = __rdtscp(&aux);
+    //__cpuid(0, aux, aux, aux, aux);
   }
 
   bool reject_sample() {
-    constexpr auto pow2 = 10u;
-    constexpr auto bitmask = (1ull << pow2) - 1;
-    return xorwow(&rand_state) & bitmask;
+    if constexpr (use_rejections) {
+      constexpr auto pow2 = 10u;
+      constexpr auto bitmask = (1ull << pow2) - 1;
+      return xorwow(&rand_state) & bitmask;
+    } else {
+      return false;
+    }
   }
 
   void free(std::uint32_t id) {

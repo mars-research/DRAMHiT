@@ -567,6 +567,9 @@ int Application::process(int argc, char *argv[]) {
 
   config.dump_configuration();
 
+  if (config.mode == BQ_TESTS_YES_BQ)
+    bq_load = BQUEUE_LOAD::HtInsert;
+
   if ((config.mode == BQ_TESTS_YES_BQ) || ((config.mode == HASHJOIN) && (config.ht_type == PARTITIONED_HT))) {
     switch (config.numa_split) {
       case PROD_CONS_SEPARATE_NODES:

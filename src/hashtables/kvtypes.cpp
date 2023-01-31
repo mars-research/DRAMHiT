@@ -2,7 +2,9 @@
 
 #include <iostream>
 
-namespace kmercounter {
+namespace kmercounter {    
+
+BQUEUE_LOAD bq_load = BQUEUE_LOAD::None;
 
 std::ostream& operator<<(std::ostream& os, const ItemQueue& q) {
     return os << "{key: " << q.key

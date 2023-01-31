@@ -48,7 +48,7 @@ class rw_experiment {
     return __rdtscp(&aux);
   }
 
-  experiment_results run(unsigned int total_ops) {
+  experiment_results run(unsigned int total_ops, collector_type* collector) {
     const auto keyrange = config.num_threads * total_ops;
     zipf_distribution distribution{
         config.skew, keyrange,
@@ -56,16 +56,16 @@ class rw_experiment {
 
     std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> args{};
     uint64_t k{};
+    collector_type dummy {};
     for (auto i = 0u; i < total_ops; ++i,++k) {
       if (k == HT_TESTS_BATCH_LENGTH) {
-        hashtable.insert_batch(args);
+        hashtable.insert_batch(args, &dummy);
         k = 0;
       }
 
       args[k].key = next_key + i;
     }
     // TODO: flush the rest in there.
-
 
     std::vector<decltype(distribution())> values(total_ops);
     for (auto& key : values) key = distribution() + 1;
@@ -81,8 +81,8 @@ class rw_experiment {
     for (auto i = 0u; i < total_ops; ++i) {
       if (i % 8 == 0 && i + 16 < keyrange) __builtin_prefetch(&values[i + 16]);
 
-      if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert();
-      if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find();
+      if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
+      if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
       if (sampler(prng)) {
         read_batch[read_buffer_len++].key = values[i]; 
       } else {
@@ -90,10 +90,10 @@ class rw_experiment {
       }
     }
 
-    time_insert();
-    time_find();
-    time_flush_insert();
-    time_flush_find();
+    time_insert(collector);
+    time_find(collector);
+    time_flush_insert(collector);
+    time_flush_find(collector);
 
     const auto stop = stop_time();
     timings.cycles = stop - start;
@@ -121,21 +121,21 @@ class rw_experiment {
   std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> result_batch;
   ValuePairs results;
 
-  void time_insert() {
+  void time_insert(collector_type* collector) {
     timings.n_writes += write_buffer_len;
 
     // const auto start = start_time();
-    hashtable.insert_batch(InsertFindArguments(write_batch.data(), write_buffer_len));
+    hashtable.insert_batch(InsertFindArguments(write_batch.data(), write_buffer_len), collector);
     // timings.insert_cycles += stop_time() - start;
 
     write_buffer_len = 0;
   }
 
-  void time_find() {
+  void time_find(collector_type* collector) {
     timings.n_reads += read_buffer_len;
 
     // const auto start = start_time();
-    hashtable.find_batch(InsertFindArguments(read_batch.data(), read_buffer_len), results);
+    hashtable.find_batch(InsertFindArguments(read_batch.data(), read_buffer_len), results, collector);
     // timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
@@ -143,30 +143,36 @@ class rw_experiment {
     read_buffer_len = 0;
   }
 
-  void time_flush_find() {
+  void time_flush_find(collector_type* collector) {
     /// const auto start = start_time();
-    hashtable.flush_find_queue(results);
+    hashtable.flush_find_queue(results, collector);
     /// timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
     results.first = 0;
   }
 
-  void time_flush_insert() {
+  void time_flush_insert(collector_type* collector) {
     // const auto start = start_time();
-    hashtable.flush_insert_queue();
+    hashtable.flush_insert_queue(collector);
     // timings.insert_cycles += stop_time() - start;
   }
 };
 
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                       unsigned int total_ops) {
-#ifdef BQ_TESTS_DO_HT_INSERTS
-  PLOG_ERROR << "Please disable Bqueues option before running this test";
-#else
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, shard.shard_idx * total_ops + 1};
-  const auto results = experiment.run(total_ops);
+
+  {
+    const std::lock_guard guard {collector_lock};
+    if (collectors.empty())
+      collectors.resize(config.num_threads);
+  }
+
+  const auto collector = &collectors.at(shard.shard_idx);
+  collector->claim();
+  const auto results = experiment.run(total_ops, collector);
   PLOG_INFO << "Executed " << results.n_reads << " reads / " << results.n_writes
             << " writes ("
             << static_cast<double>(results.n_reads) / results.n_writes
@@ -188,6 +194,7 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
 
   shard.stats->ht_capacity = hashtable.get_capacity();
   shard.stats->ht_fill = hashtable.get_fill();
-#endif
+
+  collector->dump("unified", shard.shard_idx);
 }
 }  // namespace kmercounter

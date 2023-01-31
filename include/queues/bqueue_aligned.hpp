@@ -228,7 +228,7 @@ class BQueueAligned {
 
       *value = cq->data[cq->tail];
       //printf("dequeuing at cq->head %u | val %" PRIu64 "\n", cq->tail, *value);
-      cq->data[cq->tail] = 0;
+      cq->data[cq->tail] = {};
       cq->tail = cq->tail + 1;
       if (cq->tail >= this->queue_size) cq->tail = 0;
 
@@ -241,7 +241,7 @@ class BQueueAligned {
 
       cq->backtrack_flag = 1;
 
-      while (enqueue(p, c, (data_t)BQ_MAGIC_64BIT) != 0)
+      while (enqueue(p, c, {BQ_MAGIC_64BIT, 0}) != 0)
       ;
 
     }

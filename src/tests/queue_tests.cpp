@@ -224,6 +224,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
   auto t_start = RDTSC_START();
   //std::uint64_t num_kmers{};
 
+  auto& collector = collectors.at(tid);
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -276,7 +277,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
       auto pq = pqueues[cons_id];
       PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
+      
+      const auto timer = collector.sync_start();
       this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)kv);
+      collector.sync_end(timer);
 
       auto npq = pqueues[get_next_cons(1)];
 
@@ -304,6 +308,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
   sh->stats->enqueues.duration = (t_end - t_start);
   sh->stats->enqueues.op_count = transaction_id;
+
+#ifdef LATENCY_COLLECTION
+  collector.dump("sync_insert", tid);
+#endif
 
   PLOG_DEBUG.printf("Producer %d -> Sending end messages to all consumers",
                     this_prod_id);
@@ -357,7 +365,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto ht_size = config.ht_size / n_cons;
 
-  if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+  if (bq_load == BQUEUE_LOAD::HtInsert) {
     PLOGV.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id, sh->shard_idx,
                  ht_size);
     kmer_ht = init_ht(ht_size, sh->shard_idx);
@@ -404,7 +412,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       return next_prod_id;
     };
 
-    if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+    if (bq_load == BQUEUE_LOAD::HtInsert) {
       if (!config.no_prefetch) {
         kmer_ht->prefetch_queue(QueueType::insert_queue);
       }
@@ -422,7 +430,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       // dequeue one message
       auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&kv);
       if (ret == RETRY) {
-        if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+        if (bq_load == BQUEUE_LOAD::HtInsert) {
           if (!config.no_prefetch) {
             if (data_idx > 0) {
               submit_batch(data_idx);
@@ -467,7 +475,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         goto pick_next_msg;
       }
 
-      if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+      if (bq_load == BQUEUE_LOAD::HtInsert) {
         _items[data_idx].key = kv.key;
         _items[data_idx].id = kv.key;
         PLOGV.printf("sizeof items %zu | size of kv.key %zu",
@@ -512,7 +520,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   sh->stats->insertions.duration = (t_end - t_start);
   sh->stats->insertions.op_count = transaction_id;
 
-  if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+  if (bq_load == BQUEUE_LOAD::HtInsert) {
     get_ht_stats(sh, kmer_ht);
   }
 
@@ -681,7 +689,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
           // PLOGI.printf("calling find_batch i = %d", i);
           // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
-          ktable->find_batch(InsertFindArguments(items), vp);
+          ktable->find_batch(InsertFindArguments(items), vp, collector);
           found += vp.first;
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
@@ -718,6 +726,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
 #ifdef LATENCY_COLLECTION
   collector->dump("find", tid);
+  PLOG_INFO << "Dumping find";
 #endif
 }
 
