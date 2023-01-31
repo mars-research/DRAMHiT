@@ -224,7 +224,10 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
   auto t_start = RDTSC_START();
   //std::uint64_t num_kmers{};
 
+#ifdef LATENCY_COLLECTION
   auto& collector = collectors.at(tid);
+#endif
+
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -277,11 +280,13 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
       auto pq = pqueues[cons_id];
       PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
-      
+#ifdef LATENCY_COLLECTION
       const auto timer = collector.sync_start();
+#endif
       this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)kv);
+#ifdef LATENCY_COLLECTION
       collector.sync_end(timer);
-
+#endif
       auto npq = pqueues[get_next_cons(1)];
 
       this->queues->prefetch(this_prod_id, get_next_cons(1), true);
