@@ -79,7 +79,6 @@ class GrowTHashTable : public BaseHashTable {
   }
 
   void *find_noprefetch(const void *data, collector_type *collector = nullptr) {
-    PLOG_DEBUG.printf("folklore insert");
     const kmercounter::key_type *key =
         reinterpret_cast<const kmercounter::key_type *>(data);
     handle_type& ht = table.get_handle();
