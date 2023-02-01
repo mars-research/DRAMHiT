@@ -200,8 +200,10 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       break;
     case HASHJOIN:
       this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);
+      break;
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
+      break;
     default:
       break;
   }
