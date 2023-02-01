@@ -746,7 +746,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     } else {
+#ifdef LATENCY_COLLECTION
       collector->end(q->timer_id);
+#endif
     }
 
     return found;
@@ -1284,7 +1286,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = 0;
     uint64_t key = 0;
 
+#ifdef LATENCY_COLLECTION
     const auto time = collector->start();
+#endif
 
     if (bq_load == BQUEUE_LOAD::HtInsert) {
 #if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
@@ -1313,7 +1317,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->find_queue[this->find_head].key = key;
     this->find_queue[this->find_head].key_id = key_data->id;
     this->find_queue[this->find_head].part_id = key_data->part_id;
+#ifdef LATENCY_COLLECTION
     this->find_queue[this->find_head].timer_id = time;
+#endif
 
 #ifdef COMPARE_HASH
     this->queue[this->find_head].key_hash = hash;

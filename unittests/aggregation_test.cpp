@@ -66,6 +66,8 @@ TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
   std::uint64_t n_inserted{};
   std::uint64_t n_found{};
   std::uint64_t count{};
+  collector_type *const collector{};
+
   for (std::uint64_t i{}; i < size; i += HT_TESTS_BATCH_LENGTH) {
     ++count;
 
@@ -77,12 +79,12 @@ TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
 
     InsertFindArguments items(arguments);
     n_inserted += items.size();
-    ht_->insert_batch(items);
-    ht_->flush_insert_queue();
-    ht_->find_batch(items, found);
+    ht_->insert_batch(items, collector);
+    ht_->flush_insert_queue(collector);
+    ht_->find_batch(items, found, collector);
     ASSERT_EQ(found.first, 0) << "Unexpected pending finds.";
 
-    ht_->flush_find_queue(found);
+    ht_->flush_find_queue(found, collector);
     n_found += found.first;
     // std::cerr << "[TEST] Batch " << i << "\n";
     // for (std::uint64_t j{}; j < found.first; ++j) {
@@ -98,6 +100,7 @@ TEST_P(AggregationTest, ASYNCHRONOUS_TEST) {
   std::uint64_t n_inserted{};
   std::uint64_t n_found{};
   constexpr auto size = 1 << 12;
+  collector_type *const collector{};
   static_assert(size % HT_TESTS_BATCH_LENGTH == 0,
                 "Test size is assumed to be a multiple of batch size");
 
@@ -111,18 +114,18 @@ TEST_P(AggregationTest, ASYNCHRONOUS_TEST) {
       arguments.at(j) = {1, i * HT_TESTS_BATCH_LENGTH + j + 1};
 
     InsertFindArguments items(arguments);
-    ht_->insert_batch(items);
+    ht_->insert_batch(items, collector);
     n_inserted += HT_TESTS_BATCH_LENGTH;
 
-    ht_->flush_insert_queue();
+    ht_->flush_insert_queue(collector);
 
     std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> values{};
     ValuePairs found{0, values.data()};
-    ht_->find_batch(items, found);
+    ht_->find_batch(items, found, collector);
     n_found += found.first;
     found.first = 0;
 
-    ht_->flush_find_queue(found);
+    ht_->flush_find_queue(found, collector);
     n_found += found.first;
   }
 
