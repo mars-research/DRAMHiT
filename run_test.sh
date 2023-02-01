@@ -244,10 +244,10 @@ run_kmer_test() {
   ARGS+=" --num-threads ${MAX_THREADS}"
 
 
-  printf "k, ${HT_TYPE}-set-${GENOME}-mops\n" | tee -a ${LOG_PREFIX}/summary_${GENOME}.csv;
-
   for run in ${RUNS}; do
+    ONCE=0
     LOG_PREFIX="esys23-ae/${TEST_TYPE}/run${run}/"
+
     for k in $(seq 4 ${MAX_K}); do
       LOG_FILE="${LOG_PREFIX}/k${k}_t${MAX_THREADS}_${GENOME}.log"
 
@@ -259,6 +259,12 @@ run_kmer_test() {
       ./build/kvstore ${ARGS} --k ${k} 2>&1 >> ${LOG_FILE}
 
       MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
+
+      if [ ${ONCE} == 0 ]; then
+        printf "k, ${HT_TYPE}-set-${GENOME}-mops\n" | tee -a ${LOG_PREFIX}/summary_${GENOME}.csv;
+        ONCE=1
+      fi
+
       echo "${k}, ${MOPS}" | tee -a "${LOG_PREFIX}/summary_${GENOME}.csv"
     done
   done
