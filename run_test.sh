@@ -185,7 +185,17 @@ run_test() {
   done
 }
 
-run_join_test() {
+
+KVSTORE_BASE=/opt/kvstore
+DATASET_DIR=${KVSTORE_BASE}/kmer_dataset
+
+declare -A DATASET_ARRAY
+DATASET_ARRAY["dmela"]=${DATASET_DIR}/ERR4846928.fastq
+DATASET_ARRAY["fvesca"]=${DATASET_DIR}/SRR1513870.fastq
+
+MAX_K=32
+
+run_kmer_test() {
   if [ $# -eq 4 ]; then
     TEST_TYPE=$1
     RUNS=$2
@@ -193,11 +203,9 @@ run_join_test() {
     MAX_THREADS=$4
   fi
 
-
   HT_TYPE=$(echo ${TEST_TYPE} | awk -F'-' '{print $1}')
   MODE=$(echo ${TEST_TYPE} | awk -F'-' '{print $2}')
-  R_SIZE=$(echo ${TEST_TYPE} | awk -F'-' '{print $3}')
-  S_SIZE=$(echo ${TEST_TYPE} | awk -F'-' '{print $4}')
+  GENOME=$(echo ${TEST_TYPE} | awk -F'-' '{print $3}')
 
   case ${HT_TYPE} in
     "casht")
@@ -210,45 +218,49 @@ run_join_test() {
       ARGS="--ht-type 1 --numa-split 3"
       START_THREAD=4
       ;;
-    "arrayht")
-      ARGS="--ht-type 4 --numa-split 1 --no-prefetch 1"
-      ;;
-    "arrayhtpp")
-      ARGS="--ht-type 4 --numa-split 1 --no-prefetch 0"
-      ;;
     *)
       echo "Unknown hashtable type ${HT_TYPE}"
       exit;
   esac
 
   case ${MODE} in
-    "join")
-      ARGS+=" --mode 13"
+    "kmer")
+      ARGS+=" --mode 4"
       ;;
     *)
       echo "Unknown mode ${MODE}"
       exit;
   esac
 
-  R_SIZE_MIL=$((${R_SIZE} * 1000000))
-  S_SIZE_MIL=$((${S_SIZE} * 1000000))
-  ARGS+=" --relation_r_size ${R_SIZE_MIL} --relation_s_size ${S_SIZE_MIL}"
+  FASTA_FILE=${DATASET_ARRAY[${GENOME}]}
+
+  if [ "${GENOME}" == "fvesca" ];then
+    ARGS+=" --ht-size 8589934592"
+  else
+    ARGS+=" --ht-size 4294967296"
+  fi
+
+  ARGS+=" --in-file ${FASTA_FILE}"
   ARGS+=" --num-threads ${MAX_THREADS}"
 
+
+  printf "k, ${HT_TYPE}-set-${GENOME}-mops\n" | tee -a ${LOG_PREFIX}/summary_${GENOME}.csv;
+
   for run in ${RUNS}; do
-    LOG_PREFIX="esys22-logs/${TEST_TYPE}/run${run}/"
-    LOG_FILE="${LOG_PREFIX}/${MAX_THREADS}.log"
+    LOG_PREFIX="esys23-ae/${TEST_TYPE}/run${run}/"
+    for k in $(seq 4 ${MAX_K}); do
+      LOG_FILE="${LOG_PREFIX}/k${k}_t${MAX_THREADS}_${GENOME}.log"
 
-    if [ ! -d ${LOG_PREFIX} ]; then
-      mkdir -p ${LOG_PREFIX}
-    fi
-    ./build/kvstore ${ARGS} 2>&1 >> ${LOG_FILE}
+      if [ ! -d ${LOG_PREFIX} ]; then
+        mkdir -p ${LOG_PREFIX}
+      fi
 
-    NUM_TUPLES=$(((${R_SIZE} + ${S_SIZE})*1000000))
-    JOIN_USEC=$(grep -o "Hashjoin took [0-9]\+ us" ${LOG_FILE} | awk '{ print $(NF-1) }')
-    TUPLES_PER_SEC=$(echo ${NUM_TUPLES} / ${JOIN_USEC} | bc -l)
+      echo "Running kvstore with ${ARGS} --k ${k}" > ${LOG_FILE}
+      ./build/kvstore ${ARGS} --k ${k} 2>&1 >> ${LOG_FILE}
 
-    printf "%d, %f\n" ${R_SIZE} ${TUPLES_PER_SEC} | tee -a ${LOG_PREFIX}/summary_run${run}.csv
+      MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
+      echo "${k}, ${MOPS}" | tee -a "${LOG_PREFIX}/summary_${GENOME}.csv"
+    done
   done
 }
 
@@ -315,34 +327,36 @@ HW_PREF_OFF=0
 #  run_test "cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 #done
 
-# AE figs 7-14
-#for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
-#   run_test "casht_cashtpp-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-#done
-#
-#for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
-#   run_test "casht_cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-#done
+run_ht_benchmarks() {
+  # AE figs 7-14
+  for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+    run_test "casht_cashtpp-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+  done
 
-#run_test "part-zipfian-small-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-#run_test "part-zipfian-large-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+  for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+    run_test "casht_cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+  done
 
-for s in 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
-  run_test "part-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
-  run_test "part-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
-done
+  run_test "part-zipfian-small-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+  run_test "part-zipfian-large-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 
-#run_test "part-zipfian-small-0.01" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
-#run_test "part-zipfian-large-0.01" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
+  for s in 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+    run_test "part-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
+    run_test "part-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
+  done
+}
 
-## MLC tests
-#run_mlc_test "max-bw-all" ${NUM_RUNS} ${MAX_THREADS_CASHT}
-# -------
+run_kmer_benchmarks() {
+  for genome in "fvesca" "dmela"; do
+    run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    run_kmer_test "part-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+  done
+}
 
-#for rsize in 1 4 16 64 128 256 384 512; do
-#  s_size=$((${rsize}*10))
-  #run_join_test "casht-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-  #run_join_test "cashtpp-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-  #run_join_test "arrayht-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-#  run_join_test "arrayhtpp-join-${rsize}-${s_size}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-#done
+
+if [[ $1 == "ht" ]]; then
+  run_ht_benchmarks
+elif [[ $1 == "kmer" ]]; then
+  run_kmer_benchmarks
+fi
