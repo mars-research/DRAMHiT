@@ -569,10 +569,11 @@ int Application::process(int argc, char *argv[]) {
 
   config.dump_configuration();
 
-  if (config.mode == BQ_TESTS_YES_BQ)
+  if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT)) {
     bq_load = BQUEUE_LOAD::HtInsert;
+  }
 
-  if ((config.mode == BQ_TESTS_YES_BQ) || ((config.mode == HASHJOIN) && (config.ht_type == PARTITIONED_HT))) {
+  if ((config.mode == BQ_TESTS_YES_BQ) || ((config.mode == FASTQ_WITH_INSERT) && (config.ht_type == PARTITIONED_HT))) {
     switch (config.numa_split) {
       case PROD_CONS_SEPARATE_NODES:
         this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
@@ -609,7 +610,7 @@ int Application::process(int argc, char *argv[]) {
     init_zipfian_dist(config.skew, config.seed);
   }
 
-  if (config.mode == HASHJOIN) {
+  if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
     // for hashjoin, ht-type determines how we spawn threads
     if (config.ht_type == PARTITIONED_HT) {
       this->test.qt.run_test(&config, this->n, true, this->npq);
