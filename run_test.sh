@@ -210,12 +210,14 @@ run_kmer_test() {
   case ${HT_TYPE} in
     "casht")
       ARGS="--ht-type 3 --numa-split 1 --no-prefetch 1"
+      ARGS+=" --num-threads ${MAX_THREADS}"
       ;;
     "cashtpp")
       ARGS="--ht-type 3 --numa-split 1 --no-prefetch 0"
+      ARGS+=" --num-threads ${MAX_THREADS}"
       ;;
     "part")
-      ARGS="--ht-type 1 --numa-split 3"
+      ARGS="--ht-type 1 --numa-split 3 --nprod 32 --ncons 32"
       START_THREAD=4
       ;;
     *)
@@ -241,7 +243,6 @@ run_kmer_test() {
   fi
 
   ARGS+=" --in-file ${FASTA_FILE}"
-  ARGS+=" --num-threads ${MAX_THREADS}"
 
 
   for run in ${RUNS}; do
