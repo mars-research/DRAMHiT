@@ -200,6 +200,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #endif
 
 #if defined(BQUEUE_KMER_TEST)
+#warning "BQ KMER TEST"
   auto reader = input_reader::MakeFastqKMerPreloadReader(config.K,
               config.in_file, sh->shard_idx, n_prod);
 #endif

@@ -18,6 +18,7 @@ option(BQ_ZIPFIAN_LOCAL "Enable local zipfian distribution generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
 option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
+option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -257,6 +258,10 @@ if (LATENCY_COLLECTION)
     add_definitions(-DLATENCY_COLLECTION)
 endif()
 
+if (BQ_KMER_TEST)
+    message(WARNING "Bqueue kmer test")
+    add_definitions(-DBQUEUE_KMER_TEST)
+endif()
 # Copied from https://github.com/mars-research/kmer-counting-hash-table/blob/129b03a50fa86497f971b43ba91841d830a07faf/Makefile#L32
 add_definitions(-D__MMAP_FILE)
 add_definitions(-DSERIAL_SCAN)
