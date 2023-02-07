@@ -14,6 +14,7 @@
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
+#include "./hashtables/array_kht.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "tests/PrefetchTest.hpp"
@@ -25,6 +26,7 @@
 
 #ifdef WITH_PAPI_LIB
 #include "PapiEvent.hpp"
+#include "mem_bw_papi.hpp"
 #endif
 
 #ifdef WITH_VTUNE_LIB
@@ -38,7 +40,9 @@ extern uint64_t HT_TESTS_HT_SIZE;
 extern uint64_t HT_TESTS_NUM_INSERTS;
 extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
-extern void init_zipfian_dist(double skew);
+extern void init_zipfian_dist(double skew, int64_t seed);
+
+//void sync_complete(void);
 
 // default configuration
 const Configuration def = {
@@ -63,11 +67,13 @@ const Configuration def = {
     .n_cons = 1,
     .num_nops = 0,
     .skew = 1.0,
+    .seed = std::chrono::system_clock::now().time_since_epoch().count(),
     .pread = 0.0,
     .drop_caches = true,
     .hwprefetchers = false,
     .no_prefetch = false,
     .run_both = false,
+    .materialize = false,
     .relation_r = "r.tbl",
     .relation_s = "s.tbl",
     .relation_r_size = 128000000,
@@ -78,6 +84,28 @@ const Configuration def = {
 // for synchronization of threads
 static uint64_t ready = 0;
 static std::atomic_uint num_entered{};
+
+#if defined(WITH_PAPI_LIB)
+static MemoryBwCounters *bw_counters;
+#endif
+extern bool stop_sync;
+
+void sync_complete(void) {
+#if defined(WITH_PAPI_LIB)
+  if (stop_sync) {
+    PLOGI.printf("Stopping counters");
+    bw_counters->stop();
+    bw_counters->compute_mem_bw();
+    stop_sync = false;
+  } else {
+    PLOGI.printf("Starting counters");
+    if (!bw_counters)
+      bw_counters = new MemoryBwCounters(2);
+    bw_counters->start();
+  }
+#endif
+  PLOGI.printf("Sync phase done!");
+}
 
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
@@ -93,6 +121,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       kmer_ht =
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
+    case ARRAY_HT:
+      kmer_ht =
+          new ArrayHashTable<Value, ItemQueue>(sz);
+      break;
     default:
       PLOG_FATAL.printf("HT type not implemented");
       exit(-1);
@@ -106,7 +138,7 @@ void free_ht(BaseHashTable *kmer_ht) {
   delete kmer_ht;
 }
 
-void Application::shard_thread(int tid, bool mainthread, std::barrier<std::function<void()>>* barrier) {
+void Application::shard_thread(int tid, std::barrier<std::function<void()>>* barrier) {
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -115,7 +147,7 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
 
   switch (config.mode) {
     case FASTQ_WITH_INSERT:
-      kmer_ht = init_ht(config.in_file_sz / config.num_threads, sh->shard_idx);
+      kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
     case PREFETCH:
       // kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
@@ -160,14 +192,16 @@ void Application::shard_thread(int tid, bool mainthread, std::barrier<std::funct
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
-      this->test.zipf.run(sh, kmer_ht, config.skew, config.num_threads);
+      this->test.zipf.run(sh, kmer_ht, config.skew, config.seed, config.num_threads, barrier);
       break;
     case RW_RATIO:
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
       this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
       break;
     case HASHJOIN:
-      this->test.hj.join_relations_generated(sh, config, kmer_ht, barrier);
+      this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);
+    case FASTQ_WITH_INSERT:
+      this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
     default:
       break;
   }
@@ -242,11 +276,14 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
-  std::function<void()> on_completetion = []() noexcept {
+  std::function<void()> on_completion = []() noexcept {
     // For debugging
-    // PLOG_INFO << "Phase completed."; 
+    // PLOG_INFO << "Phase completed.";
   };
-  std::barrier barrier(config.num_threads, on_completetion);
+
+  std::function<void()> on_sync_complete = sync_complete;
+
+  std::barrier barrier(config.num_threads, on_sync_complete);
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;
@@ -254,11 +291,11 @@ int Application::spawn_shard_threads() {
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    auto _thread = std::thread(&Application::shard_thread, this, i, false, &barrier);
+    auto _thread = std::thread(&Application::shard_thread, this, i, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    PLOG_INFO.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
+    PLOGV.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
     this->threads.push_back(std::move(_thread));
     i += 1;
   }
@@ -267,15 +304,15 @@ int Application::spawn_shard_threads() {
   CPU_ZERO(&cpuset);
   CPU_SET(0, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  PLOG_INFO.printf("Thread 'main': affinity: %u", 0);
+  PLOGV.printf("Thread 'main': affinity: %u", 0);
 
-  PLOG_INFO.printf("Running master thread with id %d", i);
+  PLOGV.printf("Running master thread with id %d", i);
   {
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
     sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    this->shard_thread(i, true, &barrier);
+    this->shard_thread(i, &barrier);
   }
 
   for (auto &th : this->threads) {
@@ -283,7 +320,9 @@ int Application::spawn_shard_threads() {
       th.join();
     }
   }
-  if (config.mode != CACHE_MISS) print_stats(this->shards, config);
+  if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
+    print_stats(this->shards, config);
+  }
 
   std::free(this->shards);
 
@@ -311,8 +350,10 @@ int Application::process(int argc, char *argv[]) {
         "mode",
         po::value<uint32_t>((uint32_t *)&config.mode)->default_value(def.mode),
         "1: Dry run \n"
-        // Huh? don't look at me. The numbers are not continuous for a reason.
-        // We stripped the kmer related stuff.
+        "2: Read from disk (Saved HT?)\n"
+        "3: write to disk (Save KMER HT to disk?)\n"
+        "4: Fastq with insert (for kmer test)\n"
+        "5: Fastq without insert (you don't want this)\n"
         "6/7: Synth/Prefetch\n"
         "8/9: Bqueue tests: with bqueues/without bequeues (can be built with "
         "zipfian)\n"
@@ -357,7 +398,8 @@ int Application::process(int argc, char *argv[]) {
         "ht-type",
         po::value<uint32_t>(&config.ht_type)->default_value(def.ht_type),
         "1: Partitioned HT\n"
-        "3: Casht++\n")(
+        "3: Casht++\n"
+        "4: Arrayht\n")(
         "out-file",
         po::value<std::string>(&config.ht_file)->default_value(def.ht_file),
         "Hashtable output file name.")(
@@ -384,14 +426,19 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint64_t>(&config.ht_size)->default_value(def.ht_size),
         "adjust hashtable fill ratio [0-100] ")(
         "skew", po::value<double>(&config.skew)->default_value(def.skew),
-        "Zipfian skewness")("hw-pref", po::value<bool>(&config.hwprefetchers)
-                                           ->default_value(def.hwprefetchers))(
+        "Zipfian skewness")(
+        "seed", po::value<int64_t>(&config.seed)->default_value(def.seed),
+        "Zipfian distribution generation seed")(
+        "hw-pref", po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers))(
         "no-prefetch",
         po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))(
         "run-both",
         po::value<bool>(&config.run_both)->default_value(def.run_both))(
         "p-read",
         po::value<double>(&config.pread)->default_value(def.pread))
+        ("materialize",
+        po::value<bool>(&config.materialize)->default_value(def.materialize),
+        "Materialize the hashjoin output")
         ("relation_r",
         po::value(&config.relation_r)->default_value(def.relation_r), "Path to relation R.")
         ("relation_s",
@@ -458,6 +505,18 @@ int Application::process(int argc, char *argv[]) {
         PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
       }
+    } else if (config.mode == HASHJOIN) {
+      // In our hashjoin tests, we always have equisize R and S tables, but
+      // that need not be the case
+      std::uint64_t max_join_size = config.relation_r_size;
+
+      // We need a hashtable that is 75% full. So, increase the size of the HT
+      if (config.ht_type == ARRAY_HT) {
+        config.ht_size = max_join_size;
+      } else {
+        //config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
+      }
+      PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
     }
 
     switch (config.ht_type) {
@@ -467,6 +526,9 @@ int Application::process(int argc, char *argv[]) {
         break;
       case CASHTPP:
         PLOG_INFO.printf("Hashtable type : Cas HT");
+        break;
+      case ARRAY_HT:
+        PLOG_INFO.printf("Hashtable type : Array HT");
         break;
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
@@ -505,7 +567,7 @@ int Application::process(int argc, char *argv[]) {
 
   config.dump_configuration();
 
-  if (config.mode == BQ_TESTS_YES_BQ) {
+  if ((config.mode == BQ_TESTS_YES_BQ) || ((config.mode == HASHJOIN) && (config.ht_type == PARTITIONED_HT))) {
     switch (config.numa_split) {
       case PROD_CONS_SEPARATE_NODES:
         this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
@@ -539,11 +601,18 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN) {
-    init_zipfian_dist(config.skew);
+    init_zipfian_dist(config.skew, config.seed);
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ) {
-    this->test.qt.run_test(&config, this->n, this->npq);
+  if (config.mode == HASHJOIN) {
+    // for hashjoin, ht-type determines how we spawn threads
+    if (config.ht_type == PARTITIONED_HT) {
+      this->test.qt.run_test(&config, this->n, true, this->npq);
+    } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT)) {
+      this->spawn_shard_threads();
+    }
+  } else if (config.mode == BQ_TESTS_YES_BQ) {
+    this->test.qt.run_test(&config, this->n, false, this->npq);
   } else {
     this->spawn_shard_threads();
   }

@@ -34,6 +34,7 @@
           msr-tools
         ];
         NIX_CFLAGS_COMPILE = "-march=native";
+        NIX_ENFORCE_NO_NATIVE=0;
       };
       devShells.build = mkShell {
         inputsFrom = [
@@ -49,6 +50,7 @@
           ninja
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
+        NIX_ENFORCE_NO_NATIVE=0;
       };
       devShell = mkShell {
         inputsFrom = [
@@ -67,6 +69,7 @@
           python310Packages.matplotlib
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
+        NIX_ENFORCE_NO_NATIVE=0;
       };
     }
   );

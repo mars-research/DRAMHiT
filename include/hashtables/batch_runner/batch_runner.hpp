@@ -6,6 +6,7 @@
 #include "hashtables/base_kht.hpp"
 
 namespace kmercounter {
+extern Configuration config;
 /// A wrapper around `HTBatchInserter` and `HTBatchFinder`.
 template <size_t N = HT_TESTS_BATCH_LENGTH>
 class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
@@ -20,11 +21,34 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
 
   /// Insert one kv pair.
   void insert(const uint64_t key, const uint64_t value) {
-    HTBatchInserter<N>::insert(key, value);
+    if (config.no_prefetch) {
+      KeyValuePair kv;
+      kv.key = key;
+      kv.value = value;
+      HTBatchInserter<N>::insert_noprefetch(kv);
+    } else {
+      HTBatchInserter<N>::insert(key, value);
+    }
   }
 
   /// Insert one kv pair.
-  void insert(const KeyValuePair& kv) { this->insert(kv.key, kv.value); }
+  inline void insert(const KeyValuePair& kv) {
+    if (config.no_prefetch) {
+      HTBatchInserter<N>::insert_noprefetch(kv);
+    } else {
+      //this->insert(kv.key, kv.value);
+      HTBatchInserter<N>::insert(kv.key, kv.value);
+    }
+  }
+
+  void *find(const KeyValuePair &kv) {
+    if (config.no_prefetch) {
+      return HTBatchFinder<N>::find_noprefetch(kv);
+    } else {
+      HTBatchFinder<N>::find(kv.key, kv.value);
+      return nullptr;
+    }
+  }
 
   /// Flush both insert and find queue.
   void flush() {
@@ -33,10 +57,16 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
   }
 
   /// Flush insert queue.
-  void flush_insert() { HTBatchInserter<N>::flush(); }
+  void flush_insert() {
+    if (!config.no_prefetch)
+      HTBatchInserter<N>::flush();
+  }
 
   /// Flush find queue.
-  void flush_find() { HTBatchFinder<N>::flush(); }
+  void flush_find() {
+    if (!config.no_prefetch)
+      HTBatchFinder<N>::flush();
+  }
 
   /// Returns the number of inserts flushed.
   size_t num_insert_flushed() { return HTBatchInserter<N>::num_flushed(); }

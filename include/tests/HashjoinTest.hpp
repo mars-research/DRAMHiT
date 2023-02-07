@@ -14,6 +14,7 @@ class HashjoinTest {
   /// Generate and join two relations.
   void join_relations_generated(Shard *sh, const Configuration &config,
                                 BaseHashTable *ht,
+                                bool materialize,
                                 std::barrier<VoidFn> *barrier);
   /// Load and join two tables from filesystem.
   void join_relations_from_files(Shard *sh, const Configuration &config,

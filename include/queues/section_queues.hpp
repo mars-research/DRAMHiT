@@ -10,9 +10,14 @@
 #include "helper.hpp"
 #include "queue.hpp"
 
+#include "../types.hpp"
+
 namespace kmercounter {
 
 extern Configuration config;
+
+// data_t represents a k,v pair (2*8B = 16B)
+typedef KeyValuePair data_t;
 
 class SectionQueue;
 
@@ -44,48 +49,47 @@ struct SectionQueueInner {
     CACHE_ALIGNED size_t numEnqueueSpins;
     CACHE_ALIGNED size_t numDequeueSpins;
 #endif
-  };
+    };
 
-  data_t *QUEUE;
-  data_t *QUEUE_END;
-  size_t num_sections;
-  size_t queue_size;
-  size_t section_size;
-  struct prod_queue *pq;
-  struct cons_queue *cq;
-  struct prod_cons_shared *pcq;
+    data_t *QUEUE;
+    data_t *QUEUE_END;
+    size_t num_sections;
+    size_t queue_size;
+    size_t section_size;
+    struct prod_queue *pq;
+    struct cons_queue *cq;
+    struct prod_cons_shared *pcq;
 
-  void dump(void) {
-    PLOGI.printf("{ prod state }");
-    PLOGI.printf("enqPtr:          %p", pq->enqPtr);
-    PLOGI.printf("deqLocalPtr:       %p", pq->deqLocalPtr);
+    void dump(void) {
+      PLOGD.printf("{ prod state }");
+      PLOGD.printf("enqPtr:          %p", pq->enqPtr);
+      PLOGD.printf("deqLocalPtr:       %p", pq->deqLocalPtr);
 
-    PLOGI.printf("{ cons state }");
-    PLOGI.printf("deqPtr:          %p", cq->deqPtr);
-    PLOGI.printf("enqLocalPtr:       %p", cq->enqLocalPtr);
-    PLOGI.printf("enqSharedPtr:       %p", pcq->enqSharedPtr);
-    PLOGI.printf("deqSharedPtr:    %p", pcq->deqSharedPtr);
+      PLOGD.printf("{ cons state }");
+      PLOGD.printf("deqPtr:          %p", cq->deqPtr);
+      PLOGD.printf("enqLocalPtr:       %p", cq->enqLocalPtr);
+      PLOGD.printf("enqSharedPtr:       %p", pcq->enqSharedPtr);
+      PLOGD.printf("deqSharedPtr:    %p", pcq->deqSharedPtr);
 
-    PLOGI.printf("QUEUE:      %p", QUEUE);
-    PLOGI.printf("QUEUE_END:      %p", QUEUE_END);
-    PLOGI.printf("queue_size:     0x%lx", queue_size);
-    PLOGI.printf("queue_mask:     0x%lx", ~queue_size);
-    PLOGI.printf("QUEUE_SECTION_SIZE:  0x%lx", section_size);
-  }
+      PLOGD.printf("QUEUE:      %p", QUEUE);
+      PLOGD.printf("QUEUE_END:      %p", QUEUE_END);
+      PLOGD.printf("queue_size:     0x%lx", queue_size);
+      PLOGD.printf("queue_mask:     0x%lx", ~queue_size);
+      PLOGD.printf("QUEUE_SECTION_SIZE:  0x%lx", section_size);
+    }
 
-  explicit SectionQueueInner(size_t queue_size, struct prod_queue *pq,
-                             struct cons_queue *cq,
-                             struct prod_cons_shared *pcq) {
-    this->queue_size = queue_size;
-    this->QUEUE = pq->data;
-    this->QUEUE_END = pq->data + queue_size / sizeof(data_t);
-    cq->queue_end = pq->queue_end = this->QUEUE_END;
-    this->section_size = kmercounter::SECTION_SIZE;
-    this->num_sections = this->queue_size / this->section_size;
-    this->pq = pq;
-    this->cq = cq;
-    this->pcq = pcq;
-  }
+    explicit SectionQueueInner(size_t queue_size, struct prod_queue *pq, struct
+        cons_queue *cq, struct prod_cons_shared *pcq) {
+      this->queue_size = queue_size;
+      this->QUEUE = pq->data;
+      this->QUEUE_END = pq->data + queue_size / sizeof(data_t);
+      cq->queue_end = pq->queue_end = this->QUEUE_END;
+      this->section_size = kmercounter::SECTION_SIZE;
+      this->num_sections = this->queue_size / this->section_size;
+      this->pq = pq;
+      this->cq = cq;
+      this->pcq = pcq;
+    }
 };
 
 class SectionQueue {
@@ -99,6 +103,7 @@ class SectionQueue {
   cons_queue_t **all_cqueues;
   pc_queue_t **all_pc_queues;
   static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
+  static const KeyValuePair BQ_MAGIC_KV;
   static const uint64_t SECTION_MASK = SECTION_SIZE - 1;
 
   size_t queue_size;
@@ -321,7 +326,7 @@ class SectionQueue {
     *pq->enqPtr = value;
     pq->enqPtr += 1;
 
-    if (((data_t)pq->enqPtr & SECTION_MASK) == 0) {
+    if (((uint64_t)pq->enqPtr & SECTION_MASK) == 0) {
       if (pq->enqPtr == pq->queue_end) {
         pq->enqPtr = pq->data;
       }
@@ -342,7 +347,7 @@ class SectionQueue {
   }
 
   inline int dequeue(cons_queue_t *cq, uint32_t p, uint32_t c, data_t *value) {
-    if (((data_t)cq->deqPtr & SECTION_MASK) == 0) {
+    if (((uint64_t)cq->deqPtr & SECTION_MASK) == 0) {
       if (cq->deqPtr == cq->queue_end) {
         cq->deqPtr = cq->data;
       }
@@ -409,7 +414,7 @@ class SectionQueue {
     // PLOGD.printf("PUSH DONE");
     auto pcq = &this->all_pc_queues[p][c];
     auto pq = &this->all_pqueues[p][c];
-    enqueue(pq, p, c, BQ_MAGIC_64BIT);
+    enqueue(pq, p, c, BQ_MAGIC_KV);
     pcq->enqSharedPtr = (data_t *)0xdeadbeef;
   }
 

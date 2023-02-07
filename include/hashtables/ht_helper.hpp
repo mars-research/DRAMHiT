@@ -102,7 +102,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   auto current_node = numa_node_of_cpu(sched_getcpu());
 
   if (alloc_sz < ONEGB_PAGE_SZ) {
-    PLOGI.printf("Allocating memory on node %d", current_node);
+    PLOGV.printf("Allocating memory on node %d", current_node);
     addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
     if (!addr) {
       perror("aligned_alloc:");
@@ -123,10 +123,10 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
       perror("");
       exit(1);
     } else {
-      PLOGI.printf("opened file %s", mmap_path);
+      PLOGV.printf("opened file %s", mmap_path);
     }
 
-    PLOGI.printf("requesting to mmap %" PRIu64 " bytes", alloc_sz);
+    PLOGV.printf("requesting to mmap %lu bytes", alloc_sz);
     addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
         MAP_FLAGS, fd, 0);
     if (addr == MAP_FAILED) {
@@ -146,13 +146,13 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
 
     nodemask[0] = 1 << (!current_node);
 
-    PLOGI.printf("Moving half the memory to node %d", !current_node);
+    PLOGV.printf("Moving half the memory to node %d", !current_node);
 
     long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
         MPOL_MF_MOVE | MPOL_MF_STRICT);
 
-    PLOGI.printf("mmap_addr %p | len %zu", _addr, capacity * sizeof(T));
-    PLOGI.printf("calling mbind with addr %p | len %zu | nodemask %p", addr_split,
+    PLOGV.printf("mmap_addr %p | len %zu", _addr, capacity * sizeof(T));
+    PLOGV.printf("calling mbind with addr %p | len %zu | nodemask %p", addr_split,
         len_split, nodemask);
     if (ret < 0) {
       perror("mbind");

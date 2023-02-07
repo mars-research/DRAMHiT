@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <atomic>
+#include <barrier>
 #include <cstdint>
 #include <plog/Log.h>
 
 #include "constants.hpp"
 #include "hashtables/base_kht.hpp"
+#include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "sync.h"
 #include "input_reader/fastq.hpp"
@@ -15,42 +17,51 @@
 #include "print_stats.h"
 
 namespace kmercounter {
-OpTimings KmerTest::shard_thread(Shard *sh, const Configuration &cfg, BaseHashTable *kmer_ht, bool insert, input_reader::FastqKMerPreloadReader<KMER_LEN> reader) {
-  auto k = 0;
-  uint64_t inserted = 0lu;
-  uint64_t kmer;
-  std::string tmp;
-  __attribute__((aligned(64))) InsertFindArgument _items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
-  // input_reader::Counter<uint64_t> reader(1 << sh->shard_idx);
+void KmerTest::count_kmer(Shard* sh,
+                              const Configuration& config,
+                              BaseHashTable* ht,
+                              std::barrier<VoidFn>* barrier){
+  // Be care of the `K` here; it's a compile time constant.
+  auto reader = input_reader::MakeFastqKMerPreloadReader(config.K, config.in_file, sh->shard_idx, config.num_threads);
+  HTBatchRunner batch_runner(ht);
 
-  const auto t_start = RDTSC_START();
-  if (insert) {
-    for (; reader.next(&kmer);) {
-      inserted++;
-      _items[k].key = kmer;
+  // Wait for all readers finish initializing.
+  barrier->arrive_and_wait();
 
-      if (++k == HT_TESTS_BATCH_LENGTH) {
-        kmer_ht->insert_batch(InsertFindArguments(_items));
-        k = 0;
-      }
-    }
-    kmer_ht->flush_insert_queue();
-  } else {
-    for (; reader.next(&kmer);) {
-      inserted++;
-    }
+  // start timers
+  std::uint64_t start {}, end {};
+  std::uint64_t start_cycles {}, end_cycles {};
+  std::uint64_t num_kmers{};
+  std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+  start = _rdtsc();
+
+  if (sh->shard_idx == 0) {
+    start_ts = std::chrono::steady_clock::now();
+    start_cycles = _rdtsc();
   }
 
-  // input_reader::FastqReader freader("../ERR024163_1.fastq", sh->shard_idx, cfg.num_threads);
-  // for (; freader.next(&tmp);){inserted++;}
+  // Inser Kmers into hashtable
+  for (uint64_t kmer; reader->next(&kmer);) {
+    batch_runner.insert(kmer, 0 /* we use the aggr tables so no value */);
+    num_kmers++;
+  }
+  batch_runner.flush_insert();
+  barrier->arrive_and_wait();
 
-  const auto t_end = RDTSCP();
-  const auto duration = t_end - t_start;
-  PLOG_INFO << "inserted "<< inserted << " items in " << duration << " cycles. " << duration / std::max(1ul, inserted) << " cpo";
-  sh->stats->insertions.op_count = inserted;
-  sh->stats->insertions.duration = duration;
-  get_ht_stats(sh, kmer_ht);
-  return {duration, inserted};
+  sh->stats->insertions.duration = _rdtsc() - start;
+  sh->stats->insertions.op_count = num_kmers;
+
+  // done; calc stats
+  if (sh->shard_idx == 0) {
+    end_ts = std::chrono::steady_clock::now();
+    end_cycles = _rdtsc();
+    PLOG_INFO.printf("Kmer insertion took %llu us (%llu cycles)",
+        chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
+        end_cycles - start_cycles);
+  }
+  PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, num_kmers);
+
+  get_ht_stats(sh, ht);
 }
 
 } // namespace kmercounter

@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <sstream>
+#include <barrier>
 
 #include "misc_lib.h"
 #include "print_stats.h"
@@ -17,10 +18,6 @@
 #include <papi.h>
 #endif
 
-#ifdef WITH_PAPI_LIB
-#include "mem_bw_papi.hpp"
-#endif
-
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -31,19 +28,14 @@ uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 
-extern std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
+void sync_complete(void);
+bool stop_sync = false;
 
-OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
-                             unsigned int count, unsigned int id) {
-  auto keyrange_width = (1ull << 63);
-#ifdef ZIPF_FAST
-  zipf_distribution_apache distribution(keyrange_width, skew);
-#else
-  zipf_distribution distribution{skew, keyrange_width, id + 1};
-#endif
-  std::uint64_t duration{};
-  static std::atomic_uint num_entered{};
+extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
+OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed,
+                             unsigned int count, unsigned int id,
+                             std::barrier<std::function<void()>> *sync_barrier) {
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
   collector->claim();
@@ -51,16 +43,10 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   collector_type *const collector{};
 #endif
 
-#if defined(WITH_PAPI_LIB)
-  static MemoryBwCounters bw_counters{2};
-  if (++num_entered == config.num_threads) {
-    PLOGI.printf("Starting counters %u", num_entered.load());
-    bw_counters.start();
-  }
-#else
-  ++num_entered;
-#endif
-  while (num_entered < count) _mm_pause();
+  std::uint64_t duration{};
+
+  sync_barrier->arrive_and_wait();
+  stop_sync = true;
 
 #ifdef WITH_VTUNE_LIB
   static const auto event =
@@ -68,11 +54,11 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   __itt_event_start(event);
 #endif
 
-  PLOGI.printf("Starting insertion test");
+  PLOGV.printf("Starting insertion test");
   alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
 
   const auto start = RDTSC_START();
-  std::uint64_t key{};
+  key_type key{};
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
@@ -117,13 +103,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
   __itt_event_end(event);
 #endif
 
-#if defined(WITH_PAPI_LIB)
-  if (--num_entered == 0) {
-    PLOGI.printf("Stopping counters %u", num_entered.load());
-    bw_counters.stop();
-    bw_counters.compute_mem_bw();
-  }
-#endif
+  sync_barrier->arrive_and_wait();
 
 #ifdef LATENCY_COLLECTION
   collector->dump("async_insert", id);
@@ -133,7 +113,7 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew,
 }
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
-                          unsigned int id) {
+                          unsigned int id, auto sync_barrier) {
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
 
@@ -144,15 +124,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   collector_type *const collector{};
 #endif
 
-  static std::atomic_uint num_entered{};
-  num_entered++;
-#if defined(WITH_PAPI_LIB)
-  static MemoryBwCounters bw_counters{2};
-  if (num_entered == config.num_threads) {
-    bw_counters.start();
-  }
-#endif
-  while (num_entered < num_threads) _mm_pause();
+  sync_barrier->arrive_and_wait();
+  stop_sync = true;
 
   alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
@@ -202,16 +175,11 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   const auto end = RDTSCP();
   duration += end - start;
 
-#if defined(WITH_PAPI_LIB)
-  if (--num_entered == 0) {
-    bw_counters.stop();
-    bw_counters.compute_mem_bw();
-  }
-#endif
+  sync_barrier->arrive_and_wait();
 
   if (found >= 0) {
-    PLOG_INFO.printf(
-        "thread %u | num_finds %" PRIu64 " (not_found %" PRIu64 ") | cycles per get: %" PRIu64 "", id,
+    PLOGV.printf(
+        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu", id,
         found, not_found, found > 0 ? duration / found : 0);
   }
 
@@ -222,8 +190,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   return {duration, found};
 }
 
-void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
-                      unsigned int count) {
+void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, int64_t zipf_seed,
+                      unsigned int count, std::barrier<std::function<void ()>> *sync_barrier) {
   OpTimings insert_timings{};
   static_assert(HT_TESTS_MAX_STRIDE - 1 ==
                 1);  // Otherwise timing logic is wrong
@@ -239,14 +207,14 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   }
 #endif
 
-  PLOG_INFO.printf(
-      "Zipfian test run: thread %u, ht size: %" PRIu64 ", insertions: %" PRIu64 ", skew "
+  PLOGV.printf(
+      "Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
       "%f",
       shard->shard_idx, config.ht_size, HT_TESTS_NUM_INSERTS, skew);
 
   for (uint32_t i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_timings =
-        do_zipfian_inserts(hashtable, skew, count, shard->shard_idx);
+        do_zipfian_inserts(hashtable, skew, zipf_seed, count, shard->shard_idx, sync_barrier);
     PLOG_INFO.printf(
         "Quick stats: thread %u, Batch size: %d, cycles per "
         "insertion:%" PRIu64 "",
@@ -273,8 +241,10 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   sleep(1);
 
-  const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx);
-  shard->stats->finds = num_finds;
+  const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
+
+  shard->stats->finds.duration = num_finds.duration;
+  shard->stats->finds.op_count = num_finds.op_count;
 
   if (num_finds.op_count > 0) {
     PLOG_INFO.printf("thread %u | num_finds %" PRIu64 " | cycles per get: %" PRIu64 "",

@@ -45,7 +45,8 @@ class FindResultChecker {
   ~FindResultChecker() { assert(set_->empty()); }
 
   void add(const kmercounter::FindResult& result) {
-    ASSERT_TRUE(set_->insert(result).second);
+    auto copy = result;
+    ASSERT_TRUE(set_->insert(copy).second);
   }
 
   void add(uint64_t id, uint64_t value) { this->add(FindResult(id, value)); }
@@ -131,8 +132,8 @@ TEST_P(HashtableTest, SIMPLE_BATCH_INSERT_TEST) {
   batch_runner_.flush_insert();
 
   // Look up.
-  batch_runner_.find(12, 123);
-  batch_runner_.find(23, 321);
+  batch_runner_.find({12, 123});
+  batch_runner_.find({23, 321});
   batch_runner_.flush_find();
 }
 
@@ -152,8 +153,8 @@ TEST_P(HashtableTest, SIMPLE_BATCH_UPDATE_TEST) {
   batch_runner_.flush_insert();
 
   // Look up.
-  batch_runner_.find(12, 123);
-  batch_runner_.find(23, 321);
+  batch_runner_.find({12, 123});
+  batch_runner_.find({23, 321});
   batch_runner_.flush_find();
 }
 
@@ -168,14 +169,14 @@ TEST_P(HashtableTest, SIMPLE_FIND_AGAIN_TEST) {
   batch_runner_.flush_insert();
 
   // Look up.
-  batch_runner_.find(12, 123);
-  batch_runner_.find(23, 321);
+  batch_runner_.find({12, 123});
+  batch_runner_.find({23, 321});
   batch_runner_.flush_find();
 
   // Look up again.
   checker.add({FindResult(123, 128), FindResult(321, 256)});
-  batch_runner_.find(12, 123);
-  batch_runner_.find(23, 321);
+  batch_runner_.find({12, 123});
+  batch_runner_.find({23, 321});
   batch_runner_.flush_find();
 }
 
@@ -199,7 +200,7 @@ TEST_P(HashtableTest, BATCH_QUERY_TEST) {
   for (uint64_t i = 0; i < test_size; i++) {
     const auto key = i;
     const auto id = 2 * i;
-    batch_runner_.find(key, id);
+    batch_runner_.find({key, id});
   }
   batch_runner_.flush_find();
 }

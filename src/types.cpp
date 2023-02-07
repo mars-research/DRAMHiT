@@ -18,6 +18,8 @@ std::ostream& operator<<(std::ostream& os, const FindResult& x) {
 
 KeyValuePair::KeyValuePair(const eth_hashjoin::tuple_t& tuple)
     : key(tuple.key), value(tuple.payload) {}
+
+KeyValuePair::KeyValuePair(uint64_t key, uint64_t value) : key(key), value(value) {}
 KeyValuePair::KeyValuePair() : key(0), value(0) {}
 
 // Global config. This is a temporary dirty hack.
@@ -28,6 +30,7 @@ const char* ht_type_strings[] = {
     "PARTITIONED",
     "",
     "CASHT++",
+    "ARRAY_HT",
 };
 const char* run_mode_strings[] = {
     "",

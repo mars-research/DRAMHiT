@@ -12,6 +12,13 @@
 
 
 namespace kmercounter {
+
+#if (KEY_LEN == 4)
+using key_type = std::uint32_t;
+#elif (KEY_LEN == 8)
+using key_type = std::uint64_t;
+#endif
+
 class Hasher {
 public:
 
@@ -27,11 +34,17 @@ public:
     hash_val = XXH3_64bits(buff, len);
 #elif defined(CRC_HASH)
     assert(len == sizeof(std::uint64_t));
-    hash_val = _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t *>(buff));
+    if (len == sizeof(std::uint32_t)) {
+      hash_val = _mm_crc32_u32(0xffffffff, *static_cast<const std::uint32_t *>(buff));
+    } else if (len == sizeof(std::uint64_t)) {
+      hash_val = _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t *>(buff));
+    }
 #elif defined(CITY_CRC_HASH)
     hash_val = CityHashCrc128((const char *)buff, len);
 #elif defined(WYHASH)
     hash_val = wyhash((const char *)buff, len, 0, _wyp);
+#elif defined(DIRECT_INDEX)
+    hash_val = *((key_type*) buff);
 #else
     static_assert(false, "Hasher is not specified.");
 #endif
