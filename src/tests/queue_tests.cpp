@@ -371,7 +371,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   auto ht_size = config.ht_size / n_cons;
 
-  if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+  if (bq_load == BQUEUE_LOAD::HtInsert) {
     PLOGV.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id, sh->shard_idx,
                  ht_size);
     kmer_ht = init_ht(ht_size, sh->shard_idx);
@@ -418,7 +418,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       return next_prod_id;
     };
 
-    if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+    if (bq_load == BQUEUE_LOAD::HtInsert) {
       if (!config.no_prefetch) {
         kmer_ht->prefetch_queue(QueueType::insert_queue);
       }
@@ -436,7 +436,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       // dequeue one message
       auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&kv);
       if (ret == RETRY) {
-        if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+        if (bq_load == BQUEUE_LOAD::HtInsert) {
           if (!config.no_prefetch) {
             if (data_idx > 0) {
               submit_batch(data_idx);
@@ -480,7 +480,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         goto pick_next_msg;
       }
 
-      if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+      if (bq_load == BQUEUE_LOAD::HtInsert) {
         _items[data_idx].key = _items[data_idx].id = kv.key;
         //_items[data_idx].value = k & 0xffffffff;
         _items[data_idx].value = kv.value;
@@ -521,7 +521,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   sh->stats->insertions.duration = (t_end - t_start);
   sh->stats->insertions.op_count = transaction_id;
 
-  if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+  if (bq_load == BQUEUE_LOAD::HtInsert) {
     get_ht_stats(sh, kmer_ht);
   }
 

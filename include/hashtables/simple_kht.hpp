@@ -1237,7 +1237,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = 0;
     uint64_t key = 0;
 
-    if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+    if (bq_load == BQUEUE_LOAD::HtInsert) {
 #if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
       hash = key_data->key >> 32;
       key = key_data->key & 0xFFFFFFFF;
@@ -1286,7 +1286,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     const auto time = collector->start();
 
-    if constexpr (bq_load == BQUEUE_LOAD::HtInsert) {
+    if (bq_load == BQUEUE_LOAD::HtInsert) {
 #if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
       hash = key_data->key >> 32;
       key = key_data->key & 0xFFFFFFFF;
