@@ -19,8 +19,9 @@ inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->num_memcpys = kmer_ht->num_memcpys;
   sh->stats->num_queue_flushes = kmer_ht->num_queue_flushes;
   sh->stats->num_hashcmps = kmer_ht->num_hashcmps;
-  // sh->stats->avg_distance_from_bucket =
-  //     (double)(kmer_ht->sum_distance_from_bucket / sh->stats->ht_fill);
+  if (sh->stats->ht_fill)
+    sh->stats->avg_distance_from_bucket =
+      (double)(kmer_ht->sum_distance_from_bucket / sh->stats->ht_fill);
   sh->stats->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
 #endif
 }
@@ -60,6 +61,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         "num_hashcmps: %" PRIu64 ", "
         "max_distance_from_bucket: %" PRIu64 ", "
         "avg_distance_from_bucket: %f,"
+        "avg_distance_from_bucket (adjusted): %f,"
         "avg_read_length: %" PRIu64 ","
         "num_sequences :%" PRIu64 ""
         "]"
@@ -88,6 +90,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         all_sh[k].stats->num_hashcmps,
         all_sh[k].stats->max_distance_from_bucket,
         all_sh[k].stats->avg_distance_from_bucket,
+        all_sh[k].stats->avg_distance_from_bucket / config.insert_factor,
         all_sh[k].stats->avg_read_length, all_sh[k].stats->num_sequences
 #endif  // CALC_STATS
     );
