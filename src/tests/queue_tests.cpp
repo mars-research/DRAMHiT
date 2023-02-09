@@ -606,13 +606,14 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   }
 
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+#if 0
   input_reader::PartitionedEthRelationGenerator t2(
       "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
       n_prod + n_cons, config.relation_r_size);
 
   input_reader::SizedInputReader<KeyValuePair>* s_table = &t2;
-
-  barrier->arrive_and_wait();
+#endif
+  //barrier->arrive_and_wait();
 
   auto num_messages = HT_TESTS_NUM_INSERTS / (n_prod + n_cons);
 
@@ -632,6 +633,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   static const auto event = vtune::event_start("find_batch");
 
+  barrier->arrive_and_wait();
+
   auto t_start = RDTSC_START();
 
   for (auto m = 0u; m < config.insert_factor; m++) {
@@ -643,9 +646,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 #endif
     for (auto i = 0u; i < num_messages; i++) {
       if (is_join) {
+#if 0
         KeyValuePair kv;
         s_table->next(&kv);
         k = kv.key;
+#endif
       } else {
 #if defined(XORWOW)
       k = xorwow(&_xw_state);
@@ -658,6 +663,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #else
+#warning "Monotonic counters"
       k = key_start++;
 #endif
       }
