@@ -444,10 +444,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
 #endif
-
+    size_t idx;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+    hash = key_data->key >> 32;
+    key_data->key &= 0xffffffff;
+    idx = fastrange32(_mm_crc32_u32(0xffffffff, hash), this->capacity);
+#else
     hash = this->hash((const char *)&key_data->key);
-
-    size_t idx = fastrange32(hash, this->capacity);
+    idx = fastrange32(hash, this->capacity);
+#endif
 
     KV *cur_ht = this->hashtable[this->id];
 
@@ -596,10 +601,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
 #endif
+    uint64_t hash;//, key;
+    size_t idx;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+    hash = item->key >> 32;
+    item->key &= 0xffffffff;
+    idx = fastrange32(_mm_crc32_u32(0xffffffff, hash), this->capacity);
+#else
+    hash = this->hash((const char *)&item->key);
+    idx = fastrange32(hash, this->capacity);
+#endif
 
-    uint64_t hash = this->hash((const char *)&item->key);
-
-    uint32_t idx = fastrange32(hash, this->capacity);
     KV *cur_ht = this->hashtable[item->part_id];
     KV *curr;
 
