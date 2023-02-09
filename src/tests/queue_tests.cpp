@@ -260,7 +260,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
       kv.key = k = zipf_values->at(zipf_idx);
       kv.value = k;
-      PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
@@ -281,7 +281,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       //if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
-      PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
+      //PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
 #ifdef LATENCY_COLLECTION
       const auto timer = collector.sync_start();
 #endif
@@ -446,7 +446,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         }
         goto pick_next_msg;
       }
-      PLOGV.printf("Dequeuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
+      //PLOGV.printf("Dequeuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
       /*
       IF_PLOG(plog::verbose) {
         PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %" PRIu64 "",
@@ -485,15 +485,15 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       if (bq_load == BQUEUE_LOAD::HtInsert) {
         _items[data_idx].key = kv.key;
         _items[data_idx].id = kv.key;
-        PLOGV.printf("sizeof items %zu | size of kv.key %zu",
-                  sizeof(_items[data_idx].key), sizeof(kv.key));
+        //PLOGV.printf("sizeof items %zu | size of kv.key %zu",
+        //          sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
         _items[data_idx].value = kv.value;
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
-          PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
+          //PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
           kmer_ht->insert_noprefetch(&_items[data_idx], collector);
           inserted++;
         } else {
@@ -655,7 +655,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
       k = zipf_values->at(zipf_idx);
-      PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #else
       k = key_start++;
@@ -684,8 +684,9 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       }
 
       if (config.no_prefetch) {
-        PLOGV.printf("Finding key %llu", items[0].key);
+        //PLOGV.printf("Finding key %llu", items[0].key);
         auto ret = ktable->find_noprefetch(&items[0], collector);
+        //PLOGV.printf("Got key %lu, value %lu", item->kvpair.key, item->kvpair.value);
         if (ret)
           found++;
         else {
