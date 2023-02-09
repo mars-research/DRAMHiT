@@ -251,7 +251,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
       const auto value = xorwow(&_xw_state);
-      k = value;
+      k = kv.key = kv.value = value;
+
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
@@ -264,7 +265,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
 #else
-      k = key_start++;
+      k = kv.key = kv.value = key_start++;
 #endif
       }
       // XXX: if we are testing without insertions, make sure to pick CRC as
@@ -275,7 +276,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      k |= (hash_val << 32);
+      kv.key |= (hash_val << 32);
 #endif
       //if (++cons_id >= n_cons) cons_id = 0;
 
