@@ -314,7 +314,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
   }
 
   sh->stats->enqueues.duration = (t_end - t_start);
-  sh->stats->enqueues.op_count = transaction_id;
+  sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
 
 #ifdef LATENCY_COLLECTION
   collector.dump("sync_insert", tid);
