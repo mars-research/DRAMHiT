@@ -444,13 +444,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
 #endif
-
+    size_t idx;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+    hash = key_data->key >> 32;
+    key_data->key &= 0xffffffff;
+    idx = fastrange32(_mm_crc32_u32(0xffffffff, hash), this->capacity);
+#else
     hash = this->hash((const char *)&key_data->key);
-
-    size_t idx = fastrange32(hash, this->capacity);
+    idx = fastrange32(hash, this->capacity);
+#endif
 
     KV *cur_ht = this->hashtable[this->id];
 
+    //PLOGV.printf("hash %lu | key %lu | idx %lu", hash, key_data->key, idx);
     for (auto i = 0u; i < this->capacity; i++) {
       KV *curr = &cur_ht[idx];
       auto retry = false;
@@ -596,10 +602,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
 #endif
+    uint64_t hash;//, key;
+    size_t idx;
+#if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
+    hash = item->key >> 32;
+    item->key &= 0xffffffff;
+    idx = fastrange32(_mm_crc32_u32(0xffffffff, hash), this->capacity);
+#else
+    hash = this->hash((const char *)&item->key);
+    idx = fastrange32(hash, this->capacity);
+#endif
 
-    uint64_t hash = this->hash((const char *)&item->key);
-
-    uint32_t idx = fastrange32(hash, this->capacity);
     KV *cur_ht = this->hashtable[item->part_id];
     KV *curr;
 
@@ -890,7 +903,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     auto retry = false;
     // if constexpr (experiment_inactive(experiment_type::insert_dry_run,
     //                                   experiment_type::aggr_kv_write_key_only))
-    PLOGV.printf("Inserting key %lu", q->key);
+    //PLOGV.printf("Inserting key %lu", q->key);
     retry = curr->insert(q);
 
     // if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only))
@@ -1256,7 +1269,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // assigned to the queues_
     size_t idx = fastrange32(hash, this->capacity);  // modulo
 
-    PLOGD.printf("Getting idx %zu", idx);
+    //PLOGD.printf("Getting idx %zu", idx);
     if (idx > this->capacity) {
       PLOG_ERROR.printf("%u > %" PRIu64 "\n", idx, this->capacity);
       std::terminate();

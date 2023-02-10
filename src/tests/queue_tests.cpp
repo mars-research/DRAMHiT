@@ -251,7 +251,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
       const auto value = xorwow(&_xw_state);
-      k = value;
+      k = kv.key = kv.value = value;
+
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
@@ -259,12 +260,12 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
       kv.key = k = zipf_values->at(zipf_idx);
       kv.value = k;
-      PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
 #else
-      k = key_start++;
+      k = kv.key = kv.value = key_start++;
 #endif
       }
       // XXX: if we are testing without insertions, make sure to pick CRC as
@@ -275,12 +276,12 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
       // k has the computed hash in upper 32 bits
       // and the actual key value in lower 32 bits
-      k |= (hash_val << 32);
+      kv.key |= (hash_val << 32);
 #endif
       //if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
-      PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
+      //PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
 #ifdef LATENCY_COLLECTION
       const auto timer = collector.sync_start();
 #endif
@@ -313,7 +314,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
   }
 
   sh->stats->enqueues.duration = (t_end - t_start);
-  sh->stats->enqueues.op_count = transaction_id;
+  sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
 
 #ifdef LATENCY_COLLECTION
   collector.dump("sync_insert", tid);
@@ -445,7 +446,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         }
         goto pick_next_msg;
       }
-      PLOGV.printf("Dequeuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
+      //PLOGV.printf("Dequeuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
       /*
       IF_PLOG(plog::verbose) {
         PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %" PRIu64 "",
@@ -484,15 +485,15 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       if (bq_load == BQUEUE_LOAD::HtInsert) {
         _items[data_idx].key = kv.key;
         _items[data_idx].id = kv.key;
-        PLOGV.printf("sizeof items %zu | size of kv.key %zu",
-                  sizeof(_items[data_idx].key), sizeof(kv.key));
+        //PLOGV.printf("sizeof items %zu | size of kv.key %zu",
+        //          sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
         _items[data_idx].value = kv.value;
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
-          PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
+          //PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
           kmer_ht->insert_noprefetch(&_items[data_idx], collector);
           inserted++;
         } else {
@@ -605,13 +606,14 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   }
 
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+#if 0
   input_reader::PartitionedEthRelationGenerator t2(
       "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
       n_prod + n_cons, config.relation_r_size);
 
   input_reader::SizedInputReader<KeyValuePair>* s_table = &t2;
-
-  barrier->arrive_and_wait();
+#endif
+  //barrier->arrive_and_wait();
 
   auto num_messages = HT_TESTS_NUM_INSERTS / (n_prod + n_cons);
 
@@ -631,6 +633,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   static const auto event = vtune::event_start("find_batch");
 
+  barrier->arrive_and_wait();
+
   auto t_start = RDTSC_START();
 
   for (auto m = 0u; m < config.insert_factor; m++) {
@@ -642,9 +646,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 #endif
     for (auto i = 0u; i < num_messages; i++) {
       if (is_join) {
+#if 0
         KeyValuePair kv;
         s_table->next(&kv);
         k = kv.key;
+#endif
       } else {
 #if defined(XORWOW)
       k = xorwow(&_xw_state);
@@ -654,9 +660,10 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
       k = zipf_values->at(zipf_idx);
-      PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #else
+#warning "Monotonic counters"
       k = key_start++;
 #endif
       }
@@ -683,8 +690,9 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       }
 
       if (config.no_prefetch) {
-        PLOGV.printf("Finding key %llu", items[0].key);
+        //PLOGV.printf("Finding key %llu", items[0].key);
         auto ret = ktable->find_noprefetch(&items[0], collector);
+        //PLOGV.printf("Got key %lu, value %lu", item->kvpair.key, item->kvpair.value);
         if (ret)
           found++;
         else {
@@ -778,6 +786,10 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
   // OK with the original config (prefetch = off). The weird hack was to enable
   // prefetching for insertions and turn it off for finds. Revisit this - vn
   // cfg->no_prefetch = 0;
+
+  // Do a shuffle to redistribute the keys
+  auto rng = std::default_random_engine {};
+  std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
 
   // 2) spawn n_prod + n_cons threads for find
   if (!is_join)
