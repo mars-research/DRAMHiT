@@ -238,8 +238,12 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     auto next_item = 0u;
     auto item_id = 0u;
     std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> items {};
-    std::bernoulli_distribution coin {0.5};
+    std::bernoulli_distribution coin {config.pread};
     xorwow_urbg urbg {};
+    std::array<bool, 1024> flips;
+    for (auto& flip : flips)
+      flip = !coin(urbg); // do a write if true
+
     for (transaction_id = 0u; transaction_id < num_messages;) {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
@@ -268,7 +272,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
       // if (++cons_id >= n_cons) cons_id = 0;
 
-      if (true) { // TODO
+      if (flips[1023 & transaction_id]) { // TODO
         auto pq = pqueues[cons_id];
         
         const auto timer = collector.sync_start();
