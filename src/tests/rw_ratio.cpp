@@ -191,6 +191,7 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
 
   shard.stats->any.op_count = results.n_reads + results.n_writes;
   shard.stats->any.duration = results.cycles;
+  shard.stats->insertions = shard.stats->any;
 
   shard.stats->ht_capacity = hashtable.get_capacity();
   shard.stats->ht_fill = hashtable.get_fill();
