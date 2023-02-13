@@ -1,3 +1,5 @@
+#include <ittnotify.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
@@ -59,8 +61,8 @@ static struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 // thread-local since we have multiple consumers
 static __thread int data_idx = 0;
 static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-__attribute__((
-    aligned(64))) static __thread InsertFindArgument _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+__attribute__((aligned(64))) static __thread InsertFindArgument
+    _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
 std::vector<std::uint64_t, huge_page_allocator<uint64_t>> *zipf_values;
 
@@ -190,10 +192,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     fipc_test_mfence();
   }
 
-  PLOGI.printf(
-      "[prod:%u] started! Sending %" PRIu64 " messages to %d consumers | "
-      "key_start %" PRIu64 " key_end %" PRIu64 "",
-      this_prod_id, num_messages, n_cons, key_start, key_start + num_messages);
+  PLOGI.printf("[prod:%u] started! Sending %" PRIu64
+               " messages to %d consumers | "
+               "key_start %" PRIu64 " key_end %" PRIu64 "",
+               this_prod_id, num_messages, n_cons, key_start,
+               key_start + num_messages);
 
   auto get_next_cons = [&](auto inc) {
     auto next_cons_id = cons_id + inc;
@@ -201,6 +204,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     return next_cons_id;
   };
 
+  constexpr auto preinsert_name = "preinsert";
+  const auto preinsert_event =
+      __itt_event_create(preinsert_name, std::strlen(preinsert_name));
+
+  __itt_event_start(preinsert_event);
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -216,6 +224,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     }
   }
 
+  __itt_event_end(preinsert_event);
+
   // Both producer and consumer threads participate in find. However, the
   // producer threads do not have any <k,v> pairs to find. So, they queue the
   // find request to the actual partitions which hosts these keys.
@@ -227,7 +237,18 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   this->ht_vec->at(tid) = ktable;
 
   auto t_start = RDTSC_START();
-  auto& collector = collectors.at(tid);
+  auto &collector = collectors.at(tid);
+
+  std::bernoulli_distribution coin{config.pread};
+  xorwow_urbg urbg{};
+  std::array<bool, 1024> flips;
+  for (auto &flip : flips) flip = !coin(urbg);  // do a write if true
+
+  constexpr auto rw_test_name = "rw_test";
+  const auto rw_test_event =
+      __itt_event_create(rw_test_name, std::strlen(rw_test_name));
+
+  __itt_event_start(rw_test_event);
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -237,12 +258,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
     auto next_item = 0u;
     auto item_id = 0u;
-    std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> items {};
-    std::bernoulli_distribution coin {config.pread};
-    xorwow_urbg urbg {};
-    std::array<bool, 1024> flips;
-    for (auto& flip : flips)
-      flip = !coin(urbg); // do a write if true
+    std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> items{};
 
     for (transaction_id = 0u; transaction_id < num_messages;) {
 #if defined(XORWOW)
@@ -255,7 +271,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
       k = zipf_values->at(zipf_idx);
-      //printf("zipf_values[%" PRIu64 "] = %" PRIu64 "\n", zipf_idx, k);
+      // printf("zipf_values[%" PRIu64 "] = %" PRIu64 "\n", zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
@@ -272,9 +288,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
       // if (++cons_id >= n_cons) cons_id = 0;
 
-      if (flips[1023 & transaction_id]) { // TODO
+      if (true) {  // TODO
         auto pq = pqueues[cons_id];
-        
+
         const auto timer = collector.sync_start();
         this->queues->enqueue(pq, this_prod_id, cons_id, (data_t)k);
         collector.sync_end(timer);
@@ -283,19 +299,18 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
 
         this->queues->prefetch(this_prod_id, get_next_cons(1), true);
       } else {
-        auto& item = items[next_item];
+        auto &item = items[next_item];
         items[next_item].key = k;
         items[next_item].id = item_id++;
         items[next_item].part_id = cons_id + n_prod;
-        if (next_item == 0)
-          ktable->prefetch_queue(QueueType::find_queue);
+        if (next_item == 0) ktable->prefetch_queue(QueueType::find_queue);
 
         ++next_item;
         if (next_item == HT_TESTS_FIND_BATCH_LENGTH) {
           next_item = 0;
-          InsertFindArguments kp {items};
-          std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> results {};
-          ValuePairs vp {0, results.data()};
+          InsertFindArguments kp{items};
+          std::array<FindResult, HT_TESTS_FIND_BATCH_LENGTH> results{};
+          ValuePairs vp{0, results.data()};
           ktable->find_batch(kp, vp, &collector);
         }
       }
@@ -303,6 +318,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
     }
   }
+
+  __itt_event_end(rw_test_event);
 
   // enqueue halt messages and the consumer automatically knows
   // when to stop
@@ -508,8 +525,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
 #ifdef CALC_STATS
       /*if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
-        PLOG_INFO.printf("[cons:%u] transaction_id %" PRIu64 " deq_failures %" PRIu64 "",
-                         this_cons_id, transaction_id, q->num_deq_failures);
+        PLOG_INFO.printf("[cons:%u] transaction_id %" PRIu64 " deq_failures %"
+      PRIu64 "", this_cons_id, transaction_id, q->num_deq_failures);
       }*/
 #endif
     }
@@ -547,7 +564,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   PLOG_INFO.printf("cons_id %d | inserted %" PRIu64 " elements", this_cons_id,
                    inserted);
   PLOG_INFO.printf(
-      "Quick Stats: Consumer %u finished, receiving %" PRIu64 " messages "
+      "Quick Stats: Consumer %u finished, receiving %" PRIu64
+      " messages "
       "(cycles per message %" PRIu64 ") prod_count %u | finished %u",
       this_cons_id, transaction_id, (t_end - t_start) / transaction_id, n_prod,
       finished_producers);
@@ -575,7 +593,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(tid);
-  //collector->claim();
+  // collector->claim();
 #else
   collector_type *const collector{};
 #endif
@@ -610,12 +628,14 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
-  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64)))
+  InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
   ValuePairs vp = std::make_pair(0, results);
 
-  PLOG_INFO.printf("Finder %u starting. key_start %" PRIu64 " | num_messages %" PRIu64 "", tid,
-                   key_start, num_messages);
+  PLOG_INFO.printf("Finder %u starting. key_start %" PRIu64
+                   " | num_messages %" PRIu64 "",
+                   tid, key_start, num_messages);
 
   int partition;
   int j = 0;
@@ -669,27 +689,30 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
           found++;
         else {
           not_found++;
-          //printf("key %" PRIu64 " not found | zipf_idx %" PRIu64 "\n", k, zipf_idx - 1);
+          // printf("key %" PRIu64 " not found | zipf_idx %" PRIu64 "\n", k,
+          // zipf_idx - 1);
         }
       } else {
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
           // PLOGI.printf("calling find_batch i = %d", i);
-          // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
+          // ktable->find_batch((InsertFindArgument *)items,
+          // HT_TESTS_FIND_BATCH_LENGTH);
           ktable->find_batch(InsertFindArguments(items), vp, collector);
           found += vp.first;
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
           vp.first = 0;
-          //PLOGD.printf("tid %" PRIu64 " count %" PRIu64 " | found -> %" PRIu64 " | not_found -> %" PRIu64 "", tid,
-          //    count, found, not_found);
+          // PLOGD.printf("tid %" PRIu64 " count %" PRIu64 " | found -> %"
+          // PRIu64 " | not_found -> %" PRIu64 "", tid,
+          //     count, found, not_found);
         }
       }
 
 #ifdef CALC_STATS
       if (i % (num_messages / 10) == 0) {
-        PLOG_INFO.printf(
-            "Finder %u, transaction_id %" PRIu64 " | (found %" PRIu64 ", not_found %" PRIu64 ")", tid, i,
-            found, not_found);
+        PLOG_INFO.printf("Finder %u, transaction_id %" PRIu64
+                         " | (found %" PRIu64 ", not_found %" PRIu64 ")",
+                         tid, i, found, not_found);
       }
 #endif
     }
@@ -702,10 +725,10 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   sh->stats->finds.op_count = found;
 
   if (found >= 0) {
-    PLOG_INFO.printf(
-        "thread %u | num_finds %" PRIu64 " (not_found %" PRIu64 ") | cycles per get: %" PRIu64 "",
-        sh->shard_idx, found, not_found,
-        found > 0 ? (t_end - t_start) / found : 0);
+    PLOG_INFO.printf("thread %u | num_finds %" PRIu64 " (not_found %" PRIu64
+                     ") | cycles per get: %" PRIu64 "",
+                     sh->shard_idx, found, not_found,
+                     found > 0 ? (t_end - t_start) / found : 0);
   }
 
   get_ht_stats(sh, ktable);
@@ -748,7 +771,7 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
 #endif
 
   // 2) spawn n_prod + n_cons threads for find
-  //this->run_find_test(cfg, n, npq);
+  // this->run_find_test(cfg, n, npq);
   print_stats(this->shards, *cfg);
 }
 
