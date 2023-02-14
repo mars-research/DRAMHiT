@@ -1,5 +1,3 @@
-#include <ittnotify.h>
-
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
@@ -204,11 +202,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
     return next_cons_id;
   };
 
-  constexpr auto preinsert_name = "preinsert";
-  const auto preinsert_event =
-      __itt_event_create(preinsert_name, std::strlen(preinsert_name));
-
-  __itt_event_start(preinsert_event);
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -223,8 +216,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
     }
   }
-
-  __itt_event_end(preinsert_event);
 
   // Both producer and consumer threads participate in find. However, the
   // producer threads do not have any <k,v> pairs to find. So, they queue the
@@ -244,11 +235,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
   std::array<bool, 1024> flips;
   for (auto &flip : flips) flip = !coin(urbg);  // do a write if true
 
-  constexpr auto rw_test_name = "rw_test";
-  const auto rw_test_event =
-      __itt_event_create(rw_test_name, std::strlen(rw_test_name));
-
-  __itt_event_start(rw_test_event);
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -318,8 +304,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
     }
   }
-
-  __itt_event_end(rw_test_event);
 
   // enqueue halt messages and the consumer automatically knows
   // when to stop
