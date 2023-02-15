@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 CPU_FREQ_KHZ=0
-RDMSR=$(which rdmsr)
-WRMSR=$(which wrmsr)
+RDMSR="rdmsr"
+WRMSR="wrmsr"
 
 get_rated_cpufreq() {
 	# lscpu reports the rated processor freq in %1.2f format
@@ -27,7 +27,7 @@ disable_cstate() {
 disable_turbo() {
 	if ! [ -x "$(command -v ${RDMSR})" ]; then
 		echo "Installing msr-tools ..."
-		sudo apt install msr-tools
+		sudo apt update && sudo apt install msr-tools
 		RDMSR=$(which rdmsr)
 		WRMSR=$(which wrmsr)
 	fi
