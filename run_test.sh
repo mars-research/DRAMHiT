@@ -111,7 +111,7 @@ run_test() {
   for run in ${RUNS}; do
     ONCE=0
     for i in $(seq ${SEQ_START} ${SEQ_STEP} ${SEQ_END}); do
-      LOG_PREFIX="esys23-ae/${TEST_TYPE}/run${run}/"
+      LOG_PREFIX="esys23-ae-${USER}/${TEST_TYPE}/run${run}/"
       if [ ! -d ${LOG_PREFIX} ]; then
         mkdir -p ${LOG_PREFIX}
       fi
@@ -247,7 +247,7 @@ run_kmer_test() {
 
   for run in ${RUNS}; do
     ONCE=0
-    LOG_PREFIX="esys23-ae/${TEST_TYPE}/run${run}/"
+    LOG_PREFIX="esys23-ae-${USER}/${TEST_TYPE}/run${run}/"
 
     for k in $(seq 4 ${MAX_K}); do
       LOG_FILE="${LOG_PREFIX}/k${k}_t${MAX_THREADS}_${GENOME}.log"
