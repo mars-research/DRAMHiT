@@ -78,22 +78,35 @@ class rw_experiment {
 #endif
 
     const auto start = start_time();
-    for (auto i = 0u; i < total_ops; ++i) {
-      if (i % 8 == 0 && i + 16 < keyrange) __builtin_prefetch(&values[i + 16]);
+    if (!config.no_prefetch) {
+      for (auto i = 0u; i < total_ops; ++i) {
+        if (i % 8 == 0 && i + 16 < keyrange) __builtin_prefetch(&values[i + 16]);
 
-      if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
-      if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
-      if (sampler(prng)) {
-        read_batch[read_buffer_len++].key = values[i]; 
-      } else {
-        write_batch[write_buffer_len++].key = values[i]; 
+        if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
+        if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
+        if (sampler(prng))
+          read_batch[read_buffer_len++].key = values[i]; 
+        else
+          write_batch[write_buffer_len++].key = values[i];
+      }
+
+      time_insert(collector);
+      time_find(collector);
+      time_flush_insert(collector);
+      time_flush_find(collector);
+    } else {
+      for (auto i = 0u; i < total_ops; ++i) {
+        InsertFindArgument kv {values[i], values[i]};
+        if (sampler(prng)) {
+          ++timings.n_writes;
+          hashtable.insert_noprefetch(&kv, collector);
+        } else {
+          ++timings.n_reads;
+          if (hashtable.find_noprefetch(&kv, collector))
+            ++timings.n_found;
+        }
       }
     }
-
-    time_insert(collector);
-    time_find(collector);
-    time_flush_insert(collector);
-    time_flush_find(collector);
 
     const auto stop = stop_time();
     timings.cycles = stop - start;
