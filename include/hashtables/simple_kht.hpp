@@ -1252,7 +1252,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     uint64_t hash = 0;
     uint64_t key = 0;
 
-    if (bq_load == BQUEUE_LOAD::HtInsert) {
+    if (bq_load == BQUEUE_LOAD::HtInsert) [[likely]] {
 #if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
       hash = key_data->key >> 32;
       key = key_data->key & 0xFFFFFFFF;
@@ -1270,7 +1270,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t idx = fastrange32(hash, this->capacity);  // modulo
 
     //PLOGD.printf("Getting idx %zu", idx);
-    if (idx > this->capacity) {
+    if (idx > this->capacity) [[unlikely]] {
       PLOG_ERROR.printf("%u > %" PRIu64 "\n", idx, this->capacity);
       std::terminate();
     }

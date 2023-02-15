@@ -57,22 +57,29 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed
   PLOGV.printf("Starting insertion test");
   alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
 
-  const auto start = RDTSC_START();
-  key_type key{};
-
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
 
   PLOGV.printf("id: %u | key_start %" PRIu64 "", id, key_start);
 
+  const auto start = RDTSC_START();
+  key_type key{};
+
   for (auto j = 0u; j < config.insert_factor; j++) {
+
+    key_start = std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
+
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+#ifdef XORWOW
+      auto value = key_start++;
+#else
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
       }
 
       auto value = zipf_values->at(zipf_idx);
+#endif
       items[key].key = items[key].value = value;
       items[key].id = n;
 
@@ -131,20 +138,31 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
   ValuePairs vp = std::make_pair(0, results);
 
-  uint64_t key_start =
-      std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+#ifdef WITH_VTUNE_LIB
+  static const auto event =
+      __itt_event_create("finds", strlen("finds"));
+  __itt_event_start(event);
+#endif
+
   const auto start = RDTSC_START();
   std::uint64_t key{};
   for (auto j = 0u; j < config.insert_factor; j++) {
+    uint64_t key_start =
+      std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+#ifdef XORWOW
+      auto value = key_start++;
+#else
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
       }
+      auto value = zipf_values->at(zipf_idx);
+#endif
 
       if (config.no_prefetch) {
         auto ret =
-            hashtable->find_noprefetch(&zipf_values->at(zipf_idx), collector);
+            hashtable->find_noprefetch(&value, collector);
         if (ret)
           found++;
         else
@@ -177,6 +195,9 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   sync_barrier->arrive_and_wait();
 
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(event);
+#endif
   if (found >= 0) {
     PLOGV.printf(
         "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu", id,
@@ -238,6 +259,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, int64
     }
   }
 #endif
+
+
+  // Do a shuffle to redistribute the keys
+  auto rng = std::default_random_engine {};
+  std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
 
   sleep(1);
 
