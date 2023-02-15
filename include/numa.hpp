@@ -21,6 +21,7 @@ constexpr long long RESET_MASK(int x) { return ~(1LL << (x)); }
 typedef struct numa_node {
   unsigned int id;
   unsigned long cpu_bitmask;
+  struct bitmask *mask;
   unsigned int num_cpus;
   std::vector<uint32_t> cpu_list;
 } numa_node_t;
@@ -89,6 +90,7 @@ class Numa {
   int extract_numa_config(void) {
     struct bitmask *cm = numa_allocate_cpumask();
     auto ret = 0;
+    int bitmask_sz;
 
     for (auto n = 0; n < num_configured_nodes; n++) {
       numa_node_t _node;
@@ -97,16 +99,23 @@ class Numa {
         return ret;
       }
 
+      _node.mask = cm;
+      bitmask_sz = cm->size;
       _node.cpu_bitmask = *(cm->maskp);
-      _node.num_cpus = __builtin_popcountl(_node.cpu_bitmask);
       _node.id = n;
 
       // extract all the cpus from the bitmask
-      while (_node.cpu_bitmask) {
-        // cpu number starts from 0, ffs starts from 1.
-        unsigned long c = __builtin_ffsll(_node.cpu_bitmask) - 1;
-        _node.cpu_bitmask &= RESET_MASK(c);
-        _node.cpu_list.push_back(c);
+      for (int i = 0; i < bitmask_sz; i++) {
+        int c = (_node.cpu_bitmask & 1) ? i : -1;
+        if (c != -1) {
+          _node.cpu_list.push_back(c);
+          _node.num_cpus += 1;
+        }
+        if (!((i + 1) % 64)) {
+          _node.cpu_bitmask = *(cm->maskp + 1);
+        } else {
+          _node.cpu_bitmask >>= 1;
+        }
       }
       append_node(_node);
     }
