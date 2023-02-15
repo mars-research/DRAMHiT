@@ -397,10 +397,10 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   // Round-robin between 0..n_prod
   prod_id = 0;
 
-  auto active_qmask = 0;
+  uint64_t active_qmask = 0ull;
 
   for (auto i = 0u; i < n_prod; i++) {
-    active_qmask |= (1 << i);
+    active_qmask |= (1ull << i);
   }
 
   while (finished_producers < n_prod) {
@@ -429,7 +429,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
     auto np1 = get_next_prod(1);
     this->queues->prefetch(np1, this_cons_id, false);
 
-    if (!(active_qmask & (1 << prod_id))) {
+    if (!(active_qmask & (1ull << prod_id))) {
       goto pick_next_msg;
     }
 
@@ -460,13 +460,12 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         fipc_test_FAI(finished_producers);
         // printf("Got MAGIC bit. stopping consumer\n");
         this->queues->pop_done(prod_id, this_cons_id);
-        active_qmask &= ~(1 << prod_id);
-        /*PLOG_DEBUG.printf(
+        active_qmask &= ~(1ull << prod_id);
+        /* PLOGV.printf(
             "Consumer %u, received HALT from prod_id %u. "
             "finished_producers :%u",
             this_cons_id, prod_id, finished_producers);
-         */
-
+            */
 #ifdef CALC_STATS
         PLOG_DEBUG.printf("Consumer experienced %" PRIu64 " reprobes, %" PRIu64
                           " soft",
