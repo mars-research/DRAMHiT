@@ -100,9 +100,9 @@ class rw_experiment {
         if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
         if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
         if (flips[i & 1023])
-          read_batch[read_buffer_len++].key = values[i];
-        else
           write_batch[write_buffer_len++].key = values[i];
+        else
+          read_batch[read_buffer_len++].key = values[i];
       }
 
       time_insert(collector);
