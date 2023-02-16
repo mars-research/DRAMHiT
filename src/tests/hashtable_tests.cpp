@@ -74,9 +74,9 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed
 #ifdef XORWOW
       auto value = key_start++;
 #else
-      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
-      }
+      // if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
+      //   prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+      // }
 
       auto value = zipf_values->at(zipf_idx);
 #endif

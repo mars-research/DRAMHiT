@@ -12,6 +12,7 @@
 
 #include "hashtables/base_kht.hpp"
 #include "hashtables/ht_helper.hpp"
+#include "utils/hugepage_allocator.hpp"
 
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
@@ -24,6 +25,10 @@ struct experiment_results {
   std::uint64_t n_writes;
   std::uint64_t n_found;
 };
+
+std::atomic_uint64_t ready {};
+extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
+void init_zipfian_dist(double skew, int64_t seed);
 
 class rw_experiment {
  public:
@@ -57,6 +62,7 @@ class rw_experiment {
     std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> args{};
     uint64_t k{};
     collector_type dummy {};
+
     for (auto i = 0u; i < total_ops; ++i,++k) {
       if (k == HT_TESTS_BATCH_LENGTH) {
         hashtable.insert_batch(args, &dummy);
@@ -65,10 +71,9 @@ class rw_experiment {
 
       args[k].key = next_key + i;
     }
-    // TODO: flush the rest in there.
+    
+    hashtable.flush_insert_queue();
 
-    std::vector<decltype(distribution())> values(total_ops);
-    for (auto& key : values) key = distribution() + 1;
 
 #ifdef WITH_VTUNE_LIB
     constexpr auto event_name = "rw_ratio_run";
@@ -77,6 +82,11 @@ class rw_experiment {
     __itt_event_start(event);
 #endif
 
+    std::array<bool, 1024> flips {};
+    for (auto& flip : flips)
+      flip = !sampler(prng);
+
+    const std::span values {&zipf_values->at(next_key), total_ops};
     const auto start = start_time();
     if (!config.no_prefetch) {
       for (auto i = 0u; i < total_ops; ++i) {
@@ -84,7 +94,7 @@ class rw_experiment {
 
         if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
         if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
-        if (sampler(prng))
+        if (flips[i & 1023])
           read_batch[read_buffer_len++].key = values[i]; 
         else
           write_batch[write_buffer_len++].key = values[i];
@@ -96,8 +106,9 @@ class rw_experiment {
       time_flush_find(collector);
     } else {
       for (auto i = 0u; i < total_ops; ++i) {
-        InsertFindArgument kv {values[i], values[i]};
-        if (sampler(prng)) {
+        InsertFindArgument kv {values[0], values[0]};
+        kv.id = i;
+        if (flips[i & 1023]) {
           ++timings.n_writes;
           hashtable.insert_noprefetch(&kv, collector);
         } else {

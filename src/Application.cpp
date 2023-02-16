@@ -606,7 +606,7 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN) {
+  if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN || config.mode == RW_RATIO) {
     init_zipfian_dist(config.skew, config.seed);
   }
 
