@@ -63,13 +63,14 @@ class rw_experiment {
     uint64_t k{};
     collector_type dummy {};
 
+    const std::span values {&zipf_values->at(next_key), zipf_values->size() - next_key};
     for (auto i = 0u; i < total_ops; ++i,++k) {
       if (k == HT_TESTS_BATCH_LENGTH) {
         hashtable.insert_batch(args, &dummy);
         k = 0;
       }
 
-      args[k].key = next_key + i;
+      args[k].key = values[i];
     }
     
     hashtable.flush_insert_queue();
@@ -86,7 +87,6 @@ class rw_experiment {
     for (auto& flip : flips)
       flip = !sampler(prng);
 
-    const std::span values {&zipf_values->at(next_key), total_ops};
     const auto start = start_time();
     if (!config.no_prefetch) {
       for (auto i = 0u; i < total_ops; ++i) {
@@ -106,7 +106,7 @@ class rw_experiment {
       time_flush_find(collector);
     } else {
       for (auto i = 0u; i < total_ops; ++i) {
-        InsertFindArgument kv {values[0], values[0]};
+        InsertFindArgument kv {values[i], values[i]};
         kv.id = i;
         if (flips[i & 1023]) {
           ++timings.n_writes;
@@ -186,7 +186,7 @@ class rw_experiment {
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                       unsigned int total_ops) {
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
-  rw_experiment experiment{hashtable, shard.shard_idx * total_ops + 1};
+  rw_experiment experiment{hashtable, shard.shard_idx * total_ops};
 
   {
     const std::lock_guard guard {collector_lock};
