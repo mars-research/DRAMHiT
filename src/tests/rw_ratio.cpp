@@ -26,8 +26,8 @@ struct experiment_results {
   std::uint64_t n_found;
 };
 
-std::atomic_uint64_t ready {};
-extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
+std::atomic_uint64_t ready{};
+extern std::vector<key_type, huge_page_allocator<key_type>>* zipf_values;
 void init_zipfian_dist(double skew, int64_t seed);
 
 class rw_experiment {
@@ -61,10 +61,11 @@ class rw_experiment {
 
     std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> args{};
     uint64_t k{};
-    collector_type dummy {};
+    collector_type dummy{};
 
-    const std::span values {&zipf_values->at(next_key), zipf_values->size() - next_key};
-    for (auto i = 0u; i < total_ops; ++i,++k) {
+    const std::span values{&zipf_values->at(next_key),
+                           zipf_values->size() - next_key};
+    for (auto i = 0u; i < total_ops; ++i, ++k) {
       if (k == HT_TESTS_BATCH_LENGTH) {
         hashtable.insert_batch(args, &dummy);
         k = 0;
@@ -72,9 +73,8 @@ class rw_experiment {
 
       args[k].key = values[i];
     }
-    
-    hashtable.flush_insert_queue();
 
+    hashtable.flush_insert_queue();
 
 #ifdef WITH_VTUNE_LIB
     constexpr auto event_name = "rw_ratio_run";
@@ -83,19 +83,24 @@ class rw_experiment {
     __itt_event_start(event);
 #endif
 
-    std::array<bool, 1024> flips {};
-    for (auto& flip : flips)
-      flip = !sampler(prng);
+    std::array<bool, 1024> flips{};
+    for (auto& flip : flips) flip = !sampler(prng);
 
     const auto start = start_time();
     if (!config.no_prefetch) {
       for (auto i = 0u; i < total_ops; ++i) {
-        if (i % 8 == 0 && i + 16 < keyrange) __builtin_prefetch(&values[i + 16]);
+        const auto zipf_idx = i;
+        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
+          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        }
+
+        if (i % 8 == 0 && i + 16 < keyrange)
+          __builtin_prefetch(&values[i + 16]);
 
         if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
         if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
         if (flips[i & 1023])
-          read_batch[read_buffer_len++].key = values[i]; 
+          read_batch[read_buffer_len++].key = values[i];
         else
           write_batch[write_buffer_len++].key = values[i];
       }
@@ -106,15 +111,19 @@ class rw_experiment {
       time_flush_find(collector);
     } else {
       for (auto i = 0u; i < total_ops; ++i) {
-        InsertFindArgument kv {values[i], values[i]};
+        const auto zipf_idx = i;
+        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
+          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        }
+
+        InsertFindArgument kv{values[i], values[i]};
         kv.id = i;
         if (flips[i & 1023]) {
           ++timings.n_writes;
           hashtable.insert_noprefetch(&kv, collector);
         } else {
           ++timings.n_reads;
-          if (hashtable.find_noprefetch(&kv, collector))
-            ++timings.n_found;
+          if (hashtable.find_noprefetch(&kv, collector)) ++timings.n_found;
         }
       }
     }
@@ -149,7 +158,8 @@ class rw_experiment {
     timings.n_writes += write_buffer_len;
 
     // const auto start = start_time();
-    hashtable.insert_batch(InsertFindArguments(write_batch.data(), write_buffer_len), collector);
+    hashtable.insert_batch(
+        InsertFindArguments(write_batch.data(), write_buffer_len), collector);
     // timings.insert_cycles += stop_time() - start;
 
     write_buffer_len = 0;
@@ -159,7 +169,9 @@ class rw_experiment {
     timings.n_reads += read_buffer_len;
 
     // const auto start = start_time();
-    hashtable.find_batch(InsertFindArguments(read_batch.data(), read_buffer_len), results, collector);
+    hashtable.find_batch(
+        InsertFindArguments(read_batch.data(), read_buffer_len), results,
+        collector);
     // timings.find_cycles += stop_time() - start;
 
     timings.n_found += results.first;
@@ -189,9 +201,8 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
   rw_experiment experiment{hashtable, shard.shard_idx * total_ops};
 
   {
-    const std::lock_guard guard {collector_lock};
-    if (collectors.empty())
-      collectors.resize(config.num_threads);
+    const std::lock_guard guard{collector_lock};
+    if (collectors.empty()) collectors.resize(config.num_threads);
   }
 
   const auto collector = &collectors.at(shard.shard_idx);
