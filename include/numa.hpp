@@ -102,6 +102,7 @@ class Numa {
       _node.mask = cm;
       bitmask_sz = cm->size;
       _node.cpu_bitmask = *(cm->maskp);
+      _node.num_cpus = 0;
       _node.id = n;
 
       // extract all the cpus from the bitmask
