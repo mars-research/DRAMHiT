@@ -55,10 +55,6 @@ class rw_experiment {
 
   experiment_results run(unsigned int total_ops, collector_type* collector) {
     const auto keyrange = config.num_threads * total_ops;
-    zipf_distribution distribution{
-        config.skew, keyrange,
-        next_key};  // next_key is being used purely as a seed here
-
     std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> args{};
     uint64_t k{};
     collector_type dummy{};
@@ -99,7 +95,7 @@ class rw_experiment {
 
         if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
         if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
-        if (flips[i & 1023])
+        if (false)
           write_batch[write_buffer_len++].key = values[i];
         else
           read_batch[read_buffer_len++].key = values[i];
@@ -118,12 +114,12 @@ class rw_experiment {
 
         InsertFindArgument kv{values[i], values[i]};
         kv.id = i;
-        if (flips[i & 1023]) {
+        if (false) {
           ++timings.n_writes;
           hashtable.insert_noprefetch(&kv, collector);
         } else {
           ++timings.n_reads;
-          if (hashtable.find_noprefetch(&kv, collector)) ++timings.n_found;
+          hashtable.find_noprefetch(&kv, collector);
         }
       }
     }
@@ -174,7 +170,7 @@ class rw_experiment {
         collector);
     // timings.find_cycles += stop_time() - start;
 
-    timings.n_found += results.first;
+    //timings.n_found += results.first;
     results.first = 0;
     read_buffer_len = 0;
   }
