@@ -170,7 +170,7 @@ class rw_experiment {
         collector);
     // timings.find_cycles += stop_time() - start;
 
-    //timings.n_found += results.first;
+    timings.n_found += results.first;
     results.first = 0;
     read_buffer_len = 0;
   }
