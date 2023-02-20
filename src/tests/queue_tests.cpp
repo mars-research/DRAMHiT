@@ -292,7 +292,7 @@ void QueueTest<T>::producer_thread(
       uint64_t hash_val = hasher(&k, sizeof(k));
       cons_id = hash_to_cpu(hash_val, n_cons);
 
-      if (flips[1023 & transaction_id]) {  // TODO
+      if (true) {  // TODO
         auto pq = pqueues[cons_id];
         this->queues->enqueue(pq, this_prod_id, cons_id, {k, k});
         auto npq = pqueues[get_next_cons(1)];
@@ -334,8 +334,8 @@ void QueueTest<T>::producer_thread(
     vtune::event_end(event);
   }
 
-  sh->stats->finds.duration = (t_end - t_start);
-  sh->stats->finds.op_count = transaction_id * config.insert_factor;
+  sh->stats->enqueues.duration = (t_end - t_start);
+  sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
 
 #ifdef LATENCY_COLLECTION
   collector.dump("sync_insert", tid);
