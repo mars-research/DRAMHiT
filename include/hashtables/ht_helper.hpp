@@ -6,9 +6,8 @@
 
 #include <fcntl.h>
 #include <numa.h>
-#include <numaif.h>
-#include <sys/mman.h>
 #include <unistd.h>
+#include <sys/mman.h>
 #include <plog/Log.h>
 
 #include <cstring>
@@ -41,6 +40,8 @@ constexpr uint64_t cache_block_offset(uint64_t addr) {
 constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
   return addr & ~CACHE_BLOCK_MASK;
 }
+
+void distribute_mem_to_nodes(void *addr, size_t alloc_sz);
 
 template <bool WRITE>
 inline void prefetch_object(const void *addr, uint64_t size) {
@@ -138,26 +139,8 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     }
     *out_fd = fd;
   }
-  if (config.ht_type == CASHTPP && (config.numa_split != 2) && (config.num_threads > 1)) {
-    void *_addr = addr;
-    size_t len_split = alloc_sz >> 1;
-    void *addr_split = (char *)_addr + len_split;
-    unsigned long nodemask[4096] = {0};
-
-    nodemask[0] = 1 << (!current_node);
-
-    PLOGV.printf("Moving half the memory to node %d", !current_node);
-
-    long ret = mbind(addr_split, len_split, MPOL_BIND, nodemask, 4096,
-        MPOL_MF_MOVE | MPOL_MF_STRICT);
-
-    PLOGV.printf("mmap_addr %p | len %zu", _addr, capacity * sizeof(T));
-    PLOGV.printf("calling mbind with addr %p | len %zu | nodemask %p", addr_split,
-        len_split, nodemask);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-    }
+  if (config.ht_type == CASHTPP && (config.numa_split != 2)) {
+    distribute_mem_to_nodes(addr, alloc_sz);
   }
 skip_mbind:
   memset(addr, 0, capacity * sizeof(T));

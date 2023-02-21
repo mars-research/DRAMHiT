@@ -801,9 +801,10 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
   // cfg->no_prefetch = 0;
 
   // Do a shuffle to redistribute the keys
-  auto rng = std::default_random_engine {};
-  std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
-
+  if (zipf_values) {
+    auto rng = std::default_random_engine {};
+    std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
+  }
   // 2) spawn n_prod + n_cons threads for find
   if (!is_join)
     this->run_find_test(cfg, n, is_join, npq);
