@@ -79,8 +79,9 @@ void init_zipfian_dist(double skew, int64_t seed) {
       HT_TESTS_NUM_INSERTS);
 
   std::stringstream cache_name{};
-  cache_name << "/opt/cache" << config.skew << ".bin";
+  cache_name << "/opt/kvstore/cache" << config.skew << "_" << config.ht_size << ".bin";
   std::ifstream cache{cache_name.str().c_str()};
+
   PLOG_INFO << cache_name.str() << " " << cache.is_open();
   if (cache.is_open()) {
     cache.read(reinterpret_cast<char *>(
