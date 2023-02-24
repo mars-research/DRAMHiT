@@ -212,6 +212,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // paranoid check. id should be unique
     assert(this->hashtable[this->id] == nullptr);
 
+    this->ht_sz = this->capacity * sizeof(KV);
+
     // Allocate for this id
     this->hashtable[this->id] =
         (KV *)calloc_ht<KV>(this->capacity, this->id, &this->fds[this->id]);
@@ -702,9 +704,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
+  size_t get_ht_size() const { return this->ht_sz; }
+
  private:
   static std::mutex ht_init_mutex;
   uint64_t capacity;
+  size_t ht_sz;
   KV empty_item; /* for comparison for empty slot */
   KVQ *queue;    // TODO prefetch this?
   KVQ *find_queue;
@@ -754,7 +759,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
       this->find_queue[this->find_head].part_id = q->part_id;
+#ifdef LATENCY_COLLECTION
       this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
 
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
