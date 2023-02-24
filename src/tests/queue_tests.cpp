@@ -142,8 +142,7 @@ static auto mbind_buffer_local(void *buf, ssize_t sz) {
   return ret;
 }
 
-static std::vector<cacheline> toxic_waste_dump(1024 * 1024 * 1024 /
-                                               sizeof(cacheline));
+std::vector<cacheline> toxic_waste_dump(1024 * 1024 * 1024 / sizeof(cacheline));
 
 template <typename T>
 void QueueTest<T>::producer_thread(
@@ -650,7 +649,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
 
   barrier->arrive_and_wait();
 
-  std::size_t next_pollution {};
+  std::size_t next_pollution{};
   auto t_start = RDTSC_START();
 
   for (auto m = 0u; m < config.insert_factor; m++) {
@@ -731,7 +730,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
           // PRIu64 " | not_found -> %" PRIu64 "", tid,
           //     count, found, not_found);
 
-          for (auto p = 0u; p < config.pollute_ratio * HT_TESTS_FIND_BATCH_LENGTH; ++p)
+          for (auto p = 0u;
+               p < config.pollute_ratio * HT_TESTS_FIND_BATCH_LENGTH; ++p)
             prefetch_object<true>(
                 &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
         }
