@@ -144,6 +144,8 @@ static auto mbind_buffer_local(void *buf, ssize_t sz) {
   return ret;
 }
 
+static std::vector<cacheline> toxic_waste_dump(1024 * 1024 * 1024 / sizeof(cacheline));
+
 template <typename T>
 void QueueTest<T>::producer_thread(const uint32_t tid,
                                    const uint32_t n_prod,
@@ -221,6 +223,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
   //PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
   //    sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
+  std::size_t next_pollution {};
 
   barrier->arrive_and_wait();
 
@@ -234,6 +237,7 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
     if (next_cons_id >= n_cons) next_cons_id = 0;
     return next_cons_id;
   };
+
 
   KeyValuePair kv{};
   auto t_start = RDTSC_START();
@@ -306,6 +310,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       auto npq = pqueues[get_next_cons(1)];
 
       this->queues->prefetch(this_prod_id, get_next_cons(1), true);
+
+      for (auto p = 0u; p < config.pollute_ratio; ++p)
+        prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
       transaction_id++;
     }
