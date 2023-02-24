@@ -8,11 +8,9 @@
 #include "hashtables/ht_helper.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "helper.hpp"
-
 #include "input_reader/csv.hpp"
 #include "input_reader/eth_rel_gen.hpp"
 #include "input_reader/fastq.hpp"
-
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "queues/bqueue_aligned.hpp"
@@ -64,8 +62,8 @@ static struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
 // thread-local since we have multiple consumers
 static __thread int data_idx = 0;
 static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-__attribute__((
-    aligned(64))) static __thread InsertFindArgument _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
+__attribute__((aligned(64))) static __thread InsertFindArgument
+    _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
 std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
@@ -83,8 +81,8 @@ void init_zipfian_dist(double skew, int64_t seed) {
   std::ifstream cache{cache_name.str().c_str()};
   PLOG_INFO << cache_name.str() << " " << cache.is_open();
   if (cache.is_open()) {
-    cache.read(reinterpret_cast<char *>(
-        zipf_values->data()), zipf_values->size() * sizeof(key_type));
+    cache.read(reinterpret_cast<char *>(zipf_values->data()),
+               zipf_values->size() * sizeof(key_type));
     cache.close();
   } else {
     zipf_distribution_apache distribution(keyrange_width, skew, seed);
@@ -95,8 +93,8 @@ void init_zipfian_dist(double skew, int64_t seed) {
     }
     PLOGI.printf("Zipfian dist generated. size %zu", zipf_values->size());
     std::ofstream cache_out{cache_name.str().c_str()};
-    cache_out.write(reinterpret_cast<char *>(
-        zipf_values->data()), zipf_values->size() * sizeof(key_type));
+    cache_out.write(reinterpret_cast<char *>(zipf_values->data()),
+                    zipf_values->size() * sizeof(key_type));
     cache_out.close();
   }
 }
@@ -144,17 +142,14 @@ static auto mbind_buffer_local(void *buf, ssize_t sz) {
   return ret;
 }
 
-static std::vector<cacheline> toxic_waste_dump(1024 * 1024 * 1024 / sizeof(cacheline));
+static std::vector<cacheline> toxic_waste_dump(1024 * 1024 * 1024 /
+                                               sizeof(cacheline));
 
 template <typename T>
-void QueueTest<T>::producer_thread(const uint32_t tid,
-                                   const uint32_t n_prod,
-                                   const uint32_t n_cons,
-                                   const bool main_thread,
-                                   const double skew,
-                                   bool is_join,
-                                   std::barrier<std::function<void()>>* barrier
-                                   ) {
+void QueueTest<T>::producer_thread(
+    const uint32_t tid, const uint32_t n_prod, const uint32_t n_cons,
+    const bool main_thread, const double skew, bool is_join,
+    std::barrier<std::function<void()>> *barrier) {
   // Get shard pointer from the shards array
   Shard *sh = &this->shards[tid];
 
@@ -203,7 +198,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #endif
   static auto event = -1;
 
-
   if (main_thread) {
     event = vtune::event_start("message_enq");
   }
@@ -217,13 +211,14 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 
 #if defined(BQUEUE_KMER_TEST)
 #warning "BQ KMER TEST"
-  auto reader = input_reader::MakeFastqKMerPreloadReader(config.K,
-              config.in_file, sh->shard_idx, n_prod);
+  auto reader = input_reader::MakeFastqKMerPreloadReader(
+      config.K, config.in_file, sh->shard_idx, n_prod);
 #endif
 
-  //PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu r_table size %d",
-  //    sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
-  std::size_t next_pollution {};
+  // PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu
+  // r_table size %d",
+  //     sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
+  std::size_t next_pollution{};
 
   barrier->arrive_and_wait();
 
@@ -238,13 +233,12 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
     return next_cons_id;
   };
 
-
   KeyValuePair kv{};
   auto t_start = RDTSC_START();
-  //std::uint64_t num_kmers{};
+  // std::uint64_t num_kmers{};
 
 #ifdef LATENCY_COLLECTION
-  auto& collector = collectors.at(tid);
+  auto &collector = collectors.at(tid);
 #endif
 
   for (auto j = 0u; j < config.insert_factor; j++) {
@@ -257,29 +251,29 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 #endif
 
 #if defined(BQUEUE_KMER_TEST)
-    for (;reader->next(&kmer);) {
+    for (; reader->next(&kmer);) {
 #else
     for (transaction_id = 0u; transaction_id < num_messages;) {
 #endif
       if (is_join) {
-        //num_kmers++;
+        // num_kmers++;
         kv.key = k = kmer;
         kv.value = 0;
       } else {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
-      const auto value = xorwow(&_xw_state);
-      k = kv.key = kv.value = value;
+        const auto value = xorwow(&_xw_state);
+        k = kv.key = kv.value = value;
 
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
-      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
-        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
+          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
-      kv.key = k = zipf_values->at(zipf_idx);
-      kv.value = k;
-      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
-      zipf_idx++;
+        kv.key = k = zipf_values->at(zipf_idx);
+        kv.value = k;
+        // PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+        zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
 #else
@@ -296,10 +290,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       // and the actual key value in lower 32 bits
       kv.key |= (hash_val << 32);
 #endif
-      //if (++cons_id >= n_cons) cons_id = 0;
+      // if (++cons_id >= n_cons) cons_id = 0;
 
       auto pq = pqueues[cons_id];
-      //PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
+      // PLOGV.printf("Queuing key = %" PRIu64 ", value = %" PRIu64, kv.key,
+      // kv.value);
 #ifdef LATENCY_COLLECTION
       const auto timer = collector.sync_start();
 #endif
@@ -312,7 +307,8 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       this->queues->prefetch(this_prod_id, get_next_cons(1), true);
 
       for (auto p = 0u; p < config.pollute_ratio; ++p)
-        prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+        prefetch_object<true>(
+            &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
       transaction_id++;
     }
@@ -346,11 +342,9 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
 }
 
 template <typename T>
-void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
-                                   const uint32_t n_cons,
-                                   const uint32_t num_nops,
-                                   std::barrier<std::function<void()>>* barrier
-                                   ) {
+void QueueTest<T>::consumer_thread(
+    const uint32_t tid, const uint32_t n_prod, const uint32_t n_cons,
+    const uint32_t num_nops, std::barrier<std::function<void()>> *barrier) {
   // Get shard pointer from the shards array
   Shard *sh = &this->shards[tid];
 
@@ -456,7 +450,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
     for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
       // dequeue one message
-      auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&kv);
+      auto ret =
+          this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&kv);
       if (ret == RETRY) {
         if (bq_load == BQUEUE_LOAD::HtInsert) {
           if (!config.no_prefetch) {
@@ -467,7 +462,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         }
         goto pick_next_msg;
       }
-      //PLOGV.printf("Dequeuing key = %" PRIu64 ", value = %" PRIu64, kv.key, kv.value);
+      // PLOGV.printf("Dequeuing key = %" PRIu64 ", value = %" PRIu64, kv.key,
+      // kv.value);
       /*
       IF_PLOG(plog::verbose) {
         PLOG_VERBOSE.printf("dequeing from q[%d][%d] value %" PRIu64 "",
@@ -505,15 +501,15 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       if (bq_load == BQUEUE_LOAD::HtInsert) {
         _items[data_idx].key = kv.key;
         _items[data_idx].id = kv.key;
-        //PLOGV.printf("sizeof items %zu | size of kv.key %zu",
-        //          sizeof(_items[data_idx].key), sizeof(kv.key));
+        // PLOGV.printf("sizeof items %zu | size of kv.key %zu",
+        //           sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
         _items[data_idx].value = kv.value;
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
-          //PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
+          // PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
           kmer_ht->insert_noprefetch(&_items[data_idx], collector);
           inserted++;
         } else {
@@ -526,8 +522,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       transaction_id++;
 #ifdef CALC_STATS
       /*if (transaction_id % (HT_TESTS_NUM_INSERTS * n_cons / 10) == 0) {
-        PLOG_INFO.printf("[cons:%u] transaction_id %" PRIu64 " deq_failures %" PRIu64 "",
-                         this_cons_id, transaction_id, q->num_deq_failures);
+        PLOG_INFO.printf("[cons:%u] transaction_id %" PRIu64 " deq_failures %"
+      PRIu64 "", this_cons_id, transaction_id, q->num_deq_failures);
       }*/
 #endif
     }
@@ -562,8 +558,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   }
 #endif
 
-  PLOGV.printf("cons_id %d | inserted %lu elements", this_cons_id,
-                   inserted);
+  PLOGV.printf("cons_id %d | inserted %lu elements", this_cons_id, inserted);
   PLOGV.printf(
       "Quick Stats: Consumer %u finished, receiving %lu messages "
       "(cycles per message %lu) prod_count %u | finished %u",
@@ -584,9 +579,8 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 }
 
 template <typename T>
-void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
-                               bool is_join,
-                               std::barrier<std::function<void()>>* barrier) {
+void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
+                               std::barrier<std::function<void()>> *barrier) {
   Shard *sh = &this->shards[tid];
   uint64_t found = 0, not_found = 0;
   uint64_t count = std::max(HT_TESTS_NUM_INSERTS * tid, (uint64_t)1);
@@ -620,7 +614,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
     auto ht_size = config.ht_size / n_cons;
     PLOGV.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
-                     sh->shard_idx);
+                 sh->shard_idx);
     ktable = init_ht(ht_size, sh->shard_idx);
     this->ht_vec->at(tid) = ktable;
   }
@@ -633,7 +627,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   input_reader::SizedInputReader<KeyValuePair>* s_table = &t2;
 #endif
-  //barrier->arrive_and_wait();
+  // barrier->arrive_and_wait();
 
   auto num_messages = HT_TESTS_NUM_INSERTS / (n_prod + n_cons);
 
@@ -641,12 +635,13 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
-  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  __attribute__((aligned(64)))
+  InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
 
   ValuePairs vp = std::make_pair(0, results);
 
   PLOGV.printf("Finder %u starting. key_start %lu | num_messages %lu", tid,
-                   key_start, num_messages);
+               key_start, num_messages);
 
   int partition;
   int j = 0;
@@ -655,6 +650,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 
   barrier->arrive_and_wait();
 
+  std::size_t next_pollution {};
   auto t_start = RDTSC_START();
 
   for (auto m = 0u; m < config.insert_factor; m++) {
@@ -673,18 +669,18 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
 #endif
       } else {
 #if defined(XORWOW)
-      k = xorwow(&_xw_state);
+        k = xorwow(&_xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian finds"
-      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
-        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
+          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
-      k = zipf_values->at(zipf_idx);
-      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
-      zipf_idx++;
+        k = zipf_values->at(zipf_idx);
+        // PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+        zipf_idx++;
 #else
 #warning "Monotonic counters"
-      k = key_start++;
+        k = key_start++;
 #endif
       }
       uint64_t hash_val = hasher(&k, sizeof(k));
@@ -710,34 +706,42 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       }
 
       if (config.no_prefetch) {
-        //PLOGV.printf("Finding key %llu", items[0].key);
+        // PLOGV.printf("Finding key %llu", items[0].key);
         auto ret = ktable->find_noprefetch(&items[0], collector);
-        //PLOGV.printf("Got key %lu, value %lu", item->kvpair.key, item->kvpair.value);
+        // PLOGV.printf("Got key %lu, value %lu", item->kvpair.key,
+        // item->kvpair.value);
         if (ret)
           found++;
         else {
           not_found++;
-          //printf("key %" PRIu64 " not found | zipf_idx %" PRIu64 "\n", k, zipf_idx - 1);
+          // printf("key %" PRIu64 " not found | zipf_idx %" PRIu64 "\n", k,
+          // zipf_idx - 1);
         }
       } else {
         if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
           // PLOGI.printf("calling find_batch i = %d", i);
-          // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
+          // ktable->find_batch((InsertFindArgument *)items,
+          // HT_TESTS_FIND_BATCH_LENGTH);
           ktable->find_batch(InsertFindArguments(items), vp, collector);
           found += vp.first;
           j = 0;
           not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
           vp.first = 0;
-          //PLOGD.printf("tid %" PRIu64 " count %" PRIu64 " | found -> %" PRIu64 " | not_found -> %" PRIu64 "", tid,
-          //    count, found, not_found);
+          // PLOGD.printf("tid %" PRIu64 " count %" PRIu64 " | found -> %"
+          // PRIu64 " | not_found -> %" PRIu64 "", tid,
+          //     count, found, not_found);
+
+          for (auto p = 0u; p < config.pollute_ratio * HT_TESTS_FIND_BATCH_LENGTH; ++p)
+            prefetch_object<true>(
+                &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
         }
       }
 
 #ifdef CALC_STATS
       if (i % (num_messages / 10) == 0) {
-        PLOG_INFO.printf(
-            "Finder %u, transaction_id %" PRIu64 " | (found %" PRIu64 ", not_found %" PRIu64 ")", tid, i,
-            found, not_found);
+        PLOG_INFO.printf("Finder %u, transaction_id %" PRIu64
+                         " | (found %" PRIu64 ", not_found %" PRIu64 ")",
+                         tid, i, found, not_found);
       }
 #endif
     }
@@ -778,8 +782,7 @@ void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
 }
 
 template <typename T>
-void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
-                            bool is_join,
+void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
                             NumaPolicyQueues *npq) {
   const auto thread_count = cfg->n_prod + cfg->n_cons;
   this->ht_vec = new std::vector<BaseHashTable *>(thread_count, nullptr);
@@ -809,23 +812,22 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n,
 
   // Do a shuffle to redistribute the keys
   if (zipf_values) {
-    auto rng = std::default_random_engine {};
+    auto rng = std::default_random_engine{};
     std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
   }
   // 2) spawn n_prod + n_cons threads for find
-  if (!is_join)
-    this->run_find_test(cfg, n, is_join, npq);
+  if (!is_join) this->run_find_test(cfg, n, is_join, npq);
 
   end_ts = std::chrono::steady_clock::now();
 
-  PLOG_INFO.printf("Kmer insertion took %llu us",
+  PLOG_INFO.printf(
+      "Kmer insertion took %llu us",
       chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count());
   print_stats(this->shards, *cfg);
 }
 
 template <typename T>
-void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
-                                 bool is_join,
+void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n, bool is_join,
                                  NumaPolicyQueues *npq) {
   uint32_t i = 0, j = 0;
   cpu_set_t cpuset;
@@ -836,7 +838,6 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
   };
 
   std::barrier barrier(cfg->n_prod + cfg->n_cons, on_completion);
-
 
   // Spawn threads that will perform find operation
   for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
@@ -881,7 +882,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 
     PLOGV.printf("Thread find_thread: %u, affinity: %u", i, assigned_cpu);
     PLOGV.printf("[%d] sh->insertion_cycles %lu", sh->shard_idx,
-                     cycles_per_op(sh->stats->insertions));
+                 cycles_per_op(sh->stats->insertions));
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
@@ -890,7 +891,8 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 
   {
     PLOG_VERBOSE.printf("Running master thread with id %d", main_sh->shard_idx);
-    this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, is_join, &barrier);
+    this->find_thread(main_sh->shard_idx, cfg->n_prod, cfg->n_cons, is_join,
+                      &barrier);
   }
 
   for (auto &th : this->prod_threads) {
@@ -905,8 +907,7 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
 }
 
 template <class T>
-void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
-                                      bool is_join,
+void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n, bool is_join,
                                       NumaPolicyQueues *npq) {
   cpu_set_t cpuset;
   uint32_t i = 0, j = 0;
@@ -954,8 +955,9 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
     if (assigned_cpu == 0) continue;
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
-    auto _thread = std::thread(&QueueTest<T>::producer_thread, this, i,
-                               cfg->n_prod, cfg->n_cons, false, cfg->skew, is_join, &barrier);
+    auto _thread =
+        std::thread(&QueueTest<T>::producer_thread, this, i, cfg->n_prod,
+                    cfg->n_cons, false, cfg->skew, is_join, &barrier);
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
@@ -981,16 +983,16 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 
     PLOG_DEBUG.printf("tid %d assigned cpu %d", i, assigned_cpu);
 
-    auto _thread = std::thread(&QueueTest<T>::consumer_thread, this, i,
-                               cfg->n_prod, cfg->n_cons, cfg->num_nops, &barrier);
+    auto _thread =
+        std::thread(&QueueTest<T>::consumer_thread, this, i, cfg->n_prod,
+                    cfg->n_cons, cfg->num_nops, &barrier);
 
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
 
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
 
-    PLOGV.printf("Thread consumer_thread: %u, affinity: %u", i,
-                      assigned_cpu);
+    PLOGV.printf("Thread consumer_thread: %u, affinity: %u", i, assigned_cpu);
 
     this->cons_threads.push_back(std::move(_thread));
     i += 1;
@@ -1020,9 +1022,9 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 }
 
 template class QueueTest<SectionQueue>;
-const KeyValuePair SectionQueue::BQ_MAGIC_KV = KeyValuePair(
-      SectionQueue::BQ_MAGIC_64BIT, SectionQueue::BQ_MAGIC_64BIT);
+const KeyValuePair SectionQueue::BQ_MAGIC_KV =
+    KeyValuePair(SectionQueue::BQ_MAGIC_64BIT, SectionQueue::BQ_MAGIC_64BIT);
 
-//template class QueueTest<LynxQueue>;
-//template class QueueTest<BQueueAligned>;
+// template class QueueTest<LynxQueue>;
+// template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter
