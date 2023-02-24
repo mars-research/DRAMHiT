@@ -617,6 +617,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
                      sh->shard_idx);
     ktable = init_ht(ht_size, sh->shard_idx);
     this->ht_vec->at(tid) = ktable;
+  } else {
+    PLOGD.printf("Dist to nodes tid %u", tid);
+    auto *part_ht = reinterpret_cast<PartitionedHashStore<KVType, ItemQueue>*>(ktable);
+    void *ht_mem = part_ht->hashtable[part_ht->id];
+    distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size());
   }
 
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
@@ -735,7 +740,16 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       }
 #endif
     }
+    if (!config.no_prefetch) {
+      if (vp.first > 0) {
+        vp.first = 0;
+      }
+
+      ktable->flush_find_queue(vp, collector);
+      found += vp.first;
+    }
   }
+
   auto t_end = RDTSCP();
 
   barrier->arrive_and_wait();
