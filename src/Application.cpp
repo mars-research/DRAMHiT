@@ -79,6 +79,7 @@ const Configuration def = {
     .relation_r_size = 128000000,
     .relation_s_size = 128000000,
     .delimitor = "|",
+    .pollute_ratio = 0
 };  // TODO enum
 
 // for synchronization of threads
@@ -450,7 +451,8 @@ int Application::process(int argc, char *argv[]) {
         ("relation_s_size",
         po::value(&config.relation_s_size)->default_value(def.relation_s_size), "Number of elements in relation S. Only used when the relations are generated.")
         ("delimitor",
-        po::value(&config.delimitor)->default_value(def.delimitor), "CSV delimitor for relation files.");
+        po::value(&config.delimitor)->default_value(def.delimitor), "CSV delimitor for relation files.")
+        ("pollute-ratio", po::value(&config.pollute_ratio)->default_value(def.pollute_ratio), "Ratio of pollution events to ops (>1)");
 
     papi_init();
 
