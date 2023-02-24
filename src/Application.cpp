@@ -89,6 +89,13 @@ static std::atomic_uint num_entered{};
 static MemoryBwCounters *bw_counters;
 #endif
 extern bool stop_sync;
+extern bool zipfian_finds;
+extern bool zipfian_inserts;
+
+ExecPhase cur_phase = ExecPhase::none;
+
+uint64_t g_insert_start, g_insert_end;
+uint64_t g_find_start, g_find_end;
 
 void sync_complete(void) {
 #if defined(WITH_PAPI_LIB)
@@ -104,6 +111,23 @@ void sync_complete(void) {
     bw_counters->start();
   }
 #endif
+  if (cur_phase == ExecPhase::finds) {
+    if (!zipfian_finds) {
+      g_find_start = RDTSC_START();
+      zipfian_finds = true;
+    } else {
+      g_find_end = RDTSCP();
+      PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
+    }
+  } else if (cur_phase == ExecPhase::insertions) {
+    if (!zipfian_inserts) {
+      g_insert_start = RDTSC_START();
+      zipfian_inserts = true;
+    } else {
+      g_insert_end = RDTSCP();
+      PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
+    }
+  }
   PLOGI.printf("Sync phase done!");
 }
 

@@ -291,6 +291,11 @@ enum class QueueType {
   find_queue,
 };
 
+enum class ExecPhase {
+  insertions,
+  finds,
+  none,
+};
 // Can be use for, let's say, cleanup functions.
 using VoidFn = std::function<void()>;
 

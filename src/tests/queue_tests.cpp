@@ -644,9 +644,9 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   int partition;
   int j = 0;
 
-  static const auto event = vtune::event_start("find_batch");
-
   barrier->arrive_and_wait();
+
+  static const auto event = vtune::event_start("find_batch");
 
   auto t_start = RDTSC_START();
 
@@ -737,6 +737,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   }
   auto t_end = RDTSCP();
 
+  barrier->arrive_and_wait();
+
   vtune::event_end(event);
 
   sh->stats->finds.duration = (t_end - t_start);
@@ -822,10 +824,19 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n,
                                  NumaPolicyQueues *npq) {
   uint32_t i = 0, j = 0;
   cpu_set_t cpuset;
+  bool started = false;
+  uint64_t g_find_start = 0, g_find_end = 0;
 
-  std::function<void()> on_completion = []() noexcept {
+  std::function<void()> on_completion = [&]() noexcept {
+    if (!started) {
+      PLOG_INFO << "Sync completed. Starting Find threads!";
+      started = true;
+      g_find_start = RDTSC_START();
+    } else {
+      g_find_end = RDTSCP();
+      PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
+    }
     // For debugging
-    PLOG_INFO << "Sync completed. Starting Find threads!";
   };
 
   std::barrier barrier(cfg->n_prod + cfg->n_cons, on_completion);

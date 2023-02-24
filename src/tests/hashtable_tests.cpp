@@ -11,6 +11,7 @@
 #include "sync.h"
 #include "tests/tests.hpp"
 #include "utils/hugepage_allocator.hpp"
+#include "utils/vtune.hpp"
 #include "zipf.h"
 #include "zipf_distribution.hpp"
 
@@ -30,6 +31,9 @@ const uint64_t max_possible_threads = 128;
 
 void sync_complete(void);
 bool stop_sync = false;
+bool zipfian_finds = false;
+bool zipfian_inserts = false;
+extern ExecPhase cur_phase;
 
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
@@ -131,18 +135,14 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   collector_type *const collector{};
 #endif
 
-  sync_barrier->arrive_and_wait();
-  stop_sync = true;
-
   alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
   FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
   ValuePairs vp = std::make_pair(0, results);
 
-#ifdef WITH_VTUNE_LIB
-  static const auto event =
-      __itt_event_create("finds", strlen("finds"));
-  __itt_event_start(event);
-#endif
+  sync_barrier->arrive_and_wait();
+  stop_sync = true;
+
+  static const auto event = vtune::event_start("find_casht");
 
   const auto start = RDTSC_START();
   std::uint64_t key{};
@@ -168,7 +168,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
         else
           not_found++;
       } else {
-        items[key] = {zipf_values->at(zipf_idx), n};
+        items[key] = {value , n};
 
         if (++key == HT_TESTS_FIND_BATCH_LENGTH) {
           hashtable->find_batch(InsertFindArguments(items), vp, collector);
@@ -195,9 +195,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   sync_barrier->arrive_and_wait();
 
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
-#endif
+  vtune::event_end(event);
+
   if (found >= 0) {
     PLOGV.printf(
         "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu", id,
@@ -227,6 +226,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, int64
     }
   }
 #endif
+
+  cur_phase = ExecPhase::insertions;
 
   PLOGV.printf(
       "Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
@@ -261,11 +262,13 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, int64
 #endif
 
 
-  // Do a shuffle to redistribute the keys
-  auto rng = std::default_random_engine {};
-  std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
+  if (zipf_values && shard->shard_idx == 0) {
+    // Do a shuffle to redistribute the keys
+    auto rng = std::default_random_engine {};
+    std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
+  }
 
-  sleep(1);
+  cur_phase = ExecPhase::finds;
 
   const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
 
