@@ -69,20 +69,34 @@ std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
 void init_zipfian_dist(double skew, int64_t seed) {
   std::uint64_t keyrange_width = (1ull << 63);
-
   if constexpr (std::is_same_v<key_type, std::uint32_t>) {
     keyrange_width = (1ull << 31);
   }
 
   zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(
       HT_TESTS_NUM_INSERTS);
-  zipf_distribution_apache distribution(keyrange_width, skew, seed);
-  PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);
 
-  for (auto &value : *zipf_values) {
-    value = distribution.sample();
+  std::stringstream cache_name{};
+  cache_name << "/opt/cache" << config.skew << ".bin";
+  std::ifstream cache{cache_name.str().c_str()};
+  PLOG_INFO << cache_name.str() << " " << cache.is_open();
+  if (cache.is_open()) {
+    cache.read(reinterpret_cast<char *>(
+        zipf_values->data()), zipf_values->size() * sizeof(key_type));
+    cache.close();
+  } else {
+    zipf_distribution_apache distribution(keyrange_width, skew, seed);
+    PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);
+
+    for (auto &value : *zipf_values) {
+      value = distribution.sample();
+    }
+    PLOGI.printf("Zipfian dist generated. size %zu", zipf_values->size());
+    std::ofstream cache_out{cache_name.str().c_str()};
+    cache_out.write(reinterpret_cast<char *>(
+        zipf_values->data()), zipf_values->size() * sizeof(key_type));
+    cache_out.close();
   }
-  PLOGI.printf("Zipfian dist generated. size %zu", zipf_values->size());
 }
 
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
@@ -292,7 +306,7 @@ void QueueTest<T>::producer_thread(
       uint64_t hash_val = hasher(&k, sizeof(k));
       cons_id = hash_to_cpu(hash_val, n_cons);
 
-      if (true) {  // TODO
+      if (flips[transaction_id & 1023]) {  // TODO
         auto pq = pqueues[cons_id];
         this->queues->enqueue(pq, this_prod_id, cons_id, {k, k});
         auto npq = pqueues[get_next_cons(1)];
@@ -334,8 +348,8 @@ void QueueTest<T>::producer_thread(
     vtune::event_end(event);
   }
 
-  sh->stats->enqueues.duration = (t_end - t_start);
-  sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
+  sh->stats->finds.duration = (t_end - t_start);
+  sh->stats->finds.op_count = transaction_id * config.insert_factor;
 
 #ifdef LATENCY_COLLECTION
   collector.dump("sync_insert", tid);
@@ -814,7 +828,7 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
   // std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
 
   // 2) spawn n_prod + n_cons threads for find
-  //if (!is_join) this->run_find_test(cfg, n, is_join, npq);
+  // if (!is_join) this->run_find_test(cfg, n, is_join, npq);
 
   end_ts = std::chrono::steady_clock::now();
 

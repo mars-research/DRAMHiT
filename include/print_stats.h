@@ -143,9 +143,9 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
       cycles_per_find = total_find_cycles / total_finds;
       printf(
           "===============================================================\n");
-      printf("Average  : %" PRIu64 " cycles for %" PRIu64 " finds (%" PRIu64 " cycles/find)\n",
-             total_find_cycles / config.num_threads,
-             total_finds / config.num_threads, cycles_per_find);
+      printf("Average  : %" PRIu64 " cycles for %" PRIu64 " combined R/W (%" PRIu64 " cycles/op)\n",
+             total_find_cycles / config.n_prod,
+             total_finds / config.n_prod, cycles_per_find);
       printf(
           "===============================================================\n");
     }
@@ -162,7 +162,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     if (config.mode == BQ_TESTS_YES_BQ) {
       num_threads = config.n_cons + config.n_prod;
     }
-    find_mops = ((double)2600 / cycles_per_find) * num_threads;
+    find_mops = ((double)2600 / cycles_per_find) * config.n_prod;
     printf("%s, num_threads %" PRIu64 "\n", __func__, num_threads);
     printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
 
