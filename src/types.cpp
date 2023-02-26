@@ -22,6 +22,10 @@ KeyValuePair::KeyValuePair(const eth_hashjoin::tuple_t& tuple)
 KeyValuePair::KeyValuePair(uint64_t key, uint64_t value) : key(key), value(value) {}
 KeyValuePair::KeyValuePair() : key(0), value(0) {}
 
+
+Key::Key(const uint64_t &key, const uint64_t &value) : key(key) {}
+Key::Key() : key(0) {}
+
 // Global config. This is a temporary dirty hack.
 Configuration config;
 // Extern stuff

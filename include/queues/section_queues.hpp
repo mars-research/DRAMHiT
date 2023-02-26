@@ -17,7 +17,11 @@ namespace kmercounter {
 extern Configuration config;
 
 // data_t represents a k,v pair (2*8B = 16B)
+#if defined(BQUEUE_KMER_TEST)
+typedef Key data_t;
+#else
 typedef KeyValuePair data_t;
+#endif
 
 class SectionQueue;
 
@@ -103,7 +107,7 @@ class SectionQueue {
   cons_queue_t **all_cqueues;
   pc_queue_t **all_pc_queues;
   static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
-  static const KeyValuePair BQ_MAGIC_KV;
+  static const data_t BQ_MAGIC_KV;
   static const uint64_t SECTION_MASK = SECTION_SIZE - 1;
 
   size_t queue_size;

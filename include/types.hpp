@@ -269,6 +269,22 @@ std::ostream& operator<<(std::ostream& os, const FindResult& q);
 /// A span of `FindResult`s.
 using ValuePairs = std::pair<uint32_t, FindResult *>;
 
+struct Key {
+  key_type key;
+
+  Key();
+  Key(const uint64_t &, const uint64_t &);
+  Key(const struct eth_hashjoin::tuple_t& tuple);
+
+  bool operator ==(const Key &b) const {
+    return (this->key == b.key);
+  }
+
+  operator bool() const {
+    return *this == decltype(*this){};
+  }
+};
+
 struct KeyValuePair {
   key_type key;
   value_type value;

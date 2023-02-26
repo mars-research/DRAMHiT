@@ -236,7 +236,11 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
     return next_cons_id;
   };
 
+#if defined(BQUEUE_KMER_TEST)
+  Key kv{};
+#else
   KeyValuePair kv{};
+#endif
   auto t_start = RDTSC_START();
   //std::uint64_t num_kmers{};
 
@@ -247,7 +251,6 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
     auto zipf_idx = key_start == 1 ? 0 : key_start;
-    KeyValuePair kv;
     std::uint64_t kmer{};
 #if defined(XORWOW)
     _xw_state = init_state;
@@ -261,26 +264,27 @@ void QueueTest<T>::producer_thread(const uint32_t tid,
       if (is_join) {
         //num_kmers++;
         kv.key = k = kmer;
-        kv.value = 0;
       } else {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
       const auto value = xorwow(&_xw_state);
-      k = kv.key = kv.value = value;
+      k = value;
+      kv = data_t(value, value);
 
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
-      kv.key = k = zipf_values->at(zipf_idx);
-      kv.value = k;
+      k = zipf_values->at(zipf_idx);
+      kv = data_t(k, k);
       //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
 #else
-      k = kv.key = kv.value = key_start++;
+      k = key_start++;
+      kv = data_t(k, k);
 #endif
       }
       // XXX: if we are testing without insertions, make sure to pick CRC as
@@ -366,7 +370,11 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   uint8_t finished_producers = 0;
   // alignas(64)
   uint64_t k = 0;
+#if defined(BQUEUE_KMER_TEST)
+  Key kv{};
+#else
   KeyValuePair kv{};
+#endif
   uint64_t transaction_id = 0;
   uint32_t prod_id = 0;
 
@@ -502,7 +510,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
         //PLOGV.printf("sizeof items %zu | size of kv.key %zu",
         //          sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
+#if !defined(BQUEUE_KMER_TEST)
         _items[data_idx].value = kv.value;
+#endif
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
@@ -640,7 +650,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
-  __attribute__((aligned(64))) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH] = {0};
+  alignas(64) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH]{};
 
   ValuePairs vp = std::make_pair(0, results);
 
@@ -1039,9 +1049,9 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n,
 }
 
 template class QueueTest<SectionQueue>;
-const KeyValuePair SectionQueue::BQ_MAGIC_KV = KeyValuePair(
-      SectionQueue::BQ_MAGIC_64BIT, SectionQueue::BQ_MAGIC_64BIT);
 
+const data_t SectionQueue::BQ_MAGIC_KV = data_t(
+      SectionQueue::BQ_MAGIC_64BIT, SectionQueue::BQ_MAGIC_64BIT);
 //template class QueueTest<LynxQueue>;
 //template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter

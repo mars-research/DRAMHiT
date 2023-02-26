@@ -1258,6 +1258,7 @@ class LynxQueue {
     cons_queue_t **all_cqueues;
 
     static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
+    const data_t BQ_MAGIC_KV = data_t(BQ_MAGIC_64BIT, BQ_MAGIC_64BIT);
 
     void init_prod_queues() {
       // map queues and producer_metadata
@@ -1396,8 +1397,7 @@ class LynxQueue {
     inline void push_done(uint32_t p, uint32_t c) {
       auto q = queues[p][c];
 
-      enqueue(p, c, {BQ_MAGIC_64BIT, 0});
-      //q->push(BQ_MAGIC_64BIT, q->pq_state);
+      enqueue(p, c, BQ_MAGIC_KV);
       q->push_done();
     }
 
