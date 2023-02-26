@@ -371,6 +371,9 @@ class CASHashTable : public BaseHashTable {
 
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+#ifdef CALC_STATS
+      this->sum_distance_from_bucket++;
+#endif
     } else {
 #ifdef LATENCY_COLLECTION
         collector->end(q->timer_id);
@@ -453,7 +456,6 @@ class CASHashTable : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
         collector->end(q->timer_id);
 #endif
-        
         return;
       }
     }

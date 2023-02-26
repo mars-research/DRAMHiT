@@ -765,6 +765,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+
+#ifdef CALC_STATS
+      this->sum_distance_from_bucket++;
+#endif
     } else {
 #ifdef LATENCY_COLLECTION
       collector->end(q->timer_id);
@@ -1274,7 +1278,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // The hashes have little to no upper-bit entropy _because of how they are
     // assigned to the queues_
-    size_t idx = fastrange32(hash, this->capacity);  // modulo
+    size_t idx;
+
+    if constexpr (branching == BRANCHKIND::WithBranch) {
+      idx = fastrange32(hash, this->capacity);  // modulo
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+      idx = hash & (this->capacity - 1);
+    }
 
     //PLOGD.printf("Getting idx %zu", idx);
     if (idx > this->capacity) [[unlikely]] {
@@ -1323,15 +1333,15 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key;
     }
 
-    size_t idx = fastrange32(hash, this->capacity);  // modulo
+    size_t idx;
+
+    if constexpr (branching == BRANCHKIND::WithBranch) {
+      idx = fastrange32(hash, this->capacity);  // modulo
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+      idx = hash & (this->capacity - 1);
+    }
+
     this->prefetch_partition(idx, key_data->part_id, false);
-
-    // unsigned int cpu, node;
-
-    // getcpu(&cpu, &node);
-    /*if (cpu == 0)
-    cout << "[" << cpu << "] -- Adding " << key << " partid : " <<
-    key_data->part_id << " at " << this->find_head << endl;*/
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key;
