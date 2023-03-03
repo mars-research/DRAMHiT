@@ -196,7 +196,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       break;
     case RW_RATIO:
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
-      this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
+      this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS, barrier);
       break;
     case HASHJOIN:
       this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);

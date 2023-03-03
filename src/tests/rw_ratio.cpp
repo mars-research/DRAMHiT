@@ -5,6 +5,7 @@
 
 #include <RWRatioTest.hpp>
 #include <array>
+#include <barrier>
 #include <constants.hpp>
 #include <hasher.hpp>
 #include <random>
@@ -26,6 +27,7 @@ struct experiment_results {
   std::uint64_t n_found;
 };
 
+extern ExecPhase cur_phase;
 std::atomic_uint64_t ready{};
 extern std::vector<key_type, huge_page_allocator<key_type>>* zipf_values;
 void init_zipfian_dist(double skew, int64_t seed);
@@ -53,7 +55,8 @@ class rw_experiment {
     return __rdtscp(&aux);
   }
 
-  experiment_results run(unsigned int total_ops, collector_type* collector) {
+  experiment_results run(unsigned int total_ops, collector_type* collector,
+                             std::barrier<std::function<void()>> *sync_barrier) {
     const auto keyrange = config.num_threads * total_ops;
     std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> args{};
     uint64_t k{};
@@ -82,6 +85,8 @@ class rw_experiment {
     std::array<bool, 1024> flips{};
     for (auto& flip : flips) flip = !sampler(prng);
 
+    sync_barrier->arrive_and_wait();
+
     const auto start = start_time();
     if (!config.no_prefetch) {
       for (auto i = 0u; i < total_ops; ++i) {
@@ -95,7 +100,7 @@ class rw_experiment {
 
         if (write_buffer_len == HT_TESTS_BATCH_LENGTH) time_insert(collector);
         if (read_buffer_len == HT_TESTS_FIND_BATCH_LENGTH) time_find(collector);
-        if (false)
+        if (flips[i & 1023])
           write_batch[write_buffer_len++].key = values[i];
         else
           read_batch[read_buffer_len++].key = values[i];
@@ -130,6 +135,8 @@ class rw_experiment {
 #ifdef WITH_VTUNE_LIB
     __itt_event_end(event);
 #endif
+
+    sync_barrier->arrive_and_wait();
 
     return timings;
   }
@@ -192,7 +199,8 @@ class rw_experiment {
 };
 
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
-                      unsigned int total_ops) {
+                      unsigned int total_ops,
+                      std::barrier<std::function<void()>> *sync_barrier) {
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, shard.shard_idx * total_ops};
 
@@ -203,7 +211,10 @@ void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
 
   const auto collector = &collectors.at(shard.shard_idx);
   collector->claim();
-  const auto results = experiment.run(total_ops, collector);
+
+  cur_phase = ExecPhase::insertions;
+
+  const auto results = experiment.run(total_ops, collector, sync_barrier);
   PLOG_INFO << "Executed " << results.n_reads << " reads / " << results.n_writes
             << " writes ("
             << static_cast<double>(results.n_reads) / results.n_writes
