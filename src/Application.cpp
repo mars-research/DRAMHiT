@@ -73,6 +73,7 @@ const Configuration def = {
     .hwprefetchers = false,
     .no_prefetch = false,
     .run_both = false,
+    .batch_len = HT_TESTS_BATCH_LENGTH,
     .materialize = false,
     .relation_r = "r.tbl",
     .relation_s = "s.tbl",
@@ -460,6 +461,8 @@ int Application::process(int argc, char *argv[]) {
         po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))(
         "run-both",
         po::value<bool>(&config.run_both)->default_value(def.run_both))(
+        "batch-len",
+        po::value<uint32_t>(&config.batch_len)->default_value(def.batch_len))(
         "p-read",
         po::value<double>(&config.pread)->default_value(def.pread))
         ("materialize",

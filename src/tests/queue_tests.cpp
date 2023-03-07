@@ -44,10 +44,6 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 // Test Variables
 [[maybe_unused]] static uint64_t transactions = 100000000;
 
-const unsigned BQ_TESTS_DEQUEUE_ARR_LENGTH = HT_TESTS_BATCH_LENGTH;
-const unsigned BQ_TESTS_BATCH_LENGTH_PROD = 1;
-const unsigned BQ_TESTS_BATCH_LENGTH_CONS = BQ_TESTS_DEQUEUE_ARR_LENGTH;
-
 // for synchronization of threads
 static uint64_t ready = 0;
 static uint64_t ready_threads = 0;
@@ -59,13 +55,8 @@ struct bq_kmer {
   char data[KMER_DATA_LENGTH];
 } __attribute__((aligned(64)));
 
-static struct bq_kmer bq_kmers[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-
 // thread-local since we have multiple consumers
 static __thread int data_idx = 0;
-static __thread uint64_t keys[BQ_TESTS_DEQUEUE_ARR_LENGTH];
-__attribute__((
-    aligned(64))) static __thread InsertFindArgument _items[BQ_TESTS_DEQUEUE_ARR_LENGTH] = {0};
 
 std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
@@ -365,6 +356,9 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       // sizeof(thread_stats));
       (thread_stats *)calloc(1, sizeof(thread_stats));
 
+  InsertFindArgument *items =
+      (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+
   std::uint64_t count{};
   BaseHashTable *kmer_ht = NULL;
   uint8_t finished_producers = 0;
@@ -428,7 +422,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
 
   while (finished_producers < n_prod) {
     auto submit_batch = [&](auto num_elements) {
-      InsertFindArguments kp(_items, num_elements);
+      InsertFindArguments kp(items, num_elements);
 
       kmer_ht->insert_batch(kp, collector);
       inserted += kp.size();
@@ -456,7 +450,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       goto pick_next_msg;
     }
 
-    for (auto i = 0u; i < 1 * BQ_TESTS_BATCH_LENGTH_CONS; i++) {
+    for (auto i = 0u; i < 1 * config.batch_len; i++) {
       // dequeue one message
       auto ret = this->queues->dequeue(cq, prod_id, this_cons_id, (data_t *)&kv);
       if (ret == RETRY) {
@@ -505,24 +499,24 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
       }
 
       if (bq_load == BQUEUE_LOAD::HtInsert) {
-        _items[data_idx].key = kv.key;
-        _items[data_idx].id = kv.key;
+        items[data_idx].key = kv.key;
+        items[data_idx].id = kv.key;
         //PLOGV.printf("sizeof items %zu | size of kv.key %zu",
         //          sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
 #if !defined(BQUEUE_KMER_TEST)
-        _items[data_idx].value = kv.value;
+        items[data_idx].value = kv.value;
 #endif
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
           //PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
-          kmer_ht->insert_noprefetch(&_items[data_idx], collector);
+          kmer_ht->insert_noprefetch(&items[data_idx], collector);
           inserted++;
         } else {
-          if (++data_idx == BQ_TESTS_DEQUEUE_ARR_LENGTH) {
-            submit_batch(BQ_TESTS_DEQUEUE_ARR_LENGTH);
+          if (++data_idx == config.batch_len) {
+            submit_batch(config.batch_len);
           }
         }
       }
@@ -634,7 +628,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
     distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size());
   }
 
-  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  FindResult *results = new FindResult[config.batch_len];
 #if 0
   input_reader::PartitionedEthRelationGenerator t2(
       "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
@@ -650,7 +644,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
-  alignas(64) InsertFindArgument items[HT_TESTS_FIND_BATCH_LENGTH]{};
+  InsertFindArgument *items =
+      (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
 
   ValuePairs vp = std::make_pair(0, results);
 
@@ -729,26 +724,19 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
           //printf("key %" PRIu64 " not found | zipf_idx %" PRIu64 "\n", k, zipf_idx - 1);
         }
       } else {
-        if (++j == HT_TESTS_FIND_BATCH_LENGTH) {
+        if (++j == config.batch_len) {
           // PLOGI.printf("calling find_batch i = %d", i);
           // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
-          ktable->find_batch(InsertFindArguments(items), vp, collector);
+          ktable->find_batch(InsertFindArguments(items, config.batch_len), vp, collector);
           found += vp.first;
           j = 0;
-          not_found += HT_TESTS_FIND_BATCH_LENGTH - vp.first;
+          not_found += config.batch_len - vp.first;
           vp.first = 0;
           //PLOGD.printf("tid %" PRIu64 " count %" PRIu64 " | found -> %" PRIu64 " | not_found -> %" PRIu64 "", tid,
           //    count, found, not_found);
         }
       }
 
-#ifdef CALC_STATS
-      if (i % (num_messages / 10) == 0) {
-        PLOG_INFO.printf(
-            "Finder %u, transaction_id %" PRIu64 " | (found %" PRIu64 ", not_found %" PRIu64 ")", tid, i,
-            found, not_found);
-      }
-#endif
     }
     if (!config.no_prefetch) {
       if (vp.first > 0) {
@@ -759,10 +747,15 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
       found += vp.first;
     }
   }
-
   auto t_end = RDTSCP();
 
   barrier->arrive_and_wait();
+
+#ifdef CALC_STATS
+  PLOG_INFO.printf(
+      "Finder %u (found %" PRIu64 ", not_found %" PRIu64 ")", tid,
+      found, not_found);
+#endif
 
   vtune::event_end(event);
 

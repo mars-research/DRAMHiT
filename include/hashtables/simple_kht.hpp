@@ -541,7 +541,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
-    while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
+    while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
@@ -555,7 +555,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // make sure you return at most batch_sz (but can possibly return lesser
     // number of elements)
     while ((curr_queue_sz > FLUSH_THRESHOLD) &&
-           (vp.first < HT_TESTS_FIND_BATCH_LENGTH)) {
+           (vp.first < config.batch_len)) {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;

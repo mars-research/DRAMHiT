@@ -136,6 +136,9 @@ struct Configuration {
   // Run both casht/cashtpp
   bool run_both;
 
+  // queue length for batching requests
+  uint32_t batch_len;
+
   // Hashjoin specific configs.
   // Whether to materialize the join output
   bool materialize;
@@ -164,6 +167,7 @@ struct Configuration {
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
+    printf("  batch length %u\n", batch_len);
     printf("  relation_r %s\n", relation_r.c_str());
     printf("  relation_s %s\n", relation_r.c_str());
     printf("  relation_r_size %" PRIu64 "\n", relation_r_size);

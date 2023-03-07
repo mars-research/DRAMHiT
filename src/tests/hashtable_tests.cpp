@@ -59,7 +59,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed
 #endif
 
   PLOGV.printf("Starting insertion test");
-  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
+  InsertFindArgument *items =
+      (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
@@ -92,8 +93,8 @@ OpTimings do_zipfian_inserts(BaseHashTable *hashtable, double skew, int64_t seed
       if (config.no_prefetch) {
         hashtable->insert_noprefetch(&items[key], collector);
       } else {
-        if (++key == HT_TESTS_BATCH_LENGTH) {
-          InsertFindArguments keypairs(items);
+        if (++key == config.batch_len) {
+          InsertFindArguments keypairs(items, config.batch_len);
           hashtable->insert_batch(keypairs, collector);
           key = 0;
         }
@@ -135,8 +136,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   collector_type *const collector{};
 #endif
 
-  alignas(64) InsertFindArgument items[HT_TESTS_BATCH_LENGTH]{};
-  FindResult *results = new FindResult[HT_TESTS_FIND_BATCH_LENGTH];
+  InsertFindArgument *items = (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+  FindResult *results = new FindResult[config.batch_len];
   ValuePairs vp = std::make_pair(0, results);
 
   sync_barrier->arrive_and_wait();
@@ -170,8 +171,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       } else {
         items[key] = {value , n};
 
-        if (++key == HT_TESTS_FIND_BATCH_LENGTH) {
-          hashtable->find_batch(InsertFindArguments(items), vp, collector);
+        if (++key == config.batch_len) {
+          hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp, collector);
           found += vp.first;
           vp.first = 0;
           key = 0;
@@ -238,9 +239,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew, int64
     insert_timings =
         do_zipfian_inserts(hashtable, skew, zipf_seed, count, shard->shard_idx, sync_barrier);
     PLOG_INFO.printf(
-        "Quick stats: thread %u, Batch size: %d, cycles per "
+        "Quick stats: thread %u, Batch length: %d, cycles per "
         "insertion:%" PRIu64 "",
-        shard->shard_idx, i, insert_timings.duration / insert_timings.op_count);
+        shard->shard_idx, config.batch_len, insert_timings.duration / insert_timings.op_count);
 
 #ifdef CALC_STATS
     PLOG_INFO.printf("Reprobes %" PRIu64 " soft_reprobes %" PRIu64 "", hashtable->num_reprobes,
