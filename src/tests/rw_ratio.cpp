@@ -119,7 +119,7 @@ class rw_experiment {
 
         InsertFindArgument kv{values[i], values[i]};
         kv.id = i;
-        if (false) {
+        if (flips[i & 1023]) {
           ++timings.n_writes;
           hashtable.insert_noprefetch(&kv, collector);
         } else {
