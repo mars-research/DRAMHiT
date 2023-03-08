@@ -58,6 +58,14 @@ struct bq_kmer {
 // thread-local since we have multiple consumers
 static __thread int data_idx = 0;
 
+auto get_ht_size = [](int ncons) {
+  uint64_t ht_size = config.ht_size / ncons;
+  if (ht_size & 0x3) {
+    ht_size = ht_size + 4 - (ht_size % 4);
+  }
+  return ht_size;
+};
+
 std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 
 void init_zipfian_dist(double skew, int64_t seed) {
@@ -387,7 +395,7 @@ void QueueTest<T>::consumer_thread(const uint32_t tid, const uint32_t n_prod,
   }
   vtune::set_threadname("consumer_thread" + std::to_string(tid));
 
-  auto ht_size = config.ht_size / n_cons;
+  auto ht_size = get_ht_size(n_cons);
 
   if (bq_load == BQUEUE_LOAD::HtInsert) {
     PLOGV.printf("[cons:%u] init_ht id:%d size:%u", this_cons_id, sh->shard_idx,
@@ -616,7 +624,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons,
     // Nevertheless, they need this ktable object to queue the find requests to
     // other partitions. So, just create a HT with 100 buckets.
 
-    auto ht_size = config.ht_size / n_cons;
+    auto ht_size = get_ht_size(n_cons);
     PLOGV.printf("[find%u] init_ht ht_size: %u | id: %d", tid, ht_size,
                      sh->shard_idx);
     ktable = init_ht(ht_size, sh->shard_idx);

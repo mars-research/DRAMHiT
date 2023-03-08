@@ -49,6 +49,7 @@ class CASHashTable : public BaseHashTable {
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+        PLOGV.printf("Hashtable base: %p Hashtable size: %lu\n", this->hashtable, this->capacity);
       }
       this->ref_cnt++;
     }
@@ -62,7 +63,6 @@ class CASHashTable : public BaseHashTable {
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
-    PLOGV.printf("[INFO] Hashtable size: %lu\n", this->capacity);
     PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
   }
 

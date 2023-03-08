@@ -229,7 +229,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
                       this->insert_queue, this->find_queue);
-    PLOGV.printf("Hashtable size: %lu | data_length %lu", this->capacity,
+    PLOGV.printf("Hashtable base %p | Hashtable size: %lu | data_length %lu",
+                      this->hashtable[this->id], this->capacity,
                      this->data_length);
   }
 
@@ -1279,12 +1280,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // The hashes have little to no upper-bit entropy _because of how they are
     // assigned to the queues_
     size_t idx;
-
-    if constexpr (branching == BRANCHKIND::WithBranch) {
-      idx = fastrange32(hash, this->capacity);  // modulo
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      idx = hash & (this->capacity - 1);
-    }
+    idx = fastrange32(hash, this->capacity);  // modulo
 
     //PLOGD.printf("Getting idx %zu", idx);
     if (idx > this->capacity) [[unlikely]] {
@@ -1334,12 +1330,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
 
     size_t idx;
-
-    if constexpr (branching == BRANCHKIND::WithBranch) {
-      idx = fastrange32(hash, this->capacity);  // modulo
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      idx = hash & (this->capacity - 1);
-    }
+    idx = fastrange32(hash, this->capacity);  // modulo
 
     this->prefetch_partition(idx, key_data->part_id, false);
 
