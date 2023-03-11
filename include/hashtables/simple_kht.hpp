@@ -82,8 +82,9 @@ auto key_cmp = [](__m512i cacheline, __m512i key_vector, size_t cidx) {
   return cmp & key_cmp_masks[cidx];
 };
 
+const __m512i empty_key_vector = _mm512_setzero_si512();
+
 auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
-  const __m512i empty_key_vector = _mm512_setzero_si512();
   return key_cmp(cacheline, empty_key_vector, cidx);
 };
 
@@ -226,6 +227,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
+
+    memset(this->insert_queue, 0x0, PREFETCH_QUEUE_SIZE * sizeof(KVQ));
+
+    memset(this->find_queue, 0x0, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ));
 
     PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
                       this->insert_queue, this->find_queue);
@@ -841,25 +846,30 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     __mmask8 empty_cmp = empty_key_cmp(cacheline, cidx);
 
     // compute index at which there is a key match
-    size_t midx = _bit_scan_forward(eq_cmp) >> 1;
-    const KV *match = &this->hashtable[q->part_id][midx];
-    // copy the value out
-    vp.second[vp.first].value = match->get_value();
-    vp.second[vp.first].id = q->key_id;
+    //size_t midx = _bit_scan_forward(eq_cmp) >> 1;
+    const KV *match = &this->hashtable[q->part_id][idx];
+
+    //PLOGV.printf("match found? key %lu | key_id %lu | value %lu", q->key, q->key_id, match->get_value());
 
     // if eq_cmp == 0, match is invalid as there is no match
-    __mmask8 found;
+    __mmask8 found = 0;
     asm(
         // if (!eq_cmp) found = 1;
         "test %[eq_cmp], %[eq_cmp]\n\t"
         "setnz %[found]\n\t"
         : [found] "=r"(found)
         : [eq_cmp] "r"(eq_cmp));
-    vp.first += found;
 
+    if (found) {
+
+      // copy the value out
+      vp.second[vp.first].value = match->get_value();
+      vp.second[vp.first].id = q->key_id;
+      vp.first += found;
+    }
     // if key is not found, and we have not encountered any empty "slots"
     // reprobe is necessary
-    __mmask8 reprobe;
+    __mmask8 reprobe = 0;
     asm(
         // if (!found && !empty_cmp) reprobe = 1;
         "orb %[found], %[empty_cmp]\n\t"
@@ -867,18 +877,24 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         : [reprobe] "=r"(reprobe)
         : [found] "r"(found), [empty_cmp] "r"(empty_cmp));
 
-    // index at which reprobe must begin
-    size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-    ridx = (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
+    if (reprobe) {
+#ifdef CALC_STATS
+      this->max_distance_from_bucket++;
+#endif
+      // index at which reprobe must begin
+      size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
+      ridx = (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
 
-    this->prefetch_read(ridx);
+      this->prefetch_partition(ridx, q->part_id, false);
 
-    this->find_queue[this->find_head].key = q->key;
-    this->find_queue[this->find_head].key_id = q->key_id;
-    this->find_queue[this->find_head].idx = ridx;
+      this->find_queue[this->find_head].key = q->key;
+      this->find_queue[this->find_head].key_id = q->key_id;
+      this->find_queue[this->find_head].idx = ridx;
+      this->find_queue[this->find_head].part_id = q->part_id;
 
-    this->find_head += reprobe;
-    this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+      this->find_head += reprobe;
+      this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+    }
     return found;
   }
 
