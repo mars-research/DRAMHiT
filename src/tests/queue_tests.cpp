@@ -142,6 +142,10 @@ static auto mbind_buffer_local(void *buf, ssize_t sz) {
   return ret;
 }
 
+
+std::barrier<std::function<void()>> *prod_barrier;
+uint64_t g_rw_start, g_rw_end;
+
 template <typename T>
 void QueueTest<T>::producer_thread(
     const uint32_t tid, const uint32_t n_prod, const uint32_t n_cons,
@@ -194,6 +198,7 @@ void QueueTest<T>::producer_thread(
   init_state = _xw_state;
 #endif
   static auto event = -1;
+  static bool test_started = false;
 
   if (main_thread) {
     event = vtune::event_start("message_enq");
@@ -215,6 +220,21 @@ void QueueTest<T>::producer_thread(
   // PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu
   // r_table size %d",
   //     sh->shard_idx, n_prod, config.relation_r_size, r_table->size());
+
+  std::function<void()> on_completion = []() noexcept {
+    if (!test_started) {
+      g_rw_start = RDTSC_START();
+      test_started = true;
+      PLOG_INFO << "Producers synchronized after pre-inserts";
+    } else {
+      g_rw_end = RDTSCP();
+      PLOGI.printf("producers took %llu cycles", g_rw_end - g_rw_start);
+    }
+  };
+
+  if (tid == 0) {
+    prod_barrier = new std::barrier(config.n_prod, on_completion);
+  }
 
   barrier->arrive_and_wait();
 
@@ -249,6 +269,8 @@ void QueueTest<T>::producer_thread(
   xorwow_urbg urbg{};
   std::array<bool, 1024> flips;
   for (auto &flip : flips) flip = !coin(urbg);  // do a write if true
+
+  prod_barrier->arrive_and_wait();
 
   KeyValuePair kv{};
   auto t_start = RDTSC_START();
@@ -343,6 +365,8 @@ void QueueTest<T>::producer_thread(
   }
 
   auto t_end = RDTSCP();
+
+  prod_barrier->arrive_and_wait();
 
   if (main_thread) {
     vtune::event_end(event);
