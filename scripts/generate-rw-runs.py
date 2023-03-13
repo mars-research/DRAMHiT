@@ -9,4 +9,4 @@ for p in [n / 10 for n in range(9)]:
 
     for c in [8 * (n + 1) for n in range(7)]:
         for n in range(3):
-            print(f'./kvstore --ht-type=1 --mode=8 --ht-fill=75 --ncons={c} --nprod={64 - c} --skew={skew} --p-read={p} --numa-split=3 > queues-{p}-{c}-{n}')
+            print(f'./kvstore --ht-type=1 --mode=8 --ht-fill=75 --ncons={c} --nprod={64 - c} --skew={skew} --p-read={p} --numa-split=3 --rw-queues=1 > queues-{p}-{c}-{n}')

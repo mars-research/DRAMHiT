@@ -150,6 +150,8 @@ struct Configuration {
   // CSV delimitor for relation files.
   std::string delimitor;
 
+  bool rw_queues;
+
   void dump_configuration() {
     printf("Run configuration {\n");
     printf("  num_threads %u\n", this->num_threads);
