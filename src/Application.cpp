@@ -73,13 +73,15 @@ const Configuration def = {
     .hwprefetchers = false,
     .no_prefetch = false,
     .run_both = false,
+    .batch_len = HT_TESTS_BATCH_LENGTH,
     .materialize = false,
     .relation_r = "r.tbl",
     .relation_s = "s.tbl",
     .relation_r_size = 128000000,
     .relation_s_size = 128000000,
     .delimitor = "|",
-    .rw_queues = false
+    .rw_queues = false,
+    .pollute_ratio = 0
 };  // TODO enum
 
 // for synchronization of threads
@@ -90,6 +92,13 @@ static std::atomic_uint num_entered{};
 static MemoryBwCounters *bw_counters;
 #endif
 extern bool stop_sync;
+extern bool zipfian_finds;
+extern bool zipfian_inserts;
+
+ExecPhase cur_phase = ExecPhase::none;
+
+uint64_t g_insert_start, g_insert_end;
+uint64_t g_find_start, g_find_end;
 
 void sync_complete(void) {
 #if defined(WITH_PAPI_LIB)
@@ -105,6 +114,23 @@ void sync_complete(void) {
     bw_counters->start();
   }
 #endif
+  if (cur_phase == ExecPhase::finds) {
+    if (!zipfian_finds) {
+      g_find_start = RDTSC_START();
+      zipfian_finds = true;
+    } else {
+      g_find_end = RDTSCP();
+      PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
+    }
+  } else if (cur_phase == ExecPhase::insertions) {
+    if (!zipfian_inserts) {
+      g_insert_start = RDTSC_START();
+      zipfian_inserts = true;
+    } else {
+      g_insert_end = RDTSCP();
+      PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
+    }
+  }
   PLOGI.printf("Sync phase done!");
 }
 
@@ -197,7 +223,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       break;
     case RW_RATIO:
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
-      this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS);
+      this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS, barrier);
       break;
     case HASHJOIN:
       this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);
@@ -437,6 +463,8 @@ int Application::process(int argc, char *argv[]) {
         po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))(
         "run-both",
         po::value<bool>(&config.run_both)->default_value(def.run_both))(
+        "batch-len",
+        po::value<uint32_t>(&config.batch_len)->default_value(def.batch_len))(
         "p-read",
         po::value<double>(&config.pread)->default_value(def.pread))
         ("materialize",
@@ -455,7 +483,7 @@ int Application::process(int argc, char *argv[]) {
           "rw-queues",
           po::value<bool>(&config.rw_queues)->default_value(def.rw_queues),
           "Enable R/W tests for queues tests"
-        );
+        )("pollute-ratio", po::value(&config.pollute_ratio)->default_value(def.pollute_ratio), "Ratio of pollution events to ops (>1)");
 
     papi_init();
 

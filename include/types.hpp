@@ -22,7 +22,9 @@
 #define VALUE_SIZE 8
 
 // Forward declaration of `eth_hashjoin::tuple_t`.
-namespace eth_hashjoin { struct tuple_t; }
+namespace eth_hashjoin {
+struct tuple_t;
+}
 namespace kmercounter {
 
 #if (KEY_LEN == 4)
@@ -32,7 +34,6 @@ using key_type = std::uint64_t;
 #endif
 
 using value_type = key_type;
-
 
 enum class BRANCHKIND { WithBranch, NoBranch_Cmove, NoBranch_Simd };
 
@@ -81,6 +82,10 @@ typedef enum {
 
 extern const char* run_mode_strings[];
 extern const char* ht_type_strings[];
+
+struct alignas(64) cacheline {
+  char dummy;
+};
 
 // Application configuration
 struct Configuration {
@@ -136,6 +141,9 @@ struct Configuration {
   // Run both casht/cashtpp
   bool run_both;
 
+  // queue length for batching requests
+  uint32_t batch_len;
+
   // Hashjoin specific configs.
   // Whether to materialize the join output
   bool materialize;
@@ -143,14 +151,17 @@ struct Configuration {
   std::string relation_r;
   // Path to relation S.
   std::string relation_s;
-  // Number of elements in relation R. Only used when the relations are generated.
+  // Number of elements in relation R. Only used when the relations are
+  // generated.
   uint64_t relation_r_size;
-  // Number of elements in relation S. Only used when the relations are generated.
+  // Number of elements in relation S. Only used when the relations are
+  // generated.
   uint64_t relation_s_size;
   // CSV delimitor for relation files.
   std::string delimitor;
 
   bool rw_queues;
+  unsigned pollute_ratio;
 
   void dump_configuration() {
     printf("Run configuration {\n");
@@ -158,14 +169,18 @@ struct Configuration {
     printf("  numa_split %u\n", numa_split);
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
-    printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size, ht_size/(1ul << 30));
+    printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size,
+           ht_size / (1ul << 30));
     printf("  K %" PRIu64 "\n", K);
+    printf("  P(read) %f\n", pread);
+    printf("  Pollution Ratio %u\n", pollute_ratio);
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
     printf("  ht_fill %u\n", ht_fill);
     printf("ZIPFIAN:\n  skew: %f\n  seed: %ld\n", skew, seed);
     printf("  HW prefetchers %s\n", hwprefetchers ? "enabled" : "disabled");
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
+    printf("  batch length %u\n", batch_len);
     printf("  relation_r %s\n", relation_r.c_str());
     printf("  relation_s %s\n", relation_r.c_str());
     printf("  relation_r_size %" PRIu64 "\n", relation_r_size);
@@ -240,7 +255,7 @@ struct InsertFindArgument {
   /// In aggregation mode, this is the "key". Don't ask why.
   uint32_t id;
   /// The id of the partition that will be handling this operation.
-  /// Might not be used depends on the configuration/kind of operation. 
+  /// Might not be used depends on the configuration/kind of operation.
   uint32_t part_id;
 };
 std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
@@ -254,7 +269,7 @@ struct FindResult {
   /// This matches the `InsertFindArgument::id`.
   uint32_t id;
   /// The value of the key of the find operation.
-  /// This is the number of occurrences in aggregation mode. 
+  /// This is the number of occurrences in aggregation mode.
   value_type value;
 
   constexpr FindResult() = default;
@@ -269,7 +284,23 @@ struct FindResult {
 std::ostream& operator<<(std::ostream& os, const FindResult& q);
 
 /// A span of `FindResult`s.
-using ValuePairs = std::pair<uint32_t, FindResult *>;
+using ValuePairs = std::pair<uint32_t, FindResult*>;
+
+struct Key {
+  key_type key;
+
+  Key();
+  Key(const uint64_t &, const uint64_t &);
+  Key(const struct eth_hashjoin::tuple_t& tuple);
+
+  bool operator ==(const Key &b) const {
+    return (this->key == b.key);
+  }
+
+  operator bool() const {
+    return *this == decltype(*this){};
+  }
+};
 
 struct KeyValuePair {
   key_type key;
@@ -279,13 +310,11 @@ struct KeyValuePair {
   KeyValuePair(uint64_t, uint64_t);
   KeyValuePair(const struct eth_hashjoin::tuple_t& tuple);
 
-  bool operator ==(const KeyValuePair &b) const {
+  bool operator==(const KeyValuePair& b) const {
     return (this->key == b.key) && (this->value == b.value);
   }
 
-  operator bool() const {
-    return *this == decltype(*this){};
-  }
+  operator bool() const { return *this == decltype(*this){}; }
 };
 
 enum class QueueType {
@@ -293,11 +322,16 @@ enum class QueueType {
   find_queue,
 };
 
+enum class ExecPhase {
+  insertions,
+  finds,
+  none,
+};
 // Can be use for, let's say, cleanup functions.
 using VoidFn = std::function<void()>;
 
-} //namespace kmercounter
-#endif // TYPES_HPP
+}  // namespace kmercounter
+#endif  // TYPES_HPP
 
 // X mmap, no inserts, 1 thread
 // X mmap, no inserts, 10 threads

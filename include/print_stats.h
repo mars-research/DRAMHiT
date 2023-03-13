@@ -143,9 +143,15 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
       cycles_per_find = total_find_cycles / total_finds;
       printf(
           "===============================================================\n");
-      printf("Average  : %" PRIu64 " cycles for %" PRIu64 " combined R/W (%" PRIu64 " cycles/op)\n",
-             total_find_cycles / config.n_prod,
-             total_finds / config.n_prod, cycles_per_find);
+      if (config.rw_queues) {
+        printf("Average  : %" PRIu64 " cycles for %" PRIu64 " combined R/W (%" PRIu64 " cycles/op)\n",
+              total_find_cycles / config.n_prod,
+              total_finds / config.n_prod, cycles_per_find);
+      } else {
+        printf("Average  : %" PRIu64 " cycles for %" PRIu64 " finds (%" PRIu64 " cycles/find)\n",
+              total_find_cycles / config.num_threads,
+              total_finds, cycles_per_find);
+      }
       printf(
           "===============================================================\n");
     }

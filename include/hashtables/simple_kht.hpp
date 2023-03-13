@@ -82,8 +82,9 @@ auto key_cmp = [](__m512i cacheline, __m512i key_vector, size_t cidx) {
   return cmp & key_cmp_masks[cidx];
 };
 
+const __m512i empty_key_vector = _mm512_setzero_si512();
+
 auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
-  const __m512i empty_key_vector = _mm512_setzero_si512();
   return key_cmp(cacheline, empty_key_vector, cidx);
 };
 
@@ -212,6 +213,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // paranoid check. id should be unique
     assert(this->hashtable[this->id] == nullptr);
 
+    this->ht_sz = this->capacity * sizeof(KV);
+
     // Allocate for this id
     this->hashtable[this->id] =
         (KV *)calloc_ht<KV>(this->capacity, this->id, &this->fds[this->id]);
@@ -225,9 +228,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
+    memset(this->insert_queue, 0x0, PREFETCH_QUEUE_SIZE * sizeof(KVQ));
+
+    memset(this->find_queue, 0x0, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ));
+
     PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
                       this->insert_queue, this->find_queue);
-    PLOGV.printf("Hashtable size: %lu | data_length %lu", this->capacity,
+    PLOGV.printf("Hashtable base %p | Hashtable size: %lu | data_length %lu",
+                      this->hashtable[this->id], this->capacity,
                      this->data_length);
   }
 
@@ -539,7 +547,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
-    while ((curr_queue_sz != 0) && (vp.first < HT_TESTS_BATCH_LENGTH)) {
+    while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
@@ -553,7 +561,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // make sure you return at most batch_sz (but can possibly return lesser
     // number of elements)
     while ((curr_queue_sz > FLUSH_THRESHOLD) &&
-           (vp.first < HT_TESTS_FIND_BATCH_LENGTH)) {
+           (vp.first < config.batch_len)) {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
@@ -702,9 +710,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
+  size_t get_ht_size() const { return this->ht_sz; }
+
  private:
   static std::mutex ht_init_mutex;
   uint64_t capacity;
+  size_t ht_sz;
   KV empty_item; /* for comparison for empty slot */
   KVQ *queue;    // TODO prefetch this?
   KVQ *find_queue;
@@ -754,10 +765,16 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
       this->find_queue[this->find_head].part_id = q->part_id;
+#ifdef LATENCY_COLLECTION
       this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
 
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+
+#ifdef CALC_STATS
+      this->sum_distance_from_bucket++;
+#endif
     } else {
 #ifdef LATENCY_COLLECTION
       collector->end(q->timer_id);
@@ -829,25 +846,30 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     __mmask8 empty_cmp = empty_key_cmp(cacheline, cidx);
 
     // compute index at which there is a key match
-    size_t midx = _bit_scan_forward(eq_cmp) >> 1;
-    const KV *match = &this->hashtable[q->part_id][midx];
-    // copy the value out
-    vp.second[vp.first].value = match->get_value();
-    vp.second[vp.first].id = q->key_id;
+    //size_t midx = _bit_scan_forward(eq_cmp) >> 1;
+    const KV *match = &this->hashtable[q->part_id][idx];
+
+    //PLOGV.printf("match found? key %lu | key_id %lu | value %lu", q->key, q->key_id, match->get_value());
 
     // if eq_cmp == 0, match is invalid as there is no match
-    __mmask8 found;
+    __mmask8 found = 0;
     asm(
         // if (!eq_cmp) found = 1;
         "test %[eq_cmp], %[eq_cmp]\n\t"
         "setnz %[found]\n\t"
         : [found] "=r"(found)
         : [eq_cmp] "r"(eq_cmp));
-    vp.first += found;
 
+    if (found) {
+
+      // copy the value out
+      vp.second[vp.first].value = match->get_value();
+      vp.second[vp.first].id = q->key_id;
+      vp.first += found;
+    }
     // if key is not found, and we have not encountered any empty "slots"
     // reprobe is necessary
-    __mmask8 reprobe;
+    __mmask8 reprobe = 0;
     asm(
         // if (!found && !empty_cmp) reprobe = 1;
         "orb %[found], %[empty_cmp]\n\t"
@@ -855,18 +877,24 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         : [reprobe] "=r"(reprobe)
         : [found] "r"(found), [empty_cmp] "r"(empty_cmp));
 
-    // index at which reprobe must begin
-    size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-    ridx = (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
+    if (reprobe) {
+#ifdef CALC_STATS
+      this->max_distance_from_bucket++;
+#endif
+      // index at which reprobe must begin
+      size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
+      ridx = (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
 
-    this->prefetch_read(ridx);
+      this->prefetch_partition(ridx, q->part_id, false);
 
-    this->find_queue[this->find_head].key = q->key;
-    this->find_queue[this->find_head].key_id = q->key_id;
-    this->find_queue[this->find_head].idx = ridx;
+      this->find_queue[this->find_head].key = q->key;
+      this->find_queue[this->find_head].key_id = q->key_id;
+      this->find_queue[this->find_head].idx = ridx;
+      this->find_queue[this->find_head].part_id = q->part_id;
 
-    this->find_head += reprobe;
-    this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+      this->find_head += reprobe;
+      this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+    }
     return found;
   }
 
@@ -1267,7 +1295,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     // The hashes have little to no upper-bit entropy _because of how they are
     // assigned to the queues_
-    size_t idx = fastrange32(hash, this->capacity);  // modulo
+    size_t idx;
+    idx = fastrange32(hash, this->capacity);  // modulo
 
     //PLOGD.printf("Getting idx %zu", idx);
     if (idx > this->capacity) [[unlikely]] {
@@ -1316,15 +1345,10 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       key = key_data->key;
     }
 
-    size_t idx = fastrange32(hash, this->capacity);  // modulo
+    size_t idx;
+    idx = fastrange32(hash, this->capacity);  // modulo
+
     this->prefetch_partition(idx, key_data->part_id, false);
-
-    // unsigned int cpu, node;
-
-    // getcpu(&cpu, &node);
-    /*if (cpu == 0)
-    cout << "[" << cpu << "] -- Adding " << key << " partid : " <<
-    key_data->part_id << " at " << this->find_head << endl;*/
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key;
