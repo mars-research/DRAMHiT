@@ -20,11 +20,11 @@ class xorwow_urbg {
 
   result_type operator()() noexcept { return xorwow(&state); }
 
-  constexpr auto min() noexcept {
+  static constexpr auto min() noexcept {
     return std::numeric_limits<result_type>::min();
   }
 
-  constexpr auto max() noexcept {
+  static constexpr auto max() noexcept {
     return std::numeric_limits<result_type>::max();
   }
 

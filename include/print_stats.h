@@ -145,7 +145,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
           "===============================================================\n");
       printf("Average  : %" PRIu64 " cycles for %" PRIu64 " finds (%" PRIu64 " cycles/find)\n",
              total_find_cycles / config.num_threads,
-             total_finds / config.num_threads, cycles_per_find);
+             total_finds, cycles_per_find);
       printf(
           "===============================================================\n");
     }
