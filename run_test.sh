@@ -58,7 +58,7 @@ run_test() {
 
   case ${HT_SIZE} in
     "small")
-      ARGS+=" --ht-size 2097152"
+      ARGS+=" --ht-size 1048576"
       ARGS+=" --insert-factor 500"
       if [[ ${HT_TYPE} == "part" ]];then
         ARGS+=" --no-prefetch 1"
@@ -334,23 +334,34 @@ HW_PREF_OFF=0
 #  run_test "cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 #done
 
-run_ht_benchmarks() {
-  # AE figs 7-14
+# AE figs 7-14
+run_small_ht_benchmarks() {
   for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
     run_test "casht_cashtpp-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   done
 
+  run_test "part-zipfian-small-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+
+  for s in 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
+    run_test "part-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
+  done
+}
+
+run_large_ht_benchmarks() {
   for s in 0.01 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
     run_test "casht_cashtpp-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   done
 
-  run_test "part-zipfian-small-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   run_test "part-zipfian-large-0.01-1:3" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
 
   for s in 0.2 0.4 0.6 $(seq 0.8 0.01 1.09); do
-    run_test "part-zipfian-small-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
     run_test "part-zipfian-large-${s}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_PART}
   done
+}
+
+run_ht_benchmarks() {
+  run_small_ht_benchmarks;
+  run_large_ht_benchmarks;
 }
 
 run_kmer_benchmarks() {
@@ -361,9 +372,60 @@ run_kmer_benchmarks() {
   done
 }
 
+run_cashtpp_batch_benchmarks() {
+  HT_SIZE=large
+  run=1
+
+  LOG_PREFIX="esys23-ae-${USER}/cashtpp-zipfian-large-0.01-batching/run${run}/"
+
+  if [ ! -d ${LOG_PREFIX} ]; then
+    mkdir -p ${LOG_PREFIX}
+  fi
+
+  printf "batch_len, set-cycles, cashtpp-set-${HT_SIZE}, get-cycles, cashtpp-get-${HT_SIZE}\n" | tee -a ${LOG_PREFIX}/cashtpp_run${run}.csv;
+  for i in 1 2 4 8 16; do
+    LOG_FILE="${LOG_PREFIX}/${i}.log"
+    ./build/kvstore --ht-type 3 --numa-split 1 --mode 11 --skew 0.01 --hw-pref 0 --num-threads 64 --batch-len ${i} 2>&1 >> ${LOG_FILE};
+    CASHTPP_SET_CYCLES=$(rg "set_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    CASHTPP_GET_CYCLES=$(rg "get_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    CASHTPP_SET_MOPS=$(rg "set_mops : [0-9\.]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    CASHTPP_GET_MOPS=$(rg "get_mops : [0-9\.]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    printf "%s, %s, %.0f, %s, %.0f\n" ${i} ${CASHTPP_SET_CYCLES} $(echo ${CASHTPP_SET_MOPS} | bc) ${CASHTPP_GET_CYCLES} $(echo ${CASHTPP_GET_MOPS} | bc) | tee -a ${LOG_PREFIX}/cashtpp_run${run}.csv;
+  done
+}
+
+run_part_batch_benchmarks() {
+  HT_SIZE=large
+  run=1
+
+  LOG_PREFIX="esys23-ae-${USER}/part-zipfian-large-0.01-1:3-batching/run${run}/"
+
+  if [ ! -d ${LOG_PREFIX} ]; then
+    mkdir -p ${LOG_PREFIX}
+  fi
+
+  printf "batch_len, ins-cycles, ins mops/s, find-cycles, find mops/s\n" | tee -a ${LOG_PREFIX}/part_run${run}.csv;
+  for i in 1 2 4 8 16; do
+    LOG_FILE="${LOG_PREFIX}/${i}.log"
+    ./build/kvstore --ht-type 1 --numa-split 3 --mode 8 --skew 0.01 --hw-pref 0 --nprod 16 --ncons 48 --batch-len ${i} 2>&1 >> ${LOG_FILE}
+    PART_SET_CYCLES=$(rg "set_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    PART_GET_CYCLES=$(rg "get_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    PART_SET_MOPS=$(rg "set_mops : [0-9\.]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    PART_GET_MOPS=$(rg "get_mops : [0-9\.]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
+    printf "%s, %s, %.0f, %s, %.0f\n" ${i} ${PART_SET_CYCLES} $(echo ${PART_SET_MOPS} | bc) ${PART_GET_CYCLES} $(echo ${PART_GET_MOPS} | bc) | tee -a ${LOG_PREFIX}/part_run${run}.csv;
+  done
+
+}
+
+run_batch_benchmarks() {
+  run_cashtpp_batch_benchmarks;
+  run_part_batch_benchmarks;
+}
 
 if [[ $1 == "ht" ]]; then
   run_ht_benchmarks
 elif [[ $1 == "kmer" ]]; then
   run_kmer_benchmarks
+elif [[ $1 == "batching" ]]; then
+  run_batch_benchmarks
 fi
