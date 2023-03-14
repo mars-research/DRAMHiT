@@ -27,9 +27,9 @@
   hashtables (cas and cas++). The hashtables take two template parameters (for
   Queue and the <k,v> data structure). The KVQ need not be templatized as it is
   almost similar across different <k,v> types
-  	- CAS (compare and swap)
-  	- CASHT++ (compare and swap with prefetch queue)
-  	- KVStore (partitioned hashtable with prefetch)
+  - Folklore (compare and swap)
+  - DRAMHiT (compare and swap with prefetch queue)
+  - DRAMHiT-P (partitioned hashtable with prefetch)
 
 * **Threading**: The application should spawn a set of reader/writer threads for
   managing get/set requests. As the incoming requests could be skewed, we need

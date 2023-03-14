@@ -92,7 +92,7 @@ def run_partitioned_with_queues(build_dir: str, args: argparse.Namespace):
         partitioned_args += get_additional_args(n, args)
         logfile = build_dir.parent.joinpath(f'p{n}-n{n}.log')
         print(f'Running bq{n} with {partitioned_args}', flush=True)
-        run_synchronous(build_dir, './kvstore', partitioned_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
+        run_synchronous(build_dir, './dramhit', partitioned_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
     dumplog(build_dir)
 
 def run_partitioned_no_queues(build_dir: str, args: argparse.Namespace):
@@ -104,7 +104,7 @@ def run_partitioned_no_queues(build_dir: str, args: argparse.Namespace):
         partitioned_args += get_additional_args(n, args)
         logfile = build_dir.parent.joinpath(f'{n}.log')
         print(f'Running partitioned_no_queues{n} with {partitioned_args}', flush=True)
-        run_synchronous(build_dir, './kvstore', partitioned_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
+        run_synchronous(build_dir, './dramhit', partitioned_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
     dumplog(build_dir)
 
 def run_cashtpp(build_dir: str, args: argparse.Namespace):
@@ -116,7 +116,7 @@ def run_cashtpp(build_dir: str, args: argparse.Namespace):
         cashtpp_args += get_additional_args(n, args)
         print(f'Running cashtpp{n} with {cashtpp_args}', flush=True)
         logfile = cashtpp_home.parent.joinpath(f'{n}.log')
-        run_synchronous(build_dir, './kvstore', cashtpp_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
+        run_synchronous(build_dir, './dramhit', cashtpp_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
 
     dumplog(cashtpp_home)
 
@@ -129,7 +129,7 @@ def run_casht(build_dir: str, args: argparse.Namespace):
         casht_args += get_additional_args(n, args)
         logfile = casht_home.parent.joinpath(f'{n}.log')
         print(f'Running casht{n} with {casht_args}', flush=True)
-        run_synchronous(build_dir, './kvstore', casht_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
+        run_synchronous(build_dir, './dramhit', casht_args, os.open(logfile, os.O_RDWR | os.O_CREAT))
     dumplog(casht_home)
 
 if __name__ == '__main__':

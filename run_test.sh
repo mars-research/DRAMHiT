@@ -127,13 +127,13 @@ run_test() {
 
         PROD_CONS_ARGS=" --nprod ${NPROD} --ncons ${NCONS}"
         LOG_FILE="${LOG_PREFIX}/${NPROD}-${NCONS}.log"
-        echo "Running kvstore with ${ARGS} ${PROD_CONS_ARGS}" > ${LOG_FILE}
-        ./build/kvstore ${ARGS} ${PROD_CONS_ARGS} 2>&1 >> ${LOG_FILE}
+        echo "Running dramhit with ${ARGS} ${PROD_CONS_ARGS}" > ${LOG_FILE}
+        ./build/dramhit ${ARGS} ${PROD_CONS_ARGS} 2>&1 >> ${LOG_FILE}
       else
         LOG_FILE="${LOG_PREFIX}/${i}.log"
         THREAD_ARGS=" --num-threads ${i}"
-        echo "Running kvstore with ${ARGS} ${THREAD_ARGS}" > ${LOG_FILE}
-        ./build/kvstore ${ARGS} ${THREAD_ARGS} 2>&1 >> ${LOG_FILE}
+        echo "Running dramhit with ${ARGS} ${THREAD_ARGS}" > ${LOG_FILE}
+        ./build/dramhit ${ARGS} ${THREAD_ARGS} 2>&1 >> ${LOG_FILE}
       fi
 
       if [[ "${HT_TYPE}" == "casht_cashtpp" ]];then
@@ -186,8 +186,8 @@ run_test() {
 }
 
 
-KVSTORE_BASE=/opt/kvstore
-DATASET_DIR=${KVSTORE_BASE}/kmer_dataset
+DRAMHIT_BASE=/opt/dramhit
+DATASET_DIR=${DRAMHIT_BASE}/kmer_dataset
 
 declare -A DATASET_ARRAY
 DATASET_ARRAY["dmela"]=${DATASET_DIR}/ERR4846928.fastq
@@ -256,8 +256,8 @@ run_kmer_test() {
         mkdir -p ${LOG_PREFIX}
       fi
 
-      echo "Running kvstore with ${ARGS} --k ${k}" > ${LOG_FILE}
-      ./build/kvstore ${ARGS} --k ${k} 2>&1 >> ${LOG_FILE}
+      echo "Running dramhit with ${ARGS} --k ${k}" > ${LOG_FILE}
+      ./build/dramhit ${ARGS} --k ${k} 2>&1 >> ${LOG_FILE}
 
       MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
 
@@ -385,7 +385,7 @@ run_cashtpp_batch_benchmarks() {
   printf "batch_len, set-cycles, cashtpp-set-${HT_SIZE}, get-cycles, cashtpp-get-${HT_SIZE}\n" | tee -a ${LOG_PREFIX}/cashtpp_run${run}.csv;
   for i in 1 2 4 8 16; do
     LOG_FILE="${LOG_PREFIX}/${i}.log"
-    ./build/kvstore --ht-type 3 --numa-split 1 --mode 11 --skew 0.01 --hw-pref 0 --num-threads 64 --batch-len ${i} 2>&1 >> ${LOG_FILE};
+    ./build/dramhit --ht-type 3 --numa-split 1 --mode 11 --skew 0.01 --hw-pref 0 --num-threads 64 --batch-len ${i} 2>&1 >> ${LOG_FILE};
     CASHTPP_SET_CYCLES=$(rg "set_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
     CASHTPP_GET_CYCLES=$(rg "get_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
     CASHTPP_SET_MOPS=$(rg "set_mops : [0-9\.]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
@@ -407,7 +407,7 @@ run_part_batch_benchmarks() {
   printf "batch_len, ins-cycles, ins mops/s, find-cycles, find mops/s\n" | tee -a ${LOG_PREFIX}/part_run${run}.csv;
   for i in 1 2 4 8 16; do
     LOG_FILE="${LOG_PREFIX}/${i}.log"
-    ./build/kvstore --ht-type 1 --numa-split 3 --mode 8 --skew 0.01 --hw-pref 0 --nprod 16 --ncons 48 --batch-len ${i} 2>&1 >> ${LOG_FILE}
+    ./build/dramhit --ht-type 1 --numa-split 3 --mode 8 --skew 0.01 --hw-pref 0 --nprod 16 --ncons 48 --batch-len ${i} 2>&1 >> ${LOG_FILE}
     PART_SET_CYCLES=$(rg "set_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
     PART_GET_CYCLES=$(rg "get_cycles : [0-9]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)
     PART_SET_MOPS=$(rg "set_mops : [0-9\.]+" -o ${LOG_FILE} | cut -d':' -f2 | tail -1)

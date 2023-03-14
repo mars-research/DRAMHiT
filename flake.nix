@@ -20,15 +20,15 @@
     };
     gtest = pkgs.callPackage ./lib/gtest {};
     in rec {
-      defaultPackage = packages.kvstore;
-      packages.kvstore = pkgs.callPackage ./build_package.nix {
+      defaultPackage = packages.dramhit;
+      packages.dramhit = pkgs.callPackage ./build_package.nix {
         # override any parameters here
         inherit stdenv gtest;
         cmakeFlags = [];
       };
       devShells.prod = mkShell {
         inputsFrom = [
-          packages.kvstore
+          packages.dramhit
         ];
         buildInputs = with pkgs; [
           msr-tools

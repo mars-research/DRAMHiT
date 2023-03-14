@@ -10,7 +10,7 @@ using namespace kmercounter;
 
 void initializeLogger() {
   static plog::RollingFileAppender<plog::TxtFormatter> fileAppender(
-      "kvstore.log");
+      "dramhit.log");
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
   plog::init(plog::debug, &fileAppender).addAppender(&consoleAppender);
 
@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 
   Application application;
 
-  PLOGI << "Starting kvstore";
+  PLOGI << "Starting dramhit";
 
   application.process(argc, argv);
 

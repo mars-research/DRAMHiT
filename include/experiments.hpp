@@ -9,7 +9,7 @@ enum class experiment_type {
   aggr_kv_write_key_only
 };
 
-static constexpr experiment_type active_experiment{KVSTORE_ACTIVE_EXPERIMENT};
+static constexpr experiment_type active_experiment{DRAMHIT_ACTIVE_EXPERIMENT};
 
 template <typename... pack_types>
 constexpr bool experiment_inactive(experiment_type type,

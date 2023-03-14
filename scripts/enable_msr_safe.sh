@@ -18,7 +18,7 @@ build_and_install() {
   sudo rmmod msr-safe &> /dev/null
   make clean && make && \
     sudo insmod msr-safe.ko && \
-    sudo sh -c "cat allowlists/al_kvstore > /dev/cpu/msr_allowlist"
+    sudo sh -c "cat allowlists/al_dramhit > /dev/cpu/msr_allowlist"
 }
 
 pushd ${PARENT_PATH}/../tools/msr-safe

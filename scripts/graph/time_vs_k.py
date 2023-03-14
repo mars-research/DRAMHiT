@@ -15,7 +15,7 @@ def get_insert_cycle_and_throughput(file):
         return (cycles, throughput)
             
 
-def run_test(extra_build_args, extra_kvstore_args, outpath):
+def run_test(extra_build_args, extra_dramhit_args, outpath):
     # Config build
     build_dir = f'build/tmp'
     build_cmd = f'cmake -S . -B {build_dir} -G Ninja {extra_build_args} > {outpath}.cmake.log'
@@ -24,8 +24,8 @@ def run_test(extra_build_args, extra_kvstore_args, outpath):
     # Build
     run_subprocess(f'ninja -C {build_dir} > {outpath}.build.log')
 
-    # Run kvstore
-    run_subprocess(f'{build_dir}/kvstore {extra_kvstore_args} > {outpath}')
+    # Run dramhit
+    run_subprocess(f'{build_dir}/dramhit {extra_dramhit_args} > {outpath}')
 
     # Extract cycle count
     return get_insert_cycle_and_throughput(outpath)
@@ -44,8 +44,8 @@ if __name__ == '__main__':
     for K in Ks:
         print(f'Running {test_type} K={K}')
         build_args = f'-DBQUEUE=OFF -DKMER_LEN={K}'
-        kvstore_args = f'--num-threads=64 --mode=6 --ht-type=3 --numa-split=1 --in-file={FASTQ_FILE}'
-        rtn = run_test(build_args, kvstore_args, f'{OUTPATH}/{test_type}/{K}.log')
+        dramhit_args = f'--num-threads=64 --mode=6 --ht-type=3 --numa-split=1 --in-file={FASTQ_FILE}'
+        rtn = run_test(build_args, dramhit_args, f'{OUTPATH}/{test_type}/{K}.log')
         print(f'cycles {rtn}')
         casht_cycles.append(rtn)
     print(f'{test_type}: {casht_cycles}')
@@ -57,8 +57,8 @@ if __name__ == '__main__':
     for K in Ks:
         print(f'Running {test_type} K={K}')
         build_args = f'-DBQUEUE=OFF -DKMER_LEN={K}'
-        kvstore_args = f'--num-threads=32 --mode=6 --ht-type=3 --numa-split=1 --in-file={FASTQ_FILE}'
-        rtn = run_test(build_args, kvstore_args, f'{OUTPATH}/{test_type}/{K}.log')
+        dramhit_args = f'--num-threads=32 --mode=6 --ht-type=3 --numa-split=1 --in-file={FASTQ_FILE}'
+        rtn = run_test(build_args, dramhit_args, f'{OUTPATH}/{test_type}/{K}.log')
         print(f'cycles {rtn}')
         casht32_cycles.append(rtn)
     print(f'{test_type}: {casht32_cycles}')
@@ -70,8 +70,8 @@ if __name__ == '__main__':
     for K in Ks:
         print(f'Running {test_type} K={K}')
         build_args = f'-DBQUEUE=ON -DKMER_LEN={K}'
-        kvstore_args = f'--nprod 32 --ncons 32 --mode=8 --ht-type=1 --in-file={FASTQ_FILE}'
-        rtn = run_test(build_args, kvstore_args, f'{OUTPATH}/{test_type}/{K}.log')
+        dramhit_args = f'--nprod 32 --ncons 32 --mode=8 --ht-type=1 --in-file={FASTQ_FILE}'
+        rtn = run_test(build_args, dramhit_args, f'{OUTPATH}/{test_type}/{K}.log')
         print(f'cycles {rtn}')
         partitionedht_cycles.append(rtn)
     print(f'{test_type}: {partitionedht_cycles}')

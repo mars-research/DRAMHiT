@@ -18,7 +18,7 @@
     cxxStandard = "17";
   };
 in stdenv.mkDerivation {
-  name = "kvstore";
+  name = "dramhit";
   version = "0.1.0";
 
   inherit cmakeFlags;
@@ -50,7 +50,7 @@ in stdenv.mkDerivation {
   
   installPhase = ''
     mkdir -p $out/bin
-    cp kvstore $out/bin/
+    cp dramhit $out/bin/
     find unittests/ -executable -type f -exec cp {} $out/bin/ \;
   '';
 }

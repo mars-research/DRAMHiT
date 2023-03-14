@@ -3,7 +3,7 @@
 LOG_PREFIX="atc22_logs/insert_find/"
 
 CMAKE_BUILD_DIR="build"
-KVSTORE_BIN="${CMAKE_BUILD_DIR}/kvstore"
+DRAMHIT_BIN="${CMAKE_BUILD_DIR}/dramhit"
 
 rebuild() {
   CMAKE_FLAGS=$1
@@ -69,8 +69,8 @@ run_insert_find() {
           nprod=$(($nt/2))
           ./kmercounter --mode=8 --ht-fill=75 --nprod ${nprod} --ncons ${nprod} |& tee ${LOG_PREFIX}/${key_type}/uniform-set-get/${ty}/${ty}_${nt}_${i}.log
         else
-          echo "running ${KVSTORE_BIN} with args"
-          ${KVSTORE_BIN} --mode=6 --num-threads ${nt} --ht-type ${httype[$ty]} |& tee ${LOG_PREFIX}/${key_type}/uniform-set-get/${ty}/${ty}_${nt}_${i}.log
+          echo "running ${DRAMHIT_BIN} with args"
+          ${DRAMHIT_BIN} --mode=6 --num-threads ${nt} --ht-type ${httype[$ty]} |& tee ${LOG_PREFIX}/${key_type}/uniform-set-get/${ty}/${ty}_${nt}_${i}.log
         fi
         # Just wait a few seconds before the next test
         sleep 3;

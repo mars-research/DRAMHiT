@@ -99,7 +99,7 @@ class HashtableTest : public ::testing::TestWithParam<const char*> {
 /// In other words, no queue is used.
 TEST_P(HashtableTest, NO_PREFETCH_TEST) {
   // Disable for now because of a bug.
-  // https://github.com/mars-research/kvstore/issues/16
+  // https://github.com/mars-research/dramhit/issues/16
   GTEST_SKIP();
 
   const auto test_size = absl::GetFlag(FLAGS_test_size);

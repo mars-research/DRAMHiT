@@ -18,9 +18,9 @@ def get_find_cycle_and_throughput(file):
     return (cycles, throughput)
       
 
-def run_test(kvstore_args, outpath):
-  # Run kvstore
-  run_subprocess(f'{BUILD_DIR}/kvstore {kvstore_args} > {outpath}')
+def run_test(dramhit_args, outpath):
+  # Run dramhit
+  run_subprocess(f'{BUILD_DIR}/dramhit {dramhit_args} > {outpath}')
 
   # Extract cycle count
   return get_find_cycle_and_throughput(outpath)
@@ -43,7 +43,7 @@ if __name__ == '__main__':
   cycles = []
   test_type = 'CASHTPP'
   run_subprocess(f'mkdir -p {OUTPATH}/{test_type}')
-  kvstore_args = f'--num-threads=64 --mode=12 --ht-type=3 --numa-split=1'
+  dramhit_args = f'--num-threads=64 --mode=12 --ht-type=3 --numa-split=1'
   for data_size in data_sizes:
     # Generate dataset
     print(f'Running size={data_size}')
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     outpath = f'{OUTPATH}/{data_size}/{test_type}'
     run_subprocess(f'mkdir -p {outpath}')
 
-    rtn = run_test(kvstore_args, f'{OUTPATH}/{data_size}.log')
+    rtn = run_test(dramhit_args, f'{OUTPATH}/{data_size}.log')
     print(f'cycles {rtn}')
     cycles.append(rtn)
   print(f'{test_type}: {cycles}')

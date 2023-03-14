@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
-project(kvstore VERSION 0.1.0)
+project(dramhit VERSION 0.1.0)
 
 # Declare options
 option(SANITIZE "Enable ASAN." OFF)
 option(SANITIZE_TESTING "Enable ASAN for tests." ON)
-option(BUILD_APP "Build the main application, kvstore." ON)
+option(BUILD_APP "Build the main application, dramhit." ON)
 option(BUILD_TESTING "Build tests." OFF)
 option(BUILD_EXAMPLE "Build examples." OFF)
 option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
@@ -59,21 +59,21 @@ add_compile_options(
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 # A standalone library without any of the benchmarking/application code.
-add_library(kvstore_lib
+add_library(dramhit_lib
     "src/hashtables/kvtypes.cpp"
     "src/input_reader/eth_rel_gen.cpp"
     "src/types.cpp"
     "src/zipf_distribution.cpp"
 )
-target_include_directories(kvstore_lib PUBLIC include lib/plog/include/ lib)
-target_link_libraries(kvstore_lib PRIVATE 
+target_include_directories(dramhit_lib PUBLIC include lib/plog/include/ lib)
+target_link_libraries(dramhit_lib PRIVATE 
     eth_hashjoin
     numa
 )
 
 if(BUILD_APP)
     # Build all the source files for the executable.
-    add_executable(kvstore
+    add_executable(dramhit
         "src/tests/queue_tests.cpp"
         "src/tests/hashtable_tests.cpp"
         "src/tests/prefetch_tests.cpp"
@@ -85,15 +85,15 @@ if(BUILD_APP)
         "src/misc_lib.cpp"
         "src/xorwow.cpp"
         "src/Application.cpp"
-        "src/kvstore.cpp"
+        "src/dramhit.cpp"
         "src/zipf_distribution.cpp"
         "src/Latency.cpp"
     )
 
     # Add subdirectory
-    target_link_directories(kvstore PRIVATE lib/)
-    target_link_libraries(kvstore PRIVATE
-        kvstore_lib
+    target_link_directories(dramhit PRIVATE lib/)
+    target_link_libraries(dramhit PRIVATE
+        dramhit_lib
         fnv
         xxhash
         cityhash
@@ -136,7 +136,7 @@ else()
     if (NOT experiment STREQUAL none AND NOT BRANCH STREQUAL branched)
         message(FATAL_ERROR "Branchless insertion not supported by all experiments")
     endif()
-    add_definitions(-DKVSTORE_ACTIVE_EXPERIMENT=experiment_type::${experiment})
+    add_definitions(-DDRAMHIT_ACTIVE_EXPERIMENT=experiment_type::${experiment})
 endif()
 
 set(KEY_LEN "8" CACHE STRING "Size of key/value for join benchmarks in bytes")
@@ -228,7 +228,7 @@ if (VTUNE)
 
     message(WARNING "Building with vtune")
     include_directories(${VTUNE_ROOT}/include/)
-    target_link_libraries(kvstore PRIVATE ${VTUNE_ROOT}/lib64/libittnotify.a dl)
+    target_link_libraries(dramhit PRIVATE ${VTUNE_ROOT}/lib64/libittnotify.a dl)
     add_definitions(-DWITH_VTUNE_LIB)
 endif ()
 

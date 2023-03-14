@@ -18,8 +18,8 @@ def get_insert_cycle_and_throughput(file):
             
 
 def run_test(run_args, outpath):
-    # Run kvstore
-    run_subprocess(f'{BUILD_DIR}/kvstore {run_args} > {outpath}')
+    # Run dramhit
+    run_subprocess(f'{BUILD_DIR}/dramhit {run_args} > {outpath}')
 
     # Extract cycle count
     return get_insert_cycle_and_throughput(outpath)
