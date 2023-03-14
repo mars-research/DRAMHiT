@@ -165,10 +165,11 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     printf("Number of insertions per sec (Mops/s): %.3f\n", insert_mops);
 
     // for find, we use all threads
+    // or for R/W, only n_prod
     if (config.mode == BQ_TESTS_YES_BQ) {
       num_threads = config.n_cons + config.n_prod;
     }
-    find_mops = ((double)2600 / cycles_per_find) * config.n_prod;
+    find_mops = ((double)2600 / cycles_per_find) * (config.rw_queues ? config.n_prod : num_threads);
     printf("%s, num_threads %" PRIu64 "\n", __func__, num_threads);
     printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
 
