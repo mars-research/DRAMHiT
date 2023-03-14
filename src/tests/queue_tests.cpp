@@ -252,7 +252,7 @@ void QueueTest<T>::producer_thread(
 
   key_start = key_start_orig;
   auto zipf_idx = key_start == 1 ? 0 : key_start;
-  for (transaction_id = 0u; transaction_id < num_messages;) {
+  for (transaction_id = 0u; transaction_id < num_messages * cfg->rw_queues;) {
     k = zipf_values->at(zipf_idx);
     ++zipf_idx;
     uint64_t hash_val = hasher(&k, sizeof(k));
