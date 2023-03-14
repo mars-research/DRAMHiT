@@ -417,12 +417,18 @@ void QueueTest<T>::consumer_thread(
     active_qmask |= (1ull << i);
   }
 
+  std::uint64_t next_pollution {};
   while (finished_producers < n_prod) {
     auto submit_batch = [&](auto num_elements) {
       InsertFindArguments kp(_items, num_elements);
 
       kmer_ht->insert_batch(kp, collector);
       inserted += kp.size();
+
+      for (auto p = 0u;
+            p < config.pollute_ratio * HT_TESTS_FIND_BATCH_LENGTH; ++p)
+        prefetch_object<true>(
+            &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
       data_idx = 0;
     };
