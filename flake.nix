@@ -61,7 +61,8 @@
           clang-tools
           gdb
           linuxPackages.perf
-
+          bc  
+          ripgrep
           # Python packages for evals plotting.
           python310
           python310Packages.numpy
