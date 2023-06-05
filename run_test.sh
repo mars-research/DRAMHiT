@@ -203,6 +203,11 @@ run_kmer_test() {
     MAX_THREADS=$4
   fi
 
+  
+  echo  TEST_TYPE $1
+  echo  RUNS $2
+  echo  PREFETCHER $3
+  echo  MAX_THREADS $4
   HT_TYPE=$(echo ${TEST_TYPE} | awk -F'-' '{print $1}')
   MODE=$(echo ${TEST_TYPE} | awk -F'-' '{print $2}')
   GENOME=$(echo ${TEST_TYPE} | awk -F'-' '{print $3}')
@@ -365,9 +370,9 @@ run_ht_benchmarks() {
 }
 
 run_kmer_benchmarks() {
-  for genome in "fvesca" "dmela"; do
-    run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-    run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+  for genome in "fvesca" ; do
+    # run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    # run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     run_kmer_test "part-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   done
 }
