@@ -305,7 +305,10 @@ void QueueTest<T>::producer_thread(
       if (is_join) {
         // num_kmers++;
         kv.key = k = kmer;
+#if defined(BQUEUE_KMER_TEST)
+#else
         kv.value = 0;
+#endif
       } else {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
