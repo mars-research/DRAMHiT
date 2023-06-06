@@ -79,6 +79,7 @@ if(BUILD_APP)
         "src/tests/prefetch_tests.cpp"
         "src/tests/cachemiss_test.cpp"
         "src/tests/kmer_tests.cpp"
+        "src/tests/kmer_radix_tests.cpp"
         "src/tests/hashjoin_test.cpp"
         "src/tests/rw_ratio.cpp"
         "src/tests/synth_test.cpp"
