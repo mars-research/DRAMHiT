@@ -15,6 +15,10 @@ class KmerTest {
   void count_kmer(Shard *sh, const Configuration &config,
                   BaseHashTable *ht,
                   std::barrier<VoidFn> *barrier);
+
+  void count_kmer_radix(Shard *sh, const Configuration &config,
+                  BaseHashTable *ht,
+                  std::barrier<VoidFn> *barrier);
 };
 
 }  // namespace kmercounter

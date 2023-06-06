@@ -34,3 +34,5 @@ Testing/
 *.fold
 .cache/
 .vscode/
+esys23-ae-*
+.ccls-cache
