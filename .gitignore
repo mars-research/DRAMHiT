@@ -36,3 +36,10 @@ Testing/
 .vscode/
 esys23-ae-*
 .ccls-cache
+*/CMakeFiles
+CMakeFiles
+.cmake/*
+*.cmake
+compile_commands.json
+Makefile
+CMakeCache.txt
