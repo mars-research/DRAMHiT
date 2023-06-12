@@ -101,9 +101,13 @@ size_t getLargest_POW_2(uint32_t n)
 
 void prepare(Shard* sh,
     const Configuration& config,
-    std::barrier<VoidFn>* barrier
+    BaseHashTable* ht,
+    std::barrier<VoidFn>* barrier,
+    uint32_t** hists,
+    uint64_t** partitions    
         ) {
     auto num_threads = config.num_threads;
+    auto shard_idx = sh->shard_idx;
     // Two ways:
     // 1: rel tmp 
     // 2: file cache tmp
@@ -115,6 +119,7 @@ void prepare(Shard* sh,
 
     // Assume less than 4G tuples per local partition
     uint32_t* hist = (uint32_t *) calloc(fanOut, sizeof(int32_t));
+    hists[shard_idx] = hist;
 
     // Be care of the `K` here; it's a compile time constant.
     auto reader = input_reader::MakeFastqKMerPreloadReader(config.K, config.in_file, sh->shard_idx, config.num_threads);
@@ -153,6 +158,7 @@ void prepare(Shard* sh,
 
 
     uint64_t* locals = (uint64_t*) std::aligned_alloc(PAGESIZE, hist[fanOut - 1] * sizeof(Kmer));
+    partitions[shard_idx] = locals;
     
     cacheline_t *buffer = (cacheline_t*) std::aligned_alloc(CACHE_LINE_SIZE, sizeof(cacheline_t) * fanOut); 
 
@@ -178,6 +184,20 @@ void prepare(Shard* sh,
     }
     
     barrier->arrive_and_wait();
+    
+    if (shard_idx >= fanOut) {
+        return;
+    }
+
+    HTBatchRunner batch_runner(ht);
+    for (uint32_t i = 0; i < num_threads; i++) {
+        auto start = shard_idx == 0? 0: hists[i][shard_idx - 1];
+        auto end = hists[i][shard_idx];
+        for (; start < end; start++) {
+            batch_runner.insert(partitions[i][start], 0 /* we use the aggr tables so no value */);
+        }
+    }
+    batch_runner.flush_insert();
 }
 
 void KmerTest::count_kmer_radix(Shard* sh,
