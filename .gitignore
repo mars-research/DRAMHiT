@@ -36,3 +36,5 @@ Testing/
 .vscode/
 esys23-ae-*
 .ccls-cache
+compile_commands.json
+tools/msr-safe
