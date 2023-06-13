@@ -23,7 +23,7 @@ namespace kmercounter {
 
 typedef uint64_t Kmer;
 
-BaseHashTable* init_ht(const uint64_t sz, uint8_t id) {
+BaseHashTable* init_ht_radix(const uint64_t sz, uint8_t id) {
   BaseHashTable* kmer_ht = NULL;
 
   // Create hash table
@@ -126,18 +126,10 @@ struct Task {};
 
 // A queue of tasks, select the thread with most localized memeory to consume it
 
-void spawn(const Configuration& config) {
-  auto nthreads = config.num_threads;
-  auto D = 6;
-  auto fanOut = 1u << D;
-  uint32_t** hists = (uint32_t**)std::aligned_alloc(CACHE_LINE_SIZE,
-                                                    fanOut * sizeof(uint32_t*));
-  uint64_t** partitions = (uint64_t**)std::aligned_alloc(
-      CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
-}
 
 void prepare(Shard* sh, const Configuration& config,
-             std::barrier<VoidFn>* barrier, uint32_t** hists,
+             std::barrier<VoidFn>* barrier, 
+             uint32_t** hists,
              uint64_t** partitions) {
   auto num_threads = config.num_threads;
   auto shard_idx = sh->shard_idx;
@@ -233,7 +225,7 @@ void prepare(Shard* sh, const Configuration& config,
     auto end = hists[i][shard_idx];
     total += end - start;
   }
-  BaseHashTable* ht = init_ht(total, shard_idx);
+  BaseHashTable* ht = init_ht_radix(total, shard_idx);
   HTBatchRunner batch_runner(ht);
   for (uint32_t i = 0; i < num_threads; i++) {
     auto start = shard_idx == 0 ? 0 : hists[i][shard_idx - 1];
@@ -261,6 +253,20 @@ void prepare(Shard* sh, const Configuration& config,
   PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, num_kmers);
 
   get_ht_stats(sh, ht);
+}
+
+void KmerTest::spawn
+(Shard* sh, const Configuration& config,
+             std::barrier<VoidFn>* barrier 
+        ) {
+  auto nthreads = config.num_threads;
+  auto D = 6;
+  auto fanOut = 1u << D;
+  uint32_t** hists = (uint32_t**)std::aligned_alloc(CACHE_LINE_SIZE,
+                                                    fanOut * sizeof(uint32_t*));
+  uint64_t** partitions = (uint64_t**)std::aligned_alloc(
+      CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
+  prepare(sh, config, barrier, hists, partitions);   
 }
 
 void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
