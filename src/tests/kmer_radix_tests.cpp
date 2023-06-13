@@ -10,6 +10,11 @@
 #include "hashtables/base_kht.hpp"
 #include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/kvtypes.hpp"
+
+#include "hashtables/cas_kht.hpp"
+#include "hashtables/simple_kht.hpp"
+#include "hashtables/array_kht.hpp"
+
 #include "sync.h"
 #include "input_reader/fastq.hpp"
 #include "input_reader/counter.hpp"
@@ -20,6 +25,31 @@ namespace kmercounter {
 
 typedef uint64_t Kmer;
 
+BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
+  BaseHashTable *kmer_ht = NULL;
+
+  // Create hash table
+  switch (config.ht_type) {
+    case PARTITIONED_HT:
+      kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
+      break;
+    case CASHTPP:
+      /* For the CAS Hash table, size is the same as
+          size of one partitioned ht * number of threads */
+      kmer_ht =
+          new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
+      break;
+    case ARRAY_HT:
+      kmer_ht =
+          new ArrayHashTable<Value, ItemQueue>(sz);
+      break;
+    default:
+      PLOG_FATAL.printf("HT type not implemented");
+      exit(-1);
+      break;
+  }
+  return kmer_ht;
+}
 
 /** 
  * Makes a non-temporal write of 64 bytes from src to dst.
@@ -99,9 +129,18 @@ size_t getLargest_POW_2(uint32_t n)
   return i;
 }
 
+void spawn(
+    const Configuration& config
+        ) {
+    auto nthreads = config.num_threads;
+    auto D = 6;
+    auto fanOut = 1u << D;
+    uint32_t** hists = (uint32_t**) std::aligned_alloc(CACHE_LINE_SIZE, fanOut * sizeof(uint32_t*));
+    uint64_t** partitions = (uint64_t**) std::aligned_alloc (CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*)); 
+}
+
 void prepare(Shard* sh,
     const Configuration& config,
-    BaseHashTable* ht,
     std::barrier<VoidFn>* barrier,
     uint32_t** hists,
     uint64_t** partitions    
@@ -189,6 +228,13 @@ void prepare(Shard* sh,
         return;
     }
 
+    size_t total = 0;
+    for (uint32_t i = 0; i < num_threads; i++) {
+        auto start = shard_idx == 0? 0: hists[i][shard_idx - 1];
+        auto end = hists[i][shard_idx];
+        total += end - start;
+    }
+    BaseHashTable* ht = init_ht(total, shard_idx);
     HTBatchRunner batch_runner(ht);
     for (uint32_t i = 0; i < num_threads; i++) {
         auto start = shard_idx == 0? 0: hists[i][shard_idx - 1];
@@ -198,6 +244,11 @@ void prepare(Shard* sh,
         }
     }
     batch_runner.flush_insert();
+
+    barrier->arrive_and_wait();
+
+    sh->stats->insertions.duration = _rdtsc() - start;
+    sh->stats->insertions.op_count = num_kmers;
 }
 
 void KmerTest::count_kmer_radix(Shard* sh,
