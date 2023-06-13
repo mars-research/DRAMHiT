@@ -43,3 +43,5 @@ CMakeFiles
 compile_commands.json
 Makefile
 CMakeCache.txt
+compile_commands.json
+tools/msr-safe
