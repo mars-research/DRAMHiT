@@ -234,6 +234,9 @@ run_kmer_test() {
     "kmer")
       ARGS+=" --mode 4"
       ;;
+    "kmer_radix")
+      ARGS+=" --mode 14"
+      ;;
     *)
       echo "Unknown mode ${MODE}"
       exit;
@@ -254,7 +257,7 @@ run_kmer_test() {
     ONCE=0
     LOG_PREFIX="esys23-ae-${USER}/${TEST_TYPE}/run${run}/"
 
-    for k in $(seq 4 ${MAX_K}); do
+    for k in $(seq 32 ${MAX_K}); do
       LOG_FILE="${LOG_PREFIX}/k${k}_t${MAX_THREADS}_${GENOME}.log"
 
       if [ ! -d ${LOG_PREFIX} ]; then
@@ -373,7 +376,15 @@ run_kmer_benchmarks() {
   for genome in "fvesca" ; do
     # run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     # run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-    run_kmer_test "part-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+  done
+}
+
+run_kmer_radix_benchmarks() {
+  for genome in "fvesca" ; do
+    # run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    # run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    run_kmer_test "casht-kmer_radix-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   done
 }
 
@@ -431,6 +442,8 @@ if [[ $1 == "ht" ]]; then
   run_ht_benchmarks
 elif [[ $1 == "kmer" ]]; then
   run_kmer_benchmarks
+elif [[ $1 == "kmer_radix" ]]; then
+  run_kmer_radix_benchmarks
 elif [[ $1 == "batching" ]]; then
   run_batch_benchmarks
 fi
