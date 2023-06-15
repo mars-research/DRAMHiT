@@ -21,7 +21,15 @@
 
 namespace kmercounter {
 
+
 typedef uint64_t Kmer;
+
+#define KMERPERPAGE (PAGESIZE - sizeof(uint64_t*))/sizeof(Kmer)
+
+struct PageLinkedList {
+    Kmer kmers[KMERPERPAGE];
+    PageLinkedList* next;
+};
 
 BaseHashTable* init_ht_radix(const uint64_t sz, uint8_t id) {
   BaseHashTable* kmer_ht = NULL;
@@ -112,32 +120,12 @@ typedef union {
   } data;
 } cacheline_t;
 
-size_t getLargest_POW_2(uint32_t n) {
-  size_t k = 1;
-  size_t i = 0;
-  while (2 * k < n) {
-    k *= 2;
-    i++;
-  }
-  return i;
-}
-
 struct Task {};
-
 // A queue of tasks, select the thread with most localized memeory to consume it
 
-
-void prepare(Shard* sh, const Configuration& config,
-             std::barrier<VoidFn>* barrier, 
-             uint32_t** hists,
-             uint64_t** partitions) {
-}
-
-void KmerTest::count_kmer_radix
-(Shard* sh, const Configuration& config,
-             std::barrier<VoidFn>* barrier,
-             RadixContext& context
-        ) {
+void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
+                                std::barrier<VoidFn>* barrier,
+                                RadixContext& context) {
   auto D = context.D;
   auto R = context.R;
   auto fanOut = context.fanOut;
@@ -170,19 +158,25 @@ void KmerTest::count_kmer_radix
     start_ts = std::chrono::steady_clock::now();
     start_cycles = _rdtsc();
   }
-
+  
   for (uint64_t kmer; reader->next(&kmer);) {
-    uint32_t idx = HASH_BIT_MODULO(kmer, MASK, R);
+    auto hash_val = XXH3_64bits(&kmer, sizeof(Kmer));
+    uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
     hist[idx]++;
     num_kmers++;
   }
-
+    
+  // PLOGI.printf("=== Hists before paddding:");
+  // for (uint32_t i = 0; i < fanOut; i++) {
+  //   PLOGI.printf("Partition: %u: %u", i, hist[i]);
+  // }
   // Need paddding
   for (uint32_t i = 0; i < fanOut; i++) {
     auto hist_i = hist[i];
     auto mod = hist_i % KMERSPERCACHELINE;
     hist[i] = mod == 0 ? hist_i : (hist_i + KMERSPERCACHELINE - mod);
   }
+
 
   uint32_t sum = 0;
   /* compute local prefix sum on hist */
@@ -205,7 +199,8 @@ void KmerTest::count_kmer_radix
   auto new_reader = input_reader::MakeFastqKMerPreloadReader(
       config.K, config.in_file, sh->shard_idx, config.num_threads);
   for (uint64_t kmer; new_reader->next(&kmer);) {
-    uint32_t idx = HASH_BIT_MODULO(kmer, MASK, R);
+    auto hash_val = XXH3_64bits(&kmer, sizeof(Kmer));
+    uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
     uint32_t slot = buffer[idx].data.slot;
     Kmer* part = (Kmer*)(buffer + idx);
     // Only works if KMERSPERCACHELINE is a power of 2
@@ -223,14 +218,25 @@ void KmerTest::count_kmer_radix
   }
 
   barrier->arrive_and_wait();
+  auto num_threads = config.num_threads;
+
+  if (shard_idx == 0) {
+      PLOGI.printf("=== Hists after paddding:");
+      for (uint32_t ti = 0; ti < num_threads; ti++) {
+          PLOGI.printf("Shard IDX: %u", shard_idx);
+          for (uint32_t i = 0; i < fanOut; i++) {
+            PLOGI.printf("Partition: %u: %u", i, hist[i]);
+          }
+      } 
+  }
 
   if (shard_idx >= fanOut) {
+    PLOGW.printf("Thread %u goes idle after partitioning.", shard_idx);
     return;
   }
 
   size_t total = 0;
-  auto num_threads = config.num_threads;
-  for(uint32_t i = 0; i < num_threads; i++) {
+  for (uint32_t i = 0; i < num_threads; i++) {
     auto start = shard_idx == 0 ? 0 : hists[i][shard_idx - 1];
     auto end = hists[i][shard_idx];
     total += end - start;
