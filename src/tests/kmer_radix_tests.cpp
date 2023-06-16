@@ -24,12 +24,12 @@ namespace kmercounter {
 
 typedef uint64_t Kmer;
 
-#define KMERPERPAGE (PAGESIZE - sizeof(uint64_t*))/sizeof(Kmer)
+// #define KMERPERPAGE (PAGESIZE - sizeof(uint64_t*))/sizeof(Kmer)
 
-struct PageLinkedList {
-    Kmer kmers[KMERPERPAGE];
-    PageLinkedList* next;
-};
+// struct PageLinkedList {
+//     Kmer kmers[KMERPERPAGE];
+//     PageLinkedList* next;
+// };
 
 BaseHashTable* init_ht_radix(const uint64_t sz, uint8_t id) {
   BaseHashTable* kmer_ht = NULL;
@@ -160,23 +160,18 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   }
   
   for (uint64_t kmer; reader->next(&kmer);) {
-    auto hash_val = XXH3_64bits(&kmer, sizeof(Kmer));
+    auto hash_val = XXH3_64bits((char*)&kmer, sizeof(Kmer));
     uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
     hist[idx]++;
     num_kmers++;
   }
     
-  // PLOGI.printf("=== Hists before paddding:");
-  // for (uint32_t i = 0; i < fanOut; i++) {
-  //   PLOGI.printf("Partition: %u: %u", i, hist[i]);
-  // }
   // Need paddding
   for (uint32_t i = 0; i < fanOut; i++) {
     auto hist_i = hist[i];
     auto mod = hist_i % KMERSPERCACHELINE;
     hist[i] = mod == 0 ? hist_i : (hist_i + KMERSPERCACHELINE - mod);
   }
-
 
   uint32_t sum = 0;
   /* compute local prefix sum on hist */
@@ -223,9 +218,9 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   if (shard_idx == 0) {
       PLOGI.printf("=== Hists after paddding:");
       for (uint32_t ti = 0; ti < num_threads; ti++) {
-          PLOGI.printf("Shard IDX: %u", shard_idx);
+          PLOGI.printf("Shard IDX: %u", ti);
           for (uint32_t i = 0; i < fanOut; i++) {
-            PLOGI.printf("Partition: %u: %u", i, hist[i]);
+            PLOGI.printf("Partition: %u: %u", i, hists[ti][i]);
           }
       } 
   }
@@ -257,7 +252,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
 
   sh->stats->insertions.duration = _rdtsc() - start;
   sh->stats->insertions.op_count = num_kmers;
-
+  PLOG_INFO.printf("IDX: %u, num_kmers: %u, fill: %u", shard_idx, num_kmers, ht->get_fill());
   if (sh->shard_idx == 0) {
     end_ts = std::chrono::steady_clock::now();
     end_cycles = _rdtsc();

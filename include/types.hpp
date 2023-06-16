@@ -99,7 +99,7 @@ class RadixContext {
         uint32_t fanOut;
         uint64_t mask;
 
-        RadixContext(uint8_t d, uint8_t r, uint32_t num_threads): R(r), D(d), fanOut(1 << d), mask((1 <<d) << r) {
+        RadixContext(uint8_t d, uint8_t r, uint32_t num_threads): R(r), D(d), fanOut(1 << d), mask(((1 <<d) - 1) << r) {
             hists = (uint32_t**)std::aligned_alloc(CACHE_LINE_SIZE, num_threads * sizeof(uint32_t*));   
             partitions = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE, num_threads * sizeof(uint64_t*));
             // for (uint32_t i = 0; i < num_threads; i++) {
