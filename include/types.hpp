@@ -70,6 +70,7 @@ typedef enum {
   ZIPFIAN = 11,
   RW_RATIO = 12,
   HASHJOIN = 13,
+  FASTQ_WITH_INSERT_RADIX = 14,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -85,6 +86,29 @@ extern const char* ht_type_strings[];
 
 struct alignas(64) cacheline {
   char dummy;
+};
+
+class RadixContext {
+    public:
+        uint32_t** hists;
+        uint64_t** partitions;
+        // Radix shift
+        uint8_t R;
+        // Radix bits
+        uint8_t D;
+        uint32_t fanOut;
+        uint64_t mask;
+
+        RadixContext(uint8_t d, uint8_t r, uint32_t num_threads): R(r), D(d), fanOut(1 << d), mask(((1 <<d) - 1) << r) {
+            hists = (uint32_t**)std::aligned_alloc(CACHE_LINE_SIZE, num_threads * sizeof(uint32_t*));   
+            partitions = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE, num_threads * sizeof(uint64_t*));
+            // for (uint32_t i = 0; i < num_threads; i++) {
+            //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut * sizeof(uint32_t));
+            //     partitions[i] = (uint64_t*)std::aligned_alloc(CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
+            // }
+        }
+
+        RadixContext() = default;
 };
 
 // Application configuration
