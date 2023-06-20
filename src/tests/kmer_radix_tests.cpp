@@ -7,6 +7,7 @@
 #include <barrier>
 #include <cstdint>
 
+#include <absl/container/flat_hash_map.h>
 #include "constants.hpp"
 #include "hashtables/array_kht.hpp"
 #include "hashtables/base_kht.hpp"
@@ -219,6 +220,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
 
   if (shard_idx == 0) {
       PLOGI.printf("=== Hists after paddding:");
+      PLOGI.printf("Partition time: %u", _rdtsc() - start);
       for (uint32_t ti = 0; ti < num_threads; ti++) {
           auto count = hists[ti][fanOut - 1];
           PLOGI.printf("IDX: %u, Count: %u, size: %u M", ti, count, count * sizeof(Kmer) / (1024 * 1024));
@@ -249,6 +251,8 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   //       total >> 3);  // 1GB initial size.
   // HTBatchRunner batch_runner(ht);
   std::unordered_map<uint64_t, uint64_t> counter;
+  // absl::flat_hash_map<uint64_t, uint64_t> counter(
+        // total >> 1);  // 1GB initial size.
   // counter.reserve(total >> 6);
   for (uint32_t i = 0; i < num_threads - 30; i++) {
     uint32_t start = shard_idx == 0u ? 0u : hists[i][shard_idx - 1];
@@ -264,7 +268,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   }
   // batch_runner.flush_insert();
 
-  // PLOGI.printf("Shard IDX: %u, Finish insertions, hit barrier", shard_idx);
+  PLOGI.printf("Shard IDX: %u, Finish insertions, hit barrier", shard_idx);
   barrier->arrive_and_wait();
 
   sh->stats->insertions.duration = _rdtsc() - start;
