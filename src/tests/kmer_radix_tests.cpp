@@ -1,7 +1,6 @@
 #include <plog/Log.h>
 
-// #include <absl/container/flat_hash_map.h>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <algorithm>
 #include <atomic>
 #include <barrier>
@@ -24,7 +23,6 @@
 
 namespace kmercounter {
 
-
 typedef uint64_t Kmer;
 
 // #define KMERPERPAGE (PAGESIZE - sizeof(uint64_t*))/sizeof(Kmer)
@@ -33,31 +31,6 @@ typedef uint64_t Kmer;
 //     Kmer kmers[KMERPERPAGE];
 //     PageLinkedList* next;
 // };
-
-BaseHashTable* init_ht_radix(const uint64_t sz, uint8_t id) {
-  BaseHashTable* kmer_ht = NULL;
-
-  // Create hash table
-  switch (config.ht_type) {
-    case PARTITIONED_HT:
-      kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
-      break;
-    case CASHTPP:
-      /* For the CAS Hash table, size is the same as
-          size of one partitioned ht * number of threads */
-      kmer_ht =
-          new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
-      break;
-    case ARRAY_HT:
-      kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);
-      break;
-    default:
-      PLOG_FATAL.printf("HT type not implemented");
-      exit(-1);
-      break;
-  }
-  return kmer_ht;
-}
 
 /**
  * Makes a non-temporal write of 64 bytes from src to dst.
@@ -132,6 +105,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   auto D = context.D;
   auto R = context.R;
   auto fanOut = context.fanOut;
+  auto multiplier = context.multiplier; 
   uint32_t** hists = context.hists;
   uint64_t** partitions = context.partitions;
 
@@ -169,7 +143,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
     num_kmers++;
   }
     
-  // Need paddding
+  // Need paddding so that the size of each partition is an integer multiple of the cache line size
   for (uint32_t i = 0; i < fanOut; i++) {
     auto hist_i = hist[i];
     auto mod = hist_i % KMERSPERCACHELINE;
@@ -177,7 +151,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   }
 
   uint32_t sum = 0;
-  /* compute local prefix sum on hist */
+  /* compute local prefix sum on hist so that we can get the start and end position of each partition */
   for (uint32_t i = 0; i < fanOut; i++) {
     sum += hist[i];
     hist[i] = sum;
@@ -221,10 +195,13 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   if (shard_idx == 0) {
       PLOGI.printf("=== Hists after paddding:");
       PLOGI.printf("Partition time: %u", _rdtsc() - start);
+      uint64_t total_mem = 0;
       for (uint32_t ti = 0; ti < num_threads; ti++) {
           auto count = hists[ti][fanOut - 1];
+          total_mem += count;
           PLOGI.printf("IDX: %u, Count: %u, size: %u M", ti, count, count * sizeof(Kmer) / (1024 * 1024));
       } 
+      PLOGI.printf("Total mem: %u M", total_mem * sizeof(Kmer) / (1024 * 1024));
       for (uint32_t ti = 0; ti < num_threads; ti++) {
           PLOGI.printf("Shard IDX: %u", ti);
           for (uint32_t i = 0; i < fanOut; i++) {
@@ -247,18 +224,15 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   }
   // PLOGI.printf("Shard IDX: %u, total: %u", shard_idx, total);
   // BaseHashTable* ht = init_ht_radix(total, shard_idx);
-  // absl::flat_hash_map<uint64_t, uint64_t> counter(
-  //       total >> 3);  // 1GB initial size.
   // HTBatchRunner batch_runner(ht);
-  std::unordered_map<uint64_t, uint64_t> counter;
-  // absl::flat_hash_map<uint64_t, uint64_t> counter(
-        // total >> 1);  // 1GB initial size.
+  absl::flat_hash_map<uint64_t, uint64_t> counter(
+        total);  // 1GB initial size.
   // counter.reserve(total >> 6);
-  for (uint32_t i = 0; i < num_threads - 30; i++) {
+  for (uint32_t i = 0; i < num_threads; i++) {
     uint32_t start = shard_idx == 0u ? 0u : hists[i][shard_idx - 1];
     uint32_t end = hists[i][shard_idx];
-    if (shard_idx == 1) {
-        PLOGI.printf("start: %u end: %u", start, end);
+    if (i == 1) {
+        PLOGI.printf("IDX: %u, remote: %u, start: %u end: %u", shard_idx, i, start, end);
     }
     for (; start < end; start++) {
           counter[partitions[i][start]]++;  

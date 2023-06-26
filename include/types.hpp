@@ -89,26 +89,43 @@ struct alignas(64) cacheline {
 };
 
 class RadixContext {
-    public:
-        uint32_t** hists;
-        uint64_t** partitions;
-        // Radix shift
-        uint8_t R;
-        // Radix bits
-        uint8_t D;
-        uint32_t fanOut;
-        uint64_t mask;
+ public:
+  uint32_t** hists;
+  uint64_t** partitions;
+  // Radix shift
+  uint8_t R;
+  // Radix bits
+  uint8_t D;
+  uint32_t fanOut;
+  uint64_t mask;
+  // How many hash map does a thread have
+  uint32_t multiplier;
 
-        RadixContext(uint8_t d, uint8_t r, uint32_t num_threads): R(r), D(d), fanOut(1 << d), mask(((1 <<d) - 1) << r) {
-            hists = (uint32_t**)std::aligned_alloc(CACHE_LINE_SIZE, num_threads * sizeof(uint32_t*));   
-            partitions = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE, num_threads * sizeof(uint64_t*));
-            // for (uint32_t i = 0; i < num_threads; i++) {
-            //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut * sizeof(uint32_t));
-            //     partitions[i] = (uint64_t*)std::aligned_alloc(CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
-            // }
-        }
+  RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
+      : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r) {
+    hists = (uint32_t**)std::aligned_alloc(CACHE_LINE_SIZE,
+                                           fanOut * sizeof(uint32_t*));
+    partitions = (uint64_t**)std::aligned_alloc(
+        CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
 
-        RadixContext() = default;
+    uint32_t nthreads_d = 0;
+    while ((1 << (1 + nthreads_d)) <= num_threads) {
+      nthreads_d++;
+    }
+    if (fanOut <= num_threads) {
+        multiplier = 1;
+    } else {
+        multiplier = 1 << (d - nthreads_d);
+    }
+    // for (uint32_t i = 0; i < num_threads; i++) {
+    //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
+    //     sizeof(uint32_t)); partitions[i] =
+    //     (uint64_t*)std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
+    //     sizeof(uint64_t*));
+    // }
+  }
+
+  RadixContext() = default;
 };
 
 // Application configuration
@@ -314,16 +331,12 @@ struct Key {
   key_type key;
 
   Key();
-  Key(const uint64_t &, const uint64_t &);
+  Key(const uint64_t&, const uint64_t&);
   Key(const struct eth_hashjoin::tuple_t& tuple);
 
-  bool operator ==(const Key &b) const {
-    return (this->key == b.key);
-  }
+  bool operator==(const Key& b) const { return (this->key == b.key); }
 
-  operator bool() const {
-    return *this == decltype(*this){};
-  }
+  operator bool() const { return *this == decltype(*this){}; }
 };
 
 struct KeyValuePair {
