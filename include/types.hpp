@@ -90,7 +90,7 @@ struct alignas(64) cacheline {
 
 class RadixContext {
  public:
-  uint32_t** hists;
+  uint64_t** hists;
   uint64_t** partitions;
   // Radix shift
   uint8_t R;
@@ -100,15 +100,16 @@ class RadixContext {
   uint64_t mask;
   // How many hash map does a thread have
   uint32_t multiplier;
+  uint32_t nthreads_d;
 
   RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
       : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r) {
-    hists = (uint32_t**)std::aligned_alloc(CACHE_LINE_SIZE,
-                                           fanOut * sizeof(uint32_t*));
+    hists = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE,
+                                           fanOut * sizeof(uint64_t*));
     partitions = (uint64_t**)std::aligned_alloc(
         CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
 
-    uint32_t nthreads_d = 0;
+    nthreads_d = 0;
     while ((1 << (1 + nthreads_d)) <= num_threads) {
       nthreads_d++;
     }
