@@ -194,24 +194,24 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   barrier->arrive_and_wait();
   auto num_threads = config.num_threads;
 
-  if (shard_idx == 0) {
-      PLOGI.printf("=== Hists after paddding:");
-      PLOGI.printf("Partition time: %u", _rdtsc() - start);
-      uint64_t total_mem = 0;
-      for (uint32_t ti = 0; ti < num_threads; ti++) {
-          auto count = hists[ti][fanOut - 1];
-          total_mem += count;
-          PLOGI.printf("IDX: %u, Count: %u, size: %u M", ti, count, count * sizeof(Kmer) / (1024 * 1024));
-      } 
-      PLOGI.printf("Total mem: %u M", total_mem * sizeof(Kmer) / (1024 * 1024));
-      for (uint32_t ti = 0; ti < num_threads; ti++) {
-          PLOGI.printf("Shard IDX: %u", ti);
-          for (uint32_t i = 0; i < fanOut; i++) {
-            auto count = hists[ti][i];
-            PLOGI.printf("Partition: %u: %u, size: %u M", i, count, count * sizeof(Kmer) / (1024 * 1024));
-          }
-      } 
-  }
+  // if (shard_idx == 0) {
+  //     PLOGI.printf("=== Hists after paddding:");
+  //     PLOGI.printf("Partition time: %u", _rdtsc() - start);
+  //     uint64_t total_mem = 0;
+  //     for (uint32_t ti = 0; ti < num_threads; ti++) {
+  //         auto count = hists[ti][fanOut - 1];
+  //         total_mem += count;
+  //         PLOGI.printf("IDX: %u, Count: %u, size: %u M", ti, count, count * sizeof(Kmer) / (1024 * 1024));
+  //     } 
+  //     PLOGI.printf("Total mem: %u M", total_mem * sizeof(Kmer) / (1024 * 1024));
+  //     for (uint32_t ti = 0; ti < num_threads; ti++) {
+  //         PLOGI.printf("Shard IDX: %u", ti);
+  //         for (uint32_t i = 0; i < fanOut; i++) {
+  //           auto count = hists[ti][i];
+  //           PLOGI.printf("Partition: %u: %u, size: %u M", i, count, count * sizeof(Kmer) / (1024 * 1024));
+  //         }
+  //     } 
+  // }
 
   if (shard_idx >= gathering_threads) {
     PLOGW.printf("Thread %u goes idle after partitioning.", shard_idx);
@@ -223,10 +223,11 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   uint64_t total_insertions = 0; 
   for (uint32_t k = 0; k < multiplier; k++) {
     
+    uint32_t partition_idx = multiplier * shard_idx + k;
   uint64_t total = 0;
   for (uint32_t i = 0; i < num_threads; i++) {
-    auto start = shard_idx == 0 ? 0 : hists[i][shard_idx - 1];
-    auto end = hists[i][shard_idx];
+    uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
+    uint64_t end = hists[i][partition_idx];
     total += end - start;
   }
   // PLOGI.printf("Shard IDX: %u, total: %u", shard_idx, total);
@@ -236,18 +237,17 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
         total);  // 1GB initial size.
   // counter.reserve(total >> 6);
   for (uint32_t i = 0; i < num_threads; i++) {
-    uint32_t partition_idx = multiplier * shard_idx + k;
     uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
     uint64_t end = hists[i][partition_idx];
     if (i == 1) {
         PLOGI.printf("IDX: %u, remote: %u, start: %u end: %u", shard_idx, i, start, end);
     }
+    total_insertions += end - start;
     for (; start < end; start++) {
           counter[partitions[i][start]]++;  
       // batch_runner.insert(partitions[i][start],
       //                     0 /* we use the aggr tables so no value */);
-          total_insertions++;
-    }
+        }
     }
     maps.push_back(std::move(counter));
   }

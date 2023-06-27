@@ -545,10 +545,7 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.mode == FASTQ_WITH_INSERT_RADIX) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX");
       auto nthreads = config.num_threads;
-      uint32_t d = 0;
-      while ((1 << (1 + d)) <= nthreads) {
-          d++;
-      }
+      uint32_t d = 6;
       this->radixContext = RadixContext(d, 0, nthreads); 
       
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u, multiplier: %u, nthreads_d: %u", 
