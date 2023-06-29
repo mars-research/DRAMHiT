@@ -142,7 +142,8 @@ struct Configuration {
   std::string in_file;
   uint64_t in_file_sz;
   uint32_t K;
-
+  // Radix bits
+  uint32_t D;
   // number of threads
   uint32_t num_threads;
   // run mode
@@ -214,6 +215,7 @@ struct Configuration {
     printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size,
            ht_size / (1ul << 30));
     printf("  K %" PRIu64 "\n", K);
+    printf("  D %" PRIu64 "\n", D);
     printf("  P(read) %f\n", pread);
     printf("  Pollution Ratio %u\n", pollute_ratio);
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);

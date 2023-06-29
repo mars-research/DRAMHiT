@@ -206,7 +206,7 @@ run_kmer_test() {
   
   echo  TEST_TYPE $1
   echo  RUNS $2
-  echo  PREFETCHER $3
+  echo  PREFETCHER_OFF $3
   echo  MAX_THREADS $4
   HT_TYPE=$(echo ${TEST_TYPE} | awk -F'-' '{print $1}')
   MODE=$(echo ${TEST_TYPE} | awk -F'-' '{print $2}')
@@ -215,6 +215,10 @@ run_kmer_test() {
   case ${HT_TYPE} in
     "casht")
       ARGS="--ht-type 3 --numa-split 1 --no-prefetch 1"
+      ARGS+=" --num-threads ${MAX_THREADS}"
+      ;;
+    "radix")
+      ARGS="--ht-type 3 --numa-split 2 --d 6"
       ARGS+=" --num-threads ${MAX_THREADS}"
       ;;
     "cashtpp")
@@ -384,7 +388,7 @@ run_kmer_radix_benchmarks() {
   for genome in "fvesca" ; do
     # run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     # run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-    run_kmer_test "casht-kmer_radix-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    run_kmer_test "radix-kmer_radix-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   done
 }
 

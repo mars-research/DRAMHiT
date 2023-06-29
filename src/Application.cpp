@@ -56,6 +56,7 @@ const Configuration def = {
     .in_file = std::string("/local/devel/devel/datasets/turkey/myseq0.fa"),
     .in_file_sz = 0,
     .K = 20,
+    .D = 6,
     .num_threads = 1,
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
     .numa_split = 3,
@@ -452,7 +453,11 @@ int Application::process(int argc, char *argv[]) {
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
         "for bqueues only")(
         "k", po::value<uint32_t>(&config.K)->default_value(def.K),
-        "the value of 'k' in k-mer")(
+        "the value of 'k' in k-mer")
+        (
+        "d", po::value<uint32_t>(&config.D)->default_value(def.D),
+        "the value of 'd' in radix partitioning")
+        (
         "num_nops",
         po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
         "number of nops in bqueue cons thread")(
@@ -545,11 +550,10 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.mode == FASTQ_WITH_INSERT_RADIX) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX");
       auto nthreads = config.num_threads;
-      uint32_t d = 6;
-      this->radixContext = RadixContext(d, 0, nthreads); 
+      this->radixContext = RadixContext(config.D, 0, nthreads); 
       
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u, multiplier: %u, nthreads_d: %u", 
-              d, 
+              config.D, 
               this->radixContext.fanOut, 
               this->radixContext.multiplier, 
               this->radixContext.nthreads_d);
