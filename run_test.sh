@@ -206,7 +206,7 @@ run_kmer_test() {
   
   echo  TEST_TYPE $1
   echo  RUNS $2
-  echo  PREFETCHER $3
+  echo  PREFETCHER_OFF $3
   echo  MAX_THREADS $4
   HT_TYPE=$(echo ${TEST_TYPE} | awk -F'-' '{print $1}')
   MODE=$(echo ${TEST_TYPE} | awk -F'-' '{print $2}')
@@ -215,6 +215,10 @@ run_kmer_test() {
   case ${HT_TYPE} in
     "casht")
       ARGS="--ht-type 3 --numa-split 1 --no-prefetch 1"
+      ARGS+=" --num-threads ${MAX_THREADS}"
+      ;;
+    "radix")
+      ARGS="--ht-type 3 --numa-split 2"
       ARGS+=" --num-threads ${MAX_THREADS}"
       ;;
     "cashtpp")
@@ -252,7 +256,8 @@ run_kmer_test() {
 
   ARGS+=" --in-file ${FASTA_FILE}"
 
-
+  
+  for dradix in $(seq 6 6); do
   for run in ${RUNS}; do
     ONCE=0
     LOG_PREFIX="esys23-ae-${USER}/${TEST_TYPE}/run${run}/"
@@ -265,7 +270,7 @@ run_kmer_test() {
       fi
 
       echo "Running dramhit with ${ARGS} --k ${k}" > ${LOG_FILE}
-      ./build/dramhit ${ARGS} --k ${k} 2>&1 >> ${LOG_FILE}
+      ./build/dramhit ${ARGS} --k ${k} --d ${dradix} 2>&1 >> ${LOG_FILE}
 
       MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
 
@@ -274,9 +279,10 @@ run_kmer_test() {
         ONCE=1
       fi
 
-      echo "${k}, ${MOPS}" | tee -a "${LOG_PREFIX}/summary_${GENOME}.csv"
+      echo "${k}, D=${dradix}, ${MOPS}" | tee -a "${LOG_PREFIX}/summary_${GENOME}.csv"
     done
   done
+done
 }
 
 MLC_BIN=/local/devel/mlc/mlc
@@ -384,7 +390,7 @@ run_kmer_radix_benchmarks() {
   for genome in "fvesca" ; do
     # run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     # run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
-    run_kmer_test "casht-kmer_radix-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
+    run_kmer_test "radix-kmer_radix-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
   done
 }
 
