@@ -555,7 +555,7 @@ int Application::process(int argc, char *argv[]) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u, multiplier: %u, nthreads_d: %u", 
               config.D, 
               this->radixContext.fanOut, 
-              this->radixContext.multiplier, 
+              this->radixContext.hashmaps_per_thread, 
               this->radixContext.nthreads_d);
       if (config.in_file.empty()) {
         PLOG_ERROR.printf("Please provide input fasta file.");

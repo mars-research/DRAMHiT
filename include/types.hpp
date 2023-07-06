@@ -99,7 +99,8 @@ class RadixContext {
   uint32_t fanOut;
   uint64_t mask;
   // How many hash map does a thread have
-  uint32_t multiplier;
+  uint32_t hashmaps_per_thread;
+  // floor(log(num_threads))
   uint32_t nthreads_d;
 
   RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
@@ -114,9 +115,9 @@ class RadixContext {
       nthreads_d++;
     }
     if (fanOut <= num_threads) {
-        multiplier = 1;
+        hashmaps_per_thread = 1;
     } else {
-        multiplier = 1 << (d - nthreads_d);
+        hashmaps_per_thread = 1 << (d - nthreads_d);
     }
     // for (uint32_t i = 0; i < num_threads; i++) {
     //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
