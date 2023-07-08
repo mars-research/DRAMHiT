@@ -295,14 +295,18 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   auto insertion_time = chrono::duration_cast<chrono::microseconds>(end_insertions_ts - start_insertions_ts).count();
   auto insertion_cycles = end_insertions_cycle - start_insertions_cycle;
   auto total_time = partition_time + insertion_time;
-  PLOG_INFO.printf("IDX: %u, partition time: %llu us (%llu cycles)(%llu %%), insertion time: %llu us (%llu cycles)(%llu %%)", 
+  auto time_per_insertion = (double) insertion_time / (double) total_insertions;
+  auto cycles_per_insertion = insertion_cycles / total_insertions;
+  PLOG_INFO.printf("IDX: %u, partition time: %llu us (%llu cycles)(%llu %%), insertion time: %llu us (%llu cycles)(%llu %%), time_per_insertion: %.4f us(%llu cycles)", 
         shard_idx,
         partition_time,
         partition_cycles,
         partition_time * 100 / total_time,
         insertion_time,
         insertion_cycles,
-        insertion_time * 100 / total_time
+        insertion_time * 100 / total_time,
+        time_per_insertion,
+        cycles_per_insertion
           );
   PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, total_insertions);
 
