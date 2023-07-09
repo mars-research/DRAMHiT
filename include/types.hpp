@@ -2,6 +2,7 @@
 #define TYPES_HPP
 
 #include <absl/hash/hash.h>
+#include <absl/container/flat_hash_map.h>
 
 #include <atomic>
 #include <cinttypes>
@@ -88,6 +89,8 @@ struct alignas(64) cacheline {
   char dummy;
 };
 
+typedef uint64_t Kmer;
+
 class RadixContext {
  public:
   uint64_t** hists;
@@ -102,6 +105,7 @@ class RadixContext {
   uint32_t hashmaps_per_thread;
   // floor(log(num_threads))
   uint32_t nthreads_d;
+  std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> hashmaps;
 
   RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
       : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r) {
@@ -114,17 +118,43 @@ class RadixContext {
     while ((1 << (1 + nthreads_d)) <= num_threads) {
       nthreads_d++;
     }
+    auto gather_threads = 1 << nthreads_d;
     if (fanOut <= num_threads) {
         hashmaps_per_thread = 1;
     } else {
         hashmaps_per_thread = 1 << (d - nthreads_d);
     }
+    std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(gather_threads); 
+    for (int i = 0; i < gather_threads; i++) {
+        maps[i].reserve(fanOut);
+    }
+    hashmaps = maps;
     // for (uint32_t i = 0; i < num_threads; i++) {
     //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
     //     sizeof(uint32_t)); partitions[i] =
     //     (uint64_t*)std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
     //     sizeof(uint64_t*));
     // }
+  }
+  
+   absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint64_t>& reference) {
+      absl::flat_hash_map<Kmer, long> diff;
+    for (int i = 0; i < (1 << nthreads_d); i++) {
+        for (int j = 0; j < hashmaps_per_thread; j++) {
+            auto map = hashmaps[i][j];
+            for (const auto& entry: map) {
+                auto key = entry.first;
+                auto val = entry.second;
+                if (reference.contains(key)) {
+                    auto ref_val = reference.at(key);
+                    if (ref_val != val) {
+                        diff[key] = (long)val - (long)ref_val;
+                    }
+                }
+            }
+        }
+    }
+    return diff;
   }
 
   RadixContext() = default;

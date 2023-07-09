@@ -1,6 +1,5 @@
 #include <plog/Log.h>
 
-#include <absl/container/flat_hash_map.h>
 #include <algorithm>
 #include <atomic>
 #include <barrier>
@@ -23,7 +22,6 @@
 
 namespace kmercounter {
 
-typedef uint64_t Kmer;
 
 /**
  * Makes a non-temporal write of 64 bytes from src to dst.
@@ -79,6 +77,8 @@ static inline void store_nontemp_64B(void* dst, void* src) {
 // Should be power of 2?
 #define KMERSPERCACHELINE (CACHE_LINE_SIZE / sizeof(Kmer))
 
+#define HASHER XXH3_64bits
+
 typedef union {
   struct {
     Kmer kmers[KMERSPERCACHELINE];
@@ -91,6 +91,19 @@ typedef union {
 
 struct Task {};
 // A queue of tasks, select the thread with most localized memeory to consume it
+
+absl::flat_hash_map<Kmer, uint64_t> build_ref(const Configuration& config) {
+
+  // Be care of the `K` here; it's a compile time constant.
+  auto reader = input_reader::MakeFastqKMerPreloadReader(
+      config.K, config.in_file, 0, 1);
+
+  absl::flat_hash_map<Kmer, uint64_t> counter;  
+  for (uint64_t kmer; reader->next(&kmer);) {
+    counter[kmer]++;   
+  }
+  return counter;
+}
 
 void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
                                 std::barrier<VoidFn>* barrier,
@@ -147,7 +160,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   start_partition_ts = std::chrono::steady_clock::now();
   start_partition_cycle = _rdtsc();
   for (uint64_t kmer; reader->next(&kmer);) {
-    auto hash_val = XXH3_64bits((char*)&kmer, sizeof(Kmer));
+    auto hash_val = HASHER((char*)&kmer, sizeof(Kmer));
     uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
     hist[idx]++;
     num_kmers++;
@@ -181,7 +194,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   auto new_reader = input_reader::MakeFastqKMerPreloadReader(
       config.K, config.in_file, sh->shard_idx, config.num_threads);
   for (uint64_t kmer; new_reader->next(&kmer);) {
-    auto hash_val = XXH3_64bits(&kmer, sizeof(Kmer));
+    auto hash_val = HASHER(&kmer, sizeof(Kmer));
     uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
     uint32_t slot = buffer[idx].data.slot;
     Kmer* part = (Kmer*)(buffer + idx);
@@ -249,7 +262,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   // PLOGI.printf("Shard IDX: %u, total: %u", shard_idx, total);
   // BaseHashTable* ht = init_ht_radix(total, shard_idx);
   // HTBatchRunner batch_runner(ht);
-  absl::flat_hash_map<uint64_t, uint64_t> counter(
+  absl::flat_hash_map<Kmer, uint64_t> counter(
         total_num_kmers);  // 1GB initial size.
   // counter.reserve(total >> 6);
   for (uint32_t i = 0; i < num_threads; i++) {
@@ -265,7 +278,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
       //                     0 /* we use the aggr tables so no value */);
         }
     }
-    maps.push_back(std::move(counter));
+    context.hashmaps[shard_idx].push_back(std::move(counter));
   }
   // batch_runner.flush_insert();
 
@@ -289,6 +302,15 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
         "Kmer insertion took %llu us (%llu cycles)",
         chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
         end_cycles - start_cycles);
+    
+      auto reference = build_ref(config);
+      auto diff = context.check_count(reference);
+      uint64_t max_diff = 0;
+      for (auto& entry: diff) {
+        auto abs_diff = std::abs(entry.second);
+        max_diff = abs_diff > max_diff? abs_diff: max_diff;
+      }
+      PLOGI.printf("Diff kmer: %llu; total distinct kmer: %llu; max diff: %llu;", diff.size(), reference.size(), max_diff);
   }
   auto partition_time = chrono::duration_cast<chrono::microseconds>(end_partition_ts - start_partition_ts).count(); 
   auto partition_cycles = end_partition_cycle - start_partition_cycle;
@@ -309,7 +331,6 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
         cycles_per_insertion
           );
   PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, total_insertions);
-
   // get_ht_stats(sh, ht);
 }
 

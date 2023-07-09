@@ -192,6 +192,7 @@ DATASET_DIR=${DRAMHIT_BASE}/kmer_dataset
 declare -A DATASET_ARRAY
 DATASET_ARRAY["dmela"]=${DATASET_DIR}/ERR4846928.fastq
 DATASET_ARRAY["fvesca"]=${DATASET_DIR}/SRR1513870.fastq
+DATASET_ARRAY["sample"]=${DATASET_DIR}/sample.fastq
 
 MAX_K=32
 
@@ -387,7 +388,7 @@ run_kmer_benchmarks() {
 }
 
 run_kmer_radix_benchmarks() {
-  for genome in "fvesca" ; do
+  for genome in "sample" ; do
     # run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     # run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     run_kmer_test "radix-kmer_radix-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
