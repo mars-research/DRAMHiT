@@ -22,6 +22,8 @@
 
 namespace kmercounter {
 
+#define HASHER XXH3_64bits
+
 absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint64_t>& reference, const absl::flat_hash_map<Kmer, uint64_t>& aggregation) {
     absl::flat_hash_map<Kmer, long> diff;
     for (const auto& entry: reference) {
@@ -52,6 +54,7 @@ absl::flat_hash_map<Kmer, uint64_t> build_ref(const Configuration& config) {
   }
   return counter;
 }
+
 
 void check_functionality(const Configuration& config, const RadixContext& context) {
       auto reference = build_ref(config);
@@ -127,7 +130,6 @@ static inline void store_nontemp_64B(void* dst, void* src) {
 // Should be power of 2?
 #define KMERSPERCACHELINE (CACHE_LINE_SIZE / sizeof(Kmer))
 
-#define HASHER XXH3_64bits
 
 typedef union {
   struct {
@@ -139,64 +141,23 @@ typedef union {
   } data;
 } cacheline_t;
 
-struct Task {};
-// A queue of tasks, select the thread with most localized memeory to consume it
-
-
-void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
-                                std::barrier<VoidFn>* barrier,
-                                RadixContext& context) {
-  auto D = context.D;
+void partitioning(Shard* sh, const Configuration& config, const RadixContext& context, 
+        std::unique_ptr<input_reader::InputReaderU64> reader) {
+  auto shard_idx = sh->shard_idx;
   auto R = context.R;
   auto fanOut = context.fanOut;
-  auto hashmaps_per_thread = context.hashmaps_per_thread; 
-  auto nthreads_d = context.nthreads_d;
-  auto gathering_threads = 1 << nthreads_d;
   uint64_t** hists = context.hists;
   uint64_t** partitions = context.partitions;
-
-  auto shard_idx = sh->shard_idx;
+  std::uint64_t num_kmers{};
+  
   // Two ways:
   // 1: rel tmp
   // 2: file cache tmp
-  off64_t seg_size = (sh->f_end - sh->f_start) * PAGESIZE;
   uint32_t MASK = context.mask;
 
   // Assume less than 4G tuples per local partition
   uint64_t* hist = (uint64_t*)calloc(fanOut, sizeof(int64_t));
   hists[shard_idx] = hist;
-
-  // Be care of the `K` here; it's a compile time constant.
-  auto reader = input_reader::MakeFastqKMerPreloadReader(
-      config.K, config.in_file, sh->shard_idx, config.num_threads);
-
-  std::uint64_t start = _rdtsc();
-  // start timers
-  std::uint64_t
-      start_cycles{}, 
-      end_cycles{},
-      start_partition_cycle, 
-      end_partition_cycle,
-      start_insertions_cycle,
-      end_insertions_cycle
-  ;
-  std::uint64_t num_kmers{};
-  std::chrono::time_point<std::chrono::steady_clock> 
-      start_ts, 
-      end_ts, 
-      start_partition_ts, 
-      end_partition_ts,
-      start_insertions_ts,
-      end_insertions_ts
-      ;
-
-  if (sh->shard_idx == 0) {
-    start_ts = std::chrono::steady_clock::now();
-    start_cycles = _rdtsc();
-  }
-  
-  start_partition_ts = std::chrono::steady_clock::now();
-  start_partition_cycle = _rdtsc();
   for (uint64_t kmer; reader->next(&kmer);) {
     auto hash_val = HASHER((char*)&kmer, sizeof(Kmer));
     uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
@@ -249,6 +210,52 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
 
     buffer[idx].data.slot = slot + 1;
   }
+}
+
+void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
+                                std::barrier<VoidFn>* barrier,
+                                RadixContext& context) {
+  auto hashmaps_per_thread = context.hashmaps_per_thread; 
+  auto nthreads_d = context.nthreads_d;
+  auto gathering_threads = 1 << nthreads_d;
+  uint64_t** hists = context.hists;
+  uint64_t** partitions = context.partitions;
+
+  auto shard_idx = sh->shard_idx;
+
+  // Be care of the `K` here; it's a compile time constant.
+  auto reader = input_reader::MakeFastqKMerPreloadReader(
+      config.K, config.in_file, sh->shard_idx, config.num_threads);
+
+  std::uint64_t start = _rdtsc();
+  // start timers
+  std::uint64_t
+      start_cycles{}, 
+      end_cycles{},
+      start_partition_cycle, 
+      end_partition_cycle,
+      start_insertions_cycle,
+      end_insertions_cycle
+  ;
+  std::chrono::time_point<std::chrono::steady_clock> 
+      start_ts, 
+      end_ts, 
+      start_partition_ts, 
+      end_partition_ts,
+      start_insertions_ts,
+      end_insertions_ts
+      ;
+
+  if (sh->shard_idx == 0) {
+    start_ts = std::chrono::steady_clock::now();
+    start_cycles = _rdtsc();
+  }
+
+  start_partition_ts = std::chrono::steady_clock::now();
+  start_partition_cycle = _rdtsc();
+
+  partitioning(sh, config, context, 
+          std::move(reader));
 
   end_partition_ts = std::chrono::steady_clock::now();
   end_partition_cycle = _rdtsc();
