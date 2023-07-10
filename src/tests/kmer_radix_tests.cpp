@@ -22,7 +22,58 @@
 
 namespace kmercounter {
 
+absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint64_t>& reference, const absl::flat_hash_map<Kmer, uint64_t>& aggregation) {
+    absl::flat_hash_map<Kmer, long> diff;
+    for (const auto& entry: reference) {
+        auto key = entry.first;
+        auto val = entry.second;
+        if (aggregation.contains(key)) {
+            auto agg_val = aggregation.at(key);
+            if (val != agg_val) {
+                diff[key] = (long)agg_val - (long)val;
+            }
+        }
+        else {
+            diff[key] = val;
+        }
+    }
+    return diff;
+  }
 
+absl::flat_hash_map<Kmer, uint64_t> build_ref(const Configuration& config) {
+
+  // Be care of the `K` here; it's a compile time constant.
+  auto reader = input_reader::MakeFastqKMerPreloadReader(
+      config.K, config.in_file, 0, 1);
+
+  absl::flat_hash_map<Kmer, uint64_t> counter;  
+  for (uint64_t kmer; reader->next(&kmer);) {
+    counter[kmer]++;   
+  }
+  return counter;
+}
+
+void check_functionality(const Configuration& config, const RadixContext& context) {
+      auto reference = build_ref(config);
+      auto aggregation = context.aggregate();
+      auto diff = check_count(reference, aggregation);
+      auto rev_diff = check_count(aggregation, reference);
+      for (auto& entry: rev_diff) {
+          assert(entry.second < 0);
+      }
+      uint64_t max_diff = 0;
+      Kmer max_diff_kmer = 0;
+      for (auto& entry: diff) {
+        auto abs_diff = std::abs(entry.second);
+
+        assert(entry.second > 0);
+        if (abs_diff > max_diff) {
+            max_diff = abs_diff;
+            max_diff_kmer = entry.first;
+        }
+      }
+      PLOGI.printf("Diff kmer: %llu(rev: %llu); total distinct kmer: (ref: %llu, aggr: %llu); max diff: %llu(ref: %llu);", diff.size(), rev_diff.size(), reference.size(), aggregation.size(), max_diff, reference[max_diff_kmer]);
+}
 /**
  * Makes a non-temporal write of 64 bytes from src to dst.
  * Uses vectorized non-temporal stores if available, falls
@@ -65,7 +116,6 @@ static inline void store_nontemp_64B(void* dst, void* src) {
 
 #endif
 }
-
 /* #define RADIX_HASH(V)  ((V>>7)^(V>>13)^(V>>21)^V) */
 #define HASH_BIT_MODULO(K, MASK, NBITS) (((K)&MASK) >> NBITS)
 
@@ -92,18 +142,6 @@ typedef union {
 struct Task {};
 // A queue of tasks, select the thread with most localized memeory to consume it
 
-absl::flat_hash_map<Kmer, uint64_t> build_ref(const Configuration& config) {
-
-  // Be care of the `K` here; it's a compile time constant.
-  auto reader = input_reader::MakeFastqKMerPreloadReader(
-      config.K, config.in_file, 0, 1);
-
-  absl::flat_hash_map<Kmer, uint64_t> counter;  
-  for (uint64_t kmer; reader->next(&kmer);) {
-    counter[kmer]++;   
-  }
-  return counter;
-}
 
 void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
                                 std::barrier<VoidFn>* barrier,
@@ -303,14 +341,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
         chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
         end_cycles - start_cycles);
     
-      auto reference = build_ref(config);
-      auto diff = context.check_count(reference);
-      uint64_t max_diff = 0;
-      for (auto& entry: diff) {
-        auto abs_diff = std::abs(entry.second);
-        max_diff = abs_diff > max_diff? abs_diff: max_diff;
-      }
-      PLOGI.printf("Diff kmer: %llu; total distinct kmer: %llu; max diff: %llu;", diff.size(), reference.size(), max_diff);
+    check_functionality(config, context);
   }
   auto partition_time = chrono::duration_cast<chrono::microseconds>(end_partition_ts - start_partition_ts).count(); 
   auto partition_cycles = end_partition_cycle - start_partition_cycle;

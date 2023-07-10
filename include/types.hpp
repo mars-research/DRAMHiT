@@ -136,26 +136,23 @@ class RadixContext {
     //     sizeof(uint64_t*));
     // }
   }
-  
-   absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint64_t>& reference) {
-      absl::flat_hash_map<Kmer, long> diff;
+
+  absl::flat_hash_map<Kmer, uint64_t> aggregate() const {
+    absl::flat_hash_map<Kmer, uint64_t> aggregation;
     for (int i = 0; i < (1 << nthreads_d); i++) {
         for (int j = 0; j < hashmaps_per_thread; j++) {
             auto map = hashmaps[i][j];
             for (const auto& entry: map) {
                 auto key = entry.first;
                 auto val = entry.second;
-                if (reference.contains(key)) {
-                    auto ref_val = reference.at(key);
-                    if (ref_val != val) {
-                        diff[key] = (long)val - (long)ref_val;
-                    }
-                }
+                assert(!aggregation.contains(key));
+                aggregation[key] = val;
             }
         }
     }
-    return diff;
+    return aggregation;
   }
+
 
   RadixContext() = default;
 };
