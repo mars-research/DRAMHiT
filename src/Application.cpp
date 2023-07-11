@@ -232,7 +232,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);
       break;
     case FASTQ_WITH_INSERT_RADIX:
-      this->test.kmer.count_kmer_radix(sh, config, barrier, 
+      this->test.kmer.count_kmer_radix_custom(sh, config, barrier, 
               this->radixContext);
       break;
     case FASTQ_WITH_INSERT:

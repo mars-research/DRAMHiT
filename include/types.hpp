@@ -126,7 +126,7 @@ class RadixContext {
     }
     std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(gather_threads); 
     for (int i = 0; i < gather_threads; i++) {
-        maps[i].reserve(fanOut);
+        maps[i].reserve(hashmaps_per_thread);
     }
     hashmaps = maps;
     // for (uint32_t i = 0; i < num_threads; i++) {
