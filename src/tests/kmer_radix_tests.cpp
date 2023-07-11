@@ -7,7 +7,7 @@
 
 #include <absl/container/flat_hash_map.h>
 #include "constants.hpp"
-#include "hashtables/array_kht.hpp"
+#include "hashtables/array_kht_single.hpp"
 #include "hashtables/base_kht.hpp"
 #include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/cas_kht.hpp"
