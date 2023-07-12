@@ -2,6 +2,7 @@
 #define TYPES_HPP
 
 #include <absl/hash/hash.h>
+#include <absl/container/flat_hash_map.h>
 
 #include <atomic>
 #include <cinttypes>
@@ -70,6 +71,7 @@ typedef enum {
   ZIPFIAN = 11,
   RW_RATIO = 12,
   HASHJOIN = 13,
+  FASTQ_WITH_INSERT_RADIX = 14,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -87,6 +89,74 @@ struct alignas(64) cacheline {
   char dummy;
 };
 
+typedef uint64_t Kmer;
+
+class RadixContext {
+ public:
+  uint64_t** hists;
+  uint64_t** partitions;
+  // Radix shift
+  uint8_t R;
+  // Radix bits
+  uint8_t D;
+  uint32_t fanOut;
+  uint64_t mask;
+  // How many hash map does a thread have
+  uint32_t hashmaps_per_thread;
+  // floor(log(num_threads))
+  uint32_t nthreads_d;
+  std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> hashmaps;
+
+  RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
+      : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r) {
+    hists = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE,
+                                           fanOut * sizeof(uint64_t*));
+    partitions = (uint64_t**)std::aligned_alloc(
+        CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
+
+    nthreads_d = 0;
+    while ((1 << (1 + nthreads_d)) <= num_threads) {
+      nthreads_d++;
+    }
+    auto gather_threads = 1 << nthreads_d;
+    if (fanOut <= num_threads) {
+        hashmaps_per_thread = 1;
+    } else {
+        hashmaps_per_thread = 1 << (d - nthreads_d);
+    }
+    std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(gather_threads); 
+    for (int i = 0; i < gather_threads; i++) {
+        maps[i].reserve(hashmaps_per_thread);
+    }
+    hashmaps = maps;
+    // for (uint32_t i = 0; i < num_threads; i++) {
+    //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
+    //     sizeof(uint32_t)); partitions[i] =
+    //     (uint64_t*)std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
+    //     sizeof(uint64_t*));
+    // }
+  }
+
+  absl::flat_hash_map<Kmer, uint64_t> aggregate() const {
+    absl::flat_hash_map<Kmer, uint64_t> aggregation;
+    for (int i = 0; i < (1 << nthreads_d); i++) {
+        for (int j = 0; j < hashmaps_per_thread; j++) {
+            auto map = hashmaps[i][j];
+            for (const auto& entry: map) {
+                auto key = entry.first;
+                auto val = entry.second;
+                assert(!aggregation.contains(key));
+                aggregation[key] = val;
+            }
+        }
+    }
+    return aggregation;
+  }
+
+
+  RadixContext() = default;
+};
+
 // Application configuration
 struct Configuration {
   // kmer related stuff
@@ -100,7 +170,8 @@ struct Configuration {
   std::string in_file;
   uint64_t in_file_sz;
   uint32_t K;
-
+  // Radix bits
+  uint32_t D;
   // number of threads
   uint32_t num_threads;
   // run mode
@@ -172,6 +243,7 @@ struct Configuration {
     printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size,
            ht_size / (1ul << 30));
     printf("  K %" PRIu64 "\n", K);
+    printf("  D %" PRIu64 "\n", D);
     printf("  P(read) %f\n", pread);
     printf("  Pollution Ratio %u\n", pollute_ratio);
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);
@@ -290,16 +362,12 @@ struct Key {
   key_type key;
 
   Key();
-  Key(const uint64_t &, const uint64_t &);
+  Key(const uint64_t&, const uint64_t&);
   Key(const struct eth_hashjoin::tuple_t& tuple);
 
-  bool operator ==(const Key &b) const {
-    return (this->key == b.key);
-  }
+  bool operator==(const Key& b) const { return (this->key == b.key); }
 
-  operator bool() const {
-    return *this == decltype(*this){};
-  }
+  operator bool() const { return *this == decltype(*this){}; }
 };
 
 struct KeyValuePair {

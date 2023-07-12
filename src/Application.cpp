@@ -56,6 +56,7 @@ const Configuration def = {
     .in_file = std::string("/local/devel/devel/datasets/turkey/myseq0.fa"),
     .in_file_sz = 0,
     .K = 20,
+    .D = 6,
     .num_threads = 1,
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
     .numa_split = 3,
@@ -176,6 +177,8 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
     case FASTQ_WITH_INSERT:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
+    case FASTQ_WITH_INSERT_RADIX:
+      break;
     case PREFETCH:
       // kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
       //    HT_TESTS_HT_SIZE, sh->shard_idx);
@@ -228,9 +231,10 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
     case HASHJOIN:
       this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);
       break;
-    // case FASTQ_WITH_INSERT:
-    //   this->test.kmer.count_kmer_radix(sh, config, kmer_ht, barrier);
-    //   break;
+    case FASTQ_WITH_INSERT_RADIX:
+      this->test.kmer.count_kmer_radix_custom(sh, config, barrier, 
+              this->radixContext);
+      break;
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
@@ -260,6 +264,7 @@ done:
 int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
 
+  PLOG_INFO.printf("kosustartNumber of shards: %u", config.num_threads);
   this->shards = (Shard *)std::aligned_alloc(
       CACHE_LINE_SIZE, sizeof(Shard) * config.num_threads);
 
@@ -331,7 +336,8 @@ int Application::spawn_shard_threads() {
     this->threads.push_back(std::move(_thread));
     i += 1;
   }
-
+  
+  PLOG_INFO.printf("kos i:%u", i);
   // Pin main application thread to cpu 0 and run our thread routine
   CPU_ZERO(&cpuset);
   CPU_SET(0, &cpuset);
@@ -447,7 +453,11 @@ int Application::process(int argc, char *argv[]) {
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
         "for bqueues only")(
         "k", po::value<uint32_t>(&config.K)->default_value(def.K),
-        "the value of 'k' in k-mer")(
+        "the value of 'k' in k-mer")
+        (
+        "d", po::value<uint32_t>(&config.D)->default_value(def.D),
+        "the value of 'd' in radix partitioning")
+        (
         "num_nops",
         po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
         "number of nops in bqueue cons thread")(
@@ -537,6 +547,20 @@ int Application::process(int argc, char *argv[]) {
         PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
       }
+    } else if (config.mode == FASTQ_WITH_INSERT_RADIX) {
+      PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX");
+      auto nthreads = config.num_threads;
+      this->radixContext = RadixContext(config.D, 0, nthreads); 
+      
+      PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u, multiplier: %u, nthreads_d: %u", 
+              config.D, 
+              this->radixContext.fanOut, 
+              this->radixContext.hashmaps_per_thread, 
+              this->radixContext.nthreads_d);
+      if (config.in_file.empty()) {
+        PLOG_ERROR.printf("Please provide input fasta file.");
+        exit(-1);
+      }
     } else if (config.mode == FASTQ_NO_INSERT) {
       PLOG_INFO.printf("Mode : FASTQ_NO_INSERT");
       if (config.in_file.empty()) {
@@ -605,11 +629,11 @@ int Application::process(int argc, char *argv[]) {
 
   config.dump_configuration();
 
-  if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT)) {
+  if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT) || (config.mode == FASTQ_WITH_INSERT_RADIX)) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if ((config.mode == BQ_TESTS_YES_BQ) || ((config.mode == FASTQ_WITH_INSERT) && (config.ht_type == PARTITIONED_HT))) {
+  if ((config.mode == BQ_TESTS_YES_BQ) || ((config.mode == FASTQ_WITH_INSERT || (config.mode == FASTQ_WITH_INSERT_RADIX)) && (config.ht_type == PARTITIONED_HT))) {
     switch (config.numa_split) {
       case PROD_CONS_SEPARATE_NODES:
         this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
@@ -646,7 +670,7 @@ int Application::process(int argc, char *argv[]) {
     init_zipfian_dist(config.skew, config.seed);
   }
 
-  if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
+  if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT) || (config.mode == FASTQ_WITH_INSERT_RADIX)) {
     // for hashjoin, ht-type determines how we spawn threads
     if (config.ht_type == PARTITIONED_HT) {
       this->test.qt.run_test(&config, this->n, true, this->npq);

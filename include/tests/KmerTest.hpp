@@ -17,8 +17,14 @@ class KmerTest {
                   std::barrier<VoidFn> *barrier);
 
   void count_kmer_radix(Shard *sh, const Configuration &config,
-                  BaseHashTable *ht,
-                  std::barrier<VoidFn> *barrier);
+                  std::barrier<VoidFn> *barrier,
+                    RadixContext& context
+                  );
+  void count_kmer_radix_custom(
+        Shard* sh, 
+        const Configuration& config,
+        std::barrier<VoidFn>* barrier,
+        RadixContext& context);
 };
 
 }  // namespace kmercounter
