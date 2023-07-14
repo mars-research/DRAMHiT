@@ -7,10 +7,9 @@
 
 #include <absl/container/flat_hash_map.h>
 #include "constants.hpp"
-#include "hashtables/array_kht_single.hpp"
 #include "hashtables/base_kht.hpp"
 #include "hashtables/batch_runner/batch_runner.hpp"
-#include "hashtables/cas_kht.hpp"
+#include "hashtables/cas_kht_single.hpp"
 #include "hashtables/kvtypes.hpp"
 #include "hashtables/simple_kht.hpp"
 #include "input_reader/counter.hpp"
@@ -337,7 +336,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   sh->stats->insertions.op_count = total_insertions;
   // PLOG_INFO.printf("IDX: %u, num_kmers: %u, fill: %u", shard_idx, num_kmers, ht->get_fill());
   for (uint32_t i = 0; i < hashmaps_per_thread; i++) {
-    PLOG_INFO.printf("IDX: %u, cap: %u, fill: %u", shard_idx, maps[i].capacity(), maps[i].size());
+    PLOG_INFO.printf("IDX: %u, cap: %zu, fill: %u", shard_idx, context.hashmaps[shard_idx][i].capacity(), context.hashmaps[shard_idx][i].size());
   }
   if (sh->shard_idx == 0) {
     end_ts = std::chrono::steady_clock::now();
@@ -469,7 +468,7 @@ void KmerTest::count_kmer_radix_custom(
   // HTBatchRunner batch_runner(ht);
   // absl::flat_hash_map<Kmer, uint64_t> counter(
   //       total_num_kmers);  // 1GB initial size.
-  auto ht = new ArrayHashTable<Value, ItemQueue>(total_num_kmers);
+  auto ht = new CASHashTableSingle<KVType, ItemQueue>(total_num_kmers);
   HTBatchRunner batch_runner(ht);
   // counter.reserve(total >> 6);
   for (uint32_t i = 0; i < num_threads; i++) {

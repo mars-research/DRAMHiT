@@ -148,6 +148,13 @@ struct Aggr_KV {
     return ret;
   }
 
+
+  inline bool update(queue *elem) {
+    auto ret = true;
+    this->count += 1;
+    return ret;
+  }
+
   inline bool compare_key(const void *from) {
     ItemQueue *elem =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(from));
