@@ -388,7 +388,7 @@ run_kmer_benchmarks() {
 }
 
 run_kmer_radix_benchmarks() {
-  for genome in "sample"; do
+  for genome in "fvesca"; do
     # run_kmer_test "casht-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     # run_kmer_test "cashtpp-kmer-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}
     run_kmer_test "radix-kmer_radix-${genome}" ${NUM_RUNS} ${HW_PREF_OFF} ${MAX_THREADS_CASHT}

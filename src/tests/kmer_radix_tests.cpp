@@ -449,50 +449,71 @@ void KmerTest::count_kmer_radix_custom(
   }
 
 
-  start_insertions_ts = std::chrono::steady_clock::now();
-  start_insertions_cycle = _rdtsc();
   std::vector<BaseHashTable*> maps;
   maps.reserve(hashmaps_per_thread);
 
-  uint64_t total_insertions = 0; 
-  for (uint32_t k = 0; k < hashmaps_per_thread; k++) {
-    uint32_t partition_idx = hashmaps_per_thread * shard_idx + k;
-  uint64_t total_num_kmers = 0;
-  for (uint32_t i = 0; i < num_threads; i++) {
-    uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
-    uint64_t end = hists[i][partition_idx];
-    total_num_kmers += end - start;
-  }
-  // PLOGI.printf("Shard IDX: %u, total: %u", shard_idx, total);
-  // BaseHashTable* ht = init_ht_radix(total, shard_idx);
-  // HTBatchRunner batch_runner(ht);
-  // absl::flat_hash_map<Kmer, uint64_t> counter(
-  //       total_num_kmers);  // 1GB initial size.
-  auto ht = new CASHashTableSingle<KVType, ItemQueue>(total_num_kmers);
-  HTBatchRunner batch_runner(ht);
-  // counter.reserve(total >> 6);
-  for (uint32_t i = 0; i < num_threads; i++) {
-    uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
-    uint64_t end = hists[i][partition_idx];
-    if (i == 1) {
-        PLOGI.printf("IDX: %u, remote: %u, start: %u end: %u", shard_idx, i, start, end);
-    }
-    total_insertions += end - start;
-    for (; start < end; start++) {
 
-        batch_runner.insert(partitions[i][start], 0 /* we use the aggr tables so no value */);
-      // batch_runner.insert(partitions[i][start],
-      //                     0 /* we use the aggr tables so no value */);
+  uint64_t total_insertions = 0; 
+  
+  start_insertions_ts = std::chrono::steady_clock::now();
+  start_insertions_cycle = _rdtsc();
+
+  for (uint32_t k = 0; k < hashmaps_per_thread; k++) {
+      uint32_t partition_idx = hashmaps_per_thread * shard_idx + k;
+      uint64_t total_num_kmers = 0;
+      for (uint32_t i = 0; i < num_threads; i++) {
+        uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
+        uint64_t end = hists[i][partition_idx];
+        total_num_kmers += end - start;
+      }
+      // PLOGI.printf("Shard IDX: %u, total: %u", shard_idx, total);
+      // BaseHashTable* ht = init_ht_radix(total, shard_idx);
+      // HTBatchRunner batch_runner(ht);
+      // absl::flat_hash_map<Kmer, uint64_t> counter(
+      //       total_num_kmers);  // 1GB initial size.
+      auto ht = new CASHashTableSingle<KVType, ItemQueue>(total_num_kmers);
+      HTBatchRunner batch_runner(ht);
+      // counter.reserve(total >> 6);
+
+      uint64_t xori = 0;
+      auto count_inner = 0;
+
+      auto start_insertions_cycle_inner = _rdtsc();
+      for (uint32_t i = 0; i < num_threads; i++) {
+        uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
+        uint64_t end = hists[i][partition_idx];
+        if (i == 1) {
+            PLOGI.printf("IDX: %u, remote: %u, start: %u end: %u", shard_idx, i, start, end);
         }
-    }
-    
-    batch_runner.flush_insert();
-    maps.push_back(ht);
+        auto count_innest = end - start;
+        total_insertions += count_innest;
+        count_inner += count_innest;
+
+        auto start_insertions_cycle_innest = _rdtsc();
+        for (size_t k = start; k < end; k++) {
+            // xori = xori + 1;
+            // __asm("");
+             xori ^= partitions[i][k];
+            // batch_runner.insert(partitions[i][start], 0 /* we use the aggr tables so no value */);
+
+            }
+            auto diff = _rdtsc() - start_insertions_cycle_innest;
+
+            PLOGI.printf("IDX:%u; remote: %u; Innest: cycles: %llu, cycles_per_in: %llu , start: %llu; end: %llu; total: %llu.", 
+                    shard_idx, i, diff, diff / count_innest, start, end, count_innest);
+        }
+        
+        auto diff = _rdtsc() - start_insertions_cycle_inner;
+        PLOGI.printf("Inner: cycles: %llu, cycles_per_in: %llu", diff, diff / count_inner);
+        
+        batch_runner.insert(xori, 0 /* we use the aggr tables so no value */);
+        batch_runner.flush_insert();
+        maps.push_back(ht);
   }
   // batch_runner.flush_insert();
 
+  // PLOGI.printf("Shard IDX: %u, Finish insertions, hit barrier", shard_idx);
   PLOGI.printf("Shard IDX: %u, Finish insertions, hit barrier", shard_idx);
-
   end_insertions_ts = std::chrono::steady_clock::now();
   end_insertions_cycle = _rdtsc();
 
