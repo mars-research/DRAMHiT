@@ -493,9 +493,8 @@ void KmerTest::count_kmer_radix_custom(
         for (size_t k = start; k < end; k++) {
             // xori = xori + 1;
             // __asm("");
-             xori ^= partitions[i][k];
-            // batch_runner.insert(partitions[i][start], 0 /* we use the aggr tables so no value */);
-
+             // xori ^= partitions[i][k];
+             batch_runner.insert(partitions[i][k], 0 /* we use the aggr tables so no value */);
             }
             auto diff = _rdtsc() - start_insertions_cycle_innest;
 
@@ -506,7 +505,7 @@ void KmerTest::count_kmer_radix_custom(
         auto diff = _rdtsc() - start_insertions_cycle_inner;
         PLOGI.printf("Inner: cycles: %llu, cycles_per_in: %llu", diff, diff / count_inner);
         
-        batch_runner.insert(xori, 0 /* we use the aggr tables so no value */);
+        // batch_runner.insert(xori, 0 /* we use the aggr tables so no value */);
         batch_runner.flush_insert();
         maps.push_back(ht);
   }
