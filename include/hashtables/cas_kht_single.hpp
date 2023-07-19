@@ -23,6 +23,7 @@
 #include "ht_helper.hpp"
 #include "sync.h"
 #include "hasher.hpp"
+#include <absl/container/flat_hash_map.h>
 
 namespace kmercounter {
 template <typename KV, typename KVQ>
@@ -104,7 +105,16 @@ class CASHashTableSingle: public BaseHashTable {
     collector->sync_end(timer_start);
 #endif
   }
-
+  
+  void aggregate(absl::flat_hash_map<Kmer, uint64_t>& aggr_map) {
+    for (int i = 0; i < this->capacity; i++) {
+        auto entry = this->hashtable[i];
+        if (!entry.is_empty()) {
+            assert(!aggregation.contains(entry.key));
+            aggr_map[entry.key] += entry.count;
+        }
+    }
+  }
 
   void insert_noprefetch_kmer(const void *data, collector_type* collector) {
 #ifdef LATENCY_COLLECTION

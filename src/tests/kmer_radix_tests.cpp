@@ -11,7 +11,6 @@
 #include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/cas_kht_single.hpp"
 #include "hashtables/kvtypes.hpp"
-#include "hashtables/simple_kht.hpp"
 #include "input_reader/counter.hpp"
 #include "input_reader/fastq.hpp"
 #include "print_stats.h"
@@ -43,11 +42,15 @@ absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint
 
 absl::flat_hash_map<Kmer, uint64_t> build_ref(const Configuration& config) {
 
+  PLOGI.printf("Building reference HT reader");
   // Be care of the `K` here; it's a compile time constant.
   auto reader = input_reader::MakeFastqKMerPreloadReader(
       config.K, config.in_file, 0, 1);
 
-  absl::flat_hash_map<Kmer, uint64_t> counter;  
+  PLOGI.printf("Alloc reference HT");
+  absl::flat_hash_map<Kmer, uint64_t> counter(1 << 20);  
+  PLOGI.printf("Count reference HT");
+  counter.reserve(1 << 20);
   for (uint64_t kmer; reader->next(&kmer);) {
     counter[kmer]++;   
   }
@@ -346,7 +349,8 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
         chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
         end_cycles - start_cycles);
     // check_functionality(config, context);
-  }
+  }   
+
   auto partition_time = chrono::duration_cast<chrono::microseconds>(end_partition_ts - start_partition_ts).count(); 
   auto partition_cycles = end_partition_cycle - start_partition_cycle;
   auto insertion_time = chrono::duration_cast<chrono::microseconds>(end_insertions_ts - start_insertions_ts).count();
@@ -457,15 +461,39 @@ void KmerTest::count_kmer_radix_custom(
   
   start_insertions_ts = std::chrono::steady_clock::now();
   start_insertions_cycle = _rdtsc();
+  // std::vector<size_t> gather_hist(hashmaps_per_thread);
+  // for (uint32_t k = 0; k < hashmaps_per_thread; k++) {
+  //     uint32_t partition_idx = hashmaps_per_thread * shard_idx + k;
+  //     uint64_t total_num_kmers = 0;
+  //     for (uint32_t i = 0; i < num_threads; i++) {
+  //       uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
+  //       uint64_t end = hists[i][partition_idx];
+  //       total_num_kmers += end - start;
+  //     }
+  //     gather_hist.push_back(total_num_kmers);
+  // }
+  // for (uint32_t k = 1; k < hashmaps_per_thread; k++) {
+  //     gather_hist[k] += gather_hist[k - 1];
+  // }
+
+  // auto total_capacity = gather_hist[hashmaps_per_thread - 1] * sizeof(KVType);
+  // auto shared_hash_array = (KVType*) std::aligned_alloc(PAGESIZE, total_capacity);
+  // auto shared_insert_queue = (ItemQueue *)(aligned_alloc(CACHELINE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(ItemQueue)));
+  // memset(shared_hash_array, 0, total_capacity);
 
   for (uint32_t k = 0; k < hashmaps_per_thread; k++) {
       uint32_t partition_idx = hashmaps_per_thread * shard_idx + k;
+      // uint64_t total_num_kmers = gather_hist[k] - (k == 0? 0: gather_hist[k - 1]);
       uint64_t total_num_kmers = 0;
       for (uint32_t i = 0; i < num_threads; i++) {
         uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
         uint64_t end = hists[i][partition_idx];
         total_num_kmers += end - start;
       }
+  //
+  //     gather_hist.push_back(total_num_kmers);
+      // auto slice = shared_hash_array + (k == 0? 0: gather_hist[k - 1]);
+
       // PLOGI.printf("Shard IDX: %u, total: %u", shard_idx, total);
       // BaseHashTable* ht = init_ht_radix(total, shard_idx);
       // HTBatchRunner batch_runner(ht);
@@ -507,6 +535,12 @@ void KmerTest::count_kmer_radix_custom(
         
         // batch_runner.insert(xori, 0 /* we use the aggr tables so no value */);
         batch_runner.flush_insert();
+
+        // absl::flat_hash_map<Kmer, uint64_t> counter(
+        // total_num_kmers);  // 1GB initial size.
+        // ht->aggregate(counter);
+        // context.hashmaps[shard_idx].push_back(std::move(counter));
+
         maps.push_back(ht);
   }
   // batch_runner.flush_insert();
@@ -531,7 +565,7 @@ void KmerTest::count_kmer_radix_custom(
         "Kmer insertion took %llu us (%llu cycles)",
         chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
         end_cycles - start_cycles);
-    // check_functionality(config, context);
+        // check_functionality(config, context);
   }
   auto partition_time = chrono::duration_cast<chrono::microseconds>(end_partition_ts - start_partition_ts).count(); 
   auto partition_cycles = end_partition_cycle - start_partition_cycle;
