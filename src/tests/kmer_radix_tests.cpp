@@ -144,7 +144,7 @@ typedef union {
 } cacheline_t;
 
 uint64_t partitioning(Shard* sh, const Configuration& config, const RadixContext& context, 
-        std::unique_ptr<input_reader::InputReaderU64> reader) {
+        std::unique_ptr<input_reader::InputReaderU64> reader, std::unique_ptr<input_reader::InputReaderU64> new_reader) {
   auto shard_idx = sh->shard_idx;
   auto R = context.R;
   auto fanOut = context.fanOut;
@@ -194,8 +194,8 @@ uint64_t partitioning(Shard* sh, const Configuration& config, const RadixContext
     buffer[i].data.slot = i == 0 ? 0 : hist[i - 1];
   }
 
-  auto new_reader = input_reader::MakeFastqKMerPreloadReader(
-      config.K, config.in_file, sh->shard_idx, config.num_threads);
+  auto start_new_reader = _rdtsc();
+  auto end_new_reader = _rdtsc();
   for (uint64_t kmer; new_reader->next(&kmer);) {
     auto hash_val = HASHER(&kmer, sizeof(Kmer));
     uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
@@ -214,7 +214,9 @@ uint64_t partitioning(Shard* sh, const Configuration& config, const RadixContext
 
     buffer[idx].data.slot = slot + 1;
   }
-  return (uint64_t) end_alloc;
+  auto swb_end = _rdtsc();
+  PLOGI.printf("New reader cycles: %llu, SWB: %llu cycles; Timestamp: %llu",  end_new_reader - start_new_reader, swb_end - end_new_reader, swb_end - context.global_time);
+  return (uint64_t) end_new_reader;
 }
 
 void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
@@ -229,9 +231,13 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   auto shard_idx = sh->shard_idx;
 
   // Be care of the `K` here; it's a compile time constant.
+  auto first_reader_start = _rdtsc();
   auto reader = input_reader::MakeFastqKMerPreloadReader(
       config.K, config.in_file, sh->shard_idx, config.num_threads);
-
+  auto new_reader = input_reader::MakeFastqKMerPreloadReader(
+      config.K, config.in_file, sh->shard_idx, config.num_threads);
+  auto first_reader_diff = _rdtsc() - first_reader_start;
+  PLOGI.printf("First reader cycles: %llu, First start: %llu, current: %llu", first_reader_diff, first_reader_start - context.global_time, _rdtsc() - context.global_time);
   std::uint64_t start = _rdtsc();
   // start timers
   std::uint64_t
@@ -260,8 +266,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   start_partition_cycle = _rdtsc();
 
   partitioning(sh, config, context, 
-          std::move(reader));
-
+          std::move(reader), std::move(new_reader));
   end_partition_ts = std::chrono::steady_clock::now();
   end_partition_cycle = _rdtsc();
 
@@ -390,10 +395,26 @@ void KmerTest::count_kmer_radix_custom(
 
   auto shard_idx = sh->shard_idx;
 
+  auto first_reader_start = _rdtsc();
   // Be care of the `K` here; it's a compile time constant.
   auto reader = input_reader::MakeFastqKMerPreloadReader(
       config.K, config.in_file, sh->shard_idx, config.num_threads);
+  auto new_reader = input_reader::MakeFastqKMerPreloadReader(
+      config.K, config.in_file, sh->shard_idx, config.num_threads);
+  auto first_reader_diff = _rdtsc() - first_reader_start;
+  PLOGI.printf("First reader cycles: %llu, First start: %llu, current: %llu", first_reader_diff, first_reader_start - context.global_time, _rdtsc() - context.global_time);
 
+  std::vector<CASHashTableSingle<KVType, ItemQueue>*> prealloc_maps;
+  prealloc_maps.reserve(hashmaps_per_thread);
+  auto ht_alloc_start = _rdtsc();
+  for (int i = 0; i < hashmaps_per_thread; i++) {
+    auto ht = new CASHashTableSingle<KVType, ItemQueue>((1 << 26) / hashmaps_per_thread);
+    prealloc_maps.push_back(ht);
+  }
+  InsertFindArgument arg;
+  arg.value = 0;
+  auto ht_alloc_time = _rdtsc() - ht_alloc_start;
+  PLOGI.printf("IDX: %u, HT alloc cycle per Kmer: %llu, total cycles: %llu", shard_idx, ht_alloc_time / (1 << 26), ht_alloc_time);
 
   // start timers
   std::uint64_t
@@ -414,26 +435,31 @@ void KmerTest::count_kmer_radix_custom(
       ;
 
   // barrier->arrive_and_wait();
-  std::uint64_t start_shard = _rdtsc();
 
   if (sh->shard_idx == 0) {
     start_ts = std::chrono::steady_clock::now();
     start_cycles = _rdtsc();
   }
 
+  // Wait for all readers finish initializing.
+  barrier->arrive_and_wait();
+
+  std::uint64_t start_shard = _rdtsc();
   start_partition_ts = std::chrono::steady_clock::now();
   start_partition_cycle = _rdtsc();
-
   auto part_alloc = partitioning(sh, config, context, 
-          std::move(reader));
+          std::move(reader), std::move(new_reader));
   // start_shard = part_alloc;
   // start_partition_cycle += part_alloc;
   end_partition_ts = std::chrono::steady_clock::now();
   end_partition_cycle = _rdtsc();
 
   barrier->arrive_and_wait();
-  auto after_first_barrier = _rdtsc();
-  PLOGI.printf("IDX: %u, time spent at the first barrier: %llu cycles", shard_idx, after_first_barrier - end_partition_cycle);
+  auto after_first_barrier = _rdtsc() - end_partition_cycle;
+
+  PLOGI.printf("IDX: %u Start partitioning at: %llu, gap: %llu", shard_idx, start_partition_cycle - context.global_time, end_partition_cycle - part_alloc);
+  PLOGI.printf("IDX: %u, time spent at the first barrier: %llu cycles, reaching barrier at: %llu", shard_idx, after_first_barrier, end_partition_cycle - context.global_time);
+  // start_shard += after_first_barrier;
   auto num_threads = config.num_threads;
 
   // if (shard_idx == 0) {
@@ -516,13 +542,13 @@ void KmerTest::count_kmer_radix_custom(
       // auto slice = shared_hash_array + (k == 0? 0: gather_hist[k - 1]);
 
       // PLOGI.printf("Shard IDX: %u, total: %u", shard_idx, total);
-      auto ht_alloc_start = _rdtsc();
-      auto ht = new CASHashTableSingle<KVType, ItemQueue>(total_num_kmers);
-      auto ht_alloc_time = _rdtsc() - ht_alloc_start;
+      // auto ht_alloc_start = _rdtsc();
+      // auto ht = new CASHashTableSingle<KVType, ItemQueue>(total_num_kmers);
+      // auto ht_alloc_time = _rdtsc() - ht_alloc_start;
       // start_shard += ht_alloc_time;
       // start_insertions_cycle += ht_alloc_time;
-      PLOGI.printf("IDX: %u, HT alloc cycle per Kmer: %llu, total cycles: %llu", shard_idx, ht_alloc_time / total_num_kmers, ht_alloc_time);
-      HTBatchRunner batch_runner(ht);
+      auto ht = prealloc_maps[k];
+      // PLOGI.printf("IDX: %u, HT alloc cycle per Kmer: %llu, total cycles: %llu", shard_idx, ht_alloc_time / total_num_kmers, ht_alloc_time);
       // counter.reserve(total >> 6);
 
       uint64_t xori = 0;
@@ -544,7 +570,9 @@ void KmerTest::count_kmer_radix_custom(
             // xori = xori + 1;
             // __asm("");
              // xori ^= partitions[i][k];
-             batch_runner.insert(partitions[i][k], 0 /* we use the aggr tables so no value */);
+             // batch_runner.insert(partitions[i][k], 0 /* we use the aggr tables so no value */);
+             arg.key = partitions[i][k];
+             ht->insert_one(&arg, nullptr);
             }
             auto diff = _rdtsc() - start_insertions_cycle_innest;
             PLOGI.printf("IDX:%u; remote: %u; Innest: cycles: %llu, cycles_per_in: %llu , start: %llu; end: %llu; total: %llu.", 
@@ -553,9 +581,8 @@ void KmerTest::count_kmer_radix_custom(
         
         auto diff = _rdtsc() - start_insertions_cycle_inner;
         PLOGI.printf("Inner: cycles: %llu, cycles_per_in: %llu", diff, diff / count_inner);
-        
         // batch_runner.insert(xori, 0 /* we use the aggr tables so no value */);
-        batch_runner.flush_insert();
+        // batch_runner.flush_insert();
 
         // absl::flat_hash_map<Kmer, uint64_t> counter(
         // total_num_kmers);  // 1GB initial size.

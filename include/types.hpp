@@ -105,10 +105,11 @@ class RadixContext {
   uint32_t hashmaps_per_thread;
   // floor(log(num_threads))
   uint32_t nthreads_d;
+  uint64_t global_time;
   std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> hashmaps;
 
   RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
-      : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r) {
+      : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r), global_time(_rdtsc()) {
     hists = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE,
                                            fanOut * sizeof(uint64_t*));
     partitions = (uint64_t**)std::aligned_alloc(

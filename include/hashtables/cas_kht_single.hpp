@@ -165,6 +165,15 @@ class CASHashTableSingle: public BaseHashTable {
     this->flush_if_needed(collector);
   }
 
+
+  void insert_one(const InsertFindArgument *kp, collector_type* collector) {
+    this->flush_if_needed(collector);
+
+    add_to_insert_queue((void*)kp, collector);
+
+    this->flush_if_needed(collector);
+  }
+
   // overridden function for insertion
   void flush_if_needed(collector_type* collector) {
     size_t curr_queue_sz =
