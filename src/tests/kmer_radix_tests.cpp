@@ -22,6 +22,35 @@ namespace kmercounter {
 
 #define HASHER XXH3_64bits
 
+class LinkedChuck {
+    public:
+        size_t chuck_size;
+        size_t total_count;
+        std::vector<Kmer*> chunks;
+
+        LinkedChuck(size_t size_hint): total_count(0) {
+            // chuck size must be a multiple of CACHELINE_SIZE
+            chuck_size = (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE; 
+            auto first_chunk = (Kmer*) std::aligned_alloc(PAGESIZE, chuck_size); 
+            chunks.push_back(first_chunk);
+        }
+
+        Kmer* get_next() {
+            auto index = total_count / chuck_size;
+            auto offset = total_count % chuck_size;
+            if (index + 1 == chunks.size() && offset == 0) {
+                auto chunk = (Kmer*) std::aligned_alloc(PAGESIZE, chuck_size); 
+                chunks.push_back(chunk);
+                return chunk;
+            }
+            return chunks[index] + offset;
+        }
+
+        void advance() {
+            total_count += CACHELINE_SIZE / sizeof(Kmer);
+        }
+};
+
 absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint64_t>& reference, const absl::flat_hash_map<Kmer, uint64_t>& aggregation) {
     absl::flat_hash_map<Kmer, long> diff;
     for (const auto& entry: reference) {
@@ -157,6 +186,7 @@ uint64_t partitioning(Shard* sh, const Configuration& config, const RadixContext
   // 2: file cache tmp
   uint32_t MASK = context.mask;
 
+  auto start_hist = _rdtsc();
   uint64_t* hist = (uint64_t*)calloc(fanOut, sizeof(int64_t));
   hists[shard_idx] = hist;
   for (uint64_t kmer; reader->next(&kmer);) {
@@ -179,6 +209,8 @@ uint64_t partitioning(Shard* sh, const Configuration& config, const RadixContext
     sum += hist[i];
     hist[i] = sum;
   }
+
+  auto hist_time = _rdtsc() - start_hist;
 
   auto start_alloc = _rdtsc();
   uint64_t* locals =
@@ -215,7 +247,12 @@ uint64_t partitioning(Shard* sh, const Configuration& config, const RadixContext
     buffer[idx].data.slot = slot + 1;
   }
   auto swb_end = _rdtsc();
-  PLOGI.printf("New reader cycles: %llu, SWB: %llu cycles; Timestamp: %llu",  end_new_reader - start_new_reader, swb_end - end_new_reader, swb_end - context.global_time);
+  PLOGI.printf("IDX: %u; building hist: %llu; new reader cycles: %llu, SWB: %llu cycles; Timestamp: %llu", 
+          shard_idx,
+          hist_time, 
+          end_new_reader - start_new_reader, 
+          swb_end - end_new_reader, 
+          swb_end - context.global_time);
   return (uint64_t) end_new_reader;
 }
 
@@ -404,9 +441,9 @@ void KmerTest::count_kmer_radix_custom(
   auto first_reader_diff = _rdtsc() - first_reader_start;
   PLOGI.printf("First reader cycles: %llu, First start: %llu, current: %llu", first_reader_diff, first_reader_start - context.global_time, _rdtsc() - context.global_time);
 
+  auto ht_alloc_start = _rdtsc();
   std::vector<CASHashTableSingle<KVType, ItemQueue>*> prealloc_maps;
   prealloc_maps.reserve(hashmaps_per_thread);
-  auto ht_alloc_start = _rdtsc();
   for (int i = 0; i < hashmaps_per_thread; i++) {
     auto ht = new CASHashTableSingle<KVType, ItemQueue>((1 << 26) / hashmaps_per_thread);
     prealloc_maps.push_back(ht);
