@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "plog/Log.h"
 #include "papi.h"
+#include "plog/Log.h"
 
 namespace kmercounter {
 class PapiEvent {
@@ -58,7 +58,8 @@ class PapiEvent {
 
       retval = PAPI_set_opt(PAPI_CPU_ATTACH, (PAPI_option_t*)&cpu_opt);
       if (retval != PAPI_OK) {
-        PLOG_ERROR.printf("this test; trying to PAPI_CPU_ATTACH; need to run as root %d",
+        PLOG_ERROR.printf(
+            "this test; trying to PAPI_CPU_ATTACH; need to run as root %d",
             retval);
       }
     }
@@ -105,14 +106,14 @@ class PapiEvent {
       if (retval != PAPI_OK) {
         PLOG_ERROR.printf("PAPI_stop %d", retval);
       }
-      PLOG_INFO.printf("=>%s:cpu %d %lld", this->uncore_events[i].c_str(), this->cpu,
-             values[i]);
+      PLOG_INFO.printf("=>%s:cpu %d %lld", this->uncore_events[i].c_str(),
+                       this->cpu, values[i]);
       sum += values[i];
     }
     PLOG_INFO.printf("--------------------------------------------");
     PLOG_INFO.printf("TOTAL(cpu %d)  %s: %" PRIu64 " (%f)", this->cpu,
-           this->uncore_events[0].c_str(), sum,
-           static_cast<float>(sum) / 1000000.0);
+                     this->uncore_events[0].c_str(), sum,
+                     static_cast<float>(sum) / 1000000.0);
     PLOG_INFO.printf("--------------------------------------------");
     return sum;
   }

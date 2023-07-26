@@ -12,7 +12,7 @@ namespace kmercounter {
 class RWRatioTest {
  public:
   void run(Shard& shard, BaseHashTable& hashtable, unsigned int total_ops,
-                             std::barrier<std::function<void()>> *sync_barrier);
+           std::barrier<std::function<void()>>* sync_barrier);
 };
 }  // namespace kmercounter
 

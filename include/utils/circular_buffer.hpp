@@ -2,8 +2,8 @@
 #define UTILS_CIRCULAR_BUFFER_HPP
 
 #include <array>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 
 #include "plog/Log.h"
@@ -12,7 +12,7 @@ namespace kmercounter {
 // A DNA KMer.
 template <size_t K>
 class DNAKMer {
-public:
+ public:
   static_assert(K > 0);
 
   DNAKMer() : DNAKMer(uint64_t{}) {}
@@ -33,15 +33,13 @@ public:
     return true;
   }
 
-  uint64_t data() const {
-    return buffer_;
-  }
+  uint64_t data() const { return buffer_; }
 
   std::string to_string() const {
     std::string str;
-    uint64_t mask = (uint64_t)MER_MASK << ((K - 1) * MER_SIZE); 
+    uint64_t mask = (uint64_t)MER_MASK << ((K - 1) * MER_SIZE);
     for (int i = K; i > 0; i--) {
-      const auto mer = (buffer_ & mask) >> ((i-1) * MER_SIZE);
+      const auto mer = (buffer_ & mask) >> ((i - 1) * MER_SIZE);
       const uint8_t decoded_mer = DECODE_MAP[mer];
       str.push_back(decoded_mer);
       mask >>= MER_SIZE;
@@ -49,12 +47,10 @@ public:
     return str;
   }
 
-  static std::string decode(uint64_t kmer) {
-    return DNAKMer(kmer).to_string();
-  }
+  static std::string decode(uint64_t kmer) { return DNAKMer(kmer).to_string(); }
 
   // Size of a mer in bits
-  constexpr static size_t MER_SIZE = 2; 
+  constexpr static size_t MER_SIZE = 2;
   // Maximun K, aka the number of mers, that we can hold.
   constexpr static size_t MAX_K = sizeof(uint64_t) * 8 / MER_SIZE;
   static_assert(MAX_K == 32, "Unexpected value of MAX_K");
@@ -65,14 +61,16 @@ public:
   constexpr static size_t MER_PER_BYTE = 8 / MER_SIZE;
   static_assert(MER_PER_BYTE == 4);
   // Size of buffer to holder the kmer in bytes.
-  constexpr static size_t BUFFER_LEN = (K + MER_PER_BYTE - 1) / MER_PER_BYTE; 
-  static_assert(BUFFER_LEN <= sizeof(uint64_t), "Large K support is not implemented");
+  constexpr static size_t BUFFER_LEN = (K + MER_PER_BYTE - 1) / MER_PER_BYTE;
+  static_assert(BUFFER_LEN <= sizeof(uint64_t),
+                "Large K support is not implemented");
   // Mask to obtain one mer.
   constexpr static uint8_t MER_MASK = 0b11;
   // Mask to remove unused bits of a kmer.
-  constexpr static uint64_t KMER_MASK = ~((uint64_t)(0ull) - ((K == 32) ? 0 : (1ull << KMER_SIZE)));
+  constexpr static uint64_t KMER_MASK =
+      ~((uint64_t)(0ull) - ((K == 32) ? 0 : (1ull << KMER_SIZE)));
 
-private:
+ private:
   // Shift left by one mer.
   void shift_left() {
     buffer_ <<= MER_SIZE;
@@ -80,10 +78,11 @@ private:
   }
 
   // Currently assumes only uint64_t for simplicity.
-  uint64_t buffer_; 
+  uint64_t buffer_;
   static_assert(K <= 32, "K > 32 is not yet implemented");
 
-  // Borrowed from https://github.com/gmarcais/Jellyfish/blob/master/include/jellyfish/mer_dna.hpp
+  // Borrowed from
+  // https://github.com/gmarcais/Jellyfish/blob/master/include/jellyfish/mer_dna.hpp
   enum Code {
     R = -1,
     I = -2,
@@ -95,25 +94,19 @@ private:
   };
 
   constexpr static int ENCODE_MAP[256] = {
-    O, O, O, O, O, O, O, O, O, O, I, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, R, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, A, R, C, R, O, O, G, R, O, O, R, O, R, R, O,
-    O, O, R, R, T, O, R, R, R, R, O, O, O, O, O, O,
-    O, A, R, C, R, O, O, G, R, O, O, R, O, R, R, O,
-    O, O, R, R, T, O, R, R, R, R, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-    O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O
-  };
+      O, O, O, O, O, O, O, O, O, O, I, O, O, O, O, O, O, O, O, O, O, O, O, O,
+      O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, R, O, O,
+      O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, A, R, C, R, O, O, G,
+      R, O, O, R, O, R, R, O, O, O, R, R, T, O, R, R, R, R, O, O, O, O, O, O,
+      O, A, R, C, R, O, O, G, R, O, O, R, O, R, R, O, O, O, R, R, T, O, R, R,
+      R, R, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+      O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+      O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+      O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+      O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+      O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O};
 
- constexpr static uint8_t DECODE_MAP[4] = { 'A', 'C', 'G', 'T' };
+  constexpr static uint8_t DECODE_MAP[4] = {'A', 'C', 'G', 'T'};
 };
 static_assert(DNAKMer<3>::BUFFER_LEN == 1);
 static_assert(DNAKMer<4>::BUFFER_LEN == 1);
@@ -140,13 +133,11 @@ class CircularBufferMove {
   }
 
   // Insert the data without shifting
-  void insert(const size_t i, const T& data) {
-    data_[i] = data;
-  }
+  void insert(const size_t i, const T &data) { data_[i] = data; }
 
   void copy_to(std::array<T, N> *dst) { copy_to(*dst); }
 
-  void copy_to(std::array<T, N> &dst) { dst = *(std::array<T, N>*)&data_; }
+  void copy_to(std::array<T, N> &dst) { dst = *(std::array<T, N> *)&data_; }
 
   void copy_to(T *dst) { memcpy(dst, data_.data(), N * sizeof(T)); }
 
@@ -175,7 +166,7 @@ class CircularBufferMove {
     }
   }
 
-  // Allocate for size at least 16 for possible optimization. 
+  // Allocate for size at least 16 for possible optimization.
   std::array<T, std::max((decltype(N))16, N)> data_;
 };
 

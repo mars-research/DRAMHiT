@@ -1,16 +1,16 @@
 #ifndef _HT_HELPER_H
 #define _HT_HELPER_H
 
-#include "base_kht.hpp"
-#include "hashtables/kvtypes.hpp"
-
 #include <fcntl.h>
 #include <numa.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <plog/Log.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include <cstring>
+
+#include "base_kht.hpp"
+#include "hashtables/kvtypes.hpp"
 
 namespace kmercounter {
 /* AB: 1GB page table code is from
@@ -19,8 +19,8 @@ namespace kmercounter {
 
 #define FILE_NAME "/mnt/huge/hugepagefile%d"
 
-#define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
-#define MAP_HUGE_1GB    (30 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
 extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
@@ -45,11 +45,11 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz);
 
 template <bool WRITE>
 inline void prefetch_object(const void *addr, uint64_t size) {
-  //uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
+  // uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
 
 #if defined(PREFETCH_TWO_LINE)
-  //uint64_t cache_line2_addr =
-  //    cache_block_aligned_addr((uint64_t)addr + size - 1);
+  // uint64_t cache_line2_addr =
+  //     cache_block_aligned_addr((uint64_t)addr + size - 1);
 #endif
 
   // 1 -- prefetch for write (vs 0 -- read)
@@ -128,8 +128,8 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     }
 
     PLOGV.printf("requesting to mmap %lu bytes", alloc_sz);
-    addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
-        MAP_FLAGS, fd, 0);
+    addr =
+        (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW, MAP_FLAGS, fd, 0);
     if (addr == MAP_FAILED) {
       perror("mmap");
       unlink(mmap_path);

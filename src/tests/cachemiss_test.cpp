@@ -10,9 +10,9 @@ void CacheMissTest::cache_miss_run(Shard *sh, BaseHashTable *k_ht) {
   int k = 0;
   uint64_t i = 0u;
   uint64_t count = HT_TESTS_NUM_INSERTS * sh->shard_idx;
-  printf(
-      "[INFO] Cache Miss test run: thread %u, ht size: %" PRIu64 ", insertions: %" PRIu64 "\n",
-      sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
+  printf("[INFO] Cache Miss test run: thread %u, ht size: %" PRIu64
+         ", insertions: %" PRIu64 "\n",
+         sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
   if (sh->shard_idx == 0) count = 1;
   __attribute__((aligned(64))) uint64_t keys[HT_TESTS_BATCH_LENGTH] = {0};
@@ -30,9 +30,9 @@ void CacheMissTest::cache_miss_run(Shard *sh, BaseHashTable *k_ht) {
   }
   auto t_end = RDTSCP();
 
-  printf(
-      "[INFO] CacheMissTest: Quick stats: thread %u, Batch size: %" PRIu64 ", cycles "
-      "per insertion: %" PRIu64 "\n",
-      sh->shard_idx, i, ((t_end - t_start) / i));
+  printf("[INFO] CacheMissTest: Quick stats: thread %u, Batch size: %" PRIu64
+         ", cycles "
+         "per insertion: %" PRIu64 "\n",
+         sh->shard_idx, i, ((t_end - t_start) / i));
 }
 }  // namespace kmercounter

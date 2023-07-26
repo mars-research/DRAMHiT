@@ -12,9 +12,9 @@
 #include <fstream>
 #include <functional>
 
+#include "./hashtables/array_kht.hpp"
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
-#include "./hashtables/array_kht.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "tests/PrefetchTest.hpp"
@@ -42,7 +42,7 @@ extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew, int64_t seed);
 
-//void sync_complete(void);
+// void sync_complete(void);
 
 // default configuration
 const Configuration def = {
@@ -82,8 +82,7 @@ const Configuration def = {
     .relation_s_size = 128000000,
     .delimitor = "|",
     .rw_queues = false,
-    .pollute_ratio = 0
-};  // TODO enum
+    .pollute_ratio = 0};  // TODO enum
 
 // for synchronization of threads
 static uint64_t ready = 0;
@@ -110,8 +109,7 @@ void sync_complete(void) {
     stop_sync = false;
   } else {
     PLOGI.printf("Starting counters");
-    if (!bw_counters)
-      bw_counters = new MemoryBwCounters(2);
+    if (!bw_counters) bw_counters = new MemoryBwCounters(2);
     bw_counters->start();
   }
 #endif
@@ -150,8 +148,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
           new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
       break;
     case ARRAY_HT:
-      kmer_ht =
-          new ArrayHashTable<Value, ItemQueue>(sz);
+      kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);
       break;
     default:
       PLOG_FATAL.printf("HT type not implemented");
@@ -166,7 +163,8 @@ void free_ht(BaseHashTable *kmer_ht) {
   delete kmer_ht;
 }
 
-void Application::shard_thread(int tid, std::barrier<std::function<void()>>* barrier) {
+void Application::shard_thread(int tid,
+                               std::barrier<std::function<void()>> *barrier) {
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -222,18 +220,20 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
       this->test.cmt.cache_miss_run(sh, kmer_ht);
       break;
     case ZIPFIAN:
-      this->test.zipf.run(sh, kmer_ht, config.skew, config.seed, config.num_threads, barrier);
+      this->test.zipf.run(sh, kmer_ht, config.skew, config.seed,
+                          config.num_threads, barrier);
       break;
     case RW_RATIO:
       PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
       this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS, barrier);
       break;
     case HASHJOIN:
-      this->test.hj.join_relations_generated(sh, config, kmer_ht, config.materialize, barrier);
+      this->test.hj.join_relations_generated(sh, config, kmer_ht,
+                                             config.materialize, barrier);
       break;
     case FASTQ_WITH_INSERT_RADIX:
-      this->test.kmer.count_kmer_radix_custom(sh, config, barrier, 
-              this->radixContext);
+      this->test.kmer.count_kmer_radix_custom(sh, config, barrier,
+                                              this->radixContext);
       break;
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
@@ -288,13 +288,15 @@ int Application::spawn_shard_threads() {
   if (config.ht_type == CASHTPP) {
     auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
     HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
-    PLOGV.printf("Total inserts %" PRIu64 " | num_threads %u | scaled inserts per thread %" PRIu64 "",
-          orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
+    PLOGV.printf("Total inserts %" PRIu64
+                 " | num_threads %u | scaled inserts per thread %" PRIu64 "",
+                 orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
 
   if (config.insert_factor > 1) {
-    PLOGI.printf("Insert factor %" PRIu64 ", Effective num insertions %" PRIu64 "", config.insert_factor,
-        HT_TESTS_NUM_INSERTS * config.insert_factor);
+    PLOGI.printf(
+        "Insert factor %" PRIu64 ", Effective num insertions %" PRIu64 "",
+        config.insert_factor, HT_TESTS_NUM_INSERTS * config.insert_factor);
   }
 
   /*   TODO don't spawn threads if f_start >= in_file_sz
@@ -336,7 +338,7 @@ int Application::spawn_shard_threads() {
     this->threads.push_back(std::move(_thread));
     i += 1;
   }
-  
+
   PLOG_INFO.printf("kos i:%u", i);
   // Pin main application thread to cpu 0 and run our thread routine
   CPU_ZERO(&cpuset);
@@ -398,11 +400,10 @@ int Application::process(int argc, char *argv[]) {
         "10: Cache Miss test\n"
         "11: Zipfian non-bqueue test\n"
         "12: RW-ratio test\n"
-        "13: Hashjoin")(
-        "base",
-        po::value<uint64_t>(&config.kmer_create_data_base)
-            ->default_value(def.kmer_create_data_base),
-        "Number of base K-mers")(
+        "13: Hashjoin")("base",
+                        po::value<uint64_t>(&config.kmer_create_data_base)
+                            ->default_value(def.kmer_create_data_base),
+                        "Number of base K-mers")(
         "mult",
         po::value<uint32_t>(&config.kmer_create_data_mult)
             ->default_value(def.kmer_create_data_mult),
@@ -453,11 +454,9 @@ int Application::process(int argc, char *argv[]) {
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),
         "for bqueues only")(
         "k", po::value<uint32_t>(&config.K)->default_value(def.K),
-        "the value of 'k' in k-mer")
-        (
+        "the value of 'k' in k-mer")(
         "d", po::value<uint32_t>(&config.D)->default_value(def.D),
-        "the value of 'd' in radix partitioning")
-        (
+        "the value of 'd' in radix partitioning")(
         "num_nops",
         po::value<uint32_t>(&config.num_nops)->default_value(def.num_nops),
         "number of nops in bqueue cons thread")(
@@ -471,32 +470,40 @@ int Application::process(int argc, char *argv[]) {
         "Zipfian skewness")(
         "seed", po::value<int64_t>(&config.seed)->default_value(def.seed),
         "Zipfian distribution generation seed")(
-        "hw-pref", po::value<bool>(&config.hwprefetchers)->default_value(def.hwprefetchers))(
+        "hw-pref", po::value<bool>(&config.hwprefetchers)
+                       ->default_value(def.hwprefetchers))(
         "no-prefetch",
         po::value<bool>(&config.no_prefetch)->default_value(def.no_prefetch))(
         "run-both",
         po::value<bool>(&config.run_both)->default_value(def.run_both))(
         "batch-len",
         po::value<uint32_t>(&config.batch_len)->default_value(def.batch_len))(
-        "p-read",
-        po::value<double>(&config.pread)->default_value(def.pread))
-        ("materialize",
+        "p-read", po::value<double>(&config.pread)->default_value(def.pread))(
+        "materialize",
         po::value<bool>(&config.materialize)->default_value(def.materialize),
-        "Materialize the hashjoin output")
-        ("relation_r",
-        po::value(&config.relation_r)->default_value(def.relation_r), "Path to relation R.")
-        ("relation_s",
-        po::value(&config.relation_s)->default_value(def.relation_s), "Path to relation S.")
-        ("relation_r_size",
-        po::value(&config.relation_r_size)->default_value(def.relation_r_size), "Number of elements in relation R. Only used when the relations are generated.")
-        ("relation_s_size",
-        po::value(&config.relation_s_size)->default_value(def.relation_s_size), "Number of elements in relation S. Only used when the relations are generated.")
-        ("delimitor",
-        po::value(&config.delimitor)->default_value(def.delimitor), "CSV delimitor for relation files.")(
-          "rw-queues",
-          po::value<bool>(&config.rw_queues)->default_value(def.rw_queues),
-          "Enable R/W tests for queues tests"
-        )("pollute-ratio", po::value(&config.pollute_ratio)->default_value(def.pollute_ratio), "Ratio of pollution events to ops (>1)");
+        "Materialize the hashjoin output")(
+        "relation_r",
+        po::value(&config.relation_r)->default_value(def.relation_r),
+        "Path to relation R.")(
+        "relation_s",
+        po::value(&config.relation_s)->default_value(def.relation_s),
+        "Path to relation S.")(
+        "relation_r_size",
+        po::value(&config.relation_r_size)->default_value(def.relation_r_size),
+        "Number of elements in relation R. Only used when the relations are "
+        "generated.")(
+        "relation_s_size",
+        po::value(&config.relation_s_size)->default_value(def.relation_s_size),
+        "Number of elements in relation S. Only used when the relations are "
+        "generated.")(
+        "delimitor", po::value(&config.delimitor)->default_value(def.delimitor),
+        "CSV delimitor for relation files.")(
+        "rw-queues",
+        po::value<bool>(&config.rw_queues)->default_value(def.rw_queues),
+        "Enable R/W tests for queues tests")(
+        "pollute-ratio",
+        po::value(&config.pollute_ratio)->default_value(def.pollute_ratio),
+        "Ratio of pollution events to ops (>1)");
 
     papi_init();
 
@@ -531,16 +538,18 @@ int Application::process(int argc, char *argv[]) {
       PLOG_INFO.printf("Mode : PREFETCH");
     } else if (config.mode == DRY_RUN) {
       PLOG_INFO.printf("Mode : Dry run ...");
-      PLOG_INFO.printf(
-          "base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "", config.kmer_create_data_base,
-          config.kmer_create_data_mult, config.kmer_create_data_uniq);
+      PLOG_INFO.printf("base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "",
+                       config.kmer_create_data_base,
+                       config.kmer_create_data_mult,
+                       config.kmer_create_data_uniq);
     } else if (config.mode == READ_FROM_DISK) {
       PLOG_INFO.printf("Mode : Reading kmers from disk ...");
     } else if (config.mode == WRITE_TO_DISK) {
       PLOG_INFO.printf("Mode : Writing kmers to disk ...");
-      PLOG_INFO.printf(
-          "base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "", config.kmer_create_data_base,
-          config.kmer_create_data_mult, config.kmer_create_data_uniq);
+      PLOG_INFO.printf("base: %" PRIu64 ", mult: %u, uniq: %" PRIu64 "",
+                       config.kmer_create_data_base,
+                       config.kmer_create_data_mult,
+                       config.kmer_create_data_uniq);
     } else if (config.mode == FASTQ_WITH_INSERT) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT");
       if (config.in_file.empty()) {
@@ -550,13 +559,14 @@ int Application::process(int argc, char *argv[]) {
     } else if (config.mode == FASTQ_WITH_INSERT_RADIX) {
       PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX");
       auto nthreads = config.num_threads;
-      this->radixContext = RadixContext(config.D, 0, nthreads); 
-      
-      PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u, multiplier: %u, nthreads_d: %u", 
-              config.D, 
-              this->radixContext.fanOut, 
-              this->radixContext.hashmaps_per_thread, 
-              this->radixContext.nthreads_d);
+      this->radixContext = RadixContext(config.D, 0, nthreads);
+
+      PLOG_INFO.printf(
+          "Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u, multiplier: %u, "
+          "nthreads_d: %u",
+          config.D, this->radixContext.fanOut,
+          this->radixContext.hashmaps_per_thread,
+          this->radixContext.nthreads_d);
       if (config.in_file.empty()) {
         PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
@@ -576,7 +586,8 @@ int Application::process(int argc, char *argv[]) {
       if (config.ht_type == ARRAY_HT) {
         config.ht_size = max_join_size;
       } else {
-        //config.ht_size = static_cast<double>(max_join_size) * 100 / config.ht_fill;
+        // config.ht_size = static_cast<double>(max_join_size) * 100 /
+        // config.ht_fill;
       }
       PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
     }
@@ -629,11 +640,15 @@ int Application::process(int argc, char *argv[]) {
 
   config.dump_configuration();
 
-  if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT) || (config.mode == FASTQ_WITH_INSERT_RADIX)) {
+  if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT) ||
+      (config.mode == FASTQ_WITH_INSERT_RADIX)) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if ((config.mode == BQ_TESTS_YES_BQ) || ((config.mode == FASTQ_WITH_INSERT || (config.mode == FASTQ_WITH_INSERT_RADIX)) && (config.ht_type == PARTITIONED_HT))) {
+  if ((config.mode == BQ_TESTS_YES_BQ) ||
+      ((config.mode == FASTQ_WITH_INSERT ||
+        (config.mode == FASTQ_WITH_INSERT_RADIX)) &&
+       (config.ht_type == PARTITIONED_HT))) {
     switch (config.numa_split) {
       case PROD_CONS_SEPARATE_NODES:
         this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
@@ -666,11 +681,13 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN || config.mode == RW_RATIO) {
+  if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN ||
+      config.mode == RW_RATIO) {
     init_zipfian_dist(config.skew, config.seed);
   }
 
-  if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT) || (config.mode == FASTQ_WITH_INSERT_RADIX)) {
+  if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT) ||
+      (config.mode == FASTQ_WITH_INSERT_RADIX)) {
     // for hashjoin, ht-type determines how we spawn threads
     if (config.ht_type == PARTITIONED_HT) {
       this->test.qt.run_test(&config, this->n, true, this->npq);

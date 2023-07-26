@@ -30,7 +30,6 @@ namespace kmercounter {
 
 using namespace std;
 
-
 void setup_signal_handler(void);
 
 extern uint64_t HT_TESTS_HT_SIZE;
@@ -72,7 +71,8 @@ void init_zipfian_dist(double skew, int64_t seed) {
       HT_TESTS_NUM_INSERTS);
 
   std::stringstream cache_name{};
-  cache_name << "/opt/dramhit/cache" << config.skew << "_" << config.ht_size << ".bin";
+  cache_name << "/opt/dramhit/cache" << config.skew << "_" << config.ht_size
+             << ".bin";
   std::ifstream cache{cache_name.str().c_str()};
 
   PLOG_INFO << cache_name.str() << " " << cache.is_open();
@@ -137,7 +137,6 @@ static auto mbind_buffer_local(void *buf, ssize_t sz) {
   }
   return ret;
 }
-
 
 std::barrier<std::function<void()>> *prod_barrier;
 uint64_t g_rw_start, g_rw_end;
@@ -309,19 +308,19 @@ void QueueTest<T>::producer_thread(
       } else {
 #if defined(XORWOW)
 #warning "Xorwow rand kmer insert"
-      const auto value = xorwow(&_xw_state);
-      k = value;
-      kv = data_t(value, value);
+        const auto value = xorwow(&_xw_state);
+        k = value;
+        kv = data_t(value, value);
 
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
         if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
           prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
 
-      k = zipf_values->at(zipf_idx);
-      kv = data_t(k, k);
-      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
-      zipf_idx++;
+        k = zipf_values->at(zipf_idx);
+        kv = data_t(k, k);
+        // PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+        zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
 #else
@@ -434,8 +433,8 @@ void QueueTest<T>::consumer_thread(
       // sizeof(thread_stats));
       (thread_stats *)calloc(1, sizeof(thread_stats));
 
-  InsertFindArgument *items =
-      (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
 
   std::uint64_t count{};
   BaseHashTable *kmer_ht = NULL;
@@ -581,8 +580,8 @@ void QueueTest<T>::consumer_thread(
       if (bq_load == BQUEUE_LOAD::HtInsert) {
         items[data_idx].key = kv.key;
         items[data_idx].id = kv.key;
-        //PLOGV.printf("sizeof items %zu | size of kv.key %zu",
-        //          sizeof(_items[data_idx].key), sizeof(kv.key));
+        // PLOGV.printf("sizeof items %zu | size of kv.key %zu",
+        //           sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
 #if !defined(BQUEUE_KMER_TEST)
         items[data_idx].value = kv.value;
@@ -591,7 +590,7 @@ void QueueTest<T>::consumer_thread(
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
 
         if (config.no_prefetch) {
-          //PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
+          // PLOGV.printf("Inserting key %" PRIu64, _items[data_idx].key);
           kmer_ht->insert_noprefetch(&items[data_idx], collector);
           inserted++;
         } else {
@@ -701,7 +700,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
     this->ht_vec->at(tid) = ktable;
   } else {
     PLOGD.printf("Dist to nodes tid %u", tid);
-    auto *part_ht = reinterpret_cast<PartitionedHashStore<KVType, ItemQueue>*>(ktable);
+    auto *part_ht =
+        reinterpret_cast<PartitionedHashStore<KVType, ItemQueue> *>(ktable);
     void *ht_mem = part_ht->hashtable[part_ht->id];
     distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size());
   }
@@ -722,8 +722,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
   uint64_t key_start =
       std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
 
-  InsertFindArgument *items =
-      (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
 
   ValuePairs vp = std::make_pair(0, results);
 
@@ -807,8 +807,10 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
       } else {
         if (++j == config.batch_len) {
           // PLOGI.printf("calling find_batch i = %d", i);
-          // ktable->find_batch((InsertFindArgument *)items, HT_TESTS_FIND_BATCH_LENGTH);
-          ktable->find_batch(InsertFindArguments(items, config.batch_len), vp, collector);
+          // ktable->find_batch((InsertFindArgument *)items,
+          // HT_TESTS_FIND_BATCH_LENGTH);
+          ktable->find_batch(InsertFindArguments(items, config.batch_len), vp,
+                             collector);
           found += vp.first;
           j = 0;
           not_found += config.batch_len - vp.first;
@@ -823,7 +825,6 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
                 &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
         }
       }
-
     }
     if (!config.no_prefetch) {
       if (vp.first > 0) {
@@ -839,9 +840,8 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
   barrier->arrive_and_wait();
 
 #ifdef CALC_STATS
-  PLOG_INFO.printf(
-      "Finder %u (found %" PRIu64 ", not_found %" PRIu64 ")", tid,
-      found, not_found);
+  PLOG_INFO.printf("Finder %u (found %" PRIu64 ", not_found %" PRIu64 ")", tid,
+                   found, not_found);
 #endif
 
   vtune::event_end(event);
@@ -1129,8 +1129,8 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n, bool is_join,
 
 template class QueueTest<SectionQueue>;
 
-const data_t SectionQueue::BQ_MAGIC_KV = data_t(
-      SectionQueue::BQ_MAGIC_64BIT, SectionQueue::BQ_MAGIC_64BIT);
-//template class QueueTest<LynxQueue>;
-//template class QueueTest<BQueueAligned>;
+const data_t SectionQueue::BQ_MAGIC_KV =
+    data_t(SectionQueue::BQ_MAGIC_64BIT, SectionQueue::BQ_MAGIC_64BIT);
+// template class QueueTest<LynxQueue>;
+// template class QueueTest<BQueueAligned>;
 }  // namespace kmercounter

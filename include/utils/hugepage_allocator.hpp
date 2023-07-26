@@ -2,11 +2,12 @@
 
 // adapted from https://rigtorp.se/hugepages/
 
-#include <sys/mman.h> // mmap, munmap
+#include <sys/mman.h>  // mmap, munmap
 
-template <typename T> struct huge_page_allocator {
-  constexpr static std::size_t huge_page_size_2mb = 1 << 21; // 2 MiB
-  constexpr static std::size_t huge_page_size_1gb = 1 << 30; // 1 GiB
+template <typename T>
+struct huge_page_allocator {
+  constexpr static std::size_t huge_page_size_2mb = 1 << 21;  // 2 MiB
+  constexpr static std::size_t huge_page_size_1gb = 1 << 30;  // 1 GiB
   using value_type = T;
 
   huge_page_allocator() = default;
@@ -46,12 +47,13 @@ template <typename T> struct huge_page_allocator {
 
     std::tie(is_1gb, alloc_sz) = get_rounded_alloc_size(raw_alloc_sz);
 
-    auto MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB
-        | (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
+    auto MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB |
+                     (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
 
-    PLOGV.printf("n = %lu raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n, raw_alloc_sz, alloc_sz, is_1gb);
-    auto p = static_cast<T *>(mmap( nullptr, alloc_sz, PROT_READ | PROT_WRITE,
-          MAP_FLAGS, -1, 0));
+    PLOGV.printf("n = %lu raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n,
+                 raw_alloc_sz, alloc_sz, is_1gb);
+    auto p = static_cast<T *>(
+        mmap(nullptr, alloc_sz, PROT_READ | PROT_WRITE, MAP_FLAGS, -1, 0));
 
     if (p == MAP_FAILED) {
       PLOGE.printf("map failed %d", errno);

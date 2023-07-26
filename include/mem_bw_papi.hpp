@@ -61,7 +61,8 @@ class MemoryBwCounters {
     for (auto &event : imc_read) {
       auto counter = event->stop();
       read_bw += counter;
-      PLOGI.printf("counter value %" PRIu64 " | read_bw %" PRIu64 "", counter, read_bw);
+      PLOGI.printf("counter value %" PRIu64 " | read_bw %" PRIu64 "", counter,
+                   read_bw);
     }
     for (auto &event : imc_write) {
       write_bw += event->stop();

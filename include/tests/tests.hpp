@@ -2,13 +2,13 @@
 #define TESTS_TESTS_HPP
 
 #include "CacheMissTest.hpp"
+#include "HashjoinTest.hpp"
+#include "KmerTest.hpp"
 #include "PrefetchTest.hpp"
+#include "QueueTest.hpp"
+#include "RWRatioTest.hpp"
 #include "SynthTest.hpp"
 #include "ZipfianTest.hpp"
-#include "QueueTest.hpp"
-#include "KmerTest.hpp"
-#include "HashjoinTest.hpp"
-#include "RWRatioTest.hpp"
 
 namespace kmercounter {
 
@@ -20,8 +20,8 @@ class Tests {
  public:
   SynthTest st;
   PrefetchTest pt;
-  //QueueTest<kmercounter::BQueueAligned> qt;
-  // QueueTest<kmercounter::LynxQueue> qt;
+  // QueueTest<kmercounter::BQueueAligned> qt;
+  //  QueueTest<kmercounter::LynxQueue> qt;
   QueueTest<kmercounter::SectionQueue> qt;
   CacheMissTest cmt;
   ZipfianTest zipf;
@@ -29,10 +29,9 @@ class Tests {
   HashjoinTest hj;
   RWRatioTest rw;
 
-  Tests() {
-  }
+  Tests() {}
 };
 
 }  // namespace kmercounter
 
-#endif // TESTS_TESTS_HPP
+#endif  // TESTS_TESTS_HPP

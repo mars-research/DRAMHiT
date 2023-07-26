@@ -1,13 +1,11 @@
 #ifndef UTILS_PROFILER_HPP
 #define UTILS_PROFILER_HPP
 
-
 #include <string>
 #include <string_view>
 
-#include "sync.h"
 #include "plog/Log.h"
-
+#include "sync.h"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI
 #include <papi.h>
@@ -67,4 +65,4 @@ class Profiler {
 
 }  // namespace kmercounter
 
-#endif // UTILS_PROFILER_HPP
+#endif  // UTILS_PROFILER_HPP

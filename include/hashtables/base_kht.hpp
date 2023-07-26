@@ -16,19 +16,24 @@ class BaseHashTable {
 
   // NEVER NEVER NEVER USE KEY OR ID 0
   // Your inserts will be ignored if you do (we use these as empty markers)
-  virtual void insert_batch(const InsertFindArguments &kp, collector_type* collector = nullptr) = 0;
+  virtual void insert_batch(const InsertFindArguments &kp,
+                            collector_type *collector = nullptr) = 0;
 
-  virtual void insert_noprefetch(const void *data, collector_type* collector = nullptr) = 0;
+  virtual void insert_noprefetch(const void *data,
+                                 collector_type *collector = nullptr) = 0;
 
-  virtual void flush_insert_queue(collector_type* collector = nullptr) = 0;
+  virtual void flush_insert_queue(collector_type *collector = nullptr) = 0;
 
   // NEVER NEVER NEVER USE KEY OR ID 0
   // Your inserts will be ignored if you do (we use these as empty markers)
-  virtual void find_batch(const InsertFindArguments &kp, ValuePairs &vp, collector_type* collector = nullptr) = 0;
+  virtual void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
+                          collector_type *collector = nullptr) = 0;
 
-  virtual void *find_noprefetch(const void *data, collector_type* collector = nullptr) = 0;
+  virtual void *find_noprefetch(const void *data,
+                                collector_type *collector = nullptr) = 0;
 
-  virtual void flush_find_queue(ValuePairs &vp, collector_type* collector = nullptr) = 0;
+  virtual void flush_find_queue(ValuePairs &vp,
+                                collector_type *collector = nullptr) = 0;
 
   virtual void display() const = 0;
 

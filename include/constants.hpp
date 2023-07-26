@@ -19,6 +19,6 @@ constexpr uint32_t HT_TESTS_BATCH_LENGTH = 16;
 constexpr uint32_t HT_TESTS_FIND_BATCH_LENGTH = 16;
 #endif
 constexpr uint32_t HT_TESTS_MAX_STRIDE = 2;
-} // namespace kmercounter
+}  // namespace kmercounter
 
 #endif /* CONSTANTS_HPP */

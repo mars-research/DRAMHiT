@@ -21,30 +21,33 @@
 // https://github.com/apache/commons-statistics/blob/master/commons-statistics-distribution/src/main/java/org/apache/commons/statistics/distribution/ZipfDistribution.java
 // https://github.com/apache/commons-rng/blob/master/commons-rng-sampling/src/main/java/org/apache/commons/rng/sampling/distribution/RejectionInversionZipfSampler.java
 
-#include <stdexcept>
-#include <random>
+#include "zipf_distribution.hpp"
+
 #include <chrono>
 #include <cmath>
-
-#include "zipf_distribution.hpp"
+#include <random>
+#include <stdexcept>
 
 namespace kmercounter {
 
-zipf_distribution_apache::zipf_distribution_apache(uint64_t num_elements, double exponent, int64_t seed):
-num_elements(num_elements),
-exponent(exponent),
-h_integral_x1(h_integral(1.5) - 1),
-h_integral_num_elements(h_integral(num_elements + F_1_2)),
-s(2 - h_integral_inverse(h_integral(2.5) - h(2))),
-generator(seed),
-distribution(0, 1)
-{
+zipf_distribution_apache::zipf_distribution_apache(uint64_t num_elements,
+                                                   double exponent,
+                                                   int64_t seed)
+    : num_elements(num_elements),
+      exponent(exponent),
+      h_integral_x1(h_integral(1.5) - 1),
+      h_integral_num_elements(h_integral(num_elements + F_1_2)),
+      s(2 - h_integral_inverse(h_integral(2.5) - h(2))),
+      generator(seed),
+      distribution(0, 1) {
   if (exponent <= 0) throw std::invalid_argument("exponent must be positive");
 }
 
 uint64_t zipf_distribution_apache::sample() {
   while (true) {
-    const double u = h_integral_num_elements + distribution(generator) * (h_integral_x1 - h_integral_num_elements);
+    const double u =
+        h_integral_num_elements +
+        distribution(generator) * (h_integral_x1 - h_integral_num_elements);
     double x = h_integral_inverse(u);
     uint64_t k = x + F_1_2;
     if (k < 1) {
@@ -58,9 +61,7 @@ uint64_t zipf_distribution_apache::sample() {
   }
 }
 
-double zipf_distribution_apache::h(double x) {
-  return exp(-exponent * log(x));
-}
+double zipf_distribution_apache::h(double x) { return exp(-exponent * log(x)); }
 
 double zipf_distribution_apache::h_integral(double x) {
   const double log_x = log(x);
@@ -77,9 +78,9 @@ double zipf_distribution_apache::h_integral_inverse(double x) {
 
 double zipf_distribution_apache::helper1(double x) {
   if (abs(x) > TAYLOR_THRESHOLD) {
-      return log1p(x) / x;
+    return log1p(x) / x;
   } else {
-      return 1 - x * (F_1_2 - x * (F_1_3 - F_1_4 * x));
+    return 1 - x * (F_1_2 - x * (F_1_3 - F_1_4 * x));
   }
 }
 
@@ -91,4 +92,4 @@ double zipf_distribution_apache::helper2(double x) {
   }
 }
 
-}
+}  // namespace kmercounter

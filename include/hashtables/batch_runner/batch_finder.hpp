@@ -46,8 +46,8 @@ class HTBatchFinder {
     }
   }
 
-  void *find_noprefetch(const KeyValuePair &kv) {
-    return ht_->find_noprefetch((void*) &kv);
+  void* find_noprefetch(const KeyValuePair& kv) {
+    return ht_->find_noprefetch((void*)&kv);
   }
 
   /// Flush everything to the hashtable and flush the hashtable find queue.
