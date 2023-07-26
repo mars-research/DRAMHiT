@@ -22,35 +22,6 @@ namespace kmercounter {
 
 #define HASHER XXH3_64bits
 
-class LinkedChuck {
-    public:
-        size_t chuck_size;
-        size_t total_count;
-        std::vector<Kmer*> chunks;
-
-        LinkedChuck(size_t size_hint): total_count(0) {
-            // chuck size must be a multiple of CACHELINE_SIZE
-            chuck_size = (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE; 
-            auto first_chunk = (Kmer*) std::aligned_alloc(PAGESIZE, chuck_size); 
-            chunks.push_back(first_chunk);
-        }
-
-        Kmer* get_next() {
-            auto index = total_count / chuck_size;
-            auto offset = total_count % chuck_size;
-            if (index + 1 == chunks.size() && offset == 0) {
-                auto chunk = (Kmer*) std::aligned_alloc(PAGESIZE, chuck_size); 
-                chunks.push_back(chunk);
-                return chunk;
-            }
-            return chunks[index] + offset;
-        }
-
-        void advance() {
-            total_count += CACHELINE_SIZE / sizeof(Kmer);
-        }
-};
-
 absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint64_t>& reference, const absl::flat_hash_map<Kmer, uint64_t>& aggregation) {
     absl::flat_hash_map<Kmer, long> diff;
     for (const auto& entry: reference) {
@@ -172,88 +143,88 @@ typedef union {
   } data;
 } cacheline_t;
 
-uint64_t partitioning(Shard* sh, const Configuration& config, const RadixContext& context, 
-        std::unique_ptr<input_reader::InputReaderU64> reader, std::unique_ptr<input_reader::InputReaderU64> new_reader) {
+uint64_t partitioning(Shard* sh, const Configuration& config, RadixContext& context, 
+        std::unique_ptr<input_reader::InputReaderU64> reader) {
   auto shard_idx = sh->shard_idx;
   auto R = context.R;
   auto fanOut = context.fanOut;
-  uint64_t** hists = context.hists;
-  uint64_t** partitions = context.partitions;
-  std::uint64_t num_kmers{};
+  auto sz = sh->f_end - sh->f_start;
   
   // Two ways:
   // 1: rel tmp
   // 2: file cache tmp
   uint32_t MASK = context.mask;
 
-  auto start_hist = _rdtsc();
-  uint64_t* hist = (uint64_t*)calloc(fanOut, sizeof(int64_t));
-  hists[shard_idx] = hist;
-  for (uint64_t kmer; reader->next(&kmer);) {
-    auto hash_val = HASHER((char*)&kmer, sizeof(Kmer));
-    uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
-    hist[idx]++;
-    num_kmers++;
-  }
-    
-  // Need paddding so that the size of each partition is an integer multiple of the cache line size
-  for (uint32_t i = 0; i < fanOut; i++) {
-    auto hist_i = hist[i];
-    auto mod = hist_i % KMERSPERCACHELINE;
-    hist[i] = mod == 0 ? hist_i : (hist_i + KMERSPERCACHELINE - mod);
-  }
+  // uint64_t* hist = (uint64_t*)calloc(fanOut, sizeof(int64_t));
+  // hists[shard_idx] = hist;
+  // for (uint64_t kmer; reader->next(&kmer);) {
+  //   auto hash_val = HASHER((char*)&kmer, sizeof(Kmer));
+  //   uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
+  //   hist[idx]++;
+  //   num_kmers++;
+  // }
+  //   
+  // // Need paddding so that the size of each partition is an integer multiple of the cache line size
+  // for (uint32_t i = 0; i < fanOut; i++) {
+  //   auto hist_i = hist[i];
+  //   auto mod = hist_i % KMERSPERCACHELINE;
+  //   hist[i] = mod == 0 ? hist_i : (hist_i + KMERSPERCACHELINE - mod);
+  // }
+  //
+  // uint32_t sum = 0;
+  // /* compute local prefix sum on hist so that we can get the start and end position of each partition */
+  // for (uint32_t i = 0; i < fanOut; i++) {
+  //   sum += hist[i];
+  //   hist[i] = sum;
+  // }
 
-  uint32_t sum = 0;
-  /* compute local prefix sum on hist so that we can get the start and end position of each partition */
-  for (uint32_t i = 0; i < fanOut; i++) {
-    sum += hist[i];
-    hist[i] = sum;
-  }
-
-  auto hist_time = _rdtsc() - start_hist;
-
+  PLOGI.printf("IDX: %u, sz: %llu", shard_idx, sz / fanOut);
   auto start_alloc = _rdtsc();
-  uint64_t* locals =
-      (uint64_t*)std::aligned_alloc(PAGESIZE, hist[fanOut - 1] * sizeof(Kmer));
-  auto end_alloc = _rdtsc() - start_alloc;
-  PLOGI.printf("IDX: %u, Partition alloc: %llu cycles, cycle per kmer: %llu", shard_idx, end_alloc, end_alloc / hist[fanOut - 1]);
-  partitions[shard_idx] = locals;
-
-  cacheline_t* buffer = (cacheline_t*)std::aligned_alloc(
+  // uint64_t* locals =
+  //     (uint64_t*)std::aligned_alloc(PAGESIZE, hist[fanOut - 1] * sizeof(Kmer));
+  for (int i = 0; i < fanOut; i++) {
+    context.partitions[shard_idx].push_back(PartitionChunks(sz / fanOut));
+  }
+  cacheline_t* buffers = (cacheline_t*)std::aligned_alloc(
       CACHE_LINE_SIZE, sizeof(cacheline_t) * fanOut);
+  auto end_alloc = _rdtsc() - start_alloc;
+  // PLOGI.printf("IDX: %u, Partition alloc: %llu cycles", shard_idx, end_alloc);
+  // partitions[shard_idx] = locals;
+
 
   for (uint32_t i = 0; i < fanOut; i++) {
-    buffer[i].data.slot = i == 0 ? 0 : hist[i - 1];
+    buffers[i].data.slot = 0;
   }
 
-  auto start_new_reader = _rdtsc();
-  auto end_new_reader = _rdtsc();
-  for (uint64_t kmer; new_reader->next(&kmer);) {
+  auto start_swb = _rdtsc();
+  for (uint64_t kmer; reader->next(&kmer);) {
     auto hash_val = HASHER(&kmer, sizeof(Kmer));
     uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
-    uint32_t slot = buffer[idx].data.slot;
-    Kmer* part = (Kmer*)(buffer + idx);
+    uint32_t slot = buffers[idx].data.slot;
+    Kmer* part = (Kmer*)(buffers + idx);
     // Only works if KMERSPERCACHELINE is a power of 2
     uint32_t slotMod = (slot) & (KMERSPERCACHELINE - 1);
     part[slotMod] = kmer;
 
     if (slotMod == (KMERSPERCACHELINE - 1)) {
+        PartitionChunks* partitionChunk = &(context.partitions[shard_idx][idx]);
+        // PLOGI.printf("partitions size: %llu, partition array: %llu, IDX: %u, idx: %u", context.partitions.size(), context.partitions[shard_idx].size(), shard_idx, idx);
+        auto next_loc = partitionChunk->get_next();
+        partitionChunk->advance();
       /* write out 64-Bytes with non-temporal store */
-      store_nontemp_64B((locals + slot - (KMERSPERCACHELINE - 1)),
-                        (buffer + idx));
+        store_nontemp_64B(next_loc,
+                        (buffers + idx));
       /* writes += TUPLESPERCACHELINE; */
     }
-
-    buffer[idx].data.slot = slot + 1;
+    buffers[idx].data.slot = slot + 1;
   }
   auto swb_end = _rdtsc();
-  PLOGI.printf("IDX: %u; building hist: %llu; new reader cycles: %llu, SWB: %llu cycles; Timestamp: %llu", 
+  PLOGI.printf("IDX: %u;SWB: %llu cycles; Timestamp: %llu; Partition_alloc: %llu", 
           shard_idx,
-          hist_time, 
-          end_new_reader - start_new_reader, 
-          swb_end - end_new_reader, 
-          swb_end - context.global_time);
-  return (uint64_t) end_new_reader;
+          swb_end - start_swb, 
+          swb_end - context.global_time,
+          end_alloc);
+  return (uint64_t) swb_end;
 }
 
 void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
@@ -263,15 +234,13 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   auto nthreads_d = context.nthreads_d;
   auto gathering_threads = 1 << nthreads_d;
   uint64_t** hists = context.hists;
-  uint64_t** partitions = context.partitions;
+  uint64_t** partitions = context.parts;
 
   auto shard_idx = sh->shard_idx;
 
   // Be care of the `K` here; it's a compile time constant.
   auto first_reader_start = _rdtsc();
   auto reader = input_reader::MakeFastqKMerPreloadReader(
-      config.K, config.in_file, sh->shard_idx, config.num_threads);
-  auto new_reader = input_reader::MakeFastqKMerPreloadReader(
       config.K, config.in_file, sh->shard_idx, config.num_threads);
   auto first_reader_diff = _rdtsc() - first_reader_start;
   PLOGI.printf("First reader cycles: %llu, First start: %llu, current: %llu", first_reader_diff, first_reader_start - context.global_time, _rdtsc() - context.global_time);
@@ -303,7 +272,7 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   start_partition_cycle = _rdtsc();
 
   partitioning(sh, config, context, 
-          std::move(reader), std::move(new_reader));
+          std::move(reader));
   end_partition_ts = std::chrono::steady_clock::now();
   end_partition_cycle = _rdtsc();
 
@@ -427,16 +396,12 @@ void KmerTest::count_kmer_radix_custom(
   auto hashmaps_per_thread = context.hashmaps_per_thread; 
   auto nthreads_d = context.nthreads_d;
   auto gathering_threads = 1 << nthreads_d;
-  uint64_t** hists = context.hists;
-  uint64_t** partitions = context.partitions;
 
   auto shard_idx = sh->shard_idx;
 
   auto first_reader_start = _rdtsc();
   // Be care of the `K` here; it's a compile time constant.
   auto reader = input_reader::MakeFastqKMerPreloadReader(
-      config.K, config.in_file, sh->shard_idx, config.num_threads);
-  auto new_reader = input_reader::MakeFastqKMerPreloadReader(
       config.K, config.in_file, sh->shard_idx, config.num_threads);
   auto first_reader_diff = _rdtsc() - first_reader_start;
   PLOGI.printf("First reader cycles: %llu, First start: %llu, current: %llu", first_reader_diff, first_reader_start - context.global_time, _rdtsc() - context.global_time);
@@ -485,7 +450,7 @@ void KmerTest::count_kmer_radix_custom(
   start_partition_ts = std::chrono::steady_clock::now();
   start_partition_cycle = _rdtsc();
   auto part_alloc = partitioning(sh, config, context, 
-          std::move(reader), std::move(new_reader));
+          std::move(reader));
   // start_shard = part_alloc;
   // start_partition_cycle += part_alloc;
   end_partition_ts = std::chrono::steady_clock::now();
@@ -570,10 +535,14 @@ void KmerTest::count_kmer_radix_custom(
       // uint64_t total_num_kmers = gather_hist[k] - (k == 0? 0: gather_hist[k - 1]);
       uint64_t total_num_kmers = 0;
       for (uint32_t i = 0; i < num_threads; i++) {
-        uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
-        uint64_t end = hists[i][partition_idx];
-        total_num_kmers += end - start;
+        // uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
+        // uint64_t end = hists[i][partition_idx];
+        for (auto& chunk: context.partitions[i][partition_idx].chunks) {
+            total_num_kmers += chunk.count;
+        }
       }
+
+        total_insertions += total_num_kmers;
   //
   //     gather_hist.push_back(total_num_kmers);
       // auto slice = shared_hash_array + (k == 0? 0: gather_hist[k - 1]);
@@ -588,32 +557,41 @@ void KmerTest::count_kmer_radix_custom(
       // PLOGI.printf("IDX: %u, HT alloc cycle per Kmer: %llu, total cycles: %llu", shard_idx, ht_alloc_time / total_num_kmers, ht_alloc_time);
       // counter.reserve(total >> 6);
 
-      uint64_t xori = 0;
+      // uint64_t xori = 0;
       auto count_inner = 0;
 
       auto start_insertions_cycle_inner = _rdtsc();
       for (uint32_t i = 0; i < num_threads; i++) {
-        uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
-        uint64_t end = hists[i][partition_idx];
-        if (i == 1) {
-            PLOGI.printf("IDX: %u, remote: %u, start: %u end: %u", shard_idx, i, start, end);
-        }
-        auto count_innest = end - start;
-        total_insertions += count_innest;
-        count_inner += count_innest;
+        // uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx - 1];
+        // uint64_t end = hists[i][partition_idx];
+        auto& chunks = context.partitions[i][partition_idx];
+
+        // if (i == 1) {
+        //     PLOGI.printf("IDX: %u, remote: %u, start: %u end: %u", shard_idx, i, start, end);
+        // }
+        // auto count_innest = chunks.total_count;
+        // count_inner += count_innest;
 
         auto start_insertions_cycle_innest = _rdtsc();
-        for (size_t k = start; k < end; k++) {
-            // xori = xori + 1;
-            // __asm("");
-             // xori ^= partitions[i][k];
-             // batch_runner.insert(partitions[i][k], 0 /* we use the aggr tables so no value */);
-             arg.key = partitions[i][k];
+        for (auto chunk: chunks.chunks) {
+            count_inner += chunk.count;
+            for (int j = 0; j < chunk.count; j++) {
+             arg.key = chunk.kmers[j];
              ht->insert_one(&arg, nullptr);
             }
-            auto diff = _rdtsc() - start_insertions_cycle_innest;
-            PLOGI.printf("IDX:%u; remote: %u; Innest: cycles: %llu, cycles_per_in: %llu , start: %llu; end: %llu; total: %llu.", 
-                    shard_idx, i, diff, diff / count_innest, start, end, count_innest);
+        }
+
+        // for (size_t k = start; k < end; k++) {
+        //     // xori = xori + 1;
+        //     // __asm("");
+        //      // xori ^= partitions[i][k];
+        //      // batch_runner.insert(partitions[i][k], 0 /* we use the aggr tables so no value */);
+        //      arg.key = partitions[i][k];
+        //      ht->insert_one(&arg, nullptr);
+        //     }
+        //     auto diff = _rdtsc() - start_insertions_cycle_innest;
+        //     PLOGI.printf("IDX:%u; remote: %u; Innest: cycles: %llu, cycles_per_in: %llu , start: %llu; end: %llu; total: %llu.", 
+        //             shard_idx, i, diff, diff / count_innest, start, end, count_innest);
         }
         
         auto diff = _rdtsc() - start_insertions_cycle_inner;

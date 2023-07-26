@@ -18,8 +18,9 @@ IDX_key = 'IDX'
 HIST_key = 'building hist'
 SWB_key = 'SWB'
 Timestamp_key = 'Timestamp'
+Partition_alloc = 'Partition_alloc'
 
-lines = [ line for line in open('dramhit.log') if 'hist' in line]
+lines = [ line for line in open('dramhit.log') if SWB_key in line]
 ds = []
 for line in lines:
     d = {}
@@ -28,14 +29,15 @@ for line in lines:
     ds.append(d)
 ds.sort(key=lambda d:d[IDX_key])
 ds = pd.DataFrame(ds)
-ds.set_index(IDX_key)
+print("Columns: " + ds.columns)
+# ds.set_index(IDX_key)
 
 # use fillable markers
 # valid_markers = mpl.markers.MarkerStyle.filled_markers
 
 markers = np.random.choice(valid_markers, ds.shape[1], replace=False)
 
-y_set = [HIST_key, Timestamp_key, SWB_key]
+y_set = [Timestamp_key, SWB_key, Partition_alloc]
 for y_key in y_set:
     ds[y_key] = ds[y_key] - ds[y_key].mean()
 ax = ds.plot(x=IDX_key, y=y_set)

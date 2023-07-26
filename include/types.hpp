@@ -1,6 +1,7 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include <plog/Log.h>
 #include <absl/hash/hash.h>
 #include <absl/container/flat_hash_map.h>
 
@@ -91,10 +92,54 @@ struct alignas(64) cacheline {
 
 typedef uint64_t Kmer;
 
+struct KmerChunk {
+    size_t count;
+    Kmer* kmers;
+};
+
+class PartitionChunks {
+    public:
+        size_t chunk_size;
+        size_t chunk_count;
+        std::vector<KmerChunk> chunks;
+        PartitionChunks() = default;
+
+        const uint64_t CACHELINE_SIZE = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+        const uint64_t KMERSPERCACHELINE = (CACHELINE_SIZE / sizeof(Kmer));
+        const uint64_t PAGESIZE = sysconf(_SC_PAGESIZE);
+
+        PartitionChunks(size_t size_hint) {
+            // chuck size must be a multiple of CACHELINE_SIZE
+            chunk_size = (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE; 
+            chunk_count = chunk_size / sizeof(Kmer);
+
+            // PLOGI.printf("chunk count: %llu", chuck_count);
+            auto first_chunk = (Kmer*) std::aligned_alloc(PAGESIZE, chunk_size); 
+            struct KmerChunk kc = {0, first_chunk};
+            chunks.push_back(std::move(kc));
+        }
+
+        Kmer* get_next() {
+            auto& last = chunks.back();
+            if (last.count == chunk_count) {
+                auto chunk = (Kmer*) std::aligned_alloc(PAGESIZE, chunk_size); 
+                struct KmerChunk kc = {0, chunk};
+                chunks.push_back(std::move(kc));
+                return chunk;
+            }
+            return last.kmers + last.count;
+        }
+
+        void advance() {
+            chunks.back().count += KMERSPERCACHELINE;
+        }
+};
+
 class RadixContext {
  public:
   uint64_t** hists;
-  uint64_t** partitions;
+  uint64_t** parts;
+  std::vector<std::vector<PartitionChunks>> partitions;
   // Radix shift
   uint8_t R;
   // Radix bits
@@ -112,8 +157,13 @@ class RadixContext {
       : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r), global_time(_rdtsc()) {
     hists = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE,
                                            fanOut * sizeof(uint64_t*));
-    partitions = (uint64_t**)std::aligned_alloc(
+    parts = (uint64_t**)std::aligned_alloc(
         CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
+
+    partitions = std::vector<std::vector<PartitionChunks>>(num_threads, std::vector<PartitionChunks>(0));
+    for (auto& p: partitions) {
+        p.reserve(fanOut);
+    }
 
     nthreads_d = 0;
     while ((1 << (1 + nthreads_d)) <= num_threads) {
