@@ -30,9 +30,6 @@ namespace kmercounter {
 
 using namespace std;
 
-const uint64_t CACHELINE_SIZE = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
-const uint64_t CACHELINE_MASK = CACHELINE_SIZE - 1;
-const uint64_t PAGESIZE = sysconf(_SC_PAGESIZE);
 
 void setup_signal_handler(void);
 

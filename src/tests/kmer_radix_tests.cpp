@@ -20,6 +20,7 @@
 
 namespace kmercounter {
 
+
 #define HASHER XXH3_64bits
 
 absl::flat_hash_map<Kmer, long> check_count(const absl::flat_hash_map<Kmer, uint64_t>& reference, const absl::flat_hash_map<Kmer, uint64_t>& aggregation) {
@@ -124,10 +125,6 @@ static inline void store_nontemp_64B(void* dst, void* src) {
 /* #define RADIX_HASH(V)  ((V>>7)^(V>>13)^(V>>21)^V) */
 #define HASH_BIT_MODULO(K, MASK, NBITS) (((K)&MASK) >> NBITS)
 
-/** L1 cache parameters. \note Change as needed for different machines */
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE 64
-#endif
 
 // Should be power of 2?
 #define KMERSPERCACHELINE (CACHE_LINE_SIZE / sizeof(Kmer))
@@ -186,7 +183,7 @@ uint64_t partitioning(Shard* sh, const Configuration& config, RadixContext& cont
     context.partitions[shard_idx].push_back(PartitionChunks(sz / fanOut));
   }
   cacheline_t* buffers = (cacheline_t*)std::aligned_alloc(
-      CACHE_LINE_SIZE, sizeof(cacheline_t) * fanOut);
+      CACHELINE_SIZE, sizeof(cacheline_t) * fanOut);
   auto end_alloc = _rdtsc() - start_alloc;
   // PLOGI.printf("IDX: %u, Partition alloc: %llu cycles", shard_idx, end_alloc);
   // partitions[shard_idx] = locals;

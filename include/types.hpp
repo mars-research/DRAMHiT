@@ -14,7 +14,7 @@
 #include <string>
 #include <utility>
 
-#define CACHE_LINE_SIZE 64
+
 #define PAGE_SIZE 4096
 #define ALPHA 0.15
 #define PACKED __attribute__((packed))
@@ -27,7 +27,17 @@
 namespace eth_hashjoin {
 struct tuple_t;
 }
+
+/** L1 cache parameters. \note Change as needed for different machines */
+#ifndef CACHE_LINE_SIZE
+#define CACHE_LINE_SIZE 64
+#endif
+
 namespace kmercounter {
+
+const uint64_t CACHELINE_SIZE = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+const uint64_t CACHELINE_MASK = CACHELINE_SIZE - 1;
+const uint64_t PAGESIZE = sysconf(_SC_PAGESIZE);
 
 #if (KEY_LEN == 4)
 using key_type = std::uint32_t;
@@ -99,14 +109,11 @@ struct KmerChunk {
 
 class PartitionChunks {
     public:
+        const uint64_t KMERSPERCACHELINE = (CACHELINE_SIZE / sizeof(Kmer));
         size_t chunk_size;
         size_t chunk_count;
         std::vector<KmerChunk> chunks;
         PartitionChunks() = default;
-
-        const uint64_t CACHELINE_SIZE = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
-        const uint64_t KMERSPERCACHELINE = (CACHELINE_SIZE / sizeof(Kmer));
-        const uint64_t PAGESIZE = sysconf(_SC_PAGESIZE);
 
         PartitionChunks(size_t size_hint) {
             // chuck size must be a multiple of CACHELINE_SIZE
@@ -155,10 +162,10 @@ class RadixContext {
 
   RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
       : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r), global_time(_rdtsc()) {
-    hists = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE,
+    hists = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
                                            fanOut * sizeof(uint64_t*));
     parts = (uint64_t**)std::aligned_alloc(
-        CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
+        CACHELINE_SIZE, fanOut * sizeof(uint64_t*));
 
     partitions = std::vector<std::vector<PartitionChunks>>(num_threads, std::vector<PartitionChunks>(0));
     for (auto& p: partitions) {
