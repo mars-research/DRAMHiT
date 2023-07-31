@@ -369,14 +369,22 @@ void KmerTest::count_kmer_radix(Shard* sh, const Configuration& config,
   auto total_time = partition_time + insertion_time;
   auto time_per_insertion = (double)insertion_time / (double)total_insertions;
   auto cycles_per_insertion = insertion_cycles / total_insertions;
+  auto cycles_per_partition = partition_cycles / total_insertions;
   PLOG_INFO.printf(
-      "IDX: %u, partition time: %llu us (%llu cycles)(%llu %%), insertion "
-      "time: %llu us (%llu cycles)(%llu %%), time_per_insertion: %.4f us(%llu "
-      "cycles)",
-      shard_idx, partition_time, partition_cycles,
-      partition_time * 100 / total_time, insertion_time, insertion_cycles,
-      insertion_time * 100 / total_time, time_per_insertion,
-      cycles_per_insertion);
+      "IDX: %u, partition_time: %llu us(%llu %%), partition_cycles: %llu, insertion "
+      "time: %llu us(%llu %%), insertion_cycles: %llu, time_per_insertion: %.4f us"
+      ", cycles_per_insertion: %llu, cycles_per_partition: %llu, total_kmers: %llu",
+      shard_idx, partition_time, 
+      partition_time * 100 / total_time, 
+      partition_cycles,
+      insertion_time, 
+      insertion_time * 100 / total_time, 
+      insertion_cycles,
+      time_per_insertion,
+      cycles_per_insertion,
+      cycles_per_partition,
+        total_insertions
+      );
   PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, total_insertions);
   // get_ht_stats(sh, ht);
 }
@@ -446,7 +454,7 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
                start_partition_cycle - context.global_time,
                end_partition_cycle - part_alloc);
   PLOGI.printf(
-      "IDX: %u, time spent at the first barrier: %llu cycles, reaching barrier "
+      "IDX: %u, time spent at the first_barrier: %llu, reaching barrier "
       "at: %llu",
       shard_idx, after_first_barrier,
       end_partition_cycle - context.global_time);
@@ -593,8 +601,8 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
     }
 
     auto diff = _rdtsc() - start_insertions_cycle_inner;
-    PLOGI.printf("Inner: cycles: %llu, cycles_per_in: %llu", diff,
-                 diff / count_inner);
+    // PLOGI.printf("Inner: cycles: %llu, cycles_per_in: %llu", diff,
+                 // diff / count_inner);
     // batch_runner.insert(xori, 0 /* we use the aggr tables so no value */);
     // batch_runner.flush_insert();
 
@@ -606,8 +614,6 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
     maps.push_back(ht);
   }
 
-  // PLOGI.printf("Shard IDX: %u, Finish insertions, hit barrier", shard_idx);
-  PLOGI.printf("Shard IDX: %u, Finish insertions, hit barrier", shard_idx);
   end_insertions_ts = std::chrono::steady_clock::now();
   end_insertions_cycle = _rdtsc();
 
@@ -644,15 +650,23 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   auto total_time = partition_time + insertion_time;
   auto time_per_insertion = (double)insertion_time / (double)total_insertions;
   auto cycles_per_insertion = insertion_cycles / total_insertions;
+  auto cycles_per_partition = partition_cycles / total_insertions;
   PLOG_INFO.printf(
-      "IDX: %u, partition time: %llu us (%llu cycles)(%llu %%), insertion "
-      "time: %llu us (%llu cycles)(%llu %%), time_per_insertion: %.4f us(%llu "
-      "cycles)",
-      shard_idx, partition_time, partition_cycles,
-      partition_time * 100 / total_time, insertion_time, insertion_cycles,
-      insertion_time * 100 / total_time, time_per_insertion,
-      cycles_per_insertion);
-  PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, total_insertions);
+      "IDX: %u, partition_time: %llu us(%llu %%), partition_cycles: %llu, insertion "
+      "time: %llu us(%llu %%), insertion_cycles: %llu, time_per_insertion: %.4f us"
+      ", cycles_per_insertion: %llu, cycles_per_partition: %llu, total_kmers: %llu",
+      shard_idx, partition_time, 
+      partition_time * 100 / total_time, 
+      partition_cycles,
+      insertion_time, 
+      insertion_time * 100 / total_time, 
+      insertion_cycles,
+      time_per_insertion,
+      cycles_per_insertion,
+      cycles_per_partition,
+        total_insertions
+      );
+  // PLOGV.printf("[%d] Num kmers %llu", sh->shard_idx, total_insertions);
   // get_ht_stats(sh, ht);
 }
 

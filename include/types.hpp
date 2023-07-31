@@ -13,6 +13,7 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <sys/mman.h>
 
 #define PAGE_SIZE 4096
 #define ALPHA 0.15
@@ -117,11 +118,12 @@ class PartitionChunks {
   PartitionChunks(size_t size_hint) {
     // chuck size must be a multiple of CACHELINE_SIZE
     chunk_size =
-        (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE;
+        (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE * 3;
     chunk_count = chunk_size / sizeof(Kmer);
 
     // PLOGI.printf("chunk count: %llu", chuck_count);
-    auto first_chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+    // auto first_chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+    auto first_chunk = alloc();
     struct KmerChunk kc = {0, first_chunk};
     chunks.push_back(std::move(kc));
   }
@@ -129,12 +131,26 @@ class PartitionChunks {
   Kmer* get_next() {
     auto& last = chunks.back();
     if (last.count == chunk_count) {
-      auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+      // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+      auto chunk = alloc();
       struct KmerChunk kc = {0, chunk};
       chunks.push_back(std::move(kc));
       return chunk;
     }
     return last.kmers + last.count;
+  }
+
+  Kmer* alloc() {
+    // PLOGI.printf("start mmap, chunk_size: %llu", chunk_size);
+    auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE, MAP_HUGETLB | (21 << MAP_HUGE_SHIFT) | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    // PLOGI.printf("end mmap");
+    if (addr == MAP_FAILED) {
+      perror("mmap");
+      exit(1);
+    } 
+    // memset(addr, 0, chunk_size);
+    return addr;
+    // return (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
   }
 
   void advance() { chunks.back().count += KMERSPERCACHELINE; }

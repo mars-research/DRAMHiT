@@ -5,7 +5,10 @@ import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import re
+import sys
 
+args = sys.argv[1:]
+print(args)
 
 # create valid markers from mpl.markers
 valid_markers = ([item[0] for item in mpl.markers.MarkerStyle.markers.items() if 
@@ -20,7 +23,7 @@ SWB_key = 'SWB'
 Timestamp_key = 'Timestamp'
 Partition_alloc = 'Partition_alloc'
 
-lines = [ line for line in open('dramhit.log') if SWB_key in line]
+lines = [ line for line in open('dramhit.log') if (all(arg in line for arg in args))]
 ds = []
 for line in lines:
     d = {}
@@ -37,7 +40,7 @@ print("Columns: " + ds.columns)
 
 markers = np.random.choice(valid_markers, ds.shape[1], replace=False)
 
-y_set = [Timestamp_key, SWB_key, Partition_alloc]
+y_set = args 
 for y_key in y_set:
     ds[y_key] = ds[y_key] - ds[y_key].mean()
 ax = ds.plot(x=IDX_key, y=y_set)
