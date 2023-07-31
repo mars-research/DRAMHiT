@@ -201,8 +201,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       if (!this->hashtable) {
         // Allocate placeholder for hashtable pointers
         const auto hashtable_size = MAX_PARTITIONS * sizeof(KV *);
-        this->hashtable =
-            (KV **)(aligned_alloc(64, hashtable_size));
+        this->hashtable = (KV **)(aligned_alloc(64, hashtable_size));
         // Zero the hashtable pointers
         memset(this->hashtable, 0, hashtable_size);
       }
@@ -235,8 +234,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     PLOG_DEBUG.printf("id: %d insert_queue %p | find_queue %p", id,
                       this->insert_queue, this->find_queue);
     PLOGV.printf("Hashtable base %p | Hashtable size: %lu | data_length %lu",
-                      this->hashtable[this->id], this->capacity,
-                     this->data_length);
+                 this->hashtable[this->id], this->capacity, this->data_length);
   }
 
   ~PartitionedHashStore() {
@@ -445,7 +443,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void __insert_noprefetch_branched(const void *data, collector_type* collector) {
+  void __insert_noprefetch_branched(const void *data,
+                                    collector_type *collector) {
     KVQ *key_data = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
     uint64_t hash = 0;
 
@@ -464,7 +463,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     KV *cur_ht = this->hashtable[this->id];
 
-    //PLOGV.printf("hash %lu | key %lu | idx %lu", hash, key_data->key, idx);
+    // PLOGV.printf("hash %lu | key %lu | idx %lu", hash, key_data->key, idx);
     for (auto i = 0u; i < this->capacity; i++) {
       KV *curr = &cur_ht[idx];
       auto retry = false;
@@ -483,17 +482,18 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
 
         if (0) {
-          printf("inserted key %" PRIu64 " at idx %zu | hash %" PRIu64 "\n", key_data->key,
-                 idx, hash);
+          printf("inserted key %" PRIu64 " at idx %zu | hash %" PRIu64 "\n",
+                 key_data->key, idx, hash);
         }
         break;
       }
     }
   }
 
-  void insert_noprefetch(const void *data, collector_type* collector) override {
+  void insert_noprefetch(const void *data, collector_type *collector) override {
 #ifdef LATENCY_COLLECTION
-    static_assert(branching == BRANCHKIND::WithBranch, "Latency collection only supported with branched insertion");
+    static_assert(branching == BRANCHKIND::WithBranch,
+                  "Latency collection only supported with branched insertion");
 #endif
 
     if constexpr (branching == BRANCHKIND::WithBranch) {
@@ -504,7 +504,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(const InsertFindArguments &kp, collector_type* collector) override {
+  void insert_batch(const InsertFindArguments &kp,
+                    collector_type *collector) override {
     this->flush_if_needed(collector);
 
     for (auto &data : kp) {
@@ -519,7 +520,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   // TODO: static_assert for queue pow2
 
   // overridden function for insertion
-  void flush_if_needed(collector_type* collector) {
+  void flush_if_needed(collector_type *collector) {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
@@ -531,7 +532,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void flush_insert_queue(collector_type* collector) override {
+  void flush_insert_queue(collector_type *collector) override {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
 
@@ -543,7 +544,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
-  void flush_find_queue(ValuePairs &vp, collector_type* collector) override {
+  void flush_find_queue(ValuePairs &vp, collector_type *collector) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
@@ -555,13 +556,12 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
-  void flush_if_needed(ValuePairs &vp, collector_type* collector) {
+  void flush_if_needed(ValuePairs &vp, collector_type *collector) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     // make sure you return at most batch_sz (but can possibly return lesser
     // number of elements)
-    while ((curr_queue_sz > FLUSH_THRESHOLD) &&
-           (vp.first < config.batch_len)) {
+    while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
@@ -573,7 +573,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void find_batch(const InsertFindArguments &kp, ValuePairs &values, collector_type* collector) override {
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) override {
     // What's the size of the prefetch queue size?
     // pfq_sz = 4 * 64;
     // flush_threshold = 128;
@@ -601,16 +602,17 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     // this->find_tail << endl;
   }
 
-  void *find_noprefetch(const void *data, collector_type* collector) override {
+  void *find_noprefetch(const void *data, collector_type *collector) override {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
-    InsertFindArgument *item = const_cast<InsertFindArgument *>(reinterpret_cast<const InsertFindArgument *>(data));
+    InsertFindArgument *item = const_cast<InsertFindArgument *>(
+        reinterpret_cast<const InsertFindArgument *>(data));
 
 #ifdef LATENCY_COLLECTION
     const auto start_time = collector->sync_start();
 #endif
-    uint64_t hash;//, key;
+    uint64_t hash;  //, key;
     size_t idx;
 #if defined(BQ_KEY_UPPER_BITS_HAS_HASH)
     hash = item->key >> 32;
@@ -656,8 +658,9 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   exit:
     // return empty_element if nothing is found
     if (!found) {
-      printf("key %" PRIu64 " not found at idx %" PRIu32 " | hash %" PRIu64 "\n", item->key, idx,
-             hash);
+      printf("key %" PRIu64 " not found at idx %" PRIu32 " | hash %" PRIu64
+             "\n",
+             item->key, idx, hash);
       curr = nullptr;
     }
     return curr;
@@ -728,7 +731,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type* collector) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type *collector) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -743,7 +746,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     found = curr->find(q, &retry, vp);
 
     // printf("%s, key = %" PRIu64 " | found = %d\n", __func__, q->key, found);
-    //  printf("%s, key = %" PRIu64 " | num_values %u, value %" PRIu64 " (id = %" PRIu64 ") | found
+    //  printf("%s, key = %" PRIu64 " | num_values %u, value %" PRIu64 " (id =
+    //  %" PRIu64 ") | found
     //  =%ld, retry %ld\n",
     //         __func__, q->key, vp.first, vp.second[(vp.first - 1) %
     //                 PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
@@ -846,10 +850,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     __mmask8 empty_cmp = empty_key_cmp(cacheline, cidx);
 
     // compute index at which there is a key match
-    //size_t midx = _bit_scan_forward(eq_cmp) >> 1;
+    // size_t midx = _bit_scan_forward(eq_cmp) >> 1;
     const KV *match = &this->hashtable[q->part_id][idx];
 
-    //PLOGV.printf("match found? key %lu | key_id %lu | value %lu", q->key, q->key_id, match->get_value());
+    // PLOGV.printf("match found? key %lu | key_id %lu | value %lu", q->key,
+    // q->key_id, match->get_value());
 
     // if eq_cmp == 0, match is invalid as there is no match
     __mmask8 found = 0;
@@ -861,7 +866,6 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         : [eq_cmp] "r"(eq_cmp));
 
     if (found) {
-
       // copy the value out
       vp.second[vp.first].value = match->get_value();
       vp.second[vp.first].id = q->key_id;
@@ -883,7 +887,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
       // index at which reprobe must begin
       size_t ridx = ccidx + reprobe * KV_PER_CACHE_LINE;
-      ridx = (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
+      ridx =
+          (ridx >= this->capacity) ? (ridx - this->capacity) : ridx;  // modulo
 
       this->prefetch_partition(ridx, q->part_id, false);
 
@@ -898,7 +903,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp, collector_type* collector) {
+  auto __find_one(KVQ *q, ValuePairs &vp, collector_type *collector) {
     if (q->key == this->empty_item.get_key()) {
       return __find_empty(q, vp);
     }
@@ -922,7 +927,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return empty_slot_;
   }
 
-  void __insert_branched(KVQ *q, collector_type* collector) {
+  void __insert_branched(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
     KV *cur_ht = this->hashtable[this->id];
@@ -931,7 +936,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     auto retry = false;
     // if constexpr (experiment_inactive(experiment_type::insert_dry_run,
     //                                   experiment_type::aggr_kv_write_key_only))
-    //PLOGV.printf("Inserting key %lu", q->key);
+    // PLOGV.printf("Inserting key %lu", q->key);
     retry = curr->insert(q);
 
     // if constexpr (experiment_active(experiment_type::aggr_kv_write_key_only))
@@ -1220,13 +1225,14 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     return;
   }
 
-  void __insert_one(KVQ *q, collector_type* collector) {
+  void __insert_one(KVQ *q, collector_type *collector) {
     if (q->key == this->empty_item.get_key()) {
       return __insert_empty(q);
     }
 
 #ifdef LATENCY_COLLECTION
-    static_assert(branching == BRANCHKIND::WithBranch, "Latency collection only supported with branched insertion");
+    static_assert(branching == BRANCHKIND::WithBranch,
+                  "Latency collection only supported with branched insertion");
 #endif
 
     if constexpr (experiment_inactive(experiment_type::nop_insert)) {
@@ -1275,7 +1281,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
   }
 
-  void add_to_insert_queue(void *data, collector_type* collector) {
+  void add_to_insert_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;
@@ -1298,7 +1304,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     size_t idx;
     idx = fastrange32(hash, this->capacity);  // modulo
 
-    //PLOGD.printf("Getting idx %zu", idx);
+    // PLOGD.printf("Getting idx %zu", idx);
     if (idx > this->capacity) [[unlikely]] {
       PLOG_ERROR.printf("%u > %" PRIu64 "\n", idx, this->capacity);
       std::terminate();
@@ -1323,7 +1329,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     //}
   }
 
-  void add_to_find_queue(void *data, collector_type* collector) {
+  void add_to_find_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
     uint64_t hash = 0;
     uint64_t key = 0;

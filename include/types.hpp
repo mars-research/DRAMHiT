@@ -1,7 +1,9 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+#include <absl/container/flat_hash_map.h>
 #include <absl/hash/hash.h>
+#include <plog/Log.h>
 
 #include <atomic>
 #include <cinttypes>
@@ -11,8 +13,8 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <sys/mman.h>
 
-#define CACHE_LINE_SIZE 64
 #define PAGE_SIZE 4096
 #define ALPHA 0.15
 #define PACKED __attribute__((packed))
@@ -25,7 +27,17 @@
 namespace eth_hashjoin {
 struct tuple_t;
 }
+
+/** L1 cache parameters. \note Change as needed for different machines */
+#ifndef CACHE_LINE_SIZE
+#define CACHE_LINE_SIZE 64
+#endif
+
 namespace kmercounter {
+
+const uint64_t CACHELINE_SIZE = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+const uint64_t CACHELINE_MASK = CACHELINE_SIZE - 1;
+const uint64_t PAGESIZE = sysconf(_SC_PAGESIZE);
 
 #if (KEY_LEN == 4)
 using key_type = std::uint32_t;
@@ -88,10 +100,67 @@ struct alignas(64) cacheline {
   char dummy;
 };
 
+typedef uint64_t Kmer;
+
+struct KmerChunk {
+  size_t count;
+  Kmer* kmers;
+};
+
+class PartitionChunks {
+ public:
+  const uint64_t KMERSPERCACHELINE = (CACHELINE_SIZE / sizeof(Kmer));
+  size_t chunk_size;
+  size_t chunk_count;
+  std::vector<KmerChunk> chunks;
+  PartitionChunks() = default;
+
+  PartitionChunks(size_t size_hint) {
+    // chuck size must be a multiple of CACHELINE_SIZE
+    chunk_size =
+        (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE * 3;
+    chunk_count = chunk_size / sizeof(Kmer);
+
+    // PLOGI.printf("chunk count: %llu", chuck_count);
+    // auto first_chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+    auto first_chunk = alloc();
+    struct KmerChunk kc = {0, first_chunk};
+    chunks.push_back(std::move(kc));
+  }
+
+  Kmer* get_next() {
+    auto& last = chunks.back();
+    if (last.count == chunk_count) {
+      // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+      auto chunk = alloc();
+      struct KmerChunk kc = {0, chunk};
+      chunks.push_back(std::move(kc));
+      return chunk;
+    }
+    return last.kmers + last.count;
+  }
+
+  Kmer* alloc() {
+    // PLOGI.printf("start mmap, chunk_size: %llu", chunk_size);
+    auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE, MAP_HUGETLB | (21 << MAP_HUGE_SHIFT) | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    // PLOGI.printf("end mmap");
+    if (addr == MAP_FAILED) {
+      perror("mmap");
+      exit(1);
+    } 
+    // memset(addr, 0, chunk_size);
+    return addr;
+    // return (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+  }
+
+  void advance() { chunks.back().count += KMERSPERCACHELINE; }
+};
+
 class RadixContext {
  public:
   uint64_t** hists;
-  uint64_t** partitions;
+  uint64_t** parts;
+  std::vector<std::vector<PartitionChunks>> partitions;
   // Radix shift
   uint8_t R;
   // Radix bits
@@ -99,31 +168,67 @@ class RadixContext {
   uint32_t fanOut;
   uint64_t mask;
   // How many hash map does a thread have
-  uint32_t multiplier;
+  uint32_t hashmaps_per_thread;
+  // floor(log(num_threads))
   uint32_t nthreads_d;
+  uint64_t global_time;
+  std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> hashmaps;
 
   RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
-      : R(r), D(d), fanOut(1 << d), mask(((1 << d) - 1) << r) {
-    hists = (uint64_t**)std::aligned_alloc(CACHE_LINE_SIZE,
+      : R(r),
+        D(d),
+        fanOut(1 << d),
+        mask(((1 << d) - 1) << r),
+        global_time(_rdtsc()) {
+    hists = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
                                            fanOut * sizeof(uint64_t*));
-    partitions = (uint64_t**)std::aligned_alloc(
-        CACHE_LINE_SIZE, fanOut * sizeof(uint64_t*));
+    parts = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
+                                           fanOut * sizeof(uint64_t*));
+
+    partitions = std::vector<std::vector<PartitionChunks>>(
+        num_threads, std::vector<PartitionChunks>(0));
+    for (auto& p : partitions) {
+      p.reserve(fanOut);
+    }
 
     nthreads_d = 0;
     while ((1 << (1 + nthreads_d)) <= num_threads) {
       nthreads_d++;
     }
+    auto gather_threads = 1 << nthreads_d;
     if (fanOut <= num_threads) {
-        multiplier = 1;
+      hashmaps_per_thread = 1;
     } else {
-        multiplier = 1 << (d - nthreads_d);
+      hashmaps_per_thread = 1 << (d - nthreads_d);
     }
+    std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(
+        gather_threads);
+    for (int i = 0; i < gather_threads; i++) {
+      maps[i].reserve(hashmaps_per_thread);
+    }
+    hashmaps = maps;
     // for (uint32_t i = 0; i < num_threads; i++) {
     //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
     //     sizeof(uint32_t)); partitions[i] =
     //     (uint64_t*)std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
     //     sizeof(uint64_t*));
     // }
+  }
+
+  absl::flat_hash_map<Kmer, uint64_t> aggregate() const {
+    absl::flat_hash_map<Kmer, uint64_t> aggregation;
+    for (int i = 0; i < (1 << nthreads_d); i++) {
+      for (int j = 0; j < hashmaps_per_thread; j++) {
+        auto map = hashmaps[i][j];
+        for (const auto& entry : map) {
+          auto key = entry.first;
+          auto val = entry.second;
+          assert(!aggregation.contains(key));
+          aggregation[key] = val;
+        }
+      }
+    }
+    return aggregation;
   }
 
   RadixContext() = default;

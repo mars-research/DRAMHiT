@@ -26,8 +26,8 @@ class HTBatchInserter {
     }
   }
 
-  inline void insert_noprefetch(const KeyValuePair &kv) {
-    ht_->insert_noprefetch((void*) &kv);
+  inline void insert_noprefetch(const KeyValuePair& kv) {
+    ht_->insert_noprefetch((void*)&kv);
   }
 
   // Flush everything to the hashtable and flush the hashtable insert queue.

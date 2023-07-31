@@ -7,10 +7,9 @@
 #include <numa.hpp>
 #include <tuple>
 
+#include "../types.hpp"
 #include "helper.hpp"
 #include "queue.hpp"
-
-#include "../types.hpp"
 
 namespace kmercounter {
 
@@ -53,47 +52,48 @@ struct SectionQueueInner {
     CACHE_ALIGNED size_t numEnqueueSpins;
     CACHE_ALIGNED size_t numDequeueSpins;
 #endif
-    };
+  };
 
-    data_t *QUEUE;
-    data_t *QUEUE_END;
-    size_t num_sections;
-    size_t queue_size;
-    size_t section_size;
-    struct prod_queue *pq;
-    struct cons_queue *cq;
-    struct prod_cons_shared *pcq;
+  data_t *QUEUE;
+  data_t *QUEUE_END;
+  size_t num_sections;
+  size_t queue_size;
+  size_t section_size;
+  struct prod_queue *pq;
+  struct cons_queue *cq;
+  struct prod_cons_shared *pcq;
 
-    void dump(void) {
-      PLOGD.printf("{ prod state }");
-      PLOGD.printf("enqPtr:          %p", pq->enqPtr);
-      PLOGD.printf("deqLocalPtr:       %p", pq->deqLocalPtr);
+  void dump(void) {
+    PLOGD.printf("{ prod state }");
+    PLOGD.printf("enqPtr:          %p", pq->enqPtr);
+    PLOGD.printf("deqLocalPtr:       %p", pq->deqLocalPtr);
 
-      PLOGD.printf("{ cons state }");
-      PLOGD.printf("deqPtr:          %p", cq->deqPtr);
-      PLOGD.printf("enqLocalPtr:       %p", cq->enqLocalPtr);
-      PLOGD.printf("enqSharedPtr:       %p", pcq->enqSharedPtr);
-      PLOGD.printf("deqSharedPtr:    %p", pcq->deqSharedPtr);
+    PLOGD.printf("{ cons state }");
+    PLOGD.printf("deqPtr:          %p", cq->deqPtr);
+    PLOGD.printf("enqLocalPtr:       %p", cq->enqLocalPtr);
+    PLOGD.printf("enqSharedPtr:       %p", pcq->enqSharedPtr);
+    PLOGD.printf("deqSharedPtr:    %p", pcq->deqSharedPtr);
 
-      PLOGD.printf("QUEUE:      %p", QUEUE);
-      PLOGD.printf("QUEUE_END:      %p", QUEUE_END);
-      PLOGD.printf("queue_size:     0x%lx", queue_size);
-      PLOGD.printf("queue_mask:     0x%lx", ~queue_size);
-      PLOGD.printf("QUEUE_SECTION_SIZE:  0x%lx", section_size);
-    }
+    PLOGD.printf("QUEUE:      %p", QUEUE);
+    PLOGD.printf("QUEUE_END:      %p", QUEUE_END);
+    PLOGD.printf("queue_size:     0x%lx", queue_size);
+    PLOGD.printf("queue_mask:     0x%lx", ~queue_size);
+    PLOGD.printf("QUEUE_SECTION_SIZE:  0x%lx", section_size);
+  }
 
-    explicit SectionQueueInner(size_t queue_size, struct prod_queue *pq, struct
-        cons_queue *cq, struct prod_cons_shared *pcq) {
-      this->queue_size = queue_size;
-      this->QUEUE = pq->data;
-      this->QUEUE_END = pq->data + queue_size / sizeof(data_t);
-      cq->queue_end = pq->queue_end = this->QUEUE_END;
-      this->section_size = kmercounter::SECTION_SIZE;
-      this->num_sections = this->queue_size / this->section_size;
-      this->pq = pq;
-      this->cq = cq;
-      this->pcq = pcq;
-    }
+  explicit SectionQueueInner(size_t queue_size, struct prod_queue *pq,
+                             struct cons_queue *cq,
+                             struct prod_cons_shared *pcq) {
+    this->queue_size = queue_size;
+    this->QUEUE = pq->data;
+    this->QUEUE_END = pq->data + queue_size / sizeof(data_t);
+    cq->queue_end = pq->queue_end = this->QUEUE_END;
+    this->section_size = kmercounter::SECTION_SIZE;
+    this->num_sections = this->queue_size / this->section_size;
+    this->pq = pq;
+    this->cq = cq;
+    this->pcq = pcq;
+  }
 };
 
 class SectionQueue {

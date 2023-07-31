@@ -29,11 +29,11 @@ template <typename KV, typename KVQ>
 class ArrayHashTable : public BaseHashTable {
  public:
   /// The global instance is shared by all threads.
-  static KV *hashtable;
+  KV *hashtable = nullptr;
   /// A dedicated slot for the empty value.
-  static uint64_t empty_slot_;
+  uint64_t empty_slot_ = 0;
   /// True if the empty value is inserted.
-  static bool empty_slot_exists_;
+  bool empty_slot_exists_ = false;
   /// File descriptor backs the memory
   int fd;
   int id;
@@ -46,22 +46,22 @@ class ArrayHashTable : public BaseHashTable {
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
     {
-      const std::lock_guard<std::mutex> lock(ht_init_mutex);
-      if (!this->hashtable) {
-        assert(this->ref_cnt == 0);
-        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
-      }
-      this->ref_cnt++;
+      // const std::lock_guard<std::mutex> lock(ht_init_mutex);
+      // if (!this->hashtable) {
+      assert(this->ref_cnt == 0);
+      this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+      // }
+      // this->ref_cnt++;
     }
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
     PLOGV << "Empty item: " << this->empty_item;
-    this->insert_queue =
-        (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
-    this->find_queue =
-        (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
+    this->insert_queue = (KVQ *)(aligned_alloc(
+        CACHELINE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
+    this->find_queue = (KVQ *)(aligned_alloc(
+        CACHELINE_SIZE, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
     PLOGV.printf("[INFO] Hashtable size: %lu\n", this->capacity);
     PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
@@ -72,12 +72,12 @@ class ArrayHashTable : public BaseHashTable {
     free(insert_queue);
     // Deallocate the global hashtable if ref_cnt goes down to zero.
     {
-      const std::lock_guard<std::mutex> lock(ht_init_mutex);
-      this->ref_cnt--;
-      if (this->ref_cnt == 0) {
-        free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
-        this->hashtable = nullptr;
-      }
+      // const std::lock_guard<std::mutex> lock(ht_init_mutex);
+      // this->ref_cnt--;
+      // if (this->ref_cnt == 0) {
+      free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
+      this->hashtable = nullptr;
+      // }
     }
   }
 
@@ -520,14 +520,14 @@ class ArrayHashTable : public BaseHashTable {
 };
 
 /// Static variables
-template <class KV, class KVQ>
-KV *ArrayHashTable<KV, KVQ>::hashtable = nullptr;
-
-template <class KV, class KVQ>
-uint64_t ArrayHashTable<KV, KVQ>::empty_slot_ = 0;
-
-template <class KV, class KVQ>
-bool ArrayHashTable<KV, KVQ>::empty_slot_exists_ = false;
+// template <class KV, class KVQ>
+// KV *ArrayHashTable<KV, KVQ>::hashtable = nullptr;
+//
+// template <class KV, class KVQ>
+// uint64_t ArrayHashTable<KV, KVQ>::empty_slot_ = 0;
+//
+// template <class KV, class KVQ>
+// bool ArrayHashTable<KV, KVQ>::empty_slot_exists_ = false;
 
 template <class KV, class KVQ>
 std::mutex ArrayHashTable<KV, KVQ>::ht_init_mutex;

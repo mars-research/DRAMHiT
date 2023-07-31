@@ -2,7 +2,7 @@
 /// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
 /// Key and values are stored directly in the table.
 /// CASHashtable is not parititioned, meaning that there will be
-/// at max one instance of it. All threads will share the same 
+/// at max one instance of it. All threads will share the same
 /// instance.
 /// The original one is called the casht and the one we modified with
 /// batching + prefetching though is called casht++.
@@ -18,11 +18,11 @@
 #include <type_traits>
 
 #include "constants.hpp"
-#include "plog/Log.h"
+#include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
+#include "plog/Log.h"
 #include "sync.h"
-#include "hasher.hpp"
 
 namespace kmercounter {
 template <typename KV, typename KVQ>
@@ -39,7 +39,8 @@ class CASHashTable : public BaseHashTable {
   int id;
   size_t data_length, key_length;
   const static uint64_t CACHELINE_SIZE = 64;
-  const static uint64_t KEYS_IN_CACHELINE_MASK = (CACHELINE_SIZE / sizeof(KV)) - 1;
+  const static uint64_t KEYS_IN_CACHELINE_MASK =
+      (CACHELINE_SIZE / sizeof(KV)) - 1;
 
   CASHashTable(uint64_t c)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
@@ -49,7 +50,8 @@ class CASHashTable : public BaseHashTable {
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
-        PLOGV.printf("Hashtable base: %p Hashtable size: %lu\n", this->hashtable, this->capacity);
+        PLOGV.printf("Hashtable base: %p Hashtable size: %lu\n",
+                     this->hashtable, this->capacity);
       }
       this->ref_cnt++;
     }
@@ -82,14 +84,14 @@ class CASHashTable : public BaseHashTable {
 
   void prefetch_queue(QueueType qtype) override {}
 
-  void insert_noprefetch(const void *data, collector_type* collector) override {
+  void insert_noprefetch(const void *data, collector_type *collector) override {
 #ifdef LATENCY_COLLECTION
     const auto timer_start = collector->sync_start();
 #endif
 
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo
-    //size_t idx = fastrange32(hash, this->capacity);  // modulo
+    // size_t idx = fastrange32(hash, this->capacity);  // modulo
 
     KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
 
@@ -124,7 +126,8 @@ class CASHashTable : public BaseHashTable {
   }
 
   // insert a batch
-  void insert_batch(const InsertFindArguments &kp, collector_type* collector) override {
+  void insert_batch(const InsertFindArguments &kp,
+                    collector_type *collector) override {
     this->flush_if_needed(collector);
 
     for (auto &data : kp) {
@@ -135,7 +138,7 @@ class CASHashTable : public BaseHashTable {
   }
 
   // overridden function for insertion
-  void flush_if_needed(collector_type* collector) {
+  void flush_if_needed(collector_type *collector) {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
     while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
@@ -147,7 +150,7 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void flush_insert_queue(collector_type* collector) override {
+  void flush_insert_queue(collector_type *collector) override {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
 
@@ -159,7 +162,7 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
-  void flush_find_queue(ValuePairs &vp, collector_type* collector) override {
+  void flush_find_queue(ValuePairs &vp, collector_type *collector) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
@@ -171,13 +174,12 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
-  void flush_if_needed(ValuePairs &vp, collector_type* collector) {
+  void flush_if_needed(ValuePairs &vp, collector_type *collector) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     // make sure you return at most batch_sz (but can possibly return lesser
     // number of elements)
-    while ((curr_queue_sz > FLUSH_THRESHOLD) &&
-           (vp.first < config.batch_len)) {
+    while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
       // cout << "Finding value for key " <<
       // this->find_queue[this->find_tail].key << " at tail : " <<
       // this->find_tail << endl;
@@ -189,7 +191,8 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void find_batch(const InsertFindArguments &kp, ValuePairs &values, collector_type* collector) override {
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) override {
     this->flush_if_needed(values, collector);
 
     for (auto &data : kp) {
@@ -199,7 +202,7 @@ class CASHashTable : public BaseHashTable {
     this->flush_if_needed(values, collector);
   }
 
-  void *find_noprefetch(const void *data, collector_type* collector) override {
+  void *find_noprefetch(const void *data, collector_type *collector) override {
 #ifdef CALC_STATS
     uint64_t distance_from_bucket = 0;
 #endif
@@ -209,12 +212,14 @@ class CASHashTable : public BaseHashTable {
 
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash;
-    //size_t idx = fastrange32(hash, this->capacity);  // modulo
-    InsertFindArgument *item = const_cast<InsertFindArgument*>(reinterpret_cast<const InsertFindArgument *>(data));
+    // size_t idx = fastrange32(hash, this->capacity);  // modulo
+    InsertFindArgument *item = const_cast<InsertFindArgument *>(
+        reinterpret_cast<const InsertFindArgument *>(data));
     KV *curr;
     bool found = false;
 
-    // printf("Thread %" PRIu64 ": Trying memcmp at: %" PRIu64 "\n", this->thread_id, idx);
+    // printf("Thread %" PRIu64 ": Trying memcmp at: %" PRIu64 "\n",
+    // this->thread_id, idx);
     for (auto i = 0u; i < this->capacity; i++) {
       idx = idx & (this->capacity - 1);
       curr = &this->hashtable[idx];
@@ -243,10 +248,11 @@ class CASHashTable : public BaseHashTable {
     collector->sync_end(timer_start);
 #endif
 
-
     // return empty_element if nothing is found
     if (!found) {
-      printf("key %" PRIu64 " not found at idx %" PRIu64 " | hash %" PRIu64 "\n", item->key, idx, hash);
+      printf("key %" PRIu64 " not found at idx %" PRIu64 " | hash %" PRIu64
+             "\n",
+             item->key, idx, hash);
       curr = nullptr;
     }
 
@@ -312,9 +318,7 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_tail;
   Hasher hasher_;
 
-  uint64_t hash(const void *k) {
-    return hasher_(k, this->key_length);
-  }
+  uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
@@ -335,7 +339,7 @@ class CASHashTable : public BaseHashTable {
         sizeof(this->hashtable[i & (this->capacity - 1)]));
   }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type* collector) {
+  uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type *collector) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -345,10 +349,11 @@ class CASHashTable : public BaseHashTable {
     uint64_t retry;
     found = curr->find(q, &retry, vp);
 
-    // printf("%s, key = %" PRIu64 " | num_values %u, value %" PRIu64 " (id = %" PRIu64 ") | found=%ld, retry %ld\n",
+    // printf("%s, key = %" PRIu64 " | num_values %u, value %" PRIu64 " (id = %"
+    // PRIu64 ") | found=%ld, retry %ld\n",
     //          __func__, q->key, vp.first, vp.second[(vp.first - 1) %
-    //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first - 1)
-    //                  % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
+    //                  PREFETCH_FIND_QUEUE_SIZE].value, vp.second[(vp.first -
+    //                  1) % PREFETCH_FIND_QUEUE_SIZE].id, found, retry);
     if (retry) {
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run
@@ -376,14 +381,14 @@ class CASHashTable : public BaseHashTable {
 #endif
     } else {
 #ifdef LATENCY_COLLECTION
-        collector->end(q->timer_id);
+      collector->end(q->timer_id);
 #endif
     }
 
     return found;
   }
 
-  auto __find_one(KVQ *q, ValuePairs &vp, collector_type* collector) { 
+  auto __find_one(KVQ *q, ValuePairs &vp, collector_type *collector) {
     if (q->key == this->empty_item.get_key()) {
       __find_empty(q, vp);
     } else {
@@ -391,7 +396,7 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
-    /// Update or increment the empty key.
+  /// Update or increment the empty key.
   uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
     if (empty_slot_exists_) {
       vp.second[vp.first].id = q->key_id;
@@ -401,17 +406,17 @@ class CASHashTable : public BaseHashTable {
     return empty_slot_;
   }
 
-  void __insert_branched(KVQ *q, collector_type* collector) {
+  void __insert_branched(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
   try_insert:
     KV *curr = &this->hashtable[idx];
 
     // hashtable_mutexes[pidx].lock();
-    // printf("Thread %" PRIu64 ", grabbing lock: %" PRIu64 "\n", this->thread_id, pidx);
-    // Compare with empty element
+    // printf("Thread %" PRIu64 ", grabbing lock: %" PRIu64 "\n",
+    // this->thread_id, pidx); Compare with empty element
     if (curr->is_empty()) {
-      //std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
+      // std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
       bool cas_res = curr->insert_cas(q);
       if (cas_res) {
 #ifdef CALC_STATS
@@ -429,12 +434,12 @@ class CASHashTable : public BaseHashTable {
         return;
       }
       // hashtable_mutexes[pidx].unlock();
-      // printf("Thread %" PRIu64 ", released lock: %" PRIu64 "\n", this->thread_id,
-      // pidx);
-      // printf("%" PRIu64 ": %d | %d\n", pidx, hashtable[pidx].kb.count, no_ins++);
-      // If CAS fails, we need to see if someother thread has updated the same
-      // <k,v> onto the position we were trying to insert. If so, we need to
-      // update the value instead of inserting new. Just fall-through to check!
+      // printf("Thread %" PRIu64 ", released lock: %" PRIu64 "\n",
+      // this->thread_id, pidx); printf("%" PRIu64 ": %d | %d\n", pidx,
+      // hashtable[pidx].kb.count, no_ins++); If CAS fails, we need to see if
+      // someother thread has updated the same <k,v> onto the position we were
+      // trying to insert. If so, we need to update the value instead of
+      // inserting new. Just fall-through to check!
     }
 
 #ifdef CALC_STATS
@@ -474,7 +479,7 @@ class CASHashTable : public BaseHashTable {
 #ifdef CALC_STATS
       ++this->num_soft_reprobes;
 #endif
-      goto try_insert; // FIXME: @David get rid of the goto for crying out loud
+      goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
     }
 
     prefetch(idx);
@@ -497,7 +502,7 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  void __insert_one(KVQ *q, collector_type* collector) {
+  void __insert_one(KVQ *q, collector_type *collector) {
     if (q->key == this->empty_item.get_key()) {
       __insert_empty(q);
     } else {
@@ -523,7 +528,7 @@ class CASHashTable : public BaseHashTable {
     return -1;
   }
 
-  void add_to_insert_queue(void *data, collector_type* collector) {
+  void add_to_insert_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 
 #ifdef LATENCY_COLLECTION
@@ -533,10 +538,11 @@ class CASHashTable : public BaseHashTable {
     uint64_t hash = this->hash((const char *)&key_data->key);
     // Since we use fastrange for partitioned HT, use it
     // for this HT too for a fair comparison
-    //size_t idx = fastrange32(hash, this->capacity);  // modulo
+    // size_t idx = fastrange32(hash, this->capacity);  // modulo
     size_t idx = hash & (this->capacity - 1);
 
-    //std::cout << " -- Adding " << key_data->key  << " : " << key_data->value << endl;
+    // std::cout << " -- Adding " << key_data->key  << " : " << key_data->value
+    // << endl;
     this->prefetch(idx);
 
     this->insert_queue[this->ins_head].idx = idx;
@@ -556,7 +562,7 @@ class CASHashTable : public BaseHashTable {
     if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
   }
 
-  void add_to_find_queue(void *data, collector_type* collector) {
+  void add_to_find_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 
 #ifdef LATENCY_COLLECTION
@@ -566,7 +572,7 @@ class CASHashTable : public BaseHashTable {
     uint64_t hash = this->hash((const char *)&key_data->key);
     // Since we use fastrange for partitioned HT, use it
     // for this HT too for a fair comparison
-    //size_t idx = fastrange32(hash, this->capacity);  // modulo
+    // size_t idx = fastrange32(hash, this->capacity);  // modulo
     size_t idx = hash & (this->capacity - 1);
 
     this->prefetch_read(idx);
@@ -607,4 +613,4 @@ std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
 template <class KV, class KVQ>
 uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
 }  // namespace kmercounter
-#endif // HASHTABLES_CAS_KHT_HPP
+#endif  // HASHTABLES_CAS_KHT_HPP

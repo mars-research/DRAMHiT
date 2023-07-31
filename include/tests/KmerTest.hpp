@@ -5,23 +5,23 @@
 #include <memory>
 
 #include "hashtables/base_kht.hpp"
-#include "types.hpp"
 #include "input_reader/fastq.hpp"
+#include "types.hpp"
 
 namespace kmercounter {
 
 class KmerTest {
  public:
-  void count_kmer(Shard *sh, const Configuration &config,
-                  BaseHashTable *ht,
+  void count_kmer(Shard *sh, const Configuration &config, BaseHashTable *ht,
                   std::barrier<VoidFn> *barrier);
 
   void count_kmer_radix(Shard *sh, const Configuration &config,
-                  std::barrier<VoidFn> *barrier,
-                    RadixContext& context
-                  );
+                        std::barrier<VoidFn> *barrier, RadixContext &context);
+  void count_kmer_radix_custom(Shard *sh, const Configuration &config,
+                               std::barrier<VoidFn> *barrier,
+                               RadixContext &context);
 };
 
 }  // namespace kmercounter
 
-#endif // TESTS_KMERTEST_HPP
+#endif  // TESTS_KMERTEST_HPP

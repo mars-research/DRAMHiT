@@ -19,14 +19,14 @@ class Application {
   std::vector<std::thread> threads;
   Shard *shards;
   MsrHandler *msr_ctrl;
-  RadixContext radixContext;  
+  RadixContext radixContext;
 
  public:
   std::vector<numa_node> nodes;
   int process(int argc, char **argv);
   int spawn_shard_threads_bqueues();
   int spawn_shard_threads();
-  void shard_thread(int tid, std::barrier<std::function<void()>>* barrier);
+  void shard_thread(int tid, std::barrier<std::function<void()>> *barrier);
 
   Application() {
     this->n = new Numa();

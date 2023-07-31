@@ -24,16 +24,18 @@
 #ifndef ZIPF_DISTRIBUTION_HPP_
 #define ZIPF_DISTRIBUTION_HPP_
 
-#include <stdexcept>
 #include <random>
+#include <stdexcept>
 
 namespace kmercounter {
 
 class zipf_distribution_apache {
-public:
-  zipf_distribution_apache(uint64_t num_elements, double exponent, int64_t seed = 0xdeadbeef);
+ public:
+  zipf_distribution_apache(uint64_t num_elements, double exponent,
+                           int64_t seed = 0xdeadbeef);
   uint64_t sample();
-private:
+
+ private:
   static constexpr double TAYLOR_THRESHOLD = 1e-8;
   static constexpr double F_1_2 = 0.5;
   static constexpr double F_1_3 = 1.0 / 3.0;
@@ -56,6 +58,6 @@ private:
   static double helper2(double x);
 };
 
-}
+}  // namespace kmercounter
 
 #endif

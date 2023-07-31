@@ -100,7 +100,7 @@ struct ItemQueue {
   uint64_t key_hash;  // 8 bytes
 #endif
 } PACKED;
-std::ostream& operator<<(std::ostream& os, const ItemQueue& q);
+std::ostream &operator<<(std::ostream &os, const ItemQueue &q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow
 struct Aggr_KV {
@@ -145,6 +145,12 @@ struct Aggr_KV {
       old_val = this->count;
       ret = __sync_bool_compare_and_swap(&this->count, old_val, old_val + 1);
     }
+    return ret;
+  }
+
+  inline bool update(queue *elem) {
+    auto ret = true;
+    this->count += 1;
     return ret;
   }
 
@@ -559,7 +565,8 @@ struct Item {
     if (this->is_empty()) {
       goto exit;
     } else if (this->kvpair.key == elem->key) {
-      //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
+      // printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key,
+      // this->kvpair.value);
       found = true;
       vp.second[vp.first].id = elem->key_id;
       vp.second[vp.first].value = this->kvpair.value;
@@ -734,7 +741,8 @@ struct Value {
     if (this->is_empty()) {
       goto exit;
     } else {
-      //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
+      // printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key,
+      // this->kvpair.value);
       found = true;
       vp.second[vp.first].id = elem->key_id;
       vp.second[vp.first].value = this->value;
@@ -746,7 +754,6 @@ struct Value {
   }
 
 } PACKED;
-
 
 #ifdef NOAGGR
 using KVType = Item;

@@ -60,8 +60,8 @@ OpTimings do_zipfian_inserts(
 #endif
 
   PLOGV.printf("Starting insertion test");
-  InsertFindArgument *items =
-      (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
@@ -147,7 +147,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   collector_type *const collector{};
 #endif
 
-  InsertFindArgument *items = (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
   FindResult *results = new FindResult[config.batch_len];
   ValuePairs vp = std::make_pair(0, results);
 
@@ -184,10 +185,11 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
         else
           not_found++;
       } else {
-        items[key] = {value , n};
+        items[key] = {value, n};
 
         if (++key == config.batch_len) {
-          hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp, collector);
+          hashtable->find_batch(InsertFindArguments(items, config.batch_len),
+                                vp, collector);
           found += vp.first;
           vp.first = 0;
           key = 0;
@@ -261,7 +263,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     PLOG_INFO.printf(
         "Quick stats: thread %u, Batch length: %d, cycles per "
         "insertion:%" PRIu64 "",
-        shard->shard_idx, config.batch_len, insert_timings.duration / insert_timings.op_count);
+        shard->shard_idx, config.batch_len,
+        insert_timings.duration / insert_timings.op_count);
 
 #ifdef CALC_STATS
     PLOG_INFO.printf("Reprobes %" PRIu64 " soft_reprobes %" PRIu64 "",
@@ -284,7 +287,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   if (zipf_values && shard->shard_idx == 0) {
     // Do a shuffle to redistribute the keys
-    auto rng = std::default_random_engine {};
+    auto rng = std::default_random_engine{};
     std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
   }
 

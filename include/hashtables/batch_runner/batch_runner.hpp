@@ -36,12 +36,12 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
     if (config.no_prefetch) {
       HTBatchInserter<N>::insert_noprefetch(kv);
     } else {
-      //this->insert(kv.key, kv.value);
+      // this->insert(kv.key, kv.value);
       HTBatchInserter<N>::insert(kv.key, kv.value);
     }
   }
 
-  void *find(const KeyValuePair &kv) {
+  void* find(const KeyValuePair& kv) {
     if (config.no_prefetch) {
       return HTBatchFinder<N>::find_noprefetch(kv);
     } else {
@@ -58,14 +58,12 @@ class HTBatchRunner : public HTBatchInserter<N>, public HTBatchFinder<N> {
 
   /// Flush insert queue.
   void flush_insert() {
-    if (!config.no_prefetch)
-      HTBatchInserter<N>::flush();
+    if (!config.no_prefetch) HTBatchInserter<N>::flush();
   }
 
   /// Flush find queue.
   void flush_find() {
-    if (!config.no_prefetch)
-      HTBatchFinder<N>::flush();
+    if (!config.no_prefetch) HTBatchFinder<N>::flush();
   }
 
   /// Returns the number of inserts flushed.

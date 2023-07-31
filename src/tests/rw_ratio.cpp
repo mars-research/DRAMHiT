@@ -56,7 +56,7 @@ class rw_experiment {
   }
 
   experiment_results run(unsigned int total_ops, collector_type* collector,
-                             std::barrier<std::function<void()>> *sync_barrier) {
+                         std::barrier<std::function<void()>>* sync_barrier) {
     const auto keyrange = config.num_threads * total_ops;
     std::array<InsertFindArgument, HT_TESTS_BATCH_LENGTH> args{};
     uint64_t k{};
@@ -200,7 +200,7 @@ class rw_experiment {
 
 void RWRatioTest::run(Shard& shard, BaseHashTable& hashtable,
                       unsigned int total_ops,
-                      std::barrier<std::function<void()>> *sync_barrier) {
+                      std::barrier<std::function<void()>>* sync_barrier) {
   PLOG_INFO << "Starting RW thread " << shard.shard_idx;
   rw_experiment experiment{hashtable, shard.shard_idx * total_ops};
 

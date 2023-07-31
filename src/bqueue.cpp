@@ -23,6 +23,7 @@
  */
 
 #include "bqueue.h"
+
 #include <plog/Log.h>
 
 static data_t ELEMENT_ZERO = 0x0UL;
@@ -168,33 +169,35 @@ int dequeue(struct queue_t *q, data_t *value) {
 #elif defined(CONFIG_BQUEUE_SECTION)
 
 int init_queue(queue_section_t *q) {
-  //memset(q, 0, sizeof(queue_section_t));
+  // memset(q, 0, sizeof(queue_section_t));
   q->enqPtr = q->data;
   q->enqLocalPtr = q->data;
   q->enqSharedPtr = q->data;
 
-  q->deqPtr = q->data;// + QUEUE_SIZE - 1;
+  q->deqPtr = q->data;  // + QUEUE_SIZE - 1;
   q->deqLocalPtr = q->deqPtr;
   q->deqSharedPtr = q->deqPtr;
 
   q->ROTATE_MASK = (size_t)q->data + (QUEUE_SIZE * sizeof(data_t) - 1);
-  //q->ROTATE_MASK = (QUEUE_SIZE * sizeof(data_t) - 1);
-  //q->SECTION_MASK = (size_t)q->data + (SECTION_SIZE * sizeof(data_t) - 1);
+  // q->ROTATE_MASK = (QUEUE_SIZE * sizeof(data_t) - 1);
+  // q->SECTION_MASK = (size_t)q->data + (SECTION_SIZE * sizeof(data_t) - 1);
   q->SECTION_MASK = (SECTION_SIZE * sizeof(data_t) - 1);
-  PLOG_INFO.printf("q->enqPtr %p | q->deqPtr %p | q->data %p | rotate_mask %lx | section_mask %lx",
-        q->enqPtr, q->deqPtr, q->data, q->ROTATE_MASK, q->SECTION_MASK);
+  PLOG_INFO.printf(
+      "q->enqPtr %p | q->deqPtr %p | q->data %p | rotate_mask %lx | "
+      "section_mask %lx",
+      q->enqPtr, q->deqPtr, q->data, q->ROTATE_MASK, q->SECTION_MASK);
   return 0;
 }
 
 int enqueue(queue_section_t *q, data_t value) {
   *q->enqPtr = value;
-  //q->numEnqueues++;
+  // q->numEnqueues++;
   PLOG_DEBUG.printf("enqueueing %" PRIu64 " at %p", value, q->enqPtr);
   q->enqPtr += 1;
   if (q->enqPtr > (q->data + QUEUE_SIZE)) {
     q->enqPtr = q->data;
   }
-  //PLOG_DEBUG.printf("moving q->enqPtr %p", q->enqPtr);
+  // PLOG_DEBUG.printf("moving q->enqPtr %p", q->enqPtr);
 
   if (((data_t)q->enqPtr & q->SECTION_MASK) == 0) {
     while (q->enqPtr == q->deqLocalPtr) {
@@ -208,7 +211,9 @@ int enqueue(queue_section_t *q, data_t value) {
 
 int dequeue(queue_section_t *q, data_t *value) {
   // sync
-  PLOG_DEBUG.printf("q->deqPtr %p | mask %lx | & %lx", q->deqPtr, q->SECTION_MASK, (data_t) q->deqPtr & (SECTION_SIZE * sizeof(data_t) - 1));
+  PLOG_DEBUG.printf("q->deqPtr %p | mask %lx | & %lx", q->deqPtr,
+                    q->SECTION_MASK,
+                    (data_t)q->deqPtr & (SECTION_SIZE * sizeof(data_t) - 1));
   if (((data_t)q->deqPtr & q->SECTION_MASK) == 0) {
     q->deqSharedPtr = q->deqPtr;
     while (q->deqPtr == q->enqLocalPtr) {
@@ -223,9 +228,9 @@ int dequeue(queue_section_t *q, data_t *value) {
   }
 
   PLOG_DEBUG.printf("q->deqPtr %p", q->deqPtr);
-  *value = *((data_t *) q->deqPtr);
-  *((data_t *) q->deqPtr) = 0;
-  //q->numDequeues++;
+  *value = *((data_t *)q->deqPtr);
+  *((data_t *)q->deqPtr) = 0;
+  // q->numDequeues++;
   q->deqPtr += 1;
   if (q->deqPtr > (q->data + QUEUE_SIZE)) {
     q->deqPtr = q->data;

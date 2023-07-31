@@ -1,8 +1,8 @@
 #include <sched.h>
 
-#include "tests/PrefetchTest.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
+#include "tests/PrefetchTest.hpp"
 #include "types.hpp"
 #include "xorwow.hpp"
 
@@ -98,7 +98,8 @@ void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
   uint64_t num_inserts = 0;
   uint64_t t_start, t_end;
 
-  printf("[INFO] Prefetch test run: thread %u, ht size:%" PRIu64 ", insertions:%" PRIu64 "\n",
+  printf("[INFO] Prefetch test run: thread %u, ht size:%" PRIu64
+         ", insertions:%" PRIu64 "\n",
          sh->shard_idx, HT_TESTS_HT_SIZE, HT_TESTS_NUM_INSERTS);
 
 #ifdef XORWOW_SCAN
@@ -111,10 +112,10 @@ void PrefetchTest::prefetch_test_run_exec(Shard *sh, Configuration &cfg,
   num_inserts = prefetch_test_run(
       (PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue> *)kmer_ht);
   t_end = RDTSCP();
-  printf(
-      "[INFO] Quick stats: thread %u, Prefetch stride: %" PRIu64 ", cycles per "
-      "insertion:%" PRIu64 "\n",
-      sh->shard_idx, PREFETCH_STRIDE, (t_end - t_start) / num_inserts);
+  printf("[INFO] Quick stats: thread %u, Prefetch stride: %" PRIu64
+         ", cycles per "
+         "insertion:%" PRIu64 "\n",
+         sh->shard_idx, PREFETCH_STRIDE, (t_end - t_start) / num_inserts);
   //}
 
   sh->stats->insertions.duration = (t_end - t_start);
