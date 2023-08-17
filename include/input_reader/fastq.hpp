@@ -132,7 +132,7 @@ class FastqKMerPreloadReader : public InputReaderU64 {
  public:
   template <typename... Args>
   FastqKMerPreloadReader(Args&&... args)
-      : reader_(std::make_unique<Reservoir<std::string>>(
+      : reader_(std::make_unique<ReservoirMmap<std::string>>(
             std::make_unique<MemcpyAdaptor<FastqReader, std::string>>(
                 FastqReader(std::forward<Args>(args)...)))) {}
 

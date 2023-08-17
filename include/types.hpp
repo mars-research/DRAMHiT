@@ -123,24 +123,26 @@ class PartitionChunks {
 
     // PLOGI.printf("chunk count: %llu", chuck_count);
     // auto first_chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
-    auto first_chunk = alloc();
+    auto first_chunk = alloc(true);
+    memset(first_chunk, 0, chunk_size);
     struct KmerChunk kc = {0, first_chunk};
+
     chunks.push_back(std::move(kc));
   }
 
   Kmer* get_next() {
     auto& last = chunks.back();
-    if (last.count == chunk_count) {
-      // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
-      auto chunk = alloc();
-      struct KmerChunk kc = {0, chunk};
-      chunks.push_back(std::move(kc));
-      return chunk;
-    }
+    // if (last.count == chunk_count) {
+    //   // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+    //   auto chunk = alloc(false);
+    //   struct KmerChunk kc = {0, chunk};
+    //   chunks.push_back(std::move(kc));
+    //   return chunk;
+    // }
     return last.kmers + last.count;
   }
 
-  Kmer* alloc() {
+  Kmer* alloc(bool mset) {
     // PLOGI.printf("start mmap, chunk_size: %llu", chunk_size);
     auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE, MAP_HUGETLB | (21 << MAP_HUGE_SHIFT) | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     // PLOGI.printf("end mmap");
@@ -148,7 +150,9 @@ class PartitionChunks {
       perror("mmap");
       exit(1);
     } 
-    // memset(addr, 0, chunk_size);
+    // if (mset) {
+    //     std::memset(addr, 0, chunk_size);
+    // }
     return addr;
     // return (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
   }

@@ -41,8 +41,11 @@ print("Columns: " + ds.columns)
 markers = np.random.choice(valid_markers, ds.shape[1], replace=False)
 
 y_set = args 
+
+outds = ds[args + [IDX_key]]
+outds.to_csv("kmer_data.csv", index=False)
 for y_key in y_set:
-    ds[y_key] = ds[y_key] - ds[y_key].mean()
+    ds[y_key] = ds[y_key]
 ax = ds.plot(x=IDX_key, y=y_set)
 ax.set_xticks(list(ds[IDX_key]))
 for i, line in enumerate(ax.get_lines()):

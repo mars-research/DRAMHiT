@@ -270,7 +270,8 @@ run_kmer_test() {
         mkdir -p ${LOG_PREFIX}
       fi
 
-      echo "Running dramhit with ${ARGS} --k ${k}" > ${LOG_FILE}
+      echo "Running dramhit with ${ARGS} --k ${k} --d ${dradix}" > ${LOG_FILE}
+      # sudo perf record -g --call-graph dwarf -- ./build/dramhit ${ARGS} --k ${k} --d ${dradix} 2>&1 >> ${LOG_FILE}
       ./build/dramhit ${ARGS} --k ${k} --d ${dradix} 2>&1 >> ${LOG_FILE}
 
       MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
