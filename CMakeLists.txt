@@ -217,7 +217,7 @@ endif ()
 
 if (VTUNE)
     if (NOT VTUNE_ROOT)
-        set(VTUNE_ROOT "/local/devel/intel/oneapi/vtune/latest/")
+        set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
     endif ()
 
     message(WARNING "Using VTUNE_ROOT: ${VTUNE_ROOT}")
