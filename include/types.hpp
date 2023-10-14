@@ -107,12 +107,16 @@ struct KmerChunk {
   Kmer* kmers;
 };
 
+const uint64_t KMERSPERCACHELINE1 = (CACHELINE_SIZE / sizeof(Kmer));
+const uint64_t MAX_CHUCKS = 5;
+
 class PartitionChunks {
  public:
-  const uint64_t KMERSPERCACHELINE = (CACHELINE_SIZE / sizeof(Kmer));
   size_t chunk_size;
   size_t chunk_count;
-  std::vector<KmerChunk> chunks;
+  KmerChunk chunks[MAX_CHUCKS];
+  uint64_t chunks_len = 0;
+  // KmerChunk chunk;
   PartitionChunks() = default;
 
   PartitionChunks(size_t size_hint) {
@@ -126,19 +130,25 @@ class PartitionChunks {
     auto first_chunk = alloc(true);
     memset(first_chunk, 0, chunk_size);
     struct KmerChunk kc = {0, first_chunk};
-
-    chunks.push_back(std::move(kc));
+    chunks[chunks_len++] = std::move(kc);
+    
+    // auto second_chunk = alloc(true);
+    // memset(second_chunk, 0, chunk_size);
+    // struct KmerChunk kc1 = {0, nullptr};
+    // chunk = std::move(kc1); 
   }
 
   Kmer* get_next() {
-    auto& last = chunks.back();
-    // if (last.count == chunk_count) {
-    //   // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
-    //   auto chunk = alloc(false);
-    //   struct KmerChunk kc = {0, chunk};
-    //   chunks.push_back(std::move(kc));
-    //   return chunk;
-    // }
+    auto& last = chunks[chunks_len - 1];
+    if (last.count == chunk_count) {
+        assert(false);
+      // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+      auto chunk = alloc(false);
+      struct KmerChunk kc = {0, chunk};
+      assert(chunks_len <= MAX_CHUCKS);
+      chunks[chunks_len++] = (std::move(kc));
+      return chunk;
+    }
     return last.kmers + last.count;
   }
 
@@ -157,7 +167,10 @@ class PartitionChunks {
     // return (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
   }
 
-  void advance() { chunks.back().count += KMERSPERCACHELINE; }
+  void advance() { 
+      // chunk.count += KMERSPERCACHELINE1;
+      chunks[chunks_len - 1].count += KMERSPERCACHELINE1; 
+  }
 };
 
 class RadixContext {
