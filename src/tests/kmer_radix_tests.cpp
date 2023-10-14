@@ -153,7 +153,7 @@ typedef union {
 uint64_t partitioning(Shard* sh, const Configuration& config,
                       RadixContext& context,
                       std::unique_ptr<input_reader::InputReaderU64> reader,
-                      vector<PartitionChunks> local_chunks
+                      PartitionChunks* local_chunks
                       ) {
   auto shard_idx = sh->shard_idx;
   auto R = context.R;
@@ -425,10 +425,9 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   auto shard_idx = sh->shard_idx;
   auto fanOut = context.fanOut;
   
-  vector<PartitionChunks> local_chunks;
-  local_chunks.reserve(fanOut);
+  PartitionChunks local_chunks[fanOut];
   for (int i = 0; i < fanOut; i++) {
-    local_chunks.push_back(PartitionChunks((sh->f_end - sh->f_start) / fanOut));
+    local_chunks[i] = PartitionChunks((sh->f_end - sh->f_start) / fanOut);
   }
 
 
@@ -491,7 +490,7 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
       __itt_event_create("partitioning", strlen("partitioning"));
   __itt_event_start(event);
 #endif
-  total_kmers_part = partitioning(sh, config, context, move(reader), move(local_chunks));
+  total_kmers_part = partitioning(sh, config, context, move(reader), local_chunks);
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(event);
 #endif

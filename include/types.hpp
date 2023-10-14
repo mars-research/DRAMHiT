@@ -177,7 +177,7 @@ class RadixContext {
  public:
   uint64_t** hists;
   uint64_t** parts;
-  std::vector<std::vector<PartitionChunks>> partitions;
+  std::vector<PartitionChunks*> partitions;
   // Radix shift
   uint8_t R;
   // Radix bits
@@ -202,11 +202,11 @@ class RadixContext {
     parts = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
                                            fanOut * sizeof(uint64_t*));
 
-    partitions = std::vector<std::vector<PartitionChunks>>(
-        num_threads, std::vector<PartitionChunks>(0));
-    for (auto& p : partitions) {
-      p.reserve(fanOut);
-    }
+    partitions = std::vector<PartitionChunks*>(
+        num_threads, nullptr);
+    // for (auto& p : partitions) {
+    //   p.reserve(fanOut);
+    // }
 
     nthreads_d = 0;
     while ((1 << (1 + nthreads_d)) <= num_threads) {
