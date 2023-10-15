@@ -196,12 +196,13 @@ uint64_t partitioning(Shard* sh, const Configuration& config,
   // cacheline_t* buffers = (cacheline_t*)std::aligned_alloc(
       // CACHELINE_SIZE, sizeof(cacheline_t) * fanOut);
 
-    cacheline_t* buffers = (cacheline_t*) mmap(nullptr, /* 256*1024*1024*/ sizeof(cacheline_t) * fanOut, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    // PLOGI.printf("end mmap");
-    if (buffers == MAP_FAILED) {
-      perror("mmap");
-      exit(1);
-    } 
+    // cacheline_t* buffers = (cacheline_t*) mmap(nullptr, /* 256*1024*1024*/ sizeof(cacheline_t) * fanOut, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    // // PLOGI.printf("end mmap");
+    // if (buffers == MAP_FAILED) {
+    //   perror("mmap");
+    //   exit(1);
+    // } 
+  cacheline_t buffers[fanOut];
   auto end_alloc = _rdtsc() - start_alloc;
   // PLOGI.printf("IDX: %u, Partition alloc: %llu cycles", shard_idx,
   // end_alloc); partitions[shard_idx] = locals;
