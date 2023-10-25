@@ -58,10 +58,11 @@ class CASHashTableSingle : public BaseHashTable {
     this->data_length = empty_item.data_length();
 
     PLOGV << "Empty item: " << this->empty_item;
-    this->insert_queue = (KVQ *)(aligned_alloc(
-        CACHELINE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
-    this->find_queue = (KVQ *)(aligned_alloc(
-        CACHELINE_SIZE, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
+    // this->insert_queue = (KVQ *)(aligned_alloc(
+        // CACHELINE_SIZE, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
+    this->insert_queue = (KVQ *)mmap (nullptr, /* 256*1024*1024*/ sizeof(KVQ) * PREFETCH_QUEUE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); 
+    // this->find_queue = (KVQ *)(aligned_alloc(
+        // CACHELINE_SIZE, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
 
     PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
   }
@@ -175,6 +176,23 @@ class CASHashTableSingle : public BaseHashTable {
     add_to_insert_queue((void *)kp, collector);
 
     this->flush_if_needed(collector);
+  }
+
+
+  void insert_one1(const InsertFindArgument *key_data, collector_type *collector) {
+    // this->flush_if_needed(collector);
+
+    uint64_t hash = this->hash((const char *)&key_data->key);
+    size_t idx = hash & (this->capacity - 1);
+    KVQ q;
+    // add_to_insert_queue((void *)kp, collector);
+
+    q.idx = idx;
+    q.key = key_data->key;
+    q.value = key_data->value;
+    q.key_id = key_data->id;
+    __insert_one(&q, collector);
+    // this->flush_if_needed(collector);
   }
 
   // overridden function for insertion

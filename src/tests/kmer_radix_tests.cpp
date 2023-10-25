@@ -27,8 +27,15 @@
 
 using namespace std;
 
+uint64_t crc_hash64(const void* buff, uint64_t len) {
+    // assert(len == 64);
+    return _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t *>(buff));
+}
+
 namespace kmercounter {
 
+// CRC3
+// #define HASHER crc_hash64 
 #define HASHER CityHash64
 
 absl::flat_hash_map<Kmer, long> check_count(
@@ -92,6 +99,22 @@ void check_functionality(const Configuration& config,
       diff.size(), rev_diff.size(), reference.size(), aggregation.size(),
       max_diff, reference[max_diff_kmer]);
 }
+/* #define RADIX_HASH(V)  ((V>>7)^(V>>13)^(V>>21)^V) */
+#define HASH_BIT_MODULO(K, MASK, NBITS) (((K)&MASK) >> NBITS)
+
+// Should be power of 2?
+#define KMERSPERCACHELINE (CACHE_LINE_SIZE / sizeof(Kmer))
+
+typedef union {
+  struct {
+    Kmer kmers[KMERSPERCACHELINE];
+  } kmers;
+  struct {
+    Kmer kmers[KMERSPERCACHELINE - 1];
+    uint32_t slot;
+  } data;
+} cacheline_t;
+
 /**
  * Makes a non-temporal write of 64 bytes from src to dst.
  * Uses vectorized non-temporal stores if available, falls
@@ -134,21 +157,6 @@ static inline void store_nontemp_64B(void* dst, void* src) {
 
 #endif
 }
-/* #define RADIX_HASH(V)  ((V>>7)^(V>>13)^(V>>21)^V) */
-#define HASH_BIT_MODULO(K, MASK, NBITS) (((K)&MASK) >> NBITS)
-
-// Should be power of 2?
-#define KMERSPERCACHELINE (CACHE_LINE_SIZE / sizeof(Kmer))
-
-typedef union {
-  struct {
-    Kmer kmers[KMERSPERCACHELINE];
-  } kmers;
-  struct {
-    Kmer kmers[KMERSPERCACHELINE - 1];
-    uint32_t slot;
-  } data;
-} cacheline_t;
 
 uint64_t partitioning(Shard* sh, const Configuration& config,
                       RadixContext& context,
@@ -218,6 +226,7 @@ uint64_t partitioning(Shard* sh, const Configuration& config,
       xo += kmer;
     // sum += kmer;
     total_num_part += 1;
+    // auto hash_val = (kmer * 3) >> (64 - context.D); 
     auto hash_val = HASHER((const char*)&kmer, sizeof(Kmer));
     uint32_t idx = HASH_BIT_MODULO(hash_val, MASK, R);
     uint32_t slot = buffers[idx].data.slot;
@@ -426,7 +435,9 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   auto shard_idx = sh->shard_idx;
   auto fanOut = context.fanOut;
   
-  PartitionChunks local_chunks[fanOut];
+  PartitionChunks local_chunks[fanOut]; 
+  // PartitionChunks* local_chunks = (PartitionChunks*) mmap(nullptr, /* 256*1024*1024*/ sizeof(PartitionChunks) * fanOut, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
   for (int i = 0; i < fanOut; i++) {
     local_chunks[i] = PartitionChunks((sh->f_end - sh->f_start) / fanOut);
   }
@@ -453,11 +464,14 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   auto ht_alloc_start = _rdtsc();
   std::vector<CASHashTableSingle<KVType, ItemQueue>*> prealloc_maps;
   prealloc_maps.reserve(hashmaps_per_thread);
+  // if (shard_idx == 0) {
+  
   for (int i = 0; i < hashmaps_per_thread; i++) {
     auto ht = new CASHashTableSingle<KVType, ItemQueue>((1 << 26) /
-                                                        hashmaps_per_thread);
+                                                        (hashmaps_per_thread == 1?1: hashmaps_per_thread + 0));
     prealloc_maps.push_back(ht);
   }
+  // }
   InsertFindArgument arg;
   arg.value = 0;
   auto ht_alloc_time = _rdtsc() - ht_alloc_start;
@@ -486,6 +500,10 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   auto total_kmers_part = 0; 
   // if (shard_idx == 0) {
 
+  // if (shard_idx != 0) {
+  //   barrier->arrive_and_wait();
+  //   return;
+  // }
 #ifdef WITH_VTUNE_LIB
   static const auto event =
       __itt_event_create("partitioning", strlen("partitioning"));
@@ -545,6 +563,7 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
     return;
   }
 
+
   std::vector<BaseHashTable*> maps;
 
   // maps.reserve(32);
@@ -595,6 +614,11 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   // std::aligned_alloc(PAGESIZE, total_capacity); auto shared_insert_queue =
   // (ItemQueue *)(aligned_alloc(CACHELINE_SIZE, PREFETCH_QUEUE_SIZE *
   // sizeof(ItemQueue))); memset(shared_hash_array, 0, total_capacity);
+  
+  // if (shard_idx != 0) {
+  //   barrier->arrive_and_wait();
+  //   return;
+  // }
 
   for (uint32_t k = 0; k < hashmaps_per_thread; k++) {
     uint32_t partition_idx = hashmaps_per_thread * shard_idx + k;
@@ -717,10 +741,11 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   auto cycles_per_insertion = insertion_cycles / total_insertions;
   auto cycles_per_partition = partition_cycles / total_kmers_part;
   PLOG_INFO.printf(
-      "IDX: %u, partition_time: %llu us(%llu %%), partition_cycles: %llu, total_kmer_partition: %llu, cycles_per_partition: %llu, first_barrier: %llu, insertion "
+      "IDX: %u, radix: %u partition_time: %llu us(%llu %%), partition_cycles: %llu, total_kmer_partition: %llu, cycles_per_partition: %llu, first_barrier: %llu, insertion "
       "time: %llu us(%llu %%), insertion_cycles: %llu, time_per_insertion: %.4f us"
       ", cycles_per_insertion: %llu, total_kmer_insertion: %llu, second_barrier: %llu",
       shard_idx, 
+      context.D,
       partition_time, 
       partition_time * 100 / total_time, 
       partition_cycles,
@@ -739,4 +764,4 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   // get_ht_stats(sh, ht);
 }
 
-}  // namespace kmercounter
+}  // namespace kmer

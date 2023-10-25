@@ -138,6 +138,21 @@ class PartitionChunks {
     // chunk = std::move(kc1); 
   }
 
+  void write_one(Kmer k) {
+    auto& last = chunks[chunks_len - 1];
+    if (last.count == chunk_count) {
+        assert(false);
+      // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
+      auto chunk = alloc(false);
+      struct KmerChunk kc = {0, chunk};
+      assert(chunks_len <= MAX_CHUCKS);
+      chunks[chunks_len++] = (std::move(kc));
+      // return chunk;
+    }
+    last.kmers[last.count++] = k;
+    // return last.kmers + last.count;
+  }
+
   Kmer* get_next() {
     auto& last = chunks[chunks_len - 1];
     if (last.count == chunk_count) {
@@ -154,7 +169,9 @@ class PartitionChunks {
 
   Kmer* alloc(bool mset) {
     // PLOGI.printf("start mmap, chunk_size: %llu", chunk_size);
-    auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE, MAP_HUGETLB | (21 << MAP_HUGE_SHIFT) | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
+    auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE, MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     // PLOGI.printf("end mmap");
     if (addr == MAP_FAILED) {
       perror("mmap");
@@ -218,6 +235,7 @@ class RadixContext {
     } else {
       hashmaps_per_thread = 1 << (d - nthreads_d);
     }
+    PLOGI.printf("hashmaps_per_thread: %d", hashmaps_per_thread);
     std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(
         gather_threads);
     for (int i = 0; i < gather_threads; i++) {
