@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# set -x
 run_test() {
   if [ $# -eq 4 ]; then
     TEST_TYPE=$1
@@ -258,7 +259,7 @@ run_kmer_test() {
   ARGS+=" --in-file ${FASTA_FILE}"
 
   
-  for dradix in $(seq 6 6); do
+  for dradix in $(seq 6 9); do
   for run in ${RUNS}; do
     ONCE=0
     LOG_PREFIX="esys23-ae-${USER}/${TEST_TYPE}/run${run}/"
@@ -272,6 +273,7 @@ run_kmer_test() {
 
       echo "Running dramhit with ${ARGS} --k ${k} --d ${dradix}" > ${LOG_FILE}
       # sudo perf record -g --call-graph dwarf -- ./build/dramhit ${ARGS} --k ${k} --d ${dradix} 2>&1 >> ${LOG_FILE}
+      rm dramhit.log
       ./build/dramhit ${ARGS} --k ${k} --d ${dradix} 2>&1 >> ${LOG_FILE}
 
       MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)

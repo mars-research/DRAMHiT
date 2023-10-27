@@ -35,8 +35,8 @@ uint64_t crc_hash64(const void* buff, uint64_t len) {
 namespace kmercounter {
 
 // CRC3
-// #define HASHER crc_hash64 
-#define HASHER CityHash64
+#define HASHER crc_hash64 
+// #define HASHER CityHash64
 
 absl::flat_hash_map<Kmer, long> check_count(
     const absl::flat_hash_map<Kmer, uint64_t>& reference,
@@ -467,8 +467,9 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   // if (shard_idx == 0) {
   
   for (int i = 0; i < hashmaps_per_thread; i++) {
-    auto ht = new CASHashTableSingle<KVType, ItemQueue>((1 << 26) /
-                                                        (hashmaps_per_thread == 1?1: hashmaps_per_thread + 0));
+    auto ht = new CASHashTableSingle<KVType, ItemQueue>((1 << 26) 
+            / (hashmaps_per_thread == 1?1: hashmaps_per_thread + 0)
+            );
     prealloc_maps.push_back(ht);
   }
   // }
@@ -649,9 +650,10 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
 
     auto start_insertions_cycle_inner = _rdtsc();
     for (uint32_t i = 0; i < num_threads; i++) {
+        size_t next_t = (shard_idx + i) % num_threads;
       // uint64_t start = partition_idx == 0u ? 0u : hists[i][partition_idx -
       // 1]; uint64_t end = hists[i][partition_idx];
-      auto& chunks = context.partitions[i][partition_idx];
+      auto& chunks = context.partitions[next_t][partition_idx];
 
       // if (i == 1) {
       //     PLOGI.printf("IDX: %u, remote: %u, start: %u end: %u", shard_idx,

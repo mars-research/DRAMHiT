@@ -171,7 +171,7 @@ class CASHashTableSingle : public BaseHashTable {
   }
 
   void insert_one(const InsertFindArgument *kp, collector_type *collector) {
-    this->flush_if_needed(collector);
+    // this->flush_if_needed(collector);
 
     add_to_insert_queue((void *)kp, collector);
 
@@ -503,13 +503,13 @@ class CASHashTableSingle : public BaseHashTable {
 #endif
 
 #ifdef COMPARE_HASH
-    if (this->hashtable[pidx].key_hash == q->key_hash)
+    if (!true || this->hashtable[pidx].key_hash == q->key_hash)
 #endif
     {
 #ifdef CALC_STATS
       this->num_memcmps++;
 #endif
-      if (curr->compare_key(q)) {
+      if (!true || curr->compare_key(q)) {
         curr->update(q);
         // hashtable[pidx].kmer_count++;
         // hashtable_mutexes[pidx].unlock();

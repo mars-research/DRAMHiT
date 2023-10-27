@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-NUM_2MB_PAGES_PERNODE=16384
-NUM_1GB_PAGES_PERNODE=128
+NUM_2MB_PAGES_PERNODE=32768
+NUM_1GB_PAGES_PERNODE=80
 
 # Enable 2MB pages
 echo always | sudo tee /sys/kernel/mm/transparent_hugepage/enabled &> /dev/null

@@ -105,7 +105,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   auto alloc_sz = capacity * sizeof(T);
   auto current_node = numa_node_of_cpu(sched_getcpu());
 
-  if (alloc_sz < ONEGB_PAGE_SZ) {
+  if (false && alloc_sz < ONEGB_PAGE_SZ) {
     PLOGV.printf("Allocating memory on node %d", current_node);
     addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
     if (!addr) {
