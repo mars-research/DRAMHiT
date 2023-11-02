@@ -65,10 +65,10 @@
           ripgrep
           # Python packages for evals plotting.
           python310
-          python310Packages.numpy
-          python310Packages.scipy
-          python310Packages.matplotlib
-          python310Packages.pandas
+          (python310.withPackages(ps: with ps; [ 
+            pandas 
+            matplotlib
+        ]))
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
