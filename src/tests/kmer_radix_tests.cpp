@@ -523,7 +523,16 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   // end_partition_ts = std::chrono::steady_clock::now();
   end_partition_cycle = _rdtsc();
 
+
+#ifdef WITH_VTUNE_LIB
+  static const auto event_b =
+      __itt_event_create("hit first barrier", strlen("hit first barrier"));
+  __itt_event_start(event_b);
+#endif
   barrier->arrive_and_wait();
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(event_b);
+#endif
   auto after_first_barrier = _rdtsc() - end_partition_cycle;
   // return;
 

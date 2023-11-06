@@ -25,12 +25,18 @@ namespace kmercounter {
 extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
+
+constexpr auto MAP_FLAGS_RE =
+     MAP_PRIVATE | MAP_ANONYMOUS;
+
 constexpr auto MAP_FLAGS =
-    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+    MAP_HUGETLB | MAP_HUGE_1GB | MAP_FLAGS_RE;
 constexpr auto ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
+constexpr auto TWOMB_PAGE_SZ = 2ULL * 1024 * 1024;
 
 constexpr auto MAP_FLAGS_2MB =
-    MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS;
+    MAP_HUGETLB | MAP_HUGE_2MB | MAP_FLAGS_RE;
+
 
 constexpr uint64_t CACHE_BLOCK_BITS = 6;
 constexpr uint64_t CACHE_BLOCK_MASK = (1ULL << CACHE_BLOCK_BITS) - 1;
@@ -132,7 +138,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
 
     PLOGV.printf("requesting to mmap %lu bytes", alloc_sz);
     addr =
-        (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW, alloc_sz < ONEGB_PAGE_SZ ? MAP_FLAGS_2MB: MAP_FLAGS, fd, 0);
+        (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW, alloc_sz < ONEGB_PAGE_SZ ? ( alloc_sz < TWOMB_PAGE_SZ? MAP_FLAGS_RE: MAP_FLAGS_2MB): MAP_FLAGS, fd, 0);
     if (addr == MAP_FAILED) {
       perror("mmap");
       unlink(mmap_path);

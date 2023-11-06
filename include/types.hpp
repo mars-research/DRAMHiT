@@ -171,12 +171,15 @@ class PartitionChunks {
     // PLOGI.printf("start mmap, chunk_size: %llu", chunk_size);
 
     #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
-    auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE, MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    uint huge = chunk_size < (1 << 20)? 0: MAP_HUGE_2MB;
+    auto addr = (Kmer*) aligned_alloc(PAGESIZE, chunk_size);
+    // auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE,
+            // huge | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     // PLOGI.printf("end mmap");
-    if (addr == MAP_FAILED) {
-      perror("mmap");
-      exit(1);
-    } 
+    // if (addr == MAP_FAILED) {
+    //   perror("mmap");
+    //   exit(1);
+    // } 
     // if (mset) {
     //     std::memset(addr, 0, chunk_size);
     // }

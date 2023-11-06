@@ -102,6 +102,7 @@ currentPlotting = TOTAL_KMER_PART_KEY
 currentPlotting = TOTAL_KMER_INSERTION_KEY
 currentPlotting = P_CYCLES_KEY
 currentPlotting = I_CYCLES_KEY
+currentPlotting = FB_KEY
 
 for i in idx_range:
     name = str(i) + currentPlotting

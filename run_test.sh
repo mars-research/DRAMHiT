@@ -259,7 +259,7 @@ run_kmer_test() {
   ARGS+=" --in-file ${FASTA_FILE}"
 
   
-  for dradix in $(seq 6 9); do
+  for dradix in $(seq 9 9); do
   for run in ${RUNS}; do
     ONCE=0
     LOG_PREFIX="esys23-ae-${USER}/${TEST_TYPE}/run${run}/"
@@ -273,11 +273,11 @@ run_kmer_test() {
 
       echo "Running dramhit with ${ARGS} --k ${k} --d ${dradix}" > ${LOG_FILE}
       # sudo perf record -g --call-graph dwarf -- ./build/dramhit ${ARGS} --k ${k} --d ${dradix} 2>&1 >> ${LOG_FILE}
-      rm dramhit.log
+      set -x
       ./build/dramhit ${ARGS} --k ${k} --d ${dradix} 2>&1 >> ${LOG_FILE}
-
       MOPS=$(rg "set_mops : [0-9\.]+" -o -m1 ${LOG_FILE} | cut -d':' -f2)
-
+      echo ${MOPS} >> dramhit.log
+      mv dramhit.log dramhit_${dradix}.log
       if [ ${ONCE} == 0 ]; then
         printf "k, ${HT_TYPE}-set-${GENOME}-mops\n" | tee -a ${LOG_PREFIX}/summary_${GENOME}.csv;
         ONCE=1
