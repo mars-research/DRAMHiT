@@ -204,13 +204,13 @@ uint64_t partitioning(Shard* sh, const Configuration& config,
   // cacheline_t* buffers = (cacheline_t*)std::aligned_alloc(
       // CACHELINE_SIZE, sizeof(cacheline_t) * fanOut);
 
-    // cacheline_t* buffers = (cacheline_t*) mmap(nullptr, /* 256*1024*1024*/ sizeof(cacheline_t) * fanOut, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    // // PLOGI.printf("end mmap");
-    // if (buffers == MAP_FAILED) {
-    //   perror("mmap");
-    //   exit(1);
-    // } 
-  cacheline_t buffers[fanOut];
+    cacheline_t* buffers = (cacheline_t*) mmap(nullptr, /* 256*1024*1024*/ sizeof(cacheline_t) * fanOut, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    // PLOGI.printf("end mmap");
+    if (buffers == MAP_FAILED) {
+      perror("mmap");
+      exit(1);
+    } 
+  // cacheline_t buffers[fanOut];
   auto end_alloc = _rdtsc() - start_alloc;
   // PLOGI.printf("IDX: %u, Partition alloc: %llu cycles", shard_idx,
   // end_alloc); partitions[shard_idx] = locals;
@@ -435,8 +435,8 @@ void KmerTest::count_kmer_radix_custom(Shard* sh, const Configuration& config,
   auto shard_idx = sh->shard_idx;
   auto fanOut = context.fanOut;
   
-  PartitionChunks local_chunks[fanOut]; 
-  // PartitionChunks* local_chunks = (PartitionChunks*) mmap(nullptr, /* 256*1024*1024*/ sizeof(PartitionChunks) * fanOut, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  // PartitionChunks local_chunks[fanOut]; 
+  PartitionChunks* local_chunks = (PartitionChunks*) mmap(nullptr, /* 256*1024*1024*/ sizeof(PartitionChunks) * fanOut, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
   for (int i = 0; i < fanOut; i++) {
     local_chunks[i] = PartitionChunks((sh->f_end - sh->f_start) / fanOut);

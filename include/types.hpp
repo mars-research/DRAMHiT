@@ -125,7 +125,7 @@ class PartitionChunks {
         (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE * 3;
     chunk_count = chunk_size / sizeof(Kmer);
 
-    // PLOGI.printf("chunk count: %llu", chuck_count);
+    // PLOGI.printf("chunk size: %llu", chunk_size);
     // auto first_chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
     auto first_chunk = alloc(true);
     memset(first_chunk, 0, chunk_size);
@@ -155,7 +155,7 @@ class PartitionChunks {
 
   Kmer* get_next() {
     auto& last = chunks[chunks_len - 1];
-    if (last.count == chunk_count) {
+    if (last.count >= chunk_count) {
         assert(false);
       // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
       auto chunk = alloc(false);
@@ -172,14 +172,14 @@ class PartitionChunks {
 
     #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
     uint huge = chunk_size < (1 << 20)? 0: MAP_HUGE_2MB;
-    auto addr = (Kmer*) aligned_alloc(PAGESIZE, chunk_size);
+    auto addr = (Kmer*) aligned_alloc(CACHELINE_SIZE, chunk_size);
     // auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE,
             // huge | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     // PLOGI.printf("end mmap");
-    // if (addr == MAP_FAILED) {
-    //   perror("mmap");
-    //   exit(1);
-    // } 
+    if (addr == MAP_FAILED) {
+      perror("mmap");
+      exit(1);
+    } 
     // if (mset) {
     //     std::memset(addr, 0, chunk_size);
     // }

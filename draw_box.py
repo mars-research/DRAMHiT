@@ -8,7 +8,7 @@ import pandas as pd
 import re
 import os
 
-drange = range(6, 16)
+drange = range(6, 17)
 filename = "dramhit_{}.log"
 p = re.compile(r'.*IDX: (\d+), radix: (\d+) partition_time: (.*), partition_cycles: (\d+), total_kmer_partition: (\d+), cycles_per_partition: (\d+), first_barrier: (\d+), insertion time: (.*), insertion_cycles: (\d+), time_per_insertion: (.*), cycles_per_insertion: (\d+), total_kmer_insertion: (\d+), second_barrier: (\d+)')
 
@@ -93,7 +93,6 @@ for i in drange:
                 # print("idx: {}, load factor: {}".format(idx, fill/cap))
     result.append(data)
 df = pd.DataFrame(result)
-li = []
 df[[D_KEY, MOPS_KEY]].to_csv("MOPS.csv")
 
 currentPlotting = I_CYCLES_PER_KEY
@@ -102,20 +101,46 @@ currentPlotting = TOTAL_KMER_PART_KEY
 currentPlotting = TOTAL_KMER_INSERTION_KEY
 currentPlotting = P_CYCLES_KEY
 currentPlotting = I_CYCLES_KEY
-currentPlotting = FB_KEY
+currentPlotting = I_CYCLES_PER_KEY
+# currentPlotting = FB_KEY
 
+li = []
 for i in idx_range:
     name = str(i) + currentPlotting
     d = df.rename(columns={name: currentPlotting})[[D_KEY,  currentPlotting]]
     # d.rename(columns={name: p_cycles_per_key})
     li.append(d)
 # df[[D_KEY, FB_KEY]].plot()
-
 df_con = pd.concat(li, axis=0)
+print(df_con)
+i8 = df_con.loc[df_con[D_KEY] == 8][currentPlotting].sum()
+i16 = df_con.loc[df_con[D_KEY] == 16][currentPlotting].sum()
+print("i8  " , i8)
+print("i16 " , i16)
+#
+#
+# currentPlotting = P_CYCLES_KEY
+# li = []
+# for i in idx_range:
+#     name = str(i) + currentPlotting
+#     d = df.rename(columns={name: currentPlotting})[[D_KEY,  currentPlotting]]
+#     # d.rename(columns={name: p_cycles_per_key})
+#     li.append(d)
+# # df[[D_KEY, FB_KEY]].plot()
+# df_con = pd.concat(li, axis=0)
+#
+# p8 = df_con.loc[df_con[D_KEY] == 8][currentPlotting].sum()
+# p16 = df_con.loc[df_con[D_KEY] == 16][currentPlotting].sum()
+# print("p8  ", p8)
+# print("p16 ", p16)
+# print("2 * p8 + i16 = ", 2 * p8 + i16)
+# print(" p8 + i8 =     ",  p8 + i8)
+
 boxplot = df_con.boxplot(column=[currentPlotting], by=[D_KEY])
+plt.savefig('foo.png')
 
 # df.set_index(D_KEY, inplace=True)
-plt.show()
+# plt.show()
 # df = df.transpose()
 df.to_csv("res.csv")
 # print(df_con)
