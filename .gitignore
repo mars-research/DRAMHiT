@@ -34,4 +34,4 @@ Testing/
 *.fold
 .cache/
 .vscode/
-esys-23-ae-jerryidk/
+esys-23-ae-jerryidk/*
