@@ -131,8 +131,12 @@ class FileReader : public InputReader<std::string_view> {
         part_id_(part_id),
         num_parts_(num_parts),
         buffer_(4096) {
-    PLOG_FATAL_IF(part_id >= num_parts)
-        << "part_id(" << part_id << " ) >= num_parts(" << num_parts << ")";
+
+          
+    if(part_id >= num_parts)
+    {
+        PLOG_FATAL << "part_id(" << part_id << " ) >= num_parts(" << num_parts << ")";
+    }
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the
     // parameter passing.
@@ -159,8 +163,9 @@ class FileReader : public InputReader<std::string_view> {
   /// Creats a ifstream and log if fail.
   static std::ifstream open_file(std::string_view filename) {
     std::ifstream file(filename.data());
-    PLOG_FATAL_IF(file.fail())
-        << "Failed to open file " << filename << ": " << file.rdstate();
+    if(file.fail()) {
+      PLOG_FATAL << "Failed to open file " << filename << ": " << file.rdstate();
+    }
     return file;
   }
 
