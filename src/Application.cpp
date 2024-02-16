@@ -264,7 +264,7 @@ done:
 int Application::spawn_shard_threads() {
   cpu_set_t cpuset;
 
-  PLOG_INFO.printf("kosustartNumber of shards: %u", config.num_threads);
+  PLOG_INFO.printf("Number of shards: %u", config.num_threads);
   this->shards = (Shard *)std::aligned_alloc(
       CACHE_LINE_SIZE, sizeof(Shard) * config.num_threads);
 
@@ -315,14 +315,10 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
-  std::function<void()> on_completion = []() noexcept {
-    // For debugging
-    // PLOG_INFO << "Phase completed.";
-  };
-
   std::function<void()> on_sync_complete = sync_complete;
 
   std::barrier barrier(config.num_threads, on_sync_complete);
+  
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;
@@ -339,7 +335,6 @@ int Application::spawn_shard_threads() {
     i += 1;
   }
 
-  PLOG_INFO.printf("kos i:%u", i);
   // Pin main application thread to cpu 0 and run our thread routine
   CPU_ZERO(&cpuset);
   CPU_SET(0, &cpuset);
@@ -400,7 +395,8 @@ int Application::process(int argc, char *argv[]) {
         "10: Cache Miss test\n"
         "11: Zipfian non-bqueue test\n"
         "12: RW-ratio test\n"
-        "13: Hashjoin")("base",
+        "13: Hashjoin\n"
+        "14: Fastq insert with Radix Parition")("base",
                         po::value<uint64_t>(&config.kmer_create_data_base)
                             ->default_value(def.kmer_create_data_base),
                         "Number of base K-mers")(
