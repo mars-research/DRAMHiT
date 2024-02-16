@@ -17,9 +17,10 @@ class PartitionedSpan {
  public:
   PartitionedSpan(const std::span<T>& span, uint64_t part_id,
                   uint64_t num_parts) {
-    PLOG_WARNING_ONCE_IF(span.size() % num_parts)
-        << "Partition with size " << span.size()
-        << " does not divide evenly by " << num_parts << " partitions.";
+    if(span.size() % num_parts) 
+    {
+      PLOG_WARNING << "Partition with size " << span.size() << " does not divide evenly by " << num_parts << " partitions.";
+    }
     uint64_t num_tuples_per_part = span.size() / num_parts;
     T* pointer = span.data() + part_id * num_tuples_per_part;
     size_t size = num_tuples_per_part;

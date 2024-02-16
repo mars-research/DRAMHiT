@@ -8,6 +8,7 @@
 #include "input_reader/fastq.hpp"
 #include "types.hpp"
 
+
 namespace kmercounter {
 
 class KmerTest {
@@ -21,7 +22,6 @@ class KmerTest {
   void count_kmer_radix_custom(Shard *sh, const Configuration &config,
                                std::barrier<VoidFn> *barrier,
                                RadixContext &context);
-
 
   void count_kmer_radix_jerry(Shard *sh, const Configuration &config,
                               std::barrier<VoidFn> *barrier,

@@ -510,7 +510,7 @@ class CASHashTableSingle : public BaseHashTable {
       this->num_memcmps++;
 #endif
       if (!true || curr->compare_key(q)) {
-        curr->update(q);
+        curr->update_cas(q);
         // hashtable[pidx].kmer_count++;
         // hashtable_mutexes[pidx].unlock();
 

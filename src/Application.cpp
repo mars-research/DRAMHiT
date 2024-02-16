@@ -176,6 +176,7 @@ void Application::shard_thread(int tid,
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
     case FASTQ_WITH_INSERT_RADIX:
+      kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
     case PREFETCH:
       // kmer_ht = new PartitionedHashStore<Prefetch_KV, PrefetchKV_Queue>(
@@ -232,8 +233,8 @@ void Application::shard_thread(int tid,
                                              config.materialize, barrier);
       break;
     case FASTQ_WITH_INSERT_RADIX:
-      this->test.kmer.count_kmer_radix_custom(sh, config, barrier,
-                                              this->radixContext);
+      this->test.kmer.count_kmer_radix_jerry(sh, config, barrier,
+                                              this->radixContext, kmer_ht);
       break;
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);

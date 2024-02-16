@@ -746,7 +746,7 @@ struct Value {
       found = true;
       vp.second[vp.first].id = elem->key_id;
       vp.second[vp.first].value = this->value;
-      vp.first++;
+      vp.first++; 
       goto exit;
     }
   exit:

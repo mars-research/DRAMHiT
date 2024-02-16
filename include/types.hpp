@@ -4,6 +4,7 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/hash/hash.h>
 #include <plog/Log.h>
+#include <sys/mman.h>
 
 #include <atomic>
 #include <cinttypes>
@@ -13,7 +14,6 @@
 #include <span>
 #include <string>
 #include <utility>
-#include <sys/mman.h>
 
 #define PAGE_SIZE 4096
 #define ALPHA 0.15
@@ -102,95 +102,81 @@ struct alignas(64) cacheline {
 
 typedef uint64_t Kmer;
 
-struct KmerChunk {
+typedef struct KmerChunk {
   size_t count;
   Kmer* kmers;
-};
+} KmerChunk_t;
 
 const uint64_t KMERSPERCACHELINE1 = (CACHELINE_SIZE / sizeof(Kmer));
 const uint64_t MAX_CHUCKS = 5;
 
 class PartitionChunks {
  public:
-  size_t chunk_size;
-  size_t chunk_count;
-  KmerChunk chunks[MAX_CHUCKS];
-  uint64_t chunks_len = 0;
-  // KmerChunk chunk;
+  size_t chunk_size;   // # bytes for a KmerChunk_t
+  size_t chunk_count;  // # kmer in a KmerChunk_t
+  KmerChunk_t chunks[MAX_CHUCKS];
+  uint64_t chunks_len = 0;  // # length of chunk array
+
   PartitionChunks() = default;
 
   PartitionChunks(size_t size_hint) {
     // chuck size must be a multiple of CACHELINE_SIZE
     chunk_size =
         (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE * 3;
-    chunk_count = chunk_size / sizeof(Kmer);
-
-    // PLOGI.printf("chunk size: %llu", chunk_size);
-    // auto first_chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
-    auto first_chunk = alloc(true);
-    memset(first_chunk, 0, chunk_size);
-    struct KmerChunk kc = {0, first_chunk};
-    chunks[chunks_len++] = std::move(kc);
-    
-    // auto second_chunk = alloc(true);
-    // memset(second_chunk, 0, chunk_size);
-    // struct KmerChunk kc1 = {0, nullptr};
-    // chunk = std::move(kc1); 
+    chunk_count = chunk_size / sizeof(Kmer) -
+                  1;  // subtract 1 because we keep track of count
+    alloc_kmerchunk();
   }
 
   void write_one(Kmer k) {
-    auto& last = chunks[chunks_len - 1];
+    KmerChunk last = chunks[chunks_len - 1];
     if (last.count == chunk_count) {
-        assert(false);
-      // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
-      auto chunk = alloc(false);
-      struct KmerChunk kc = {0, chunk};
-      assert(chunks_len <= MAX_CHUCKS);
-      chunks[chunks_len++] = (std::move(kc));
-      // return chunk;
+      if (!alloc_kmerchunk()) {
+        PLOG_FATAL << "Allocation of KmerChunk failed \n";
+      }
     }
-    last.kmers[last.count++] = k;
-    // return last.kmers + last.count;
+    last.kmers[last.count] = k;
+    last.count++;
   }
 
   Kmer* get_next() {
-    auto& last = chunks[chunks_len - 1];
+    KmerChunk last = chunks[chunks_len - 1];
     if (last.count >= chunk_count) {
-        assert(false);
-      // auto chunk = (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
-      auto chunk = alloc(false);
-      struct KmerChunk kc = {0, chunk};
-      assert(chunks_len <= MAX_CHUCKS);
-      chunks[chunks_len++] = (std::move(kc));
-      return chunk;
+      if (!alloc_kmerchunk()) {
+        PLOG_FATAL << "Allocation of KmerChunk failed \n";
+      }else 
+      {
+        return chunks[chunks_len - 1].kmers;
+      }
     }
-    return last.kmers + last.count;
+    return &last.kmers[last.count];
   }
 
-  Kmer* alloc(bool mset) {
-    // PLOGI.printf("start mmap, chunk_size: %llu", chunk_size);
+  bool alloc_kmerchunk() {
+    if (chunks_len >= MAX_CHUCKS) return false;
 
-    #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
-    uint huge = chunk_size < (1 << 20)? 0: MAP_HUGE_2MB;
-    auto addr = (Kmer*) aligned_alloc(CACHELINE_SIZE, chunk_size);
-    // auto addr = (Kmer*) mmap(nullptr, /* 256*1024*1024*/ chunk_size, PROT_READ | PROT_WRITE,
-            // huge | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    // PLOGI.printf("end mmap");
+    KmerChunk_t kc;
+    kc.count = 0;
+    kc.kmers = (Kmer*)alloc();
+
+    chunks[chunks_len] = std::move(kc);
+    chunks_len++;
+
+    return true;
+  }
+
+  Kmer* alloc() {
+#define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
+    uint huge = chunk_size < (1 << 20) ? 0 : MAP_HUGE_2MB;
+    auto addr = (Kmer*)aligned_alloc(CACHELINE_SIZE, chunk_size);
     if (addr == MAP_FAILED) {
       perror("mmap");
       exit(1);
-    } 
-    // if (mset) {
-    //     std::memset(addr, 0, chunk_size);
-    // }
+    }
     return addr;
-    // return (Kmer*)std::aligned_alloc(PAGESIZE, chunk_size);
   }
 
-  void advance() { 
-      // chunk.count += KMERSPERCACHELINE1;
-      chunks[chunks_len - 1].count += KMERSPERCACHELINE1; 
-  }
+  void advance() { chunks[chunks_len - 1].count += KMERSPERCACHELINE1; }
 };
 
 class RadixContext {
@@ -222,8 +208,7 @@ class RadixContext {
     parts = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
                                            fanOut * sizeof(uint64_t*));
 
-    partitions = std::vector<PartitionChunks*>(
-        num_threads, nullptr);
+    partitions = std::vector<PartitionChunks*>(num_threads, nullptr);
     // for (auto& p : partitions) {
     //   p.reserve(fanOut);
     // }
