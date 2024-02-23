@@ -102,158 +102,352 @@ struct alignas(64) cacheline {
 
 typedef uint64_t Kmer;
 
-typedef struct KmerChunk {
-  size_t count;
-  Kmer* kmers;
-} KmerChunk_t;
+/**
+ * Makes a non-temporal write of 64 bytes from src to dst.
+ * Uses vectorized non-temporal stores if available, falls
+ * back to assignment copy.
+ *
+ * @param dst
+ * @param src
+ *
+ * @return
+ */
+static inline void store_nontemp_64B(void* dst, void* src) {
+#ifdef __AVX__
+  register __m256i* d1 = (__m256i*)dst;
+  register __m256i s1 = *((__m256i*)src);
+  register __m256i* d2 = d1 + 1;
+  register __m256i s2 = *(((__m256i*)src) + 1);
 
-const uint64_t KMERSPERCACHELINE1 = (CACHELINE_SIZE / sizeof(Kmer));
-const uint64_t MAX_CHUCKS = 5;
+  _mm256_stream_si256(d1, s1);
+  _mm256_stream_si256(d2, s2);
 
-class PartitionChunks {
+#elif defined(__SSE2__)
+
+  register __m128i* d1 = (__m128i*)dst;
+  register __m128i* d2 = d1 + 1;
+  register __m128i* d3 = d1 + 2;
+  register __m128i* d4 = d1 + 3;
+  register __m128i s1 = *(__m128i*)src;
+  register __m128i s2 = *((__m128i*)src + 1);
+  register __m128i s3 = *((__m128i*)src + 2);
+  register __m128i s4 = *((__m128i*)src + 3);
+
+  _mm_stream_si128(d1, s1);
+  _mm_stream_si128(d2, s2);
+  _mm_stream_si128(d3, s3);
+  _mm_stream_si128(d4, s4);
+
+#else
+  /* just copy with assignment */
+  *(cacheline_t*)dst = *(cacheline_t*)src;
+
+#endif
+}
+
+#define KMERSPERCACHELINE (CACHE_LINE_SIZE / sizeof(Kmer))
+#define CACHELINEPERPAGE (PAGE_SIZE / CACHE_LINE_SIZE)
+
+// typedef union {
+//   struct {
+//     Kmer kmers[KMERSPERCACHELINE];
+//   } kmers;
+//   struct {
+//     Kmer kmers[KMERSPERCACHELINE - 1];
+//     uint32_t slot;
+//   } data;
+// } cacheline_t;
+
+typedef struct {
+  Kmer kmers[KMERSPERCACHELINE];
+} cacheline_t;
+
+typedef struct cacheblock {
+  cacheline_t* lines;
+  uint64_t count;
+  uint64_t max_count;
+  struct cacheblock* next;
+} cacheblock_t;
+
+class BufferedPartition {
  public:
-  size_t chunk_size;   // # bytes for a KmerChunk_t
-  size_t chunk_count;  // # kmer in a KmerChunk_t
-  KmerChunk_t chunks[MAX_CHUCKS];
-  uint64_t chunks_len = 0;  // # length of chunk array
+  uint64_t hint_max_line;
+  uint64_t hint_max_kmer;
 
-  PartitionChunks() = default;
+  uint64_t total_kmer_count;  // how many kmer is inserted
+  uint64_t total_line_count;  // how many line is occupied
 
-  PartitionChunks(size_t size_hint) {
-    // chuck size must be a multiple of CACHELINE_SIZE
-    chunk_size =
-        (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE * CACHELINE_SIZE * 3;
-    chunk_count = chunk_size / sizeof(Kmer) -
-                  1;  // subtract 1 because we keep track of count
-    alloc_kmerchunk();
+  uint8_t buffer_size;
+  uint8_t buffer_count;
+  cacheline_t buffer;
+
+  uint8_t blocks_count;
+  cacheblock_t* headblock_ptr;
+  cacheblock_t* tailblock_ptr;
+  bool non_temp;
+
+  BufferedPartition(size_t size_hint) {
+    buffer_size = KMERSPERCACHELINE;
+    non_temp = false;
+    hint_max_line = (size_hint + CACHE_LINE_SIZE - 1) / CACHE_LINE_SIZE;
+    hint_max_kmer = (size_hint + sizeof(Kmer) - 1) / sizeof(Kmer);
+    total_kmer_count = 0;
+    total_line_count = 0;
+    buffer_count = 0;
+    headblock_ptr = (cacheblock_t*)malloc(sizeof(cacheblock_t));
+    headblock_ptr->lines =
+        (cacheline_t*)malloc(sizeof(cacheline_t) * hint_max_line);
+    headblock_ptr->count = 0;
+    headblock_ptr->max_count = hint_max_line;
+    headblock_ptr->next = NULL;
+    tailblock_ptr = headblock_ptr;
+    blocks_count = 1;
   }
 
-  void write_one(Kmer k) {
-    KmerChunk last = chunks[chunks_len - 1];
-    if (last.count == chunk_count) {
-      if (!alloc_kmerchunk()) {
-        PLOG_FATAL << "Allocation of KmerChunk failed \n";
-      }
+  ~BufferedPartition() {
+    cacheblock_t* tmp;
+    int free_num = 0;
+    while (headblock_ptr != NULL) {
+      tmp = headblock_ptr;
+      headblock_ptr = headblock_ptr->next;
+      free(tmp->lines);
+      free(tmp);
+      free_num++;
     }
-    last.kmers[last.count] = k;
-    last.count++;
-  }
 
-  Kmer* get_next() {
-    KmerChunk last = chunks[chunks_len - 1];
-    if (last.count >= chunk_count) {
-      if (!alloc_kmerchunk()) {
-        PLOG_FATAL << "Allocation of KmerChunk failed \n";
-      }else 
-      {
-        return chunks[chunks_len - 1].kmers;
-      }
+    if (free_num != blocks_count) {
+      PLOG_FATAL.printf("free num %d, != blocks count %d\n", free_num, blocks_count);
     }
-    return &last.kmers[last.count];
   }
 
-  bool alloc_kmerchunk() {
-    if (chunks_len >= MAX_CHUCKS) return false;
+  void alloc_block(uint64_t max_line) {
+    if (headblock_ptr == NULL) return;
 
-    KmerChunk_t kc;
-    kc.count = 0;
-    kc.kmers = (Kmer*)alloc();
-
-    chunks[chunks_len] = std::move(kc);
-    chunks_len++;
-
-    return true;
-  }
-
-  Kmer* alloc() {
-#define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
-    uint huge = chunk_size < (1 << 20) ? 0 : MAP_HUGE_2MB;
-    auto addr = (Kmer*)aligned_alloc(CACHELINE_SIZE, chunk_size);
-    if (addr == MAP_FAILED) {
-      perror("mmap");
-      exit(1);
+    cacheblock_t* curr = headblock_ptr;
+    int i = 0;
+    while (i < (blocks_count - 1)) {
+      curr = curr->next;
+      i++;
     }
-    return addr;
+    cacheblock_t* new_block = (cacheblock_t*)malloc(sizeof(cacheblock_t));
+    new_block->lines = (cacheline_t*)malloc(sizeof(cacheline_t) * max_line);
+    new_block->count = 0;
+    new_block->max_count = max_line;
+    new_block->next = NULL;
+    curr->next = new_block;
+    tailblock_ptr = new_block;
+    blocks_count++;
   }
 
-  void advance() { chunks[chunks_len - 1].count += KMERSPERCACHELINE1; }
+  cacheblock_t* get_block(uint64_t block_idx) {
+    cacheblock_t* curr = headblock_ptr;
+    while (block_idx > 0) {
+      curr = curr->next;
+      block_idx--;
+    }
+    return curr;
+  }
+
+  Kmer get_kmer(uint64_t block_idx, uint64_t line_idx, uint64_t index) {
+    if (index >= KMERSPERCACHELINE || line_idx >= hint_max_line ||
+        block_idx >= blocks_count)
+      return 0;
+
+    cacheblock_t* curr = headblock_ptr;
+    while (block_idx > 0) {
+      curr = curr->next;
+      block_idx--;
+    }
+
+    if (line_idx >= curr->count) return 0;
+    return curr->lines[line_idx].kmers[index];
+  }
+
+  void write_kmer(Kmer kmer) {
+    if (buffer_count >= buffer_size) {
+      write_line(buffer_size);
+      buffer_count = 0;
+    }
+    buffer.kmers[buffer_count] = kmer;
+    buffer_count++;
+  }
+
+  void flush_buffer() {
+    if (buffer_count > 0) write_line(buffer_count);
+  }
+
+  void write_line(uint64_t num_kmer) {
+    if (tailblock_ptr->count >= tailblock_ptr->max_count) {
+      alloc_block(PAGE_SIZE / CACHE_LINE_SIZE);
+    }
+
+    tailblock_ptr->lines[tailblock_ptr->count] = buffer;
+    tailblock_ptr->count++;
+    total_kmer_count += num_kmer;
+    total_line_count++;
+  }
 };
 
+// typedef struct KmerChunk {
+//   size_t count;
+//   Kmer* kmers;
+// } KmerChunk_t;
+
+// const uint64_t MAX_CHUCKS = 2;
+// #define DEFAULT_CACHELINE_IN_CHUNK 3
+
+// class PartitionChunks {
+//  public:
+//   size_t chunk_size;   // max bytes in a KmerChunk_t.kmer, multiple of
+//   cacheline size size_t chunk_count;  // max kmers in a KmerChunk_t.kmer
+//   KmerChunk_t chunks[MAX_CHUCKS];
+//   uint64_t chunks_len = 0;  // number of chunks in chunk array.
+
+//   PartitionChunks() = default;
+
+//   PartitionChunks(size_t size_hint) {
+//     // chuck size must be a multiple of CACHELINE_SIZE
+//     chunk_size = (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE *
+//     CACHELINE_SIZE; chunk_count = chunk_size / sizeof(Kmer);  // subtract 1
+//     because we keep track of count alloc_kmerchunk();
+//   }
+
+//   void write_one(Kmer k) {
+//     KmerChunk last = chunks[chunks_len - 1];
+//     if (last.count == chunk_count) {
+//       if (!alloc_kmerchunk()) {
+//         PLOG_FATAL << "Allocation of KmerChunk failed \n";
+//       }
+//     }
+//     last.kmers[last.count] = k;
+//     last.count++;
+//   }
+
+//   Kmer* get_next() {
+//     KmerChunk last = chunks[chunks_len - 1];
+//     if (last.count >= chunk_count) {
+//       if (!alloc_kmerchunk()) {
+//         PLOG_FATAL << "Allocation of KmerChunk failed \n";
+//       }else
+//       {
+//         return chunks[chunks_len - 1].kmers;
+//       }
+//     }
+//     return &last.kmers[last.count];
+//   }
+
+//   /**
+//    * allocate a new kmerChunk and put into chunk array.
+//   */
+//   bool alloc_kmerchunk() {
+//     if (chunks_len >= MAX_CHUCKS) return false;
+
+//     KmerChunk_t kc;
+//     kc.count = 0;
+//     kc.kmers = (Kmer*)alloc_kmer();
+
+//     chunks[chunks_len] = std::move(kc);
+//     chunks_len++;
+
+//     return true;
+//   }
+
+//   Kmer* alloc_kmer() {
+
+//     // #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
+//     // uint huge = chunk_size < (1 << 20) ? 0 : MAP_HUGE_2MB;
+
+//     auto addr = (Kmer*)aligned_alloc(CACHELINE_SIZE, chunk_size);
+//     if (addr == MAP_FAILED) {
+//       PLOG_FATAL << "mmap failed";
+//       exit(1);
+//     }
+//     return addr;
+//   }
+
+//   void advance() { chunks[chunks_len - 1].count += KMERSPERCACHELINE1; }
+// };
+
+
+  
 class RadixContext {
  public:
-  uint64_t** hists;
-  uint64_t** parts;
-  std::vector<PartitionChunks*> partitions;
-  // Radix shift
+  // uint64_t** hists;
+  // uint64_t** parts;
+  // std::vector<PartitionChunks*> partitions;
+  // uint32_t hashmaps_per_thread;
+  // uint32_t nthreads_d;
+  // std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> hashmaps;
+
+  BufferedPartition*** partitions;  // partitions[thread_id][radix_bin_num]
   uint8_t R;
-  // Radix bits
   uint8_t D;
   uint32_t fanOut;
   uint64_t mask;
-  // How many hash map does a thread have
-  uint32_t hashmaps_per_thread;
-  // floor(log(num_threads))
-  uint32_t nthreads_d;
   uint64_t global_time;
-  std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> hashmaps;
+  uint64_t threads_num;
+  uint64_t size_hint;
 
-  RadixContext(uint8_t d, uint8_t r, uint32_t num_threads)
+
+  ~RadixContext() {
+    free(partitions);
+  }
+
+  RadixContext(uint8_t d, uint8_t r, uint32_t num_threads, uint64_t filesize)
       : R(r),
         D(d),
         fanOut(1 << d),
         mask(((1 << d) - 1) << r),
         global_time(_rdtsc()) {
-    hists = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
-                                           fanOut * sizeof(uint64_t*));
-    parts = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
-                                           fanOut * sizeof(uint64_t*));
+    threads_num = num_threads;
+    partitions = (BufferedPartition***) malloc(sizeof(void*) * num_threads);
+    size_hint = filesize / num_threads;
+    // hists = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
+    //                                        fanOut * sizeof(uint64_t*));
+    // parts = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
+    //                                        fanOut * sizeof(uint64_t*));
 
-    partitions = std::vector<PartitionChunks*>(num_threads, nullptr);
-    // for (auto& p : partitions) {
-    //   p.reserve(fanOut);
+    // partitions = std::vector<PartitionChunks*>(num_threads, nullptr);
+
+    //   nthreads_d = 0;
+    //   while ((1 << (1 + nthreads_d)) <= num_threads) {
+    //     nthreads_d++;
+    //   }
+    //   auto gather_threads = 1 << nthreads_d;
+    //   if (fanOut <= num_threads) {
+    //     hashmaps_per_thread = 1;
+    //   } else {
+    //     hashmaps_per_thread = 1 << (d - nthreads_d);
+    //   }
+    //   PLOGI.printf("hashmaps_per_thread: %d", hashmaps_per_thread);
+    //   std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(
+    //       gather_threads);
+    //   for (int i = 0; i < gather_threads; i++) {
+    //     maps[i].reserve(hashmaps_per_thread);
+    //   }
+    //   hashmaps = maps;
     // }
 
-    nthreads_d = 0;
-    while ((1 << (1 + nthreads_d)) <= num_threads) {
-      nthreads_d++;
-    }
-    auto gather_threads = 1 << nthreads_d;
-    if (fanOut <= num_threads) {
-      hashmaps_per_thread = 1;
-    } else {
-      hashmaps_per_thread = 1 << (d - nthreads_d);
-    }
-    PLOGI.printf("hashmaps_per_thread: %d", hashmaps_per_thread);
-    std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(
-        gather_threads);
-    for (int i = 0; i < gather_threads; i++) {
-      maps[i].reserve(hashmaps_per_thread);
-    }
-    hashmaps = maps;
-    // for (uint32_t i = 0; i < num_threads; i++) {
-    //     hists[i] = (uint32_t*) std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
-    //     sizeof(uint32_t)); partitions[i] =
-    //     (uint64_t*)std::aligned_alloc(CACHE_LINE_SIZE, fanOut *
-    //     sizeof(uint64_t*));
-    // }
+    // absl::flat_hash_map<Kmer, uint64_t> aggregate() const {
+    //   absl::flat_hash_map<Kmer, uint64_t> aggregation;
+    //   for (int i = 0; i < (1 << nthreads_d); i++) {
+    //     for (int j = 0; j < hashmaps_per_thread; j++) {
+    //       auto map = hashmaps[i][j];
+    //       for (const auto& entry : map) {
+    //         auto key = entry.first;
+    //         auto val = entry.second;
+    //         assert(!aggregation.contains(key));
+    //         aggregation[key] = val;
+    //       }
+    //     }
+    //   }
+    //   return aggregation;
   }
 
-  absl::flat_hash_map<Kmer, uint64_t> aggregate() const {
-    absl::flat_hash_map<Kmer, uint64_t> aggregation;
-    for (int i = 0; i < (1 << nthreads_d); i++) {
-      for (int j = 0; j < hashmaps_per_thread; j++) {
-        auto map = hashmaps[i][j];
-        for (const auto& entry : map) {
-          auto key = entry.first;
-          auto val = entry.second;
-          assert(!aggregation.contains(key));
-          aggregation[key] = val;
-        }
-      }
-    }
-    return aggregation;
-  }
+  
 
+
+  
   RadixContext() = default;
 };
 

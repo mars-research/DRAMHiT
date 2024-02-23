@@ -19,7 +19,7 @@ class Application {
   std::vector<std::thread> threads;
   Shard *shards;
   MsrHandler *msr_ctrl;
-  RadixContext radixContext;
+  RadixContext *radixContext;
 
  public:
   std::vector<numa_node> nodes;

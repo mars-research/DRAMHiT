@@ -111,6 +111,7 @@ class FastqReader : public FileReader {
   }
 };
 
+
 /// Reads KMers from a Fastq file.
 template <size_t K>
 class FastqKMerReader : public InputReaderU64 {

@@ -16,16 +16,21 @@ class KmerTest {
   void count_kmer(Shard *sh, const Configuration &config, BaseHashTable *ht,
                   std::barrier<VoidFn> *barrier);
 
-  void count_kmer_radix(Shard *sh, const Configuration &config,
-                        std::barrier<VoidFn> *barrier, RadixContext &context);
+//   void count_kmer_radix(Shard *sh, const Configuration &config,
+//                         std::barrier<VoidFn> *barrier, RadixContext &context);
                         
-  void count_kmer_radix_custom(Shard *sh, const Configuration &config,
-                               std::barrier<VoidFn> *barrier,
-                               RadixContext &context);
+//   void count_kmer_radix_custom(Shard *sh, const Configuration &config,
+//                                std::barrier<VoidFn> *barrier,
+//                                RadixContext &context);
 
-  void count_kmer_radix_jerry(Shard *sh, const Configuration &config,
-                              std::barrier<VoidFn> *barrier,
-                               RadixContext &context, BaseHashTable *ht);
+//   void count_kmer_radix_partition(Shard *sh, const Configuration &config,
+//                               std::barrier<VoidFn> *barrier,
+//                                RadixContext &context, BaseHashTable *ht);
+
+
+    void count_kmer_radix_partition_global(Shard* sh, const Configuration& config,
+                            std::barrier<VoidFn>* barrier,
+                            RadixContext* context, BaseHashTable* ht);
 };
 
 }  // namespace kmercounter

@@ -165,6 +165,7 @@ void free_ht(BaseHashTable *kmer_ht) {
 
 void Application::shard_thread(int tid,
                                std::barrier<std::function<void()>> *barrier) {
+
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -210,6 +211,7 @@ void Application::shard_thread(int tid,
 
   while (num_entered != config.num_threads) _mm_pause();
 
+  
   switch (config.mode) {
     case SYNTH:
       this->test.st.synth_run_exec(sh, kmer_ht);
@@ -232,11 +234,14 @@ void Application::shard_thread(int tid,
       this->test.hj.join_relations_generated(sh, config, kmer_ht,
                                              config.materialize, barrier);
       break;
-    case FASTQ_WITH_INSERT_RADIX:
-      this->test.kmer.count_kmer_radix_jerry(sh, config, barrier,
-                                              this->radixContext, kmer_ht);
+    case FASTQ_WITH_INSERT_RADIX: 
+      PLOG_INFO << "Running radix ";
+      this->test.kmer.count_kmer_radix_partition_global(sh, config, barrier,
+                                            this->radixContext, kmer_ht);
+      
       break;
     case FASTQ_WITH_INSERT:
+      PLOG_INFO << "Running Kmer ";
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
     default:
@@ -244,18 +249,18 @@ void Application::shard_thread(int tid,
   }
 
   // Write to file
-  if (!config.ht_file.empty()) {
-    // for CAS hashtable, not every thread has to write to file
-    if (config.ht_type == CASHTPP && (sh->shard_idx > 0)) {
-      goto done;
-    }
-    std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
-    PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
-                     outfile.c_str());
-    kmer_ht->print_to_file(outfile);
-  }
+  // if (!config.ht_file.empty()) {
+  //   // for CAS hashtable, not every thread has to write to file
+  //   if (config.ht_type == CASHTPP && (sh->shard_idx > 0)) {
+  //     goto done;
+  //   }
+  //   std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
+  //   PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
+  //                    outfile.c_str());
+  //   kmer_ht->print_to_file(outfile);
+  // }
 
-  // free_ht(kmer_ht);
+  free_ht(kmer_ht);
 
 done:
   --num_entered;
@@ -331,7 +336,7 @@ int Application::spawn_shard_threads() {
     CPU_ZERO(&cpuset);
     CPU_SET(assigned_cpu, &cpuset);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    PLOGV.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
+    PLOG_INFO.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
     this->threads.push_back(std::move(_thread));
     i += 1;
   }
@@ -357,7 +362,7 @@ int Application::spawn_shard_threads() {
     }
   }
   if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
-    print_stats(this->shards, config);
+     print_stats(this->shards, config);
   }
 
   std::free(this->shards);
@@ -554,16 +559,12 @@ int Application::process(int argc, char *argv[]) {
         exit(-1);
       }
     } else if (config.mode == FASTQ_WITH_INSERT_RADIX) {
-      PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX");
       auto nthreads = config.num_threads;
-      this->radixContext = RadixContext(config.D, 0, nthreads);
+      this->radixContext = new RadixContext(config.D, 0, nthreads, get_file_size(config.in_file.c_str()));
 
       PLOG_INFO.printf(
-          "Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u, multiplier: %u, "
-          "nthreads_d: %u",
-          config.D, this->radixContext.fanOut,
-          this->radixContext.hashmaps_per_thread,
-          this->radixContext.nthreads_d);
+          "Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u",
+          config.D, this->radixContext->fanOut);
       if (config.in_file.empty()) {
         PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
@@ -626,16 +627,16 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  // Dump hwprefetchers msr - Needs msr-safe driver
-  // (use scripts/enable_msr_safe.sh)
-  auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
-  printf("MSR 0x1a4 has: { ");
-  for (const auto &e : rdmsr_set) {
-    printf("0x%lx ", e);
-  }
-  printf("}\n");
+  // // Dump hwprefetchers msr - Needs msr-safe driver
+  // // (use scripts/enable_msr_safe.sh)
+  // auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
+  // printf("MSR 0x1a4 has: { ");
+  // for (const auto &e : rdmsr_set) {
+  //   printf("0x%lx ", e);
+  // }
+  // printf("}\n");
 
-  config.dump_configuration();
+  // config.dump_configuration();
 
   if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT) ||
       (config.mode == FASTQ_WITH_INSERT_RADIX)) {
