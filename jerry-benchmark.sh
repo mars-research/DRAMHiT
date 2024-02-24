@@ -23,7 +23,7 @@ function bench_radix()
     --num-threads 1 \
     --ht-size 8589934592 \
     --in-file /opt/dramhit/kmer_dataset/SRR1513870.fastq \
-    --k 8 --d 6 > jerry_benchmark_radix.log
+    --k 8 --d 2 > jerry_benchmark_radix.log
 }
 
 function debug() 

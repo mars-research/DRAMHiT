@@ -401,46 +401,47 @@ uint64_t radix_partition( RadixContext* context,
 
     string_view sv; 
     const char* data;
-    int max = 100;
     uint64_t hash_val = 0; 
     uint32_t partition_idx = 0; 
 
-    while(reader.next(&sv) && max >= 0)
+    while(reader.next(&sv))
     {
       size_t len = sv.size();
 
       for(int i=0; i<(len-k+1); i++) {
         data = sv.substr(i, k).data();
         hash_val = crc_hash64(data, k);
-        partition_idx = HASH_BIT_MODULO(hash_val, mask, R);
+        partition_idx = (uint32_t)HASH_BIT_MODULO(hash_val, mask, R);
         if (partition_idx < fanOut)
         {
           local_partitions[partition_idx]->write_kmer(packkmer(data, k));
           totol_kmer_part++;
         }
         else
+        {
           PLOG_FATAL << "partition index too big";
+        }
       }
     }
 
     // flush the cacheline buffer.
     for(int i=0; i<fanOut; i++)
-      local_partitions[partition_idx]->flush_buffer();
+      local_partitions[i]->flush_buffer();
 
     // pass the partitions into global lookup table, so other threads can gather.
-    context->partitions[id] = local_partitions; 
+    context->partitions[id] = local_partitions;
 
     uint64_t tt_count = 0; 
-    uint64_t count = 0; 
+    uint64_t count = 0;
     for(int i=0; i<fanOut; i++)
     {
       count = local_partitions[i]->total_kmer_count;
       tt_count += count;
-      PLOG_INFO.printf("Thread id: %d partition [%d], kmer count [%d]", id, i, count);
+      printf("Thread id: %d partition [%d], kmer count [%lu] \n", id, i, count);
     }
 
     if(tt_count != totol_kmer_part) 
-      PLOG_FATAL.printf("total count %d doesn match total partition count %d ", tt_count, totol_kmer_part); 
+      printf("total count %lu doesn match total partition count %lu \n", tt_count, totol_kmer_part); 
     return totol_kmer_part;
   }
 
@@ -460,13 +461,13 @@ void KmerTest::count_kmer_radix_partition_global(Shard* sh,
   BufferedPartition** local_partitions = (BufferedPartition**)malloc(array_size);
   for (int i = 0; i < fanOut; i++)
       local_partitions[i] = new BufferedPartition(context->size_hint);
-  PLOG_INFO.printf("LRadix FASTQ INSERT Initialization finished %d", shard_idx);
+  PLOG_INFO.printf("Radix FASTQ INSERT Initialization finished %d", shard_idx);
   
   barrier->arrive_and_wait();
   
   PLOG_INFO.printf("Radix Partition started %d", shard_idx);
   uint64_t total_kmers_part = radix_partition(context, local_partitions, seq_reader, shard_idx, config.K);
-  PLOG_INFO.printf("Radix Partition finished: %d total parititon: %d", shard_idx, total_kmers_part);
+  PLOG_INFO.printf("Radix Partition finished: %d total parititon: %lu", shard_idx, total_kmers_part);
 
   barrier->arrive_and_wait();
 
@@ -499,7 +500,7 @@ void KmerTest::count_kmer_radix_partition_global(Shard* sh,
   }
   batch_runner.flush_insert();
 
-  PLOG_INFO.printf("Insertion finished: %d total insertion: %d", shard_idx , total_insertion);
+  PLOG_INFO.printf("Insertion finished: %d total insertion: %lu", shard_idx , total_insertion);
   
   barrier->arrive_and_wait();
 
