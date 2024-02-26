@@ -288,85 +288,6 @@ class BufferedPartition {
   }
 };
 
-// typedef struct KmerChunk {
-//   size_t count;
-//   Kmer* kmers;
-// } KmerChunk_t;
-
-// const uint64_t MAX_CHUCKS = 2;
-// #define DEFAULT_CACHELINE_IN_CHUNK 3
-
-// class PartitionChunks {
-//  public:
-//   size_t chunk_size;   // max bytes in a KmerChunk_t.kmer, multiple of
-//   cacheline size size_t chunk_count;  // max kmers in a KmerChunk_t.kmer
-//   KmerChunk_t chunks[MAX_CHUCKS];
-//   uint64_t chunks_len = 0;  // number of chunks in chunk array.
-
-//   PartitionChunks() = default;
-
-//   PartitionChunks(size_t size_hint) {
-//     // chuck size must be a multiple of CACHELINE_SIZE
-//     chunk_size = (size_hint + CACHELINE_SIZE - 1) / CACHELINE_SIZE *
-//     CACHELINE_SIZE; chunk_count = chunk_size / sizeof(Kmer);  // subtract 1
-//     because we keep track of count alloc_kmerchunk();
-//   }
-
-//   void write_one(Kmer k) {
-//     KmerChunk last = chunks[chunks_len - 1];
-//     if (last.count == chunk_count) {
-//       if (!alloc_kmerchunk()) {
-//         PLOG_FATAL << "Allocation of KmerChunk failed \n";
-//       }
-//     }
-//     last.kmers[last.count] = k;
-//     last.count++;
-//   }
-
-//   Kmer* get_next() {
-//     KmerChunk last = chunks[chunks_len - 1];
-//     if (last.count >= chunk_count) {
-//       if (!alloc_kmerchunk()) {
-//         PLOG_FATAL << "Allocation of KmerChunk failed \n";
-//       }else
-//       {
-//         return chunks[chunks_len - 1].kmers;
-//       }
-//     }
-//     return &last.kmers[last.count];
-//   }
-
-//   /**
-//    * allocate a new kmerChunk and put into chunk array.
-//   */
-//   bool alloc_kmerchunk() {
-//     if (chunks_len >= MAX_CHUCKS) return false;
-
-//     KmerChunk_t kc;
-//     kc.count = 0;
-//     kc.kmers = (Kmer*)alloc_kmer();
-
-//     chunks[chunks_len] = std::move(kc);
-//     chunks_len++;
-
-//     return true;
-//   }
-
-//   Kmer* alloc_kmer() {
-
-//     // #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
-//     // uint huge = chunk_size < (1 << 20) ? 0 : MAP_HUGE_2MB;
-
-//     auto addr = (Kmer*)aligned_alloc(CACHELINE_SIZE, chunk_size);
-//     if (addr == MAP_FAILED) {
-//       PLOG_FATAL << "mmap failed";
-//       exit(1);
-//     }
-//     return addr;
-//   }
-
-//   void advance() { chunks[chunks_len - 1].count += KMERSPERCACHELINE1; }
-// };
 
 
   
@@ -402,52 +323,8 @@ class RadixContext {
     threads_num = num_threads;
     partitions = (BufferedPartition***) malloc(sizeof(void*) * num_threads);
     size_hint = filesize / num_threads;
-    // hists = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
-    //                                        fanOut * sizeof(uint64_t*));
-    // parts = (uint64_t**)std::aligned_alloc(CACHELINE_SIZE,
-    //                                        fanOut * sizeof(uint64_t*));
-
-    // partitions = std::vector<PartitionChunks*>(num_threads, nullptr);
-
-    //   nthreads_d = 0;
-    //   while ((1 << (1 + nthreads_d)) <= num_threads) {
-    //     nthreads_d++;
-    //   }
-    //   auto gather_threads = 1 << nthreads_d;
-    //   if (fanOut <= num_threads) {
-    //     hashmaps_per_thread = 1;
-    //   } else {
-    //     hashmaps_per_thread = 1 << (d - nthreads_d);
-    //   }
-    //   PLOGI.printf("hashmaps_per_thread: %d", hashmaps_per_thread);
-    //   std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> maps(
-    //       gather_threads);
-    //   for (int i = 0; i < gather_threads; i++) {
-    //     maps[i].reserve(hashmaps_per_thread);
-    //   }
-    //   hashmaps = maps;
-    // }
-
-    // absl::flat_hash_map<Kmer, uint64_t> aggregate() const {
-    //   absl::flat_hash_map<Kmer, uint64_t> aggregation;
-    //   for (int i = 0; i < (1 << nthreads_d); i++) {
-    //     for (int j = 0; j < hashmaps_per_thread; j++) {
-    //       auto map = hashmaps[i][j];
-    //       for (const auto& entry : map) {
-    //         auto key = entry.first;
-    //         auto val = entry.second;
-    //         assert(!aggregation.contains(key));
-    //         aggregation[key] = val;
-    //       }
-    //     }
-    //   }
-    //   return aggregation;
   }
 
-  
-
-
-  
   RadixContext() = default;
 };
 
