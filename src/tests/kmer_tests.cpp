@@ -17,11 +17,13 @@
 #include "types.hpp"
 
 namespace kmercounter {
+
+
 void KmerTest::count_kmer(Shard* sh, const Configuration& config,
                           BaseHashTable* ht, std::barrier<VoidFn>* barrier) {
   // Be care of the `K` here; it's a compile time constant.
-  auto reader = input_reader::MakeFastqKMerPreloadReader(
-      config.K, config.in_file, sh->shard_idx, config.num_threads);
+  auto reader = input_reader::FastqReader(
+      config.in_file, sh->shard_idx, config.num_threads);
   HTBatchRunner batch_runner(ht);
 
   // Wait for all readers finish initializing.
@@ -39,11 +41,28 @@ void KmerTest::count_kmer(Shard* sh, const Configuration& config,
     start_cycles = _rdtsc();
   }
 
-  // Inser Kmers into hashtable
-  for (uint64_t kmer; reader->next(&kmer);) {
-    batch_runner.insert(kmer, 0 /* we use the aggr tables so no value */);
-    num_kmers++;
+  string_view sv; 
+  const char* data;
+  Kmer kmer;
+  uint32_t k = config.K;
+
+  while(reader.next(&sv))
+  {
+    size_t len = sv.size();
+
+    for(int i=0; i<(len-k+1); i++) {
+        data = sv.substr(i, k).data();
+        kmer = packkmer(data, k); 
+        batch_runner.insert(kmer, 0 /* we use the aggr tables so no value */);
+        num_kmers++;
+    }
   }
+
+  // // Inser Kmers into hashtable
+  // for (uint64_t kmer; reader->next(&kmer);) {
+  //   batch_runner.insert(kmer, 0 /* we use the aggr tables so no value */);
+  //   num_kmers++;
+  // }
   batch_runner.flush_insert();
   barrier->arrive_and_wait();
 
