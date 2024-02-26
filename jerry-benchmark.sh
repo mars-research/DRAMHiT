@@ -32,7 +32,7 @@ function debug()
 }
 
 function bench() {
-    bench_radix
+    #bench_radix
     bench_regular
 }
 
