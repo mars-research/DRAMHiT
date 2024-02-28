@@ -235,13 +235,11 @@ void Application::shard_thread(int tid,
                                              config.materialize, barrier);
       break;
     case FASTQ_WITH_INSERT_RADIX: 
-      PLOG_INFO << "Running radix ";
       this->test.kmer.count_kmer_radix_partition_global(sh, config, barrier,
                                             this->radixContext, kmer_ht);
       
       break;
     case FASTQ_WITH_INSERT:
-      PLOG_INFO << "Running Kmer ";
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
     default:
@@ -629,12 +627,12 @@ int Application::process(int argc, char *argv[]) {
 
   // // Dump hwprefetchers msr - Needs msr-safe driver
   // // (use scripts/enable_msr_safe.sh)
-  // auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
-  // printf("MSR 0x1a4 has: { ");
-  // for (const auto &e : rdmsr_set) {
-  //   printf("0x%lx ", e);
-  // }
-  // printf("}\n");
+  auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
+  printf("MSR 0x1a4 (hw-prefetcher has: { ");
+  for (const auto &e : rdmsr_set) {
+     printf("0x%lx ", e);
+  }
+  printf("} 0xf is disable 0x0 is enable.\n");
 
   // config.dump_configuration();
 

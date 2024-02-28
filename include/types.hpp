@@ -320,9 +320,14 @@ class RadixContext {
         fanOut(1 << d),
         mask(((1 << d) - 1) << r),
         global_time(_rdtsc()) {
+
+    if(fanOut < num_threads) 
+    {
+        PLOG_FATAL << "fanout must be multiple of num threads"; 
+    }
     threads_num = num_threads;
     partitions = (BufferedPartition***) malloc(sizeof(void*) * num_threads);
-    size_hint = filesize / num_threads;
+    size_hint = filesize / (num_threads * fanOut); // hint per partition.
   }
 
   RadixContext() = default;
