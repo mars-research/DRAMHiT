@@ -24,7 +24,7 @@ All the dependencies should be available in the nix shell now.
 
 #### Option 2: Manual installation.
 ```bash
-sudo apt install libnuma-dev libboost-program-options-dev cmake
+sudo apt install libnuma-dev libboost-program-options-dev cmake libabsl-dev libcapstone-dev
 ```
 
 ### Setup the machine

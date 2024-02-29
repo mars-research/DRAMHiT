@@ -41,6 +41,7 @@ constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / KV_SIZE;
 
 const size_t MAX_PARTITIONS = 64;
 
+#ifdef AVX_SUPPORT
 // cacheline
 //       <------------------------ cacheline ------------------------->
 //       || val3 | key3 || val2 | key2 || val1 | key1 || val0 | key0 ||
@@ -87,6 +88,7 @@ const __m512i empty_key_vector = _mm512_setzero_si512();
 auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
   return key_cmp(cacheline, empty_key_vector, cidx);
 };
+#endif
 
 }  // unnamed namespace
 
@@ -247,6 +249,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->hashtable[this->id] = nullptr;
   }
 
+#ifdef AVX_SUPPORT
   // FIXME: shares a lot of code with __insert_branchless_simd
   void __insert_noprefetch_simd(const void *data) {
     KVQ *q = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
@@ -444,6 +447,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
     return;
   }
+#endif 
 
   void __insert_noprefetch_branched(const void *data, collector_type* collector) {
     KVQ *key_data = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
@@ -499,7 +503,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     if constexpr (branching == BRANCHKIND::WithBranch) {
       __insert_noprefetch_branched(data, collector);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      __insert_noprefetch_simd(data);
+      #ifdef AVX_SUPPORT
+        __insert_noprefetch_simd(data);
+      #else
+        __insert_noprefetch_branched(data, collector);
+      #endif 
     }
   }
 
@@ -813,7 +821,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 
     return found;
   }
-
+#ifdef AVX_SUPPORT
   uint64_t __find_branchless_simd(KVQ *q, ValuePairs &vp) {
     static_assert(sizeof(KV) == KV_SIZE);
 
@@ -897,6 +905,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
     return found;
   }
+#endif
+
 
   auto __find_one(KVQ *q, ValuePairs &vp, collector_type* collector) {
     if (q->key == this->empty_item.get_key()) {
@@ -908,7 +918,13 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
       return __find_branchless_cmov(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-      return __find_branchless_simd(q, vp);
+
+      #ifdef AVX_SUPPORT
+        return __find_branchless_simd(q, vp);
+      #else
+        return __find_branchless_cmov(q, vp);
+      #endif
+      
     }
   }
 
@@ -1000,6 +1016,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
   }
 
+#ifdef AVX_SUPPORT
   void __insert_branchless_simd(KVQ *q) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
@@ -1219,6 +1236,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
 #endif
     return;
   }
+#endif
 
   void __insert_one(KVQ *q, collector_type* collector) {
     if (q->key == this->empty_item.get_key()) {
@@ -1235,7 +1253,11 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
         __insert_branchless_cmov(q);
       } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
-        __insert_branchless_simd(q);
+        #ifdef AVX_SUPPORT
+          __insert_branchless_simd(q); 
+        #else 
+          __insert_branchless_cmov(q);
+        #endif
       }
     }
   }

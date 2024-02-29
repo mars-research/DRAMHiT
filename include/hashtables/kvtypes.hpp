@@ -504,6 +504,12 @@ struct Item {
     return success;
   }
 
+  inline uint16_t insert_or_update_v2(const void *data) {
+    PLOG_FATAL << "Not implemented";
+    assert(false);
+    return -1;
+  }
+
   inline bool update_cas(queue *elem) {
     auto ret = false;
     uint64_t old_val;

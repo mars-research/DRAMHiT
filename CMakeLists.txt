@@ -19,6 +19,8 @@ option(CALC_STATS "Enable hashtable statistics" OFF)
 option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 option(BQ_KMER_TEST "Bqueue kmer test" OFF)
+option(AVX_SUPPORT "SIMD" ON)
+
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -117,8 +119,21 @@ else()
     message(WARNING "Hasher type selected was: ${HASHER}")
 endif()
 
+if(AVX_SUPPORT)
+    message(WARNING "SIMD ON")
+    add_definitions(-DAVX_SUPPORT)
+else()
+    message(WARNING "SIMD OFF")
+endif() 
+
 set(branch_types simd cmov branched)
-set(BRANCH branched CACHE STRING "Branch style")
+
+if(AVX_SUPPORT)
+    set(BRANCH branched CACHE STRING "Branch style")
+else()
+    set(BRANCH cmov CACHE STRING "Branch style")
+endif() 
+
 set_property(CACHE BRANCH PROPERTY STRINGS ${branch_types})
 if (NOT BRANCH IN_LIST branch_types)
     message(FATAL_ERROR "branching type must be one of: ${branch_types}")
