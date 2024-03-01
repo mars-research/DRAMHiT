@@ -67,7 +67,7 @@ cmake --build build/
 
 ### Run
 ```
-./build/kmercounter
+sudo ./build/dramhit
 ```
 
 ### Test
