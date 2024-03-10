@@ -29,7 +29,7 @@ void pollute()
 }
 
 // Function to perform software prefetching
-void prefetch(const int *ptr) {
+void prefetch(const uint64_t *ptr) {
     _mm_prefetch((const char*) ptr, _MM_HINT_T0);
 }
 
@@ -180,77 +180,69 @@ void test3()
 }
 
 typedef struct {
-    unsigned long long cycles;  
-    unsigned long long op_count; 
-    unsigned long long inner_total_cycle; 
-
+    uint64_t cycles;  
+    uint64_t op_count; 
     uint64_t cpo;
 } stats_t; 
+
+
+uint64_t rdtsc() {
+    uint32_t low, high;
+    __asm__ volatile ("mfence\n\trdtsc" : "=a" (low), "=d" (high));
+    return ((uint64_t)high << 32) | low;
+}
 
 void seq_read_random_write(uint64_t* src, uint64_t src_len, uint64_t* dst, uint64_t dst_len, stats_t* stat)
 {
     srand(time(NULL));
-    unsigned long long start_cycle; 
-    unsigned long long end_cycle; 
-    unsigned long long cycles; 
+    uint64_t start_cycle; 
+    uint64_t end_cycle; 
+    uint64_t cycles = 0; 
 
-    unsigned long long op_count = 0;
+    uint64_t op_count = 0;
     for (int i = 0; i < src_len; i++) {
         src[i] = 1;
     }
     
     pollute(); 
-    start_cycle = __rdtsc();
+
+    uint64_t index;
+    uint64_t* src_addr;
+    uint64_t* dst_addr;
     for (int i = 0; i < src_len; i++) {
-        dst[(rand() % dst_len)] = src[i]; 
+
+        index = rand() % dst_len;
+
+        src_addr = &src[i]; 
+        dst_addr = &dst[index];
+
+        start_cycle = rdtsc();
+        *dst_addr = *src_addr;
+        end_cycle = rdtsc();
+
+
+        // printf("start: %lu, end: %lu, interval: %lu\n", start_cycle, end_cycle, end_cycle-start_cycle); 
+
+        cycles += (end_cycle - start_cycle); 
         op_count++;
     }
-    end_cycle = __rdtsc();
-
-    cycles = end_cycle - start_cycle;
      
-    stat->cycles += cycles; 
-    stat->op_count += op_count;
-    stat->cpo +=  (uint64_t) (cycles / op_count); 
+    stat->cycles = cycles; 
+    stat->op_count = op_count;
+    stat->cpo =  (uint64_t) (cycles / op_count); 
     // printf("r/w - cycles: %llu, write: %llu, cpo: %lu \n", cycles, op_count, (uint64_t) (cycles / op_count)); 
 }
 
-/**
-size: 16, shift: 4, cpo: 173 
-size: 32, shift: 5, cpo: 140 
-size: 64, shift: 6, cpo: 119 
-size: 128, shift: 7, cpo: 108 
-size: 256, shift: 8, cpo: 104 
-size: 512, shift: 9, cpo: 121 
-size: 1024, shift: 10, cpo: 113 
-size: 2048, shift: 11, cpo: 113 
-size: 4096, shift: 12, cpo: 100 
-size: 8192, shift: 13, cpo: 110 
-size: 16384, shift: 14, cpo: 108 
-size: 32768, shift: 15, cpo: 108 
-size: 65536, shift: 16, cpo: 108 
-size: 131072, shift: 17, cpo: 109 
-size: 262144, shift: 18, cpo: 112 
-size: 524288, shift: 19, cpo: 107 
-size: 1048576, shift: 20, cpo: 108 
-size: 2097152, shift: 21, cpo: 122 
-size: 4194304, shift: 22, cpo: 161 
-size: 8388608, shift: 23, cpo: 194 
-size: 16777216, shift: 24, cpo: 208 
-
-*/
 void test4() 
 {
     uint64_t num_access = (1 << 25);
     uint64_t size;
-    uint64_t times = 10;
+    uint64_t times = 1;
     stats_t stat;
 
     for(uint64_t shift = 4; shift < 25; shift++)
     {
-        stat.cycles = 0;
-        stat.op_count = 0;
-        stat.cpo = 0;
+        
         size = 1 << shift; 
         for(int i = 0; i < times; i++)
         {
@@ -260,7 +252,7 @@ void test4()
             free(src); 
             free(dst);
         }
-        printf("size: %lu, shift: %lu, cpo: %lu \n",  size, shift, (uint64_t) (stat.cycles / stat.op_count));
+        printf("cycles: %lu, op_count: %lu, cpo: %lu \n",  stat.cycles, stat.op_count, stat.cpo);
     }
 }
 
@@ -301,7 +293,6 @@ void group_seq_read_random_write(uint64_t** srcs, uint64_t** dsts, uint64_t len,
     stat->cycles = cycles; 
     stat->op_count = op_count;
     stat->cpo =  (uint64_t) (cycles / op_count); 
-    stat->inner_total_cycle = inner_total_cycle;
 }
 
 /**
@@ -328,7 +319,7 @@ void test5()
         }
 
         group_seq_read_random_write(srcs, dsts, num, size, &stat);
-        printf("cpo: %lu inner cpo: %lu \n", (uint64_t) (stat.cycles / stat.op_count), (uint64_t) (stat.inner_total_cycle / stat.op_count));
+        printf("cpo: %lu \n", (uint64_t) (stat.cycles / stat.op_count));
 
         for(int i=0; i<num; i++)
         {
@@ -339,6 +330,61 @@ void test5()
         free(dsts);
     }
 }
+
+
+
+void random_access_v2(uint64_t* src, uint64_t size, uint64_t num_access)
+{
+    srand(time(NULL));
+    uint64_t start_cycle; 
+    uint64_t end_cycle; 
+    uint64_t cycles = 0; 
+
+    uint64_t op_count = 0;
+    for (int i = 0; i < size; i++) {
+        src[i] = 1;
+    }
+    
+    //pollute(); 
+
+    for (int i = 0; i < size; i+=8) {
+
+        prefetch(src + i);
+    }
+    
+
+    uint64_t index;
+    uint64_t value;
+    uint64_t* src_addr;
+    uint64_t* dst_addr;
+    for (int i = 0; i < num_access; i++) {
+
+        index = rand() % size;
+        src_addr = src + index; 
+
+        start_cycle = rdtsc();
+        asm volatile("movq (%[addr]), %%rdx"::[addr] "r" (src_addr):"%rdx"); 
+        end_cycle = rdtsc();
+
+        cycles += (end_cycle - start_cycle); 
+        op_count++;
+    }
+     
+    printf(" cycles %lu, size %lu, cpo %lu\n", cycles, size, (uint64_t) (cycles / op_count)); 
+}
+
+void test6() 
+{
+    uint64_t num_access = 100000;
+    uint64_t size;
+    for(int i=6; i<20; i++)
+    {
+        size = (1 << i);
+        uint64_t* src = (uint64_t*) aligned_alloc(4096, sizeof(uint64_t) * size);
+        random_access_v2(src, size, num_access);
+    }
+}
+
 
 /**
 *  
@@ -357,8 +403,9 @@ void test5()
 *
 */
 
+
 int main() {
     
-    test5();
+    test6();
     return 0;
 }
