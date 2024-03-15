@@ -83,6 +83,7 @@ typedef enum {
   RW_RATIO = 12,
   HASHJOIN = 13,
   FASTQ_WITH_INSERT_RADIX = 14,
+  BASELINE = 15,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -354,6 +355,10 @@ struct Configuration {
   run_mode_t mode;
   // controls distribution of threads across numa nodes
   uint32_t numa_split;
+
+  //baseline
+  uint32_t data_size;
+  uint32_t workload_size;
 
   // hashtable configuration
   // different hashtable types

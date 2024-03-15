@@ -1,7 +1,7 @@
 #!/bin/bash
 
 GENOME="fvesca"
-LOG_DIR=./log
+LOG_DIR=.
 DATASET_DIR=/opt/dramhit/kmer_dataset
 declare -A DATASET_ARRAY
 DATASET_ARRAY["dmela"]=${DATASET_DIR}/ERR4846928.fastq
@@ -19,10 +19,35 @@ function command_regular()
     --mode 4 \
     --ht-type 3 \
     --numa-split 1 \
-    --num-threads $2 \
+    --num-threads 64 \
     --ht-size $HT_SIZE \
     --in-file $FASTA_FILE \
-    --k $1 > $LOG_DIR/kmer_k${1}.log
+    --k 10 > $LOG_DIR/kmer_k${1}.log
+}
+
+function command_baseline() 
+{
+    sudo ./build/dramhit \
+    --mode 15 \
+    --ht-type 3 \
+    --numa-split 1 \
+    --num-threads 1 \
+    --ht-size $1 \
+    --datasize $2 \
+    --workload $3 > logs/baseline_d${2}_ht${1}.log
+}
+
+
+function bench_baseline() 
+{
+    #ht=300
+    #d=100
+    w=100000
+    for (( i=5; i<=25; i+=1 )); do
+        d=$((1<<i))
+        ht=$((1*d))
+        command_baseline $ht $d $w
+    done    
 }
 
 function command_radix() 
@@ -31,7 +56,6 @@ function command_radix()
     --mode 14 \
     --ht-type 3 \
     --numa-split 1 \
-    --hw-pref on \
     --num-threads $3 \
     --ht-size ${HT_SIZE} \
     --in-file ${FASTA_FILE} \
@@ -41,9 +65,9 @@ function command_radix()
 function bench_radix()
 {
     echo ">>> Input File: ${FASTA_FILE} Hashtable Size: ${HT_SIZE}"
-    t=64 # thread number
+    t=1 # thread number
     k=15
-    for d in $(seq 6 6); do
+    for d in $(seq 10 10); do
         echo "-> Starting to run with d ${d} k ${k}"
         command_radix $k $d $t
     done
@@ -51,36 +75,14 @@ function bench_radix()
 
 function debug() 
 {
-    sudo gdb --args \ 
-    ./build/dramhit \ 
-    "--mode" "14" \ 
-    "--k" "6" \
-    "--d" "2" \
-    "--ht-type" "3" \ 
-    "--numa-split" "1" \ 
-    "--num-threads" "1" \
-     "--ht-size" "100" \
-    "--in-file" $DATASET_ARRAY[$ACTIVE_DATASET]    
+    sudo gdb --args ./build/dramhit --mode 15 --ht-type 3 --numa-split 1 --num-threads 1 --ht-size 300 --datasize 100 --workload 10000 
 }
 
-# perf report
-function perf() 
-{
-    sudo perf record \
-    -e cache-misses, cycles, faults \ 
-    ./build/dramhit \
-    --mode 14 \
-    --ht-type 3 \
-    --numa-split 1 \
-    --num-threads 64 \
-    --ht-size $HT_SIZE \
-    --in-file $FASTA_FILE \
-    --k 8 --d 8    
-}
 
 function bench() {
-    bench_radix
-    #bench_regular
+    #bench_radix
+    #command_regular
+    bench_baseline
 }
 
 function build() {

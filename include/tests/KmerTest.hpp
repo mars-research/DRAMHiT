@@ -25,6 +25,10 @@ private:
     void count_kmer_radix_partition_global(Shard* sh, const Configuration& config,
                             std::barrier<VoidFn>* barrier,
                             RadixContext* context, BaseHashTable* ht);
+
+    void count_kmer_baseline(Shard* sh, const Configuration& config,
+                                std::barrier<VoidFn>* barrier,
+                                BaseHashTable* ht);
 };
 
 }  // namespace kmercounter

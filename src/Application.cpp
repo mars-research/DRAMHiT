@@ -174,8 +174,7 @@ void Application::shard_thread(int tid,
 
   switch (config.mode) {
     case FASTQ_WITH_INSERT:
-      kmer_ht = init_ht(config.ht_size, sh->shard_idx);
-      break;
+    case BASELINE:
     case FASTQ_WITH_INSERT_RADIX:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
@@ -242,6 +241,9 @@ void Application::shard_thread(int tid,
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
+    case BASELINE:
+      this->test.kmer.count_kmer_baseline(sh, config, barrier, kmer_ht);
+      break;
     default:
       break;
   }
@@ -258,7 +260,7 @@ void Application::shard_thread(int tid,
   //   kmer_ht->print_to_file(outfile);
   // }
 
-  free_ht(kmer_ht);
+  // free_ht(kmer_ht);
 
 done:
   --num_entered;
@@ -278,7 +280,7 @@ int Application::spawn_shard_threads() {
 
   if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
       (config.mode != PREFETCH) && (config.mode != CACHE_MISS) &&
-      (config.mode != RW_RATIO) && (config.mode != HASHJOIN)) {
+      (config.mode != RW_RATIO) && (config.mode != HASHJOIN) && (config.mode != BASELINE)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -400,7 +402,8 @@ int Application::process(int argc, char *argv[]) {
         "11: Zipfian non-bqueue test\n"
         "12: RW-ratio test\n"
         "13: Hashjoin\n"
-        "14: Fastq insert with Radix Parition")("base",
+        "14: Fastq insert with Radix Parition\n"
+        "15: BaseLine")("base",
                         po::value<uint64_t>(&config.kmer_create_data_base)
                             ->default_value(def.kmer_create_data_base),
                         "Number of base K-mers")(
@@ -503,7 +506,15 @@ int Application::process(int argc, char *argv[]) {
         "Enable R/W tests for queues tests")(
         "pollute-ratio",
         po::value(&config.pollute_ratio)->default_value(def.pollute_ratio),
-        "Ratio of pollution events to ops (>1)");
+        "Ratio of pollution events to ops (>1)")
+        (
+        "workload",
+        po::value<uint32_t>(&config.workload_size)->default_value(10000),
+        "Baseline workload size")
+        (
+        "datasize",
+        po::value<uint32_t>(&config.data_size)->default_value(100),
+        "Baseline data size");
 
     papi_init();
 
@@ -586,6 +597,8 @@ int Application::process(int argc, char *argv[]) {
         // config.ht_fill;
       }
       PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
+    }else if(config.mode == BASELINE)
+    {
     }
 
     switch (config.ht_type) {
@@ -641,7 +654,7 @@ int Application::process(int argc, char *argv[]) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if ((config.mode == BQ_TESTS_YES_BQ) ||
+  if ((config.mode == BASELINE) ||(config.mode == BQ_TESTS_YES_BQ) ||
       ((config.mode == FASTQ_WITH_INSERT ||
         (config.mode == FASTQ_WITH_INSERT_RADIX)) &&
        (config.ht_type == PARTITIONED_HT))) {
