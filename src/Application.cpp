@@ -165,7 +165,6 @@ void free_ht(BaseHashTable *kmer_ht) {
 
 void Application::shard_thread(int tid,
                                std::barrier<std::function<void()>> *barrier) {
-
   Shard *sh = &this->shards[tid];
   BaseHashTable *kmer_ht = NULL;
 
@@ -194,6 +193,8 @@ void Application::shard_thread(int tid,
     case CACHE_MISS:
       kmer_ht = init_ht(HT_TESTS_HT_SIZE, sh->shard_idx);
       break;
+    case FASTQ_INSERT_PARTITION:
+      break;
     default:
       PLOGF.printf("No config mode specified! cannot run");
       return;
@@ -210,7 +211,6 @@ void Application::shard_thread(int tid,
 
   while (num_entered != config.num_threads) _mm_pause();
 
-  
   switch (config.mode) {
     case SYNTH:
       this->test.st.synth_run_exec(sh, kmer_ht);
@@ -233,10 +233,13 @@ void Application::shard_thread(int tid,
       this->test.hj.join_relations_generated(sh, config, kmer_ht,
                                              config.materialize, barrier);
       break;
-    case FASTQ_WITH_INSERT_RADIX: 
-      this->test.kmer.count_kmer_radix_partition_global(sh, config, barrier,
-                                            this->radixContext, kmer_ht);
-      
+    case FASTQ_WITH_INSERT_RADIX:
+      this->test.kmer.count_kmer_radix_partition_global(
+          sh, config, barrier, this->radixContext, kmer_ht);
+
+      break;
+    case FASTQ_INSERT_PARTITION:
+      this->test.kmer.count_kmer_partition(sh, config, barrier);
       break;
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
@@ -280,7 +283,8 @@ int Application::spawn_shard_threads() {
 
   if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
       (config.mode != PREFETCH) && (config.mode != CACHE_MISS) &&
-      (config.mode != RW_RATIO) && (config.mode != HASHJOIN) && (config.mode != BASELINE)) {
+      (config.mode != RW_RATIO) && (config.mode != HASHJOIN) &&
+      (config.mode != BASELINE)) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -324,7 +328,7 @@ int Application::spawn_shard_threads() {
   std::function<void()> on_sync_complete = sync_complete;
 
   std::barrier barrier(config.num_threads, on_sync_complete);
-  
+
   uint32_t i = 0;
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;
@@ -362,7 +366,7 @@ int Application::spawn_shard_threads() {
     }
   }
   if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
-     print_stats(this->shards, config);
+    print_stats(this->shards, config);
   }
 
   std::free(this->shards);
@@ -506,15 +510,17 @@ int Application::process(int argc, char *argv[]) {
         "Enable R/W tests for queues tests")(
         "pollute-ratio",
         po::value(&config.pollute_ratio)->default_value(def.pollute_ratio),
-        "Ratio of pollution events to ops (>1)")
-        (
+        "Ratio of pollution events to ops (>1)")(
         "workload",
         po::value<uint32_t>(&config.workload_size)->default_value(10000),
-        "Baseline workload size")
-        (
-        "datasize",
-        po::value<uint32_t>(&config.data_size)->default_value(100),
-        "Baseline data size");
+        "Baseline workload size")(
+        "datasize", po::value<uint32_t>(&config.data_size)->default_value(100),
+        "Baseline data size")(
+        "max-fill-factor",
+        po::value<double>(&config.max_fill_factor)->default_value(0.6),
+        "max fill factor (ratio)")(
+        "num-ht", po::value<uint32_t>(&config.num_ht)->default_value(10),
+        "number of hashtables");
 
     papi_init();
 
@@ -569,11 +575,11 @@ int Application::process(int argc, char *argv[]) {
       }
     } else if (config.mode == FASTQ_WITH_INSERT_RADIX) {
       auto nthreads = config.num_threads;
-      this->radixContext = new RadixContext(config.D, 0, nthreads, get_file_size(config.in_file.c_str()));
+      this->radixContext = new RadixContext(
+          config.D, 0, nthreads, get_file_size(config.in_file.c_str()));
 
-      PLOG_INFO.printf(
-          "Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u",
-          config.D, this->radixContext->fanOut);
+      PLOG_INFO.printf("Mode : FASTQ_WITH_INSERT_RADIX D:%u, fanout: %u",
+                       config.D, this->radixContext->fanOut);
       if (config.in_file.empty()) {
         PLOG_ERROR.printf("Please provide input fasta file.");
         exit(-1);
@@ -597,26 +603,30 @@ int Application::process(int argc, char *argv[]) {
         // config.ht_fill;
       }
       PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
-    }else if(config.mode == BASELINE)
+    } else if (config.mode == BASELINE) {
+    } else if (config.mode == FASTQ_INSERT_PARTITION)
     {
+      PLOGI.printf("ht size %lu, ht num %lu, fill factor %d", config.ht_size, config.num_ht, config.max_fill_factor);
     }
 
-    switch (config.ht_type) {
-      case PARTITIONED_HT:
-        PLOG_INFO.printf("Hashtable type : Paritioned HT");
-        config.ht_size /= config.num_threads;
-        break;
-      case CASHTPP:
-        PLOG_INFO.printf("Hashtable type : Cas HT");
-        break;
-      case ARRAY_HT:
-        PLOG_INFO.printf("Hashtable type : Array HT");
-        break;
-      default:
-        PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
-                     config.ht_type);
-        PLOG_INFO.printf("Exiting");
-        exit(0);
+    if (config.mode != FASTQ_INSERT_PARTITION) {
+      switch (config.ht_type) {
+        case PARTITIONED_HT:
+          PLOG_INFO.printf("Hashtable type : Paritioned HT");
+          config.ht_size /= config.num_threads;
+          break;
+        case CASHTPP:
+          PLOG_INFO.printf("Hashtable type : Cas HT");
+          break;
+        case ARRAY_HT:
+          PLOG_INFO.printf("Hashtable type : Array HT");
+          break;
+        default:
+          PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
+                       config.ht_type);
+          PLOG_INFO.printf("Exiting");
+          exit(0);
+      }
     }
 
     if (config.ht_fill > 0 && config.ht_fill < 200) {
@@ -643,7 +653,7 @@ int Application::process(int argc, char *argv[]) {
   auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
   printf("MSR 0x1a4 (hw-prefetcher has: { ");
   for (const auto &e : rdmsr_set) {
-     printf("0x%lx ", e);
+    printf("0x%lx ", e);
   }
   printf("} 0xf is disable 0x0 is enable.\n");
 
@@ -654,7 +664,7 @@ int Application::process(int argc, char *argv[]) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if ((config.mode == BASELINE) ||(config.mode == BQ_TESTS_YES_BQ) ||
+  if ((config.mode == BQ_TESTS_YES_BQ) ||
       ((config.mode == FASTQ_WITH_INSERT ||
         (config.mode == FASTQ_WITH_INSERT_RADIX)) &&
        (config.ht_type == PARTITIONED_HT))) {
@@ -722,6 +732,10 @@ int Application::process(int argc, char *argv[]) {
       this->spawn_shard_threads();
     }
   }
+
+  if(config.mode == FASTQ_INSERT_PARTITION || config.mode == BASELINE)
+    this->spawn_shard_threads();
+
   return 0;
 }
 }  // namespace kmercounter

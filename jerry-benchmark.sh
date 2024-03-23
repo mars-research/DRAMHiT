@@ -29,7 +29,7 @@ function command_baseline()
 {
     sudo ./build/dramhit \
     --mode 15 \
-    --ht-type 3 \
+    --ht-type 4 \
     --numa-split 1 \
     --num-threads 1 \
     --ht-size $1 \
@@ -37,15 +37,38 @@ function command_baseline()
     --workload $3 > logs/baseline_d${2}_ht${1}.log
 }
 
+function command_partition() 
+{
+    sudo ./build/dramhit \
+    --mode 16 \
+    --ht-type 3 \
+    --numa-split 1 \
+    --num-threads 32 \
+    --in-file $FASTA_FILE \
+    --ht-size $1 \
+    --num-ht $2 \
+    --max-fill-factor $3 > logs/partition_sz${1}_num${2}_fill${3}.log
+}
+
+function bench_partition() 
+{
+    #ht=300
+    fill=0.6
+    for (( i=10; i<=10; i+=1 )); do
+        num=$((1 << i))
+        size=$(($HT_SIZE/$num/32))
+        command_partition $size $num $fill
+    done    
+}
 
 function bench_baseline() 
 {
     #ht=300
     #d=100
-    w=100000
-    for (( i=5; i<=25; i+=1 )); do
+    w=1000000
+    for (( i=5; i<=15; i+=1 )); do
         d=$((1<<i))
-        ht=$((1*d))
+        ht=$((2*d))
         command_baseline $ht $d $w
     done    
 }
@@ -75,7 +98,14 @@ function bench_radix()
 
 function debug() 
 {
-    sudo gdb --args ./build/dramhit --mode 15 --ht-type 3 --numa-split 1 --num-threads 1 --ht-size 300 --datasize 100 --workload 10000 
+    sudo gdb --args ./build/dramhit \
+    --mode 15 \
+    --ht-type 4 \
+    --numa-split 1 \
+    --num-threads 1 \
+    --ht-size 64 \
+    --datasize 32 \
+    --workload 1 
 }
 
 
@@ -83,6 +113,7 @@ function bench() {
     #bench_radix
     #command_regular
     bench_baseline
+    # bench_partition
 }
 
 function build() {

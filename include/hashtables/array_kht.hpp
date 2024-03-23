@@ -89,14 +89,14 @@ class ArrayHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash;
-
+    size_t idx = hash & (this->capacity - 1);  // modulo
+    // size_t idx = fastrange32(hash, this->capacity);  // modulo
+    
     KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
 
     KV *curr = &this->hashtable[idx];
     if (curr->is_empty()) {
-      PLOGV.printf("inserting key %llu at idx %llu", elem->key, idx);
-      bool cas_res = curr->insert(elem);
+      curr->insert(elem);
     } else {
       curr->update(elem);
     }
@@ -124,6 +124,8 @@ class ArrayHashTable : public BaseHashTable {
       KVQ q;
       q.idx = this->hash((const char *)&data.key);
       q.value = data.value;
+
+      PLOG_INFO.printf("key insertion: %d", data.key);
       __insert_one(&q, collector);
     }
   }

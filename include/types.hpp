@@ -84,6 +84,7 @@ typedef enum {
   HASHJOIN = 13,
   FASTQ_WITH_INSERT_RADIX = 14,
   BASELINE = 15,
+  FASTQ_INSERT_PARTITION = 16,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -359,6 +360,10 @@ struct Configuration {
   //baseline
   uint32_t data_size;
   uint32_t workload_size;
+
+  //kmer partition
+  double max_fill_factor;
+  uint32_t num_ht;
 
   // hashtable configuration
   // different hashtable types
