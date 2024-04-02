@@ -2,20 +2,28 @@
 #include <stdlib.h>
 #include <x86intrin.h> 
 #include <stdint.h>
+#include <time.h>
 
-uint64_t rdtsc() {
-    uint32_t low, high;
-    asm volatile ("mfence\n\trdtsc" : "=a" (low), "=d" (high));
-    return ((uint64_t)high << 32) | low;
-}
+#define LEN 1024
+uint arr[LEN];
+uint idx[LEN];
 
 int main(int argc, char** argv) 
 {
+    srand(time(NULL));
     int workload = atoi(argv[1]); 
+    for(int i=0; i < LEN; i++) 
+        idx[i] = rand() % LEN;  
 
     unsigned long long a = __rdtsc();
-   // for(int i=0; i < workload; i++);
+    uint c;
+    for(int i=0; i < workload; i++)
+    {
+        c = idx[i&(LEN-1)];
+        arr[c] = c;
+    } 
     unsigned long long b = __rdtsc(); 
 
-    printf("Cycle: %llu Workload: %d \n", b-a, workload);
+    unsigned long long cycle = b - a;
+    printf("Cycle: %llu Workload: %d CPO: %lld\n", cycle, workload, cycle / workload);
 }
