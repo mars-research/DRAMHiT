@@ -321,24 +321,46 @@ void KmerTest::count_kmer_partition(Shard* sh, const Configuration& config,
   }
 }
 
+#include "time.h"
+
+
+uint32_t hash(uint32_t x) {
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
+/*
+* Create equal size input and output, move input into output
+* 
+*/
 void KmerTest::count_kmer_baseline(Shard* sh, const Configuration& config,
                                    std::barrier<VoidFn>* barrier,
                                    BaseHashTable* ht) {
-  HTBatchRunner batch_runner(ht);
+  // HTBatchRunner batch_runner(ht);
 
   uint32_t len = config.data_size; // pow of 2 
   uint32_t inserts = config.workload_size; // 1000000
 
+  srand(time(NULL));
+
   PLOG_INFO.printf("length: %d, inserts: %d", len, inserts);
 
+  Kmer* output = (Kmer*)aligned_alloc(4096, sizeof(Kmer) * len);
+
+  // populate input array
   Kmer* input = (Kmer*)aligned_alloc(4096, sizeof(Kmer) * len);
-  for (uint32_t i = 0; i < len; i++) input[i] = i+1; 
+  for (uint32_t i = 0; i < len; i++) input[i] = (uint32_t) rand(); 
 
   auto start = _rdtsc();
+
+  uint32_t e;
   for (uint32_t i = 0; i < inserts; i++) 
   {
-    int in = input[i & (len-1)];
-    ht->insert_noprefetch((void*)(&in));
+    e = input[i & (len-1)];
+    output[(hash(e) & (len-1))] = e;
+    // ht->insert_noprefetch((void*)(&in));
   }
 
   // batch_runner.flush_insert();
