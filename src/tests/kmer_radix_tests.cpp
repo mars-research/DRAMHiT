@@ -150,6 +150,7 @@ void KmerTest::count_kmer_radix_partition_global(Shard* sh,
 
 
   unsigned long long start_cycle = __rdtsc();
+  
   uint64_t total_kmers_part = radix_partition(context, local_partitions,
                                               seq_reader, shard_idx);
 
