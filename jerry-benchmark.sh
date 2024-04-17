@@ -11,7 +11,8 @@ HT_SIZE_ARRAY["dmela"]=8589934592
 HT_SIZE_ARRAY["fvesca"]=4294967296
 
 FASTA_FILE=${DATASET_ARRAY[${GENOME}]}
-HT_SIZE=${HT_SIZE_ARRAY[$GENOME]}
+# HT_SIZE=${HT_SIZE_ARRAY[$GENOME]}
+HT_SIZE=4
 
 function command_regular() 
 {
@@ -37,29 +38,6 @@ function command_baseline()
     --workload $3 > logs/baseline_d${2}_ht${1}.log
 }
 
-function command_partition() 
-{
-    sudo ./build/dramhit \
-    --mode 16 \
-    --ht-type 3 \
-    --numa-split 1 \
-    --num-threads 32 \
-    --in-file $FASTA_FILE \
-    --ht-size $1 \
-    --num-ht $2 \
-    --max-fill-factor $3 > logs/partition_sz${1}_num${2}_fill${3}.log
-}
-
-function bench_partition() 
-{
-    #ht=300
-    fill=0.6
-    for (( i=10; i<=10; i+=1 )); do
-        num=$((1 << i))
-        size=$(($HT_SIZE/$num/32))
-        command_partition $size $num $fill
-    done    
-}
 
 function bench_baseline() 
 {
@@ -90,8 +68,8 @@ function bench_radix()
     echo ">>> Input File: ${FASTA_FILE} Hashtable Size: ${HT_SIZE}"
     t=1 # thread number
     k=15
-    for d in $(seq 10 10); do
-        echo "-> Starting to run with d ${d} k ${k}"
+    for d in $(seq 5 8); do
+        echo "-> Starting to run with d ${d} k ${k} t ${t}"
         command_radix $k $d $t
     done
 }
@@ -110,10 +88,9 @@ function debug()
 
 
 function bench() {
-    #bench_radix
+    bench_radix
     #command_regular
-    bench_baseline
-    # bench_partition
+    #bench_baseline
 }
 
 function build() {

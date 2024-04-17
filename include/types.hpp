@@ -160,6 +160,8 @@ static inline void store_nontemp_64B(void* dst, void* src) {
 //   } data;
 // } cacheline_t;
 
+
+
 typedef struct {
   Kmer kmers[KMERSPERCACHELINE];
 } cacheline_t;

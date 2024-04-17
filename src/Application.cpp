@@ -238,9 +238,6 @@ void Application::shard_thread(int tid,
           sh, config, barrier, this->radixContext, kmer_ht);
 
       break;
-    case FASTQ_INSERT_PARTITION:
-      this->test.kmer.count_kmer_partition(sh, config, barrier);
-      break;
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
@@ -365,7 +362,7 @@ int Application::spawn_shard_threads() {
       th.join();
     }
   }
-  if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
+  if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN) && (config.mode != FASTQ_WITH_INSERT_RADIX)) {
     print_stats(this->shards, config);
   }
 

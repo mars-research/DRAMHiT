@@ -111,49 +111,77 @@ class FastqReader : public FileReader {
   }
 };
 
+class KmerReader {
+ public:
+  std::vector<Kmer> kmers;
+  uint32_t size;
+  uint k;
 
+  KmerReader(uint k, std::string_view filename, uint64_t part_id,
+             uint64_t num_parts) {
+    this->k = k;
+    auto reader = FastqReader(filename, part_id, num_parts);
 
-// class KmerReader {
-// public:
-//   FastqReader* seq_reader;
-//   string_view* seq_ptr;
-//   uint k;
-//   uint pos_in_seq;
-//   KmerReader(uint k, std::string_view filename, uint64_t part_id, uint64_t num_parts) 
-//   {
-//     this->k = k;
-//     pos_in_seq = 0;
-//     seq_reader = new FastqReader(filename, part_id, num_parts);
-//     seq_ptr = new string_view();
-//   }
+    string_view sv;
+    const char* data;
 
-//   ~KmerReader() {
-//     delete seq_reader;
-//     delete seq_ptr; 
-//   }
+    uint32_t sz = 0;
+    
+    while (reader.next(&sv) && sz < 1000000) {
+      size_t len = sv.size();
 
-//   bool next(char* kmer_str) 
-//   {
-//     printf("%p\n", seq_ptr);
-//     if(seq_ptr->size() > 0 && pos_in_seq < (seq_ptr->size() - k + 1)) 
-//     {
-//       // kmer_str = seq_ptr->substr(pos_in_seq, k).data(); 
-//      string_view sub = seq_ptr->substr(pos_in_seq, k);  
-//       for(int i=0; i<k; i++)
-//         kmer_str[i] = sub.data()[i];
-//       pos_in_seq += k;
-//       return true; 
-//     }
-//     else if(seq_reader->next(seq_ptr))
-//     {
-//       pos_in_seq = 0;
-//       return this->next(kmer_str);
-//     }else {
-//       kmer_str = nullptr;
-//       return false;
-//     }
-//   }
-// };
+      if (len > k) {
+        for (int i = 0; i < (uint)(len - k + 1); i++) {
+          data = sv.substr(i, k).data();
+          kmers.push_back(packkmer(data, k));
+          sz++;
+        }
+      }
+    }
+    this->size = sz;
+  }
+
+  Kmer packkmer(const char* s, int k) {
+    uint8_t nt;
+    Kmer kmer;
+    for (int i = 0; i < k; i++) {
+      switch (s[i]) {
+        case 'a':
+        case 'A':
+          nt = 0;
+          break;
+        case 'c':
+        case 'C':
+          nt = 1;
+          break;
+        case 'g':
+        case 'G':
+          nt = 2;
+          break;
+        case 't':
+        case 'T':
+          nt = 3;
+          break;
+        default:
+          nt = 0;
+          break;
+      }
+      kmer = (kmer | nt) << 2;
+    }
+
+    return kmer;
+  }
+
+  bool next(Kmer* kmer) {
+    if (!kmers.empty()) {
+      *kmer = kmers.back();
+      kmers.pop_back();
+      return true;
+    }
+    return false;
+  }
+};
+
 /// Reads KMers from a Fastq file.
 template <size_t K>
 class FastqKMerReader : public InputReaderU64 {
