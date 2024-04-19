@@ -30,9 +30,6 @@ using namespace std;
 
 namespace kmercounter {
 
-
-
-
 uint64_t crc_hash64(const void* buff, uint64_t len) {
   return _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t*>(buff));
 }
@@ -81,104 +78,172 @@ Kmer packkmer(const char* s, int k) {
   return kmer;
 }
 
-
 uint32_t hash(uint32_t x) {
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = (x >> 16) ^ x;
-    return x;
+  x = ((x >> 16) ^ x) * 0x45d9f3b;
+  x = ((x >> 16) ^ x) * 0x45d9f3b;
+  x = (x >> 16) ^ x;
+  return x;
 }
 
-
 uint64_t radix_partition(RadixContext* context,
-                                   std::vector<std::vector<Kmer>>& local_partitions,
-                                   input_reader::KmerReader& reader, int id) {
+                         vector<vector<Kmer>>& local_partitions,
+                         input_reader::KmerReader& reader, int id) {
   auto R = context->R;
   auto mask = context->mask;
   auto fanOut = context->fanOut;
   uint64_t totol_kmer_part = 0;
   uint32_t partition_idx = 0;
 
-
   Kmer kmer;
   while (reader.next(&kmer)) {
-    partition_idx = (uint32_t) hash(kmer) % fanOut;
+    partition_idx = (uint32_t)hash(kmer) % fanOut;
     if (partition_idx < fanOut) {
       local_partitions[partition_idx].push_back(kmer);
       totol_kmer_part++;
     } else {
       PLOG_FATAL << "partition index too big";
-    } 
+    }
   }
 
   // flush the cacheline buffer.
-  //for (int i = 0; i < fanOut; i++) local_partitions[i]->flush_buffer();
+  // for (int i = 0; i < fanOut; i++) local_partitions[i]->flush_buffer();
 
-  // pass the partitions into global lookup table, so other threads can gather. 
+  // pass the partitions into global lookup table, so other threads can gather.
   // context->partitions[id] = local_partitions;
 
   return totol_kmer_part;
 }
 
+
+
+// Need to add support for hashing over different bits for different level
+uint64_t radix_partition(vector<Kmer>& input, vector<Partition>& output) {
+  uint_t fanout = output.size();
+  uint32_t partition_idx;
+  Partition* p_ptr;
+  for (auto& kmer : input) {
+    partition_idx = (uint32_t)hash(kmer) % fanout;
+    p_ptr = output[partition_idx];
+    p_ptr->data.push_back(kmer);
+  }
+  return 0;
+}
+
 void KmerTest::count_kmer_radix_partition_global(Shard* sh,
                                                  const Configuration& config,
-                                                 std::barrier<VoidFn>*
-                                                 barrier, RadixContext*
-                                                 context, BaseHashTable* ht)
-                                                 {
+                                                 std::barrier<VoidFn>* barrier,
+                                                 RadixContext* context,
+                                                 BaseHashTable* ht) {
   uint8_t shard_idx = sh->shard_idx;
-  uint32_t fanOut = context->fanOut;
+  uint32_t fanout = context->fanOut;
   HTBatchRunner batch_runner(ht);
-  
+
+  uint32_t num_threads = config.num_threads;
+
   PLOG_INFO.printf("About to initialize Kmer Reader ");
 
-  auto seq_reader = input_reader::KmerReader(config.K, config.in_file, shard_idx,
-      config.num_threads);
+  auto reader = input_reader::KmerReader(config.K, config.in_file, shard_idx,
+                                         config.num_threads);
 
-    PLOG_INFO.printf("Finish initializing Kmer Reader ");
-
-
-  // size_t array_size = fanOut * sizeof(BufferedPartition*);
-  // BufferedPartition** local_partitions =
-  //     (BufferedPartition**)malloc(array_size);
-  // for (int i = 0; i < fanOut; i++)
-  //   local_partitions[i] = new BufferedPartition(context->size_hint);
-
-  std::vector<std::vector<Kmer>> local_partitions(fanOut);
-
-  barrier->arrive_and_wait();
-
-
-  unsigned long long start_cycle = __rdtsc();
-  
-  uint64_t total_kmers_part = radix_partition(context, local_partitions,
-                                              seq_reader, shard_idx);
-
-  unsigned long long total_cycle = __rdtsc() - start_cycle;
-  PLOG_INFO.printf("Radix Partition finished: %d total parititon: %lu cycles: %llu cpo: %lu", 
-                   shard_idx, total_kmers_part, total_cycle, total_cycle / total_kmers_part);
-
-  barrier->arrive_and_wait();
-
-
-  // Partition Again. 
-
-  // Create hashtables here
+  PLOG_INFO.printf("Finish initializing Kmer Reader ");
 
   
+  vector<Kmer>& input = reader.kmers;  // Initilize it with Kmer reader;
+  barrier->arrive_and_wait();
+
+  // Main Algorithm
+
+  uint last_partition_level = fanOut - 1;
+
+
+  for (uint level = 0; level < fanOut; level++) 
+  {
+
+    // 1. Allocation Paritions
+    uint32_t num_partitions = (level + 1) * fanout;
+    Partition* partitioins = (Parititon*)malloc(sizeof(Partition) * num_partitions);
+    for (uint i = 0; i < num_partitions; i++) {
+      partitioins[i] = new Partition(i);
+    }
+
+    // 2. Get Input Partitions, 1D array. tid * pow(fanout, level) length   
+
+    Partition* input = context->partitions[i];
+
+
+    // 
+
+
+    vector<Partition> thread_partitions_ouput_aggregated;
+
+    for (uint i = 0; i < num_threads; i++) {
+      vector<vector<Partition>>& thread_partitions_input = context->partitions[i];
+
+      for (uint j = 0; j < thread_partitions_input.size(); j++) {
+        if (thread_partitions_input[j].id == shard_idx) {
+          vector<Partition> thread_partitions_ouput(num_threads);
+
+          for (uint id = 0; id < num_threads; id++)
+            thread_partitions_ouput[id].id = id;
+
+          radix_partition(thread_partitions_input[j].data, thread_partitions_ouput);
+          // Copy partition to final output
+          for (Partition p : thread_partitions_ouput)
+            thread_partitions_ouput_aggregated.push_back(p);
+        }
+      }
+    }
+    // Copy to the global parititon array. 
+    context->partitions[shard_idx] = thread_partitions_ouput_aggregated;
+    barrier->arrive_and_wait();
+  }
+
+  // vector<vector<Kmer>> local_partitions(fanOut);
+
+  // barrier->arrive_and_wait();
+
+  // unsigned long long start_cycle = __rdtsc();
+
+  // uint64_t total_kmers_part = radix_partition(context, local_partitions,
+  //                                             seq_reader, shard_idx);
+
+  // unsigned long long total_cycle = __rdtsc() - start_cycle;
+  // PLOG_INFO.printf("Radix Partition finished: %d total parititon: %lu cycles:
+  // %llu cpo: %lu",
+  //                  shard_idx, total_kmers_part, total_cycle, total_cycle /
+  //                  total_kmers_part);
+
+  // barrier->arrive_and_wait();
+
+  // vector<Kmer>& p;
+  // vector<vector<Kmer>>& ps;
+  // for(int i=0; i<config.num_threads; i++)
+  // {
+  //   ps = static_cast<vector<vector<Kmer>>*>context->partitions[i];
+  //   p = (*ps)[shard_idx];
+
+  //   radix_partition(p, output);
+  // }
+
+  // barrier->arrive_and_wait();
+
+  // Insertion
 
   // auto start_insertion_cycle = _rdtsc();
   // uint64_t total_insertion = 0;
 
   // uint stride =
   //     fanOut /
-  //     context->threads_num;  // number of complete paritions each thread gets.
+  //     context->threads_num;  // number of complete paritions each thread
+  //     gets.
   // BufferedPartition* workload;
   // for (uint i = 0; i < context->threads_num; i++) {
   //   for (uint j = stride * (shard_idx - 1); j < stride * shard_idx; j++) {
-  //     workload = context->partitions[i][j];  // get work load base on shard id.
+  //     workload = context->partitions[i][j];  // get work load base on shard
+  //     id.
 
-  //     // we should be able to quickly access the workload partition if the size
+  //     // we should be able to quickly access the workload partition if the
+  //     size
   //     // of it is small enough to fit in cache.
   //     uint64_t workload_inserted = 0;
   //     for (uint b = 0; b < workload->blocks_count; b++) {
@@ -206,26 +271,23 @@ void KmerTest::count_kmer_radix_partition_global(Shard* sh,
 
   // free
   //  PLOG_INFO.printf("freeing memory allocated: %d", shard_idx);
-  //for (int i = 0; i < fanOut; i++) delete local_partitions[i];
-  //free(local_partitions);
+  // for (int i = 0; i < fanOut; i++) delete local_partitions[i];
+  // free(local_partitions);
 }
-
-
-
 
 #include "time.h"
 
 /*
-* Create equal size input and output, move input into output
-* 
-*/
+ * Create equal size input and output, move input into output
+ *
+ */
 void KmerTest::count_kmer_baseline(Shard* sh, const Configuration& config,
                                    std::barrier<VoidFn>* barrier,
                                    BaseHashTable* ht) {
   // HTBatchRunner batch_runner(ht);
 
-  uint32_t len = config.data_size; // pow of 2 
-  uint32_t inserts = config.workload_size; // 1000000
+  uint32_t len = config.data_size;          // pow of 2
+  uint32_t inserts = config.workload_size;  // 1000000
 
   srand(time(NULL));
 
@@ -235,15 +297,14 @@ void KmerTest::count_kmer_baseline(Shard* sh, const Configuration& config,
 
   // populate input array
   Kmer* input = (Kmer*)aligned_alloc(4096, sizeof(Kmer) * len);
-  for (uint32_t i = 0; i < len; i++) input[i] = (uint32_t) rand(); 
+  for (uint32_t i = 0; i < len; i++) input[i] = (uint32_t)rand();
 
   auto start = _rdtsc();
 
   uint32_t e;
-  for (uint32_t i = 0; i < inserts; i++) 
-  {
-    e = input[i & (len-1)];
-    output[(hash(e) & (len-1))] = e;
+  for (uint32_t i = 0; i < inserts; i++) {
+    e = input[i & (len - 1)];
+    output[(hash(e) & (len - 1))] = e;
     // ht->insert_noprefetch((void*)(&in));
   }
 

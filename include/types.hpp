@@ -293,7 +293,13 @@ class BufferedPartition {
 };
 
 
+class Partition {
+ public:
+  uint id;
+  vector<Kmer> data;
 
+  Partition(uint id) { this->id = id; }
+};
   
 class RadixContext {
  public:
@@ -304,7 +310,6 @@ class RadixContext {
   // uint32_t nthreads_d;
   // std::vector<std::vector<absl::flat_hash_map<Kmer, uint64_t>>> hashmaps;
 
-  BufferedPartition*** partitions;  // partitions[thread_id][radix_bin_num]
   uint8_t R;
   uint8_t D;
   uint32_t fanOut;
@@ -312,10 +317,9 @@ class RadixContext {
   uint64_t global_time;
   uint64_t threads_num;
   uint64_t size_hint;
-
+  Parititon** partitions;
 
   ~RadixContext() {
-    free(partitions);
   }
 
   RadixContext(uint8_t d, uint8_t r, uint32_t num_threads, uint64_t filesize)
@@ -330,8 +334,14 @@ class RadixContext {
         PLOG_FATAL << "fanout must be multiple of num threads"; 
     }
     threads_num = num_threads;
-    partitions = (BufferedPartition***) malloc(sizeof(void*) * num_threads);
     size_hint = filesize / (num_threads * fanOut); // hint per partition.
+
+    uint level = R;
+
+    for(uint i=0; i<level; i++)
+    {
+      partitions[i] = (Parititon*) malloc(sizeof(Partition*)*num_threads*pow(fanOut,level)); 
+    }
   }
 
   RadixContext() = default;
