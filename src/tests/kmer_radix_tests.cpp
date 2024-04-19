@@ -153,10 +153,10 @@ void KmerTest::count_kmer_radix_partition_global(Shard* sh,
 
   // Main Algorithm
 
-  uint last_partition_level = fanOut - 1;
+  uint last_partition_level = 2;
 
 
-  for (uint level = 0; level < fanOut; level++) 
+  for (uint level = 0; level < last_partition_level; level++) 
   {
 
     // 1. Allocation Paritions
@@ -167,34 +167,20 @@ void KmerTest::count_kmer_radix_partition_global(Shard* sh,
     }
 
     // 2. Get Input Partitions, 1D array. tid * pow(fanout, level) length   
+    Partition* level_input = context->partitions[level];
+    Partition* level_output = context->partitions[level+1];
 
-    Partition* input = context->partitions[i];
-
-
-    // 
-
-
-    vector<Partition> thread_partitions_ouput_aggregated;
-
-    for (uint i = 0; i < num_threads; i++) {
-      vector<vector<Partition>>& thread_partitions_input = context->partitions[i];
-
-      for (uint j = 0; j < thread_partitions_input.size(); j++) {
-        if (thread_partitions_input[j].id == shard_idx) {
-          vector<Partition> thread_partitions_ouput(num_threads);
-
-          for (uint id = 0; id < num_threads; id++)
-            thread_partitions_ouput[id].id = id;
-
-          radix_partition(thread_partitions_input[j].data, thread_partitions_ouput);
-          // Copy partition to final output
-          for (Partition p : thread_partitions_ouput)
-            thread_partitions_ouput_aggregated.push_back(p);
-        }
-      }
+    // TODO: Think about this later .... 
+    // Radix partition through each input element for shard idex
+    for (uint tid = 0; tid < num_threads; tid++) {
+        radix_partition(level_input[tid * pow(fanout,level) + shard_idx].data, 
+                        &level_output[shard_idx * pow(fanout, level+1)]);
     }
-    // Copy to the global parititon array. 
-    context->partitions[shard_idx] = thread_partitions_ouput_aggregated;
+
+    // Free previous level partitions - level_input
+    for(uint i=0; i<num_threads*pow(fanout, level); i++)
+      free(level_input[i]);
+
     barrier->arrive_and_wait();
   }
 
