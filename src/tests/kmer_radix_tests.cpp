@@ -117,8 +117,7 @@ uint64_t radix_partition(RadixContext* context,
 
 
 // Need to add support for hashing over different bits for different level
-uint64_t radix_partition(vector<Kmer>& input, vector<Partition>& output) {
-  uint_t fanout = output.size();
+uint64_t radix_partition(Partition& input, Partition* output, uint32_t fanout) {
   uint32_t partition_idx;
   Partition* p_ptr;
   for (auto& kmer : input) {
@@ -173,8 +172,8 @@ void KmerTest::count_kmer_radix_partition_global(Shard* sh,
     // TODO: Think about this later .... 
     // Radix partition through each input element for shard idex
     for (uint tid = 0; tid < num_threads; tid++) {
-        radix_partition(level_input[tid * pow(fanout,level) + shard_idx].data, 
-                        &level_output[shard_idx * pow(fanout, level+1)]);
+        radix_partition(level_input[tid * pow(fanout,level) + shard_idx], 
+                        &level_output[shard_idx * pow(fanout, level+1) + tid * pow(fanout, level)], fanout);
     }
 
     // Free previous level partitions - level_input
