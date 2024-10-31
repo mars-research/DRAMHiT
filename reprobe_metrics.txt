@@ -1,0 +1,547 @@
+---------------------------------------
+Processing file 0:  C:/Users/josh/Desktop/school/os/tests_10-30-24_fixFindReprobeMetrics/64GB_fill.txt
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 10
+
+Insertion Operations: 429496704
+Insertion Reprobes: 5960776
+Insertion Reprobe %: 1.39%
+
+Find Operations: 429494887
+Find Reprobes: 5960768
+Find Reprobe %: 1.39%
+
+Mops: 1434
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 20
+
+Insertion Operations: 858993408
+Insertion Reprobes: 26843881
+Insertion Reprobe %: 3.13%
+
+Find Operations: 858990797
+Find Reprobes: 26843883
+Find Reprobe %: 3.13%
+
+Mops: 1410
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 30
+
+Insertion Operations: 1288490176
+Insertion Reprobes: 69019974
+Insertion Reprobe %: 5.36%
+
+Find Operations: 1288488756
+Find Reprobes: 69019937
+Find Reprobe %: 5.36%
+
+Mops: 1352
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 40
+
+Insertion Operations: 1717986880
+Insertion Reprobes: 143169426
+Insertion Reprobe %: 8.33%
+
+Find Operations: 1717984666
+Find Reprobes: 143169452
+Find Reprobe %: 8.33%
+
+Mops: 1289
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 50
+
+Insertion Operations: 2147483648
+Insertion Reprobes: 268435906
+Insertion Reprobe %: 12.50%
+
+Find Operations: 2147482624
+Find Reprobes: 268435754
+Find Reprobe %: 12.50%
+
+Mops: 1214
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 60
+
+Insertion Operations: 2576980352
+Insertion Reprobes: 483142109
+Insertion Reprobe %: 18.75%
+
+Find Operations: 2576978535
+Find Reprobes: 483142050
+Find Reprobe %: 18.75%
+
+Mops: 1116
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 70
+
+Insertion Operations: 3006477056
+Insertion Reprobes: 876723925
+Insertion Reprobe %: 29.16%
+
+Find Operations: 3006474445
+Find Reprobes: 876724172
+Find Reprobe %: 29.16%
+
+Mops: 1008
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 80
+
+Insertion Operations: 3435973824
+Insertion Reprobes: 1718051214
+Insertion Reprobe %: 50.00%
+
+Find Operations: 3435972404
+Find Reprobes: 1718049896
+Find Reprobe %: 50.00%
+
+Mops: 871
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 4294967296
+Hashtable Fill: 90
+
+Insertion Operations: 3865470528
+Insertion Reprobes: 4348733168
+Insertion Reprobe %: 112.50%
+
+Find Operations: 3865468314
+Find Reprobes: 4348731254
+Find Reprobe %: 112.50%
+
+Mops: 655
+-----------------------------------
+
+---------------------------------------
+Processing file 1:  C:/Users/josh/Desktop/school/os/tests_10-30-24_fixFindReprobeMetrics/16GB_fill.txt
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 10
+
+Insertion Operations: 107374144
+Insertion Reprobes: 1490862
+Insertion Reprobe %: 1.39%
+
+Find Operations: 107371930
+Find Reprobes: 1490861
+Find Reprobe %: 1.39%
+
+Mops: 1422
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 20
+
+Insertion Operations: 214748352
+Insertion Reprobes: 6710235
+Insertion Reprobe %: 3.12%
+
+Find Operations: 214746932
+Find Reprobes: 6710204
+Find Reprobe %: 3.12%
+
+Mops: 1446
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 30
+
+Insertion Operations: 322122496
+Insertion Reprobes: 17245126
+Insertion Reprobe %: 5.35%
+
+Find Operations: 322119885
+Find Reprobes: 17245126
+Find Reprobe %: 5.35%
+
+Mops: 1386
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 40
+
+Insertion Operations: 429496704
+Insertion Reprobes: 35793004
+Insertion Reprobe %: 8.33%
+
+Find Operations: 429494887
+Find Reprobes: 35792965
+Find Reprobe %: 8.33%
+
+Mops: 1300
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 50
+
+Insertion Operations: 536870912
+Insertion Reprobes: 67098302
+Insertion Reprobe %: 12.50%
+
+Find Operations: 536869888
+Find Reprobes: 67098181
+Find Reprobe %: 12.50%
+
+Mops: 1232
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 60
+
+Insertion Operations: 644245056
+Insertion Reprobes: 120814170
+Insertion Reprobe %: 18.75%
+
+Find Operations: 644242842
+Find Reprobes: 120814141
+Find Reprobe %: 18.75%
+
+Mops: 1139
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 70
+
+Insertion Operations: 751619264
+Insertion Reprobes: 219273581
+Insertion Reprobe %: 29.17%
+
+Find Operations: 751617844
+Find Reprobes: 219273166
+Find Reprobe %: 29.17%
+
+Mops: 1033
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 80
+
+Insertion Operations: 858993408
+Insertion Reprobes: 429536690
+Insertion Reprobe %: 50.00%
+
+Find Operations: 858990797
+Find Reprobes: 429536656
+Find Reprobe %: 50.00%
+
+Mops: 894
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 1073741824
+Hashtable Fill: 90
+
+Insertion Operations: 966367616
+Insertion Reprobes: 1087788406
+Insertion Reprobe %: 112.56%
+
+Find Operations: 966365799
+Find Reprobes: 1087782355
+Find Reprobe %: 112.56%
+
+Mops: 660
+-----------------------------------
+
+---------------------------------------
+Processing file 2:  C:/Users/josh/Desktop/school/os/tests_10-30-24_fixFindReprobeMetrics/4GB_fill.txt
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 10
+
+Insertion Operations: 26843520
+Insertion Reprobes: 373882
+Insertion Reprobe %: 1.39%
+
+Find Operations: 26841703
+Find Reprobes: 373874
+Find Reprobe %: 1.39%
+
+Mops: 1422
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 20
+
+Insertion Operations: 53687040
+Insertion Reprobes: 1679768
+Insertion Reprobe %: 3.13%
+
+Find Operations: 53684429
+Find Reprobes: 1679762
+Find Reprobe %: 3.13%
+
+Mops: 1386
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 30
+
+Insertion Operations: 80530624
+Insertion Reprobes: 4314808
+Insertion Reprobe %: 5.36%
+
+Find Operations: 80529204
+Find Reprobes: 4314778
+Find Reprobe %: 5.36%
+
+Mops: 1352
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 40
+
+Insertion Operations: 107374144
+Insertion Reprobes: 8946318
+Insertion Reprobe %: 8.33%
+
+Find Operations: 107371930
+Find Reprobes: 8946369
+Find Reprobe %: 8.33%
+
+Mops: 1300
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 50
+
+Insertion Operations: 134217728
+Insertion Reprobes: 16782958
+Insertion Reprobe %: 12.50%
+
+Find Operations: 134216704
+Find Reprobes: 16782824
+Find Reprobe %: 12.50%
+
+Mops: 1241
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 60
+
+Insertion Operations: 161061248
+Insertion Reprobes: 30204373
+Insertion Reprobe %: 18.75%
+
+Find Operations: 161059431
+Find Reprobes: 30204309
+Find Reprobe %: 18.75%
+
+Mops: 1171
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 70
+
+Insertion Operations: 187904768
+Insertion Reprobes: 54817943
+Insertion Reprobe %: 29.17%
+
+Find Operations: 187902157
+Find Reprobes: 54818254
+Find Reprobe %: 29.17%
+
+Mops: 1073
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 80
+
+Insertion Operations: 214748352
+Insertion Reprobes: 107294840
+Insertion Reprobe %: 49.96%
+
+Find Operations: 214746932
+Find Reprobes: 107293382
+Find Reprobe %: 49.96%
+
+Mops: 934
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 268435456
+Hashtable Fill: 90
+
+Insertion Operations: 241591872
+Insertion Reprobes: 271765090
+Insertion Reprobe %: 112.49%
+
+Find Operations: 241589658
+Find Reprobes: 271761800
+Find Reprobe %: 112.49%
+
+Mops: 693
+-----------------------------------
+
+---------------------------------------
+Processing file 3:  C:/Users/josh/Desktop/school/os/tests_10-30-24_fixFindReprobeMetrics/512MB_fill.txt
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 10
+
+Insertion Operations: 3355392
+Insertion Reprobes: 46468
+Insertion Reprobe %: 1.38%
+
+Find Operations: 3352782
+Find Reprobes: 46449
+Find Reprobe %: 1.39%
+
+Mops: 1485
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 20
+
+Insertion Operations: 6710848
+Insertion Reprobes: 210014
+Insertion Reprobe %: 3.13%
+
+Find Operations: 6708634
+Find Reprobes: 209998
+Find Reprobe %: 3.13%
+
+Mops: 1446
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 30
+
+Insertion Operations: 10066304
+Insertion Reprobes: 539381
+Insertion Reprobe %: 5.36%
+
+Find Operations: 10064488
+Find Reprobes: 539366
+Find Reprobe %: 5.36%
+
+Mops: 1398
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 40
+
+Insertion Operations: 13421760
+Insertion Reprobes: 1119527
+Insertion Reprobe %: 8.34%
+
+Find Operations: 13420340
+Find Reprobes: 1119477
+Find Reprobe %: 8.34%
+
+Mops: 1352
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 50
+
+Insertion Operations: 16777216
+Insertion Reprobes: 2095045
+Insertion Reprobe %: 12.49%
+
+Find Operations: 16776192
+Find Reprobes: 2094921
+Find Reprobe %: 12.49%
+
+Mops: 1289
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 60
+
+Insertion Operations: 20132608
+Insertion Reprobes: 3776924
+Insertion Reprobe %: 18.76%
+
+Find Operations: 20129997
+Find Reprobes: 3777004
+Find Reprobe %: 18.76%
+
+Mops: 1197
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 70
+
+Insertion Operations: 23488064
+Insertion Reprobes: 6842794
+Insertion Reprobe %: 29.13%
+
+Find Operations: 23485850
+Find Reprobes: 6842868
+Find Reprobe %: 29.14%
+
+Mops: 1087
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 80
+
+Insertion Operations: 26843520
+Insertion Reprobes: 13445226
+Insertion Reprobe %: 50.09%
+
+Find Operations: 26841704
+Find Reprobes: 13444088
+Find Reprobe %: 50.09%
+
+Mops: 945
+-----------------------------------
+
+-----------------------------------
+Hashtable Size: 33554432
+Hashtable Fill: 90
+
+Insertion Operations: 30198976
+Insertion Reprobes: 34022441
+Insertion Reprobe %: 112.66%
+
+Find Operations: 30197557
+Find Reprobes: 34014598
+Find Reprobe %: 112.64%
+
+Mops: 723
+-----------------------------------
