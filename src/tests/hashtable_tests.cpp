@@ -154,7 +154,11 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   sync_barrier->arrive_and_wait();
   stop_sync = true;
 
-  static const auto event = vtune::event_start("find_casht");
+#ifdef WITH_VTUNE_LIB
+  static const auto vtune_event_find =
+  __itt_event_create("finding", strlen("finding"));
+  __itt_event_start(vtune_event_find);
+#endif
 
   const auto start = RDTSC_START();
   std::uint64_t key{};
@@ -212,10 +216,12 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   const auto end = RDTSCP();
   duration += end - start;
+    
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(vtune_event_find);
+#endif
 
   sync_barrier->arrive_and_wait();
-
-  vtune::event_end(event);
 
   if (found >= 0) {
     PLOGV.printf(
