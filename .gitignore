@@ -35,3 +35,5 @@ Testing/
 .cache/
 .vscode/
 esys-23-ae-jerryidk/*
+CMakeCache.txt
+*.json

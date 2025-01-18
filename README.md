@@ -57,7 +57,7 @@ sudo apt install libnuma-dev libboost-program-options-dev cmake libabsl-dev libc
 ### Build
 * Setup build directory
 ```
-cmake -S . -B build
+cmake -S . -B build 
 ```
 
 * Build

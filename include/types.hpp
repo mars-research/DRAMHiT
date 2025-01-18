@@ -76,6 +76,7 @@ typedef enum {
 // src/Application.cpp
 typedef enum {
   PARTITIONED_HT = 1,
+  SIMPLE_HT = 2,
   CASHTPP = 3,
   ARRAY_HT = 4,
 } ht_type_t;

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 project(dramhit VERSION 0.1.0)
 
+# To select SIMD or CMOV type for partitioned hashtable, use -DBRANCH= To set the variable.
+
 # Declare options
 option(SANITIZE "Enable ASAN." OFF)
 option(SANITIZE_TESTING "Enable ASAN for tests." ON)
@@ -20,7 +22,6 @@ option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
-
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -120,10 +121,10 @@ else()
 endif()
 
 if(AVX_SUPPORT)
-    message(WARNING "SIMD ON")
+    message(WARNING "SIMD supported, you may set BRANCH variable to simd")
     add_definitions(-DAVX_SUPPORT)
 else()
-    message(WARNING "SIMD OFF")
+    message(WARNING "SIMD not supported")
 endif() 
 
 set(branch_types simd cmov branched)
