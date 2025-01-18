@@ -65,6 +65,15 @@ cmake -S . -B build
 cmake --build build/
 ```
 
+### Configure build with ccmake (optional)
+
+On command line, install and start ccmake
+
+```
+sudo apt install cmake-curses-gui
+ccmake PATH_TO_CMAKE
+```
+
 ### Run
 ```
 sudo ./build/dramhit
