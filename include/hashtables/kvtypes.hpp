@@ -7,6 +7,7 @@
 #include <cstring>
 
 #include "types.hpp"
+#include <immintrin.h>
 
 namespace kmercounter {
 
@@ -576,6 +577,36 @@ struct Item {
     }
   exit:
     return found;
+  }
+
+  inline uint64_t find_simd(const void *data, uint64_t *retry, ValuePairs &vp)
+  {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data)); // elem contains key to find
+    constexpr __mmask8 KEYMSK = 0b01010101;
+    __m128i kv = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&elem->key));
+    __m512i key_vector = _mm512_maskz_broadcast_i64x2(KEYMSK, kv);
+    __m512i zero_vector = _mm512_setzero_si512();
+    
+    // load the cacheline.
+    __m512i cacheline = _mm512_load_si512(this); // this is an idx into the hashtable.
+    __mmask8 key_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, key_vector);
+    __mmask8 ept_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, zero_vector);
+
+    if(key_cmp == 0 && ept_cmp > 0) {
+      size_t idx = _bit_scan_forward(key_cmp) >> 1;
+      Item *item = &this[idx];
+      vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].value = item->kvpair.value;
+      vp.first++;
+      *retry = 0;
+      return 1;
+    }else {
+      if (key_cmp == 0 && ept_cmp == 0){ // still can probe more
+        *retry = 1;
+      }
+      return 0;                
+    }
   }
 
   inline uint64_t find_brless(const void *data, uint64_t *retry,

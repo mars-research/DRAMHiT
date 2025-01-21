@@ -37,3 +37,4 @@ Testing/
 esys-23-ae-jerryidk/*
 CMakeCache.txt
 *.json
+cmake.check_cache

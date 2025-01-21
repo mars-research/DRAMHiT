@@ -35,13 +35,15 @@
 
 namespace kmercounter {
 
-namespace {
+#ifdef AVX_SUPPORT
+
+namespace { // This prevents definition collision
+
 // utility constants and lambdas for SIMD operations
 constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / KV_SIZE;
 
 const size_t MAX_PARTITIONS = 64;
 
-#ifdef AVX_SUPPORT
 // cacheline
 //       <------------------------ cacheline ------------------------->
 //       || val3 | key3 || val2 | key2 || val1 | key1 || val0 | key0 ||
@@ -88,9 +90,10 @@ const __m512i empty_key_vector = _mm512_setzero_si512();
 auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
   return key_cmp(cacheline, empty_key_vector, cidx);
 };
+
+} 
 #endif
 
-}  // unnamed namespace
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another

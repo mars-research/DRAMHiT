@@ -335,6 +335,91 @@ class CASHashTable : public BaseHashTable {
         sizeof(this->hashtable[i & (this->capacity - 1)]));
   }
 
+#ifdef AVX_SUPPORT
+  uint64_t __find_simd(KVQ *q, ValuePairs &vp) {
+    size_t idx = q->idx;
+    uint64_t found = 0;
+
+    // make sure idx is actually cacheline size aligned multiple of n. 
+    idx = idx - (size_t) (idx & KEYS_IN_CACHELINE_MASK); 
+try_find_simd:
+    // cacheline aligned index 
+    KV *curr = &this->hashtable[idx];
+    uint64_t retry;
+    found = curr->find_simd(q, &retry, vp);
+
+    if (retry) {
+      // insert back into queue, and prefetch next bucket.
+      // next bucket will be probed in the next run
+      idx += CACHELINE_SIZE/sizeof(KV);
+      this->prefetch_read(idx);
+
+      this->find_queue[this->find_head].key = q->key;
+      this->find_queue[this->find_head].key_id = q->key_id;
+      this->find_queue[this->find_head].idx = idx;
+#ifdef LATENCY_COLLECTION
+      this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
+      this->find_head += 1;
+      this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+#ifdef CALC_STATS
+      this->sum_distance_from_bucket++;
+#endif
+    } else {
+#ifdef LATENCY_COLLECTION
+      collector->end(q->timer_id);
+#endif
+    }
+
+    return found;
+  }
+#endif
+
+  uint64_t __find_branchless_cmov(KVQ *q, ValuePairs &vp) {
+    // hashtable idx where the data should be found
+    size_t idx = q->idx;
+    uint64_t found = 0;
+
+try_find_brless:
+    KV *curr = &this->hashtable[idx];
+    uint64_t retry;
+    found = curr->find_brless(q, &retry, vp);
+
+    if (retry) {
+      // insert back into queue, and prefetch next bucket.
+      // next bucket will be probed in the next run
+      idx++;
+      idx = idx & (this->capacity - 1);  // modulo
+
+      // If idx still on a cacheline, keep looking until idx spill over
+      if ((idx & KEYS_IN_CACHELINE_MASK) != 0) { 
+        goto try_find_brless;
+      }
+
+      // key is at a different cacheline, prefetch and delay the find
+      this->prefetch_read(idx);
+
+      this->find_queue[this->find_head].key = q->key;
+      this->find_queue[this->find_head].key_id = q->key_id;
+      this->find_queue[this->find_head].idx = idx;
+#ifdef LATENCY_COLLECTION
+      this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
+
+      this->find_head += 1;
+      this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
+#ifdef CALC_STATS
+      this->sum_distance_from_bucket++;
+#endif
+    } else {
+#ifdef LATENCY_COLLECTION__find_branched
+        collector->end(q->timer_id);
+#endif
+    }
+
+    return found;
+  }
+
   uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type* collector) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
@@ -343,7 +428,7 @@ class CASHashTable : public BaseHashTable {
   try_find:
     KV *curr = &this->hashtable[idx];
     uint64_t retry;
-    found = curr->find(q, &retry, vp);
+    found = curr->find(q, &retry, vp); 
 
     // printf("%s, key = %" PRIu64 " | num_values %u, value %" PRIu64 " (id = %" PRIu64 ") | found=%ld, retry %ld\n",
     //          __func__, q->key, vp.first, vp.second[(vp.first - 1) %
@@ -354,12 +439,13 @@ class CASHashTable : public BaseHashTable {
       // next bucket will be probed in the next run
       idx++;
       idx = idx & (this->capacity - 1);  // modulo
-      // |  CACHELINE_SIZE   |
-      // | 0 | 1 | . | . | n | n+1 ....
-      if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
+
+      // If idx still on a cacheline, keep looking until idx spill over
+      if ((idx & KEYS_IN_CACHELINE_MASK) != 0) { 
         goto try_find;
       }
 
+      // key is at a different cacheline, prefetch and delay the find
       this->prefetch_read(idx);
 
       this->find_queue[this->find_head].key = q->key;
@@ -385,9 +471,19 @@ class CASHashTable : public BaseHashTable {
 
   auto __find_one(KVQ *q, ValuePairs &vp, collector_type* collector) { 
     if (q->key == this->empty_item.get_key()) {
-      __find_empty(q, vp);
-    } else {
-      __find_branched(q, vp, collector);
+      return __find_empty(q, vp);
+    }
+
+    if constexpr (branching == BRANCHKIND::WithBranch) {
+      return __find_branched(q, vp, collector);
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
+      return __find_branchless_cmov(q, vp);
+    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+      #ifdef AVX_SUPPORT
+        return __find_simd(q, vp);
+      #else
+        return __find_branchless_cmov(q, vp);
+      #endif
     }
   }
 
