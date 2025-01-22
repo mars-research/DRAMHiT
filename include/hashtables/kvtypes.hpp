@@ -631,7 +631,7 @@ struct Item {
     *retry = !this->is_empty() && (this->kvpair.key != elem->key);    
     vp.second[vp.first].id = found && elem->key_id;
     vp.second[vp.first].value = found && this->kvpair.value;
-    vp.first = found && (vp.first + 1);
+    vp.first = vp.first + found;
 
     return found;
 
