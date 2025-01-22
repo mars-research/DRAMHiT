@@ -561,22 +561,35 @@ struct Item {
   inline uint64_t find(const void *data, uint64_t *retry, ValuePairs &vp) {
     ItemQueue *elem =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
-    auto found = false;
-    *retry = 0;
-    if (this->is_empty()) {
-      goto exit;
-    } else if (this->kvpair.key == elem->key) {
-      //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
-      found = true;
+
+    uint64_t found = !this->is_empty() && (this->kvpair.key == elem->key);
+    *retry = !this->is_empty() && (this->kvpair.key != elem->key);
+
+    if (found) {
       vp.second[vp.first].id = elem->key_id;
       vp.second[vp.first].value = this->kvpair.value;
       vp.first++;
-      goto exit;
-    } else {
-      *retry = 1;
     }
-  exit:
+
     return found;
+
+  //   if (this->is_empty()) {
+  //     goto exit;
+  //   } else if (this->kvpair.key == elem->key) {
+      
+  //     // TODO.
+  //     //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
+  //     found = true;
+  //     vp.second[vp.first].id = elem->key_id;
+  //     vp.second[vp.first].value = this->kvpair.value;
+  //     vp.first++;
+
+  //     goto exit;
+  //   } else {
+  //     *retry = 1;
+  //   }
+  // exit:
+  //   return found;
   }
 
   inline uint64_t find_simd(const void *data, uint64_t *retry, ValuePairs &vp)
@@ -611,67 +624,78 @@ struct Item {
 
   inline uint64_t find_brless(const void *data, uint64_t *retry,
                               ValuePairs &vp) {
-    ItemQueue *item =
+
+    ItemQueue *elem =
         const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+    uint64_t found = !this->is_empty() && (this->kvpair.key == elem->key);
+    *retry = !this->is_empty() && (this->kvpair.key != elem->key);    
+    vp.second[vp.first].id = found && elem->key_id;
+    vp.second[vp.first].value = found && this->kvpair.value;
+    vp.first = found && (vp.first + 1);
 
-    uint64_t found = false;
-    uint32_t cur_val_idx = vp.first;
-
-    asm volatile(
-        "xor %%r13, %%r13\n\t"
-        "mov %[key_in], %%rbx\n\t"
-        "mov %%rbx, %%r12\n\t"
-        "xor %[key_curr], %%rbx\n\t"
-        // 1) if the key is empty, we'll get back the same data
-        "cmp %%r12, %%rbx\n\t"
-        // set empty = true;
-        "mov $0x1, %%r15\n\t"
-        "cmove %%r15, %%r13\n\t"
-        // set found = false;
-        // "cmove $0x0, %[found]\n\t"
-
-        // 2) if key == data, we'll get zero. we've found the key!
-        "xor %%r15, %%r15\n\t"
-        "xor %%r14, %%r14\n\t"
-        // increment the cur_val_idx
-        "inc %[cur_val_idx]\n\t"
-        "test %%rbx, %%rbx\n\t"
-        "cmove %[val_curr], %%r15\n\t"
-        "mov %%r15, %[value_out]\n\t"
-        // copy key_id if found = true
-        "cmove %[key_id], %%r14d\n\t"
-        "mov %%r14, %[value_id]\n\t"
-
-        // set found = true;
-        "mov $0x1, %%r15\n\t"
-        "cmove %%r15, %[found]\n\t"
-        "mov %[values_idx], %%r14\n\t"
-        "cmove %[cur_val_idx], %%r14d\n\t"
-        "mov %%r14, %[values_idx]\n\t"
-
-        // if key != data, we'll get > 0 && !data
-        // if !empty && !found, return 0x1, to continue finding the key
-        // e | f | retry
-        // 0 | 0 | 1
-        // 0 | 1 | 0
-        // 1 | 0 | 0
-        "mov %[found], %%r14\n\t"
-        "xor %%r14, %%r13\n\t"
-        "not %%r13\n\t"
-        "and $0x1, %%r13\n\t"
-        "xor %%r14, %%r14\n\t"
-        "cmp $0x1, %%r13\n\t"
-        "mov $0x1, %%r15\n\t"
-        "cmove %%r15, %%r14\n\t"
-        "mov %%r14, %[retry]\n\t"
-        : [value_out] "=m"(vp.second[cur_val_idx]),
-          [value_id] "=m"(vp.second[cur_val_idx].id), [retry] "=m"(*retry),
-          [found] "+r"(found), [values_idx] "+m"(vp.first),
-          [cur_val_idx] "+r"(cur_val_idx)
-        : [key_in] "r"(item->key), [key_id] "r"(item->key_id),
-          [key_curr] "m"(this->kvpair.key), [val_curr] "rm"(this->kvpair.value)
-        : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
     return found;
+
+    // ItemQueue *item =
+    //     const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+
+    // uint64_t found = false;
+    // uint32_t cur_val_idx = vp.first;
+
+    // asm volatile(
+    //     "xor %%r13, %%r13\n\t"
+    //     "mov %[key_in], %%rbx\n\t"
+    //     "mov %%rbx, %%r12\n\t"
+    //     "xor %[key_curr], %%rbx\n\t"
+    //     // 1) if the key is empty, we'll get back the same data
+    //     "cmp %%r12, %%rbx\n\t"
+    //     // set empty = true;
+    //     "mov $0x1, %%r15\n\t"
+    //     "cmove %%r15, %%r13\n\t"
+    //     // set found = false;
+    //     // "cmove $0x0, %[found]\n\t"
+
+    //     // 2) if key == data, we'll get zero. we've found the key!
+    //     "xor %%r15, %%r15\n\t"
+    //     "xor %%r14, %%r14\n\t"
+    //     // increment the cur_val_idx
+    //     "inc %[cur_val_idx]\n\t"
+    //     "test %%rbx, %%rbx\n\t"
+    //     "cmove %[val_curr], %%r15\n\t"
+    //     "mov %%r15, %[value_out]\n\t"
+    //     // copy key_id if found = true
+    //     "cmove %[key_id], %%r14d\n\t"
+    //     "mov %%r14, %[value_id]\n\t"
+
+    //     // set found = true;
+    //     "mov $0x1, %%r15\n\t"
+    //     "cmove %%r15, %[found]\n\t"
+    //     "mov %[values_idx], %%r14\n\t"
+    //     "cmove %[cur_val_idx], %%r14d\n\t"
+    //     "mov %%r14, %[values_idx]\n\t"
+
+    //     // if key != data, we'll get > 0 && !data
+    //     // if !empty && !found, return 0x1, to continue finding the key
+    //     // e | f | retry
+    //     // 0 | 0 | 1
+    //     // 0 | 1 | 0
+    //     // 1 | 0 | 0
+    //     "mov %[found], %%r14\n\t"
+    //     "xor %%r14, %%r13\n\t"
+    //     "not %%r13\n\t"
+    //     "and $0x1, %%r13\n\t"
+    //     "xor %%r14, %%r14\n\t"
+    //     "cmp $0x1, %%r13\n\t"
+    //     "mov $0x1, %%r15\n\t"
+    //     "cmove %%r15, %%r14\n\t"
+    //     "mov %%r14, %[retry]\n\t"
+    //     : [value_out] "=m"(vp.second[cur_val_idx]),
+    //       [value_id] "=m"(vp.second[cur_val_idx].id), [retry] "=m"(*retry),
+    //       [found] "+r"(found), [values_idx] "+m"(vp.first),
+    //       [cur_val_idx] "+r"(cur_val_idx)
+    //     : [key_in] "r"(item->key), [key_id] "r"(item->key_id),
+    //       [key_curr] "m"(this->kvpair.key), [val_curr] "rm"(this->kvpair.value)
+    //     : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
+    // return found;
   };
 
   inline uint64_t find_key_brless(const void *data, uint64_t *retry) {

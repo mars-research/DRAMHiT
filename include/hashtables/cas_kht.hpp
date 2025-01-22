@@ -383,7 +383,7 @@ try_find_simd:
 try_find_brless:
     KV *curr = &this->hashtable[idx];
     uint64_t retry;
-    found = curr->find_brless(q, &retry, vp);
+    found = curr->find_brless(q, &retry, vp); // find, not find (curr )
 
     if (retry) {
       // insert back into queue, and prefetch next bucket.
