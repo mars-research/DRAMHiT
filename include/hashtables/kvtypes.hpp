@@ -592,6 +592,7 @@ struct Item {
   //   return found;
   }
 
+#ifdef AVX_SUPPORT
   inline uint64_t find_simd(const void *data, uint64_t *retry, ValuePairs &vp)
   {
     ItemQueue *elem =
@@ -621,7 +622,7 @@ struct Item {
       return 0;                
     }
   }
-
+#endif
   inline uint64_t find_brless(const void *data, uint64_t *retry,
                               ValuePairs &vp) {
 
