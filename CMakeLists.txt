@@ -67,6 +67,7 @@ add_library(dramhit_lib
     "src/input_reader/eth_rel_gen.cpp"
     "src/types.cpp"
     "src/zipf_distribution.cpp"
+		"src/misc_lib.cpp"
 )
 target_include_directories(dramhit_lib PUBLIC include lib/plog/include/ lib)
 target_link_libraries(dramhit_lib PRIVATE 
