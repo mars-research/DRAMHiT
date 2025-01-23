@@ -5,8 +5,7 @@
 
 ### Download the source
 ```
-git clone git@github.com:mars-research/kmer-counting-hash-table.git --recursive
-cd kmer-counting-hash-table
+git clone git@github.com:mars-research/DRAMHiT.git --recursive
 ```
 
 ### Install dependencies
