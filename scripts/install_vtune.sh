@@ -33,7 +33,7 @@ sudo apt update
 # My gui app is version 2025, so looked it up with:
 #apt-cache policy intel-oneapi-vtune | grep 2025
 
-sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
+sudo apt install -y intel-oneapi-vtune=2025.0.1-14
 #   Installs in dir:
 #/opt/intel/oneapi/vtune/latest/bin64/vtune
 
@@ -42,7 +42,7 @@ sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
 cd /opt/intel/oneapi/vtune/latest/sepdk/src
 sudo ./build-driver -ni
 groups
-sudo ./insmod-sep -r -g dramhit-PG0
+sudo ./insmod-sep -r -g redshift-PG0 
 ./insmod-sep -q
 
 #Now to use inside the vtune gui application click the ssh option and fill out your info:

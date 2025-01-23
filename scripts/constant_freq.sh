@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-CPU_FREQ_KHZ=0
+CPU_FREQ_KHZ=2200000 
 RDMSR="rdmsr"
 WRMSR="wrmsr"
 
 get_rated_cpufreq() {
 	# lscpu reports the rated processor freq in %1.2f format
-	CPU_FREQ_GHZ=$(lscpu | grep -o "[0-9\.]\+GHz" | grep -o "[0-9\.]\+")
-	CPU_FREQ_KHZ=$(printf "%.0f" $(echo "${CPU_FREQ_GHZ} * 10^9" | bc))
+	#CPU_FREQ_GHZ=$(lscpu | grep -o "[0-9\.]\+GHz" | grep -o "[0-9\.]\+")
+	#CPU_FREQ_KHZ=$(printf "%.0f" $(echo "${CPU_FREQ_GHZ} * 10^9" | bc))
 	echo $CPU_FREQ_KHZ
 }
 

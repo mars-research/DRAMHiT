@@ -49,6 +49,12 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz) {
 namespace kmercounter {
 
 void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
+
+    // Check if there is only one NUMA node
+    if (numa_num_configured_nodes() == 1) {
+	PLOG_INFO.printf("Only one NUMA node available, skipping memory distribution.");
+	return;
+    }
     PLOGV.printf("addr %p, alloc_sz %zu | all_nodes %lx",
           addr, alloc_sz, *numa_all_nodes_ptr->maskp);
 
