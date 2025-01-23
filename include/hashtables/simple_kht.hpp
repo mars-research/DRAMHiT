@@ -35,7 +35,6 @@
 
 namespace kmercounter {
 
-#ifdef AVX_SUPPORT
 
 namespace { // This prevents definition collision
 
@@ -43,6 +42,8 @@ namespace { // This prevents definition collision
 constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / KV_SIZE;
 
 const size_t MAX_PARTITIONS = 64;
+
+#ifdef AVX_SUPPORT
 
 // cacheline
 //       <------------------------ cacheline ------------------------->
@@ -91,8 +92,9 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
   return key_cmp(cacheline, empty_key_vector, cidx);
 };
 
-} 
 #endif
+
+} 
 
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
