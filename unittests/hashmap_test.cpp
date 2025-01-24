@@ -20,6 +20,9 @@
 #include "test_lib.hpp"
 
 namespace kmercounter {
+
+extern Configuration config;
+
 namespace {
 
 using testing::UnorderedElementsAre;
@@ -74,6 +77,8 @@ class HashtableTest : public ::testing::TestWithParam<const char*> {
   void SetUp() override {
     const auto ht_name = GetParam();
     const auto hashtable_size = absl::GetFlag(FLAGS_hashtable_size);
+
+    config.no_prefetch = 0;
     // Get hashtable.
     ht_ = std::unique_ptr<kmercounter::BaseHashTable>(
         [ht_name, hashtable_size]() -> kmercounter::BaseHashTable* {
@@ -173,7 +178,8 @@ TEST_P(HashtableTest, SIMPLE_FIND_AGAIN_TEST) {
   batch_runner_.find({23, 321});
   batch_runner_.flush_find();
 
-  // Look up again.
+  // Look up again. 
+  // can't add the same kv. 
   checker.add({FindResult(123, 128), FindResult(321, 256)});
   batch_runner_.find({12, 123});
   batch_runner_.find({23, 321});

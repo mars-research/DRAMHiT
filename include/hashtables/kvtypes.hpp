@@ -9,6 +9,8 @@
 #include "types.hpp"
 #include <immintrin.h>
 
+
+
 namespace kmercounter {
 
 struct Kmer_base {
@@ -601,13 +603,12 @@ struct Item {
     __m128i kv = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(&elem->key));
     __m512i key_vector = _mm512_maskz_broadcast_i64x2(KEYMSK, kv);
     __m512i zero_vector = _mm512_setzero_si512();
-    
     // load the cacheline.
     __m512i cacheline = _mm512_load_si512(this); // this is an idx into the hashtable.
     __mmask8 key_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, key_vector);
     __mmask8 ept_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, zero_vector);
 
-    if(key_cmp == 0 && ept_cmp > 0) {
+    if(key_cmp > 0 && ept_cmp == 0) {
       size_t idx = _bit_scan_forward(key_cmp) >> 1;
       Item *item = &this[idx];
       vp.second[vp.first].id = elem->key_id;

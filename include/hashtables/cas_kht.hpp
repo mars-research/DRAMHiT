@@ -24,6 +24,7 @@
 #include "sync.h"
 #include "hasher.hpp"
 
+
 namespace kmercounter {
 template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
@@ -340,10 +341,10 @@ class CASHashTable : public BaseHashTable {
     size_t idx = q->idx;
     uint64_t found = 0;
 
-    // make sure idx is actually cacheline size aligned multiple of n. 
     idx = idx - (size_t) (idx & KEYS_IN_CACHELINE_MASK); 
+    if(idx < capacity - 1 )
+
 try_find_simd:
-    // cacheline aligned index 
     KV *curr = &this->hashtable[idx];
     uint64_t retry;
     found = curr->find_simd(q, &retry, vp);
@@ -352,6 +353,7 @@ try_find_simd:
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run
       idx += CACHELINE_SIZE/sizeof(KV);
+      idx = idx & (this->capacity - 1);  // make sure idx is in the range
       this->prefetch_read(idx);
 
       this->find_queue[this->find_head].key = q->key;
@@ -389,7 +391,7 @@ try_find_brless:
       // insert back into queue, and prefetch next bucket.
       // next bucket will be probed in the next run
       idx++;
-      idx = idx & (this->capacity - 1);  // modulo
+      idx = idx & (this->capacity - 1);  // make sure idx is in the range
 
       // If idx still on a cacheline, keep looking until idx spill over
       if ((idx & KEYS_IN_CACHELINE_MASK) != 0) { 
