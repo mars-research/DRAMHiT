@@ -23,7 +23,7 @@ endif()
 add_custom_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/eth_hashjoin
   OUTPUT ${ETH_HASHJOIN_CONFIG_H}
-  COMMAND ./configure ${ETH_HASHJOIN_COINGURE_FLAGS}
+  COMMAND ./configure ${ETH_HASHJOIN_COINGURE_FLAGS} --disable-dependency-tracking
 )
 
 set(ETH_SOURCE_FILES

@@ -338,20 +338,17 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef AVX_SUPPORT
   uint64_t __find_simd(KVQ *q, ValuePairs &vp) {
-    size_t idx = q->idx;
-    uint64_t found = 0;
-
-    idx = idx - (size_t) (idx & KEYS_IN_CACHELINE_MASK); 
-    if(idx < capacity - 1 )
-
-try_find_simd:
-    KV *curr = &this->hashtable[idx];
     uint64_t retry;
-    found = curr->find_simd(q, &retry, vp);
+    size_t idx = q->idx;
+    idx = idx - (size_t) (idx & KEYS_IN_CACHELINE_MASK); 
+
+    KV *curr_cacheline = &this->hashtable[idx];
+    size_t offset = q->idx - idx;
+
+    uint64_t found = curr_cacheline->find_simd(q, &retry, vp, offset);
 
     if (retry) {
-      // insert back into queue, and prefetch next bucket.
-      // next bucket will be probed in the next run
+      //printf("[CPU %d] Looking for key %d at idx: %d\n On cacheline idx: %d\n", sched_getcpu(),
       idx += CACHELINE_SIZE/sizeof(KV);
       idx = idx & (this->capacity - 1);  // make sure idx is in the range
       this->prefetch_read(idx);
@@ -371,7 +368,12 @@ try_find_simd:
 #ifdef LATENCY_COLLECTION
       collector->end(q->timer_id);
 #endif
+
+      //printf("[CPU %d] found key %d\n", sched_getcpu(), q->key);
+
     }
+
+    
 
     return found;
   }

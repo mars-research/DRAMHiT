@@ -264,12 +264,13 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   for (uint32_t i = 1; i < HT_TESTS_MAX_STRIDE; i++) {
     insert_timings = do_zipfian_inserts(hashtable, skew, zipf_seed, count,
                                         shard->shard_idx, sync_barrier);
+
+#ifdef CALC_STATS
     PLOG_INFO.printf(
         "Quick stats: thread %u, Batch length: %d, cycles per "
         "insertion:%" PRIu64 "",
         shard->shard_idx, config.batch_len, insert_timings.duration / insert_timings.op_count);
 
-#ifdef CALC_STATS
     PLOG_INFO.printf("Reprobes %" PRIu64 " soft_reprobes %" PRIu64 "",
                      hashtable->num_reprobes, hashtable->num_soft_reprobes);
 #endif
@@ -302,13 +303,14 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   shard->stats->finds.duration = num_finds.duration;
   shard->stats->finds.op_count = num_finds.op_count;
 
-  if (num_finds.op_count > 0) {
-    PLOG_INFO.printf("thread %u | num_finds %" PRIu64
-                     " | cycles per get: %" PRIu64 "",
-                     shard->shard_idx, num_finds.op_count,
-                     num_finds.duration / num_finds.op_count);
-  }
+  // if (num_finds.op_count > 0) {
+  //   PLOG_INFO.printf("thread %u | num_finds %" PRIu64
+  //                    " | cycles per get: %" PRIu64 "",
+  //                    shard->shard_idx, num_finds.op_count,
+  //                    num_finds.duration / num_finds.op_count);
+  // }
 
+  shard->stats->ht_fill = config.ht_fill;
   get_ht_stats(shard, hashtable);
 
 #ifdef LATENCY_COLLECTION

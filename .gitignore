@@ -37,3 +37,5 @@ Testing/
 CMakeCache.txt
 *.json
 cmake.check_cache
+tester/
+results/
