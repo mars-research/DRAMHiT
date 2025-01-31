@@ -10,7 +10,7 @@ let
     src = ./.;
   };
 
-  shell = flake.shellNix.default {
+  shell = flake.shellNix.default // {
     reproduce = flake.defaultNix.outputs.reproduce.${builtins.currentSystem};
   };
 in shell

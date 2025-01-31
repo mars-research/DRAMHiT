@@ -85,7 +85,7 @@ OpTimings do_zipfian_inserts(
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
       }
 
-      auto value = zipf_values->at(zipf_idx);
+      auto value = zipf_values->at(zipf_idx); // len 1024,  zipf[2 * 1024]
 #endif
       items[key].key = items[key].value = value;
       items[key].id = n;
@@ -160,14 +160,17 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   __itt_event_start(vtune_event_find);
 #endif
 
+
+  // THis ensures that for a given hashtable size, regardless of 
+  // the fill factor, number of finds is the same.
+  const uint64_t num_finds = config.ht_size / num_threads; 
   const auto start = RDTSC_START();
   std::uint64_t key{};
   std::size_t next_pollution{};
   for (auto j = 0u; j < config.insert_factor; j++) {
-    uint64_t key_start =
-        std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+    uint64_t key_start = std::max(static_cast<uint64_t>(num_finds) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
-    for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+    for (unsigned int n{}; n < num_finds; ++n) {
 #ifdef XORWOW
       auto value = key_start++;
 #else
@@ -180,8 +183,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       if (config.no_prefetch) {
         auto ret = hashtable->find_noprefetch(&value, collector);
         for (auto p = 0u; p < config.pollute_ratio; ++p)
-          prefetch_object<true>(
-              &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+          prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
         if (ret)
           found++;
@@ -195,10 +197,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
           found += vp.first;
           vp.first = 0;
           key = 0;
-          for (auto p = 0u;
-               p < config.pollute_ratio * HT_TESTS_FIND_BATCH_LENGTH; ++p)
-            prefetch_object<true>(
-                &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+          for (auto p = 0u; p < config.pollute_ratio * HT_TESTS_FIND_BATCH_LENGTH; ++p)
+            prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
         }
       }
 
@@ -233,7 +233,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   collector->dump("find", id);
 #endif
 
-  return {duration, found};
+  return {duration, found + not_found};
 }
 
 void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
