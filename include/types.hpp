@@ -171,7 +171,7 @@ struct Configuration {
     printf("  mode %d - %s\n", mode, run_mode_strings[mode]);
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
     printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size,
-           ht_size / (1ul << 30));
+           (ht_size * (KEY_SIZE+VALUE_SIZE)  ) / (1024*1024*1024)); // elements*KVsize/ GiB (in bytes)
     printf("  K %" PRIu64 "\n", K);
     printf("  P(read) %f\n", pread);
     printf("  Pollution Ratio %u\n", pollute_ratio);
