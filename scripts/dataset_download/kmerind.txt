@@ -1,7 +1,0 @@
-# Dataset from kerind https://github.com/mars-research/kmer_wiki/blob/master/papers/bioinformatics/kmerind-acm-tcbb.pdf
-# Use `download_sra_tools.sh` to install sratools if you haven't already.
-# Use `~/sratoolkit/bin/fastq-dump ${FILE}` to generate fastq files
-
-# Homosapien
-# https://www.ncbi.nlm.nih.gov/sra/SRX033191[accn]
-https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR077487/SRR077487

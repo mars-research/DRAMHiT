@@ -1,1 +1,0 @@
-add_dramhit_test(circular_buffer_test)

@@ -1,90 +1,72 @@
-# DRAMHiT
-[![Build and Test](https://github.com/mars-research/DRAMHiT/actions/workflows/build.yml/badge.svg)](https://github.com/mars-research/kmer-counting-hash-table/actions/workflows/build.yml)
+# Gemini Unofficial Oxford Version [![Build Status](https://github.com/anishathalye/gemini/workflows/CI/badge.svg)](https://github.com/anishathalye/gemini/actions?query=workflow%3ACI)
 
-## Build
+This is an unofficial adaptation of the modern LaTeX [beamerposter] theme, Gemini, tailored for the University of Oxford.
 
-### Download the source
-```
-git clone git@github.com:mars-research/DRAMHiT.git --recursive
-```
+<p align="center">
+<a href="https://raw.githubusercontent.com/anishathalye/assets/master/gemini/poster-gemini.pdf">
+<img src="https://raw.githubusercontent.com/MaxMLang/assets/master/ox-poster.png">
+</a>
+</p>
 
-### Install dependencies
+For a general-purpose beamer presentation theme, see [Auriga].
 
-#### Optional 1(recommended): Nix shell.
-If Nix is not installed, install Nix.
-```bash
-curl -L https://nixos.org/nix/install | sh
-```
-Use nix shell. 
-```bash
-nix-shell
-```
-All the dependencies should be available in the nix shell now.
+## Oxford Customizations
 
-#### Option 2: Manual installation.
-```bash
-sudo apt install libnuma-dev libboost-program-options-dev cmake libabsl-dev libcapstone-dev
-```
+* Integrated University of Oxford branding guidelines
+* Example templates featuring the Oxford color scheme and logo placement
+* Additional font support to match Oxford's branding (where applicable)
 
-### Setup the machine
+## Dependencies
 
-#### Option 1(recommended): Express setup 
-- Apply constant frequency, enable hugepages, and disable hardware prefetching.
-```
-./scripts/setup.sh
-```
+* A TeX installation that includes [LuaTeX]
+    * `latexmk` is needed for using the provided `Makefile`
+* LaTeX package dependencies including beamerposter (typically part of your TeX installation, available on [CTAN] if not)
+* [Raleway] and [Lato] fonts, both available under Open Font License, and any additional fonts recommended by the University's branding guidelines
 
-#### Option 2: Maunal setup
+## Usage
 
-- Set all cpus to run at a constant frequency
-```
-./scripts/constant_freq.sh
-```
-- Enable hugepages (both 2MiB and 1GiB)
-```
-./scripts/enable_hugepages.sh
-```
-- Disable hardware prefetching
-```
-./scripts/prefetch_control.sh off
-```
-- (Optional)Enable/disable hyperthreading
-```
-./scripts/toggle_hyperthreading.sh
-```
+1. Copy or clone the files from this repository
 
-### Build
-* Setup build directory
-```
-cmake -S . -B build 
-```
+1. Configure `poster.tex` with your desired paper size, column layout, and scale adjustments as needed
 
-* Build
-```
-cmake --build build/
-```
+1. Customize `beamercolorthemegemini.sty` by copying it and modifying the `\usecolortheme` line in `poster.tex` to theme your poster to Oxford's branding (optional but recommended for university-related presentations)
 
-### Configure build with ccmake (optional)
+1. Use `make` to compile your poster
 
-On command line, install and start ccmake
+## FAQ
 
-```
-sudo apt install cmake-curses-gui
-ccmake PATH_TO_CMAKE
-```
+For common questions, such as adding an institution logo or customizing the color theme further, consult the [FAQ] in the Wiki.
 
-### Run
-```
-sudo ./build/dramhit
-```
+## Themes
 
-### Test
-Run all tests.
-```
-ctest --test-dir=build
-```
+The Oxford version includes several color themes suitable for various types of presentations:
 
-Run individual test binary. For example, the hashmap test:
-```
-./build/unittests/hashmap_test
-```
+* `gemini` (default)
+* `ox` (customized for University of Oxford branding)
+* `mit`
+* `labsix`
+
+You're encouraged to create your own color theme or use the `ox` theme for presentations associated with the University.
+
+## Design Goals
+
+* **Minimal**: Focuses on readability and simplicity.
+* **Batteries Included**: Ready to use with minimal setup.
+* **Easy Theming**: Simplified process to create or modify themes.
+
+## Contributing
+
+Contributions such as bug reports, new themes, and enhancements are welcome! Design is subjective, so early feedback through issues or pull requests is encouraged.
+
+## License
+
+Copyright (c) 2018-2022 Anish Athalye. This unofficial Oxford version is released under the MIT License. See [LICENSE.md][license] for details.
+
+[beamerposter]: https://github.com/deselaers/latex-beamerposter
+[Auriga]: https://github.com/anishathalye/auriga
+[LuaTeX]: http://www.luatex.org/
+[CTAN]: https://ctan.org/
+[Raleway]: https://www.fontsquirrel.com/fonts/raleway
+[Lato]: https://www.fontsquirrel.com/fonts/lato
+[license]: LICENSE.md
+[FAQ]: https://github.com/anishathalye/gemini/wiki/FAQ

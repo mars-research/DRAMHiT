@@ -1,2 +1,0 @@
-ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR097/SRR097732/SRR097732_1.fastq.gz
-ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR097/SRR097732/SRR097732_2.fastq.gz
