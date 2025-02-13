@@ -15,6 +15,8 @@
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
 #include "./hashtables/array_kht.hpp"
+#include "./hashtables/multi_kht.hpp"
+
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "tests/PrefetchTest.hpp"
@@ -139,6 +141,12 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   switch (config.ht_type) {
+    case MULTI_HT:
+      /* For the CAS Hash table, size is the same as
+          size of one partitioned ht * number of threads */
+      kmer_ht =
+          new MultiHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
+      break;
     case PARTITIONED_HT:
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
       break;
@@ -238,7 +246,7 @@ void Application::shard_thread(int tid, std::barrier<std::function<void()>>* bar
   // Write to file
   if (!config.ht_file.empty()) {
     // for CAS hashtable, not every thread has to write to file
-    if (config.ht_type == CASHTPP && (sh->shard_idx > 0)) {
+    if ( (config.ht_type == CASHTPP ||config.ht_type == MULTI_HT) && (sh->shard_idx > 0)) {
       goto done;
     }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
@@ -277,10 +285,10 @@ int Application::spawn_shard_threads() {
 
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
-  if (config.ht_type == CASHTPP) {
+  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT) {
     auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
     HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
-    PLOGV.printf("Total inserts %" PRIu64 " | num_threads %u | scaled inserts per thread %" PRIu64 "",
+    PLOGI.printf("Total inserts %" PRIu64 " | num_threads %u | scaled inserts per thread %" PRIu64 "",
           orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
 
@@ -562,6 +570,9 @@ int Application::process(int argc, char *argv[]) {
       case CASHTPP:
         PLOG_INFO.printf("Hashtable type : Cas HT");
         break;
+      case MULTI_HT:
+        PLOG_INFO.printf("Hashtable type : Multi HT");
+        break;
       case ARRAY_HT:
         PLOG_INFO.printf("Hashtable type : Array HT");
         break;
@@ -647,7 +658,7 @@ int Application::process(int argc, char *argv[]) {
     // for hashjoin, ht-type determines how we spawn threads
     if (config.ht_type == PARTITIONED_HT) {
       this->test.qt.run_test(&config, this->n, true, this->npq);
-    } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT)) {
+    } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT) || (config.ht_type == MULTI_HT)) {
       this->spawn_shard_threads();
     }
   } else if (config.mode == BQ_TESTS_YES_BQ) {

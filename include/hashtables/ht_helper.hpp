@@ -45,7 +45,7 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz);
 
 template <bool WRITE>
 inline void prefetch_object(const void *addr, uint64_t size) {
-  //uint64_t cache_line1_addr = cache_block_aligned_addr((uint64_t)addr);
+  //uint64_t _addr = cache_block_aligned_addr((uint64_t)addr);
 
 #if defined(PREFETCH_TWO_LINE)
   //uint64_t cache_line2_addr =

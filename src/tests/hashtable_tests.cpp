@@ -135,6 +135,8 @@ OpTimings do_zipfian_inserts(
   return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
+
+
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
   std::uint64_t duration{};
@@ -163,7 +165,9 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   // THis ensures that for a given hashtable size, regardless of 
   // the fill factor, number of finds is the same.
-  const uint64_t num_finds = config.ht_size / num_threads; 
+  // const uint64_t num_finds = config.ht_size / num_threads; 
+  const uint64_t num_finds = HT_TESTS_NUM_INSERTS; //old zipf test
+
   const auto start = RDTSC_START();
   std::uint64_t key{};
   std::size_t next_pollution{};
@@ -225,15 +229,15 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   if (found >= 0) {
     PLOGV.printf(
-        "thread %u | num_finds %lu (not_found %lu) | cycles per get: %lu", id,
-        found, not_found, found > 0 ? duration / found : 0);
+        "thread %u | num_finds %lu | cycles per get: %lu", id,
+        found, found > 0 ? duration / found : 0);
   }
 
 #ifdef LATENCY_COLLECTION
   collector->dump("find", id);
 #endif
 
-  return {duration, found + not_found};
+  return {duration, num_finds * config.insert_factor};
 }
 
 void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
@@ -295,6 +299,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
   }
 
+// std::size_t next_pollution{};
+//   for (auto p = 0u; p < 90000; ++p)
+//           prefetch_object<false>(
+//               &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+
   cur_phase = ExecPhase::finds;
 
   const auto num_finds =
@@ -310,6 +319,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //                    num_finds.duration / num_finds.op_count);
   // }
 
+  
   shard->stats->ht_fill = config.ht_fill;
   get_ht_stats(shard, hashtable);
 

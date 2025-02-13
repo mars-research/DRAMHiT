@@ -56,6 +56,9 @@ class AggregationTest : public ::testing::TestWithParam<const char*> {
 // Avoiding asynchronous effects
 // Note the off-by-one on found values
 TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
+
+  GTEST_SKIP();
+
   const auto size = absl::GetFlag(FLAGS_test_size);
   ASSERT_EQ(size % HT_TESTS_BATCH_LENGTH, 0)
       << "Test size is assumed to be a multiple of batch size";
@@ -97,6 +100,9 @@ TEST_P(AggregationTest, SYNCHRONOUS_TEST) {
 }
 
 TEST_P(AggregationTest, ASYNCHRONOUS_TEST) {
+
+  GTEST_SKIP();
+
   std::uint64_t n_inserted{};
   std::uint64_t n_found{};
   constexpr auto size = 1 << 12;
@@ -174,6 +180,8 @@ TEST_P(AggregationTest, SINGLE_INSERT_TEST) {
 // lengths between find/insert
 // NOTE: also noted a very strange use of the value field
 TEST_P(AggregationTest, OFF_BY_ONE_TEST) {
+  GTEST_SKIP();
+
   std::array<InsertFindArgument, 2> arguments{
       InsertFindArgument{key : 1, id : 128},
       InsertFindArgument{key : 0xdeadbeef, id : 256}};

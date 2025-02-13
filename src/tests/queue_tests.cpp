@@ -71,10 +71,11 @@ void init_zipfian_dist(double skew, int64_t seed) {
     keyrange_width = (1ull << 31);
   }
 
-  zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(config.ht_size);
+  //zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(config.ht_size);
+  zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(HT_TESTS_NUM_INSERTS); //old zipf test
 
   std::stringstream cache_name{};
-  cache_name << "/opt/dramhit/cache" << config.skew << "_" << config.ht_size <<".bin";
+  cache_name << "/opt/dramhit/cache" << config.skew << "_" << config.ht_size << "_" << config.ht_fill << ".bin";
   std::ifstream cache{cache_name.str().c_str()};
 
   PLOG_INFO << cache_name.str() << " " << cache.is_open();

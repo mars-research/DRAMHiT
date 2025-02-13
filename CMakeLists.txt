@@ -47,7 +47,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_options(
-    -O3
+    -O1
     -Wall
     -g
     -fdiagnostics-color=always

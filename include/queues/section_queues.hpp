@@ -165,7 +165,7 @@ class SectionQueue {
   }
 
   void init_data(NumaPolicyQueues *npq) {
-    auto qdata_sz = nprod * ncons * this->queue_size;
+    // auto qdata_sz = nprod * ncons * this->queue_size;
     std::map<uint32_t, std::vector<uint32_t>> node_map;
 
     auto get_current_node = [](uint32_t cpu) { return numa_node_of_cpu(cpu); };
@@ -376,9 +376,9 @@ class SectionQueue {
   }
 
   void dump_stats(uint32_t p, uint32_t c) {
+#ifdef CALC_STATS
     auto cq = &all_cqueues[c][p];
     auto pcq = &all_pc_queues[p][c];
-#ifdef CALC_STATS
     printf("[%u][%u] enq spins %" PRIu64 " | numdequeue spins %" PRIu64
            " | enqLocalPtr %p\n",
            p, c, pcq->numEnqueueSpins, pcq->numDequeueSpins, cq->enqLocalPtr);
@@ -423,7 +423,7 @@ class SectionQueue {
   }
 
   void pop_done(uint32_t p, uint32_t c) {
-    auto cq = &this->all_cqueues[c][p];
+    auto  cq = &this->all_cqueues[c][p];
     // cq->pop_done = true;
   }
 

@@ -96,7 +96,6 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
 
 } 
 
-
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
 // TODO how long should be the count variable?

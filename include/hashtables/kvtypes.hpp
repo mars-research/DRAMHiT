@@ -11,6 +11,9 @@
 
 namespace kmercounter {
 
+
+
+
 struct Kmer_base {
   Kmer_s kmer;
   uint16_t count;
@@ -93,6 +96,7 @@ struct Kmer_queue {
 struct ItemQueue {
   key_type key;
   value_type value;
+  //on multi-level ht this is used as ht-level
   uint32_t part_id;
   uint32_t key_id;
   uint32_t timer_id;
@@ -493,12 +497,12 @@ struct Item {
     return true;
   }
 
+  // |K, v| 
   inline bool insert_cas(queue *elem) {
     const Item empty = this->get_empty_key();
 
     auto success = __sync_bool_compare_and_swap(&this->kvpair.key,
                                                 empty.kvpair.key, elem->key);
-
     if (success) {
       this->update_value(elem);
     }
@@ -572,98 +576,93 @@ struct Item {
     }
 
     return found;
-
-  //   if (this->is_empty()) {
-  //     goto exit;
-  //   } else if (this->kvpair.key == elem->key) {
-      
-  //     // TODO.
-  //     //printf("k = %" PRIu64 " v = %" PRIu64 "\n", this->kvpair.key, this->kvpair.value);
-  //     found = true;
-  //     vp.second[vp.first].id = elem->key_id;
-  //     vp.second[vp.first].value = this->kvpair.value;
-  //     vp.first++;
-
-  //     goto exit;
-  //   } else {
-  //     *retry = 1;
-  //   }
-  // exit:
-  //   return found;
-  }
-
-inline uint64_t find_simd_test(const void *data, uint64_t *retry, ValuePairs &vp, size_t * offset) {
-     //__builtin_prefetch(&this[0], 0, 3);
-    ItemQueue *elem =
-        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(
-            data));  // elem contains key to find
-    //  Interleave key with non-zero values for comparison
-    __m512i key_zero_vector = _mm512_set_epi64(elem->key, 0, elem->key, 0,
-                                               elem->key, 0, elem->key, 0);
-    // Load the cacheline.
-    __m512i cacheline = _mm512_load_si512(this);
-    // Compare cacheline with key_zero_vector
-    __mmask8 key_cmp =
-        0b10101010 & _mm512_cmpeq_epu64_mask(cacheline, key_zero_vector);
-    if (key_cmp) {
-      size_t idx = _bit_scan_forward(key_cmp) >> 1;
-      Item *item = &this[idx];
-      vp.second[vp.first].id = elem->key_id;
-      vp.second[vp.first].value = item->kvpair.value;
-      //zipfian test does key=value, check this is true
-      // if(item->kvpair.value!= elem->key)
-      //         std::terminate(); 
-      vp.first++;
-      *retry = 0;
-      return 1;
-    } else {
-      // if (first_element) {  // still can probe more
-      //*retry = 1;
-      __m512i zero_vector = _mm512_setzero_si512();
-      __m512i cacheline1 = _mm512_load_si512(this);
-
-       __mmask8 ept_cmp = _mm512_cmpeq_epu64_mask(cacheline1, zero_vector);
-
-           ept_cmp = ept_cmp << *offset;
-           if(!ept_cmp) 
-            *retry = 1;
-      // if (first_element) {  // still can probe more
-      // if(ept_cmp != 0b11111111)
-      // *retry = 1;
-      //printf("Couldn't find: %d\n", elem->idx);
-      // }
-      return 0;
-    }
   }
 
 #ifdef AVX_SUPPORT
+
+  /**
+   * I know this looks crazy, this seems to be the only to get 
+   * a 64 bit value out of the avx512 register dynamically without 
+   * storing it in memory.
+   * 
+   * 
+   */
+  inline uint64_t mm512_extract_uint64(__m512i vec, size_t index) {
+    uint64_t result;
+
+    __asm__ volatile (
+        "movq       %[index], %%xmm1          \n\t"  // Move index to XMM1
+        "vpbroadcastq %%xmm1, %%zmm1          \n\t"  // Broadcast index across lanes
+        "vpermi2q   %%zmm1, %[vec], %%zmm0    \n\t"  // Permute based on index
+        "vmovq      %%xmm0, %[result]         \n\t"  // Extract 64-bit value
+        : [result] "=r" (result)
+        : [vec] "v" (vec), [index] "r" ((uint64_t)index)
+        : "zmm0", "zmm1"
+    );
+
+    return result;
+  }
+
+  inline uint64_t find_simd_brless(const void *data, uint64_t *retry, ValuePairs &vp, size_t offset)
+  {
+      ItemQueue *elem = const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+      constexpr __mmask8 KEYMSK = 0b01010101;
+      
+      __m512i key_vector = _mm512_set_epi64(0, elem->key, 0, elem->key,
+                                            0, elem->key, 0, elem->key);
+      __m512i cacheline = _mm512_load_si512(this);
+      __mmask8 key_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, key_vector);
+      __m512i zero_vector = _mm512_setzero_si512();
+      __mmask8 EMTMSK = ~(1 << ((2 * offset) - 1)); 
+      __mmask8 ept_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, zero_vector);
+
+      //previous code equialent
+      bool found = key_cmp > 0;
+      // if key_cmp is 0, idx will be set to 16 otherwise works as normal
+      // 0-7 or 16
+      size_t idx = _bit_scan_forward((size_t)key_cmp | 0b10000000000000000 );
+      // if answer was 9, turn it to 0, otherwise does nothing
+      size_t new_idx = idx & 15;
+      //set, will be set again if we retry
+      vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].value = ((Item)this[(new_idx>>1)]).kvpair.value; 
+      //+=1 if idx == new_idx, otherwise += 0
+      //vp.first += !(idx ^ new_idx);
+      vp.first += found;
+
+      // retry=1 if idx != new_idx & ept_cmp == 0, otherwise 0
+      //*retry = (!!(idx ^ new_idx)) & !(EMTMSK & ept_cmp);
+      *retry = !found & !(EMTMSK & ept_cmp);
+      //return 1 if idx == new_idx, 0 otherwise
+      return  found;
+
+  }
   inline uint64_t find_simd(const void *data, uint64_t *retry, ValuePairs &vp, size_t offset)
   {
-    ItemQueue *elem = const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
-    constexpr __mmask8 KEYMSK = 0b01010101;
-    __mmask8 EMTMSK = ~((1 << (2 * offset)) - 1); 
-    __m512i key_vector = _mm512_set_epi64(0, elem->key, 0, elem->key,
-                                          0, elem->key, 0, elem->key);
-    __m512i zero_vector = _mm512_setzero_si512();
-    __m512i cacheline = _mm512_load_si512(this); // this is an idx into the hashtable.
-    __mmask8 key_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, key_vector);
-    __mmask8 ept_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, zero_vector);
-
-    *retry = 0;
-    if(key_cmp > 0) {
-      size_t idx = _bit_scan_forward(key_cmp);
-      vp.second[vp.first].id = elem->key_id;
-      vp.second[vp.first].value = cacheline[idx+1]; // value 
-      vp.first++;
-      return 1;
-    }else {
-      // key not found
-      // retry iff keys and following keys in cacheline are not empty
-      if((EMTMSK & ept_cmp) == 0) {
-        *retry = 1;
-      } 
+      ItemQueue *elem = const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+      constexpr __mmask8 KEYMSK = 0b01010101;
       
-      return 0;                
+      __m512i key_vector = _mm512_set_epi64(0, elem->key, 0, elem->key,
+                                            0, elem->key, 0, elem->key);
+      __m512i cacheline = _mm512_load_si512(this); // this is an idx into the hashtable.
+      __mmask8 key_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, key_vector);
+     
+      *retry = 0;
+      if( key_cmp > 0) {
+        size_t idx = _bit_scan_forward(key_cmp);
+        vp.second[vp.first].id = elem->key_id;
+        vp.second[vp.first].value = ((Item)this[(idx>>1)]).kvpair.value; 
+        vp.first++;
+        return 1;
+      }else {
+        // key not found
+        __m512i zero_vector = _mm512_setzero_si512();
+        __mmask8 EMTMSK = ~((1 << (2 * offset)) - 1);
+        __mmask8 ept_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, zero_vector);
+        if((EMTMSK & ept_cmp) == 0) {
+          *retry = 1;
+        } 
+        return 0;                
     }
   }
 #endif

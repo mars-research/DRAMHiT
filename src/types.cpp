@@ -35,6 +35,7 @@ const char* ht_type_strings[] = {
     "",
     "CASHT++",
     "ARRAY_HT",
+    "MULTI_HT",
 };
 const char* run_mode_strings[] = {
     "",
