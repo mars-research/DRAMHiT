@@ -22,6 +22,9 @@ option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
+option(UNIFORM_HT_SUPPORT "Uniform hashing" ON)
+option(HASHER "hash function" hasher_types)
+
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -47,7 +50,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_options(
-    -O1
+    -O3
     -Wall
     -g
     -fdiagnostics-color=always
@@ -112,6 +115,8 @@ include_directories(include/ lib/ lib/cityhash/src/)
 
 # Declare string type options.
 set(hasher_types city crc xxhash wyhash citycrc xxhash3 fnv direct_index)
+
+
 set(HASHER "crc" CACHE STRING "Hasher")
 #set(HASHER "direct_index" CACHE STRING "Hasher")
 set_property(CACHE HASHER PROPERTY STRINGS ${hasher_types})
@@ -120,6 +125,11 @@ if (NOT HASHER IN_LIST hasher_types)
 else()
     message(WARNING "Hasher type selected was: ${HASHER}")
 endif()
+
+if(UNIFORM_HT_SUPPORT)
+    message(WARNING "uniform hashtable")
+    add_definitions(-DUNIFORM_HT_SUPPORT)
+endif() 
 
 if(AVX_SUPPORT)
     message(WARNING "SIMD supported, you may set BRANCH variable to simd")

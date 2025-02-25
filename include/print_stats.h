@@ -49,52 +49,52 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   //}
   printf("===============================================================\n");
   for (; k < config.num_threads; k++) {
-//     printf(
-//         "Thread %2d: "
-//         "%" PRIu64 " cycles (%f ms) for %" PRIu64 " insertions (%" PRIu64 " cycles/insert) | (%" PRIu64 " cycles/enqueue) "
-//         "{ fill: %" PRIu64 " of %" PRIu64 " (%f %%) }"
-// #ifdef CALC_STATS
-//         "["
-//         "num_reprobes: %" PRIu64 ", "
-//         "num_memcmps: %" PRIu64 ", "
-//         "num_memcpys: %" PRIu64 ", "
-//         "num_queue_flushes: %" PRIu64 ", "
-//         "num_hashcmps: %" PRIu64 ", "
-//         "max_distance_from_bucket: %" PRIu64 ", "
-//         "avg_distance_from_bucket: %f,"
-//         "avg_distance_from_bucket (adjusted): %f,"
-//         "avg_read_length: %" PRIu64 ","
-//         "num_sequences :%" PRIu64 ""
-//         "]"
-// #endif  // CALC_STATS
-//         "\n",
-//         all_sh[k].shard_idx, all_sh[k].stats->insertions.duration,
-//         (double)all_sh[k].stats->insertions.duration * one_cycle_ns / 1000000.0,
-//         all_sh[k].stats->insertions.op_count,
-//         all_sh[k].stats->insertions.op_count == 0
-//             ? 0
-//             : all_sh[k].stats->insertions.duration /
-//                   all_sh[k].stats->insertions.op_count,
-//         all_sh[k].stats->enqueues.op_count == 0
-//             ? 0
-//             : all_sh[k].stats->enqueues.duration /
-//                   all_sh[k].stats->enqueues.op_count,
-//         all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
-//         all_sh[k].stats->ht_capacity == 0
-//             ? 0
-//             : (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity *
-//                   100
-// #ifdef CALC_STATS
-//         ,
-//         all_sh[k].stats->num_reprobes, all_sh[k].stats->num_memcmps,
-//         all_sh[k].stats->num_memcpys, all_sh[k].stats->num_queue_flushes,
-//         all_sh[k].stats->num_hashcmps,
-//         all_sh[k].stats->max_distance_from_bucket,
-//         all_sh[k].stats->avg_distance_from_bucket,
-//         all_sh[k].stats->avg_distance_from_bucket / config.insert_factor,
-//         all_sh[k].stats->avg_read_length, all_sh[k].stats->num_sequences
-// #endif  // CALC_STATS
-//     );
+    printf(
+        "Thread %2d: "
+        "%" PRIu64 " cycles (%f ms) for %" PRIu64 " insertions (%" PRIu64 " cycles/insert) | (%" PRIu64 " cycles/enqueue) "
+        "{ fill: %" PRIu64 " of %" PRIu64 " (%f %%) }"
+#ifdef CALC_STATS
+        "["
+        "num_reprobes: %" PRIu64 ", "
+        "num_memcmps: %" PRIu64 ", "
+        "num_memcpys: %" PRIu64 ", "
+        "num_queue_flushes: %" PRIu64 ", "
+        "num_hashcmps: %" PRIu64 ", "
+        "max_distance_from_bucket: %" PRIu64 ", "
+        "avg_distance_from_bucket: %f,"
+        "avg_distance_from_bucket (adjusted): %f,"
+        "avg_read_length: %" PRIu64 ","
+        "num_sequences :%" PRIu64 ""
+        "]"
+#endif  // CALC_STATS
+        "\n",
+        all_sh[k].shard_idx, all_sh[k].stats->insertions.duration,
+        (double)all_sh[k].stats->insertions.duration * one_cycle_ns / 1000000.0,
+        all_sh[k].stats->insertions.op_count,
+        all_sh[k].stats->insertions.op_count == 0
+            ? 0
+            : all_sh[k].stats->insertions.duration /
+                  all_sh[k].stats->insertions.op_count,
+        all_sh[k].stats->enqueues.op_count == 0
+            ? 0
+            : all_sh[k].stats->enqueues.duration /
+                  all_sh[k].stats->enqueues.op_count,
+        all_sh[k].stats->ht_fill, all_sh[k].stats->ht_capacity,
+        all_sh[k].stats->ht_capacity == 0
+            ? 0
+            : (double)all_sh[k].stats->ht_fill / all_sh[k].stats->ht_capacity *
+                  100
+#ifdef CALC_STATS
+        ,
+        all_sh[k].stats->num_reprobes, all_sh[k].stats->num_memcmps,
+        all_sh[k].stats->num_memcpys, all_sh[k].stats->num_queue_flushes,
+        all_sh[k].stats->num_hashcmps,
+        all_sh[k].stats->max_distance_from_bucket,
+        all_sh[k].stats->avg_distance_from_bucket,
+        all_sh[k].stats->avg_distance_from_bucket / config.insert_factor,
+        all_sh[k].stats->avg_read_length, all_sh[k].stats->num_sequences
+#endif  // CALC_STATS
+    );
     all_total_cycles += all_sh[k].stats->insertions.duration;
     all_total_time_ns +=
         (double)all_sh[k].stats->insertions.duration * one_cycle_ns;
@@ -111,6 +111,12 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 #endif  // CALC_STATS
   }// end config.num_threads loop
 
+
+#ifdef CALC_STATS
+  printf("total reprobes %llu, spill factor ~(inserts+reprobes)/inserts: %f\n", 
+    all_total_reprobes, 
+    (float)(all_total_num_inserts+all_total_reprobes)/all_total_num_inserts);
+#endif
   //const volatile auto a = config.num_threads;
   //const volatile auto b = all_total_num_inserts;
   // printf("%u %" PRIu64 "\n", config.num_threads, all_total_num_inserts);
@@ -188,7 +194,6 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
     printf("{ set_cycles : %" PRIu64 ", get_cycles : %" PRIu64 ",", cycles_per_insert, cycles_per_find);
     printf(" set_mops : %.3f, get_mops : %.3f }\n", insert_mops, find_mops);
-    //printf("{ new_set_mops : %.3f, new_get_mops : %.3f }\n", new_insert_mops, new_find_mops);
   }
 
   // printf(

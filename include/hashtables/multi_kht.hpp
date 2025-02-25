@@ -39,8 +39,6 @@ class MultiHashTable : public BaseHashTable {
   int fd;
   int id;
 
-
-
   const static __mmask8 KEYMSK = 0b01010101;
   size_t data_length, key_length;
   const static uint64_t CACHELINE_SIZE = 64;
@@ -48,29 +46,26 @@ class MultiHashTable : public BaseHashTable {
       (CACHELINE_SIZE / sizeof(KV)) - 1;
 
   MultiHashTable(uint64_t c)
-      : fd(-1),
-        id(1),
-        find_head(0),
-        find_tail(0),
-        ins_head(0),
-        ins_tail(0) {
+      : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
 
-    //capacity = capacity*2;
-    lvl0_capacity = capacity >> 1; 
-    lvl1_capacity = capacity - lvl0_capacity; 
-    // lvl1_capacity = capacity >> 2; 
-    // lvl0_capacity = capacity - lvl1_capacity; 
+    // capacity = capacity*2;
+    lvl0_capacity = capacity;
+    lvl1_capacity = (uint64_t) (lvl0_capacity >> 2);
+    this->capacity = lvl0_capacity + lvl1_capacity;
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
-        this->backup_hashtable = &hashtable[lvl0_capacity]; // |0 | 1 |2 | 3| 
+        this->backup_hashtable = &hashtable[lvl0_capacity];  // |0 | 1 |2 | 3|
 
-        PLOGI.printf("L0 Hashtable base: %p L0 Hashtable size: %lu\n"
-                     "L1 Hashtable base: %p L1 Hashtable size: %lu",
-                     hashtable, lvl0_capacity, backup_hashtable, lvl1_capacity);
+        PLOGI.printf(
+            "L0 Hashtable base: %p L0 Hashtable size: %lu "
+            "L1 Hashtable base: %p L1 Hashtable size: %lu "
+            "Totol capacity %lu ",
+            hashtable, lvl0_capacity, backup_hashtable, lvl1_capacity,
+            capacity);
 
         // this->backup_hashtable =
         //     calloc_ht<KV>(this->capacity, this->id1, &this->fd1);
@@ -79,7 +74,6 @@ class MultiHashTable : public BaseHashTable {
       }
       this->ref_cnt++;
     }
-
 
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
@@ -127,7 +121,6 @@ class MultiHashTable : public BaseHashTable {
 
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash & (this->capacity - 1);  // modulo
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
 
     KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
 
@@ -218,13 +211,12 @@ class MultiHashTable : public BaseHashTable {
     // make sure you return at most batch_sz (but can possibly return lesser
     // number of elements)
 
-    if((curr_queue_sz >= FLUSH_THRESHOLD) && (vp.first < config.batch_len))
-    {
+    if ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
       __builtin_prefetch(&curr_queue_sz, true, 3);
       __builtin_prefetch(&this->find_tail, true, 3);
     }
 
-    while ((curr_queue_sz >= FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
+    while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) {
         this->find_tail = 0;
@@ -241,8 +233,6 @@ class MultiHashTable : public BaseHashTable {
 
     for (auto &data : kp) {
       add_to_find_queue(&data, collector);
-      // prefetch next line, 
-      // do find here
     }
 
     this->flush_if_needed(values, collector);
@@ -315,7 +305,7 @@ class MultiHashTable : public BaseHashTable {
 
   size_t get_fill() const override {
     size_t count = 0;
-    for (size_t i = 0; i < this->capacity; i++) {
+    for (size_t i = 0; i < lvl0_capacity; i++) {
       if (!this->hashtable[i].is_empty()) {
         count++;
       }
@@ -333,7 +323,7 @@ class MultiHashTable : public BaseHashTable {
     return count;
   }
 
-  size_t get_capacity() const override { return this->capacity; }
+  size_t get_capacity() const override { return lvl0_capacity; }
 
   size_t get_max_count() const override {
     size_t count = 0;
@@ -438,20 +428,8 @@ class MultiHashTable : public BaseHashTable {
   }
 
 
-  inline void __add_to_findqueue(KVQ *q, size_t idx) 
-  {
-    this->prefetch_read_backup(idx);
-    this->find_queue[this->find_head].idx = idx;
-    this->find_queue[this->find_head].key = q->key;
-    this->find_queue[this->find_head].key_id = q->key_id;
-    this->find_queue[this->find_head].part_id = 1;
-    this->find_head += 1;
-    this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
-  }
-
-#ifdef AVX_SUPPORT 
+#ifdef AVX_SUPPORT
   uint64_t __find_simd_level1(KVQ *q, ValuePairs &vp) {
-
     uint64_t retry;
     size_t idx = q->idx;
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
@@ -461,8 +439,16 @@ class MultiHashTable : public BaseHashTable {
     uint64_t found = curr_cacheline->find_simd(q, &retry, vp, offset);
 
     if (retry) {
+#ifdef UNIFORM_HT_SUPPORT
+      uint64_t old_hash = q->key_hash;
+      uint64_t hash = this->hash(&old_hash);
+      idx = hash & (lvl1_capacity - 1);
+      this->find_queue[this->find_head].key_hash = hash;
+#else
       idx += CACHELINE_SIZE / sizeof(KV);
       idx = idx & (lvl1_capacity - 1);
+#endif
+
       this->prefetch_read_backup(idx);
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
@@ -477,35 +463,7 @@ class MultiHashTable : public BaseHashTable {
     }
     return found;
 
-    // size_t idx = q->idx;
-    // KV *entry = &this->backup_hashtable[idx];
-
-    // while (1) {
-      
-    //   if (entry->is_empty()) {
-    //     return 0;
-    //   }
-
-    //   if (entry->compare_key(q)) {
-    //     vp.second[vp.first].id = q->key_id;
-    //     vp.second[vp.first].value = entry->kvpair.value;
-    //     vp.first++;
-    //     return 1;
-    //   }
-
-    //   idx++;
-    //   idx = idx & (lvl1_capacity - 1);
-      
-    //   if ((idx & KEYS_IN_CACHELINE_MASK) == 0) break;
-
-    //   entry = &this->backup_hashtable[idx];
-    // }
-
-    // __add_to_findqueue(q, idx);
-    // return 0;
-
-
-  }// end findsimdlvl1
+  }  // end findsimdlvl1
 
   inline uint64_t __find_simd_level0(KVQ *q, ValuePairs &vp) {
     size_t idx = q->idx;
@@ -515,23 +473,36 @@ class MultiHashTable : public BaseHashTable {
     KV *entry = &this->hashtable[idx];
     uint64_t retry;
     uint64_t found = entry->find_simd(q, &retry, vp, offset);
-    
-    if(retry) {
-      __add_to_findqueue(q, q->idx);
+
+    if (retry) {
+      
+      idx = q->idx & (lvl1_capacity - 1);
+      this->prefetch_read_backup(idx);
+      this->find_queue[this->find_head].idx = idx;
+      this->find_queue[this->find_head].key = q->key;
+      this->find_queue[this->find_head].key_id = q->key_id;
+      this->find_queue[this->find_head].part_id = 1;
+#ifdef UNIFORM_HT_SUPPORT
+      this->find_queue[this->find_head].key_hash = q->key_hash;
+#endif
+      this->find_head += 1;
+      this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
 
-    return found; 
+    return found;
   }
 
   uint64_t __find_simd(KVQ *q, ValuePairs &vp) {
-    if(q->part_id == 0) 
-      return __find_simd_level0(q, vp);
-    return __find_simd_level1(q,vp);
+    if (q->part_id == 0) return __find_simd_level0(q, vp);
+    return __find_simd_level1(q, vp);
   }
 #endif
 
   // TODO.
   uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type *collector) {
+    PLOG_FATAL << "__find_branched() Not implemented";
+    assert(false);
+    return -1;
     // hashtable idx where the data should be found
     size_t idx = q->idx;
     uint64_t found = 0;
@@ -605,13 +576,11 @@ class MultiHashTable : public BaseHashTable {
     return empty_slot_;
   }
 
-
-  inline void __insert_branched_l0(KVQ *q, collector_type *collector)
-  {
+  inline void __insert_branched_l0(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
 
     size_t idx = q->idx;
-    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);  
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
   try_insert:
     KV *curr = &this->hashtable[idx];
 
@@ -619,7 +588,6 @@ class MultiHashTable : public BaseHashTable {
     // printf("Thread %" PRIu64 ", grabbing lock: %" PRIu64 "\n",
     // this->thread_id, pidx); Compare with empty element
     if (curr->is_empty()) {
-      // std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
       bool cas_res = curr->insert_cas(q);
       if (cas_res) {
         return;
@@ -657,12 +625,14 @@ class MultiHashTable : public BaseHashTable {
       goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
     }
 
+#ifdef CALC_STATS
+    this->num_reprobes++;
+#endif
 
-    size_t queue_idx = q->idx  & (lvl1_capacity - 1);
-    //prefetch write
-    prefetch_object<true>(
-      &this->backup_hashtable[queue_idx],
-      sizeof(this->backup_hashtable[queue_idx]));
+    size_t queue_idx = q->idx & (lvl1_capacity - 1);
+    // prefetch write
+    prefetch_object<true>(&this->backup_hashtable[queue_idx],
+                          sizeof(this->backup_hashtable[queue_idx]));
 
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
@@ -670,52 +640,21 @@ class MultiHashTable : public BaseHashTable {
     this->insert_queue[this->ins_head].idx = queue_idx;
     this->insert_queue[this->ins_head].part_id = 1;
 
+#ifdef UNIFORM_HT_SUPPORT
+    this->insert_queue[this->ins_head].key_hash = q->key_hash;
+#endif
+
     ++this->ins_head;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
     return;
-
-    // size_t idx = q->idx;
-    // KV *curr = &this->hashtable[idx];
-    // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);    
-
-    // // Try find in the cachline
-    // while (1) {
-    //   if (curr->is_empty() && curr->insert_cas(q)) {
-    //     return;
-    //   }
-
-    //   if (curr->compare_key(q) && curr->update_cas(q)) {
-    //     return;
-    //   }
-
-    //   idx++;
-    //   idx = idx & (lvl0_capacity - 1);
-
-    //   if ((idx & KEYS_IN_CACHELINE_MASK) == 0) {
-    //     break;
-    //   }
-    // }
-
-    // // Not found,
-    // // determine idx to fetch, if level 0, use original hash idx, if level 1,
-    // // use accumulated idx
-    // size_t queue_idx = q->idx;
-    // prefetch_read_backup(queue_idx);
-    // this->insert_queue[this->ins_head].idx = queue_idx;
-    // this->insert_queue[this->ins_head].key = q->key;
-    // this->insert_queue[this->ins_head].key_id = q->key_id;
-    // this->insert_queue[this->ins_head].value = q->value;
-    // this->insert_queue[this->ins_head].part_id = 1;
-    // ++this->ins_head;
-    // this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
-
-  }// end l0 find
+  }  // end l0 find
 
   void __insert_branched_l1(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
 
     size_t idx = q->idx;
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
   try_insert_lvl1:
     KV *curr = &this->backup_hashtable[idx];
 
@@ -758,13 +697,27 @@ class MultiHashTable : public BaseHashTable {
     // |  CACHELINE_SIZE   |
     // | 0 | 1 | . | . | n | n+1 ....
     if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
-      goto try_insert_lvl1;  // FIXME: @David get rid of the goto for crying out loud
+      goto try_insert_lvl1;  // FIXME: @David get rid of the goto for crying out
+                             // loud
     }
 
-    //prefetch write
-    prefetch_object<true>(
-      &this->backup_hashtable[idx & (lvl1_capacity - 1)],
-      sizeof(this->backup_hashtable[idx & (lvl1_capacity - 1)]));
+    // if(get_lvl1_fill() == this->lvl1_capacity)
+    // {
+    //   PLOG_INFO.printf("second level full");
+    //   return;
+    // }
+#ifdef CALC_STATS
+    this->num_reprobes++;
+#endif
+
+#ifdef UNIFORM_HT_SUPPORT
+    uint64_t old_hash = q->key_hash;
+    uint64_t hash = this->hash(&old_hash);
+    idx = hash & (lvl1_capacity - 1);
+    this->insert_queue[this->ins_head].key_hash = hash;
+#endif
+
+    prefetch_backup(idx);
 
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
@@ -773,53 +726,7 @@ class MultiHashTable : public BaseHashTable {
     this->insert_queue[this->ins_head].part_id = 1;
     ++this->ins_head;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
-    // printf("Current fill: %d Max fill: %d\n",get_lvl1_fill(), lvl1_capacity);
-
     return;
-/////////////////////////////////////////////////////////////////////
-    // if(get_lvl1_fill() >= lvl1_capacity-1) 
-    // {
-    //   printf("Current fill: %d Max fill: %d\n",get_lvl1_fill(), lvl1_capacity);
-    //  exit(-1);
-    // }
-    // size_t idx = q->idx;
-    // KV *curr = &this->backup_hashtable[idx];
-
-
-    // printf("Key %lu ID %lu\n", q->key, q->key_id);
-
-    // // Try find in the cachline
-    // while (1) {
-    //   if (curr->is_empty() && curr->insert_cas(q)) {
-    //     return;
-    //   }
-
-    //   if (curr->compare_key(q) && curr->update_cas(q)) {
-    //     return;
-    //   }
-
-    //   idx++;
-    //   idx = idx & (lvl1_capacity - 1);
-
-
-    //   if ((idx & KEYS_IN_CACHELINE_MASK) == 0) {
-    //     break;
-    //   }
-    // }
-
-    // // Not found,
-    // // determine idx to fetch, if level 0, use original hash idx, if level 1,
-    // // use accumulated idx
-    // size_t queue_idx = idx;
-
-    // prefetch_read_backup(queue_idx);
-    // this->insert_queue[this->ins_head].idx = queue_idx;
-    // this->insert_queue[this->ins_head].key = q->key;
-    // this->insert_queue[this->ins_head].key_id = q->key_id;
-    // this->insert_queue[this->ins_head].value = q->value;
-    // this->insert_queue[this->ins_head].part_id = 1;
-    // ++this->ins_head;
-    // this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
   }
 
   /*
@@ -827,7 +734,7 @@ class MultiHashTable : public BaseHashTable {
    The backup hashtable doesn't need to be cahceline aligned.
   */
   void __insert_branched(KVQ *q, collector_type *collector) {
-    if(q->part_id == 0)
+    if (q->part_id == 0)
       __insert_branched_l0(q, collector);
     else
       __insert_branched_l1(q, collector);
@@ -876,12 +783,12 @@ class MultiHashTable : public BaseHashTable {
     this->insert_queue[this->ins_head].key_id = key_data->id;
     this->insert_queue[this->ins_head].part_id = 0;
 
-#ifdef LATENCY_COLLECTION
-    this->insert_queue[this->ins_head].timer_id = timer;
+#ifdef UNIFORM_HT_SUPPORT
+    this->insert_queue[this->ins_head].key_hash = hash;
 #endif
 
-#ifdef COMPARE_HASH
-    this->insert_queue[this->ins_head].key_hash = hash;
+#ifdef LATENCY_COLLECTION
+    this->insert_queue[this->ins_head].timer_id = timer;
 #endif
 
     this->ins_head++;
@@ -904,12 +811,12 @@ class MultiHashTable : public BaseHashTable {
     this->find_queue[this->find_head].key_id = key_data->id;
     this->find_queue[this->find_head].part_id = 0;
 
-#ifdef LATENCY_COLLECTION
-    this->find_queue[this->find_head].timer_id = timer;
+#ifdef UNIFORM_HT_SUPPORT
+    this->find_queue[this->find_head].key_hash = hash;
 #endif
 
-#ifdef COMPARE_HASH
-    this->queue[this->find_head].key_hash = hash;
+#ifdef LATENCY_COLLECTION
+    this->find_queue[this->find_head].timer_id = timer;
 #endif
 
     this->find_head++;

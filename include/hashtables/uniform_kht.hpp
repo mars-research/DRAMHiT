@@ -8,8 +8,8 @@
 /// batching + prefetching though is called casht++.
 // TODO bloom filters for high frequency kmers?
 
-#ifndef HASHTABLES_CAS_KHT_HPP
-#define HASHTABLES_CAS_KHT_HPP
+#ifndef HASHTABLES_UNIFORM_KHT_HPP
+#define HASHTABLES_UNIFORM_KHT_HPP
 
 #include <cassert>
 #include <fstream>
@@ -26,15 +26,11 @@
 
 namespace kmercounter {
 template <typename KV, typename KVQ>
-class CASHashTable : public BaseHashTable {
+class UniformHashTable : public BaseHashTable {
  public:
-  /// The global instance is shared by all threads.
   static KV *hashtable;
-  /// A dedicated slot for the empty value.
   static uint64_t empty_slot_;
-  /// True if the empty value is inserted.
   static bool empty_slot_exists_;
-  /// File descriptor backs the memory
   int fd;
   int id;
   size_t data_length, key_length;
@@ -42,7 +38,7 @@ class CASHashTable : public BaseHashTable {
   const static uint64_t KEYS_IN_CACHELINE_MASK =
       (CACHELINE_SIZE / sizeof(KV)) - 1;
 
-  CASHashTable(uint64_t c)
+  UniformHashTable(uint64_t c)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
     {
@@ -50,7 +46,7 @@ class CASHashTable : public BaseHashTable {
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
-        PLOGI.printf("Hashtable base: %p Hashtable size: %lu", this->hashtable,
+        PLOGI.printf("UNIFORM Hashtable base: %p Hashtable size: %lu", this->hashtable,
                      this->capacity);
       }
       this->ref_cnt++;
@@ -59,16 +55,13 @@ class CASHashTable : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-    PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
-
-    PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
   }
 
-  ~CASHashTable() {
+  ~UniformHashTable() {
     free(find_queue);
     free(insert_queue);
     // Deallocate the global hashtable if ref_cnt goes down to zero.
@@ -90,9 +83,7 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash & (this->capacity - 1);  // modulo
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
-
+    size_t idx = hash & (this->capacity - 1);
     KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
 
     for (auto i = 0u; i < this->capacity; i++) {
@@ -216,14 +207,10 @@ class CASHashTable : public BaseHashTable {
 
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash;
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
     InsertFindArgument *item = const_cast<InsertFindArgument *>(
         reinterpret_cast<const InsertFindArgument *>(data));
     KV *curr;
     bool found = false;
-
-    // printf("Thread %" PRIu64 ": Trying memcmp at: %" PRIu64 "\n",
-    // this->thread_id, idx);
     for (auto i = 0u; i < this->capacity; i++) {
       idx = idx & (this->capacity - 1);
       curr = &this->hashtable[idx];
@@ -321,8 +308,13 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_head;
   uint32_t ins_tail;
   Hasher hasher_;
+  uint64_t tid;
 
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
+  uint64_t next_index(uint64_t key, uint64_t seed) {
+    uint64_t x = key + seed;
+    return hasher_(&x, this->key_length) & (capacity - 1);
+  }
 
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
@@ -354,19 +346,14 @@ class CASHashTable : public BaseHashTable {
     uint64_t found = curr_cacheline->find_simd(q, &retry, vp, offset);
 
     if (retry) {
-#ifdef UNIFORM_HT_SUPPORT
       uint64_t old_hash = q->key_hash;
       uint64_t hash = this->hash(&old_hash);
-      idx = hash & (this->capacity - 1);
-      this->find_queue[this->find_head].key_hash = hash;
-#else
-      idx += CACHELINE_SIZE / sizeof(KV);
-      idx = idx & (this->capacity - 1);
-#endif  
-      this->prefetch_read(idx);
+      uint64_t new_idx = hash & (capacity - 1);
+      this->prefetch_read(new_idx);
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
-      this->find_queue[this->find_head].idx = idx;
+      this->find_queue[this->find_head].idx = new_idx;
+      this->find_queue[this->find_head].key_hash = hash;
 #ifdef LATENCY_COLLECTION
       this->find_queue[this->find_head].timer_id = q->timer_id;
 #endif
@@ -500,7 +487,7 @@ class CASHashTable : public BaseHashTable {
     // hashtable idx at which data is to be inserted
 
     size_t idx = q->idx;
-    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);  // this aligns the insert
 
   try_insert:
     KV *curr = &this->hashtable[idx];
@@ -527,13 +514,6 @@ class CASHashTable : public BaseHashTable {
       // inserting new. Just fall-through to check!
     }
 
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-#ifdef CALC_STATS
-    this->num_memcmps++;
-#endif
     if (curr->compare_key(q)) {
       curr->update_cas(q);
 
@@ -549,28 +529,23 @@ class CASHashTable : public BaseHashTable {
     idx++;
     idx = idx & (this->capacity - 1);  // modulo
 
-    // |  CACHELINE_SIZE   |
-    // | 0 | 1 | . | . | n | n+1 ....
     if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
 #ifdef CALC_STATS
       ++this->num_soft_reprobes;
 #endif
-      goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
+      goto try_insert;  
     }
-
-#ifdef UNIFORM_HT_SUPPORT
+     
     uint64_t old_hash = q->key_hash;
     uint64_t hash = this->hash(&old_hash);
-    idx = hash & (this->capacity - 1);
-    this->insert_queue[this->ins_head].key_hash = hash;
-#endif
-
-    prefetch(idx);
+    uint64_t new_idx = hash & (this->capacity - 1);
+    prefetch(new_idx);
 
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
     this->insert_queue[this->ins_head].value = q->value;
-    this->insert_queue[this->ins_head].idx = idx;
+    this->insert_queue[this->ins_head].idx = new_idx;
+    this->insert_queue[this->ins_head].key_hash = hash;
 
 #ifdef LATENCY_COLLECTION
     this->insert_queue[this->ins_head].timer_id = q->timer_id;
@@ -623,14 +598,12 @@ class CASHashTable : public BaseHashTable {
 
     this->prefetch(idx);
 
-#ifdef UNIFORM_HT_SUPPORT
-    this->insert_queue[this->ins_head].key_hash = hash;
-#endif
-
     this->insert_queue[this->ins_head].idx = idx;
     this->insert_queue[this->ins_head].key = key_data->key;
     this->insert_queue[this->ins_head].value = key_data->value;
     this->insert_queue[this->ins_head].key_id = key_data->id;
+
+    this->insert_queue[this->ins_head].key_hash = hash;
 
 #ifdef LATENCY_COLLECTION
     this->insert_queue[this->ins_head].timer_id = timer;
@@ -649,16 +622,11 @@ class CASHashTable : public BaseHashTable {
 
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);
-
     prefetch_read(idx);
-
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
     this->find_queue[this->find_head].key_id = key_data->id;
-
-#ifdef UNIFORM_HT_SUPPORT
     this->find_queue[this->find_head].key_hash = hash;
-#endif
 
 #ifdef LATENCY_COLLECTION
     this->find_queue[this->find_head].timer_id = timer;
@@ -671,18 +639,18 @@ class CASHashTable : public BaseHashTable {
 
 /// Static variables
 template <class KV, class KVQ>
-KV *CASHashTable<KV, KVQ>::hashtable = nullptr;
+KV *UniformHashTable<KV, KVQ>::hashtable = nullptr;
 
 template <class KV, class KVQ>
-uint64_t CASHashTable<KV, KVQ>::empty_slot_ = 0;
+uint64_t UniformHashTable<KV, KVQ>::empty_slot_ = 0;
 
 template <class KV, class KVQ>
-bool CASHashTable<KV, KVQ>::empty_slot_exists_ = false;
+bool UniformHashTable<KV, KVQ>::empty_slot_exists_ = false;
 
 template <class KV, class KVQ>
-std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
+std::mutex UniformHashTable<KV, KVQ>::ht_init_mutex;
 
 template <class KV, class KVQ>
-uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
+uint32_t UniformHashTable<KV, KVQ>::ref_cnt = 0;
 }  // namespace kmercounter
-#endif  // HASHTABLES_CAS_KHT_HPP
+#endif

@@ -99,7 +99,7 @@ struct PrefetchKV_Queue {
   uint64_t key;
   uint64_t key_id;
   uint8_t pad[4];
-#ifdef COMPARE_HASH
+#if defined(COMPARE_HASH) || defined(UNIFORM_HT_SUPPORT) 
   uint64_t key_hash;  // 8 bytes
 #endif
 };

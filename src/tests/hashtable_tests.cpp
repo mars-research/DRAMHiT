@@ -73,6 +73,7 @@ OpTimings do_zipfian_inserts(
   std::size_t next_pollution{};
 
   for (auto j = 0u; j < config.insert_factor; j++) {
+
     key_start =
         std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -90,7 +91,6 @@ OpTimings do_zipfian_inserts(
       items[key].key = items[key].value = value;
       items[key].id = n;
 
-      // printf("zipf_values[%d] = %" PRIu64 "\n", zipf_idx, value);
       zipf_idx++;
       if (config.no_prefetch) {
         hashtable->insert_noprefetch(&items[key], collector);
@@ -228,7 +228,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   sync_barrier->arrive_and_wait();
 
   if (found >= 0) {
-    PLOGV.printf(
+    PLOGI.printf(
         "thread %u | num_finds %lu | cycles per get: %lu", id,
         found, found > 0 ? duration / found : 0);
   }

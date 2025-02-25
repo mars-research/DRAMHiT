@@ -80,6 +80,7 @@ typedef enum {
   CASHTPP = 3,
   ARRAY_HT = 4,
   MULTI_HT = 5,
+  UNIFORM_HT = 6,
 } ht_type_t;
 
 extern const char* run_mode_strings[];

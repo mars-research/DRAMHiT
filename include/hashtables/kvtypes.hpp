@@ -88,7 +88,7 @@ struct Kmer_queue {
   const void *data;
   uint32_t idx;  // TODO reduce size, TODO decided by hashtable size?
   uint8_t pad[4];
-#ifdef COMPARE_HASH
+#if defined(COMPARE_HASH) || defined(UNIFORM_HT_SUPPORT) 
   uint64_t key_hash;  // 8 bytes
 #endif
 } PACKED;
@@ -101,7 +101,7 @@ struct ItemQueue {
   uint32_t key_id;
   uint32_t timer_id;
   uint32_t idx;
-#ifdef COMPARE_HASH
+#if defined(COMPARE_HASH) || defined(UNIFORM_HT_SUPPORT) 
   uint64_t key_hash;  // 8 bytes
 #endif
 } PACKED;

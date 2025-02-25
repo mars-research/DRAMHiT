@@ -1,0 +1,60 @@
+cas_uniform
+{ set_cycles : 91, get_cycles : 49, set_mops : 1292.308, get_mops : 2400.000 }
+{ set_cycles : 93, get_cycles : 49, set_mops : 1264.516, get_mops : 2400.000 }
+{ set_cycles : 95, get_cycles : 50, set_mops : 1237.895, get_mops : 2352.000 }
+{ set_cycles : 96, get_cycles : 51, set_mops : 1225.000, get_mops : 2305.882 }
+{ set_cycles : 99, get_cycles : 53, set_mops : 1187.879, get_mops : 2218.868 }
+{ set_cycles : 102, get_cycles : 55, set_mops : 1152.941, get_mops : 2138.182 }
+{ set_cycles : 107, get_cycles : 61, set_mops : 1099.065, get_mops : 1927.869 }
+{ set_cycles : 112, get_cycles : 66, set_mops : 1050.000, get_mops : 1781.818 }
+{ set_cycles : 123, get_cycles : 80, set_mops : 956.098, get_mops : 1470.000 }
+cas_linear
+{ set_cycles : 91, get_cycles : 48, set_mops : 1292.308, get_mops : 2450.000 }
+{ set_cycles : 93, get_cycles : 49, set_mops : 1264.516, get_mops : 2400.000 }
+{ set_cycles : 95, get_cycles : 49, set_mops : 1237.895, get_mops : 2400.000 }
+{ set_cycles : 96, get_cycles : 50, set_mops : 1225.000, get_mops : 2352.000 }
+{ set_cycles : 99, get_cycles : 53, set_mops : 1187.879, get_mops : 2218.868 }
+{ set_cycles : 103, get_cycles : 56, set_mops : 1141.748, get_mops : 2100.000 }
+{ set_cycles : 109, get_cycles : 62, set_mops : 1078.899, get_mops : 1896.774 }
+{ set_cycles : 119, get_cycles : 75, set_mops : 988.235, get_mops : 1568.000 }
+{ set_cycles : 148, get_cycles : 105, set_mops : 794.595, get_mops : 1120.000 }
+multi_linear
+{ set_cycles : 91, get_cycles : 49, set_mops : 1292.308, get_mops : 2400.000 }
+{ set_cycles : 93, get_cycles : 49, set_mops : 1264.516, get_mops : 2400.000 }
+{ set_cycles : 94, get_cycles : 50, set_mops : 1251.064, get_mops : 2352.000 }
+{ set_cycles : 96, get_cycles : 51, set_mops : 1225.000, get_mops : 2305.882 }
+{ set_cycles : 99, get_cycles : 54, set_mops : 1187.879, get_mops : 2177.778 }
+{ set_cycles : 100, get_cycles : 55, set_mops : 1176.000, get_mops : 2138.182 }
+{ set_cycles : 103, get_cycles : 59, set_mops : 1141.748, get_mops : 1993.220 }
+{ set_cycles : 106, get_cycles : 62, set_mops : 1109.434, get_mops : 1896.774 }
+{ set_cycles : 111, get_cycles : 68, set_mops : 1059.459, get_mops : 1729.412 }
+multi_uniform
+{ set_cycles : 92, get_cycles : 48, set_mops : 1278.261, get_mops : 2450.000 }
+{ set_cycles : 93, get_cycles : 49, set_mops : 1264.516, get_mops : 2400.000 }
+{ set_cycles : 94, get_cycles : 50, set_mops : 1251.064, get_mops : 2352.000 }
+{ set_cycles : 96, get_cycles : 51, set_mops : 1225.000, get_mops : 2305.882 }
+{ set_cycles : 98, get_cycles : 53, set_mops : 1200.000, get_mops : 2218.868 }
+{ set_cycles : 100, get_cycles : 55, set_mops : 1176.000, get_mops : 2138.182 }
+{ set_cycles : 104, get_cycles : 59, set_mops : 1130.769, get_mops : 1993.220 }
+{ set_cycles : 106, get_cycles : 62, set_mops : 1109.434, get_mops : 1896.774 }
+{ set_cycles : 110, get_cycles : 68, set_mops : 1069.091, get_mops : 1729.412 }
+DRAMHiT
+{ set_cycles : 91, get_cycles : 49, set_mops : 1292.308, get_mops : 2400.000 }
+{ set_cycles : 93, get_cycles : 51, set_mops : 1264.516, get_mops : 2305.882 }
+{ set_cycles : 95, get_cycles : 56, set_mops : 1237.895, get_mops : 2100.000 }
+{ set_cycles : 97, get_cycles : 61, set_mops : 1212.371, get_mops : 1927.869 }
+{ set_cycles : 100, get_cycles : 69, set_mops : 1176.000, get_mops : 1704.348 }
+{ set_cycles : 104, get_cycles : 79, set_mops : 1130.769, get_mops : 1488.608 }
+{ set_cycles : 110, get_cycles : 91, set_mops : 1069.091, get_mops : 1292.308 }
+{ set_cycles : 120, get_cycles : 105, set_mops : 980.000, get_mops : 1120.000 }
+{ set_cycles : 148, get_cycles : 132, set_mops : 794.595, get_mops : 890.909 }
+Folklore
+{ set_cycles : 168, get_cycles : 99, set_mops : 700.000, get_mops : 1187.879 }
+{ set_cycles : 169, get_cycles : 104, set_mops : 695.858, get_mops : 1130.769 }
+{ set_cycles : 173, get_cycles : 109, set_mops : 679.769, get_mops : 1078.899 }
+{ set_cycles : 180, get_cycles : 113, set_mops : 653.333, get_mops : 1040.708 }
+{ set_cycles : 190, get_cycles : 126, set_mops : 618.947, get_mops : 933.333 }
+{ set_cycles : 213, get_cycles : 148, set_mops : 552.113, get_mops : 794.595 }
+{ set_cycles : 238, get_cycles : 176, set_mops : 494.118, get_mops : 668.182 }
+{ set_cycles : 274, get_cycles : 231, set_mops : 429.197, get_mops : 509.091 }
+{ set_cycles : 330, get_cycles : 311, set_mops : 356.364, get_mops : 378.135 }
