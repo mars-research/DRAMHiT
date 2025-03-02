@@ -11,9 +11,6 @@
 
 namespace kmercounter {
 
-
-
-
 struct Kmer_base {
   Kmer_s kmer;
   uint16_t count;
@@ -661,7 +658,9 @@ struct Item {
         __mmask8 ept_cmp = KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, zero_vector);
         if((EMTMSK & ept_cmp) == 0) {
           *retry = 1;
-        } 
+        }
+       
+          
         return 0;                
     }
   }

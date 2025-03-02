@@ -24,7 +24,10 @@
 #include "plog/Log.h"
 #include "sync.h"
 
+#define PREFETCH_WIDTH 1
+
 namespace kmercounter {
+
 template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
  public:
@@ -39,6 +42,7 @@ class CASHashTable : public BaseHashTable {
   int id;
   size_t data_length, key_length;
   const static uint64_t CACHELINE_SIZE = 64;
+  const static uint64_t KV_IN_CACHELINE = CACHELINE_SIZE / sizeof(KV);
   const static uint64_t KEYS_IN_CACHELINE_MASK =
       (CACHELINE_SIZE / sizeof(KV)) - 1;
 
@@ -142,7 +146,7 @@ class CASHashTable : public BaseHashTable {
     size_t curr_queue_sz =
         (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
 
-    while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
+    while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
       __insert_one(&this->insert_queue[this->ins_tail], collector);
       if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
       curr_queue_sz =
@@ -195,15 +199,54 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
+  // void find_batch_v2(const InsertFindArguments &kp, ValuePairs &values, collector_type *collector) 
+  // {
+  //   for (auto &data : kp) {
+  //     add_to_find_queue(&data, collector);
+  //   }
+    
+
+  //   // find_one
+  //   //
+
+  // }
+
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
+
+    
     this->flush_if_needed(values, collector);
+
+    // uint64_t old_head = this->find_head;
 
     for (auto &data : kp) {
       add_to_find_queue(&data, collector);
     }
+    
+    //flush_find_queue(values, collector); 
+    
+    // size_t num_prefetched = 0;
+    // while(num_prefetched < config.batch_len) {
+    //   prefetch_read(this->find_queue[old_head].idx);
+    //   num_prefetched++;
+    //   old_head++;
+    //   if (old_head >= PREFETCH_FIND_QUEUE_SIZE) old_head = 0;
+    // }
 
-    this->flush_if_needed(values, collector);
+    //this->flush_if_needed(values, collector);
+
+    //SIMPLE BATCH 
+    // for (auto &data : kp) {
+    //   add_to_find_queue(&data, collector);
+    // }
+
+    // do{
+    //   this->find_head = 0;
+    //   for(int i = 0; i< config.batch_len - values.first; i++)
+    //   __find_one(&this->find_queue[i], values, collector); // 16, 9
+    // }
+    // while (values.first != config.batch_len);
+    
   }
 
   void *find_noprefetch(const void *data, collector_type *collector) override {
@@ -343,26 +386,41 @@ class CASHashTable : public BaseHashTable {
         sizeof(this->hashtable[i & (this->capacity - 1)]));
   }
 
+  // TODO add support for uniform
+  void multi_prefetch(uint64_t idx) {
+    for (uint8_t i = 0; i < PREFETCH_WIDTH; i++) {
+      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
+      prefetch(idx);
+    }
+  }
+
+  void multi_prefetch_read(uint64_t idx) {
+    for (uint8_t i = 0; i < PREFETCH_WIDTH; i++) {
+      prefetch_read(idx);
+      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
+    }
+  }
+
 #ifdef AVX_SUPPORT
+
   uint64_t __find_simd(KVQ *q, ValuePairs &vp) {
     uint64_t retry;
     size_t idx = q->idx;
-    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-    size_t offset = q->idx - idx;
 
     KV *curr_cacheline = &this->hashtable[idx];
-    uint64_t found = curr_cacheline->find_simd(q, &retry, vp, offset);
+    uint64_t found = curr_cacheline->find_simd(q, &retry, vp, 0);
 
     if (retry) {
 #ifdef UNIFORM_HT_SUPPORT
       uint64_t old_hash = q->key_hash;
       uint64_t hash = this->hash(&old_hash);
       idx = hash & (this->capacity - 1);
+      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
       this->find_queue[this->find_head].key_hash = hash;
 #else
       idx += CACHELINE_SIZE / sizeof(KV);
       idx = idx & (this->capacity - 1);
-#endif  
+#endif
       this->prefetch_read(idx);
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
@@ -373,6 +431,43 @@ class CASHashTable : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
+
+    return found;
+  }
+
+  uint64_t __find_simd_multi_prefetch(KVQ *q, ValuePairs &vp) {
+    uint64_t retry;
+    size_t idx = q->idx;
+    KV *curr_cacheline;
+    uint64_t found;
+
+    for (uint8_t j = 0; j < PREFETCH_WIDTH; j++) {
+      curr_cacheline = &this->hashtable[idx];
+      found = curr_cacheline->find_simd(q, &retry, vp, 0);
+
+      if (!retry) {
+        return found;
+      }
+
+#ifdef UNIFORM_HT_SUPPORT
+      uint64_t old_hash = q->key_hash;
+      uint64_t hash = this->hash(&old_hash);
+      idx = hash & (this->capacity - 1);
+      this->find_queue[this->find_head].key_hash = hash;
+#else
+      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
+#endif
+    }
+
+    this->multi_prefetch_read(idx);
+    this->find_queue[this->find_head].key = q->key;
+    this->find_queue[this->find_head].key_id = q->key_id;
+    this->find_queue[this->find_head].idx = idx;
+#ifdef LATENCY_COLLECTION
+    this->find_queue[this->find_head].timer_id = q->timer_id;
+#endif
+    this->find_head += 1;
+    this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
     return found;
   }
 
@@ -479,7 +574,11 @@ class CASHashTable : public BaseHashTable {
       return __find_branchless_cmov(q, vp);
     } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
 #ifdef AVX_SUPPORT
+#if PREFETCH_WIDTH > 1
+      return __find_simd_multi_prefetch(q, vp);
+#else
       return __find_simd(q, vp);
+#endif
 #else
       return __find_branchless_cmov(q, vp);
 #endif
@@ -649,8 +748,13 @@ class CASHashTable : public BaseHashTable {
 
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
 
+#if PREFETCH_WIDTH > 1
+    multi_prefetch_read(idx);
+#else
     prefetch_read(idx);
+#endif
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
@@ -666,6 +770,7 @@ class CASHashTable : public BaseHashTable {
 
     this->find_head++;
     if (this->find_head >= PREFETCH_FIND_QUEUE_SIZE) this->find_head = 0;
+
   }
 };
 

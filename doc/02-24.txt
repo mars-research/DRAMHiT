@@ -58,3 +58,23 @@ Folklore
 { set_cycles : 238, get_cycles : 176, set_mops : 494.118, get_mops : 668.182 }
 { set_cycles : 274, get_cycles : 231, set_mops : 429.197, get_mops : 509.091 }
 { set_cycles : 330, get_cycles : 311, set_mops : 356.364, get_mops : 378.135 }
+multi-75-25-uniform
+{ set_cycles : 92, get_cycles : 52, set_mops : 1278.261, get_mops : 2261.538 }
+{ set_cycles : 95, get_cycles : 53, set_mops : 1237.895, get_mops : 2218.868 }
+{ set_cycles : 101, get_cycles : 54, set_mops : 1164.356, get_mops : 2177.778 }
+{ set_cycles : 107, get_cycles : 57, set_mops : 1099.065, get_mops : 2063.158 }
+{ set_cycles : 115, get_cycles : 61, set_mops : 1022.609, get_mops : 1927.869 }
+{ set_cycles : 122, get_cycles : 65, set_mops : 963.934, get_mops : 1809.231 }
+{ set_cycles : 131, get_cycles : 71, set_mops : 897.710, get_mops : 1656.338 }
+{ set_cycles : 141, get_cycles : 77, set_mops : 834.043, get_mops : 1527.273 }
+{ set_cycles : 167, get_cycles : 97, set_mops : 704.192, get_mops : 1212.371 }
+multi-75-25-linear
+{ set_cycles : 92, get_cycles : 52, set_mops : 1278.261, get_mops : 2261.538 }
+{ set_cycles : 95, get_cycles : 52, set_mops : 1237.895, get_mops : 2261.538 }
+{ set_cycles : 100, get_cycles : 54, set_mops : 1176.000, get_mops : 2177.778 }
+{ set_cycles : 107, get_cycles : 56, set_mops : 1099.065, get_mops : 2100.000 }
+{ set_cycles : 115, get_cycles : 61, set_mops : 1022.609, get_mops : 1927.869 }
+{ set_cycles : 122, get_cycles : 65, set_mops : 963.934, get_mops : 1809.231 }
+{ set_cycles : 131, get_cycles : 71, set_mops : 897.710, get_mops : 1656.338 }
+{ set_cycles : 144, get_cycles : 80, set_mops : 816.667, get_mops : 1470.000 }
+{ set_cycles : 307, get_cycles : 162, set_mops : 383.062, get_mops : 725.926 }

@@ -18,6 +18,7 @@
 #include <type_traits>
 
 #include "constants.hpp"
+#include "fastrange.h"
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
@@ -49,9 +50,11 @@ class MultiHashTable : public BaseHashTable {
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
 
-    // capacity = capacity*2;
-    lvl0_capacity = capacity;
-    lvl1_capacity = (uint64_t) (lvl0_capacity >> 2);
+    lvl0_capacity = (uint64_t)((capacity >> 2) * 3);
+    lvl0_capacity = lvl0_capacity + (lvl0_capacity % 4);
+    lvl1_capacity =
+        capacity - lvl0_capacity;  //(uint64_t) (lvl0_capacity >> 2);
+    lvl1_capacity = lvl1_capacity + (lvl1_capacity % 4);
     this->capacity = lvl0_capacity + lvl1_capacity;
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -66,11 +69,6 @@ class MultiHashTable : public BaseHashTable {
             "Totol capacity %lu ",
             hashtable, lvl0_capacity, backup_hashtable, lvl1_capacity,
             capacity);
-
-        // this->backup_hashtable =
-        //     calloc_ht<KV>(this->capacity, this->id1, &this->fd1);
-        // PLOGI.printf("Backup Hashtable base: %p Hashtable size: %lu\n",
-        //              this->backup_hashtable, this->capacity);
       }
       this->ref_cnt++;
     }
@@ -105,9 +103,7 @@ class MultiHashTable : public BaseHashTable {
       if (this->ref_cnt == 0) {
         free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
         this->hashtable = nullptr;
-        // free_mem<KV>(this->backup_hashtable, this->capacity, this->id1,
-        //              this->fd1);
-        // this->backup_hashtable = nullptr;
+        this->backup_hashtable = nullptr;
       }
     }
   }
@@ -370,9 +366,8 @@ class MultiHashTable : public BaseHashTable {
 
   void prefetch(uint64_t i) {
 #if defined(PREFETCH_WITH_PREFETCH_INSTR)
-    prefetch_object<true /* write */>(
-        &this->hashtable[i & (lvl0_capacity - 1)],
-        sizeof(this->hashtable[i & (lvl0_capacity - 1)]));
+    prefetch_object<true /* write */>(&this->hashtable[i],
+                                      sizeof(this->hashtable[i]));
     // true /*write*/);
 #endif
 
@@ -382,51 +377,19 @@ class MultiHashTable : public BaseHashTable {
   };
 
   inline void prefetch_backup(uint64_t i) {
-    prefetch_object<true>(
-        &this->backup_hashtable[i & (lvl1_capacity - 1)],
-        sizeof(this->backup_hashtable[i & (lvl1_capacity - 1)]));
+    prefetch_object<true>(&this->backup_hashtable[i],
+                          sizeof(this->backup_hashtable[i]));
   }
 
   inline void prefetch_read_backup(uint64_t i) {
-    prefetch_object<false>(
-        &this->backup_hashtable[i & (lvl1_capacity - 1)],
-        sizeof(this->backup_hashtable[i & (lvl1_capacity - 1)]));
+    prefetch_object<false>(&this->backup_hashtable[i],
+                           sizeof(this->backup_hashtable[i]));
   }
-
-  void ht_prefetch_write(uint64_t i, size_t ht_level) {
-    if (ht_level == 0) {
-      prefetch_object<true /* write */>(
-          &this->hashtable[i & (lvl0_capacity - 1)],
-          sizeof(this->hashtable[i & (lvl0_capacity - 1)]));
-      // true /*write*/);
-    } else {
-      prefetch_object<true /* write */>(
-          &this->backup_hashtable[i & (lvl1_capacity - 1)],
-          sizeof(this->backup_hashtable[i & (lvl1_capacity - 1)]));
-      // true /*write*/);
-    }
-  };
-
-  void ht_prefetch_read(uint64_t i, size_t ht_level) {
-    if (ht_level == 0) {
-      prefetch_object<false /* write */>(
-          &this->hashtable[i & (lvl0_capacity - 1)],
-          sizeof(this->hashtable[i & (lvl0_capacity - 1)]));
-      // true /*write*/);
-    } else {
-      prefetch_object<false /* write */>(
-          &this->backup_hashtable[i & (lvl1_capacity - 1)],
-          sizeof(this->backup_hashtable[i & (lvl1_capacity - 1)]));
-      // true /*write*/);
-    }
-  };
 
   void prefetch_read(uint64_t i) {
-    prefetch_object<false /* write */>(
-        &this->hashtable[i & (lvl0_capacity - 1)],
-        sizeof(this->hashtable[i & (lvl0_capacity - 1)]));
+    prefetch_object<false /* write */>(&this->hashtable[i],
+                                       sizeof(this->hashtable[i]));
   }
-
 
 #ifdef AVX_SUPPORT
   uint64_t __find_simd_level1(KVQ *q, ValuePairs &vp) {
@@ -442,11 +405,19 @@ class MultiHashTable : public BaseHashTable {
 #ifdef UNIFORM_HT_SUPPORT
       uint64_t old_hash = q->key_hash;
       uint64_t hash = this->hash(&old_hash);
+#ifdef FAST_RANGE
+      idx = hash % lvl1_capacity;
+#else
       idx = hash & (lvl1_capacity - 1);
+#endif
       this->find_queue[this->find_head].key_hash = hash;
 #else
       idx += CACHELINE_SIZE / sizeof(KV);
+#ifdef FAST_RANGE
+      idx = idx % lvl1_capacity;
+#else
       idx = idx & (lvl1_capacity - 1);
+#endif
 #endif
 
       this->prefetch_read_backup(idx);
@@ -475,8 +446,11 @@ class MultiHashTable : public BaseHashTable {
     uint64_t found = entry->find_simd(q, &retry, vp, offset);
 
     if (retry) {
-      
+#ifdef FAST_RANGE
+      idx = q->idx % lvl1_capacity;
+#else
       idx = q->idx & (lvl1_capacity - 1);
+#endif
       this->prefetch_read_backup(idx);
       this->find_queue[this->find_head].idx = idx;
       this->find_queue[this->find_head].key = q->key;
@@ -617,8 +591,11 @@ class MultiHashTable : public BaseHashTable {
     next bucket will be probed in the next run
     */
     idx++;
+#ifdef FAST_RANGE
+    idx = idx % lvl0_capacity;
+#else
     idx = idx & (lvl0_capacity - 1);  // modulo
-
+#endif
     // |  CACHELINE_SIZE   |
     // | 0 | 1 | . | . | n | n+1 ....
     if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
@@ -629,7 +606,11 @@ class MultiHashTable : public BaseHashTable {
     this->num_reprobes++;
 #endif
 
+#ifdef FAST_RANGE
+    size_t queue_idx = q->idx % lvl1_capacity;
+#else
     size_t queue_idx = q->idx & (lvl1_capacity - 1);
+#endif
     // prefetch write
     prefetch_object<true>(&this->backup_hashtable[queue_idx],
                           sizeof(this->backup_hashtable[queue_idx]));
@@ -692,8 +673,12 @@ class MultiHashTable : public BaseHashTable {
     next bucket will be probed in the next run
     */
     idx++;
-    idx = idx & (lvl1_capacity - 1);  // modulo
-
+#ifdef FAST_RANGE
+    idx = idx % lvl1_capacity;  // need to use module instead of fastrange here,
+                                // bc fastrange is random.
+#else
+    idx = idx & (lvl1_capacity - 1);
+#endif
     // |  CACHELINE_SIZE   |
     // | 0 | 1 | . | . | n | n+1 ....
     if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
@@ -701,11 +686,6 @@ class MultiHashTable : public BaseHashTable {
                              // loud
     }
 
-    // if(get_lvl1_fill() == this->lvl1_capacity)
-    // {
-    //   PLOG_INFO.printf("second level full");
-    //   return;
-    // }
 #ifdef CALC_STATS
     this->num_reprobes++;
 #endif
@@ -713,7 +693,11 @@ class MultiHashTable : public BaseHashTable {
 #ifdef UNIFORM_HT_SUPPORT
     uint64_t old_hash = q->key_hash;
     uint64_t hash = this->hash(&old_hash);
+#ifdef FAST_RANGE
+    idx = hash % lvl1_capacity;
+#else
     idx = hash & (lvl1_capacity - 1);
+#endif
     this->insert_queue[this->ins_head].key_hash = hash;
 #endif
 
@@ -774,7 +758,12 @@ class MultiHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)&key_data->key);
+
+#ifdef FAST_RANGE
+    size_t idx = hash % lvl0_capacity;
+#else
     size_t idx = hash & (lvl0_capacity - 1);
+#endif
     prefetch(idx);
 
     this->insert_queue[this->ins_head].idx = idx;
@@ -803,7 +792,11 @@ class MultiHashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)&key_data->key);
+#ifdef FAST_RANGE
+    size_t idx = hash % lvl0_capacity;
+#else
     size_t idx = hash & (lvl0_capacity - 1);
+#endif
     prefetch_read(idx);
 
     this->find_queue[this->find_head].idx = idx;

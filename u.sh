@@ -27,9 +27,10 @@ batch=16
 
 for fill in 10 20 30 40 50 60 70 80 90
 do  
-    sudo ./build/dramhit --ht-fill $fill --insert-factor $insertFactor --num-threads $numThreads --ht-type 3 --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 --hw-pref 0 --batch-len $batch
+    sudo ./build/dramhit --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 --hw-pref 0 --batch-len $batch
 done
 
+# sudo ./build/dramhit --ht-fill 50 --insert-factor $insertFactor --num-threads $numThreads --ht-type 5 --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 --hw-pref 0 --batch-len $batch
 
-#sudo ./build/dramhit --ht-fill 80 --insert-factor $insertFactor --num-threads $numThreads --ht-type 3 --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 --hw-pref 0 --batch-len $batch
+# sudo ./build/dramhit --ht-fill 70 --insert-factor $insertFactor --num-threads $numThreads --ht-type 3 --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 --hw-pref 0 --batch-len $batch
 

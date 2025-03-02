@@ -22,8 +22,9 @@ option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
-option(UNIFORM_HT_SUPPORT "Uniform hashing" ON)
-option(HASHER "hash function" hasher_types)
+option(UNIFORM_PROBING "Uniform hashing" ON)
+option(FAST_RANGE "fast range" OFF)
+
 
 
 # Check g++ version
@@ -126,7 +127,12 @@ else()
     message(WARNING "Hasher type selected was: ${HASHER}")
 endif()
 
-if(UNIFORM_HT_SUPPORT)
+if(FAST_RANGE)
+    message(WARNING "fastrange on")
+    add_definitions(-DFAST_RANGE)
+endif() 
+
+if(UNIFORM_PROBING)
     message(WARNING "uniform hashtable")
     add_definitions(-DUNIFORM_HT_SUPPORT)
 endif() 
