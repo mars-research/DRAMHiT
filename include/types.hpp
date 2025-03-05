@@ -165,6 +165,7 @@ struct Configuration {
 
   bool rw_queues;
   unsigned pollute_ratio;
+  uint32_t find_queue_sz;
 
   void dump_configuration() {
     printf("Run configuration {\n");

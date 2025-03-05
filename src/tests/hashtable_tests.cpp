@@ -237,7 +237,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   collector->dump("find", id);
 #endif
 
-  return {duration, num_finds * config.insert_factor};
+  return {duration, found};
 }
 
 void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,

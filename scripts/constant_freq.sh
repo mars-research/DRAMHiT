@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CPU_FREQ_KHZ=2200000 
+CPU_FREQ_KHZ=2100000 
 RDMSR="rdmsr"
 WRMSR="wrmsr"
 

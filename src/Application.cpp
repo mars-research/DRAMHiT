@@ -83,7 +83,8 @@ const Configuration def = {
     .relation_s_size = 128000000,
     .delimitor = "|",
     .rw_queues = false,
-    .pollute_ratio = 0
+    .pollute_ratio = 0,
+    .find_queue_sz = 16
 };  // TODO enum
 
 // for synchronization of threads
@@ -151,7 +152,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
     case UNIFORM_HT:
     case CASHTPP:
       kmer_ht =
-          new CASHashTable<KVType, ItemQueue>(sz);  // * config.num_threads);
+          new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz);
       break;
     case ARRAY_HT:
       kmer_ht =
@@ -488,7 +489,8 @@ int Application::process(int argc, char *argv[]) {
           "rw-queues",
           po::value<bool>(&config.rw_queues)->default_value(def.rw_queues),
           "Enable R/W tests for queues tests"
-        )("pollute-ratio", po::value(&config.pollute_ratio)->default_value(def.pollute_ratio), "Ratio of pollution events to ops (>1)");
+        )("pollute-ratio", po::value(&config.pollute_ratio)->default_value(def.pollute_ratio), "Ratio of pollution events to ops (>1)")
+        ("find_queue_sz", po::value(&config.find_queue_sz)->default_value(def.find_queue_sz), "Find queue size");
 
     papi_init();
 
