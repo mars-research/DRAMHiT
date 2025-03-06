@@ -45,7 +45,7 @@ class CASHashTable : public BaseHashTable {
   const static uint64_t KV_IN_CACHELINE = CACHELINE_SIZE / sizeof(KV);
   const static uint64_t KEYS_IN_CACHELINE_MASK =
       (CACHELINE_SIZE / sizeof(KV)) - 1;
-  
+
   uint32_t find_queue_sz;
 
   CASHashTable(uint64_t c, uint32_t queue_sz)
@@ -70,8 +70,7 @@ class CASHashTable : public BaseHashTable {
     PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
-    this->find_queue =
-        (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
+    this->find_queue = (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
 
     PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
   }
@@ -178,8 +177,7 @@ class CASHashTable : public BaseHashTable {
     while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= find_queue_sz) this->find_tail = 0;
-      curr_queue_sz =
-          (this->find_head - this->find_tail) & (find_queue_sz - 1);
+      curr_queue_sz = (this->find_head - this->find_tail) & (find_queue_sz - 1);
     }
   }
 
@@ -197,35 +195,32 @@ class CASHashTable : public BaseHashTable {
       if (++this->find_tail >= find_queue_sz) {
         this->find_tail = 0;
       }
-      curr_queue_sz =
-          (this->find_head - this->find_tail) & (find_queue_sz - 1);
+      curr_queue_sz = (this->find_head - this->find_tail) & (find_queue_sz - 1);
     }
     return;
   }
 
-
-  inline size_t get_find_queue_sz() 
-  {
-    if(this->find_head > this->find_tail) return find_head - find_tail;
-    else return find_queue_sz - find_tail + find_head;
+  // Under vtune, this is an overhead b/c branch. 
+  inline size_t get_find_queue_sz() {
+    if (this->find_head > this->find_tail)
+      return find_head - find_tail;
+    else
+      return find_queue_sz - find_tail + find_head;
   }
 
-  void pop_find_queue(ValuePairs &values, collector_type *collector) 
-  {
+  void pop_find_queue(ValuePairs &values, collector_type *collector) {
     uint64_t retry;
     do {
       retry = __find_one(&this->find_queue[this->find_tail], values, collector);
       this->find_tail++;
-      if(find_tail >= find_queue_sz) this->find_tail = 0;
-    } while(retry); 
+      if (find_tail >= find_queue_sz) this->find_tail = 0;
+    } while (retry);
   }
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
-
     for (auto &data : kp) {
-
-      if(get_find_queue_sz() >= find_queue_sz-1) 
+      if (get_find_queue_sz() >= find_queue_sz - 1)
         pop_find_queue(values, collector);
       add_to_find_queue(&data, collector);
     }
@@ -350,29 +345,22 @@ class CASHashTable : public BaseHashTable {
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
-#if defined(PREFETCH_WITH_PREFETCH_INSTR)
     prefetch_object<true /* write */>(
         &this->hashtable[i & (this->capacity - 1)],
         sizeof(this->hashtable[i & (this->capacity - 1)]));
-    // true /*write*/);
-#endif
+  }
 
-#if defined(PREFETCH_WITH_WRITE)
-    prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
-#endif
-  };
-
+  // remove &, as it will generate instructions
   void prefetch_read(uint64_t i) {
-    prefetch_object<false /* write */>(
-        &this->hashtable[i & (this->capacity - 1)],
-        sizeof(this->hashtable[i & (this->capacity - 1)]));
+    prefetch_object<false /* write */>(&this->hashtable[i],
+                                       sizeof(this->hashtable[i]));
   }
 
   // TODO add support for uniform
   void multi_prefetch(uint64_t idx) {
     for (uint8_t i = 0; i < PREFETCH_WIDTH; i++) {
-      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
       prefetch(idx);
+      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
     }
   }
 
@@ -389,6 +377,7 @@ class CASHashTable : public BaseHashTable {
     uint64_t retry;
     size_t idx = q->idx;
 
+   
     KV *curr_cacheline = &this->hashtable[idx];
     uint64_t found = curr_cacheline->find_simd(q, &retry, vp, 0);
 
@@ -550,21 +539,23 @@ class CASHashTable : public BaseHashTable {
       return __find_empty(q, vp);
     }
 
-    if constexpr (branching == BRANCHKIND::WithBranch) {
-      return __find_branched(q, vp, collector);
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Cmove) {
-      return __find_branchless_cmov(q, vp);
-    } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
+#if defined(BRANCHLESS_CMOVE)
+    return __find_branchless_cmov(q, vp);
+#elif defined(BRANCHLESS_SIMD)
+
 #ifdef AVX_SUPPORT
 #if PREFETCH_WIDTH > 1
-      return __find_simd_multi_prefetch(q, vp);
+    return __find_simd_multi_prefetch(q, vp);
 #else
-      return __find_simd(q, vp);
+    return __find_simd(q, vp);
 #endif
 #else
-      return __find_branchless_cmov(q, vp);
+#error "AVX is not supported, compilation failed."
 #endif
-    }
+
+#else
+    return __find_branched(q, vp, collector);
+#endif
   }
 
   /// Update or increment the empty key.
@@ -721,7 +712,7 @@ class CASHashTable : public BaseHashTable {
     if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
   }
 
-  void add_to_find_queue(void *data, collector_type *collector) {
+  inline void add_to_find_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 
 #ifdef LATENCY_COLLECTION
@@ -752,7 +743,6 @@ class CASHashTable : public BaseHashTable {
 
     this->find_head++;
     if (this->find_head >= find_queue_sz) this->find_head = 0;
-
   }
 };
 

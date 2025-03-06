@@ -9,7 +9,6 @@ kmercounter
 **/*.d
 kvstore
 /build/
-/.vscode/
 result
 .papi/
 *.fastq
@@ -33,9 +32,8 @@ Testing/
 *.svg
 *.fold
 .cache/
-.vscode/
 CMakeCache.txt
-*.json
 cmake.check_cache
 tester/
 results/
+tools/msr-safe/
