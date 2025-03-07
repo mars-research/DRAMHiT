@@ -57,7 +57,7 @@ inline void prefetch_object(const void *addr, uint64_t size) {
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
   //__builtin_prefetch((const void *)cache_line1_addr, WRITE, 3);
-  __builtin_prefetch((const void *)addr, WRITE, 3);
+  __builtin_prefetch((const void *)addr, WRITE, 1);
 
   //__builtin_prefetch(addr, 1, 0);
 #if defined(PREFETCH_TWO_LINE)

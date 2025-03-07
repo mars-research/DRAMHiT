@@ -96,12 +96,14 @@ struct ItemQueue {
   //on multi-level ht this is used as ht-level
   uint32_t part_id;
   uint32_t key_id;
-  uint32_t timer_id;
+#ifdef LATENCY_COLLECTION
+  uint32_t timer_id; TODO COMMENT BACK IN
+#endif 
   uint32_t idx;
 #if defined(COMPARE_HASH) || defined(UNIFORM_HT_SUPPORT) 
   uint64_t key_hash;  // 8 bytes
 #endif
-} PACKED;
+}; //PACKED; // ;TODO COMMENT BACK IN
 std::ostream& operator<<(std::ostream& os, const ItemQueue& q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow

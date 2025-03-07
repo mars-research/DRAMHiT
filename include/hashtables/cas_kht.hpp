@@ -65,6 +65,10 @@ class CASHashTable : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
+
+    //PLOGI.printf("class size %d, queue item sz: %d", sizeof(CASHashTable), sizeof(KVQ));
+
+    pcounter = 0;
     find_queue_sz = queue_sz;
 
     PLOGV << "Empty item: " << this->empty_item;
@@ -200,7 +204,7 @@ class CASHashTable : public BaseHashTable {
     return;
   }
 
-  // Under vtune, this is an overhead b/c branch. 
+  // Under vtune, this is an overhead b/c branch.
   inline size_t get_find_queue_sz() {
     if (this->find_head > this->find_tail)
       return find_head - find_tail;
@@ -213,17 +217,25 @@ class CASHashTable : public BaseHashTable {
     do {
       retry = __find_one(&this->find_queue[this->find_tail], values, collector);
       this->find_tail++;
-      if (find_tail >= find_queue_sz) this->find_tail = 0;
+      if (find_tail >= find_queue_sz) {
+        //__builtin_prefetch(&this->find_head, true, 3); <- improve 1 cycle, but don't kno why
+        this->find_tail = 0;
+      }
     } while (retry);
   }
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
+
+
+
+    // do some prefetch for internal class data and arguments. 
     for (auto &data : kp) {
       if (get_find_queue_sz() >= find_queue_sz - 1)
         pop_find_queue(values, collector);
       add_to_find_queue(&data, collector);
     }
+
   }
 
   void *find_noprefetch(const void *data, collector_type *collector) override {
@@ -342,6 +354,9 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_tail;
   Hasher hasher_;
 
+  uint32_t pcounter;
+
+
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
@@ -352,8 +367,9 @@ class CASHashTable : public BaseHashTable {
 
   // remove &, as it will generate instructions
   void prefetch_read(uint64_t i) {
-    prefetch_object<false /* write */>(&this->hashtable[i],
-                                       sizeof(this->hashtable[i]));
+
+    const void* addr = (const void*) &this->hashtable[i]; 
+    __builtin_prefetch((const void *)addr, false, 1);
   }
 
   // TODO add support for uniform
@@ -377,7 +393,6 @@ class CASHashTable : public BaseHashTable {
     uint64_t retry;
     size_t idx = q->idx;
 
-   
     KV *curr_cacheline = &this->hashtable[idx];
     uint64_t found = curr_cacheline->find_simd(q, &retry, vp, 0);
 
