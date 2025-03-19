@@ -44,7 +44,7 @@ sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
 
 #   Install the sampling drivers that came with vtune install (https://www.intel.com/content/www/us/en/docs/vtune-profiler/user-guide/2025-0/build-install-sampling-drivers-for-linux-targets.html):
 # Note: group name may vary
-cd /opt/mnt/intel/oneapi/vtune/latest/sepdk/src
+cd /opt/intel/oneapi/vtune/latest/sepdk/src
 sudo ./build-driver -ni
 groups
 sudo ./insmod-sep -r -g redshift-PG0

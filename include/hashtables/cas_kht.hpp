@@ -66,10 +66,10 @@ class CASHashTable : public BaseHashTable {
     this->data_length = empty_item.data_length();
 
 
-    //PLOGI.printf("class size %d, queue item sz: %d", sizeof(CASHashTable), sizeof(KVQ));
+    // PLOGI.printf("class size %d, queue item sz: %d", sizeof(CASHashTable), sizeof(KVQ));
 
     pcounter = 0;
-    find_queue_sz = queue_sz;
+    find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
 
     PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
@@ -206,32 +206,48 @@ class CASHashTable : public BaseHashTable {
 
   // Under vtune, this is an overhead b/c branch.
   inline size_t get_find_queue_sz() {
-    if (this->find_head > this->find_tail)
-      return find_head - find_tail;
-    else
-      return find_queue_sz - find_tail + find_head;
+    // only works with pow2 queue
+    return  (this->find_head - this->find_tail) & (find_queue_sz - 1);
+
+    // if (this->find_head >= this->find_tail)
+    //   return find_head - find_tail;
+    // else
+    //   return find_queue_sz + find_tail - find_head;
   }
 
-  void pop_find_queue(ValuePairs &values, collector_type *collector) {
-    uint64_t retry;
-    do {
+  inline void pop_find_queue(ValuePairs &values, collector_type *collector) {
+    // if(this->find_tail == 0 && this->find_head){
+    //   // __builtin_prefetch(&this->find_tail,true, 3);
+    //   // __builtin_prefetch(&values.first, true, 3);
+    // }
+
+    uint64_t retry = 0;
+    do {      
+      //values.first++;
       retry = __find_one(&this->find_queue[this->find_tail], values, collector);
+      //demote
+      // _cldemote ( &this->hashtable[this->find_queue[this->find_tail].idx]);
+      // __builtin_prefetch(&this->hashtable[this->find_queue[this->find_tail].idx], false, 0);
       this->find_tail++;
-      if (find_tail >= find_queue_sz) {
-        //__builtin_prefetch(&this->find_head, true, 3); <- improve 1 cycle, but don't kno why
-        this->find_tail = 0;
-      }
-    } while (retry);
+      this->find_tail &= (find_queue_sz - 1);
+      // if (find_tail >= find_queue_sz) {
+      // //__builtin_prefetch(&this->find_head, true, 3);// <- improve 1 cycle, but don't kno why
+      //   this->find_tail = 0;
+      // }
+      //non-temporal = 0, L1 = 3, L2 = 2, L3 = 1 (on our machine same as L2?)
+      __builtin_prefetch(&this->hashtable[this->find_queue[this->find_tail].idx], false, 3);
+
+    } while ((retry));
   }
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
 
-
-
+    // values.first += config.batch_len;
+    // return;
     // do some prefetch for internal class data and arguments. 
     for (auto &data : kp) {
-      if (get_find_queue_sz() >= find_queue_sz - 1)
+      if ((get_find_queue_sz() >= find_queue_sz - 1))
         pop_find_queue(values, collector);
       add_to_find_queue(&data, collector);
     }
@@ -367,9 +383,13 @@ class CASHashTable : public BaseHashTable {
 
   // remove &, as it will generate instructions
   void prefetch_read(uint64_t i) {
-
-    const void* addr = (const void*) &this->hashtable[i]; 
-    __builtin_prefetch((const void *)addr, false, 1);
+    prefetch_object<false /* write */>(
+      &this->hashtable[i],
+      64);
+    
+    //we use pref_obj other places in code, probably good to keep it so we only change pref type once
+    // const void* addr = (const void*) &this->hashtable[i]; 
+    // __builtin_prefetch((const void *)addr, false, 1);
   }
 
   // TODO add support for uniform
@@ -756,8 +776,8 @@ class CASHashTable : public BaseHashTable {
     this->find_queue[this->find_head].timer_id = timer;
 #endif
 
-    this->find_head++;
-    if (this->find_head >= find_queue_sz) this->find_head = 0;
+    this->find_head += 1;
+    this->find_head &= (find_queue_sz - 1);
   }
 };
 

@@ -218,7 +218,7 @@ struct thread_stats {
   uint64_t ht_fill;
   uint64_t ht_capacity;
   uint32_t max_count;
-  // uint64_t total_threads; // TODO add this back
+    // uint64_t total_threads; // TODO add this back
 #ifdef CALC_STATS
   uint64_t num_reprobes;
   uint64_t num_memcpys;

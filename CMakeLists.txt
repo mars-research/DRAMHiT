@@ -24,6 +24,8 @@ option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
 option(UNIFORM_PROBING "Uniform hashing" ON)
 option(FAST_RANGE "fast range" OFF)
+option(PERFCPP "perf cpp" ON)
+
 
 
 
@@ -244,6 +246,22 @@ if (HIGH_LEVEL_PAPI)
     include_directories(papi/src/)
     add_definitions(-DENABLE_HIGH_LEVEL_PAPI)
 endif ()
+
+if (PERFCPP) 
+    message(WARNING "Building with perfcpp ${CMAKE_CURRENT_BINARY_DIR}")
+    include(ExternalProject)
+    ExternalProject_Add(
+      perf-cpp-external
+      GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
+      GIT_TAG "v0.10.0"
+      PREFIX "lib/perf-cpp"
+      INSTALL_COMMAND cmake -E echo ""
+    )
+
+    target_include_directories(dramhit PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/lib/perf-cpp/src/perf-cpp-external/include)
+    target_link_libraries(dramhit PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/lib/perf-cpp/src/perf-cpp-external-build/libperf-cpp.a)
+
+endif()
 
 if (VTUNE)
     if (NOT VTUNE_ROOT)

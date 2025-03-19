@@ -56,7 +56,7 @@ inline void prefetch_object(const void *addr, uint64_t size) {
   // 0 -- data has no temporal locality (3 -- high temporal locality)
   //__builtin_prefetch((const void*)cache_line1_addr, 1, 1);
 
-  //__builtin_prefetch((const void *)cache_line1_addr, WRITE, 3);
+  // __builtin_prefetch((const void *)cache_line1_addr, WRITE, 3);
   __builtin_prefetch((const void *)addr, WRITE, 1);
 
   //__builtin_prefetch(addr, 1, 0);
@@ -135,7 +135,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
       unlink(mmap_path);
       exit(1);
     } else {
-      PLOGD.printf("mmap returns %p", addr);
+      PLOGI.printf("mmap returns %p", addr);
     }
     *out_fd = fd;
   }

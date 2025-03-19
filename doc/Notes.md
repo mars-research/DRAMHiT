@@ -1,5 +1,61 @@
 
 
+===============================================================
+Number of insertions per sec (Mops/s): 76.364
+print_stats, num_threads 2
+Number of finds per sec (Mops/s): 113.514
+{ set_cycles : 55, get_cycles : 37, set_mops : 76.364, get_mops : 113.514 }
+===============================================================
+===============================================================
+Number of insertions per sec (Mops/s): 56.757
+print_stats, num_threads 1
+Number of finds per sec (Mops/s): 84.000
+{ set_cycles : 37, get_cycles : 25, set_mops : 56.757, get_mops : 84.000 }
+===============================================================
+
+--- March 17 2025 ---
+
+Comparing cache-sized ht with 4gb ht at 56, 28, & 1 threads
+
+> 4GiB HT, 10% fill
+print_stats, num_threads 56
+{ set_cycles : 90, get_cycles : 43, set_mops : 1306.667, get_mops : 2734.884 }
+print_stats, num_threads 28
+{ set_cycles : 51, get_cycles : 28, set_mops : 1152.941, get_mops : 2100.000 }
+print_stats, num_threads 1
+{ set_cycles : 45, get_cycles : 26, set_mops : 46.667, get_mops : 80.769 }
+
+> L1 (32KiB) HT, 10% fill 
+print_stats, num_threads 56
+{ set_cycles : 94, get_cycles : 44, set_mops : 1251.064, get_mops : 2672.727 }
+print_stats, num_threads 28
+{ set_cycles : 65, get_cycles : 27, set_mops : 904.615, get_mops : 2177.778 }
+print_stats, num_threads 1
+{ set_cycles : 37, get_cycles : 25, set_mops : 56.757, get_mops : 84.000 }
+
+---- March 14 25  -----
+Notes:
+- With find batch modified to do 0 work, we still lose 5-6 cyles on 1024ht size with 28vs56 threads, which we believe is instr cache contention
+- With prefetch commented out and find_one commented out, on 2048ht we observe 28vs56 threads on vtune, 56th still some L1d misses, some internal data structure may be getting evicted
+
+----- March 13 25 -----
+
+tests: 4gb 10%fill (aligned queue) 
+removing fluff from ht_test:
+{ set_cycles : 89, get_cycles : 41, set_mops : 1321.348, get_mops : 2868.293 }
+L1+L2 prefetch + prefetch tail variable:
+{ set_cycles : 90, get_cycles : 43, set_mops : 1306.667, get_mops : 2734.884 }
+L1+L2 prefetch:
+{ set_cycles : 90, get_cycles : 44, set_mops : 1306.667, get_mops : 2672.727 }
+L2:
+{ set_cycles : 91, get_cycles : 45, set_mops : 1292.308, get_mops : 2613.333 }
+L1:
+{ set_cycles : 91, get_cycles : 47, set_mops : 1292.308, get_mops : 2502.128 }
+
+Observation:
+We observe that get_cycles increases when using hyperthreading, ie 31 cycles for 28th and 51 cycles for 56th. This happens on both
+4gb hashtable and cache-sized(4096) hashtable. 
+
 ----- March 05 25 -----
 
 Observation: 
@@ -37,7 +93,7 @@ Observation:
 
 Hypothesis:
 
-1. Cost of prefetch due to limited LFB buffer. (roughly 10 cycles extra)
+1. Cost of prefetch due to limited LFB buffer. (roughly 10 cycles extra), [eliminated with L1+L2 combined prefetching]
 2. Since each cpu cache are under high contention, memory instructions associated with DRAMHiT itself such as logic of prefetch 
 engine also increases due to potential misses (not sure why, cpu cache likely will keep find_queue in cache). 
 3. More reprobes in total when we run large table ?

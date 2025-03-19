@@ -638,6 +638,10 @@ struct Item {
   }
   inline uint64_t find_simd(const void *data, uint64_t *retry, ValuePairs &vp, size_t offset)
   {
+    // even with this, 17vs26cycles on 1vs2 threads.
+    // vp.first++;
+    // return 1;
+
       ItemQueue *elem = const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
       constexpr __mmask8 KEYMSK = 0b01010101;
       

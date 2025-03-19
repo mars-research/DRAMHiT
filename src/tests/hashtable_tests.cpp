@@ -19,6 +19,8 @@
 #include <papi.h>
 #endif
 
+//#include <perfcpp/event_counter.h>
+#include "PerfMultiCounter.hpp"
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -28,6 +30,10 @@ extern void get_ht_stats(Shard *, BaseHashTable *);
 uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
+
+
+extern MultithreadCounter EVENTCOUNTERS;
+
 
 void sync_complete(void);
 bool stop_sync = false;
@@ -60,8 +66,8 @@ OpTimings do_zipfian_inserts(
 #endif
 
   PLOGV.printf("Starting insertion test");
-  InsertFindArgument *items =
-      (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
 
   uint64_t key_start =
       std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
@@ -73,7 +79,6 @@ OpTimings do_zipfian_inserts(
   std::size_t next_pollution{};
 
   for (auto j = 0u; j < config.insert_factor; j++) {
-
     key_start =
         std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -84,9 +89,10 @@ OpTimings do_zipfian_inserts(
 #else
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        // __builtin_prefetch(&zipf_values->at(zipf_idx + 16), false, 3);
       }
 
-      auto value = zipf_values->at(zipf_idx); // len 1024,  zipf[2 * 1024]
+      auto value = zipf_values->at(zipf_idx);  // len 1024,  zipf[2 * 1024]
 #endif
       items[key].key = items[key].value = value;
       items[key].id = n;
@@ -135,8 +141,6 @@ OpTimings do_zipfian_inserts(
   return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
-
-
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
   std::uint64_t duration{};
@@ -149,7 +153,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   collector_type *const collector{};
 #endif
 
-  InsertFindArgument *items = (InsertFindArgument *) aligned_alloc(64, sizeof(InsertFindArgument) * config.batch_len);
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
   FindResult *results = new FindResult[config.batch_len];
   ValuePairs vp = std::make_pair(0, results);
 
@@ -158,21 +163,21 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
 #ifdef WITH_VTUNE_LIB
   static const auto vtune_event_find =
-  __itt_event_create("finding", strlen("finding"));
+      __itt_event_create("finding", strlen("finding"));
   __itt_event_start(vtune_event_find);
 #endif
 
-
-  // THis ensures that for a given hashtable size, regardless of 
+  // THis ensures that for a given hashtable size, regardless of
   // the fill factor, number of finds is the same.
-  // const uint64_t num_finds = config.ht_size / num_threads; 
-  const uint64_t num_finds = HT_TESTS_NUM_INSERTS; //old zipf test
+  // const uint64_t num_finds = config.ht_size / num_threads;
+  const uint64_t num_finds = HT_TESTS_NUM_INSERTS;  // old zipf test
 
   const auto start = RDTSC_START();
   std::uint64_t key{};
   std::size_t next_pollution{};
   for (auto j = 0u; j < config.insert_factor; j++) {
-    uint64_t key_start = std::max(static_cast<uint64_t>(num_finds) * id, (uint64_t)1);
+    uint64_t key_start =
+        std::max(static_cast<uint64_t>(num_finds) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
     for (unsigned int n{}; n < num_finds; ++n) {
 #ifdef XORWOW
@@ -180,31 +185,36 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 #else
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
         prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        // __builtin_prefetch(&zipf_values->at(zipf_idx + 16), false, 3);
       }
       auto value = zipf_values->at(zipf_idx);
 #endif
 
-      if (config.no_prefetch) {
-        auto ret = hashtable->find_noprefetch(&value, collector);
-        for (auto p = 0u; p < config.pollute_ratio; ++p)
-          prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+      // if (config.no_prefetch) {
+      //   auto ret = hashtable->find_noprefetch(&value, collector);
+      //   for (auto p = 0u; p < config.pollute_ratio; ++p)
+      //     prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 *
+      //     1024 - 1)], 64);
 
-        if (ret)
-          found++;
-        else
-          not_found++;
-      } else {
-        items[key] = {value , n};
+      //   if (ret)
+      //     found++;
+      //   else
+      //     not_found++;
+      // } else {
+      items[key] = {value, n};
 
-        if (++key == config.batch_len) {
-          hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp, collector);
-          found += vp.first;
-          vp.first = 0;
-          key = 0;
-          for (auto p = 0u; p < config.pollute_ratio * HT_TESTS_FIND_BATCH_LENGTH; ++p)
-            prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
-        }
+      if (++key == config.batch_len) {
+        hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp,
+                              collector);
+        found += vp.first;
+        vp.first = 0;
+        key = 0;
+        // for (auto p = 0u; p < config.pollute_ratio *
+        // HT_TESTS_FIND_BATCH_LENGTH; ++p)
+        //   prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 *
+        //   1024 - 1)], 64);
       }
+      // }
 
       zipf_idx++;
     }
@@ -220,7 +230,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   const auto end = RDTSCP();
   duration += end - start;
-    
+
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(vtune_event_find);
 #endif
@@ -228,9 +238,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   sync_barrier->arrive_and_wait();
 
   if (found >= 0) {
-    PLOGI.printf(
-        "thread %u | num_finds %lu | cycles per get: %lu", id,
-        found, found > 0 ? duration / found : 0);
+    PLOGI.printf("thread %u | num_finds %lu | cycles per get: %lu", id, found,
+                 found > 0 ? duration / found : 0);
   }
 
 #ifdef LATENCY_COLLECTION
@@ -241,12 +250,13 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 }
 
 void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
-                      int64_t zipf_seed, unsigned int count,
+                      int64_t zipf_seed, unsigned int count, 
                       std::barrier<std::function<void()>> *sync_barrier) {
   OpTimings insert_timings{};
   static_assert(HT_TESTS_MAX_STRIDE - 1 ==
                 1);  // Otherwise timing logic is wrong
 
+                
 #ifdef LATENCY_COLLECTION
   static auto step = 0;
   {
@@ -273,7 +283,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     PLOG_INFO.printf(
         "Quick stats: thread %u, Batch length: %d, cycles per "
         "insertion:%" PRIu64 "",
-        shard->shard_idx, config.batch_len, insert_timings.duration / insert_timings.op_count);
+        shard->shard_idx, config.batch_len,
+        insert_timings.duration / insert_timings.op_count);
 
     PLOG_INFO.printf("Reprobes %" PRIu64 " soft_reprobes %" PRIu64 "",
                      hashtable->num_reprobes, hashtable->num_soft_reprobes);
@@ -295,31 +306,27 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   if (zipf_values && shard->shard_idx == 0) {
     // Do a shuffle to redistribute the keys
-    auto rng = std::default_random_engine {};
+    auto rng = std::default_random_engine{};
     std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
   }
 
-// std::size_t next_pollution{};
-//   for (auto p = 0u; p < 90000; ++p)
-//           prefetch_object<false>(
-//               &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+  // std::size_t next_pollution{};
+  //   for (auto p = 0u; p < 90000; ++p)
+  //           prefetch_object<false>(
+  //               &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
   cur_phase = ExecPhase::finds;
 
+  EVENTCOUNTERS.start(shard->shard_idx);
   const auto num_finds =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
 
+  EVENTCOUNTERS.stop(shard->shard_idx);
+  //perf_counters.at(shard->shard_idx).stop();
+  //perf_counters.at(shard->shard_idx).save();
+
   shard->stats->finds.duration = num_finds.duration;
   shard->stats->finds.op_count = num_finds.op_count;
-
-  // if (num_finds.op_count > 0) {
-  //   PLOG_INFO.printf("thread %u | num_finds %" PRIu64
-  //                    " | cycles per get: %" PRIu64 "",
-  //                    shard->shard_idx, num_finds.op_count,
-  //                    num_finds.duration / num_finds.op_count);
-  // }
-
-  
   shard->stats->ht_fill = config.ht_fill;
   get_ht_stats(shard, hashtable);
 
