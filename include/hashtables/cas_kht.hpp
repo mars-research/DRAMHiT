@@ -243,9 +243,12 @@ class CASHashTable : public BaseHashTable {
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
 
-    // values.first += config.batch_len;
-    // return;
+    //values.first += config.batch_len;
+    // values.first++;
+    //return;
     // do some prefetch for internal class data and arguments. 
+
+    // mov 0x0, mov 0x0 + 4k
     for (auto &data : kp) {
       if ((get_find_queue_sz() >= find_queue_sz - 1))
         pop_find_queue(values, collector);

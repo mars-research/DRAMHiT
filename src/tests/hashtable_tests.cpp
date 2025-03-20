@@ -147,7 +147,6 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
-
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
   collector->claim();
@@ -158,7 +157,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
   FindResult *results = new FindResult[config.batch_len];
-  ValuePairs vp = std::make_pair(0, results);
+  alignas(32) ValuePairs vp = std::make_pair(0, results);
 
   sync_barrier->arrive_and_wait();
   stop_sync = true;
@@ -205,6 +204,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       // } else {
       items[key] = {value, n};
 
+      
       if (++key == config.batch_len) {
 #ifdef WITH_PERFCPP
         EVENTCOUNTERS.start(id);
@@ -318,14 +318,22 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   }
 
   // std::size_t next_pollution{};
-  //   for (auto p = 0u; p < 90000; ++p)
+  //   for (auto p = 0u; p < 900000; ++p)
   //           prefetch_object<false>(
   //               &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
   cur_phase = ExecPhase::finds;
 
+//   #ifdef WITH_PERFCPP
+//         EVENTCOUNTERS.start(shard->shard_idx);
+// #endif
+        
   const auto num_finds =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
+
+// #ifdef WITH_PERFCPP
+//       EVENTCOUNTERS.stop(shard->shard_idx);
+// #endif
 
   shard->stats->finds.duration = num_finds.duration;
   shard->stats->finds.op_count = num_finds.op_count;

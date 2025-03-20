@@ -26,9 +26,9 @@ class PerfCounterResult {
     }
   }
 
-  void print() {
+  void print(uint64_t sample_count) {
     for (auto& [counter_name, counter_value] : _results) {
-      std::cout << counter_name << ": " << counter_value << std::endl;
+      std::cout << counter_name << " per op: "<< counter_value/sample_count << " total: " << counter_value << std::endl;
     }
   }
 };
@@ -83,7 +83,7 @@ class MultithreadCounter {
     std::cout << "\n------- PERFCPP ------- " << std::endl;
     for (size_t i = 0; i < num_threads; i++) {
       std::cout << "\nThread ID: " << i << " Sample counts: " << sample_counts[i] << std::endl;
-      results[i].print();
+      results[i].print(sample_counts[i]);
     }
     std::cout << "\n----------------------- " << std::endl;
   }
