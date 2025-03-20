@@ -22,11 +22,9 @@ option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
-option(UNIFORM_PROBING "Uniform hashing" ON)
+option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
 option(PERFCPP "perf cpp" ON)
-
-
 
 
 # Check g++ version
@@ -81,6 +79,8 @@ target_link_libraries(dramhit_lib PRIVATE
     numa
 )
 
+
+
 if(BUILD_APP)
     # Build all the source files for the executable.
     add_executable(dramhit
@@ -111,6 +111,8 @@ if(BUILD_APP)
         boost_program_options
         Threads::Threads
     )
+
+
 endif()
 
 # Declare include directory.
@@ -247,19 +249,19 @@ if (HIGH_LEVEL_PAPI)
     add_definitions(-DENABLE_HIGH_LEVEL_PAPI)
 endif ()
 
-if (PERFCPP) 
-    message(WARNING "Building with perfcpp ${CMAKE_CURRENT_BINARY_DIR}")
-    include(ExternalProject)
-    ExternalProject_Add(
-      perf-cpp-external
-      GIT_REPOSITORY "https://github.com/jmuehlig/perf-cpp"
-      GIT_TAG "v0.10.0"
-      PREFIX "lib/perf-cpp"
-      INSTALL_COMMAND cmake -E echo ""
-    )
+if (PERFCPP)
+    message(WARNING "Building with perf-cpp from ${CMAKE_CURRENT_BINARY_DIR}")
 
-    target_include_directories(dramhit PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/lib/perf-cpp/src/perf-cpp-external/include)
-    target_link_libraries(dramhit PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/lib/perf-cpp/src/perf-cpp-external-build/libperf-cpp.a)
+    # Add the perf-cpp subdirectory (make sure the path to the perf-cpp source is correct)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/perf-cpp ${CMAKE_CURRENT_BINARY_DIR}/perf-cpp-build)
+
+    # Include perf-cpp headers
+    target_include_directories(dramhit PRIVATE ${CMAKE_SOURCE_DIR}/perf-cpp/include)
+
+    # Link perf-cpp static library
+    target_link_libraries(dramhit PRIVATE perf-cpp)
+
+    # Add the define for using perf-cpp
     add_definitions(-DWITH_PERFCPP)
 endif()
 

@@ -24,8 +24,6 @@
 #include "plog/Log.h"
 #include "sync.h"
 
-#define PREFETCH_WIDTH 1
-
 namespace kmercounter {
 
 template <typename KV, typename KVQ>
@@ -394,21 +392,6 @@ class CASHashTable : public BaseHashTable {
     // __builtin_prefetch((const void *)addr, false, 1);
   }
 
-  // TODO add support for uniform
-  void multi_prefetch(uint64_t idx) {
-    for (uint8_t i = 0; i < PREFETCH_WIDTH; i++) {
-      prefetch(idx);
-      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
-    }
-  }
-
-  void multi_prefetch_read(uint64_t idx) {
-    for (uint8_t i = 0; i < PREFETCH_WIDTH; i++) {
-      prefetch_read(idx);
-      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
-    }
-  }
-
 #ifdef AVX_SUPPORT
 
   uint64_t __find_simd(KVQ *q, ValuePairs &vp) {
@@ -443,41 +426,6 @@ class CASHashTable : public BaseHashTable {
     return retry;
   }
 
-  uint64_t __find_simd_multi_prefetch(KVQ *q, ValuePairs &vp) {
-    uint64_t retry;
-    size_t idx = q->idx;
-    KV *curr_cacheline;
-    uint64_t found;
-
-    for (uint8_t j = 0; j < PREFETCH_WIDTH; j++) {
-      curr_cacheline = &this->hashtable[idx];
-      found = curr_cacheline->find_simd(q, &retry, vp, 0);
-
-      if (!retry) {
-        return found;
-      }
-
-#ifdef UNIFORM_HT_SUPPORT
-      uint64_t old_hash = q->key_hash;
-      uint64_t hash = this->hash(&old_hash);
-      idx = hash & (this->capacity - 1);
-      this->find_queue[this->find_head].key_hash = hash;
-#else
-      idx = (idx + KV_IN_CACHELINE) & (this->capacity - 1);
-#endif
-    }
-
-    this->multi_prefetch_read(idx);
-    this->find_queue[this->find_head].key = q->key;
-    this->find_queue[this->find_head].key_id = q->key_id;
-    this->find_queue[this->find_head].idx = idx;
-#ifdef LATENCY_COLLECTION
-    this->find_queue[this->find_head].timer_id = q->timer_id;
-#endif
-    this->find_head += 1;
-    this->find_head &= (find_queue_sz - 1);
-    return found;
-  }
 
 #endif
 
@@ -547,6 +495,7 @@ class CASHashTable : public BaseHashTable {
         goto try_find;
       }
 
+
       // key is at a different cacheline, prefetch and delay the find
       this->prefetch_read(idx);
 
@@ -581,11 +530,7 @@ class CASHashTable : public BaseHashTable {
 #elif defined(BRANCHLESS_SIMD)
 
 #ifdef AVX_SUPPORT
-#if PREFETCH_WIDTH > 1
-    return __find_simd_multi_prefetch(q, vp);
-#else
     return __find_simd(q, vp);
-#endif
 #else
 #error "AVX is not supported, compilation failed."
 #endif
@@ -760,11 +705,7 @@ class CASHashTable : public BaseHashTable {
     size_t idx = hash & (this->capacity - 1);
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
 
-#if PREFETCH_WIDTH > 1
-    multi_prefetch_read(idx);
-#else
     prefetch_read(idx);
-#endif
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;

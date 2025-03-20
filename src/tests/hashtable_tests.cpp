@@ -206,11 +206,14 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       items[key] = {value, n};
 
       if (++key == config.batch_len) {
-
+#ifdef WITH_PERFCPP
         EVENTCOUNTERS.start(id);
+#endif
         hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp,
                               collector);
+#ifdef WITH_PERFCPP
         EVENTCOUNTERS.stop(id);
+#endif
         found += vp.first;
         vp.first = 0;
         key = 0;
@@ -255,13 +258,12 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 }
 
 void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
-                      int64_t zipf_seed, unsigned int count, 
+                      int64_t zipf_seed, unsigned int count,
                       std::barrier<std::function<void()>> *sync_barrier) {
   OpTimings insert_timings{};
   static_assert(HT_TESTS_MAX_STRIDE - 1 ==
                 1);  // Otherwise timing logic is wrong
 
-                
 #ifdef LATENCY_COLLECTION
   static auto step = 0;
   {
