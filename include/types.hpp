@@ -166,6 +166,8 @@ struct Configuration {
   bool rw_queues;
   unsigned pollute_ratio;
   uint32_t find_queue_sz;
+  std::string perf_cnt_path;
+  std::string perf_def_path;
 
   void dump_configuration() {
     printf("Run configuration {\n");
@@ -190,6 +192,8 @@ struct Configuration {
     printf("  relation_r_size %" PRIu64 "\n", relation_r_size);
     printf("  relation_s_size %" PRIu64 "\n", relation_s_size);
     printf("  delimitor %s\n", delimitor.c_str());
+    printf("  perf cnt path %s\n", perf_cnt_path.c_str());
+    printf("  perf def path %s\n", perf_def_path.c_str());
     printf("}\n");
   }
 };

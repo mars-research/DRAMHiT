@@ -48,6 +48,8 @@ class CASHashTable : public BaseHashTable {
 
   uint32_t find_queue_sz;
 
+  CASHashTable(uint64_t c) : CASHashTable(c, 8) {};
+
   CASHashTable(uint64_t c, uint32_t queue_sz)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);

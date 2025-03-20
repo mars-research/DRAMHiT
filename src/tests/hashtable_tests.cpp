@@ -19,8 +19,10 @@
 #include <papi.h>
 #endif
 
-//#include <perfcpp/event_counter.h>
+#ifdef WITH_PERFCPP
 #include "PerfMultiCounter.hpp"
+#endif
+
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -31,9 +33,9 @@ uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 
-
+#ifdef WITH_PERFCPP
 extern MultithreadCounter EVENTCOUNTERS;
-
+#endif
 
 void sync_complete(void);
 bool stop_sync = false;
@@ -204,8 +206,11 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       items[key] = {value, n};
 
       if (++key == config.batch_len) {
+
+        EVENTCOUNTERS.start(id);
         hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp,
                               collector);
+        EVENTCOUNTERS.stop(id);
         found += vp.first;
         vp.first = 0;
         key = 0;
@@ -317,13 +322,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   cur_phase = ExecPhase::finds;
 
-  EVENTCOUNTERS.start(shard->shard_idx);
   const auto num_finds =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
-
-  EVENTCOUNTERS.stop(shard->shard_idx);
-  //perf_counters.at(shard->shard_idx).stop();
-  //perf_counters.at(shard->shard_idx).save();
 
   shard->stats->finds.duration = num_finds.duration;
   shard->stats->finds.op_count = num_finds.op_count;

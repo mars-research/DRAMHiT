@@ -34,7 +34,9 @@
 #include <ittnotify.h>
 #endif
 
+#ifdef WITH_PERFCPP
 #include "PerfMultiCounter.hpp"
+#endif
 
 namespace kmercounter {
 
@@ -45,8 +47,9 @@ extern const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew, int64_t seed);
 
-
+#ifdef WITH_PERFCPP
 MultithreadCounter EVENTCOUNTERS;
+#endif
 
 // void sync_complete(void);
 
@@ -88,7 +91,10 @@ const Configuration def = {
     .delimitor = "|",
     .rw_queues = false,
     .pollute_ratio = 0,
-    .find_queue_sz = 16};  // TODO enum
+    .find_queue_sz = 16,
+    .perf_cnt_path = "",
+    .perf_def_path = "",
+};  // TODO enum
 
 // for synchronization of threads
 static uint64_t ready = 0;
@@ -323,7 +329,6 @@ int Application::spawn_shard_threads() {
     // PLOG_INFO << "Phase completed.";
   };
 
-
   // create a list of counters
 
   std::function<void()> on_sync_complete = sync_complete;
@@ -372,8 +377,9 @@ int Application::spawn_shard_threads() {
     print_stats(this->shards, config);
   }
 
-  EVENTCOUNTERS.show();
-
+#ifdef WITH_PERFCPP
+  EVENTCOUNTERS.print();
+#endif
 
   std::free(this->shards);
 
@@ -515,11 +521,15 @@ int Application::process(int argc, char *argv[]) {
         "Ratio of pollution events to ops (>1)")(
         "find_queue_sz",
         po::value(&config.find_queue_sz)->default_value(def.find_queue_sz),
-        "Find queue size");
+        "Find queue size")(
+        "perf_cnt_path",
+        po::value(&config.perf_cnt_path)->default_value(def.perf_cnt_path),
+        "Perf counter (to be recorded) events")(
+        "perf_def_path",
+        po::value(&config.perf_def_path)->default_value(def.perf_def_path),
+        "Perf definition (if empty, only default events are supported)");
 
     papi_init();
-
-
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -527,8 +537,11 @@ int Application::process(int argc, char *argv[]) {
 
     plog::get()->setMaxSeverity(plog::info);
 
-    EVENTCOUNTERS = MultithreadCounter(config.num_threads);
-    EVENTCOUNTERS.add({"seconds"});
+#ifdef WITH_PERFCPP
+    EVENTCOUNTERS = MultithreadCounter(config.num_threads, config.perf_cnt_path,
+                                       config.perf_def_path);
+
+#endif
 
     if (vm.count("help")) {
       cout << desc << "\n";

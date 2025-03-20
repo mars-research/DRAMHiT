@@ -23,3 +23,6 @@
 [submodule "lib/eth_hashjoin"]
 	path = lib/eth_hashjoin
 	url = https://github.com/mars-research/vldb13-eth-hashjoin.git
+[submodule "perf-cpp"]
+	path = perf-cpp
+	url = https://github.com/jmuehlig/perf-cpp.git

@@ -72,6 +72,9 @@
         "variant": "cpp",
         "codecvt": "cpp",
         "unordered_set": "cpp",
-        "syncstream": "cpp"
+        "syncstream": "cpp",
+        "*.h++": "cpp",
+        "regex": "cpp",
+        "shared_mutex": "cpp"
     }
 }

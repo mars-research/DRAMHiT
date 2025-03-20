@@ -1,0 +1,5 @@
+seconds
+instructions
+cycles
+cache-misses
+CYCLE_ACTIVITY.CYCLES_L1D_MISS

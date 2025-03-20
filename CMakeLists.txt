@@ -260,7 +260,7 @@ if (PERFCPP)
 
     target_include_directories(dramhit PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/lib/perf-cpp/src/perf-cpp-external/include)
     target_link_libraries(dramhit PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/lib/perf-cpp/src/perf-cpp-external-build/libperf-cpp.a)
-
+    add_definitions(-DWITH_PERFCPP)
 endif()
 
 if (VTUNE)
