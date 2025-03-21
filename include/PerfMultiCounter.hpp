@@ -28,7 +28,9 @@ class PerfCounterResult {
 
   void print(uint64_t sample_count) {
     for (auto& [counter_name, counter_value] : _results) {
-      std::cout << counter_name << " per op: "<< counter_value/sample_count << " total: " << counter_value << std::endl;
+      std::cout << counter_name << "\n"
+                << "    per op: "<< counter_value/sample_count << "\n" 
+                << "    total: " << counter_value << std::endl;
     }
   }
 };
@@ -54,7 +56,7 @@ class MultithreadCounter {
     defs.reserve(num_threads);
     counters.reserve(num_threads);
     for (size_t i = 0; i < num_threads; ++i) {
-      sample_counts.emplace_back(0);
+      sample_counts.emplace_back(1);
       results.emplace_back(this->events);
       if (def_path.empty()) 
         defs.emplace_back();
@@ -75,7 +77,13 @@ class MultithreadCounter {
     if (thread_idx < num_threads) {
       counters[thread_idx].stop();
       results[thread_idx].add(counters[thread_idx].result());
-      sample_counts[thread_idx]++;
+    }
+  }
+
+  void set_sample_count(size_t thread_idx, uint64_t sample_count) 
+  {
+    if (thread_idx < num_threads) {
+      sample_counts[thread_idx] = sample_count;
     }
   }
 
