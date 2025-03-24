@@ -26,6 +26,8 @@ disable_cstate() {
 
 disable_turbo() {
 
+	RDMSR=$(which rdmsr)
+	WRMSR=$(which wrmsr)
 	if ! [ -x "$(command -v ${RDMSR})" ]; then
 		echo "Installing msr-tools ..."
 		sudo apt update && sudo apt install msr-tools
@@ -42,14 +44,13 @@ disable_turbo() {
 	# disable turbo boost (bit 38 on 0x1a0 msr)
 	TURBO_BOOST_BIT=38
 	echo "Disabling turboboost"
-	sudo ${WRMSR} -a 0x1a0 $(printf "0x%x" $(($(sudo ${RDMSR} -d 0x1a0)|(1<<${TURBO_BOOST_BIT}))))
+	sudo "${WRMSR}" -a 0x1a0 "$(printf '0x%x' "$(( $(sudo "${RDMSR}" -d 0x1a0) | (1 << TURBO_BOOST_BIT) ))")"
+
 }
 
 set_const_freq() {
 	set_freq;
-
 	disable_cstate;
-
 	disable_turbo;
 }
 
