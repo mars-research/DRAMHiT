@@ -61,6 +61,7 @@ add_compile_options(
     -fno-stack-protector
     -funroll-all-loops
     #-rdynamic
+    #-mpreferred-stack-boundary=6
 )
 # Enable lto
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)

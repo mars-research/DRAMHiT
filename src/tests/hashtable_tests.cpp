@@ -157,7 +157,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
   FindResult *results = new FindResult[config.batch_len];
-  //alignas(32) ValuePairs vp = std::make_pair(0, results);
+  // alignas(32) ValuePairs vp = std::make_pair(0, results);
   ValuePairs vp = std::make_pair(0, results);
   sync_barrier->arrive_and_wait();
   stop_sync = true;
@@ -204,7 +204,6 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       // } else {
       items[key] = {value, n};
 
-      
       if (++key == config.batch_len) {
         hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp,
                               collector);
@@ -319,15 +318,18 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   cur_phase = ExecPhase::finds;
 
 #ifdef WITH_PERFCPP
-  EVENTCOUNTERS.start(shard->shard_idx);
+  if (shard->shard_idx == 0) EVENTCOUNTERS.start(shard->shard_idx);
 #endif
-        
+  // __asm volatile("# LLVM-MCA-BEGIN foo":::"memory");
   const auto num_finds =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
+  // __asm volatile("# LLVM-MCA-END":::"memory");
 
 #ifdef WITH_PERFCPP
-  EVENTCOUNTERS.stop(shard->shard_idx);
-  EVENTCOUNTERS.set_sample_count(shard->shard_idx, num_finds.op_count);
+  if (shard->shard_idx == 0) {
+    EVENTCOUNTERS.stop(shard->shard_idx);
+    EVENTCOUNTERS.set_sample_count(shard->shard_idx, num_finds.op_count);
+  }
 #endif
 
   shard->stats->finds.duration = num_finds.duration;

@@ -23,7 +23,6 @@
 #include "ht_helper.hpp"
 #include "plog/Log.h"
 #include "sync.h"
-
 namespace kmercounter {
 
 template <typename KV, typename KVQ>
@@ -65,8 +64,8 @@ class CASHashTable : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-
-    // PLOGI.printf("class size %d, queue item sz: %d", sizeof(CASHashTable), sizeof(KVQ));
+    // PLOGI.printf("class size %d, queue item sz: %d", sizeof(CASHashTable),
+    // sizeof(KVQ));
 
     pcounter = 0;
     find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
@@ -207,7 +206,7 @@ class CASHashTable : public BaseHashTable {
   // Under vtune, this is an overhead b/c branch.
   inline size_t get_find_queue_sz() {
     // only works with pow2 queue
-    return  (this->find_head - this->find_tail) & (find_queue_sz - 1);
+    return (this->find_head - this->find_tail) & (find_queue_sz - 1);
 
     // if (this->find_head >= this->find_tail)
     //   return find_head - find_tail;
@@ -222,40 +221,126 @@ class CASHashTable : public BaseHashTable {
     // }
 
     uint64_t retry = 0;
-    do {      
-      //values.first++;
+    do {
+      // values.first++;
       retry = __find_one(&this->find_queue[this->find_tail], values, collector);
-      //demote
-      // _cldemote ( &this->hashtable[this->find_queue[this->find_tail].idx]);
-      // __builtin_prefetch(&this->hashtable[this->find_queue[this->find_tail].idx], false, 0);
+      // demote
+      //  _cldemote ( &this->hashtable[this->find_queue[this->find_tail].idx]);
+      //  __builtin_prefetch(&this->hashtable[this->find_queue[this->find_tail].idx],
+      //  false, 0);
       this->find_tail++;
       this->find_tail &= (find_queue_sz - 1);
       // if (find_tail >= find_queue_sz) {
-      // //__builtin_prefetch(&this->find_head, true, 3);// <- improve 1 cycle, but don't kno why
+      // //__builtin_prefetch(&this->find_head, true, 3);// <- improve 1 cycle,
+      // but don't kno why
       //   this->find_tail = 0;
       // }
-      //non-temporal = 0, L1 = 3, L2 = 2, L3 = 1 (on our machine same as L2?)
-      __builtin_prefetch(&this->hashtable[this->find_queue[this->find_tail].idx], false, 3);
+      // non-temporal = 0, L1 = 3, L2 = 2, L3 = 1 (on our machine same as L2?)
+      __builtin_prefetch(
+          &this->hashtable[this->find_queue[this->find_tail].idx], false, 3);
 
     } while ((retry));
   }
 
+  // void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+  //                 collector_type *collector) override {
+
+  //   //values.first += config.batch_len;
+  //   // values.first++;
+  //   //return;
+  //   // do some prefetch for internal class data and arguments.
+
+  //   // mov 0x0, mov 0x0 + 4k
+  //   for (auto &data : kp) {
+  //     if ((get_find_queue_sz() >= find_queue_sz - 1))
+  //       pop_find_queue(values, collector);
+  //     add_to_find_queue(&data, collector);
+  //   }
+
+  // }
+
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
-
-    //values.first += config.batch_len;
-    // values.first++;
-    //return;
-    // do some prefetch for internal class data and arguments. 
-
-    // mov 0x0, mov 0x0 + 4k
+    register int tail asm("r8") = this->find_tail;
+    register int head asm("r9") = this->find_head;
+    register int ht_size asm("r10") = this->capacity;
+    // uint32_t tail = this->find_tail;
+    // uint32_t head = this->find_head;
     for (auto &data : kp) {
-      if ((get_find_queue_sz() >= find_queue_sz - 1))
-        pop_find_queue(values, collector);
-      add_to_find_queue(&data, collector);
-    }
+      if (((head - tail) & (find_queue_sz - 1)) >= find_queue_sz - 1) {
+        uint64_t retry = 0;
+        do {
+          KVQ *q = &this->find_queue[tail];
+          ValuePairs &vp = values;
+          size_t idx = q->idx;
 
-  }
+          KV *curr_cacheline = &this->hashtable[idx];
+          uint64_t found = curr_cacheline->find_simd(q, &retry, vp, 0);
+
+          if (retry) {
+#ifdef UNIFORM_HT_SUPPORT
+            uint64_t old_hash = q->key_hash;
+            uint64_t hash = this->hash(&old_hash);
+            idx = hash & (ht_size - 1);
+            idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+            this->find_queue[head].key_hash = hash;
+#else
+            idx += CACHELINE_SIZE / sizeof(KV);
+            idx = idx & (ht_size - 1);
+#endif
+            this->prefetch_read(idx);
+            this->find_queue[head].key = q->key;
+            this->find_queue[head].key_id = q->key_id;
+            this->find_queue[head].idx = idx;
+#ifdef LATENCY_COLLECTION
+            this->find_queue[head].timer_id = q->timer_id;
+#endif
+            head += 1;
+            head &= (find_queue_sz - 1);
+          }
+
+          tail++;
+          tail &= (find_queue_sz - 1);
+
+          // uint32_t next_tail = (tail + 1) & (find_queue_sz - 1); 
+          __builtin_prefetch(&this->hashtable[this->find_queue[tail].idx],
+                             false, 3);
+
+        } while ((retry));
+      }
+      // ADD TO_FIND QUEUE
+      InsertFindArgument *key_data =
+          reinterpret_cast<InsertFindArgument *>(&data);
+
+#ifdef LATENCY_COLLECTION
+      const auto timer = collector->start();
+#endif
+
+      uint64_t hash = this->hash((const char *)&key_data->key);
+      size_t idx = hash & (ht_size - 1);
+      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+
+      prefetch_read(idx);
+
+      this->find_queue[head].idx = idx;
+      this->find_queue[head].key = key_data->key;
+      this->find_queue[head].key_id = key_data->id;
+
+#ifdef UNIFORM_HT_SUPPORT
+      this->find_queue[head].key_hash = hash;
+#endif
+
+#ifdef LATENCY_COLLECTION
+      this->find_queue[head].timer_id = timer;
+#endif
+
+      head += 1;
+      head &= (find_queue_sz - 1);
+    }  // end for loop
+
+    this->find_tail = tail;
+    this->find_head = head;
+  }  // end_unrolled_find_batch
 
   void *find_noprefetch(const void *data, collector_type *collector) override {
 #ifdef CALC_STATS
@@ -375,7 +460,6 @@ class CASHashTable : public BaseHashTable {
 
   uint32_t pcounter;
 
-
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
@@ -386,13 +470,12 @@ class CASHashTable : public BaseHashTable {
 
   // remove &, as it will generate instructions
   void prefetch_read(uint64_t i) {
-    prefetch_object<false /* write */>(
-      &this->hashtable[i],
-      64);
-    
-    //we use pref_obj other places in code, probably good to keep it so we only change pref type once
-    // const void* addr = (const void*) &this->hashtable[i]; 
-    // __builtin_prefetch((const void *)addr, false, 1);
+    prefetch_object<false /* write */>(&this->hashtable[i], 64);
+
+    // we use pref_obj other places in code, probably good to keep it so we only
+    // change pref type once
+    //  const void* addr = (const void*) &this->hashtable[i];
+    //  __builtin_prefetch((const void *)addr, false, 1);
   }
 
 #ifdef AVX_SUPPORT
@@ -428,7 +511,6 @@ class CASHashTable : public BaseHashTable {
 
     return retry;
   }
-
 
 #endif
 
@@ -497,7 +579,6 @@ class CASHashTable : public BaseHashTable {
       if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
         goto try_find;
       }
-
 
       // key is at a different cacheline, prefetch and delay the find
       this->prefetch_read(idx);

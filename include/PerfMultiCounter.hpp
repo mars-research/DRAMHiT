@@ -1,18 +1,20 @@
 #pragma once
 
 #include <perfcpp/event_counter.h>
-#include <iostream>
+
 #include <fstream>
+#include <iostream>
 #include <mutex>
-#include <vector>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace kmercounter {
 
 class PerfCounterResult {
- private: 
+ private:
   std::vector<std::pair<std::string, double>> _results;
+
  public:
   PerfCounterResult(const std::vector<std::string>& events) {
     for (const auto& event : events) {
@@ -27,10 +29,14 @@ class PerfCounterResult {
   }
 
   void print(uint64_t sample_count) {
+    // DEFAULT, shows per op and total
+    //  for (auto& [counter_name, counter_value] : _results) {
+    //    std::cout << counter_name << "\n"
+    //              << "    per op: "<< counter_value/sample_count << "\n"
+    //              << "    total: " << counter_value << std::endl;
+    //  }
     for (auto& [counter_name, counter_value] : _results) {
-      std::cout << counter_name << "\n"
-                << "    per op: "<< counter_value/sample_count << "\n" 
-                << "    total: " << counter_value << std::endl;
+      std::cout << counter_name << ":" << counter_value / sample_count << "\n";
     }
   }
 };
@@ -41,16 +47,17 @@ class MultithreadCounter {
   MultithreadCounter() {}
 
   // Delegating constructor: reads events from a file then delegates
-  MultithreadCounter(size_t num_threads, const std::string& cnt_path, const std::string& def_path)
-      : MultithreadCounter(num_threads, readEventsFromFile(cnt_path), def_path)
-  {
+  MultithreadCounter(size_t num_threads, const std::string& cnt_path,
+                     const std::string& def_path)
+      : MultithreadCounter(num_threads, readEventsFromFile(cnt_path),
+                           def_path) {
     // Nothing to do here, delegation took care of initialization.
   }
 
   // Main constructor: uses events vector
-  MultithreadCounter(size_t num_threads, const std::vector<std::string>& events, const std::string& def_path)
-      : num_threads(num_threads), events(events) {    
-
+  MultithreadCounter(size_t num_threads, const std::vector<std::string>& events,
+                     const std::string& def_path)
+      : num_threads(num_threads), events(events) {
     sample_counts.reserve(num_threads);
     results.reserve(num_threads);
     defs.reserve(num_threads);
@@ -58,12 +65,12 @@ class MultithreadCounter {
     for (size_t i = 0; i < num_threads; ++i) {
       sample_counts.emplace_back(1);
       results.emplace_back(this->events);
-      if (def_path.empty()) 
+      if (def_path.empty())
         defs.emplace_back();
       else
-        defs.emplace_back(def_path);  
+        defs.emplace_back(def_path);
       counters.emplace_back(defs[i]);
-      counters[i].add(this->events);
+      counters[i].add(this->events, perf::EventCounter::Schedule::Separate);
     }
   }
 
@@ -80,8 +87,7 @@ class MultithreadCounter {
     }
   }
 
-  void set_sample_count(size_t thread_idx, uint64_t sample_count) 
-  {
+  void set_sample_count(size_t thread_idx, uint64_t sample_count) {
     if (thread_idx < num_threads) {
       sample_counts[thread_idx] = sample_count;
     }
@@ -90,7 +96,8 @@ class MultithreadCounter {
   void print() {
     std::cout << "\n------- PERFCPP ------- " << std::endl;
     for (size_t i = 0; i < num_threads; i++) {
-      std::cout << "\nThread ID: " << i << " Sample counts: " << sample_counts[i] << std::endl;
+      std::cout << "\nThread ID: " << i
+                << " Sample counts: " << sample_counts[i] << std::endl;
       results[i].print(sample_counts[i]);
     }
     std::cout << "\n----------------------- " << std::endl;
@@ -100,8 +107,7 @@ class MultithreadCounter {
   // Helper function to read events from file
   static std::vector<std::string> readEventsFromFile(const std::string& path) {
     std::vector<std::string> events;
-    if(path.empty())
-      return events;
+    if (path.empty()) return events;
 
     std::ifstream file(path);
     if (!file.is_open()) {
@@ -116,7 +122,8 @@ class MultithreadCounter {
     return events;
   }
 
-  std::vector<perf::EventCounter> counters;  // Each counter needs its own definitions
+  std::vector<perf::EventCounter>
+      counters;  // Each counter needs its own definitions
   std::vector<perf::CounterDefinition> defs;
   std::vector<PerfCounterResult> results;
   std::vector<uint64_t> sample_counts;
