@@ -259,13 +259,14 @@ class CASHashTable : public BaseHashTable {
 
   // }
 
-  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+  inline __attribute__((always_inline)) void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
-    register int tail asm("r8") = this->find_tail;
-    register int head asm("r9") = this->find_head;
-    register int ht_size asm("r10") = this->capacity;
-    // uint32_t tail = this->find_tail;
-    // uint32_t head = this->find_head;
+    // register int tail asm("r8") = this->find_tail;
+    // register int head asm("r9") = this->find_head;
+    // register int ht_size asm("r10") = this->capacity;
+    uint64_t tail = this->find_tail;
+    uint64_t head = this->find_head;
+    uint64_t ht_size = this->capacity;
     for (auto &data : kp) {
       if (((head - tail) & (find_queue_sz - 1)) >= find_queue_sz - 1) {
         uint64_t retry = 0;
@@ -274,8 +275,44 @@ class CASHashTable : public BaseHashTable {
           ValuePairs &vp = values;
           size_t idx = q->idx;
 
-          KV *curr_cacheline = &this->hashtable[idx];
-          uint64_t found = curr_cacheline->find_simd(q, &retry, vp, 0);
+          // KV *curr_cacheline = &this->hashtable[idx];
+          // uint64_t found = curr_cacheline->find_simd(q, &retry, vp, 0);
+          uint64_t found;
+          /// find_simd
+          ItemQueue *elem =
+              const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(q));
+          constexpr __mmask8 KEYMSK = 0b01010101;
+
+          __m512i key_vector = _mm512_set_epi64(0, elem->key, 0, elem->key, 0,
+                                                elem->key, 0, elem->key);
+          __m512i cacheline = _mm512_load_si512(
+              &this->hashtable[idx]);  // this is an idx into the hashtable.
+          __mmask8 key_cmp =
+              KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, key_vector);
+
+          retry = 0;
+          if (key_cmp > 0) {
+            size_t idx = _bit_scan_forward(key_cmp);
+            vp.second[vp.first].id = elem->key_id;
+            vp.second[vp.first].value = elem->value;
+            vp.first++;
+            // return 1;
+            found = 1;
+          } else {
+            // key not found
+            __m512i zero_vector = _mm512_setzero_si512();
+            __mmask8 EMTMSK = ~((1 << (2 * 0)) - 1);
+            __mmask8 ept_cmp =
+                KEYMSK & _mm512_cmpeq_epu64_mask(cacheline, zero_vector);
+            if ((EMTMSK & ept_cmp) == 0) {
+              retry = 1;
+            }
+
+            found = 0;
+            // return 0;
+          }
+
+          /// end find simd
 
           if (retry) {
 #ifdef UNIFORM_HT_SUPPORT
@@ -302,7 +339,7 @@ class CASHashTable : public BaseHashTable {
           tail++;
           tail &= (find_queue_sz - 1);
 
-          // uint32_t next_tail = (tail + 1) & (find_queue_sz - 1); 
+          // uint32_t next_tail = (tail + 1) & (find_queue_sz - 1);
           __builtin_prefetch(&this->hashtable[this->find_queue[tail].idx],
                              false, 3);
 
