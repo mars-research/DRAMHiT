@@ -338,7 +338,7 @@ int Application::spawn_shard_threads() {
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
     if (assigned_cpu == 0) continue;
 
-    if (assigned_cpu == 1) assigned_cpu = 28;
+    // if (assigned_cpu == 1) assigned_cpu = 28;
 
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;

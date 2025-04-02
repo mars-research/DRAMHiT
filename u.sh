@@ -17,10 +17,10 @@ if [ "$#" -ne 2 ]; then
 fi
 test=$1
 numThreads=$2
-#TEST L1-size HT
+#TEST 256 KB
 if [ "$test" = "small" ]; then
-    size=2048
-    insertFactor=1000000
+    size=16384
+    insertFactor=100000
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
     size=134217728
@@ -41,4 +41,12 @@ do
     --find_queue_sz 32 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor \
     --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
     --hw-pref 0 --batch-len $batch
+
+    echo "/opt/DRAMHiT/build/dramhit \
+    --perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
+    --find_queue_sz 32 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor \
+    --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
+    --hw-pref 0 --batch-len $batch"
 done
+
+

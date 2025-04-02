@@ -1,17 +1,63 @@
 
 
-===============================================================
+
+
+small 1 thread 
+------- PERFCPP ------- 
+
+Thread ID: 0 Sample counts: 163799985
+BR_MISP_RETIRED.ALL_BRANCHES:0.00119316
+BR_MISP_RETIRED.INDIRECT:2.32234e-05
+BR_MISP_RETIRED.COND:0.00116917
+
+-----------------------
+
+------- PERFCPP ------- 
+
+Thread ID: 0 Sample counts: 2899985
+BR_MISP_RETIRED.ALL_BRANCHES:0.00144173 
+BR_MISP_RETIRED.INDIRECT:0.000105863
+BR_MISP_RETIRED.COND:0.00130346
+
+----------------------- 
+
+
+------- - March 31 2025 ------
+
+small: 256 KB
+large: 2 GB
+fill factor: 10%
+
+Table: manually inlined find_batch
+cycle per operation for get.
+|       | 1 thread  | 56 threads | 
+| small |     21    |     31     |   
+| large |     23    |     38     |
+
+Table: regular find_batch, no optimization
+cycle per operation for get.
+|       | 1 thread  | 56 threads | 
+| small |     25    |     37     |   
+| large |     26    |     42     |
+
+Table: find_batch simply returns (do zero work).
+This is purely measuring the outer benchmark loop.
+cycle per operation for get.
+|       | 1 thread  | 56 threads | 
+| small |     5     |     8      |   
+| large |     9     |     9      |
+
+--------- unknown ----------- 
+
 Number of insertions per sec (Mops/s): 76.364
 print_stats, num_threads 2
 Number of finds per sec (Mops/s): 113.514
 { set_cycles : 55, get_cycles : 37, set_mops : 76.364, get_mops : 113.514 }
-===============================================================
-===============================================================
+
 Number of insertions per sec (Mops/s): 56.757
 print_stats, num_threads 1
 Number of finds per sec (Mops/s): 84.000
 { set_cycles : 37, get_cycles : 25, set_mops : 56.757, get_mops : 84.000 }
-===============================================================
 
 --- March 17 2025 ---
 
@@ -96,7 +142,7 @@ Hypothesis:
 1. Cost of prefetch due to limited LFB buffer. (roughly 10 cycles extra), [eliminated with L1+L2 combined prefetching]
 2. Since each cpu cache are under high contention, memory instructions associated with DRAMHiT itself such as logic of prefetch 
 engine also increases due to potential misses (not sure why, cpu cache likely will keep find_queue in cache). 
-3. More reprobes in total when we run large table ?
+1. More reprobes in total when we run large table ?
 
 -----------------------
 

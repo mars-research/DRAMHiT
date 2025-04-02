@@ -185,9 +185,10 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       auto value = key_start++;
 #else
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
-        // __builtin_prefetch(&zipf_values->at(zipf_idx + 16), false, 3);
+        //prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        __builtin_prefetch(&zipf_values->at(zipf_idx + 16), false, 3);
       }
+
       auto value = zipf_values->at(zipf_idx);
 #endif
 
@@ -320,10 +321,17 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #ifdef WITH_PERFCPP
   if (shard->shard_idx == 0) EVENTCOUNTERS.start(shard->shard_idx);
 #endif
-  // __asm volatile("# LLVM-MCA-BEGIN foo":::"memory");
+
+#ifdef WITH_VTUNE_LIB
+  __itt_resume();
+#endif
+
   const auto num_finds =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
-  // __asm volatile("# LLVM-MCA-END":::"memory");
+
+#ifdef WITH_VTUNE_LIB
+  __itt_pause();
+#endif
 
 #ifdef WITH_PERFCPP
   if (shard->shard_idx == 0) {

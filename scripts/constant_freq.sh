@@ -3,6 +3,8 @@
 CPU_FREQ_KHZ=2100000 
 RDMSR=$(which rdmsr)
 WRMSR=$(which wrmsr)
+echo $RDMSR 
+echo $WRMSR
 
 get_rated_cpufreq() {
 	# lscpu reports the rated processor freq in %1.2f format
@@ -26,14 +28,14 @@ disable_cstate() {
 
 disable_turbo() {
 
-	RDMSR=$(which rdmsr)
-	WRMSR=$(which wrmsr)
 	if ! [ -x "$(command -v ${RDMSR})" ]; then
 		echo "Installing msr-tools ..."
 		sudo apt update && sudo apt install msr-tools
 		RDMSR=$(which rdmsr)
 		WRMSR=$(which wrmsr)
 	fi
+
+
 
 	# make sure we have this module loaded
 	if [ -z "$(lsmod | grep '^msr')" ]; then
@@ -44,8 +46,7 @@ disable_turbo() {
 	# disable turbo boost (bit 38 on 0x1a0 msr)
 	TURBO_BOOST_BIT=38
 	echo "Disabling turboboost"
-	sudo "${WRMSR}" -a 0x1a0 "$(printf '0x%x' "$(( $(sudo "${RDMSR}" -d 0x1a0) | (1 << TURBO_BOOST_BIT) ))")"
-
+	sudo $WRMSR -a 0x1a0 "$(printf '0x%x' "$(( $(sudo $RDMSR -d 0x1a0) | (1 << TURBO_BOOST_BIT) ))")"
 }
 
 set_const_freq() {

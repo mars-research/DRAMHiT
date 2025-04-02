@@ -34,10 +34,10 @@ sudo apt update
 # apt-cache policy intel-oneapi-vtune | grep 2025
 
 # Jerry's install version
-# sudo apt install -y intel-oneapi-vtune=2025.0.1-14
+sudo apt install -y intel-oneapi-vtune=2025.1.0-683
 
 # Josh's install version
-sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
+#sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
 
 #   Installs in dir:
 #/opt/intel/oneapi/vtune/latest/bin64/vtune
