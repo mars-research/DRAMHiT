@@ -10,7 +10,7 @@
         "program": "/opt/dramhit/dramhit/build/dramhit",
         "args": [
         "--find_queue_sz", 
-        "8",
+        "32",
         "--ht-fill",
         "10",
         "--ht-type", 

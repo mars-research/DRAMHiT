@@ -214,99 +214,69 @@ class CASHashTable : public BaseHashTable {
     //   return find_queue_sz + find_tail - find_head;
   }
 
-  inline void pop_find_queue(ValuePairs &values, collector_type *collector) {
-    // if(this->find_tail == 0 && this->find_head){
-    //   // __builtin_prefetch(&this->find_tail,true, 3);
-    //   // __builtin_prefetch(&values.first, true, 3);
-    // }
-
+  inline void pop_find_queue(ValuePairs &vp, collector_type *collector) {
     uint64_t retry = 0;
     do {
-      // values.first++;
-      retry = __find_one(&this->find_queue[this->find_tail], values, collector);
-      // demote
-      //  _cldemote ( &this->hashtable[this->find_queue[this->find_tail].idx]);
-      //  __builtin_prefetch(&this->hashtable[this->find_queue[this->find_tail].idx],
-      //  false, 0);
+      retry = __find_one(&this->find_queue[this->find_tail], vp, collector);
       this->find_tail++;
       this->find_tail &= (find_queue_sz - 1);
-      // if (find_tail >= find_queue_sz) {
-      // //__builtin_prefetch(&this->find_head, true, 3);// <- improve 1 cycle,
-      // but don't kno why
-      //   this->find_tail = 0;
-      // }
-      // non-temporal = 0, L1 = 3, L2 = 2, L3 = 1 (on our machine same as L2?)
       __builtin_prefetch(
           &this->hashtable[this->find_queue[this->find_tail].idx], false, 3);
-
     } while ((retry));
   }
 
-
   // void find_batch(const InsertFindArguments &kp, ValuePairs &values,
   //                 collector_type *collector) override {
-
-  //   //values.first += config.batch_len;
-  //   // values.first++;
-  //   //return;
-  //   // do some prefetch for internal class data and arguments.
-
-  //   // mov 0x0, mov 0x0 + 4k
-  //   for (auto &data : kp) {
-  //     if ((get_find_queue_sz() >= find_queue_sz - 1))
+  //   if ((get_find_queue_sz() >= find_queue_sz - 1))  {
+  //     for (auto &data : kp) {
   //       pop_find_queue(values, collector);
-  //     add_to_find_queue(&data, collector);
+  //       add_to_find_queue(&data, collector);
+  //     }
+  //   }else {
+  //
+  //     for (auto &data : kp) {
+  //       if ((get_find_queue_sz() >= find_queue_sz - 1)) {
+  //         pop_find_queue(values, collector);
+  //       }
+  //
+  //       add_to_find_queue(&data, collector);
+  //     }
   //   }
-
   // }
 
-
-
-  //Artificial test, to get max dram bandwidth
-  // void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-  //                 collector_type *collector) override {
-  //   for (auto &data : kp) {
-  //     values.first++;
-  //     InsertFindArgument *key_data =
-  //         reinterpret_cast<InsertFindArgument *>(&data);
-  //     uint64_t hash = this->hash((const char *)&key_data->key);
-  //     uint32_t idx = hash & (this->capacity - 1);
-  //     prefetch_read(idx);
-  //   }
+  // Artificial test, to get max dram bandwidth
+  //  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+  //                  collector_type *collector) override {
+  //    for (auto &data : kp) {
+  //      values.first++;
+  //      InsertFindArgument *key_data =
+  //          reinterpret_cast<InsertFindArgument *>(&data);
+  //      uint64_t hash = this->hash((const char *)&key_data->key);
+  //      uint32_t idx = hash & (this->capacity - 1);
+  //      prefetch_read(idx);
+  //    }
 
   // }
-
-  inline uint64_t mm512_extract_uint64(__m512i vec, size_t index) {
-    uint64_t result;
-
-    __asm__ volatile (
-        "movq       %[index], %%xmm1          \n\t"  // Move index to XMM1
-        "vpbroadcastq %%xmm1, %%zmm1          \n\t"  // Broadcast index across lanes
-        "vpermi2q   %%zmm1, %[vec], %%zmm0    \n\t"  // Permute based on index
-        "vmovq      %%xmm0, %[result]         \n\t"  // Extract 64-bit value
-        : [result] "=r" (result)
-        : [vec] "v" (vec), [index] "r" ((uint64_t)index)
-        : "zmm0", "zmm1"
-    );
-
-    return result;
-  }
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
                   collector_type *collector) override {
-    //register int tail asm("r8") = this->find_tail;
-    //register int head asm("r9") = this->find_head;
-    //register int ht_size asm("r10") = this->capacity;
-    uint64_t tail = this->find_tail;
-    uint64_t head = this->find_head;
-    uint64_t ht_size = this->capacity;
+    // register int tail asm("r8") = this->find_tail;
+    // register int head asm("r9") = this->find_head;
+    // register int ht_size asm("r10") = this->capacity;
+
+    uint32_t tail = this->find_tail;
+    uint32_t head = this->find_head;
+
+    const uint32_t HT_MASK = (this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK);
+    const uint32_t FIND_QUEUE_MASK = this->find_queue_sz - 1;
 
     constexpr __mmask8 KEYMSK = 0b01010101;
     __m512i zero_vector = _mm512_setzero_si512();
 
-    uint32_t next_tail = 0;
-    for (auto &data : kp) {
-      if (((head - tail) & (find_queue_sz - 1)) >= find_queue_sz - 1) {
+    // fast path
+    if (((head - tail) & FIND_QUEUE_MASK) >= FIND_QUEUE_MASK) {
+      // c++ iterator is faster than a regular integer loop.
+      for (auto &data : kp) {
         uint64_t retry = 0;
         uint64_t key = 0;
         uint32_t key_id = 0;
@@ -317,6 +287,8 @@ class CASHashTable : public BaseHashTable {
         __m512i key_vector;
         __m512i cacheline;
         __mmask8 key_cmp;
+        // uint32_t next_tail;
+        // pop find queue
         do {
           q = &this->find_queue[tail];
           idx = q->idx;  // idx is cacheline aligned
@@ -324,42 +296,32 @@ class CASHashTable : public BaseHashTable {
           key_id = q->key_id;
           value = q->value;
 
+          // update tails (faster here idk why)
+          tail++;
+          // if(tail >= find_queue_sz) tail = 0;
+          tail &= FIND_QUEUE_MASK;
+          //uint32_t next_tail = (tail + 3) & FIND_QUEUE_MASK;
+          const void* next_tail_addr = &this->hashtable[this->find_queue[tail].idx];
+          __builtin_prefetch(next_tail_addr, false, 3);
 
-          //__builtin_prefetch(&this->find_queue[((tail+1) & (find_queue_sz-1))], false, 3);
+          //__builtin_prefetch(&this->find_queue[((tail+1) &
+          //(find_queue_sz-1))], false, 3);
 
           // key_vector = _mm512_set_epi64(0, key, 0, key, 0, key, 0, key);
           key_vector = _mm512_set1_epi64(key);
-          cacheline = _mm512_load_si512(&this->hashtable[idx]); // can be replaced with _mm512_maskz_loadu_epi64
+          cacheline = _mm512_load_si512(
+              &this->hashtable[idx]);  // can be replaced with
+                                       // _mm512_maskz_loadu_epi64
           key_cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
 
           retry = 0;
           if (key_cmp > 0) {
-            __mmask8 offset = (_bit_scan_forward(key_cmp) >> 1); // 00_01_00_00 = 4
-            // __m128i lane;
-            // __mmask8 lane_idx = offset >> 1;
-            // switch(lane_idx) {
-            //   case 0:
-            //     lane = _mm512_extracti64x2_epi64(cacheline, 0);
-            //     break;
-            //   case 1:
-            //     lane = _mm512_extracti64x2_epi64(cacheline, 1);
-            //     break;
-            //   case 2:
-            //     lane = _mm512_extracti64x2_epi64(cacheline, 2);
-            //     break;
-            //   case 3:
-            //     lane = _mm512_extracti64x2_epi64(cacheline, 3);
-            //     break;
-            //   default:
-            //     printf("error in find_batch");
-            //     exit(-1);
-            // }
-            // vp.second[vp.first].value = _mm_extract_epi64(lane, 0); // 01
-
-            vp.second[vp.first].value =  (this->hashtable[(idx + offset)]).kvpair.value;
+            __mmask8 offset = (_bit_scan_forward(key_cmp) >> 1); // 01_00_00_00  
+            vp.second[vp.first].value =
+                (this->hashtable[(idx + offset)]).kvpair.value;
             vp.second[vp.first].id = key_id;
             vp.first++;
-          } else {
+          } else {  
             ept_cmp = _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
 
             // if ept found ept_cmp > 0, then we stop retry
@@ -368,14 +330,15 @@ class CASHashTable : public BaseHashTable {
 #ifdef UNIFORM_HT_SUPPORT
               uint64_t old_hash = q->key_hash;
               uint64_t hash = this->hash(&old_hash);
-              idx = hash & (ht_size - 1);
-              idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+              idx = hash & HT_MASK;
               this->find_queue[head].key_hash = hash;
 #else
               idx += CACHELINE_SIZE / sizeof(KV);
-              idx = idx & (ht_size - 1);
+              idx = idx & HT_MASK;
 #endif
-              this->prefetch_read(idx);
+
+              __builtin_prefetch(&this->hashtable[idx], false, 1);
+              // this->prefetch_read(idx);
               this->find_queue[head].key = key;
               this->find_queue[head].key_id = key_id;
               this->find_queue[head].idx = idx;
@@ -383,51 +346,160 @@ class CASHashTable : public BaseHashTable {
               this->find_queue[head].timer_id = q->timer_id;
 #endif
               head += 1;
-              head &= (find_queue_sz - 1);
-            }  
+              head &= FIND_QUEUE_MASK;
+            }
           }
+        } while (retry);  
 
-           // update tails (faster here idk why)
-           tail++;
-           tail &= (find_queue_sz - 1);
-           next_tail = (tail + 4) & (find_queue_sz - 1);
- 
-           __builtin_prefetch(&this->hashtable[this->find_queue[next_tail].idx],
-                              false, 3);
-          
-        } while (retry);
-      }
-      // ADD TO_FIND QUEUE
-      InsertFindArgument *key_data =
-          reinterpret_cast<InsertFindArgument *>(&data);
+        // add to find queue
+        InsertFindArgument *key_data =
+            reinterpret_cast<InsertFindArgument *>(&data);
 
 #ifdef LATENCY_COLLECTION
-      const auto timer = collector->start();
+        const auto timer = collector->start();
 #endif
 
-      // uint64_t hash = this->hash((const char *)&key_data->key);
-      //-1 cycle
-      uint64_t hash = _mm_crc32_u64(0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
-      uint32_t idx = hash & (ht_size - 1);
-      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+        // uint64_t hash = this->hash((const char *)&key_data->key);
+        //-1 cycle
+        uint64_t hash = _mm_crc32_u64(
+            0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
+        idx = hash & HT_MASK;
+        // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
 
-      prefetch_read(idx);
+        __builtin_prefetch(&this->hashtable[idx], false, 1);
+        // prefetch_read(idx);
 
-      this->find_queue[head].idx = idx;
-      this->find_queue[head].key = key_data->key;
-      this->find_queue[head].key_id = key_data->id;
+        this->find_queue[head].idx = idx;
+        this->find_queue[head].key = key_data->key;
+        this->find_queue[head].key_id = key_data->id;
 
 #ifdef UNIFORM_HT_SUPPORT
-      this->find_queue[head].key_hash = hash;
+        this->find_queue[head].key_hash = hash;
 #endif
 
 #ifdef LATENCY_COLLECTION
-      this->find_queue[head].timer_id = timer;
+        this->find_queue[head].timer_id = timer;
 #endif
 
-      head += 1;
-      head &= (find_queue_sz - 1);
-    }  // end for loop
+        head += 1;
+        head &= FIND_QUEUE_MASK;
+      }  // end for loop
+    }  // end of fast path
+    else {  // slow path
+      for (auto &data : kp) {
+        // pop queue
+        if (((head - tail) & FIND_QUEUE_MASK) >= FIND_QUEUE_MASK) {
+          uint64_t retry = 0;
+          uint64_t key = 0;
+          uint32_t key_id = 0;
+          uint32_t idx = 0;
+          uint64_t value = 0;
+          KVQ *q;
+          __mmask8 ept_cmp;
+          __m512i key_vector;
+          __m512i cacheline;
+          __mmask8 key_cmp;
+          do {
+            q = &this->find_queue[tail];
+            idx = q->idx;  // idx is cacheline aligned
+            key = q->key;
+            key_id = q->key_id;
+            value = q->value;
+
+            //__builtin_prefetch(&this->find_queue[((tail+1) &
+            //(find_queue_sz-1))], false, 3);
+
+            // key_vector = _mm512_set_epi64(0, key, 0, key, 0, key, 0, key);
+            key_vector = _mm512_set1_epi64(key);
+            cacheline = _mm512_load_si512(
+                &this->hashtable[idx]);  // can be replaced with
+                                         // _mm512_maskz_loadu_epi64
+            key_cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
+
+            retry = 0;
+            if (key_cmp > 0) {
+              __mmask8 offset = (_bit_scan_forward(key_cmp) >> 1);
+              vp.second[vp.first].value =
+                  (this->hashtable[(idx + offset)]).kvpair.value;
+              vp.second[vp.first].id = key_id;
+              vp.first++;
+            } else {
+              ept_cmp =
+                  _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
+
+              // if ept found ept_cmp > 0, then we stop retry
+              retry = ept_cmp == 0;
+              if (retry) {
+#ifdef UNIFORM_HT_SUPPORT
+                uint64_t old_hash = q->key_hash;
+                uint64_t hash = this->hash(&old_hash);
+                idx = hash & HT_MASK;
+                this->find_queue[head].key_hash = hash;
+#else
+                idx += CACHELINE_SIZE / sizeof(KV);
+                idx = idx & HT_MASK;
+#endif
+
+                __builtin_prefetch(&this->hashtable[idx], false, 1);
+                // this->prefetch_read(idx);
+                this->find_queue[head].key = key;
+                this->find_queue[head].key_id = key_id;
+                this->find_queue[head].idx = idx;
+#ifdef LATENCY_COLLECTION
+                this->find_queue[head].timer_id = q->timer_id;
+#endif
+                head += 1;
+                head &= FIND_QUEUE_MASK;
+              }
+            }
+
+            // update tails (faster here idk why)
+            tail++;
+            // if(tail >= find_queue_sz) tail = 0;
+            tail &= FIND_QUEUE_MASK;
+            uint32_t next_tail = (tail + 4) & FIND_QUEUE_MASK;
+
+            __builtin_prefetch(
+                &this->hashtable[this->find_queue[next_tail].idx], false, 3);
+
+          } while (retry);
+        }
+
+        // add to find queue
+        InsertFindArgument *key_data =
+            reinterpret_cast<InsertFindArgument *>(&data);
+
+#ifdef LATENCY_COLLECTION
+        const auto timer = collector->start();
+#endif
+
+        // uint64_t hash = this->hash((const char *)&key_data->key);
+        //-1 cycle
+        uint64_t hash = _mm_crc32_u64(
+            0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
+        uint32_t idx = hash & HT_MASK;
+        // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+
+        __builtin_prefetch(&this->hashtable[idx], false, 1);
+        // prefetch_read(idx);
+
+        this->find_queue[head].idx = idx;
+        this->find_queue[head].key = key_data->key;
+        this->find_queue[head].key_id = key_data->id;
+
+#ifdef UNIFORM_HT_SUPPORT
+        this->find_queue[head].key_hash = hash;
+#endif
+
+#ifdef LATENCY_COLLECTION
+        this->find_queue[head].timer_id = timer;
+#endif
+
+        head += 1;
+        head &= FIND_QUEUE_MASK;
+
+      }  // end for loop
+    }
 
     this->find_tail = tail;
     this->find_head = head;
@@ -563,8 +635,8 @@ class CASHashTable : public BaseHashTable {
   void prefetch_read(uint64_t i) {
     prefetch_object<false /* write */>(&this->hashtable[i], 64);
 
-    // we use pref_obj other places in code, probably good to keep it so we only
-    // change pref type once
+    // we use pref_obj other places in code, probably good to keep it so we
+    // only change pref type once
     //  const void* addr = (const void*) &this->hashtable[i];
     //  __builtin_prefetch((const void *)addr, false, 1);
   }
@@ -784,7 +856,8 @@ class CASHashTable : public BaseHashTable {
 #ifdef CALC_STATS
       ++this->num_soft_reprobes;
 #endif
-      goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
+      goto try_insert;  // FIXME: @David get rid of the goto for crying out
+                        // loud
     }
 
 #ifdef UNIFORM_HT_SUPPORT

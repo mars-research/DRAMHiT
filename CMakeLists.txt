@@ -26,9 +26,6 @@ option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
 option(PERFCPP "perf cpp" ON)
 
-
-
-
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
     message(FATAL_ERROR "g++ must be version 8.0 or above")
@@ -55,13 +52,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(
     -O3
     -Wall
-    -g
-    -fdiagnostics-color=always
-    -mprefetchwt1
     -march=native
-    -fcf-protection=none
-    -fno-stack-protector
-    -funroll-all-loops
+    #-fcf-protection=none
+    #-fno-stack-protector
+    #-funroll-all-loops
     #-rdynamic
     #-mpreferred-stack-boundary=6
 )

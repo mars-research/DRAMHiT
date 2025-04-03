@@ -531,6 +531,8 @@ int Application::process(int argc, char *argv[]) {
 
     papi_init();
 
+    config.batch_len = 16;
+
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
