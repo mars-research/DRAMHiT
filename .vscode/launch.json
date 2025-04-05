@@ -7,7 +7,7 @@
         "name": "(gdb) Launch",
         "type": "cppdbg",
         "request": "launch",
-        "program": "/opt/dramhit/dramhit/build/dramhit",
+        "program": "/opt/DRAMHiT/build/dramhit",
         "args": [
         "--find_queue_sz", 
         "32",

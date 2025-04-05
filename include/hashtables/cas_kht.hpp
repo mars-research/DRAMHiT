@@ -44,19 +44,25 @@ class CASHashTable : public BaseHashTable {
       (CACHELINE_SIZE / sizeof(KV)) - 1;
 
   uint32_t find_queue_sz;
+  uint32_t FIND_QUEUE_SZ_MASK;
+  uint64_t HT_BUCKET_MASK;
 
   CASHashTable(uint64_t c) : CASHashTable(c, 8) {};
 
   CASHashTable(uint64_t c, uint32_t queue_sz)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
+    find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
+
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
+
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
         PLOGI.printf("Hashtable base: %p Hashtable size: %lu", this->hashtable,
                      this->capacity);
+        PLOGI.printf("queue item sz: %d", sizeof(KVQ));
       }
       this->ref_cnt++;
     }
@@ -64,18 +70,16 @@ class CASHashTable : public BaseHashTable {
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
-    // PLOGI.printf("class size %d, queue item sz: %d", sizeof(CASHashTable),
-    // sizeof(KVQ));
-
-    pcounter = 0;
-    find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
-
     PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
     this->find_queue = (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
 
-    PLOGV.printf("%s, data_length %lu\n", __func__, this->data_length);
+    find_head_ptr = find_queue;
+    find_tail_ptr = find_queue;
+    this->FIND_QUEUE_SZ_MASK = this->find_queue_sz - 1;
+    this->HT_BUCKET_MASK =
+        (uint32_t)((this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK));
   }
 
   ~CASHashTable() {
@@ -260,209 +264,90 @@ class CASHashTable : public BaseHashTable {
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
                   collector_type *collector) override {
-    // register int tail asm("r8") = this->find_tail;
-    // register int head asm("r9") = this->find_head;
-    // register int ht_size asm("r10") = this->capacity;
-
-    uint32_t tail = this->find_tail;
-    uint32_t head = this->find_head;
-
-    const uint32_t HT_MASK = (this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK);
-    const uint32_t FIND_QUEUE_MASK = this->find_queue_sz - 1;
-
-    constexpr __mmask8 KEYMSK = 0b01010101;
-    __m512i zero_vector = _mm512_setzero_si512();
+    bool fast_path = ((this->find_head - this->find_tail) &
+                      FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
 
     // fast path
-    if (((head - tail) & FIND_QUEUE_MASK) >= FIND_QUEUE_MASK) {
+    if (fast_path) [[likely]] {
+      uint32_t tail = this->find_tail;
+      uint32_t head = this->find_head;
+
+      uint32_t not_found = 0;
+
+      FindResult *vp_result = vp.second;
+      // KVQ* tail_ptr = &this->find_queue[tail];
+      // uint32_t FIND_QUEUE_SZ_MASK = FIND_QUEUE_SZ_MASK;
+      // uint64_t HT_BUCKET_MASK = HT_BUCKET_MASK;
+
       // c++ iterator is faster than a regular integer loop.
       for (auto &data : kp) {
-        uint64_t retry = 0;
-        uint64_t key = 0;
-        uint32_t key_id = 0;
-        uint32_t idx = 0;
-        uint64_t value = 0;
-        KVQ *q;
-        __mmask8 ept_cmp;
-        __m512i key_vector;
-        __m512i cacheline;
-        __mmask8 key_cmp;
-        // uint32_t next_tail;
-        // pop find queue
-        do {
-          q = &this->find_queue[tail];
-          idx = q->idx;  // idx is cacheline aligned
-          key = q->key;
-          key_id = q->key_id;
-          value = q->value;
+        // uint64_t retry = 0;
+        //  pop find queue
+        // do {
+      retry:
 
-          // update tails (faster here idk why)
-          tail++;
-          // if(tail >= find_queue_sz) tail = 0;
-          tail &= FIND_QUEUE_MASK;
-          //uint32_t next_tail = (tail + 3) & FIND_QUEUE_MASK;
-          const void* next_tail_addr = &this->hashtable[this->find_queue[tail].idx];
-          __builtin_prefetch(next_tail_addr, false, 3);
 
-          //__builtin_prefetch(&this->find_queue[((tail+1) &
-          //(find_queue_sz-1))], false, 3);
+       uint32_t next_tail = (tail + 2) & FIND_QUEUE_SZ_MASK;
+       const void *next_tail_addr = &this->hashtable[this->find_queue[next_tail].idx];
+       __builtin_prefetch(next_tail_addr, false, 3);
 
-          // key_vector = _mm512_set_epi64(0, key, 0, key, 0, key, 0, key);
-          key_vector = _mm512_set1_epi64(key);
-          cacheline = _mm512_load_si512(
-              &this->hashtable[idx]);  // can be replaced with
-                                       // _mm512_maskz_loadu_epi64
-          key_cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
+        KVQ *q = &this->find_queue[tail];
+        uint32_t idx = q->idx;  // idx is cacheline aligned
+        uint64_t key = q->key;
 
-          retry = 0;
-          if (key_cmp > 0) {
-            __mmask8 offset = (_bit_scan_forward(key_cmp) >> 1); // 01_00_00_00  
-            vp.second[vp.first].value =
-                (this->hashtable[(idx + offset)]).kvpair.value;
-            vp.second[vp.first].id = key_id;
-            vp.first++;
-          } else {  
-            ept_cmp = _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
+        __m512i key_vector = _mm512_set1_epi64(key);
+        __m512i cacheline = _mm512_load_si512(&this->hashtable[idx]);
 
-            // if ept found ept_cmp > 0, then we stop retry
-            retry = ept_cmp == 0;
-            if (retry) {
+        alignas(64) uint64_t result[8];
+        _mm512_store_si512(reinterpret_cast<__m512i *>(result), cacheline);
+
+        __mmask8 key_cmp =
+            _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
+
+        // update tails
+        tail++;
+        tail &= FIND_QUEUE_SZ_MASK;
+
+
+        // retry = 0;
+        if (key_cmp > 0) [[likely]] {
+          __mmask8 offset = _bit_scan_forward(key_cmp);
+          // vp.second[vp.first].value = result[(offset + 1)];
+          // vp.second[vp.first].id = q->key_id;
+          // vp.first++;
+          vp_result->value = result[(offset + 1)];
+          vp_result->id = q->key_id;
+          vp_result++;
+        } else {
+          __m512i zero_vector = _mm512_setzero_si512();
+          __mmask8 ept_cmp =
+              _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
+
+          // if ept found ept_cmp > 0, then we stop retry
+          // retry = ept_cmp == 0;
+          if (ept_cmp == 0) {
 #ifdef UNIFORM_HT_SUPPORT
-              uint64_t old_hash = q->key_hash;
-              uint64_t hash = this->hash(&old_hash);
-              idx = hash & HT_MASK;
-              this->find_queue[head].key_hash = hash;
+            uint64_t old_hash = q->key_hash;
+            uint64_t hash = this->hash(&old_hash);
+            idx = hash & HT_BUCKET_MASK;
+            this->find_queue[head].key_hash = hash;
 #else
-              idx += CACHELINE_SIZE / sizeof(KV);
-              idx = idx & HT_MASK;
+            idx += CACHELINE_SIZE / sizeof(KV);
+            idx = idx & HT_BUCKET_MASK;
 #endif
-
-              __builtin_prefetch(&this->hashtable[idx], false, 1);
-              // this->prefetch_read(idx);
-              this->find_queue[head].key = key;
-              this->find_queue[head].key_id = key_id;
-              this->find_queue[head].idx = idx;
+            __builtin_prefetch(&this->hashtable[idx], false, 1);
+            this->find_queue[head].key = key;
+            this->find_queue[head].key_id = q->key_id;
+            this->find_queue[head].idx = idx;
 #ifdef LATENCY_COLLECTION
-              this->find_queue[head].timer_id = q->timer_id;
+            this->find_queue[head].timer_id = q->timer_id;
 #endif
-              head += 1;
-              head &= FIND_QUEUE_MASK;
-            }
+            head += 1;
+            head &= FIND_QUEUE_SZ_MASK;
+            goto retry;
+          } else {
+            not_found++;
           }
-        } while (retry);  
-
-        // add to find queue
-        InsertFindArgument *key_data =
-            reinterpret_cast<InsertFindArgument *>(&data);
-
-#ifdef LATENCY_COLLECTION
-        const auto timer = collector->start();
-#endif
-
-        // uint64_t hash = this->hash((const char *)&key_data->key);
-        //-1 cycle
-        uint64_t hash = _mm_crc32_u64(
-            0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
-        idx = hash & HT_MASK;
-        // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-
-        __builtin_prefetch(&this->hashtable[idx], false, 1);
-        // prefetch_read(idx);
-
-        this->find_queue[head].idx = idx;
-        this->find_queue[head].key = key_data->key;
-        this->find_queue[head].key_id = key_data->id;
-
-#ifdef UNIFORM_HT_SUPPORT
-        this->find_queue[head].key_hash = hash;
-#endif
-
-#ifdef LATENCY_COLLECTION
-        this->find_queue[head].timer_id = timer;
-#endif
-
-        head += 1;
-        head &= FIND_QUEUE_MASK;
-      }  // end for loop
-    }  // end of fast path
-    else {  // slow path
-      for (auto &data : kp) {
-        // pop queue
-        if (((head - tail) & FIND_QUEUE_MASK) >= FIND_QUEUE_MASK) {
-          uint64_t retry = 0;
-          uint64_t key = 0;
-          uint32_t key_id = 0;
-          uint32_t idx = 0;
-          uint64_t value = 0;
-          KVQ *q;
-          __mmask8 ept_cmp;
-          __m512i key_vector;
-          __m512i cacheline;
-          __mmask8 key_cmp;
-          do {
-            q = &this->find_queue[tail];
-            idx = q->idx;  // idx is cacheline aligned
-            key = q->key;
-            key_id = q->key_id;
-            value = q->value;
-
-            //__builtin_prefetch(&this->find_queue[((tail+1) &
-            //(find_queue_sz-1))], false, 3);
-
-            // key_vector = _mm512_set_epi64(0, key, 0, key, 0, key, 0, key);
-            key_vector = _mm512_set1_epi64(key);
-            cacheline = _mm512_load_si512(
-                &this->hashtable[idx]);  // can be replaced with
-                                         // _mm512_maskz_loadu_epi64
-            key_cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
-
-            retry = 0;
-            if (key_cmp > 0) {
-              __mmask8 offset = (_bit_scan_forward(key_cmp) >> 1);
-              vp.second[vp.first].value =
-                  (this->hashtable[(idx + offset)]).kvpair.value;
-              vp.second[vp.first].id = key_id;
-              vp.first++;
-            } else {
-              ept_cmp =
-                  _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
-
-              // if ept found ept_cmp > 0, then we stop retry
-              retry = ept_cmp == 0;
-              if (retry) {
-#ifdef UNIFORM_HT_SUPPORT
-                uint64_t old_hash = q->key_hash;
-                uint64_t hash = this->hash(&old_hash);
-                idx = hash & HT_MASK;
-                this->find_queue[head].key_hash = hash;
-#else
-                idx += CACHELINE_SIZE / sizeof(KV);
-                idx = idx & HT_MASK;
-#endif
-
-                __builtin_prefetch(&this->hashtable[idx], false, 1);
-                // this->prefetch_read(idx);
-                this->find_queue[head].key = key;
-                this->find_queue[head].key_id = key_id;
-                this->find_queue[head].idx = idx;
-#ifdef LATENCY_COLLECTION
-                this->find_queue[head].timer_id = q->timer_id;
-#endif
-                head += 1;
-                head &= FIND_QUEUE_MASK;
-              }
-            }
-
-            // update tails (faster here idk why)
-            tail++;
-            // if(tail >= find_queue_sz) tail = 0;
-            tail &= FIND_QUEUE_MASK;
-            uint32_t next_tail = (tail + 4) & FIND_QUEUE_MASK;
-
-            __builtin_prefetch(
-                &this->hashtable[this->find_queue[next_tail].idx], false, 3);
-
-          } while (retry);
         }
 
         // add to find queue
@@ -473,18 +358,17 @@ class CASHashTable : public BaseHashTable {
         const auto timer = collector->start();
 #endif
 
-        // uint64_t hash = this->hash((const char *)&key_data->key);
-        //-1 cycle
-        uint64_t hash = _mm_crc32_u64(
+        uint32_t hash = (uint32_t)_mm_crc32_u64(
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
-        uint32_t idx = hash & HT_MASK;
-        // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+        uint32_t new_idx = hash & HT_BUCKET_MASK;
+        __builtin_prefetch(&this->hashtable[new_idx], false, 1);
 
-        __builtin_prefetch(&this->hashtable[idx], false, 1);
-        // prefetch_read(idx);
-
-        this->find_queue[head].idx = idx;
-        this->find_queue[head].key = key_data->key;
+        // See ItemQueue
+        //__m128i packed_values = _mm_set_epi64x(((uint64_t)key_data->id << 32)
+        //| idx, key_data->key); _mm_storeu_si128((__m128i*)&find_queue[head],
+        // packed_values);
+        this->find_queue[head].key = key_data->key;  // 64 bits
+        this->find_queue[head].idx = new_idx;
         this->find_queue[head].key_id = key_data->id;
 
 #ifdef UNIFORM_HT_SUPPORT
@@ -496,13 +380,24 @@ class CASHashTable : public BaseHashTable {
 #endif
 
         head += 1;
-        head &= FIND_QUEUE_MASK;
-
+        head &= FIND_QUEUE_SZ_MASK;
       }  // end for loop
+
+      this->find_tail = tail;
+      this->find_head = head;
+      vp.first += (kp.size() - not_found);
+    }  // end of fast path
+    else {  // slow paths
+      for (auto &data : kp) {
+        // pop queue
+        if (((find_head - find_tail) & FIND_QUEUE_SZ_MASK) >=
+            (find_queue_sz - 1)) {
+          pop_find_queue(vp, collector);
+        }
+        add_to_find_queue(&data, collector);
+      }
     }
 
-    this->find_tail = tail;
-    this->find_head = head;
   }  // end_unrolled_find_batch
 
   void *find_noprefetch(const void *data, collector_type *collector) override {
@@ -619,9 +514,13 @@ class CASHashTable : public BaseHashTable {
   uint32_t find_tail;
   uint32_t ins_head;
   uint32_t ins_tail;
-  Hasher hasher_;
 
-  uint32_t pcounter;
+  KVQ *find_head_ptr;
+  KVQ *find_tail_ptr;
+
+  const __mmask8 KEYMSK = 0b01010101;
+
+  Hasher hasher_;
 
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 

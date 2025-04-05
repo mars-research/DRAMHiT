@@ -8,6 +8,8 @@
 /// batching + prefetching though is called casht++.
 // TODO bloom filters for high frequency kmers?
 
+
+
 #ifndef HASHTABLES_MULTI_KHT_HPP
 #define HASHTABLES_MULTI_KHT_HPP
 

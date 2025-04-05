@@ -25,6 +25,7 @@ option(AVX_SUPPORT "SIMD" ON)
 option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
 option(PERFCPP "perf cpp" ON)
+option(PART_ID "partition id for multilevel and partition hashtable" OFF)
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -53,9 +54,9 @@ add_compile_options(
     -O3
     -Wall
     -march=native
-    #-fcf-protection=none
-    #-fno-stack-protector
-    #-funroll-all-loops
+    -fcf-protection=none
+    -fno-stack-protector
+    -funroll-all-loops
     #-rdynamic
     #-mpreferred-stack-boundary=6
 )
@@ -131,6 +132,11 @@ endif()
 if(FAST_RANGE)
     message(WARNING "fastrange on")
     add_definitions(-DFAST_RANGE)
+endif() 
+
+if(PART_ID)
+    message(WARNING "part_id enabled")
+    add_definitions(-DPART_ID)
 endif() 
 
 if(UNIFORM_PROBING)

@@ -90,20 +90,26 @@ struct Kmer_queue {
 #endif
 } PACKED;
 
+// TODO, there is likely a compiler bug, if, value and key are not contiguous in memory
+// insert in cas will never finish. 
 struct ItemQueue {
-  key_type key;
-  value_type value;
+  key_type key; // 64bit
+  value_type value; // 64bit
+  uint32_t idx;
+  uint32_t key_id;
+  uint64_t padding; 
+#ifdef PART_ID
   //on multi-level ht this is used as ht-level
   uint32_t part_id;
-  uint32_t key_id;
+#endif
 #ifdef LATENCY_COLLECTION
   uint32_t timer_id;
 #endif 
-  uint32_t idx;
 #if defined(COMPARE_HASH) || defined(UNIFORM_HT_SUPPORT) 
   uint64_t key_hash;  // 8 bytes
 #endif
-}; //PACKED; // ;TODO COMMENT BACK IN
+} __attribute__((packed));
+
 std::ostream& operator<<(std::ostream& os, const ItemQueue& q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow

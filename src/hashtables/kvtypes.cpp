@@ -11,7 +11,9 @@ std::ostream& operator<<(std::ostream& os, const ItemQueue& q) {
               << ",value: " << q.value
               << ",key_id: " << q.key_id
               << ",idx:" << q.idx
+#ifdef PART_ID
               << ",part_id:" << q.part_id
+#endif
 #ifdef COMPARE_HASH
               << ",key_hash:" << q.key_hash
 #endif

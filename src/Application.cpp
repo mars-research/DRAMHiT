@@ -14,8 +14,13 @@
 
 #include "./hashtables/array_kht.hpp"
 #include "./hashtables/cas_kht.hpp"
+
+
+#ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
+#endif
+
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "tests/PrefetchTest.hpp"
@@ -150,13 +155,14 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   // Create hash table
   switch (config.ht_type) {
+#ifdef PART_ID
     case MULTI_HT:
       kmer_ht = new MultiHashTable<KVType, ItemQueue>(sz);
       break;
     case PARTITIONED_HT:
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
       break;
-    case UNIFORM_HT:
+#endif
     case CASHTPP:
       kmer_ht = new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz);
       break;
@@ -252,9 +258,9 @@ void Application::shard_thread(int tid,
   // Write to file
   if (!config.ht_file.empty()) {
     // for CAS hashtable, not every thread has to write to file
-    if ((config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
-         config.ht_type == UNIFORM_HT) &&
-        (sh->shard_idx > 0)) {
+    if ((config.ht_type == CASHTPP || config.ht_type == MULTI_HT ) &&
+        (sh->shard_idx > 0)) 
+    {
       goto done;
     }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
@@ -293,8 +299,7 @@ int Application::spawn_shard_threads() {
 
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
-  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
-      config.ht_type == UNIFORM_HT) {
+  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT) {
     auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
     HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
     PLOGI.printf("Total inserts %" PRIu64
@@ -610,18 +615,18 @@ int Application::process(int argc, char *argv[]) {
     }
 
     switch (config.ht_type) {
+
+#ifdef PART_ID
       case PARTITIONED_HT:
         PLOG_INFO.printf("Hashtable type : Paritioned HT");
         config.ht_size /= config.num_threads;
         break;
-      case CASHTPP:
-        PLOG_INFO.printf("Hashtable type : Cas HT");
-        break;
       case MULTI_HT:
         PLOG_INFO.printf("Hashtable type : Multi HT");
         break;
-      case UNIFORM_HT:
-        PLOG_INFO.printf("Hashtable type : Uniform HT");
+#endif
+      case CASHTPP:
+        PLOG_INFO.printf("Hashtable type : Cas HT");
         break;
       case ARRAY_HT:
         PLOG_INFO.printf("Hashtable type : Array HT");
@@ -712,7 +717,7 @@ int Application::process(int argc, char *argv[]) {
     if (config.ht_type == PARTITIONED_HT) {
       this->test.qt.run_test(&config, this->n, true, this->npq);
     } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT) ||
-               (config.ht_type == MULTI_HT) || (config.ht_type == UNIFORM_HT)) {
+               (config.ht_type == MULTI_HT)) {
       this->spawn_shard_threads();
     }
   } else if (config.mode == BQ_TESTS_YES_BQ) {
