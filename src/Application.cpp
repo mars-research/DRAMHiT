@@ -164,7 +164,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
 #endif
     case CASHTPP:
-      kmer_ht = new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz);
+      kmer_ht = new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz, id);
       break;
     case ARRAY_HT:
       kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);

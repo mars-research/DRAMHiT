@@ -1,5 +1,35 @@
 
 
+--- Apr 08 2025 ----
+
+56* means no l1 prefetch
+all units are billions
+| threads | cycles | l1 miss cycles | instructions | execution stalls | l1d stall | l2 stall | l3 miss stall| 
+| 56  | 350   | 26.8  | 719 | 78.4 | 16.1 | 15.9 | 9 |
+| 27  | 218.8 | 25.2  | 717 | 33.8 | 14.4 | 12.3 | 10 |
+| 56* | 370   | 108.2 | 653 | 94.6 | 36   | 13   | 9 |
+
+
+formula: 
+
+percent of cycle cpu spends on servicing memory = l1 miss cycles / cycles
+percent of instructions cpu stalled  = execution stalls / instructions
+percent of stalls cpu due to memory =  l1 stall / execution stalls  
+percent of stalls cpu due to l1 miss = (l1 stall - l2 stall) / execution stalls 
+percent of stalls cpu due to l2 miss = (l2 stall - l3 stall) / execution stalls 
+percent of stalls cpu due to l3 miss = l3 stall / execution stalls 
+ 
+in 56 threads: 
+
+7.4% total cpu cycles are spend servicing l1 misses
+10.9 % instructions are stalled 
+20.5 % stalls are due to memory
+
+in 27 threads:
+
+11.5% cpu cycles are spend servicing l1 misses
+4.7% instructions are stalled
+42.6% stalls are due to memory
 
 
 small 1 thread 

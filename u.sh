@@ -24,7 +24,7 @@ if [ "$test" = "small" ]; then
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
     size=134217728
-    insertFactor=100
+    insertFactor=500
 fi
 
 # size=134217728

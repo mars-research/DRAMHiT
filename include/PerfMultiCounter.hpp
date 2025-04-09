@@ -36,7 +36,7 @@ class PerfCounterResult {
     //              << "    total: " << counter_value << std::endl;
     //  }
     for (auto& [counter_name, counter_value] : _results) {
-      std::cout << counter_name << ":" << counter_value / sample_count << "\n";
+      std::cout << counter_name << ":" << counter_value / sample_count << ":" << counter_value <<"\n";
     }
   }
 };
