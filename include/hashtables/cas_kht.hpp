@@ -291,12 +291,12 @@ class CASHashTable : public BaseHashTable {
         uint32_t next_tail = (tail + 4) & FIND_QUEUE_SZ_MASK;
         const void *next_tail_addr =
             &this->hashtable[this->find_queue[next_tail].idx];
-        __builtin_prefetch(next_tail_addr, false, 0);
+        __builtin_prefetch(next_tail_addr, false, 3);
 
         q = &this->find_queue[tail];
         uint32_t idx = q->idx;
         key = q->key;
-        bucket = (uint64_t *)&this->hashtable[idx];  //
+        bucket = (uint64_t *)&this->hashtable[idx];
         key_vector = _mm512_set1_epi64(key);
         cacheline = _mm512_load_si512(bucket);
         key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);

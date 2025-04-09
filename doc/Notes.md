@@ -1,13 +1,15 @@
 
 
---- Apr 08 2025 ----
+---- Apr 08 2025 ----
 
 56* means no l1 prefetch
 all units are billions
-| threads | cycles | l1 miss cycles | instructions | execution stalls | l1d stall | l2 stall | l3 miss stall| 
-| 56  | 350   | 26.8  | 719 | 78.4 | 16.1 | 15.9 | 9 |
-| 27  | 218.8 | 25.2  | 717 | 33.8 | 14.4 | 12.3 | 10 |
-| 56* | 370   | 108.2 | 653 | 94.6 | 36   | 13   | 9 |
+| Threads | Cycles | L1 Miss Cycles | Instructions | Execution Stalls | L1D Stall | L2 Stall | L3 Miss Stall | % Cycles on Mem | % Instr Stalled | % Stalls Mem | % Stalls L1 | % Stalls L2 | % Stalls L3 |
+|---------|--------|----------------|--------------|------------------|-----------|----------|----------------|------------------|------------------|----------------|--------------|--------------|--------------|
+| 56      | 350    | 26.8           | 719          | 78.4             | 16.1      | 15.9     | 9              | 7.7%             | 10.9%            | 20.5%         | 0.3%         | 12.6%        | 11.5%        |
+| 27      | 215.4  | 23.2           | 719          | 31.2             | 12.8      | 11.1     | 9.2            | 10.8%            | 4.3%             | 41.0%         | 5.4%         | 6.1%         | 29.5%        |
+| 56*     | 370    | 108.2          | 653          | 94.6             | 36        | 13       | 9              | 29.2%            | 14.5%            | 38.1%         | 24.3%        | 4.2%         | 9.5%         |
+
 
 
 formula: 
@@ -19,40 +21,10 @@ percent of stalls cpu due to l1 miss = (l1 stall - l2 stall) / execution stalls
 percent of stalls cpu due to l2 miss = (l2 stall - l3 stall) / execution stalls 
 percent of stalls cpu due to l3 miss = l3 stall / execution stalls 
  
-in 56 threads: 
 
-7.4% total cpu cycles are spend servicing l1 misses
-10.9 % instructions are stalled 
-20.5 % stalls are due to memory
+-------------------------
 
-in 27 threads:
-
-11.5% cpu cycles are spend servicing l1 misses
-4.7% instructions are stalled
-42.6% stalls are due to memory
-
-
-small 1 thread 
-------- PERFCPP ------- 
-
-Thread ID: 0 Sample counts: 163799985
-BR_MISP_RETIRED.ALL_BRANCHES:0.00119316
-BR_MISP_RETIRED.INDIRECT:2.32234e-05
-BR_MISP_RETIRED.COND:0.00116917
-
------------------------
-
-------- PERFCPP ------- 
-
-Thread ID: 0 Sample counts: 2899985
-BR_MISP_RETIRED.ALL_BRANCHES:0.00144173 
-BR_MISP_RETIRED.INDIRECT:0.000105863
-BR_MISP_RETIRED.COND:0.00130346
-
------------------------ 
-
-
-------- - March 31 2025 ------
+-------- March 31 2025 ------
 
 small: 256 KB
 large: 2 GB
