@@ -262,7 +262,6 @@ class CASHashTable : public BaseHashTable {
   //      uint32_t idx = hash & (this->capacity - 1);
   //      prefetch_read(idx);
   //    }
-
   // }
 
 #define KEYMSK ((__mmask8)(0b01010101))
@@ -287,7 +286,7 @@ class CASHashTable : public BaseHashTable {
       // c++ iterator is faster than a regular integer loop.
       for (auto &data : kp) {
       retry:
-        // Prefetch next tail bucket
+        //Prefetch next tail bucket
         uint32_t next_tail = (tail + 4) & FIND_QUEUE_SZ_MASK;
         const void *next_tail_addr =
             &this->hashtable[this->find_queue[next_tail].idx];
