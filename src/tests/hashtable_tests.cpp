@@ -6,6 +6,7 @@
 #include <barrier>
 #include <sstream>
 
+#include "./hashtables/cas_kht.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
 #include "sync.h"
@@ -145,6 +146,7 @@ OpTimings do_zipfian_inserts(
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
+  auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
 #ifdef LATENCY_COLLECTION
@@ -185,7 +187,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       auto value = key_start++;
 #else
       if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-        //prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        // prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
         __builtin_prefetch(&zipf_values->at(zipf_idx + 16), false, 3);
       }
 
@@ -206,7 +208,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       items[key] = {value, n};
 
       if (++key == config.batch_len) {
-        hashtable->find_batch(InsertFindArguments(items, config.batch_len), vp,
+        cas_ht->find_batch_simple(InsertFindArguments(items, config.batch_len), vp,
                               collector);
         found += vp.first;
         vp.first = 0;
@@ -310,7 +312,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     auto rng = std::default_random_engine{};
     std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
   }
-
+  //Flush cache after inserts
   // std::size_t next_pollution{};
   //   for (auto p = 0u; p < 900000; ++p)
   //           prefetch_object<false>(

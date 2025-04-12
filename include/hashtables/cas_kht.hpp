@@ -232,42 +232,47 @@ class CASHashTable : public BaseHashTable {
     } while ((retry));
   }
 
-  // void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-  //                 collector_type *collector) override {
-  //   if ((get_find_queue_sz() >= find_queue_sz - 1))  {
-  //     for (auto &data : kp) {
-  //       pop_find_queue(values, collector);
-  //       add_to_find_queue(&data, collector);
-  //     }
-  //   }else {
-  //
-  //     for (auto &data : kp) {
-  //       if ((get_find_queue_sz() >= find_queue_sz - 1)) {
-  //         pop_find_queue(values, collector);
-  //       }
-  //
-  //       add_to_find_queue(&data, collector);
-  //     }
-  //   }
-  // }
+  void find_batch_simple(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector)  {
+    if ((get_find_queue_sz() >= find_queue_sz - 1))  {
+      for (auto &data : kp) {
+        pop_find_queue(values, collector);
+        add_to_find_queue(&data, collector);
+      }
+    }else {
+  
+      for (auto &data : kp) {
+        if ((get_find_queue_sz() >= find_queue_sz - 1)) {
+          pop_find_queue(values, collector);
+        }
+  
+        add_to_find_queue(&data, collector);
+      }
+    }
+  }
 
   // Artificial test, to get max dram bandwidth
-  //  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-  //                  collector_type *collector) override {
-  //    for (auto &data : kp) {
-  //      values.first++;
-  //      InsertFindArgument *key_data =
-  //          reinterpret_cast<InsertFindArgument *>(&data);
-  //      uint64_t hash = this->hash((const char *)&key_data->key);
-  //      uint32_t idx = hash & (this->capacity - 1);
-  //      prefetch_read(idx);
-  //    }
-  // }
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) override {
+    InsertFindArgument *key_data;
+    uint32_t hash;
+    uint32_t idx;
+    for (auto &data : kp) {
+      key_data = reinterpret_cast<InsertFindArgument *>(&data);
+      hash = (uint32_t)_mm_crc32_u64(
+          0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
+      idx = hash & HT_BUCKET_MASK;
+      __builtin_prefetch(&this->hashtable[idx], false, 3);
+      values.first++;
+      this->find_queue[this->find_head].key = hash;
+      this->find_head = (this->find_head + 1) & (this->find_queue_sz - 1);
+    }
+  }
 
 #define KEYMSK ((__mmask8)(0b01010101))
 
-  void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
-                  collector_type *collector) override {
+  void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
+                           collector_type *collector) {
     bool fast_path = ((this->find_head - this->find_tail) &
                       FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
     // fast path
@@ -286,8 +291,8 @@ class CASHashTable : public BaseHashTable {
       // c++ iterator is faster than a regular integer loop.
       for (auto &data : kp) {
       retry:
-        //Prefetch next tail bucket
-        uint32_t next_tail = (tail + 4) & FIND_QUEUE_SZ_MASK;
+        // Prefetch next tail bucket
+        uint32_t next_tail = (tail + 7) & FIND_QUEUE_SZ_MASK;
         const void *next_tail_addr =
             &this->hashtable[this->find_queue[next_tail].idx];
         __builtin_prefetch(next_tail_addr, false, 3);
@@ -367,7 +372,7 @@ class CASHashTable : public BaseHashTable {
       this->find_head = head;
       vp.first += (kp.size() - not_found);
     }  // end of fast path
-    else {  // slow paths
+    else [[unlikely]]{  // slow paths
       for (auto &data : kp) {
         // pop queue
         if (((find_head - find_tail) & FIND_QUEUE_SZ_MASK) >=
