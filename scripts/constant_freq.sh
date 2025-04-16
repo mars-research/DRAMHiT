@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -e
 CPU_FREQ_KHZ=2100000 
 RDMSR=$(which rdmsr)
 WRMSR=$(which wrmsr)
@@ -35,14 +35,15 @@ disable_turbo() {
 		WRMSR=$(which wrmsr)
 	fi
 
-
+	echo "Loading msr module"
+	sudo modprobe msr
 
 	# make sure we have this module loaded
 	if [ -z "$(lsmod | grep '^msr')" ]; then
-		echo "Loading msr module"
-		sudo modprobe msr
+		echo "ERROR: Fail to load msr module into kernel!"
+		exit 
 	fi
-
+	
 	# disable turbo boost (bit 38 on 0x1a0 msr)
 	TURBO_BOOST_BIT=38
 	echo "Disabling turboboost"

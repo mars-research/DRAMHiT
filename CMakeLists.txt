@@ -26,6 +26,13 @@ option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
 option(PERFCPP "perf cpp" ON)
 option(PART_ID "partition id for multilevel and partition hashtable" OFF)
+option(NOPREFETCH "prefetch instructions" ON)
+
+
+if(NOPREFETCH)
+    message(WARNING "no prefetch instrumentations")
+    add_definitions(-DNOPREFETCH)
+endif() 
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
