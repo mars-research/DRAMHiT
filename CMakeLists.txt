@@ -24,15 +24,16 @@ option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
 option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
-option(PERFCPP "perf cpp" ON)
+option(PERFCPP "perf cpp" OFF)
 option(PART_ID "partition id for multilevel and partition hashtable" OFF)
-option(NOPREFETCH "prefetch instructions" ON)
+option(HT_TEST_INSERT_ONCE "insert only once (no benchmark for insertion)" OFF)
 
 
-if(NOPREFETCH)
-    message(WARNING "no prefetch instrumentations")
-    add_definitions(-DNOPREFETCH)
+if(HT_TEST_INSERT_ONCE)
+    message(WARNING "insert only once (no benchmark for insertion)")
+    add_definitions(-DHT_TEST_INSERT_ONCE)
 endif() 
+
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)

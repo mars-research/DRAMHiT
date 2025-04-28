@@ -325,39 +325,27 @@ class CASHashTable : public BaseHashTable {
       for (auto &data : kp) {
       retry:
 
-#ifndef NOPREFETCH
         // Prefetch next tail bucket
         uint32_t next_tail = (tail + 7) & FIND_QUEUE_SZ_MASK;
         const void *next_tail_addr =
             &this->hashtable[this->find_queue[next_tail].idx];
         __builtin_prefetch(next_tail_addr, false, 3);
-#endif
 
         q = &this->find_queue[tail];
         uint32_t idx = q->idx;
         key = q->key;
 
-#ifndef NOPREFETCH
         bucket = (uint64_t *)&this->hashtable[idx];
-#endif
         key_vector = _mm512_set1_epi64(key);
-
-#ifndef NOPREFETCH
-        cacheline = _mm512_load_si512(bucket);
-#else
         cacheline = _mm512_set1_epi64(key);
-#endif
+
         key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
         // update tails before we enter branching.
         tail = (tail + 1) & FIND_QUEUE_SZ_MASK;
 
         if (key_cmp > 0) {
           __mmask8 offset = _bit_scan_forward(key_cmp);
-#ifndef NOPREFETCH
           vp_result->value = bucket[(offset + 1)];
-#else
-          vp_result->value = key;
-#endif
           vp_result->id = q->key_id;
           vp_result++;
         } else {
@@ -400,9 +388,7 @@ class CASHashTable : public BaseHashTable {
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
         uint32_t new_idx = hash & HT_BUCKET_MASK;
 
-#ifndef NOPREFETCH
         __builtin_prefetch(&this->hashtable[new_idx], false, 1);
-#endif
         this->find_queue[head].key = key_data->key;
         this->find_queue[head].idx = new_idx;
         this->find_queue[head].key_id = key_data->id;

@@ -81,7 +81,13 @@ OpTimings do_zipfian_inserts(
   key_type key{};
   std::size_t next_pollution{};
 
-  for (auto j = 0u; j < config.insert_factor; j++) {
+  auto insert_factor = config.insert_factor;
+  
+#ifdef HT_TEST_INSERT_ONCE
+  insert_factor = 1; 
+#endif
+
+  for (auto j = 0u; j < insert_factor; j++) {
     key_start =
         std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -141,7 +147,7 @@ OpTimings do_zipfian_inserts(
   collector->dump("async_insert", id);
 #endif
 
-  return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
+  return {duration, HT_TESTS_NUM_INSERTS * insert_factor};
 }
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
