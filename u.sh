@@ -1,6 +1,7 @@
 #  rm build/CMakeCache.txt
 #     cmake -S . -B build
 #     cmake --build build/ --clean-first
+#  sudo apt-get install cmake-curses-gui
 #  nix develop --extra-experimental-features nix-command --extra-experimental-features flakes
 
 # 28 threads
@@ -24,7 +25,7 @@ if [ "$test" = "small" ]; then
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
     size=134217728
-    insertFactor=100
+    insertFactor=500
 fi
 
 # size=134217728

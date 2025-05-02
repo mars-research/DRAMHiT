@@ -152,7 +152,7 @@ OpTimings do_zipfian_inserts(
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
-  //auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+  auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
 #ifdef LATENCY_COLLECTION
@@ -214,10 +214,10 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       items[key] = {value, n};
 
       if (++key == config.batch_len) {
-        //cas_ht->find_batch_unrolled(InsertFindArguments(items, config.batch_len), vp,
-        //                    collector);
-        hashtable->find_batch(InsertFindArguments(items, config.batch_len),
-                                  vp, collector);
+        cas_ht->find_batch_unrolled(InsertFindArguments(items, config.batch_len), vp,
+                           collector);
+        // hashtable->find_batch(InsertFindArguments(items, config.batch_len),
+        //                           vp, collector);
         found += vp.first;
         vp.first = 0;
         key = 0;
