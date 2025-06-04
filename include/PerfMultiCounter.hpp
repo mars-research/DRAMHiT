@@ -30,24 +30,28 @@ class PerfCounterResult {
 
   void print(uint64_t sample_count) {
     // DEFAULT, shows per op and total
-    //  for (auto& [counter_name, counter_value] : _results) {
-    //    std::cout << counter_name << "\n"
-    //              << "    per op: "<< counter_value/sample_count << "\n"
-    //              << "    total: " << counter_value << std::endl;
-    //  }
-    printf("%-44s %20s %20s\n", "Counter Name", "Avg per Sample", "Total");
-    printf("%.*s\n", 84,
-           "-------------------------------------------------------------------"
-           "-----------------");
+     for (auto& [counter_name, counter_value] : _results) {
+      //  std::cout << counter_name << "\n"
+      //            << "    per op: "<< counter_value/sample_count << "\n"
+      //            << "    total: " << counter_value << std::endl;
 
-    for (auto& [counter_name, counter_value] : _results) {
-      // std::cout << counter_name << ":" << counter_value / sample_count << ":"
-      // << counter_value <<"\n"; //Original
+      //For python script
+      std::cout << counter_name << ":" << counter_value/sample_count << "\n";
+     }
+    // printf("%-44s %20s %20s\n", "Counter Name", "Avg per Sample", "Total");
+    // printf("%.*s\n", 84,
+    //        "-------------------------------------------------------------------"
+    //        "-----------------");
 
-      printf("%-40s %20.2f %20llu\n", counter_name.c_str(),
-             (double)counter_value / sample_count,
-             (unsigned long long)counter_value);
-    }
+    // for (auto& [counter_name, counter_value] : _results) {
+    //   // std::cout << counter_name << ":" << counter_value / sample_count << ":"
+    //   // << counter_value <<"\n"; //Original
+
+    //   printf("%-40s %20.2f %20llu\n", counter_name.c_str(),
+    //          (double)counter_value / sample_count,
+    //          (unsigned long long)counter_value);
+    // }
+
   }
 };
 

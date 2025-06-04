@@ -43,7 +43,7 @@ do
     --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
     --hw-pref 0 --batch-len $batch
 
-    echo "/opt/DRAMHiT/build/dramhit \
+    echo "$(pwd)/build/dramhit \
     --perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
     --find_queue_sz 32 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor \
     --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
