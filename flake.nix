@@ -44,8 +44,10 @@
           clang_14
           llvmPackages_14.libllvm
           gcc11
+          pkg-config
         ];
         buildInputs = with pkgs; [
+          openssl
           cmake
           ninja
         ];  

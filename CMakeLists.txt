@@ -9,9 +9,7 @@ option(SANITIZE_TESTING "Enable ASAN for tests." ON)
 option(BUILD_APP "Build the main application, dramhit." ON)
 option(BUILD_TESTING "Build tests." OFF)
 option(BUILD_EXAMPLE "Build examples." OFF)
-option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
-option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
-option(VTUNE "Use VTUNE to do performance monitering." OFF)
+
 option(AGGR "Use aggregation hashtable (histogram)" OFF)
 option(BQUEUE "Enable bqueue tests" OFF)
 option(XORWOW "Xorwow" OFF)
@@ -24,9 +22,17 @@ option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
 option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
-option(PERFCPP "perf cpp" OFF)
 option(PART_ID "partition id for multilevel and partition hashtable" OFF)
 option(HT_TEST_INSERT_ONCE "insert only once (no benchmark for insertion)" OFF)
+
+
+# option(PERFCPP "perf cpp" OFF)
+# option(PCM "Building with PCM" OFF)
+# option(LEGACY_PAPI "Use Vikram's PAPI stuff to do performance monitering." OFF)
+# option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
+# option(VTUNE "Use VTUNE to do performance monitering." OFF)
+
+
 
 
 if(HT_TEST_INSERT_ONCE)
@@ -244,23 +250,61 @@ elseif(HASHER STREQUAL "wyhash")
     add_definitions(-DWYHASH)
 endif()
 
-if (LEGACY_PAPI)
+
+
+# Benchmark backend
+
+set(BENCHMARK_BACKEND "PCM" CACHE STRING "Benchmark backend to use (PERFCPP, PCM, LEGACY_PAPI, HIGH_LEVEL_PAPI, VTUNE)")
+
+set(VALID_BACKENDS PERFCPP PCM LEGACY_PAPI HIGH_LEVEL_PAPI VTUNE)
+
+list(FIND VALID_BACKENDS ${BENCHMARK_BACKEND} BACKEND_INDEX)
+if(BENCHMARK_BACKEND AND BACKEND_INDEX EQUAL -1)
+    message(FATAL_ERROR "Invalid BENCHMARK_BACKEND: '${BENCHMARK_BACKEND}'. Valid values: ${VALID_BACKENDS}")
+elseif(BENCHMARK_BACKEND)
+    message(STATUS "Selected benchmarking backend: ${BENCHMARK_BACKEND}")
+else()
+    message(STATUS "No benchmarking backend selected.")
+endif()
+
+if (BENCHMARK_BACKEND STREQUAL "LEGACY_PAPI")
     message(WARNING "PAPI support is currently broken!")
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE papi)
     target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE papi/src/)
     include_directories(papi/src/)
     add_definitions(-DWITH_PAPI_LIB)
-endif ()
-
-if (HIGH_LEVEL_PAPI)
+elseif (BENCHMARK_BACKEND STREQUAL "HIGH_LEVEL_PAPI")
     message(WARNING "Enabled high-level PAPI support")
     target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE papi/src/)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE papi)
     include_directories(papi/src/)
     add_definitions(-DENABLE_HIGH_LEVEL_PAPI)
-endif ()
+elseif (BENCHMARK_BACKEND STREQUAL "PCM")
+    set(PCM_LIB_PATH "${CMAKE_SOURCE_DIR}/pcm/build/src/libpcm.a")
+    set(PCM_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/pcm/src/")
 
-if (PERFCPP)
+    if (NOT EXISTS ${PCM_LIB_PATH})
+        message(STATUS "libpcm.a not found. Running PCM build script...")
+
+        # Run your PCM build script (make sure it's executable)
+        execute_process(
+            COMMAND ${CMAKE_SOURCE_DIR}/scripts/build_pcm.sh
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts
+            RESULT_VARIABLE PCM_BUILD_RESULT
+        )
+
+        if (NOT PCM_BUILD_RESULT EQUAL 0)
+            message(FATAL_ERROR "PCM build script failed with exit code ${PCM_BUILD_RESULT}")
+        endif()
+    endif()
+
+    message(WARNING "Building with intel pcm from ${PCM_LIB_PATH}")
+
+    target_link_libraries(dramhit PRIVATE ${PCM_LIB_PATH})
+    target_include_directories(dramhit PRIVATE ${PCM_INCLUDE_PATH})
+
+    add_definitions(-DWITH_PCM)
+elseif (BENCHMARK_BACKEND STREQUAL "PERFCPP")
     message(WARNING "Building with perf-cpp from ${CMAKE_CURRENT_BINARY_DIR}")
 
     # Add the perf-cpp subdirectory (make sure the path to the perf-cpp source is correct)
@@ -274,9 +318,7 @@ if (PERFCPP)
 
     # Add the define for using perf-cpp
     add_definitions(-DWITH_PERFCPP)
-endif()
-
-if (VTUNE)
+elseif (BENCHMARK_BACKEND STREQUAL "VTUNE")
     if (NOT VTUNE_ROOT)
         set(VTUNE_ROOT "/opt/intel/oneapi/vtune/latest/")
     endif ()

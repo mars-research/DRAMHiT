@@ -26,3 +26,6 @@
 [submodule "perf-cpp"]
 	path = perf-cpp
 	url = https://github.com/jmuehlig/perf-cpp.git
+[submodule "pcm"]
+	path = pcm
+	url = https://github.com/intel/pcm.git

@@ -276,6 +276,13 @@ class CASHashTable : public BaseHashTable {
             (uint64_t *)&this->hashtable[this->find_queue[tail].idx];
         // volatile uint64 t1 = bucket[0];
         // volatile uint64 t2 = bucket[4];
+        // volatile __m512i cacheline = _mm512_load_si512(bucket);
+        // __m512i key_vector = _mm512_set1_epi64(9);
+        // if(_mm512_mask_cmpeq_epu64_mask(0xf, cacheline, key_vector)){
+        // values.second[values.first].value = bucket[3]; 
+        // }else
+        values.second[values.first].value = bucket[0]; 
+
         tail++;
         tail &= FIND_QUEUE_SZ_MASK;
         values.first++;
@@ -287,7 +294,10 @@ class CASHashTable : public BaseHashTable {
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
         idx = hash & HT_BUCKET_MASK;
         __builtin_prefetch(&this->hashtable[idx], false, 1);
+        this->find_queue[head].key = key_data->key;
         this->find_queue[head].idx = idx;
+        this->find_queue[head].key_id = key_data->id;
+
         head++;
         head &= FIND_QUEUE_SZ_MASK;
       }
@@ -318,7 +328,9 @@ class CASHashTable : public BaseHashTable {
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
         idx = hash & HT_BUCKET_MASK;
         __builtin_prefetch(&this->hashtable[idx], false, 1);
+        this->find_queue[head].key = key_data->key;
         this->find_queue[head].idx = idx;
+        this->find_queue[head].key_id = key_data->id;
         head++;
         head &= FIND_QUEUE_SZ_MASK;
       }  // end slow path for loop
@@ -330,7 +342,7 @@ class CASHashTable : public BaseHashTable {
 
 #define KEYMSK ((__mmask8)(0b01010101))
 
-  void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
+void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
                            collector_type *collector) {
     bool fast_path = ((this->find_head - this->find_tail) &
                       FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
@@ -411,7 +423,7 @@ class CASHashTable : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
         const auto timer = collector->start();
 #endif
-        uint32_t hash = (uint32_t)_mm_crc32_u64(
+        uint64_t hash = _mm_crc32_u64(
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
         uint32_t new_idx = hash & HT_BUCKET_MASK;
 

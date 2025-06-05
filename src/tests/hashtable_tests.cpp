@@ -24,6 +24,11 @@
 #include "PerfMultiCounter.hpp"
 #endif
 
+#ifdef WITH_PCM
+#include "cpucounters.h" 
+#endif
+
+
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);

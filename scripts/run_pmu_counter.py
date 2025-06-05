@@ -30,7 +30,7 @@ def get_data(in_file_name):
 # Print our event counter data to std out
 def write_data(data):
     for e in data:
-        print(f"{e}: {data[e]}")
+        print(f"{e},{data[e]}")
         sys.stdout.flush()  # Flush output immediately
     
 #Gets 4 lines from file 
@@ -45,13 +45,20 @@ def get_next_events(start_line, perf_list):
     return events, next_line
 
 # file with all counters
-perf_list = set_dir+"./perf-cpp/perf_list.csv"
+perf_list = set_dir+"./perf_counters_aggregate"
 # temp file for current counters being run (4 at at time for no multiplexing)
 event_tmp = set_dir+"./perf_cnt.txt"
 # total counters = total lines in our counter file
 total_lines = sum(1 for _ in open(perf_list))
 # start from beggining of file
 next_line = 0
+# output file name
+output_tmp = 'temp_dramhit_output.txt'
+
+# Set the below
+size = 'large'
+thread_num = '56'
+fill = '10'
 
 # Ensure event_tmp is initialized to empty
 with open(event_tmp, 'w') as f:
@@ -66,11 +73,13 @@ while next_line < total_lines:
         f.flush()
     # RUN dramhit with those 4 counters
     subprocess.run([
-        "sudo", set_dir+"./u.sh", "large", "56"
-    ], stdout=open('temp_dramhit_output.txt', 'w'))
+        "sudo", set_dir+"./u.sh", size, thread_num, fill
+    ], stdout=open(output_tmp, 'w'))
     # parse results and write to stdo
-    data = get_data('temp_dramhit_output.txt')
+    data = get_data(output_tmp)
     write_data(data)
 
 # clean up temp files
-os.remove('temp_dramhit_output.txt')  
+os.remove(output_tmp)  
+
+            
