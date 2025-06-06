@@ -279,9 +279,9 @@ class CASHashTable : public BaseHashTable {
         // volatile __m512i cacheline = _mm512_load_si512(bucket);
         // __m512i key_vector = _mm512_set1_epi64(9);
         // if(_mm512_mask_cmpeq_epu64_mask(0xf, cacheline, key_vector)){
-        // values.second[values.first].value = bucket[3]; 
+        // values.second[values.first].value = bucket[3];
         // }else
-        values.second[values.first].value = bucket[0]; 
+        values.second[values.first].value = bucket[0];
 
         tail++;
         tail &= FIND_QUEUE_SZ_MASK;
@@ -342,7 +342,7 @@ class CASHashTable : public BaseHashTable {
 
 #define KEYMSK ((__mmask8)(0b01010101))
 
-void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
+  void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
                            collector_type *collector) {
     bool fast_path = ((this->find_head - this->find_tail) &
                       FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
@@ -359,6 +359,7 @@ void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
       __m512i cacheline;
       __mmask8 key_cmp;
       KVQ *q;
+      uint64_t hash;
       // c++ iterator is faster than a regular integer loop.
       for (auto &data : kp) {
       retry:
@@ -394,13 +395,18 @@ void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
           // if ept found ept_cmp > 0, then we stop retry
           if (ept_cmp == 0) {  // retry
 #ifdef UNIFORM_HT_SUPPORT
-            uint64_t old_hash = q->key_hash;
-            uint64_t hash = this->hash(&old_hash);
+            hash = _mm_crc32_u64(
+                0xffffffff,
+                *static_cast<const std::uint64_t *>(&(q->key_hash)));
             idx = hash & HT_BUCKET_MASK;
-            this->find_queue[head].key_hash = hash;
 #else
             idx += CACHELINE_SIZE / sizeof(KV);
             idx = idx & HT_BUCKET_MASK;
+#endif
+            __builtin_prefetch(&this->hashtable[idx], false, 1);
+
+#ifdef UNIFORM_HT_SUPPORT
+            this->find_queue[head].key_hash = hash;
 #endif
             this->find_queue[head].key = key;
             this->find_queue[head].key_id = q->key_id;
@@ -423,7 +429,7 @@ void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
 #ifdef LATENCY_COLLECTION
         const auto timer = collector->start();
 #endif
-        uint64_t hash = _mm_crc32_u64(
+        hash = _mm_crc32_u64(
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
         uint32_t new_idx = hash & HT_BUCKET_MASK;
 
