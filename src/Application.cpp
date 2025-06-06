@@ -43,6 +43,10 @@
 #include "PerfMultiCounter.hpp"
 #endif
 
+#ifdef WITH_PCM
+#include "PCMCounter.hpp"
+#endif 
+
 namespace kmercounter {
 
 class LynxQueue;
@@ -54,6 +58,10 @@ extern void init_zipfian_dist(double skew, int64_t seed);
 
 #ifdef WITH_PERFCPP
 MultithreadCounter EVENTCOUNTERS;
+#endif
+
+#ifdef WITH_PCM
+pcm::PCMCounters pcm_cnt;
 #endif
 
 // void sync_complete(void);
@@ -130,6 +138,20 @@ void sync_complete(void) {
     bw_counters->start();
   }
 #endif
+
+
+#if defined(WITH_PCM)
+  if (stop_sync) {
+    PLOGI.printf("Stopping counters");
+    pcm_cnt.stop();
+    pcm_cnt.readout(false, true, true);
+    stop_sync = false;
+  } else {
+    PLOGI.printf("Starting counters");
+    pcm_cnt.start();
+  }
+#endif
+
   if (cur_phase == ExecPhase::finds) {
     if (!zipfian_finds) {
       g_find_start = RDTSC_START();
@@ -546,7 +568,7 @@ int Application::process(int argc, char *argv[]) {
 
 #ifdef WITH_PERFCPP
     EVENTCOUNTERS = MultithreadCounter(1, config.perf_cnt_path,
-                                       config.perf_def_path);
+                                       config.perf_def_path);`
 
 #endif
 
@@ -650,6 +672,7 @@ int Application::process(int argc, char *argv[]) {
     exit(-1);
   }
 
+
   if (config.drop_caches) {
     PLOG_INFO.printf("Dropping the page cache");
     if (system("sudo bash -c 'echo 3 > /proc/sys/vm/drop_caches'") < 0) {
@@ -739,6 +762,10 @@ int Application::process(int argc, char *argv[]) {
       this->spawn_shard_threads();
     }
   }
+
+
+
+
   return 0;
 }
 }  // namespace kmercounter

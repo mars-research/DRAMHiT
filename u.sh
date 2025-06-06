@@ -51,4 +51,25 @@ batch=16
     --hw-pref 0 --batch-len $batch"
 #done
 
+# sudo bash -c '
+#         mkfifo ctl.fifo ack.fifo
+#         exec 10<>ctl.fifo
+#         exec 11<>ack.fifo
+#         cmd="./build/dramhit \
+#         --perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
+#         --find_queue_sz 32 --ht-fill 10 --ht-type 3 --insert-factor 500 \
+#         --num-threads 56 --numa-split 1 --no-prefetch 0 --mode 11 \
+#         --ht-size 134217728 --skew 0.01 --hw-pref 0 --batch-len 16"
+        
+#         /nix/store/ad3jjs95bcnwncb71bvm9zjd9ifd0fbw-perf-linux-5.15.47/bin/perf \
+#         stat --delay=-1 --control fd:10,11 \
+#         -e 'cpu/event=0x5,umask=0xFF/' \
+#         -e 'cycles'\
+#         \
+#         $cmd
+#         exec 10>&-
+#         exec 11>&-
+#         rm ctl.fifo ack.fifo
+#     '
+
 

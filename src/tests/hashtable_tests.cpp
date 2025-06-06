@@ -25,9 +25,8 @@
 #endif
 
 #ifdef WITH_PCM
-#include "cpucounters.h" 
+#include "cpucounters.h"
 #endif
-
 
 namespace kmercounter {
 
@@ -87,9 +86,9 @@ OpTimings do_zipfian_inserts(
   std::size_t next_pollution{};
 
   auto insert_factor = config.insert_factor;
-  
+
 #ifdef HT_TEST_INSERT_ONCE
-  insert_factor = 1; 
+  insert_factor = 1;
 #endif
 
   for (auto j = 0u; j < insert_factor; j++) {
@@ -172,7 +171,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   FindResult *results = new FindResult[config.batch_len];
   // alignas(32) ValuePairs vp = std::make_pair(0, results);
   ValuePairs vp = std::make_pair(0, results);
-  sync_barrier->arrive_and_wait();
+  sync_barrier->arrive_and_wait(); // this calls sync_complete
   stop_sync = true;
 
 #ifdef WITH_VTUNE_LIB
@@ -219,8 +218,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       items[key] = {value, n};
 
       if (++key == config.batch_len) {
-        cas_ht->find_batch_unrolled(InsertFindArguments(items, config.batch_len), vp,
-                           collector);
+        cas_ht->find_batch_unrolled(
+            InsertFindArguments(items, config.batch_len), vp, collector);
         // hashtable->find_batch(InsertFindArguments(items, config.batch_len),
         //                           vp, collector);
         found += vp.first;
@@ -342,9 +341,24 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   __itt_resume();
 #endif
 
+  // perf resume()
+  // int perf_ctl_fd = 10;
+  // int perf_ctl_ack_fd = 11;
+  // char ack[5];
+  // if (shard->shard_idx == 0) {
+  //   write(perf_ctl_fd, "enable\n", 8);
+  //   read(perf_ctl_ack_fd, ack, 5);
+  //   assert(strcmp(ack, "ack\n") == 0);
+  // }
   const auto num_finds =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
-
+      
+  // perf pause()
+  // if (shard->shard_idx == 0) {
+  //   write(perf_ctl_fd, "disable\n", 9);
+  //   read(perf_ctl_ack_fd, ack, 5);
+  //   assert(strcmp(ack, "ack\n") == 0);
+  // }
 #ifdef WITH_VTUNE_LIB
   __itt_pause();
 #endif
