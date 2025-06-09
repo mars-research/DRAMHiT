@@ -5,6 +5,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -55,6 +56,8 @@ class PerfCounterResult {
     return false;
   }
 
+
+
   void print(uint64_t sample_count) {
     // DEFAULT, shows per op and total
     for (auto& [counter_name, counter_value] : _results) {
@@ -66,20 +69,6 @@ class PerfCounterResult {
       std::cout << counter_name << ":" << counter_value / sample_count << ":"
                 << counter_value << "\n";
     }
-    // printf("%-44s %20s %20s\n", "Counter Name", "Avg per Sample", "Total");
-    // printf("%.*s\n", 84,
-    //        "-------------------------------------------------------------------"
-    //        "-----------------");
-
-    // for (auto& [counter_name, counter_value] : _results) {
-    //   // std::cout << counter_name << ":" << counter_value / sample_count <<
-    //   ":"
-    //   // << counter_value <<"\n"; //Original
-
-    //   printf("%-40s %20.2f %20llu\n", counter_name.c_str(),
-    //          (double)counter_value / sample_count,
-    //          (unsigned long long)counter_value);
-    // }
   }
 };
 
@@ -154,11 +143,16 @@ class MultithreadCounter {
     std::cout << "\n------- PERFCPP ------- " << std::endl;
 
     double totol_bw = 0;
+
+    double avg_cycles = 0;
+    
+
     for (size_t i = 0; i < num_threads; i++) {
       std::cout << "\nThread ID: " << i
                 << " Sample counts: " << sample_counts[i] << std::endl;
       results[i].print(sample_counts[i]);
 
+      
 
       double bw = 0;
       if(results[i].contain("cycles") && results[i].contain("OFFCORE_REQUESTS.DATA_RD"))
@@ -167,6 +161,21 @@ class MultithreadCounter {
         std::cout << "core bw: " << bw << "GB/s \n";
         totol_bw += bw;
       } 
+    }
+
+
+    // average system 
+
+    std::cout << "\nSystem stats summary (average over threads) \n";  
+    
+    for (auto& evt : events) {
+      uint64_t average = 0;
+      for (size_t i = 0; i < num_threads; i++) {
+        average += results[i].get_value(evt);
+      }
+      average = average / num_threads;
+
+      std::cout << evt << ": " << average << std::endl;
     }
 
     if(totol_bw > 0.1)
