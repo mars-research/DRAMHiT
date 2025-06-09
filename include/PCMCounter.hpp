@@ -1,8 +1,6 @@
 #pragma once
 
 #include "cpucounters.h"
-#include "sync.h"
-
 namespace pcm {
 class PCMCounters {
  public:
@@ -22,9 +20,18 @@ class PCMCounters {
   PCMCounters() {
     pcm = pcm::PCM::getInstance();
 
-    if (pcm->program() != pcm::PCM::Success) {
-      printf("failed to program pcm");
-      return;
+    int error = pcm->program();
+
+    if(error == PCM::ErrorCode::PMUBusy)
+    {
+      pcm->resetPMU();
+      error = pcm->program();
+    }
+
+    if (error != pcm::PCM::Success) {
+      printf("Failed to program pcm\n");
+      pcm->cleanup();
+      exit(-1);
     }
 
     cstates1 = new CoreCounterState[pcm->getNumCores()];
@@ -38,8 +45,6 @@ class PCMCounters {
 
   // save all start state
   void start() {
-
-
     sstate1 = getSystemCounterState();
     int i = 0;
     for (i = 0; i < pcm->getNumSockets(); ++i)

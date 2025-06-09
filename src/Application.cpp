@@ -142,12 +142,12 @@ void sync_complete(void) {
 
 #if defined(WITH_PCM)
   if (stop_sync) {
-    PLOGI.printf("Stopping counters");
+    PLOGI.printf("Stopping PCM counters");
     pcm_cnt.stop();
     pcm_cnt.readout(false, true, true);
     stop_sync = false;
   } else {
-    PLOGI.printf("Starting counters");
+    PLOGI.printf("Starting PCM counters");
     pcm_cnt.start();
   }
 #endif
@@ -568,7 +568,7 @@ int Application::process(int argc, char *argv[]) {
 
 #ifdef WITH_PERFCPP
     EVENTCOUNTERS = MultithreadCounter(1, config.perf_cnt_path,
-                                       config.perf_def_path);`
+                                       config.perf_def_path);
 
 #endif
 

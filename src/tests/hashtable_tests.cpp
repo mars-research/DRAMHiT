@@ -24,9 +24,6 @@
 #include "PerfMultiCounter.hpp"
 #endif
 
-#ifdef WITH_PCM
-#include "cpucounters.h"
-#endif
 
 namespace kmercounter {
 
@@ -334,7 +331,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   cur_phase = ExecPhase::finds;
 
 #ifdef WITH_PERFCPP
-  if (shard->shard_idx == 0) EVENTCOUNTERS.start(shard->shard_idx);
+  //if (shard->shard_idx == 0) 
+  EVENTCOUNTERS.start(shard->shard_idx);
 #endif
 
 #ifdef WITH_VTUNE_LIB
@@ -364,10 +362,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
 
 #ifdef WITH_PERFCPP
-  if (shard->shard_idx == 0) {
+  //if (shard->shard_idx == 0) {
+
     EVENTCOUNTERS.stop(shard->shard_idx);
     EVENTCOUNTERS.set_sample_count(shard->shard_idx, num_finds.op_count);
-  }
+  //}
 #endif
 
   shard->stats->finds.duration = num_finds.duration;

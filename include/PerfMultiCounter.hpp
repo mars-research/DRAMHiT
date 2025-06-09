@@ -2,6 +2,7 @@
 
 #include <perfcpp/event_counter.h>
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -28,30 +29,57 @@ class PerfCounterResult {
     }
   }
 
+  void clear() {
+    for (auto& [counter_name, counter_value] : _results) {
+      counter_value = 0;
+    }
+  }
+
+  uint64_t get_value(std::string x) 
+  {
+    for (auto& [counter_name, counter_value] : _results) {
+      if (counter_name == x) {
+        return counter_value;
+      } 
+    } 
+
+    return 0; 
+  }
+
+  bool contain(std::string x){
+    for (auto& [counter_name, counter_value] : _results) {
+      if (counter_name == x) {
+        return true;
+      } 
+    } 
+    return false;
+  }
+
   void print(uint64_t sample_count) {
     // DEFAULT, shows per op and total
-     for (auto& [counter_name, counter_value] : _results) {
+    for (auto& [counter_name, counter_value] : _results) {
       //  std::cout << counter_name << "\n"
       //            << "    per op: "<< counter_value/sample_count << "\n"
       //            << "    total: " << counter_value << std::endl;
 
-      //For python script
-      std::cout << counter_name << ":" << counter_value/sample_count << "\n";
-     }
+      // For python script
+      std::cout << counter_name << ":" << counter_value / sample_count << ":"
+                << counter_value << "\n";
+    }
     // printf("%-44s %20s %20s\n", "Counter Name", "Avg per Sample", "Total");
     // printf("%.*s\n", 84,
     //        "-------------------------------------------------------------------"
     //        "-----------------");
 
     // for (auto& [counter_name, counter_value] : _results) {
-    //   // std::cout << counter_name << ":" << counter_value / sample_count << ":"
+    //   // std::cout << counter_name << ":" << counter_value / sample_count <<
+    //   ":"
     //   // << counter_value <<"\n"; //Original
 
     //   printf("%-40s %20.2f %20llu\n", counter_name.c_str(),
     //          (double)counter_value / sample_count,
     //          (unsigned long long)counter_value);
     // }
-
   }
 };
 
@@ -84,9 +112,10 @@ class MultithreadCounter {
       else
         defs.emplace_back(def_path);
       counters.emplace_back(defs[i]);
-      // counters[i].add(this->events, perf::EventCounter::Schedule::Separate); //Disable multiplexing
-      counters[i].add(this->events); //Enable multiplexing (it's default)
-      
+      counters[i].add(
+          this->events,
+          perf::EventCounter::Schedule::Separate);  // Disable multiplexing
+      // counters[i].add(this->events); //Enable multiplexing (it's default)
     }
   }
 
@@ -103,6 +132,18 @@ class MultithreadCounter {
     }
   }
 
+  void clear(size_t thread_idx) {
+    if (thread_idx < num_threads) {
+      results[thread_idx].clear();
+    }
+  }
+
+  void clear_all() {
+    for (int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
+      results[thread_idx].clear();
+    }
+  }
+
   void set_sample_count(size_t thread_idx, uint64_t sample_count) {
     if (thread_idx < num_threads) {
       sample_counts[thread_idx] = sample_count;
@@ -111,12 +152,26 @@ class MultithreadCounter {
 
   void print() {
     std::cout << "\n------- PERFCPP ------- " << std::endl;
+
+    double totol_bw = 0;
     for (size_t i = 0; i < num_threads; i++) {
       std::cout << "\nThread ID: " << i
                 << " Sample counts: " << sample_counts[i] << std::endl;
       results[i].print(sample_counts[i]);
+
+
+      double bw = 0;
+      if(results[i].contain("cycles") && results[i].contain("OFFCORE_REQUESTS.DATA_RD"))
+      {
+        bw = (results[i].get_value("OFFCORE_REQUESTS.DATA_RD") * 64 / GB_IN_BYTES) / (results[i].get_value("cycles")  / CYCLES_PER_SEC);
+        std::cout << "core bw: " << bw << "GB/s \n";
+        totol_bw += bw;
+      } 
     }
-    std::cout << "\n----------------------- " << std::endl;
+
+    if(totol_bw > 0.1)
+      std::cout << "total bw: " << totol_bw << "GB/s \n";
+    std::cout << "----------------------- " << std::endl;
   }
 
  private:
@@ -137,6 +192,9 @@ class MultithreadCounter {
     }
     return events;
   }
+
+  static constexpr double CYCLES_PER_SEC = (2.1 * 1000 * 1000 * 1000);
+  static constexpr double GB_IN_BYTES = (1 << 30);
 
   std::vector<perf::EventCounter>
       counters;  // Each counter needs its own definitions
