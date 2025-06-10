@@ -7,30 +7,25 @@ import sys
 set_dir= "/opt/dramhit/dramhit/"
 
 # Parses output from dramhit with perfcpp output
-def get_data(in_file_name):
+def get_data(in_file_name, events):
     data = {}
-    line_count = 0
-    capture_data = False
-    # Find line where event info starts
     with open(in_file_name, 'r') as f:
         for line in f:
-            if "Thread ID: 0" in line:
-                capture_data = True
-                line_count = 0  # Reset count when finding thread 0
-                continue  # Move to next line
-            # Parse the 4 events, assumes:
-            #    event:count\n event:count\n event:count\n event:count\n
-            if capture_data and line_count < 4:
-                tokens = line.strip().split(":")
-                if len(tokens) >= 2:
-                    data[tokens[0].strip()] = tokens[1].strip()
-                    line_count += 1
+            for e in events:
+                if e in line:
+                    tokens = line.strip().split(":")
+                    if len(tokens) == 3:
+                        data[tokens[0].strip()] = [tokens[1].strip(), tokens[2].strip()]
+    
+    for k in list(data.keys()): 
+        if (k in events) == False:
+            data.pop(k)                   
     return data
 
 # Print our event counter data to std out
 def write_data(data):
     for e in data:
-        print(f"{e},{data[e]}")
+        print(f"{e},{data[e][0]},{data[e][1]}")
         sys.stdout.flush()  # Flush output immediately
     
 #Gets 4 lines from file 
@@ -76,7 +71,7 @@ while next_line < total_lines:
         "sudo", set_dir+"./u.sh", size, thread_num, fill
     ], stdout=open(output_tmp, 'w'))
     # parse results and write to stdo
-    data = get_data(output_tmp)
+    data = get_data(output_tmp, events)
     write_data(data)
 
 # clean up temp files

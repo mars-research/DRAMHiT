@@ -141,19 +141,14 @@ class MultithreadCounter {
 
   void print() {
     std::cout << "\n------- PERFCPP ------- " << std::endl;
+    std::cout << "\n data format: <EVT_NAME> <PER OP> <TOTAL> " << std::endl;
 
-    double totol_bw = 0;
-
-    double avg_cycles = 0;
-    
+    double totol_bw = 0;    
 
     for (size_t i = 0; i < num_threads; i++) {
       std::cout << "\nThread ID: " << i
                 << " Sample counts: " << sample_counts[i] << std::endl;
       results[i].print(sample_counts[i]);
-
-      
-
       double bw = 0;
       if(results[i].contain("cycles") && results[i].contain("OFFCORE_REQUESTS.DATA_RD"))
       {
@@ -163,11 +158,18 @@ class MultithreadCounter {
       } 
     }
 
-
     // average system 
-
     std::cout << "\nSystem stats summary (average over threads) \n";  
-    
+
+    uint64_t sc_average = 0;
+    for(auto& sc: sample_counts)
+    {
+      sc_average += sc;
+    }
+
+    std::cout << "samples:" << sc_average / num_threads << ":" << sc_average << std::endl;
+    sc_average = sc_average / num_threads;
+
     for (auto& evt : events) {
       uint64_t average = 0;
       for (size_t i = 0; i < num_threads; i++) {
@@ -175,7 +177,7 @@ class MultithreadCounter {
       }
       average = average / num_threads;
 
-      std::cout << evt << ": " << average << std::endl;
+      std::cout << evt << ":" << average/sc_average << ":" << average << std::endl;
     }
 
     if(totol_bw > 0.1)
