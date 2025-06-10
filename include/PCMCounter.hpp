@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "cpucounters.h"
 namespace pcm {
 class PCMCounters {
@@ -69,34 +70,35 @@ class PCMCounters {
       cstates2[i] = getCoreCounterState(i);
   }
 
-  void print(SystemCounterState) {}
+
+
+  template <class CounterStateType>
+  inline void print_tma(std::string header,const CounterStateType & before, const CounterStateType & after) 
+  {
+      std::cout << header << "\n"
+                << " IPC "<< getCoreIPC(before, after) << "\n"
+                << " Ref cycles " << getRefCycles(before, after) << "\n"
+                << " TSC " << getInvariantTSC(before, after) << "\n"
+                << " Retired " << getInstructionsRetired(before, after) << "\n"
+                << " L2 miss " << getL2CacheMisses(before, after) << "\n"
+                << " L2 hit " << getL2CacheHits(before, after) << "\n"
+                << "\n <<<<< TMA view with Pipeline slot >>>>> \n" 
+                << " Retiring " << getRetiring(before, after) << "\n"
+                << " Frontend bound " << getFrontendBound(before, after) << "\n"
+                << " Backend bound " << getBackendBound(before, after) << "\n"
+                << " ------> Memory bound " << getMemoryBound(before, after) << "\n"
+                << " ------> Core bound " << getCoreBound(before, after) << "\n"
+                << " Bad speculation bound " << getBadSpeculation(before, after) << "\n"
+                << " ------> Branch mispredict bound " << getBranchMispredictionBound(before, after) << "\n"
+                << " ------> Machine clears bound " << getMachineClearsBound(before, after) << "\n";
+  }
 
   void readout(bool cores, bool sockets, bool system) {
     int i = 0;
 
     if (cores) {
       for (i = 0; i < pcm->getNumCores(); ++i) {
-        std::cout << "Core: " << i << "\n"
-                  << " Memory bandwidth: "
-                  << getLocalMemoryBW(cstates1[i], cstates2[i]) << "\n"
-                  << " IPC " << getCoreIPC(cstates1[i], cstates2[i]) << "\n"
-                  << " Ref cycle " << getRefCycles(cstates1[i], cstates2[i])
-                  << "\n"
-                  << " Retired instructions "
-                  << getInstructionsRetired(cstates1[i], cstates2[i]) << "\n"
-                  << " L2 miss " << getL2CacheMisses(cstates1[i], cstates2[i])
-                  << "\n"
-                  << " L2 hit " << getL2CacheHits(cstates1[i], cstates2[i])
-                  << "\n"
-                  << " Frontend bound "
-                  << getFrontendBound(cstates1[i], cstates2[i]) << "\n"
-                  << " Backend bound "
-                  << getBackendBound(cstates1[i], cstates2[i]) << "\n"
-                  << " Memory bound "
-                  << getMemoryBound(cstates1[i], cstates2[i]) << "\n"
-                  << " Branch mispredict bound "
-                  << getBranchMispredictionBound(cstates1[i], cstates2[i])
-                  << "\n";
+        print_tma("Core ", cstates1[1], cstates2[i]);
       }
     }
 
@@ -117,22 +119,7 @@ class PCMCounters {
     }
 
     if (system) {
-      std::cout << "System "
-                   " IPC "
-                << getCoreIPC(sstate1, sstate2) << "\n"
-                << " Ref cycles " << getRefCycles(sstate1, sstate2) << "\n"
-                << " TSC " << getInvariantTSC(sstate1, sstate2) << "\n"
-                << " Retired " << getInstructionsRetired(sstate1, sstate2)
-                << "\n"
-                << " L2 miss " << getL2CacheMisses(sstate1, sstate2) << "\n"
-                << " L2 hit " << getL2CacheHits(sstate1, sstate2) << "\n"
-                << " Frontend bound " << getFrontendBound(sstate1, sstate2)
-                << "\n"
-                << " Backend bound " << getBackendBound(sstate1, sstate2)
-                << "\n"
-                << " Memory bound " << getMemoryBound(sstate1, sstate2) << "\n"
-                << " Branch mispredict bound "
-                << getBranchMispredictionBound(sstate1, sstate2) << "\n";
+      print_tma("System ", sstate1, sstate2);
     }
   }
 };
