@@ -26,7 +26,7 @@ if [ "$test" = "small" ]; then
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
     size=134217728
-    insertFactor=50
+    insertFactor=100
 fi
 
 # size=134217728
@@ -38,17 +38,12 @@ batch=16
 
 #for fill in $(seq 10 10 10);
 #do  
-    sudo ./build/dramhit \
-    --perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue_sz 32 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor \
-    --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
-    --hw-pref 0 --batch-len $batch
-
-    echo "$(pwd)/build/dramhit \
-    --perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
+    cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
     --find_queue_sz 32 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor \
     --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
     --hw-pref 0 --batch-len $batch"
+    sudo $(pwd)/build/dramhit $cmd
+    echo $(pwd)/build/dramhit $cmd
 #done
 
 # sudo bash -c '
