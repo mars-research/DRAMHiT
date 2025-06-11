@@ -52,6 +52,8 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
 
 
 #ifdef SINGLE_NUMA_NODE_MODE
+// we are at mercy of the OS here, since we only uses threads belongs to socket 0, 
+// then all memory allocated will be automatically binded to that node, no need to do anything.
   return;
 #endif
     // Check if there is only one NUMA node
