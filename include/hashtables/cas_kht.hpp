@@ -720,7 +720,7 @@ class CASHashTable : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= (find_queue_sz - 1);
 #ifdef CALC_STATS
-      this->sum_distance_from_bucket++;
+      this->num_reprobed++;
 #endif
     } else {
 #ifdef LATENCY_COLLECTION

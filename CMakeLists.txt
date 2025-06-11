@@ -24,6 +24,7 @@ option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
 option(PART_ID "partition id for multilevel and partition hashtable" OFF)
 option(HT_TEST_INSERT_ONCE "insert only once (no benchmark for insertion)" OFF)
+option(SINGLE_NUMA "run everything in only on one socket" OFF)
 
 
 # option(PERFCPP "perf cpp" OFF)
@@ -32,14 +33,15 @@ option(HT_TEST_INSERT_ONCE "insert only once (no benchmark for insertion)" OFF)
 # option(HIGH_LEVEL_PAPI "Use PAPI high-level monitoring" OFF)
 # option(VTUNE "Use VTUNE to do performance monitering." OFF)
 
-
-
+if(SINGLE_NUMA)
+    message(WARNING "only a single numa node will be used")
+    add_definitions(-DSINGLE_NUMA_NODE_MODE)
+endif()
 
 if(HT_TEST_INSERT_ONCE)
     message(WARNING "insert only once (no benchmark for insertion)")
     add_definitions(-DHT_TEST_INSERT_ONCE)
-endif() 
-
+endif()
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)

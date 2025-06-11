@@ -42,6 +42,8 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
 }
 
 void distribute_mem_to_nodes(void *addr, size_t alloc_sz);
+void distribute_mem_to_node_x(void *addr, size_t alloc_sz, uint8_t x);
+
 
 template <bool WRITE>
 inline void prefetch_object(const void *addr, uint64_t size) {
@@ -140,7 +142,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     *out_fd = fd;
   }
   if (config.ht_type == CASHTPP && (config.numa_split != 2)) {
-    distribute_mem_to_nodes(addr, alloc_sz);
+      distribute_mem_to_nodes(addr, alloc_sz);
   }
 skip_mbind:
   memset(addr, 0, capacity * sizeof(T));
