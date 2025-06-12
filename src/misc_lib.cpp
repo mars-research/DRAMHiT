@@ -42,27 +42,32 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz) {
   return sum;
 }
 
+#include <numaif.h>
+
 #include "numa.hpp"
 #include "types.hpp"
-#include <numaif.h>
 
 namespace kmercounter {
 
 void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
+  #ifdef SINGLE_SOCKET
+  PLOG_INFO.printf("Skipping memory distribution, using single numa node");
+  return;
+  #endif
+  // Check if there is only one NUMA node
+  if (numa_num_configured_nodes() == 1) {
+    PLOG_INFO.printf(
+        "Only one NUMA node available, skipping memory distribution.");
+    return;
+  }
+  PLOGV.printf("addr %p, alloc_sz %zu | all_nodes %lx", addr, alloc_sz,
+               *numa_all_nodes_ptr->maskp);
 
-    // Check if there is only one NUMA node
-    if (numa_num_configured_nodes() == 1) {
-	PLOG_INFO.printf("Only one NUMA node available, skipping memory distribution.");
-	return;
-    }
-    PLOGV.printf("addr %p, alloc_sz %zu | all_nodes %lx",
-          addr, alloc_sz, *numa_all_nodes_ptr->maskp);
-
-    long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
-                *numa_all_nodes_ptr->maskp, MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-    }
+  long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
+                   *numa_all_nodes_ptr->maskp, MPOL_MF_MOVE | MPOL_MF_STRICT);
+  if (ret < 0) {
+    perror("mbind");
+    PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+  }
 }
-} // namespace
+}  // namespace kmercounter

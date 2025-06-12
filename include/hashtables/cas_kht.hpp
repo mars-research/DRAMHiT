@@ -281,7 +281,7 @@ class CASHashTable : public BaseHashTable {
         // if(_mm512_mask_cmpeq_epu64_mask(0xf, cacheline, key_vector)){
         // values.second[values.first].value = bucket[3];
         // }else
-        values.second[values.first].value = bucket[0];
+        // values.second[values.first].value = bucket[0];
 
         tail++;
         tail &= FIND_QUEUE_SZ_MASK;
@@ -294,9 +294,9 @@ class CASHashTable : public BaseHashTable {
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
         idx = hash & HT_BUCKET_MASK;
         __builtin_prefetch(&this->hashtable[idx], false, 1);
-        this->find_queue[head].key = key_data->key;
+        // this->find_queue[head].key = key_data->key;
         this->find_queue[head].idx = idx;
-        this->find_queue[head].key_id = key_data->id;
+        // this->find_queue[head].key_id = key_data->id;
 
         head++;
         head &= FIND_QUEUE_SZ_MASK;
@@ -316,7 +316,7 @@ class CASHashTable : public BaseHashTable {
           // touch memory
           uint64 *bucket =
               (uint64_t *)&this->hashtable[this->find_queue[tail].idx];
-          volatile uint64 t1 = bucket[0];
+          // volatile uint64 t1 = bucket[0];
           tail++;
           tail &= FIND_QUEUE_SZ_MASK;
           values.first++;
@@ -394,6 +394,10 @@ class CASHashTable : public BaseHashTable {
 
           // if ept found ept_cmp > 0, then we stop retry
           if (ept_cmp == 0) {  // retry
+#ifdef CALC_STATS
+            this->num_reprobes++;
+#endif
+
 #ifdef UNIFORM_HT_SUPPORT
             hash = _mm_crc32_u64(
                 0xffffffff,
@@ -817,9 +821,6 @@ class CASHashTable : public BaseHashTable {
     // |  CACHELINE_SIZE   |
     // | 0 | 1 | . | . | n | n+1 ....
     if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
-#ifdef CALC_STATS
-      ++this->num_soft_reprobes;
-#endif
       goto try_insert;  // FIXME: @David get rid of the goto for crying out
                         // loud
     }
@@ -845,9 +846,6 @@ class CASHashTable : public BaseHashTable {
     ++this->ins_head;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
-#ifdef CALC_STATS
-    this->num_reprobes++;
-#endif
     return;
   }
 
