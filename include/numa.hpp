@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include <vector>
+
 #include "plog/Log.h"
 
 using namespace std;
@@ -66,7 +67,7 @@ class Numa {
   void print_numa_nodes(void) {
     std::for_each(nodes.begin(), nodes.end(), [](auto &node) {
       PLOGV.printf("Node: %d cpu_bitmask: 0x%08lx | num_cpus: %d", node.id,
-             node.cpu_bitmask, node.num_cpus);
+                   node.cpu_bitmask, node.num_cpus);
       std::string nodes;
       std::for_each(node.cpu_list.begin(), node.cpu_list.end(),
                     [&](uint32_t &cpu) { nodes += " " + std::to_string(cpu); });
@@ -215,7 +216,8 @@ class NumaPolicyQueues : public Numa {
   std::set<uint32_t> unassigned_cpu_list;
 
   void generate_cpu_lists() {
-    [[maybe_unused]] uint32_t total_threads = this->config_num_cons + this->config_num_prod;
+    [[maybe_unused]] uint32_t total_threads =
+        this->config_num_cons + this->config_num_prod;
     assert(total_threads <= static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
     if (this->npq == PROD_CONS_EQUAL_PARTITION) {
@@ -284,7 +286,8 @@ class NumaPolicyQueues : public Numa {
       std::cout << "cons_config: "
                 << "num_nodes_reqd: " << std::get<0>(cons_config) << ", "
                 << "num_cpus_reqd: " << std::get<1>(cons_config) << "\n";
-      //assert(std::get<0>(prod_config) + std::get<0>(cons_config) <= num_nodes);
+      // assert(std::get<0>(prod_config) + std::get<0>(cons_config) <=
+      // num_nodes);
 
       for (auto i = 0u; i < this->config_num_prod; i++) {
         uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
@@ -327,7 +330,9 @@ class NumaPolicyQueues : public Numa {
 enum numa_policy_threads {
   THREADS_SPLIT_SEPARATE_NODES = 1,
   THREADS_ASSIGN_SEQUENTIAL = 2,
-  THREADS_ONLY_FIRST_NUMA_NODE = 3
+  THREADS_REMOTE_NUMA_NODE = 3, 
+  THREADS_LOCAL_NUMA_NODE = 4
+
 };
 
 class NumaPolicyThreads : public Numa {
@@ -355,18 +360,6 @@ class NumaPolicyThreads : public Numa {
     return this->assigned_cpu_list;
   }
 
-  std::vector<uint32_t> get_numa_node_cpu_list(uint32_t node_idx) 
-  {
-    std::vector<uint32_t> empt;
-
-    if(node_idx >= Numa::get_num_nodes()) {
-      std::cout << "numa node index out of bound" << std::endl;
-      exit(-1);
-    }
-
-    return this->nodes[node_idx].cpu_list;
-  }
-
   std::vector<uint32_t> get_unassigned_cpu_list() {
     std::vector<uint32_t> v(this->unassigned_cpu_list.begin(),
                             this->unassigned_cpu_list.end());
@@ -385,19 +378,34 @@ class NumaPolicyThreads : public Numa {
            static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
 #ifdef SINGLE_NUMA_NODE_MODE
-    
+
     if (this->config_num_threads > nodes[0].cpu_list.size()) {
       std::cout << "too many threads to be scheduled on nodes 0" << std::endl;
       exit(-1);
     }
 
     for (auto i = 0u; i < this->config_num_threads; i++) {
-        uint32_t cpu_assigned = nodes[0].cpu_list[i];
-        this->assigned_cpu_list.push_back(cpu_assigned);
-        this->unassigned_cpu_list.erase(cpu_assigned);
+      uint32_t cpu_assigned = nodes[0].cpu_list[i];
+      this->assigned_cpu_list.push_back(cpu_assigned);
+      this->unassigned_cpu_list.erase(cpu_assigned);
     }
     return;
 #endif
+
+    // return numa node 0 threads.
+    if (this->np == THREADS_REMOTE_NUMA_NODE || this->np == THREADS_LOCAL_NUMA_NODE) {
+      if (this->config_num_threads > nodes[0].cpu_list.size()) {
+        std::cout << "too many threads to be scheduled on nodes 0" << std::endl;
+        exit(-1);
+      }
+
+      for (auto i = 0u; i < this->config_num_threads; i++) {
+        uint32_t cpu_assigned = nodes[0].cpu_list[i];
+        this->assigned_cpu_list.push_back(cpu_assigned);
+        this->unassigned_cpu_list.erase(cpu_assigned);
+      }
+      return;
+    }
 
     if (this->np == THREADS_SPLIT_SEPARATE_NODES) {
       int num_nodes = Numa::get_num_nodes();
@@ -446,11 +454,6 @@ class NumaPolicyThreads : public Numa {
       }
       return;
     }
-
-
-
-
-
   }
 
   void init_unassigned_cpus_list() {

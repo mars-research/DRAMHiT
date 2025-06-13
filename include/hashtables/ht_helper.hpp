@@ -42,7 +42,6 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
 }
 
 void distribute_mem_to_nodes(void *addr, size_t alloc_sz);
-void distribute_mem_to_node_x(void *addr, size_t alloc_sz, uint8_t x);
 
 
 template <bool WRITE>

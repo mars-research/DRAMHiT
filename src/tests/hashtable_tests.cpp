@@ -24,7 +24,6 @@
 #include "PerfMultiCounter.hpp"
 #endif
 
-
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -168,7 +167,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   FindResult *results = new FindResult[config.batch_len];
   // alignas(32) ValuePairs vp = std::make_pair(0, results);
   ValuePairs vp = std::make_pair(0, results);
-  sync_barrier->arrive_and_wait(); // this calls sync_complete
+  sync_barrier->arrive_and_wait();  // this calls sync_complete
   stop_sync = true;
 
 #ifdef WITH_VTUNE_LIB
@@ -189,6 +188,11 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
     uint64_t key_start =
         std::max(static_cast<uint64_t>(num_finds) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
+    
+    //for (auto p = 0u; p < toxic_waste_dump.size(); ++p) {
+    //  __builtin_prefetch(&toxic_waste_dump[p], true, 3);
+    //}
+
     for (unsigned int n{}; n < num_finds; ++n) {
 #ifdef XORWOW
       auto value = key_start++;
@@ -228,6 +232,11 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
         //   1024 - 1)], 64);
       }
       // }
+
+      // for (auto p = 0u; p < config.pollute_ratio *
+      // HT_TESTS_FIND_BATCH_LENGTH; ++p)
+      //   prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 *
+      //   1024 - 1)], 64);
 
       zipf_idx++;
     }
@@ -331,7 +340,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   cur_phase = ExecPhase::finds;
 
 #ifdef WITH_PERFCPP
-  //if (shard->shard_idx == 0) 
+  // if (shard->shard_idx == 0)
   EVENTCOUNTERS.start(shard->shard_idx);
 #endif
 
@@ -350,7 +359,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   // }
   const auto num_finds =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
-      
+
   // perf pause()
   // if (shard->shard_idx == 0) {
   //   write(perf_ctl_fd, "disable\n", 9);
@@ -362,10 +371,10 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
 
 #ifdef WITH_PERFCPP
-  //if (shard->shard_idx == 0) {
+  // if (shard->shard_idx == 0) {
 
-    EVENTCOUNTERS.stop(shard->shard_idx);
-    EVENTCOUNTERS.set_sample_count(shard->shard_idx, num_finds.op_count);
+  EVENTCOUNTERS.stop(shard->shard_idx);
+  EVENTCOUNTERS.set_sample_count(shard->shard_idx, num_finds.op_count);
   //}
 #endif
 

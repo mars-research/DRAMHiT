@@ -16,7 +16,6 @@ class PCMCounters {
 
   uint64_t cycles;
 
-
   // init pcm
   PCMCounters() {
     pcm = pcm::PCM::getInstance();
@@ -95,6 +94,8 @@ class PCMCounters {
 
   void readout(bool cores, bool sockets, bool system) {
     int i = 0;
+
+    std::cout << "Cycles: " << this->cycles << std::endl; 
 
     if (cores) {
       for (i = 0; i < pcm->getNumCores(); ++i) {

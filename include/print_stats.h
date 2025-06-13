@@ -7,7 +7,7 @@ namespace kmercounter {
 
 //CHANGE ME DEPENDING ON MACHINE
 /*From /proc/cpuinfo*/
-#define CPUFREQ_MHZ (2100.0)
+#define CPUFREQ_MHZ (2500.0)
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
 inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
@@ -113,9 +113,17 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 
 
 #ifdef CALC_STATS
-  printf("total reprobes %llu, spill factor ~(inserts+reprobes)/inserts: %f\n", 
-    all_total_reprobes, 
-    (float)(all_total_num_inserts+all_total_reprobes)/all_total_num_inserts);
+  // printf("total reprobes %llu, spill factor ~(inserts+reprobes)/inserts: %f\n", 
+  //   all_total_reprobes, 
+  //   (float)(all_total_num_inserts+all_total_reprobes)/all_total_num_inserts);
+  printf("===============================================================\n");
+  printf(
+      "Total reprobes:                  %10llu\n"
+      "Total finds:                     %10llu\n"
+      "Cachelines accessed per find:    %10.4f\n",
+      (unsigned long long)all_total_reprobes, (unsigned long long)total_finds,
+      (all_total_reprobes + total_finds) / (double)total_finds);
+
 #endif
   //const volatile auto a = config.num_threads;
   //const volatile auto b = all_total_num_inserts;

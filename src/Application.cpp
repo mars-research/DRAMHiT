@@ -14,7 +14,7 @@
 
 #include "./hashtables/array_kht.hpp"
 #include "./hashtables/cas_kht.hpp"
-
+#include "numa.hpp"
 
 #ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
@@ -45,7 +45,7 @@
 
 #ifdef WITH_PCM
 #include "PCMCounter.hpp"
-#endif 
+#endif
 
 namespace kmercounter {
 
@@ -139,7 +139,6 @@ void sync_complete(void) {
   }
 #endif
 
-
 #if defined(WITH_PCM)
   if (stop_sync) {
     PLOGI.printf("Stopping PCM counters");
@@ -186,7 +185,8 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
 #endif
     case CASHTPP:
-      kmer_ht = new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz, id);
+      kmer_ht =
+          new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz, id);
       break;
     case ARRAY_HT:
       kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);
@@ -280,9 +280,8 @@ void Application::shard_thread(int tid,
   // Write to file
   if (!config.ht_file.empty()) {
     // for CAS hashtable, not every thread has to write to file
-    if ((config.ht_type == CASHTPP || config.ht_type == MULTI_HT ) &&
-        (sh->shard_idx > 0)) 
-    {
+    if ((config.ht_type == CASHTPP || config.ht_type == MULTI_HT) &&
+        (sh->shard_idx > 0)) {
       goto done;
     }
     std::string outfile = config.ht_file + std::to_string(sh->shard_idx);
@@ -362,11 +361,10 @@ int Application::spawn_shard_threads() {
 
   std::barrier barrier(config.num_threads, on_sync_complete);
   uint32_t i = 0;
+
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
+
     if (assigned_cpu == 0) continue;
-
-    // if (assigned_cpu == 1) assigned_cpu = 28;
-
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
@@ -637,7 +635,6 @@ int Application::process(int argc, char *argv[]) {
     }
 
     switch (config.ht_type) {
-
 #ifdef PART_ID
       case PARTITIONED_HT:
         PLOG_INFO.printf("Hashtable type : Paritioned HT");
@@ -671,7 +668,6 @@ int Application::process(int argc, char *argv[]) {
     std::cout << e.what() << "\n";
     exit(-1);
   }
-
 
   if (config.drop_caches) {
     PLOG_INFO.printf("Dropping the page cache");
@@ -724,6 +720,14 @@ int Application::process(int argc, char *argv[]) {
         this->np = new NumaPolicyThreads(config.num_threads,
                                          THREADS_ASSIGN_SEQUENTIAL);
         break;
+      case THREADS_REMOTE_NUMA_NODE:
+        this->np = new NumaPolicyThreads(config.num_threads,
+                                         THREADS_REMOTE_NUMA_NODE);
+        break;
+      case THREADS_LOCAL_NUMA_NODE:
+        this->np = new NumaPolicyThreads(config.num_threads,
+                                         THREADS_LOCAL_NUMA_NODE);
+        break;
       default:
         PLOGE.printf("Unknown numa policy. Exiting");
         exit(-1);
@@ -762,9 +766,6 @@ int Application::process(int argc, char *argv[]) {
       this->spawn_shard_threads();
     }
   }
-
-
-
 
   return 0;
 }
