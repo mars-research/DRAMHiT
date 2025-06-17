@@ -12,6 +12,7 @@
 #define HASHTABLES_CAS_KHT_HPP
 
 #include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -47,14 +48,19 @@ class CASHashTable : public BaseHashTable {
   uint8_t cpuid;
 
   uint32_t find_queue_sz;
+  uint32_t insert_queue_sz;
+  uint32_t INSERT_QUEUE_SZ_MASK;
   uint32_t FIND_QUEUE_SZ_MASK;
   uint64_t HT_BUCKET_MASK;
+  #define KEYMSK ((__mmask8)(0b01010101))
+
   CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
 
   CASHashTable(uint64_t c, uint32_t queue_sz, uint8_t tid)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
     find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
+    insert_queue_sz = 64;  // TODO: CHANGE ME
 
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -76,13 +82,13 @@ class CASHashTable : public BaseHashTable {
     this->data_length = empty_item.data_length();
 
     PLOGV << "Empty item: " << this->empty_item;
-    this->insert_queue =
-        (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
-    this->find_queue = (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
 
-    find_head_ptr = find_queue;
-    find_tail_ptr = find_queue;
+    this->insert_queue =
+        (KVQ *)(aligned_alloc(64, insert_queue_sz * sizeof(KVQ)));
+    this->find_queue = (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
     this->FIND_QUEUE_SZ_MASK = this->find_queue_sz - 1;
+    this->INSERT_QUEUE_SZ_MASK = this->insert_queue_sz - 1;
+
     this->HT_BUCKET_MASK =
         (uint32_t)((this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK));
   }
@@ -154,31 +160,193 @@ class CASHashTable : public BaseHashTable {
     }
 
     this->flush_if_needed(collector);
+  } 
+
+  inline void atomic_cas_value_until_success(uint64_t *vptr, uint64_t value) {
+    uint8_t ret_val = 0;
+    uint64_t old_val;
+    while (!ret_val) {
+      old_val = *vptr;
+      ret_val = __sync_bool_compare_and_swap(vptr, old_val, value);
+    }
   }
 
+#define IN_DEVELOPMENT
+#ifdef IN_DEVELOPMENT
+  void insert_batch_unrolled(const InsertFindArguments &kp,
+                             collector_type *collector) {
+    bool fast_path = ((this->ins_head - this->ins_tail) &
+                      INSERT_QUEUE_SZ_MASK) >= (insert_queue_sz - 1);
+    // fast path
+    if (fast_path) [[likely]] {
+      __m512i zero_vector = _mm512_setzero_si512();
+      uint32_t tail = this->ins_tail;
+      uint32_t head = this->ins_head;
+      uint32_t not_found = 0;
+      uint64_t key;
+      uint64_t value;
+      uint64_t *bucket;
+      __mmask8 offset;
+      __m512i key_vector;
+      __m512i cacheline;
+      __mmask8 key_cmp;
+      uint8_t cas_ret_val;
+      uint64_t cas_old_val;
+      KVQ *q;
+      uint64_t hash;
+      // c++ iterator is faster than a regular integer loop.
+      for (auto &data : kp) {
+      NextCacheLine:
+        // pop the tail
+        q = &this->insert_queue[tail];
+        tail = (tail + 1) & INSERT_QUEUE_SZ_MASK;
+
+        uint32_t idx = q->idx;
+        value = q->value;
+        key = q->key;
+
+        // cacheline address
+        bucket = (uint64_t *)&this->hashtable[idx];
+
+#ifdef SIMD_WRITE_OPTIMIZATION
+        key_vector = _mm512_set1_epi64(key);
+        // load simd register for fast path
+        cacheline = _mm512_load_si512(bucket);
+        key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
+
+        // Key exists, fast path swap keys until success.
+        if (key_cmp > 0) {
+          offset = _bit_scan_forward(key_cmp);
+          bucket[(offset + 1)] = value; // atomic_cas_value_until_success(&bucket[(offset + 1)], value);
+          goto AddNextInsertion;
+        }
+#endif 
+        // Key doesn't exist, show path, must walk the entire cacheline, and
+        // access memory. Optimization possible! unrolled this.
+        offset = 0;
+
+      NextSlot:
+        if (__sync_bool_compare_and_swap(&bucket[offset], 0,
+                                         key))  // empty slot, inserting a key.
+        {
+          bucket[(offset + 1)] = value;
+          // atomic_cas_value_until_success(&bucket[(offset + 1)], value);
+          goto AddNextInsertion;
+        }
+
+        if (bucket[offset] == key)  // someone else might have inserted the key
+        {
+          bucket[(offset + 1)] = value;
+          //atomic_cas_value_until_success(&bucket[(offset + 1)], value);
+          goto AddNextInsertion;
+        }
+
+        offset += 2;
+        if (offset >= 8) {
+          goto Retry;
+        }
+        goto NextSlot;
+
+      Retry:
+#ifdef CALC_STATS
+        this->num_reprobes++;
+#endif
+
+#ifdef UNIFORM_HT_SUPPORT
+        hash = _mm_crc32_u64(
+            0xffffffff, *static_cast<const std::uint64_t *>(&(q->key_hash)));
+        idx = hash & HT_BUCKET_MASK;
+#else
+        idx += CACHELINE_SIZE / sizeof(KV);
+        idx = idx & HT_BUCKET_MASK;
+#endif
+        // prefetch write.
+        __builtin_prefetch(&this->hashtable[idx], true, 1);
+
+#ifdef UNIFORM_HT_SUPPORT
+        this->insert_queue[head].key_hash = hash;
+#endif
+        this->insert_queue[head].key = key;
+        this->insert_queue[head].key_id = q->key_id;
+        this->insert_queue[head].idx = idx;
+        this->insert_queue[head].value = value;
+
+#ifdef LATENCY_COLLECTION
+        this->insert_queue[head].timer_id = q->timer_id;
+#endif
+        head += 1;
+        head &= INSERT_QUEUE_SZ_MASK;
+        goto NextCacheLine;  // retry, need to pop tail again
+
+      AddNextInsertion:
+        // add to find queue
+        InsertFindArgument *key_data =
+            reinterpret_cast<InsertFindArgument *>(&data);
+
+#ifdef LATENCY_COLLECTION
+        const auto timer = collector->start();
+#endif
+        hash = _mm_crc32_u64(
+            0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
+        uint32_t new_idx = hash & HT_BUCKET_MASK;
+
+        __builtin_prefetch(&this->hashtable[new_idx], true, 1);
+
+        this->insert_queue[head].key = key_data->key;
+        this->insert_queue[head].idx = new_idx;
+        this->insert_queue[head].key_id = key_data->id;
+        this->insert_queue[head].value = key_data->id;
+
+#ifdef UNIFORM_HT_SUPPORT
+        this->insert_queue[head].key_hash = hash;
+#endif
+
+#ifdef LATENCY_COLLECTION
+        this->insert_queue[head].timer_id = timer;
+#endif
+        head += 1;
+        head &= INSERT_QUEUE_SZ_MASK;
+      }  // end for loop
+
+      this->ins_tail = tail;
+      this->ins_head = head;
+    }  // end of fast path
+    else [[unlikely]] {  // slow paths
+      for (auto &data : kp) {
+        // pop queue
+        if (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
+            (insert_queue_sz - 1)) {
+          pop_insert_queue(collector);
+        }
+        add_to_insert_queue(&data, collector);
+      }
+    }
+  }
+
+#endif
   // overridden function for insertion
   void flush_if_needed(collector_type *collector) {
     size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
+        (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
 
     while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
       __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
+      if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
       curr_queue_sz =
-          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
+          (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
     }
     return;
   }
 
   void flush_insert_queue(collector_type *collector) override {
     size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
+        (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
 
     while (curr_queue_sz != 0) {
       __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
+      if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
       curr_queue_sz =
-          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
+          (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
     }
   }
 
@@ -223,6 +391,17 @@ class CASHashTable : public BaseHashTable {
     //   return find_queue_sz + find_tail - find_head;
   }
 
+#ifdef IN_DEVELOPMENT
+  inline void pop_insert_queue(collector_type *collector) {
+    uint64_t retry = 0;
+    do {
+      retry = __insert_one(&this->insert_queue[this->ins_tail], collector);
+      this->ins_tail++;
+      this->ins_tail &= (insert_queue_sz - 1);
+    } while ((retry));
+  }
+#endif
+
   inline void pop_find_queue(ValuePairs &vp, collector_type *collector) {
     uint64_t retry = 0;
     do {
@@ -246,7 +425,6 @@ class CASHashTable : public BaseHashTable {
         if ((get_find_queue_sz() >= find_queue_sz - 1)) {
           pop_find_queue(values, collector);
         }
-
         add_to_find_queue(&data, collector);
       }
     }
@@ -340,7 +518,6 @@ class CASHashTable : public BaseHashTable {
     this->find_head = head;
   }
 
-#define KEYMSK ((__mmask8)(0b01010101))
 
   void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
                            collector_type *collector) {
@@ -544,6 +721,50 @@ class CASHashTable : public BaseHashTable {
     return count;
   }
 
+  uint64 flush_ht_from_cache() {
+    uint64 count = 0;
+    for (int j = 0; j < 10; j++)
+      // count += this->get_fill();
+      for (size_t i = 0; i < this->capacity; i += 4) {
+        //   // _mm_clflush(&this->hashtable[i]);
+        __builtin_prefetch(&this->hashtable[i], false, 1);
+        //   // count += this->hashtable[i].kvpair.key;
+        count++;
+      }
+    // printf("[JOSH] %d\n", count);
+    //   return count;
+    // constexpr size_t DUMMY_HT_BYTES = 500 * 1024 * 1024;  // 100MB
+    // constexpr size_t DUMMY_HT_CAPACITY = DUMMY_HT_BYTES / sizeof(KV);
+
+    // // Allocate
+    // KV *dummy_ht = (KV *)malloc(DUMMY_HT_BYTES);
+    // assert(dummy_ht != nullptr);
+
+    // // Optional: zero init so we can test fill
+    // memset(dummy_ht, 0, DUMMY_HT_BYTES);
+
+    // // Simple is_empty logic
+    // auto is_empty = [](const KV &kv) -> bool {
+    //   static const KV zero = {};
+    //   return memcmp(&kv, &zero, sizeof(KV)) == 0;
+    // };
+
+    // // Count non-empty entries
+    // size_t count = 0;
+    // for (int j = 0; j < 10; j++)
+    //   for (size_t i = 0; i < DUMMY_HT_CAPACITY; i++) {
+    //     if (!is_empty(dummy_ht[i])) {
+    //       count++;
+    //     }
+    //   }
+    // // printf("Dummy HT fill: %lu entries\n", count);
+
+    // // Free
+    // free(dummy_ht);
+
+    return count;
+  }
+
   size_t get_capacity() const override { return this->capacity; }
 
   size_t get_max_count() const override {
@@ -583,9 +804,6 @@ class CASHashTable : public BaseHashTable {
   uint32_t find_tail;
   uint32_t ins_head;
   uint32_t ins_tail;
-
-  KVQ *find_head_ptr;
-  KVQ *find_tail_ptr;
 
   // const __mmask8 KEYMSK = 0b01010101;
 
@@ -765,7 +983,7 @@ class CASHashTable : public BaseHashTable {
     return empty_slot_;
   }
 
-  void __insert_branched(KVQ *q, collector_type *collector) {
+  uint64_t __insert_branched(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
 
     size_t idx = q->idx;
@@ -785,7 +1003,7 @@ class CASHashTable : public BaseHashTable {
         collector->end(q->timer_id);
 #endif
 
-        return;
+        return 0;
       }
       // hashtable_mutexes[pidx].unlock();
       // printf("Thread %" PRIu64 ", released lock: %" PRIu64 "\n",
@@ -809,7 +1027,7 @@ class CASHashTable : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
       collector->end(q->timer_id);
 #endif
-      return;
+      return 0;
     }
 
     /* insert back into queue, and prefetch next bucket.
@@ -844,16 +1062,17 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     ++this->ins_head;
-    this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
+    this->ins_head &= INSERT_QUEUE_SZ_MASK;
 
-    return;
+    return 1;
   }
 
-  void __insert_one(KVQ *q, collector_type *collector) {
+  uint64_t __insert_one(KVQ *q, collector_type *collector) {
     if (q->key == this->empty_item.get_key()) {
       __insert_empty(q);
+      return 0;
     } else {
-      __insert_branched(q, collector);
+      return __insert_branched(q, collector);
     }
   }
 
@@ -873,35 +1092,6 @@ class CASHashTable : public BaseHashTable {
     PLOG_FATAL << "Not implemented";
     assert(false);
     return -1;
-  }
-
-  void add_to_insert_queue(void *data, collector_type *collector) {
-    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
-
-#ifdef LATENCY_COLLECTION
-    const auto timer = collector->start();
-#endif
-
-    uint64_t hash = this->hash((const char *)&key_data->key);
-    size_t idx = hash & (this->capacity - 1);
-
-    this->prefetch(idx);
-
-#ifdef UNIFORM_HT_SUPPORT
-    this->insert_queue[this->ins_head].key_hash = hash;
-#endif
-
-    this->insert_queue[this->ins_head].idx = idx;
-    this->insert_queue[this->ins_head].key = key_data->key;
-    this->insert_queue[this->ins_head].value = key_data->value;
-    this->insert_queue[this->ins_head].key_id = key_data->id;
-
-#ifdef LATENCY_COLLECTION
-    this->insert_queue[this->ins_head].timer_id = timer;
-#endif
-
-    this->ins_head++;
-    if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
   }
 
   inline void add_to_find_queue(void *data, collector_type *collector) {
@@ -930,8 +1120,41 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     this->find_head += 1;
-    this->find_head &= (find_queue_sz - 1);
+    this->find_head &= FIND_QUEUE_SZ_MASK;
   }
+
+#ifdef IN_DEVELOPMENT
+  inline void add_to_insert_queue(void *data, collector_type *collector) {
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
+
+#ifdef LATENCY_COLLECTION
+    const auto timer = collector->start();
+#endif
+
+    uint64_t hash = this->hash((const char *)&key_data->key);
+    size_t idx = hash & (this->capacity - 1);
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+
+    prefetch(idx);
+
+    this->insert_queue[this->ins_head].idx = idx;
+    this->insert_queue[this->ins_head].key = key_data->key;
+    this->insert_queue[this->ins_head].key_id = key_data->id;
+    this->insert_queue[this->ins_head].value = key_data->value;
+
+#ifdef UNIFORM_HT_SUPPORT
+    this->insert_queue[this->ins_head].key_hash = hash;
+#endif
+
+#ifdef LATENCY_COLLECTION
+    this->insert_queue[this->ins_head].timer_id = timer;
+#endif
+
+    this->ins_head += 1;
+    this->ins_head &= INSERT_QUEUE_SZ_MASK;
+  }
+
+#endif
 };
 
 /// Static variables

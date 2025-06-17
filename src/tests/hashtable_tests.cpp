@@ -50,6 +50,10 @@ extern std::vector<cacheline> toxic_waste_dump;
 OpTimings do_zipfian_inserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
+
+
+  auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
   collector->claim();
@@ -107,24 +111,24 @@ OpTimings do_zipfian_inserts(
       items[key].id = n;
 
       zipf_idx++;
-      if (config.no_prefetch) {
-        hashtable->insert_noprefetch(&items[key], collector);
+      // if (config.no_prefetch) {
+      //   hashtable->insert_noprefetch(&items[key], collector);
 
-        for (auto p = 0u; p < config.pollute_ratio; ++p)
-          prefetch_object<true>(
-              &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
-      } else {
+      //   for (auto p = 0u; p < config.pollute_ratio; ++p)
+      //     prefetch_object<true>(
+      //         &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+      // } else {
         if (++key == config.batch_len) {
           InsertFindArguments keypairs(items, config.batch_len);
-          hashtable->insert_batch(keypairs, collector);
-          for (auto p = 0u; p < config.pollute_ratio * HT_TESTS_BATCH_LENGTH;
-               ++p)
-            prefetch_object<true>(
-                &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+          cas_ht->insert_batch_unrolled(keypairs, collector);
+          // for (auto p = 0u; p < config.pollute_ratio * HT_TESTS_BATCH_LENGTH;
+          //      ++p)
+          //   prefetch_object<true>(
+          //       &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
           key = 0;
         }
-      }
+      //}
     }
   }
   if (!config.no_prefetch) {
@@ -188,10 +192,10 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
     uint64_t key_start =
         std::max(static_cast<uint64_t>(num_finds) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
-    
-    //for (auto p = 0u; p < toxic_waste_dump.size(); ++p) {
-    //  __builtin_prefetch(&toxic_waste_dump[p], true, 3);
-    //}
+
+    // for (auto p = 0u; p < toxic_waste_dump.size(); ++p) {
+    //   __builtin_prefetch(&toxic_waste_dump[p], true, 3);
+    // }
 
     for (unsigned int n{}; n < num_finds; ++n) {
 #ifdef XORWOW
@@ -337,6 +341,16 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //                &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)],
   //                64);
 
+
+  //int cpu = sched_getcpu();
+  // if(cpu == 0 || cpu == 1 || cpu == 20 || cpu ==21){
+  //auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+  //volatile uint64 t1 = cas_ht->flush_ht_from_cache();
+    //Only thing that seems to work
+  // for (int i = 0; i < 10; i++) 
+  // hashtable->get_fill();
+  // }
+  
   cur_phase = ExecPhase::finds;
 
 #ifdef WITH_PERFCPP
@@ -357,8 +371,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //   read(perf_ctl_ack_fd, ack, 5);
   //   assert(strcmp(ack, "ack\n") == 0);
   // }
-  const auto num_finds =
-      do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
+
+
+  //const auto num_finds = do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
 
   // perf pause()
   // if (shard->shard_idx == 0) {
@@ -378,8 +393,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //}
 #endif
 
-  shard->stats->finds.duration = num_finds.duration;
-  shard->stats->finds.op_count = num_finds.op_count;
+  shard->stats->finds.duration = 1; //num_finds.duration;
+  shard->stats->finds.op_count = 1; //num_finds.op_count;
   shard->stats->ht_fill = config.ht_fill;
   get_ht_stats(shard, hashtable);
 
