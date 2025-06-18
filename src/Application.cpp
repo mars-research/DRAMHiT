@@ -151,23 +151,23 @@ void sync_complete(void) {
   }
 #endif
 
-  if (cur_phase == ExecPhase::finds) {
-    if (!zipfian_finds) {
-      g_find_start = RDTSC_START();
-      zipfian_finds = true;
-    } else {
-      g_find_end = RDTSCP();
-      PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
-    }
-  } else if (cur_phase == ExecPhase::insertions) {
-    if (!zipfian_inserts) {
-      g_insert_start = RDTSC_START();
-      zipfian_inserts = true;
-    } else {
-      g_insert_end = RDTSCP();
-      PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
-    }
-  }
+  // if (cur_phase == ExecPhase::finds) {
+  //   if (!zipfian_finds) {
+  //     g_find_start = RDTSC_START();
+  //     zipfian_finds = true;
+  //   } else {
+  //     g_find_end = RDTSCP();
+  //     PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
+  //   }
+  // } else if (cur_phase == ExecPhase::insertions) {
+  //   if (!zipfian_inserts) {
+  //     g_insert_start = RDTSC_START();
+  //     zipfian_inserts = true;
+  //   } else {
+  //     g_insert_end = RDTSCP();
+  //     PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
+  //   }
+  // }
   PLOGI.printf("Sync phase done!");
 }
 

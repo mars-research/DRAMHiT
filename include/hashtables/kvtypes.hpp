@@ -528,6 +528,8 @@ struct Item {
       ret = __sync_bool_compare_and_swap(&this->kvpair.value, old_val,
                                          elem->value);
     }
+
+    // this->kvpair.value = elem->value;
     return ret;
   }
 

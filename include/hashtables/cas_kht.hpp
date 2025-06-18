@@ -52,7 +52,7 @@ class CASHashTable : public BaseHashTable {
   uint32_t INSERT_QUEUE_SZ_MASK;
   uint32_t FIND_QUEUE_SZ_MASK;
   uint64_t HT_BUCKET_MASK;
-  #define KEYMSK ((__mmask8)(0b01010101))
+#define KEYMSK ((__mmask8)(0b01010101))
 
   CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
 
@@ -107,6 +107,8 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
+  void clear_table() { memset(this->hashtable, 0, capacity * sizeof(KV)); }
+
   void prefetch_queue(QueueType qtype) override {}
 
   void insert_noprefetch(const void *data, collector_type *collector) override {
@@ -160,7 +162,7 @@ class CASHashTable : public BaseHashTable {
     }
 
     this->flush_if_needed(collector);
-  } 
+  }
 
   inline void atomic_cas_value_until_success(uint64_t *vptr, uint64_t value) {
     uint8_t ret_val = 0;
@@ -171,7 +173,33 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
-#define IN_DEVELOPMENT
+  inline void pop_insert_queue(collector_type *collector) {
+    uint64_t retry = 0;
+    do {
+      uint32_t next_tail = (this->ins_tail + 6) & INSERT_QUEUE_SZ_MASK;
+      const void *next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
+      __builtin_prefetch(next_tail_addr, true, 3);
+
+      retry = __insert_one(&this->insert_queue[this->ins_tail], collector);
+      this->ins_tail++;
+      this->ins_tail &= INSERT_QUEUE_SZ_MASK;
+
+    } while ((retry));
+  }
+
+  void insert_batch_unrolled(const InsertFindArguments &kp,
+                             collector_type *collector) {
+    for (auto &data : kp) {
+      // pop queue
+      if (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
+          (insert_queue_sz - 1)) {
+        pop_insert_queue(collector);
+      }
+      add_to_insert_queue(&data, collector);
+    }
+  }
+
+// #define IN_DEVELOPMENT
 #ifdef IN_DEVELOPMENT
   void insert_batch_unrolled(const InsertFindArguments &kp,
                              collector_type *collector) {
@@ -197,6 +225,11 @@ class CASHashTable : public BaseHashTable {
       // c++ iterator is faster than a regular integer loop.
       for (auto &data : kp) {
       NextCacheLine:
+
+        // uint32_t next_tail = (tail + 7) & INSERT_QUEUE_SZ_MASK;
+        // const void *next_tail_addr =
+        //     &this->hashtable[this->insert_queue[next_tail].idx];
+        // __builtin_prefetch(next_tail_addr, true, 1);
         // pop the tail
         q = &this->insert_queue[tail];
         tail = (tail + 1) & INSERT_QUEUE_SZ_MASK;
@@ -217,16 +250,19 @@ class CASHashTable : public BaseHashTable {
         // Key exists, fast path swap keys until success.
         if (key_cmp > 0) {
           offset = _bit_scan_forward(key_cmp);
-          bucket[(offset + 1)] = value; // atomic_cas_value_until_success(&bucket[(offset + 1)], value);
+          bucket[(offset + 1)] =
+              value;  // atomic_cas_value_until_success(&bucket[(offset
+                      // + 1)], value);
           goto AddNextInsertion;
         }
-#endif 
+#endif
         // Key doesn't exist, show path, must walk the entire cacheline, and
         // access memory. Optimization possible! unrolled this.
         offset = 0;
 
       NextSlot:
-        if (__sync_bool_compare_and_swap(&bucket[offset], 0,
+        if (bucket[offset] == 0 &&
+            __sync_bool_compare_and_swap(&bucket[offset], 0,
                                          key))  // empty slot, inserting a key.
         {
           bucket[(offset + 1)] = value;
@@ -237,7 +273,7 @@ class CASHashTable : public BaseHashTable {
         if (bucket[offset] == key)  // someone else might have inserted the key
         {
           bucket[(offset + 1)] = value;
-          //atomic_cas_value_until_success(&bucket[(offset + 1)], value);
+          // atomic_cas_value_until_success(&bucket[(offset + 1)], value);
           goto AddNextInsertion;
         }
 
@@ -260,7 +296,7 @@ class CASHashTable : public BaseHashTable {
         idx += CACHELINE_SIZE / sizeof(KV);
         idx = idx & HT_BUCKET_MASK;
 #endif
-        // prefetch write.
+        // prefetch write
         __builtin_prefetch(&this->hashtable[idx], true, 1);
 
 #ifdef UNIFORM_HT_SUPPORT
@@ -290,7 +326,7 @@ class CASHashTable : public BaseHashTable {
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
         uint32_t new_idx = hash & HT_BUCKET_MASK;
 
-        __builtin_prefetch(&this->hashtable[new_idx], true, 1);
+        __builtin_prefetch(&this->hashtable[idx], true, 1);
 
         this->insert_queue[head].key = key_data->key;
         this->insert_queue[head].idx = new_idx;
@@ -332,8 +368,7 @@ class CASHashTable : public BaseHashTable {
     while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
       __insert_one(&this->insert_queue[this->ins_tail], collector);
       if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
-      curr_queue_sz =
-          (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
+      curr_queue_sz = (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
     }
     return;
   }
@@ -345,8 +380,7 @@ class CASHashTable : public BaseHashTable {
     while (curr_queue_sz != 0) {
       __insert_one(&this->insert_queue[this->ins_tail], collector);
       if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
-      curr_queue_sz =
-          (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
+      curr_queue_sz = (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
     }
   }
 
@@ -390,17 +424,6 @@ class CASHashTable : public BaseHashTable {
     // else
     //   return find_queue_sz + find_tail - find_head;
   }
-
-#ifdef IN_DEVELOPMENT
-  inline void pop_insert_queue(collector_type *collector) {
-    uint64_t retry = 0;
-    do {
-      retry = __insert_one(&this->insert_queue[this->ins_tail], collector);
-      this->ins_tail++;
-      this->ins_tail &= (insert_queue_sz - 1);
-    } while ((retry));
-  }
-#endif
 
   inline void pop_find_queue(ValuePairs &vp, collector_type *collector) {
     uint64_t retry = 0;
@@ -517,7 +540,6 @@ class CASHashTable : public BaseHashTable {
     this->find_tail = tail;
     this->find_head = head;
   }
-
 
   void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
                            collector_type *collector) {
@@ -988,9 +1010,64 @@ class CASHashTable : public BaseHashTable {
 
     size_t idx = q->idx;
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+    KV *curr;
+
+    // The intuition is, we load a snapshot of a cacheline of keys and see 
+    // how far ahead we can skip into. It is okay to be outdated with the world,  
+    // because, that just means we skip less than we could have. We can do this
+    // because keys are never deleted in the hashtable.
+
+    // ex. We load a cacheline like this | - , - , 0, 0 |. 
+    //  The world can update the keys like this during operation | -, -, X, 0|
+    // but it will never remove any of keys.
+
+    uint64_t *bucket = (uint64_t *)&this->hashtable[idx];
+    __m512i cacheline = _mm512_load_si512(bucket);
+
+    // Check of the keys exists, 
+    __m512i key_vector = _mm512_set1_epi64(q->key);
+    __mmask8 key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
+    if (key_cmp > 0) {
+      __mmask8 offset = _bit_scan_forward(key_cmp);
+      bucket[(offset + 1)] = q->value;
+      return 0;
+    }
+
+    // Check for empty slot
+    __m512i zero_vector = _mm512_setzero_si512();
+    __mmask8 ept_cmp =
+        _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
+    if (ept_cmp != 0) {
+      idx += (_bit_scan_forward(ept_cmp) >> 1); 
+    } else {
+      idx += 4;
+#ifdef UNIFORM_HT_SUPPORT
+      uint64_t old_hash = q->key_hash;
+      uint64_t hash = this->hash(&old_hash);
+      idx = hash & (this->capacity - 1);
+      this->insert_queue[this->ins_head].key_hash = hash;
+#endif
+
+      //prefetch(idx);
+      __builtin_prefetch(&this->hashtable[idx], false, 1);
+
+      this->insert_queue[this->ins_head].key = q->key;
+      this->insert_queue[this->ins_head].key_id = q->key_id;
+      this->insert_queue[this->ins_head].value = q->value;
+      this->insert_queue[this->ins_head].idx = idx;
+
+#ifdef LATENCY_COLLECTION
+      this->insert_queue[this->ins_head].timer_id = q->timer_id;
+#endif
+
+      ++this->ins_head;
+      this->ins_head &= INSERT_QUEUE_SZ_MASK;
+
+      return 1;
+    }
 
   try_insert:
-    KV *curr = &this->hashtable[idx];
+    curr = &this->hashtable[idx];
 
     if (curr->is_empty()) {
       bool cas_res = curr->insert_cas(q);
@@ -1051,6 +1128,7 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     prefetch(idx);
+    //__builtin_prefetch(&this->hashtable[idx], false, 1);
 
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
@@ -1123,7 +1201,6 @@ class CASHashTable : public BaseHashTable {
     this->find_head &= FIND_QUEUE_SZ_MASK;
   }
 
-#ifdef IN_DEVELOPMENT
   inline void add_to_insert_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 
@@ -1135,7 +1212,8 @@ class CASHashTable : public BaseHashTable {
     size_t idx = hash & (this->capacity - 1);
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
 
-    prefetch(idx);
+    //prefetch(idx);
+    __builtin_prefetch(&this->hashtable[idx], false, 1);
 
     this->insert_queue[this->ins_head].idx = idx;
     this->insert_queue[this->ins_head].key = key_data->key;
@@ -1153,8 +1231,6 @@ class CASHashTable : public BaseHashTable {
     this->ins_head += 1;
     this->ins_head &= INSERT_QUEUE_SZ_MASK;
   }
-
-#endif
 };
 
 /// Static variables

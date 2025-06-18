@@ -1,3 +1,4 @@
+#include <cstdint>
 #ifdef WITH_VTUNE_LIB
 #include <ittnotify.h>
 #endif
@@ -81,17 +82,31 @@ OpTimings do_zipfian_inserts(
 
   PLOGV.printf("id: %u | key_start %" PRIu64 "", id, key_start);
 
-  const auto start = RDTSC_START();
   key_type key{};
   std::size_t next_pollution{};
 
   auto insert_factor = config.insert_factor;
+
+  uint64_t start;
+  uint64_t end;
 
 #ifdef HT_TEST_INSERT_ONCE
   insert_factor = 1;
 #endif
 
   for (auto j = 0u; j < insert_factor; j++) {
+
+    // For each experiment, set up code .... 
+    sync_barrier->arrive_and_wait();
+    if(id==0) {
+      cas_ht->clear_table();
+    }
+    sync_barrier->arrive_and_wait();
+
+    // end of the set up code.
+
+    start = RDTSC_START();
+
     key_start =
         std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
@@ -130,13 +145,20 @@ OpTimings do_zipfian_inserts(
         }
       //}
     }
-  }
-  if (!config.no_prefetch) {
-    hashtable->flush_insert_queue(collector);
+
+    //if (!config.no_prefetch) {
+      hashtable->flush_insert_queue(collector);
+    //}
+
+
+    end = RDTSCP();
+    duration += end - start;
   }
 
-  const auto end = RDTSCP();
-  duration += end - start;
+  
+
+
+  
 
   PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
              << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
