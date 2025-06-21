@@ -48,6 +48,10 @@ extern ExecPhase cur_phase;
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 extern std::vector<cacheline> toxic_waste_dump;
 
+
+    #define XORWOW
+
+
 OpTimings do_zipfian_inserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
@@ -94,6 +98,8 @@ OpTimings do_zipfian_inserts(
   insert_factor = 1;
 #endif
 
+
+
   for (auto j = 0u; j < insert_factor; j++) {
 
     // For each experiment, set up code .... 
@@ -107,8 +113,7 @@ OpTimings do_zipfian_inserts(
 
     start = RDTSC_START();
 
-    key_start =
-        std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+    key_start = std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
 
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
@@ -125,7 +130,7 @@ OpTimings do_zipfian_inserts(
       items[key].key = items[key].value = value;
       items[key].id = n;
 
-      zipf_idx++;
+    zipf_idx++;
       // if (config.no_prefetch) {
       //   hashtable->insert_noprefetch(&items[key], collector);
 
@@ -135,7 +140,7 @@ OpTimings do_zipfian_inserts(
       // } else {
         if (++key == config.batch_len) {
           InsertFindArguments keypairs(items, config.batch_len);
-          cas_ht->insert_batch_unrolled(keypairs, collector);
+          cas_ht->insert_batch_simple(keypairs, collector);
           // for (auto p = 0u; p < config.pollute_ratio * HT_TESTS_BATCH_LENGTH;
           //      ++p)
           //   prefetch_object<true>(

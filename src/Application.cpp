@@ -711,22 +711,16 @@ int Application::process(int argc, char *argv[]) {
         break;
     }
   } else {
+
+
     switch (config.numa_split) {
       case THREADS_SPLIT_SEPARATE_NODES:
-        this->np = new NumaPolicyThreads(config.num_threads,
-                                         THREADS_SPLIT_SEPARATE_NODES);
-        break;
       case THREADS_ASSIGN_SEQUENTIAL:
-        this->np = new NumaPolicyThreads(config.num_threads,
-                                         THREADS_ASSIGN_SEQUENTIAL);
-        break;
       case THREADS_REMOTE_NUMA_NODE:
-        this->np = new NumaPolicyThreads(config.num_threads,
-                                         THREADS_REMOTE_NUMA_NODE);
-        break;
       case THREADS_LOCAL_NUMA_NODE:
+      case THREADS_NO_MEM_DISTRIBUTION:
         this->np = new NumaPolicyThreads(config.num_threads,
-                                         THREADS_LOCAL_NUMA_NODE);
+                                         (numa_policy_threads) config.numa_split);
         break;
       default:
         PLOGE.printf("Unknown numa policy. Exiting");

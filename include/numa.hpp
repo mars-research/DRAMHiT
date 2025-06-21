@@ -331,8 +331,8 @@ enum numa_policy_threads {
   THREADS_SPLIT_SEPARATE_NODES = 1,
   THREADS_ASSIGN_SEQUENTIAL = 2,
   THREADS_REMOTE_NUMA_NODE = 3, 
-  THREADS_LOCAL_NUMA_NODE = 4
-
+  THREADS_LOCAL_NUMA_NODE = 4, 
+  THREADS_NO_MEM_DISTRIBUTION = 5
 };
 
 class NumaPolicyThreads : public Numa {
@@ -377,21 +377,6 @@ class NumaPolicyThreads : public Numa {
     assert(this->config_num_threads <=
            static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
-#ifdef SINGLE_NUMA_NODE_MODE
-
-    if (this->config_num_threads > nodes[0].cpu_list.size()) {
-      std::cout << "too many threads to be scheduled on nodes 0" << std::endl;
-      exit(-1);
-    }
-
-    for (auto i = 0u; i < this->config_num_threads; i++) {
-      uint32_t cpu_assigned = nodes[0].cpu_list[i];
-      this->assigned_cpu_list.push_back(cpu_assigned);
-      this->unassigned_cpu_list.erase(cpu_assigned);
-    }
-    return;
-#endif
-
     // return numa node 0 threads.
     if (this->np == THREADS_REMOTE_NUMA_NODE || this->np == THREADS_LOCAL_NUMA_NODE) {
       if (this->config_num_threads > nodes[0].cpu_list.size()) {
@@ -407,7 +392,7 @@ class NumaPolicyThreads : public Numa {
       return;
     }
 
-    if (this->np == THREADS_SPLIT_SEPARATE_NODES) {
+    if (this->np == THREADS_SPLIT_SEPARATE_NODES || this->np == THREADS_NO_MEM_DISTRIBUTION) {
       int num_nodes = Numa::get_num_nodes();
       uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0, last_cpu_idx = 0;
       uint32_t threads_per_node =

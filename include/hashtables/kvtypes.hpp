@@ -522,14 +522,14 @@ struct Item {
 
   inline bool update_cas(queue *elem) {
     auto ret = false;
-    uint64_t old_val;
-    while (!ret) {
-      old_val = this->kvpair.value;
-      ret = __sync_bool_compare_and_swap(&this->kvpair.value, old_val,
-                                         elem->value);
-    }
+    // uint64_t old_val;
+    // while (!ret) {
+    //   old_val = this->kvpair.value;
+    //   ret = __sync_bool_compare_and_swap(&this->kvpair.value, old_val,
+    //                                      elem->value);
+    // }
 
-    // this->kvpair.value = elem->value;
+    this->kvpair.value = elem->value;
     return ret;
   }
 
