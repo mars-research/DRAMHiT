@@ -10,11 +10,11 @@
 #include "./hashtables/cas_kht.hpp"
 #include "print_stats.h"
 #include "sync.h"
+#include "tests/tests.hpp"
 #include "utils/hugepage_allocator.hpp"
 #include "utils/vtune.hpp"
 #include "zipf.h"
 #include "zipf_distribution.hpp"
-#include "tests/tests.hpp"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI
 #include <papi.h>
@@ -226,17 +226,15 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       }
 #endif
       zipf_idx++;
-
-#ifndef NOPREFETCH
-      if (vp.first > 0) {
-        vp.first = 0;
-      }
-
-      hashtable->flush_find_queue(vp, collector);
-      found += vp.first;
-#endif
-
     }
+#ifndef NOPREFETCH
+    if (vp.first > 0) {
+      vp.first = 0;
+    }
+
+    hashtable->flush_find_queue(vp, collector);
+    found += vp.first;
+#endif
     end = RDTSCP();
     duration += end - start;
   }
