@@ -172,14 +172,14 @@ class MultithreadCounter {
       double bw = 0;
       if(results[i].contain("cycles") && results[i].contain("OFFCORE_REQUESTS.DATA_RD"))
       {
-        bw = (results[i].get_value("OFFCORE_REQUESTS.DATA_RD") * 64 / GB_IN_BYTES) / (results[i].get_value("cycles")  / CYCLES_PER_SEC);
+        bw = (results[i].get_value("OFFCORE_REQUESTS.DATA_RD") * 64 * FREQ / GB_IN_BYTES) / results[i].get_value("cycles");
         std::cout << "read bw: " << bw << "GB/s \n";
         totol_rbw += bw;
       } 
 
       if(results[i].contain("cycles") && results[i].contain("OFFCORE_REQUESTS.ALL_REQUESTS"))
       {
-        bw = (results[i].get_value("OFFCORE_REQUESTS.ALL_REQUESTS") * 64 / GB_IN_BYTES) / (results[i].get_value("cycles")  / CYCLES_PER_SEC);
+        bw = (results[i].get_value("OFFCORE_REQUESTS.ALL_REQUESTS") * 64 * FREQ / GB_IN_BYTES) / results[i].get_value("cycles");
         std::cout << "total bw: " << bw << "GB/s \n";
         totol_bw += bw;
       }
@@ -232,7 +232,7 @@ class MultithreadCounter {
     return events;
   }
 
-  static constexpr double CYCLES_PER_SEC = (2.5 * 1000 * 1000 * 1000);
+  static constexpr double FREQ = (2.5 * 1000 * 1000 * 1000);
   static constexpr double GB_IN_BYTES = (1 << 30);
 
   std::vector<perf::EventCounter>

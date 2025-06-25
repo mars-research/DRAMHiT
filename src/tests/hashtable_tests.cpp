@@ -14,6 +14,7 @@
 #include "utils/vtune.hpp"
 #include "zipf.h"
 #include "zipf_distribution.hpp"
+#include "tests/tests.hpp"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI
 #include <papi.h>

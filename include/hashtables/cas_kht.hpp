@@ -158,7 +158,7 @@ static KV *hashtable;
 
   // insert a batch
   void old_insert_batch(const InsertFindArguments &kp,
-                    collector_type *collector) override {
+                    collector_type *collector) {
     this->flush_if_needed(collector);
 
     for (auto &data : kp) {
