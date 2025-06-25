@@ -157,7 +157,7 @@ static KV *hashtable;
   }
 
   // insert a batch
-  void insert_batch(const InsertFindArguments &kp,
+  void old_insert_batch(const InsertFindArguments &kp,
                     collector_type *collector) override {
     this->flush_if_needed(collector);
 
@@ -180,10 +180,10 @@ static KV *hashtable;
   inline void pop_insert_queue(collector_type *collector) {
     uint64_t retry = 0;
     do {
-      uint32_t next_tail = (this->ins_tail + 8) & INSERT_QUEUE_SZ_MASK; // iteration nmber between prefetch to l1. prefetch to l2
-      const void *next_tail_addr =
+      uint32_t next_tail = (this->ins_tail + 8) & INSERT_QUEUE_SZ_MASK;      
+      const void *next_tail_addr = 
           &this->hashtable[this->insert_queue[next_tail].idx];
-      __builtin_prefetch(next_tail_addr, false, 3);  
+      __builtin_prefetch(next_tail_addr, true, 3);  
 
       // |N  X  T| -> # 64, 64   
       retry = __insert_one(&this->insert_queue[this->ins_tail], collector);
@@ -394,9 +394,16 @@ static KV *hashtable;
   }  // end insert unrolled
 
 
-  void insert_batch_simple(const InsertFindArguments &kp,
+  void insert_batch(const InsertFindArguments &kp,
                            collector_type *collector) {
     for (auto &data : kp) {
+
+      // uint64_t hash = this->hash((const char *)&data.key);
+      // size_t idx = hash & (this->capacity - 1);
+      // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+      // this->hashtable[idx].kvpair.key = data.key;
+      //__sync_bool_compare_and_swap((__int128*) &this->hashtable[idx], *(__int128*)&this->hashtable[idx], *(__int128*)&data);
+
       // pop queue
       if (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
           (insert_queue_sz - 1)) {
@@ -405,8 +412,6 @@ static KV *hashtable;
       add_to_insert_queue(&data, collector);
     }
   }
-
-  inline uint64_t toy_hash(uint64_t x) { return (x * 2654435761) ^ (x >> 16); }
 
   __attribute__((noinline)) void insert_batch_max_test(
       InsertFindArgument *kp, collector_type *collector) {
@@ -422,179 +427,8 @@ static KV *hashtable;
       _mm_stream_si64((long long int *)(reg), (long long int)kv);
       //_mm_sfence();
     }
-
-    // sum++;
-    //_mm_stream_pd((double*)(reg), kv);
-
-    // hash = _mm_crc32_u64(0xffffffff, data.key);
-    // idx = hash & (this->capacity - 1);
-    //_mm_stream_pd((double*)(base + idx), r);
-
-    // idx = toy_hash(data.key) & (this->capacity - 1);
-    //_mm_stream_pd((double*)(&this->hashtable[idx]), r);
   }
 
-// #define IN_DEVELOPMENT
-#ifdef IN_DEVELOPMENT
-  void insert_batch_unrolled(const InsertFindArguments &kp,
-                             collector_type *collector) {
-    bool fast_path = ((this->ins_head - this->ins_tail) &
-                      INSERT_QUEUE_SZ_MASK) >= (insert_queue_sz - 1);
-    // fast path
-    if (fast_path) [[likely]] {
-      __m512i zero_vector = _mm512_setzero_si512();
-      uint32_t tail = this->ins_tail;
-      uint32_t head = this->ins_head;
-      uint32_t not_found = 0;
-      uint64_t key;
-      uint64_t value;
-      uint64_t *bucket;
-      __mmask8 offset;
-      __m512i key_vector;
-      __m512i cacheline;
-      __mmask8 key_cmp;
-      uint8_t cas_ret_val;
-      uint64_t cas_old_val;
-      KVQ *q;
-      uint64_t hash;
-      // c++ iterator is faster than a regular integer loop.
-      for (auto &data : kp) {
-      NextCacheLine:
-
-        // uint32_t next_tail = (tail + 7) & INSERT_QUEUE_SZ_MASK;
-        // const void *next_tail_addr =
-        //     &this->hashtable[this->insert_queue[next_tail].idx];
-        // __builtin_prefetch(next_tail_addr, true, 1);
-        // pop the tail
-        q = &this->insert_queue[tail];
-        tail = (tail + 1) & INSERT_QUEUE_SZ_MASK;
-
-        uint32_t idx = q->idx;
-        value = q->value;
-        key = q->key;
-
-        // cacheline address
-        bucket = (uint64_t *)&this->hashtable[idx];
-
-#ifdef SIMD_WRITE_OPTIMIZATION
-        key_vector = _mm512_set1_epi64(key);
-        // load simd register for fast path
-        cacheline = _mm512_load_si512(bucket);
-        key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
-
-        // Key exists, fast path swap keys until success.
-        if (key_cmp > 0) {
-          offset = _bit_scan_forward(key_cmp);
-          bucket[(offset + 1)] =
-              value;  // atomic_cas_value_until_success(&bucket[(offset
-                      // + 1)], value);
-          goto AddNextInsertion;
-        }
-#endif
-        // Key doesn't exist, show path, must walk the entire cacheline, and
-        // access memory. Optimization possible! unrolled this.
-        offset = 0;
-
-      NextSlot:
-        if (bucket[offset] == 0 &&
-            __sync_bool_compare_and_swap(&bucket[offset], 0,
-                                         key))  // empty slot, inserting a key.
-        {
-          bucket[(offset + 1)] = value;
-          // atomic_cas_value_until_success(&bucket[(offset + 1)], value);
-          goto AddNextInsertion;
-        }
-
-        if (bucket[offset] == key)  // someone else might have inserted the key
-        {
-          bucket[(offset + 1)] = value;
-          // atomic_cas_value_until_success(&bucket[(offset + 1)], value);
-          goto AddNextInsertion;
-        }
-
-        offset += 2;
-        if (offset >= 8) {
-          goto Retry;
-        }
-        goto NextSlot;
-
-      Retry:
-#ifdef CALC_STATS
-        this->num_reprobes++;
-#endif
-
-#ifdef UNIFORM_HT_SUPPORT
-        hash = _mm_crc32_u64(
-            0xffffffff, *static_cast<const std::uint64_t *>(&(q->key_hash)));
-        idx = hash & HT_BUCKET_MASK;
-#else
-        idx += CACHELINE_SIZE / sizeof(KV);
-        idx = idx & HT_BUCKET_MASK;
-#endif
-        // prefetch write
-        __builtin_prefetch(&this->hashtable[idx], true, 1);
-
-#ifdef UNIFORM_HT_SUPPORT
-        this->insert_queue[head].key_hash = hash;
-#endif
-        this->insert_queue[head].key = key;
-        this->insert_queue[head].key_id = q->key_id;
-        this->insert_queue[head].idx = idx;
-        this->insert_queue[head].value = value;
-
-#ifdef LATENCY_COLLECTION
-        this->insert_queue[head].timer_id = q->timer_id;
-#endif
-        head += 1;
-        head &= INSERT_QUEUE_SZ_MASK;
-        goto NextCacheLine;  // retry, need to pop tail again
-
-      AddNextInsertion:
-        // add to find queue
-        InsertFindArgument *key_data =
-            reinterpret_cast<InsertFindArgument *>(&data);
-
-#ifdef LATENCY_COLLECTION
-        const auto timer = collector->start();
-#endif
-        hash = _mm_crc32_u64(
-            0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
-        uint32_t new_idx = hash & HT_BUCKET_MASK;
-
-        __builtin_prefetch(&this->hashtable[idx], true, 1);
-
-        this->insert_queue[head].key = key_data->key;
-        this->insert_queue[head].idx = new_idx;
-        this->insert_queue[head].key_id = key_data->id;
-        this->insert_queue[head].value = key_data->id;
-
-#ifdef UNIFORM_HT_SUPPORT
-        this->insert_queue[head].key_hash = hash;
-#endif
-
-#ifdef LATENCY_COLLECTION
-        this->insert_queue[head].timer_id = timer;
-#endif
-        head += 1;
-        head &= INSERT_QUEUE_SZ_MASK;
-      }  // end for loop
-
-      this->ins_tail = tail;
-      this->ins_head = head;
-    }  // end of fast path
-    else [[unlikely]] {  // slow paths
-      for (auto &data : kp) {
-        // pop queue
-        if (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
-            (insert_queue_sz - 1)) {
-          pop_insert_queue(collector);
-        }
-        add_to_insert_queue(&data, collector);
-      }
-    }
-  }
-
-#endif
   // overridden function for insertion
   void flush_if_needed(collector_type *collector) {
     size_t curr_queue_sz =
@@ -674,7 +508,7 @@ static KV *hashtable;
     } while ((retry));
   }
 
-  void find_batch_simple(const InsertFindArguments &kp, ValuePairs &values,
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                          collector_type *collector) {
     if ((get_find_queue_sz() >= find_queue_sz - 1)) {
       for (auto &data : kp) {
@@ -689,94 +523,6 @@ static KV *hashtable;
         add_to_find_queue(&data, collector);
       }
     }
-  }
-
-  // Artificial test, to get max dram bandwidth
-  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-                  collector_type *collector) override {
-    // values.first += 16;
-    uint64_t hash;
-    uint32_t idx;
-    uint32_t head = this->find_head;
-    uint32_t tail = this->find_tail;
-
-    bool fast_path =
-        ((head - tail) & FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
-
-    if (fast_path) [[likely]] {
-      for (auto &data : kp) {
-        // L1 prefetch
-        uint32_t next_tail = (tail + 7) & FIND_QUEUE_SZ_MASK;
-        const void *next_tail_addr =
-            &this->hashtable[this->find_queue[next_tail].idx];
-        __builtin_prefetch(next_tail_addr, false, 3);
-        // touch memory
-        uint64 *bucket =
-            (uint64_t *)&this->hashtable[this->find_queue[tail].idx];
-        // volatile uint64 t1 = bucket[0];
-        // volatile uint64 t2 = bucket[4];
-        // volatile __m512i cacheline = _mm512_load_si512(bucket);
-        // __m512i key_vector = _mm512_set1_epi64(9);
-        // if(_mm512_mask_cmpeq_epu64_mask(0xf, cacheline, key_vector)){
-        // values.second[values.first].value = bucket[3];
-        // }else
-        // values.second[values.first].value = bucket[0];
-
-        tail++;
-        tail &= FIND_QUEUE_SZ_MASK;
-        values.first++;
-
-        // add to find queue
-        InsertFindArgument *key_data =
-            reinterpret_cast<InsertFindArgument *>(&data);
-        hash = _mm_crc32_u64(
-            0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
-        idx = hash & HT_BUCKET_MASK;
-        __builtin_prefetch(&this->hashtable[idx], false, 1);
-        // this->find_queue[head].key = key_data->key;
-        this->find_queue[head].idx = idx;
-        // this->find_queue[head].key_id = key_data->id;
-
-        head++;
-        head &= FIND_QUEUE_SZ_MASK;
-      }
-    }
-    // slow path
-    else {
-      for (auto &data : kp) {
-        bool pop_find_queue =
-            ((head - tail) & FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
-        if (pop_find_queue) {
-          // L1 prefetch
-          uint32_t next_tail = (tail + 7) & FIND_QUEUE_SZ_MASK;
-          const void *next_tail_addr =
-              &this->hashtable[this->find_queue[next_tail].idx];
-          __builtin_prefetch(next_tail_addr, false, 3);
-          // touch memory
-          uint64 *bucket =
-              (uint64_t *)&this->hashtable[this->find_queue[tail].idx];
-          // volatile uint64 t1 = bucket[0];
-          tail++;
-          tail &= FIND_QUEUE_SZ_MASK;
-          values.first++;
-        }
-        // add to find queue
-        InsertFindArgument *key_data =
-            reinterpret_cast<InsertFindArgument *>(&data);
-        hash = _mm_crc32_u64(
-            0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
-        idx = hash & HT_BUCKET_MASK;
-        __builtin_prefetch(&this->hashtable[idx], false, 1);
-        this->find_queue[head].key = key_data->key;
-        this->find_queue[head].idx = idx;
-        this->find_queue[head].key_id = key_data->id;
-        head++;
-        head &= FIND_QUEUE_SZ_MASK;
-      }  // end slow path for loop
-    }  // end slow path
-
-    this->find_tail = tail;
-    this->find_head = head;
   }
 
   void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
@@ -1245,14 +991,12 @@ static KV *hashtable;
 
   uint64_t __insert_branched_s(KVQ *q, collector_type *collector) {
 
-    uint64_t idx = q->idx;
-
-    if(idx > (this->capacity/2))
-      this->hashtable[idx].kvpair.key = q->key;
-    else
-      dummy_v += this->hashtable[idx].kvpair.value;
+    //this->dummy_v += this->hashtable[q->idx].kvpair.key;
+    //this->hashtable[q->idx].kvpair.key = q->key;
+    __sync_bool_compare_and_swap((__int128*) &this->hashtable[q->idx], *(__int128*)&this->hashtable[q->idx], *(__int128*)q);
+    
     //__m128i kv = _mm_setzero_si128();
-    //_mm_stream_si128((__m128i *)&this->hashtable[idx], kv);
+    //_mm_stream_si128((__m128i *)&this->hashtable[q->idx], kv);
     return 0;
   }
 

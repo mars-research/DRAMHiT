@@ -63,7 +63,7 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
   PLOGV.printf("addr %p, alloc_sz %zu | all_nodes %lx", addr, alloc_sz,
                *numa_all_nodes_ptr->maskp);
 
-  if ( (config.numa_split == THREADS_REMOTE_NUMA_NODE || config.numa_split == THREADS_NO_MEM_DISTRIBUTION) && config.ht_type == CASHTPP) {
+  if (config.numa_split == THREADS_REMOTE_NUMA_NODE && config.ht_type == CASHTPP) {
     unsigned long nodemask = 1UL << 1;
     unsigned long maxnode = sizeof(nodemask) * 8; 
 
@@ -74,7 +74,7 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
-  else if (config.numa_split == THREADS_LOCAL_NUMA_NODE && config.ht_type == CASHTPP){
+  else if ((config.numa_split == THREADS_LOCAL_NUMA_NODE  || config.numa_split == THREADS_NO_MEM_DISTRIBUTION) && config.ht_type == CASHTPP){
     // we are at mercy of the OS here, since we only uses threads belongs to
     // socket 0, then all memory allocated will be automatically binded to that
     // node, no need to do anything.

@@ -95,6 +95,8 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 //         all_sh[k].stats->avg_read_length, all_sh[k].stats->num_sequences
 // #endif  // CALC_STATS
 //     );
+
+    printf("thread %d insertion cycles %lu find cycles %lu\n", k, all_sh[k].stats->insertions.duration, all_sh[k].stats->finds.duration);
     all_total_cycles += all_sh[k].stats->insertions.duration;
     all_total_time_ns +=
         (double)all_sh[k].stats->insertions.duration * one_cycle_ns;

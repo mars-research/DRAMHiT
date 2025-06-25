@@ -119,7 +119,7 @@ struct Configuration {
   uint64_t ht_size;
   // insert factor
   uint64_t insert_factor;
-
+  uint64_t read_factor;
   // bqueue configuration
   // prod/cons count
   uint32_t n_prod;

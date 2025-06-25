@@ -4,7 +4,7 @@ import re
 import sys
 
 #CHANGE ME, dir where build/ folder is at
-set_dir= "/opt/dramhit/dramhit/"
+set_dir= "/opt/DRAMHiT/"
 
 # Parses output from dramhit with perfcpp output
 def get_data(in_file_name, events):
@@ -52,7 +52,7 @@ output_tmp = 'temp_dramhit_output.txt'
 
 # Set the below
 size = 'large'
-thread_num = '56'
+thread_num = '128'
 fill = '10'
 
 # Ensure event_tmp is initialized to empty

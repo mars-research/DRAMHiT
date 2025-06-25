@@ -85,6 +85,7 @@ const Configuration def = {
     .ht_fill = 75,
     .ht_size = HT_TESTS_HT_SIZE,
     .insert_factor = 1,
+    .read_factor = 1,
     .n_prod = 1,
     .n_cons = 1,
     .num_nops = 0,
@@ -126,6 +127,12 @@ uint64_t g_insert_start, g_insert_end;
 uint64_t g_find_start, g_find_end;
 
 void sync_complete(void) {
+
+  if(cur_phase == ExecPhase::none) 
+  {
+    return;
+  }
+
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
     PLOGI.printf("Stopping counters");
@@ -151,23 +158,23 @@ void sync_complete(void) {
   }
 #endif
 
-  // if (cur_phase == ExecPhase::finds) {
-  //   if (!zipfian_finds) {
-  //     g_find_start = RDTSC_START();
-  //     zipfian_finds = true;
-  //   } else {
-  //     g_find_end = RDTSCP();
-  //     PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
-  //   }
-  // } else if (cur_phase == ExecPhase::insertions) {
-  //   if (!zipfian_inserts) {
-  //     g_insert_start = RDTSC_START();
-  //     zipfian_inserts = true;
-  //   } else {
-  //     g_insert_end = RDTSCP();
-  //     PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
-  //   }
-  // }
+  if (cur_phase == ExecPhase::finds) {
+    if (!zipfian_finds) {
+      g_find_start = RDTSC_START();
+      zipfian_finds = true;
+    } else {
+      g_find_end = RDTSCP();
+      PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
+    }
+  } else if (cur_phase == ExecPhase::insertions) {
+    if (!zipfian_inserts) {
+      g_insert_start = RDTSC_START();
+      zipfian_inserts = true;
+    } else {
+      g_insert_end = RDTSCP();
+      PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
+    }
+  }
   PLOGI.printf("Sync phase done!");
 }
 
@@ -552,7 +559,11 @@ int Application::process(int argc, char *argv[]) {
         "Perf counter (to be recorded) events")(
         "perf_def_path",
         po::value(&config.perf_def_path)->default_value(def.perf_def_path),
-        "Perf definition (if empty, only default events are supported)");
+        "Perf definition (if empty, only default events are supported)")
+        ("read-factor",
+                             po::value<uint64_t>(&config.read_factor)
+                                 ->default_value(def.read_factor),
+                             "Repeat read workload X times");
 
     papi_init();
 

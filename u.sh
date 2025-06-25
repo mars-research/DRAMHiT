@@ -13,20 +13,27 @@
 
 # Ensure correct usage
 if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <small|large> <num_threads> <fill>:3"
-    exit 1
+     echo "Usage: $0 <small|large> <num_threads> <fill> ʕ•ᴥ•ʔ"
+     exit 1
 fi
+#if [ "$#" -ne 2 ]; then
+#    echo "Usage: $0 <small|large> <num_threads> ʕ•ᴥ•ʔ"
+#    exit 1
+#fi
 test=$1
 numThreads=$2
 fill=$3
 #TEST 256 KB
 if [ "$test" = "small" ]; then
     size=16384
-    insertFactor=100000
+    insertFactor=10000
+    readFactor=10
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
-    size=134217728
-    insertFactor=100
+    size=536870912
+    #size=134217728
+    insertFactor=1
+    readFactor=10
 fi
 
 # size=134217728
@@ -35,16 +42,17 @@ fi
 # insertFactor=1000000
 # numThreads=1
 batch=16
-
-#for fill in $(seq 10 10 10);
+#for fill in $(seq 70 70 70);
 #do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue_sz 32 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor \
-    --num-threads $numThreads --numa-split 1 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
+    --find_queue 32 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --read-factor $readFactor \
+    --num-threads $numThreads --numa-split 4 --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
     --hw-pref 0 --batch-len $batch"
-    sudo $(pwd)/build/dramhit $cmd
     echo $(pwd)/build/dramhit $cmd
+    sudo $(pwd)/build/dramhit $cmd
+    echo $(pwd)/build/dramhit $cmd  
 #done
+# sudo ./tools/mlc/mlc   --bandwidth_matrix -h -U -W6 
 
 # sudo bash -c '
 #         mkfifo ctl.fifo ack.fifo
@@ -66,5 +74,4 @@ batch=16
 #         exec 11>&-
 #         rm ctl.fifo ack.fifo
 #     '
-
 

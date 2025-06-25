@@ -1,5 +1,49 @@
 
+# jun 24
 
+8gb 128 threads, two numa node, queue sz 32
+
+baseline no prefetch store, 155 cycles per op
+prefetch2z -> prefetch0z -> store, 155 cycles per op
+prefetch2z -> prefetchwz -> store, 141 cycles per op
+prefetch2z -> store, 141 cycles per op
+
+baseline no prefetch cas, 214 cycles per op
+prefetch2z -> prefetch0z -> cas, 141 cycles per op
+prefetch2z -> prefetchwz -> cas, 141 cycles per op
+prefetch2z -> cas, 140 cycles per op
+
+queue sz 64 prefetch2z -> prefetchwz -> cas, 141 cycles per op
+queue sz 128 prefetch2z -> prefetchwz -> cas, 140 cycles per op
+
+
+# jun 23
+
+
+8gb table, 64 threads, single numa node: 
+
+prefetchw -> store, 102 cycles per op 
+prefetch2z -> store, 96 cycles per op. 
+prefetchnta -> store, 105 cycles per op. 
+prefetch0z -> store, 97 cycles per op. 
+
+prefetch2z -> prefetchw, 64 threads, 39 cycles per op
+prefetch2z -> prefetchw -> store, 64 threads, 99 cycles per op
+prefetch2z -> prefetchw -> load, 64 threads, 39 cycles per op
+prefetch2z -> prefetchw -> cas, 64 threads, 98 cycles per op
+
+prefetch2z -> prefetch0z, 64 threads, 39 cycles per op
+prefetch2z -> prefetch0z -> store, 64 threads, 99 cycles per op
+prefetch2z -> prefetch0z -> load, 64 threads, 39 cycles per op
+prefetch2z -> prefetch0z -> cas, 64 threads, 98 cycles per op
+
+queue_sz 32, prefetch2z -> store, 98 cycles per op. 
+queue_sz 64, prefetch2z -> store, 99 cycles per op. 
+queue_sz 128, prefetch2z -> store, 98 cycles per op. 
+
+
+
+----- 
 
 | size | threads | fill | cpo  | mops | bandwidth | probing |
 | ---- | ------  | ---- | ---- | ---- | --------- | ------- |
@@ -10,8 +54,11 @@
 
 
 
+8gb 10% linear 
+{ set_cycles : 157, get_cycles : 77, set_mops : 2038.217, get_mops : 4155.844 }
 
-
+8gb 70% linear
+{ set_cycles : 174, get_cycles : 92, set_mops : 1839.080, get_mops : 3478.261 }
 
 
 

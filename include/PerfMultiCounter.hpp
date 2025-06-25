@@ -5,11 +5,11 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <map>
-#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <sstream>
+
 
 namespace kmercounter {
 
@@ -59,16 +59,16 @@ class PerfCounterResult {
 
 
   void print(uint64_t sample_count) {
-    // DEFAULT, shows per op and total
-    for (auto& [counter_name, counter_value] : _results) {
-      //  std::cout << counter_name << "\n"
-      //            << "    per op: "<< counter_value/sample_count << "\n"
-      //            << "    total: " << counter_value << std::endl;
+    std::cout << get_result_str(sample_count); 
+  }
 
-      // For python script
-      std::cout << counter_name << ":" << counter_value / sample_count << ":"
-                << counter_value << "\n";
+  std::string get_result_str(uint64_t sample_count)
+  { 
+    std::ostringstream s;
+    for (auto& [counter_name, counter_value] : _results) {
+      s << counter_name << ":" << counter_value / sample_count << ":" << counter_value << "\n";
     }
+    return s.str();
   }
 };
 
@@ -139,11 +139,31 @@ class MultithreadCounter {
     }
   }
 
+
+  // save all counter results into a file 
+  void save(std::string path) 
+  { 
+
+    std::ostringstream s;
+    for (size_t i = 0; i < num_threads; i++) {
+      s << "\nThread ID: " << i << " Sample counts: " << sample_counts[i] << std::endl;
+      s << results[i].get_result_str(sample_counts[i]);
+    }
+
+    std::ofstream out(path);  // open the file for writing
+    if (!out) {
+        throw std::runtime_error("Failed to open file: " + path);
+    }
+    out << s.str();
+  }
+
   void print() {
     std::cout << "\n------- PERFCPP ------- " << std::endl;
     std::cout << "\n data format: <EVT_NAME> <PER OP> <TOTAL> " << std::endl;
 
+    double totol_rbw = 0;  
     double totol_bw = 0;    
+  
 
     for (size_t i = 0; i < num_threads; i++) {
       std::cout << "\nThread ID: " << i
@@ -153,13 +173,20 @@ class MultithreadCounter {
       if(results[i].contain("cycles") && results[i].contain("OFFCORE_REQUESTS.DATA_RD"))
       {
         bw = (results[i].get_value("OFFCORE_REQUESTS.DATA_RD") * 64 / GB_IN_BYTES) / (results[i].get_value("cycles")  / CYCLES_PER_SEC);
-        std::cout << "core bw: " << bw << "GB/s \n";
-        totol_bw += bw;
+        std::cout << "read bw: " << bw << "GB/s \n";
+        totol_rbw += bw;
       } 
+
+      if(results[i].contain("cycles") && results[i].contain("OFFCORE_REQUESTS.ALL_REQUESTS"))
+      {
+        bw = (results[i].get_value("OFFCORE_REQUESTS.ALL_REQUESTS") * 64 / GB_IN_BYTES) / (results[i].get_value("cycles")  / CYCLES_PER_SEC);
+        std::cout << "total bw: " << bw << "GB/s \n";
+        totol_bw += bw;
+      }
     }
 
     // average system 
-    std::cout << "\nSystem stats summary (average over threads) \n";  
+    std::cout << "\nSystem stats summary: <evt> <sum/thread> <sum>\n";  
 
     uint64_t sc_average = 0;
     for(auto& sc: sample_counts)
@@ -171,14 +198,15 @@ class MultithreadCounter {
     sc_average = sc_average / num_threads;
 
     for (auto& evt : events) {
-      uint64_t average = 0;
+      uint64_t sum = 0;
       for (size_t i = 0; i < num_threads; i++) {
-        average += results[i].get_value(evt);
+        sum += results[i].get_value(evt);
       }
-      average = average / num_threads;
-
-      std::cout << evt << ":" << average/sc_average << ":" << average << std::endl;
+      std::cout << evt << ":" << sum/num_threads << ":" << sum << std::endl;
     }
+
+    if(totol_rbw > 0.1)
+      std::cout << "total rbw: " << totol_rbw << "GB/s \n";
 
     if(totol_bw > 0.1)
       std::cout << "total bw: " << totol_bw << "GB/s \n";
@@ -204,7 +232,7 @@ class MultithreadCounter {
     return events;
   }
 
-  static constexpr double CYCLES_PER_SEC = (2.1 * 1000 * 1000 * 1000);
+  static constexpr double CYCLES_PER_SEC = (2.5 * 1000 * 1000 * 1000);
   static constexpr double GB_IN_BYTES = (1 << 30);
 
   std::vector<perf::EventCounter>
