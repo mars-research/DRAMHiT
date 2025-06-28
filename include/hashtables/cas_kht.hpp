@@ -398,18 +398,19 @@ static KV *hashtable;
                            collector_type *collector) {
     for (auto &data : kp) {
 
-      // uint64_t hash = this->hash((const char *)&data.key);
-      // size_t idx = hash & (this->capacity - 1);
-      // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-      // this->hashtable[idx].kvpair.key = data.key;
+      uint64_t hash = this->hash((const char *)&data.key);
+      size_t idx = hash & (this->capacity - 1);
+      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+      __builtin_prefetch(&this->hashtable[idx], false, 0);
+      //this->hashtable[idx].kvpair.key = data.key;
       //__sync_bool_compare_and_swap((__int128*) &this->hashtable[idx], *(__int128*)&this->hashtable[idx], *(__int128*)&data);
 
       // pop queue
-      if (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
-          (insert_queue_sz - 1)) {
-            pop_insert_queue(collector);
-      }
-      add_to_insert_queue(&data, collector);
+      // if (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
+      //     (insert_queue_sz - 1)) {
+      //       pop_insert_queue(collector);
+      // }
+      // add_to_insert_queue(&data, collector);
     }
   }
 
@@ -989,7 +990,7 @@ static KV *hashtable;
     return empty_slot_;
   }
 
-  uint64_t __insert_branched_s(KVQ *q, collector_type *collector) {
+  uint64_t __insert_branched(KVQ *q, collector_type *collector) {
 
     //this->dummy_v += this->hashtable[q->idx].kvpair.key;
     //this->hashtable[q->idx].kvpair.key = q->key;
@@ -1000,7 +1001,7 @@ static KV *hashtable;
     return 0;
   }
 
-  uint64_t __insert_branched(KVQ *q, collector_type *collector) {
+  uint64_t __insert_branched_s(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
 
     size_t idx = q->idx;

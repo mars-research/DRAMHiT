@@ -77,8 +77,8 @@ OpTimings do_zipfian_inserts(
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
 
-  uint64_t key_start =
-      std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+  uint64_t key_start; 
+  //std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
 
   PLOGV.printf("id: %u | key_start %" PRIu64 "", id, key_start);
 
@@ -96,10 +96,9 @@ OpTimings do_zipfian_inserts(
     sync_barrier->arrive_and_wait();
     cur_phase = ExecPhase::insertions;
 
-    start = RDTSC_START();
-    key_start =
-        std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+    key_start = std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
+    start = RDTSC_START();
 
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
 #ifdef XORWOW
@@ -282,21 +281,21 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
       shard->shard_idx, config.ht_size, HT_TESTS_NUM_INSERTS, skew);
 
 #ifdef WITH_PERFCPP
-  // if (shard->shard_idx == 0)
+  if (shard->shard_idx != 0)
   EVENTCOUNTERS.start(shard->shard_idx);
 #endif
   insert_timings = do_zipfian_inserts(hashtable, skew, zipf_seed, count,
                                       shard->shard_idx, sync_barrier);
 
 #ifdef WITH_PERFCPP
-  // if (shard->shard_idx == 0) {
+  if (shard->shard_idx != 0) {
 
   EVENTCOUNTERS.stop(shard->shard_idx);
   EVENTCOUNTERS.set_sample_count(shard->shard_idx, insert_timings.op_count);
-  EVENTCOUNTERS.save("Insertion_perfcpp_counter.csv");
+  // EVENTCOUNTERS.save("Insertion_perfcpp_counter.csv");
   // EVENTCOUNTERS.clear(shard->shard_idx);
 
-  //}
+  }
 #endif
 
   shard->stats->insertions = insert_timings;

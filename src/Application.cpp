@@ -578,6 +578,8 @@ int Application::process(int argc, char *argv[]) {
 #ifdef WITH_PERFCPP
     EVENTCOUNTERS = MultithreadCounter(config.num_threads, config.perf_cnt_path,
                                        config.perf_def_path);
+    // EVENTCOUNTERS = MultithreadCounter(1, config.perf_cnt_path,
+    //                                    config.perf_def_path);
 
 #endif
 
