@@ -170,9 +170,9 @@ uint64_t experiment(cacheline_t* mem, uint64_t  mem_len, uint64_t op) {
   for (uint64_t i = 0; i < op; i++) {
 
 #if defined(CONFLICT_PREFETCH)
-    PREFETCH1(&mem[op+i]); 
-#elif defined(NONCONFLICT_PREFETCH)
     PREFETCH1(&mem[i]); 
+#elif defined(NONCONFLICT_PREFETCH)
+    PREFETCH1(&mem[op+i]); 
 #endif
 
 #ifdef LOAD_TEST

@@ -5,21 +5,21 @@ Run: ./prefetch 100 1024
 ----
 Compile: gcc -O1 prefetch_test.c -DLOAD_TEST -DCONFLICT_PREFETCH -o prefetch
 Run: ./prefetch 100 1024
-1024,18,7.20
+1024,10,4.00
 ----
 Compile: gcc -O1 prefetch_test.c -DLOAD_TEST -DNONCONFLICT_PREFETCH -o prefetch
 Run: ./prefetch 100 1024
-1024,10,4.00
+1024,18,7.20
 ----
 Compile: gcc -O1 prefetch_test.c -DSTORE_TEST -o prefetch
 Run: ./prefetch 100 1024
-1024,22,8.80
+1024,21,8.40
 ----
 Compile: gcc -O1 prefetch_test.c -DSTORE_TEST -DCONFLICT_PREFETCH -o prefetch
 Run: ./prefetch 100 1024
-1024,31,12.40
+1024,9,3.60
 ----
 Compile: gcc -O1 prefetch_test.c -DSTORE_TEST -DNONCONFLICT_PREFETCH -o prefetch
 Run: ./prefetch 100 1024
-1024,9,3.60
+1024,32,12.80
 ----
