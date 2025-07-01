@@ -106,7 +106,7 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t lfb_size) {
 }
 
 //#define LOAD_TEST
-#define STORE_TEST
+//#define STORE_TEST
 
 #define PREFETCH1(addr) _mm_prefetch((const char*)(addr), HINT_L1)
 #define PREFETCH2(addr) PREFETCH1(addr); PREFETCH1(addr)
@@ -136,6 +136,9 @@ nonconflicting prefetch + load
 
 conflicing prefetch + store
 
+  regular(cacheable) store will issue two requests one to RFO, and another to write into 
+  DRAM.  
+
   since store is retired upon entering store buffer. conflicting prefetch will actually help 
   store by requesting exclusive ownership cacheline ahead of time, thus speed up the following store.
   When store request enters store buffer, it consults lfb which sees a exclusive ownership of the 
@@ -147,6 +150,7 @@ non-conflicting prefetch + store
   similar to nonconflicting prefetch + load cases, non-conflicting prefetch will hurt performance of store 
   by taking up more slots in lfb. This eventually clogs up the store buffer, thus preventing store even enter store buffer. 
   Compare cycles difference between store vs nonconflicting prefetch + store. 
+ 
 */
 uint64_t experiment(cacheline_t* mem, uint64_t  mem_len, uint64_t op) {
   uint64_t start_cycles = 0, end_cycles = 0;
@@ -164,7 +168,12 @@ uint64_t experiment(cacheline_t* mem, uint64_t  mem_len, uint64_t op) {
   start_cycles = RDTSC_START();
 
   for (uint64_t i = 0; i < op; i++) {
+
+#if defined(CONFLICT_PREFETCH)
     PREFETCH1(&mem[op+i]); 
+#elif defined(NONCONFLICT_PREFETCH)
+    PREFETCH1(&mem[i]); 
+#endif
 
 #ifdef LOAD_TEST
     // issue a single load
@@ -172,8 +181,8 @@ uint64_t experiment(cacheline_t* mem, uint64_t  mem_len, uint64_t op) {
 #endif
 
 #ifdef STORE_TEST
-    //mem[i].data[0] = 0xff;
-    __sync_bool_compare_and_swap((uint64_t*)&mem[i], 0, 0xff);
+    mem[i].data[0] = 0xff;
+    //__sync_bool_compare_and_swap((uint64_t*)&mem[i], 0, 0xff);
 #endif
   }
 
