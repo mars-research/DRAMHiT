@@ -16,9 +16,6 @@
 [submodule "plog"]
 	path = lib/plog
 	url = https://github.com/SergiusTheBest/plog.git
-[submodule "tools/msr-safe"]
-	path = tools/msr-safe
-	url = https://github.com/mars-research/msr-safe-ubuntu24.git 
 [submodule "lib/eth_hashjoin"]
 	path = lib/eth_hashjoin
 	url = https://github.com/mars-research/vldb13-eth-hashjoin.git
