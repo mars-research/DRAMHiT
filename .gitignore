@@ -36,4 +36,3 @@ CMakeCache.txt
 cmake.check_cache
 tester/
 results/
-tools/msr-safe/
