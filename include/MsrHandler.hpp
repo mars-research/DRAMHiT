@@ -88,7 +88,7 @@ class MsrHandler {
     if (ret != sizeof(val)) {
       PLOG_ERROR.printf("pwrite failed with errno %d\n", errno);
     }
-    PLOG_VERBOSE.printf("wrmsr %lx on cpu %u = %lx\n", msr, cpu, val);
+    PLOG_INFO.printf("wrmsr %lx on cpu %u = %lx\n", msr, cpu, val);
     return ret;
   }
 

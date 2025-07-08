@@ -25,3 +25,6 @@
 [submodule "pcm"]
 	path = pcm
 	url = https://github.com/intel/pcm.git
+[submodule "tools/msr-safe"]
+	path = tools/msr-safe
+	url = https://github.com/mars-research/msr-safe-ubuntu24.git
