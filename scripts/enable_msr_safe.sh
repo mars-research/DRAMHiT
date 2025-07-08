@@ -21,6 +21,6 @@ echo "Chowning /dev/cpu/*/msr_safe to ${USER}:${GROUP}"
 sudo chown ${USER}:${GROUP} /dev/cpu/*/msr_safe
 
 # install allowlist for hwpref
-cat allowlists/dramhit.txt | sudo tee /dev/cpu/msr_allowlist
+cat allowlists/dramhit | sudo tee /dev/cpu/msr_allowlist
 
 popd
