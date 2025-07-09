@@ -12,6 +12,7 @@
 #define HASHTABLES_CAS_KHT_HPP
 
 #include <xmmintrin.h>
+
 #include <cassert>
 #include <cstdint>
 #include <fstream>
@@ -31,7 +32,7 @@ template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
  public:
   /// The global instance is shared by all threads.
-static KV *hashtable;
+  static KV *hashtable;
   /// A dedicated slot for the empty value.
   static uint64_t empty_slot_;
   /// True if the empty value is inserted.
@@ -48,14 +49,12 @@ static KV *hashtable;
   uint8_t tid;
   uint8_t cpuid;
 
-    uint64_t dummy_v;
-
-
   uint32_t find_queue_sz;
   uint32_t insert_queue_sz;
   uint32_t INSERT_QUEUE_SZ_MASK;
   uint32_t FIND_QUEUE_SZ_MASK;
   uint64_t HT_BUCKET_MASK;
+
 #define KEYMSK ((__mmask8)(0b01010101))
 
   CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
@@ -63,8 +62,8 @@ static KV *hashtable;
   CASHashTable(uint64_t c, uint32_t queue_sz, uint8_t tid)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
-    find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
-    insert_queue_sz = find_queue_sz;  // TODO: CHANGE ME
+    this->find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
+    this->insert_queue_sz = find_queue_sz;
 
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -156,9 +155,42 @@ static KV *hashtable;
     return false;
   }
 
+  inline uint32_t get_insert_queue_sz() {
+    return (ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK;
+  }
+
+  // overridden function for insertion
+  inline void flush_if_needed(collector_type *collector) {
+    size_t curr_queue_sz = get_insert_queue_sz();
+
+    while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
+      __insert_one(&this->insert_queue[this->ins_tail], collector);
+      if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
+      curr_queue_sz = get_insert_queue_sz();
+    }
+    return;
+  }
+
+  inline void pop_insert_queue(collector_type *collector) {
+    uint64_t retry = 0;
+    do {
+      uint32_t next_tail = (this->ins_tail + 8) & INSERT_QUEUE_SZ_MASK;
+      const void *next_tail_addr =
+          &this->hashtable[this->insert_queue[next_tail].idx];
+      __builtin_prefetch(next_tail_addr, true, 3);
+
+      // |N  X  T| -> # 64, 64
+      retry = __insert_one(&this->insert_queue[this->ins_tail], collector);
+      this->ins_tail++;
+      this->ins_tail &= INSERT_QUEUE_SZ_MASK;
+
+    } while ((retry));
+  }
+
+#if defined(DRAMHiT_2023)
+
   // insert a batch
-  void old_insert_batch(const InsertFindArguments &kp,
-                    collector_type *collector) {
+  void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
     this->flush_if_needed(collector);
 
     for (auto &data : kp) {
@@ -167,34 +199,24 @@ static KV *hashtable;
 
     this->flush_if_needed(collector);
   }
-
-  inline void atomic_cas_value_until_success(uint64_t *vptr, uint64_t value) {
-    uint8_t ret_val = 0;
-    uint64_t old_val;
-    while (!ret_val) {
-      old_val = *vptr;
-      ret_val = __sync_bool_compare_and_swap(vptr, old_val, value);
+#elif defined(DRAMHiT_2025)
+  void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
+    if ((get_insert_queue_sz() >= INSERT_QUEUE_SZ_MASK)) {
+      for (auto &data : kp) {
+        pop_insert_queue(collector);
+        add_to_insert_queue(&data, collector);
+      }
+    } else {
+      for (auto &data : kp) {
+        if ((get_insert_queue_sz() >= INSERT_QUEUE_SZ_MASK)) {
+          pop_insert_queue(collector);
+        }
+        add_to_insert_queue(&data, collector);
+      }
     }
   }
-
-  inline void pop_insert_queue(collector_type *collector) {
-    uint64_t retry = 0;
-    do {
-      uint32_t next_tail = (this->ins_tail + 8) & INSERT_QUEUE_SZ_MASK;      
-      const void *next_tail_addr = 
-          &this->hashtable[this->insert_queue[next_tail].idx];
-      __builtin_prefetch(next_tail_addr, true, 3);  
-
-      // |N  X  T| -> # 64, 64   
-      retry = __insert_one(&this->insert_queue[this->ins_tail], collector);
-      this->ins_tail++;
-      this->ins_tail &= INSERT_QUEUE_SZ_MASK;
-
-    } while ((retry));
-  }
-
-  __attribute__((noinline)) void insert_batch_unrolled(
-      const InsertFindArguments &kp, collector_type *collector) {
+#else
+  void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
     bool fast_path = (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
                       (insert_queue_sz - 1));
     if (fast_path) {
@@ -275,14 +297,6 @@ static KV *hashtable;
                   this->ins_tail &= INSERT_QUEUE_SZ_MASK;
                   continue;
                 }
-                // hashtable_mutexes[pidx].unlock();
-                // printf("Thread %" PRIu64 ", released lock: %" PRIu64 "\n",
-                // this->thread_id, pidx); printf("%" PRIu64 ": %d | %d\n",
-                // pidx, hashtable[pidx].kb.count, no_ins++); If CAS fails, we
-                // need to see if someother thread has updated the same <k,v>
-                // onto the position we were trying to insert. If so, we need to
-                // update the value instead of inserting new. Just fall-through
-                // to check!
               }
 
 #ifdef CALC_STATS
@@ -316,15 +330,17 @@ static KV *hashtable;
                 goto try_insert;  // FIXME: @David get rid of the goto for
                                   // crying out loud
               }
+            add_to_queue:
 
 #ifdef UNIFORM_HT_SUPPORT
               uint64_t old_hash = q->key_hash;
               uint64_t hash = this->hash(&old_hash);
               idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
+              idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
               this->insert_queue[this->ins_head].key_hash = hash;
 #endif
-            add_to_queue:
-
               // prefetch(idx);
               __builtin_prefetch(&this->hashtable[idx], false, 1);
 
@@ -393,55 +409,22 @@ static KV *hashtable;
     }  // end slow path
   }  // end insert unrolled
 
-
-  void insert_batch(const InsertFindArguments &kp,
-                           collector_type *collector) {
-    for (auto &data : kp) {
-
-      uint64_t hash = this->hash((const char *)&data.key);
-      size_t idx = hash & (this->capacity - 1);
-      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-      __builtin_prefetch(&this->hashtable[idx], false, 0);
-      //this->hashtable[idx].kvpair.key = data.key;
-      //__sync_bool_compare_and_swap((__int128*) &this->hashtable[idx], *(__int128*)&this->hashtable[idx], *(__int128*)&data);
-
-      // pop queue
-      // if (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
-      //     (insert_queue_sz - 1)) {
-      //       pop_insert_queue(collector);
-      // }
-      // add_to_insert_queue(&data, collector);
-    }
-  }
-
-  __attribute__((noinline)) void insert_batch_max_test(
-      InsertFindArgument *kp, collector_type *collector) {
-    uint64_t reg;
-    __m64 kv = _mm_setzero_si64();
-    uint64_t base_addr = (uint64_t)this->hashtable;
-    uint64_t lenmsk = this->capacity - 1;
-    for (int i = 0; i < config.batch_len; i++) {
-      reg = _mm_crc32_u64(0xffffffff, kp[i].key);
-      reg = reg & lenmsk;
-      reg = reg << 4;
-      reg = base_addr + reg;
-      _mm_stream_si64((long long int *)(reg), (long long int)kv);
-      //_mm_sfence();
-    }
-  }
-
-  // overridden function for insertion
-  void flush_if_needed(collector_type *collector) {
-    size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
-
-    while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
-      __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
-      curr_queue_sz = (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
-    }
-    return;
-  }
+#endif
+  // __attribute__((noinline)) void insert_batch_max_test(
+  //     InsertFindArgument *kp, collector_type *collector) {
+  //   uint64_t reg;
+  //   __m64 kv = _mm_setzero_si64();
+  //   uint64_t base_addr = (uint64_t)this->hashtable;
+  //   uint64_t lenmsk = this->capacity - 1;
+  //   for (int i = 0; i < config.batch_len; i++) {
+  //     reg = _mm_crc32_u64(0xffffffff, kp[i].key);
+  //     reg = reg & lenmsk;
+  //     reg = reg << 4;
+  //     reg = base_addr + reg;
+  //     _mm_stream_si64((long long int *)(reg), (long long int)kv);
+  //     //_mm_sfence();
+  //   }
+  // }
 
   void flush_insert_queue(collector_type *collector) override {
     size_t curr_queue_sz =
@@ -453,7 +436,7 @@ static KV *hashtable;
       curr_queue_sz = (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
     }
 
-    // all store must be flushed. 
+    // all store must be flushed.
     _mm_sfence();
   }
 
@@ -468,34 +451,22 @@ static KV *hashtable;
     }
   }
 
-  void flush_if_needed(ValuePairs &vp, collector_type *collector) {
-    size_t curr_queue_sz =
-        (this->find_head - this->find_tail) & (find_queue_sz - 1);
+  inline size_t get_find_queue_sz() {
+    return (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
+  }
 
-    if ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
-      __builtin_prefetch(&curr_queue_sz, true, 3);
-      __builtin_prefetch(&this->find_tail, true, 3);
-    }
+  inline void flush_if_needed(ValuePairs &vp, collector_type *collector) {
+    size_t curr_queue_sz =
+        (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
 
     while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= find_queue_sz) {
         this->find_tail = 0;
       }
-      curr_queue_sz = (this->find_head - this->find_tail) & (find_queue_sz - 1);
+      curr_queue_sz = get_find_queue_sz();
     }
     return;
-  }
-
-  // Under vtune, this is an overhead b/c branch.
-  inline size_t get_find_queue_sz() {
-    // only works with pow2 queue
-    return (this->find_head - this->find_tail) & (find_queue_sz - 1);
-
-    // if (this->find_head >= this->find_tail)
-    //   return find_head - find_tail;
-    // else
-    //   return find_queue_sz + find_tail - find_head;
   }
 
   inline void pop_find_queue(ValuePairs &vp, collector_type *collector) {
@@ -503,31 +474,44 @@ static KV *hashtable;
     do {
       retry = __find_one(&this->find_queue[this->find_tail], vp, collector);
       this->find_tail++;
-      this->find_tail &= (find_queue_sz - 1);
+      this->find_tail &= FIND_QUEUE_SZ_MASK;
       __builtin_prefetch(
           &this->hashtable[this->find_queue[this->find_tail].idx], false, 3);
     } while ((retry));
   }
 
+#if defined(DRAMHiT_2023)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-                         collector_type *collector) {
-    if ((get_find_queue_sz() >= find_queue_sz - 1)) {
+                  collector_type *collector) {
+    this->flush_if_needed(values, collector);
+
+    for (auto &data : kp) {
+      add_to_find_queue(&data, collector);
+    }
+
+    this->flush_if_needed(values, collector);
+  }
+
+#elif defined(DRAMHiT_2025)
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) {
+    if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
       for (auto &data : kp) {
         pop_find_queue(values, collector);
         add_to_find_queue(&data, collector);
       }
     } else {
       for (auto &data : kp) {
-        if ((get_find_queue_sz() >= find_queue_sz - 1)) {
+        if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
           pop_find_queue(values, collector);
         }
         add_to_find_queue(&data, collector);
       }
     }
   }
-
-  void find_batch_unrolled(const InsertFindArguments &kp, ValuePairs &vp,
-                           collector_type *collector) {
+#else
+  void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
+                  collector_type *collector) {
     bool fast_path = ((this->find_head - this->find_tail) &
                       FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
     // fast path
@@ -574,7 +558,7 @@ static KV *hashtable;
           vp_result++;
         } else {
           __mmask8 ept_cmp =
-              _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
+              _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
 
           // if ept found ept_cmp > 0, then we stop retry
           if (ept_cmp == 0) {  // retry
@@ -652,6 +636,8 @@ static KV *hashtable;
       }
     }
   }  // end unrolled
+
+#endif
 
   void *find_noprefetch(const void *data, collector_type *collector) override {
 #ifdef CALC_STATS
@@ -804,6 +790,7 @@ static KV *hashtable;
   /// Reference counter of the global `hashtable`.
   static uint32_t ref_cnt;
   uint64_t capacity;
+
   KV empty_item;
   KVQ *find_queue;
   KVQ *insert_queue;
@@ -834,27 +821,35 @@ static KV *hashtable;
     //  __builtin_prefetch((const void *)addr, false, 1);
   }
 
-#ifdef AVX_SUPPORT
+#if defined(AVX_SUPPORT) && defined(BUCKETIZATION)
 
   uint64_t __find_simd(KVQ *q, ValuePairs &vp) {
     uint64_t retry;
     size_t idx = q->idx;
 
     KV *curr_cacheline = &this->hashtable[idx];
-    uint64_t found = curr_cacheline->find_simd(q, &retry, vp, 0);
+    uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
 
     if (retry) {
 #ifdef UNIFORM_HT_SUPPORT
       uint64_t old_hash = q->key_hash;
       uint64_t hash = this->hash(&old_hash);
       idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
       idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
       this->find_queue[this->find_head].key_hash = hash;
 #else
       idx += CACHELINE_SIZE / sizeof(KV);
       idx = idx & (this->capacity - 1);
 #endif
-      this->prefetch_read(idx);
+
+#ifdef DRAMHiT_2023
+      __builtin_prefetch(&this->hashtable[idx], false, 3);
+#else
+      __builtin_prefetch(&this->hashtable[idx], false, 1);
+#endif
+
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
       this->find_queue[this->find_head].idx = idx;
@@ -907,7 +902,7 @@ static KV *hashtable;
       this->sum_distance_from_bucket++;
 #endif
     } else {
-#ifdef LATENCY_COLLECTION__find_branched
+#ifdef LATENCY_COLLECTION
       collector->end(q->timer_id);
 #endif
     }
@@ -937,6 +932,7 @@ static KV *hashtable;
       }
 
       // key is at a different cacheline, prefetch and delay the find
+
       this->prefetch_read(idx);
 
       this->find_queue[this->find_head].key = q->key;
@@ -964,17 +960,12 @@ static KV *hashtable;
     if (q->key == this->empty_item.get_key()) {
       return __find_empty(q, vp);
     }
-
-#if defined(BRANCHLESS_CMOVE)
-    return __find_branchless_cmov(q, vp);
-#elif defined(BRANCHLESS_SIMD)
-
+#if defined(CAS_SIMD)
 #ifdef AVX_SUPPORT
     return __find_simd(q, vp);
 #else
 #error "AVX is not supported, compilation failed."
 #endif
-
 #else
     return __find_branched(q, vp, collector);
 #endif
@@ -991,22 +982,13 @@ static KV *hashtable;
   }
 
   uint64_t __insert_branched(KVQ *q, collector_type *collector) {
-
-    //this->dummy_v += this->hashtable[q->idx].kvpair.key;
-    //this->hashtable[q->idx].kvpair.key = q->key;
-    __sync_bool_compare_and_swap((__int128*) &this->hashtable[q->idx], *(__int128*)&this->hashtable[q->idx], *(__int128*)q);
-    
-    //__m128i kv = _mm_setzero_si128();
-    //_mm_stream_si128((__m128i *)&this->hashtable[q->idx], kv);
-    return 0;
-  }
-
-  uint64_t __insert_branched_s(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
 
     size_t idx = q->idx;
-    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
     KV *curr;
+
+#ifdef CAS_SIMD
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
     // The intuition is, we load a snapshot of a cacheline of keys and see
     // how far ahead we can skip into. It is okay to be outdated with the world,
     // because, that just means we skip less than we could have. We can do this
@@ -1026,7 +1008,8 @@ static KV *hashtable;
     if (key_cmp > 0) {
       __mmask8 offset = _bit_scan_forward(key_cmp);
       bucket[(offset + 1)] = q->value;
-      //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long int)q->value);
+      //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long
+      // int)q->value);
       return 0;
     }
 
@@ -1035,19 +1018,26 @@ static KV *hashtable;
     __mmask8 ept_cmp =
         _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
     if (ept_cmp != 0) {
-      idx += (_bit_scan_forward(ept_cmp) >> 1); // |-, -, 0, 0| 
+      idx += (_bit_scan_forward(ept_cmp) >> 1);  // |-, -, 0, 0|
     } else {
-      idx += 4;
 #ifdef UNIFORM_HT_SUPPORT
       uint64_t old_hash = q->key_hash;
       uint64_t hash = this->hash(&old_hash);
       idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
+      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
       this->insert_queue[this->ins_head].key_hash = hash;
+#else
+      idx += 4;
 #endif
 
-      // prefetch(idx);
-      __builtin_prefetch(&this->hashtable[idx], false, 1);
+#ifdef DRAMHiT_2023
+      __builtin_prefetch(&this->hashtable[idx], true, 3);
 
+#else
+      __builtin_prefetch(&this->hashtable[idx], false, 1);
+#endif
       this->insert_queue[this->ins_head].key = q->key;
       this->insert_queue[this->ins_head].key_id = q->key_id;
       this->insert_queue[this->ins_head].value = q->value;
@@ -1062,38 +1052,16 @@ static KV *hashtable;
 
       return 1;
     }
+#endif
 
   try_insert:
     curr = &this->hashtable[idx];
 
-    if(__sync_bool_compare_and_swap((__int128*) curr, 0, *(__int128*)q))
-    {
-        return 0;
+    // insert key
+    if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
+      return 0;
     }
 
-
-    //if (curr->is_empty()) {
-//       bool cas_res = curr->insert_cas(q); // atmoic cas for key.
-//       if (cas_res) {
-// #ifdef CALC_STATS
-//         this->num_memcpys++;
-// #endif
-
-// #ifdef LATENCY_COLLECTION
-//         collector->end(q->timer_id);
-// #endif
-
-//         return 0;
-//       }
-    //}
-
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-#ifdef CALC_STATS
-    this->num_memcmps++;
-#endif
     if (curr->compare_key(q)) {
       curr->update_cas(q);
 
@@ -1103,28 +1071,28 @@ static KV *hashtable;
       return 0;
     }
 
-    /* insert back into queue, and prefetch next bucket.
-    next bucket will be probed in the next run
-    */
     idx++;
     idx = idx & (this->capacity - 1);  // modulo
 
-    // |  CACHELINE_SIZE   |
-    // | 0 | 1 | . | . | n | n+1 ....
     if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
-      goto try_insert;  // FIXME: @David get rid of the goto for crying out
-                        // loud
+      goto try_insert;
     }
 
 #ifdef UNIFORM_HT_SUPPORT
     uint64_t old_hash = q->key_hash;
     uint64_t hash = this->hash(&old_hash);
     idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
     this->insert_queue[this->ins_head].key_hash = hash;
 #endif
 
-    // prefetch(idx);
+#ifdef DRAMHiT_2023
+    __builtin_prefetch(&this->hashtable[idx], true, 3);
+#else
     __builtin_prefetch(&this->hashtable[idx], false, 1);
+#endif
 
     this->insert_queue[this->ins_head].key = q->key;
     this->insert_queue[this->ins_head].key_id = q->key_id;
@@ -1177,10 +1145,17 @@ static KV *hashtable;
 
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);
+
+#ifdef BUCKETIZATION
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
+    // prefetch_read(idx);
 
-    prefetch_read(idx);
-
+#ifdef DRAMHiT_2023
+    __builtin_prefetch(&this->hashtable[idx], false, 3);
+#else
+    __builtin_prefetch(&this->hashtable[idx], false, 1);
+#endif
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
     this->find_queue[this->find_head].key_id = key_data->id;
@@ -1206,11 +1181,14 @@ static KV *hashtable;
 
     uint64_t hash = this->hash((const char *)&key_data->key);
     size_t idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-
-    // prefetch(idx);
+#endif
+#ifdef DRAMHiT_2023
+    __builtin_prefetch(&this->hashtable[idx], false, 3);
+#else
     __builtin_prefetch(&this->hashtable[idx], false, 1);
-
+#endif
     this->insert_queue[this->ins_head].idx = idx;
     this->insert_queue[this->ins_head].key = key_data->key;
     this->insert_queue[this->ins_head].key_id = key_data->id;

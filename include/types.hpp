@@ -215,6 +215,7 @@ inline auto cycles_per_op(const OpTimings& ops) {
 /* Thread stats */
 struct thread_stats {
   OpTimings insertions;
+  OpTimings upsertions;
   OpTimings finds;
   OpTimings enqueues;
   OpTimings any;
@@ -331,6 +332,7 @@ enum class QueueType {
 
 enum class ExecPhase {
   insertions,
+  upsertions,
   finds,
   none,
 };

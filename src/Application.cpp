@@ -174,7 +174,7 @@ void sync_complete(void) {
       g_insert_end = RDTSCP();
       PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
     }
-  }
+  } 
   PLOGI.printf("Sync phase done!");
 }
 

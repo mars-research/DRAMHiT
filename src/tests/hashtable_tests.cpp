@@ -48,11 +48,103 @@ extern ExecPhase cur_phase;
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 extern std::vector<cacheline> toxic_waste_dump;
 
-#define XORWOW
+//#define XORWOW
+
+OpTimings do_zipfian_upserts(
+    BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
+    unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
+
+  auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+
+#ifdef LATENCY_COLLECTION
+  const auto collector = &collectors.at(id);
+  collector->claim();
+#else
+  collector_type *const collector{};
+#endif
+
+  std::uint64_t duration{};
+
+  sync_barrier->arrive_and_wait();
+  stop_sync = true;
+
+#ifdef WITH_VTUNE_LIB
+  static const auto event =
+      __itt_event_create("inserting", strlen("inserting"));
+  __itt_event_start(event);
+#endif
+
+  PLOGV.printf("Starting insertion test");
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
+
+  uint64_t key_start; 
+  key_type key{};
+  std::size_t next_pollution{};
+
+  uint64_t start;
+  uint64_t end;
+  for (auto j = 0u; j < config.insert_factor; j++) {
+
+    key_start = std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+    auto zipf_idx = key_start == 1 ? 0 : key_start;
+    start = RDTSC_START();
+
+    for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
+#ifdef XORWOW
+      auto value = key_start++;
+#else
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
+        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+      }
+
+      auto value = zipf_values->at(zipf_idx);  // len 1024,  zipf[2 * 1024]
+#endif
+      items[key].key = items[key].value = value;
+      items[key].id = n;
+
+      zipf_idx++;
+
+#ifdef NOPREFETCH
+      hashtable->insert_noprefetch(&items[key], collector);
+#else
+      if (++key == config.batch_len) {
+        InsertFindArguments keypairs(items, config.batch_len);
+#ifdef CAS_NO_VIRTUAL
+        cas_ht->insert_batch(keypairs, collector);
+#else
+        hashtable->insert_batch(keypairs, collector);
+#endif
+        key = 0;
+      }
+#endif
+    }
+
+#ifndef NOPPREFETCH
+    hashtable->flush_insert_queue(collector);
+#endif
+
+    end = RDTSCP();
+    duration += end - start;
+  }
+
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(event);
+#endif
+
+  sync_barrier->arrive_and_wait();
+
+#ifdef LATENCY_COLLECTION
+  collector->dump("async_insert", id);
+#endif
+
+  return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
+}
 
 OpTimings do_zipfian_inserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
+
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
 
 #ifdef LATENCY_COLLECTION
@@ -121,7 +213,11 @@ OpTimings do_zipfian_inserts(
 #else
       if (++key == config.batch_len) {
         InsertFindArguments keypairs(items, config.batch_len);
+#ifdef CAS_NO_VIRTUAL
         cas_ht->insert_batch(keypairs, collector);
+#else
+        hashtable->insert_batch(keypairs, collector);
+#endif
         key = 0;
       }
 #endif
@@ -153,7 +249,10 @@ OpTimings do_zipfian_inserts(
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
+
+#ifdef CAS_NO_VIRTUAL
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+#endif
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
 #ifdef LATENCY_COLLECTION
@@ -211,17 +310,16 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       hashtable->find_noprefetch(&value, collector);
 #else
       if (++key == config.batch_len) {
-        cas_ht->find_batch_unrolled(
+#ifdef CAS_NO_VIRTUAL
+        cas_ht->find_batch(
             InsertFindArguments(items, config.batch_len), vp, collector);
-        // hashtable->find_batch(InsertFindArguments(items, config.batch_len),
-        //                           vp, collector);
+#else
+        hashtable->find_batch(InsertFindArguments(items, config.batch_len),
+                                  vp, collector);
+#endif
         found += vp.first;
         vp.first = 0;
         key = 0;
-        // for (auto p = 0u; p < config.pollute_ratio *
-        // HT_TESTS_FIND_BATCH_LENGTH; ++p)
-        //   prefetch_object<true>(&toxic_waste_dump[next_pollution++ & (1024 *
-        //   1024 - 1)], 64);
       }
 #endif
       zipf_idx++;
@@ -261,6 +359,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
                       std::barrier<std::function<void()>> *sync_barrier) {
   OpTimings insert_timings{};
   OpTimings find_timings{};
+  OpTimings upsertion_timings{};
 
 #ifdef LATENCY_COLLECTION
   static auto step = 0;
@@ -300,6 +399,20 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   shard->stats->insertions = insert_timings;
 
+
+  if (zipf_values && shard->shard_idx == 0) {
+    // Do a shuffle to redistribute the keys
+    auto rng = std::default_random_engine{};
+    std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
+  }
+
+  cur_phase = ExecPhase::upsertions;
+
+  upsertion_timings = do_zipfian_upserts(hashtable, skew, zipf_seed, count,
+                                      shard->shard_idx, sync_barrier);
+  
+  
+  shard->stats->upsertions = upsertion_timings;
 #ifdef LATENCY_COLLECTION
   {
     std::lock_guard lock{collector_lock};
