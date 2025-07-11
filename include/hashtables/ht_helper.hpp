@@ -41,7 +41,7 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
   return addr & ~CACHE_BLOCK_MASK;
 }
 
-void distribute_mem_to_nodes(void *addr, size_t alloc_sz);
+void distribute_mem_to_nodes(void *addr, size_t alloc_sz, numa_policy_threads policy);
 
 
 template <bool WRITE>
@@ -100,11 +100,13 @@ static inline void prefetch_with_write(Kmer_KV *k) {
 template <class T>
 T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   T *addr;
-  auto alloc_sz = capacity * sizeof(T);
+  uint64_t alloc_sz = capacity * sizeof(T);
   auto current_node = numa_node_of_cpu(sched_getcpu());
 
+  
+
   if (alloc_sz < ONEGB_PAGE_SZ) {
-    PLOGV.printf("Allocating memory on node %d", current_node);
+    PLOGI.printf("Allocating memory on node %d", current_node);
     addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
     if (!addr) {
       perror("aligned_alloc:");
@@ -128,7 +130,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
       PLOGV.printf("opened file %s", mmap_path);
     }
 
-    PLOGV.printf("requesting to mmap %lu bytes", alloc_sz);
+    PLOGI.printf("requesting to mmap %lu bytes", alloc_sz);
     addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
         MAP_FLAGS, fd, 0);
     if (addr == MAP_FAILED) {
@@ -141,7 +143,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     *out_fd = fd;
   }
   if (config.ht_type == CASHTPP && (config.numa_split != 2)) {
-      distribute_mem_to_nodes(addr, alloc_sz);
+      distribute_mem_to_nodes(addr, alloc_sz, (kmercounter::numa_policy_threads)config.numa_split);
   }
 skip_mbind:
   memset(addr, 0, capacity * sizeof(T));

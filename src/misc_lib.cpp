@@ -51,7 +51,7 @@ namespace kmercounter {
 
 extern Configuration config;
 
-void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
+void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz, numa_policy_threads policy) {
 
   // Check if there is only one NUMA node
   if (numa_num_configured_nodes() == 1) {
@@ -60,10 +60,10 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
     return;
   }
 
-  PLOGV.printf("addr %p, alloc_sz %zu | all_nodes %lx", addr, alloc_sz,
+  PLOGI.printf("addr %p, alloc_sz %lu | all_nodes %lx", addr, alloc_sz,
                *numa_all_nodes_ptr->maskp);
 
-  if (config.numa_split == THREADS_REMOTE_NUMA_NODE && config.ht_type == CASHTPP) {
+  if (policy == THREADS_REMOTE_NUMA_NODE) {
     unsigned long nodemask = 1UL << 1;
     unsigned long maxnode = sizeof(nodemask) * 8; 
 
@@ -74,7 +74,7 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
-  else if ((config.numa_split == THREADS_LOCAL_NUMA_NODE  || config.numa_split == THREADS_NO_MEM_DISTRIBUTION) && config.ht_type == CASHTPP){
+  else if ((policy == THREADS_LOCAL_NUMA_NODE  || policy == THREADS_NO_MEM_DISTRIBUTION)){
     // we are at mercy of the OS here, since we only uses threads belongs to
     // socket 0, then all memory allocated will be automatically binded to that
     // node, no need to do anything.
@@ -89,25 +89,32 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
-  else if (config.numa_split == THREADS_SPLIT_EVEN_NODES && config.ht_type == CASHTPP)
+  else if (policy == THREADS_SPLIT_EVEN_NODES)
   {
-    unsigned long node0 = 1UL << 0;
-    unsigned long node1 = 1UL << 1;
 
     if(alloc_sz % 2) 
     {
-      PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %d", alloc_sz);
+      PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %lu", alloc_sz);
       exit(-1);
     }
 
-    long ret = mbind(addr, alloc_sz/2, MPOL_BIND, &node0, sizeof(node0)*8,
+    uint64_t sz = alloc_sz >> 1;
+    void* u_addr = addr + sz;
+
+    unsigned long nodemask = 1UL << 0;
+    unsigned long maxnode = sizeof(nodemask) * 8; 
+
+    long ret = mbind(addr, sz, MPOL_BIND, &nodemask, maxnode,
                      MPOL_MF_MOVE | MPOL_MF_STRICT);
     if (ret < 0) {
       perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+      PLOGE.printf("mbind ret %ld | errno %d | addr: %p | sz: %lu", ret, errno, addr, sz);
     }
 
-    ret = mbind(addr+alloc_sz/2, alloc_sz/2, MPOL_BIND, &node1, sizeof(node1)*8,
+    nodemask = 1UL << 1;
+    maxnode = sizeof(nodemask) * 8; 
+
+    ret = mbind(u_addr, sz, MPOL_BIND, &nodemask, maxnode,
                      MPOL_MF_MOVE | MPOL_MF_STRICT);
     if (ret < 0) {
       perror("mbind");
@@ -115,7 +122,6 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
     }
   }
   else {
-
       long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
                    *numa_all_nodes_ptr->maskp, MPOL_MF_MOVE | MPOL_MF_STRICT);
       if (ret < 0) {

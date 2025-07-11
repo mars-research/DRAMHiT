@@ -26,6 +26,11 @@ option(PART_ID "partition id for multilevel and partition hashtable" OFF)
 option(OLD_DRAMHiT "dramhit, no bucket, no simd, just branch" OFF)
 option(DRAMHiT_MANUAL_INLINE "dramhit inlined" OFF)
 option(BUCKETIZATION "buckets" OFF)
+option(BUDDY_QUEUE "remote access experiment" OFF)
+
+if(BUDDY_QUEUE)
+    add_definitions(-DBUDDY_QUEUE)
+endif() 
 
 if(OLD_DRAMHiT)
     add_definitions(-DDRAMHiT_2023)

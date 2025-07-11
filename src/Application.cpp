@@ -732,6 +732,7 @@ int Application::process(int argc, char *argv[]) {
       case THREADS_REMOTE_NUMA_NODE:
       case THREADS_LOCAL_NUMA_NODE:
       case THREADS_NO_MEM_DISTRIBUTION:
+      case THREADS_SPLIT_EVEN_NODES:
         this->np = new NumaPolicyThreads(config.num_threads,
                                          (numa_policy_threads) config.numa_split);
         break;

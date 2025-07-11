@@ -705,7 +705,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
     PLOGD.printf("Dist to nodes tid %u", tid);
     auto *part_ht = reinterpret_cast<PartitionedHashStore<KVType, ItemQueue>*>(ktable);
     void *ht_mem = part_ht->hashtable[part_ht->id];
-    distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size());
+    distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size(), (kmercounter::numa_policy_threads) 0);
   }
 
   FindResult *results = new FindResult[config.batch_len];

@@ -57,7 +57,7 @@ template <typename T> struct huge_page_allocator {
       PLOGE.printf("map failed %d", errno);
       throw std::bad_alloc();
     } else {
-      kmercounter::distribute_mem_to_nodes(p, alloc_sz);
+      kmercounter::distribute_mem_to_nodes(p, alloc_sz, (kmercounter::numa_policy_threads) 0);
     }
     return p;
   }

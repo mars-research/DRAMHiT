@@ -85,9 +85,8 @@ cacheline_t* alloc_mem(size_t len) {
 
 #define ITER 100
 
-cacheline_t* mem; 
 
-uint64_t experiment() {
+uint64_t experiment(cacheline_t* mem) {
   uint64_t start_cycles = 0, end_cycles = 0;
 
   for (uint64_t i = 0; i < ARRAY_LEN; i++) {
@@ -111,14 +110,14 @@ uint64_t experiment() {
 
 int main() {
 
-  mem = alloc_mem(ARRAY_LEN * CACHELINE_SIZE);
+  cacheline_t* mem = alloc_mem(ARRAY_LEN * CACHELINE_SIZE);
 
   uint64_t exp_cycle = 0;
   uint64_t avg_exp_cycle = 0;
 
   exp_cycle = 0;
   for (int i = 0; i < ITER; i++) {
-    exp_cycle += experiment();
+    exp_cycle += experiment(mem);
     sleep_ms(10);
   }
   avg_exp_cycle = exp_cycle / ITER;

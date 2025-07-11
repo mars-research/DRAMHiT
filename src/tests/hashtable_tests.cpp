@@ -346,6 +346,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   OpTimings find_timings{};
   OpTimings upsertion_timings{};
 
+
+  // TODO: generate zipfian here first !
+
 #ifdef LATENCY_COLLECTION
   static auto step = 0;
   {
