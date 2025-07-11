@@ -23,7 +23,22 @@ option(AVX_SUPPORT "SIMD" ON)
 option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
 option(PART_ID "partition id for multilevel and partition hashtable" OFF)
+option(OLD_DRAMHiT "dramhit, no bucket, no simd, just branch" OFF)
+option(DRAMHiT_MANUAL_INLINE "dramhit inlined" OFF)
+option(BUCKETIZATION "buckets" OFF)
 
+if(OLD_DRAMHiT)
+    add_definitions(-DDRAMHiT_2023)
+else()
+    if(DRAMHiT_MANUAL_INLINE) 
+    else()
+        add_definitions(-DDRAMHiT_2025)
+    endif()
+endif() 
+
+if(BUCKETIZATION)
+    add_definitions(-DBUCKETIZATION)
+endif() 
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -211,6 +226,7 @@ endif()
 
 if(BRANCH STREQUAL "simd")
     add_definitions(-DBRANCHLESS_SIMD)
+    add_definitions(-DCAS_SIMD)
 elseif(BRANCH STREQUAL "cmov")
     add_definitions(-DBRANCHLESS_CMOVE)
 elseif(BRANCH STREQUAL "branched")
@@ -238,7 +254,7 @@ endif()
 
 # Benchmark backend
 
-set(BENCHMARK_BACKEND "PCM" CACHE STRING "Benchmark backend to use (PERFCPP, PCM, LEGACY_PAPI, HIGH_LEVEL_PAPI, VTUNE, NONE)")
+set(BENCHMARK_BACKEND "NONE" CACHE STRING "Benchmark backend to use (PERFCPP, PCM, LEGACY_PAPI, HIGH_LEVEL_PAPI, VTUNE, NONE)")
 
 set(VALID_BACKENDS PERFCPP PCM LEGACY_PAPI HIGH_LEVEL_PAPI VTUNE NONE)
 

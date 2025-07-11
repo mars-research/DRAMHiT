@@ -89,6 +89,31 @@ void distribute_mem_to_nodes(void *addr, size_t alloc_sz) {
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   }
+  else if (config.numa_split == THREADS_SPLIT_EVEN_NODES && config.ht_type == CASHTPP)
+  {
+    unsigned long node0 = 1UL << 0;
+    unsigned long node1 = 1UL << 1;
+
+    if(alloc_sz % 2) 
+    {
+      PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %d", alloc_sz);
+      exit(-1);
+    }
+
+    long ret = mbind(addr, alloc_sz/2, MPOL_BIND, &node0, sizeof(node0)*8,
+                     MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+    }
+
+    ret = mbind(addr+alloc_sz/2, alloc_sz/2, MPOL_BIND, &node1, sizeof(node1)*8,
+                     MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+    }
+  }
   else {
 
       long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,

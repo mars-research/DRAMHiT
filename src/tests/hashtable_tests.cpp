@@ -110,11 +110,7 @@ OpTimings do_zipfian_upserts(
 #else
       if (++key == config.batch_len) {
         InsertFindArguments keypairs(items, config.batch_len);
-#ifdef CAS_NO_VIRTUAL
         cas_ht->insert_batch(keypairs, collector);
-#else
-        hashtable->insert_batch(keypairs, collector);
-#endif
         key = 0;
       }
 #endif
@@ -213,11 +209,7 @@ OpTimings do_zipfian_inserts(
 #else
       if (++key == config.batch_len) {
         InsertFindArguments keypairs(items, config.batch_len);
-#ifdef CAS_NO_VIRTUAL
         cas_ht->insert_batch(keypairs, collector);
-#else
-        hashtable->insert_batch(keypairs, collector);
-#endif
         key = 0;
       }
 #endif
@@ -250,9 +242,7 @@ OpTimings do_zipfian_inserts(
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
 
-#ifdef CAS_NO_VIRTUAL
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
-#endif
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
 #ifdef LATENCY_COLLECTION
@@ -310,13 +300,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       hashtable->find_noprefetch(&value, collector);
 #else
       if (++key == config.batch_len) {
-#ifdef CAS_NO_VIRTUAL
         cas_ht->find_batch(
             InsertFindArguments(items, config.batch_len), vp, collector);
-#else
-        hashtable->find_batch(InsertFindArguments(items, config.batch_len),
-                                  vp, collector);
-#endif
         found += vp.first;
         vp.first = 0;
         key = 0;
