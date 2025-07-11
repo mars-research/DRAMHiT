@@ -254,8 +254,13 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
+
+#ifdef BUDDY_QUEUE
+  FindResult *results = new FindResult[(config.batch_len*2)];
+#else
   FindResult *results = new FindResult[config.batch_len];
-  // alignas(32) ValuePairs vp = std::make_pair(0, results);
+#endif
+
   ValuePairs vp = std::make_pair(0, results);
   sync_barrier->arrive_and_wait();  // this calls sync_complete
   stop_sync = true;
