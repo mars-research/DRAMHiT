@@ -48,12 +48,11 @@ extern ExecPhase cur_phase;
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 extern std::vector<cacheline> toxic_waste_dump;
 
-//#define XORWOW
+// #define XORWOW
 
 OpTimings do_zipfian_upserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
-
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
 
 #ifdef LATENCY_COLLECTION
@@ -68,25 +67,19 @@ OpTimings do_zipfian_upserts(
   sync_barrier->arrive_and_wait();
   stop_sync = true;
 
-#ifdef WITH_VTUNE_LIB
-  static const auto event =
-      __itt_event_create("inserting", strlen("inserting"));
-  __itt_event_start(event);
-#endif
-
   PLOGV.printf("Starting insertion test");
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
 
-  uint64_t key_start; 
+  uint64_t key_start;
   key_type key{};
   std::size_t next_pollution{};
 
   uint64_t start;
   uint64_t end;
   for (auto j = 0u; j < config.insert_factor; j++) {
-
-    key_start = std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+    key_start =
+        std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
     start = RDTSC_START();
 
@@ -124,10 +117,6 @@ OpTimings do_zipfian_upserts(
     duration += end - start;
   }
 
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
-#endif
-
   sync_barrier->arrive_and_wait();
 
 #ifdef LATENCY_COLLECTION
@@ -140,7 +129,6 @@ OpTimings do_zipfian_upserts(
 OpTimings do_zipfian_inserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
-
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
 
 #ifdef LATENCY_COLLECTION
@@ -155,18 +143,12 @@ OpTimings do_zipfian_inserts(
   sync_barrier->arrive_and_wait();
   stop_sync = true;
 
-#ifdef WITH_VTUNE_LIB
-  static const auto event =
-      __itt_event_create("inserting", strlen("inserting"));
-  __itt_event_start(event);
-#endif
-
   PLOGV.printf("Starting insertion test");
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
 
-  uint64_t key_start; 
-  //std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+  uint64_t key_start;
+  // std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
 
   PLOGV.printf("id: %u | key_start %" PRIu64 "", id, key_start);
 
@@ -184,7 +166,8 @@ OpTimings do_zipfian_inserts(
     sync_barrier->arrive_and_wait();
     cur_phase = ExecPhase::insertions;
 
-    key_start = std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
+    key_start =
+        std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
     auto zipf_idx = key_start == 1 ? 0 : key_start;
     start = RDTSC_START();
 
@@ -226,10 +209,6 @@ OpTimings do_zipfian_inserts(
   PLOG_DEBUG << "Inserts done; Reprobes: " << hashtable->num_reprobes
              << ", Soft Reprobes: " << hashtable->num_soft_reprobes;
 
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(event);
-#endif
-
   sync_barrier->arrive_and_wait();
 
 #ifdef LATENCY_COLLECTION
@@ -241,7 +220,6 @@ OpTimings do_zipfian_inserts(
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier) {
-
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
@@ -256,7 +234,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       64, sizeof(InsertFindArgument) * config.batch_len);
 
 #ifdef BUDDY_QUEUE
-  FindResult *results = new FindResult[(config.batch_len*2)];
+  FindResult *results = new FindResult[(config.batch_len * 2)];
 #else
   FindResult *results = new FindResult[config.batch_len];
 #endif
@@ -264,12 +242,6 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   ValuePairs vp = std::make_pair(0, results);
   sync_barrier->arrive_and_wait();  // this calls sync_complete
   stop_sync = true;
-
-#ifdef WITH_VTUNE_LIB
-  static const auto vtune_event_find =
-      __itt_event_create("finding", strlen("finding"));
-  __itt_event_start(vtune_event_find);
-#endif
 
   // THis ensures that for a given hashtable size, regardless of
   // the fill factor, number of finds is the same.
@@ -305,8 +277,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
       hashtable->find_noprefetch(&value, collector);
 #else
       if (++key == config.batch_len) {
-        cas_ht->find_batch(
-            InsertFindArguments(items, config.batch_len), vp, collector);
+        cas_ht->find_batch(InsertFindArguments(items, config.batch_len), vp,
+                           collector);
         found += vp.first;
         vp.first = 0;
         key = 0;
@@ -325,10 +297,6 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
     end = RDTSCP();
     duration += end - start;
   }
-
-#ifdef WITH_VTUNE_LIB
-  __itt_event_end(vtune_event_find);
-#endif
 
   sync_barrier->arrive_and_wait();
 
@@ -351,7 +319,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   OpTimings find_timings{};
   OpTimings upsertion_timings{};
 
-
   // TODO: generate zipfian here first !
 
 #ifdef LATENCY_COLLECTION
@@ -373,25 +340,30 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
       shard->shard_idx, config.ht_size, HT_TESTS_NUM_INSERTS, skew);
 
 #ifdef WITH_PERFCPP
-  if (shard->shard_idx != 0)
-  EVENTCOUNTERS.start(shard->shard_idx);
+  if (shard->shard_idx != 0) EVENTCOUNTERS.start(shard->shard_idx);
+#endif
+
+#ifdef WITH_VTUNE_LIB
+  static const auto insert_event =
+      __itt_event_create("insert_test", strlen("insert_test"));
+  __itt_event_start(insert_event);
 #endif
   insert_timings = do_zipfian_inserts(hashtable, skew, zipf_seed, count,
                                       shard->shard_idx, sync_barrier);
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(insert_event);
+#endif
 
 #ifdef WITH_PERFCPP
   if (shard->shard_idx != 0) {
-
-  EVENTCOUNTERS.stop(shard->shard_idx);
-  EVENTCOUNTERS.set_sample_count(shard->shard_idx, insert_timings.op_count);
-  // EVENTCOUNTERS.save("Insertion_perfcpp_counter.csv");
-  // EVENTCOUNTERS.clear(shard->shard_idx);
-
+    EVENTCOUNTERS.stop(shard->shard_idx);
+    EVENTCOUNTERS.set_sample_count(shard->shard_idx, insert_timings.op_count);
+    // EVENTCOUNTERS.save("Insertion_perfcpp_counter.csv");
+    // EVENTCOUNTERS.clear(shard->shard_idx);
   }
 #endif
 
   shard->stats->insertions = insert_timings;
-
 
   if (zipf_values && shard->shard_idx == 0) {
     // Do a shuffle to redistribute the keys
@@ -401,10 +373,19 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   cur_phase = ExecPhase::upsertions;
 
+#ifdef WITH_VTUNE_LIB
+  static const auto upsert_event =
+      __itt_event_create("upsert_test", strlen("upsert_test"));
+  __itt_event_start(upsert_event);
+#endif
+
   upsertion_timings = do_zipfian_upserts(hashtable, skew, zipf_seed, count,
-                                      shard->shard_idx, sync_barrier);
-  
-  
+                                         shard->shard_idx, sync_barrier);
+
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(upsert_event);
+#endif
+
   shard->stats->upsertions = upsertion_timings;
 #ifdef LATENCY_COLLECTION
   {
@@ -446,21 +427,30 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
 
 #ifdef WITH_VTUNE_LIB
-  __itt_resume();
+  //__itt_resume();
 #endif
 
-  // perf resume()
-  // int perf_ctl_fd = 10;
-  // int perf_ctl_ack_fd = 11;
-  // char ack[5];
-  // if (shard->shard_idx == 0) {
-  //   write(perf_ctl_fd, "enable\n", 8);
-  //   read(perf_ctl_ack_fd, ack, 5);
-  //   assert(strcmp(ack, "ack\n") == 0);
-  // }
+// perf resume()
+// int perf_ctl_fd = 10;
+// int perf_ctl_ack_fd = 11;
+// char ack[5];
+// if (shard->shard_idx == 0) {
+//   write(perf_ctl_fd, "enable\n", 8);
+//   read(perf_ctl_ack_fd, ack, 5);
+//   assert(strcmp(ack, "ack\n") == 0);
+// }
+#ifdef WITH_VTUNE_LIB
+  static const auto vtune_event_find =
+      __itt_event_create("find_test", strlen("find_test"));
+  __itt_event_start(vtune_event_find);
+#endif
 
   find_timings =
       do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
+
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(vtune_event_find);
+#endif
 
   // perf pause()
   // if (shard->shard_idx == 0) {
@@ -469,7 +459,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //   assert(strcmp(ack, "ack\n") == 0);
   // }
 #ifdef WITH_VTUNE_LIB
-  __itt_pause();
+  //__itt_pause();
 #endif
 
 #ifdef WITH_PERFCPP

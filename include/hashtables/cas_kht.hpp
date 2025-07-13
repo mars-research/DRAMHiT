@@ -35,10 +35,12 @@ class BuddyBuffer {
   InsertFindArgument *arr;
   BuddyBuffer(uint32_t capacity) {
     this->capacity = capacity;
-    arr = (InsertFindArgument *)aligned_alloc(64, capacity * sizeof(InsertFindArgument));
+    arr = (InsertFindArgument *)aligned_alloc(
+        64, capacity * sizeof(InsertFindArgument));
   }
 
   bool add(InsertFindArgument *q) {
+    // return true; //fake add, skips remote requests, and doesn't write to buffer, so won't flush. 
     if (sz < capacity) {
       arr[sz] = *q;
       sz++;
@@ -67,9 +69,6 @@ class CASHashTable : public BaseHashTable {
 
   BuddyBuffer *buddy_find_queue;
   BuddyBuffer *buddy_insert_queue;
-
-  uint32_t buddy_find_tail;
-  uint32_t buddy_find_head;
 
 #endif
 
@@ -127,6 +126,12 @@ class CASHashTable : public BaseHashTable {
       this->ref_cnt++;
     }
 
+    this->tid = tid;
+    this->cpuid = tid >= 28 ? tid - 28 : tid;
+    this->empty_item = this->empty_item.get_empty_key();
+    this->key_length = empty_item.key_length();
+    this->data_length = empty_item.data_length();
+
 #ifdef BUDDY_QUEUE
     // grab the pointer buddy queues
     int buddy_cpu = (tid % 2 == 0) ? tid + 1 : tid - 1;
@@ -134,12 +139,6 @@ class CASHashTable : public BaseHashTable {
     buddy_insert_queue = buddy_insert_queues[buddy_cpu];
 
 #endif
-
-    this->tid = tid;
-    this->cpuid = tid >= 28 ? tid - 28 : tid;
-    this->empty_item = this->empty_item.get_empty_key();
-    this->key_length = empty_item.key_length();
-    this->data_length = empty_item.data_length();
 
     PLOGV << "Empty item: " << this->empty_item;
 
@@ -260,15 +259,16 @@ class CASHashTable : public BaseHashTable {
   void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
 
 #ifdef BUDDY_QUEUE
-    uint32_t sz = buddy_insert_queue->size();
+    BuddyBuffer *own_buddy_buffer = buddy_insert_queues[tid];
+    uint32_t sz = own_buddy_buffer->size();
     if (sz == config.batch_len) {
       for (int i = 0; i < sz; i++) {
         if ((get_insert_queue_sz() >= INSERT_QUEUE_SZ_MASK)) {
           pop_insert_queue(collector);
         }
-        add_to_insert_queue(&(buddy_insert_queue->arr[i]), collector);
+        add_to_insert_queue(&(own_buddy_buffer->arr[i]), collector);
       }
-      buddy_insert_queue->sz = 0;
+      own_buddy_buffer->sz = 0;
     }
 #endif
 
@@ -580,7 +580,22 @@ class CASHashTable : public BaseHashTable {
   // trickery: we return at most batch sz things due to pop_find_queue.
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
-    // if buddy_find_queue.size() > X { }
+// if buddy_find_queue.size() > X { }
+#ifdef BUDDY_QUEUE
+    BuddyBuffer *own_buddy_buffer = buddy_find_queues[tid];
+    uint32_t sz = own_buddy_buffer->size();
+    if (sz == config.batch_len) {
+      for (int i = 0; i < sz; i++) {
+        if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
+          pop_find_queue(values, collector);  // values contains vp.first
+        }
+        add_to_find_queue(&(own_buddy_buffer->arr[i]), collector);
+      }
+      own_buddy_buffer->sz = 0;
+    }
+#endif
+
+
 
     if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
       for (auto &data : kp) {
@@ -1242,6 +1257,12 @@ class CASHashTable : public BaseHashTable {
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
 #endif
 
+#ifdef BUDDY_QUEUE
+    if (!is_local_addr(idx) && buddy_find_queue->add(key_data)) {
+      return;
+    }
+#endif
+
 #ifdef DRAMHiT_2023
     __builtin_prefetch(&this->hashtable[idx], false, 3);
 #else
@@ -1277,8 +1298,7 @@ class CASHashTable : public BaseHashTable {
 #endif
 
 #ifdef BUDDY_QUEUE
-    if (is_remote_addr(idx) &&
-        buddy_insert_queue->add(key_data)) {
+    if (!is_local_addr(idx) && buddy_insert_queue->add(key_data)) {
       return;
     }
 #endif
@@ -1306,11 +1326,27 @@ class CASHashTable : public BaseHashTable {
   }
 
 #ifdef BUDDY_QUEUE
-  bool is_remote_addr(uint64_t idx) {
+  bool is_local_addr(uint64_t idx) {
     // odd tid is node 1, even tid is node 0.
     // lower half is node 0, upper half is node 1
     // xor, value needs to be opposite of each other
-    return (tid % 2 == 0) ^ (idx < (this->capacity / 2));
+    // return (tid % 2 == 0) ^ (idx < (this->capacity / 2));
+
+    bool idx_from_numa_0 = (idx < (this->capacity / 2));
+    // cpu from node 0
+    if (tid % 2 == 0) {
+      if (idx_from_numa_0)
+        return true;
+      else
+        return false;
+    }
+    // cpu from node 1
+    if (tid % 2 == 1) {
+      if (idx_from_numa_0)
+        return false;
+      else
+        return true;
+    }
   }
 
 #endif
