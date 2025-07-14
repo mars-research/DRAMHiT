@@ -30,27 +30,48 @@ namespace kmercounter {
 
 class BuddyBuffer {
  public:
-  uint32_t sz;
+  std::atomic<uint32_t> sz;  // make sz atomic
+  // uint32_t sz;
   uint32_t capacity;
   InsertFindArgument *arr;
+
   BuddyBuffer(uint32_t capacity) {
     this->capacity = capacity;
+    this->sz = 0;
     arr = (InsertFindArgument *)aligned_alloc(
-        64, capacity * sizeof(InsertFindArgument));
+        64, this->capacity * sizeof(InsertFindArgument));
   }
 
   bool add(InsertFindArgument *q) {
-    // return true; //fake add, skips remote requests, and doesn't write to buffer, so won't flush. 
-    if (sz < capacity) {
-      arr[sz] = *q;
-      sz++;
+    return true; //fake add, skips remote requests, and doesn't write to
+    // buffer, so won't flush.
+    uint32_t index = sz.load(std::memory_order_seq_cst);
+    if (index < capacity) {
+      arr[index] = *q;
+      sz.store(index + 1, std::memory_order_seq_cst);
       return true;
     }
-
     return false;
+    // if (sz < this->capacity) {
+    //   this->arr[sz] = *q;
+    //  sz++;
+    //   return true;
+    // }
+    // return false;
+    // return true; // FAKE ADD
   }
 
-  uint32_t size() { return sz; }
+  uint32_t size() {
+    // return sz; 
+    return sz.load(std::memory_order_seq_cst); 
+    }
+
+  void reset_buffer() { 
+    // sz = 0;
+    // return;
+  
+    sz.store(0, std::memory_order_seq_cst); 
+    }
 };
 
 template <typename KV, typename KVQ>
@@ -69,6 +90,7 @@ class CASHashTable : public BaseHashTable {
 
   BuddyBuffer *buddy_find_queue;
   BuddyBuffer *buddy_insert_queue;
+  uint32_t BuddyBufferLength = 64;
 
 #endif
 
@@ -106,20 +128,24 @@ class CASHashTable : public BaseHashTable {
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+
         PLOGI.printf("Hashtable base: %p Hashtable size: %lu", this->hashtable,
                      this->capacity);
         PLOGI.printf("queue item sz: %d", sizeof(KVQ));
 #ifdef BUDDY_QUEUE
         // allocate buddy queues
+        // uint32 num_threads = config.num_threads;
+        uint32 num_threads = 128;
+
         buddy_find_queues = (BuddyBuffer **)(aligned_alloc(
-            64, config.num_threads * sizeof(void *)));
+            64, num_threads * sizeof(void *)));
 
         buddy_insert_queues = (BuddyBuffer **)(aligned_alloc(
-            64, config.num_threads * sizeof(void *)));
-
-        for (int i = 0; i < config.num_threads; i++) {
-          buddy_find_queues[i] = new BuddyBuffer(queue_sz);
-          buddy_insert_queues[i] = new BuddyBuffer(queue_sz);
+            64, num_threads * sizeof(void *)));
+        
+        for (int i = 0; i < num_threads; i++) {
+          buddy_find_queues[i] = new BuddyBuffer(BuddyBufferLength);
+          buddy_insert_queues[i] = new BuddyBuffer(BuddyBufferLength);
         }
 #endif
       }
@@ -127,6 +153,8 @@ class CASHashTable : public BaseHashTable {
     }
 
     this->tid = tid;
+    this->tid = sched_getcpu();
+    // printf("Set tid:%d , on cpuid %d\n", this->tid, sched_getcpu());
     this->cpuid = tid >= 28 ? tid - 28 : tid;
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
@@ -134,7 +162,9 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef BUDDY_QUEUE
     // grab the pointer buddy queues
-    int buddy_cpu = (tid % 2 == 0) ? tid + 1 : tid - 1;
+    //buffer[0-63]
+    // buffer[126]
+    int buddy_cpu = (this->tid % 2 == 0) ? this->tid + 1 : this->tid - 1;
     buddy_find_queue = buddy_find_queues[buddy_cpu];
     buddy_insert_queue = buddy_insert_queues[buddy_cpu];
 
@@ -259,16 +289,18 @@ class CASHashTable : public BaseHashTable {
   void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
 
 #ifdef BUDDY_QUEUE
-    BuddyBuffer *own_buddy_buffer = buddy_insert_queues[tid];
+    BuddyBuffer *own_buddy_buffer = buddy_insert_queues[this->tid];
     uint32_t sz = own_buddy_buffer->size();
-    if (sz == config.batch_len) {
+    // printf("SIZE OF BUDDY BUFFER = %d\n", sz);
+    // sz[0-64] == 16 
+    if (sz == BuddyBufferLength) {
       for (int i = 0; i < sz; i++) {
         if ((get_insert_queue_sz() >= INSERT_QUEUE_SZ_MASK)) {
           pop_insert_queue(collector);
         }
         add_to_insert_queue(&(own_buddy_buffer->arr[i]), collector);
       }
-      own_buddy_buffer->sz = 0;
+      own_buddy_buffer->reset_buffer();
     }
 #endif
 
@@ -582,20 +614,20 @@ class CASHashTable : public BaseHashTable {
                   collector_type *collector) {
 // if buddy_find_queue.size() > X { }
 #ifdef BUDDY_QUEUE
-    BuddyBuffer *own_buddy_buffer = buddy_find_queues[tid];
+    BuddyBuffer *own_buddy_buffer = buddy_find_queues[this->tid];
     uint32_t sz = own_buddy_buffer->size();
-    if (sz == config.batch_len) {
+
+    if (sz == BuddyBufferLength) {
       for (int i = 0; i < sz; i++) {
         if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
           pop_find_queue(values, collector);  // values contains vp.first
         }
         add_to_find_queue(&(own_buddy_buffer->arr[i]), collector);
       }
-      own_buddy_buffer->sz = 0;
+      // printf("Flushed buddy BUFFER\n");
+      own_buddy_buffer->reset_buffer();
     }
 #endif
-
-
 
     if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
       for (auto &data : kp) {
@@ -1259,6 +1291,7 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef BUDDY_QUEUE
     if (!is_local_addr(idx) && buddy_find_queue->add(key_data)) {
+      // printf("Rescheduled\n");
       return;
     }
 #endif
@@ -1334,14 +1367,14 @@ class CASHashTable : public BaseHashTable {
 
     bool idx_from_numa_0 = (idx < (this->capacity / 2));
     // cpu from node 0
-    if (tid % 2 == 0) {
+    if (this->tid % 2 == 0) {
       if (idx_from_numa_0)
         return true;
       else
         return false;
     }
     // cpu from node 1
-    if (tid % 2 == 1) {
+    if (this->tid % 2 == 1) {
       if (idx_from_numa_0)
         return false;
       else
