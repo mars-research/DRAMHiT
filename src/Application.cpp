@@ -47,6 +47,9 @@
 #include "PCMCounter.hpp"
 #endif
 
+#include "zipf_distribution.hpp"
+
+
 namespace kmercounter {
 
 class LynxQueue;
@@ -65,6 +68,7 @@ pcm::PCMCounters pcm_cnt;
 #endif
 
 // void sync_complete(void);
+zipf_distribution_apache* ZIPF_DISTRIBUTION;
 
 // default configuration
 const Configuration def = {
@@ -742,9 +746,15 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ || config.mode == ZIPFIAN ||
+  if (config.mode == BQ_TESTS_YES_BQ ||
       config.mode == RW_RATIO) {
     init_zipfian_dist(config.skew, config.seed);
+  }
+
+  if(config.mode == ZIPFIAN)
+  {
+      std::uint64_t keyrange_width = (1ull << 63);
+      ZIPF_DISTRIBUTION = new zipf_distribution_apache(keyrange_width, config.skew, config.seed);
   }
 
   if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
