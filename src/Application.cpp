@@ -68,7 +68,6 @@ pcm::PCMCounters pcm_cnt;
 #endif
 
 // void sync_complete(void);
-zipf_distribution_apache* ZIPF_DISTRIBUTION;
 
 // default configuration
 const Configuration def = {
@@ -207,11 +206,12 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       exit(-1);
       break;
   }
+
+  
   return kmer_ht;
 }
 
 void free_ht(BaseHashTable *kmer_ht) {
-  PLOG_INFO.printf("freeing hashtable");
   delete kmer_ht;
 }
 
@@ -288,6 +288,7 @@ void Application::shard_thread(int tid,
       break;
   }
 
+
   // Write to file
   if (!config.ht_file.empty()) {
     // for CAS hashtable, not every thread has to write to file
@@ -301,7 +302,7 @@ void Application::shard_thread(int tid,
     kmer_ht->print_to_file(outfile);
   }
 
-  // free_ht(kmer_ht);
+  free_ht(kmer_ht);
 
 done:
   --num_entered;
@@ -417,6 +418,8 @@ int Application::spawn_shard_threads() {
   EVENTCOUNTERS.print();
 #endif
 
+
+   
   std::free(this->shards);
 
   return 0;
@@ -747,16 +750,9 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == BQ_TESTS_YES_BQ ||
-      config.mode == RW_RATIO) {
+      config.mode == RW_RATIO || config.mode == ZIPFIAN) {
     init_zipfian_dist(config.skew, config.seed);
   }
-
-  if(config.mode == ZIPFIAN)
-  {
-      std::uint64_t keyrange_width = (1ull << 63);
-      ZIPF_DISTRIBUTION = new zipf_distribution_apache(keyrange_width, config.skew, config.seed);
-  }
-
   if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
     // for hashjoin, ht-type determines how we spawn threads
     if (config.ht_type == PARTITIONED_HT) {

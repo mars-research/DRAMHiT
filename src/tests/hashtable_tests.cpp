@@ -46,13 +46,14 @@ bool clear_table = false;
 extern ExecPhase cur_phase;
 
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
-extern std::vector<cacheline> toxic_waste_dump;
+// extern std::vector<cacheline> toxic_waste_dump;
 
 // #define XORWOW
 
 OpTimings do_zipfian_upserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
-    unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
+    unsigned int id, std::barrier<std::function<void()>> *sync_barrier,
+    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
 
 #ifdef LATENCY_COLLECTION
@@ -78,25 +79,28 @@ OpTimings do_zipfian_upserts(
   uint64_t start;
   uint64_t end;
   for (auto j = 0u; j < config.insert_factor; j++) {
-    key_start =
-        std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
-    auto zipf_idx = key_start == 1 ? 0 : key_start;
+    uint64_t value;
+
+#ifdef XORWOW
+    value = id * HT_TESTS_NUM_INSERTS;
+#else
+    uint64_t zipf_idx = 0;
+#endif
     start = RDTSC_START();
 
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
 #ifdef XORWOW
-      auto value = key_start++;
+      value++;
 #else
-      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_set->size()) {
+        prefetch_object<false>(&zipf_set->at(zipf_idx + 16), 64);
       }
 
-      auto value = zipf_values->at(zipf_idx);  // len 1024,  zipf[2 * 1024]
+      value = zipf_set->at(zipf_idx);  // len 1024,  zipf[2 * 1024]
+      zipf_idx++;
 #endif
       items[key].key = items[key].value = value;
       items[key].id = n;
-
-      zipf_idx++;
 
 #ifdef NOPREFETCH
       hashtable->insert_noprefetch(&items[key], collector);
@@ -128,7 +132,8 @@ OpTimings do_zipfian_upserts(
 
 OpTimings do_zipfian_inserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
-    unsigned int id, std::barrier<std::function<void()>> *sync_barrier) {
+    unsigned int id, std::barrier<std::function<void()>> *sync_barrier,
+    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
 
 #ifdef LATENCY_COLLECTION
@@ -166,26 +171,29 @@ OpTimings do_zipfian_inserts(
     sync_barrier->arrive_and_wait();
     cur_phase = ExecPhase::insertions;
 
-    key_start =
-        std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
-    auto zipf_idx = key_start == 1 ? 0 : key_start;
+    uint64_t value;
+#ifdef XORWOW
+    value = id * HT_TESTS_NUM_INSERTS;
+#else
+    uint64_t zipf_idx = 0;
+#endif
+
     start = RDTSC_START();
 
     for (unsigned int n{}; n < HT_TESTS_NUM_INSERTS; ++n) {
 #ifdef XORWOW
-      auto value = key_start++;
+      value++;
 #else
-      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-        prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
-        // __builtin_prefetch(&zipf_values->at(zipf_idx + 16), false, 3);
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_set->size()) {
+        __builtin_prefetch(&zipf_set->at(zipf_idx + 16), false, 3);
       }
 
-      auto value = zipf_values->at(zipf_idx);  // len 1024,  zipf[2 * 1024]
+      value = zipf_set->at(zipf_idx);  // len 1024,  zipf[2 * 1024]
+      zipf_idx++;
+
 #endif
       items[key].key = items[key].value = value;
       items[key].id = n;
-
-      zipf_idx++;
 
 #ifdef NOPREFETCH
       hashtable->insert_noprefetch(&items[key], collector);
@@ -218,8 +226,10 @@ OpTimings do_zipfian_inserts(
   return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
-OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
-                          unsigned int id, auto sync_barrier) {
+OpTimings do_zipfian_gets(
+    BaseHashTable *hashtable, unsigned int num_threads, unsigned int id,
+    auto sync_barrier,
+    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
@@ -255,20 +265,25 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   std::size_t next_pollution{};
   for (auto j = 0u; j < config.read_factor; j++) {
     start = RDTSC_START();
-    uint64_t key_start =
-        std::max(static_cast<uint64_t>(num_finds) * id, (uint64_t)1);
-    auto zipf_idx = key_start == 1 ? 0 : key_start;
+
+    uint64_t value;
+#ifdef XORWOW
+    value = id * HT_TESTS_NUM_INSERTS;
+#else
+    uint64_t zipf_idx = 0;
+#endif
 
     for (unsigned int n{}; n < num_finds; ++n) {
 #ifdef XORWOW
-      auto value = key_start++;
+      value++;
 #else
-      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-        // prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
-        __builtin_prefetch(&zipf_values->at(zipf_idx + 16), false, 3);
+      if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_set->size()) {
+        // prefetch_object<false>(&zipf_set->at(zipf_idx + 16), 64);
+        __builtin_prefetch(&zipf_set->at(zipf_idx + 16), false, 3);
       }
 
-      auto value = zipf_values->at(zipf_idx);
+      value = zipf_set->at(zipf_idx);
+      zipf_idx++;
 #endif
 
       items[key] = {value, n};
@@ -284,8 +299,8 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
         key = 0;
       }
 #endif
-      zipf_idx++;
     }
+
 #ifndef NOPREFETCH
     if (vp.first > 0) {
       vp.first = 0;
@@ -300,15 +315,14 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
 
   sync_barrier->arrive_and_wait();
 
-  if (found >= 0) {
-    PLOGI.printf("thread %u | num_finds %lu | cycles per get: %lu", id, found,
-                 found > 0 ? duration / found : 0);
+  if (found > 0) {
+    PLOGI.printf("DEBUG: thread %u | actual found %lu | cycles per get: %lu", id, found, duration / found);
   }
 
 #ifdef LATENCY_COLLECTION
   collector->dump("find", id);
 #endif
-
+  return {duration, HT_TESTS_NUM_INSERTS * config.read_factor};
   return {duration, found};
 }
 
@@ -319,7 +333,29 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   OpTimings find_timings{};
   OpTimings upsertion_timings{};
 
-  // TODO: generate zipfian here first !
+  CASHashTable<KVType, ItemQueue> *cas_ht =
+      static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+
+  // generate zipfian here.
+#ifndef XORWOW
+  std::vector<key_type, huge_page_allocator<key_type>> *zipf_set_local =
+      new std::vector<key_type, huge_page_allocator<key_type>>(
+          HT_TESTS_NUM_INSERTS);
+  // int cpu = sched_getcpu();
+  // sleep(cpu);
+//   uint64_t* zipf_set_local = static_cast<uint64_t*>(aligned_alloc(CACHE_LINE_SIZE, HT_TESTS_NUM_INSERTS * sizeof(uint64_t)));
+// assert(zipf_set_local != nullptr && "aligned_alloc failed");
+  
+  uint64_t starting_offset = shard->shard_idx * HT_TESTS_NUM_INSERTS;
+  for(int i =0; i< HT_TESTS_NUM_INSERTS; i++){
+    zipf_set_local->at(i)= zipf_values->at(i+starting_offset);
+  }
+
+  // PLOGI.printf("generated %d zipf on thread %d", HT_TESTS_NUM_INSERTS,
+  //              shard->shard_idx);
+#else
+  std::vector<key_type, huge_page_allocator<key_type>> *zipf_set;
+#endif
 
 #ifdef LATENCY_COLLECTION
   static auto step = 0;
@@ -348,8 +384,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
       __itt_event_create("insert_test", strlen("insert_test"));
   __itt_event_start(insert_event);
 #endif
-  insert_timings = do_zipfian_inserts(hashtable, skew, zipf_seed, count,
-                                      shard->shard_idx, sync_barrier);
+  insert_timings =
+      do_zipfian_inserts(hashtable, skew, zipf_seed, count, shard->shard_idx,
+                         sync_barrier, zipf_set_local);
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(insert_event);
 #endif
@@ -365,11 +402,14 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   shard->stats->insertions = insert_timings;
 
-  if (zipf_values && shard->shard_idx == 0) {
-    // Do a shuffle to redistribute the keys
+#ifndef XORWOW
+  if (zipf_set_local) {
     auto rng = std::default_random_engine{};
-    std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
+    std::shuffle(std::begin(*zipf_set_local), std::end(*zipf_set_local), rng);
   }
+#endif
+
+  if (shard->shard_idx == 0) cas_ht->flush_ht_from_cache();
 
   cur_phase = ExecPhase::upsertions;
 
@@ -379,8 +419,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   __itt_event_start(upsert_event);
 #endif
 
-  upsertion_timings = do_zipfian_upserts(hashtable, skew, zipf_seed, count,
-                                         shard->shard_idx, sync_barrier);
+  upsertion_timings =
+      do_zipfian_upserts(hashtable, skew, zipf_seed, count, shard->shard_idx,
+                         sync_barrier, zipf_set_local);
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(upsert_event);
@@ -398,11 +439,12 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   }
 #endif
 
-  if (zipf_values && shard->shard_idx == 0) {
-    // Do a shuffle to redistribute the keys
+#ifndef XORWOW
+  if (zipf_set_local) {
     auto rng = std::default_random_engine{};
-    std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
+    std::shuffle(std::begin(*zipf_set_local), std::end(*zipf_set_local), rng);
   }
+#endif
   // Flush cache after inserts
   //  std::size_t next_pollution{};
   //    for (auto p = 0u; p < 900000; ++p)
@@ -418,6 +460,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   // for (int i = 0; i < 10; i++)
   // hashtable->get_fill();
   // }
+
+  if (shard->shard_idx == 0) cas_ht->flush_ht_from_cache();
 
   cur_phase = ExecPhase::finds;
 
@@ -445,8 +489,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   __itt_event_start(vtune_event_find);
 #endif
 
-  find_timings =
-      do_zipfian_gets(hashtable, count, shard->shard_idx, sync_barrier);
+  find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
+                                 sync_barrier, zipf_set_local);
 
 #ifdef WITH_VTUNE_LIB
   __itt_event_end(vtune_event_find);

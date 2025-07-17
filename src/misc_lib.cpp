@@ -51,6 +51,8 @@ namespace kmercounter {
 
 extern Configuration config;
 
+
+
 void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz, numa_policy_threads policy) {
 
   // Check if there is only one NUMA node
