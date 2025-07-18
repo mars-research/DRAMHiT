@@ -264,6 +264,8 @@ OpTimings do_zipfian_gets(
   std::uint64_t key{};
   std::size_t next_pollution{};
   for (auto j = 0u; j < config.read_factor; j++) {
+
+    
     start = RDTSC_START();
 
     uint64_t value;
@@ -292,22 +294,22 @@ OpTimings do_zipfian_gets(
       hashtable->find_noprefetch(&value, collector);
 #else
       if (++key == config.batch_len) {
+        vp.first = 0;
         cas_ht->find_batch(InsertFindArguments(items, config.batch_len), vp,
                            collector);
         found += vp.first;
-        vp.first = 0;
+        vp.first = 0; 
         key = 0;
       }
 #endif
     }
 
 #ifndef NOPREFETCH
-    if (vp.first > 0) {
+    do {
+      found += vp.first;
       vp.first = 0;
-    }
+    } while (cas_ht->cas_flush_find_queue(vp, collector) > 0);
 
-    hashtable->flush_find_queue(vp, collector);
-    found += vp.first;
 #endif
     end = RDTSCP();
     duration += end - start;
@@ -316,7 +318,8 @@ OpTimings do_zipfian_gets(
   sync_barrier->arrive_and_wait();
 
   if (found > 0) {
-    PLOGI.printf("DEBUG: thread %u | actual found %lu | cycles per get: %lu", id, found, duration / found);
+    PLOGI.printf("DEBUG: thread %u | actual found %lu | cycles per get: %lu",
+                 id, found, duration / found);
   }
 
 #ifdef LATENCY_COLLECTION
@@ -343,12 +346,14 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
           HT_TESTS_NUM_INSERTS);
   // int cpu = sched_getcpu();
   // sleep(cpu);
-//   uint64_t* zipf_set_local = static_cast<uint64_t*>(aligned_alloc(CACHE_LINE_SIZE, HT_TESTS_NUM_INSERTS * sizeof(uint64_t)));
-// assert(zipf_set_local != nullptr && "aligned_alloc failed");
-  
+  //   uint64_t* zipf_set_local =
+  //   static_cast<uint64_t*>(aligned_alloc(CACHE_LINE_SIZE,
+  //   HT_TESTS_NUM_INSERTS * sizeof(uint64_t)));
+  // assert(zipf_set_local != nullptr && "aligned_alloc failed");
+
   uint64_t starting_offset = shard->shard_idx * HT_TESTS_NUM_INSERTS;
-  for(int i =0; i< HT_TESTS_NUM_INSERTS; i++){
-    zipf_set_local->at(i)= zipf_values->at(i+starting_offset);
+  for (int i = 0; i < HT_TESTS_NUM_INSERTS; i++) {
+    zipf_set_local->at(i) = zipf_values->at(i + starting_offset);
   }
 
   // PLOGI.printf("generated %d zipf on thread %d", HT_TESTS_NUM_INSERTS,

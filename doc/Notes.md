@@ -1,4 +1,24 @@
 
+# july 17
+
+
+
+
+Just write. never read the request. 
+{ set_cycles : 143, get_cycles : 120, upsert_cycles : 142, set_mops : 2237.762, get_mops : 2666.667, upsert_mops : 2253.521 }
+
+
+Just read. never write anything.
+{ set_cycles : 141, get_cycles : 54, upsert_cycles : 141, set_mops : 2269.504, get_mops : 5925.926, upsert_mops : 2269.504 }
+
+# july 15
+
+
+remote 128
+
+{ set_cycles : 129, get_cycles : 62, upsert_cycles : 129, set_mops : 2480.620, get_mops : 5161.290, upsert_mops : 2480.620 }
+
+
 
 # jun 26
 

@@ -375,7 +375,7 @@ class NumaPolicyThreads : public Numa {
   std::set<uint32_t> unassigned_cpu_list;
 
   void generate_cpu_list() {
-    assert(this->config_num_threads <=
+    assert(this->config_num_threads <= 
            static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
     // return numa node 0 threads.

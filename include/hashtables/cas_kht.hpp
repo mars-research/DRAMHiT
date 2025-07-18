@@ -57,17 +57,19 @@ class BuddyBuffer {
   uint32_t reader_count;
   char pad2[64 - sizeof(uint32_t)];
 
-  uint32_t writer_bucket_idx;
-  char pad3[64 - sizeof(uint32_t)];
+  // uint32_t writer_bucket_idx;
+  // char pad3[64 - sizeof(uint32_t)];
 
-  uint32_t reader_bucket_idx;
-  char pad4[64 - sizeof(uint32_t)];
+  // uint32_t reader_bucket_idx;
+  // char pad4[64 - sizeof(uint32_t)];
 
   BuddyItem writer_buffer[4];
   uint8_t writer_buffer_idx;
-  flag_cacheline *commited_writer_count;
-  uint32 bucket_sz;
+  flag_cacheline *flags;
+  uint32_t bucket_sz;
   uint32_t capacity;
+  uint32_t bucket_num;
+  uint32_t bucket_msk;
   BuddyItem *arr;
 
   static void *operator new(std::size_t size, size_t numa_node) {
@@ -86,25 +88,40 @@ class BuddyBuffer {
   // Matching placement delete (called if constructor throws)
   static void operator delete(void *ptr) noexcept { free(ptr); }
 
+  inline bool is_pow_2(size_t x) { return x != 0 && (x & (x - 1)) == 0; }
+
   BuddyBuffer(uint32_t capacity, uint32 bucket_sz, size_t numa_node) {
+    assert(capacity >= 4);
+    assert(capacity % 4 == 0);
+    assert(capacity % bucket_sz == 0);
+
+    assert(bucket_sz >= 4);
+    assert(bucket_sz % 4 == 0);
+    assert(is_pow_2(bucket_sz));
+
+    this->bucket_msk = __builtin_ctz(bucket_sz);
+
     this->capacity = capacity;
     this->bucket_sz = bucket_sz;
+    this->bucket_num = capacity / bucket_sz;
+    // assert(is_pow_2(bucket_num));
+
     this->writer_count = 0;
     this->reader_count = 0;
-    writer_bucket_idx = 0;
-    reader_bucket_idx = 0;
+    // writer_bucket_idx = 0;
+    // reader_bucket_idx = 0;
     writer_buffer_idx = 0;
 
     unsigned long nodemask = 1UL << numa_node;
     uint32_t page_sz = 4096;
 
-    // for commit writer
-    uint64_t mem_sz = this->capacity / bucket_sz * sizeof(flag_cacheline);
+    // for flags
+    uint64_t mem_sz = this->bucket_num * sizeof(flag_cacheline);
     mem_sz = ((page_sz + mem_sz - 1) / page_sz) * page_sz;
-    commited_writer_count = (flag_cacheline *)aligned_alloc(page_sz, mem_sz);
-    assert(commited_writer_count != nullptr);
-    assert(mbind(commited_writer_count, mem_sz, MPOL_BIND, &nodemask,
-                 sizeof(nodemask) * 8, MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
+    flags = (flag_cacheline *)aligned_alloc(page_sz, mem_sz);
+    assert(flags != nullptr);
+    assert(mbind(flags, mem_sz, MPOL_BIND, &nodemask, sizeof(nodemask) * 8,
+                 MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
 
     // for arr
     mem_sz = this->capacity * sizeof(BuddyItem);
@@ -115,39 +132,67 @@ class BuddyBuffer {
                  MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
 
     memset(arr, 0, this->capacity * sizeof(BuddyItem));
-    memset(this->commited_writer_count, 0,
-           (this->capacity / bucket_sz) * sizeof(flag_cacheline));
-
-    assert(capacity % 64 == 0);
-    assert(capacity % 4 == 0);
+    memset(this->flags, 0, bucket_num * sizeof(flag_cacheline));
   }
 
-  void add(uint64_t a, uint64_t b) {
-    if (writer_buffer_idx < 4) {
-      writer_buffer[writer_buffer_idx].key = a;
-      writer_buffer[writer_buffer_idx].val = b;
-      writer_buffer_idx++;
+  bool add(uint64_t a, uint64_t b) {
+    writer_buffer[writer_buffer_idx].key = a;
+    writer_buffer[writer_buffer_idx].val = b;
+    writer_buffer_idx++;
 
-      if (writer_buffer_idx == 4) {
-        this->flush();
-        writer_buffer_idx = 0;
-        prefetch_arr();
-      }
+    if (writer_buffer_idx == 4) {
+      bool flush_status = this->flush();
+      writer_buffer_idx = flush_status ? 0 : 3;
+      return flush_status;
     }
+
+    return true;
   }
 
   bool read(uint64 **addr_ptr) {
-    // uint32_t i = reader_count / buckets;
-    if (commited_writer_count[reader_bucket_idx].flag == 1) {
+    // use 4th slot as flag
+    if (arr[(reader_count + 3)].key == 1) {  // read
       *addr_ptr = (uint64_t *)&arr[reader_count];
-      reader_count += 4;  // increment by cacheline
-      if (!(reader_count & (bucket_sz - 1))) {
-        reader_bucket_idx++;
+      reader_count += 4;
+      if (reader_count == capacity) {
+        reader_count = 0;
       }
       return true;
     }
 
+    // uint32_t bucket_idx = get_flag_idx(reader_count);
+
+    // if (flags[bucket_idx].flag == 1) {
+    //   *addr_ptr = (uint64_t *)&arr[reader_count];
+    //   reader_count += 4;
+    //   if (reader_count == capacity) {
+    //     reader_count = 0;
+    //   }
+
+    //   if (!(reader_count & (bucket_sz - 1))) {  // we finish a bucket
+    //     flags[bucket_idx].flag = 0;
+    //   }
+
+    //   return true;
+    // }
+
+    // this bucket is not ready, check next
+    reader_count += bucket_sz;
+    if (reader_count == capacity) {
+      reader_count = 0;
+    }
+
     return false;
+
+    // if (flags[reader_bucket_idx].flag == 1) {
+    //   *addr_ptr = (uint64_t *)&arr[reader_count];
+    //   reader_count += 4;  // increment by cacheline
+    //   if (!(reader_count & (bucket_sz - 1))) {
+    //     reader_bucket_idx++;
+    //   }
+    //   return true;
+    // }
+    // return true;
   }
 
   void prefetch_arr() {
@@ -157,27 +202,54 @@ class BuddyBuffer {
     }
   }
 
- private:
+  inline uint32_t get_flag_idx(uint32_t count) { return count >> bucket_msk; }
+
   bool flush() {
-    if (writer_count < capacity) {
+    if (reader_count == writer_count) {
+      writer_count += bucket_sz;
+      if (writer_count == capacity) writer_count = 0;
+    } else {
+      if (arr[(writer_count + 3)].key == 0) {
+        __m512i data = _mm512_load_si512((void *)writer_buffer);
+        _mm512_store_si512((void *)&arr[writer_count], data);
+        writer_count += 4;
+        if (writer_count == capacity) {
+          writer_count = 0;
+        }
+      }
+    }
+
+  retry:
+    uint32_t bucket_idx = get_flag_idx(writer_count);
+    if (flags[bucket_idx].flag == 0) {
       __m512i data = _mm512_load_si512((void *)writer_buffer);
-
-      // uint64_t addr = (uint64_t) &arr[writer_count];
-      //_mm512_store_si512((void *)&arr[writer_count], data);
+      _mm512_store_si512((void *)&arr[writer_count], data);
       writer_count += 4;
-
+      if (writer_count == capacity) {
+        writer_count = 0;
+      }
       if (!(writer_count & (bucket_sz - 1))) {
-        commited_writer_count[writer_bucket_idx].flag = 1;
-        writer_bucket_idx++;
+        flags[bucket_idx].flag = 1;
       }
 
       return true;
     }
+
+    uint32_t reader_bucket_idx = get_flag_idx(reader_count);
+    // bucket is ready, maybe reader is reading it, let us avoid collison
+    if (reader_bucket_idx == bucket_idx) {
+      writer_count += bucket_sz;
+      if (writer_count == capacity) writer_count = 0;
+
+      goto retry;
+    }
+
     return false;
   }
 };
 
 #endif
+
 
 template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
@@ -225,6 +297,11 @@ class CASHashTable : public BaseHashTable {
   uint32_t FIND_QUEUE_SZ_MASK;
   uint64_t HT_BUCKET_MASK;
 
+#ifdef REMOTE_QUEUE
+  uint32_t REMOTE_FIND_QUEUE_SZ_MASK;
+  uint32_t remote_find_queue_sz;
+#endif
+
 #define KEYMSK ((__mmask8)(0b01010101))
 
   CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
@@ -257,16 +334,16 @@ class CASHashTable : public BaseHashTable {
           buddy_insert_queues[i] = nullptr;
         }
 
-        size_t buddy_nodes_size = (this->capacity / config.num_threads);
-        size_t bucket_sz = buddy_nodes_size;
+        size_t buddy_capacity = 128;  // (this->capacity / config.num_threads);
+        size_t bucket_sz = 32;        // buddy_capacity;
         int numa_node;
         int o_numa_node;
         for (int i = 0; i < num_threads; i++) {
           numa_node = i % 2;
-          buddy_find_queues[i] = new (numa_node)
-              BuddyBuffer(buddy_nodes_size, bucket_sz, numa_node);
-          buddy_insert_queues[i] = new (numa_node)
-              BuddyBuffer(buddy_nodes_size, bucket_sz, numa_node);
+          buddy_find_queues[i] =
+              new (numa_node) BuddyBuffer(buddy_capacity, bucket_sz, numa_node);
+          buddy_insert_queues[i] =
+              new (numa_node) BuddyBuffer(buddy_capacity, bucket_sz, numa_node);
         }
 
 #endif
@@ -276,7 +353,7 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef BUDDY_QUEUE
     this->tid = sched_getcpu();
-    printf("tid:%d is belongs to node %d\n", tid, numa_node_of_cpu(tid));
+    // printf("tid:%d is belongs to node %d\n", tid, numa_node_of_cpu(tid));
 
     for (int i = 0; i < num_threads; i++) {
       assert(buddy_find_queues[i] != nullptr);
@@ -300,12 +377,23 @@ class CASHashTable : public BaseHashTable {
     // this->tid = tid;
     // this->tid = sched_getcpu();
     // printf("Set tid:%d , on cpuid %d\n", this->tid, sched_getcpu());
+    this->tid = sched_getcpu();
     this->cpuid = tid >= 28 ? tid - 28 : tid;
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
 
     PLOGV << "Empty item: " << this->empty_item;
+
+#ifdef REMOTE_QUEUE
+    this->remote_find_queue_sz = find_queue_sz*2;
+    this->remote_find_queue =
+        (KVQ *)(aligned_alloc(64, remote_find_queue_sz * sizeof(KVQ)));
+    this->REMOTE_FIND_QUEUE_SZ_MASK = this->remote_find_queue_sz - 1;
+
+    this->remote_find_head = 0;
+    this->remote_find_tail = 0;
+#endif
 
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, insert_queue_sz * sizeof(KVQ)));
@@ -320,8 +408,10 @@ class CASHashTable : public BaseHashTable {
   ~CASHashTable() {
     free(find_queue);
     free(insert_queue);
+#ifdef BUDDY_QUEUE
     delete buddy_find_queue;
     delete buddy_insert_queue;
+#endif
     // Deallocate the global hashtable if ref_cnt goes down to zero.
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -698,19 +788,49 @@ class CASHashTable : public BaseHashTable {
   }
 
   void flush_find_queue(ValuePairs &vp, collector_type *collector) override {
+
+  }
+
+  uint32_t cas_flush_find_queue(ValuePairs &vp, collector_type *collector) {
     size_t curr_queue_sz =
-        (this->find_head - this->find_tail) & (find_queue_sz - 1);
+        (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
 
     while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
-      if (++this->find_tail >= find_queue_sz) this->find_tail = 0;
-      curr_queue_sz = (this->find_head - this->find_tail) & (find_queue_sz - 1);
+      this->find_tail++;
+      if (this->find_tail == find_queue_sz) this->find_tail = 0;
+      curr_queue_sz = (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
     }
+
+#ifdef REMOTE_QUEUE
+    size_t remote_curr_queue_sz =
+        (this->remote_find_head - this->remote_find_tail) &
+        REMOTE_FIND_QUEUE_SZ_MASK;
+
+    while ((remote_curr_queue_sz != 0) && (vp.first < config.batch_len)) {
+      __remote_find_one(&this->remote_find_queue[this->remote_find_tail], vp,
+                        collector);
+      this->remote_find_tail++;
+      if (this->remote_find_tail == remote_find_queue_sz)
+        this->remote_find_tail = 0;
+      remote_curr_queue_sz = (this->remote_find_head - this->remote_find_tail) &
+                             REMOTE_FIND_QUEUE_SZ_MASK;
+    }
+    return remote_curr_queue_sz + curr_queue_sz;
+#endif
+
+    return curr_queue_sz;
   }
 
   inline size_t get_find_queue_sz() {
     return (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
   }
+#ifdef REMOTE_QUEUE
+  inline size_t get_remote_find_queue_sz() {
+    return (this->remote_find_head - this->remote_find_tail) &
+           REMOTE_FIND_QUEUE_SZ_MASK;
+  }
+#endif
 
   inline void flush_if_needed(ValuePairs &vp, collector_type *collector) {
     size_t curr_queue_sz =
@@ -737,6 +857,21 @@ class CASHashTable : public BaseHashTable {
     } while ((retry));
   }
 
+#ifdef REMOTE_QUEUE
+  inline void pop_remote_find_queue(ValuePairs &vp, collector_type *collector) {
+    uint64_t retry = 0;
+    do {
+      retry = __remote_find_one(
+          &this->remote_find_queue[this->remote_find_tail], vp, collector);
+      this->remote_find_tail++;
+      this->remote_find_tail &= REMOTE_FIND_QUEUE_SZ_MASK;
+      __builtin_prefetch(
+          &this->hashtable[this->remote_find_queue[this->remote_find_tail].idx],
+          false, 3);
+    } while ((retry));
+  }
+#endif
+
 #if defined(DRAMHiT_2023)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
@@ -753,11 +888,33 @@ class CASHashTable : public BaseHashTable {
   // trickery: we return at most batch sz things due to pop_find_queue.
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
+
+#ifdef REMOTE_QUEUE
+    for (auto &data : kp) {
+      if (is_remote(&data)) {
+        if ((get_remote_find_queue_sz() >= REMOTE_FIND_QUEUE_SZ_MASK)) {
+          pop_remote_find_queue(values, collector);
+        }
+        add_to_remote_find_queue(&data, collector);
+      } else {
+        if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
+          pop_find_queue(values, collector);
+        }
+        add_to_find_queue(&data, collector);
+      }
+    }
+    return;
+#endif
+
 #ifdef BUDDY_QUEUE
-    // uint64_t *addr = nullptr;
-    // if (own_buddy_find_queue->read(&addr)) {
-    //   __builtin_prefetch(addr, false, 3);
-    // }
+    uint64_t *addr = nullptr;  // cacheline X
+                               // remote read core 0      local write core 1
+                               // write [] full,
+                               // local write
+    if (own_buddy_find_queue->read(
+            &addr)) {  // remote read, -> line exclusive in another core
+      //__builtin_prefetch(addr, false, 3);   // local write, c
+    }
     // __builtin_prefetch(&buddy_current, false, 3);
     // bool flush_remote = own_buddy_find_queue->is_full();
     // if (flush_remote) {
@@ -798,18 +955,20 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef BUDDY_QUEUE
     // if (addr != nullptr) {
-    // __m512i simd512;
-    // alignas(64) uint64_t local_cacheline[8];
-    // simd512 = _mm512_load_si512(addr);
-    // _mm512_store_si512(local_cacheline, simd512);
+    //   // __m512i simd512;
+    //   // alignas(64) uint64_t local_cacheline[8];
+    //   // simd512 = _mm512_load_si512(addr);
+    //   // _mm512_store_si512(local_cacheline, simd512);
 
-    // for (int i = 0; i < 8; i += 2) {
-    //   if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
-    //     pop_find_queue(values, collector);
+    //   for (int i = 0; i < 8; i += 2) {
+    //     if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
+    //       pop_find_queue(values, collector);
+    //     }
+    //     // buddy_add_to_find_queue(local_cacheline[(i)], local_cacheline[(i +
+    //     // 1)]);
+
+    //     buddy_add_to_find_queue(addr[(i)], addr[(i + 1)]);
     //   }
-    //   buddy_add_to_find_queue(local_cacheline[(i)], local_cacheline[(i +
-    //   1)]);
-    // }
     // }
 #endif
   }  // end find_batch()
@@ -1108,6 +1267,12 @@ class CASHashTable : public BaseHashTable {
   uint32_t ins_head;
   uint32_t ins_tail;
 
+#ifdef REMOTE_QUEUE
+  KVQ *remote_find_queue;
+  uint32_t remote_find_head;
+  uint32_t remote_find_tail;
+#endif
+
   // const __mmask8 KEYMSK = 0b01010101;
 
   Hasher hasher_;
@@ -1286,6 +1451,55 @@ class CASHashTable : public BaseHashTable {
     return __find_branched(q, vp, collector);
 #endif
   }
+
+#ifdef REMOTE_QUEUE
+  uint64_t __remote_find_one(KVQ *q, ValuePairs &vp,
+                             collector_type *collector) {
+    if (q->key == this->empty_item.get_key()) {
+      return __find_empty(q, vp);
+    }
+
+    return __remote_find_simd(q, vp);
+  }
+
+  uint64_t __remote_find_simd(KVQ *q, ValuePairs &vp) {
+    uint64_t retry;
+    size_t idx = q->idx;
+
+    KV *curr_cacheline = &this->hashtable[idx];
+    uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
+
+    if (retry) {
+#ifdef UNIFORM_HT_SUPPORT
+      uint64_t old_hash = q->key_hash;
+      uint64_t hash = this->hash(&old_hash);
+      idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
+      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
+      this->remote_find_queue[this->remote_find_head].key_hash = hash;
+#else
+      idx += CACHELINE_SIZE / sizeof(KV);
+      idx = idx & (this->capacity - 1);
+#endif
+
+#ifdef DRAMHiT_2023
+      __builtin_prefetch(&this->hashtable[idx], false, 3);
+#else
+      __builtin_prefetch(&this->hashtable[idx], false, 1);
+#endif
+
+      this->remote_find_queue[this->remote_find_head].key = q->key;
+      this->remote_find_queue[this->remote_find_head].key_id = q->key_id;
+      this->remote_find_queue[this->remote_find_head].idx = idx;
+      this->remote_find_head += 1;
+      this->remote_find_head &= REMOTE_FIND_QUEUE_SZ_MASK;
+    }
+
+    return retry;
+  }
+
+#endif
 
   /// Update or increment the empty key.
   uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
@@ -1492,6 +1706,57 @@ class CASHashTable : public BaseHashTable {
     this->find_head &= FIND_QUEUE_SZ_MASK;
   }
 
+#ifdef REMOTE_QUEUE
+
+  inline void add_to_remote_find_queue(void *data, collector_type *collector) {
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
+
+#ifdef LATENCY_COLLECTION
+    const auto timer = collector->start();
+#endif
+
+    uint64_t hash = this->hash((const char *)&key_data->key);
+    size_t idx = hash & (this->capacity - 1);
+
+#ifdef BUCKETIZATION
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
+
+#ifdef DRAMHiT_2023
+    __builtin_prefetch(&this->hashtable[idx], false, 3);
+#else
+    __builtin_prefetch(&this->hashtable[idx], false, 1);
+#endif
+    this->remote_find_queue[this->remote_find_head].idx = idx;
+    this->remote_find_queue[this->remote_find_head].key = key_data->key;
+    this->remote_find_queue[this->remote_find_head].key_id = key_data->id;
+
+#ifdef UNIFORM_HT_SUPPORT
+    this->remote_find_queue[this->remote_find_head].key_hash = hash;
+#endif
+
+#ifdef LATENCY_COLLECTION
+    this->remote_find_queue[this->remote_find_head].timer_id = timer;
+#endif
+
+    this->remote_find_head += 1;
+    this->remote_find_head &= REMOTE_FIND_QUEUE_SZ_MASK;
+  }
+
+  bool is_remote(void *data) {
+    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
+
+    uint64_t hash = this->hash((const char *)&key_data->key);
+    size_t idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
+    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
+
+    return is_remote_addr(idx);
+  }
+
+#endif
+
 #ifdef BUDDY_QUEUE
 
   bool add_to_buddy_find_queue(void *data) {
@@ -1504,10 +1769,8 @@ class CASHashTable : public BaseHashTable {
 #endif
 
     if (is_remote_addr(idx)) {
-      buddy_find_queue->add(key_data->key, key_data->id);
-      // we need to add something onto the find_quue, this method, must
-      // this->find_head += 1;
-      return true;
+      return buddy_find_queue->add(key_data->key,
+                                   key_data->id);  // queue 0. writer
     }
 
     return false;
@@ -1585,7 +1848,7 @@ class CASHashTable : public BaseHashTable {
     this->ins_head &= INSERT_QUEUE_SZ_MASK;
   }
 
-#ifdef BUDDY_QUEUE
+#if defined(BUDDY_QUEUE) || defined(REMOTE_QUEUE)
   bool is_remote_addr(uint64_t idx) {
     // odd tid is node 1, even tid is node 0.
     // lower half is node 0, upper half is node 1
@@ -1610,7 +1873,6 @@ class CASHashTable : public BaseHashTable {
     //     return true;
     // }
   }
-
 #endif
 };
 
