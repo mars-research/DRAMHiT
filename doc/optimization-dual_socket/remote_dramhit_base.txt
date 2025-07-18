@@ -1,0 +1,9 @@
+{ set_cycles : 150, get_cycles : 79, upsert_cycles : 151, set_mops : 2133.333, get_mops : 4050.633, upsert_mops : 2119.205 }
+{ set_cycles : 155, get_cycles : 90, upsert_cycles : 156, set_mops : 2064.516, get_mops : 3555.556, upsert_mops : 2051.282 }
+{ set_cycles : 158, get_cycles : 96, upsert_cycles : 159, set_mops : 2025.316, get_mops : 3333.333, upsert_mops : 2012.579 }
+{ set_cycles : 163, get_cycles : 103, upsert_cycles : 165, set_mops : 1963.190, get_mops : 3106.796, upsert_mops : 1939.394 }
+{ set_cycles : 175, get_cycles : 112, upsert_cycles : 178, set_mops : 1828.571, get_mops : 2857.143, upsert_mops : 1797.753 }
+{ set_cycles : 192, get_cycles : 125, upsert_cycles : 200, set_mops : 1666.667, get_mops : 2560.000, upsert_mops : 1600.000 }
+{ set_cycles : 220, get_cycles : 142, upsert_cycles : 230, set_mops : 1454.545, get_mops : 2253.521, upsert_mops : 1391.304 }
+{ set_cycles : 273, get_cycles : 168, upsert_cycles : 287, set_mops : 1172.161, get_mops : 1904.762, upsert_mops : 1114.983 }
+{ set_cycles : 432, get_cycles : 223, upsert_cycles : 452, set_mops : 740.741, get_mops : 1434.978, upsert_mops : 707.965 }
