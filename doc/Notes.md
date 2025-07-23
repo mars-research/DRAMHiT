@@ -1,4 +1,41 @@
 
+# 07/17
+
+In the Xeon Scalable Processor, the in-memory directory has three states: I, A, and S. I (invalid) state
+means the data is clean and does not exist in any other socket’s cache. The A (snoopAll) state
+means the data may exist in another socket in an exclusive or modified state. S (Shared) state
+means the data is clean and may be shared across one or more socket's caches.
+When doing a read to memory, if the directory line is in the A state, we must snoop all the other
+sockets because another socket may have the line in modified state. If this is the case, the snoop
+will return the modified data. However, it may be the case that a line is read in A state and all the
+snoops come back a miss. This can happen if another socket reads the line earlier and then silently
+dropped it from its cache without modifying it. If the [Stale AtoS] feature is [Enabled], in the
+situation where a line in A state returns only snoop misses, the line will transition to S state. That
+way, subsequent reads to the line will encounter it in S state and not have to snoop, saving latency
+and snoop bandwidth. [Stale AtoS] may be beneficial in a workload where there are many crosssocket reads.
+
+
+Mem state | Action 
+    I     | allocate a piece of memory on socket 0.  
+    I     | local thread prefetch mem 
+    A     | remote socket prefetch mem  
+    I     | local thread prefetch mem 
+
+whenenver mem state changes, write back needs to happen.
+clflush will gurantee to change mem state from A back to I.
+
+
+write back memory traffic happens, when the commonly shared 
+directory bit needs to be updated. Let us call it the 
+shared bit. When shared bit is set, it means both socket 
+has a copy of the cacheline.
+
+In order to update mem directory bit, remote socket need 
+to touch the memory allocated. To unset the bit, remote socket
+can clflush. Local socket can not reset the bit with clflush, 
+it always owns the memory allocated locally.
+
+
 # july 17
 
 run at 10%
@@ -25,25 +62,44 @@ single local: { set_cycles : 119, get_cycles : 49, upsert_cycles : 117, set_mops
 single remote: { set_cycles : 178, get_cycles : 84, upsert_cycles : 173, set_mops : 898.876, get_mops : 1904.762, upsert_mops : 924.855 }
 dual: { set_cycles : 162, get_cycles : 82, upsert_cycles : 163, set_mops : 1975.309, get_mops : 3902.439, upsert_mops : 1963.190 } 
 
-8g 70% prefetch loop
+8g 70% prefetch loop skew 0.01
 
 60.5 in theory for dual. 
 single local: 43
 single remote: 78
 dual: 78
 
-8g 10% prefetch loop
+8g 10% prefetch loop skew 0.01
 single local: 43
 single remote: 77
 dual: 62
 
-8g 70% prefetch loop skew 1.0 (0.45 fill factor)
+8g 70% prefetch loop skew 0.01 64 threads
+dual: 41
 
-dual: 56
+8g 10% prefetch loop skew 0.01 64 threads
+dual: 33
 
 8g 50% prefetch loop skew 0.01
-
 dual: 76
+
+4g 100% prefetch loop skew 0.01
+dual: 74
+
+
+8g 70% prefetch loop skew 1.0 (0.45 fill factor)
+
+dual: 56 
+
+how can 45% fill factor be faster than 10%? 
+
+does it happen on single socket? 
+
+
+70% f 1.0 skew: single-local 32 <- num_op = 
+10% f 0.01 skew: single-local 43
+
+
 
 8g prefetch loop xorwow at 70%
 

@@ -54,7 +54,12 @@ OpTimings do_zipfian_upserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier,
     std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
+
+    
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+
+    if(config.insert_factor == 0)
+      return {1, 1};
 
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
@@ -135,6 +140,11 @@ OpTimings do_zipfian_inserts(
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier,
     std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+
+
+  if(config.insert_factor == 0)
+      return {1, 1};
+
 
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
@@ -218,6 +228,8 @@ OpTimings do_zipfian_inserts(
   collector->dump("async_insert", id);
 #endif
 
+  
+
   return {duration, HT_TESTS_NUM_INSERTS * config.insert_factor};
 }
 
@@ -226,6 +238,13 @@ OpTimings do_zipfian_gets(
     auto sync_barrier,
     std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+
+
+  if(config.read_factor == 0)
+  {
+     return {1, 1};
+
+  }
   std::uint64_t duration{};
   std::uint64_t found = 0, not_found = 0;
 #ifdef LATENCY_COLLECTION
