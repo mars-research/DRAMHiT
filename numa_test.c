@@ -11,8 +11,7 @@
  * entire table (ensuring a remote copy). Then run the walker thread on node 0
  * and measure cycles again.
  *
- * Compile with: gcc -O2 -pthread -lnuma -march=native -o numa_experiment_rdtsc
- * numa_experiment_rdtsc.c
+ * Compile with: gcc -O1 -pthread -lnuma -march=native -o numa_test numa_test.c -I/opt/intel/oneapi/vtune/latest/include /opt/intel/oneapi/vtune/latest/lib64/libittnotify.a
  */
 
 #define _GNU_SOURCE
