@@ -250,7 +250,6 @@ class BuddyBuffer {
 
 #endif
 
-
 template <typename KV, typename KVQ>
 class CASHashTable : public BaseHashTable {
  public:
@@ -303,6 +302,8 @@ class CASHashTable : public BaseHashTable {
 #endif
 
 #define KEYMSK ((__mmask8)(0b01010101))
+#define PREFETCH_INSERT_NEXT_DISTANCE 8
+#define PREFETCH_FIND_NEXT_DISTANCE 8
 
   CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
 
@@ -311,6 +312,9 @@ class CASHashTable : public BaseHashTable {
     this->capacity = kmercounter::utils::next_pow2(c);
     this->find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
     this->insert_queue_sz = find_queue_sz;
+
+
+    assert(capacity % KV_IN_CACHELINE == 0);
 
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -386,7 +390,7 @@ class CASHashTable : public BaseHashTable {
     PLOGV << "Empty item: " << this->empty_item;
 
 #ifdef REMOTE_QUEUE
-    this->remote_find_queue_sz = find_queue_sz*2;
+    this->remote_find_queue_sz = find_queue_sz * 2;
     this->remote_find_queue =
         (KVQ *)(aligned_alloc(64, remote_find_queue_sz * sizeof(KVQ)));
     this->REMOTE_FIND_QUEUE_SZ_MASK = this->remote_find_queue_sz - 1;
@@ -482,7 +486,8 @@ class CASHashTable : public BaseHashTable {
 
     while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
       __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
+      this->ins_tail++;
+      this->ins_tail &= INSERT_QUEUE_SZ_MASK;
       curr_queue_sz = get_insert_queue_sz();
     }
     return;
@@ -490,11 +495,13 @@ class CASHashTable : public BaseHashTable {
 
   inline void pop_insert_queue(collector_type *collector) {
     uint64_t retry = 0;
+    uint32_t next_tail;
+    const void *next_tail_addr;
     do {
-      uint32_t next_tail = (this->ins_tail + 8) & INSERT_QUEUE_SZ_MASK;
-      const void *next_tail_addr =
-          &this->hashtable[this->insert_queue[next_tail].idx];
-      __builtin_prefetch(next_tail_addr, true, 3);
+      next_tail = (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) &
+                  INSERT_QUEUE_SZ_MASK;
+      next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
+      __builtin_prefetch(next_tail_addr, false, 3);
 
       // |N  X  T| -> # 64, 64
       retry = __insert_one(&this->insert_queue[this->ins_tail], collector);
@@ -774,32 +781,29 @@ class CASHashTable : public BaseHashTable {
   // }
 
   void flush_insert_queue(collector_type *collector) override {
-    size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
+    size_t curr_queue_sz = get_insert_queue_sz();
 
     while (curr_queue_sz != 0) {
       __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= insert_queue_sz) this->ins_tail = 0;
-      curr_queue_sz = (this->ins_head - this->ins_tail) & INSERT_QUEUE_SZ_MASK;
+      this->ins_tail++;
+      this->ins_tail &= INSERT_QUEUE_SZ_MASK;
+      curr_queue_sz = get_insert_queue_sz();
     }
 
     // all store must be flushed.
     _mm_sfence();
   }
 
-  void flush_find_queue(ValuePairs &vp, collector_type *collector) override {
-
-  }
+  void flush_find_queue(ValuePairs &vp, collector_type *collector) override {}
 
   uint32_t cas_flush_find_queue(ValuePairs &vp, collector_type *collector) {
-    size_t curr_queue_sz =
-        (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
+    size_t curr_queue_sz = get_find_queue_sz();
 
     while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       this->find_tail++;
-      if (this->find_tail == find_queue_sz) this->find_tail = 0;
-      curr_queue_sz = (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
+      this->find_tail &= FIND_QUEUE_SZ_MASK;
+      curr_queue_sz = get_find_queue_sz();
     }
 
 #ifdef REMOTE_QUEUE
@@ -833,14 +837,12 @@ class CASHashTable : public BaseHashTable {
 #endif
 
   inline void flush_if_needed(ValuePairs &vp, collector_type *collector) {
-    size_t curr_queue_sz =
-        (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
+    size_t curr_queue_sz = get_find_queue_sz();
 
     while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
-      if (++this->find_tail >= find_queue_sz) {
-        this->find_tail = 0;
-      }
+      this->find_tail++;
+      this->find_tail &= FIND_QUEUE_SZ_MASK;
       curr_queue_sz = get_find_queue_sz();
     }
     return;
@@ -848,12 +850,17 @@ class CASHashTable : public BaseHashTable {
 
   inline void pop_find_queue(ValuePairs &vp, collector_type *collector) {
     uint64_t retry = 0;
+    uint32_t next_tail;
+    const void *next_tail_addr;
     do {
+      next_tail =
+          (this->find_tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
+      next_tail_addr = &this->hashtable[this->find_queue[next_tail].idx];
+      __builtin_prefetch(next_tail_addr, false, 3);
       retry = __find_one(&this->find_queue[this->find_tail], vp, collector);
       this->find_tail++;
       this->find_tail &= FIND_QUEUE_SZ_MASK;
-      __builtin_prefetch(
-          &this->hashtable[this->find_queue[this->find_tail].idx], false, 3);
+
     } while ((retry));
   }
 
@@ -888,6 +895,22 @@ class CASHashTable : public BaseHashTable {
   // trickery: we return at most batch sz things due to pop_find_queue.
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
+    uint64_t hash;
+    size_t idx;
+    for (auto &data : kp) {
+      hash = this->hash((const char *)&(data.key));
+      idx = hash & (this->capacity - 1);
+      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+
+      // if(((tid & 1) == 0) ^ (idx < (this->capacity >> 1))) // is remote
+      // {
+      // }else {
+        __builtin_prefetch(&this->hashtable[idx], false, 1);
+      //}
+      
+    }
+
+    return;
 
 #ifdef REMOTE_QUEUE
     for (auto &data : kp) {
@@ -913,7 +936,10 @@ class CASHashTable : public BaseHashTable {
                                // local write
     if (own_buddy_find_queue->read(
             &addr)) {  // remote read, -> line exclusive in another core
-      //__builtin_prefetch(addr, false, 3);   // local write, c
+      //__builtin_prefetch(addr, false, 3);  cmake -S . -B build
+      //-DOLD_DRAMHiT=ON -DBUCKETIZATION=OFF -DBRANCH=branched
+      //-DDRAMHiT_MANUAL_INLINE=OFF -DUNIFORM_PROBING=OFF
+      // local write, c
     }
     // __builtin_prefetch(&buddy_current, false, 3);
     // bool flush_remote = own_buddy_find_queue->is_full();
@@ -1331,7 +1357,7 @@ class CASHashTable : public BaseHashTable {
       this->find_queue[this->find_head].timer_id = q->timer_id;
 #endif
       this->find_head += 1;
-      this->find_head &= (find_queue_sz - 1);
+      this->find_head &= FIND_QUEUE_SZ_MASK;
     }
 
     return retry;
@@ -1435,7 +1461,9 @@ class CASHashTable : public BaseHashTable {
     //     if (q->value == 0xdeadbeef) {
     //       buddy_find_queue->add_cl((void*)(buddy_local_writer_buffer.slots));
     //       return 0;
-    //     }
+    //     }cmake -S . -B build -DOLD_DRAMHiT=ON -DBUCKETIZATION=OFF
+    //     -DBRANCH=branched -DDRAMHiT_MANUAL_INLINE=OFF -DUNIFORM_PROBING=OFF
+
     // #endif
 
     if (q->key == this->empty_item.get_key()) {
@@ -1517,12 +1545,11 @@ class CASHashTable : public BaseHashTable {
     size_t idx = q->idx;
     KV *curr;
 
-#ifdef CAS_SIMD
-    idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-    // The intuition is, we load a snapshot of a cacheline of keys and see
-    // how far ahead we can skip into. It is okay to be outdated with the world,
-    // because, that just means we skip less than we could have. We can do this
-    // because keys are never deleted in the hashtable.
+#if defined(CAS_SIMD) && defined(BUCKETIZATION)
+    //  The intuition is, we load a snapshot of a cacheline of keys and see
+    //  how far ahead we can skip into. It is okay to be outdated with the
+    //  world, because, that just means we skip less than we could have. We can
+    //  do this because keys are never deleted in the hashtable.
 
     // ex. We load a cacheline like this | - , - , 0, 0 |.
     //  The world can update the keys like this during operation | -, -, X, 0|
@@ -1560,11 +1587,11 @@ class CASHashTable : public BaseHashTable {
       this->insert_queue[this->ins_head].key_hash = hash;
 #else
       idx += 4;
+      idx = idx & (this->capacity - 1);
 #endif
 
 #ifdef DRAMHiT_2023
       __builtin_prefetch(&this->hashtable[idx], true, 3);
-
 #else
       __builtin_prefetch(&this->hashtable[idx], false, 1);
 #endif
@@ -1587,15 +1614,15 @@ class CASHashTable : public BaseHashTable {
   try_insert:
     curr = &this->hashtable[idx];
 
-    // insert key
-    if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
-      return 0;
-    }
+    // we first check if key is 0.if we use cas,
+    // it will request for exclusive state unneccesarrily.
 
-    // if(curr->key == q->key) {
-    //   curr->value = q->value;
-    //   return 0;
-    // }
+#ifdef READ_BEFORE_CAS
+    if (curr->kvpair.key == 0)
+#endif
+      if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
+        return 0;
+      }
 
     if (curr->compare_key(q)) {
       curr->update_cas(q);

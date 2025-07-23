@@ -152,11 +152,6 @@ OpTimings do_zipfian_inserts(
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
 
-  uint64_t key_start;
-  // std::max(static_cast<uint64_t>(HT_TESTS_NUM_INSERTS) * id, (uint64_t)1);
-
-  PLOGV.printf("id: %u | key_start %" PRIu64 "", id, key_start);
-
   key_type key{};
   std::size_t next_pollution{};
 
@@ -340,8 +335,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
       static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
 
   // generate zipfian here.
+  std::vector<key_type, huge_page_allocator<key_type>> *zipf_set_local;
 #ifndef XORWOW
-  std::vector<key_type, huge_page_allocator<key_type>> *zipf_set_local =
+  zipf_set_local =
       new std::vector<key_type, huge_page_allocator<key_type>>(
           HT_TESTS_NUM_INSERTS);
   // int cpu = sched_getcpu();
@@ -463,10 +459,10 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   // volatile uint64 t1 = cas_ht->flush_ht_from_cache();
   // Only thing that seems to work
   // for (int i = 0; i < 10; i++)
-  // hashtable->get_fill();
-  // }
+  //   hashtable->get_fill();
 
-  if (shard->shard_idx == 0) cas_ht->flush_ht_from_cache();
+
+  //if (shard->shard_idx == 0) cas_ht->flush_ht_from_cache();
 
   cur_phase = ExecPhase::finds;
 
@@ -521,6 +517,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   shard->stats->finds = find_timings;
   shard->stats->ht_fill = config.ht_fill;
   get_ht_stats(shard, hashtable);
+
+
+  if (shard->shard_idx == 0) {
+    PLOGI.printf("get fill %.3f", (double) cas_ht->get_fill()/cas_ht->get_capacity());
+  }
 
 #ifdef LATENCY_COLLECTION
   {

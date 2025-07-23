@@ -27,6 +27,16 @@ option(OLD_DRAMHiT "dramhit, no bucket, no simd, just branch" OFF)
 option(DRAMHiT_MANUAL_INLINE "dramhit inlined" OFF)
 option(BUCKETIZATION "buckets" OFF)
 option(BUDDY_QUEUE "remote access experiment" OFF)
+option(REMOTE_QUEUE "remote prefetch engine" OFF)
+option(READ_BEFORE_CAS "read before cas" OFF)
+
+if(READ_BEFORE_CAS)
+    add_definitions(-DREAD_BEFORE_CAS)
+endif()
+
+if(REMOTE_QUEUE)
+    add_definitions(-DREMOTE_QUEUE)
+endif()
 
 if(BUDDY_QUEUE)
     add_definitions(-DBUDDY_QUEUE)

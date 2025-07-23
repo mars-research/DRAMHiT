@@ -1,15 +1,75 @@
 
 # july 17
 
+run at 10%
+
+dual theoritical get = (local + remote)/2 = (47+85)/2 = 66
+
+single socket local = { set_cycles : 107, get_cycles : 47, upsert_cycles : 106, set_mops : 1495.327, get_mops : 3404.255, upsert_mops : 1509.434 }
+single socket remote = { set_cycles : 157, get_cycles : 85, upsert_cycles : 158, set_mops : 1019.108, get_mops : 1882.353, upsert_mops : 1012.658 }
+dual socket = { set_cycles : 140, get_cycles : 71, upsert_cycles : 141, set_mops : 2285.714, get_mops : 4507.042, upsert_mops : 2269.504 }
+
+run at 70%
+
+dual theoritical get = (101+58)/2 = 80 
+
+single socket local = { set_cycles : 119, get_cycles : 58, upsert_cycles : 117, set_mops : 1344.538, get_mops : 2711.864, upsert_mops : 1367.521 }
+single socket remote = { set_cycles : 177, get_cycles : 101, upsert_cycles : 171, set_mops : 903.955, get_mops : 1584.158, upsert_mops : 935.673 }
+dual socket = { set_cycles : 162, get_cycles : 96, upsert_cycles : 163, set_mops : 1975.309, get_mops : 3333.333, upsert_mops : 1963.190 }
+
+8G 70% (no reprobe)
+
+(49+84)/2=66
+
+single local: { set_cycles : 119, get_cycles : 49, upsert_cycles : 117, set_mops : 1344.538, get_mops : 3265.306, upsert_mops : 1367.521 }
+single remote: { set_cycles : 178, get_cycles : 84, upsert_cycles : 173, set_mops : 898.876, get_mops : 1904.762, upsert_mops : 924.855 }
+dual: { set_cycles : 162, get_cycles : 82, upsert_cycles : 163, set_mops : 1975.309, get_mops : 3902.439, upsert_mops : 1963.190 } 
+
+8g 70% prefetch loop
+
+60.5 in theory for dual. 
+single local: 43
+single remote: 78
+dual: 78
+
+8g 10% prefetch loop
+single local: 43
+single remote: 77
+dual: 62
+
+8g 70% prefetch loop skew 1.0 (0.45 fill factor)
+
+dual: 56
+
+8g 50% prefetch loop skew 0.01
+
+dual: 76
+
+8g prefetch loop xorwow at 70%
+
+single local: 36
+single remote: 76
+dual: 87
+
+we need a experiemnt that explores prefetch on same address from two 
+different socket and see latency/throughput.
+
+8g prefetch loop xorwow at 10%
+dual: 51
+
+we think that at higher fill factor, more cacheline are shared between socket, thus making memory access much more expensive. 
+increasing skewness of the data.
+
+skewness 1.0 
+
+(39+60)/2 = 50
+single socket local = { set_cycles : 238, get_cycles : 39, upsert_cycles : 185, set_mops : 672.269, get_mops : 4102.564, upsert_mops : 864.865 }
+single socket remote = { set_cycles : 236, get_cycles : 60, upsert_cycles : 184, set_mops : 677.966, get_mops : 2666.667, upsert_mops : 869.565 }
+dual socket = { set_cycles : 552, get_cycles : 52, upsert_cycles : 478, set_mops : 579.710, get_mops : 6153.846, upsert_mops : 669.456 }
+
+so not related. 
 
 
-
-Just write. never read the request. 
-{ set_cycles : 143, get_cycles : 120, upsert_cycles : 142, set_mops : 2237.762, get_mops : 2666.667, upsert_mops : 2253.521 }
-
-
-Just read. never write anything.
-{ set_cycles : 141, get_cycles : 54, upsert_cycles : 141, set_mops : 2269.504, get_mops : 5925.926, upsert_mops : 2269.504 }
 
 # july 15
 
