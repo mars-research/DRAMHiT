@@ -11,7 +11,9 @@
  * entire table (ensuring a remote copy). Then run the walker thread on node 0
  * and measure cycles again.
  *
- * Compile with: gcc -O1 -pthread -lnuma -march=native -o numa_test numa_test.c -I/opt/intel/oneapi/vtune/latest/include /opt/intel/oneapi/vtune/latest/lib64/libittnotify.a
+ * Compile with: gcc -O1 -pthread -lnuma -march=native -o numa_test numa_test.c
+ * -I/opt/intel/oneapi/vtune/latest/include
+ * /opt/intel/oneapi/vtune/latest/lib64/libittnotify.a
  */
 
 #define _GNU_SOURCE
@@ -30,6 +32,10 @@
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
 
+__itt_event local;
+__itt_event remote;
+__itt_event flush;
+
 typedef struct {
   uint64_t value;
   char pad[CACHELINE_SIZE - sizeof(uint64_t)];
@@ -38,6 +44,7 @@ typedef struct {
 typedef struct {
   cacheline_t *table;
   size_t size;
+  int node;
 } thread_arg_t;
 
 // Bind current thread to a NUMA node
@@ -50,23 +57,13 @@ void bind_to_node(int node) {
 }
 
 // Pseudo-random walk with prefetch, using CRC32 for next index
-void *walker_thread(void *arg) {
+void *walk_table(void *arg) {
   thread_arg_t *t = (thread_arg_t *)arg;
-  bind_to_node(0);
+  bind_to_node(t->node);
 
   cacheline_t *table = t->table;
   size_t size = t->size;
   uint64_t idx = 0;
-  uint64_t start, end;
-  unsigned aux;
-
-  //   for (uint64_t i = 0; i < size; i++) {
-  //     _mm_clflush(&table[i]);
-  //   }
-
-  // Serialize and read start cycle count
-  asm volatile("cpuid" ::: "rax", "rbx", "rcx", "rdx");
-  start = __rdtsc();
 
   for (int iter = 0; iter < ITERATIONS; iter++) {
     for (size_t i = 0; i < size; i++) {
@@ -75,36 +72,26 @@ void *walker_thread(void *arg) {
     }
   }
 
-  // Read end cycle count and serialize
-  end = __rdtscp(&aux);
-  asm volatile("cpuid" ::: "rax", "rbx", "rcx", "rdx");
-
-  printf("Walker cycles: %llu\n", (unsigned long long)((end - start) / size));
   return NULL;
 }
 
-// Prefetch entire table sequentially on remote node
-void *prefetch_thread(void *arg) {
-  thread_arg_t *t = (thread_arg_t *)arg;
-  bind_to_node(1);
+void spawn_threads(thread_arg_t arg, int num_threads) {
+  pthread_t *threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
 
-  cacheline_t *table = t->table;
-  size_t size = t->size;
-  for (int iter = 0; iter < ITERATIONS; iter++) {
-    for (size_t i = 0; i < size; i++) {
-      __builtin_prefetch(&table[i], 0, 3);
-    }
+  for (int i = 0; i < num_threads; i++) {
+    pthread_create(&threads[i], NULL, walk_table, &arg);
   }
-  return NULL;
-}
 
-__itt_event local;
-__itt_event remote;
-__itt_event flush;
+  for (int i = 0; i < num_threads; i++) {
+    pthread_join(threads[i], NULL);
+  }
+
+  free(threads);
+}
 
 int main() {
   if (numa_available() < 0) {
-    fprintf(stderr, "NUMA is not available\n");
+    fprintf(stderr, "NUMA is not available\n"); 
     return EXIT_FAILURE;
   }
 
@@ -127,31 +114,24 @@ int main() {
     table[i].value = i;
   }
 
-  thread_arg_t arg = {table, TABLE_SIZE};
-  pthread_t walker, prefetcher;
+  thread_arg_t local_thread_arg = {table, TABLE_SIZE, 0};
+  thread_arg_t remote_thread_arg = {table, TABLE_SIZE, 1};
 
   __itt_event_start(local);
-  pthread_create(&walker, NULL, walker_thread, &arg);
-  pthread_join(walker, NULL);
+  spawn_threads(local_thread_arg, 1);
   __itt_event_end(local);
+
   sleep(1);
 
   __itt_event_start(remote);
-  pthread_create(&prefetcher, NULL, prefetch_thread, &arg);
-  pthread_join(prefetcher, NULL);
+
+  spawn_threads(remote_thread_arg, 1);
   __itt_event_end(remote);
-  sleep(1);
 
-  __itt_event_start(flush);
-  for (uint64_t i = 0; i < TABLE_SIZE; i++) {
-    _mm_clflush(&table[i]);
-  }
-  __itt_event_end(flush);
   sleep(1);
-
   __itt_event_start(local);
-  pthread_create(&walker, NULL, walker_thread, &arg);
-  pthread_join(walker, NULL);
+
+  spawn_threads(local_thread_arg, 16);
   __itt_event_end(local);
 
   free(table);
