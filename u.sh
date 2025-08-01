@@ -24,9 +24,11 @@ test=$1
 numa_policy=$2
 numThreads=$3
 
-if [ "$numa_policy" = "local" ]; then
-    numa_policy=4    
-elif [ "$numa_policy" = "remote" ]; then
+if [ "$numa_policy" = "single-local" ]; then
+    numa_policy=4  
+elif [ "$numa_policy" = "single-remote" ]; then
+    numa_policy=3
+elif [ "$numa_policy" = "dual" ]; then
     numa_policy=1
 fi
 
@@ -37,10 +39,13 @@ if [ "$test" = "small" ]; then
     readFactor=10000
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
+    # size=1073741824
     size=536870912
+    # size=1073741824
+    #size=268435456
     #size=134217728
-    insertFactor=10
-    readFactor=10
+    insertFactor=0
+    readFactor=100
 fi
 
 # size=134217728
@@ -48,16 +53,19 @@ fi
 # size=2048
 # insertFactor=1000000
 # numThreads=1
-for fill in $(seq 10 10 90);
-do  
+
+fill=10
+#for skew in $(seq 0.01 0.5 2.0);
+#for fill in $(seq 10 10 10);
+#do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
     --find_queue 64 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --read-factor $readFactor \
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01 \
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16"
     echo $(pwd)/build/dramhit $cmd
     sudo $(pwd)/build/dramhit $cmd
-    echo $(pwd)/build/dramhit $cmd  
-done    
+    echo $(pwd)/build/dramhit $cmd
+#done    
 # sudo ./tools/mlc/mlc   --bandwidth_matrix -h -U -W6 
 
 # sudo bash -c '

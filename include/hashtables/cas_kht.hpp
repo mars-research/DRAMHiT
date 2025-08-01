@@ -26,6 +26,8 @@
 #include "ht_helper.hpp"
 #include "plog/Log.h"
 #include "sync.h"
+#include "xorwow.hpp"
+
 namespace kmercounter {
 
 #ifdef BUDDY_QUEUE
@@ -312,7 +314,6 @@ class CASHashTable : public BaseHashTable {
     this->capacity = kmercounter::utils::next_pow2(c);
     this->find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
     this->insert_queue_sz = find_queue_sz;
-
 
     assert(capacity % KV_IN_CACHELINE == 0);
 
@@ -895,22 +896,20 @@ class CASHashTable : public BaseHashTable {
   // trickery: we return at most batch sz things due to pop_find_queue.
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
-    uint64_t hash;
     size_t idx;
-    for (auto &data : kp) {
-      hash = this->hash((const char *)&(data.key));
-      idx = hash & (this->capacity - 1);
-      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
 
-      // if(((tid & 1) == 0) ^ (idx < (this->capacity >> 1))) // is remote
-      // {
-      // }else {
-        __builtin_prefetch(&this->hashtable[idx], false, 1);
-      //}
-      
+    uint64_t len = this->capacity >> 2;
+    // uint64_t len = this->capacity;
+    for (auto &data : kp) {
+      idx = _mm_crc32_u64(0xffffffff, data.key) & (len - 1);
+      idx = idx << 2;  // idx * 4
+      __builtin_prefetch(&this->hashtable[idx], false, 1);
     }
 
     return;
+
+
+
 
 #ifdef REMOTE_QUEUE
     for (auto &data : kp) {
@@ -1000,6 +999,16 @@ class CASHashTable : public BaseHashTable {
   }  // end find_batch()
 
 #else
+
+  uint64_t simple_hash64(uint64_t x) {
+    x ^= x >> 33;
+    x *= 0xff51afd7ed558ccdULL;
+    x ^= x >> 33;
+    x *= 0xc4ceb9fe1a85ec53ULL;
+    x ^= x >> 33;
+    return x;
+  }
+
   void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
                   collector_type *collector) {
     bool fast_path = ((this->find_head - this->find_tail) &
@@ -1091,8 +1100,10 @@ class CASHashTable : public BaseHashTable {
 #ifdef LATENCY_COLLECTION
         const auto timer = collector->start();
 #endif
+
         hash = _mm_crc32_u64(
             0xffffffff, *static_cast<const std::uint64_t *>(&key_data->key));
+
         uint32_t new_idx = hash & HT_BUCKET_MASK;
 
         __builtin_prefetch(&this->hashtable[new_idx], false, 1);
@@ -1880,25 +1891,7 @@ class CASHashTable : public BaseHashTable {
     // odd tid is node 1, even tid is node 0.
     // lower half is node 0, upper half is node 1
     // xor, value needs to be opposite of each other
-    // return (tid % 2 == 0) ^ (idx < (this->capacity / 2));
-
     return ((tid & 1) == 0) ^ (idx < (this->capacity >> 1));
-
-    // bool idx_from_numa_0 = (idx < (this->capacity / 2));
-    // // cpu from node 0
-    // if (this->tid % 2 == 0) {
-    //   if (idx_from_numa_0)
-    //     return true;
-    //   else
-    //     return false;
-    // }
-    // // cpu from node 1
-    // if (this->tid % 2 == 1) {
-    //   if (idx_from_numa_0)
-    //     return false;
-    //   else
-    //     return true;
-    // }
   }
 #endif
 };

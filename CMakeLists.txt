@@ -29,6 +29,11 @@ option(BUCKETIZATION "buckets" OFF)
 option(BUDDY_QUEUE "remote access experiment" OFF)
 option(REMOTE_QUEUE "remote prefetch engine" OFF)
 option(READ_BEFORE_CAS "read before cas" OFF)
+option(INCREMENT "Increment idx for hashtable test" OFF)
+
+if(INCREMENT)
+    add_definitions(-DINCREMENT)
+endif()
 
 if(READ_BEFORE_CAS)
     add_definitions(-DREAD_BEFORE_CAS)

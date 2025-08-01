@@ -1,5 +1,82 @@
 
-# 07/17
+
+
+
+
+# 07/28
+
+revisitng the equation: 
+T = SIZE / TIME 
+T = (#lfb * cacheline_size) / LFB_LATENCY  *  num_cores = (16 * 64) / latency * 32 * ((10^9) / (1<<30))  
+=  XGB/s
+
+
+250 GB/s is measure by vtune and mlc for max single socket bandwidth. 
+that suggests latency to retire 1 lfb slot is 122 ns. 
+
+
+LFB_LATENCY is not the same as DRAM Latency
+
+
+
+I just run a simple random prefetch loop with 8gb 10% with XORWOW. ( also run it on 50%, similar performance). 
+                 
+32 threads:  18 cycle/op
+64 threads:  36 cycle/op
+
+each op would be 1 prefetch.
+both saturate memory bw, 250 GB/s
+
+so LFB must be
+
+# 07/24
+
+
+In dramhit, at hig17h fill, with dual socket
+
+final performance for get = reprobe + contention + base memory. 
+
+Simple prefetch loop:
+
+No getfill:
+
+8gb 
+10%: 59
+70%: 67
+
+
+Counter are collected by vtune (1 sample per 10ms), a snapshot comparison. 
+
+F:  I   : A   : S 
+10% 2.7 : 2   : 0.7
+70% 1.1 : 0.5 : 3.2
+----------------- No warm up 
+
+F:  I   : A   : S 
+10% 1.8 : 1.2 : 2.0
+70% 0.9 : 0.3 : 3.5
+-----------------  warm up 
+
+
+getfill:
+
+8gb 
+10%: 68
+70%: 69
+
+
+Cache per socket:
+
+1.5 MB + 64 MB + 60 MB = 125.5 MB
+
+Cache total:
+251 MB 
+
+8GB * 10% = 0.8 GB = 819 MB
+8GB * 70% = 5.6 GB
+
+# 07/23
+
 
 In the Xeon Scalable Processor, the in-memory directory has three states: I, A, and S. I (invalid) state
 means the data is clean and does not exist in any other socket’s cache. The A (snoopAll) state
@@ -19,21 +96,14 @@ Mem state | Action
     I     | allocate a piece of memory on socket 0.  
     I     | local thread prefetch mem 
     A     | remote socket prefetch mem  
+    I     | local thread prefetch mem <- we want S here.
+    A     | remote socket prefetch mem  
     I     | local thread prefetch mem 
+
 
 whenenver mem state changes, write back needs to happen.
 clflush will gurantee to change mem state from A back to I.
 
-
-write back memory traffic happens, when the commonly shared 
-directory bit needs to be updated. Let us call it the 
-shared bit. When shared bit is set, it means both socket 
-has a copy of the cacheline.
-
-In order to update mem directory bit, remote socket need 
-to touch the memory allocated. To unset the bit, remote socket
-can clflush. Local socket can not reset the bit with clflush, 
-it always owns the memory allocated locally.
 
 
 # july 17
@@ -43,7 +113,11 @@ run at 10%
 dual theoritical get = (local + remote)/2 = (47+85)/2 = 66
 
 single socket local = { set_cycles : 107, get_cycles : 47, upsert_cycles : 106, set_mops : 1495.327, get_mops : 3404.255, upsert_mops : 1509.434 }
-single socket remote = { set_cycles : 157, get_cycles : 85, upsert_cycles : 158, set_mops : 1019.108, get_mops : 1882.353, upsert_mops : 1012.658 }
+
+single socket remote = { set_cycles : 157, get_cycles : 85, upsert_cycles : 158, set_mops : 1019.108, get_mops : 1882.353, upsert_mops : 1012.658 } 
+
+1882 * 64 = 120 GB/s matches mlc remote memory bandwidth. under vtune, upi is saturated.
+
 dual socket = { set_cycles : 140, get_cycles : 71, upsert_cycles : 141, set_mops : 2285.714, get_mops : 4507.042, upsert_mops : 2269.504 }
 
 run at 70%
@@ -52,7 +126,7 @@ dual theoritical get = (101+58)/2 = 80
 
 single socket local = { set_cycles : 119, get_cycles : 58, upsert_cycles : 117, set_mops : 1344.538, get_mops : 2711.864, upsert_mops : 1367.521 }
 single socket remote = { set_cycles : 177, get_cycles : 101, upsert_cycles : 171, set_mops : 903.955, get_mops : 1584.158, upsert_mops : 935.673 }
-dual socket = { set_cycles : 162, get_cycles : 96, upsert_cycles : 163, set_mops : 1975.309, get_mops : 3333.333, upsert_mops : 1963.190 }
+dual socket = { set_cycles : 162, get_cycles : 96, upsert_cycles : 163, set_mops : 1975.309, get_mops : 3333.333, upsert_mops : 1963.190 }  
 
 8G 70% (no reprobe)
 
@@ -62,17 +136,27 @@ single local: { set_cycles : 119, get_cycles : 49, upsert_cycles : 117, set_mops
 single remote: { set_cycles : 178, get_cycles : 84, upsert_cycles : 173, set_mops : 898.876, get_mops : 1904.762, upsert_mops : 924.855 }
 dual: { set_cycles : 162, get_cycles : 82, upsert_cycles : 163, set_mops : 1975.309, get_mops : 3902.439, upsert_mops : 1963.190 } 
 
-8g 70% prefetch loop skew 0.01
+8g,  
+
+generate workload base skew 0.01, 70% * 8gb 
+each thread, 70% *8gb / thread 
 
 60.5 in theory for dual. 
 single local: 43
 single remote: 78
 dual: 78
 
-8g 10% prefetch loop skew 0.01
+8g f10% * 8gb prefetch loop skew 0.01
 single local: 43
 single remote: 77
 dual: 62
+
+x   y
+x -> 
+1/10 
+_ _ X_ _ _ _ _ _ _ _ 
+
+70%
 
 8g 70% prefetch loop skew 0.01 64 threads
 dual: 41

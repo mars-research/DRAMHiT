@@ -390,6 +390,16 @@ class NumaPolicyThreads : public Numa {
         this->assigned_cpu_list.push_back(cpu_assigned);
         this->unassigned_cpu_list.erase(cpu_assigned);
       }
+
+      printf("Assinging (%d) cpus: ",assigned_cpu_list.size());
+      for(int i =0; i< assigned_cpu_list.size();i++)
+      {
+        cout<< assigned_cpu_list[i];
+        if(i< assigned_cpu_list.size()-1 )
+        cout << ", ";
+
+      }
+      cout<<endl;
       return;
     }
 
