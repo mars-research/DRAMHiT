@@ -17,8 +17,9 @@
  */
 
 #define _GNU_SOURCE
+#include <assert.h>
 #include <errno.h>
-// #include <ittnotify.h>
+#include <ittnotify.h>
 #include <numa.h>
 #include <numaif.h>
 #include <pthread.h>
@@ -29,8 +30,9 @@
 #include <unistd.h>
 #include <x86intrin.h>
 
-#define TABLE_SIZE (1 << 30) /8 // number of elements (~512M cache lines => ~32GB)
-#define ITERATIONS (1<<30)   // number of traversal rounds
+#define TABLE_SIZE (1 << 30) / 16
+// #define TABLE_SIZE (1 << 20)
+#define ITERATIONS (1 << 30)  // number of traversal rounds
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
 #define RANDOM_ACCESS
@@ -38,12 +40,16 @@
 #define LOCAL 0
 #define REMOTE 1
 
+__itt_event local;
+__itt_event remote;
+__itt_event flush;
 
 typedef struct {
   uint64_t value;
   char pad[CACHELINE_SIZE - sizeof(uint64_t)];
 } cacheline_t;
 cacheline_t *table;
+cacheline_t *flush_table;
 
 typedef struct {
   int node;
@@ -51,6 +57,14 @@ typedef struct {
   int cpu;
 } thread_arg_t;
 
+// Writes x to each item in the table.
+void *write_to_all_table(uint64_t x) {
+  printf("Stating to write to table...\n");
+  for (size_t i = 0; i < TABLE_SIZE; i++) {
+    table[i].value = x;
+  }
+  printf("Done writing to table\n");
+}
 // Bind current thread to a NUMA node
 void bind_to_node(int node) {
   if (numa_run_on_node(node) != 0) {
@@ -97,7 +111,15 @@ int get_numa_cpuids(int node, int *cpu_ids, int max_len) {
   numa_free_cpumask(cpumask);
   return count;
 }
-
+void flush_table_from_cache() {
+  printf("Flushing cache...\n");
+  for (uint64_t i = 0; i < TABLE_SIZE; i++) {
+    // cacheline_t *table
+    _mm_clflush(&table[i]);
+  }
+  _mm_sfence();
+  printf("Done flushing cache\n");
+}
 // Pseudo-random walk with prefetch, using CRC32 for next index
 void *walk_table(void *arg) {
   thread_arg_t *t = (thread_arg_t *)arg;
@@ -107,8 +129,7 @@ void *walk_table(void *arg) {
   int node = t->node;
 
   pin_self_to_cpu(cpu);
-  printf("Walking page table on %d \n",cpu);
-
+  // printf("Walking page table on thread: %d \n", cpu);
 
   if (cpu != sched_getcpu()) {
     printf("cpu doesnt match expected: %d sched: %d\n", cpu, sched_getcpu());
@@ -118,14 +139,52 @@ void *walk_table(void *arg) {
   uint64_t sum = 0;
   uint64_t idx;
   for (uint64_t i = 0; i < ITERATIONS; i++) {
-    //  idx = _mm_crc32_u64(0xffffffff, i + (node * ITERATIONS)) & (TABLE_SIZE - 1);
-    idx = i & (TABLE_SIZE - 1);
-    sum += table[idx].value ;
+    // idx = _mm_crc32_u64(0xffffffff, i + (node * ITERATIONS)) & (TABLE_SIZE -
+    // 1);
+    idx = i % (TABLE_SIZE);
+    sum += table[idx].value;
   }
 
   printf("sum %lu from cpu %d node %d\n", sum, cpu, node);
 
   return NULL;
+}
+
+int write_from_remote_thread(int node, int num_threads) {
+  int success = 0;
+
+  pthread_t *threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
+  thread_arg_t *args =
+      (thread_arg_t *)malloc(sizeof(thread_arg_t) * num_threads);
+  int *cpus = (int *)malloc(num_threads * sizeof(int));
+  int count = get_numa_cpuids(node, cpus, num_threads);
+
+  if (count < num_threads) {
+    printf("not enough physical cpus on node %d, max cpu %d, requested %d\n",
+           node, count, num_threads);
+    goto cleanup;
+  }
+
+  for (int i = 0; i < num_threads; i++) {
+    uint64_t t = 10;
+
+    if (pthread_create(&threads[i], NULL, write_to_all_table, &t) != 0) {
+      perror("pthread_create failed");
+      goto cleanup;
+    }
+  }
+
+  for (int i = 0; i < num_threads; i++) {
+    pthread_join(threads[i], NULL);
+  }
+
+  success = 1;
+cleanup:
+  free(threads);
+  free(args);
+  free(cpus);
+
+  return success;
 }
 
 int spawn_threads(int node, int num_threads) {
@@ -155,7 +214,7 @@ int spawn_threads(int node, int num_threads) {
   }
 
   for (int i = 0; i < num_threads; i++) {
-   pthread_join(threads[i], NULL);
+    pthread_join(threads[i], NULL);
   }
 
   success = 1;
@@ -207,8 +266,7 @@ cleanup:
   free(threads);
   free(args);
   free(local_cpus);
-    free(remote_cpus);
-
+  free(remote_cpus);
 
   return success;
 }
@@ -216,19 +274,32 @@ cleanup:
 // A -> I condition
 // I -> A -> I
 void experiment_0() {
-
   // spawn_threads(REMOTE, 16);
   // spawn_threads(LOCAL , 16);
-  spawn_threads_numa(2,2);
 
-      // spawn_threads_numa(16, 16);
-//   spawn_threads(LOCAL , 2);
-// spawn_threads(REMOTE, 1);
-//   sleep(5);
-    // spawn_threads_numa(16, 16);
+  // Reach S state
+  sleep(1);
+  spawn_threads_numa(2, 2);
+  sleep(1);
+  write_from_remote_thread(1, 1);
+  sleep(1);
+  spawn_threads(REMOTE, 1);
+  sleep(1);
+  // Confirm S state
+  __itt_event_start(local);
+  spawn_threads(LOCAL, 1);
+  __itt_event_end(local);
 
-//   spawn_threads(LOCAL, 16);
-//   spawn_threads(REMOTE, 16);
+  // write_from_remote_thread(0, 1);
+
+  // spawn_threads_numa(16, 16);
+  //   spawn_threads(LOCAL , 2);
+
+  //   sleep(5);
+  // spawn_threads_numa(16, 16);
+
+  //   spawn_threads(LOCAL, 16);
+  //   spawn_threads(REMOTE, 16);
 
   // spawn_threads(REMOTE, 1);
   // if (spawn_threads(LOCAL, 16) == 0) {
@@ -256,7 +327,22 @@ void experiment_0() {
   // __itt_event_end(local);
 }
 
+cacheline_t *alloc_table(size_t size, size_t numa_node) {
+  size_t page_sz = 4096;
+  size_t obj_sz = ((size + page_sz - 1) / page_sz) * page_sz;
+  void *mem = aligned_alloc(page_sz, obj_sz);
+  assert(mem != NULL);
+  unsigned long nodemask = 1UL << numa_node;
+  assert(mbind(mem, obj_sz, MPOL_BIND, &nodemask, sizeof(nodemask) * 8,
+               MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
+  return mem;
+}
+
 int main() {
+  local = __itt_event_create("local", strlen("local"));
+  remote = __itt_event_create("remote", strlen("remote"));
+  flush = __itt_event_create("flush", strlen("flush"));
+
   if (numa_available() < 0) {
     fprintf(stderr, "NUMA is not available\n");
     return EXIT_FAILURE;
@@ -264,27 +350,30 @@ int main() {
 
   srand(time(NULL));
 
-  // Set policy to allocate on node 0
-  numa_set_preferred(0);
+  // Alloc table
+  // table = aligned_alloc(ALIGNMENT, TABLE_SIZE * sizeof(cacheline_t));
 
-  table = aligned_alloc(ALIGNMENT, TABLE_SIZE * sizeof(cacheline_t));
-      memset(table, 0, TABLE_SIZE * sizeof(cacheline_t));
-      double gb = (double)TABLE_SIZE * sizeof(cacheline_t) / (1024 * 1024 * 1024);
-    printf("Allocated memory: %.3f GB\n", gb);
+  table = alloc_table(TABLE_SIZE * sizeof(cacheline_t), 0);
+  // flush_table = alloc_table(TABLE_SIZE * sizeof(cacheline_t), 0);
+  // init all table to 0
+  memset(table, 1, TABLE_SIZE * sizeof(cacheline_t));
+  // Print out table size
+  double gb = (double)TABLE_SIZE * sizeof(cacheline_t) / (1024 * 1024 * 1024);
+  printf("Allocated memory: %.3f GB\n", gb);
+
   if (table == NULL) {
     perror("aligned_alloc");
     return EXIT_FAILURE;
   }
 
   // // Touch pages and initialize one value per cache line
-  for (size_t i = 0; i < TABLE_SIZE; i++) {
-    table[i].value = 1;
-  }
+  // write_to_all_table(1);
 
-  sleep(1);
+  // flush_table_from_cache();
 
   experiment_0();
 
   free(table);
+  free(flush_table);
   return 0;
 }
