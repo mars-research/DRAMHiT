@@ -1,5 +1,10 @@
-// Compile: gcc -O1 -o upi upi_test.c -lnuma -lpthread
 
+
+// This is used to show upi maxium throughput is 240GB/s as we expected
+// This essentilly spawn all threads in system, and force them to do remote 
+// memory access.
+// Compile: gcc -O1 -o upi upi_test.c -lnuma -lpthread
+// Monitor this under vtune to see max bandwidth upi.
 
 #define _GNU_SOURCE
 #include <numa.h>
@@ -13,8 +18,8 @@
 #include <x86intrin.h>
 
 #define THREADS_PER_SOCKET 64
-#define ITERATIONS (100000000)                // 1_000_000_000UL
-#define MEM_SIZE (2UL * 1024 * 1024 * 1024)  // 8 GB
+#define ITERATIONS (100000000)               // 1_000_000_000UL
+#define MEM_SIZE (2UL * 1024 * 1024 * 1024)  // 2 GB
 
 #define TOTAL_THREADS (2 * THREADS_PER_SOCKET)
 #define CACHELINE 64
@@ -75,14 +80,10 @@ void *thread_worker(void *arg) {
   }
 
   uint64_t sum = 0;
-  // Begin benchmark
+  // Begin benchmark, random walk about the table
   for (uint64_t i = 0; i < ITERATIONS; i++) {
     uint32_t idx = _mm_crc32_u32(0xffffffff, i + (tid * WORKLOAD_PER_THREAD)) &
                    (NUM_LINES - 1);
-    // const uint8_t *addr = &mem[(idx << 6)];
-    // _mm_prefetch((const char*)addr, _MM_HINT_T1);
-
-    // printf("addr %p accessed by tid\n", &mem[(idx << 6)]);
     sum += mem[(idx << 6)];
   }
 
