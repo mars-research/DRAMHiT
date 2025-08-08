@@ -1,22 +1,12 @@
 /*
- * numa_experiment_rdtsc.c
- *
- * Experiment steps:
- * 1. Allocate a table of size TABLE_SIZE on NUMA node 0, with each element
- * 64-byte aligned and occupying one cache line.
- * 2. Bind the memory to node 0.
- * 3. Run a thread on node 0 that pseudo-randomly walks the table using
- * prefetch, measuring cycles via RDTSC.
- * 4. Repeat: after binding, spawn a helper thread on node 1 to prefetch the
- * entire table (ensuring a remote copy). Then run the walker thread on node 0
- * and measure cycles again.
- *
+ * 
  * Compile with: gcc -O1 -pthread -lnuma -march=native -o numa_test numa_test.c
  * -I/opt/intel/oneapi/vtune/latest/include
  * /opt/intel/oneapi/vtune/latest/lib64/libittnotify.a
  */
 
 #define _GNU_SOURCE
+#include <assert.h>
 #include <errno.h>
 #include <ittnotify.h>
 #include <numa.h>
@@ -29,18 +19,27 @@
 #include <unistd.h>
 #include <x86intrin.h>
 
-#define TABLE_SIZE (1 << 24)  // number of elements (~512M cache lines => ~32GB)
-#define ITERATIONS 50000000   // number of traversal rounds
+// 1024 * 1024
+#define TABLE_SIZE (1 << 26)  // 4 GB
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
-#define RANDOM_ACCESS
+// #define RANDOM_ACCESS
+#define READ
+#define STRIDE 1024
 
 #define LOCAL 0
 #define REMOTE 1
 
+#define CACHELOCAL 1
+#define CACHEREMOTE 0
+
+
 __itt_event local;
 __itt_event remote;
 __itt_event flush;
+__itt_event experiment1;
+__itt_event experiment2;
+__itt_event dowork;
 
 typedef struct {
   uint64_t value;
@@ -52,9 +51,14 @@ typedef struct {
   int node;
   int tid;
   int cpu;
+  int iter;
+  pthread_barrier_t *barrier;
 } thread_arg_t;
 
-// Bind current thread to a NUMA node
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+int ready = 1;
+
 void bind_to_node(int node) {
   if (numa_run_on_node(node) != 0) {
     perror("numa_run_on_node");
@@ -101,13 +105,13 @@ int get_numa_cpuids(int node, int *cpu_ids, int max_len) {
   return count;
 }
 
-// Pseudo-random walk with prefetch, using CRC32 for next index
 void *walk_table(void *arg) {
   thread_arg_t *t = (thread_arg_t *)arg;
 
   int cpu = t->cpu;
   int tid = t->tid;
   int node = t->node;
+  int iter = t->iter;
 
   pin_self_to_cpu(cpu);
 
@@ -118,22 +122,114 @@ void *walk_table(void *arg) {
 
   uint64_t sum = 0;
   uint64_t idx;
-  for (uint64_t i = 0; i < ITERATIONS; i++) {
-#if defined(RANDOM_ACCESS)
-    idx = _mm_crc32_u64(0xffffffff, i + (node * ITERATIONS)) & (TABLE_SIZE - 1);
-#else
-    idx = i & (TABLE_SIZE - 1);
-#endif
 
-    sum += table[idx].value;
+  if (t->barrier != NULL) {
+    pthread_barrier_wait(t->barrier);
   }
 
-  printf("sum %lu from cpu %d node %d\n", sum, cpu, node);
+  __itt_event_start(dowork);
+  for (uint64_t j = 0; j < iter; j++) {
+    for (uint64_t i = 0; i < TABLE_SIZE; i += STRIDE) {
+      for (uint64_t k = 0; k < STRIDE; k++) {
+#if defined(RANDOM_ACCESS)
+        idx = _mm_crc32_u64(0xffffffff, i + k) & (TABLE_SIZE - 1);
+#else
+        idx = i + k & (TABLE_SIZE - 1);
+#endif
+
+#if defined(READ)
+        sum += table[idx].value;
+#else
+        table[idx].value = idx;
+#endif
+      }
+    }
+  }
+
+  __itt_event_end(dowork);
+
+  printf("total op %u sum %lu from cpu %d node %d\n", iter * TABLE_SIZE, sum,
+         cpu, node);
 
   return NULL;
 }
 
-int spawn_threads(int node, int num_threads) {
+// Pseudo-random walk with prefetch, using CRC32 for next index
+void *walk_table_sync(void *arg) {
+  thread_arg_t *t = (thread_arg_t *)arg;
+
+  int cpu = t->cpu;
+  int tid = t->tid;
+  int node = t->node;
+  int iter = t->iter;
+
+  pin_self_to_cpu(cpu);
+
+  if (cpu != sched_getcpu()) {
+    printf("cpu doesnt match expected: %d sched: %d\n", cpu, sched_getcpu());
+    pthread_exit(NULL);
+  }
+
+  uint64_t sum = 0;
+  uint64_t idx;
+
+  if (t->barrier != NULL) {
+    pthread_barrier_wait(t->barrier);
+  }
+
+  __itt_event_start(dowork);
+  for (uint64_t j = 0; j < iter; j++) {
+    for (uint64_t i = 0; i < TABLE_SIZE; i += STRIDE) {
+      pthread_mutex_lock(&mutex);
+
+      while (node == 0 && ready != 1) {
+        pthread_cond_wait(&cond, &mutex);
+      }
+
+      while (node == 1 && ready != 0) {
+        pthread_cond_wait(&cond, &mutex);
+      }
+
+      pthread_mutex_unlock(&mutex);
+
+      // printf("dowork from node %u loc: %lu\n", node, i);
+      for (uint64_t k = 0; k < STRIDE; k++) {
+#if defined(RANDOM_ACCESS)
+        idx = _mm_crc32_u64(0xffffffff, i + k) & (TABLE_SIZE - 1);
+#else
+        idx = (i + k) & (TABLE_SIZE - 1);
+#endif
+
+#if defined(READ)
+        sum += table[idx].value;
+#else
+        table[idx].value = idx;
+#endif
+      }
+
+      pthread_mutex_lock(&mutex);
+
+      if (node == 1) {
+        ready = 1;
+        pthread_cond_signal(&cond);
+      } else {
+        ready = 0;
+        pthread_cond_signal(&cond);
+      }
+
+      pthread_mutex_unlock(&mutex);
+    }
+  }
+
+  __itt_event_end(dowork);
+
+  printf("total op %u sum %lu from cpu %d node %d\n", iter * TABLE_SIZE, sum,
+         cpu, node);
+
+  return NULL;
+}
+
+int spawn_threads(int node, int num_threads, int iter) {
   int success = 0;
 
   pthread_t *threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
@@ -143,8 +239,10 @@ int spawn_threads(int node, int num_threads) {
   int count = get_numa_cpuids(node, cpus, num_threads);
 
   if (count < num_threads) {
-    printf("not enough physical cpus on node %d, max cpu %d, requested %d\n",
-           node, count, num_threads);
+    printf(
+        "not enough physical cpus on node %d, max cpu %d, requesoftwarested "
+        "%d\n",
+        node, count, num_threads);
     goto cleanup;
   }
 
@@ -152,6 +250,8 @@ int spawn_threads(int node, int num_threads) {
     args[i].tid = i;
     args[i].cpu = cpus[i];
     args[i].node = node;
+    args[i].barrier = NULL;
+    args[i].iter = iter;
 
     if (pthread_create(&threads[i], NULL, walk_table, &args[i]) != 0) {
       perror("pthread_create failed");
@@ -172,7 +272,7 @@ cleanup:
   return success;
 }
 
-int spawn_threads_numa(int local_c, int remote_c) {
+int spawn_threads_numa(int local_c, int remote_c, int iter) {
   int success = 0;
 
   int num_threads = local_c + remote_c;
@@ -180,24 +280,32 @@ int spawn_threads_numa(int local_c, int remote_c) {
   pthread_t *threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
   thread_arg_t *args =
       (thread_arg_t *)malloc(sizeof(thread_arg_t) * num_threads);
-  int *local_cpus = (int *)malloc(local_c * sizeof(int));
-  int *remote_cpus = (int *)malloc(remote_c * sizeof(int));
 
-  int count = get_numa_cpuids(LOCAL, local_cpus, local_c);
-  count = get_numa_cpuids(REMOTE, remote_cpus, remote_c);
+  int NUM_CPUS = 32; 
+  int *local_cpus = (int *)malloc(NUM_CPUS * sizeof(int));
+  int *remote_cpus = (int *)malloc(NUM_CPUS * sizeof(int));
+
+  int count = get_numa_cpuids(LOCAL, local_cpus, NUM_CPUS);
+  int remote_count = get_numa_cpuids(REMOTE, remote_cpus, NUM_CPUS);
+
+  pthread_barrier_t barrier;
+  pthread_barrier_init(&barrier, NULL, num_threads);
 
   for (int i = 0; i < num_threads; i++) {
     args[i].tid = i;
+    args[i].barrier = &barrier;
+    args[i].iter = iter;
 
+    int cpu = rand() % NUM_CPUS;
     if (i < local_c) {
-      args[i].cpu = local_cpus[i];
+      args[i].cpu = local_cpus[cpu];
       args[i].node = LOCAL;
     } else {
-      args[i].cpu = remote_cpus[(i - local_c)];
+      args[i].cpu = remote_cpus[cpu];
       args[i].node = REMOTE;
     }
 
-    if (pthread_create(&threads[i], NULL, walk_table, &args[i]) != 0) {
+    if (pthread_create(&threads[i], NULL, walk_table_sync, &args[i]) != 0) {
       perror("pthread_create failed");
       goto cleanup;
     }
@@ -209,43 +317,57 @@ int spawn_threads_numa(int local_c, int remote_c) {
 
   success = 1;
 cleanup:
+  pthread_barrier_destroy(&barrier);
+
   free(threads);
   free(args);
   free(local_cpus);
-    free(remote_cpus);
-
+  free(remote_cpus);
 
   return success;
 }
 
-// A -> I condition
-// I -> A -> I
-void experiment_0() {
-  __itt_event_start(local);
-  // if (spawn_threads(LOCAL, 16) == 0) {
-  //   printf("spawn threads failed\n");
-  // }
 
-  if (spawn_threads_numa(2, 2) == 0) {
+
+// 2 local and 1 remote
+void experiment_1() {
+  spawn_threads(1, 1, 2);  //A
+
+  sleep(1);
+
+    spawn_threads(0, 1, 2);  //I
+
+  sleep(1);
+
+  ready = CACHELOCAL; // S
+  if (spawn_threads_numa(1, 1, 1) == 0) {
     printf("spawn threads failed\n");
   }
-  __itt_event_end(local);
 
-  // sleep(1);
+  sleep(1);
 
-  // __itt_event_start(remote);
-  // if (spawn_threads(REMOTE, 16) == 0) {
+  spawn_threads(0, 1, 2); 
+
+  sleep(1);
+
+  // ready = CACHEREMOTE;
+  // if (spawn_threads_numa(1, 1, 1) == 0) {
   //   printf("spawn threads failed\n");
   // }
-  // __itt_event_end(remote);
-
   // sleep(1);
+  // // local read
+  // spawn_threads(1, 1, 2); 
+}
 
-  // __itt_event_start(local);
-  // if (spawn_threads(LOCAL, 16) == 0) {
-  //   printf("spawn threads failed\n");
-  // }
-  // __itt_event_end(local);
+void *alloc_table(size_t size, size_t numa_node) {
+  size_t page_sz = 4096;
+  size_t obj_sz = ((size + page_sz - 1) / page_sz) * page_sz;
+  void *mem = aligned_alloc(page_sz, obj_sz);
+  assert(mem != NULL);
+  unsigned long nodemask = 1UL << numa_node;
+  assert(mbind(mem, obj_sz, MPOL_BIND, &nodemask, sizeof(nodemask) * 8,
+               MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
+  return mem;
 }
 
 int main() {
@@ -258,26 +380,38 @@ int main() {
   remote = __itt_event_create("remote", strlen("remote"));
   flush = __itt_event_create("flush", strlen("flush"));
 
+  experiment1 = __itt_event_create("experment-1", strlen("experment-1"));
+
+  dowork = __itt_event_create("dowork", strlen("dowork"));
+
   srand(time(NULL));
 
-  // Set policy to allocate on node 0
-  numa_set_preferred(0);
+  bind_to_node(0);
 
-  table = aligned_alloc(ALIGNMENT, TABLE_SIZE * sizeof(cacheline_t));
+  table = (cacheline_t *)alloc_table(TABLE_SIZE * sizeof(cacheline_t), LOCAL);
+
   if (table == NULL) {
-    perror("aligned_alloc");
+    perror("alloc table failed");
     return EXIT_FAILURE;
   }
 
-  // Touch pages and initialize one value per cache line
-  for (size_t i = 0; i < TABLE_SIZE; i++) {
-    table[i].value = i;
-  }
+  for (int i = 0; i < TABLE_SIZE; i++) table[i].value = 1;
 
+  printf("allocating and writing to table %p from node %u\n", table, LOCAL);
   sleep(1);
 
-  experiment_0();
+  //__itt_event_start(experiment1);
+  experiment_1();
+  //__itt_event_end(experiment1);
 
+  // sleep(1);
+
+  // __itt_event_start(experiment2);
+  // experiment_2();
+  // __itt_event_end(experiment2);
+
+  pthread_mutex_destroy(&mutex);
+  pthread_cond_destroy(&cond);
   free(table);
   return 0;
 }

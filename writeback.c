@@ -279,16 +279,16 @@ void experiment_0() {
 
   // Reach S state
   sleep(1);
-  spawn_threads_numa(2, 2);
+  spawn_threads_numa(1, 1);
   sleep(1);
-  write_from_remote_thread(1, 1);
+  // write_from_remote_thread(1, 1);
+  spawn_threads(LOCAL, 1);
+
   sleep(1);
   spawn_threads(REMOTE, 1);
   sleep(1);
   // Confirm S state
-  __itt_event_start(local);
   spawn_threads(LOCAL, 1);
-  __itt_event_end(local);
 
   // write_from_remote_thread(0, 1);
 
