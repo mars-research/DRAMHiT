@@ -328,6 +328,25 @@ cleanup:
 }
 
 
+// 
+void experiment() {
+  spawn_threads(0, 1, 2); 
+    sleep(1);
+
+  spawn_threads(1, 1, 2);  
+    sleep(1);
+
+  spawn_threads(0, 1, 2); 
+    sleep(1);
+
+  spawn_threads(1, 1, 2);  
+    sleep(1);
+    spawn_threads(0, 1, 2); 
+    sleep(1);
+
+  spawn_threads(1, 1, 2);  
+}
+
 
 // 2 local and 1 remote
 void experiment_1() {
@@ -401,7 +420,7 @@ int main() {
   sleep(1);
 
   //__itt_event_start(experiment1);
-  experiment_1();
+  experiment();
   //__itt_event_end(experiment1);
 
   // sleep(1);

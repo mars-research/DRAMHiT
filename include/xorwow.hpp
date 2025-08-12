@@ -5,6 +5,11 @@
 
 #include <cstdint>
 #include <limits>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 struct xorwow_state {
   uint32_t a, b, c, d;

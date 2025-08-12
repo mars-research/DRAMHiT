@@ -1,6 +1,6 @@
 #include "xorwow.hpp"
 
-#include <cstdlib>
+
 
 void xorwow_init(xorwow_state *s) {
   s->a = rand();
@@ -9,6 +9,30 @@ void xorwow_init(xorwow_state *s) {
   s->d = rand();
   s->counter = rand();
 }
+
+// void xorwow_init(xorwow_state *s) {
+//     int fd = open("/dev/urandom", O_RDONLY);
+//     if (fd < 0) {
+//         perror("open /dev/urandom");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     size_t to_read = sizeof(*s);
+//     uint8_t *buf = (uint8_t *)s;
+
+//     while (to_read > 0) {
+//         ssize_t n = read(fd, buf, to_read);
+//         if (n <= 0) {
+//             perror("read /dev/urandom");
+//             close(fd);
+//             exit(EXIT_FAILURE);
+//         }
+//         buf += n;
+//         to_read -= n;
+//     }
+
+//     close(fd);
+// }
 
 /* The state array must be initialized to not be all zero in the first four
  * words */

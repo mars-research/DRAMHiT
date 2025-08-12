@@ -149,17 +149,6 @@ void sync_complete(void) {
   }
 #endif
 
-#if defined(WITH_PCM)
-  if (stop_sync) {
-    PLOGI.printf("Stopping PCM counters");
-    pcm_cnt.stop();
-    pcm_cnt.readout(false, true, true);
-    stop_sync = false;
-  } else {
-    PLOGI.printf("Starting PCM counters");
-    pcm_cnt.start();
-  }
-#endif
 
   if (cur_phase == ExecPhase::finds) {
     if (!zipfian_finds) {
