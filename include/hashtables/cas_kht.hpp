@@ -896,8 +896,10 @@ class CASHashTable : public BaseHashTable {
   // trickery: we return at most batch sz things due to pop_find_queue.
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
-    size_t idx;
 
+
+#ifdef CAS_FIND_BANDWIDTH_TEST
+    size_t idx;
     uint64_t len = this->capacity >> 2;
     // uint64_t len = this->capacity;
     for (auto &data : kp) {
@@ -905,11 +907,8 @@ class CASHashTable : public BaseHashTable {
       idx = idx << 2;  // idx * 4
       __builtin_prefetch(&this->hashtable[idx], false, 1);
     }
-
     return;
-
-
-
+#endif
 
 #ifdef REMOTE_QUEUE
     for (auto &data : kp) {

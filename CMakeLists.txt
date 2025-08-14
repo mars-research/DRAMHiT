@@ -16,7 +16,7 @@ option(XORWOW "Xorwow" OFF)
 option(BQ_ZIPFIAN "Enable global zipfian distribution generation" ON)
 option(BQ_ZIPFIAN_LOCAL "Enable local zipfian distribution generation" OFF)
 option(CALC_STATS "Enable hashtable statistics" OFF)
-option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
+#option(ZIPF_FAST "Enable faster zipfian distribution generation" ON)
 option(LATENCY_COLLECTION "Enable latency data collection" OFF)
 option(BQ_KMER_TEST "Bqueue kmer test" OFF)
 option(AVX_SUPPORT "SIMD" ON)
@@ -29,11 +29,11 @@ option(BUCKETIZATION "buckets" OFF)
 option(BUDDY_QUEUE "remote access experiment" OFF)
 option(REMOTE_QUEUE "remote prefetch engine" OFF)
 option(READ_BEFORE_CAS "read before cas" OFF)
-option(INCREMENT "Increment idx for hashtable test" OFF)
+option(CAS_FIND_BANDWIDTH_TEST "read bandwidth test" OFF)
 
-if(INCREMENT)
-    add_definitions(-DINCREMENT)
-endif()
+if(CAS_FIND_BANDWIDTH_TEST) 
+        add_definitions(-DCAS_FIND_BANDWIDTH_TEST)
+endif() 
 
 if(READ_BEFORE_CAS)
     add_definitions(-DREAD_BEFORE_CAS)
@@ -222,10 +222,10 @@ endif()
 set(KMER_LEN "8" CACHE STRING "The K in KMer")
 add_definitions(-DKMER_LEN=${KMER_LEN})
 
-if(ZIPF_FAST)
-    message(WARNING "Using fast zipfian")
-    add_definitions(-DZIPF_FAST)
-endif()
+# if(ZIPF_FAST)
+#     message(WARNING "Using fast zipfian")
+#     add_definitions(-DZIPF_FAST)
+# endif()
 
 if(XORWOW)
     message(WARNING "Xorwow synthetic tests")
@@ -271,6 +271,28 @@ elseif(HASHER STREQUAL "wyhash")
 endif()
 
 
+
+# Input data generation
+
+set(DATA_GEN "INC" CACHE STRING "Benchmark backend to use (HASH, ZIPFIAN, INC)")
+
+set(VALID_DATA_GEN HASH INC ZIPFIAN)
+
+list(FIND VALID_DATA_GEN ${DATA_GEN} DATAGEN_INDEX)
+if(DATA_GEN AND DATAGEN_INDEX EQUAL -1)
+    message(STATUS "No benchmarking backend selected.")
+elseif(DATA_GEN)
+    message(STATUS "Selected data gen: ${DATA_GEN}")
+else()
+    message(STATUS "No data gen selected.")
+endif()
+
+if (DATA_GEN STREQUAL "HASH")
+    add_definitions(-DINFLIGHT)
+    message(STATUS "fast HASH in flightly data generation")
+elseif (BENCHMARK_BACKEND STREQUAL "ZIPFIAN")
+    add_definitions(-DZIPFIAN)    
+endif()
 
 # Benchmark backend
 

@@ -1,5 +1,5 @@
 /*
- * 
+ *
  * Compile with: gcc -O1 -pthread -lnuma -march=native -o numa_test numa_test.c
  * -I/opt/intel/oneapi/vtune/latest/include
  * /opt/intel/oneapi/vtune/latest/lib64/libittnotify.a
@@ -32,7 +32,6 @@
 
 #define CACHELOCAL 1
 #define CACHEREMOTE 0
-
 
 __itt_event local;
 __itt_event remote;
@@ -281,7 +280,7 @@ int spawn_threads_numa(int local_c, int remote_c, int iter) {
   thread_arg_t *args =
       (thread_arg_t *)malloc(sizeof(thread_arg_t) * num_threads);
 
-  int NUM_CPUS = 32; 
+  int NUM_CPUS = 32;
   int *local_cpus = (int *)malloc(NUM_CPUS * sizeof(int));
   int *remote_cpus = (int *)malloc(NUM_CPUS * sizeof(int));
 
@@ -327,45 +326,41 @@ cleanup:
   return success;
 }
 
-
-// 
 void experiment() {
-  spawn_threads(0, 1, 2); 
-    sleep(1);
+  spawn_threads(0, 1, 2);
+  sleep(1);
 
-  spawn_threads(1, 1, 2);  
-    sleep(1);
+  ready = CACHELOCAL;  // S
+  if (spawn_threads_numa(1, 1, 1) == 0) {
+    printf("spawn threads failed\n");
+  }
+  sleep(1);
 
-  spawn_threads(0, 1, 2); 
-    sleep(1);
+  spawn_threads(0, 1, 2);
+  sleep(1);
 
-  spawn_threads(1, 1, 2);  
-    sleep(1);
-    spawn_threads(0, 1, 2); 
-    sleep(1);
-
-  spawn_threads(1, 1, 2);  
+  spawn_threads(1, 1, 2);
+  sleep(1);
 }
-
 
 // 2 local and 1 remote
 void experiment_1() {
-  spawn_threads(1, 1, 2);  //A
+  spawn_threads(1, 1, 2);  // A
 
   sleep(1);
 
-    spawn_threads(0, 1, 2);  //I
+  spawn_threads(0, 1, 2);  // I
 
   sleep(1);
 
-  ready = CACHELOCAL; // S
+  ready = CACHELOCAL;  // S
   if (spawn_threads_numa(1, 1, 1) == 0) {
     printf("spawn threads failed\n");
   }
 
   sleep(1);
 
-  spawn_threads(0, 1, 2); 
+  spawn_threads(0, 1, 2);
 
   sleep(1);
 
@@ -375,7 +370,7 @@ void experiment_1() {
   // }
   // sleep(1);
   // // local read
-  // spawn_threads(1, 1, 2); 
+  // spawn_threads(1, 1, 2);
 }
 
 void *alloc_table(size_t size, size_t numa_node) {

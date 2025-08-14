@@ -28,6 +28,7 @@
 #include "PCMCounter.hpp"
 #endif
 
+
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -56,7 +57,6 @@ extern ExecPhase cur_phase;
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 // extern std::vector<cacheline> toxic_waste_dump;
 
-// #define XORWOW
 
 static inline uint32_t hash_knuth(uint32_t x) {
     return x * 2654435761u;
@@ -95,7 +95,7 @@ OpTimings do_zipfian_inserts(
   key_type key{};
   std::size_t next_pollution{};
 
-#if defined(XORWOW)
+#if defined(INFLIGHT)
   struct xorwow_state _xw_state, init_state;
   xorwow_init(&_xw_state);
   init_state = _xw_state;
@@ -113,7 +113,7 @@ OpTimings do_zipfian_inserts(
     cur_phase = ExecPhase::insertions;
 
     uint64_t value;
-#if defined(XORWOW)
+#if defined(INFLIGHT)
     _xw_state = init_state;
 #elif defined(ZIPFIAN)
     uint64_t zipf_idx = 0;
@@ -126,7 +126,7 @@ OpTimings do_zipfian_inserts(
 
     for (unsigned int n = 0; n < batches; ++n) {
       for (int i = 0; i < config.batch_len; i++) {
-#if defined(XORWOW)
+#if defined(INFLIGHT)
         //value = xorwow(&_xw_state);
         value = hash_knuth((HT_TESTS_NUM_INSERTS * id + (n*16)+ i));
         //value = hash_xorshift((HT_TESTS_NUM_INSERTS * id + (n*16)+ i));
@@ -210,14 +210,14 @@ OpTimings do_zipfian_gets(
   std::uint64_t key{};
   std::size_t next_pollution{};
 
-#if defined(XORWOW)
+#if defined(INFLIGHT)
   struct xorwow_state _xw_state, init_state;
   xorwow_init(&_xw_state);
   init_state = _xw_state;
 #endif
 
-  char *vtune_evt_name = (char *)malloc(16);
-  __itt_event vtune_evt;
+  // char *vtune_evt_name = (char *)malloc(16);
+  // __itt_event vtune_evt;
   for (auto j = 0u; j < config.read_factor; j++) {
     // sync_barrier->arrive_and_wait();
 
@@ -232,7 +232,7 @@ OpTimings do_zipfian_gets(
     start = RDTSC_START();
 
     uint64_t value;
-#ifdef XORWOW
+#if defined(INFLIGHT)
     _xw_state = init_state;
 
 #elif defined(ZIPFIAN)
@@ -243,7 +243,7 @@ OpTimings do_zipfian_gets(
     uint64_t batches = num_finds / config.batch_len;
     for (uint64_t n = 0; n < batches; n++) {
       for (int i = 0; i < config.batch_len; i++) {
-#ifdef XORWOW
+#if defined(INFLIGHT)
         //value = xorwow(&_xw_state);
         value = hash_knuth((id * HT_TESTS_NUM_INSERTS + n*16+i));
 #elif defined(ZIPFIAN)
@@ -324,7 +324,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   // generate zipfian here.
   std::vector<key_type, huge_page_allocator<key_type>> *zipf_set_local;
-#ifndef XORWOW
+#if defined(ZIPFIAN)
   zipf_set_local = new std::vector<key_type, huge_page_allocator<key_type>>(
       HT_TESTS_NUM_INSERTS);
   // int cpu = sched_getcpu();
@@ -390,7 +390,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   shard->stats->insertions = insert_timings;
 
-#ifndef XORWOW
+#if defined(ZIPFIAN)
   if (zipf_set_local) {
     auto rng = std::default_random_engine{};
     std::shuffle(std::begin(*zipf_set_local), std::end(*zipf_set_local), rng);
@@ -427,7 +427,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   }
 #endif
 
-#ifndef XORWOW
+#if defined(ZIPFIAN)
   if (zipf_set_local) {
     auto rng = std::default_random_engine{};
     std::shuffle(std::begin(*zipf_set_local), std::end(*zipf_set_local), rng);

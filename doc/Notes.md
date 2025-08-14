@@ -1,7 +1,37 @@
 
 
+# 08/14
+
+We turn off the directory feature in BIOS, now reporting all numbers 
+
+8gb table, simd + bucket
 
 
+70%
+single socket local, 32 threads, { set_cycles : 65, get_cycles : 34, upsert_cycles : 1, set_mops : 1230.769, get_mops : 2352.941, upsert_mops : 80000.000 }
+single socket local, 64 threads, { set_cycles : 111, get_cycles : 51, upsert_cycles : 1, set_mops : 1441.441, get_mops : 3137.255, upsert_mops : 160000.000 }
+dual, 128 threads, { set_cycles : 125, get_cycles : 67, upsert_cycles : 1, set_mops : 2560.000, get_mops : 4776.119, upsert_mops : 320000.000 }
+
+10%
+single socket local, 32 threads, { set_cycles : 56, get_cycles : 24, upsert_cycles : 1, set_mops : 1428.571, get_mops : 3333.333, upsert_mops : 80000.000 }
+single socket local, 64 threads, { set_cycles : 101, get_cycles : 41, upsert_cycles : 1, set_mops : 1584.158, get_mops : 3902.439, upsert_mops : 160000.000 }
+single socket remote: 64 threads, { set_cycles : 112, get_cycles : 83, upsert_cycles : 1, set_mops : 1428.571, get_mops : 1927.711, upsert_mops : 160000.000 }
+dual, 128 threads, { set_cycles : 113, get_cycles : 56, upsert_cycles : 1, set_mops : 2831.858, get_mops : 5714.286, upsert_mops : 320000.000 }
+
+
+repeat factor: 10
+read only workload:
+
+cpo
+|
+|
+|---------- fill factor 
+
+repeat factor: 500
+read only workload:
+
+
+write 
 
 # 07/28
 
