@@ -1,5 +1,5 @@
 
-FILE="SNOOP.txt"
+FILE="DIRECTORY.txt"
 echo "NOTE: single local <-> numa_policy=4\n dual <-> numa_policy=1" >> ${FILE}
 
 for fill in $(seq 10 10 90); 

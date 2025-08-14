@@ -44,8 +44,8 @@ elif [ "$test" = "large" ]; then
     # size=1073741824
     #size=268435456
     #size=134217728
-    insertFactor=0
-    readFactor=100
+    insertFactor=1
+    readFactor=10
 fi
 
 # size=134217728

@@ -25,7 +25,6 @@ Testing/
 *.jf
 *.jpg
 *.data
-*.png
 *.pyc
 *.patch
 /latencies/
