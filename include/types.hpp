@@ -120,6 +120,9 @@ struct Configuration {
   // insert factor
   uint64_t insert_factor;
   uint64_t read_factor;
+
+    uint64_t insert_snapshot;
+  uint64_t read_snapshot;
   // bqueue configuration
   // prod/cons count
   uint32_t n_prod;

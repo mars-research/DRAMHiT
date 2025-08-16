@@ -2,6 +2,7 @@
 import sys
 import re
 import matplotlib.pyplot as plt
+import os
 from collections import defaultdict
 
 # Configurations to track
@@ -22,6 +23,8 @@ arg_pattern = re.compile(r"--([\w-]+)\s+([\w\.\-]+)")
 # Regex for get_cycles in the stats line
 get_cycles_pattern = re.compile(r"get_cycles\s*:\s*([\d\.]+)")
 
+get_mops_pattern = re.compile(r"get_mops\s*:\s*([\d\.]+)")
+
 # Data: config -> list of (fill_factor, get_cycles)
 data = defaultdict(list)
 
@@ -30,14 +33,14 @@ if len(sys.argv) != 3:
     sys.exit(1)
 
 files = sys.argv[1:3]
-
 for filename in files:
-    if "snoop" in filename.lower():
+    fname = os.path.basename(filename).lower()
+    if "snoop" in fname.lower():
         category = "snoop"
-    elif "directory" in filename.lower():
+    elif "directory" in fname.lower():
         category = "directory"
     else:
-        print(f"ERROR: Cannot determine category from filename: {filename}")
+        print(f"ERROR: Cannot determine category from filename: {fname}")
         sys.exit(1)
 
     with open(filename, "r") as f:
@@ -57,10 +60,10 @@ for filename in files:
             if config_name in TARGET_CONFIGS and 10 <= fill_factor <= 90:
                 if i + 1 < len(lines):
                     stats_line = lines[i + 1]
-                    match = get_cycles_pattern.search(stats_line)
+                    match = get_mops_pattern.search(stats_line)
                     if match:
-                        get_cycles = float(match.group(1))
-                        data[config_name].append((fill_factor, get_cycles))
+                        get_mops = float(match.group(1))
+                        data[config_name].append((fill_factor, get_mops))
         i += 1
 
 # Sort data by fill_factor
@@ -86,12 +89,12 @@ for ax, (rf, ns) in zip(axes.flatten(), groups):
             ax.plot(xs, ys, marker='o', label=cfg)
     ax.set_title(f"Read {rf}, NUMA {ns}")
     ax.set_xlabel("Fill Factor")
-    ax.set_ylabel("Get Cycles")
+    ax.set_ylabel("Get Mops")
     ax.grid(True)
     ax.legend(fontsize='small')
 
 plt.tight_layout()
-plt.savefig("get_cycles_2x2.png", dpi=300)
+plt.savefig("get_mops_2x2.png", dpi=300)
 plt.close()
 
 print("Saved: get_cycles_2x2.png")

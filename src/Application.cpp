@@ -49,7 +49,6 @@
 
 #include "zipf_distribution.hpp"
 
-
 namespace kmercounter {
 
 class LynxQueue;
@@ -89,6 +88,8 @@ const Configuration def = {
     .ht_size = HT_TESTS_HT_SIZE,
     .insert_factor = 1,
     .read_factor = 1,
+    .insert_snapshot = 0,
+    .read_snapshot = 0,
     .n_prod = 1,
     .n_cons = 1,
     .num_nops = 0,
@@ -126,15 +127,10 @@ extern bool zipfian_inserts;
 
 ExecPhase cur_phase = ExecPhase::none;
 
-uint64_t g_insert_start, g_insert_end;
-uint64_t g_find_start, g_find_end;
+uint64_t g_insert_start, g_insert_end, g_insert_duration;
+uint64_t g_find_start, g_find_end, g_find_duration;
 
 void sync_complete(void) {
-
-  if(cur_phase == ExecPhase::none) 
-  {
-    return;
-  }
 
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
@@ -149,25 +145,29 @@ void sync_complete(void) {
   }
 #endif
 
+  // if (cur_phase == ExecPhase::finds) {
+  //   if (!zipfian_finds) {
+  //     zipfian_finds = true;
+  //     g_find_start = RDTSC_START();
+  //   } else {
+  //     g_find_end = RDTSCP();
+  //     g_find_duration = g_find_end - g_find_start;
+  //   }
+  //   PLOGI.printf("Find barrier!");
 
-  if (cur_phase == ExecPhase::finds) {
-    if (!zipfian_finds) {
-      g_find_start = RDTSC_START();
-      zipfian_finds = true;
-    } else {
-      g_find_end = RDTSCP();
-      PLOGI.printf("Finds took %lu cycles", g_find_end - g_find_start);
-    }
-  } else if (cur_phase == ExecPhase::insertions) {
-    if (!zipfian_inserts) {
-      g_insert_start = RDTSC_START();
-      zipfian_inserts = true;
-    } else {
-      g_insert_end = RDTSCP();
-      PLOGI.printf("inserts took %lu cycles", g_insert_end - g_insert_start);
-    }
-  } 
-  PLOGI.printf("Sync phase done!");
+  // } else if (cur_phase == ExecPhase::insertions) {
+  //   if (!zipfian_inserts) {
+  //     zipfian_inserts = true;
+  //     g_insert_start = RDTSC_START();
+  //   } else {
+  //     g_insert_end = RDTSCP();
+  //     g_insert_duration = g_insert_end - g_insert_start;
+  //   }
+
+  //   PLOGI.printf("Insert barrier!");
+  // } else {
+  //   PLOGI.printf("Unknown barrier!");
+  // }
 }
 
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
@@ -196,13 +196,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
   }
 
-  
   return kmer_ht;
 }
 
-void free_ht(BaseHashTable *kmer_ht) {
-  delete kmer_ht;
-}
+void free_ht(BaseHashTable *kmer_ht) { delete kmer_ht; }
 
 void Application::shard_thread(int tid,
                                std::barrier<std::function<void()>> *barrier) {
@@ -277,7 +274,6 @@ void Application::shard_thread(int tid,
       break;
   }
 
-
   // Write to file
   if (!config.ht_file.empty()) {
     // for CAS hashtable, not every thread has to write to file
@@ -351,20 +347,12 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
-  std::function<void()> on_completion = []() noexcept {
-    // For debugging
-    // PLOG_INFO << "Phase completed.";
-  };
-
-  // create a list of counters
-
   std::function<void()> on_sync_complete = sync_complete;
 
   std::barrier barrier(config.num_threads, on_sync_complete);
   uint32_t i = 0;
 
   for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
-
     if (assigned_cpu == 0) continue;
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
@@ -407,8 +395,6 @@ int Application::spawn_shard_threads() {
   EVENTCOUNTERS.print();
 #endif
 
-
-   
   std::free(this->shards);
 
   return 0;
@@ -555,11 +541,19 @@ int Application::process(int argc, char *argv[]) {
         "Perf counter (to be recorded) events")(
         "perf_def_path",
         po::value(&config.perf_def_path)->default_value(def.perf_def_path),
-        "Perf definition (if empty, only default events are supported)")
-        ("read-factor",
-                             po::value<uint64_t>(&config.read_factor)
-                                 ->default_value(def.read_factor),
-                             "Repeat read workload X times");
+        "Perf definition (if empty, only default events are supported)")(
+        "read-factor",
+        po::value<uint64_t>(&config.read_factor)
+            ->default_value(def.read_factor),
+        "Repeat read workload X times")(
+        "read-snapshot",
+        po::value<uint64_t>(&config.read_snapshot)
+            ->default_value(def.read_snapshot),
+        "Get performance stats on ith iter read")(
+        "insert-snapshot",
+        po::value<uint64_t>(&config.insert_snapshot)
+            ->default_value(def.insert_snapshot),
+        "Get performance stats on ith iter insert");
 
     papi_init();
 
@@ -720,8 +714,6 @@ int Application::process(int argc, char *argv[]) {
         break;
     }
   } else {
-
-
     switch (config.numa_split) {
       case THREADS_SPLIT_SEPARATE_NODES:
       case THREADS_ASSIGN_SEQUENTIAL:
@@ -729,8 +721,8 @@ int Application::process(int argc, char *argv[]) {
       case THREADS_LOCAL_NUMA_NODE:
       case THREADS_NO_MEM_DISTRIBUTION:
       case THREADS_SPLIT_EVEN_NODES:
-        this->np = new NumaPolicyThreads(config.num_threads,
-                                         (numa_policy_threads) config.numa_split);
+        this->np = new NumaPolicyThreads(
+            config.num_threads, (numa_policy_threads)config.numa_split);
         break;
       default:
         PLOGE.printf("Unknown numa policy. Exiting");
@@ -738,9 +730,11 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ ||
-      config.mode == RW_RATIO || config.mode == ZIPFIAN) {
+  if (config.mode == BQ_TESTS_YES_BQ || config.mode == RW_RATIO ||
+      config.mode == ZIPFIAN) {
+#ifdef ZIPFIAN
     init_zipfian_dist(config.skew, config.seed);
+#endif
   }
   if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
     // for hashjoin, ht-type determines how we spawn threads
