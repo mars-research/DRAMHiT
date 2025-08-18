@@ -124,14 +124,16 @@ static MemoryBwCounters *bw_counters;
 extern bool stop_sync;
 extern bool zipfian_finds;
 extern bool zipfian_inserts;
+extern uint64_t zipfian_iter;
 
 ExecPhase cur_phase = ExecPhase::none;
 
-uint64_t g_insert_start, g_insert_end, g_insert_duration;
-uint64_t g_find_start, g_find_end, g_find_duration;
+uint64_t *g_insert_durations;
+uint64_t *g_find_durations;
+uint64_t g_insert_start, g_insert_end;
+uint64_t g_find_start, g_find_end;
 
 void sync_complete(void) {
-
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
     PLOGI.printf("Stopping counters");
@@ -145,29 +147,33 @@ void sync_complete(void) {
   }
 #endif
 
-  // if (cur_phase == ExecPhase::finds) {
-  //   if (!zipfian_finds) {
-  //     zipfian_finds = true;
-  //     g_find_start = RDTSC_START();
-  //   } else {
-  //     g_find_end = RDTSCP();
-  //     g_find_duration = g_find_end - g_find_start;
-  //   }
-  //   PLOGI.printf("Find barrier!");
+  if (cur_phase == ExecPhase::finds) {
+    if (!zipfian_finds) {
+      zipfian_finds = true;
+      g_find_start = RDTSC_START();
+    } else {
+      g_find_end = RDTSCP();
 
-  // } else if (cur_phase == ExecPhase::insertions) {
-  //   if (!zipfian_inserts) {
-  //     zipfian_inserts = true;
-  //     g_insert_start = RDTSC_START();
-  //   } else {
-  //     g_insert_end = RDTSCP();
-  //     g_insert_duration = g_insert_end - g_insert_start;
-  //   }
-
-  //   PLOGI.printf("Insert barrier!");
-  // } else {
-  //   PLOGI.printf("Unknown barrier!");
-  // }
+      if (zipfian_iter < config.read_factor) {
+        g_find_durations[zipfian_iter] = g_find_end - g_find_start;
+        PLOGI.printf("Zipfian find iter: %lu duration: %lu", zipfian_iter,
+                     g_find_durations[zipfian_iter]);
+      }
+    }
+  } else if (cur_phase == ExecPhase::insertions) {
+    if (!zipfian_inserts) {
+      zipfian_inserts = true;
+      g_insert_start = RDTSC_START();
+    } else {
+      g_insert_end = RDTSCP();
+      if (zipfian_iter < config.insert_factor) {
+        g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
+        PLOGI.printf("Zipfian insert iter: %lu duration: %lu", zipfian_iter,
+                     g_insert_durations[zipfian_iter]);
+      }
+    }
+  } else {
+  }
 }
 
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
@@ -394,6 +400,11 @@ int Application::spawn_shard_threads() {
 #ifdef WITH_PERFCPP
   EVENTCOUNTERS.print();
 #endif
+
+  if (config.mode == ZIPFIAN) {
+    free(g_insert_durations);
+    free(g_find_durations);
+  }
 
   std::free(this->shards);
 
@@ -692,6 +703,11 @@ int Application::process(int argc, char *argv[]) {
 
   if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT)) {
     bq_load = BQUEUE_LOAD::HtInsert;
+  }
+
+  if (config.mode == ZIPFIAN) {
+    g_insert_durations = (uint64_t*)malloc(sizeof(uint64_t) * config.insert_factor);
+    g_find_durations = (uint64_t*)malloc(sizeof(uint64_t) * config.read_factor);
   }
 
   if ((config.mode == BQ_TESTS_YES_BQ) ||

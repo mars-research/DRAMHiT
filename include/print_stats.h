@@ -34,11 +34,11 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t total_find_cycles = 0;
   uint64_t total_finds = 0;
 
-  double max_find_duration = 0;
-  double max_insert_duration = 0;
+  uint64_t max_find_duration = 0;
+  uint64_t max_insert_duration = 0;
 
-  double avg_find_duration = 0;
-  double avg_insert_duration = 0;
+  uint64_t avg_find_duration = 0;
+  uint64_t avg_insert_duration = 0;
 
   uint64_t total_upsert_cycles = 0;
   uint64_t total_upsert = 0;
@@ -86,15 +86,32 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 
   uint64_t num_threads = config.num_threads;
 
-  find_mops = CPUFREQ_MHZ * (double)(total_finds / max_find_duration);
-  insert_mops = CPUFREQ_MHZ * (double)(total_inserts / max_insert_duration);
-
   avg_find_duration = total_find_cycles / num_threads;
+  avg_insert_duration = total_insert_cycles / num_threads;
+  find_mops = (double)((CPUFREQ_MHZ * total_finds) / avg_find_duration);
+  insert_mops = (double)((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
 
   printf("===============================================================\n");
-  printf("avg find duration %lu, max find duration %f\n",
-         total_find_cycles / num_threads, max_find_duration);
-  printf("Number of finds per sec (Mops/s): %.3f\n", find_mops);
+
+  if (config.insert_factor > 0) {
+    printf("insert op per iter %lu, avg insert cpu cycles per iter: %lu\n",
+           total_inserts / config.insert_factor,
+           total_insert_cycles / config.insert_factor);
+  }
+
+  if (config.read_factor > 0) {
+    printf("read op per iter %lu, avg find cpu cycles per iter: %lu\n",
+           total_finds / config.read_factor,
+           total_find_cycles / config.read_factor);
+  }
+
+  printf(
+      "Insert stats: total op %lu, total cpu cycles %lu, op per thread %lu\n",
+      total_inserts, total_insert_cycles, total_inserts / num_threads);
+
+  printf("Find stats: total op %lu, total cpu cycles %lu, op per thread %lu\n",
+         total_finds, total_find_cycles, total_finds / num_threads);
+
   printf("{ set_cycles : %" PRIu64 ", get_cycles : %" PRIu64
          ", upsert_cycles : %" PRIu64 ",",
          cycles_per_insert, cycles_per_find, cycles_per_upsert);

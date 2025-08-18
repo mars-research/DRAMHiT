@@ -47,14 +47,16 @@ extern pcm::PCMCounters pcm_cnt;
 #endif
 
 void sync_complete(void);
-bool stop_sync = false;
-bool zipfian_finds = false;
-bool zipfian_inserts = false;
-
-extern bool HASHTABLE_TEST_COMPLETE = false;
 
 bool clear_table = false;
 extern ExecPhase cur_phase;
+
+extern uint64_t *g_insert_durations;
+extern uint64_t *g_find_durations;
+uint64_t zipfian_iter;
+bool stop_sync = false;
+bool zipfian_finds = false;
+bool zipfian_inserts = false;
 
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 static inline uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
@@ -158,8 +160,10 @@ OpTimings do_zipfian_inserts(
 
   if (config.insert_factor == 0) return {1, 1};
 
-  uint64_t *durations =
-      (uint64_t *)aligned_alloc(64, sizeof(uint64_t) * config.insert_factor);
+  if (id == 0) {
+    cur_phase = ExecPhase::insertions;
+    zipfian_inserts = false;
+  }
 
   const uint64_t ops_per_iter = HT_TESTS_NUM_INSERTS;
   const uint64_t batches = HT_TESTS_NUM_INSERTS / config.batch_len;
@@ -175,7 +179,7 @@ OpTimings do_zipfian_inserts(
       cas_ht->clear_table();
     }
     sync_barrier->arrive_and_wait();
-    
+
     uint64_t idx;
 #if defined(ZIPFIAN)
     idx = 0;
@@ -183,31 +187,29 @@ OpTimings do_zipfian_inserts(
     idx = ops_per_iter * id;
 #endif
 
-     
+    if (id == 0) {
+      cur_phase = ExecPhase::insertions;
+      zipfian_inserts = false;
+    }
     sync_barrier->arrive_and_wait();
 
-    // actual work
-    start = RDTSCP();
     do_batch_insertion(cas_ht, batches, config.batch_len, idx);
 
+    if (id == 0) {
+      zipfian_inserts = true;
+      zipfian_iter = j;
+    }
     sync_barrier->arrive_and_wait();
-    end = RDTSCP();
-
-    durations[j] = (end - start);
   }
 
   uint64_t duration = 0;
   uint64_t ops = 0;
-  if (config.insert_snapshot > 0 &&
-      config.insert_snapshot < config.insert_factor) {
-    duration = durations[config.insert_snapshot];
-    ops = ops_per_iter;
-  } else {
-    for (int i = 0; i < config.insert_factor; i++) duration += durations[i];
-    ops = ops_per_iter * config.insert_factor;
-  }
+  for (int i = 0; i < config.insert_factor; i++)
+    duration += g_insert_durations[i];
+  ops = ops_per_iter * config.insert_factor;
 
-  free(durations);
+  // free(durations);
+  //  duration = duration / config.num_threads;
 
   return {duration, ops};
 }
@@ -222,8 +224,10 @@ OpTimings do_zipfian_gets(
     return {1, 1};
   }
 
-  uint64_t *durations =
-      (uint64_t *)aligned_alloc(64, sizeof(uint64_t) * config.read_factor);
+  if (id == 0) {
+    cur_phase = ExecPhase::finds;
+    zipfian_finds = false;
+  }
 
   std::uint64_t found = 0;
   const uint64_t ops_per_iter = HT_TESTS_NUM_INSERTS;
@@ -240,38 +244,36 @@ OpTimings do_zipfian_gets(
 #else
     idx = id * ops_per_iter;
 #endif
-    
+
+    // All thread wait here, and record start
+
+    if (id == 0) {
+      zipfian_finds = false;
+    }
     sync_barrier->arrive_and_wait();
-    start = RDTSC_START();
-    found += do_batch_find(cas_ht, batches, config.batch_len, idx);
+
+    found = do_batch_find(cas_ht, batches, config.batch_len, idx);
+
+    if (id == 0) {
+      zipfian_finds = true;
+      zipfian_iter = j;
+    }
     sync_barrier->arrive_and_wait();
-    end = RDTSCP();
-    durations[j] = (end - start);
+
+    if (found > 0) {
+      double per_found = (double)found / ops_per_iter;
+      if (per_found < 0.8) {
+        PLOGI.printf("debug: find op found percentage %f\n", per_found);
+      }
+    }
   }
 
   uint64_t duration = 0;
   uint64_t ops = 0;
-  if (config.read_snapshot > 0 && config.read_snapshot < config.read_factor) {
-    duration = durations[config.read_snapshot];
-    ops = ops_per_iter;
 
-    for (int i = 0; i < config.read_factor; i++) {
-      printf("thread %d, iter %d, duration %lu, op %lu\n", id, i, duration,
-             ops);
-    }
+  for (int i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
+  ops = ops_per_iter * config.read_factor;
 
-  } else {
-    for (int i = 0; i < config.read_factor; i++) duration += durations[i];
-    ops = ops_per_iter * config.read_factor;
-
-    if (found > 0) {
-      PLOGI.printf("DEBUG: thread %u | actual found %lu out total op %lu is %f",
-                   id, found, ops,
-                   (double)found / ops);
-    }
-  }
-
-  free(durations);
   return {duration, ops};
 }
 
@@ -300,6 +302,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   uint64_t starting_offset = shard->shard_idx * HT_TESTS_NUM_INSERTS;
   for (int i = 0; i < HT_TESTS_NUM_INSERTS; i++) {
     zipf_set_local->at(i) = zipf_values->at(i + starting_offset);
+    // zipf_set_local->at(i) = hash_knuth(i + starting_offset);
   }
 
   // PLOGI.printf("generated %d zipf on thread %d", HT_TESTS_NUM_INSERTS,
