@@ -86,9 +86,9 @@ class MsrHandler {
     auto msr_cpu = dev_msr_fds[cpu];
     int ret = pwrite(msr_cpu, &val, sizeof(val), msr);
     if (ret != sizeof(val)) {
-      PLOG_ERROR.printf("pwrite failed with errno %d\n", errno);
+      PLOG_ERROR.printf("pwrite failed with errno %d", errno);
     }
-    //PLOG_INFO.printf("wrmsr %lx on cpu %u = %lx\n", msr, cpu, val);
+    //PLOG_INFO.printf("wrmsr %lx on cpu %u = %lx", msr, cpu, val);
     return ret;
   }
 

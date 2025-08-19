@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+
 #include "cpucounters.h"
 namespace pcm {
 class PCMCounters {
@@ -22,8 +23,7 @@ class PCMCounters {
 
     int error = pcm->program();
 
-    if(error == PCM::ErrorCode::PMUBusy)
-    {
+    if (error == PCM::ErrorCode::PMUBusy) {
       pcm->resetPMU();
       error = pcm->program();
     }
@@ -52,14 +52,20 @@ class PCMCounters {
     for (i = 0; i < pcm->getNumCores(); ++i)
       cstates1[i] = getCoreCounterState(i);
 
-    cycles = RDTSCP(); 
-    
+    cycles = RDTSCP();
+  }
+
+  void start_bw() {
+    int i = 0;
+    for (i = 0; i < pcm->getNumSockets(); ++i)
+      sktstates1[i] = getSocketCounterState(i);
+
+    cycles = RDTSCP();
   }
 
   // save all end state
   void stop() {
-
-    cycles = RDTSCP() - cycles; 
+    cycles = RDTSCP() - cycles;
 
     sstate2 = getSystemCounterState();
     int i = 0;
@@ -69,33 +75,67 @@ class PCMCounters {
       cstates2[i] = getCoreCounterState(i);
   }
 
+  void stop_bw() {
+    cycles = RDTSCP() - cycles;
 
+    int i = 0;
+    for (i = 0; i < pcm->getNumSockets(); ++i)
+      sktstates2[i] = getSocketCounterState(i);
+  }
+
+  double calculate_bw_gbs(double sec, double bytes) {
+    return (bytes / GB_IN_BYTES) / sec;
+  }
+
+  void print_bw() {
+    double freq;
+    double sec;
+    uint64_t rbytes, wbytes;
+    uint64_t trbytes = 0;
+    uint64_t twbytes = 0;
+    for (int i = 0; i < pcm->getNumSockets(); ++i) {
+      freq = getAverageFrequency(sktstates1[i], sktstates2[i]);
+      sec = cycles / freq;
+      rbytes = getBytesReadFromMC(sktstates1[i], sktstates2[i]);
+      wbytes = getBytesReadFromMC(sktstates1[i], sktstates2[i]);
+      trbytes += rbytes;
+      twbytes += twbytes;
+      printf("mc %d, write bw: %.3f, read bw: %.3f\n",
+             calculate_bw_gbs(wbytes, sec), calculate_bw_gbs(rbytes, sec));
+    }
+    printf("Total write bw: %.3f\nTotal read bw: %.3f\n",
+           calculate_bw_gbs(twbytes, sec), calculate_bw_gbs(trbytes, sec));
+  }
 
   template <class CounterStateType>
-  inline void print_tma(std::string header,const CounterStateType & before, const CounterStateType & after) 
-  {
-      std::cout << header << "\n"
-                << " IPC "<< getCoreIPC(before, after) << "\n"
-                << " Ref cycles " << getRefCycles(before, after) << "\n"
-                << " TSC " << getInvariantTSC(before, after) << "\n"
-                << " Retired " << getInstructionsRetired(before, after) << "\n"
-                << " L2 miss " << getL2CacheMisses(before, after) << "\n"
-                << " L2 hit " << getL2CacheHits(before, after) << "\n"
-                << "\n <<<<< TMA view with Pipeline slot >>>>> \n" 
-                << " Retiring " << getRetiring(before, after) << "\n"
-                << " Frontend bound " << getFrontendBound(before, after) << "\n"
-                << " Backend bound " << getBackendBound(before, after) << "\n"
-                << " ------> Memory bound " << getMemoryBound(before, after) << "\n"
-                << " ------> Core bound " << getCoreBound(before, after) << "\n"
-                << " Bad speculation bound " << getBadSpeculation(before, after) << "\n"
-                << " ------> Branch mispredict bound " << getBranchMispredictionBound(before, after) << "\n"
-                << " ------> Machine clears bound " << getMachineClearsBound(before, after) << "\n";
+  inline void print_tma(std::string header, const CounterStateType &before,
+                        const CounterStateType &after) {
+    std::cout << header << "\n"
+              << " IPC " << getCoreIPC(before, after) << "\n"
+              << " Ref cycles " << getRefCycles(before, after) << "\n"
+              << " TSC " << getInvariantTSC(before, after) << "\n"
+              << " Retired " << getInstructionsRetired(before, after) << "\n"
+              << " L2 miss " << getL2CacheMisses(before, after) << "\n"
+              << " L2 hit " << getL2CacheHits(before, after) << "\n"
+              << "\n <<<<< TMA view with Pipeline slot >>>>> \n"
+              << " Retiring " << getRetiring(before, after) << "\n"
+              << " Frontend bound " << getFrontendBound(before, after) << "\n"
+              << " Backend bound " << getBackendBound(before, after) << "\n"
+              << " ------> Memory bound " << getMemoryBound(before, after)
+              << "\n"
+              << " ------> Core bound " << getCoreBound(before, after) << "\n"
+              << " Bad speculation bound " << getBadSpeculation(before, after)
+              << "\n"
+              << " ------> Branch mispredict bound "
+              << getBranchMispredictionBound(before, after) << "\n"
+              << " ------> Machine clears bound "
+              << getMachineClearsBound(before, after) << "\n";
   }
 
   void readout(bool cores, bool sockets, bool system) {
     int i = 0;
 
-    std::cout << "Cycles: " << this->cycles << std::endl; 
+    std::cout << "Cycles: " << this->cycles << std::endl;
 
     if (cores) {
       for (i = 0; i < pcm->getNumCores(); ++i) {

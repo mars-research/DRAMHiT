@@ -7,13 +7,13 @@ from collections import defaultdict
 
 # Configurations to track
 TARGET_CONFIGS = [
-    "snoop_numa-split_1_read-factor_10",
+    "snoop_numa-split_1_read-factor_0",
     "snoop_numa-split_1_read-factor_500",
-    "snoop_numa-split_4_read-factor_10",
+    "snoop_numa-split_4_read-factor_0",
     "snoop_numa-split_4_read-factor_500",
-    "directory_numa-split_1_read-factor_10",
+    "directory_numa-split_1_read-factor_0",
     "directory_numa-split_1_read-factor_500",
-    "directory_numa-split_4_read-factor_10",
+    "directory_numa-split_4_read-factor_0",
     "directory_numa-split_4_read-factor_500",
 ]
 
@@ -57,13 +57,21 @@ for filename in files:
 
             config_name = f"{category}_numa-split_{numa_split}_read-factor_{read_factor}"
 
-            if config_name in TARGET_CONFIGS and 10 <= fill_factor <= 90:
-                if i + 1 < len(lines):
-                    stats_line = lines[i + 1]
-                    match = get_mops_pattern.search(stats_line)
-                    if match:
-                        get_mops = float(match.group(1))
-                        data[config_name].append((fill_factor, get_mops))
+            if i + 2 < len(lines):                
+                numbers = re.findall(r'\d+', lines[i+1])
+                numbers = [int(n) for n in numbers]
+                mops = numbers[4]
+                read_factor = numbers[0]
+                config_name = f"{category}_numa-split_{numa_split}_read-factor_{read_factor}"
+                data[config_name].append((fill_factor, mops))
+                
+                numbers = re.findall(r'\d+', lines[i+2])
+                numbers = [int(n) for n in numbers]
+                mops = numbers[4]
+                read_factor = numbers[0]
+                config_name = f"{category}_numa-split_{numa_split}_read-factor_{read_factor}"
+                data[config_name].append((fill_factor, mops))
+
         i += 1
 
 # Sort data by fill_factor
@@ -72,8 +80,8 @@ for cfg in data:
 
 # Define the four groups: (read_factor, numa_split)
 groups = [
-    (10, 1),
-    (10, 4),
+    (0, 1),
+    (0, 4),
     (500, 1),
     (500, 4),
 ]

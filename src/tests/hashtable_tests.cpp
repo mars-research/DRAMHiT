@@ -440,17 +440,17 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 #endif
 
 #if defined(WITH_PCM)
-  if (shard->shard_idx == 0) pcm_cnt.start_bw();
+  //if (shard->shard_idx == 0) pcm_cnt.start_bw();
 #endif
 
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
                                  sync_barrier, zipf_set_local);
 
 #if defined(WITH_PCM)
-  if (shard->shard_idx == 0) {
-    pcm_cnt.stop_bw();
-    pcm_cnt.read_out_bw();
-  }
+  // if (shard->shard_idx == 0) {
+  //   pcm_cnt.stop_bw();
+  //   pcm_cnt.read_out_bw();
+  // }
 #elif defined(WITH_VTUNE_LIB)
   // vtune
 #elif defined(WITH_PERFCPP)

@@ -1,4 +1,3 @@
-
 Directory mode
 /opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 10 --ht-type 3 --insert-factor 1 --read-factor 512 --read-snapshot 1 --num-threads 64 --numa-split 4 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
 Read snapshot iter 0, duration 41432886, op 53687040, cpo 49, mops 3239

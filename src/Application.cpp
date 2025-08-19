@@ -63,7 +63,7 @@ MultithreadCounter EVENTCOUNTERS;
 #endif
 
 #ifdef WITH_PCM
-pcm::PCMCounters pcm_cnt;
+pcm::PCMCounters g_pcm_cnt;
 #endif
 
 // void sync_complete(void);
@@ -144,16 +144,23 @@ void sync_complete(void) {
     PLOGI.printf("Starting counters");
     if (!bw_counters) bw_counters = new MemoryBwCounters(2);
     bw_counters->start();
-  }
+  }  
 #endif
 
   if (cur_phase == ExecPhase::finds) {
     if (!zipfian_finds) {
+
+#if defined(WITH_PCM)
+      g_pcm_cnt.start_bw();
+#endif
       zipfian_finds = true;
       g_find_start = RDTSC_START();
     } else {
       g_find_end = RDTSCP();
-
+#if defined(WITH_PCM)
+      g_pcm_cnt.stop_bw();
+      g_pcm_cnt.print_bw();
+#endif
       if (zipfian_iter < config.read_factor) {
         g_find_durations[zipfian_iter] = g_find_end - g_find_start;
         PLOGI.printf("Zipfian find iter: %lu duration: %lu", zipfian_iter,
