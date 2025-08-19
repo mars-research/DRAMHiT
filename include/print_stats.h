@@ -5,6 +5,9 @@
 
 namespace kmercounter {
 
+extern uint64_t *g_find_durations;
+extern uint64_t *g_insert_durations;
+
 // CHANGE ME DEPENDING ON MACHINE
 /*From /proc/cpuinfo*/
 #define CPUFREQ_MHZ (2500.0)
@@ -94,15 +97,47 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   printf("===============================================================\n");
 
   if (config.insert_factor > 0) {
+    uint64_t op_per_iter = total_inserts / config.insert_factor;
     printf("insert op per iter %lu, avg insert cpu cycles per iter: %lu\n",
-           total_inserts / config.insert_factor,
-           total_insert_cycles / config.insert_factor);
+           op_per_iter, total_insert_cycles / config.insert_factor);
+    if (config.insert_snapshot > 0) {
+      printf(
+          "=========================Snapshot "
+          "info============================\n");
+
+      for (int i = 0; i < config.insert_factor; i++) {
+        uint64_t snapshot_duration = g_insert_durations[i];
+        printf(
+            "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+            "%lu\n",
+            i, snapshot_duration, op_per_iter,
+            (snapshot_duration * config.num_threads) / op_per_iter,
+            ((uint64_t)(CPUFREQ_MHZ * op_per_iter) / snapshot_duration));
+      }
+      printf(
+          "===============================================================\n");
+    }
   }
 
   if (config.read_factor > 0) {
+    uint64_t op_per_iter = total_finds / config.read_factor;
     printf("read op per iter %lu, avg find cpu cycles per iter: %lu\n",
-           total_finds / config.read_factor,
-           total_find_cycles / config.read_factor);
+           op_per_iter, total_find_cycles / config.read_factor);
+    if (config.read_snapshot > 0) {
+      printf(
+          "=====================Snapshot info============================\n");
+
+      for (int i = 0; i < config.read_factor; i++) {
+        uint64_t snapshot_duration = g_find_durations[i];
+        printf(
+            "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+            i, snapshot_duration, op_per_iter,
+            (snapshot_duration * config.num_threads) / op_per_iter,
+            ((uint64_t)(CPUFREQ_MHZ * op_per_iter) / snapshot_duration));
+      }
+      printf(
+          "===============================================================\n");
+    }
   }
 
   printf(

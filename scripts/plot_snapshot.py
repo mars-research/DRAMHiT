@@ -1,64 +1,40 @@
-#!/usr/bin/env python3
-import re
 import sys
-from collections import defaultdict
+import re
 import matplotlib.pyplot as plt
+def is_power_of_two(n: int) -> bool:
+    return n > 0 and (n & (n - 1)) == 0
 
-# Usage: python script.py input.log
-if len(sys.argv) != 2:
-    print(f"Usage: {sys.argv[0]} <logfile>")
-    sys.exit(1)
-
-logfile = sys.argv[1]
-
-# Regex pattern for the example line
+# Regex to capture iter and cpo
 pattern = re.compile(
-    r"Zipfian find iter:\s+(\d+)\s+duration:\s+(\d+)"
+    r"Read snapshot iter (?P<iter>\d+), duration \d+, op \d+, cpo (?P<cpo>\d+), mops \d+"
 )
 
-patternOp = re.compile(
-    r"read op per iter\s+(\d+)"
-)
+iters = []
+cpos = []
 
-# get find op occur per iteration, this should be consistent accross runs.
-fop = 0
-# Data structure: { iter: {"duration": total_duration, "op": total_op} }
-data = defaultdict(lambda: {"duration": 0})
+# Read from stdin
+for line in sys.stdin:
+    line = line.strip()
+    match = pattern.match(line)
+    if match:
+        it = int(match.group("iter"))
+        cpo = int(match.group("cpo"))
+        print(f"iter={it}, cpo={cpo}")  # optional debug
+        if is_power_of_two(it):
+            iters.append(it)
+            cpos.append(cpo)
 
-# Read and parse log file
-with open(logfile, "r") as f:
-    for line in f:
-        match = pattern.search(line)
-        if match:
-            iteration, duration = match.groups()
-            iteration = int(iteration)
-            duration = int(duration)
-            data[iteration]["duration"] += duration
-            
-        match = patternOp.search(line)
-        if match:
-            op = match.groups()
-            fop = int(op[0])
-            print(f"op number {fop}")
+# Make plot
+if iters and cpos:
+    plt.figure(figsize=(8,5))
+    plt.plot(iters, cpos, marker="o")
+    plt.xlabel("Iteration")
+    plt.ylabel("CPO")
+    plt.title("Iteration vs CPO")
+    plt.grid(True)
+    plt.savefig("iter_vs_cpo.png", dpi=150)
+    print("Saved plot as iter_vs_cpo.png")
+else:
+    print("No matching lines found.")
 
-# Compute cycle_per_op
-iter_list = sorted(data.keys())
-cycle_per_op = [
-    data[it]["duration"] / fop if fop != 0 else 0
-    for it in iter_list
-]
-
-# Plot
-plt.figure(figsize=(8, 5))
-plt.plot(iter_list, cycle_per_op, marker="o")
-plt.xlabel("Iteration")
-plt.ylabel("Cycles per Op")
-plt.title("Cycles per Operation vs Iteration")
-plt.grid(True)
-plt.tight_layout()
-
-# Save to file
-outfile = "cycles_per_op.png"
-plt.savefig(outfile, dpi=300)
-print(f"Plot saved as {outfile}")
 

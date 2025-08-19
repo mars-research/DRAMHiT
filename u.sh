@@ -45,7 +45,7 @@ elif [ "$test" = "large" ]; then
     #size=268435456
     #size=134217728
     insertFactor=1
-    readFactor=10
+    readFactor=513
 fi
 
 # size=134217728
@@ -54,12 +54,12 @@ fi
 # insertFactor=1000000
 # numThreads=1
 
-fill=10
+fill=70
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
 #do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --read-factor $readFactor \
+    --find_queue 64 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16"
     echo $(pwd)/build/dramhit $cmd
