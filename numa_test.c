@@ -404,6 +404,8 @@ void experiment() {
   sync_walk(); // DIR S
   printf("Reading S state from Local socket\n");
   local_walk();  
+  printf("Reading S state from remote socket\n");
+  remote_walk();  
 }
 
 
