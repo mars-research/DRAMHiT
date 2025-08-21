@@ -1,0 +1,28 @@
+Snoop mode
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 10 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 73654522, op 53687040, cpo 87, mops 1822
+{ set_cycles : 116, get_cycles : 85, upsert_cycles : 1, set_mops : 1377.987, get_mops : 1863.013, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 20 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 147232642, op 107374144, cpo 87, mops 1823
+{ set_cycles : 117, get_cycles : 86, upsert_cycles : 1, set_mops : 1360.003, get_mops : 1841.957, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 30 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 219588006, op 161061248, cpo 87, mops 1833
+{ set_cycles : 118, get_cycles : 87, upsert_cycles : 1, set_mops : 1349.499, get_mops : 1826.449, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 40 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 296013040, op 214748352, cpo 88, mops 1813
+{ set_cycles : 118, get_cycles : 88, upsert_cycles : 1, set_mops : 1352.738, get_mops : 1801.247, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 50 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 383559750, op 268435456, cpo 91, mops 1749
+{ set_cycles : 120, get_cycles : 90, upsert_cycles : 1, set_mops : 1332.753, get_mops : 1759.780, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 60 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 475149510, op 322122496, cpo 94, mops 1694
+{ set_cycles : 123, get_cycles : 94, upsert_cycles : 1, set_mops : 1292.645, get_mops : 1687.015, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 70 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 616337836, op 375809600, cpo 104, mops 1524
+{ set_cycles : 131, get_cycles : 103, upsert_cycles : 1, set_mops : 1215.883, get_mops : 1540.331, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 80 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 824922574, op 429496704, cpo 122, mops 1301
+{ set_cycles : 146, get_cycles : 123, upsert_cycles : 1, set_mops : 1094.997, get_mops : 1294.247, upsert_mops : 0.000 }
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-fill 90 --ht-type 3 --insert-factor 1 --read-factor 500 --read-snapshot 1 --num-threads 64 --numa-split 3 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16
+Read snapshot iter 0, duration 1300205128, op 483183808, cpo 172, mops 929
+{ set_cycles : 195, get_cycles : 172, upsert_cycles : 1, set_mops : 820.059, get_mops : 928.490, upsert_mops : 0.000 }

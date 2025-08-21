@@ -18,7 +18,31 @@
 #include <time.h>
 #include <unistd.h>
 #include <x86intrin.h>
+static inline uint64_t RDTSC_START(void) {
+  unsigned cycles_low, cycles_high;
 
+  asm volatile(
+      "CPUID\n\t"
+      "RDTSC\n\t"
+      "mov %%edx, %0\n\t"
+      "mov %%eax, %1\n\t"
+      : "=r"(cycles_high), "=r"(cycles_low)::"%rax", "%rbx", "%rcx", "%rdx");
+
+  return ((uint64_t)cycles_high << 32) | cycles_low;
+}
+
+static inline uint64_t RDTSCP(void) {
+  unsigned cycles_low, cycles_high;
+
+  asm volatile(
+      "RDTSCP\n\t"
+      "mov %%edx, %0\n\t"
+      "mov %%eax, %1\n\t"
+      "CPUID\n\t"
+      : "=r"(cycles_high), "=r"(cycles_low)::"%rax", "%rbx", "%rcx", "%rdx");
+
+  return ((uint64_t)cycles_high << 32) | cycles_low;
+}
 // 1024 * 1024
 #define TABLE_SIZE (1 << 26)  // 4 GB
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
@@ -35,10 +59,9 @@
 
 __itt_event local;
 __itt_event remote;
-__itt_event flush;
-__itt_event experiment1;
-__itt_event experiment2;
+__itt_event share;
 __itt_event dowork;
+
 
 typedef struct {
   uint64_t value;
@@ -127,6 +150,9 @@ void *walk_table(void *arg) {
   }
 
   __itt_event_start(dowork);
+
+  uint64_t start, end;
+  start = RDTSC_START();
   for (uint64_t j = 0; j < iter; j++) {
     for (uint64_t i = 0; i < TABLE_SIZE; i += STRIDE) {
       for (uint64_t k = 0; k < STRIDE; k++) {
@@ -144,11 +170,11 @@ void *walk_table(void *arg) {
       }
     }
   }
-
+  end = RDTSCP();
   __itt_event_end(dowork);
 
-  printf("total op %u sum %lu from cpu %d node %d\n", iter * TABLE_SIZE, sum,
-         cpu, node);
+  printf("total op %u sum %lu from cpu %d node %d duration %lu\n",
+         iter * TABLE_SIZE, sum, cpu, node, end - start);
 
   return NULL;
 }
@@ -326,8 +352,7 @@ cleanup:
   return success;
 }
 
-void reach_s() 
-{
+void reach_s() {
   spawn_threads(0, 1, 2);
   sleep(1);
 
@@ -338,54 +363,49 @@ void reach_s()
   sleep(1);
 
   spawn_threads(0, 1, 2);
+}
+
+void remote_walk() {
+  __itt_event_start(remote);
+
+  spawn_threads(1, 1, 1);
+  __itt_event_end(remote);
+
+  sleep(1);
+}
+
+void local_walk() {
+  __itt_event_start(local);
+  spawn_threads(0, 1, 1);
+  __itt_event_end(local);
+
+  sleep(1);
+}
+
+void sync_walk() {
+  __itt_event_start(share);
+  ready = CACHELOCAL;
+  if (spawn_threads_numa(1, 1, 1) == 0) {
+    printf("spawn threads failed\n");
+  }
+
+  __itt_event_end(share);
+  sleep(1);
 }
 
 void experiment() {
-  spawn_threads(0, 1, 2);
-  sleep(1);
+ 
+  local_walk();  // Initilize to I
 
-  ready = CACHELOCAL;  // S
-  if (spawn_threads_numa(1, 1, 1) == 0) {
-    printf("spawn threads failed\n");
-  }
-  sleep(1);
+  remote_walk(); // DIR A 
+  printf("Reading A state from Local socket\n");
+  local_walk();  
 
-  spawn_threads(0, 1, 2);
-  sleep(1);
-
-  spawn_threads(1, 1, 2);
-  sleep(1);
+  sync_walk(); // DIR S
+  printf("Reading S state from Local socket\n");
+  local_walk();  
 }
 
-// 2 local and 1 remote
-void experiment_1() {
-  spawn_threads(1, 1, 2);  // A
-
-  sleep(1);
-
-  spawn_threads(0, 1, 2);  // I
-
-  sleep(1);
-
-  ready = CACHELOCAL;  // S
-  if (spawn_threads_numa(1, 1, 1) == 0) {
-    printf("spawn threads failed\n");
-  }
-
-  sleep(1);
-
-  spawn_threads(0, 1, 2);
-
-  sleep(1);
-
-  // ready = CACHEREMOTE;
-  // if (spawn_threads_numa(1, 1, 1) == 0) {
-  //   printf("spawn threads failed\n");
-  // }
-  // sleep(1);
-  // // local read
-  // spawn_threads(1, 1, 2);
-}
 
 void *alloc_table(size_t size, size_t numa_node) {
   size_t page_sz = 4096;
@@ -406,10 +426,7 @@ int main() {
 
   local = __itt_event_create("local", strlen("local"));
   remote = __itt_event_create("remote", strlen("remote"));
-  flush = __itt_event_create("flush", strlen("flush"));
-
-  experiment1 = __itt_event_create("experment-1", strlen("experment-1"));
-
+  share = __itt_event_create("share", strlen("share"));
   dowork = __itt_event_create("dowork", strlen("dowork"));
 
   srand(time(NULL));
@@ -428,15 +445,7 @@ int main() {
   printf("allocating and writing to table %p from node %u\n", table, LOCAL);
   sleep(1);
 
-  //__itt_event_start(experiment1);
-  reach_s();
-  //__itt_event_end(experiment1);
-
-  // sleep(1);
-
-  // __itt_event_start(experiment2);
-  // experiment_2();
-  // __itt_event_end(experiment2);
+  experiment();
 
   pthread_mutex_destroy(&mutex);
   pthread_cond_destroy(&cond);
