@@ -326,6 +326,20 @@ cleanup:
   return success;
 }
 
+void reach_s() 
+{
+  spawn_threads(0, 1, 2);
+  sleep(1);
+
+  ready = CACHELOCAL;  // S
+  if (spawn_threads_numa(1, 1, 1) == 0) {
+    printf("spawn threads failed\n");
+  }
+  sleep(1);
+
+  spawn_threads(0, 1, 2);
+}
+
 void experiment() {
   spawn_threads(0, 1, 2);
   sleep(1);
@@ -415,7 +429,7 @@ int main() {
   sleep(1);
 
   //__itt_event_start(experiment1);
-  experiment();
+  reach_s();
   //__itt_event_end(experiment1);
 
   // sleep(1);
