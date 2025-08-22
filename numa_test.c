@@ -44,12 +44,14 @@ static inline uint64_t RDTSCP(void) {
   return ((uint64_t)cycles_high << 32) | cycles_low;
 }
 // 1024 * 1024
-#define TABLE_SIZE (1 << 26)  // 4 GB
+#define TABLE_SIZE (1 << 26)  // 8 GB
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
-// #define RANDOM_ACCESS
+#define RANDOM_ACCESS
 #define READ
 #define STRIDE 1024
+#define WORKLOAD_PER_THREAD TABLE_SIZE/64
+
 
 #define LOCAL 0
 #define REMOTE 1
@@ -149,29 +151,20 @@ void *walk_table(void *arg) {
     pthread_barrier_wait(t->barrier);
   }
 
-  __itt_event_start(dowork);
 
   uint64_t start, end;
   start = RDTSC_START();
   for (uint64_t j = 0; j < iter; j++) {
-    for (uint64_t i = 0; i < TABLE_SIZE; i += STRIDE) {
-      for (uint64_t k = 0; k < STRIDE; k++) {
+    for (uint64_t i = 0; i < TABLE_SIZE; i++) {
 #if defined(RANDOM_ACCESS)
-        idx = _mm_crc32_u64(0xffffffff, i + k) & (TABLE_SIZE - 1);
+        idx = _mm_crc32_u64(0xffffffff, i+(tid * WORKLOAD_PER_THREAD)) & (TABLE_SIZE - 1);
 #else
-        idx = i + k & (TABLE_SIZE - 1);
+        idx = i  & (TABLE_SIZE - 1);
 #endif
-
-#if defined(READ)
         sum += table[idx].value;
-#else
-        table[idx].value = idx;
-#endif
-      }
     }
   }
   end = RDTSCP();
-  __itt_event_end(dowork);
 
   printf("total op %u sum %lu from cpu %d node %d duration %lu\n",
          iter * TABLE_SIZE, sum, cpu, node, end - start);
@@ -217,19 +210,9 @@ void *walk_table_sync(void *arg) {
 
       pthread_mutex_unlock(&mutex);
 
-      // printf("dowork from node %u loc: %lu\n", node, i);
       for (uint64_t k = 0; k < STRIDE; k++) {
-#if defined(RANDOM_ACCESS)
-        idx = _mm_crc32_u64(0xffffffff, i + k) & (TABLE_SIZE - 1);
-#else
         idx = (i + k) & (TABLE_SIZE - 1);
-#endif
-
-#if defined(READ)
         sum += table[idx].value;
-#else
-        table[idx].value = idx;
-#endif
       }
 
       pthread_mutex_lock(&mutex);
@@ -271,11 +254,14 @@ int spawn_threads(int node, int num_threads, int iter) {
     goto cleanup;
   }
 
+  pthread_barrier_t barrier;
+  pthread_barrier_init(&barrier, NULL, num_threads);
+
   for (int i = 0; i < num_threads; i++) {
     args[i].tid = i;
     args[i].cpu = cpus[i];
     args[i].node = node;
-    args[i].barrier = NULL;
+    args[i].barrier = &barrier;
     args[i].iter = iter;
 
     if (pthread_create(&threads[i], NULL, walk_table, &args[i]) != 0) {
@@ -374,9 +360,28 @@ void remote_walk() {
   sleep(1);
 }
 
+void remote_walk_64() {
+  __itt_event_start(remote);
+
+  spawn_threads(1, 64, 1);
+  __itt_event_end(remote);
+
+  sleep(1);
+}
+
 void local_walk() {
   __itt_event_start(local);
   spawn_threads(0, 1, 1);
+  __itt_event_end(local);
+
+  sleep(1);
+}
+
+
+
+void local_walk_64() {
+  __itt_event_start(local);
+  spawn_threads(0, 64, 1);
   __itt_event_end(local);
 
   sleep(1);
@@ -396,16 +401,22 @@ void sync_walk() {
 void experiment() {
  
   local_walk();  // Initilize to I
+  local_walk_64();
 
   remote_walk(); // DIR A 
+  remote_walk_64();
+
   printf("Reading A state from Local socket\n");
   local_walk();  
 
   sync_walk(); // DIR S
   printf("Reading S state from Local socket\n");
   local_walk();  
+  local_walk_64();
+
   printf("Reading S state from remote socket\n");
   remote_walk();  
+  remote_walk_64();
 }
 
 
