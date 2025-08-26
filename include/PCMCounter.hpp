@@ -17,8 +17,15 @@ class PCMCounters {
 
   uint64_t cycles;
 
+  std::vector samples;
+  
+
   // init pcm
-  PCMCounters() {
+  PCMCounters() {}
+
+  void clean() { pcm->cleanup(); }
+
+  void init() {
     pcm = pcm::PCM::getInstance();
 
     int error = pcm->program();
@@ -41,7 +48,7 @@ class PCMCounters {
   }
 
   // clean up
-  ~PCMCounters() { pcm->cleanup(); }
+  //~PCMCounters() {  }
 
   // save all start state
   void start() {
@@ -52,20 +59,12 @@ class PCMCounters {
     for (i = 0; i < pcm->getNumCores(); ++i)
       cstates1[i] = getCoreCounterState(i);
 
-    cycles = RDTSCP();
+    cycles = RDTSC_START();
   }
 
-  void start_bw() {
-    int i = 0;
-    for (i = 0; i < pcm->getNumSockets(); ++i)
-      sktstates1[i] = getSocketCounterState(i);
-
-    cycles = RDTSCP();
-  }
-
-  // save all end state
+    // save all end state
   void stop() {
-    cycles = RDTSCP() - cycles;
+    cycles = RDTSC_START() - cycles;
 
     sstate2 = getSystemCounterState();
     int i = 0;
@@ -75,36 +74,47 @@ class PCMCounters {
       cstates2[i] = getCoreCounterState(i);
   }
 
-  void stop_bw() {
-    cycles = RDTSCP() - cycles;
+
+  void start_socket() {
+    int i = 0;
+    for (i = 0; i < pcm->getNumSockets(); ++i)
+      sktstates1[i] = getSocketCounterState(i);
+  }
+
+  void stop_socket() {
 
     int i = 0;
     for (i = 0; i < pcm->getNumSockets(); ++i)
       sktstates2[i] = getSocketCounterState(i);
   }
 
-  double calculate_bw_gbs(double sec, double bytes) {
+  double calculate_bw_gbs(double bytes,double sec) {
     return (bytes / GB_IN_BYTES) / sec;
   }
 
-  void print_bw() {
+
+  void print_bw(uint64_t duration) {
     double freq;
     double sec;
-    uint64_t rbytes, wbytes;
+    uint64_t rbytes = 0;
+    uint64_t wbytes = 0;
     uint64_t trbytes = 0;
     uint64_t twbytes = 0;
     for (int i = 0; i < pcm->getNumSockets(); ++i) {
       freq = getAverageFrequency(sktstates1[i], sktstates2[i]);
-      sec = cycles / freq;
+      sec = duration / freq;
       rbytes = getBytesReadFromMC(sktstates1[i], sktstates2[i]);
-      wbytes = getBytesReadFromMC(sktstates1[i], sktstates2[i]);
+      wbytes = getBytesWrittenToMC(sktstates1[i], sktstates2[i]);
       trbytes += rbytes;
-      twbytes += twbytes;
-      printf("mc %d, write bw: %.3f, read bw: %.3f\n",
-             calculate_bw_gbs(wbytes, sec), calculate_bw_gbs(rbytes, sec));
+      twbytes += wbytes;
+      printf("MC %d, write bw: %.3f, read bw: %.3f\n", i,
+             calculate_bw_gbs(wbytes, sec), calculate_bw_gbs(rbytes, sec),
+             rbytes, wbytes, sec);
     }
-    printf("Total write bw: %.3f\nTotal read bw: %.3f\n",
+    printf("Total write bw: %.3f, read bw: %.3f\n",
            calculate_bw_gbs(twbytes, sec), calculate_bw_gbs(trbytes, sec));
+
+    //samples.push(trbytes);
   }
 
   template <class CounterStateType>

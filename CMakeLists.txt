@@ -274,7 +274,7 @@ endif()
 
 # Input data generation
 
-set(DATA_GEN "INC" CACHE STRING "Benchmark backend to use (HASH, ZIPFIAN, INC)")
+set(DATA_GEN "HASH" CACHE STRING "Benchmark backend to use (HASH, ZIPFIAN, INC)")
 
 set(VALID_DATA_GEN HASH INC ZIPFIAN)
 

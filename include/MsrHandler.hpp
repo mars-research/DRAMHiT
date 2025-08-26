@@ -13,7 +13,19 @@
 
 class MsrHandler {
  public:
-  MsrHandler() {
+  MsrHandler() {}
+
+  ~MsrHandler() {}
+
+  void msr_close() {
+    if (this->msr_safe_loaded) {
+      for (const auto& [cpu, fd] : this->dev_msr_fds) {
+        close(fd);
+      }
+    }
+  }
+
+  void msr_open() {
     auto nr_cpus = std::thread::hardware_concurrency();
 
     for (auto cpu = 0u; cpu < nr_cpus; cpu++) {
@@ -32,14 +44,6 @@ class MsrHandler {
           "Could not open /dev/cpu/*/msr_safe! msr-safe not loaded?");
     } else {
       PLOG_INFO.printf("msr-safe loaded!");
-    }
-  }
-
-  ~MsrHandler() {
-    if (this->msr_safe_loaded) {
-      for (const auto& [cpu, fd] : this->dev_msr_fds) {
-        close(fd);
-      }
     }
   }
 
@@ -88,7 +92,7 @@ class MsrHandler {
     if (ret != sizeof(val)) {
       PLOG_ERROR.printf("pwrite failed with errno %d", errno);
     }
-    //PLOG_INFO.printf("wrmsr %lx on cpu %u = %lx", msr, cpu, val);
+    // PLOG_INFO.printf("wrmsr %lx on cpu %u = %lx", msr, cpu, val);
     return ret;
   }
 

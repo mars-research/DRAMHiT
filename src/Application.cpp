@@ -63,7 +63,7 @@ MultithreadCounter EVENTCOUNTERS;
 #endif
 
 #ifdef WITH_PCM
-pcm::PCMCounters g_pcm_cnt;
+static pcm::PCMCounters g_pcm_cnt;
 #endif
 
 // void sync_complete(void);
@@ -144,35 +144,44 @@ void sync_complete(void) {
     PLOGI.printf("Starting counters");
     if (!bw_counters) bw_counters = new MemoryBwCounters(2);
     bw_counters->start();
-  }  
+  }
 #endif
 
   if (cur_phase == ExecPhase::finds) {
     if (!zipfian_finds) {
-
+      PLOGI.printf("Zipfian find iter: %lu start", zipfian_iter);
 #if defined(WITH_PCM)
-      g_pcm_cnt.start_bw();
+      g_pcm_cnt.start_socket();
 #endif
       zipfian_finds = true;
       g_find_start = RDTSC_START();
+
     } else {
       g_find_end = RDTSCP();
-#if defined(WITH_PCM)
-      g_pcm_cnt.stop_bw();
-      g_pcm_cnt.print_bw();
-#endif
+
       if (zipfian_iter < config.read_factor) {
         g_find_durations[zipfian_iter] = g_find_end - g_find_start;
-        PLOGI.printf("Zipfian find iter: %lu duration: %lu", zipfian_iter,
+        PLOGI.printf("Zipfian find iter: %lu end duration: %lu", zipfian_iter,
                      g_find_durations[zipfian_iter]);
       }
+      zipfian_finds = false;
+
+#if defined(WITH_PCM)
+      g_pcm_cnt.stop_socket();
+      g_pcm_cnt.print_bw(g_find_end - g_find_start);
+#endif
     }
   } else if (cur_phase == ExecPhase::insertions) {
     if (!zipfian_inserts) {
+      PLOGI.printf("Zipfian insert iter: %lu start", zipfian_iter);
+
       zipfian_inserts = true;
       g_insert_start = RDTSC_START();
     } else {
       g_insert_end = RDTSCP();
+      zipfian_inserts = false;
+      PLOGI.printf("Zipfian insert iter: %lu end", zipfian_iter);
+
       if (zipfian_iter < config.insert_factor) {
         g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
         PLOGI.printf("Zipfian insert iter: %lu duration: %lu", zipfian_iter,
@@ -301,7 +310,6 @@ void Application::shard_thread(int tid,
   }
 
   free_ht(kmer_ht);
-
 done:
   --num_entered;
   return;
@@ -360,6 +368,8 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
+  g_pcm_cnt.init();
+
   std::function<void()> on_sync_complete = sync_complete;
 
   std::barrier barrier(config.num_threads, on_sync_complete);
@@ -412,6 +422,8 @@ int Application::spawn_shard_threads() {
     free(g_insert_durations);
     free(g_find_durations);
   }
+
+  g_pcm_cnt.clean();
 
   std::free(this->shards);
 
@@ -601,6 +613,7 @@ int Application::process(int argc, char *argv[]) {
       plog::get()->setMaxSeverity(plog::verbose);
     }
 
+    msr_ctrl->msr_open();
     // Control hw prefetcher msr
     if (vm["hw-pref"].as<bool>()) {
       // XXX: 0x1a4 is prefetch control;
@@ -609,6 +622,8 @@ int Application::process(int argc, char *argv[]) {
     } else {
       this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
+
+    msr_ctrl->msr_close();
 
     if (config.mode == SYNTH) {
       PLOG_INFO.printf("Mode : SYNTH");
@@ -699,12 +714,12 @@ int Application::process(int argc, char *argv[]) {
 
   // Dump hwprefetchers msr - Needs msr-safe driver
   // (use scripts/enable_msr_safe.sh)
-  auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
-  printf("MSR 0x1a4 has: { ");
-  for (const auto &e : rdmsr_set) {
-    printf("0x%lx ", e);
-  }
-  printf("}\n");
+  // auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
+  // printf("MSR 0x1a4 has: { ");
+  // for (const auto &e : rdmsr_set) {
+  //   printf("0x%lx ", e);
+  // }
+  // printf("}\n");
 
   config.dump_configuration();
 
@@ -713,8 +728,10 @@ int Application::process(int argc, char *argv[]) {
   }
 
   if (config.mode == ZIPFIAN) {
-    g_insert_durations = (uint64_t*)malloc(sizeof(uint64_t) * config.insert_factor);
-    g_find_durations = (uint64_t*)malloc(sizeof(uint64_t) * config.read_factor);
+    g_insert_durations =
+        (uint64_t *)malloc(sizeof(uint64_t) * config.insert_factor);
+    g_find_durations =
+        (uint64_t *)malloc(sizeof(uint64_t) * config.read_factor);
   }
 
   if ((config.mode == BQ_TESTS_YES_BQ) ||

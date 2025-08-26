@@ -435,13 +435,14 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //     __itt_event_create("find_test", strlen("find_test"));
   // __itt_event_start(vtune_event_find);
 
-  // if(shard->shard_idx == 0)
-  //   __itt_resume();
+  if(shard->shard_idx == 0)
+     __itt_resume();
 #endif
 
 #if defined(WITH_PCM)
   //if (shard->shard_idx == 0) pcm_cnt.start_bw();
 #endif
+
 
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
                                  sync_barrier, zipf_set_local);

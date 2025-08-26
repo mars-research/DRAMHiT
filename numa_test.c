@@ -47,10 +47,9 @@ static inline uint64_t RDTSCP(void) {
 #define TABLE_SIZE (1 << 26)  // 8 GB
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
-#define RANDOM_ACCESS
+//#define RANDOM_ACCESS
 #define READ
 #define STRIDE 1024
-#define WORKLOAD_PER_THREAD TABLE_SIZE/64
 
 
 #define LOCAL 0
@@ -76,6 +75,7 @@ typedef struct {
   int tid;
   int cpu;
   int iter;
+  int num_threads;
   pthread_barrier_t *barrier;
 } thread_arg_t;
 
@@ -136,6 +136,8 @@ void *walk_table(void *arg) {
   int tid = t->tid;
   int node = t->node;
   int iter = t->iter;
+    int num_threads = t->num_threads;
+  uint32_t WORKLOAD_PER_THREAD = TABLE_SIZE/num_threads; 
 
   pin_self_to_cpu(cpu);
 
@@ -159,9 +161,11 @@ void *walk_table(void *arg) {
 #if defined(RANDOM_ACCESS)
         idx = _mm_crc32_u64(0xffffffff, i+(tid * WORKLOAD_PER_THREAD)) & (TABLE_SIZE - 1);
 #else
-        idx = i  & (TABLE_SIZE - 1);
+        idx = i+(tid * WORKLOAD_PER_THREAD) & (TABLE_SIZE - 1);
 #endif
-        sum += table[idx].value;
+        //sum += table[idx].value;
+
+        _mm_prefetch(&table[idx], 1);
     }
   }
   end = RDTSCP();
@@ -263,6 +267,7 @@ int spawn_threads(int node, int num_threads, int iter) {
     args[i].node = node;
     args[i].barrier = &barrier;
     args[i].iter = iter;
+    args[i].num_threads = (uint32_t)num_threads;
 
     if (pthread_create(&threads[i], NULL, walk_table, &args[i]) != 0) {
       perror("pthread_create failed");
@@ -419,6 +424,30 @@ void experiment() {
   remote_walk_64();
 }
 
+void rpq_test() 
+{
+  //[1, 2, 4, 8, 16, 32, 64]
+
+  static __itt_event evt1 = __itt_event_create("1", 1);
+  __itt_event_start(evt1);
+  spawn_threads(0, 1 , 1);
+  __itt_event_end(evt1);
+  __itt_event_destroy(evt1);
+  
+  static __itt_event evt2 = __itt_event_create("2", 1);
+  static __itt_event evt3 = __itt_event_create("4", 1);
+  static __itt_event evt4 = __itt_event_create("8", 1);
+  static __itt_event evt5 = __itt_event_create("16", 2);
+  static __itt_event evt6 = __itt_event_create("32", 2);
+  static __itt_event evt7 = __itt_event_create("64", 2);
+
+  // spawn_threads(0, 32, 2);
+
+  // __itt_event_start(local);
+  // spawn_threads(0, 2, 2);
+  // __itt_event_end(local);
+}
+
 
 void *alloc_table(size_t size, size_t numa_node) {
   size_t page_sz = 4096;
@@ -442,6 +471,7 @@ int main() {
   share = __itt_event_create("share", strlen("share"));
   dowork = __itt_event_create("dowork", strlen("dowork"));
 
+
   srand(time(NULL));
 
   bind_to_node(0);
@@ -458,7 +488,7 @@ int main() {
   printf("allocating and writing to table %p from node %u\n", table, LOCAL);
   sleep(1);
 
-  experiment();
+  rpq_test();
 
   pthread_mutex_destroy(&mutex);
   pthread_cond_destroy(&cond);
