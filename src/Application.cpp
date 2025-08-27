@@ -72,7 +72,7 @@ static pcm::PCMCounters g_pcm_cnt;
 const Configuration def = {
     .kmer_create_data_base = 524288,
     .kmer_create_data_mult = 1,
-    .kmer_create_data_uniq = 1048576,
+    .kmer_create_data_uniq = 1048576, 
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .stats_file = std::string(""),

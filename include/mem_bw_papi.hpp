@@ -8,14 +8,14 @@ namespace kmercounter {
 
 class MemoryBwCounters {
  public:
-  const std::string imc_box = "skx_unc_imc";
+  const std::string imc_box = "emr_unc_imc";
   const std::string cas_rd = "UNC_M_CAS_COUNT:RD";
   const std::string cas_wr = "UNC_M_CAS_COUNT:WR";
 
   // XXX: I don't know how to get this from an API
   const std::uint64_t NUM_MEMORY_CHANNELS = 6;
 
-  static constexpr double CYCLES_PER_SEC = (2.6 * 1000 * 1000 * 1000);
+  static constexpr double CYCLES_PER_SEC = (2.5 * 1000 * 1000 * 1000);
   static constexpr double MB_IN_BYTES = (1 << 20);
 
   // TODO: get this from NUMA API

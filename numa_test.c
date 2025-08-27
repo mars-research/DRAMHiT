@@ -157,7 +157,7 @@ void *walk_table(void *arg) {
   uint64_t start, end;
   start = RDTSC_START();
   for (uint64_t j = 0; j < iter; j++) {
-    for (uint64_t i = 0; i < TABLE_SIZE; i++) {
+    for (uint64_t i = 0; i < WORKLOAD_PER_THREAD; i++) {
 #if defined(RANDOM_ACCESS)
         idx = _mm_crc32_u64(0xffffffff, i+(tid * WORKLOAD_PER_THREAD)) & (TABLE_SIZE - 1);
 #else
@@ -424,28 +424,69 @@ void experiment() {
   remote_walk_64();
 }
 
-void rpq_test() 
-{
+__itt_event evt1;
+__itt_event evt2;
+
+__itt_event evt3;
+
+__itt_event evt4;
+
+__itt_event evt5;
+__itt_event evt6;
+__itt_event evt7;
+
+void rpq_test() {
   //[1, 2, 4, 8, 16, 32, 64]
 
-  static __itt_event evt1 = __itt_event_create("1", 1);
+  evt1 = __itt_event_create("1", 1);
   __itt_event_start(evt1);
-  spawn_threads(0, 1 , 1);
+  spawn_threads(0, 1, 1);
   __itt_event_end(evt1);
-  __itt_event_destroy(evt1);
-  
-  static __itt_event evt2 = __itt_event_create("2", 1);
-  static __itt_event evt3 = __itt_event_create("4", 1);
-  static __itt_event evt4 = __itt_event_create("8", 1);
-  static __itt_event evt5 = __itt_event_create("16", 2);
-  static __itt_event evt6 = __itt_event_create("32", 2);
-  static __itt_event evt7 = __itt_event_create("64", 2);
 
-  // spawn_threads(0, 32, 2);
+  sleep(1);
 
-  // __itt_event_start(local);
-  // spawn_threads(0, 2, 2);
-  // __itt_event_end(local);
+  evt2 = __itt_event_create("2", 1);
+  __itt_event_start(evt2);
+  spawn_threads(0, 2, 2);
+  __itt_event_end(evt2);
+
+  sleep(1);
+
+  evt3 = __itt_event_create("4", 1);
+  __itt_event_start(evt3);
+  spawn_threads(0, 4, 4);
+  __itt_event_end(evt3);
+
+  sleep(1);
+
+  evt4 = __itt_event_create("8", 1);
+  __itt_event_start(evt4);
+  spawn_threads(0, 8, 8);
+  __itt_event_end(evt4);
+
+  sleep(1);
+
+  evt5 = __itt_event_create("16", 2);
+  __itt_event_start(evt5);
+  spawn_threads(0, 16, 16);
+  __itt_event_end(evt5);
+
+  sleep(1);
+
+  evt6 = __itt_event_create("32", 2);
+  __itt_event_start(evt6);
+  spawn_threads(0, 32, 32);
+  __itt_event_end(evt6);
+
+  sleep(1);
+
+  evt7 = __itt_event_create("64", 2);
+
+  __itt_event_start(evt7);
+  spawn_threads(0, 64, 64);
+  __itt_event_end(evt7);
+
+  sleep(1);
 }
 
 
@@ -459,6 +500,8 @@ void *alloc_table(size_t size, size_t numa_node) {
                MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
   return mem;
 }
+
+
 
 int main() {
   if (numa_available() < 0) {

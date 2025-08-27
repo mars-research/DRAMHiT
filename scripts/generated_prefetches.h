@@ -1,0 +1,17 @@
+_mm_prefetch((const char*)(&mem[539]), HINT_L1);
+_mm_prefetch((const char*)(&mem[136]), HINT_L1);
+_mm_prefetch((const char*)(&mem[757]), HINT_L1);
+_mm_prefetch((const char*)(&mem[354]), HINT_L1);
+_mm_prefetch((const char*)(&mem[975]), HINT_L1);
+_mm_prefetch((const char*)(&mem[572]), HINT_L1);
+_mm_prefetch((const char*)(&mem[169]), HINT_L1);
+_mm_prefetch((const char*)(&mem[790]), HINT_L1);
+_mm_prefetch((const char*)(&mem[387]), HINT_L1);
+_mm_prefetch((const char*)(&mem[1008]), HINT_L1);
+_mm_prefetch((const char*)(&mem[605]), HINT_L1);
+_mm_prefetch((const char*)(&mem[202]), HINT_L1);
+_mm_prefetch((const char*)(&mem[823]), HINT_L1);
+_mm_prefetch((const char*)(&mem[420]), HINT_L1);
+_mm_prefetch((const char*)(&mem[17]), HINT_L1);
+_mm_prefetch((const char*)(&mem[638]), HINT_L1);
+_mm_prefetch((const char*)(&mem[235]), HINT_L1);

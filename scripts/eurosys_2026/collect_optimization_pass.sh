@@ -5,8 +5,8 @@ RESULT=result.txt
 
 run_ht_local() 
 {
-    insertFactor=500
-    readFactor=500
+    insertFactor=100
+    readFactor=100
     numThreads=64
     numa_policy=4
     size=536870912
