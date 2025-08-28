@@ -72,7 +72,7 @@ static pcm::PCMCounters g_pcm_cnt;
 const Configuration def = {
     .kmer_create_data_base = 524288,
     .kmer_create_data_mult = 1,
-    .kmer_create_data_uniq = 1048576, 
+    .kmer_create_data_uniq = 1048576,
     .kmer_files_dir = std::string("/local/devel/pools/million/39/"),
     .alphanum_kmers = true,
     .stats_file = std::string(""),
@@ -130,6 +130,13 @@ ExecPhase cur_phase = ExecPhase::none;
 
 uint64_t *g_insert_durations;
 uint64_t *g_find_durations;
+
+#ifdef WITH_PCM
+
+double *g_find_bw;
+double *g_insert_bw;
+#endif
+
 uint64_t g_insert_start, g_insert_end;
 uint64_t g_find_start, g_find_end;
 
@@ -158,18 +165,18 @@ void sync_complete(void) {
 
     } else {
       g_find_end = RDTSCP();
+      PLOGI.printf("Zipfian find iter: %lu end", zipfian_iter);
+#if defined(WITH_PCM)
+      g_pcm_cnt.stop_socket();
+#endif
 
       if (zipfian_iter < config.read_factor) {
         g_find_durations[zipfian_iter] = g_find_end - g_find_start;
-        PLOGI.printf("Zipfian find iter: %lu end duration: %lu", zipfian_iter,
-                     g_find_durations[zipfian_iter]);
-      }
-      zipfian_finds = false;
-
 #if defined(WITH_PCM)
-      g_pcm_cnt.stop_socket();
-      g_pcm_cnt.print_bw(g_find_end - g_find_start);
+        g_find_bw[zipfian_iter] =
+            g_pcm_cnt.get_bw(g_find_durations[zipfian_iter]);
 #endif
+      }
     }
   } else if (cur_phase == ExecPhase::insertions) {
     if (!zipfian_inserts) {
@@ -184,8 +191,6 @@ void sync_complete(void) {
 
       if (zipfian_iter < config.insert_factor) {
         g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
-        PLOGI.printf("Zipfian insert iter: %lu duration: %lu", zipfian_iter,
-                     g_insert_durations[zipfian_iter]);
       }
     }
   } else {
@@ -368,7 +373,10 @@ int Application::spawn_shard_threads() {
     exit(-1);
   }
 
+#ifdef WITH_PCM
+
   g_pcm_cnt.init();
+#endif
 
   std::function<void()> on_sync_complete = sync_complete;
 
@@ -422,8 +430,10 @@ int Application::spawn_shard_threads() {
     free(g_insert_durations);
     free(g_find_durations);
   }
-
+  
+#ifdef WITH_PCM
   g_pcm_cnt.clean();
+#endif
 
   std::free(this->shards);
 
@@ -732,6 +742,11 @@ int Application::process(int argc, char *argv[]) {
         (uint64_t *)malloc(sizeof(uint64_t) * config.insert_factor);
     g_find_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.read_factor);
+
+#ifdef WITH_PCM
+    g_find_bw = (double *)malloc(sizeof(double) * config.read_factor);
+    g_insert_bw = (double *)malloc(sizeof(double) * config.insert_factor);
+#endif
   }
 
   if ((config.mode == BQ_TESTS_YES_BQ) ||

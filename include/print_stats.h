@@ -8,6 +8,9 @@ namespace kmercounter {
 extern uint64_t *g_find_durations;
 extern uint64_t *g_insert_durations;
 
+#if defined(WITH_PCM)
+extern double *g_find_bw;
+#endif
 // CHANGE ME DEPENDING ON MACHINE
 /*From /proc/cpuinfo*/
 #define CPUFREQ_MHZ (2500.0)
@@ -69,7 +72,25 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
         all_sh[k].stats->insertions.duration > max_insert_duration
             ? all_sh[k].stats->insertions.duration
             : max_insert_duration;
-  }
+#ifdef CALC_STATS
+    // all_total_num_sequences += all_sh[k].stats->num_sequences;
+    // all_total_avg_read_length += all_sh[k].stats->avg_read_length;
+    all_total_reprobes += all_sh[k].stats->num_reprobes;
+    // all_total_find_time_ns =
+    //(double)all_sh[k].finds.duration * one_cycle_ns;
+#endif
+  }  // end for loop across all threads.
+
+#ifdef CALC_STATS
+
+  printf(
+      "{total_reprobes: %llu, total_finds: %llu, avg_cachelines_accessed: %.4f}\n",
+      (unsigned long long)all_total_reprobes, (unsigned long long)total_finds,
+      (all_total_reprobes + total_finds) / (double)total_finds);
+  printf("{reprobe_factor: %.4f}\n",
+         (all_total_reprobes + total_finds) / (double)total_finds);
+
+#endif
 
   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
 
@@ -152,6 +173,19 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
          cycles_per_insert, cycles_per_find, cycles_per_upsert);
   printf(" set_mops : %.3f, get_mops : %.3f, upsert_mops : %.3f }\n",
          insert_mops, find_mops, upsert_mops);
+
+#ifdef WITH_PCM
+  if (config.read_factor > 0) {
+    double avg_bw = 0;
+
+    for (int i = 0; i < config.read_factor; i++) {
+      printf("iter: %d, bw:%.3f\n", i, g_find_bw[i]);
+      avg_bw += g_find_bw[i];
+    }
+    avg_bw = avg_bw / config.read_factor;
+    printf("{find_avg_bw: %.3f}\n", avg_bw);
+  }
+#endif
 
   printf("===============================================================\n");
 }

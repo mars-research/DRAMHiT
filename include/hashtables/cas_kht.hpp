@@ -897,7 +897,6 @@ class CASHashTable : public BaseHashTable {
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
 
-
 #ifdef CAS_FIND_BANDWIDTH_TEST
     size_t idx;
     uint64_t len = this->capacity >> 2;
@@ -1368,6 +1367,10 @@ class CASHashTable : public BaseHashTable {
 #endif
       this->find_head += 1;
       this->find_head &= FIND_QUEUE_SZ_MASK;
+
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
     }
 
     return retry;
@@ -1455,7 +1458,7 @@ class CASHashTable : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= FIND_QUEUE_SZ_MASK;
 #ifdef CALC_STATS
-      this->num_reprobed++;
+      this->num_reprobes++;
 #endif
     } else {
 #ifdef LATENCY_COLLECTION
@@ -1488,7 +1491,7 @@ class CASHashTable : public BaseHashTable {
 #else
     return __find_branched(q, vp, collector);
 #endif
-  }
+  }  // end __find_one()
 
 #ifdef REMOTE_QUEUE
   uint64_t __remote_find_one(KVQ *q, ValuePairs &vp,
