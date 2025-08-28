@@ -4,6 +4,7 @@
 #  sudo apt-get install cmake-curses-gui
 #  nix develop --extra-experimental-features nix-command --extra-experimental-features flakes
 
+# to run: ./collect_reprobe_stats.sh 
 
 
 echo "Collecting reprobe stats on: <8gb> <single-local> <64 threads> <reads_factor=1:write_factor=1> ʕ•ᴥ•ʔ"
@@ -16,7 +17,7 @@ numa_policy=4
 
 size=536870912 # 8gb
 insertFactor=1
-readFactor=1
+readFactor=100
 numThreads=64
 
 
@@ -32,8 +33,8 @@ do
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16"
    
-    echo "Command executed: "$(pwd)/build/dramhit $cmd >> $file_name
-    sudo $(pwd)/build/dramhit $cmd >> $file_name
+    echo "Command executed: "/opt/DRAMHiT/build/dramhit $cmd >> $file_name
+    sudo /opt/DRAMHiT/build/dramhit $cmd >> $file_name
     echo >> $file_name # New line
 done    
 
@@ -41,30 +42,37 @@ done
 fills="10\\n20\\n30\\n40\\n50\\n60\\n70\\n80\\n90"
 
 # Match on reprobe factor results & save to temp file
-grep reprobe_factor "$file_name" | sed 's/{reprobe_factor: //;s/}//' > tmp.txt
+grep reprobe_factor "$file_name" | sed 's/{reprobe_factor: //;s/}//' > tmp1.txt
+
+grep get_mops "$file_name" | sed 's/.*get_mops : \([0-9.]*\).*/\1/' > tmp2.txt
 
 # Write header of csv
-echo "fill,reprobe_factor" > "$1.csv"
+echo "fill,reprobe_factor,mops" > "$1.csv"
 
 # Append the combination of both files & seperate by ","
-paste -d, <(echo -e "$fills") tmp.txt >> "$1.csv"
-
+paste -d, <(echo -e "$fills") tmp1.txt tmp2.txt >> "$1.csv"
 # Clean up
-rm tmp.txt
+rm tmp1.txt tmp2.txt
 
 }
 
 
-cmake -S . -B build -DDATA_GEN=HASH -DCALC_STATS=ON -DOLD_DRAMHiT=OFF -DBUCKETIZATION=OFF -DBRANCH=branched -DDRAMHiT_MANUAL_INLINE=OFF -DUNIFORM_PROBING=OFF
-cmake --build ./build
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025 -DDATA_GEN=HASH -DCALC_STATS=ON  -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF
+cmake --build /opt/DRAMHiT/build
 run_ht_local branched_no_bucket_linear_reprobes
 
-cmake -S . -B build -DDATA_GEN=HASH -DCALC_STATS=ON -DOLD_DRAMHiT=OFF -DBUCKETIZATION=ON -DBRANCH=simd -DDRAMHiT_MANUAL_INLINE=OFF -DUNIFORM_PROBING=OFF
-cmake --build ./build
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025 -DDATA_GEN=HASH -DCALC_STATS=ON  -DBUCKETIZATION=ON -DBRANCH=branched -DUNIFORM_PROBING=OFF
+cmake --build /opt/DRAMHiT/build
+run_ht_local branched_bucket_linear_reprobes
+
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025 -DDATA_GEN=HASH -DCALC_STATS=ON  -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=OFF
+cmake --build /opt/DRAMHiT/build
 run_ht_local simd_bucket_linear_reprobes
 
-cmake -S . -B build -DDATA_GEN=HASH -DCALC_STATS=ON -DOLD_DRAMHiT=OFF -DBUCKETIZATION=ON -DBRANCH=simd -DDRAMHiT_MANUAL_INLINE=OFF -DUNIFORM_PROBING=ON
-cmake --build ./build
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025 -DDATA_GEN=HASH -DCALC_STATS=ON  -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON
+cmake --build /opt/DRAMHiT/build
 run_ht_local simd_bucket_uniform_reprobes
 
-``
+
+
+

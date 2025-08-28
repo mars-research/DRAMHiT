@@ -570,7 +570,7 @@ class CASHashTable : public BaseHashTable {
       add_to_insert_queue(&data, collector);
     }
   }
-#else
+#elif defined(DRAMHiT_2025_INLINED)
   void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
     bool fast_path = (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
                       (insert_queue_sz - 1));
@@ -880,6 +880,8 @@ class CASHashTable : public BaseHashTable {
   }
 #endif
 
+
+
 #if defined(DRAMHiT_2023)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
@@ -996,16 +998,7 @@ class CASHashTable : public BaseHashTable {
 #endif
   }  // end find_batch()
 
-#else
-
-  uint64_t simple_hash64(uint64_t x) {
-    x ^= x >> 33;
-    x *= 0xff51afd7ed558ccdULL;
-    x ^= x >> 33;
-    x *= 0xc4ceb9fe1a85ec53ULL;
-    x ^= x >> 33;
-    return x;
-  }
+#elif defined(DRAMHiT_2025_INLINED)
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
                   collector_type *collector) {

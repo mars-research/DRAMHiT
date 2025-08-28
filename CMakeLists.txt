@@ -23,8 +23,6 @@ option(AVX_SUPPORT "SIMD" ON)
 option(UNIFORM_PROBING "Uniform hashing" OFF)
 option(FAST_RANGE "fast range" OFF)
 option(PART_ID "partition id for multilevel and partition hashtable" OFF)
-option(OLD_DRAMHiT "dramhit, no bucket, no simd, just branch" OFF)
-option(DRAMHiT_MANUAL_INLINE "dramhit inlined" OFF)
 option(BUCKETIZATION "buckets" OFF)
 option(BUDDY_QUEUE "remote access experiment" OFF)
 option(REMOTE_QUEUE "remote prefetch engine" OFF)
@@ -47,13 +45,23 @@ if(BUDDY_QUEUE)
     add_definitions(-DBUDDY_QUEUE)
 endif() 
 
-if(OLD_DRAMHiT STREQUAL "ON")
+# Define a single option variable with 3 choices for find_batch()
+set(DRAMHiT_VARIANT "2023" CACHE STRING "Choose DRAMHiT variant: 2023, 2025, 2025_INLINE")
+
+# Tell CMake what the valid values are (for GUIs like ccmake / cmake-gui)
+set_property(CACHE DRAMHiT_VARIANT PROPERTY STRINGS 2023 2025 2025_INLINE)
+
+# Now use it in conditions
+if(DRAMHiT_VARIANT STREQUAL "2023")
     add_definitions(-DDRAMHiT_2023)
+elseif(DRAMHiT_VARIANT STREQUAL "2025")
+    add_definitions(-DDRAMHiT_2025)
+elseif(DRAMHiT_VARIANT STREQUAL "2025_INLINE")
+    add_definitions(-DDRAMHiT_2025_INLINED)
 else()
-    if(DRAMHiT_MANUAL_INLINE STREQUAL "OFF")
-        add_definitions(-DDRAMHiT_2025)
-    endif()
+    message(FATAL_ERROR "Invalid DRAMHiT_VARIANT: ${DRAMHiT_VARIANT}")
 endif()
+
 
 
 if(BUCKETIZATION)
@@ -198,6 +206,8 @@ if (NOT BRANCH IN_LIST branch_types)
 else()
     message(WARNING "Branch type selected was: ${BRANCH}")
 endif()
+
+
 
 set(experiments none prefetch_only nop_insert insert_dry_run aggr_kv_write_key_only)
 set(experiment none CACHE STRING "Benchmarking experiment")

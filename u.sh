@@ -4,13 +4,6 @@
 #  sudo apt-get install cmake-curses-gui
 #  nix develop --extra-experimental-features nix-command --extra-experimental-features flakes
 
-# 28 threads
-# { set_cycles : 51, get_cycles : 28, set_mops : 1152.941, get_mops : 2100.000 }
-
-# 56 threads
-# { set_cycles : 89, get_cycles : 42, set_mops : 1321.348, get_mops : 2800.000 }
-
-
 # Ensure correct usage
 if [ "$#" -ne 3 ]; then
      echo "Usage: $0 <small|large> <numa_policy> <num_threads> ʕ•ᴥ•ʔ"
@@ -44,8 +37,8 @@ elif [ "$test" = "large" ]; then
     # size=1073741824
     #size=268435456
     #size=134217728
-    insertFactor=1
-    readFactor=513
+    insertFactor=0
+    readFactor=100
 fi
 
 # size=134217728
@@ -54,10 +47,10 @@ fi
 # insertFactor=1000000
 # numThreads=1
 
-fill=70
+fill=10
 #for skew in $(seq 0.01 0.5 2.0);
-#for fill in $(seq 10 10 10);
-#do  
+for fill in $(seq 10 10 10);
+do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
     --find_queue 64 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
@@ -65,27 +58,24 @@ fill=70
     echo $(pwd)/build/dramhit $cmd
     sudo $(pwd)/build/dramhit $cmd
     echo $(pwd)/build/dramhit $cmd
-#done    
-# sudo ./tools/mlc/mlc   --bandwidth_matrix -h -U -W6 
+done    
 
+
+# dramhit="$(pwd)/build/dramhit $cmd"
+# export dramhit
 # sudo bash -c '
 #         mkfifo ctl.fifo ack.fifo
 #         exec 10<>ctl.fifo
 #         exec 11<>ack.fifo
-#         cmd="./build/dramhit \
-#         --perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-#         --find_queue_sz 32 --ht-fill 10 --ht-type 3 --insert-factor 500 \
-#         --num-threads 56 --numa-split 1 --no-prefetch 0 --mode 11 \
-#         --ht-size 134217728 --skew 0.01 --hw-pref 0 --batch-len 16"
-        
-#         /nix/store/ad3jjs95bcnwncb71bvm9zjd9ifd0fbw-perf-linux-5.15.47/bin/perf \
-#         stat --delay=-1 --control fd:10,11 \
-#         -e 'cpu/event=0x5,umask=0xFF/' \
-#         -e 'cycles'\
-#         \
-#         $cmd
+       
+#         /usr/bin/perf stat --delay=1 -I 1000  --control fd:10,11 -e 'UNC_M_CAS_COUNT.ALL' $dramhit
+
 #         exec 10>&-
 #         exec 11>&-
 #         rm ctl.fifo ack.fifo
 #     '
 
+#     sudo /opt/intel/oneapi/vtune/latest/bin64/vtune -collect memory-access -result-dir vtune_mem_bw -start-paused -- ./u.sh large single-local 64
+#     sudo /opt/intel/oneapi/vtune/latest/bin64/vtune -report summary -r vtune_mem_bw -filter "Task Name==find_test"
+#     sudo /opt/intel/oneapi/vtune/latest/bin64/vtune -report summary -r vtune_mem_bw 
+#     rm -rf vtune_mem_bw

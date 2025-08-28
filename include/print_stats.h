@@ -90,6 +90,8 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   printf("{reprobe_factor: %.4f}\n",
          (all_total_reprobes + total_finds) / (double)total_finds);
 
+  // printf("{Avg cycles: %.4f}\n", (double)total_find_cycles/ (double)config.num_threads);
+
 #endif
 
   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
