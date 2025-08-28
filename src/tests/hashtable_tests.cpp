@@ -214,6 +214,150 @@ OpTimings do_zipfian_inserts(
   return {duration, ops};
 }
 
+OpTimings old_zipfian_gets(
+    BaseHashTable *hashtable, unsigned int num_threads, unsigned int id,
+    auto sync_barrier,
+    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
+  auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
+
+  if (config.read_factor == 0) {
+    return {1, 1};
+  }
+  std::uint64_t duration{};
+  std::uint64_t found = 0, not_found = 0;
+
+  collector_type *const collector{};
+
+  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
+      64, sizeof(InsertFindArgument) * config.batch_len);
+
+#ifdef BUDDY_QUEUE
+  FindResult *results = new FindResult[(config.batch_len * 2)];
+#else
+  FindResult *results = new FindResult[config.batch_len];
+#endif
+
+  ValuePairs vp = std::make_pair(0, results);
+  sync_barrier->arrive_and_wait();  // this calls sync_complete
+  stop_sync = true;
+
+  // THis ensures that for a given hashtable size, regardless of
+  // the fill factor, number of finds is the same.
+  // const uint64_t num_finds = config.ht_size / num_threads;
+  const uint64_t num_finds = HT_TESTS_NUM_INSERTS;  // old zipf test
+
+  uint64_t start;
+  uint64_t end;
+
+  std::uint64_t key{};
+  std::size_t next_pollution{};
+
+#if defined(INFLIGHT)
+  struct xorwow_state _xw_state, init_state;
+  xorwow_init(&_xw_state);
+  init_state = _xw_state;
+#endif
+  // perf resume()
+  int perf_ctl_fd = 10;
+  int perf_ctl_ack_fd = 11;
+  char ack[5];
+
+  // if (id == 0) {
+  //   write(perf_ctl_fd, "enable\n", 8);
+  //   read(perf_ctl_ack_fd, ack, 5);
+  //   assert(strcmp(ack, "ack\n") == 0);
+
+  //   // write(perf_ctl_fd, "enable UNC_M_CAS_COUNT.ALL\n",
+  //   //       strlen("enable UNC_M_CAS_COUNT.ALL\n"));
+  //   // read(perf_ctl_ack_fd, ack, 5);
+  //   // assert(strcmp(ack, "ack\n") == 0);
+  // }
+  start = RDTSC_START();
+
+  for (auto j = 0u; j < config.read_factor; j++) {
+    uint64_t value;
+#if defined(INFLIGHT)
+    _xw_state = init_state;
+
+#elif defined(ZIPFIAN)
+    uint64_t zipf_idx = 0;
+#else
+    value = id * HT_TESTS_NUM_INSERTS;
+#endif
+    uint64_t batches = num_finds / config.batch_len;
+    for (uint64_t n = 0; n < batches; n++) {
+      for (int i = 0; i < config.batch_len; i++) {
+#if defined(INFLIGHT)
+        // value = xorwow(&_xw_state);
+        value = hash_knuth((id * HT_TESTS_NUM_INSERTS));
+#elif defined(ZIPFIAN)
+        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_set->size()) {
+          __builtin_prefetch(&zipf_set->at(zipf_idx + 16), false, 3);
+        }
+        value = zipf_set->at(zipf_idx);
+        zipf_idx++;
+#else
+        value++;
+#endif
+
+        items[i] = {value, n + i};
+      }  // end for loop
+
+#ifdef NOPREFETCH
+      hashtable->find_noprefetch(&value, collector);
+#else
+      //  if (++key == config.batch_len) {
+      vp.first = 0;
+      cas_ht->find_batch(InsertFindArguments(items, config.batch_len), vp,
+                         collector);
+      found += vp.first;
+      // vp.first = 0;
+      // key = 0;
+      //    }
+#endif
+    }
+
+#ifndef NOPREFETCH
+    vp.first = 0;
+    while (cas_ht->cas_flush_find_queue(vp, collector) > 0) {
+      found += vp.first;
+      vp.first = 0;
+    }
+#endif
+
+    // if(id==0)
+    //   __itt_event_end(vtune_evt);
+  }
+
+  end = RDTSCP();
+  duration += end - start;
+
+  sync_barrier->arrive_and_wait();
+  // perf pause()
+  // if (id == 0) {
+  //   write(perf_ctl_fd, "disable\n", 9);
+  //   read(perf_ctl_ack_fd, ack, 5);
+  //   assert(strcmp(ack, "ack\n") == 0);
+  // }
+
+  if (found > 0) {
+    PLOGI.printf("DEBUG: thread %u | actual found %lu | cycles per get: %lu",
+                 id, found, duration / found);
+  }
+
+#ifdef LATENCY_COLLECTION
+  collector->dump("find", id);
+#endif
+
+  // We need to count the cachelines from our zipfian prefetch, our local zipf
+  // set is HT_TESTS_NUM_INSERTS of keys we prefetch every 8, since 8 fit in
+  // cacheline, so we should count additional HT_TESTS_NUM_INSERTS/8
+  // return {duration, (HT_TESTS_NUM_INSERTS+(HT_TESTS_NUM_INSERTS/8)) *
+  // config.read_factor};
+  return {duration, HT_TESTS_NUM_INSERTS * config.read_factor};
+  return {duration, found};
+}
+
 OpTimings do_zipfian_gets(
     BaseHashTable *hashtable, unsigned int num_threads, unsigned int id,
     auto sync_barrier,
@@ -434,18 +578,17 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   // static const auto vtune_event_find =
   //     __itt_event_create("find_test", strlen("find_test"));
   // __itt_event_start(vtune_event_find);
-
-  if(shard->shard_idx == 0)
-     __itt_resume();
+  __itt_resume();
 #endif
 
 #if defined(WITH_PCM)
-  //if (shard->shard_idx == 0) pcm_cnt.start_bw();
+  // if (shard->shard_idx == 0) pcm_cnt.start_bw();
 #endif
-
 
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
                                  sync_barrier, zipf_set_local);
+  // find_timings = old_zipfian_gets(hashtable, count, shard->shard_idx,
+  //                                 sync_barrier, zipf_set_local);
 
 #if defined(WITH_PCM)
   // if (shard->shard_idx == 0) {
@@ -453,6 +596,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //   pcm_cnt.read_out_bw();
   // }
 #elif defined(WITH_VTUNE_LIB)
+// __itt_event_end(vtune_event_find);
+  __itt_pause();
   // vtune
 #elif defined(WITH_PERFCPP)
   if (shard->shard_idx == 0) {

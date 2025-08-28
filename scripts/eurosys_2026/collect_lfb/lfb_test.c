@@ -84,8 +84,31 @@ cacheline_t* alloc_mem(size_t len) {
 
 static inline uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
 
-uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz,
-                        uint32_t* workload) {
+
+#define ITER 100
+#define MAX_BATCH_SZ 32
+
+uint64_t get_overhead(uint64_t batch_sz, uint32_t* workload) {
+  uint64_t duration = 0;
+  uint64_t start_cycles, end_cycles;
+
+  for (int j = 0; j < ITER; j++) {
+    start_cycles = RDTSC_START();
+    uint32_t idx = 0;
+    for (uint64_t i = 0; i < batch_sz; i++) {
+      idx = workload[i];
+    }
+    end_cycles = RDTSCP();
+    duration += end_cycles - start_cycles;
+  }
+
+  duration = duration / ITER;
+
+  return duration;
+}
+
+uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint32_t* workload,
+                        uint64_t overhead) {
   uint64_t start_cycles, end_cycles;
 
   asm volatile("" ::: "memory");
@@ -97,13 +120,15 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz,
   }
   end_cycles = RDTSCP();
   asm volatile("" ::: "memory");
-  return (end_cycles - start_cycles) / batch_sz;
-}
-#define MAX_BATCH_SZ 32
-int main(int argc, char** argv) {
-  uint64_t iter = 100;
-  uint64_t mem_len = 4096;  // 4k
 
+  uint64_t duration = end_cycles - start_cycles;
+
+  //if (duration > overhead) duration = duration - overhead;
+  return duration;
+}
+
+int main(int argc, char** argv) {
+  uint64_t mem_len = 4096;  // 4k
   uint64_t exp_cycle = 0;
   cacheline_t* mem = alloc_mem(mem_len * CACHELINE_SIZE);
 
@@ -111,24 +136,20 @@ int main(int argc, char** argv) {
   for (int i = 0; i < MAX_BATCH_SZ; i++) {
     workload[i] = hash_knuth(i) % mem_len;
   }
-
+  uint64_t overhead;
   for (uint32_t batch_sz = 5; batch_sz <= MAX_BATCH_SZ; batch_sz++) {
     exp_cycle = 0;
-    for (int i = 0; i < iter; i++) {
-      
-     // prefetch workload
+    overhead = get_overhead(batch_sz, workload);
+    for (int i = 0; i < ITER; i++) {
       for (int j = 0; j < batch_sz; j++) {
         _mm_prefetch((const void*)&workload[j], HINT_L1);
-      }
-      sleep_ms(10);
-      exp_cycle += lfb_experiment(mem, batch_sz, workload);
-      sleep_ms(10);
-      for (int j = 0; j < batch_sz; j++) {
         _mm_clflush((const void*)&mem[workload[j]]);
       }
+      sleep_ms(10);
+      exp_cycle += lfb_experiment(mem, batch_sz, workload, overhead);
     }
-    exp_cycle = exp_cycle / iter;
-    printf("batch_sz: %u, cycle_per_op: %lu\n", batch_sz, exp_cycle);
+    exp_cycle = exp_cycle / ITER;
+    printf("batch_sz: %u, duration: %lu, overhead: %lu, cycle_per_op: %lu\n", batch_sz, exp_cycle, overhead, (exp_cycle - overhead)/batch_sz);
   }
 
   return 0;

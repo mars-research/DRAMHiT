@@ -16,8 +16,6 @@ class PCMCounters {
   PCM *pcm;
 
   uint64_t cycles;
-
-  std::vector samples;
   
 
   // init pcm
@@ -92,6 +90,25 @@ class PCMCounters {
     return (bytes / GB_IN_BYTES) / sec;
   }
 
+  double get_bw(uint64_t duration) 
+  {
+    double freq;
+    double sec;
+    uint64_t rbytes = 0;
+    uint64_t wbytes = 0;
+    uint64_t trbytes = 0;
+    uint64_t twbytes = 0;
+    for (int i = 0; i < pcm->getNumSockets(); ++i) {
+      freq = getAverageFrequency(sktstates1[i], sktstates2[i]);
+      sec = duration / freq;
+      rbytes = getBytesReadFromMC(sktstates1[i], sktstates2[i]);
+      wbytes = getBytesWrittenToMC(sktstates1[i], sktstates2[i]);
+      trbytes += rbytes;
+      twbytes += wbytes;
+    }
+    return calculate_bw_gbs(twbytes+trbytes, sec); 
+  }
+
 
   void print_bw(uint64_t duration) {
     double freq;
@@ -111,10 +128,9 @@ class PCMCounters {
              calculate_bw_gbs(wbytes, sec), calculate_bw_gbs(rbytes, sec),
              rbytes, wbytes, sec);
     }
-    printf("Total write bw: %.3f, read bw: %.3f\n",
+    printf("{write_bw: %.3f, read_bw: %.3f}\n",
            calculate_bw_gbs(twbytes, sec), calculate_bw_gbs(trbytes, sec));
 
-    //samples.push(trbytes);
   }
 
   template <class CounterStateType>

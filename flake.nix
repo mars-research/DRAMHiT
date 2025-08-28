@@ -70,6 +70,8 @@
           python310Packages.numpy
           python310Packages.scipy
           python310Packages.matplotlib
+          python310Packages.seaborn
+
         ];  
         NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
