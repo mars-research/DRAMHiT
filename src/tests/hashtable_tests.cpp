@@ -558,11 +558,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
 #ifdef WITH_PERFCPP
   // if (shard->shard_idx == 0)
-  // EVENTCOUNTERS.start(shard->shard_idx);
-#endif
-
-#ifdef WITH_VTUNE_LIB
-  //__itt_resume();
+  EVENTCOUNTERS.start(shard->shard_idx);
 #endif
 
 // perf resume()
@@ -581,9 +577,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   __itt_resume();
 #endif
 
-#if defined(WITH_PCM)
-  // if (shard->shard_idx == 0) pcm_cnt.start_bw();
-#endif
 
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
                                  sync_barrier, zipf_set_local);
@@ -600,9 +593,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   __itt_pause();
   // vtune
 #elif defined(WITH_PERFCPP)
-  if (shard->shard_idx == 0) {
     EVENTCOUNTERS.stop(shard->shard_idx);
-  }
 #endif
 
   // perf pause()
