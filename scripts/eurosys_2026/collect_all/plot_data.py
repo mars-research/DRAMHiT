@@ -21,9 +21,12 @@ def plot_json(json_file, output_file):
 
     # Convert to pandas DataFrame
     df = pd.DataFrame(data)
+    
+    df = pd.json_normalize(data, sep='.')
+
 
     # Ensure 'fill_factor' is numeric
-    df["fill_factor"] = pd.to_numeric(df["fill_factor"])
+    df["run_cfg.fill_factor"] = pd.to_numeric(df["run_cfg.fill_factor"])
 
     # Set Seaborn style
     sns.set_theme()
@@ -39,9 +42,9 @@ def plot_json(json_file, output_file):
         ax = axes[i]
         sns.lineplot(
             data=df,
-            x="fill_factor",
+            x="run_cfg.fill_factor",
             y=counter,
-            hue="title",
+            hue="identifier",
             marker="o",
             ax=ax
         )
@@ -54,9 +57,9 @@ def plot_json(json_file, output_file):
     if "get_mops" in df.columns:
         sns.lineplot(
             data=df,
-            x="fill_factor",
+            x="run_cfg.fill_factor",
             y="get_mops",
-            hue="title",
+            hue="identifier",
             marker="o",
             ax=ax
         )
