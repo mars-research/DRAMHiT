@@ -857,7 +857,11 @@ class CASHashTable : public BaseHashTable {
       next_tail =
           (this->find_tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
       next_tail_addr = &this->hashtable[this->find_queue[next_tail].idx];
-      __builtin_prefetch(next_tail_addr, false, 3);
+
+    #ifdef DOUBLE_PREFETCH
+    __builtin_prefetch(next_tail_addr, false, 3);
+    #endif
+
       retry = __find_one(&this->find_queue[this->find_tail], vp, collector);
       this->find_tail++;
       this->find_tail &= FIND_QUEUE_SZ_MASK;
@@ -1348,9 +1352,20 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef DRAMHiT_2023
       __builtin_prefetch(&this->hashtable[idx], false, 3);
-#else
-      __builtin_prefetch(&this->hashtable[idx], false, 1);
-#endif
+#else // dramhit 2025
+      // __builtin_prefetch(&this->hashtable[idx], false, 1);
+    #ifdef DOUBLE_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 1);
+    #elif L1_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 3);
+    #elif L2_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 2);
+    #elif L3_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 1);
+    #elif NTA_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 0);
+    #endif 
+#endif // end DRAMHiT_2023
 
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
@@ -1720,9 +1735,21 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef DRAMHiT_2023
     __builtin_prefetch(&this->hashtable[idx], false, 3);
-#else
+#else //DRAMHIT2025_variants
+
+    #ifdef DOUBLE_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 1);
-#endif
+    #elif L1_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 3);
+    #elif L2_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 2);
+    #elif L3_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 1);
+    #elif NTA_PREFETCH
+    __builtin_prefetch(&this->hashtable[idx], false, 0);
+    #endif
+
+#endif // end DRAMHiT_2023
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
     this->find_queue[this->find_head].key_id = key_data->id;

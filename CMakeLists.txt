@@ -47,10 +47,8 @@ endif()
 
 # Define a single option variable with 3 choices for find_batch()
 set(DRAMHiT_VARIANT "2023" CACHE STRING "Choose DRAMHiT variant: 2023, 2025, 2025_INLINE")
-
 # Tell CMake what the valid values are (for GUIs like ccmake / cmake-gui)
 set_property(CACHE DRAMHiT_VARIANT PROPERTY STRINGS 2023 2025 2025_INLINE)
-
 # Now use it in conditions
 if(DRAMHiT_VARIANT STREQUAL "2023")
     add_definitions(-DDRAMHiT_2023)
@@ -62,6 +60,24 @@ else()
     message(FATAL_ERROR "Invalid DRAMHiT_VARIANT: ${DRAMHiT_VARIANT}")
 endif()
 
+# Define a single option variable with X choices for PREFETCH
+set(PREFETCH "DOUBLE" CACHE STRING "Choose PREFETCH: DOUBLE, L1, L2, L3, NTA")
+# Tell CMake what the valid values are (for GUIs like ccmake / cmake-gui)
+set_property(CACHE PREFETCH PROPERTY STRINGS DOUBLE L1 L2 L3 NTA)
+# Map PREFETCH choice into compiler definitions
+if(PREFETCH STREQUAL "DOUBLE")
+    add_definitions(-DDOUBLE_PREFETCH)
+elseif(PREFETCH STREQUAL "L1")
+    add_definitions(-DL1_PREFETCH)
+elseif(PREFETCH STREQUAL "L2")
+    add_definitions(-DL2_PREFETCH)
+elseif(PREFETCH STREQUAL "L3")
+    add_definitions(-DL3_PREFETCH)
+elseif(PREFETCH STREQUAL "NTA")
+    add_definitions(-DNTA_PREFETCH)
+else()
+    message(FATAL_ERROR "Invalid PREFETCH option: ${PREFETCH}")
+endif()
 
 
 if(BUCKETIZATION)
