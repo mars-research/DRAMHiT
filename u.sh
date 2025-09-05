@@ -27,18 +27,18 @@ fi
 
 #TEST 256 KB
 if [ "$test" = "small" ]; then
-    size=16384
-    insertFactor=10000
-    readFactor=10000
+    size=102400
+    insertFactor=1
+    readFactor=1
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
     # size=1073741824
-    size=536870912
+    size=268435456
     # size=1073741824
     #size=268435456
     #size=134217728
-    insertFactor=0
-    readFactor=100
+    insertFactor=1
+    readFactor=1
 fi
 
 # size=134217728
@@ -52,7 +52,7 @@ fill=10
 for fill in $(seq 10 10 10);
 do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
+    --find_queue 64 --ht-fill $fill --ht-type 6 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16"
     echo $(pwd)/build/dramhit $cmd

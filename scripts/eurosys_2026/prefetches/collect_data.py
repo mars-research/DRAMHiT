@@ -135,18 +135,18 @@ if __name__ == "__main__":
     build_cfgs = [
         {"PREFETCH":"DOUBLE","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
         {"PREFETCH":"L1","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
-        # {"PREFETCH":"L2","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
+        {"PREFETCH":"L2","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
         {"PREFETCH":"L3","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
-        # {"PREFETCH":"NTA","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
+        {"PREFETCH":"NTA","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
 
     ]
 
     # Run configurations (example: vary fill_factor, others fixed)
     run_cfgs = [
-    {"insertFactor": 1, "readFactor": 10, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ] + [
-    {"insertFactor": 1, "readFactor": 10, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 1, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ]
 

@@ -84,13 +84,15 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 #ifdef CALC_STATS
 
   printf(
-      "{total_reprobes: %llu, total_finds: %llu, avg_cachelines_accessed: %.4f}\n",
+      "{total_reprobes: %llu, total_finds: %llu, avg_cachelines_accessed: "
+      "%.4f}\n",
       (unsigned long long)all_total_reprobes, (unsigned long long)total_finds,
       (all_total_reprobes + total_finds) / (double)total_finds);
   printf("{reprobe_factor: %.4f}\n",
          (all_total_reprobes + total_finds) / (double)total_finds);
 
-  // printf("{Avg cycles: %.4f}\n", (double)total_find_cycles/ (double)config.num_threads);
+  // printf("{Avg cycles: %.4f}\n", (double)total_find_cycles/
+  // (double)config.num_threads);
 
 #endif
 
@@ -113,16 +115,26 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t num_threads = config.num_threads;
 
   avg_find_duration = total_find_cycles / num_threads;
+
   avg_insert_duration = total_insert_cycles / num_threads;
+
   find_mops = (double)((CPUFREQ_MHZ * total_finds) / avg_find_duration);
   insert_mops = (double)((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
 
   printf("===============================================================\n");
 
   if (config.insert_factor > 0) {
-    uint64_t op_per_iter = total_inserts / config.insert_factor;
-    printf("insert op per iter %lu, avg insert cpu cycles per iter: %lu\n",
-           op_per_iter, total_insert_cycles / config.insert_factor);
+
+            uint64_t op_per_iter = total_inserts / config.insert_factor;
+
+    uint64_t total_insert_duration_over_all_run = 0;
+    for (int i = 0; i < config.insert_factor; i++) {
+      total_insert_duration_over_all_run += g_insert_durations[i];
+    }
+    printf("average_insert_task_duration : %lu, total_insert_tas_duration : %lu\n", 
+      total_insert_duration_over_all_run/ config.insert_factor, 
+      total_insert_duration_over_all_run);
+
     if (config.insert_snapshot > 0) {
       printf(
           "=========================Snapshot "
@@ -143,9 +155,16 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   }
 
   if (config.read_factor > 0) {
+
     uint64_t op_per_iter = total_finds / config.read_factor;
-    printf("read op per iter %lu, avg find cpu cycles per iter: %lu\n",
-           op_per_iter, total_find_cycles / config.read_factor);
+    uint64_t total_find_duration_over_all_run = 0;
+    for (int i = 0; i < config.read_factor; i++) {
+      total_find_duration_over_all_run += g_find_durations[i];
+    }
+    printf("average_find_task_duration : %lu, total_find_duration : %lu\n", 
+      total_find_duration_over_all_run / config.read_factor, 
+      total_find_duration_over_all_run);
+
     if (config.read_snapshot > 0) {
       printf(
           "=====================Snapshot info============================\n");
@@ -163,9 +182,8 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     }
   }
 
-  printf(
-      "Insert stats: total op %lu, total cpu cycles %lu, op per thread %lu\n",
-      total_inserts, total_insert_cycles, total_inserts / num_threads);
+  printf("Insert stats: total op %lu, total cpu cycles %lu, duration %lu\n",
+         total_inserts, total_insert_cycles, avg_insert_duration);
 
   printf("Find stats: total op %lu, total cpu cycles %lu, op per thread %lu\n",
          total_finds, total_find_cycles, total_finds / num_threads);
@@ -181,11 +199,11 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     double avg_bw = 0;
 
     for (int i = 0; i < config.read_factor; i++) {
-      printf("iter: %d, bw:%.3f\n", i, g_find_bw[i]);
+      //printf("iter: %d, bw:%.3f\n", i, g_find_bw[i]);
       avg_bw += g_find_bw[i];
     }
     avg_bw = avg_bw / config.read_factor;
-    printf("{find_avg_bw: %.3f}\n", avg_bw);
+    printf("{ find_avg_bw : %.3f}\n", avg_bw);
   }
 #endif
 

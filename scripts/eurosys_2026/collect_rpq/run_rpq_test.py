@@ -18,7 +18,7 @@ if comp_proc.returncode != 0:
 print("Compilation succeeded.\n")
 
 # Command template
-cmd_template = "/usr/bin/perf stat -e unc_m_rpq_inserts.pch0,unc_m_rpq_occupancy_pch0,unc_m_cas_count.all,unc_m_cas_count.rd -- ./rpq 100 {num_threads} 2>&1"
+cmd_template = "sudo /usr/bin/perf stat -e unc_m_rpq_inserts.pch0,unc_m_rpq_occupancy_pch0,unc_m_cas_count.all,unc_m_cas_count.rd -- ./rpq 10 {num_threads} 2>&1"
 
 results = []
 
@@ -71,16 +71,21 @@ with open("data.csv", "w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=results[0].keys())
     writer.writeheader()   # writes column names
     writer.writerows(results) # writes rows
-    
+
+
 # Extract data for plotting
 num_threads_list = [r["num_threads"] for r in results]
 bw_list = [r.get("bw", 0) for r in results]
 occupancy_list = [
-    r.get("unc_m_rpq_occupancy_pch0", 0) for r in results
+    r.get("unc_m_rpq_occupancy_pch0", 0)/r.get("duration", 0) for r in results
 ]
 
 inserts_list = [
-    r.get("unc_m_rpq_inserts.pch0", 0) for r in results
+    r.get("unc_m_rpq_inserts.pch0", 0)/r.get("duration", 0) for r in results
+]
+
+duration_list = [
+    r.get("duration", 0) for r in results
 ]
 
 
@@ -88,7 +93,7 @@ inserts_list = [
 sns.set_theme()
 
 # Create figure with 2 subplots
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8))
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(10, 8))
 
 # Graph 1: num_threads vs estimated bandwidth
 ax1.plot(num_threads_list, bw_list, marker='o', color='red')
@@ -101,14 +106,20 @@ ax1.grid(True)
 ax2.plot(num_threads_list, occupancy_list, marker='o', color='orange')
 ax2.set_xlabel("Number of Threads")
 ax2.set_ylabel("unc_m_rpq_occupancy_pch0")
-ax2.set_title("Num Threads vs unc_m_rpq_occupancy_pch0")
+ax2.set_title("Num Threads vs unc_m_rpq_occupancy_pch0/duration")
 ax2.grid(True)
 
 ax3.plot(num_threads_list, inserts_list, marker='o', color='blue')
 ax3.set_xlabel("Number of Threads")
 ax3.set_ylabel("unc_m_rpq_insert_pch0")
-ax3.set_title("Num Threads vs unc_m_rpq_insert_pch0")
+ax3.set_title("Num Threads vs unc_m_rpq_insert_pch0/duration")
 ax3.grid(True)
+
+ax4.plot(num_threads_list, duration_list, marker='o', color='green')
+ax4.set_xlabel("Number of Threads")
+ax4.set_ylabel("duration")
+ax4.set_title("Num Threads vs duration")
+ax4.grid(True)
 
 plt.tight_layout()
 plt.savefig("perf_results.png")

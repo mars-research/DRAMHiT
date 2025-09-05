@@ -129,8 +129,12 @@ def save_json(data, filename):
 if __name__ == "__main__":
     # Build configurations
     build_cfgs = [
+        {"DRAMHiT_VARIANT": "2023", "DATA_GEN": "HASH", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2023", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
         {"DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
         {"DRAMHiT_VARIANT": "2025_INLINE", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2025_INLINE", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"}
     ]
 
     # Run configurations (example: vary fill_factor, others fixed)

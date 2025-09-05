@@ -1,4 +1,7 @@
 {
+    "clangd.arguments": [
+        "--compile-commands-dir=/opt/DRAMHiT/build/"
+    ],
     "files.associations": {
         "*.tcc": "cpp",
         "random": "cpp",

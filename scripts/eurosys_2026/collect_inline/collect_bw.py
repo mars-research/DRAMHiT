@@ -7,7 +7,7 @@ import re
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
-
+USE_PERF = True
 
 def build(defines):
     define_flags = [f"-D{k}={v}" for k, v in defines.items()]
@@ -31,22 +31,17 @@ def make_perf_command(counters, dramhit_args):
     return cmd
 
 
-counters = [
-    "cycles",
-    "l1d_pend_miss.fb_full",
-    "memory_activity.cycles_l1d_miss",
-    "cycle_activity.stalls_total"
-]
+
+counters = ["unc_m_cas_count.all"]
 
 
 def run(run_cfg):
     results = []
 
-    fill = run_cfg["fill_factor"]
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
         "--find_queue", "64",
-        "--ht-fill", str(fill),
+        "--ht-fill", str(run_cfg["fill_factor"]),
         "--ht-type", "3",
         "--insert-factor", str(run_cfg["insertFactor"]),
         "--read-factor", str(run_cfg["readFactor"]),
@@ -60,7 +55,12 @@ def run(run_cfg):
         "--batch-len", "16"
     ]
 
-    cmd = make_perf_command(counters, dramhit_args)
+    cmd = []
+    if USE_PERF:
+        cmd = make_perf_command(counters, dramhit_args)
+    else:
+        cmd = ["sudo"] + dramhit_args
+        
     print("Running:", " ".join(cmd))
 
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -83,7 +83,7 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     result    : tuple (stdout, stderr)
     counters  : list of perf counter names to extract
     run_cfg   : dict (runtime configuration)
-    build_cfg : dict (build configuration)
+    build_cfg : dict (build configuration)  
 
     Returns
     -------
@@ -109,13 +109,15 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     row.update(metrics)
 
     # Parse perf counters from stderr
-    cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
-    counter_dic = {k: None for k in counters}
-    for val, name in cnt_pattern.findall(stderr):
-        clean_val = int(val.replace(",", ""))
-        if name in counters:
-            counter_dic[name] = clean_val
-    row.update(counter_dic)
+    
+    if USE_PERF:
+        cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
+        counter_dic = {k: None for k in counters}
+        for val, name in cnt_pattern.findall(stderr):
+            clean_val = int(val.replace(",", ""))
+            if name in counters:
+                counter_dic[name] = clean_val
+        row.update(counter_dic)
 
     return row
 
@@ -129,9 +131,13 @@ def save_json(data, filename):
 if __name__ == "__main__":
     # Build configurations
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2025", "BENCHMARK_BACKEND": "NONE","DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2025_INLINE", "BENCHMARK_BACKEND": "NONE", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
     ]
+    
+#     run_cfgs = [
+#     {"insertFactor": 1, "readFactor": 1, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": 10}
+# ]
 
     # Run configurations (example: vary fill_factor, others fixed)
     run_cfgs = [
@@ -153,4 +159,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "all_dramhit_results.json")
+    save_json(all_results, "dramhit_results_bw.json")

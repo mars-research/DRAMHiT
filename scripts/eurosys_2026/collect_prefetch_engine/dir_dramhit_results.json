@@ -1,0 +1,2162 @@
+[
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 110.0,
+    "get_cycles": 49.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1452.211,
+    "get_mops": 3244.576,
+    "upsert_mops": 0.0,
+    "cycles": 269529777127,
+    "l1d_pend_miss.fb_full": 134014141662,
+    "memory_activity.cycles_l1d_miss": 6953446571,
+    "cycle_activity.stalls_total": 133304738613
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 116.0,
+    "get_cycles": 51.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1370.134,
+    "get_mops": 3080.506,
+    "upsert_mops": 0.0,
+    "cycles": 548426019931,
+    "l1d_pend_miss.fb_full": 253196224834,
+    "memory_activity.cycles_l1d_miss": 13851158727,
+    "cycle_activity.stalls_total": 262159259817
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 118.0,
+    "get_cycles": 55.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1348.677,
+    "get_mops": 2901.461,
+    "upsert_mops": 0.0,
+    "cycles": 871008519739,
+    "l1d_pend_miss.fb_full": 364086771681,
+    "memory_activity.cycles_l1d_miss": 28076639932,
+    "cycle_activity.stalls_total": 406665561353
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 126.0,
+    "get_cycles": 59.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1266.735,
+    "get_mops": 2672.67,
+    "upsert_mops": 0.0,
+    "cycles": 1262080393557,
+    "l1d_pend_miss.fb_full": 467682371934,
+    "memory_activity.cycles_l1d_miss": 65233456171,
+    "cycle_activity.stalls_total": 580963596841
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 139.0,
+    "get_cycles": 66.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1147.366,
+    "get_mops": 2412.973,
+    "upsert_mops": 0.0,
+    "cycles": 1751870509153,
+    "l1d_pend_miss.fb_full": 576906261901,
+    "memory_activity.cycles_l1d_miss": 169017959682,
+    "cycle_activity.stalls_total": 801942650473
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 155.0,
+    "get_cycles": 73.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1027.285,
+    "get_mops": 2163.343,
+    "upsert_mops": 0.0,
+    "cycles": 2351369730678,
+    "l1d_pend_miss.fb_full": 696104033684,
+    "memory_activity.cycles_l1d_miss": 370747702008,
+    "cycle_activity.stalls_total": 1069917809315
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 181.0,
+    "get_cycles": 82.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 879.509,
+    "get_mops": 1937.471,
+    "upsert_mops": 0.0,
+    "cycles": 3082231730986,
+    "l1d_pend_miss.fb_full": 841467074584,
+    "memory_activity.cycles_l1d_miss": 506512517793,
+    "cycle_activity.stalls_total": 1387761246107
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 235.0,
+    "get_cycles": 95.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 680.017,
+    "get_mops": 1678.222,
+    "upsert_mops": 0.0,
+    "cycles": 4064185676657,
+    "l1d_pend_miss.fb_full": 1013899074961,
+    "memory_activity.cycles_l1d_miss": 602256498818,
+    "cycle_activity.stalls_total": 1784539207543
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 392.0,
+    "get_cycles": 125.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 408.093,
+    "get_mops": 1271.911,
+    "upsert_mops": 0.0,
+    "cycles": 5955246668367,
+    "l1d_pend_miss.fb_full": 1244034747128,
+    "memory_activity.cycles_l1d_miss": 844268634360,
+    "cycle_activity.stalls_total": 2460247106321
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 157.0,
+    "get_cycles": 76.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2034.951,
+    "get_mops": 4199.367,
+    "upsert_mops": 0.0,
+    "cycles": 373458692351,
+    "l1d_pend_miss.fb_full": 236132925471,
+    "memory_activity.cycles_l1d_miss": 11064126891,
+    "cycle_activity.stalls_total": 238688578535
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 156.0,
+    "get_cycles": 84.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2041.617,
+    "get_mops": 3792.562,
+    "upsert_mops": 0.0,
+    "cycles": 841083820108,
+    "l1d_pend_miss.fb_full": 532363567638,
+    "memory_activity.cycles_l1d_miss": 32711437290,
+    "cycle_activity.stalls_total": 550817718630
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 160.0,
+    "get_cycles": 92.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1990.733,
+    "get_mops": 3476.55,
+    "upsert_mops": 0.0,
+    "cycles": 1379767301890,
+    "l1d_pend_miss.fb_full": 849870330971,
+    "memory_activity.cycles_l1d_miss": 68416659197,
+    "cycle_activity.stalls_total": 909812361627
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 173.0,
+    "get_cycles": 98.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1849.347,
+    "get_mops": 3247.134,
+    "upsert_mops": 0.0,
+    "cycles": 1979153610341,
+    "l1d_pend_miss.fb_full": 1165773597390,
+    "memory_activity.cycles_l1d_miss": 139506269762,
+    "cycle_activity.stalls_total": 1289932295802
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 193.0,
+    "get_cycles": 106.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1651.026,
+    "get_mops": 3003.45,
+    "upsert_mops": 0.0,
+    "cycles": 2672586275670,
+    "l1d_pend_miss.fb_full": 1492603801092,
+    "memory_activity.cycles_l1d_miss": 329542242317,
+    "cycle_activity.stalls_total": 1712420933430
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 198.0,
+    "get_cycles": 115.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1614.353,
+    "get_mops": 2774.728,
+    "upsert_mops": 0.0,
+    "cycles": 3516874126335,
+    "l1d_pend_miss.fb_full": 1902740652685,
+    "memory_activity.cycles_l1d_miss": 682183634088,
+    "cycle_activity.stalls_total": 2219193150854
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 244.0,
+    "get_cycles": 126.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1311.176,
+    "get_mops": 2530.038,
+    "upsert_mops": 0.0,
+    "cycles": 4512639697837,
+    "l1d_pend_miss.fb_full": 2407603838162,
+    "memory_activity.cycles_l1d_miss": 1080548341714,
+    "cycle_activity.stalls_total": 2793242861501
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 306.0,
+    "get_cycles": 143.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1043.613,
+    "get_mops": 2229.556,
+    "upsert_mops": 0.0,
+    "cycles": 5863484964536,
+    "l1d_pend_miss.fb_full": 3070143543193,
+    "memory_activity.cycles_l1d_miss": 1490330022018,
+    "cycle_activity.stalls_total": 3540672531923
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-OFF-branched-OFF",
+    "set_cycles": 542.0,
+    "get_cycles": 197.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 590.218,
+    "get_mops": 1620.409,
+    "upsert_mops": 0.0,
+    "cycles": 8645889971420,
+    "l1d_pend_miss.fb_full": 4293736929063,
+    "memory_activity.cycles_l1d_miss": 1970541275948,
+    "cycle_activity.stalls_total": 5077969217630
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 105.0,
+    "get_cycles": 45.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1520.676,
+    "get_mops": 3480.073,
+    "upsert_mops": 0.0,
+    "cycles": 237846389554,
+    "l1d_pend_miss.fb_full": 118068060709,
+    "memory_activity.cycles_l1d_miss": 9852844248,
+    "cycle_activity.stalls_total": 86339041321
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 108.0,
+    "get_cycles": 48.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1480.541,
+    "get_mops": 3323.633,
+    "upsert_mops": 0.0,
+    "cycles": 485748624408,
+    "l1d_pend_miss.fb_full": 214570555923,
+    "memory_activity.cycles_l1d_miss": 19999360063,
+    "cycle_activity.stalls_total": 164034611557
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 112.0,
+    "get_cycles": 51.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1422.29,
+    "get_mops": 3130.717,
+    "upsert_mops": 0.0,
+    "cycles": 769850467917,
+    "l1d_pend_miss.fb_full": 291571160462,
+    "memory_activity.cycles_l1d_miss": 34329286229,
+    "cycle_activity.stalls_total": 253837010759
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 120.0,
+    "get_cycles": 55.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1326.804,
+    "get_mops": 2873.818,
+    "upsert_mops": 0.0,
+    "cycles": 1120261492237,
+    "l1d_pend_miss.fb_full": 343210007352,
+    "memory_activity.cycles_l1d_miss": 58613324841,
+    "cycle_activity.stalls_total": 373537845057
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 129.0,
+    "get_cycles": 61.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1239.921,
+    "get_mops": 2593.893,
+    "upsert_mops": 0.0,
+    "cycles": 1569554154374,
+    "l1d_pend_miss.fb_full": 381601567318,
+    "memory_activity.cycles_l1d_miss": 128746715281,
+    "cycle_activity.stalls_total": 544097102167
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 148.0,
+    "get_cycles": 67.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1080.028,
+    "get_mops": 2353.086,
+    "upsert_mops": 0.0,
+    "cycles": 2103714648689,
+    "l1d_pend_miss.fb_full": 426209972204,
+    "memory_activity.cycles_l1d_miss": 287504025164,
+    "cycle_activity.stalls_total": 750652556550
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 176.0,
+    "get_cycles": 74.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 905.379,
+    "get_mops": 2136.206,
+    "upsert_mops": 0.0,
+    "cycles": 2733125088322,
+    "l1d_pend_miss.fb_full": 506023705075,
+    "memory_activity.cycles_l1d_miss": 499797821586,
+    "cycle_activity.stalls_total": 986252013325
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 232.0,
+    "get_cycles": 85.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 686.921,
+    "get_mops": 1880.1,
+    "upsert_mops": 0.0,
+    "cycles": 3566741964515,
+    "l1d_pend_miss.fb_full": 651984061789,
+    "memory_activity.cycles_l1d_miss": 726186965469,
+    "cycle_activity.stalls_total": 1272270530707
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 404.0,
+    "get_cycles": 113.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 396.004,
+    "get_mops": 1405.235,
+    "upsert_mops": 0.0,
+    "cycles": 5218745199442,
+    "l1d_pend_miss.fb_full": 1029400570740,
+    "memory_activity.cycles_l1d_miss": 947953402266,
+    "cycle_activity.stalls_total": 1780758931540
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 160.0,
+    "get_cycles": 74.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1994.967,
+    "get_mops": 4306.304,
+    "upsert_mops": 0.0,
+    "cycles": 365689064036,
+    "l1d_pend_miss.fb_full": 229480376226,
+    "memory_activity.cycles_l1d_miss": 39205617261,
+    "cycle_activity.stalls_total": 212028232448
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 165.0,
+    "get_cycles": 82.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1931.001,
+    "get_mops": 3861.723,
+    "upsert_mops": 0.0,
+    "cycles": 818579563650,
+    "l1d_pend_miss.fb_full": 522960045093,
+    "memory_activity.cycles_l1d_miss": 93537306522,
+    "cycle_activity.stalls_total": 490552700363
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 162.0,
+    "get_cycles": 94.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1974.916,
+    "get_mops": 3372.781,
+    "upsert_mops": 0.0,
+    "cycles": 1332934002880,
+    "l1d_pend_miss.fb_full": 850732398247,
+    "memory_activity.cycles_l1d_miss": 157708514243,
+    "cycle_activity.stalls_total": 806758000934
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 202.0,
+    "get_cycles": 100.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1578.191,
+    "get_mops": 3193.312,
+    "upsert_mops": 0.0,
+    "cycles": 1889800844275,
+    "l1d_pend_miss.fb_full": 1174724401295,
+    "memory_activity.cycles_l1d_miss": 224603518653,
+    "cycle_activity.stalls_total": 1131092222588
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 197.0,
+    "get_cycles": 106.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1621.05,
+    "get_mops": 2994.472,
+    "upsert_mops": 0.0,
+    "cycles": 2518381703168,
+    "l1d_pend_miss.fb_full": 1514825864974,
+    "memory_activity.cycles_l1d_miss": 341134364922,
+    "cycle_activity.stalls_total": 1480263150721
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 235.0,
+    "get_cycles": 121.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1359.779,
+    "get_mops": 2633.927,
+    "upsert_mops": 0.0,
+    "cycles": 3244216067205,
+    "l1d_pend_miss.fb_full": 1924371868200,
+    "memory_activity.cycles_l1d_miss": 581107975000,
+    "cycle_activity.stalls_total": 1875756698657
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 288.0,
+    "get_cycles": 123.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1109.302,
+    "get_mops": 2588.397,
+    "upsert_mops": 0.0,
+    "cycles": 4147409248929,
+    "l1d_pend_miss.fb_full": 2456259311037,
+    "memory_activity.cycles_l1d_miss": 906112262663,
+    "cycle_activity.stalls_total": 2382660351671
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 349.0,
+    "get_cycles": 139.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 916.367,
+    "get_mops": 2296.36,
+    "upsert_mops": 0.0,
+    "cycles": 5357670199845,
+    "l1d_pend_miss.fb_full": 3168426650429,
+    "memory_activity.cycles_l1d_miss": 1297295756455,
+    "cycle_activity.stalls_total": 3034797200693
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-OFF-branched-OFF",
+    "set_cycles": 865.0,
+    "get_cycles": 211.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 369.705,
+    "get_mops": 1511.036,
+    "upsert_mops": 0.0,
+    "cycles": 7729757889593,
+    "l1d_pend_miss.fb_full": 4490216933092,
+    "memory_activity.cycles_l1d_miss": 1767670066787,
+    "cycle_activity.stalls_total": 4266886813960
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 107.0,
+    "get_cycles": 49.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1481.506,
+    "get_mops": 3255.778,
+    "upsert_mops": 0.0,
+    "cycles": 264192866147,
+    "l1d_pend_miss.fb_full": 130448344241,
+    "memory_activity.cycles_l1d_miss": 3905210167,
+    "cycle_activity.stalls_total": 118516135311
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 107.0,
+    "get_cycles": 49.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1481.958,
+    "get_mops": 3219.841,
+    "upsert_mops": 0.0,
+    "cycles": 520881779138,
+    "l1d_pend_miss.fb_full": 256928882588,
+    "memory_activity.cycles_l1d_miss": 6149491567,
+    "cycle_activity.stalls_total": 230072351456
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 108.0,
+    "get_cycles": 49.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1481.433,
+    "get_mops": 3208.817,
+    "upsert_mops": 0.0,
+    "cycles": 781913789830,
+    "l1d_pend_miss.fb_full": 384658538693,
+    "memory_activity.cycles_l1d_miss": 8617513251,
+    "cycle_activity.stalls_total": 342733121082
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 109.0,
+    "get_cycles": 50.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1462.218,
+    "get_mops": 3145.471,
+    "upsert_mops": 0.0,
+    "cycles": 1055530094450,
+    "l1d_pend_miss.fb_full": 513823783346,
+    "memory_activity.cycles_l1d_miss": 11514754291,
+    "cycle_activity.stalls_total": 460390961280
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 110.0,
+    "get_cycles": 52.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1441.988,
+    "get_mops": 3076.548,
+    "upsert_mops": 0.0,
+    "cycles": 1355937036331,
+    "l1d_pend_miss.fb_full": 649161470445,
+    "memory_activity.cycles_l1d_miss": 14505450972,
+    "cycle_activity.stalls_total": 585543440934
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 114.0,
+    "get_cycles": 55.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1398.175,
+    "get_mops": 2902.371,
+    "upsert_mops": 0.0,
+    "cycles": 1718664276898,
+    "l1d_pend_miss.fb_full": 800225535164,
+    "memory_activity.cycles_l1d_miss": 17995623165,
+    "cycle_activity.stalls_total": 738665817192
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 120.0,
+    "get_cycles": 61.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1325.596,
+    "get_mops": 2614.508,
+    "upsert_mops": 0.0,
+    "cycles": 2221276988427,
+    "l1d_pend_miss.fb_full": 1005253128365,
+    "memory_activity.cycles_l1d_miss": 21343699149,
+    "cycle_activity.stalls_total": 955719711182
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 131.0,
+    "get_cycles": 71.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1213.722,
+    "get_mops": 2241.671,
+    "upsert_mops": 0.0,
+    "cycles": 2982008995308,
+    "l1d_pend_miss.fb_full": 1433124492511,
+    "memory_activity.cycles_l1d_miss": 28261721675,
+    "cycle_activity.stalls_total": 1306604037660
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 159.0,
+    "get_cycles": 96.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1001.09,
+    "get_mops": 1650.305,
+    "upsert_mops": 0.0,
+    "cycles": 4518710554316,
+    "l1d_pend_miss.fb_full": 2432408566843,
+    "memory_activity.cycles_l1d_miss": 73686973517,
+    "cycle_activity.stalls_total": 2123109833695
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 149.0,
+    "get_cycles": 75.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2146.517,
+    "get_mops": 4258.979,
+    "upsert_mops": 0.0,
+    "cycles": 368836620812,
+    "l1d_pend_miss.fb_full": 228631127288,
+    "memory_activity.cycles_l1d_miss": 8667250686,
+    "cycle_activity.stalls_total": 221105261321
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 153.0,
+    "get_cycles": 81.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2089.937,
+    "get_mops": 3921.54,
+    "upsert_mops": 0.0,
+    "cycles": 808590078706,
+    "l1d_pend_miss.fb_full": 527800043143,
+    "memory_activity.cycles_l1d_miss": 21130233081,
+    "cycle_activity.stalls_total": 511471882461
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 153.0,
+    "get_cycles": 86.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2086.526,
+    "get_mops": 3690.292,
+    "upsert_mops": 0.0,
+    "cycles": 1306246565276,
+    "l1d_pend_miss.fb_full": 873529318566,
+    "memory_activity.cycles_l1d_miss": 42387937263,
+    "cycle_activity.stalls_total": 855255128925
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 150.0,
+    "get_cycles": 91.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2122.335,
+    "get_mops": 3515.533,
+    "upsert_mops": 0.0,
+    "cycles": 1829148416818,
+    "l1d_pend_miss.fb_full": 1232897147217,
+    "memory_activity.cycles_l1d_miss": 66648910000,
+    "cycle_activity.stalls_total": 1216954823618
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 157.0,
+    "get_cycles": 95.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2031.749,
+    "get_mops": 3333.369,
+    "upsert_mops": 0.0,
+    "cycles": 2396509316014,
+    "l1d_pend_miss.fb_full": 1619295277033,
+    "memory_activity.cycles_l1d_miss": 90914947544,
+    "cycle_activity.stalls_total": 1605634399766
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 165.0,
+    "get_cycles": 100.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1930.076,
+    "get_mops": 3196.479,
+    "upsert_mops": 0.0,
+    "cycles": 3021754305557,
+    "l1d_pend_miss.fb_full": 2039805453149,
+    "memory_activity.cycles_l1d_miss": 109393004006,
+    "cycle_activity.stalls_total": 2018634739265
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 170.0,
+    "get_cycles": 107.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1879.352,
+    "get_mops": 2972.465,
+    "upsert_mops": 0.0,
+    "cycles": 3802018651776,
+    "l1d_pend_miss.fb_full": 2585706688739,
+    "memory_activity.cycles_l1d_miss": 119164539015,
+    "cycle_activity.stalls_total": 2514103064862
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 191.0,
+    "get_cycles": 125.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1675.167,
+    "get_mops": 2553.507,
+    "upsert_mops": 0.0,
+    "cycles": 5089760457380,
+    "l1d_pend_miss.fb_full": 3648799967717,
+    "memory_activity.cycles_l1d_miss": 122692802645,
+    "cycle_activity.stalls_total": 3392672403335
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2023",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2023-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2023-HASH-ON-simd-OFF",
+    "set_cycles": 254.0,
+    "get_cycles": 176.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1257.832,
+    "get_mops": 1815.652,
+    "upsert_mops": 0.0,
+    "cycles": 7575800148960,
+    "l1d_pend_miss.fb_full": 5693600405267,
+    "memory_activity.cycles_l1d_miss": 164073987634,
+    "cycle_activity.stalls_total": 5154981277444
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 103.0,
+    "get_cycles": 45.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1542.285,
+    "get_mops": 3537.53,
+    "upsert_mops": 0.0,
+    "cycles": 235092905930,
+    "l1d_pend_miss.fb_full": 115783952994,
+    "memory_activity.cycles_l1d_miss": 7257283747,
+    "cycle_activity.stalls_total": 76286693531
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 104.0,
+    "get_cycles": 46.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1533.981,
+    "get_mops": 3467.239,
+    "upsert_mops": 0.0,
+    "cycles": 464796770985,
+    "l1d_pend_miss.fb_full": 230398282956,
+    "memory_activity.cycles_l1d_miss": 13237243544,
+    "cycle_activity.stalls_total": 147406437062
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 105.0,
+    "get_cycles": 46.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1521.085,
+    "get_mops": 3434.499,
+    "upsert_mops": 0.0,
+    "cycles": 699920687639,
+    "l1d_pend_miss.fb_full": 348227751022,
+    "memory_activity.cycles_l1d_miss": 19064300096,
+    "cycle_activity.stalls_total": 220541111151
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 105.0,
+    "get_cycles": 47.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1516.679,
+    "get_mops": 3365.628,
+    "upsert_mops": 0.0,
+    "cycles": 943853575984,
+    "l1d_pend_miss.fb_full": 464333503142,
+    "memory_activity.cycles_l1d_miss": 24523786391,
+    "cycle_activity.stalls_total": 295219278618
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 107.0,
+    "get_cycles": 49.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1485.144,
+    "get_mops": 3245.629,
+    "upsert_mops": 0.0,
+    "cycles": 1210377968283,
+    "l1d_pend_miss.fb_full": 582009582525,
+    "memory_activity.cycles_l1d_miss": 28650736935,
+    "cycle_activity.stalls_total": 374107333522
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 109.0,
+    "get_cycles": 51.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1464.92,
+    "get_mops": 3089.529,
+    "upsert_mops": 0.0,
+    "cycles": 1526690983048,
+    "l1d_pend_miss.fb_full": 704869883485,
+    "memory_activity.cycles_l1d_miss": 32346237266,
+    "cycle_activity.stalls_total": 465533862829
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 114.0,
+    "get_cycles": 56.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1394.141,
+    "get_mops": 2823.552,
+    "upsert_mops": 0.0,
+    "cycles": 1957529700011,
+    "l1d_pend_miss.fb_full": 858582504225,
+    "memory_activity.cycles_l1d_miss": 36877300545,
+    "cycle_activity.stalls_total": 594206565523
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 125.0,
+    "get_cycles": 66.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1274.954,
+    "get_mops": 2413.273,
+    "upsert_mops": 0.0,
+    "cycles": 2665531305859,
+    "l1d_pend_miss.fb_full": 1248130023749,
+    "memory_activity.cycles_l1d_miss": 66006381271,
+    "cycle_activity.stalls_total": 871784414054
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 154.0,
+    "get_cycles": 90.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1035.907,
+    "get_mops": 1761.725,
+    "upsert_mops": 0.0,
+    "cycles": 4090860704059,
+    "l1d_pend_miss.fb_full": 2161735779987,
+    "memory_activity.cycles_l1d_miss": 250793273040,
+    "cycle_activity.stalls_total": 1562149778599
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 147.0,
+    "get_cycles": 73.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2176.627,
+    "get_mops": 4368.524,
+    "upsert_mops": 0.0,
+    "cycles": 360276210253,
+    "l1d_pend_miss.fb_full": 223574577278,
+    "memory_activity.cycles_l1d_miss": 35277467471,
+    "cycle_activity.stalls_total": 197964492498
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 154.0,
+    "get_cycles": 79.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2072.373,
+    "get_mops": 4015.438,
+    "upsert_mops": 0.0,
+    "cycles": 789515870999,
+    "l1d_pend_miss.fb_full": 508827150590,
+    "memory_activity.cycles_l1d_miss": 89761826488,
+    "cycle_activity.stalls_total": 462620048591
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 153.0,
+    "get_cycles": 84.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2085.858,
+    "get_mops": 3783.153,
+    "upsert_mops": 0.0,
+    "cycles": 1266768800459,
+    "l1d_pend_miss.fb_full": 827887181178,
+    "memory_activity.cycles_l1d_miss": 156584182063,
+    "cycle_activity.stalls_total": 772549603899
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 150.0,
+    "get_cycles": 88.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2124.56,
+    "get_mops": 3619.003,
+    "upsert_mops": 0.0,
+    "cycles": 1772947487243,
+    "l1d_pend_miss.fb_full": 1169640645014,
+    "memory_activity.cycles_l1d_miss": 229041812023,
+    "cycle_activity.stalls_total": 1101890720321
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 157.0,
+    "get_cycles": 93.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 2031.996,
+    "get_mops": 3440.801,
+    "upsert_mops": 0.0,
+    "cycles": 2330763930910,
+    "l1d_pend_miss.fb_full": 1544923448436,
+    "memory_activity.cycles_l1d_miss": 305365555677,
+    "cycle_activity.stalls_total": 1465011457794
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 165.0,
+    "get_cycles": 97.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1931.711,
+    "get_mops": 3279.175,
+    "upsert_mops": 0.0,
+    "cycles": 2931993597482,
+    "l1d_pend_miss.fb_full": 1940940027804,
+    "memory_activity.cycles_l1d_miss": 378598632507,
+    "cycle_activity.stalls_total": 1836513153787
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 172.0,
+    "get_cycles": 106.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1857.506,
+    "get_mops": 3018.307,
+    "upsert_mops": 0.0,
+    "cycles": 3689766703526,
+    "l1d_pend_miss.fb_full": 2443129573059,
+    "memory_activity.cycles_l1d_miss": 464750113133,
+    "cycle_activity.stalls_total": 2286047125442
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 206.0,
+    "get_cycles": 128.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1550.794,
+    "get_mops": 2487.475,
+    "upsert_mops": 0.0,
+    "cycles": 4879143783831,
+    "l1d_pend_miss.fb_full": 3282532888995,
+    "memory_activity.cycles_l1d_miss": 663749358506,
+    "cycle_activity.stalls_total": 3038802149573
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "DATA_GEN": "HASH",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DATA_GEN=HASH-DRAMHiT_VARIANT=2025-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025-HASH-ON-simd-OFF",
+    "set_cycles": 261.0,
+    "get_cycles": 175.0,
+    "upsert_cycles": 1.0,
+    "set_mops": 1226.033,
+    "get_mops": 1828.06,
+    "upsert_mops": 0.0,
+    "cycles": 7167150729649,
+    "l1d_pend_miss.fb_full": 4906856809786,
+    "memory_activity.cycles_l1d_miss": 1266604252835,
+    "cycle_activity.stalls_total": 4580309598581
+  }
+]

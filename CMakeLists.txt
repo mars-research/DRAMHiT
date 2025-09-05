@@ -28,6 +28,8 @@ option(BUDDY_QUEUE "remote access experiment" OFF)
 option(REMOTE_QUEUE "remote prefetch engine" OFF)
 option(READ_BEFORE_CAS "read before cas" OFF)
 option(CAS_FIND_BANDWIDTH_TEST "read bandwidth test" OFF)
+option(GROWT "growt hashtable" ON)
+
 
 if(CAS_FIND_BANDWIDTH_TEST) 
         add_definitions(-DCAS_FIND_BANDWIDTH_TEST)
@@ -136,6 +138,7 @@ target_link_libraries(dramhit_lib PRIVATE
 
 
 
+
 if(BUILD_APP)
     # Build all the source files for the executable.
     add_executable(dramhit
@@ -167,6 +170,13 @@ if(BUILD_APP)
         Threads::Threads
     )
 
+    if(GROWT)
+        list(APPEND CMAKE_PREFIX_PATH "/opt/intel/oneapi/tbb/2022.2/lib/cmake/tbb")
+        find_package(TBB REQUIRED)
+        add_definitions(-DGROWT)
+        target_include_directories(dramhit PUBLIC growt /opt/intel/oneapi/tbb/2022.2/include/)
+        target_link_libraries(dramhit PRIVATE TBB::tbb TBB::tbbmalloc)
+    endif()
 
 endif()
 

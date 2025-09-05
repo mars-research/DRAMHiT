@@ -16,6 +16,11 @@
 #include "./hashtables/cas_kht.hpp"
 #include "numa.hpp"
 
+#ifdef GROWT
+#include "hashtables/growt_kht.hpp"
+#endif
+
+
 #ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
@@ -48,6 +53,7 @@
 #endif
 
 #include "zipf_distribution.hpp"
+
 
 namespace kmercounter {
 
@@ -156,7 +162,7 @@ void sync_complete(void) {
 
   if (cur_phase == ExecPhase::finds) {
     if (!zipfian_finds) {
-      PLOGI.printf("Zipfian find iter: %lu start", zipfian_iter);
+      // PLOGI.printf("Zipfian find iter: %lu start", zipfian_iter);
 #if defined(WITH_PCM)
       g_pcm_cnt.start_socket();
 #endif
@@ -165,7 +171,7 @@ void sync_complete(void) {
 
     } else {
       g_find_end = RDTSCP();
-      PLOGI.printf("Zipfian find iter: %lu end", zipfian_iter);
+      // PLOGI.printf("Zipfian find iter: %lu end", zipfian_iter);
 #if defined(WITH_PCM)
       g_pcm_cnt.stop_socket();
 #endif
@@ -175,19 +181,19 @@ void sync_complete(void) {
 #if defined(WITH_PCM)
         g_find_bw[zipfian_iter] =
             g_pcm_cnt.get_bw(g_find_durations[zipfian_iter]);
-#endif
+#endif  
       }
     }
   } else if (cur_phase == ExecPhase::insertions) {
     if (!zipfian_inserts) {
-      PLOGI.printf("Zipfian insert iter: %lu start", zipfian_iter);
+      // PLOGI.printf("Zipfian insert iter: %lu start", zipfian_iter);
 
       zipfian_inserts = true;
       g_insert_start = RDTSC_START();
     } else {
       g_insert_end = RDTSCP();
       zipfian_inserts = false;
-      PLOGI.printf("Zipfian insert iter: %lu end", zipfian_iter);
+      // PLOGI.printf("Zipfian insert iter: %lu end", zipfian_iter);
 
       if (zipfian_iter < config.insert_factor) {
         g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
@@ -208,6 +214,13 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
     case PARTITIONED_HT:
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
+      break;
+#endif
+
+#ifdef GROWT
+    case GROWHT:
+      kmer_ht =
+          new GrowtHashTable(sz);
       break;
 #endif
     case CASHTPP:
@@ -343,7 +356,7 @@ int Application::spawn_shard_threads() {
 
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
-  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT) {
+  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT || config.ht_type == GROWHT) {
     auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
     HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
     PLOGI.printf("Total inserts %" PRIu64
@@ -695,6 +708,9 @@ int Application::process(int argc, char *argv[]) {
         break;
       case ARRAY_HT:
         PLOG_INFO.printf("Hashtable type : Array HT");
+        break;
+      case GROWHT:
+        PLOG_INFO.printf("Hashtable type : Grow HT");
         break;
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
