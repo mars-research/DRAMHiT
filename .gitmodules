@@ -28,3 +28,6 @@
 [submodule "tools/msr-safe"]
 	path = tools/msr-safe
 	url = https://github.com/mars-research/msr-safe-ubuntu24.git
+[submodule "growt"]
+	path = growt
+	url = https://github.com/mars-research/growt-folk.git

@@ -35,9 +35,9 @@ class GrowtHashTable : public BaseHashTable {
 
       if (!table) {
         assert(this->ref_cnt == 0);
-        this->table = new growht_type(capacity);
+        this->table = new growht_type(capacity/2);
 
-        std::cout << "table name " << table->name() << std::endl;
+        std::cout << "table name " << table->name() << " size " << table->capacity() << std::endl;
       }
       this->ref_cnt++;
     }
