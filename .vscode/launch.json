@@ -1,56 +1,44 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [{
-        "name": "(gdb) Launch",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "/opt/DRAMHiT/build/dramhit",
-        "args": [
-        "--find_queue_sz", 
-        "32",
-        "--ht-fill",
-        "10",
-        "--ht-type", 
-        "3",
-        "--insert-factor",
-        "1",
-        "--num-threads",
-        "1",
-        "--numa-split",
-        "1",
-        "--no-prefetch",
-        "0",
-        "--mode",
-        "11",
-        "--ht-size",
-        "1024",
-        "--skew",
-        "0.01",
-        "--hw-pref",
-        "0",
-        "--batch-len",
-        "16"],
-        "stopAtEntry": true,
-        "cwd": "${fileDirname}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "gdb",
-        "setupCommands": [
-            {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-            },
-            {
-                "description": "Set Disassembly Flavor to Intel",
-                "text": "-gdb-set disassembly-flavor intel",
-                "ignoreFailures": true
-            }
-        ]
-    }
-        
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/opt/DRAMHiT/build/dramhit",
+            "args": [
+                "--find_queue_sz", "32",
+                "--ht-fill", "10",
+                "--ht-type", "7",
+                "--insert-factor", "1",
+                "--read-factor", "1",
+                "--num-threads", "128",
+                "--numa-split", "1",
+                "--no-prefetch", "0",
+                "--mode", "11",
+                "--ht-size", "160",
+                "--skew", "0.01",
+                "--hw-pref", "0",
+                "--batch-len", "16"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/nix/store/fmkhiwpkabrbham1s56mv8h3zyzgi246-gdb-12.1/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        }
     ]
 }

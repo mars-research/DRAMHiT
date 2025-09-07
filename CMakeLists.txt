@@ -29,6 +29,7 @@ option(REMOTE_QUEUE "remote prefetch engine" OFF)
 option(READ_BEFORE_CAS "read before cas" OFF)
 option(CAS_FIND_BANDWIDTH_TEST "read bandwidth test" OFF)
 option(GROWT "growt hashtable" ON)
+option(CLHT " CLHT hashtable" OFF)
 
 
 if(CAS_FIND_BANDWIDTH_TEST) 
@@ -177,6 +178,26 @@ if(BUILD_APP)
         target_include_directories(dramhit PUBLIC growt /opt/intel/oneapi/tbb/2022.2/include/)
         target_link_libraries(dramhit PRIVATE TBB::tbb TBB::tbbmalloc)
     endif()
+
+    if(CLHT)
+        # LINK CLHT
+        # Include external headers
+        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/CLHT/external/include)
+        # Link external prebuilt libraries
+        link_directories(${CMAKE_CURRENT_SOURCE_DIR}/CLHT/external/lib)
+        # Link CLHT and other prebuilt libraries to dramhit
+        target_link_libraries(dramhit PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/CLHT/libclht.a
+            ${CMAKE_CURRENT_SOURCE_DIR}/CLHT/external/lib/libssmem.a
+            ${CMAKE_CURRENT_SOURCE_DIR}/CLHT/external/lib/libsspfd.a
+        )
+        # required by clht
+        add_definitions(-DCORES_PER_SOCKET=64)
+        add_definitions(-DNUMBER_OF_SOCKETS=2)
+        add_definitions(-DCACHE_LINE_SIZE=64)
+    endif()
+
+
 
 endif()
 

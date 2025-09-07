@@ -19,7 +19,7 @@
 #ifdef GROWT
 #include "hashtables/growt_kht.hpp"
 #endif
-
+#include "hashtables/clht_kht.hpp"
 
 #ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
@@ -229,6 +229,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
     case ARRAY_HT:
       kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);
+      break;
+    case CLHT_HT:
+      // clht_create already allocates mem
+      kmer_ht = new CLHT_HashTable(sz); 
       break;
     default:
       PLOG_FATAL.printf("HT type not implemented");
@@ -711,6 +715,9 @@ int Application::process(int argc, char *argv[]) {
         break;
       case GROWHT:
         PLOG_INFO.printf("Hashtable type : Grow HT");
+        break;
+      case CLHT_HT:
+        PLOG_INFO.printf("Hashtable type : CLHT HT");
         break;
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
