@@ -28,7 +28,7 @@ option(BUDDY_QUEUE "remote access experiment" OFF)
 option(REMOTE_QUEUE "remote prefetch engine" OFF)
 option(READ_BEFORE_CAS "read before cas" OFF)
 option(CAS_FIND_BANDWIDTH_TEST "read bandwidth test" OFF)
-option(GROWT "growt hashtable" ON)
+option(GROWT "growt hashtable" OFF)
 option(CLHT " CLHT hashtable" OFF)
 
 
@@ -182,7 +182,7 @@ if(BUILD_APP)
     if(CLHT)
         # LINK CLHT
         # Include external headers
-        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/CLHT/external/include)
+        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/CLHT/external/include ${CMAKE_CURRENT_SOURCE_DIR}/CLHT/include)
         # Link external prebuilt libraries
         link_directories(${CMAKE_CURRENT_SOURCE_DIR}/CLHT/external/lib)
         # Link CLHT and other prebuilt libraries to dramhit
@@ -195,6 +195,7 @@ if(BUILD_APP)
         add_definitions(-DCORES_PER_SOCKET=64)
         add_definitions(-DNUMBER_OF_SOCKETS=2)
         add_definitions(-DCACHE_LINE_SIZE=64)
+        add_definitions(-DCLHT)
     endif()
 
 

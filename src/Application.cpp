@@ -230,10 +230,12 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
     case ARRAY_HT:
       kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);
       break;
+#ifdef CLHT
     case CLHT_HT:
       // clht_create already allocates mem
       kmer_ht = new CLHT_HashTable(sz); 
       break;
+#endif 
     default:
       PLOG_FATAL.printf("HT type not implemented");
       exit(-1);
@@ -360,11 +362,18 @@ int Application::spawn_shard_threads() {
 
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
-  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT || config.ht_type == GROWHT) {
-    auto orig_num_inserts = HT_TESTS_NUM_INSERTS;
-    HT_TESTS_NUM_INSERTS /= (double)config.num_threads;
-    PLOGI.printf("Total inserts %" PRIu64
-                 " | num_threads %u | scaled inserts per thread %" PRIu64 "",
+  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT || config.ht_type == GROWHT || 
+  config.ht_type == CLHT_HT) {
+
+
+    uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
+
+  #ifdef CLHT
+    HT_TESTS_NUM_INSERTS =  (orig_num_inserts * 3 / config.num_threads) / 4; // actual clht capacty if bucket num * 3 
+  #else
+    HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
+  #endif
+    PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
                  orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
 
@@ -713,12 +722,16 @@ int Application::process(int argc, char *argv[]) {
       case ARRAY_HT:
         PLOG_INFO.printf("Hashtable type : Array HT");
         break;
+  #ifdef GROWT
       case GROWHT:
         PLOG_INFO.printf("Hashtable type : Grow HT");
         break;
+  #endif
+  #ifdef CLHT
       case CLHT_HT:
         PLOG_INFO.printf("Hashtable type : CLHT HT");
         break;
+  #endif
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
                      config.ht_type);

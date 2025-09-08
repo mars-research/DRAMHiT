@@ -33,9 +33,10 @@ class GrowtHashTable : public BaseHashTable {
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
+      capacity = capacity/2; 
       if (!table) {
         assert(this->ref_cnt == 0);
-        this->table = new growht_type(capacity/2);
+        this->table = new growht_type(capacity);
 
         std::cout << "table name " << table->name() << " size " << table->capacity() << std::endl;
       }
@@ -115,7 +116,7 @@ class GrowtHashTable : public BaseHashTable {
 
   size_t get_fill() const override { return 0; }
 
-  size_t get_capacity() const override { return 0; }
+  size_t get_capacity() const override { return table->capacity(); }
 
   size_t get_max_count() const override {
     return 0;  // Growt doesn’t expose max load

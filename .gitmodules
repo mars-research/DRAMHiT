@@ -31,3 +31,6 @@
 [submodule "growt"]
 	path = growt
 	url = https://github.com/mars-research/growt-folk.git
+[submodule "CLHT"]
+	path = CLHT
+	url = https://github.com/mars-research/CLHT.git

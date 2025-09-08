@@ -62,7 +62,7 @@ bool zipfian_inserts = false;
 extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
 static inline uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
 
-void do_batch_insertion_growt(BaseHashTable *ht, uint64_t batch_num,
+void do_batch_insertion_other(BaseHashTable *ht, uint64_t batch_num,
                               uint32_t batch_len, uint64_t idx) {
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
@@ -98,7 +98,7 @@ void do_batch_insertion_growt(BaseHashTable *ht, uint64_t batch_num,
   free(items);
 }
 
-uint64_t do_batch_find_growt(BaseHashTable *ht, uint64_t batch_num,
+uint64_t do_batch_find_other(BaseHashTable *ht, uint64_t batch_num,
                        uint32_t batch_len, uint32_t idx) {
   uint64_t found = 0;
 #ifdef LATENCY_COLLECTION
@@ -241,7 +241,7 @@ OpTimings do_zipfian_inserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier,
     std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
-#if defined(GROWT)
+#if defined(GROWT) || defined(CLHT)
 #else
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
 #endif
@@ -280,8 +280,8 @@ OpTimings do_zipfian_inserts(
     }
     sync_barrier->arrive_and_wait();
 
-#if defined(GROWT)
-    do_batch_insertion_growt(hashtable, batches, config.batch_len, idx);
+#if defined(GROWT) || defined(CLHT)
+    do_batch_insertion_other(hashtable, batches, config.batch_len, idx);
 #else
     do_batch_insertion(cas_ht, batches, config.batch_len, idx);
 #endif
@@ -305,156 +305,13 @@ OpTimings do_zipfian_inserts(
   return {duration, ops};
 }
 
-OpTimings old_zipfian_gets(
-    BaseHashTable *hashtable, unsigned int num_threads, unsigned int id,
-    auto sync_barrier,
-    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
-  auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
-
-  if (config.read_factor == 0) {
-    return {1, 1};
-  }
-  std::uint64_t duration{};
-  std::uint64_t found = 0, not_found = 0;
-
-  collector_type *const collector{};
-
-  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
-      64, sizeof(InsertFindArgument) * config.batch_len);
-
-#ifdef BUDDY_QUEUE
-  FindResult *results = new FindResult[(config.batch_len * 2)];
-#else
-  FindResult *results = new FindResult[config.batch_len];
-#endif
-
-  ValuePairs vp = std::make_pair(0, results);
-  sync_barrier->arrive_and_wait();  // this calls sync_complete
-  stop_sync = true;
-
-  // THis ensures that for a given hashtable size, regardless of
-  // the fill factor, number of finds is the same.
-  // const uint64_t num_finds = config.ht_size / num_threads;
-  const uint64_t num_finds = HT_TESTS_NUM_INSERTS;  // old zipf test
-
-  uint64_t start;
-  uint64_t end;
-
-  std::uint64_t key{};
-  std::size_t next_pollution{};
-
-#if defined(INFLIGHT)
-  struct xorwow_state _xw_state, init_state;
-  xorwow_init(&_xw_state);
-  init_state = _xw_state;
-#endif
-  // perf resume()
-  int perf_ctl_fd = 10;
-  int perf_ctl_ack_fd = 11;
-  char ack[5];
-
-  // if (id == 0) {
-  //   write(perf_ctl_fd, "enable\n", 8);
-  //   read(perf_ctl_ack_fd, ack, 5);
-  //   assert(strcmp(ack, "ack\n") == 0);
-
-  //   // write(perf_ctl_fd, "enable UNC_M_CAS_COUNT.ALL\n",
-  //   //       strlen("enable UNC_M_CAS_COUNT.ALL\n"));
-  //   // read(perf_ctl_ack_fd, ack, 5);
-  //   // assert(strcmp(ack, "ack\n") == 0);
-  // }
-  start = RDTSC_START();
-
-  for (auto j = 0u; j < config.read_factor; j++) {
-    uint64_t value;
-#if defined(INFLIGHT)
-    _xw_state = init_state;
-
-#elif defined(ZIPFIAN)
-    uint64_t zipf_idx = 0;
-#else
-    value = id * HT_TESTS_NUM_INSERTS;
-#endif
-    uint64_t batches = num_finds / config.batch_len;
-    for (uint64_t n = 0; n < batches; n++) {
-      for (int i = 0; i < config.batch_len; i++) {
-#if defined(INFLIGHT)
-        // value = xorwow(&_xw_state);
-        value = hash_knuth((id * HT_TESTS_NUM_INSERTS));
-#elif defined(ZIPFIAN)
-        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_set->size()) {
-          __builtin_prefetch(&zipf_set->at(zipf_idx + 16), false, 3);
-        }
-        value = zipf_set->at(zipf_idx);
-        zipf_idx++;
-#else
-        value++;
-#endif
-
-        items[i] = {value, n + i};
-      }  // end for loop
-
-#ifdef NOPREFETCH
-      hashtable->find_noprefetch(&value, collector);
-#else
-      //  if (++key == config.batch_len) {
-      vp.first = 0;
-      cas_ht->find_batch(InsertFindArguments(items, config.batch_len), vp,
-                         collector);
-      found += vp.first;
-      // vp.first = 0;
-      // key = 0;
-      //    }
-#endif
-    }
-
-#ifndef NOPREFETCH
-    vp.first = 0;
-    while (cas_ht->cas_flush_find_queue(vp, collector) > 0) {
-      found += vp.first;
-      vp.first = 0;
-    }
-#endif
-
-    // if(id==0)
-    //   __itt_event_end(vtune_evt);
-  }
-
-  end = RDTSCP();
-  duration += end - start;
-
-  sync_barrier->arrive_and_wait();
-  // perf pause()
-  // if (id == 0) {
-  //   write(perf_ctl_fd, "disable\n", 9);
-  //   read(perf_ctl_ack_fd, ack, 5);
-  //   assert(strcmp(ack, "ack\n") == 0);
-  // }
-
-  if (found > 0) {
-    PLOGI.printf("DEBUG: thread %u | actual found %lu | cycles per get: %lu",
-                 id, found, duration / found);
-  }
-
-#ifdef LATENCY_COLLECTION
-  collector->dump("find", id);
-#endif
-
-  // We need to count the cachelines from our zipfian prefetch, our local zipf
-  // set is HT_TESTS_NUM_INSERTS of keys we prefetch every 8, since 8 fit in
-  // cacheline, so we should count additional HT_TESTS_NUM_INSERTS/8
-  // return {duration, (HT_TESTS_NUM_INSERTS+(HT_TESTS_NUM_INSERTS/8)) *
-  // config.read_factor};
-  return {duration, HT_TESTS_NUM_INSERTS * config.read_factor};
-  return {duration, found};
-}
 
 OpTimings do_zipfian_gets(
     BaseHashTable *hashtable, unsigned int num_threads, unsigned int id,
     auto sync_barrier,
     std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
 
-#if defined(GROWT)
+#if defined(GROWT) || defined(CLHT)
 
 #else
   auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
@@ -491,8 +348,8 @@ OpTimings do_zipfian_gets(
       zipfian_finds = false;
     }
     sync_barrier->arrive_and_wait();
-#if defined(GROWT)
-    found = do_batch_find_growt(hashtable, batches, config.batch_len, idx);
+#if defined(GROWT) || defined(CLHT)
+    found = do_batch_find_other(hashtable, batches, config.batch_len, idx);
 
 #else
     found = do_batch_find(cas_ht, batches, config.batch_len, idx);
@@ -503,12 +360,10 @@ OpTimings do_zipfian_gets(
     }
     sync_barrier->arrive_and_wait();
 
-    if (found > 0) {
-      double per_found = (double)found / ops_per_iter;
-      //if (per_found < 0.8) {
-        PLOGI.printf("op issued %lu, actual found %lu, perc %.3f",ops_per_iter, found, per_found);
-      //}
-    }
+    // if (found > 0) {
+    //   double per_found = (double)found / ops_per_iter;
+    //     PLOGI.printf("op issued %lu, actual found %lu, perc %.3f",ops_per_iter, found, per_found);
+    // }
   }
 
   uint64_t duration = 0;
@@ -526,13 +381,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   OpTimings insert_timings{};
   OpTimings find_timings{};
   OpTimings upsertion_timings{1, 1};
-
-#if defined(GROWT)
-
-#else
-  CASHashTable<KVType, ItemQueue> *cas_ht =
-      static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
-#endif
 
   // generate zipfian here.
   std::vector<key_type, huge_page_allocator<key_type>> *zipf_set_local;
@@ -642,37 +490,13 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     std::shuffle(std::begin(*zipf_set_local), std::end(*zipf_set_local), rng);
   }
 #endif
-  // Flush cache after inserts
-  //  std::size_t next_pollution{};
-  //    for (auto p = 0u; p < 900000; ++p)
-  //            prefetch_object<false>(
-  //                &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)],
-  //                64);
 
-  // int cpu = sched_getcpu();
-  //  if(cpu == 0 || cpu == 1 || cpu == 20 || cpu ==21){
-  // auto *cas_ht = static_cast<CASHashTable<KVType, ItemQueue> *>(hashtable);
-  // volatile uint64 t1 = cas_ht->flush_ht_from_cache();
-  // Only thing that seems to work
-  // for (int i = 0; i < 10; i++)
-  //    hashtable->get_fill();
-
-  // if (shard->shard_idx == 0) cas_ht->flush_ht_from_cache();
 
 #ifdef WITH_PERFCPP
   // if (shard->shard_idx == 0)
   EVENTCOUNTERS.start(shard->shard_idx);
 #endif
 
-// perf resume()
-// int perf_ctl_fd = 10;
-// int perf_ctl_ack_fd = 11;
-// char ack[5];
-// if (shard->shard_idx == 0) {
-//   write(perf_ctl_fd, "enable\n", 8);
-//   read(perf_ctl_ack_fd, ack, 5);
-//   assert(strcmp(ack, "ack\n") == 0);
-// }
 #ifdef WITH_VTUNE_LIB
   // static const auto vtune_event_find =
   //     __itt_event_create("find_test", strlen("find_test"));
@@ -682,8 +506,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
                                  sync_barrier, zipf_set_local);
-  // find_timings = old_zipfian_gets(hashtable, count, shard->shard_idx,
-  //                                 sync_barrier, zipf_set_local);
 
 #if defined(WITH_PCM)
   // if (shard->shard_idx == 0) {
@@ -691,19 +513,10 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //   pcm_cnt.read_out_bw();
   // }
 #elif defined(WITH_VTUNE_LIB)
-  // __itt_event_end(vtune_event_find);
   __itt_pause();
-  // vtune
 #elif defined(WITH_PERFCPP)
   EVENTCOUNTERS.stop(shard->shard_idx);
 #endif
-
-  // perf pause()
-  // if (shard->shard_idx == 0) {
-  //   write(perf_ctl_fd, "disable\n", 9);
-  //   read(perf_ctl_ack_fd, ack, 5);
-  //   assert(strcmp(ack, "ack\n") == 0);
-  // }
 
   shard->stats->finds = find_timings;
   shard->stats->ht_fill = config.ht_fill;
@@ -715,10 +528,11 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   sync_barrier->arrive_and_wait();
 
-  // if (shard->shard_idx == 0) {
-  //   PLOGI.printf("get fill %.3f",
-  //                (double)cas_ht->get_fill() / cas_ht->get_capacity());
-  // }
+  
+  if (shard->shard_idx == 0) {
+    PLOGI.printf("get fill %.3f",
+                 (double)hashtable->get_fill() / hashtable->get_capacity());
+  }
 
 #ifdef LATENCY_COLLECTION
   {

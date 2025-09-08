@@ -5,8 +5,8 @@
 
 // CLHT includes (choose lock-based or lock-free)
 extern "C" {
-// #include "/opt/DRAMHiT/CLHT/include/clht_lf.h"  //lock-free (no resize)
-#include "/opt/DRAMHiT/CLHT/include/clht_lf_res.h" //lock-free resize
+#include "clht_lf.h"  //lock-free (no resize)
+//#include "/opt/DRAMHiT/CLHT/include/clht_lf_res.h" //lock-free resize
 }
 
 namespace kmercounter {
@@ -21,24 +21,23 @@ class CLHT_HashTable : public BaseHashTable {
   static clht_t* table;
   static uint32_t ref_cnt;
 
+  uint64_t num_buckets;
+
  public:
   CLHT_HashTable(uint64_t sz) {
 
     {
+
+      num_buckets = sz / 4; // CLHT bucket is 64 byte. Dramhit sz is count of kv which is 16 bytes. 
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
       if (!table) {
         assert(this->ref_cnt == 0);
-        table = clht_create(sz*2);
-        printf("Created hashtable at addr %p\n", (void*)table);
-        printf("%s\n", clht_type_desc());
+        table = clht_create(num_buckets);
+        printf("Created %s at addr %p\n", clht_type_desc(), (void*)table);
         fflush(stdout);
-
       }
       
-      clht_gc_thread_init(table, sched_getcpu());
-      
-
       this->ref_cnt++;
 
     }  // end scope of lock...
@@ -49,9 +48,6 @@ class CLHT_HashTable : public BaseHashTable {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       this->ref_cnt--;
       if (this->ref_cnt == 0) {
-        std::cout << "deleting" << std::endl;
-        // need to fix for custom allocator
-        // clht_gc_destroy(table);
       }
     }  // end scope of lock...
   }
@@ -72,8 +68,7 @@ class CLHT_HashTable : public BaseHashTable {
         vp.second[vp.first].value = val;
         vp.second[vp.first].id = data.id;
         vp.first++;
-      } else
-        abort();
+      }  
     }
   }
 
@@ -86,8 +81,8 @@ class CLHT_HashTable : public BaseHashTable {
   }
   void flush_find_queue(ValuePairs&, collector_type* = nullptr) override {}
   void display() const override {}
-  size_t get_fill() const override { return 0; }
-  size_t get_capacity() const override { return 0; }
+  size_t get_fill() const override { return clht_size(table->ht); }
+  size_t get_capacity() const override { return this->num_buckets * 3; }
   size_t get_max_count() const override { return 0; }
   void print_to_file(std::string&) const override {}
   uint64_t read_hashtable_element(const void*) override { return 0; }
