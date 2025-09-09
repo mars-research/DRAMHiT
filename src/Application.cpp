@@ -23,6 +23,8 @@
 #ifdef CLHT
 #include "hashtables/clht_kht.hpp"
 #endif
+#include "hashtables/umap_kht.hpp"
+
 
 #ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
@@ -56,7 +58,6 @@
 #endif
 
 #include "zipf_distribution.hpp"
-
 
 namespace kmercounter {
 
@@ -184,7 +185,7 @@ void sync_complete(void) {
 #if defined(WITH_PCM)
         g_find_bw[zipfian_iter] =
             g_pcm_cnt.get_bw(g_find_durations[zipfian_iter]);
-#endif  
+#endif
       }
     }
   } else if (cur_phase == ExecPhase::insertions) {
@@ -219,11 +220,13 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
       break;
 #endif
+    case UMAP_HT:
+      kmer_ht = new UMAP_HashTable(sz);
+      break;
 
 #ifdef GROWT
     case GROWHT:
-      kmer_ht =
-          new GrowtHashTable(sz);
+      kmer_ht = new GrowtHashTable(sz);
       break;
 #endif
     case CASHTPP:
@@ -236,9 +239,9 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 #ifdef CLHT
     case CLHT_HT:
       // clht_create already allocates mem
-      kmer_ht = new CLHT_HashTable(sz); 
+      kmer_ht = new CLHT_HashTable(sz);
       break;
-#endif 
+#endif
     default:
       PLOG_FATAL.printf("HT type not implemented");
       exit(-1);
@@ -365,17 +368,17 @@ int Application::spawn_shard_threads() {
 
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
-  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT || config.ht_type == GROWHT || 
-  config.ht_type == CLHT_HT) {
-
-
+  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
+      config.ht_type == GROWHT || config.ht_type == CLHT_HT ||
+      config.ht_type == UMAP_HT) {
     uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
 
-  #ifdef CLHT
-    HT_TESTS_NUM_INSERTS =  (orig_num_inserts * 3 / config.num_threads) / 4; // actual clht capacty if bucket num * 3 
-  #else
+#ifdef CLHT
+    HT_TESTS_NUM_INSERTS = (orig_num_inserts * 3 / config.num_threads) /
+                           4;  // actual clht capacty if bucket num * 3
+#else
     HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
-  #endif
+#endif
     PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
                  orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
@@ -459,7 +462,7 @@ int Application::spawn_shard_threads() {
     free(g_insert_durations);
     free(g_find_durations);
   }
-  
+
 #ifdef WITH_PCM
   g_pcm_cnt.clean();
 #endif
@@ -722,19 +725,22 @@ int Application::process(int argc, char *argv[]) {
       case CASHTPP:
         PLOG_INFO.printf("Hashtable type : Cas HT");
         break;
+      case UMAP_HT:
+        PLOG_INFO.printf("Hashtable type : UMAP HT");
+        break;
       case ARRAY_HT:
         PLOG_INFO.printf("Hashtable type : Array HT");
         break;
-  #ifdef GROWT
+#ifdef GROWT
       case GROWHT:
         PLOG_INFO.printf("Hashtable type : Grow HT");
         break;
-  #endif
-  #ifdef CLHT
+#endif
+#ifdef CLHT
       case CLHT_HT:
         PLOG_INFO.printf("Hashtable type : CLHT HT");
         break;
-  #endif
+#endif
       default:
         PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
                      config.ht_type);

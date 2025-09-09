@@ -172,6 +172,7 @@ if(BUILD_APP)
     )
 
     if(GROWT)
+        #if find fails, scripts/install_tbb.sh 
         list(APPEND CMAKE_PREFIX_PATH "/opt/oneapi-tbb-2022.2.0/lib/cmake/tbb")
         find_package(TBB REQUIRED)
         add_definitions(-DGROWT)

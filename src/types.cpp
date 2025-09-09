@@ -37,7 +37,8 @@ const char* ht_type_strings[] = {
     "ARRAY_HT",
     "MULTI_HT",
     "UNIFORM_HT",
-    "CLHT_HT"
+    "CLHT_HT",
+    "UMAP_HT"
 };
 const char* run_mode_strings[] = {
     "",
