@@ -172,10 +172,10 @@ if(BUILD_APP)
     )
 
     if(GROWT)
-        list(APPEND CMAKE_PREFIX_PATH "/opt/intel/oneapi/tbb/2022.2/lib/cmake/tbb")
+        list(APPEND CMAKE_PREFIX_PATH "/opt/oneapi-tbb-2022.2.0/lib/cmake/tbb")
         find_package(TBB REQUIRED)
         add_definitions(-DGROWT)
-        target_include_directories(dramhit PUBLIC growt /opt/intel/oneapi/tbb/2022.2/include/)
+        target_include_directories(dramhit PUBLIC growt /opt/oneapi-tbb-2022.2.0/include/)
         target_link_libraries(dramhit PRIVATE TBB::tbb TBB::tbbmalloc)
     endif()
 

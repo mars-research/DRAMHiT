@@ -19,7 +19,10 @@
 #ifdef GROWT
 #include "hashtables/growt_kht.hpp"
 #endif
+
+#ifdef CLHT
 #include "hashtables/clht_kht.hpp"
+#endif
 
 #ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
