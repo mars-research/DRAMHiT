@@ -1,0 +1,24 @@
+
+with Abstract class, find_batch can not be inlined.
+    
+CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch
+
+450d40:       55                      push   %rbp
+  450d41:       c4 e1 f9 6e fa          vmovq  %rdx,%xmm7
+  450d46:       48 89 e5                mov    %rsp,%rbp
+  450d49:       41 57                   push   %r15
+  450d4b:       41 56                   push   %r14
+  450d4d:       41 55                   push   %r13
+  450d4f:       41 54                   push   %r12
+  450d51:       49 89 fc                mov    %rdi,%r12
+  450d54:       53                      push   %rbx
+  450d55:       48 83 e4 c0             and    $0xffffffffffffffc0,%rsp
+  450d59:       44 8b 87 b0 00 00 00    mov    0xb0(%rdi),%r8d
+  450d60:       48 8b 46 08             mov    0x8(%rsi),%rax
+  450d64:       8b bf b4 00 00 00       mov    0xb4(%rdi),%edi
+  450d6a:       45 8b 4c 24 78          mov    0x78(%r12),%r9d
+  450d6f:       41 8b 4c 24 6c          mov    0x6c(%r12),%ecx
+  450d74:       48 8b 36                mov    (%rsi),%rsi
+  450d77:       45 89 c5                mov    %r8d,%r13d
+  450d7a:       48 8d 14 40             lea    (%rax,%rax,2),%rdx
+  

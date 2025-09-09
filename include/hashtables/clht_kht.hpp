@@ -79,7 +79,7 @@ class CLHT_HashTable : public BaseHashTable {
   void* find_noprefetch(const void*, collector_type* = nullptr) override {
     return nullptr;
   }
-  void flush_find_queue(ValuePairs&, collector_type* = nullptr) override {}
+  size_t flush_find_queue(ValuePairs&, collector_type* = nullptr) override {return 0; }
   void display() const override {}
   size_t get_fill() const override { return clht_size(table->ht); }
   size_t get_capacity() const override { return this->num_buckets * 3; }

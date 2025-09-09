@@ -783,49 +783,57 @@ class CASHashTable : public BaseHashTable {
 
   void flush_insert_queue(collector_type *collector) override {
     size_t curr_queue_sz = get_insert_queue_sz();
-
     while (curr_queue_sz != 0) {
-      __insert_one(&this->insert_queue[this->ins_tail], collector);
-      this->ins_tail++;
-      this->ins_tail &= INSERT_QUEUE_SZ_MASK;
-      curr_queue_sz = get_insert_queue_sz();
+      pop_insert_queue(collector);
+      curr_queue_sz--;
     }
 
     // all store must be flushed.
     _mm_sfence();
   }
 
-  void flush_find_queue(ValuePairs &vp, collector_type *collector) override {}
-
-  uint32_t cas_flush_find_queue(ValuePairs &vp, collector_type *collector) {
+  size_t flush_find_queue(ValuePairs &vp, collector_type *collector) override {
     size_t curr_queue_sz = get_find_queue_sz();
-
     while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
-      __find_one(&this->find_queue[this->find_tail], vp, collector);
-      this->find_tail++;
-      this->find_tail &= FIND_QUEUE_SZ_MASK;
-      curr_queue_sz = get_find_queue_sz();
+      pop_find_queue(vp, collector);  // gurantee to reduce curr_queue_sz
+      curr_queue_sz--;
     }
-
-#ifdef REMOTE_QUEUE
-    size_t remote_curr_queue_sz =
-        (this->remote_find_head - this->remote_find_tail) &
-        REMOTE_FIND_QUEUE_SZ_MASK;
-
-    while ((remote_curr_queue_sz != 0) && (vp.first < config.batch_len)) {
-      __remote_find_one(&this->remote_find_queue[this->remote_find_tail], vp,
-                        collector);
-      this->remote_find_tail++;
-      if (this->remote_find_tail == remote_find_queue_sz)
-        this->remote_find_tail = 0;
-      remote_curr_queue_sz = (this->remote_find_head - this->remote_find_tail) &
-                             REMOTE_FIND_QUEUE_SZ_MASK;
-    }
-    return remote_curr_queue_sz + curr_queue_sz;
-#endif
 
     return curr_queue_sz;
   }
+
+  //   uint32_t cas_flush_find_queue(ValuePairs &vp, collector_type *collector)
+  //   {
+  //     size_t curr_queue_sz = get_find_queue_sz();
+
+  //     while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
+  //       __find_one(&this->find_queue[this->find_tail], vp, collector);
+  //       this->find_tail++;
+  //       this->find_tail &= FIND_QUEUE_SZ_MASK;
+  //       curr_queue_sz = get_find_queue_sz();
+  //     }
+
+  // #ifdef REMOTE_QUEUE
+  //     size_t remote_curr_queue_sz =
+  //         (this->remote_find_head - this->remote_find_tail) &
+  //         REMOTE_FIND_QUEUE_SZ_MASK;
+
+  //     while ((remote_curr_queue_sz != 0) && (vp.first < config.batch_len)) {
+  //       __remote_find_one(&this->remote_find_queue[this->remote_find_tail],
+  //       vp,
+  //                         collector);
+  //       this->remote_find_tail++;
+  //       if (this->remote_find_tail == remote_find_queue_sz)
+  //         this->remote_find_tail = 0;
+  //       remote_curr_queue_sz = (this->remote_find_head -
+  //       this->remote_find_tail) &
+  //                              REMOTE_FIND_QUEUE_SZ_MASK;
+  //     }
+  //     return remote_curr_queue_sz + curr_queue_sz;
+  // #endif
+
+  //     return curr_queue_sz;
+  //   }
 
   inline size_t get_find_queue_sz() {
     return (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
@@ -858,9 +866,9 @@ class CASHashTable : public BaseHashTable {
           (this->find_tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
       next_tail_addr = &this->hashtable[this->find_queue[next_tail].idx];
 
-    #ifdef DOUBLE_PREFETCH
-    __builtin_prefetch(next_tail_addr, false, 3);
-    #endif
+#ifdef DOUBLE_PREFETCH
+      __builtin_prefetch(next_tail_addr, false, 3);
+#endif
 
       retry = __find_one(&this->find_queue[this->find_tail], vp, collector);
       this->find_tail++;
@@ -884,8 +892,6 @@ class CASHashTable : public BaseHashTable {
   }
 #endif
 
-
-
 #if defined(DRAMHiT_2023)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
@@ -899,9 +905,21 @@ class CASHashTable : public BaseHashTable {
   }
 
 #elif defined(DRAMHiT_2025)
+
+#if defined(CAS_NO_ABSTRACT)
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) override{ 
+                  }
+  
+
   // trickery: we return at most batch sz things due to pop_find_queue.
+  void find_batch_inline(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) {
+
+#else
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
+#endif
 
 #ifdef CAS_FIND_BANDWIDTH_TEST
     size_t idx;
@@ -1004,8 +1022,20 @@ class CASHashTable : public BaseHashTable {
 
 #elif defined(DRAMHiT_2025_INLINED)
 
-  void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
+#if defined(CAS_NO_ABSTRACT)
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) override{ 
+                  }
+  
+
+  // trickery: we return at most batch sz things due to pop_find_queue.
+  void find_batch_inline(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) {
+
+#else
+  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+                  collector_type *collector) {
+#endif
     bool fast_path = ((this->find_head - this->find_tail) &
                       FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
     // fast path
@@ -1352,20 +1382,20 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef DRAMHiT_2023
       __builtin_prefetch(&this->hashtable[idx], false, 3);
-#else // dramhit 2025
-      // __builtin_prefetch(&this->hashtable[idx], false, 1);
-    #ifdef DOUBLE_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 1);
-    #elif L1_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 3);
-    #elif L2_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 2);
-    #elif L3_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 1);
-    #elif NTA_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 0);
-    #endif 
-#endif // end DRAMHiT_2023
+#else  // dramhit 2025
+       // __builtin_prefetch(&this->hashtable[idx], false, 1);
+#ifdef DOUBLE_PREFETCH
+      __builtin_prefetch(&this->hashtable[idx], false, 1);
+#elif L1_PREFETCH
+      __builtin_prefetch(&this->hashtable[idx], false, 3);
+#elif L2_PREFETCH
+      __builtin_prefetch(&this->hashtable[idx], false, 2);
+#elif L3_PREFETCH
+      __builtin_prefetch(&this->hashtable[idx], false, 1);
+#elif NTA_PREFETCH
+      __builtin_prefetch(&this->hashtable[idx], false, 0);
+#endif
+#endif  // end DRAMHiT_2023
 
       this->find_queue[this->find_head].key = q->key;
       this->find_queue[this->find_head].key_id = q->key_id;
@@ -1735,21 +1765,21 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef DRAMHiT_2023
     __builtin_prefetch(&this->hashtable[idx], false, 3);
-#else //DRAMHIT2025_variants
+#else  // DRAMHIT2025_variants
 
-    #ifdef DOUBLE_PREFETCH
+#ifdef DOUBLE_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 1);
-    #elif L1_PREFETCH
+#elif L1_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 3);
-    #elif L2_PREFETCH
+#elif L2_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 2);
-    #elif L3_PREFETCH
+#elif L3_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 1);
-    #elif NTA_PREFETCH
+#elif NTA_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 0);
-    #endif
+#endif
 
-#endif // end DRAMHiT_2023
+#endif  // end DRAMHiT_2023
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;
     this->find_queue[this->find_head].key_id = key_data->id;

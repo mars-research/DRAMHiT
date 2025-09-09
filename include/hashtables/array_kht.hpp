@@ -134,7 +134,7 @@ class ArrayHashTable : public BaseHashTable {
   void flush_insert_queue(collector_type* collector) override {
   }
 
-  void flush_find_queue(ValuePairs &vp, collector_type* collector) override {
+  size_t flush_find_queue(ValuePairs &vp, collector_type* collector) override {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
 
@@ -144,6 +144,8 @@ class ArrayHashTable : public BaseHashTable {
       curr_queue_sz =
           (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
     }
+
+    return curr_queue_sz; 
   }
 
   void flush_if_needed(ValuePairs &vp, collector_type* collector) {

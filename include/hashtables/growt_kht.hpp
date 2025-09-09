@@ -101,9 +101,10 @@ class GrowtHashTable : public BaseHashTable {
     return nullptr;
   }
 
-  void flush_find_queue(ValuePairs& vp,
+  size_t flush_find_queue(ValuePairs& vp,
                         collector_type* collector = nullptr) override {
     // no-op
+    return 0;
   }
 
   void display() const override {}

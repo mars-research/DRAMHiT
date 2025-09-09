@@ -80,6 +80,8 @@
         "regex": "cpp",
         "shared_mutex": "cpp",
         "csignal": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "format": "cpp",
+        "ranges": "cpp"
     }
 }

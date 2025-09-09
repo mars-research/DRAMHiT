@@ -28,7 +28,7 @@ class BaseHashTable {
 
   virtual void *find_noprefetch(const void *data, collector_type* collector = nullptr) = 0;
 
-  virtual void flush_find_queue(ValuePairs &vp, collector_type* collector = nullptr) = 0;
+  virtual size_t flush_find_queue(ValuePairs &vp, collector_type* collector = nullptr) = 0;
 
   virtual void display() const = 0;
 

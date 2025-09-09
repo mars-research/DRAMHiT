@@ -25,7 +25,6 @@
 #endif
 #include "hashtables/umap_kht.hpp"
 
-
 #ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
 #include "./hashtables/simple_kht.hpp"
@@ -368,17 +367,16 @@ int Application::spawn_shard_threads() {
 
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
+  uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
   if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
       config.ht_type == GROWHT || config.ht_type == CLHT_HT ||
       config.ht_type == UMAP_HT) {
-    uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
-
-#ifdef CLHT
+    HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
+    PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
+                 orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
+  } else if (config.ht_type == CLHT_HT) {
     HT_TESTS_NUM_INSERTS = (orig_num_inserts * 3 / config.num_threads) /
                            4;  // actual clht capacty if bucket num * 3
-#else
-    HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
-#endif
     PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
                  orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
