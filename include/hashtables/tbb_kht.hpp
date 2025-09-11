@@ -48,21 +48,26 @@ class TBB_HashTable : public BaseHashTable {
   }
 
   ~TBB_HashTable() override {
-    ref_cnt--;
-    if (ref_cnt == 0) {
-      //   printf("Final size: %zu, bucket_count: %zu\n",
-      //          table->size(), table->bucket_count());
+    {
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+
+      ref_cnt--;
+      if (ref_cnt == 0) {
+        //   printf("Final size: %zu, bucket_count: %zu\n",
+        //          table->size(), table->bucket_count());
         printf("Final load factor: %zu\n", table->load_factor());
-                fflush(stdout);
+        fflush(stdout);
 
-      //   if (table->bucket_count() != bucket_count_start) {
-      //     fprintf(stderr,
-      //             "WARNING: tbb::concurrent_unordered_map resized START: %zu
-      //             END: %zu!\n", bucket_count_start, table->bucket_count());
-      //   }
+        //   if (table->bucket_count() != bucket_count_start) {
+        //     fprintf(stderr,
+        //             "WARNING: tbb::concurrent_unordered_map resized START:
+        //             %zu END: %zu!\n", bucket_count_start,
+        //             table->bucket_count());
+        //   }
 
-      delete table;
-      table = nullptr;
+        delete table;
+        table = nullptr;
+      }
     }
   }
 

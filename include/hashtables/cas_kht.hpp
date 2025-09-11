@@ -1053,7 +1053,7 @@ class CASHashTable : public BaseHashTable {
     else [[unlikely]] {  // slow paths
       for (auto &data : kp) {
         if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
-          pop_find_queue(values, collector);
+          pop_find_queue(vp, collector);
         }
         add_to_find_queue(&data, collector);
       }
