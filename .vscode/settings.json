@@ -82,6 +82,9 @@
         "csignal": "cpp",
         "future": "cpp",
         "format": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "forward_list": "cpp",
+        "scoped_allocator": "cpp",
+        "cassert": "cpp"
     }
 }

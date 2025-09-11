@@ -43,7 +43,7 @@ do
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
     --find_queue 64 --ht-fill $fill --ht-type $2 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16"
+    --hw-pref $3 --batch-len 16"
    
     echo "Command executed: "/opt/DRAMHiT/build/dramhit $cmd >> $file_name_txt
     sudo /opt/DRAMHiT/build/dramhit $cmd >> $file_name_txt
@@ -65,33 +65,23 @@ echo "fill,set_mops,get_mops" > $file_name_csv
 paste -d, <(echo -e "$fills") tmp1.txt tmp2.txt >> $file_name_csv
 # Clean up
 rm tmp1.txt tmp2.txt
-
 }
 
+rm /opt/DRAMHiT/build/CMakeCache.txt
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2023 -DDATA_GEN=HASH -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF -DGROWT=OFF -DCLHT=OFF
+cmake --build /opt/DRAMHiT/build
+run_ht_dual dramhit_2023 $DRAMHIT 0
 
 rm /opt/DRAMHiT/build/CMakeCache.txt
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2023 -DDATA_GEN=HASH -DCALC_STATS=OFF  -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF -DPREFETCH=DOUBLE -DGROWT=OFF -DCLHT=OFF
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025_INLINE -DDATA_GEN=HASH -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DCAS_NO_ABSTRACT=ON -DREAD_BEFORE_CAS=ON
 cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_2023 $DRAMHIT
+run_ht_dual dramhit_inline_uniform $DRAMHIT 0
 
 rm /opt/DRAMHiT/build/CMakeCache.txt
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025_INLINE -DDATA_GEN=HASH -DCALC_STATS=OFF  -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DGROWT=OFF -DCLHT=OFF
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDATA_GEN=HASH -DGROWT=ON -DCLHT=ON -DCAS_NO_ABSTRACT=OFF
 cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_inline_uniform $DRAMHIT
-
-rm /opt/DRAMHiT/build/CMakeCache.txt
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDATA_GEN=HASH -DCALC_STATS=OFF  -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=OFF -DPREFETCH=DOUBLE -DGROWT=OFF -DCLHT=ON
-cmake --build /opt/DRAMHiT/build
-run_ht_dual CLHT $CLHT
-
-rm /opt/DRAMHiT/build/CMakeCache.txt
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDATA_GEN=HASH -DCALC_STATS=OFF  -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=OFF -DPREFETCH=DOUBLE -DGROWT=ON -DCLHT=OFF
-cmake --build /opt/DRAMHiT/build
-run_ht_dual GROWT $GROWT
-
-rm /opt/DRAMHiT/build/CMakeCache.txt
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDATA_GEN=HASH -DCALC_STATS=OFF  -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=OFF -DPREFETCH=DOUBLE -DGROWT=ON -DCLHT=OFF
-cmake --build /opt/DRAMHiT/build
-run_ht_dual TBB $TBB
+run_ht_dual GROWT $GROWT 1
+run_ht_dual TBB $TBB 1
+run_ht_dual CLHT $CLHT 1
 
 

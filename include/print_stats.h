@@ -84,11 +84,11 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 #ifdef CALC_STATS
 
   printf(
-      "{total_reprobes: %llu, total_finds: %llu, avg_cachelines_accessed: "
+      "{total_reprobes : %llu, total_finds : %llu, avg_cachelines_accessed : "
       "%.4f}\n",
       (unsigned long long)all_total_reprobes, (unsigned long long)total_finds,
       (all_total_reprobes + total_finds) / (double)total_finds);
-  printf("{reprobe_factor: %.4f}\n",
+  printf("{reprobe_factor : %.4f}\n",
          (all_total_reprobes + total_finds) / (double)total_finds);
 
   // printf("{Avg cycles: %.4f}\n", (double)total_find_cycles/

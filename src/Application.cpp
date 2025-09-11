@@ -369,27 +369,28 @@ int Application::spawn_shard_threads() {
     }
   }
 
+  if (config.insert_factor >= 1) {
+    PLOGI.printf(
+        "Insert factor %" PRIu64 ", Effective num insertions %" PRIu64 "",
+        config.insert_factor, HT_TESTS_NUM_INSERTS * config.insert_factor);
+  }
+
+
   // split the num inserts equally among threads for a
   // non-partitioned hashtable
   uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
   if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
-      config.ht_type == GROWHT || config.ht_type == CLHT_HT ||
-      config.ht_type == UMAP_HT || config.ht_type == TBB_HT) {
+      config.ht_type == GROWHT || config.ht_type == UMAP_HT || config.ht_type == TBB_HT) {
     HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
     PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
                  orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   } else if (config.ht_type == CLHT_HT) {
     HT_TESTS_NUM_INSERTS = (orig_num_inserts * 3 / config.num_threads) /
-                           4;  // actual clht capacty if bucket num * 3
+                           4;  // actual clht capacty if bucket num * 3 100, 3/4
     PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
                  orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
   }
 
-  if (config.insert_factor > 1) {
-    PLOGI.printf(
-        "Insert factor %" PRIu64 ", Effective num insertions %" PRIu64 "",
-        config.insert_factor, HT_TESTS_NUM_INSERTS * config.insert_factor);
-  }
 
   /*   TODO don't spawn threads if f_start >= in_file_sz
     Not doing it now, as it has implications for num_threads,

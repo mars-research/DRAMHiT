@@ -19,13 +19,24 @@ def plot_json(json_file, output_file):
     
     df_single = df[df["run_cfg.numa_policy"] == 4]
     df_dual = df[df["run_cfg.numa_policy"] == 1]
+
+    
+    # Ensure 'fill_factor' is numeric
+    df["run_cfg.fill_factor"] = pd.to_numeric(df["run_cfg.fill_factor"])
+
+    
     datasets = [df_single, df_dual]
+    
+    for df in datasets:
+        df["normalized_allbr"] = df["br_inst_retired.all_branches"] / df["find_ops"]
+        df["normalized_uops"] = df["uops_issued.any"] / df["find_ops"]
+        df["normalized_mispbr"] = df["br_misp_retired.all_branches"] / df["find_ops"]
 
     # Set Seaborn style
     sns.set_theme()
     
     row = 2
-    col = 2
+    col = 4
     fig, axes = plt.subplots(row, col, figsize=(19, 7))    
         
     cnt = 0
@@ -50,14 +61,40 @@ def plot_json(json_file, output_file):
         sns.lineplot(
             data=df,
             x="run_cfg.fill_factor",
-            y="find_avg_bw",
+            y="normalized_allbr",
             hue="identifier",
             marker="o",
             ax=ax
         )
-        ax.set_title(f"Fill Factor vs BW")
+        ax.set_title(f"Fill Factor vs brs/find")
         ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("BW")
+        ax.set_ylabel("n_brs")
+        
+        ax = rax[2]
+        sns.lineplot(
+            data=df,
+            x="run_cfg.fill_factor",
+            y="normalized_uops",
+            hue="identifier",
+            marker="o",
+            ax=ax
+        )
+        ax.set_title(f"Fill Factor vs uops/find")
+        ax.set_xlabel("Fill Factor")
+        ax.set_ylabel("n_uops")
+        
+        ax = rax[3]
+        sns.lineplot(
+            data=df,
+            x="run_cfg.fill_factor",
+            y="normalized_mispbr",
+            hue="identifier",
+            marker="o",
+            ax=ax
+        )
+        ax.set_title(f"Fill Factor vs misp_br/find")
+        ax.set_xlabel("Fill Factor")
+        ax.set_ylabel("n_misp_br")
         
         cnt += 1
 
@@ -65,7 +102,7 @@ def plot_json(json_file, output_file):
     for ax in axes.flatten():
         leg = ax.get_legend()
         if leg is not None:  # only adjust if legend exists
-            ax.legend(fontsize=8, markerscale=0.1, title_fontsize=12)
+            ax.legend(fontsize=4, markerscale=0.1, title_fontsize=12)
             
     plt.tight_layout()
     plt.savefig(output_file, dpi=300)

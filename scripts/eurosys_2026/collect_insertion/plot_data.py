@@ -6,13 +6,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-# Hard-coded counter names
-counters = [
-    "cycles",
-    "l1d_pend_miss.fb_full",
-    "memory_activity.cycles_l1d_miss",
-    "cycle_activity.stalls_total"
-]
 
 def plot_json(json_file, output_file):
     # Load JSON data
@@ -23,54 +16,55 @@ def plot_json(json_file, output_file):
     df = pd.DataFrame(data)
     
     df = pd.json_normalize(data, sep='.')
+    
+    df_single = df[df["run_cfg.numa_policy"] == 4]
+    df_dual = df[df["run_cfg.numa_policy"] == 1]
 
-
+    
     # Ensure 'fill_factor' is numeric
     df["run_cfg.fill_factor"] = pd.to_numeric(df["run_cfg.fill_factor"])
 
+    
+    datasets = [df_single, df_dual]
+    
+    # for df in datasets:
+    #     df["normalized_allbr"] = df["br_inst_retired.all_branches"] / df["find_ops"]
+    #     df["normalized_uops"] = df["uops_issued.any"] / df["find_ops"]
+    #     df["normalized_mispbr"] = df["br_misp_retired.all_branches"] / df["find_ops"]
+
     # Set Seaborn style
     sns.set_theme()
+    
+    row = 2
+    col = 1
+    fig, axes = plt.subplots(row, col, figsize=(19, 7))    
+        
+    cnt = 0
+    for df in datasets:
+        rax = axes[cnt]
+        ax = rax
 
-    #sns.set(style="whitegrid", palette="tab10", font_scale=1.2)
-
-    # Create figure with 5 subplots (4 counters + get_mops)
-    fig, axes = plt.subplots(3, 2, figsize=(14, 12))
-    axes = axes.flatten()
-
-    # Plot perf counters
-    for i, counter in enumerate(counters):
-        ax = axes[i]
         sns.lineplot(
             data=df,
             x="run_cfg.fill_factor",
-            y=counter,
+            y="set_mops",
             hue="identifier",
             marker="o",
             ax=ax
         )
-        ax.set_title(f"Fill Factor vs {counter}")
+        ax.set_title("Fill Factor vs insert Mops")
         ax.set_xlabel("Fill Factor")
-        ax.set_ylabel(counter)
+        ax.set_ylabel("Insert Mops")
+        
+    
+        cnt += 1
 
-    # Plot get_mops
-    ax = axes[4]
-    if "get_mops" in df.columns:
-        sns.lineplot(
-            data=df,
-            x="run_cfg.fill_factor",
-            y="get_mops",
-            hue="identifier",
-            marker="o",
-            ax=ax
-        )
-        ax.set_title("Fill Factor vs get_mops")
-        ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("get_mops")
 
-    # Remove unused subplot (if any)
-    if len(axes) > 5:
-        fig.delaxes(axes[5])
-
+    for ax in axes.flatten():
+        leg = ax.get_legend()
+        if leg is not None:  # only adjust if legend exists
+            ax.legend(fontsize=4, markerscale=0.1, title_fontsize=12)
+            
     plt.tight_layout()
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
@@ -84,3 +78,4 @@ if __name__ == "__main__":
     json_file = sys.argv[1]
     output_file = sys.argv[2]
     plot_json(json_file, output_file)
+

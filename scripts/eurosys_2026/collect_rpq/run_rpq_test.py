@@ -93,7 +93,7 @@ duration_list = [
 sns.set_theme()
 
 # Create figure with 2 subplots
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(10, 8))
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(2, 2, figsize=(10, 8))
 
 # Graph 1: num_threads vs estimated bandwidth
 ax1.plot(num_threads_list, bw_list, marker='o', color='red')
@@ -105,8 +105,8 @@ ax1.grid(True)
 # Graph 2: num_threads vs occupancy counter/sec
 ax2.plot(num_threads_list, occupancy_list, marker='o', color='orange')
 ax2.set_xlabel("Number of Threads")
-ax2.set_ylabel("unc_m_rpq_occupancy_pch0")
-ax2.set_title("Num Threads vs unc_m_rpq_occupancy_pch0/duration")
+ax2.set_ylabel("rpq_occupancy_pch0")
+ax2.set_title("Num Threads vs rpq_occupancy_pch0/duration")
 ax2.grid(True)
 
 ax3.plot(num_threads_list, inserts_list, marker='o', color='blue')

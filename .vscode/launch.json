@@ -8,15 +8,15 @@
             "program": "/opt/DRAMHiT/build/dramhit",
             "args": [
                 "--find_queue_sz", "32",
-                "--ht-fill", "10",
-                "--ht-type", "7",
+                "--ht-fill", "134217728",
+                "--ht-type", "8",
                 "--insert-factor", "1",
                 "--read-factor", "1",
                 "--num-threads", "128",
                 "--numa-split", "1",
                 "--no-prefetch", "0",
                 "--mode", "11",
-                "--ht-size", "160",
+                "--ht-size", "268435456",
                 "--skew", "0.01",
                 "--hw-pref", "0",
                 "--batch-len", "16"

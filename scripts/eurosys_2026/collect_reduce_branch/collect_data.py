@@ -30,11 +30,11 @@ def make_perf_command(counters, dramhit_args):
     ] + dramhit_args
     return cmd
 
-
 counters = [
     "cycles",
-    "uops_dispatched.port_2_3_10",
-    "uops_issued.any"
+    "br_inst_retired.all_branches",
+    "uops_issued.any",
+    "br_misp_retired.all_branches"
 ]
 
 def run(run_cfg):
@@ -133,12 +133,9 @@ def save_json(data, filename):
 if __name__ == "__main__":
     # Build configurations
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2025", "CAS_NO_ABSTRACT" : "ON", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "CAS_NO_ABSTRACT" : "ON", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"DRAMHiT_VARIANT": "2025", "CAS_NO_ABSTRACT" : "OFF", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "CAS_NO_ABSTRACT" : "OFF", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
+        {"DRAMHiT_VARIANT": "2025", "CAS_FAST_PATH" : "OFF", "CAS_NO_ABSTRACT" : "OFF", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
+        {"DRAMHiT_VARIANT": "2025", "CAS_FAST_PATH" : "ON", "CAS_NO_ABSTRACT" : "OFF", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
     ]
-    
 
     run_cfgs = [
     {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
@@ -152,7 +149,7 @@ if __name__ == "__main__":
     all_results = []
     
     def get_name(bcfg):
-        keys = ["DRAMHiT_VARIANT", "CAS_NO_ABSTRACT"] 
+        keys = ["DRAMHiT_VARIANT", "CAS_FAST_PATH"] 
         ret = ""
         for k in keys:
             ret += "{" + k + "-" + bcfg[k] + "}" 

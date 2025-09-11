@@ -71,6 +71,11 @@ class TBB_HashTable : public BaseHashTable {
     }
   }
 
+  void clear() 
+  {
+    table->clear();
+  }
+
   void insert_batch(const InsertFindArguments& kp,
                     collector_type* collector) override {
     for (auto& data : kp) {

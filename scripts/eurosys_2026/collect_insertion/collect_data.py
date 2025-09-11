@@ -7,7 +7,7 @@ import re
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
-USE_PERF = True
+USE_PERF = False
 
 def build(defines):
     define_flags = [f"-D{k}={v}" for k, v in defines.items()]
@@ -30,10 +30,12 @@ def make_perf_command(counters, dramhit_args):
     ] + dramhit_args
     return cmd
 
-
-
-counters = ["unc_m_cas_count.all"]
-
+counters = [
+    "cycles",
+    "br_inst_retired.all_branches",
+    "uops_issued.any",
+    "br_misp_retired.all_branches"
+]
 
 def run(run_cfg):
     results = []
@@ -131,32 +133,34 @@ def save_json(data, filename):
 if __name__ == "__main__":
     # Build configurations
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2025", "BENCHMARK_BACKEND": "NONE","DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BENCHMARK_BACKEND": "NONE", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2025", "READ_BEFORE_CAS" : "OFF", "CAS_FAST_PATH" : "OFF", "CAS_NO_ABSTRACT" : "OFF", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2025", "READ_BEFORE_CAS" : "ON", "CAS_FAST_PATH" : "OFF", "CAS_NO_ABSTRACT" : "OFF", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
     ]
-    
-#     run_cfgs = [
-#     {"insertFactor": 1, "readFactor": 1, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": 10}
-# ]
 
-    # Run configurations (example: vary fill_factor, others fixed)
     run_cfgs = [
-    {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 10, "readFactor": 1, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ] + [
-    {"insertFactor": 1, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 10, "readFactor": 1, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ]
 
-
     all_results = []
+    
+    def get_name(bcfg):
+        keys = ["READ_BEFORE_CAS"] 
+        ret = ""
+        for k in keys:
+            ret += "{" + k + "-" + bcfg[k] + "}" 
+        
+        return ret
 
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, "-".join(str(v) for v in bcfg.values()))
+            obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit_results_bw.json")
+    save_json(all_results, "dramhit_directory.json")

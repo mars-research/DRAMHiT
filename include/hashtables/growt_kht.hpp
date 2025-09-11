@@ -27,16 +27,17 @@ class GrowtHashTable : public BaseHashTable {
   static growht_type* table;
   static uint32_t ref_cnt;
   static std::mutex ht_init_mutex;
+  uint64_t sz;
 
  public:
   GrowtHashTable(uint64_t capacity) {
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
-      capacity = capacity/2; 
+      sz = capacity/2; 
       if (!table) {
         assert(this->ref_cnt == 0);
-        this->table = new growht_type(capacity);
+        this->table = new growht_type(sz);
 
         std::cout << "table name " << table->name() << " size " << table->capacity() << std::endl;
       }
@@ -83,6 +84,15 @@ class GrowtHashTable : public BaseHashTable {
       }
     }
   }
+
+
+  // uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
+  // void clear() override 
+  // {
+  //   delete table;
+  //   this->table = new growht_type(sz);
+  //   printf("table name %s @ %p sz %lu \n", table->name(), table, table->capacity());
+  // }
 
   // Insert single (expects std::pair<size_t,size_t>)
   bool insert(const void* data) override { return false; }

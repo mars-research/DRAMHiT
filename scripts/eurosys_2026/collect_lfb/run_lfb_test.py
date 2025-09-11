@@ -4,7 +4,7 @@ import re
 import matplotlib.pyplot as plt
 import csv
 import seaborn as sns
-
+import pandas as pd
 
 compile_cmd = "gcc -O1 lfb_test.c -o lfb"
 print("Compiling lfb_test.c...")
@@ -45,15 +45,22 @@ with open("results.csv", "w", newline="") as f:
         writer.writerow([b, c])
 
 
-sns.set_theme(style="whitegrid", context="talk")
+df = pd.DataFrame({
+    "Batch Size": batch_sizes,
+    "Cycles per Prefetch": cycles
+})
+
+# Set Seaborn theme
+sns.set_theme(style="whitegrid")  # or "darkgrid", "ticks", etc.
 
 # Plot
-plt.plot(batch_sizes, cycles, marker='o')
+sns.lineplot(data=df, x="Batch Size", y="Cycles per Prefetch", marker="o")
+
+# Labels & title
 plt.xlabel("Batch Size")
 plt.ylabel("Cycles per Prefetch")
 plt.title("Batch Size vs Cycles per Prefetch")
-plt.grid(True)
 
 # Save as PNG
-plt.savefig("plot.png", dpi=300, bbox_inches="tight")
+plt.savefig("batch_cycles.png", dpi=300, bbox_inches="tight")
 print("Plot saved as batch_cycles.png")

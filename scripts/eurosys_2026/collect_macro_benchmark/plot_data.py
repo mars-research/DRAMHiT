@@ -27,75 +27,36 @@ def plot_json(json_file, output_file):
     
     datasets = [df_single, df_dual]
     
-    for df in datasets:
-        df["normalized_cyc"] = df["uops_dispatched.port_2_3_10"] / (df["total_find_duration"] * df["run_cfg.numThreads"])
-        df["normalized_uops"] = df["uops_dispatched.port_2_3_10"] / df["uops_issued.any"]
-        df["normalized_ops"] = df["uops_dispatched.port_2_3_10"] / df["find_ops"]
+    # for df in datasets:
+    #     df["normalized_allbr"] = df["br_inst_retired.all_branches"] / df["find_ops"]
+    #     df["normalized_uops"] = df["uops_issued.any"] / df["find_ops"]
+    #     df["normalized_mispbr"] = df["br_misp_retired.all_branches"] / df["find_ops"]
 
     # Set Seaborn style
     sns.set_theme()
     
     row = 2
-    col = 4
+    col = 1
     fig, axes = plt.subplots(row, col, figsize=(19, 7))    
         
     cnt = 0
     for df in datasets:
         rax = axes[cnt]
-        ax = rax[0]
+        ax = rax
 
         sns.lineplot(
             data=df,
             x="run_cfg.fill_factor",
-            y="get_mops",
+            y="set_mops",
             hue="identifier",
             marker="o",
             ax=ax
         )
-        ax.set_title("Fill Factor vs Find Mops")
+        ax.set_title("Fill Factor vs insert Mops")
         ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Find Mops")
+        ax.set_ylabel("Insert Mops")
         
-        
-        ax = rax[1]
-        sns.lineplot(
-            data=df,
-            x="run_cfg.fill_factor",
-            y="normalized_cyc",
-            hue="identifier",
-            marker="o",
-            ax=ax
-        )
-        ax.set_title(f"Fill Factor vs Mem Uops/Cycles")
-        ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Mem Uops/Cycles")
-        
-        ax = rax[2]
-        sns.lineplot(
-            data=df,
-            x="run_cfg.fill_factor",
-            y="normalized_ops",
-            hue="identifier",
-            marker="o",
-            ax=ax
-        )
-        ax.set_title(f"Fill Factor vs Mem Uops/find")
-        ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Mem Uops/find")
-        
-        ax = rax[3]
-        sns.lineplot(
-            data=df,
-            x="run_cfg.fill_factor",
-            y="uops_dispatched.port_2_3_10",
-            hue="identifier",
-            marker="o",
-            ax=ax
-        )
-        ax.set_title(f"Fill Factor vs Mem Uops")
-        ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Mem Uops")
-        
+    
         cnt += 1
 
 
