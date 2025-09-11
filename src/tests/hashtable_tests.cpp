@@ -69,6 +69,7 @@ void do_batch_insertion(BaseHashTable *ht, uint64_t batch_num,
   const auto collector = &collectors.at(id);
   collector->claim();
 #else
+
   collector_type *const collector{};
 #endif
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
@@ -189,7 +190,7 @@ OpTimings do_zipfian_inserts(
     // }
     // sync_barrier->arrive_and_wait();
     // if (id == 0) {
-    //   cas_ht->clear_table();
+    //   hashtable->clear();
     // }
     // sync_barrier->arrive_and_wait();
 

@@ -38,7 +38,8 @@ const char* ht_type_strings[] = {
     "MULTI_HT",
     "UNIFORM_HT",
     "CLHT_HT",
-    "UMAP_HT"
+    "UMAP_HT",
+    "TBB_HT"
 };
 const char* run_mode_strings[] = {
     "",

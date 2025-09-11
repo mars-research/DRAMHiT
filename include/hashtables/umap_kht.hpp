@@ -59,22 +59,22 @@ class UMAP_HashTable : public BaseHashTable {
 
   void insert_batch(const InsertFindArguments& kp,
                     collector_type* collector) override {
-    for (auto& data : kp) {
-      {
-        const std::lock_guard<std::mutex> lock(ht_init_mutex);
-
+    {  // start lock
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+      for (auto& data : kp) {
         if (!table->insert_or_assign(data.key, data.value).second) {
           // std::cout << "growt insertion failed" << std::endl;
         }
       }
-    }
+    }  // end lock
   }
 
   void find_batch(const InsertFindArguments& kp, ValuePairs& vp,
                   collector_type* collector) override {
-    for (auto& data : kp) {
-      {
-        const std::lock_guard<std::mutex> lock(ht_init_mutex);
+    {  // lock scope
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+
+      for (auto& data : kp) {
         auto it = table->find(data.key);
         if (it != table->end()) {
           vp.second[vp.first].value = it->second;
@@ -82,7 +82,7 @@ class UMAP_HashTable : public BaseHashTable {
           vp.first++;
         }
       }
-    }
+    }  // end lock
   }
 
   // --- stubs for BaseHashTable interface ---

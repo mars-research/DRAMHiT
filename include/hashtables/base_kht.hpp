@@ -44,6 +44,11 @@ class BaseHashTable {
 
   virtual void prefetch_queue(QueueType qtype) = 0;
 
+  virtual void clear()  
+  {
+    
+  }
+
   virtual ~BaseHashTable() {}
 
   uint64_t num_reprobes = 0;

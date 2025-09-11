@@ -18,6 +18,7 @@
 
 #ifdef GROWT
 #include "hashtables/growt_kht.hpp"
+#include "hashtables/tbb_kht.hpp"
 #endif
 
 #ifdef CLHT
@@ -227,6 +228,9 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
     case GROWHT:
       kmer_ht = new GrowtHashTable(sz);
       break;
+    case TBB_HT:
+      kmer_ht = new TBB_HashTable(sz);
+      break;
 #endif
     case CASHTPP:
       kmer_ht =
@@ -370,7 +374,7 @@ int Application::spawn_shard_threads() {
   uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
   if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
       config.ht_type == GROWHT || config.ht_type == CLHT_HT ||
-      config.ht_type == UMAP_HT) {
+      config.ht_type == UMAP_HT || config.ht_type == TBB_HT) {
     HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
     PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
                  orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
@@ -719,6 +723,7 @@ int Application::process(int argc, char *argv[]) {
       case MULTI_HT:
         PLOG_INFO.printf("Hashtable type : Multi HT");
         break;
+
 #endif
       case CASHTPP:
         PLOG_INFO.printf("Hashtable type : Cas HT");
@@ -732,6 +737,9 @@ int Application::process(int argc, char *argv[]) {
 #ifdef GROWT
       case GROWHT:
         PLOG_INFO.printf("Hashtable type : Grow HT");
+        break;
+      case TBB_HT:
+        PLOG_INFO.printf("Hashtable type : TBB HT");
         break;
 #endif
 #ifdef CLHT

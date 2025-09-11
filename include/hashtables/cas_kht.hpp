@@ -432,7 +432,7 @@ class CASHashTable : public BaseHashTable {
     }
   }
 
-  void clear_table() { memset(this->hashtable, 0, capacity * sizeof(KV)); }
+  void clear() override { memset(this->hashtable, 0, capacity * sizeof(KV)); }
 
   void prefetch_queue(QueueType qtype) override {}
 
@@ -802,39 +802,6 @@ class CASHashTable : public BaseHashTable {
     return curr_queue_sz;
   }
 
-  //   uint32_t cas_flush_find_queue(ValuePairs &vp, collector_type *collector)
-  //   {
-  //     size_t curr_queue_sz = get_find_queue_sz();
-
-  //     while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
-  //       __find_one(&this->find_queue[this->find_tail], vp, collector);
-  //       this->find_tail++;
-  //       this->find_tail &= FIND_QUEUE_SZ_MASK;
-  //       curr_queue_sz = get_find_queue_sz();
-  //     }
-
-  // #ifdef REMOTE_QUEUE
-  //     size_t remote_curr_queue_sz =
-  //         (this->remote_find_head - this->remote_find_tail) &
-  //         REMOTE_FIND_QUEUE_SZ_MASK;
-
-  //     while ((remote_curr_queue_sz != 0) && (vp.first < config.batch_len)) {
-  //       __remote_find_one(&this->remote_find_queue[this->remote_find_tail],
-  //       vp,
-  //                         collector);
-  //       this->remote_find_tail++;
-  //       if (this->remote_find_tail == remote_find_queue_sz)
-  //         this->remote_find_tail = 0;
-  //       remote_curr_queue_sz = (this->remote_find_head -
-  //       this->remote_find_tail) &
-  //                              REMOTE_FIND_QUEUE_SZ_MASK;
-  //     }
-  //     return remote_curr_queue_sz + curr_queue_sz;
-  // #endif
-
-  //     return curr_queue_sz;
-  //   }
-
   inline size_t get_find_queue_sz() {
     return (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
   }
@@ -908,13 +875,11 @@ class CASHashTable : public BaseHashTable {
 
 #if defined(CAS_NO_ABSTRACT)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-                  collector_type *collector) override{ 
-                  }
-  
+                  collector_type *collector) override {}
 
   // trickery: we return at most batch sz things due to pop_find_queue.
   void find_batch_inline(const InsertFindArguments &kp, ValuePairs &values,
-                  collector_type *collector) {
+                         collector_type *collector) {
 
 #else
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
@@ -933,107 +898,41 @@ class CASHashTable : public BaseHashTable {
     return;
 #endif
 
-#ifdef REMOTE_QUEUE
-    for (auto &data : kp) {
-      if (is_remote(&data)) {
-        if ((get_remote_find_queue_sz() >= REMOTE_FIND_QUEUE_SZ_MASK)) {
-          pop_remote_find_queue(values, collector);
-        }
-        add_to_remote_find_queue(&data, collector);
-      } else {
-        if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
-          pop_find_queue(values, collector);
-        }
-        add_to_find_queue(&data, collector);
-      }
-    }
-    return;
-#endif
-
-#ifdef BUDDY_QUEUE
-    uint64_t *addr = nullptr;  // cacheline X
-                               // remote read core 0      local write core 1
-                               // write [] full,
-                               // local write
-    if (own_buddy_find_queue->read(
-            &addr)) {  // remote read, -> line exclusive in another core
-      //__builtin_prefetch(addr, false, 3);  cmake -S . -B build
-      //-DOLD_DRAMHiT=ON -DBUCKETIZATION=OFF -DBRANCH=branched
-      //-DDRAMHiT_MANUAL_INLINE=OFF -DUNIFORM_PROBING=OFF
-      // local write, c
-    }
-    // __builtin_prefetch(&buddy_current, false, 3);
-    // bool flush_remote = own_buddy_find_queue->is_full();
-    // if (flush_remote) {
-    //   __builtin_prefetch(&(own_buddy_find_queue->arr), false, 3);
-    //   __builtin_prefetch(&(own_buddy_find_queue->sz), false, 3);
-
-    // if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
-    //       pop_find_queue(values, collector);
-    //     }
-    //     add_to_find_queue(&data, collector);
-    //  }
-#endif
-
+#if defined(FAST_PATH)
     if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
       for (auto &data : kp) {
-#ifdef BUDDY_QUEUE
-        if (add_to_buddy_find_queue(&data)) {
-          continue;
-        }
-#endif
-
         pop_find_queue(values, collector);
         add_to_find_queue(&data, collector);
       }
     } else {
       for (auto &data : kp) {
-#ifdef BUDDY_QUEUE
-        if (add_to_buddy_find_queue(&data)) {
-          continue;
-        }
-#endif
         if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
           pop_find_queue(values, collector);
         }
         add_to_find_queue(&data, collector);
       }
     }
-
-#ifdef BUDDY_QUEUE
-    // if (addr != nullptr) {
-    //   // __m512i simd512;
-    //   // alignas(64) uint64_t local_cacheline[8];
-    //   // simd512 = _mm512_load_si512(addr);
-    //   // _mm512_store_si512(local_cacheline, simd512);
-
-    //   for (int i = 0; i < 8; i += 2) {
-    //     if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
-    //       pop_find_queue(values, collector);
-    //     }
-    //     // buddy_add_to_find_queue(local_cacheline[(i)], local_cacheline[(i +
-    //     // 1)]);
-
-    //     buddy_add_to_find_queue(addr[(i)], addr[(i + 1)]);
-    //   }
-    // }
+#else
+    for (auto &data : kp) {
+      if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
+        pop_find_queue(values, collector);
+      }
+      add_to_find_queue(&data, collector);
+    }
 #endif
-  }  // end find_batch()
-
+  }
 #elif defined(DRAMHiT_2025_INLINED)
 
 #if defined(CAS_NO_ABSTRACT)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-                  collector_type *collector) override{ 
-                  }
-  
+                  collector_type *collector) override {}
 
   // trickery: we return at most batch sz things due to pop_find_queue.
-  void find_batch_inline(const InsertFindArguments &kp, ValuePairs &values,
-                  collector_type *collector) {
+  void find_batch_inline(const InsertFindArguments &kp, ValuePairs &vp,
+                         collector_type *collector) {
 
 #else
-  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
+  void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
                   collector_type *collector) {
 #endif
     bool fast_path = ((this->find_head - this->find_tail) &
@@ -1153,10 +1052,8 @@ class CASHashTable : public BaseHashTable {
     }  // end of fast path
     else [[unlikely]] {  // slow paths
       for (auto &data : kp) {
-        // pop queue
-        if (((find_head - find_tail) & FIND_QUEUE_SZ_MASK) >=
-            (find_queue_sz - 1)) {
-          pop_find_queue(vp, collector);
+        if ((get_find_queue_sz() >= FIND_QUEUE_SZ_MASK)) {
+          pop_find_queue(values, collector);
         }
         add_to_find_queue(&data, collector);
       }
@@ -1772,11 +1669,11 @@ class CASHashTable : public BaseHashTable {
 #elif L1_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 3);
 #elif L2_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 2);
+  __builtin_prefetch(&this->hashtable[idx], false, 2);
 #elif L3_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 1);
+  __builtin_prefetch(&this->hashtable[idx], false, 1);
 #elif NTA_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 0);
+  __builtin_prefetch(&this->hashtable[idx], false, 0);
 #endif
 
 #endif  // end DRAMHiT_2023

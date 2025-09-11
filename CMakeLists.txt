@@ -32,6 +32,12 @@ option(GROWT "growt hashtable" OFF)
 option(CLHT " CLHT hashtable" OFF)
 option(CAS_NO_ABSTRACT "remove abstract so method can be inlined" OFF)
 
+option(CAS_FAST_PATH "minimize branch in cas" OFF)
+
+if(CAS_FAST_PATH)
+    add_definitions(-DFAST_PATH)
+endif()
+
 if(CAS_NO_ABSTRACT) 
         add_definitions(-DCAS_NO_ABSTRACT)
 endif() 

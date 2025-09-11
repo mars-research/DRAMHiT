@@ -83,6 +83,7 @@ typedef enum {
   GROWHT = 6,
   CLHT_HT = 7,
   UMAP_HT = 8,
+  TBB_HT = 9,
 } ht_type_t;
 
 extern const char* run_mode_strings[];
