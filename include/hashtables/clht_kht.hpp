@@ -48,6 +48,7 @@ class CLHT_HashTable : public BaseHashTable {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
       this->ref_cnt--;
       if (this->ref_cnt == 0) {
+        clht_gc_destroy(table);
       }
     }  // end scope of lock...
   }
@@ -70,6 +71,13 @@ class CLHT_HashTable : public BaseHashTable {
         vp.first++;
       }  
     }
+  }
+
+  void clear() override
+  {
+            clht_gc_destroy(table);
+        table = clht_create(num_buckets);
+
   }
 
   // --- stub the rest so we satisfy BaseHashTable ---

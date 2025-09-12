@@ -19,24 +19,14 @@ class TBB_HashTable : public BaseHashTable {
  public:
   TBB_HashTable(uint64_t sz) {
     {  // lock scope
-      setenv("TBB_MALLOC_USE_HUGE_PAGES", "1", 1);
-      scalable_allocation_mode(TBBMALLOC_USE_HUGE_PAGES, 1);
+
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
       if (!table) {
-        // https://oneapi-spec.uxlfoundation.org/specifications/oneapi/v1.3-rev-1/elements/onetbb/source/containers/concurrent_unordered_map_cls#class-template-synopsis
-        // https://www.intel.com/content/www/us/en/docs/onetbb/developer-guide-api-reference/2021-6/configuring-the-memory-allocator.html
-
         assert(ref_cnt == 0);
 
         table = new tbb::concurrent_unordered_map<uint64_t, uint64_t>();
         table->reserve(sz);
-        table->max_load_factor(1.0);
-
-        printf(
-            "Created tbb::concurrent_unordered_map at %p with reserved buckets "
-            "%zu\n",
-            (void*)table, sz);
 
         //    bucket_count_start = table->bucket_count();
         bucket_count_start = sz;
@@ -53,18 +43,6 @@ class TBB_HashTable : public BaseHashTable {
 
       ref_cnt--;
       if (ref_cnt == 0) {
-        //   printf("Final size: %zu, bucket_count: %zu\n",
-        //          table->size(), table->bucket_count());
-        printf("Final load factor: %zu\n", table->load_factor());
-        fflush(stdout);
-
-        //   if (table->bucket_count() != bucket_count_start) {
-        //     fprintf(stderr,
-        //             "WARNING: tbb::concurrent_unordered_map resized START:
-        //             %zu END: %zu!\n", bucket_count_start,
-        //             table->bucket_count());
-        //   }
-
         delete table;
         table = nullptr;
       }
