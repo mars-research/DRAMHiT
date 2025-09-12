@@ -150,7 +150,11 @@ double *g_insert_bw;
 uint64_t g_insert_start, g_insert_end;
 uint64_t g_find_start, g_find_end;
 
+
+
 void sync_complete(void) {
+
+
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
     PLOGI.printf("Stopping counters");
@@ -315,7 +319,6 @@ void Application::shard_thread(int tid,
                           config.num_threads, barrier);
       break;
     case RW_RATIO:
-      PLOG_INFO << "Inserting " << HT_TESTS_NUM_INSERTS << " pairs per thread";
       this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS, barrier);
       break;
     case HASHJOIN:
