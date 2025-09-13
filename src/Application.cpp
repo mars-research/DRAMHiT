@@ -86,9 +86,7 @@ uint64_t sum_total_ops(Shard *all_sh, Configuration &config) {
 
 void print_stats_simple(uint64_t duration, uint64_t ops) {
   double mops = (double)((CPUFREQ_MHZ * ops) / duration);
-  uint64_t cpo = ops / (duration * config.num_threads);
-    printf("ops : %lu, duration : %lu\n", ops, duration);
-
+  uint64_t cpo = (duration * config.num_threads) / ops;
   printf("cpo : %lu, mops : %.3f\n", cpo, mops);
 }
 // default configuration
@@ -225,9 +223,10 @@ void sync_complete(void) {
   } else if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
     if (cur_phase == ExecPhase::recording && g_app_record_start) {
       g_app_record_duration = RDTSC_START();
-    } else {
+      cur_phase = ExecPhase::none;
+    } else if(cur_phase == ExecPhase::recording && !g_app_record_start){
       g_app_record_duration = RDTSCP() - g_app_record_duration;
-
+      cur_phase = ExecPhase::none;
       PLOGI.printf("task duration %lu cycles", g_app_record_duration);
     }
   }

@@ -42,6 +42,7 @@ void KmerTest::count_kmer(Shard* sh,
   batch_runner.flush_insert();
   if(sh->shard_idx == 0)
   {
+    cur_phase = ExecPhase::recording;
     g_app_record_start = false;
   }
   barrier->arrive_and_wait();

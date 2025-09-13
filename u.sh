@@ -33,11 +33,11 @@ if [ "$test" = "small" ]; then
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
     # size=1073741824
-    #size=268435456
-    # size=536870912
+    # size=268435456
+    size=536870912
     # size=1073741824
     #size=268435456
-    size=134217728
+    #size=134217728
     insertFactor=5
     readFactor=5
 fi

@@ -61,7 +61,6 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   }
   batch_runner.flush_insert();
 
-  
   barrier->arrive_and_wait();
 
 
@@ -168,6 +167,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   hashjoin(sh, &t1, &t2, relation_r, relation_s, ht, mt, materialize, barrier);
 
   if (sh->shard_idx == 0) {
+    cur_phase = ExecPhase::recording;
     g_app_record_start = false;
   }
   barrier->arrive_and_wait();
