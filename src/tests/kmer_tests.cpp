@@ -17,6 +17,8 @@
 #include "print_stats.h"
 
 namespace kmercounter {
+extern ExecPhase cur_phase;
+extern bool g_app_record_start;
 void KmerTest::count_kmer(Shard* sh,
                               const Configuration& config,
                               BaseHashTable* ht,
@@ -26,14 +28,24 @@ void KmerTest::count_kmer(Shard* sh,
   auto reader = input_reader::MakeFastqKMerPreloadReader(config.K, config.in_file, sh->shard_idx, config.num_threads);
   HTBatchRunner batch_runner(ht);
 
+  if(sh->shard_idx == 0)
+  {
+    cur_phase = ExecPhase::recording;
+    g_app_record_start = true;
+  }
+
   barrier->arrive_and_wait();
   for (uint64_t kmer; reader->next(&kmer);) {
     batch_runner.insert(kmer, 0 /* we use the aggr tables so no value */);
     num_kmers++;
   }
   batch_runner.flush_insert();
+  if(sh->shard_idx == 0)
+  {
+    g_app_record_start = false;
+  }
   barrier->arrive_and_wait();
-
+  sh->stats->insertions.op_count = num_kmers;
   get_ht_stats(sh, ht);
 }
 

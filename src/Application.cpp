@@ -77,7 +77,20 @@ static pcm::PCMCounters g_pcm_cnt;
 #endif
 
 // void sync_complete(void);
+uint64_t sum_total_ops(Shard *all_sh, Configuration &config) {
+  uint64_t ops = 0;
+  for (int k = 0; k < config.num_threads; k++)
+    ops += all_sh[k].stats->insertions.op_count;
+  return ops;
+}
 
+void print_stats_simple(uint64_t duration, uint64_t ops) {
+  double mops = (double)((CPUFREQ_MHZ * ops) / duration);
+  uint64_t cpo = ops / (duration * config.num_threads);
+    printf("ops : %lu, duration : %lu\n", ops, duration);
+
+  printf("cpo : %lu, mops : %.3f\n", cpo, mops);
+}
 // default configuration
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -150,11 +163,10 @@ double *g_insert_bw;
 uint64_t g_insert_start, g_insert_end;
 uint64_t g_find_start, g_find_end;
 
-
+bool g_app_record_start;
+uint64_t g_app_record_duration;
 
 void sync_complete(void) {
-
-
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
     PLOGI.printf("Stopping counters");
@@ -168,46 +180,56 @@ void sync_complete(void) {
   }
 #endif
 
-  if (cur_phase == ExecPhase::finds) {
-    if (!zipfian_finds) {
-      // PLOGI.printf("Zipfian find iter: %lu start", zipfian_iter);
+  if (config.mode == ZIPFIAN) {
+    if (cur_phase == ExecPhase::finds) {
+      if (!zipfian_finds) {
+        // PLOGI.printf("Zipfian find iter: %lu start", zipfian_iter);
 #if defined(WITH_PCM)
-      g_pcm_cnt.start_socket();
+        g_pcm_cnt.start_socket();
 #endif
-      zipfian_finds = true;
-      g_find_start = RDTSC_START();
+        zipfian_finds = true;
+        g_find_start = RDTSC_START();
 
-    } else {
-      g_find_end = RDTSCP();
-      // PLOGI.printf("Zipfian find iter: %lu end", zipfian_iter);
+      } else {
+        g_find_end = RDTSCP();
+        // PLOGI.printf("Zipfian find iter: %lu end", zipfian_iter);
 #if defined(WITH_PCM)
-      g_pcm_cnt.stop_socket();
+        g_pcm_cnt.stop_socket();
 #endif
 
-      if (zipfian_iter < config.read_factor) {
-        g_find_durations[zipfian_iter] = g_find_end - g_find_start;
+        if (zipfian_iter < config.read_factor) {
+          g_find_durations[zipfian_iter] = g_find_end - g_find_start;
 #if defined(WITH_PCM)
-        g_find_bw[zipfian_iter] =
-            g_pcm_cnt.get_bw(g_find_durations[zipfian_iter]);
+          g_find_bw[zipfian_iter] =
+              g_pcm_cnt.get_bw(g_find_durations[zipfian_iter]);
 #endif
+        }
       }
-    }
-  } else if (cur_phase == ExecPhase::insertions) {
-    if (!zipfian_inserts) {
-      // PLOGI.printf("Zipfian insert iter: %lu start", zipfian_iter);
+    } else if (cur_phase == ExecPhase::insertions) {
+      if (!zipfian_inserts) {
+        // PLOGI.printf("Zipfian insert iter: %lu start", zipfian_iter);
 
-      zipfian_inserts = true;
-      g_insert_start = RDTSC_START();
-    } else {
-      g_insert_end = RDTSCP();
-      zipfian_inserts = false;
-      // PLOGI.printf("Zipfian insert iter: %lu end", zipfian_iter);
+        zipfian_inserts = true;
+        g_insert_start = RDTSC_START();
+      } else {
+        g_insert_end = RDTSCP();
+        zipfian_inserts = false;
+        // PLOGI.printf("Zipfian insert iter: %lu end", zipfian_iter);
 
-      if (zipfian_iter < config.insert_factor) {
-        g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
+        if (zipfian_iter < config.insert_factor) {
+          g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
+        }
       }
+    } else {
     }
-  } else {
+  } else if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
+    if (cur_phase == ExecPhase::recording && g_app_record_start) {
+      g_app_record_duration = RDTSC_START();
+    } else {
+      g_app_record_duration = RDTSCP() - g_app_record_duration;
+
+      PLOGI.printf("task duration %lu cycles", g_app_record_duration);
+    }
   }
 }
 
@@ -372,28 +394,22 @@ int Application::spawn_shard_threads() {
     }
   }
 
-  if (config.insert_factor >= 1) {
-    PLOGI.printf(
-        "Insert factor %" PRIu64 ", Effective num insertions %" PRIu64 "",
-        config.insert_factor, HT_TESTS_NUM_INSERTS * config.insert_factor);
+  if (config.mode == ZIPFIAN) {
+    uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
+    if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
+        config.ht_type == GROWHT || config.ht_type == UMAP_HT ||
+        config.ht_type == TBB_HT) {
+      HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
+      PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
+                   orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
+    } else if (config.ht_type == CLHT_HT) {
+      HT_TESTS_NUM_INSERTS =
+          (orig_num_inserts * 3 / config.num_threads) /
+          4;  // actual clht capacty if bucket num * 3 100, 3/4
+      PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
+                   orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
+    }
   }
-
-
-  // split the num inserts equally among threads for a
-  // non-partitioned hashtable
-  uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
-  if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
-      config.ht_type == GROWHT || config.ht_type == UMAP_HT || config.ht_type == TBB_HT) {
-    HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
-    PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
-                 orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
-  } else if (config.ht_type == CLHT_HT) {
-    HT_TESTS_NUM_INSERTS = (orig_num_inserts * 3 / config.num_threads) /
-                           4;  // actual clht capacty if bucket num * 3 100, 3/4
-    PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
-                 orig_num_inserts, config.num_threads, HT_TESTS_NUM_INSERTS);
-  }
-
 
   /*   TODO don't spawn threads if f_start >= in_file_sz
     Not doing it now, as it has implications for num_threads,
@@ -456,9 +472,14 @@ int Application::spawn_shard_threads() {
       th.join();
     }
   }
-  if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
-    print_stats(this->shards, config);
-  }
+  //if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
+    if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
+      print_stats_simple(g_app_record_duration,
+                         sum_total_ops(this->shards, config));
+    } else {
+      print_stats(this->shards, config);
+    }
+  //}
 
 #ifdef WITH_PERFCPP
   EVENTCOUNTERS.print();
@@ -712,10 +733,10 @@ int Application::process(int argc, char *argv[]) {
       if (config.ht_type == ARRAY_HT) {
         config.ht_size = max_join_size;
       } else {
-        // config.ht_size = static_cast<double>(max_join_size) * 100 /
-        // config.ht_fill;
+        config.ht_size = max(config.relation_r_size, config.ht_size);
       }
-      PLOGI.printf("Setting ht size to %llu for hashjoin test", config.ht_size);
+      PLOGI.printf("hashjoin workload sz %lu, ht_size %lu",
+                   config.relation_r_size, config.ht_size);
     }
 
     switch (config.ht_type) {

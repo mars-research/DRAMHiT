@@ -3,9 +3,9 @@ import subprocess
 import csv
 
 # Constants
-size = 268435456  # 8gb / 2
-insertFactor = 1
-readFactor = 1
+size = 268435456/2  # 2gb / 2
+insertFactor = 100
+readFactor = 100
 numThreads = 128
 numa_policy = 1
 

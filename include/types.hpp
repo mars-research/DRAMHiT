@@ -339,8 +339,8 @@ enum class QueueType {
 
 enum class ExecPhase {
   insertions,
-  upsertions,
   finds,
+  recording,
   none,
 };
 // Can be use for, let's say, cleanup functions.

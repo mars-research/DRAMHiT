@@ -28,9 +28,10 @@
 #include <chrono>
 
 namespace kmercounter {
-namespace {
 
-using namespace std;
+extern ExecPhase cur_phase;
+extern bool g_app_record_start;
+
 using JoinArrayElement = std::array<uint64_t, 3>;
 
 using MaterializeVector = std::vector<JoinArrayElement>;
@@ -46,14 +47,6 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
               bool materialize, std::barrier<std::function<void()>>* barrier) {
   // Build hashtable from t1.
   HTBatchRunner batch_runner(ht);
-  const auto t1_start = RDTSC_START();
-
-  std::chrono::time_point<std::chrono::steady_clock> start_build_ts, end_build_ts, end_probe_ts;
-
-  if (sh->shard_idx == 0) {
-    start_build_ts = std::chrono::steady_clock::now();
-  }
-
   collector_type *const collector{};
   auto [rel_r, rel_r_size] = relation_r;
   auto [rel_s, rel_s_size] = relation_s;
@@ -64,26 +57,14 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   for (auto i = 0; i < rel_r_size; i++) {
     KeyValuePair kv = rel_r[i];
 #endif
-    PLOGV.printf("inserting k: %lu, v: %lu", kv.key, kv.value);
     batch_runner.insert(kv);
   }
   batch_runner.flush_insert();
 
-  if (0)
-  {
-    const auto duration = RDTSCP() - t1_start;
-    sh->stats->insertions.op_count = t1->size();
-    sh->stats->insertions.duration = duration;
-  }
-
-  // Make sure insertions is finished before probing.
+  
   barrier->arrive_and_wait();
 
-  if (sh->shard_idx == 0) {
-    end_build_ts = std::chrono::steady_clock::now();
-  }
 
-  // Helper function for checking the result of the batch finds.
   uint64_t num_output = 0;
 
   auto join_row = [&num_output, &mvec, &materialize](const FindResult& res) {
@@ -97,7 +78,6 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   batch_runner.set_callback(join_row);
 
   // Probe.
-  const auto t2_start = RDTSC_START();
 #ifdef ITERATOR
   for (KeyValuePair kv; t2->next(&kv);) {
 #else
@@ -106,43 +86,12 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 #endif
     value_type val = kv.value;
     KeyValuePair *f_kv = (KeyValuePair*) batch_runner.find(kv);
-    if (f_kv)
-      PLOGV.printf("finding key %llu value1 %llu | value2 %llu", kv.key, kv.value, f_kv->value);
   }
   batch_runner.flush_find();
 
-  // Make sure insertions is finished before probing.
   barrier->arrive_and_wait();
 
-
-  if (sh->shard_idx == 0) {
-    end_probe_ts = std::chrono::steady_clock::now();
-
-    PLOG_INFO.printf("Build phase took %llu us, probe phase took %llu us",
-        chrono::duration_cast<chrono::microseconds>(end_build_ts - start_build_ts).count(),
-        chrono::duration_cast<chrono::microseconds>(end_probe_ts - end_build_ts).count());
-  }
-
-  if (0)
-  {
-    const auto t2_end = RDTSCP();
-    const auto duration = t2_end - t2_start;
-    const auto total_duration = t2_end - t1_start;
-    num_output = t2->size();
-
-    // Piggy back the total on find.
-    sh->stats->finds.op_count = num_output;
-    sh->stats->finds.duration = total_duration;
-
-    std::osyncstream(std::cout)
-        << "Thread " << (int)sh->shard_idx << " took " << duration
-        << " to join t2 with size " << t2->size() << ". Output " << num_output
-        << " rows. Average " << duration / std::max(1ul, num_output)
-        << " cycles per probe, " << total_duration / std::max(1ul, num_output)
-        << " cycles per output." << std::endl;
-  }
 }
-}  // namespace
 
 void HashjoinTest::join_relations_generated(Shard* sh,
                                             const Configuration& config,
@@ -154,7 +103,9 @@ void HashjoinTest::join_relations_generated(Shard* sh,
       config.num_threads, config.relation_r_size);
   input_reader::PartitionedEthRelationGenerator t2(
       "s.tbl", DEFAULT_S_SEED, config.relation_s_size, sh->shard_idx,
-      config.num_threads, config.relation_r_size);
+      config.num_threads, config.relation_r_size);  
+
+
 
 #ifndef ITERATOR
   input_reader::SizedInputReader<KeyValuePair>* _t2 = &t2;
@@ -206,30 +157,22 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     mt = new MaterializeVector(t1.size());
 
   // Wait for all readers finish initializing.
-  barrier->arrive_and_wait();
 
   if (sh->shard_idx == 0) {
-    start = _rdtsc();
-    start_ts = std::chrono::steady_clock::now();
+    cur_phase = ExecPhase::recording;
+    g_app_record_start = true;
   }
-
+  barrier->arrive_and_wait();
+  
   // Run hashjoin
   hashjoin(sh, &t1, &t2, relation_r, relation_s, ht, mt, materialize, barrier);
 
+  if (sh->shard_idx == 0) {
+    g_app_record_start = false;
+  }
   barrier->arrive_and_wait();
 
-  if (sh->shard_idx == 0) {
-    end = _rdtsc();
-    end_ts = std::chrono::steady_clock::now();
-    PLOG_INFO.printf("Hashjoin took %llu us (%llu cycles)",
-        chrono::duration_cast<chrono::microseconds>(end_ts - start_ts).count(),
-        end - start);
-    if (mt) {
-      for (const auto &e: *mt) {
-        PLOGV.printf("k: %llu, v1: %llu, v2: %llu", e.at(0), e.at(1), e.at(2));
-      }
-    }
-  }
+  sh->stats->insertions.op_count = t1.size();
 }
 
 void HashjoinTest::join_relations_from_files(Shard* sh,

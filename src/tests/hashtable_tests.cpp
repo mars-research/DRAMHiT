@@ -185,14 +185,7 @@ OpTimings do_zipfian_inserts(
   uint64_t start, end;
 
   for (auto j = 0u; j < config.insert_factor; j++) {
-    // if (id == 0) {
-    //   cur_phase = ExecPhase::none;
-    // }
-    // sync_barrier->arrive_and_wait();
-    // if (id == 0) {
-    //   hashtable->clear();
-    // }
-    // sync_barrier->arrive_and_wait();
+
 
     uint64_t idx;
 #if defined(ZIPFIAN)
@@ -212,6 +205,15 @@ OpTimings do_zipfian_inserts(
     if (id == 0) {
       zipfian_inserts = true;
       zipfian_iter = j;
+    }
+    sync_barrier->arrive_and_wait();
+
+    if (id == 0) {
+      cur_phase = ExecPhase::none;
+    }
+    sync_barrier->arrive_and_wait();
+    if (id == 0) {
+      hashtable->clear();
     }
     sync_barrier->arrive_and_wait();
   }

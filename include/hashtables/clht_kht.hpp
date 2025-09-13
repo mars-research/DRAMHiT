@@ -75,9 +75,8 @@ class CLHT_HashTable : public BaseHashTable {
 
   void clear() override
   {
-            clht_gc_destroy(table);
-        table = clht_create(num_buckets);
-
+    clht_gc_destroy(table);
+    table = clht_create(num_buckets);
   }
 
   // --- stub the rest so we satisfy BaseHashTable ---

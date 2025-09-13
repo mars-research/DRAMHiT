@@ -34,6 +34,8 @@ inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
+
+
 inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t total_inserts = 0;
   uint64_t total_insert_cycles = 0;
