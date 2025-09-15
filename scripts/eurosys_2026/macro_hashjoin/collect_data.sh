@@ -8,8 +8,6 @@
 # from within work dir
 
 
-echo "Collecting reprobe stats on: <8gb> <dual> <128 threads> ʕ•ᴥ•ʔ"
-
 test=$1
 numa_policy=$2
 numThreads=$3
@@ -17,16 +15,14 @@ numThreads=$3
 numa_policy=1
 
 # size=536870912 # 8gb
-size=268435456 
-insertFactor=100
-readFactor=100
+size=268435456
 numThreads=128
 
 # 'Constants' hash table types
-DRAMHIT=3
+DRAMHIT25=3
 GROWT=6
 CLHT=7
-UMAP=8
+DRAMHIT23=8
 TBB=9
 
 # Produces raw output of all runs in args1.txt and plottable data in args1.csv
@@ -41,9 +37,9 @@ do
     echo "Generating $file_name_txt (fill=$fill)"
 
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type $2 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
-    --hw-pref $3 --batch-len 16"
+    --find_queue 64 --ht-fill $fill --ht-type $2 \
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size \
+    --hw-pref $3 --batch-len 16 --relation_r_size $size"
    
     echo "Command executed: "/opt/DRAMHiT/build/dramhit $cmd >> $file_name_txt
     sudo /opt/DRAMHiT/build/dramhit $cmd >> $file_name_txt
@@ -68,16 +64,10 @@ rm tmp1.txt tmp2.txt
 }
 
 rm /opt/DRAMHiT/build/CMakeCache.txt
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2023 -DDATA_GEN=HASH -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF -DGROWT=OFF -DCLHT=OFF
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025_INLINE -DDATA_GEN=HASH -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DGROWT=ON -DCLHT=ON 
 cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_2023 $DRAMHIT 0
-
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025_INLINE -DDATA_GEN=HASH -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DCAS_NO_ABSTRACT=ON -DREAD_BEFORE_CAS=ON
-cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_inline_uniform $DRAMHIT 0
-
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDATA_GEN=HASH -DGROWT=ON -DCLHT=ON -DCAS_NO_ABSTRACT=OFF
-cmake --build /opt/DRAMHiT/build
+run_ht_dual dramhit_2023 $DRAMHIT23 0
+run_ht_dual dramhit_2025 $DRAMHIT25 0
 run_ht_dual GROWT $GROWT 1
 run_ht_dual TBB $TBB 1
 run_ht_dual CLHT $CLHT 1

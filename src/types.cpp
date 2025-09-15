@@ -38,22 +38,23 @@ const char* ht_type_strings[] = {
     "MULTI_HT",
     "UNIFORM_HT",
     "CLHT_HT",
-    "UMAP_HT",
+    "HASH_HT",
     "TBB_HT"
 };
 const char* run_mode_strings[] = {
     "",
-    "DRY_RUN",
-    "READ_FROM_DISK",
-    "WRITE_TO_DISK",
-    "FASTQ_WITH_INSERT",
-    "FASTQ_NO_INSERT",
-    "SYNTH",
-    "PREFETCH",
-    "BQ_TESTS_YES_BQ",
-    "BQ_TESTS_NO_BQ",
-    "CACHE_MISS",
-    "ZIPFIAN",
-    "HASHJOIN",
+    "DRY_RUN", // 1
+    "READ_FROM_DISK", // 2 
+    "WRITE_TO_DISK", // 3
+    "FASTQ_WITH_INSERT", // 4
+    "FASTQ_NO_INSERT", // 5
+    "SYNTH", // 6
+    "PREFETCH", // 7
+    "BQ_TESTS_YES_BQ", // 8
+    "BQ_TESTS_NO_BQ", // 9 
+    "CACHE_MISS", // 10
+    "ZIPFIAN", // 11 
+    "RW_RATIO", // 12 
+    "HASHJOIN", // 13
 };
 }  // namespace kmercounter

@@ -82,7 +82,7 @@ typedef enum {
   MULTI_HT = 5,
   GROWHT = 6,
   CLHT_HT = 7,
-  UMAP_HT = 8,
+  CAS23HTPP = 8,
   TBB_HT = 9,
 } ht_type_t;
 

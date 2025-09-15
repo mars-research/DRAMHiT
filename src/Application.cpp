@@ -14,6 +14,7 @@
 
 #include "./hashtables/array_kht.hpp"
 #include "./hashtables/cas_kht.hpp"
+#include "./hashtables/cas23_kht.hpp"
 #include "numa.hpp"
 
 #ifdef GROWT
@@ -24,7 +25,6 @@
 #ifdef CLHT
 #include "hashtables/clht_kht.hpp"
 #endif
-#include "hashtables/umap_kht.hpp"
 
 #ifdef PART_ID
 #include "./hashtables/multi_kht.hpp"
@@ -105,7 +105,7 @@ const Configuration def = {
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
     .numa_split = 3,
     .ht_type = 0,
-    .ht_fill = 75,
+    .ht_fill = 70,
     .ht_size = HT_TESTS_HT_SIZE,
     .insert_factor = 0,
     .read_factor = 0,
@@ -245,10 +245,9 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
       break;
 #endif
-    case UMAP_HT:
-      kmer_ht = new UMAP_HashTable(sz);
-      break;
-
+    case CAS23HTPP:
+      kmer_ht = new CAS23HashTable<KVType, ItemQueue>(sz);
+      break; 
 #ifdef GROWT
     case GROWHT:
       kmer_ht = new GrowtHashTable(sz);
@@ -396,7 +395,7 @@ int Application::spawn_shard_threads() {
   if (config.mode == ZIPFIAN) {
     uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
     if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
-        config.ht_type == GROWHT || config.ht_type == UMAP_HT ||
+        config.ht_type == GROWHT || config.ht_type == CAS23HTPP ||
         config.ht_type == TBB_HT) {
       HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
       PLOGI.printf("total kv %lu, num_threads %u, op per thread (per run) %lu",
@@ -752,8 +751,8 @@ int Application::process(int argc, char *argv[]) {
       case CASHTPP:
         PLOG_INFO.printf("Hashtable type : Cas HT");
         break;
-      case UMAP_HT:
-        PLOG_INFO.printf("Hashtable type : UMAP HT");
+      case CAS23HTPP:
+        PLOG_INFO.printf("Hashtable type : CAS2023 HT");
         break;
       case ARRAY_HT:
         PLOG_INFO.printf("Hashtable type : Array HT");
@@ -866,33 +865,37 @@ int Application::process(int argc, char *argv[]) {
     init_zipfian_dist(config.skew, config.seed);
 #endif
   }
-  if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
-    // for hashjoin, ht-type determines how we spawn threads
-    if (config.ht_type == PARTITIONED_HT) {
-      this->test.qt.run_test(&config, this->n, true, this->npq);
-    } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT) ||
-               (config.ht_type == MULTI_HT)) {
-      this->spawn_shard_threads();
-    }
-  } else if (config.mode == BQ_TESTS_YES_BQ) {
-    this->test.qt.run_test(&config, this->n, false, this->npq);
-  } else {
-    this->spawn_shard_threads();
-  }
 
-  // If we start to run casht, reset the num_inserts and no_prefetch
-  // to run cashtpp
-  if (config.run_both) {
-    PLOGI.printf("Running cashtpp now with the same configuration");
-    if ((config.ht_type == CASHTPP) && config.no_prefetch &&
-        (config.mode == ZIPFIAN)) {
-      HT_TESTS_NUM_INSERTS = config.ht_size * config.ht_fill * 0.01;
+  this->spawn_shard_threads();
 
-      config.no_prefetch = 0;
 
-      this->spawn_shard_threads();
-    }
-  }
+  // if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
+  //   // for hashjoin, ht-type determines how we spawn threads
+  //   if (config.ht_type == PARTITIONED_HT) {
+  //     this->test.qt.run_test(&config, this->n, true, this->npq);
+  //   } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT) || (config.ht_type == CAS23HTPP)
+  //              (config.ht_type == MULTI_HT)) {
+  //     this->spawn_shard_threads();
+  //   }
+  // } else if (config.mode == BQ_TESTS_YES_BQ) {
+  //   this->test.qt.run_test(&config, this->n, false, this->npq);
+  // } else {
+  //   this->spawn_shard_threads();
+  // }
+
+  // // If we start to run casht, reset the num_inserts and no_prefetch
+  // // to run cashtpp
+  // if (config.run_both) {
+  //   PLOGI.printf("Running cashtpp now with the same configuration");
+  //   if ((config.ht_type == CASHTPP) && config.no_prefetch &&
+  //       (config.mode == ZIPFIAN)) {
+  //     HT_TESTS_NUM_INSERTS = config.ht_size * config.ht_fill * 0.01;
+
+  //     config.no_prefetch = 0;
+
+  //     this->spawn_shard_threads();
+  //   }
+  // }
 
   return 0;
 }

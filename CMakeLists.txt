@@ -59,7 +59,7 @@ if(BUDDY_QUEUE)
 endif() 
 
 # Define a single option variable with 3 choices for find_batch()
-set(DRAMHiT_VARIANT "2023" CACHE STRING "Choose DRAMHiT variant: 2023, 2025, 2025_INLINE")
+set(DRAMHiT_VARIANT "2025" CACHE STRING "Choose DRAMHiT variant: 2023, 2025, 2025_INLINE")
 # Tell CMake what the valid values are (for GUIs like ccmake / cmake-gui)
 set_property(CACHE DRAMHiT_VARIANT PROPERTY STRINGS 2023 2025 2025_INLINE)
 # Now use it in conditions

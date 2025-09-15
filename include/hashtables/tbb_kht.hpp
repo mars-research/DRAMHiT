@@ -25,8 +25,9 @@ class TBB_HashTable : public BaseHashTable {
       if (!table) {
         assert(ref_cnt == 0);
 
-        table = new tbb::concurrent_unordered_map<uint64_t, uint64_t>();
-        table->reserve(sz);
+        table = new tbb::concurrent_unordered_map<uint64_t, uint64_t>(sz);
+        //table->max_load_factor = 2.0; 
+        //table->reserve(sz);
 
         //    bucket_count_start = table->bucket_count();
         bucket_count_start = sz;
