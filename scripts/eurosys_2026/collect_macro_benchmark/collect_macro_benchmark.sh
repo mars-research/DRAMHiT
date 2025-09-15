@@ -18,7 +18,7 @@ numa_policy=1
 
 # size=536870912 # 8gb
 size=268435456 
-insertFactor=1
+insertFactor=100
 readFactor=100
 numThreads=128
 
@@ -72,12 +72,10 @@ cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2023 -DDATA_GEN=H
 cmake --build /opt/DRAMHiT/build
 run_ht_dual dramhit_2023 $DRAMHIT 0
 
-rm /opt/DRAMHiT/build/CMakeCache.txt
 cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025_INLINE -DDATA_GEN=HASH -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DCAS_NO_ABSTRACT=ON -DREAD_BEFORE_CAS=ON
 cmake --build /opt/DRAMHiT/build
 run_ht_dual dramhit_inline_uniform $DRAMHIT 0
 
-rm /opt/DRAMHiT/build/CMakeCache.txt
 cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDATA_GEN=HASH -DGROWT=ON -DCLHT=ON -DCAS_NO_ABSTRACT=OFF
 cmake --build /opt/DRAMHiT/build
 run_ht_dual GROWT $GROWT 1
