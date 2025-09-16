@@ -26,8 +26,8 @@ class TBB_HashTable : public BaseHashTable {
         assert(ref_cnt == 0);
 
         table = new tbb::concurrent_unordered_map<uint64_t, uint64_t>(sz);
-        //table->max_load_factor = 2.0; 
-        //table->reserve(sz);
+        table->max_load_factor(1.0);
+        table->reserve(sz);
 
         //    bucket_count_start = table->bucket_count();
         bucket_count_start = sz;
@@ -50,9 +50,18 @@ class TBB_HashTable : public BaseHashTable {
     }
   }
 
-  void clear() 
-  {
-    table->clear();
+  void clear() {
+    printf("Clearing table.\n");
+    fflush(stdout);
+
+    {
+      const std::lock_guard<std::mutex> lock(ht_init_mutex);
+      // delete table;
+      // table = new tbb::concurrent_unordered_map<uint64_t, uint64_t>(
+      //     bucket_count_start);
+      // table->reserve(bucket_count_start);
+      table->clear();
+    }
   }
 
   void insert_batch(const InsertFindArguments& kp,
