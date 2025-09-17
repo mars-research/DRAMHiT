@@ -36,7 +36,7 @@ const char* ht_type_strings[] = {
     "CASHT++",
     "ARRAY_HT",
     "MULTI_HT",
-    "UNIFORM_HT",
+    "GROW_HT",
     "CLHT_HT",
     "HASH_HT",
     "TBB_HT"
@@ -56,5 +56,6 @@ const char* run_mode_strings[] = {
     "ZIPFIAN", // 11 
     "RW_RATIO", // 12 
     "HASHJOIN", // 13
+    "UNIFORM", // 14
 };
 }  // namespace kmercounter

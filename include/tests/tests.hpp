@@ -9,6 +9,8 @@
 #include "KmerTest.hpp"
 #include "HashjoinTest.hpp"
 #include "RWRatioTest.hpp"
+#include "UniformTest.hpp"
+
 
 namespace kmercounter {
 
@@ -28,6 +30,7 @@ class Tests {
   KmerTest kmer;
   HashjoinTest hj;
   RWRatioTest rw;
+  UniformTest uniform;
 
   Tests() {
   }

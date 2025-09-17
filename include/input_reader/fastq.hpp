@@ -43,9 +43,9 @@ class FastqReader : public FileReader {
     }
     int next_char = this->peek();
     if (next_char != '@') {
-      PLOG_WARNING << "Unexpected character " << next_char
-                   << ". Expecting sequence identifier "
-                      "line which begins with '@'.";
+      // PLOG_WARNING << "Unexpected character " << next_char
+      //              << ". Expecting sequence identifier "
+      //                 "line which begins with '@'.";
       return false;
     }
     if (!FileReader::next(nullptr)) {

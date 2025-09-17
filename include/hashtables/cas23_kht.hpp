@@ -335,7 +335,7 @@ class CAS23HashTable : public BaseHashTable {
 #endif
   };
 
-  void prefetch_read(uint64_t i) {
+  void  prefetch_read(uint64_t i) {
     prefetch_object<false /* write */>(
         &this->hashtable[i & (this->capacity - 1)],
         sizeof(this->hashtable[i & (this->capacity - 1)]));

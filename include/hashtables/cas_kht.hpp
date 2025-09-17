@@ -58,8 +58,6 @@ class CASHashTable : public BaseHashTable {
   uint32_t FIND_QUEUE_SZ_MASK;
   uint64_t HT_BUCKET_MASK;
 
-
-
 #define KEYMSK ((__mmask8)(0b01010101))
 #define PREFETCH_INSERT_NEXT_DISTANCE 8
 #define PREFETCH_FIND_NEXT_DISTANCE 8
@@ -116,7 +114,6 @@ class CASHashTable : public BaseHashTable {
       if (this->ref_cnt == 0) {
         free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
         this->hashtable = nullptr;
-
       }
     }
   }
@@ -214,8 +211,14 @@ class CASHashTable : public BaseHashTable {
     this->flush_if_needed(collector);
   }
 #elif defined(DRAMHiT_2025)
+#if defined(CAS_NO_ABSTRACT)
+  void insert_batch(const InsertFindArguments &kp,
+                    collector_type *collector) override {}
+  void insert_batch_inline(const InsertFindArguments &kp,
+                           collector_type *collector) {
+#else
   void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
-
+#endif
     if ((get_insert_queue_sz() >= INSERT_QUEUE_SZ_MASK)) {
       for (auto &data : kp) {
         pop_insert_queue(collector);
@@ -231,7 +234,15 @@ class CASHashTable : public BaseHashTable {
     }
   }
 #elif defined(DRAMHiT_2025_INLINED)
+
+#if defined(CAS_NO_ABSTRACT)
+  void insert_batch(const InsertFindArguments &kp,
+                    collector_type *collector) override {}
+  void insert_batch_inline(const InsertFindArguments &kp,
+                           collector_type *collector) {
+#else
   void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
+#endif
     bool fast_path = (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
                       (insert_queue_sz - 1));
     if (fast_path) {
@@ -276,7 +287,7 @@ class CASHashTable : public BaseHashTable {
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
               if (ept_cmp != 0) {
                 idx += (_bit_scan_forward(ept_cmp) >> 1);
-              } else { // we didn;t find emty key 
+              } else {  // we didn;t find emty key
                 idx += 4;
                 retry = 1;
                 goto retry_add_to_queue;
@@ -384,7 +395,6 @@ class CASHashTable : public BaseHashTable {
       }
     }  // end slow path
   }  // end insert unrolled
-
 #endif
   // __attribute__((noinline)) void insert_batch_max_test(
   //     InsertFindArgument *kp, collector_type *collector) {
@@ -427,7 +437,6 @@ class CASHashTable : public BaseHashTable {
     return (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
   }
 
-
   inline void flush_if_needed(ValuePairs &vp, collector_type *collector) {
     size_t curr_queue_sz = get_find_queue_sz();
 
@@ -459,7 +468,6 @@ class CASHashTable : public BaseHashTable {
 
     } while ((retry));
   }
-
 
 #if defined(DRAMHiT_2023)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
@@ -1001,7 +1009,6 @@ class CASHashTable : public BaseHashTable {
   }
 
   uint64_t __find_one(KVQ *q, ValuePairs &vp, collector_type *collector) {
-
     if (q->key == this->empty_item.get_key()) {
       return __find_empty(q, vp);
     }
@@ -1015,7 +1022,6 @@ class CASHashTable : public BaseHashTable {
     return __find_branched(q, vp, collector);
 #endif
   }  // end __find_one()
-
 
   /// Update or increment the empty key.
   uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
@@ -1269,13 +1275,11 @@ class CASHashTable : public BaseHashTable {
     this->ins_head += 1;
     this->ins_head &= INSERT_QUEUE_SZ_MASK;
   }
-
 };
 
 /// Static variables
 template <class KV, class KVQ>
 KV *CASHashTable<KV, KVQ>::hashtable = nullptr;
-
 
 template <class KV, class KVQ>
 uint64_t CASHashTable<KV, KVQ>::empty_slot_ = 0;

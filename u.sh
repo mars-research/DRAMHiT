@@ -33,7 +33,7 @@ fi
 
 #TEST 256 KB
 if [ "$test" = "small" ]; then
-    size=102400
+    size=128
     insertFactor=1
     readFactor=1
 #TEST 2GB HT
@@ -55,12 +55,13 @@ fi
 # numThreads=1
 
 fill=70
+MODE=11
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
 #do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type $TBB --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
+    --find_queue 64 --ht-fill $fill --ht-type $CLHT --insert-factor $insertFactor --read-factor $readFactor\
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $MODE --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16"
     echo $(pwd)/build/dramhit $cmd
     sudo $(pwd)/build/dramhit $cmd

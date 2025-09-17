@@ -2,10 +2,17 @@ import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import sys
 
+if len(sys.argv) < 3:
+    print("Usage: python script.py <data to plot> <output path>")
+    sys.exit(1)
+
+input_json = sys.argv[1]
+out_file = sys.argv[2]
 
 # Load JSON results
-with open("results.json", "r") as f:
+with open(input_json, "r") as f:
     all_results = json.load(f)
 
 sns.set(style="whitegrid")
@@ -19,10 +26,10 @@ for ht_name, data in all_results.items():
     mops = [entry["mops"] for entry in data]
     sns.lineplot(x=rsizes_mb, y=mops, marker="o", label=ht_name)
 
-plt.xlabel("Hash Table Size")
+plt.xlabel("Hash Table Size (MB)")
 plt.ylabel("MOPS")
 plt.title("Hashjoin Test")
-plt.xscale("log")  # log base 2 scale for x-axis
+#plt.xscale("log")  # log base 2 scale for x-axis
 
 plt.legend(title="Hash Table")
 plt.tight_layout()
@@ -33,7 +40,7 @@ plt.tight_layout()
 # plt.xlim(min_size, max_size)
 
 # Save figure as PNG
-plt.savefig("hashjoin_test.png", dpi=300)
+plt.savefig(out_file, dpi=300)
 plt.close()
 
 

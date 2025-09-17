@@ -25,7 +25,7 @@ plot "results/dramhit_2023.csv"             using 1:2 with linespoints ls 1 titl
      "results/dramhit_inline_uniform.csv"   using 1:2 with linespoints ls 2 title "Dramhit inline Uniform", \
      "results/CLHT.csv"                     using 1:2 with linespoints ls 4 title "clht", \
      "results/GROWT.csv"                    using 1:2 with linespoints ls 3 title "growt", \
-     "results/TBB.csv"                      using 1:2 with linespoints ls 5 title "TBB"
+#     "results/TBB.csv"                      using 1:2 with linespoints ls 5 title "TBB"
 
 ####################
 # Bottom plot (MOPS)
@@ -37,7 +37,7 @@ plot "results/dramhit_2023.csv"             using 1:3 with linespoints ls 1 titl
      "results/dramhit_inline_uniform.csv"   using 1:3 with linespoints ls 2 title "Dramhit inline Uniform", \
      "results/CLHT.csv"                     using 1:3 with linespoints ls 4 title "clht", \
      "results/GROWT.csv"                    using 1:3 with linespoints ls 3 title "growt", \
-     "results/TBB.csv"                      using 1:3 with linespoints ls 5 title "TBB"
+#     "results/TBB.csv"                      using 1:3 with linespoints ls 5 title "TBB"
 
 unset multiplot
 unset output

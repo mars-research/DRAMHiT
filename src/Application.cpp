@@ -13,8 +13,8 @@
 #include <functional>
 
 #include "./hashtables/array_kht.hpp"
-#include "./hashtables/cas_kht.hpp"
 #include "./hashtables/cas23_kht.hpp"
+#include "./hashtables/cas_kht.hpp"
 #include "numa.hpp"
 
 #ifdef GROWT
@@ -62,9 +62,9 @@
 namespace kmercounter {
 
 class LynxQueue;
-extern uint64_t HT_TESTS_HT_SIZE;
-extern uint64_t HT_TESTS_NUM_INSERTS;
-extern const uint64_t max_possible_threads = 128;
+uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
+uint64_t HT_TESTS_NUM_INSERTS;
+const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew, int64_t seed);
 
@@ -85,6 +85,8 @@ uint64_t sum_total_ops(Shard *all_sh, Configuration &config) {
 }
 
 void print_stats_simple(uint64_t duration, uint64_t ops) {
+  printf("duration : %lu, ops : %lu\n", duration, ops);
+
   double mops = (double)((CPUFREQ_MHZ * ops) / duration);
   uint64_t cpo = (duration * config.num_threads) / ops;
   printf("cpo : %lu, mops : %.3f\n", cpo, mops);
@@ -142,11 +144,12 @@ static std::atomic_uint num_entered{};
 #if defined(WITH_PAPI_LIB)
 static MemoryBwCounters *bw_counters;
 #endif
-extern bool stop_sync;
-extern bool zipfian_finds;
-extern bool zipfian_inserts;
-extern uint64_t zipfian_iter;
 
+bool clear_table = false;
+uint64_t zipfian_iter;
+bool stop_sync = false;
+bool zipfian_finds = false;
+bool zipfian_inserts = false;
 ExecPhase cur_phase = ExecPhase::none;
 
 uint64_t *g_insert_durations;
@@ -178,10 +181,9 @@ void sync_complete(void) {
   }
 #endif
 
-  if (config.mode == ZIPFIAN) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     if (cur_phase == ExecPhase::finds) {
       if (!zipfian_finds) {
-        // PLOGI.printf("Zipfian find iter: %lu start", zipfian_iter);
 #if defined(WITH_PCM)
         g_pcm_cnt.start_socket();
 #endif
@@ -190,7 +192,6 @@ void sync_complete(void) {
 
       } else {
         g_find_end = RDTSCP();
-        // PLOGI.printf("Zipfian find iter: %lu end", zipfian_iter);
 #if defined(WITH_PCM)
         g_pcm_cnt.stop_socket();
 #endif
@@ -205,14 +206,11 @@ void sync_complete(void) {
       }
     } else if (cur_phase == ExecPhase::insertions) {
       if (!zipfian_inserts) {
-        // PLOGI.printf("Zipfian insert iter: %lu start", zipfian_iter);
-
         zipfian_inserts = true;
         g_insert_start = RDTSC_START();
       } else {
         g_insert_end = RDTSCP();
         zipfian_inserts = false;
-        // PLOGI.printf("Zipfian insert iter: %lu end", zipfian_iter);
 
         if (zipfian_iter < config.insert_factor) {
           g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
@@ -224,7 +222,7 @@ void sync_complete(void) {
     if (cur_phase == ExecPhase::recording && g_app_record_start) {
       g_app_record_duration = RDTSC_START();
       cur_phase = ExecPhase::none;
-    } else if(cur_phase == ExecPhase::recording && !g_app_record_start){
+    } else if (cur_phase == ExecPhase::recording && !g_app_record_start) {
       g_app_record_duration = RDTSCP() - g_app_record_duration;
       cur_phase = ExecPhase::none;
       PLOGI.printf("task duration %lu cycles", g_app_record_duration);
@@ -247,7 +245,7 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 #endif
     case CAS23HTPP:
       kmer_ht = new CAS23HashTable<KVType, ItemQueue>(sz);
-      break; 
+      break;
 #ifdef GROWT
     case GROWHT:
       kmer_ht = new GrowtHashTable(sz);
@@ -299,6 +297,8 @@ void Application::shard_thread(int tid,
     case SYNTH:
     case RW_RATIO:
     case ZIPFIAN:
+    case UNIFORM:
+
     case HASHJOIN:
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
@@ -348,6 +348,8 @@ void Application::shard_thread(int tid,
     case FASTQ_WITH_INSERT:
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
+    case UNIFORM:
+      this->test.uniform.run(sh, kmer_ht, barrier);
     default:
       break;
   }
@@ -381,9 +383,7 @@ int Application::spawn_shard_threads() {
 
   size_t seg_sz = 0;
 
-  if ((config.mode != SYNTH) && (config.mode != ZIPFIAN) &&
-      (config.mode != PREFETCH) && (config.mode != CACHE_MISS) &&
-      (config.mode != RW_RATIO) && (config.mode != HASHJOIN)) {
+  if (config.mode == FASTQ_WITH_INSERT) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
     seg_sz = config.in_file_sz / config.num_threads;
@@ -392,7 +392,7 @@ int Application::spawn_shard_threads() {
     }
   }
 
-  if (config.mode == ZIPFIAN) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
     if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
         config.ht_type == GROWHT || config.ht_type == CAS23HTPP ||
@@ -470,20 +470,20 @@ int Application::spawn_shard_threads() {
       th.join();
     }
   }
-  //if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
-    if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
-      print_stats_simple(g_app_record_duration,
-                         sum_total_ops(this->shards, config));
-    } else {
-      print_stats(this->shards, config);
-    }
+  // if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
+  if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
+    print_stats_simple(g_app_record_duration,
+                       sum_total_ops(this->shards, config));
+  } else {
+    print_stats(this->shards, config);
+  }
   //}
 
 #ifdef WITH_PERFCPP
   EVENTCOUNTERS.print();
 #endif
 
-  if (config.mode == ZIPFIAN) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     free(g_insert_durations);
     free(g_find_durations);
   }
@@ -690,6 +690,13 @@ int Application::process(int argc, char *argv[]) {
       this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
 
+    //     auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
+    // PLOGI.printf("MSR 0x1a4 has: { ");
+    // for (const auto &e : rdmsr_set) {
+    //   printf("0x%lx ", e);
+    // }
+    // printf("}\n");
+
     msr_ctrl->msr_close();
 
     if (config.mode == SYNTH) {
@@ -777,7 +784,7 @@ int Application::process(int argc, char *argv[]) {
         exit(0);
     }
 
-    if (config.ht_fill > 0 && config.ht_fill < 200) {
+    if (config.ht_fill > 0 && config.ht_fill < 100) {
       HT_TESTS_NUM_INSERTS =
           static_cast<double>(config.ht_size) * config.ht_fill * 0.01;
     } else {
@@ -796,26 +803,17 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  // Dump hwprefetchers msr - Needs msr-safe driver
-  // (use scripts/enable_msr_safe.sh)
-  // auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
-  // printf("MSR 0x1a4 has: { ");
-  // for (const auto &e : rdmsr_set) {
-  //   printf("0x%lx ", e);
-  // }
-  // printf("}\n");
-
-  config.dump_configuration();
-
   if ((config.mode == BQ_TESTS_YES_BQ) || (config.mode == FASTQ_WITH_INSERT)) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if (config.mode == ZIPFIAN) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     g_insert_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.insert_factor);
     g_find_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.read_factor);
+
+    if (config.mode == ZIPFIAN) init_zipfian_dist(config.skew, config.seed);
 
 #ifdef WITH_PCM
     g_find_bw = (double *)malloc(sizeof(double) * config.read_factor);
@@ -859,21 +857,16 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  if (config.mode == BQ_TESTS_YES_BQ || config.mode == RW_RATIO ||
-      config.mode == ZIPFIAN) {
-#ifdef ZIPFIAN
-    init_zipfian_dist(config.skew, config.seed);
-#endif
-  }
+  config.dump_configuration();
 
   this->spawn_shard_threads();
-
 
   // if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
   //   // for hashjoin, ht-type determines how we spawn threads
   //   if (config.ht_type == PARTITIONED_HT) {
   //     this->test.qt.run_test(&config, this->n, true, this->npq);
-  //   } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT) || (config.ht_type == CAS23HTPP)
+  //   } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT) ||
+  //   (config.ht_type == CAS23HTPP)
   //              (config.ht_type == MULTI_HT)) {
   //     this->spawn_shard_threads();
   //   }

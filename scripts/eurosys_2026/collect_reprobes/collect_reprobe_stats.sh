@@ -30,7 +30,7 @@ for fill in $(seq 10 10 90);
 do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
     --find_queue 64 --ht-fill $fill --ht-type 3 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 14 --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16"
    
     echo "Command executed: "/opt/DRAMHiT/build/dramhit $cmd >> $file_name

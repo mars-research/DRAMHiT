@@ -190,10 +190,10 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   }
 
   printf("{ set_cycles : %" PRIu64 ", get_cycles : %" PRIu64
-         ", upsert_cycles : %" PRIu64 ",",
-         cycles_per_insert, cycles_per_find, cycles_per_upsert);
-  printf(" set_mops : %.3f, get_mops : %.3f, upsert_mops : %.3f }\n",
-         insert_mops, find_mops, upsert_mops);
+          ",",
+         cycles_per_insert, cycles_per_find);
+  printf(" set_mops : %.3f, get_mops : %.3f }\n",
+         insert_mops, find_mops);
 
 #ifdef WITH_PCM
   if (config.read_factor > 0) {

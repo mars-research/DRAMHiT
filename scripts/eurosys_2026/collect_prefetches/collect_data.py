@@ -8,6 +8,7 @@ import os
 import subprocess
 import json
 import re
+import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
@@ -57,7 +58,7 @@ def run(run_cfg):
         "--num-threads", str(run_cfg["numThreads"]),
         "--numa-split", str(run_cfg["numa_policy"]),
         "--no-prefetch", "0",
-        "--mode", "11",
+        "--mode", "14",
         "--ht-size", str(run_cfg["size"]),
         "--skew", "0.01",
         "--hw-pref", "0",
@@ -131,6 +132,12 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <output.json>")
+        sys.exit(1)
+
+    out_file = sys.argv[1]
+
     # Build configurations
     build_cfgs = [
         {"PREFETCH":"DOUBLE","DRAMHiT_VARIANT": "2025", "DATA_GEN": "HASH", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
@@ -161,4 +168,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "all_dramhit_results.json")
+    save_json(all_results, out_file)

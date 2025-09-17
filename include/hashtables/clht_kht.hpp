@@ -6,7 +6,7 @@
 // CLHT includes (choose lock-based or lock-free)
 extern "C" {
 #include "clht_lf.h"  //lock-free (no resize)
-//#include "/opt/DRAMHiT/CLHT/include/clht_lf_res.h" //lock-free resize
+// #include "/opt/DRAMHiT/CLHT/include/clht_lf_res.h" //lock-free resize
 }
 
 namespace kmercounter {
@@ -25,19 +25,18 @@ class CLHT_HashTable : public BaseHashTable {
 
  public:
   CLHT_HashTable(uint64_t sz) {
-
     {
-
-      num_buckets = sz / 4; // CLHT bucket is 64 byte. Dramhit sz is count of kv which is 16 bytes. 
+      num_buckets = sz / 4;  // CLHT bucket is 64 byte. Dramhit sz is count of
+                             // kv which is 16 bytes.
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
       if (!table) {
         assert(this->ref_cnt == 0);
         table = clht_create(num_buckets);
-        printf("Created %s at addr %p\n", clht_type_desc(), (void*)table);
+        printf("Created %s at addr %p sz %lu\n", clht_type_desc(), (void*)table, num_buckets);
         fflush(stdout);
       }
-      
+
       this->ref_cnt++;
 
     }  // end scope of lock...
@@ -57,6 +56,11 @@ class CLHT_HashTable : public BaseHashTable {
   void insert_batch(const InsertFindArguments& kp,
                     collector_type* collector) override {
     for (auto& data : kp) {
+      // PLOGI.printf("inserting %lu %lu", data.key, data.value);
+
+      // if (!clht_put(table, data.key, data.value)) {
+      //   PLOGI.printf("failed to insert");
+      // }
       clht_put(table, data.key, data.value);
     }
   }
@@ -69,12 +73,11 @@ class CLHT_HashTable : public BaseHashTable {
         vp.second[vp.first].value = val;
         vp.second[vp.first].id = data.id;
         vp.first++;
-      }  
+      }
     }
   }
 
-  void clear() override
-  {
+  void clear() override {
     clht_gc_destroy(table);
     table = clht_create(num_buckets);
   }
@@ -86,7 +89,9 @@ class CLHT_HashTable : public BaseHashTable {
   void* find_noprefetch(const void*, collector_type* = nullptr) override {
     return nullptr;
   }
-  size_t flush_find_queue(ValuePairs&, collector_type* = nullptr) override {return 0; }
+  size_t flush_find_queue(ValuePairs&, collector_type* = nullptr) override {
+    return 0;
+  }
   void display() const override {}
   size_t get_fill() const override { return clht_size(table->ht); }
   size_t get_capacity() const override { return this->num_buckets * 3; }

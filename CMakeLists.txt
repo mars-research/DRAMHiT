@@ -159,6 +159,7 @@ if(BUILD_APP)
         "src/tests/cachemiss_test.cpp"
         "src/tests/kmer_tests.cpp"
         "src/tests/hashjoin_test.cpp"
+        "src/tests/uniform_test.cpp"
         "src/tests/rw_ratio.cpp"
         "src/tests/synth_test.cpp"
         "src/misc_lib.cpp"
@@ -343,29 +344,6 @@ elseif(HASHER STREQUAL "wyhash")
     add_definitions(-DWYHASH)
 endif()
 
-
-
-# Input data generation
-
-set(DATA_GEN "HASH" CACHE STRING "Benchmark backend to use (HASH, ZIPFIAN, INC)")
-
-set(VALID_DATA_GEN HASH INC ZIPFIAN)
-
-list(FIND VALID_DATA_GEN ${DATA_GEN} DATAGEN_INDEX)
-if(DATA_GEN AND DATAGEN_INDEX EQUAL -1)
-    message(STATUS "No benchmarking backend selected.")
-elseif(DATA_GEN)
-    message(STATUS "Selected data gen: ${DATA_GEN}")
-else()
-    message(STATUS "No data gen selected.")
-endif()
-
-if (DATA_GEN STREQUAL "HASH")
-    add_definitions(-DINFLIGHT)
-    message(STATUS "fast HASH in flightly data generation")
-elseif (BENCHMARK_BACKEND STREQUAL "ZIPFIAN")
-    add_definitions(-DZIPFIAN)    
-endif()
 
 # Benchmark backend
 

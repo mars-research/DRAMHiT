@@ -5,18 +5,18 @@ import json
 import sys
 
 # constants
-REPEAT = 10   # number of times to repeat each run
-base_size = 268435456
+REPEAT = 1   # number of times to repeat each run
 numThreads = 128
 numa_policy = 1
-
 DRAMHIT25 = 3
 GROWT = 6
 CLHT = 7
 DRAMHIT23 = 8
 TBB = 9
-MODE = 13
-fill = 0.7
+MODE = 4
+datapath = "/opt/datasets/ERR4846928.fastq"
+ht_size = 4294967296 #64GB
+ 
 def run_once(cmd: str):
     """Run a command and return its stdout as string."""
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -25,19 +25,15 @@ def run_once(cmd: str):
 import math
 
 def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
-    htsizes = [base_size // (2**i) for i in range(10)]
     results[name] = []
 
-    for htsize in htsizes:
-        rsize = int(htsize * fill) // numThreads * numThreads
-        print(f"Running {name} (htsize={htsize}, rsize={rsize})")
-
-
+    for k in range(4, 15):
+        print(f"Running {name} (k={k})")
         cmd_base = f"""
         /opt/DRAMHiT/build/dramhit
-        --find_queue 64 --ht-type {ht_type}
-        --num-threads {numThreads} --numa-split {numa_policy} --no-prefetch 0
-        --mode {MODE} --ht-size {htsize} --hw-pref {hw_pref} --batch-len 16 --relation_r_size {rsize}
+        --find_queue 64 --batch-len 16 --ht-type {ht_type}
+        --num-threads {numThreads} --numa-split {numa_policy} --no-prefetch 0 --k {k}
+        --mode {MODE} --ht-size {ht_size} --hw-pref {hw_pref}  --in-file {datapath}
         """
         cmd_base = " ".join(cmd_base.split())  # clean whitespace
 
@@ -49,7 +45,7 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
             if not matches:
                 print("\n❌ Error: could not parse mops values")
                 print(f"Command: {cmd_base}")
-                print(f"Repeat #{r+1} / {REPEAT}, htsize={htsize}, ht={name}")
+                print(f"Repeat #{r+1} / {REPEAT}, htsize={ht_size}, ht={name}")
                 print("---- Output  ----")
                 print(out)
                 print(err)
@@ -60,21 +56,14 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
 
         avg = round(statistics.mean(mops), 1)
         results[name].append({
-            "rsize": rsize,
-            "htsize": htsize,
+            "k": k,
             "mops": avg,
         })
 
 
 if __name__ == "__main__":
-
-    if len(sys.argv) < 2:
-        print("Usage: python script.py <output.json>")
-        sys.exit(1)
-
-    json_out_file = sys.argv[1]
     # rebuild project
-    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
+    #subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
         "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON "
@@ -87,12 +76,12 @@ if __name__ == "__main__":
 
     run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
     run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
-    run_ht_dual("GROWT", GROWT, 1, all_results)
-    run_ht_dual("CLHT", CLHT, 1, all_results)
-    run_ht_dual("TBB", TBB, 1, all_results)
+    # run_ht_dual("GROWT", GROWT, 1, all_results)
+    # run_ht_dual("CLHT", CLHT, 1, all_results)
+    # run_ht_dual("TBB", TBB, 1, all_results)
 
     # save to JSON
-    with open(json_out_file, "w") as f:
+    with open("results.json", "w") as f:
         json.dump(all_results, f, indent=2)
 
-    print("\n✅ Final results saved to "+json_out_file)
+    print("\n✅ Final results saved to results.json")

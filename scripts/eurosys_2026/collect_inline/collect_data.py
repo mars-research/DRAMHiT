@@ -50,7 +50,7 @@ def run(run_cfg):
         "--num-threads", str(run_cfg["numThreads"]),
         "--numa-split", str(run_cfg["numa_policy"]),
         "--no-prefetch", "0",
-        "--mode", "11",
+        "--mode", "14",
         "--ht-size", str(run_cfg["size"]),
         "--skew", "0.01",
         "--hw-pref", "0",
@@ -148,7 +148,6 @@ if __name__ == "__main__":
     for f in range(10, 100, 10)
 ]
 
-
     all_results = []
     
     def get_name(bcfg):
@@ -167,4 +166,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit_directory.json")
+    save_json(all_results, "dramhit_snoop.json")

@@ -50,8 +50,8 @@ class FileReader : public InputReader<std::string_view> {
       : FileReader(std::move(input_file), 0, 1) {}
 
   ~FileReader() {
-    PLOG_INFO_IF(offset_ != part_end_)
-        << "Offset mismatch: expected " << part_end_ << "; actual: " << offset_;
+    // PLOG_INFO_IF(offset_ != part_end_)
+    //     << "Offset mismatch: expected " << part_end_ << "; actual: " << offset_;
   }
 
   /// Copy the next line to `output` and advance the offset.
@@ -137,6 +137,8 @@ class FileReader : public InputReader<std::string_view> {
     {
         PLOG_FATAL << "part_id(" << part_id << " ) >= num_parts(" << num_parts << ")";
     }
+
+    
     // Get the size of the file and calculate the range of this partition.
     // We are doing it here for now because I don't want to mess with the
     // parameter passing.

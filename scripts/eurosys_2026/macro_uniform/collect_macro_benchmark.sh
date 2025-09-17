@@ -15,13 +15,12 @@ numa_policy=$2
 numThreads=$3
 # elif [ "$numa_policy" = "dual" ]; then
 numa_policy=1
-
-# size=536870912 # 8gb
 size=268435456 
-insertFactor=100
-readFactor=100
+insertFactor=2
+readFactor=2
 numThreads=128
 
+MODE=14 # uniform
 # 'Constants' hash table types
 DRAMHIT=3
 GROWT=6
@@ -40,9 +39,8 @@ for fill in $(seq 10 10 90);
 do  
     echo "Generating $file_name_txt (fill=$fill)"
 
-    cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type $2 --insert-factor $insertFactor --read-factor $readFactor --read-snapshot 1\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew 0.01\
+    cmd="--find_queue 64 --ht-fill $fill --ht-type $2 --insert-factor $insertFactor --read-factor $readFactor\
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $MODE --ht-size $size --skew 0.01\
     --hw-pref $3 --batch-len 16"
    
     echo "Command executed: "/opt/DRAMHiT/build/dramhit $cmd >> $file_name_txt
@@ -67,19 +65,20 @@ paste -d, <(echo -e "$fills") tmp1.txt tmp2.txt >> $file_name_csv
 rm tmp1.txt tmp2.txt
 }
 
-rm /opt/DRAMHiT/build/CMakeCache.txt
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2023 -DDATA_GEN=HASH -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF -DGROWT=OFF -DCLHT=OFF
-cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_2023 $DRAMHIT 0
+mkdir -p ./results
 
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025_INLINE -DDATA_GEN=HASH -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DCAS_NO_ABSTRACT=ON -DREAD_BEFORE_CAS=ON
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2023 -DDATA_GEN=HASH -DBUCKETIZATION=OFF -DBRANCH=branched
 cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_inline_uniform $DRAMHIT 0
+run_ht_dual dramhit_2023_compile $DRAMHIT 0
+run_ht_dual dramhit_2023 $DRAMHIT23 0
 
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDATA_GEN=HASH -DGROWT=ON -DCLHT=ON -DCAS_NO_ABSTRACT=OFF
-cmake --build /opt/DRAMHiT/build
-run_ht_dual GROWT $GROWT 1
-run_ht_dual TBB $TBB 1
-run_ht_dual CLHT $CLHT 1
+
+# cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025_INLINE -DDATA_GEN=HASH -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON -DCLHT=ON -DGROWT=ON
+# cmake --build /opt/DRAMHiT/build
+# run_ht_dual dramhit_2023 $DRAMHIT23 0
+# run_ht_dual dramhit_2025 $DRAMHIT 0
+# run_ht_dual GROWT $GROWT 1
+# # run_ht_dual TBB $TBB 1
+# run_ht_dual CLHT $CLHT 1
 
 
