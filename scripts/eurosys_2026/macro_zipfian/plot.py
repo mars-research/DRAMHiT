@@ -52,6 +52,6 @@ axes[1].legend()
 
 # Adjust layout and save figure
 plt.tight_layout()
-plt.savefig("macro_zipfian.png", dpi=300)
+plt.savefig("snoop.png", dpi=300)
 
 

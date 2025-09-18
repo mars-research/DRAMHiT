@@ -21,7 +21,7 @@ plt.figure(figsize=(10, 6))
 rsize_set = set()
 # Plot each hash table
 for ht_name, data in all_results.items():
-    rsizes_bytes = [entry["htsize"] * 16 for entry in data]  # convert to bytes
+    rsizes_bytes = [entry["rsize"] * 16 for entry in data]  # convert to bytes
     rsizes_mb = [int(b / 1024**2) for b in rsizes_bytes]         # convert to GB
     mops = [entry["mops"] for entry in data]
     sns.lineplot(x=rsizes_mb, y=mops, marker="o", label=ht_name)

@@ -56,7 +56,6 @@ rm tmp1.txt tmp2.txt
 
 }
 
-
 cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2025 -DDATA_GEN=HASH -DCALC_STATS=ON  -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF
 cmake --build /opt/DRAMHiT/build
 run_ht_local branched_no_bucket_linear_reprobes

@@ -92,6 +92,8 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
 
 }
 
+
+#define REPEAT 100
 void HashjoinTest::join_relations_generated(Shard* sh,
                                             const Configuration& config,
                                             BaseHashTable* ht,
@@ -164,7 +166,8 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   barrier->arrive_and_wait();
   
   // Run hashjoin
-  hashjoin(sh, &t1, &t2, relation_r, relation_s, ht, mt, materialize, barrier);
+
+    hashjoin(sh, &t1, &t2, relation_r, relation_s, ht, mt, materialize, barrier);
 
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::recording;

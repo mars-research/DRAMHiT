@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 
 # CSV files
 csv_files = [
-    "results/dramhit_2023_compile.csv",
     "results/dramhit_2023.csv",
     "results/dramhit_2025.csv",
     "results/CLHT.csv",
@@ -15,7 +14,6 @@ csv_files = [
 
 # Labels for each file (for the legend)
 labels = [
-    "dramhit23-compile",
     "dramhit23",
     "dramhit25",
     "CLHT",

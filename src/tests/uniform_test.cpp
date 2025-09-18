@@ -207,6 +207,7 @@ void UniformTest::run(Shard *shard, BaseHashTable *hashtable,
   shard->stats->finds = find_timings;
   shard->stats->ht_fill = config.ht_fill;
 
+
   if (shard->shard_idx == 0) {
     cur_phase = ExecPhase::none;
   }
@@ -217,6 +218,8 @@ void UniformTest::run(Shard *shard, BaseHashTable *hashtable,
     PLOGI.printf("get fill %.3f",
                  (double)hashtable->get_fill() / hashtable->get_capacity());
   }
+
+  shard->stats->num_reprobes = hashtable->num_reprobes;
 }
 
 }  // namespace kmercounter

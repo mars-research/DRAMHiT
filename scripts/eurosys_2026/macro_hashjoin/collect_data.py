@@ -5,7 +5,7 @@ import json
 import sys
 
 # constants
-REPEAT = 10   # number of times to repeat each run
+REPEAT = 1   # number of times to repeat each run
 base_size = 268435456
 numThreads = 128
 numa_policy = 1
@@ -17,6 +17,11 @@ DRAMHIT23 = 8
 TBB = 9
 MODE = 13
 fill = 0.7
+#htsize = 4096
+
+htsize = 268435456
+
+
 def run_once(cmd: str):
     """Run a command and return its stdout as string."""
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -25,13 +30,12 @@ def run_once(cmd: str):
 import math
 
 def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
-    htsizes = [base_size // (2**i) for i in range(10)]
+    # htsizes = [base_size // (2**i) for i in range(10)]
     results[name] = []
 
-    for htsize in htsizes:
-        rsize = int(htsize * fill) // numThreads * numThreads
+    for fill in range(10, 80,10):
+        rsize = int(htsize * fill/100.0) // numThreads * numThreads
         print(f"Running {name} (htsize={htsize}, rsize={rsize})")
-
 
         cmd_base = f"""
         /opt/DRAMHiT/build/dramhit
@@ -47,7 +51,7 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
             matches = re.findall(r"mops\s*:\s*([\d.]+)", out)
 
             if not matches:
-                print("\n❌ Error: could not parse mops values")
+                print("\nError: could not parse mops values")
                 print(f"Command: {cmd_base}")
                 print(f"Repeat #{r+1} / {REPEAT}, htsize={htsize}, ht={name}")
                 print("---- Output  ----")
@@ -77,7 +81,7 @@ if __name__ == "__main__":
     subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
-        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON "
+        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON "
         "-DGROWT=ON -DCLHT=ON", shell=True, check=True
     )
     subprocess.run("cmake --build /opt/DRAMHiT/build", shell=True, check=True)
@@ -89,10 +93,10 @@ if __name__ == "__main__":
     run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
     run_ht_dual("GROWT", GROWT, 1, all_results)
     run_ht_dual("CLHT", CLHT, 1, all_results)
-    run_ht_dual("TBB", TBB, 1, all_results)
+    #run_ht_dual("TBB", TBB, 1, all_results)
 
     # save to JSON
     with open(json_out_file, "w") as f:
         json.dump(all_results, f, indent=2)
 
-    print("\n✅ Final results saved to "+json_out_file)
+    print("\nFinal results saved to "+json_out_file)

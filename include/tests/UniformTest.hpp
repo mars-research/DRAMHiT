@@ -5,7 +5,7 @@
 #include "hashtables/base_kht.hpp"
 #include "types.hpp"
 #include "hashtables/cas_kht.hpp"
-
+#include "print_stats.h"
 namespace kmercounter {
 
 class UniformTest {

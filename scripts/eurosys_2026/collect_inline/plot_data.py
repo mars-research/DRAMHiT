@@ -5,6 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from matplotlib.lines import Line2D
 
 
 def plot_json(json_file, output_file):
@@ -50,7 +51,8 @@ def plot_json(json_file, output_file):
             y="get_mops",
             hue="identifier",
             marker="o",
-            ax=ax
+            ax=ax,
+            legend=False
         )
         ax.set_title("Fill Factor vs Find Mops")
         ax.set_xlabel("Fill Factor")
@@ -64,7 +66,8 @@ def plot_json(json_file, output_file):
             y="normalized_cyc",
             hue="identifier",
             marker="o",
-            ax=ax
+            ax=ax,
+            legend=False
         )
         ax.set_title(f"Fill Factor vs Mem Uops/Cycles")
         ax.set_xlabel("Fill Factor")
@@ -77,7 +80,8 @@ def plot_json(json_file, output_file):
             y="normalized_ops",
             hue="identifier",
             marker="o",
-            ax=ax
+            ax=ax,
+            legend=False
         )
         ax.set_title(f"Fill Factor vs Mem Uops/find")
         ax.set_xlabel("Fill Factor")
@@ -90,7 +94,8 @@ def plot_json(json_file, output_file):
             y="uops_dispatched.port_2_3_10",
             hue="identifier",
             marker="o",
-            ax=ax
+            ax=ax,
+            legend=False
         )
         ax.set_title(f"Fill Factor vs Mem Uops")
         ax.set_xlabel("Fill Factor")
@@ -98,13 +103,24 @@ def plot_json(json_file, output_file):
         
         cnt += 1
 
+    
+    unique_ids = datasets[0]["identifier"].unique()
+    palette = sns.color_palette(n_colors=len(unique_ids))
 
-    for ax in axes.flatten():
-        leg = ax.get_legend()
-        if leg is not None:  # only adjust if legend exists
-            ax.legend(fontsize=4, markerscale=0.1, title_fontsize=12)
-            
-    plt.tight_layout()
+    custom_lines = [
+        Line2D([0], [0], color=palette[i], marker="o", label=uid)
+        for i, uid in enumerate(unique_ids)
+    ]
+
+    fig.legend(
+        fontsize=8,
+        handles=custom_lines,
+        loc="upper center",
+        ncol=len(unique_ids)
+    )
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 

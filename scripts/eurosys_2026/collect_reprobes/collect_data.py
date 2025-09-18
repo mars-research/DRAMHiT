@@ -7,7 +7,7 @@ import re
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
-USE_PERF = True
+USE_PERF = False
 
 def build(defines):
     define_flags = [f"-D{k}={v}" for k, v in defines.items()]
@@ -133,25 +133,23 @@ def save_json(data, filename):
 if __name__ == "__main__":
     # Build configurations
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2025", "CAS_NO_ABSTRACT" : "ON", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "CAS_NO_ABSTRACT" : "ON", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"DRAMHiT_VARIANT": "2025", "CAS_NO_ABSTRACT" : "OFF", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "CAS_NO_ABSTRACT" : "OFF", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
+        {"DRAMHiT_VARIANT": "2025", "CALC_STATS" : "ON",  "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
+        {"DRAMHiT_VARIANT": "2025", "CALC_STATS" : "ON", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
+        {"DRAMHiT_VARIANT": "2025_INLINE", "CALC_STATS" : "ON",  "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
+        {"DRAMHiT_VARIANT": "2025_INLINE", "CALC_STATS" : "ON",  "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"},
     ]
-    
-
     run_cfgs = [
-    {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 1, "readFactor": 1, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ] + [
-    {"insertFactor": 1, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 1, "readFactor": 1, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ]
 
     all_results = []
     
     def get_name(bcfg):
-        keys = ["DRAMHiT_VARIANT", "CAS_NO_ABSTRACT"] 
+        keys = ["DRAMHiT_VARIANT","BUCKETIZATION", "UNIFORM_PROBING"] 
         ret = ""
         for k in keys:
             ret += "{" + k + "-" + bcfg[k] + "}" 
@@ -166,4 +164,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit_snoop.json")
+    save_json(all_results, "dramhit_reprobe_snoop.json")

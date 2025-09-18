@@ -251,9 +251,8 @@ class CASHashTable : public BaseHashTable {
         {
           uint64_t retry = 0;
           do {
-            uint32_t next_tail = (this->ins_tail + 7) & INSERT_QUEUE_SZ_MASK;
-            const void *next_tail_addr =
-                &this->hashtable[this->insert_queue[next_tail].idx];
+            uint32_t next_tail = (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) & INSERT_QUEUE_SZ_MASK;
+            const void *next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
             __builtin_prefetch(next_tail_addr, false, 3);
 
             KVQ *q = &this->insert_queue[this->ins_tail];
@@ -265,7 +264,7 @@ class CASHashTable : public BaseHashTable {
               // hashtable idx at which data is to be inserted
 
               size_t idx = q->idx;
-              idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+              // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
               KV *curr;
 
               uint64_t *bucket = (uint64_t *)&this->hashtable[idx];
@@ -326,9 +325,8 @@ class CASHashTable : public BaseHashTable {
               uint64_t old_hash = q->key_hash;
               uint64_t hash = this->hash(&old_hash);
               idx = hash & (this->capacity - 1);
-#ifdef BUCKETIZATION
               idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-#endif
+              
               this->insert_queue[this->ins_head].key_hash = hash;
 #endif
               // prefetch(idx);
@@ -351,7 +349,7 @@ class CASHashTable : public BaseHashTable {
 
           } while ((retry));
         }
-        // push
+        // add to insert queue
         {
           InsertFindArgument *key_data =
               reinterpret_cast<InsertFindArgument *>(&data);
@@ -362,9 +360,10 @@ class CASHashTable : public BaseHashTable {
 
           uint64_t hash = this->hash((const char *)&key_data->key);
           size_t idx = hash & (this->capacity - 1);
-          idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
 
-          // prefetch(idx);
+#if defined(BUCKETIZATION)
+          idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
           __builtin_prefetch(&this->hashtable[idx], false, 1);
 
           this->insert_queue[this->ins_head].idx = idx;
