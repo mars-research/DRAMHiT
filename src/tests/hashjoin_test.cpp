@@ -61,6 +61,9 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   }
   batch_runner.flush_insert();
 
+  if (sh->shard_idx == 0) {
+    cur_phase = ExecPhase::none;
+  }
   barrier->arrive_and_wait();
 
 
@@ -88,6 +91,9 @@ void hashjoin(Shard* sh, input_reader::SizedInputReader<KeyValuePair>* t1,
   }
   batch_runner.flush_find();
 
+  if (sh->shard_idx == 0) {
+    cur_phase = ExecPhase::none;
+  }
   barrier->arrive_and_wait();
 
 }

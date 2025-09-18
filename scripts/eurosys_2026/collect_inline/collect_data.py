@@ -139,7 +139,6 @@ if __name__ == "__main__":
         {"DRAMHiT_VARIANT": "2025_INLINE", "CAS_NO_ABSTRACT" : "OFF", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
     ]
     
-
     run_cfgs = [
     {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)

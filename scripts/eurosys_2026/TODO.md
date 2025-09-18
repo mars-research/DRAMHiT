@@ -32,3 +32,13 @@ Quick todo
 [X] macro_hashjoin
 [ ] macro_zipfian
 
+
+
+# meeting notes
+
+    
+finalize reprobe experiments
+
+- drop clht
+- benchmark insert
+- modify growt, then run larger hashtable.

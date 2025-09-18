@@ -24,7 +24,7 @@ labels = [
 sns.set(style="whitegrid")
 
 # Create subplots: 1 row, 2 columns
-fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+fig, axes = plt.subplots(1, 2, figsize=(10, 6))
 
 # Colors / line styles
 colors = sns.color_palette("tab10", n_colors=len(csv_files))
@@ -52,6 +52,6 @@ axes[1].legend()
 
 # Adjust layout and save figure
 plt.tight_layout()
-plt.savefig("snoop.png", dpi=300)
+plt.savefig("zipfian.png", dpi=300)
 
 

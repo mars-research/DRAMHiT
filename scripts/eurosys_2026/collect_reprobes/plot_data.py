@@ -80,7 +80,7 @@ def plot_json(json_file, output_file):
         fontsize=8,
         handles=custom_lines,
         loc="upper center",
-        ncol=len(unique_ids)
+        ncol=2
     )
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])

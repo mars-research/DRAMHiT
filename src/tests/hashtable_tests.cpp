@@ -195,15 +195,15 @@ OpTimings do_zipfian_inserts(
     }
     sync_barrier->arrive_and_wait();
 
-    if (id == 0) {
-      cur_phase = ExecPhase::none;
-    }
-    sync_barrier->arrive_and_wait();
-    // don't clear last insert iteration, or ht will be empty for finds
-    if (id == 0 && j + 1 < config.insert_factor) {
-      hashtable->clear();
-    }
-    sync_barrier->arrive_and_wait();
+    // if (id == 0) {
+    //   cur_phase = ExecPhase::none;
+    // }
+    // sync_barrier->arrive_and_wait();
+    // // don't clear last insert iteration, or ht will be empty for finds
+    // if (id == 0 && j + 1 < config.insert_factor) {
+    //   hashtable->clear();
+    // }
+    // sync_barrier->arrive_and_wait();
   }
 
   uint64_t duration = 0;

@@ -3,7 +3,7 @@
 
 #include <immintrin.h>
 #include <plog/Log.h>
-
+#include <assert.h>
 #include <cassert>
 #include <cstring>
 
@@ -90,25 +90,19 @@ struct Kmer_queue {
 #endif
 } PACKED;
 
-// TODO, there is likely a compiler bug, if, value and key are not contiguous in
-// memory insert in cas will never finish.
 struct ItemQueue {
   key_type key;      // 64bit
   value_type value;  // 64bit
   uint32_t idx;
   uint32_t key_id;
-  uint64_t padding;
-#ifdef PART_ID
-  // on multi-level ht this is used as ht-level
-  uint32_t part_id;
-#endif
-#ifdef LATENCY_COLLECTION
-  uint32_t timer_id;
-#endif
 #if defined(COMPARE_HASH) || defined(UNIFORM_HT_SUPPORT)
   uint64_t key_hash;  // 8 bytes
 #endif
-} __attribute__((packed));
+};
+
+static_assert(offsetof(struct ItemQueue, key) == 0, "key must be first");
+static_assert(offsetof(struct ItemQueue, value) == sizeof(key_type), "value must follow key");
+
 
 std::ostream &operator<<(std::ostream &os, const ItemQueue &q);
 
@@ -504,14 +498,15 @@ struct Item {
 
   // |K, v|
   inline bool insert_cas(queue *elem) {
-    const Item empty = this->get_empty_key();
+    return __sync_bool_compare_and_swap((__int128 *)this, 0,
+                                        *(__int128 *)elem);
 
-    auto success = __sync_bool_compare_and_swap(&this->kvpair.key,
-                                                empty.kvpair.key, elem->key);
-    if (success) {
-      this->update_value(elem);
-    }
-    return success;
+    // auto success = __sync_bool_compare_and_swap(&this->kvpair.key,
+    //                                             empty.kvpair.key, elem->key);
+    // if (success) {
+    //   this->update_value(elem);
+    // }
+    // return success;
   }
 
   inline uint16_t insert_or_update_v2(const void *data) {
@@ -656,8 +651,7 @@ struct Item {
     __m512i key_vector = _mm512_set1_epi64(elem->key);
     __m512i cacheline =
         _mm512_load_si512(bucket);  // this is an idx into the hashtable.
-    __mmask8 key_cmp =
-        _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
+    __mmask8 key_cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
 
     // | 0 | 0 | 0 | 1 |
     *retry = 0;
@@ -872,6 +866,7 @@ using KVType = Item;
 #else
 using KVType = Aggr_KV;
 #endif
+
 
 }  // namespace kmercounter
 

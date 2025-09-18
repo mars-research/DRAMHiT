@@ -136,8 +136,8 @@ if __name__ == "__main__":
 
     # Build configurations
     build_cfgs = [
-        # {"DRAMHiT_VARIANT": "2023", "PREFETCH": "DOUBLE", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
-        # {"DRAMHiT_VARIANT": "2025", "PREFETCH": "DOUBLE", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2023", "PREFETCH": "DOUBLE", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2025", "PREFETCH": "DOUBLE", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
         {"DRAMHiT_VARIANT": "2023", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
         {"DRAMHiT_VARIANT": "2025", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
         {"DRAMHiT_VARIANT": "2025_INLINE", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},

@@ -5,6 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from matplotlib.lines import Line2D
 
 # Hard-coded counter names
 counters = [
@@ -33,13 +34,13 @@ def plot_json(json_file, output_file):
 
     
     datasets = [df_single, df_dual]
+
+    for df in datasets:
+        df["normalized_stall"] = df["cycle_activity.stalls_total"] / df["find_ops"]
+        df["normalized_fb_full"] = df["l1d_pend_miss.fb_full"] / df["find_ops"]
     # Set Seaborn style
     sns.set_theme()
 
-    #sns.set(style="whitegrid", palette="tab10", font_scale=1.2)
-
-    # Create figure with 5 subplots (4 counters + get_mops)
-    
     row = 2
     col = 3
     fig, axes = plt.subplots(row, col, figsize=(15, 7))
@@ -55,22 +56,33 @@ def plot_json(json_file, output_file):
             data=df,
             x="run_cfg.fill_factor",
             y="get_mops",
-            # hue="identifier",
             hue="prefetch_id",
             marker="o",
+            legend=False,
             ax=ax
         )
         ax.set_title("Fill Factor vs Find Mops")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Find Mops")
-        
+        MODE = ""
+        if cnt == 0:
+            MODE = "Single Socket"
+        else: 
+            MODE = "Dual Socket"
+        ax.text(
+            0.1, 1.2, MODE,         # (x,y) in axes coords
+            transform=ax.transAxes,      # relative to the axis
+            ha="right", va="top",
+            fontsize=12, fontweight="bold"
+        )
+
         ax = rax[1]
         
         sns.lineplot(
             data=df,
             x="run_cfg.fill_factor",
             y="cycle_activity.stalls_total",
-            # hue="identifier",
+            legend=False,
             hue="prefetch_id",  
             marker="o",
             ax=ax
@@ -86,7 +98,7 @@ def plot_json(json_file, output_file):
             data=df,
             x="run_cfg.fill_factor",
             y="l1d_pend_miss.fb_full",
-            # hue="identifier",
+            legend=False,
             hue="prefetch_id",
             marker="o",
             ax=ax
@@ -96,9 +108,23 @@ def plot_json(json_file, output_file):
         ax.set_ylabel("FB full cycle")
         cnt += 1
         
+    unique_ids = datasets[0]["prefetch_id"].unique()
+    palette = sns.color_palette(n_colors=len(unique_ids))
 
+    custom_lines = [
+        Line2D([0], [0], color=palette[i], marker="o", label=uid)
+        for i, uid in enumerate(unique_ids)
+    ]
 
-    plt.tight_layout()
+    fig.legend(
+        fontsize=8,
+        handles=custom_lines,
+        loc="upper center",
+        ncol=len(unique_ids)
+    )
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 

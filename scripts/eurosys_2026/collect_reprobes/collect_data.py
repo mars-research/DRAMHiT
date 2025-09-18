@@ -135,14 +135,14 @@ if __name__ == "__main__":
     build_cfgs = [
         {"DRAMHiT_VARIANT": "2025", "CALC_STATS" : "ON",  "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
         {"DRAMHiT_VARIANT": "2025", "CALC_STATS" : "ON", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "CALC_STATS" : "ON",  "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "CALC_STATS" : "ON",  "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"},
+        {"DRAMHiT_VARIANT": "2025", "CALC_STATS" : "ON",  "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
+        {"DRAMHiT_VARIANT": "2025", "CALC_STATS" : "ON",  "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"},
     ]
     run_cfgs = [
-    {"insertFactor": 1, "readFactor": 1, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ] + [
-    {"insertFactor": 1, "readFactor": 1, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 1, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
 ]
 

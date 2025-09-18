@@ -525,6 +525,10 @@ class CAS23HashTable : public BaseHashTable {
     return -1;
   }
 
+  void clear() override {
+    memset(this->hashtable, 0, capacity * sizeof(KV));
+  }
+
   void add_to_insert_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 

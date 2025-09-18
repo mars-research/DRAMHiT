@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import csv
 import seaborn as sns
 
+
 # --- Step 0: Compile rpq_test.c ---
 compile_cmd = "gcc -O1 -lnuma -pthread rpq_test.c -o rpq"
 print("Compiling rpq_test.c...")
@@ -84,43 +85,28 @@ inserts_list = [
     r.get("unc_m_rpq_inserts.pch0", 0)/r.get("duration", 0) for r in results
 ]
 
-duration_list = [
-    r.get("duration", 0) for r in results
-]
-
-
-
 sns.set_theme()
 
 # Create figure with 2 subplots
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(2, 2, figsize=(10, 8))
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8))
 
-# Graph 1: num_threads vs estimated bandwidth
 ax1.plot(num_threads_list, bw_list, marker='o', color='red')
 ax1.set_xlabel("Number of Threads")
 ax1.set_ylabel("Estimated Bandwidth (GB/s)")
 ax1.set_title("Num Threads vs Estimated Bandwidth")
 ax1.grid(True)
 
-# Graph 2: num_threads vs occupancy counter/sec
 ax2.plot(num_threads_list, occupancy_list, marker='o', color='orange')
 ax2.set_xlabel("Number of Threads")
-ax2.set_ylabel("rpq_occupancy_pch0")
-ax2.set_title("Num Threads vs rpq_occupancy_pch0/duration")
+ax2.set_ylabel("RPQ Occupancy pch0")
+ax2.set_title("Num Threads vs RPQ Occupancy/Cycles")
 ax2.grid(True)
 
 ax3.plot(num_threads_list, inserts_list, marker='o', color='blue')
 ax3.set_xlabel("Number of Threads")
-ax3.set_ylabel("unc_m_rpq_insert_pch0")
-ax3.set_title("Num Threads vs unc_m_rpq_insert_pch0/duration")
+ax3.set_ylabel("RPQ Insert pch0")
+ax3.set_title("Num Threads vs RPQ Insert/Cycles")
 ax3.grid(True)
 
-ax4.plot(num_threads_list, duration_list, marker='o', color='green')
-ax4.set_xlabel("Number of Threads")
-ax4.set_ylabel("duration")
-ax4.set_title("Num Threads vs duration")
-ax4.grid(True)
-
 plt.tight_layout()
-plt.savefig("perf_results.png")
-print("Saved plot to perf_results.png")
+plt.savefig("rpq.png")

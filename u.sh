@@ -44,7 +44,7 @@ elif [ "$test" = "large" ]; then
     # size=1073741824
     size=268435456
     # size=134217728
-    insertFactor=1
+    insertFactor=100
     readFactor=100
 fi
 
@@ -55,7 +55,7 @@ fi
 # numThreads=1
 
 fill=70
-MODE=13
+MODE=14
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
 #do  

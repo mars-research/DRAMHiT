@@ -66,14 +66,13 @@ rm tmp1.txt tmp2.txt
 }
 
 mkdir -p ./results
-
+sudo rm -rf /opt/DRAMHiT/build
 cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON -DCLHT=ON -DGROWT=ON
 cmake --build /opt/DRAMHiT/build
 run_ht_dual dramhit_2025 $DRAMHIT 0
 run_ht_dual dramhit_2023 $DRAMHIT23 0
 run_ht_dual GROWT $GROWT 1
-run_ht_dual CLHT $CLHT 1
-
-rm dramhit.log
+#run_ht_dual CLHT $CLHT 1
+sudo rm dramhit.log
 
 

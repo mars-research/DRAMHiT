@@ -49,6 +49,7 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
         for r in range(REPEAT):
             out, err = run_once("sudo " + cmd_base)
             matches = re.findall(r"mops\s*:\s*([\d.]+)", out)
+            print(out)
 
             if not matches:
                 print("\nError: could not parse mops values")
@@ -90,9 +91,9 @@ if __name__ == "__main__":
     all_results = {}
 
     run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
-    run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
-    run_ht_dual("GROWT", GROWT, 1, all_results)
-    run_ht_dual("CLHT", CLHT, 1, all_results)
+    #run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
+    #run_ht_dual("GROWT", GROWT, 1, all_results)
+    #run_ht_dual("CLHT", CLHT, 1, all_results)
     #run_ht_dual("TBB", TBB, 1, all_results)
 
     # save to JSON

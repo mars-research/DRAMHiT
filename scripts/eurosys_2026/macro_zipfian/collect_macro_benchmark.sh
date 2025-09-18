@@ -17,8 +17,8 @@ numThreads=$3
 numa_policy=1
 size=268435456
 #size=9000
-insertFactor=100
-readFactor=100
+insertFactor=10
+readFactor=10
 numThreads=128
 
 # 'Constants' hash table types
@@ -37,7 +37,7 @@ file_name_csv=results/$1.csv
 touch $file_name_txt
 echo "skew,get_mops,set_mops" > $file_name_csv
 
-for skew in $(seq -f "%.2f" 0.60 0.05 1.20);
+for skew in $(seq -f "%.2f" 0.80 0.05 1.10);
 do  
     echo "Generating $file_name_txt (fill=$fill)"
 
@@ -54,13 +54,13 @@ done
 rm tmp1.txt tmp2.txt $file_name_txt
 }
 
-mkdir -p ./results
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON -DCLHT=ON -DGROWT=ON
-cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_2023 $DRAMHIT23 0
-run_ht_dual dramhit_2025 $DRAMHIT 0
+#mkdir -p /opt/zipfian
+#mkdir -p ./results
+#cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON -DCLHT=ON -DGROWT=ON
+#cmake --build /opt/DRAMHiT/build
+#run_ht_dual dramhit_2023 $DRAMHIT23 0
+#run_ht_dual dramhit_2025 $DRAMHIT 0
 run_ht_dual GROWT $GROWT 1
-#run_ht_dual CLHT $CLHT 1 clht gets stuck at 70%
 #run_ht_dual TBB $TBB 1
 
 

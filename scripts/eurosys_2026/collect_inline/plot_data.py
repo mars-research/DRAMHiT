@@ -57,7 +57,17 @@ def plot_json(json_file, output_file):
         ax.set_title("Fill Factor vs Find Mops")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Find Mops")
-        
+        MODE = ""
+        if cnt == 0:
+            MODE = "Single Socket"
+        else: 
+            MODE = "Dual Socket"
+        ax.text(
+            0.1, 1.2, MODE,         # (x,y) in axes coords
+            transform=ax.transAxes,      # relative to the axis
+            ha="right", va="top",
+            fontsize=12, fontweight="bold"
+        )
         
         ax = rax[1]
         sns.lineplot(
@@ -116,7 +126,7 @@ def plot_json(json_file, output_file):
         fontsize=8,
         handles=custom_lines,
         loc="upper center",
-        ncol=len(unique_ids)
+        ncol=2
     )
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])

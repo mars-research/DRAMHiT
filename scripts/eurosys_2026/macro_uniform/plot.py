@@ -3,6 +3,7 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 # CSV files
 csv_files = [
@@ -21,37 +22,55 @@ labels = [
 ]
 
 # Set Seaborn style
-sns.set(style="whitegrid")
+sns.set_theme()
 
-# Create subplots: 1 row, 2 columns
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
 # Colors / line styles
 colors = sns.color_palette("tab10", n_colors=len(csv_files))
-linestyles = ["solid",'-', '--', '-.', ':']
+linestyles = ["solid", '-', '--', '-.', ':']
 
-# Plot 1: fill vs reprobe_factor
+# Plot 1: fill vs set_mops
 for i, csv_file in enumerate(csv_files):
     df = pd.read_csv(csv_file)
-    axes[0].plot(df['fill'], df['set_mops'], label=labels[i],
-                 color=colors[i], linestyle=linestyles[i], marker='o')
+    sns.lineplot(
+        data=df,
+        x="fill", y="set_mops",
+        label=labels[i],
+        color=colors[i],
+        linestyle=linestyles[i],
+        marker="o",
+        ax=axes[0]
+    )
 axes[0].set_xlabel("Fill Factor (%)")
-axes[0].set_ylabel("Mops")
-axes[0].set_title("Fill Factor vs Set Mops")
-axes[0].legend()
+axes[0].set_ylabel("Insert Mops")
+axes[0].set_title("Fill Factor vs Insert Mops")
 
-# Plot 2: fill vs mops
+# Plot 2: fill vs get_mops
 for i, csv_file in enumerate(csv_files):
     df = pd.read_csv(csv_file)
-    axes[1].plot(df['fill'], df['get_mops'], label=labels[i],
-                 color=colors[i], linestyle=linestyles[i], marker='o')
+    sns.lineplot(
+        data=df,
+        x="fill", y="get_mops",
+        label=labels[i],
+        color=colors[i],
+        linestyle=linestyles[i],
+        marker="o",
+        ax=axes[1]
+    )
 axes[1].set_xlabel("Fill Factor (%)")
-axes[1].set_ylabel("Mops")
-axes[1].set_title("Fill Factor vs Get Mops")
-axes[1].legend()
+axes[1].set_ylabel("Find Mops")
+axes[1].set_title("Fill Factor vs Find Mops")
 
-# Adjust layout and save figure
-plt.tight_layout()
+# Remove per-axis legends
+for ax in axes:
+    ax.legend().remove()
+
+# Create a single figure-level legend
+handles, labels = axes[0].get_legend_handles_labels()
+fig.legend(handles, labels, loc="upper center", ncol=len(csv_files))
+
+plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.savefig("macro_uniform.png", dpi=300)
 
 

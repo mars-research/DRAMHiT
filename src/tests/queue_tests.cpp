@@ -75,7 +75,7 @@ void init_zipfian_dist(double skew, int64_t seed) {
   zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(HT_TESTS_NUM_INSERTS); //old zipf test
   PLOG_INFO << "HT_TESTS_NUM_INSERTS " << HT_TESTS_NUM_INSERTS;
   std::stringstream cache_name{};
-  cache_name << "/opt/dramhit/cache" << config.skew << "_" << config.ht_size << "_" << config.ht_fill << ".bin";
+  cache_name << "/opt/zipfian/" << config.skew << "_" << config.ht_size << "_" << config.ht_fill << ".bin";
   std::ifstream cache{cache_name.str().c_str()};
 
   PLOG_INFO << cache_name.str() << " " << cache.is_open();

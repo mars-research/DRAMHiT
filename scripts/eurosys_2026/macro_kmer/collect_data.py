@@ -16,7 +16,7 @@ TBB = 9
 MODE = 4
 datapath = "/opt/datasets/ERR4846928.fastq"
 ht_size = 4294967296 #64GB
- 
+MAX_K=32
 def run_once(cmd: str):
     """Run a command and return its stdout as string."""
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -27,7 +27,7 @@ import math
 def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
     results[name] = []
 
-    for k in range(4, 15):
+    for k in range(4, MAX_K):
         print(f"Running {name} (k={k})")
         cmd_base = f"""
         /opt/DRAMHiT/build/dramhit
@@ -66,8 +66,8 @@ if __name__ == "__main__":
     #subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
-        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON "
-        "-DGROWT=ON -DCLHT=ON", shell=True, check=True
+        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREEFTCH=DOUBLE -DREAD_BEFORE_CAS=ON"
+        , shell=True, check=True
     )
     subprocess.run("cmake --build /opt/DRAMHiT/build", shell=True, check=True)
 
@@ -76,12 +76,9 @@ if __name__ == "__main__":
 
     run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
     run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
-    # run_ht_dual("GROWT", GROWT, 1, all_results)
-    # run_ht_dual("CLHT", CLHT, 1, all_results)
-    # run_ht_dual("TBB", TBB, 1, all_results)
 
     # save to JSON
     with open("results.json", "w") as f:
         json.dump(all_results, f, indent=2)
 
-    print("\n✅ Final results saved to results.json")
+    print("\nFinal results saved to results.json")
