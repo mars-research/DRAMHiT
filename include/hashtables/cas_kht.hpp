@@ -246,13 +246,17 @@ class CASHashTable : public BaseHashTable {
     bool fast_path = (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
                       (insert_queue_sz - 1));
     if (fast_path) {
+      // TODo lift head and tail out to local var
       for (auto &data : kp) {
         // pop
         {
           uint64_t retry = 0;
           do {
-            uint32_t next_tail = (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) & INSERT_QUEUE_SZ_MASK;
-            const void *next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
+            uint32_t next_tail =
+                (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) &
+                INSERT_QUEUE_SZ_MASK;
+            const void *next_tail_addr =
+                &this->hashtable[this->insert_queue[next_tail].idx];
             __builtin_prefetch(next_tail_addr, false, 3);
 
             KVQ *q = &this->insert_queue[this->ins_tail];
@@ -326,7 +330,7 @@ class CASHashTable : public BaseHashTable {
               uint64_t hash = this->hash(&old_hash);
               idx = hash & (this->capacity - 1);
               idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-              
+
               this->insert_queue[this->ins_head].key_hash = hash;
 #endif
               // prefetch(idx);
@@ -395,21 +399,6 @@ class CASHashTable : public BaseHashTable {
     }  // end slow path
   }  // end insert unrolled
 #endif
-  // __attribute__((noinline)) void insert_batch_max_test(
-  //     InsertFindArgument *kp, collector_type *collector) {
-  //   uint64_t reg;
-  //   __m64 kv = _mm_setzero_si64();
-  //   uint64_t base_addr = (uint64_t)this->hashtable;
-  //   uint64_t lenmsk = this->capacity - 1;
-  //   for (int i = 0; i < config.batch_len; i++) {
-  //     reg = _mm_crc32_u64(0xffffffff, kp[i].key);
-  //     reg = reg & lenmsk;
-  //     reg = reg << 4;
-  //     reg = base_addr + reg;
-  //     _mm_stream_si64((long long int *)(reg), (long long int)kv);
-  //     //_mm_sfence();
-  //   }
-  // }
 
   void flush_insert_queue(collector_type *collector) override {
     size_t curr_queue_sz = get_insert_queue_sz();
@@ -436,9 +425,8 @@ class CASHashTable : public BaseHashTable {
     return (this->find_head - this->find_tail) & FIND_QUEUE_SZ_MASK;
   }
 
-  inline void flush_if_needed(ValuePairs &vp, collector_type *collector) {
+  void flush_if_needed(ValuePairs &vp, collector_type *collector) {
     size_t curr_queue_sz = get_find_queue_sz();
-
     while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       this->find_tail++;
@@ -470,7 +458,7 @@ class CASHashTable : public BaseHashTable {
 
 #if defined(DRAMHiT_2023)
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-                  collector_type *collector) {
+                  collector_type *collector) override {
     this->flush_if_needed(values, collector);
 
     for (auto &data : kp) {
@@ -993,7 +981,7 @@ class CASHashTable : public BaseHashTable {
       this->find_queue[this->find_head].timer_id = q->timer_id;
 #endif
 
-      this->find_head += 1;
+      this->find_head++;
       this->find_head &= FIND_QUEUE_SZ_MASK;
 #ifdef CALC_STATS
       this->num_reprobes++;
@@ -1193,7 +1181,7 @@ class CASHashTable : public BaseHashTable {
     return -1;
   }
 
-  inline void add_to_find_queue(void *data, collector_type *collector) {
+  void add_to_find_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
 
 #ifdef LATENCY_COLLECTION
@@ -1208,7 +1196,7 @@ class CASHashTable : public BaseHashTable {
 #endif
 
 #ifdef DRAMHiT_2023
-    __builtin_prefetch(&this->hashtable[idx], false, 3);
+    this->prefetch_read(idx);
 #else  // DRAMHIT2025_variants
 
 #ifdef DOUBLE_PREFETCH
@@ -1236,7 +1224,7 @@ class CASHashTable : public BaseHashTable {
     this->find_queue[this->find_head].timer_id = timer;
 #endif
 
-    this->find_head += 1;
+    this->find_head++;
     this->find_head &= FIND_QUEUE_SZ_MASK;
   }
 

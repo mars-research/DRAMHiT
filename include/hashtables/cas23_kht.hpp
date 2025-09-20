@@ -179,12 +179,8 @@ class CAS23HashTable : public BaseHashTable {
   void flush_if_needed(ValuePairs &vp, collector_type *collector) {
     size_t curr_queue_sz =
         (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
-    // make sure you return at most batch_sz (but can possibly return lesser
-    // number of elements)
+
     while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
-      // cout << "Finding value for key " <<
-      // this->find_queue[this->find_tail].key << " at tail : " <<
-      // this->find_tail << endl;
       __find_one(&this->find_queue[this->find_tail], vp, collector);
       if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
       curr_queue_sz =
@@ -335,7 +331,7 @@ class CAS23HashTable : public BaseHashTable {
 #endif
   };
 
-  void  prefetch_read(uint64_t i) {
+  void prefetch_read(uint64_t i) {
     prefetch_object<false /* write */>(
         &this->hashtable[i & (this->capacity - 1)],
         sizeof(this->hashtable[i & (this->capacity - 1)]));
@@ -374,7 +370,7 @@ class CAS23HashTable : public BaseHashTable {
       this->find_head += 1;
       this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
 #ifdef CALC_STATS
-      this->sum_distance_from_bucket++;
+      this->num_reprobes++;
 #endif
     } else {
 #ifdef LATENCY_COLLECTION
@@ -409,57 +405,19 @@ class CAS23HashTable : public BaseHashTable {
   try_insert:
     KV *curr = &this->hashtable[idx];
 
-    // hashtable_mutexes[pidx].lock();
-    // printf("Thread %" PRIu64 ", grabbing lock: %" PRIu64 "\n",
-    // this->thread_id, pidx); Compare with empty element
-    if (curr->is_empty()) {
-      // std::cout << "insert_cas k " << q->key << " : " << q->value << "\n";
-      bool cas_res = curr->insert_cas(q);
-      if (cas_res) {
-#ifdef CALC_STATS
-        this->num_memcpys++;
-#endif
-
-#ifdef COMPARE_HASH
-        hashtable[pidx].key_hash = q->key_hash;
-#endif
-
-#ifdef LATENCY_COLLECTION
-        collector->end(q->timer_id);
-#endif
-
+    if (curr->kvpair.key == 0) {
+      if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
         return;
-      }
-      // hashtable_mutexes[pidx].unlock();
-      // printf("Thread %" PRIu64 ", released lock: %" PRIu64 "\n",
-      // this->thread_id, pidx); printf("%" PRIu64 ": %d | %d\n", pidx,
-      // hashtable[pidx].kb.count, no_ins++); If CAS fails, we need to see if
-      // someother thread has updated the same <k,v> onto the position we were
-      // trying to insert. If so, we need to update the value instead of
-      // inserting new. Just fall-through to check!
+      } 
     }
 
-#ifdef CALC_STATS
-    this->num_hashcmps++;
-#endif
-
-#ifdef COMPARE_HASH
-    if (this->hashtable[pidx].key_hash == q->key_hash)
-#endif
-    {
-#ifdef CALC_STATS
-      this->num_memcmps++;
-#endif
-      if (curr->compare_key(q)) {
-        curr->update_cas(q);
-        // hashtable[pidx].kmer_count++;
-        // hashtable_mutexes[pidx].unlock();
+    if (curr->compare_key(q)) {
+      curr->update_cas(q);
 
 #ifdef LATENCY_COLLECTION
-        collector->end(q->timer_id);
+      collector->end(q->timer_id);
 #endif
-        return;
-      }
+      return;
     }
 
     // hashtable_mutexes[pidx].unlock();
@@ -473,9 +431,6 @@ class CAS23HashTable : public BaseHashTable {
     // |  CACHELINE_SIZE   |
     // | 0 | 1 | . | . | n | n+1 ....
     if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
-#ifdef CALC_STATS
-      ++this->num_soft_reprobes;
-#endif
       goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
     }
 
@@ -493,9 +448,6 @@ class CAS23HashTable : public BaseHashTable {
     ++this->ins_head;
     this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
 
-#ifdef CALC_STATS
-    this->num_reprobes++;
-#endif
     return;
   }
 
@@ -525,9 +477,7 @@ class CAS23HashTable : public BaseHashTable {
     return -1;
   }
 
-  void clear() override {
-    memset(this->hashtable, 0, capacity * sizeof(KV));
-  }
+  void clear() override { memset(this->hashtable, 0, capacity * sizeof(KV)); }
 
   void add_to_insert_queue(void *data, collector_type *collector) {
     InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
@@ -571,15 +521,9 @@ class CAS23HashTable : public BaseHashTable {
 #endif
 
     uint64_t hash = this->hash((const char *)&key_data->key);
-    // Since we use fastrange for partitioned HT, use it
-    // for this HT too for a fair comparison
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
     size_t idx = hash & (this->capacity - 1);
 
     this->prefetch_read(idx);
-
-    // cout << " -- Adding " << key_data->key  << " at " << this->find_head <<
-    // endl;
 
     this->find_queue[this->find_head].idx = idx;
     this->find_queue[this->find_head].key = key_data->key;

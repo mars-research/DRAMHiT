@@ -8,18 +8,18 @@
 # from within work dir
 
 
-echo "Collecting reprobe stats on: <8gb> <dual> <128 threads> ʕ•ᴥ•ʔ"
+echo "Collecting uniform on: <8gb> <dual> <128 threads> ʕ•ᴥ•ʔ"
 
 test=$1
 numa_policy=$2
 numThreads=$3
 # elif [ "$numa_policy" = "dual" ]; then
 numa_policy=1
-size=268435456 
+size=536870912 
 insertFactor=100
 readFactor=100
 numThreads=128
-
+    
 MODE=14 # uniform
 # 'Constants' hash table types
 DRAMHIT=3
@@ -67,12 +67,11 @@ rm tmp1.txt tmp2.txt
 
 mkdir -p ./results
 sudo rm -rf /opt/DRAMHiT/build
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON -DCLHT=ON -DGROWT=ON
+cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON -DGROWT=ON
 cmake --build /opt/DRAMHiT/build
 run_ht_dual dramhit_2025 $DRAMHIT 0
 run_ht_dual dramhit_2023 $DRAMHIT23 0
 run_ht_dual GROWT $GROWT 1
-#run_ht_dual CLHT $CLHT 1
 sudo rm dramhit.log
 
 

@@ -94,8 +94,7 @@ class ArrayHashTable : public BaseHashTable {
 
     KV *curr = &this->hashtable[idx];
     if (curr->is_empty()) {
-      PLOGV.printf("inserting key %llu at idx %llu", elem->key, idx);
-      bool cas_res = curr->insert(elem);
+      curr->insert(elem);
     } else {
       curr->update(elem);
     }

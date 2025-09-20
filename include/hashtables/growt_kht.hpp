@@ -17,7 +17,7 @@ namespace kmercounter {
 
 using growht_type =
     growt::table_config<uint64_t, uint64_t, utils_tm::hash_tm::crc_hash,
-                        growt::PoolAllocator<>, 
+                        growt::HTLBPoolAllocator<>, 
                         hmod::sync>::table_type;
 
 class GrowtHashTable : public BaseHashTable {
@@ -85,13 +85,6 @@ class GrowtHashTable : public BaseHashTable {
   }
 
 
-  void clear() override 
-  {
-    delete table;
-    this->table = new growht_type(sz);
-    printf("table name %s @ %p sz %lu \n", table->name(), table, table->capacity());
-  }
-
   // Insert single (expects std::pair<size_t,size_t>)
   bool insert(const void* data) override { return false; }
 
@@ -123,7 +116,13 @@ class GrowtHashTable : public BaseHashTable {
 
   void prefetch_queue(QueueType qtype) override {}
 
-  size_t get_fill() const override { return 0; }
+  size_t get_fill() const override { 
+    size_t count=0;
+    for (auto it = table->cbegin(); it != table->cend(); ++it) {
+    ++count;
+    }
+    return count;
+ }
 
   size_t get_capacity() const override { return table->capacity(); }
 

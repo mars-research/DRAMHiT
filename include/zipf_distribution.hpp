@@ -25,7 +25,11 @@
 #define ZIPF_DISTRIBUTION_HPP_
 
 #include <stdexcept>
+#include <vector>
 #include <random>
+#include <algorithm>
+#include <stdexcept>
+#include <cstdint>
 
 namespace kmercounter {
 
@@ -54,6 +58,57 @@ private:
 
   static double helper1(double x);
   static double helper2(double x);
+};
+
+
+class zipf_distribution_sync {
+public:
+    // Constructor: n = number of elements, s = exponent, max_threads, optional seed
+    zipf_distribution_sync(uint64_t num_elements, double exponent, size_t max_threads, int64_t seed = 0xdeadbeef)
+        : n(num_elements), s(exponent), cdf(num_elements)
+    {
+        if (n == 0) throw std::invalid_argument("num_elements must be > 0");
+        if (s <= 0.0) throw std::invalid_argument("exponent must be > 0");
+        if (max_threads == 0) throw std::invalid_argument("max_threads must be > 0");
+
+        // Compute normalization constant and CDF
+        double sum = 0.0;
+        for (uint64_t k = 1; k <= n; ++k) {
+            sum += 1.0 / std::pow(k, s);
+        }
+
+        double cumulative = 0.0;
+        for (uint64_t k = 1; k <= n; ++k) {
+            cumulative += 1.0 / std::pow(k, s) / sum;
+            cdf[k-1] = cumulative;
+        }
+
+        // Initialize per-thread RNGs
+        rngs.resize(max_threads);
+        for (size_t i = 0; i < max_threads; ++i) {
+            rngs[i].seed(seed + i);
+        }
+    }
+
+    // Thread-safe sampling: provide thread_id (0..max_threads-1)
+    uint64_t sample(size_t thread_id) {
+        if (thread_id >= rngs.size()) {
+            throw std::out_of_range("thread_id out of range");
+        }
+
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+        double u = dist(rngs[thread_id]);
+
+        // Binary search in CDF
+        auto it = std::lower_bound(cdf.begin(), cdf.end(), u);
+        return std::distance(cdf.begin(), it); // returns index [0, n-1]
+    }
+
+private:
+    uint64_t n;
+    double s;
+    std::vector<double> cdf;
+    std::vector<std::mt19937_64> rngs; // one RNG per thread
 };
 
 }

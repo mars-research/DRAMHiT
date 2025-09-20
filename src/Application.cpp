@@ -58,7 +58,7 @@
 #endif
 
 #include "zipf_distribution.hpp"
-
+#include "utils/hugepage_allocator.hpp"
 namespace kmercounter {
 
 class LynxQueue;
@@ -79,7 +79,7 @@ static pcm::PCMCounters g_pcm_cnt;
 // void sync_complete(void);
 uint64_t sum_total_ops(Shard *all_sh, Configuration &config) {
   uint64_t ops = 0;
-  for (int k = 0; k < config.num_threads; k++)
+  for (uint32_t k = 0; k < config.num_threads; k++)
     ops += all_sh[k].stats->insertions.op_count;
   return ops;
 }
@@ -167,6 +167,9 @@ uint64_t g_find_start, g_find_end;
 bool g_app_record_start;
 uint64_t g_app_record_duration;
 
+extern std::vector<key_type> *g_zipf_values;
+
+
 void sync_complete(void) {
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
@@ -198,6 +201,7 @@ void sync_complete(void) {
 
         if (zipfian_iter < config.read_factor) {
           g_find_durations[zipfian_iter] = g_find_end - g_find_start;
+          PLOGI.printf("find duration %lu", g_find_durations[zipfian_iter]);
 #if defined(WITH_PCM)
           g_find_bw[zipfian_iter] =
               g_pcm_cnt.get_bw(g_find_durations[zipfian_iter]);
@@ -214,9 +218,16 @@ void sync_complete(void) {
 
         if (zipfian_iter < config.insert_factor) {
           g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
+          PLOGI.printf("insert duration %lu", g_insert_durations[zipfian_iter]);
+
         }
       }
     } else {
+
+      if(cur_phase == ExecPhase::free_global_zipfian_values)
+      {
+        delete g_zipf_values;
+      }
     }
   } else if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
     if (cur_phase == ExecPhase::recording && g_app_record_start) {
@@ -653,9 +664,6 @@ int Application::process(int argc, char *argv[]) {
         "Get performance stats on ith iter insert");
 
     papi_init();
-
-    config.batch_len = 16;
-
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
@@ -680,6 +688,7 @@ int Application::process(int argc, char *argv[]) {
       plog::get()->setMaxSeverity(plog::verbose);
     }
 
+    config.dump_configuration();
     msr_ctrl->msr_open();
     // Control hw prefetcher msr
     if (vm["hw-pref"].as<bool>()) {
@@ -690,7 +699,7 @@ int Application::process(int argc, char *argv[]) {
       this->msr_ctrl->write_msr(0x1a4, 0xf);
     }
 
-    //     auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
+    // auto rdmsr_set = this->msr_ctrl->read_msr(0x1a4);
     // PLOGI.printf("MSR 0x1a4 has: { ");
     // for (const auto &e : rdmsr_set) {
     //   printf("0x%lx ", e);
@@ -813,7 +822,12 @@ int Application::process(int argc, char *argv[]) {
     g_find_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.read_factor);
 
-    if (config.mode == ZIPFIAN) init_zipfian_dist(config.skew, config.seed);
+    if (config.mode == ZIPFIAN) 
+    {
+      init_zipfian_dist(config.skew, config.seed);
+    }
+    
+  
 
 #ifdef WITH_PCM
     g_find_bw = (double *)malloc(sizeof(double) * config.read_factor);
@@ -857,38 +871,8 @@ int Application::process(int argc, char *argv[]) {
     }
   }
 
-  config.dump_configuration();
 
   this->spawn_shard_threads();
-
-  // if ((config.mode == HASHJOIN) || (config.mode == FASTQ_WITH_INSERT)) {
-  //   // for hashjoin, ht-type determines how we spawn threads
-  //   if (config.ht_type == PARTITIONED_HT) {
-  //     this->test.qt.run_test(&config, this->n, true, this->npq);
-  //   } else if ((config.ht_type == CASHTPP) || (config.ht_type == ARRAY_HT) ||
-  //   (config.ht_type == CAS23HTPP)
-  //              (config.ht_type == MULTI_HT)) {
-  //     this->spawn_shard_threads();
-  //   }
-  // } else if (config.mode == BQ_TESTS_YES_BQ) {
-  //   this->test.qt.run_test(&config, this->n, false, this->npq);
-  // } else {
-  //   this->spawn_shard_threads();
-  // }
-
-  // // If we start to run casht, reset the num_inserts and no_prefetch
-  // // to run cashtpp
-  // if (config.run_both) {
-  //   PLOGI.printf("Running cashtpp now with the same configuration");
-  //   if ((config.ht_type == CASHTPP) && config.no_prefetch &&
-  //       (config.mode == ZIPFIAN)) {
-  //     HT_TESTS_NUM_INSERTS = config.ht_size * config.ht_fill * 0.01;
-
-  //     config.no_prefetch = 0;
-
-  //     this->spawn_shard_threads();
-  //   }
-  // }
 
   return 0;
 }

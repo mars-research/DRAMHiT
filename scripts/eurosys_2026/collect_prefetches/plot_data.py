@@ -81,15 +81,15 @@ def plot_json(json_file, output_file):
         sns.lineplot(
             data=df,
             x="run_cfg.fill_factor",
-            y="cycle_activity.stalls_total",
+            y="normalized_stall",
             legend=False,
             hue="prefetch_id",  
             marker="o",
             ax=ax
         )
-        ax.set_title(f"Fill Factor vs Stall Cycles")
+        ax.set_title(f"Fill Factor vs Stall Cycles/Find")
         ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Stall Cycles")
+        ax.set_ylabel("Stall Cycles/Find")
         
         ax = rax[2]
         
@@ -97,15 +97,15 @@ def plot_json(json_file, output_file):
         sns.lineplot(
             data=df,
             x="run_cfg.fill_factor",
-            y="l1d_pend_miss.fb_full",
+            y="normalized_fb_full",
             legend=False,
             hue="prefetch_id",
             marker="o",
             ax=ax
         )
-        ax.set_title(f"Fill Factor vs FB full cycle")
+        ax.set_title(f"Fill Factor vs FB full cycle/Find")
         ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("FB full cycle")
+        ax.set_ylabel("FB full cycle/Find")
         cnt += 1
         
     unique_ids = datasets[0]["prefetch_id"].unique()

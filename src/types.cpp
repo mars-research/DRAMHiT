@@ -38,7 +38,7 @@ const char* ht_type_strings[] = {
     "MULTI_HT",
     "GROW_HT",
     "CLHT_HT",
-    "HASH_HT",
+    "CAS23_HT",
     "TBB_HT"
 };
 const char* run_mode_strings[] = {

@@ -6,10 +6,9 @@ import sys
 
 # constants
 REPEAT = 1   # number of times to repeat each run
-base_size = 268435456
+
 numThreads = 128
 numa_policy = 1
-
 DRAMHIT25 = 3
 GROWT = 6
 CLHT = 7
@@ -17,9 +16,8 @@ DRAMHIT23 = 8
 TBB = 9
 MODE = 13
 fill = 0.7
-#htsize = 4096
 
-htsize = 268435456
+htsize = 536870912
 
 
 def run_once(cmd: str):
@@ -33,7 +31,7 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
     # htsizes = [base_size // (2**i) for i in range(10)]
     results[name] = []
 
-    for fill in range(10, 80,10):
+    for fill in range(10, 100,10):
         rsize = int(htsize * fill/100.0) // numThreads * numThreads
         print(f"Running {name} (htsize={htsize}, rsize={rsize})")
 
@@ -91,10 +89,9 @@ if __name__ == "__main__":
     all_results = {}
 
     run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
-    #run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
-    #run_ht_dual("GROWT", GROWT, 1, all_results)
-    #run_ht_dual("CLHT", CLHT, 1, all_results)
-    #run_ht_dual("TBB", TBB, 1, all_results)
+    run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
+    run_ht_dual("GROWT", GROWT, 1, all_results)
+
 
     # save to JSON
     with open(json_out_file, "w") as f:

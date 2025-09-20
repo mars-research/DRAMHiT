@@ -63,7 +63,7 @@ auto get_ht_size = [](int ncons) {
   return ht_size;
 };
 
-std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
+std::vector<key_type> *g_zipf_values;
 
 void init_zipfian_dist(double skew, int64_t seed) {
   std::uint64_t keyrange_width = (1ull << 63);
@@ -71,8 +71,7 @@ void init_zipfian_dist(double skew, int64_t seed) {
     keyrange_width = (1ull << 31);
   }
 
-  //zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(config.ht_size);
-  zipf_values = new std::vector<key_type, huge_page_allocator<key_type>>(HT_TESTS_NUM_INSERTS); //old zipf test
+  g_zipf_values = new std::vector<key_type>(HT_TESTS_NUM_INSERTS); //old zipf test
   PLOG_INFO << "HT_TESTS_NUM_INSERTS " << HT_TESTS_NUM_INSERTS;
   std::stringstream cache_name{};
   cache_name << "/opt/zipfian/" << config.skew << "_" << config.ht_size << "_" << config.ht_fill << ".bin";
@@ -80,20 +79,20 @@ void init_zipfian_dist(double skew, int64_t seed) {
 
   PLOG_INFO << cache_name.str() << " " << cache.is_open();
   if (cache.is_open()) {
-    cache.read(reinterpret_cast<char *>(zipf_values->data()),
-               zipf_values->size() * sizeof(key_type));
+    cache.read(reinterpret_cast<char *>(g_zipf_values->data()),
+               g_zipf_values->size() * sizeof(key_type));
     cache.close();
   } else {
     zipf_distribution_apache distribution(keyrange_width, skew, seed);
     PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);
 
-    for (auto &value : *zipf_values) {
+    for (auto &value : *g_zipf_values) {
       value = distribution.sample();
     }
-    PLOGI.printf("Zipfian dist generated. size %zu", zipf_values->size());
+    PLOGI.printf("Zipfian dist generated. size %zu", g_zipf_values->size());
     std::ofstream cache_out{cache_name.str().c_str()};
-    cache_out.write(reinterpret_cast<char *>(zipf_values->data()),
-                    zipf_values->size() * sizeof(key_type));
+    cache_out.write(reinterpret_cast<char *>(g_zipf_values->data()),
+                    g_zipf_values->size() * sizeof(key_type));
     cache_out.close();
   }
 }
@@ -253,7 +252,7 @@ void QueueTest<T>::producer_thread(
   key_start = key_start_orig;
   auto zipf_idx = key_start == 1 ? 0 : key_start;
   for (transaction_id = 0u; transaction_id < num_messages * cfg->rw_queues;) {
-    k = zipf_values->at(zipf_idx);
+    k = g_zipf_values->at(zipf_idx);
     ++zipf_idx;
     uint64_t hash_val = hasher(&k, sizeof(k));
     cons_id = hash_to_cpu(hash_val, n_cons);
@@ -317,12 +316,12 @@ void QueueTest<T>::producer_thread(
 
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian insertion"
-        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
-          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        if (!(zipf_idx & 7) && zipf_idx + 16 < g_zipf_values->size())
+          prefetch_object<false>(&g_zipf_values->at(zipf_idx + 16), 64);
 
-      k = zipf_values->at(zipf_idx);
+      k = g_zipf_values->at(zipf_idx);
       kv = data_t(k, k);
-      //PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+      //PLOGV.printf("g_zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
       zipf_idx++;
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
       k = values.at(transaction_id);
@@ -761,11 +760,11 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
         k = xorwow(&_xw_state);
 #elif defined(BQ_TESTS_INSERT_ZIPFIAN)
 #warning "Zipfian finds"
-        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size())
-          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        if (!(zipf_idx & 7) && zipf_idx + 16 < g_zipf_values->size())
+          prefetch_object<false>(&g_zipf_values->at(zipf_idx + 16), 64);
 
-        k = zipf_values->at(zipf_idx);
-        // PLOGV.printf("zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
+        k = g_zipf_values->at(zipf_idx);
+        // PLOGV.printf("g_zipf_values[%" PRIu64 "] = %" PRIu64, zipf_idx, k);
         zipf_idx++;
 #else
 #warning "Monotonic counters"
@@ -909,9 +908,9 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
   // cfg->no_prefetch = 0;
 
   // Do a shuffle to redistribute the keys
-  if (zipf_values) {
+  if (g_zipf_values) {
     auto rng = std::default_random_engine{};
-    std::shuffle(std::begin(*zipf_values), std::end(*zipf_values), rng);
+    std::shuffle(std::begin(*g_zipf_values), std::end(*g_zipf_values), rng);
   }
 
   // 2) spawn n_prod + n_cons threads for find

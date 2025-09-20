@@ -54,13 +54,13 @@ extern bool stop_sync;
 extern uint64_t zipfian_iter;
 extern bool zipfian_finds;
 extern bool zipfian_inserts;
-extern std::vector<key_type, huge_page_allocator<key_type>> *zipf_values;
+extern std::vector<key_type> *g_zipf_values;
 
 static inline uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
 
 void do_batch_insertion(
     BaseHashTable *ht, uint64_t batch_num, uint32_t batch_len, uint64_t idx,
-    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
+    std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
 #if defined(CAS_NO_ABSTRACT)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
@@ -77,11 +77,11 @@ void do_batch_insertion(
   uint64_t value;
   for (unsigned int n = 0; n < batch_num; ++n) {
     for (int i = 0; i < batch_len; i++) {
-      if (!(idx & 7) && idx + 16 < zipf_set->size()) {
-        __builtin_prefetch(&zipf_set->at(idx + 16), false, 3);
+      if (!(idx & 7) && idx + 16 < zipf_set.size()) {
+        __builtin_prefetch(&zipf_set.at(idx + 16), false, 3);
       }
 
-      value = zipf_set->at(idx);  // len 1024,  zipf[2 * 1024]
+      value = zipf_set.at(idx);  // len 1024,  zipf[2 * 1024]
 
       items[i].key = items[i].value = value;
       items[i].id = idx;
@@ -103,7 +103,7 @@ void do_batch_insertion(
 
 uint64_t do_batch_find(
     BaseHashTable *ht, uint64_t batch_num, uint32_t batch_len, uint32_t idx,
-    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
+    std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
 #if defined(CAS_NO_ABSTRACT)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
@@ -128,11 +128,11 @@ uint64_t do_batch_find(
   uint32_t value;
   for (unsigned int n = 0; n < batch_num; ++n) {
     for (int i = 0; i < batch_len; i++) {
-      if (!(idx & 7) && idx + 16 < zipf_set->size()) {
-        __builtin_prefetch(&zipf_set->at(idx + 16), false, 3);
+      if (!(idx & 7) && idx + 16 < zipf_set.size()) {
+        __builtin_prefetch(&zipf_set.at(idx + 16), false, 3);
       }
 
-      value = zipf_set->at(idx);  // len 1024,  zipf[2 * 1024]
+      value = zipf_set.at(idx);  // len 1024,  zipf[2 * 1024]
 
       items[i].key = value;
       items[i].id = idx;
@@ -165,13 +165,8 @@ uint64_t do_batch_find(
 OpTimings do_zipfian_inserts(
     BaseHashTable *hashtable, double skew, int64_t seed, unsigned int count,
     unsigned int id, std::barrier<std::function<void()>> *sync_barrier,
-    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
+    std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
   if (config.insert_factor == 0) return {1, 1};
-
-  if (id == 0) {
-    cur_phase = ExecPhase::insertions;
-    zipfian_inserts = false;
-  }
 
   const uint64_t ops_per_iter = HT_TESTS_NUM_INSERTS;
   const uint64_t batches = HT_TESTS_NUM_INSERTS / config.batch_len;
@@ -221,14 +216,9 @@ OpTimings do_zipfian_inserts(
 OpTimings do_zipfian_gets(
     BaseHashTable *hashtable, unsigned int num_threads, unsigned int id,
     auto sync_barrier,
-    std::vector<key_type, huge_page_allocator<key_type>> *zipf_set) {
+    std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
   if (config.read_factor == 0) {
     return {1, 1};
-  }
-
-  if (id == 0) {
-    cur_phase = ExecPhase::finds;
-    zipfian_finds = false;
   }
 
   std::uint64_t found = 0;
@@ -243,6 +233,7 @@ OpTimings do_zipfian_gets(
     idx = 0;
 
     if (id == 0) {
+      cur_phase = ExecPhase::finds;
       zipfian_finds = false;
     }
     sync_barrier->arrive_and_wait();
@@ -252,12 +243,6 @@ OpTimings do_zipfian_gets(
       zipfian_iter = j;
     }
     sync_barrier->arrive_and_wait();
-
-    // if (found > 0) {
-    //   double per_found = (double)found / ops_per_iter;
-    //     PLOGI.printf("op issued %lu, actual found %lu, perc
-    //     %.3f",ops_per_iter, found, per_found);
-    // }
   }
 
   uint64_t duration = 0;
@@ -275,16 +260,22 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   OpTimings insert_timings{};
   OpTimings find_timings{};
 
-  // generate zipfian here.
-  std::vector<key_type, huge_page_allocator<key_type>> *zipf_set_local;
-  zipf_set_local = new std::vector<key_type, huge_page_allocator<key_type>>(
-      HT_TESTS_NUM_INSERTS);
+  // get zipfian here.
+  std::vector<key_type, huge_page_allocator<key_type>> zipf_set_local(
+      HT_TESTS_NUM_INSERTS,            // initial size
+      huge_page_allocator<key_type>()  // allocator instance
+  );
 
   uint64_t starting_offset = shard->shard_idx * HT_TESTS_NUM_INSERTS;
-  for (int i = 0; i < HT_TESTS_NUM_INSERTS; i++) {
-    zipf_set_local->at(i) = zipf_values->at(i + starting_offset);
+  for (size_t i = 0; i < HT_TESTS_NUM_INSERTS; i++) {
+    zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);
   }
 
+  if(shard->shard_idx == 0)
+  {
+    cur_phase = ExecPhase::free_global_zipfian_values;
+  }
+  sync_barrier->arrive_and_wait();
 #ifdef LATENCY_COLLECTION
   static auto step = 0;
   {
@@ -295,11 +286,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     }
   }
 #endif
-
-  PLOGV.printf(
-      "Zipfian test run: thread %u, ht size: %lu, insertions: %lu, skew "
-      "%f",
-      shard->shard_idx, config.ht_size, HT_TESTS_NUM_INSERTS, skew);
 
 #ifdef WITH_PERFCPP
   if (shard->shard_idx != 0) EVENTCOUNTERS.start(shard->shard_idx);
@@ -328,10 +314,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   shard->stats->insertions = insert_timings;
 
-  if (zipf_set_local) {
-    auto rng = std::default_random_engine{};
-    std::shuffle(std::begin(*zipf_set_local), std::end(*zipf_set_local), rng);
-  }
+  auto rng = std::default_random_engine{};
+  std::shuffle(std::begin(zipf_set_local), std::end(zipf_set_local), rng);
+
 #ifdef WITH_VTUNE_LIB
   // __itt_event_end(upsert_event);
 #endif
@@ -346,11 +331,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     }
   }
 #endif
-
-  if (zipf_set_local) {
-    auto rng = std::default_random_engine{};
-    std::shuffle(std::begin(*zipf_set_local), std::end(*zipf_set_local), rng);
-  }
 
 #ifdef WITH_PERFCPP
   // if (shard->shard_idx == 0)
@@ -385,7 +365,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   if (shard->shard_idx == 0) {
     cur_phase = ExecPhase::none;
   }
-
   sync_barrier->arrive_and_wait();
 
   if (shard->shard_idx == 0) {

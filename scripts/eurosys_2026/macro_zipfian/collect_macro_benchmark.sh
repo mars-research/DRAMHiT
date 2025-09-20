@@ -8,17 +8,13 @@
 # from within work dir
 
 
-echo "Collecting reprobe stats on: <4gb> <dual> <128 threads> ʕ•ᴥ•ʔ"
+echo "Collecting zipfian stats on: <8gb> <dual> <128 threads> ʕ•ᴥ•ʔ"
 
-test=$1
-numa_policy=$2
-numThreads=$3
 # elif [ "$numa_policy" = "dual" ]; then
 numa_policy=1
-size=268435456
-#size=9000
-insertFactor=10
-readFactor=10
+size=536870912
+insertFactor=100
+readFactor=100
 numThreads=128
 
 # 'Constants' hash table types
@@ -43,7 +39,7 @@ do
 
     cmd="--find_queue 64 --ht-fill $fill --ht-type $2 --insert-factor $insertFactor --read-factor $readFactor\
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode 11 --ht-size $size --skew $skew\
-    --hw-pref $3 --batch-len 16"
+    --hw-pref $3 --batch-len 16 --drop-caches true"
    
     sudo /opt/DRAMHiT/build/dramhit $cmd > $file_name_txt
     grep get_mops "$file_name_txt" | sed 's/.*get_mops : \([0-9.]*\).*/\1/' > tmp1.txt
@@ -56,11 +52,19 @@ rm tmp1.txt tmp2.txt $file_name_txt
 
 #mkdir -p /opt/zipfian
 #mkdir -p ./results
-#cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON -DCLHT=ON -DGROWT=ON
-#cmake --build /opt/DRAMHiT/build
-#run_ht_dual dramhit_2023 $DRAMHIT23 0
-#run_ht_dual dramhit_2025 $DRAMHIT 0
-run_ht_dual GROWT $GROWT 1
-#run_ht_dual TBB $TBB 1
+# cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025 -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON
+# cmake --build /opt/DRAMHiT/build
+# run_ht_dual dramhit_2025_simd_uniform $DRAMHIT 0
+
+# cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025 -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=OFF -DREAD_BEFORE_CAS=ON
+# cmake --build /opt/DRAMHiT/build
+# run_ht_dual dramhit_2025_simd_linear $DRAMHIT 0
+
+# cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DDRAMHiT_VARIANT=2023 -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF -DREAD_BEFORE_CAS=ON
+# cmake --build /opt/DRAMHiT/build
+# run_ht_dual dramhit_2023_compile $DRAMHIT 0
+
+run_ht_dual dramhit_2023 $DRAMHIT23 0
+# run_ht_dual GROWT $GROWT 1
 
 

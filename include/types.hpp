@@ -343,6 +343,7 @@ enum class ExecPhase {
   finds,
   recording,
   none,
+  free_global_zipfian_values,
 };
 // Can be use for, let's say, cleanup functions.
 using VoidFn = std::function<void()>;

@@ -62,9 +62,6 @@ void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz, numa_policy_threads 
     return;
   }
 
-  PLOGI.printf("addr %p, alloc_sz %lu | all_nodes %lx", addr, alloc_sz,
-               *numa_all_nodes_ptr->maskp);
-
   if (policy == THREADS_REMOTE_NUMA_NODE) {
     unsigned long nodemask = 1UL << 1;
     unsigned long maxnode = sizeof(nodemask) * 8; 
@@ -77,9 +74,6 @@ void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz, numa_policy_threads 
     }
   }
   else if ((policy == THREADS_LOCAL_NUMA_NODE  || policy == THREADS_NO_MEM_DISTRIBUTION)){
-    // we are at mercy of the OS here, since we only uses threads belongs to
-    // socket 0, then all memory allocated will be automatically binded to that
-    // node, no need to do anything.
 
     unsigned long nodemask = 1UL << 0;
     unsigned long maxnode = sizeof(nodemask) * 8;
@@ -93,13 +87,6 @@ void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz, numa_policy_threads 
   }
   else if (policy == THREADS_SPLIT_EVEN_NODES)
   {
-
-    if(alloc_sz % 2) 
-    {
-      PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %lu", alloc_sz);
-      exit(-1);
-    }
-
     uint64_t sz = alloc_sz >> 1;
     void* u_addr = addr + sz;
 
@@ -131,6 +118,8 @@ void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz, numa_policy_threads 
         PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
       }
   }
+
+  PLOGI.printf("addr %p, alloc_sz %lu", addr, alloc_sz);
 }
 
 }  // namespace kmercounter

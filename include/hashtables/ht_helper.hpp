@@ -1,26 +1,26 @@
 #ifndef _HT_HELPER_H
 #define _HT_HELPER_H
 
-#include "base_kht.hpp"
-#include "hashtables/kvtypes.hpp"
-
 #include <fcntl.h>
 #include <numa.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <plog/Log.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include <cstring>
+
+#include "base_kht.hpp"
+#include "hashtables/kvtypes.hpp"
 
 namespace kmercounter {
 /* AB: 1GB page table code is from
  * https://github.com/torvalds/linux/blob/master/tools/testing/selftests/vm/hugepage-mmap.c
  */
 
-#define FILE_NAME "/mnt/huge/hugepagefile%d"
+#define FILE_NAME "/mnt/huge/hugepagefile"
 
-#define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
-#define MAP_HUGE_1GB    (30 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 
 extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
@@ -41,16 +41,16 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
   return addr & ~CACHE_BLOCK_MASK;
 }
 
-void distribute_mem_to_nodes(void *addr, size_t alloc_sz, numa_policy_threads policy);
-
+void distribute_mem_to_nodes(void *addr, size_t alloc_sz,
+                             numa_policy_threads policy);
 
 template <bool WRITE>
 inline void prefetch_object(const void *addr, uint64_t size) {
-  //uint64_t _addr = cache_block_aligned_addr((uint64_t)addr);
+  // uint64_t _addr = cache_block_aligned_addr((uint64_t)addr);
 
 #if defined(PREFETCH_TWO_LINE)
-  //uint64_t cache_line2_addr =
-  //    cache_block_aligned_addr((uint64_t)addr + size - 1);
+  // uint64_t cache_line2_addr =
+  //     cache_block_aligned_addr((uint64_t)addr + size - 1);
 #endif
 
   // 1 -- prefetch for write (vs 0 -- read)
@@ -103,8 +103,6 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   uint64_t alloc_sz = capacity * sizeof(T);
   auto current_node = numa_node_of_cpu(sched_getcpu());
 
-  
-
   if (alloc_sz < ONEGB_PAGE_SZ) {
     PLOGI.printf("Allocating memory on node %d", current_node);
     addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
@@ -116,35 +114,39 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
       goto skip_mbind;
     }
   } else {
-    int fd;
-    char mmap_path[256] = {0};
-    snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
-
-    fd = open(mmap_path, O_CREAT | O_RDWR, 0755);
+    int fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
 
     if (fd < 0) {
-      PLOGE.printf("Couldn't open file %s:", mmap_path);
+      PLOGE.printf("Couldn't open file %s:", FILE_NAME);
       perror("");
       exit(1);
     } else {
-      PLOGV.printf("opened file %s", mmap_path);
+      PLOGI.printf("opened file %s", FILE_NAME);
     }
 
     PLOGI.printf("requesting to mmap %lu bytes", alloc_sz);
-    addr = (T *)mmap(ADDR, /* 256*1024*1024*/ alloc_sz, PROT_RW,
-        MAP_FLAGS, fd, 0);
+
+    if (alloc_sz % 2) {
+      PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %lu", alloc_sz);
+      exit(-1);
+    }
+    addr = (T *)mmap(ADDR, alloc_sz, PROT_RW, MAP_FLAGS, fd, 0);
+
+    close(fd);
+    unlink(FILE_NAME);
     if (addr == MAP_FAILED) {
       perror("mmap");
-      unlink(mmap_path);
+      unlink(FILE_NAME);
       exit(1);
     } else {
       PLOGI.printf("mmap returns %p", addr);
     }
     *out_fd = fd;
   }
-  if (config.ht_type == CASHTPP && (config.numa_split != 2)) {
-      distribute_mem_to_nodes(addr, alloc_sz, (kmercounter::numa_policy_threads)config.numa_split);
-  }
+  // if (config.ht_type == CASHTPP && (config.numa_split != 2)) {
+  distribute_mem_to_nodes(addr, alloc_sz,
+                          (kmercounter::numa_policy_threads)config.numa_split);
+  //}
 skip_mbind:
   memset(addr, 0, capacity * sizeof(T));
   return addr;
@@ -157,16 +159,10 @@ void free_mem(T *addr, uint64_t capacity, int id, int fd) {
   if (alloc_sz < ONEGB_PAGE_SZ) {
     free(addr);
   } else {
-    char mmap_path[256] = {0};
-    PLOGI.printf("Entering!");
-    snprintf(mmap_path, sizeof(mmap_path), FILE_NAME, id);
     if (addr) {
       munmap(addr, capacity * sizeof(T));
+      PLOGI.printf("%p with sz %lu unmapped", addr, capacity * sizeof(T));
     }
-    if (fd > 0) {
-      close(fd);
-    }
-    unlink(FILE_NAME);
   }
 }
 

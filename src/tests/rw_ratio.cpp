@@ -29,7 +29,7 @@ struct experiment_results {
 
 extern ExecPhase cur_phase;
 std::atomic_uint64_t ready{};
-extern std::vector<key_type, huge_page_allocator<key_type>>* zipf_values;
+extern std::vector<key_type>* g_zipf_values;
 void init_zipfian_dist(double skew, int64_t seed);
 
 class rw_experiment {
@@ -62,8 +62,8 @@ class rw_experiment {
     uint64_t k{};
     collector_type dummy{};
 
-    const std::span values{&zipf_values->at(next_key),
-                           zipf_values->size() - next_key};
+    const std::span values{&g_zipf_values->at(next_key),
+                           g_zipf_values->size() - next_key};
     for (auto i = 0u; i < total_ops; ++i, ++k) {
       if (k == HT_TESTS_BATCH_LENGTH) {
         hashtable.insert_batch(args, &dummy);
@@ -91,8 +91,8 @@ class rw_experiment {
     if (!config.no_prefetch) {
       for (auto i = 0u; i < total_ops; ++i) {
         const auto zipf_idx = i;
-        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        if (!(zipf_idx & 7) && zipf_idx + 16 < g_zipf_values->size()) {
+          prefetch_object<false>(&g_zipf_values->at(zipf_idx + 16), 64);
         }
 
         if (i % 8 == 0 && i + 16 < keyrange)
@@ -113,8 +113,8 @@ class rw_experiment {
     } else {
       for (auto i = 0u; i < total_ops; ++i) {
         const auto zipf_idx = i;
-        if (!(zipf_idx & 7) && zipf_idx + 16 < zipf_values->size()) {
-          prefetch_object<false>(&zipf_values->at(zipf_idx + 16), 64);
+        if (!(zipf_idx & 7) && zipf_idx + 16 < g_zipf_values->size()) {
+          prefetch_object<false>(&g_zipf_values->at(zipf_idx + 16), 64);
         }
 
         InsertFindArgument kv{values[i], values[i]};

@@ -36,10 +36,17 @@ def plot_json(json_file, output_file):
     
     datasets = [df_single, df_dual]
     
+    dcnt = 0
     for df in datasets:
         df["normalized_stall"] = df["cycle_activity.stalls_total"] / df["find_ops"]
         df["normalized_fb_full"] = df["l1d_pend_miss.fb_full"] / df["find_ops"]
-    # Set Seaborn style
+        df["identifier"] = df["build_cfg_str"].str.split('-').str[0] + " " + df["build_cfg_str"].str.split('-').str[3] + " "+ df["build_cfg_str"].str.split('-').str[-1]
+        msk = df['build_cfg_str'].str.strip().str.contains('INLINE', case=False, na=False)
+        df = df[~msk]  
+        datasets[dcnt] = df 
+        dcnt += 1
+
+   # Set Seaborn style
     sns.set_theme()
     
     row = 2
@@ -47,9 +54,7 @@ def plot_json(json_file, output_file):
     fig, axes = plt.subplots(row, col, figsize=(15, 7))
     
     cnt = 0
-    for df in datasets:
-        
-        df["identifier"] = df["build_cfg_str"].str.split('-').str[0] + df["build_cfg_str"].str.split('-').str[3] + df["build_cfg_str"].str.split('-').str[-1]
+    for df in datasets:      
         rax = axes[cnt]
         ax = rax[0]
         sns.lineplot(
@@ -120,7 +125,7 @@ def plot_json(json_file, output_file):
         fontsize=8,
         handles=custom_lines,
         loc="upper center",
-        ncol=3
+        ncol=2
     )
     
 

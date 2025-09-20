@@ -2,11 +2,14 @@
 
 // adapted from https://rigtorp.se/hugepages/
 
-#include <sys/mman.h> // mmap, munmap
+#include <sys/mman.h>  // mmap, munmap
 
-template <typename T> struct huge_page_allocator {
-  constexpr static std::size_t huge_page_size_2mb = 1 << 21; // 2 MiB
-  constexpr static std::size_t huge_page_size_1gb = 1 << 30; // 1 GiB
+#define HUGEPAGE_FILE "/mnt/huge/hugepagefile"
+template <typename T>
+struct huge_page_allocator {
+  constexpr static std::size_t huge_page_size_2mb = 1 << 21;  // 2 MiB
+  constexpr static std::size_t huge_page_size_1gb = 1 << 30;  // 1 GiB
+
   using value_type = T;
 
   huge_page_allocator() = default;
@@ -46,20 +49,29 @@ template <typename T> struct huge_page_allocator {
 
     std::tie(is_1gb, alloc_sz) = get_rounded_alloc_size(raw_alloc_sz);
 
-    auto MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB
-        | (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
+    int fd = open(HUGEPAGE_FILE, O_CREAT | O_RDWR, 0755);
 
-    PLOGV.printf("n = %lu raw_alloc_sz %zu | alloc_sz %zu, is_1gb %d", n, raw_alloc_sz, alloc_sz, is_1gb);
-    auto p = static_cast<T *>(mmap( nullptr, alloc_sz, PROT_READ | PROT_WRITE,
-          MAP_FLAGS, -1, 0));
+    if (fd < 0) {
+      PLOGE.printf("Couldn't open file %s:", HUGEPAGE_FILE);
+      perror("");
+      exit(1);
+    }
+
+    auto MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB |
+                     (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
+
+    auto p = static_cast<T *>(
+        mmap(nullptr, alloc_sz, PROT_READ | PROT_WRITE, MAP_FLAGS, fd, 0));
+    close(fd);
+    unlink(HUGEPAGE_FILE);
 
     if (p == MAP_FAILED) {
       PLOGE.printf("map failed %d", errno);
       throw std::bad_alloc();
-    } else {
-      // just bind to local threads.
-      // kmercounter::distribute_mem_to_nodes(p, alloc_sz, (kmercounter::numa_policy_threads) 0);
     }
+
+    PLOGV.printf("huge page %p with sz %lu mapped", p, alloc_sz);
+
     return p;
   }
 
@@ -69,6 +81,9 @@ template <typename T> struct huge_page_allocator {
     bool is_1gb;
     std::tie(is_1gb, alloc_sz) = get_rounded_alloc_size(raw_alloc_sz);
 
-    munmap(p, alloc_sz);
+    if (p) {
+      munmap(p, alloc_sz);
+      PLOGV.printf("huge page %p with sz %lu unmapped", p, alloc_sz);
+    }
   }
 };
