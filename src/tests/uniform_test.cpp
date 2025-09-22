@@ -183,6 +183,8 @@ OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
       zipfian_iter = j;
     }
     sync_barrier->arrive_and_wait();
+
+    PLOGI.printf("found %lu ops %lu", found, ops_per_iter*batches);
   }
 
   uint64_t duration = 0;

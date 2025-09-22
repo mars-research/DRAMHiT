@@ -4,7 +4,6 @@ import os
 import subprocess
 import json
 import re
-import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
@@ -31,11 +30,11 @@ def make_perf_command(counters, dramhit_args):
     ] + dramhit_args
     return cmd
 
+
 counters = [
     "cycles",
-    "br_inst_retired.all_branches",
-    "uops_issued.any",
-    "br_misp_retired.all_branches"
+    "uops_dispatched.port_2_3_10",
+    "uops_issued.any"
 ]
 
 def run(run_cfg):
@@ -132,37 +131,38 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
-
-    if len(sys.argv) < 2:
-        print("Usage: python script.py <output.json>")
-        sys.exit(1)
-
-    out_file = sys.argv[1]
-
     # Build configurations
+    # for insertion, prefetch to l1 is prefetchw.
+    # double prefetch is prefetch to l2 then prefetch to l1, must only be used with 2025.
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "L3"},
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "L3"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "L3"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "L3"},
+        {"DRAMHiT_VARIANT": "2023", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023
+        {"DRAMHiT_VARIANT": "2023", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket
+        {"DRAMHiT_VARIANT": "2023", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket + simd
+        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"}, # 2025 + bucket + simd + double prefetch
+        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"}, # 2025_inline + bucket + simd + double prefetch
+        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"}, # 2025_inline + bucket + simd + double prefetch + uniform
     ]
-
+    
     run_cfgs = [
-    {"insertFactor": 10, "readFactor": 1, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
+    {"insertFactor": 100, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
-] 
+] + [
+    {"insertFactor": 100, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
+    for f in range(10, 100, 10)
+]
 
     all_results = []
     
     def get_name(bcfg):
-        ret = ""
+        ret = bcfg["DRAMHiT_VARIANT"]
         for k in bcfg.keys():
-            ret += "{" + k + "-" + bcfg[k] + "}" 
-        
+            if k == "BUCKETIZATION" and bcfg[k] == "ON":
+                ret += "+bucket"
+            elif k == "BRANCH" and bcfg[k] == "simd":
+                ret += "+simd"
+            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
+                ret += "+uniform"
+
         return ret
 
     for bcfg in build_cfgs:
@@ -173,4 +173,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, out_file)
+    save_json(all_results, "dramhit.json")

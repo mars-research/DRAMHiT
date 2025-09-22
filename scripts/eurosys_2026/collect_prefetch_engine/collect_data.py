@@ -136,12 +136,10 @@ if __name__ == "__main__":
 
     # Build configurations
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2023", "PREFETCH": "DOUBLE", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
-        {"DRAMHiT_VARIANT": "2025", "PREFETCH": "DOUBLE", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF"},
-        {"DRAMHiT_VARIANT": "2023", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
-        {"DRAMHiT_VARIANT": "2025", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
+        {"DRAMHiT_VARIANT": "2023_INLINE", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
         {"DRAMHiT_VARIANT": "2025_INLINE", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"}
+    #    {"DRAMHiT_VARIANT": "2023", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
+    #    {"DRAMHiT_VARIANT": "2025", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
     ]
 
     # Run configurations (example: vary fill_factor, others fixed)
@@ -154,13 +152,28 @@ if __name__ == "__main__":
 ]
 
 
+    def get_name(bcfg):
+        ret = bcfg["DRAMHiT_VARIANT"]
+        for k in bcfg.keys():
+            if k == "BUCKETIZATION" and bcfg[k] == "ON":
+                ret += "+bucket"
+            elif k == "BRANCH" and bcfg[k] == "simd":
+                ret += "+simd"
+            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
+                ret += "+uniform"
+            elif k == "UNIFORM_PROBING" and bcfg[k] == "OFF":
+                ret += "+linear"
+            elif k == "PREFETCH" and bcfg[k] == "L1":
+                ret += "+l1prefetch"
+        return ret
+
     all_results = []
 
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, "-".join(str(v) for v in bcfg.values()))
+            obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
             all_results.append(obj)
 
     # Save all results into a single JSON file

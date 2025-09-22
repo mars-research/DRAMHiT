@@ -40,13 +40,15 @@ def plot_json(json_file, output_file):
     for df in datasets:
         df["normalized_stall"] = df["cycle_activity.stalls_total"] / df["find_ops"]
         df["normalized_fb_full"] = df["l1d_pend_miss.fb_full"] / df["find_ops"]
-        df["identifier"] = df["build_cfg_str"].str.split('-').str[0] + " " + df["build_cfg_str"].str.split('-').str[3] + " "+ df["build_cfg_str"].str.split('-').str[-1]
-        msk = df['build_cfg_str'].str.strip().str.contains('INLINE', case=False, na=False)
-        df = df[~msk]  
-        datasets[dcnt] = df 
-        dcnt += 1
+        #df["identifier"] = df["build_cfg_str"].str.split('-').str[0] + " " + df["build_cfg_str"].str.split('-').str[3] + " "+ df["build_cfg_str"].str.split('-').str[-1]
+        #msk = df['build_cfg_str'].str.strip().str.contains('INLINE', case=False, na=False)
+        #df = df[~msk]  
+        #datasets[dcnt] = df 
+        #dcnt += 1
 
    # Set Seaborn style
+
+    identifier = "build_cfg_str"
     sns.set_theme()
     
     row = 2
@@ -61,7 +63,7 @@ def plot_json(json_file, output_file):
             data=df,
             x="run_cfg.fill_factor",
             y="get_mops",
-            hue="identifier",
+            hue=identifier,
             marker="o",
             ax=ax,
             legend=False
@@ -88,7 +90,7 @@ def plot_json(json_file, output_file):
             data=df,
             x="run_cfg.fill_factor",
             y="normalized_stall",
-            hue="identifier",
+            hue=identifier,
             marker="o",
             legend=False,
             ax=ax
@@ -102,7 +104,7 @@ def plot_json(json_file, output_file):
             data=df,
             x="run_cfg.fill_factor",
             y="normalized_fb_full",
-            hue="identifier",
+            hue=identifier,
             marker="o",
             legend=False,
             ax=ax
@@ -113,7 +115,7 @@ def plot_json(json_file, output_file):
         cnt += 1
 
 
-    unique_ids = datasets[0]["identifier"].unique()
+    unique_ids = datasets[0][identifier].unique()
     palette = sns.color_palette(n_colors=len(unique_ids))
     
     custom_lines = [

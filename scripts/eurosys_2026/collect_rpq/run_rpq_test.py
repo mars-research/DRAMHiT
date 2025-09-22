@@ -5,7 +5,7 @@ import re
 import matplotlib.pyplot as plt
 import csv
 import seaborn as sns
-
+import pandas as pd
 
 # --- Step 0: Compile rpq_test.c ---
 compile_cmd = "gcc -O1 -lnuma -pthread rpq_test.c -o rpq"
@@ -19,11 +19,11 @@ if comp_proc.returncode != 0:
 print("Compilation succeeded.\n")
 
 # Command template
-cmd_template = "sudo /usr/bin/perf stat -e unc_m_rpq_inserts.pch0,unc_m_rpq_occupancy_pch0,unc_m_cas_count.all,unc_m_cas_count.rd -- ./rpq 10 {num_threads} 2>&1"
+cmd_template = "sudo /usr/bin/perf stat -e unc_m_rpq_inserts.pch0,unc_m_rpq_occupancy_pch0,unc_m_rpq_inserts.pch1,unc_m_rpq_occupancy_pch1 -- ./rpq 10 {num_threads} 2>&1"
 
 results = []
 
-for num_threads in range(1, 64):
+for num_threads in range(1, 32):
     cmd = cmd_template.format(num_threads=num_threads)
     proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     output = proc.stdout + proc.stderr  # combine stdout + stderr
@@ -50,8 +50,8 @@ for num_threads in range(1, 64):
     perf_counter_names = [
         "unc_m_rpq_inserts.pch0",
         "unc_m_rpq_occupancy_pch0",
-        "unc_m_cas_count.all",
-        "unc_m_cas_count.rd"
+        "unc_m_rpq_inserts.pch1",
+        "unc_m_rpq_occupancy_pch1",
     ]
 
     # Parse only the specific perf counters
@@ -67,46 +67,8 @@ for num_threads in range(1, 64):
 
     results.append(run_data)
 
-
+# Save CSV
 with open("data.csv", "w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=results[0].keys())
-    writer.writeheader()   # writes column names
-    writer.writerows(results) # writes rows
-
-
-# Extract data for plotting
-num_threads_list = [r["num_threads"] for r in results]
-bw_list = [r.get("bw", 0) for r in results]
-occupancy_list = [
-    r.get("unc_m_rpq_occupancy_pch0", 0)/r.get("duration", 0) for r in results
-]
-
-inserts_list = [
-    r.get("unc_m_rpq_inserts.pch0", 0)/r.get("duration", 0) for r in results
-]
-
-sns.set_theme()
-
-# Create figure with 2 subplots
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8))
-
-ax1.plot(num_threads_list, bw_list, marker='o', color='red')
-ax1.set_xlabel("Number of Threads")
-ax1.set_ylabel("Estimated Bandwidth (GB/s)")
-ax1.set_title("Num Threads vs Estimated Bandwidth")
-ax1.grid(True)
-
-ax2.plot(num_threads_list, occupancy_list, marker='o', color='orange')
-ax2.set_xlabel("Number of Threads")
-ax2.set_ylabel("RPQ Occupancy pch0")
-ax2.set_title("Num Threads vs RPQ Occupancy/Cycles")
-ax2.grid(True)
-
-ax3.plot(num_threads_list, inserts_list, marker='o', color='blue')
-ax3.set_xlabel("Number of Threads")
-ax3.set_ylabel("RPQ Insert pch0")
-ax3.set_title("Num Threads vs RPQ Insert/Cycles")
-ax3.grid(True)
-
-plt.tight_layout()
-plt.savefig("rpq.png")
+    writer.writeheader()
+    writer.writerows(results)

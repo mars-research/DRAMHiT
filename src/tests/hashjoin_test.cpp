@@ -182,6 +182,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   barrier->arrive_and_wait();
 
   sh->stats->insertions.op_count = t1.size();
+  //get_ht_stats(sh, ht); 
 }
 
 void HashjoinTest::join_relations_from_files(Shard* sh,

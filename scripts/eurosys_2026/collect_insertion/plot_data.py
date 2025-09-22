@@ -19,10 +19,9 @@ def plot_json(json_file, output_file):
     
     df_single = df[df["run_cfg.numa_policy"] == 4]
     df_dual = df[df["run_cfg.numa_policy"] == 1]
-
+    df_single = df[~df["identifier"].str.contains("PREFETCH-DOUBLE")]
     
     # Ensure 'fill_factor' is numeric
-    df["run_cfg.fill_factor"] = pd.to_numeric(df["run_cfg.fill_factor"])
 
     
     datasets = [df_single, df_dual]
@@ -59,11 +58,6 @@ def plot_json(json_file, output_file):
     
         cnt += 1
 
-
-    for ax in axes.flatten():
-        leg = ax.get_legend()
-        if leg is not None:  # only adjust if legend exists
-            ax.legend(fontsize=4, markerscale=0.1, title_fontsize=12)
             
     plt.tight_layout()
     plt.savefig(output_file, dpi=300)

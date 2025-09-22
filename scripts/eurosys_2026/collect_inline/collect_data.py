@@ -142,9 +142,6 @@ if __name__ == "__main__":
     run_cfgs = [
     {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
     for f in range(10, 100, 10)
-] + [
-    {"insertFactor": 1, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
-    for f in range(10, 100, 10)
 ]
 
     all_results = []
@@ -152,7 +149,7 @@ if __name__ == "__main__":
     def get_name(bcfg):
         keys = ["DRAMHiT_VARIANT", "CAS_NO_ABSTRACT"] 
         ret = ""
-        for k in keys:
+        for k in bcfg.keys():
             ret += "{" + k + "-" + bcfg[k] + "}" 
         
         return ret
