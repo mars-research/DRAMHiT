@@ -10,6 +10,7 @@ CLHT=7
 DRAMHIT23=8
 TBB=9
 
+
 # Ensure correct usage
 if [ "$#" -ne 3 ]; then
      echo "Usage: $0 <small|large> <numa_policy> <num_threads> ʕ•ᴥ•ʔ"
@@ -44,8 +45,8 @@ elif [ "$test" = "large" ]; then
     # size=1073741824
     # size=268435456
     # size=134217728
-    insertFactor=5
-    readFactor=5
+    insertFactor=100
+    readFactor=100
 fi
 
 # size=134217728
@@ -61,8 +62,8 @@ MODE=14
 #do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
     --find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $MODE --ht-size $size --skew 1.05\
-    --hw-pref 0 --batch-len 31"
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $MODE --ht-size $size --skew 0.01\
+    --hw-pref 0 --batch-len 16"
     echo $(pwd)/build/dramhit $cmd
     sudo $(pwd)/build/dramhit $cmd
     echo $(pwd)/build/dramhit $cmd

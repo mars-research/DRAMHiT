@@ -107,8 +107,6 @@ OpTimings do_uniform_inserts(
 
   collector_type *const collector{};
 
-  uint64_t start, end;
-
   for (auto j = 0u; j < config.insert_factor; j++) {
     uint64_t idx;
     idx = ops_per_iter * id;
@@ -163,8 +161,6 @@ OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
   const uint64_t ops_per_iter = HT_TESTS_NUM_INSERTS;
   const uint64_t batches = ops_per_iter / config.batch_len;
 
-  uint64_t start;
-  uint64_t end;
 
   for (auto j = 0u; j < config.read_factor; j++) {
     uint64_t value, idx;
@@ -184,7 +180,8 @@ OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
     }
     sync_barrier->arrive_and_wait();
 
-    PLOGI.printf("found %lu ops %lu", found, ops_per_iter*batches);
+
+    PLOGI.printf("found %lu ops %lu", found, ops_per_iter);
   }
 
   uint64_t duration = 0;

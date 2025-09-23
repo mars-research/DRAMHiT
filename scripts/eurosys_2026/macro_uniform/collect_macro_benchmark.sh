@@ -65,20 +65,22 @@ paste -d, <(echo -e "$fills") tmp1.txt tmp2.txt >> $file_name_csv
 rm tmp1.txt tmp2.txt
 }
 
-mkdir -p ./results
+# mkdir -p ./results
 sudo rm -rf /opt/DRAMHiT/build
 
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON 
-cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_2025_best_uniform $DRAMHIT 0
+# cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON 
+# cmake --build /opt/DRAMHiT/build
+# run_ht_dual dramhit_2025_best_uniform $DRAMHIT 0
 
 cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DPREFETCH=DOUBLE -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=OFF -DREAD_BEFORE_CAS=ON
 cmake --build /opt/DRAMHiT/build
-run_ht_dual dramhit_2025_best_linear $DRAMHIT 0
-
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DGROWT=ON
+# run_ht_dual dramhit_2025_best_linear $DRAMHIT 0
 run_ht_dual dramhit_2023 $DRAMHIT23 0
-run_ht_dual GROWT $GROWT 1
+
+
+# cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DGROWT=ON
+# cmake --build /opt/DRAMHiT/build
+# run_ht_dual GROWT $GROWT 1
 
 
 

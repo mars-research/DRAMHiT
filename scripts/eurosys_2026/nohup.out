@@ -1,0 +1,1138 @@
+Collecting uniform on: <8gb> <dual> <128 threads> ʕ•ᴥ•ʔ
+-- The C compiler identification is GNU 11.3.0
+-- The CXX compiler identification is GNU 11.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /nix/store/4s5z176c5cz222dd7agxsgxblz56jy1f-gcc-wrapper-11.3.0/bin/gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /nix/store/4s5z176c5cz222dd7agxsgxblz56jy1f-gcc-wrapper-11.3.0/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Build type: RelWithDebInfo
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found Boost: /nix/store/3d2yvfw9wbfbmzk7xsllkk1147qgqgsk-boost-1.77.0-dev/lib/cmake/Boost-1.77.0/BoostConfig.cmake (found suitable version "1.77.0", minimum required is "1.67") found components: program_options 
+CMake Warning at CMakeLists.txt:243 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:257 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:262 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:280 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+[  2%] Building CXX object lib/CMakeFiles/eth_hashjoin.dir/eth_hashjoin/src/cpu_mapping.c.o
+<command-line>: warning: "KEY_8B" redefined
+<command-line>: note: this is the location of the previous definition
+[  5%] Building CXX object lib/CMakeFiles/eth_hashjoin.dir/eth_hashjoin/src/generator.c.o
+<command-line>: warning: "KEY_8B" redefined
+<command-line>: note: this is the location of the previous definition
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c: In function 'void* eth_hashjoin::random_unique_gen_thread(void*)':
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:37:21: warning: comparison of integer expressions of different signedness: 'uint64_t' {aka 'long unsigned int'} and 'int' [-Wsign-compare]
+   37 |     if(RV !=0 && RV != PTHREAD_BARRIER_SERIAL_THREAD){  \
+      |                     ^
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:187:5: note: in expansion of macro 'BARRIER_ARRIVE'
+  187 |     BARRIER_ARRIVE(arg->barrier, i);
+      |     ^~~~~~~~~~~~~~
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c: In function 'void eth_hashjoin::write_relation(eth_hashjoin::relation_t*, char*)':
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:248:23: warning: format '%d' expects argument of type 'int', but argument 3 has type 'eth_hashjoin::intkey_t' {aka 'long int'} [-Wformat=]
+  248 |         fprintf(fp, "%d %d\n", rel->tuples[i].key, rel->tuples[i].payload);
+      |                      ~^        ~~~~~~~~~~~~~~~~~~
+      |                       |                       |
+      |                       int                     eth_hashjoin::intkey_t {aka long int}
+      |                      %ld
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:248:26: warning: format '%d' expects argument of type 'int', but argument 4 has type 'eth_hashjoin::value_t' {aka 'long int'} [-Wformat=]
+  248 |         fprintf(fp, "%d %d\n", rel->tuples[i].key, rel->tuples[i].payload);
+      |                         ~^                         ~~~~~~~~~~~~~~~~~~~~~~
+      |                          |                                        |
+      |                          int                                      eth_hashjoin::value_t {aka long int}
+      |                         %ld
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c: In function 'void eth_hashjoin::read_relation(eth_hashjoin::relation_t*, char*)':
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:665:34: warning: format '%d' expects argument of type 'int', but argument 2 has type 'eth_hashjoin::intkey_t' {aka 'long int'} [-Wformat=]
+  665 |             printf("[WARN ] key=%d, payload=%d\n", key, payload);
+      |                                 ~^                 ~~~
+      |                                  |                 |
+      |                                  int               eth_hashjoin::intkey_t {aka long int}
+      |                                 %ld
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:665:46: warning: format '%d' expects argument of type 'int', but argument 3 has type 'eth_hashjoin::value_t' {aka 'long int'} [-Wformat=]
+  665 |             printf("[WARN ] key=%d, payload=%d\n", key, payload);
+      |                                             ~^          ~~~~~~~
+      |                                              |          |
+      |                                              int        eth_hashjoin::value_t {aka long int}
+      |                                             %ld
+[  8%] Building CXX object lib/CMakeFiles/eth_hashjoin.dir/eth_hashjoin/src/genzipf.c.o
+<command-line>: warning: "KEY_8B" redefined
+<command-line>: note: this is the location of the previous definition
+[ 11%] Linking CXX static library libeth_hashjoin.a
+[ 14%] Built target eth_hashjoin
+[ 17%] Building CXX object CMakeFiles/dramhit_lib.dir/src/hashtables/kvtypes.cpp.o
+In file included from /opt/DRAMHiT/include/hashtables/kvtypes.hpp:10,
+                 from /opt/DRAMHiT/src/hashtables/kvtypes.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/src/hashtables/kvtypes.cpp:1:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+[ 20%] Building CXX object CMakeFiles/dramhit_lib.dir/src/input_reader/eth_rel_gen.cpp.o
+In file included from /opt/DRAMHiT/include/input_reader/eth_rel_gen.hpp:12,
+                 from /opt/DRAMHiT/src/input_reader/eth_rel_gen.cpp:1:
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator64.hpp:6: warning: "KEY_8B" redefined
+    6 | #define KEY_8B
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /opt/DRAMHiT/include/input_reader/eth_rel_gen.hpp:18,
+                 from /opt/DRAMHiT/src/input_reader/eth_rel_gen.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+[ 23%] Building CXX object CMakeFiles/dramhit_lib.dir/src/types.cpp.o
+In file included from /opt/DRAMHiT/src/types.cpp:5:
+/opt/DRAMHiT/lib/eth_hashjoin/src/types64.hpp:6: warning: "KEY_8B" redefined
+    6 | #define KEY_8B
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /opt/DRAMHiT/src/types.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+[ 26%] Building CXX object CMakeFiles/dramhit_lib.dir/src/zipf_distribution.cpp.o
+[ 29%] Building CXX object CMakeFiles/dramhit_lib.dir/src/misc_lib.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+/opt/DRAMHiT/src/misc_lib.cpp: In function 'void kmercounter::distribute_mem_to_nodes(void*, uint64_t, kmercounter::numa_policy_threads)':
+/opt/DRAMHiT/src/misc_lib.cpp:91:25: warning: pointer of type 'void *' used in arithmetic [-Wpointer-arith]
+   91 |     void* u_addr = addr + sz;
+      |                    ~~~~~^~~~
+[ 32%] Linking CXX static library libdramhit_lib.a
+[ 32%] Built target dramhit_lib
+[ 35%] Building C object lib/CMakeFiles/xxhash.dir/xxHash/xxhash.c.o
+[ 38%] Linking C static library libxxhash.a
+[ 38%] Built target xxhash
+[ 41%] Building C object lib/CMakeFiles/fnv.dir/fnv/fnv.c.o
+[ 44%] Linking C static library libfnv.a
+[ 44%] Built target fnv
+[ 47%] Building CXX object lib/CMakeFiles/cityhash.dir/cityhash/src/city.cc.o
+[ 50%] Linking CXX static library libcityhash.a
+[ 52%] Built target cityhash
+[ 55%] Building CXX object CMakeFiles/dramhit.dir/src/tests/queue_tests.cpp.o
+In file included from /opt/DRAMHiT/include/input_reader/eth_rel_gen.hpp:12,
+                 from /opt/DRAMHiT/src/tests/queue_tests.cpp:12:
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator64.hpp:6: warning: "KEY_8B" redefined
+    6 | #define KEY_8B
+      | 
+<command-line>: note: this is the location of the previous definition
+/opt/DRAMHiT/src/tests/queue_tests.cpp:770:2: warning: #warning "Monotonic counters" [-Wcpp]
+  770 | #warning "Monotonic counters"
+      |  ^~~~~~~
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:12,
+                 from /opt/DRAMHiT/src/tests/queue_tests.cpp:8:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:12,
+                 from /opt/DRAMHiT/src/tests/queue_tests.cpp:8:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/src/tests/queue_tests.cpp:8:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/src/tests/queue_tests.cpp:15:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+In file included from /opt/DRAMHiT/src/tests/queue_tests.cpp:16:
+/opt/DRAMHiT/include/queues/bqueue_aligned.hpp: In member function 'void kmercounter::BQueueAligned::push_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/bqueue_aligned.hpp:240:12: warning: unused variable 'pq' [-Wunused-variable]
+  240 |       auto pq = &this->all_pqueues[p][c];
+      |            ^~
+In file included from /opt/DRAMHiT/src/tests/queue_tests.cpp:17:
+/opt/DRAMHiT/include/queues/lynxq.hpp: In function 'std::tuple<long unsigned int, long unsigned int> kmercounter::get_mem_base(const ucontext_t*, kmercounter::Memoize_mem_op_t*, char*, csh, cs_x86_op*)':
+/opt/DRAMHiT/include/queues/lynxq.hpp:974:12: warning: unused variable 'sum' [-Wunused-variable]
+  974 |   uint64_t sum = regs.mem_disp + new_base_value + regs.reg_index_value *
+      |            ^~~
+/opt/DRAMHiT/include/queues/lynxq.hpp: In function 'void kmercounter::lynxQ_handler(int, siginfo_t*, void*)':
+/opt/DRAMHiT/include/queues/lynxq.hpp:1139:18: warning: unused variable 'ip' [-Wunused-variable]
+ 1139 |   const uint8_t *ip = get_err_ip(context);
+      |                  ^~
+/opt/DRAMHiT/include/queues/lynxq.hpp: In member function 'int kmercounter::LynxQueue::enqueue(uint32_t, uint32_t, kmercounter::data_t)':
+/opt/DRAMHiT/include/queues/lynxq.hpp:1363:12: warning: unused variable 'q' [-Wunused-variable]
+ 1363 |       auto q = queues[p][c];
+      |            ^
+/opt/DRAMHiT/include/queues/lynxq.hpp: In member function 'int kmercounter::LynxQueue::dequeue(uint32_t, uint32_t, kmercounter::data_t*)':
+/opt/DRAMHiT/include/queues/lynxq.hpp:1380:29: warning: narrowing conversion of 'cq->kmercounter::cons_queue::pop_long()' from 'long int' to 'uint64_t' {aka 'long unsigned int'} [-Wnarrowing]
+ 1380 |       *value = {cq->pop_long(), 0};
+      |                 ~~~~~~~~~~~~^~
+/opt/DRAMHiT/include/queues/lynxq.hpp:1378:12: warning: unused variable 'q' [-Wunused-variable]
+ 1378 |       auto q = queues[p][c];
+      |            ^
+/opt/DRAMHiT/src/tests/queue_tests.cpp: In instantiation of 'void kmercounter::QueueTest<T>::insert_with_queues(kmercounter::Configuration*, kmercounter::Numa*, bool, kmercounter::NumaPolicyQueues*) [with T = kmercounter::SectionQueue]':
+/opt/DRAMHiT/src/tests/queue_tests.cpp:1131:16:   required from here
+/opt/DRAMHiT/src/tests/queue_tests.cpp:1027:12: warning: unused variable 'num_nodes' [-Wunused-variable]
+ 1027 |   uint32_t num_nodes = static_cast<uint32_t>(this->n->get_num_nodes());
+      |            ^~~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp: In instantiation of 'void kmercounter::QueueTest<T>::producer_thread(uint32_t, uint32_t, uint32_t, bool, double, bool, std::barrier<std::function<void()> >*) [with T = kmercounter::SectionQueue; uint32_t = unsigned int]':
+/opt/DRAMHiT/src/tests/queue_tests.cpp:1131:16:   required from here
+/opt/DRAMHiT/src/tests/queue_tests.cpp:356:14: warning: unused variable 'npq' [-Wunused-variable]
+  356 |         auto npq = pqueues[get_next_cons(1)];
+      |              ^~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:360:15: warning: unused variable 'item' [-Wunused-variable]
+  360 |         auto &item = items[next_item];
+      |               ^~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:289:10: warning: unused variable 'zipf_idx' [-Wunused-variable]
+  289 |     auto zipf_idx = key_start == 1 ? 0 : key_start;
+      |          ^~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:164:29: warning: unused variable 'cqueues' [-Wunused-variable]
+  164 |   typename T::cons_queue_t *cqueues[n_cons];
+      |                             ^~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:181:23: warning: unused variable '_xw_state' [-Wunused-variable]
+  181 |   struct xorwow_state _xw_state, init_state;
+      |                       ^~~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:181:34: warning: unused variable 'init_state' [-Wunused-variable]
+  181 |   struct xorwow_state _xw_state, init_state;
+      |                                  ^~~~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp: In instantiation of 'void kmercounter::QueueTest<T>::consumer_thread(uint32_t, uint32_t, uint32_t, uint32_t, std::barrier<std::function<void()> >*) [with T = kmercounter::SectionQueue; uint32_t = unsigned int]':
+/opt/DRAMHiT/src/tests/queue_tests.cpp:1131:16:   required from here
+/opt/DRAMHiT/src/tests/queue_tests.cpp:599:26: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+  599 |           if (++data_idx == config.batch_len) {
+      |               ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:445:12: warning: variable 'k' set but not used [-Wunused-but-set-variable]
+  445 |   uint64_t k = 0;
+      |            ^
+/opt/DRAMHiT/src/tests/queue_tests.cpp: In instantiation of 'void kmercounter::QueueTest<T>::find_thread(int, int, int, bool, std::barrier<std::function<void()> >*) [with T = kmercounter::SectionQueue]':
+/opt/DRAMHiT/src/tests/queue_tests.cpp:1131:16:   required from here
+/opt/DRAMHiT/src/tests/queue_tests.cpp:809:17: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+  809 |         if (++j == config.batch_len) {
+      |             ~~~~^~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:747:10: warning: unused variable 'zipf_idx' [-Wunused-variable]
+  747 |     auto zipf_idx = key_start == 1 ? 0 : key_start;
+      |          ^~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp: At global scope:
+/opt/DRAMHiT/src/tests/queue_tests.cpp:47:17: warning: 'kmercounter::ready_threads' defined but not used [-Wunused-variable]
+   47 | static uint64_t ready_threads = 0;
+      |                 ^~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/queue_tests.cpp:46:17: warning: 'kmercounter::ready' defined but not used [-Wunused-variable]
+   46 | static uint64_t ready = 0;
+      |                 ^~~~~
+In file included from /opt/DRAMHiT/src/tests/queue_tests.cpp:17:
+/opt/DRAMHiT/include/queues/lynxq.hpp:1133:13: warning: 'void kmercounter::lynxQ_handler(int, siginfo_t*, void*)' defined but not used [-Wunused-function]
+ 1133 | static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
+      |             ^~~~~~~~~~~~~
+[ 58%] Building CXX object CMakeFiles/dramhit.dir/src/tests/hashtable_tests.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/src/tests/hashtable_tests.cpp:3:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/src/tests/hashtable_tests.cpp:3:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/./hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/include/./hashtables/cas_kht.hpp:26,
+                 from /opt/DRAMHiT/src/tests/hashtable_tests.cpp:11:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/src/tests/hashtable_tests.cpp:12:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp: In function 'void kmercounter::do_batch_insertion(kmercounter::BaseHashTable*, uint64_t, uint32_t, uint64_t, std::vector<long unsigned int, huge_page_allocator<long unsigned int> >&)':
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:79:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   79 |     for (int i = 0; i < batch_len; i++) {
+      |                     ~~^~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp: In function 'uint64_t kmercounter::do_batch_find(kmercounter::BaseHashTable*, uint64_t, uint32_t, uint32_t, std::vector<long unsigned int, huge_page_allocator<long unsigned int> >&)':
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:130:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+  130 |     for (int i = 0; i < batch_len; i++) {
+      |                     ~~^~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp: In function 'kmercounter::OpTimings kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, double, int64_t, unsigned int, unsigned int, std::barrier<std::function<void()> >*, std::vector<long unsigned int, huge_page_allocator<long unsigned int> >&)':
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:206:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  206 |   for (int i = 0; i < config.insert_factor; i++)
+      |                   ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:174:12: warning: unused variable 'start' [-Wunused-variable]
+  174 |   uint64_t start, end;
+      |            ^~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:174:19: warning: unused variable 'end' [-Wunused-variable]
+  174 |   uint64_t start, end;
+      |                   ^~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp: In instantiation of 'kmercounter::OpTimings kmercounter::do_zipfian_gets(kmercounter::BaseHashTable*, unsigned int, unsigned int, auto:44, std::vector<long unsigned int, huge_page_allocator<long unsigned int> >&) [with auto:44 = std::barrier<std::function<void()> >*]':
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:347:33:   required from here
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:232:14: warning: unused variable 'value' [-Wunused-variable]
+  232 |     uint64_t value, idx;
+      |              ^~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:251:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  251 |   for (int i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:224:17: warning: variable 'found' set but not used [-Wunused-but-set-variable]
+  224 |   std::uint64_t found = 0;
+      |                 ^~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:228:12: warning: unused variable 'start' [-Wunused-variable]
+  228 |   uint64_t start;
+      |            ^~~~~
+/opt/DRAMHiT/src/tests/hashtable_tests.cpp:229:12: warning: unused variable 'end' [-Wunused-variable]
+  229 |   uint64_t end;
+      |            ^~~
+[ 61%] Building CXX object CMakeFiles/dramhit.dir/src/tests/prefetch_tests.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:12,
+                 from /opt/DRAMHiT/include/hashtables/simple_kht.hpp:31,
+                 from /opt/DRAMHiT/include/tests/PrefetchTest.hpp:6,
+                 from /opt/DRAMHiT/src/tests/prefetch_tests.cpp:3:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:12,
+                 from /opt/DRAMHiT/include/hashtables/simple_kht.hpp:31,
+                 from /opt/DRAMHiT/include/tests/PrefetchTest.hpp:6,
+                 from /opt/DRAMHiT/src/tests/prefetch_tests.cpp:3:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/include/hashtables/simple_kht.hpp:31,
+                 from /opt/DRAMHiT/include/tests/PrefetchTest.hpp:6,
+                 from /opt/DRAMHiT/src/tests/prefetch_tests.cpp:3:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/src/tests/prefetch_tests.cpp:5:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+[ 64%] Building CXX object CMakeFiles/dramhit.dir/src/tests/cachemiss_test.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/CacheMissTest.hpp:4,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:4,
+                 from /opt/DRAMHiT/src/tests/cachemiss_test.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/CacheMissTest.hpp:4,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:4,
+                 from /opt/DRAMHiT/src/tests/cachemiss_test.cpp:1:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/include/hashtables/simple_kht.hpp:31,
+                 from /opt/DRAMHiT/include/tests/PrefetchTest.hpp:6,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:5,
+                 from /opt/DRAMHiT/src/tests/cachemiss_test.cpp:1:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/include/tests/UniformTest.hpp:8,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:12,
+                 from /opt/DRAMHiT/src/tests/cachemiss_test.cpp:1:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+[ 67%] Building CXX object CMakeFiles/dramhit.dir/src/tests/kmer_tests.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/KmerTest.hpp:7,
+                 from /opt/DRAMHiT/src/tests/kmer_tests.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/KmerTest.hpp:7,
+                 from /opt/DRAMHiT/src/tests/kmer_tests.cpp:1:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/src/tests/kmer_tests.cpp:12:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/src/tests/kmer_tests.cpp:17:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+[ 70%] Building CXX object CMakeFiles/dramhit.dir/src/tests/hashjoin_test.cpp.o
+In file included from /opt/DRAMHiT/include/input_reader/eth_rel_gen.hpp:12,
+                 from /opt/DRAMHiT/src/tests/hashjoin_test.cpp:23:
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator64.hpp:6: warning: "KEY_8B" redefined
+    6 | #define KEY_8B
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/src/tests/hashjoin_test.cpp:19:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/src/tests/hashjoin_test.cpp:19:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/src/tests/hashjoin_test.cpp:21:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp: In function 'void kmercounter::hashjoin(kmercounter::Shard*, kmercounter::input_reader::SizedInputReader<kmercounter::KeyValuePair>*, kmercounter::input_reader::SizedInputReader<kmercounter::KeyValuePair>*, std::tuple<kmercounter::KeyValuePair*, unsigned int>, std::tuple<kmercounter::KeyValuePair*, unsigned int>, kmercounter::BaseHashTable*, kmercounter::MaterializeVector*, bool, std::barrier<std::function<void()> >*)':
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:57:22: warning: comparison of integer expressions of different signedness: 'int' and 'std::tuple_element<0, std::tuple<unsigned int> >::type' {aka 'unsigned int'} [-Wsign-compare]
+   57 |   for (auto i = 0; i < rel_r_size; i++) {
+      |                    ~~^~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:86:22: warning: comparison of integer expressions of different signedness: 'int' and 'std::tuple_element<0, std::tuple<unsigned int> >::type' {aka 'unsigned int'} [-Wsign-compare]
+   86 |   for (auto i = 0; i < rel_s_size; i++) {
+      |                    ~~^~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:89:16: warning: unused variable 'val' [-Wunused-variable]
+   89 |     value_type val = kv.value;
+      |                ^~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:90:19: warning: unused variable 'f_kv' [-Wunused-variable]
+   90 |     KeyValuePair *f_kv = (KeyValuePair*) batch_runner.find(kv);
+      |                   ^~~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:50:25: warning: unused variable 'collector' [-Wunused-variable]
+   50 |   collector_type *const collector{};
+      |                         ^~~~~~~~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp: In member function 'void kmercounter::HashjoinTest::join_relations_generated(kmercounter::Shard*, const kmercounter::Configuration&, kmercounter::BaseHashTable*, bool, std::barrier<std::function<void()> >*)':
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:120:8: warning: unused variable 's' [-Wunused-variable]
+  120 |   auto s = _rdtsc();
+      |        ^
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:121:8: warning: unused variable 'sum' [-Wunused-variable]
+  121 |   auto sum = 0;
+      |        ^~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:159:17: warning: unused variable 'start' [-Wunused-variable]
+  159 |   std::uint64_t start {}, end {};
+      |                 ^~~~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:159:27: warning: unused variable 'end' [-Wunused-variable]
+  159 |   std::uint64_t start {}, end {};
+      |                           ^~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:127:17: warning: ignoring return value of 'int posix_memalign(void**, size_t, size_t)' declared with attribute 'warn_unused_result' [-Wunused-result]
+  127 |   posix_memalign((void **)&rel_r, 64, t1.size() * sizeof(KeyValuePair));
+      |   ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/hashjoin_test.cpp:130:17: warning: ignoring return value of 'int posix_memalign(void**, size_t, size_t)' declared with attribute 'warn_unused_result' [-Wunused-result]
+  130 |   posix_memalign((void **)&rel_s, 64, t2.size() * sizeof(KeyValuePair));
+      |   ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[ 73%] Building CXX object CMakeFiles/dramhit.dir/src/tests/uniform_test.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/UniformTest.hpp:5,
+                 from /opt/DRAMHiT/src/tests/uniform_test.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/UniformTest.hpp:5,
+                 from /opt/DRAMHiT/src/tests/uniform_test.cpp:1:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/include/hashtables/cas_kht.hpp:26,
+                 from /opt/DRAMHiT/include/tests/UniformTest.hpp:7,
+                 from /opt/DRAMHiT/src/tests/uniform_test.cpp:1:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/include/tests/UniformTest.hpp:8,
+                 from /opt/DRAMHiT/src/tests/uniform_test.cpp:1:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In function 'void kmercounter::do_uniform_batch_insertion(kmercounter::BaseHashTable*, uint64_t, uint32_t, uint64_t)':
+/opt/DRAMHiT/src/tests/uniform_test.cpp:29:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   29 |     for (int i = 0; i < batch_len; i++) {
+      |                     ~~^~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In function 'uint64_t kmercounter::do_uniform_batch_find(kmercounter::BaseHashTable*, uint64_t, uint32_t, uint32_t)':
+/opt/DRAMHiT/src/tests/uniform_test.cpp:65:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   65 |     for (int i = 0; i < batch_len; i++) {
+      |                     ~~^~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In function 'kmercounter::OpTimings kmercounter::do_uniform_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void()> >*)':
+/opt/DRAMHiT/src/tests/uniform_test.cpp:142:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  142 |   for (int i = 0; i < config.insert_factor; i++)
+      |                   ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp:108:25: warning: unused variable 'collector' [-Wunused-variable]
+  108 |   collector_type *const collector{};
+      |                         ^~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In instantiation of 'kmercounter::OpTimings kmercounter::do_uniform_gets(kmercounter::BaseHashTable*, unsigned int, auto:44) [with auto:44 = std::barrier<std::function<void()> >*]':
+/opt/DRAMHiT/src/tests/uniform_test.cpp:203:33:   required from here
+/opt/DRAMHiT/src/tests/uniform_test.cpp:166:14: warning: unused variable 'value' [-Wunused-variable]
+  166 |     uint64_t value, idx;
+      |              ^~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp:190:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  190 |   for (int i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+[ 76%] Building CXX object CMakeFiles/dramhit.dir/src/tests/rw_ratio.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/src/tests/rw_ratio.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/RWRatioTest.hpp:8,
+                 from /opt/DRAMHiT/src/tests/rw_ratio.cpp:6:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/src/tests/rw_ratio.cpp:15:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+[ 79%] Building CXX object CMakeFiles/dramhit.dir/src/tests/synth_test.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/SynthTest.hpp:4,
+                 from /opt/DRAMHiT/src/tests/synth_test.cpp:6:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/SynthTest.hpp:4,
+                 from /opt/DRAMHiT/src/tests/synth_test.cpp:6:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/src/tests/synth_test.cpp:12:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/src/tests/synth_test.cpp:13:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+[ 82%] Building CXX object CMakeFiles/dramhit.dir/src/misc_lib.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+/opt/DRAMHiT/src/misc_lib.cpp: In function 'void kmercounter::distribute_mem_to_nodes(void*, uint64_t, kmercounter::numa_policy_threads)':
+/opt/DRAMHiT/src/misc_lib.cpp:91:25: warning: pointer of type 'void *' used in arithmetic [-Wpointer-arith]
+   91 |     void* u_addr = addr + sz;
+      |                    ~~~~~^~~~
+[ 85%] Building CXX object CMakeFiles/dramhit.dir/src/xorwow.cpp.o
+[ 88%] Building CXX object CMakeFiles/dramhit.dir/src/Application.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/CacheMissTest.hpp:4,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:4,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/Application.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/CacheMissTest.hpp:4,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:4,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/Application.cpp:1:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/include/hashtables/simple_kht.hpp:31,
+                 from /opt/DRAMHiT/include/tests/PrefetchTest.hpp:6,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:5,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/Application.cpp:1:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/include/tests/UniformTest.hpp:8,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:12,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/Application.cpp:1:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:13: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  152 |             "%lu\n",
+      |             ~~~~~~~
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:13: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+In file included from /opt/DRAMHiT/include/tests/UniformTest.hpp:7,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:12,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/Application.cpp:1:
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp: In instantiation of 'void* kmercounter::CASHashTable<KV, KVQ>::find_noprefetch(const void*, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]':
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:687:9:   required from here
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:698:25: warning: unused variable 'item' [-Wunused-variable]
+  698 |     InsertFindArgument *item = const_cast<InsertFindArgument *>(
+      |                         ^~~~
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp: In instantiation of 'uint64_t kmercounter::CASHashTable<KV, KVQ>::__find_simd(KVQ*, kmercounter::ValuePairs&) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; uint64_t = long unsigned int; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>]':
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:969:12:   required from 'uint64_t kmercounter::CASHashTable<KV, KVQ>::__find_one(KVQ*, kmercounter::ValuePairs&, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; uint64_t = long unsigned int; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]'
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:483:15:   required from 'void kmercounter::CASHashTable<KV, KVQ>::pop_find_queue(kmercounter::ValuePairs&, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]'
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:678:11:   required from 'void kmercounter::CASHashTable<KV, KVQ>::find_batch(const InsertFindArguments&, kmercounter::ValuePairs&, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; kmercounter::InsertFindArguments = std::span<kmercounter::InsertFindArgument>; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]'
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:557:8:   required from here
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:880:14: warning: unused variable 'found' [-Wunused-variable]
+  880 |     uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
+      |              ^~~~~
+/opt/DRAMHiT/src/Application.cpp: At global scope:
+/opt/DRAMHiT/src/Application.cpp:141:17: warning: 'kmercounter::ready' defined but not used [-Wunused-variable]
+  141 | static uint64_t ready = 0;
+      |                 ^~~~~
+[ 91%] Building CXX object CMakeFiles/dramhit.dir/src/dramhit.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/CacheMissTest.hpp:4,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:4,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/dramhit.cpp:7:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/include/hashtables/base_kht.hpp:8,
+                 from /opt/DRAMHiT/include/tests/CacheMissTest.hpp:4,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:4,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/dramhit.cpp:7:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/include/hashtables/simple_kht.hpp:31,
+                 from /opt/DRAMHiT/include/tests/PrefetchTest.hpp:6,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:5,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/dramhit.cpp:7:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+In file included from /opt/DRAMHiT/include/tests/UniformTest.hpp:8,
+                 from /opt/DRAMHiT/include/tests/tests.hpp:12,
+                 from /opt/DRAMHiT/include/Application.hpp:9,
+                 from /opt/DRAMHiT/src/dramhit.cpp:7:
+/opt/DRAMHiT/include/print_stats.h: In function 'void kmercounter::print_stats(kmercounter::Shard*, kmercounter::Configuration&)':
+/opt/DRAMHiT/include/print_stats.h:62:21: warning: comparison of integer expressions of different signedness: 'int' and 'uint32_t' {aka 'unsigned int'} [-Wsign-compare]
+   62 |   for (int k = 0; k < config.num_threads; k++) {
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:132:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  132 |     for (int i = 0; i < config.insert_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:148:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  148 |       for (int i = 0; i < config.insert_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:151:37: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  151 |             "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
+      |                                   ~~^
+      |                                     |
+      |                                     long unsigned int
+      |                                   %u
+  152 |             "%lu\n",
+  153 |             i, snapshot_duration, op_per_iter,
+      |             ~                        
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:165:23: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  165 |     for (int i = 0; i < config.read_factor; i++) {
+      |                     ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:179:25: warning: comparison of integer expressions of different signedness: 'int' and 'uint64_t' {aka 'long unsigned int'} [-Wsign-compare]
+  179 |       for (int i = 0; i < config.read_factor; i++) {
+      |                       ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:182:35: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'int' [-Wformat=]
+  182 |             "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
+      |                                 ~~^
+      |                                   |
+      |                                   long unsigned int
+      |                                 %u
+  183 |             i, snapshot_duration, op_per_iter,
+      |             ~                      
+      |             |
+      |             int
+/opt/DRAMHiT/include/print_stats.h:101:46: warning: unused variable 'upsert_mops' [-Wunused-variable]
+  101 |   double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+      |                                              ^~~~~~~~~~~
+/opt/DRAMHiT/include/print_stats.h:105:12: warning: variable 'cycles_per_upsert' set but not used [-Wunused-but-set-variable]
+  105 |   uint64_t cycles_per_upsert = 0;
+      |            ^~~~~~~~~~~~~~~~~
+[ 94%] Building CXX object CMakeFiles/dramhit.dir/src/zipf_distribution.cpp.o
+[ 97%] Building CXX object CMakeFiles/dramhit.dir/src/Latency.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/include/Latency.hpp:19,
+                 from /opt/DRAMHiT/src/Latency.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/include/Latency.hpp:20,
+                 from /opt/DRAMHiT/src/Latency.cpp:1:
+/opt/DRAMHiT/include/queues/section_queues.hpp: In member function 'void kmercounter::SectionQueue::pop_done(uint32_t, uint32_t)':
+/opt/DRAMHiT/include/queues/section_queues.hpp:426:11: warning: unused variable 'cq' [-Wunused-variable]
+  426 |     auto  cq = &this->all_cqueues[c][p];
+      |           ^~
+[100%] Linking CXX executable dramhit
+[100%] Built target dramhit
+Generating results/dramhit_2025_best_uniform.txt (fill=10)
+Generating results/dramhit_2025_best_uniform.txt (fill=20)

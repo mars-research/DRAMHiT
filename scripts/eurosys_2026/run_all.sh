@@ -22,3 +22,13 @@
 # python3 collect_data.py snoop.json
 # python3 plot_data.py snoop.json snoop.png
 # cd ..
+
+cd macro_uniform
+# ./collect_macro_benchmark.sh
+python3 plot.py
+cd ..
+
+# cd macro_zipfian
+# ./collect_macro_benchmark.sh
+# python3 plot.py 
+# cd ..

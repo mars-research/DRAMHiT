@@ -14,25 +14,32 @@ fig, axes = plt.subplots(row, col, figsize=(12, 12))
 
 def plot_json(json_file, output_file):
     # Load JSON data
-        with open(json_file, "r") as f:
-            data = json.load(f)
+    with open(json_file, "r") as f:
+        data = json.load(f)
 
-        # Convert to pandas DataFrame
-        df = pd.DataFrame(data)
-        
-        df = pd.json_normalize(data, sep='.')
+    # Convert to pandas DataFrame
+    df = pd.DataFrame(data)
+    
+    df = pd.json_normalize(data, sep='.')
     
     df_single = df[df["run_cfg.numa_policy"] == 4]
     df_dual = df[df["run_cfg.numa_policy"] == 1]
+    
+# Suppose df_single["build_cfg"] = "foo-16-bar"
 
-    df_single = df_single[] 
-        
+    def make_identifier(build_cfg):
+        parts = build_cfg.split("-")
+        # Example: combine first and second part into identifier
+        return f"{parts[0]}_{parts[1]}"
+
+    df_single["identifier"] = df_single["build_cfg_str"].apply(make_identifier)
+    
     ax = axes[0][0]
     sns.lineplot(
         data=df_single,
         x="run_cfg.fill_factor",
         y="get_mops",
-        hue="identifier",
+        hue="build_cfg_str",
         marker="o",
         ax=ax,
         legend=False
@@ -46,7 +53,7 @@ def plot_json(json_file, output_file):
         data=df_single,
         x="run_cfg.fill_factor",
         y="set_mops",
-        hue="identifier",
+        hue="build_cfg_str",
         marker="o",
         ax=ax,
         legend=False
@@ -60,7 +67,7 @@ def plot_json(json_file, output_file):
         data=df_dual,
         x="run_cfg.fill_factor",
         y="get_mops",
-        hue="identifier",
+        hue="build_cfg_str",
         marker="o",
         ax=ax,
         legend=False
@@ -74,7 +81,7 @@ def plot_json(json_file, output_file):
         data=df_dual,
         x="run_cfg.fill_factor",
         y="set_mops",
-        hue="identifier",
+        hue="build_cfg_str",
         marker="o",
         ax=ax,
         legend=False
@@ -83,8 +90,8 @@ def plot_json(json_file, output_file):
     ax.set_xlabel("Fill Factor(%)")
     ax.set_ylabel("Set Mops")
     
-    ids1 = df_single["identifier"].unique()
-    ids2 = df_dual["identifier"].unique()
+    ids1 = df_single["build_cfg_str"].unique()
+    ids2 = df_dual["build_cfg_str"].unique()
 
     if  (ids1 != ids2).any():
         raise ValueError(f"Identifiers mismatch.\nOnly in df_single: {ids1 - ids2}\nOnly in df_other: {ids2 - ids1}")
@@ -100,7 +107,7 @@ def plot_json(json_file, output_file):
         fontsize=8,
         handles=custom_lines,
         loc="upper center",
-        ncol=3
+        ncol=2
     )
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])

@@ -71,6 +71,6 @@ handles, labels = axes[0].get_legend_handles_labels()
 fig.legend(handles, labels, loc="upper center", ncol=len(csv_files))
 
 plt.tight_layout(rect=[0, 0, 1, 0.95])
-plt.savefig("macro_uniform.png", dpi=300)
+plt.savefig("new_macro_uniform.png", dpi=300)
 
 

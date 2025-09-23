@@ -135,9 +135,9 @@ if __name__ == "__main__":
     # for insertion, prefetch to l1 is prefetchw.
     # double prefetch is prefetch to l2 then prefetch to l1, must only be used with 2025.
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2023", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023
-        {"DRAMHiT_VARIANT": "2023", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket
-        {"DRAMHiT_VARIANT": "2023", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket + simd
+        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023
+        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket
+        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket + simd
         {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"}, # 2025 + bucket + simd + double prefetch
         {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"}, # 2025_inline + bucket + simd + double prefetch
         {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"}, # 2025_inline + bucket + simd + double prefetch + uniform

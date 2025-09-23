@@ -221,16 +221,6 @@ class CASHashTable : public BaseHashTable {
 
     this->flush_if_needed(collector);
   }
-#elif defined(DRAMHiT_2023_INLINED)
-  void insert_batch(const InsertFindArguments &kp, collector_type *collector) {
-    this->flush_if_needed(collector);
-
-    for (auto &data : kp) {
-      add_to_insert_queue(&data, collector);
-    }
-
-    this->flush_if_needed(collector);
-  }
 #elif defined(DRAMHiT_2025)
 #if defined(CAS_NO_ABSTRACT)
   void insert_batch(const InsertFindArguments &kp,
@@ -512,114 +502,6 @@ class CASHashTable : public BaseHashTable {
     }
 
     this->flush_if_needed(values, collector);
-  }
-
-#elif defined(DRAMHiT_2023_INLINED)
-  void find_batch(const InsertFindArguments &kp, ValuePairs &values,
-                  collector_type *collector) override {
-#ifdef DOUBLE_PREFETCH
-    uint32_t next_tail;
-    const void *next_tail_addr;
-#endif
-
-    __m512i zero_vector = _mm512_setzero_si512();
-    uint32_t tail = this->find_tail;
-    uint32_t head = this->find_head;
-    uint32_t not_found = 0;
-    uint64_t key;
-    uint64_t *bucket;
-    __m512i key_vector;
-    __m512i cacheline;
-    __mmask8 key_cmp;
-    KVQ *q;
-    size_t curr_queue_sz = get_find_queue_sz();
-    while ((curr_queue_sz > FLUSH_THRESHOLD) &&
-           (values.first < config.batch_len)) {  // 32 64 16
-#ifdef DOUBLE_PREFETCH
-      next_tail =
-          (this->find_tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
-      next_tail_addr = &this->hashtable[this->find_queue[next_tail].idx];
-      __builtin_prefetch(next_tail_addr, false, 3);
-#endif
-
-      KVQ *q = &this->find_queue[tail];
-      uint32_t idx = q->idx;
-      key = q->key;
-      bucket = (uint64_t *)&this->hashtable[idx];
-      key_vector = _mm512_set1_epi64(key);
-      cacheline = _mm512_load_si512(bucket);
-      key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
-      tail = (tail + 1) & FIND_QUEUE_SZ_MASK;
-
-      if (key_cmp > 0) {
-        __mmask8 offset = _bit_scan_forward(key_cmp);
-        values.second[values.first].value = bucket[(offset + 1)];
-        values.second[values.first].id = q->key_id;
-        values.first++;
-      } else {
-        __mmask8 ept_cmp =
-            _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
-        if (ept_cmp == 0) {  // retry
-#ifdef CALC_STATS
-          this->num_reprobes++;
-#endif
-
-#ifdef UNIFORM_HT_SUPPORT
-          hash = _mm_crc32_u64(
-              0xffffffff, *static_cast<const std::uint64_t *>(&(q->key_hash)));
-          idx = hash & HT_BUCKET_MASK;
-#else
-          idx += CACHELINE_SIZE / sizeof(KV);
-          idx = idx & HT_BUCKET_MASK;
-#endif
-          prefetch_read(idx);
-
-#ifdef UNIFORM_HT_SUPPORT
-          this->find_queue[head].key_hash = hash;
-#endif
-          this->find_queue[head].key = key;
-          this->find_queue[head].key_id = q->key_id;
-          this->find_queue[head].idx = idx;
-#ifdef LATENCY_COLLECTION
-          this->find_queue[head].timer_id = q->timer_id;
-#endif
-          head++;
-          head &= FIND_QUEUE_SZ_MASK;
-        } else {
-          not_found++;
-        }
-      }
-      // end of findone
-      tail++;
-      tail &= FIND_QUEUE_SZ_MASK;
-      curr_queue_sz = get_find_queue_sz();
-    }
-
-    uint64_t hash;
-    size_t idx;
-    for (auto &data : kp) {
-      hash = this->hash((const char *)&data.key);
-      idx = hash & (this->capacity - 1);
-
-#ifdef BUCKETIZATION
-      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-#endif
-
-      prefetch_read(idx);
-
-      this->find_queue[head].idx = idx;
-      this->find_queue[head].key = data.key;
-      this->find_queue[head].key_id = data.id;
-
-#ifdef UNIFORM_HT_SUPPORT
-      this->find_queue[head].key_hash = hash;
-#endif
-      head++;
-      head &= FIND_QUEUE_SZ_MASK;
-    }
-
-    this->find_head = head;
-    this->find_tail = tail;
   }
 
 #elif defined(DRAMHiT_2025)
