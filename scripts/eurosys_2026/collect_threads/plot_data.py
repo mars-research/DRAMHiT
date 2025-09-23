@@ -18,91 +18,93 @@ def plot_json(json_file, output_file):
         data = json.load(f)
 
     # Convert to pandas DataFrame
-    df = pd.DataFrame(data)
-    
     df = pd.json_normalize(data, sep='.')
     
     df_single = df[df["run_cfg.numa_policy"] == 4]
     df_dual = df[df["run_cfg.numa_policy"] == 1]
-        
+    
+    # Determine unique fills for consistent coloring
+    unique_fills = sorted(df["run_cfg.fill_factor"].unique())
+    palette = sns.color_palette("tab10", n_colors=len(unique_fills))
+    
+    # Plot Single Socket - Find
     ax = axes[0][0]
     sns.lineplot(
         data=df_single,
         x="run_cfg.numThreads",
         y="get_mops",
-        hue="identifier",
+        hue="run_cfg.fill_factor",
         marker="o",
         ax=ax,
-        legend=False
+        palette=palette
     )
     ax.set_title("Single socket")
-    ax.set_xlabel("Fill Factor(%)")
+    ax.set_xlabel("Number of Threads")
     ax.set_ylabel("Find Mops")
     
+    # Plot Single Socket - Set
     ax = axes[0][1]
     sns.lineplot(
         data=df_single,
         x="run_cfg.numThreads",
         y="set_mops",
-        hue="identifier",
+        hue="run_cfg.fill_factor",
         marker="o",
         ax=ax,
-        legend=False
+        palette=palette
     )
-    ax.set_title(f"Single socket")
-    ax.set_xlabel("Fill Factor(%)")
+    ax.set_title("Single socket")
+    ax.set_xlabel("Number of Threads")
     ax.set_ylabel("Set Mops")
 
+    # Plot Dual Socket - Find
     ax = axes[1][0]
     sns.lineplot(
         data=df_dual,
         x="run_cfg.numThreads",
         y="get_mops",
-        hue="identifier",
+        hue="run_cfg.fill_factor",
         marker="o",
         ax=ax,
-        legend=False
+        palette=palette
     )
     ax.set_title("Dual socket")
-    ax.set_xlabel("Fill Factor(%)")
+    ax.set_xlabel("Number of Threads")
     ax.set_ylabel("Find Mops")
     
+    # Plot Dual Socket - Set
     ax = axes[1][1]
     sns.lineplot(
         data=df_dual,
         x="run_cfg.numThreads",
         y="set_mops",
-        hue="identifier",
+        hue="run_cfg.fill_factor",
         marker="o",
         ax=ax,
-        legend=False
+        palette=palette
     )
-    ax.set_title(f"Dual socket")
-    ax.set_xlabel("Fill Factor(%)")
+    ax.set_title("Dual socket")
+    ax.set_xlabel("Number of Threads")
     ax.set_ylabel("Set Mops")
-    
-    ids1 = df_single["identifier"].unique()
-    ids2 = df_dual["identifier"].unique()
 
-    if  (ids1 != ids2).any():
-        raise ValueError(f"Identifiers mismatch.\nOnly in df_single: {ids1 - ids2}\nOnly in df_other: {ids2 - ids1}")
-
-    palette = sns.color_palette(n_colors=len(ids1))
-
-    custom_lines = [
-        Line2D([0], [0], color=palette[i], marker="o", label=uid)
-        for i, uid in enumerate(ids1)
-    ]
-
+    # Create single flat legend above subplots
+    handles, labels = axes[0][0].get_legend_handles_labels()
     fig.legend(
+        handles,
+        labels,
+        title="Table Fill",
         fontsize=8,
-        handles=custom_lines,
         loc="upper center",
-        ncol=3
+        ncol=len(labels)
     )
 
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    # Remove legends from subplots
+    for ax_row in axes:
+        for ax in ax_row:
+            ax.get_legend().remove()
 
+    # Leave space for the top legend
+    plt.tight_layout(rect=[0, 0, 1, .98])
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 
@@ -114,4 +116,3 @@ if __name__ == "__main__":
     json_file = sys.argv[1]
     output_file = sys.argv[2]
     plot_json(json_file, output_file)
-

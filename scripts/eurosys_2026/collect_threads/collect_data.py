@@ -4,6 +4,7 @@ import os
 import subprocess
 import json
 import re
+import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
@@ -131,19 +132,48 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
+
+
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <output.json>")
+        sys.exit(1)
+
+    out_file = sys.argv[1]
     # Build configurations
     build_cfgs = [
         {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"},
+        # {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"},
     ]
-    
+    ht_size=536870912
+    # ht_size= 134217728
+    test_factor=10
+    range_64= [1] + [4*i for i in range(1, 17)] 
+    # range_128= [1] + [4*i for i in range(1, 33)] 
+    range_128= [128] 
     run_cfgs = [
-    {"insertFactor": 100, "readFactor": 100, "numThreads": t, "numa_policy": 4, "size": 536870912, "fill_factor": 70}
-    for t in range(1, 64, 1)
-] +  [
-    {"insertFactor": 100, "readFactor": 100, "numThreads": t, "numa_policy": 1, "size": 536870912, "fill_factor": 70}
-    for t in range(1, 128, 1)
-] 
+        {
+            "insertFactor": test_factor,
+            "readFactor": test_factor,
+            "numThreads": t,
+            "numa_policy": 4,
+            "size": ht_size,
+            "fill_factor": f
+        }
+        for f in [10, 30, 50, 70, 90]
+        for t in range_64
+    ] + [
+        {
+            "insertFactor": test_factor,
+            "readFactor": test_factor,
+            "numThreads": t,
+            "numa_policy": 1,
+            "size": ht_size,
+            "fill_factor": f
+        }
+        for f in [10, 30, 50, 70, 90]
+        for t in range_128
+    ]
+
     all_results = []
     
     def get_name(bcfg):
@@ -155,17 +185,18 @@ if __name__ == "__main__":
                 ret += "+simd"
             elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
                 ret += "+uniform"
-            elif k == "PREFETCH" and bcfg[k] == "DOUBLE":
-                ret += "+2prefetch"
         
         return ret
-
+    test_index = 1
+    total_tests = len(build_cfgs) * len(run_cfgs)
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
+            print(f"Running test {test_index}/{total_tests}...")
+            test_index += 1
             output = run(rcfg)
             obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit_threads.json")
+    save_json(all_results, out_file)
