@@ -43,24 +43,3 @@ with open("results.csv", "w", newline="") as f:
     writer.writerow(["batch_sz", "cycles_per_op"])
     for b, c in zip(batch_sizes, cycles):
         writer.writerow([b, c])
-
-
-df = pd.DataFrame({
-    "Batch Size": batch_sizes,
-    "Cycles per Prefetch": cycles
-})
-
-# Set Seaborn theme
-sns.set_theme(style="whitegrid")  # or "darkgrid", "ticks", etc.
-
-# Plot
-sns.lineplot(data=df, x="Batch Size", y="Cycles per Prefetch", marker="o")
-
-# Labels & title
-plt.xlabel("Batch Size")
-plt.ylabel("Cycles per Prefetch")
-plt.title("Batch Size vs Cycles per Prefetch")
-
-# Save as PNG
-plt.savefig("batch_cycles.png", dpi=300, bbox_inches="tight")
-print("Plot saved as batch_cycles.png")

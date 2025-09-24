@@ -45,6 +45,6 @@ axes[1].legend()
 
 # Adjust layout and save figure
 plt.tight_layout()
-plt.savefig("new_zipfian.png", dpi=300)
+plt.savefig("new_zipfian.pdf", dpi=300)
 
 

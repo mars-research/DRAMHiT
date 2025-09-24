@@ -181,7 +181,7 @@ OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
     sync_barrier->arrive_and_wait();
 
 
-    PLOGI.printf("found %lu ops %lu", found, ops_per_iter);
+    PLOGV.printf("found %lu ops %lu", found, ops_per_iter);
   }
 
   uint64_t duration = 0;

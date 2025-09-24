@@ -1,0 +1,163 @@
+Collecting zipfian stats on: <8gb> <dual> <128 threads> ʕ•ᴥ•ʔ
+-- The C compiler identification is GNU 11.3.0
+-- The CXX compiler identification is GNU 11.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /nix/store/4s5z176c5cz222dd7agxsgxblz56jy1f-gcc-wrapper-11.3.0/bin/gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /nix/store/4s5z176c5cz222dd7agxsgxblz56jy1f-gcc-wrapper-11.3.0/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Build type: RelWithDebInfo
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found Boost: /nix/store/3d2yvfw9wbfbmzk7xsllkk1147qgqgsk-boost-1.77.0-dev/lib/cmake/Boost-1.77.0/BoostConfig.cmake (found suitable version "1.77.0", minimum required is "1.67") found components: program_options 
+CMake Warning at CMakeLists.txt:243 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:262 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:280 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:243 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:262 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:280 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+[  2%] Building CXX object lib/CMakeFiles/eth_hashjoin.dir/eth_hashjoin/src/cpu_mapping.c.o
+<command-line>: warning: "KEY_8B" redefined
+<command-line>: note: this is the location of the previous definition
+[  5%] Building CXX object lib/CMakeFiles/eth_hashjoin.dir/eth_hashjoin/src/generator.c.o
+<command-line>: warning: "KEY_8B" redefined
+<command-line>: note: this is the location of the previous definition
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c: In function 'void* eth_hashjoin::random_unique_gen_thread(void*)':
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:37:21: warning: comparison of integer expressions of different signedness: 'uint64_t' {aka 'long unsigned int'} and 'int' [-Wsign-compare]
+   37 |     if(RV !=0 && RV != PTHREAD_BARRIER_SERIAL_THREAD){  \
+      |                     ^
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:187:5: note: in expansion of macro 'BARRIER_ARRIVE'
+  187 |     BARRIER_ARRIVE(arg->barrier, i);
+      |     ^~~~~~~~~~~~~~
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c: In function 'void eth_hashjoin::write_relation(eth_hashjoin::relation_t*, char*)':
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:248:23: warning: format '%d' expects argument of type 'int', but argument 3 has type 'eth_hashjoin::intkey_t' {aka 'long int'} [-Wformat=]
+  248 |         fprintf(fp, "%d %d\n", rel->tuples[i].key, rel->tuples[i].payload);
+      |                      ~^        ~~~~~~~~~~~~~~~~~~
+      |                       |                       |
+      |                       int                     eth_hashjoin::intkey_t {aka long int}
+      |                      %ld
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:248:26: warning: format '%d' expects argument of type 'int', but argument 4 has type 'eth_hashjoin::value_t' {aka 'long int'} [-Wformat=]
+  248 |         fprintf(fp, "%d %d\n", rel->tuples[i].key, rel->tuples[i].payload);
+      |                         ~^                         ~~~~~~~~~~~~~~~~~~~~~~
+      |                          |                                        |
+      |                          int                                      eth_hashjoin::value_t {aka long int}
+      |                         %ld
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c: In function 'void eth_hashjoin::read_relation(eth_hashjoin::relation_t*, char*)':
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:665:34: warning: format '%d' expects argument of type 'int', but argument 2 has type 'eth_hashjoin::intkey_t' {aka 'long int'} [-Wformat=]
+  665 |             printf("[WARN ] key=%d, payload=%d\n", key, payload);
+      |                                 ~^                 ~~~
+      |                                  |                 |
+      |                                  int               eth_hashjoin::intkey_t {aka long int}
+      |                                 %ld
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator.c:665:46: warning: format '%d' expects argument of type 'int', but argument 3 has type 'eth_hashjoin::value_t' {aka 'long int'} [-Wformat=]
+  665 |             printf("[WARN ] key=%d, payload=%d\n", key, payload);
+      |                                             ~^          ~~~~~~~
+      |                                              |          |
+      |                                              int        eth_hashjoin::value_t {aka long int}
+      |                                             %ld
+[  8%] Building CXX object lib/CMakeFiles/eth_hashjoin.dir/eth_hashjoin/src/genzipf.c.o
+<command-line>: warning: "KEY_8B" redefined
+<command-line>: note: this is the location of the previous definition
+[ 11%] Linking CXX static library libeth_hashjoin.a
+[ 14%] Built target eth_hashjoin
+[ 17%] Building CXX object CMakeFiles/dramhit_lib.dir/src/hashtables/kvtypes.cpp.o
+In file included from /opt/DRAMHiT/include/hashtables/kvtypes.hpp:10,
+                 from /opt/DRAMHiT/src/hashtables/kvtypes.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+In file included from /opt/DRAMHiT/src/hashtables/kvtypes.cpp:1:
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp: In member function 'uint64_t kmercounter::Item::find_simd(const void*, uint64_t*, kmercounter::ValuePairs&)':
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:650:36: warning: converting a packed 'kmercounter::Item' pointer (alignment 1) to a 'uint64_t' {aka 'long unsigned int'} pointer (alignment 8) may result in an unaligned pointer value [-Waddress-of-packed-member]
+  650 |     uint64_t *bucket = (uint64_t *)this;
+      |                                    ^~~~
+/opt/DRAMHiT/include/hashtables/kvtypes.hpp:478:8: note: defined here
+  478 | struct Item {
+      |        ^~~~
+[ 20%] Building CXX object CMakeFiles/dramhit_lib.dir/src/input_reader/eth_rel_gen.cpp.o
+In file included from /opt/DRAMHiT/include/input_reader/eth_rel_gen.hpp:12,
+                 from /opt/DRAMHiT/src/input_reader/eth_rel_gen.cpp:1:
+/opt/DRAMHiT/lib/eth_hashjoin/src/generator64.hpp:6: warning: "KEY_8B" redefined
+    6 | #define KEY_8B
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /opt/DRAMHiT/include/input_reader/eth_rel_gen.hpp:18,
+                 from /opt/DRAMHiT/src/input_reader/eth_rel_gen.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+[ 23%] Building CXX object CMakeFiles/dramhit_lib.dir/src/types.cpp.o
+In file included from /opt/DRAMHiT/src/types.cpp:5:
+/opt/DRAMHiT/lib/eth_hashjoin/src/types64.hpp:6: warning: "KEY_8B" redefined
+    6 | #define KEY_8B
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /opt/DRAMHiT/src/types.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+[ 26%] Building CXX object CMakeFiles/dramhit_lib.dir/src/zipf_distribution.cpp.o
+[ 29%] Building CXX object CMakeFiles/dramhit_lib.dir/src/misc_lib.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:4,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:1:
+/opt/DRAMHiT/include/types.hpp: In member function 'void kmercounter::Configuration::dump_configuration()':
+/opt/DRAMHiT/include/types.hpp:187:12: warning: format '%lu' expects argument of type 'long unsigned int', but argument 2 has type 'uint32_t' {aka 'unsigned int'} [-Wformat=]
+  187 |     printf("  K %" PRIu64 "\n", K);
+      |            ^~~~~~~~~~~~~~~~~~~  ~
+      |                                 |
+      |                                 uint32_t {aka unsigned int}
+gmake[2]: *** [CMakeFiles/dramhit_lib.dir/build.make:132: CMakeFiles/dramhit_lib.dir/src/misc_lib.cpp.o] Interrupt
+gmake[1]: *** [CMakeFiles/Makefile2:108: CMakeFiles/dramhit_lib.dir/all] Interrupt
+gmake: *** [Makefile:91: all] Interrupt

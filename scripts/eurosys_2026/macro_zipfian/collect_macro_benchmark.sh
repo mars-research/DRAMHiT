@@ -33,8 +33,7 @@ file_name_csv=results/$1.csv
 touch $file_name_txt
 echo "skew,get_mops,set_mops" > $file_name_csv
 
-for skew in $(seq -f "%.2f" 0.80 0.05 1.10);
-do  
+for skew in $(seq -f "%.2f" 0.80 0.05 1.10) 0.20 0.40; do
     echo "Generating $file_name_txt (fill=$fill)"
 
     cmd="--find_queue 64 --ht-fill $fill --ht-type $2 --insert-factor $insertFactor --read-factor $readFactor\

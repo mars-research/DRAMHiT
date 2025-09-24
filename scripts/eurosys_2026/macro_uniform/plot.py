@@ -8,16 +8,16 @@ from matplotlib.lines import Line2D
 # CSV files
 csv_files = [
     "results/dramhit_2023.csv",
-    "results/dramhit_2025.csv",
-    "results/CLHT.csv",
+    "results/dramhit_2025_best_linear.csv",
+    "results/dramhit_2025_best_uniform.csv",
     "results/GROWT.csv"
 ]
 
 # Labels for each file (for the legend)
 labels = [
     "dramhit23",
-    "dramhit25",
-    "CLHT",
+    "dramhit_2025_best_linear",
+    "dramhit_2025_best_uniform",
     "GROWT"
 ]
 
@@ -71,6 +71,6 @@ handles, labels = axes[0].get_legend_handles_labels()
 fig.legend(handles, labels, loc="upper center", ncol=len(csv_files))
 
 plt.tight_layout(rect=[0, 0, 1, 0.95])
-plt.savefig("new_macro_uniform.png", dpi=300)
+plt.savefig("new_macro_uniform.pdf", dpi=300)
 
 

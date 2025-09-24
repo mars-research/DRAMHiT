@@ -25,9 +25,12 @@ namespace kmercounter {
 extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
-constexpr auto MAP_FLAGS =
+constexpr auto MAP_FLAGS_1GB =
+    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+constexpr auto MAP_FLAGS_2MB =
     MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
 constexpr auto ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
+constexpr auto TWOMB_PAGE_SZ = 2ULL * 1024 * 1024;
 
 constexpr uint64_t CACHE_BLOCK_BITS = 6;
 constexpr uint64_t CACHE_BLOCK_MASK = (1ULL << CACHE_BLOCK_BITS) - 1;
@@ -97,73 +100,90 @@ static inline void prefetch_with_write(Kmer_KV *k) {
   k->padding[0] = 1;
 }
 
+inline size_t round_hugepage(size_t n) {
+  if (n < ONEGB_PAGE_SZ) return (((n - 1) / TWOMB_PAGE_SZ) + 1) * TWOMB_PAGE_SZ;
+  return (((n - 1) / ONEGB_PAGE_SZ) + 1) * ONEGB_PAGE_SZ;
+}
+
 template <class T>
 T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   T *addr;
   uint64_t alloc_sz = capacity * sizeof(T);
   auto current_node = numa_node_of_cpu(sched_getcpu());
 
-  if (alloc_sz < ONEGB_PAGE_SZ) {
-    PLOGI.printf("Allocating memory on node %d", current_node);
-    addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
-    if (!addr) {
-      perror("aligned_alloc:");
-      exit(1);
-    }
-    if (alloc_sz < (2 * PAGE_SIZE)) {
-      goto skip_mbind;
-    }
+  // if (alloc_sz < ONEGB_PAGE_SZ) {
+  //   PLOGI.printf("Allocating memory on node %d", current_node);
+  //   addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
+  //   if (!addr) {
+  //     perror("aligned_alloc:");
+  //     exit(1);
+  //   }
+  //   if (alloc_sz < (2 * PAGE_SIZE)) {
+  //     goto skip_mbind;
+  //   }
+  // } else {
+  int fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
+
+  if (fd < 0) {
+    PLOGE.printf("Couldn't open file %s:", FILE_NAME);
+    perror("");
+    exit(1);
   } else {
-    int fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
-
-    if (fd < 0) {
-      PLOGE.printf("Couldn't open file %s:", FILE_NAME);
-      perror("");
-      exit(1);
-    } else {
-      PLOGI.printf("opened file %s", FILE_NAME);
-    }
-
-    PLOGI.printf("requesting to mmap %lu bytes", alloc_sz);
-
-    if (alloc_sz % 2) {
-      PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %lu", alloc_sz);
-      exit(-1);
-    }
-    addr = (T *)mmap(ADDR, alloc_sz, PROT_RW, MAP_FLAGS, fd, 0);
-
-    close(fd);
-    unlink(FILE_NAME);
-    if (addr == MAP_FAILED) {
-      perror("mmap");
-      unlink(FILE_NAME);
-      exit(1);
-    } else {
-      PLOGI.printf("mmap returns %p", addr);
-    }
-    *out_fd = fd;
+    PLOGI.printf("opened file %s", FILE_NAME);
   }
-  // if (config.ht_type == CASHTPP && (config.numa_split != 2)) {
-  distribute_mem_to_nodes(addr, alloc_sz,
+
+  if (alloc_sz % 2) {
+    PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %lu", alloc_sz);
+    exit(-1);
+  }
+
+  int flags;
+  alloc_sz = round_hugepage(alloc_sz);
+
+  if (alloc_sz < ONEGB_PAGE_SZ) {
+    flags = MAP_FLAGS_2MB;
+    PLOGI.printf("allocating %lu 2mb pages bytes %lu", alloc_sz/TWOMB_PAGE_SZ, alloc_sz);
+  } else {
+    flags = MAP_FLAGS_1GB;
+    PLOGI.printf("allocating %lu 1gb pages bytes %lu", alloc_sz/ONEGB_PAGE_SZ, alloc_sz);
+  }
+
+
+  addr = (T *)mmap(ADDR, alloc_sz, PROT_RW, flags, fd, 0);
+
+  close(fd);
+  unlink(FILE_NAME);
+  if (addr == MAP_FAILED) {
+    unlink(FILE_NAME);
+    PLOGE.printf("mmap failed");
+    exit(1);
+  } else {
+    PLOGI.printf("mmap returns %p", addr);
+  }
+  *out_fd = fd;
+  
+  if(alloc_sz >= ONEGB_PAGE_SZ){
+    distribute_mem_to_nodes(addr, alloc_sz,
                           (kmercounter::numa_policy_threads)config.numa_split);
-  //}
-skip_mbind:
+  }
+
   memset(addr, 0, capacity * sizeof(T));
   return addr;
 }
 
 template <class T>
 void free_mem(T *addr, uint64_t capacity, int id, int fd) {
-  auto alloc_sz = capacity * sizeof(T);
+  size_t alloc_sz = capacity * sizeof(T);
+  alloc_sz = round_hugepage(alloc_sz);
 
-  if (alloc_sz < ONEGB_PAGE_SZ) {
-    free(addr);
-  } else {
-    if (addr) {
-      munmap(addr, capacity * sizeof(T));
-      PLOGI.printf("%p with sz %lu unmapped", addr, capacity * sizeof(T));
-    }
+  // if (alloc_sz < ONEGB_PAGE_SZ) {
+  //   free(addr);
+  // } else {
+  if (addr) {
+    munmap(addr, capacity * sizeof(T));
+    PLOGI.printf("%p with sz %lu unmapped", addr, capacity * sizeof(T));
   }
+  //}
 }
 
 }  // namespace kmercounter

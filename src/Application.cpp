@@ -201,7 +201,7 @@ void sync_complete(void) {
 
         if (zipfian_iter < config.read_factor) {
           g_find_durations[zipfian_iter] = g_find_end - g_find_start;
-          PLOGI.printf("find duration %lu", g_find_durations[zipfian_iter]);
+          PLOGV.printf("find duration %lu", g_find_durations[zipfian_iter]);
 #if defined(WITH_PCM)
           g_find_bw[zipfian_iter] =
               g_pcm_cnt.get_bw(g_find_durations[zipfian_iter]);
@@ -218,7 +218,7 @@ void sync_complete(void) {
 
         if (zipfian_iter < config.insert_factor) {
           g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
-          PLOGI.printf("insert duration %lu", g_insert_durations[zipfian_iter]);
+          PLOGV.printf("insert duration %lu", g_insert_durations[zipfian_iter]);
 
         }
       }
@@ -236,7 +236,7 @@ void sync_complete(void) {
     } else if (cur_phase == ExecPhase::recording && !g_app_record_start) {
       g_app_record_duration = RDTSCP() - g_app_record_duration;
       cur_phase = ExecPhase::none;
-      PLOGI.printf("task duration %lu cycles", g_app_record_duration);
+      PLOGV.printf("task duration %lu cycles", g_app_record_duration);
     }
   }
 }
@@ -587,7 +587,7 @@ int Application::process(int argc, char *argv[]) {
         "drop-caches",
         po::value<bool>(&config.drop_caches)->default_value(def.drop_caches),
         "drop page cache before run")(
-        "v", po::bool_switch()->default_value(false), "enable verbose logging")(
+        "v", po::bool_switch()->default_value(false), "enable ` logging")(
         "nprod", po::value<uint32_t>(&config.n_prod)->default_value(def.n_prod),
         "for bqueues only")(
         "ncons", po::value<uint32_t>(&config.n_cons)->default_value(def.n_cons),

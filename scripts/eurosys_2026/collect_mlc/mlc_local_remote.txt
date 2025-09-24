@@ -1,0 +1,30 @@
+=== Random Read Latency ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --latency_matrix -X -x1
+Local: 93.4
+Remote: 142.8
+
+=== Random Read Bandwidth ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix
+Local: 257158.55
+Remote: 122282.4
+
+=== Random RW(1:1) Bandwidth ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix -W5
+Local: 203757.8
+Remote: 183737.4
+
+=== Sequential Read Latency ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --latency_matrix -X -x1
+Local: 124.2
+Remote: 190.60000000000002
+
+=== Sequential Read Bandwidth ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix
+Local: 256905.3
+Remote: 122243.85
+
+=== Sequential RW(1:1) Bandwidth ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix -W5
+Local: 203534.45
+Remote: 183503.09999999998
+

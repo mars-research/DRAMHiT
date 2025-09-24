@@ -37,7 +37,7 @@ static inline uint64_t RDTSCP(void) {
   return ((uint64_t)cycles_high << 32) | cycles_low;
 }
 // 1024 * 1024
-#define TABLE_SIZE (uint64_t) (1 << 26)  // 8 GB
+#define TABLE_SIZE (uint64_t) (1 << 26)  // 4 GB
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
 // #define RANDOM_ACCESS

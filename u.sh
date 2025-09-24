@@ -6,9 +6,7 @@
 # 'Constants' hash table types
 DRAMHIT=3
 GROWT=6
-CLHT=7
 DRAMHIT23=8
-TBB=9
 
 
 # Ensure correct usage
@@ -34,19 +32,20 @@ fi
 
 #TEST 256 KB
 if [ "$test" = "small" ]; then
-    size=128
-    insertFactor=1
-    readFactor=1
+    size=524288 
+    insertFactor=10000
+    readFactor=10000
 #TEST 2GB HT
 elif [ "$test" = "large" ]; then
-     size=1073741824
-    # size=268435456
-    #size=536870912
+    #size=1073741824
+    size=268435456
+    size=536870912
+
     # size=1073741824
     # size=268435456
     # size=134217728
-    insertFactor=100
-    readFactor=100
+    insertFactor=5
+    readFactor=5
 fi
 
 # size=134217728
@@ -56,14 +55,18 @@ fi
 # numThreads=1
 
 fill=70
-MODE=14
+
+HASHJOIN=13
+rsize=375809638
+ZIPFIAN=11
+UNIFORM=14
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
 #do  
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $MODE --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16"
+    --find_queue 64 --ht-fill $fill --ht-type $GROWT --insert-factor $insertFactor --read-factor $readFactor\
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.8\
+    --hw-pref 0 --batch-len 16 --relation_r_size $rsize"
     echo $(pwd)/build/dramhit $cmd
     sudo $(pwd)/build/dramhit $cmd
     echo $(pwd)/build/dramhit $cmd

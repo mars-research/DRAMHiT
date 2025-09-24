@@ -172,7 +172,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   barrier->arrive_and_wait();
   
   // Run hashjoin
-
+  for(uint64_t i = 0; i<config.insert_factor; i++)
     hashjoin(sh, &t1, &t2, relation_r, relation_s, ht, mt, materialize, barrier);
 
   if (sh->shard_idx == 0) {
@@ -180,9 +180,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     g_app_record_start = false;
   }
   barrier->arrive_and_wait();
-
-  sh->stats->insertions.op_count = t1.size();
-  //get_ht_stats(sh, ht); 
+  sh->stats->insertions.op_count = (t1.size() * config.insert_factor);
 }
 
 void HashjoinTest::join_relations_from_files(Shard* sh,
