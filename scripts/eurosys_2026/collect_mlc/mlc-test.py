@@ -79,7 +79,7 @@ def run_command(cmd_list, use_sudo=False, timeout=300):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mlc", default=MLC, help="path to mlc")
-    parser.add_argument("--out", default="mlc_local_remote.txt", help="output text filename")
+    parser.add_argument("--out", default="mlc.txt", help="output text filename")
     parser.add_argument("--timeout", type=int, default=300, help="timeout seconds per command")
     args = parser.parse_args()
 
