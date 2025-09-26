@@ -48,6 +48,11 @@ void KmerTest::count_kmer(Shard* sh,
   barrier->arrive_and_wait();
   sh->stats->insertions.op_count = num_kmers;
   get_ht_stats(sh, ht);
+
+  if (sh->shard_idx == 0) {
+    PLOGI.printf("get fill %.3f",
+                 (double)ht->get_fill() / ht->get_capacity());
+  }
 }
 
 } // namespace kmercounter

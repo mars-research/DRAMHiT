@@ -47,6 +47,10 @@ class SpanReader : public SizedInputReader<T> {
 
   size_t size() override { return data_.size(); }
 
+  void reset() { 
+    iter_ = RangeReader<decltype(data_.begin()), T>(data_.begin(), data_.end());
+  }
+
  private:
   std::span<T> data_;
   RangeReader<decltype(data_.begin()), T> iter_;

@@ -238,6 +238,7 @@ void sync_complete(void) {
       cur_phase = ExecPhase::none;
       PLOGV.printf("task duration %lu cycles", g_app_record_duration);
     }
+
   }
 }
 
@@ -688,7 +689,7 @@ int Application::process(int argc, char *argv[]) {
       plog::get()->setMaxSeverity(plog::verbose);
     }
 
-    config.dump_configuration();
+    //config.dump_configuration();
     msr_ctrl->msr_open();
     // Control hw prefetcher msr
     if (vm["hw-pref"].as<bool>()) {

@@ -87,10 +87,10 @@ def main():
 
     # Workload commands in order
     cmds = OrderedDict([
-        ("Random Read Latency", {"cmd": [mlc_bin, "--latency_matrix", "-X", "-x1"], "use_sudo": False}),
-        ("Random Read Bandwidth", {"cmd": [mlc_bin, "--bandwidth_matrix"], "use_sudo": False}),
-        ("Random RW(1:1) Bandwidth", {"cmd": [mlc_bin, "--bandwidth_matrix", "-W5"], "use_sudo": False}),
-        ("Sequential Read Latency", {"cmd": [mlc_bin, "--latency_matrix", "-X", "-x1"], "use_sudo": True}),
+        ("Random Read Latency", {"cmd": [mlc_bin, "--latency_matrix", "-r"], "use_sudo": True}),
+        ("Sequential Read Latency", {"cmd": [mlc_bin, "--latency_matrix"], "use_sudo": True}),
+        ("Random Read Bandwidth", {"cmd": [mlc_bin, "--bandwidth_matrix", "-U"], "use_sudo": True}),
+        ("Random RW(1:1) Bandwidth", {"cmd": [mlc_bin, "--bandwidth_matrix", "-W5", "-U"], "use_sudo": True}),
         ("Sequential Read Bandwidth", {"cmd": [mlc_bin, "--bandwidth_matrix"], "use_sudo": True}),
         ("Sequential RW(1:1) Bandwidth", {"cmd": [mlc_bin, "--bandwidth_matrix", "-W5"], "use_sudo": True}),
     ])
@@ -104,7 +104,11 @@ def main():
             rc, out = run_command(info["cmd"], use_sudo=info["use_sudo"], timeout=args.timeout)
             mat = parse_numa_matrix(out)
             local, remote = local_remote_from_matrix(mat)
-            f.write(f"Local: {local}\nRemote: {remote}\n\n")
+            
+            if "Bandwidth" in label:
+                f.write(f"Local: {local/1024} GB/s \nRemote: {remote/1024} GB/s\n\n")
+            else:
+                f.write(f"Local: {local} ns \nRemote: {remote} ns\n\n")
 
     print(f"Local/Remote results written to {args.out}")
 

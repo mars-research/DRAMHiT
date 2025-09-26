@@ -83,7 +83,7 @@ mlc random huge pages sequential
 Numa node            0       1
        0        258759.4        121034.4
        1        121826.0        256925.2
-
+ 
 convert random read mlc to bytes
 > 251892.1(mb/s) * 10**6
 251892100000

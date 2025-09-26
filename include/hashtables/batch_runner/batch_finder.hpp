@@ -81,9 +81,9 @@ class HTBatchFinder {
 
   /// Process each result, if there's any.
   void process_results() {
-    for (const auto& result : std::span(results_.second, results_.first)) {
-      callback_fn_(result);
-    }
+    // for (const auto& result : std::span(results_.second, results_.first)) {
+    //   callback_fn_(result);
+    // }
     // The hashtable might pollute the `results_` with buffers from other
     // finders.
     results_ = {0, result_buffer_};

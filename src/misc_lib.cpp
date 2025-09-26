@@ -76,7 +76,7 @@ void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz, numa_policy_threads 
   else if ((policy == THREADS_LOCAL_NUMA_NODE  || policy == THREADS_NO_MEM_DISTRIBUTION)){
 
     unsigned long nodemask = 1UL << 0;
-    unsigned long maxnode = 1;//sizeof(nodemask) * 8;
+    unsigned long maxnode = sizeof(nodemask) * 8;
 
     long ret = mbind(addr, alloc_sz, MPOL_BIND, &nodemask, maxnode,
                      MPOL_MF_MOVE | MPOL_MF_STRICT);

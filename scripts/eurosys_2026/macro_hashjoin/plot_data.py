@@ -1,46 +1,54 @@
 import json
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
-import sys
 
-if len(sys.argv) < 3:
-    print("Usage: python script.py <data to plot> <output path>")
-    sys.exit(1)
+# --- Load JSON ---
+with open("hashjoin.json") as f:
+    data = json.load(f)
 
-input_json = sys.argv[1]
-out_file = sys.argv[2]
+# --- Flatten JSON into DataFrame ---
+rows = []
+for table, entries in data.items():
+    for entry in entries:
+        rows.append({
+            "table": table,
+            "fill": entry["fill"],
+            "htsize": entry["htsize"],
+            "mops": float(entry["mops"]),
+        })
 
-# Load JSON results
-with open(input_json, "r") as f:
-    all_results = json.load(f)
+df = pd.DataFrame(rows)
+# Pick fill factors you want subplots for
+fills = [10, 70]
 
-sns.set(style="whitegrid")
-plt.figure(figsize=(10, 6))
+# --- Helper function to plot ---
+def plot_metric(metric, ylabel, filename):
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)
+    axes = axes.flatten()
 
-rsize_set = set()
-# Plot each hash table
-for ht_name, data in all_results.items():
-    rsizes_bytes = [entry["rsize"] * 16 for entry in data]  # convert to bytes
-    rsizes_mb = [int(b / 1024**2) for b in rsizes_bytes]         # convert to GB
-    mops = [entry["mops"] for entry in data]
-    sns.lineplot(x=rsizes_mb, y=mops, marker="o", label=ht_name)
+    for i, fill in enumerate(fills):
+        ax = axes[i]
+        subset = df[df["fill"] == fill]
+        sns.lineplot(
+            data=subset,
+            x="htsize", y=metric, hue="table", marker="o", ax=ax
+        )
+        ax.set_title(f"Fill = {fill}%")
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel("Hashtable Size")
+        ax.set_xscale("log", base=2)  # optional: log scale for htsize
+        ax.grid(True, linestyle="--", alpha=0.6)
 
-plt.xlabel("Hash Table Size (MB)")
-plt.ylabel("MOPS")
-plt.title("Hashjoin Test")
-#plt.xscale("log")  # log base 2 scale for x-axis
+    # Hide unused subplot if fills < 4
+    for j in range(i+1, len(axes)):
+        fig.delaxes(axes[j])
 
-plt.legend(title="Hash Table")
-plt.tight_layout()
-# min_size = min(rsizes_mb)
-# max_size = max(rsizes_mb)
-# ticks = 2 ** np.arange(np.floor(np.log2(min_size)), np.ceil(np.log2(max_size)) + 0.25, 1)
-# plt.xticks(ticks)  # log2 fractional ticks
-# plt.xlim(min_size, max_size)
+    plt.suptitle(f"{ylabel} vs Hashtable Size", fontsize=14)
+    plt.savefig(filename)
+    plt.close()
 
-# Save figure as PNG
-plt.savefig(out_file, dpi=300)
-plt.close()
+# --- Generate both figures ---
+plot_metric("mops", "MOPS", "get_mops.pdf")
 
 

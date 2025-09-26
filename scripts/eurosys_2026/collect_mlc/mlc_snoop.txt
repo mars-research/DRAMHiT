@@ -1,30 +1,30 @@
 === Random Read Latency ===
-Command: /opt/DRAMHiT/tools/mlc/mlc --latency_matrix -X -x1
-Local: 93.4
-Remote: 142.8
-
-=== Random Read Bandwidth ===
-Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix
-Local: 257158.55
-Remote: 122282.4
-
-=== Random RW(1:1) Bandwidth ===
-Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix -W5
-Local: 203757.8
-Remote: 183737.4
+Command: /opt/DRAMHiT/tools/mlc/mlc --latency_matrix -r
+Local: 126.4 ns 
+Remote: 194.25 ns
 
 === Sequential Read Latency ===
-Command: /opt/DRAMHiT/tools/mlc/mlc --latency_matrix -X -x1
-Local: 124.2
-Remote: 190.60000000000002
+Command: /opt/DRAMHiT/tools/mlc/mlc --latency_matrix
+Local: 123.85 ns 
+Remote: 190.0 ns
+
+=== Random Read Bandwidth ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix -U
+Local: 242.71142578125 GB/s 
+Remote: 117.45009765625 GB/s
+
+=== Random RW(1:1) Bandwidth ===
+Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix -W5 -U
+Local: 155.6142578125 GB/s 
+Remote: 144.90195312499998 GB/s
 
 === Sequential Read Bandwidth ===
 Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix
-Local: 256905.3
-Remote: 122243.85
+Local: 247.468603515625 GB/s 
+Remote: 118.120361328125 GB/s
 
 === Sequential RW(1:1) Bandwidth ===
 Command: /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix -W5
-Local: 203534.45
-Remote: 183503.09999999998
+Local: 196.23896484375 GB/s 
+Remote: 177.06508789062502 GB/s
 

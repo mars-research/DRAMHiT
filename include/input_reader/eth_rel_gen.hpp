@@ -50,6 +50,7 @@ class PartitionedEthRelationReader
 
   // Explicit implementatio here to resolve ambiguitiy.
   size_t size() override { return EthRelationReader::size(); }
+  void reset() { EthRelationReader::reset(); }
 };
 
 /// Helper class ensuring the same relation only get created once.
@@ -88,6 +89,7 @@ class PartitionedEthRelationGenerator : private SingletonEthRelationGenerator,
       : SingletonEthRelationGenerator(identifier, seed, ntuples, num_parts, max_id),
         PartitionedEthRelationReader(SingletonEthRelationGenerator::relation_,
                                      part_id, num_parts) {}
+
 };
 
 }  // namespace input_reader

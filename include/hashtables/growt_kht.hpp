@@ -34,12 +34,11 @@ class GrowtHashTable : public BaseHashTable {
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
-      sz = capacity/2; 
+      sz = (uint64_t)(capacity >> 1); 
       if (!table) {
         assert(this->ref_cnt == 0);
         this->table = new growht_type(sz);
-
-        std::cout << "table name " << table->name() << " size " << table->capacity() << std::endl;
+        std::cout << "table name " << table->name() << "requested " << sz <<" capacity " << table->capacity() << std::endl;
       }
       this->ref_cnt++;
     }

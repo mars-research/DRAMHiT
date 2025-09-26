@@ -8,7 +8,7 @@ clone_chtkc() {
   if [ ! -d ${MOUNT_DIR}/chtkc ]; then
     echo "Cloning chtkc..."
     pushd ${MOUNT_DIR}
-    git clone https://github.com/mars-research/chtkc.git --branch kmer-eval
+    git clone https://github.com/mars-research/chtkc-eurosys --branch kmer-eval
     popd;
   else
     echo "chtkc dir not empty! skipping..."
