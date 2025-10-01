@@ -45,12 +45,19 @@
           llvmPackages_14.libllvm
           gcc11
           pkg-config
+          cmake
+          ninja
+          (writeShellScriptBin "gcc-ar-${lib.versions.major gcc11.version}" ''
+            exec gcc-ar "$@"
+          '')
+          (writeShellScriptBin "gcc-ranlib-${lib.versions.major gcc11.version}" ''
+            exec gcc-ranlib "$@"
+          '')
         ];
         buildInputs = with pkgs; [
           openssl
-          cmake
-          ninja
         ];  
+
         NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
       };
@@ -63,9 +70,8 @@
           clang-tools
           gdb
           linuxPackages.perf
-          bc  
+          bc
           ripgrep
-          # Python packages for evals plotting.
           python310
           python310Packages.numpy
           python310Packages.scipy

@@ -194,13 +194,13 @@ if(BUILD_APP)
 
     if(GROWT)
         #if find fails, scripts/install_tbb.sh 
-        list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/growt/oneapi-tbb-2022.2.0/lib/cmake/tbb")
+        list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/growt/oneapi-tbb-2022.2.0/lib/cmake/tbb")
         find_package(TBB REQUIRED)
         if (NOT TBB_FOUND)
             message(FATAL_ERROR "TBB not found. Run scripts/install_tbb.sh to install it.")
         endif()
         add_definitions(-DGROWT)
-        target_include_directories(dramhit PUBLIC growt ${CMAKE_CURRENT_SOURCE_DIR}/growt/oneapi-tbb-2022.2.0/include/)
+        target_include_directories(dramhit PUBLIC growt ${CMAKE_CURRENT_SOURCE_DIR}/lib/growt/oneapi-tbb-2022.2.0/include/)
         target_link_libraries(dramhit PRIVATE TBB::tbb TBB::tbbmalloc)
     endif()
 
@@ -222,9 +222,6 @@ if(BUILD_APP)
         add_definitions(-DCACHE_LINE_SIZE=64)
         add_definitions(-DCLHT)
     endif()
-
-
-
 endif()
 
 # Declare include directory.
@@ -359,7 +356,7 @@ endif()
 
 set(BENCHMARK_BACKEND "NONE" CACHE STRING "Benchmark backend to use (PERFCPP, PCM, LEGACY_PAPI, HIGH_LEVEL_PAPI, VTUNE, NONE)")
 
-set(VALID_BACKENDS PERFCPP PCM LEGACY_PAPI HIGH_LEVEL_PAPI VTUNE NONE)
+set(VALID_BACKENDS PERFCPP PCM PAPI VTUNE NONE)
 
 list(FIND VALID_BACKENDS ${BENCHMARK_BACKEND} BACKEND_INDEX)
 if(BENCHMARK_BACKEND AND BACKEND_INDEX EQUAL -1)
@@ -370,21 +367,16 @@ else()
     message(STATUS "No benchmarking backend selected.")
 endif()
 
-if (BENCHMARK_BACKEND STREQUAL "LEGACY_PAPI")
-    message(WARNING "PAPI support is currently broken!")
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE papi)
-    target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE papi/src/)
-    include_directories(papi/src/)
-    add_definitions(-DWITH_PAPI_LIB)
-elseif (BENCHMARK_BACKEND STREQUAL "HIGH_LEVEL_PAPI")
-    message(WARNING "Enabled high-level PAPI support")
-    target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE papi/src/)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE papi)
-    include_directories(papi/src/)
+if (BENCHMARK_BACKEND STREQUAL "PAPI")
+    message(WARNING "Enabled PAPI support")
+    target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE lib/papi/src/)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE lib/papi)
+    include_directories(lib/papi/src/)
     add_definitions(-DENABLE_HIGH_LEVEL_PAPI)
+    add_definitions(-DWITH_PAPI_LIB)
 elseif (BENCHMARK_BACKEND STREQUAL "PCM")
-    set(PCM_LIB_PATH "${CMAKE_SOURCE_DIR}/pcm/build/src/libpcm.a")
-    set(PCM_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/pcm/src/")
+    set(PCM_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/pcm/build/src/libpcm.a")
+    set(PCM_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/lib/pcm/src/")
 
     if (NOT EXISTS ${PCM_LIB_PATH})
         message(STATUS "libpcm.a not found. Running PCM build script...")
@@ -411,13 +403,13 @@ elseif (BENCHMARK_BACKEND STREQUAL "PERFCPP")
     message(WARNING "Building with perf-cpp from ${CMAKE_CURRENT_BINARY_DIR}")
 
     # Add the perf-cpp subdirectory (make sure the path to the perf-cpp source is correct)
-    add_subdirectory(${CMAKE_SOURCE_DIR}/perf-cpp ${CMAKE_CURRENT_BINARY_DIR}/perf-cpp-build)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/lib/perfcpp ${CMAKE_CURRENT_BINARY_DIR}/lib/perfcpp/build)
 
     # Include perf-cpp headers
-    target_include_directories(dramhit PRIVATE ${CMAKE_SOURCE_DIR}/perf-cpp/include)
+    target_include_directories(dramhit PRIVATE ${CMAKE_SOURCE_DIR}/lib/perfcpp/include)
 
     # Link perf-cpp static library
-    target_link_libraries(dramhit PRIVATE perf-cpp)
+    target_link_libraries(dramhit PRIVATE lib/perfcpp)
 
     # Add the define for using perf-cpp
     add_definitions(-DWITH_PERFCPP)
