@@ -1,5 +1,4 @@
 # DRAMHiT
-[![Build and Test](https://github.com/mars-research/DRAMHiT/actions/workflows/build.yml/badge.svg)](https://github.com/mars-research/kmer-counting-hash-table/actions/workflows/build.yml)
 
 ## Build
 
@@ -10,81 +9,42 @@ git clone git@github.com:mars-research/DRAMHiT.git --recursive
 
 ### Install dependencies
 
-#### Optional 1(recommended): Nix shell.
-If Nix is not installed, install Nix.
-```bash
+Install nix
+```
 curl -L https://nixos.org/nix/install | sh
 ```
-Use nix shell. 
-```bash
-nix-shell
-```
-All the dependencies should be available in the nix shell now.
 
-#### Option 2: Manual installation.
-```bash
-sudo apt install libnuma-dev libboost-program-options-dev cmake libabsl-dev libcapstone-dev
+Setup direnv (recommended for development)
 ```
+sudo apt install direnv
+echo 'eval "$(direnv hook bash)"' >>"$HOME_DIR/.bashrc"
+```
+
+or alternatively, use 
+```
+nix develop --extra-experimental-features nix-command --extra-experimental-features flakes
+```
+command to manually enter nix development shell
 
 ### Setup the machine
-
-#### Option 1(recommended): Express setup 
-- Apply constant frequency, enable hugepages, and disable hardware prefetching.
 ```
 ./scripts/setup.sh
 ```
 
-#### Option 2: Maunal setup
-
-- Set all cpus to run at a constant frequency
-```
-./scripts/constant_freq.sh
-```
-- Enable hugepages (both 2MiB and 1GiB)
-```
-./scripts/enable_hugepages.sh
-```
-- Disable hardware prefetching
-```
-./scripts/prefetch_control.sh off
-```
-- (Optional)Enable/disable hyperthreading
-```
-./scripts/toggle_hyperthreading.sh
-```
-
 ### Build
-* Setup build directory
-```
-cmake -S . -B build 
-```
-
 * Build
 ```
+cmake -S . -B build 
 cmake --build build/
 ```
 
 ### Configure build with ccmake (optional)
 
-On command line, install and start ccmake
+On command line, install and start ccmake. 
 
 ```
 sudo apt install cmake-curses-gui
-ccmake PATH_TO_CMAKE
+ccmake ./build
 ```
 
-### Run
-```
-sudo ./build/dramhit
-```
 
-### Test
-Run all tests.
-```
-ctest --test-dir=build
-```
-
-Run individual test binary. For example, the hashmap test:
-```
-./build/unittests/hashmap_test
-```
