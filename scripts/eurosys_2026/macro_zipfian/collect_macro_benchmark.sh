@@ -63,8 +63,8 @@ rm tmp1.txt tmp2.txt $file_name_txt
 # run_ht_dual dramhit_2023 $DRAMHIT23 0
 
 
-cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DGROWT=ON
-cmake --build /opt/DRAMHiT/build
-run_ht_dual GROWT $GROWT 1
+# cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build -DGROWT=ON
+# cmake --build /opt/DRAMHiT/build
+# run_ht_dual GROWT $GROWT 1
 
 

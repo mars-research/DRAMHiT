@@ -1,5 +1,32 @@
 
 
+# 10/03
+
+Investigate insertion with skew distribution dual socket
+
+Original dramhit with 1.0 skew factor with 70% fill 
+results in actuall fill 0.467, roughly 67% percent of key generated are unique.
+{ set_cycles : 407, get_cycles : 104, set_mops : 785.829, get_mops : 3072.607 }
+
+2025 prefetch engine
+{ set_cycles : 408, get_cycles : 93, set_mops : 782.947, get_mops : 3437.853 }
+
+2025 + bucketization
+{ set_cycles : 436, get_cycles : 93, set_mops : 733.093, get_mops : 3434.856 }
+
+2025 - read before cas
+{ set_cycles : 779, get_cycles : 93, set_mops : 410.318, get_mops : 3427.782 }
+
+2025 + simd and bucketization
+{ set_cycles : 457, get_cycles : 80, set_mops : 698.941, get_mops : 3969.471 }
+
+2025 + simd and bucketization - read before cas
+{ set_cycles : 457, get_cycles : 80, set_mops : 699.298, get_mops : 3957.381 }
+
+2025 + double prefetch strategies.
+{ set_cycles : 430, get_cycles : 92, set_mops : 744.140, get_mops : 3473.988 }
+
+
 # 08/14
 
 We turn off the directory feature in BIOS, now reporting all numbers 

@@ -200,7 +200,12 @@ if(BUILD_APP)
             message(FATAL_ERROR "TBB not found. Run scripts/install_tbb.sh to install it.")
         endif()
         add_definitions(-DGROWT)
-        target_include_directories(dramhit PUBLIC growt ${CMAKE_CURRENT_SOURCE_DIR}/lib/growt/oneapi-tbb-2022.2.0/include/)
+        #target_include_directories(dramhit PUBLIC growt ${CMAKE_CURRENT_SOURCE_DIR}/lib/growt/oneapi-tbb-2022.2.0/include/)
+
+        target_include_directories(dramhit PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/growt
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/growt/oneapi-tbb-2022.2.0/include/)
+
         target_link_libraries(dramhit PRIVATE TBB::tbb TBB::tbbmalloc)
     endif()
 
