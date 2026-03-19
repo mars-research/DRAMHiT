@@ -689,6 +689,7 @@ int Application::process(int argc, char *argv[]) {
       plog::get()->setMaxSeverity(plog::verbose);
     }
 
+#ifdef HARDCODE_PREFETCH_H14A
     //config.dump_configuration();
     msr_ctrl->msr_open();
     // Control hw prefetcher msr
@@ -706,8 +707,8 @@ int Application::process(int argc, char *argv[]) {
     //   printf("0x%lx ", e);
     // }
     // printf("}\n");
-
     msr_ctrl->msr_close();
+#endif
 
     if (config.mode == SYNTH) {
       PLOG_INFO.printf("Mode : SYNTH");
@@ -823,12 +824,10 @@ int Application::process(int argc, char *argv[]) {
     g_find_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.read_factor);
 
-    if (config.mode == ZIPFIAN) 
+    if (config.mode == ZIPFIAN)
     {
       init_zipfian_dist(config.skew, config.seed);
     }
-    
-  
 
 #ifdef WITH_PCM
     g_find_bw = (double *)malloc(sizeof(double) * config.read_factor);

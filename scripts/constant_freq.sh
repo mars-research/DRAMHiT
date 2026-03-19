@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -e
-CPU_FREQ_KHZ=2500000 
-RDMSR=$(which rdmsr)
-WRMSR=$(which wrmsr)
-echo $RDMSR 
-echo $WRMSR
+CPU_FREQ_KHZ=3200000 
+#RDMSR=$(which rdmsr)
+#WRMSR=$(which wrmsr)
+#echo $RDMSR 
+#echo $WRMSR
 
 get_rated_cpufreq() {
 	# lscpu reports the rated processor freq in %1.2f format
@@ -26,28 +26,31 @@ disable_cstate() {
 	for i in $(ls /sys/devices/system/cpu/cpu*/cpuidle/state*/disable); do echo "1" | sudo tee $i > /dev/null 2>&1 ;done
 }
 
+# Let us be normal .... 
 disable_turbo() {
 
-	if ! [ -x "$(command -v ${RDMSR})" ]; then
-		echo "Installing msr-tools ..."
-		sudo apt update && sudo apt install msr-tools
-		RDMSR=$(which rdmsr)
-		WRMSR=$(which wrmsr)
-	fi
+	echo 0 | sudo tee /sys/devices/system/cpu/cpufreq/boost
 
-	echo "Loading msr module"
-	sudo modprobe msr
-
-	# make sure we have this module loaded
-	if [ -z "$(lsmod | grep '^msr')" ]; then
-		echo "ERROR: Fail to load msr module into kernel!"
-		exit 
-	fi
-	
-	# disable turbo boost (bit 38 on 0x1a0 msr)
-	TURBO_BOOST_BIT=38
-	echo "Disabling turboboost"
-	sudo $WRMSR -a 0x1a0 "$(printf '0x%x' "$(( $(sudo $RDMSR -d 0x1a0) | (1 << TURBO_BOOST_BIT) ))")"
+#	if ! [ -x "$(command -v ${RDMSR})" ]; then
+#		echo "Installing msr-tools ..."
+#		sudo apt update && sudo apt install msr-tools
+#		RDMSR=$(which rdmsr)
+#		WRMSR=$(which wrmsr)
+#	fi
+#
+#	echo "Loading msr module"
+#	sudo modprobe msr
+#
+#	# make sure we have this module loaded
+#	if [ -z "$(lsmod | grep '^msr')" ]; then
+#		echo "ERROR: Fail to load msr module into kernel!"
+#		exit 
+#	fi
+#	
+#	# disable turbo boost (bit 38 on 0x1a0 msr)
+#	TURBO_BOOST_BIT=38
+#	echo "Disabling turboboost"
+#	sudo $WRMSR -a 0x1a0 "$(printf '0x%x' "$(( $(sudo $RDMSR -d 0x1a0) | (1 << TURBO_BOOST_BIT) ))")"
 }
 
 set_const_freq() {
@@ -58,14 +61,14 @@ set_const_freq() {
 
 dump_sys_state() {
 	if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]; then
-		for i in $(ls /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq); do echo "$i: $(cat $i)";done
-		for i in $(ls /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq); do echo "$i: $(cat $i)";done
+		cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+		cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
 	fi
-
-	for i in $(ls /sys/devices/system/cpu/cpu*/cpuidle/state*/disable); do echo "$i: $(cat $i)";done
-	sudo ${RDMSR} -a 0x1a0 -f 38:38
 }
 
 get_rated_cpufreq;
 set_const_freq;
 dump_sys_state;
+
+
+

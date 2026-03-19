@@ -23,7 +23,7 @@ numa_policy=$2
 numThreads=$3
 
 if [ "$numa_policy" = "single-local" ]; then
-    numa_policy=4  
+    numa_policy=4
 elif [ "$numa_policy" = "single-remote" ]; then
     numa_policy=3
 elif [ "$numa_policy" = "dual" ]; then
@@ -32,7 +32,7 @@ fi
 
 #TEST 256 KB
 if [ "$test" = "small" ]; then
-    size=524288 
+    size=524288
     insertFactor=10000
     readFactor=10000
 #TEST 2GB HT
@@ -62,15 +62,15 @@ ZIPFIAN=11
 UNIFORM=14
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
-#do  
+#do
     cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type $DRAMHIT23 --insert-factor $insertFactor --read-factor $readFactor\
+    --find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $UNIFORM --ht-size $size --skew 0.8\
     --hw-pref 0 --batch-len 16 --relation_r_size $rsize"
     echo $(pwd)/build/dramhit $cmd
     sudo $(pwd)/build/dramhit $cmd
-    echo $(pwd)/build/dramhit $cmd
-#done    
+    #echo $(pwd)/build/dramhit $cmd
+#done
 
 
 # dramhit="$(pwd)/build/dramhit $cmd"
@@ -79,7 +79,7 @@ UNIFORM=14
 #         mkfifo ctl.fifo ack.fifo
 #         exec 10<>ctl.fifo
 #         exec 11<>ack.fifo
-       
+
 #         /usr/bin/perf stat --delay=1 -I 1000  --control fd:10,11 -e 'UNC_M_CAS_COUNT.ALL' $dramhit
 
 #         exec 10>&-
@@ -89,5 +89,5 @@ UNIFORM=14
 
 #     sudo /opt/intel/oneapi/vtune/latest/bin64/vtune -collect memory-access -result-dir vtune_mem_bw -start-paused -- ./u.sh large single-local 64
 #     sudo /opt/intel/oneapi/vtune/latest/bin64/vtune -report summary -r vtune_mem_bw -filter "Task Name==find_test"
-#     sudo /opt/intel/oneapi/vtune/latest/bin64/vtune -report summary -r vtune_mem_bw 
+#     sudo /opt/intel/oneapi/vtune/latest/bin64/vtune -report summary -r vtune_mem_bw
 #     rm -rf vtune_mem_bw
