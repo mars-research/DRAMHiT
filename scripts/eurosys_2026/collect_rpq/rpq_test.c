@@ -113,7 +113,6 @@ int get_numa_cpuids(int node, int *cpu_ids, int max_len) {
 
 void *walk_table(void *arg) {
   thread_arg_t *t = (thread_arg_t *)arg;
-
   int cpu = t->cpu;
   int tid = t->tid;
   int node = t->node;
