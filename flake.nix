@@ -62,7 +62,7 @@
           act
           clang-tools
           gdb
-          linuxPackages.perf
+          # linuxPackages.perf
           bc  
           ripgrep
           # Python packages for evals plotting.
