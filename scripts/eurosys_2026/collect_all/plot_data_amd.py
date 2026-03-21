@@ -8,9 +8,9 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.lines import Line2D
 
-row = 2
+row = 1
 col = 2
-fig, axes = plt.subplots(row, col, figsize=(12, 12))
+fig, axes = plt.subplots(row, col, figsize=(12, 6))
 
 
 def plot_json(json_file, output_file):
@@ -24,7 +24,6 @@ def plot_json(json_file, output_file):
     df = pd.json_normalize(data, sep=".")
 
     df_single = df[df["run_cfg.numa_policy"] == 4]
-    df_dual = df[df["run_cfg.numa_policy"] == 1]
 
     def make_identifier(build_cfg: str) -> str:
         # Parse into dict
@@ -42,21 +41,15 @@ def plot_json(json_file, output_file):
                 ret += "+simd"
             elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
                 ret += "+uniform"
+            elif k == "PREFETCH" and bcfg[k] == "L2":
+                ret += "+prefetchT1"
             elif k == "PREFETCH" and bcfg[k] == "DOUBLE":
                 ret += "+2prefetch"
 
         return ret
 
     df_single["build_cfg_str"] = df_single["build_cfg_str"].apply(make_identifier)
-    df_dual["build_cfg_str"] = df_dual["build_cfg_str"].apply(make_identifier)
-
     ids1 = df_single["build_cfg_str"].unique()
-    ids2 = df_dual["build_cfg_str"].unique()
-
-    if (ids1 != ids2).any():
-        raise ValueError(
-            f"Identifiers mismatch.\nOnly in df_single: {ids1 - ids2}\nOnly in df_other: {ids2 - ids1}"
-        )
     palette = sns.color_palette("rocket", n_colors=len(ids1))
     palette = palette[::-1]  # reverse the palette
     sns.set_theme(style="whitegrid", palette=palette)
@@ -68,7 +61,7 @@ def plot_json(json_file, output_file):
 
     fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=2)
 
-    ax = axes[0][0]
+    ax = axes[0]
     sns.lineplot(
         data=df_single,
         x="run_cfg.fill_factor",
@@ -85,7 +78,7 @@ def plot_json(json_file, output_file):
     # ax.set_xlim(0)
     # ax.set_ylim(0)
 
-    ax = axes[0][1]
+    ax = axes[1]
     sns.lineplot(
         data=df_single,
         x="run_cfg.fill_factor",
@@ -99,41 +92,6 @@ def plot_json(json_file, output_file):
     ax.set_xlabel("Fill Factor(%)")
     ax.set_ylabel("Set Mops")
     ax.grid(True, which="major", axis="both", linestyle="--")
-    # ax.set_xlim(0)
-    # ax.set_ylim(0)
-
-    ax = axes[1][0]
-    sns.lineplot(
-        data=df_dual,
-        x="run_cfg.fill_factor",
-        y="get_mops",
-        hue="build_cfg_str",
-        marker="o",
-        ax=ax,
-        legend=False,
-    )
-    ax.set_title("Dual socket - Find Throughput")
-    ax.set_xlabel("Fill Factor(%)")
-    ax.set_ylabel("Find Mops")
-    ax.grid(True, which="major", axis="both", linestyle="--")
-    # ax.set_xlim(0)
-    # ax.set_ylim(0)
-
-    ax = axes[1][1]
-    sns.lineplot(
-        data=df_dual,
-        x="run_cfg.fill_factor",
-        y="set_mops",
-        hue="build_cfg_str",
-        marker="o",
-        ax=ax,
-        legend=False,
-    )
-    ax.set_title(f"Dual socket - Set Throughput")
-    ax.set_xlabel("Fill Factor(%)")
-    ax.set_ylabel("Set Mops")
-    ax.grid(True, which="major", axis="both", linestyle="--")
-
     # ax.set_xlim(0)
     # ax.set_ylim(0)
 

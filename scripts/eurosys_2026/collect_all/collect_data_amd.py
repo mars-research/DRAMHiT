@@ -1,13 +1,12 @@
 #!/bin/python3
-
 import json
 import os
 import re
 import subprocess
+import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
-USE_PERF = True
 
 
 def build(defines):
@@ -22,22 +21,7 @@ def build(defines):
     subprocess.run(build_cmd, check=True)
 
 
-def make_perf_command(counters, dramhit_args):
-    counters_str = ",".join(counters)
-    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
-    return cmd
-
-
-counters = [
-    "cycles",
-    "br_inst_retired.all_branches",
-    "uops_issued.any",
-    "br_misp_retired.all_branches",
-]
-
-
 def run(run_cfg):
-    results = []
 
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
@@ -69,11 +53,7 @@ def run(run_cfg):
         "16",
     ]
 
-    cmd = []
-    if USE_PERF:
-        cmd = make_perf_command(counters, dramhit_args)
-    else:
-        cmd = ["sudo"] + dramhit_args
+    cmd = ["sudo"] + dramhit_args
 
     print("Running:", " ".join(cmd))
 
@@ -89,7 +69,7 @@ def run(run_cfg):
     return (stdout, stderr)
 
 
-def parse_results(result, counters, run_cfg, build_cfg, identifier):
+def parse_results(result, run_cfg, build_cfg, identifier):
     """
     Parse a single run's output (stdout, stderr) into a single dictionary.
 
@@ -123,17 +103,6 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     metrics = {k: float(v) for k, v in kv_pattern.findall(stdout)}
     row.update(metrics)
 
-    # Parse perf counters from stderr
-
-    if USE_PERF:
-        cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
-        counter_dic = {k: None for k in counters}
-        for val, name in cnt_pattern.findall(stderr):
-            clean_val = int(val.replace(",", ""))
-            if name in counters:
-                counter_dic[name] = clean_val
-        row.update(counter_dic)
-
     return row
 
 
@@ -144,44 +113,59 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <output.json>")
+        sys.exit(1)
+
+    out_file = sys.argv[1]
     # Build configurations
+    # for insertion, prefetch to l1 is prefetchw.
+    # double prefetch is prefetch to l2 then prefetch to l1, must only be used with 2025.
     build_cfgs = [
         {
             "DRAMHiT_VARIANT": "2025",
-            "CAS_FAST_PATH": "OFF",
-            "CAS_NO_ABSTRACT": "OFF",
-            "DATA_GEN": "HASH",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "ON",
-        },
+            "BUCKETIZATION": "OFF",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "L1",
+        },  # Baseline
         {
             "DRAMHiT_VARIANT": "2025",
-            "CAS_FAST_PATH": "ON",
-            "CAS_NO_ABSTRACT": "OFF",
-            "DATA_GEN": "HASH",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "L1",
+        },  # Bucketization + SIMD
+        {
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-        },
+            "PREFETCH": "L1",
+        },  # Uniform
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "DOUBLE",
+        },  # Prefetch inst
+        {
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "CAS_NO_ABSTRACT": "ON",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "DOUBLE",
+        },  # Code optimization
     ]
 
     run_cfgs = [
         {
-            "insertFactor": 1,
+            "insertFactor": 100,
             "readFactor": 100,
             "numThreads": 64,
             "numa_policy": 4,
-            "size": 536870912,
-            "fill_factor": f,
-        }
-        for f in range(10, 100, 10)
-    ] + [
-        {
-            "insertFactor": 1,
-            "readFactor": 100,
-            "numThreads": 128,
-            "numa_policy": 1,
             "size": 536870912,
             "fill_factor": f,
         }
@@ -191,10 +175,14 @@ if __name__ == "__main__":
     all_results = []
 
     def get_name(bcfg):
-        keys = ["DRAMHiT_VARIANT", "CAS_FAST_PATH"]
-        ret = ""
-        for k in keys:
-            ret += "{" + k + "-" + bcfg[k] + "}"
+        ret = bcfg["DRAMHiT_VARIANT"]
+        for k in bcfg.keys():
+            if k == "BUCKETIZATION" and bcfg[k] == "ON":
+                ret += "+bucket"
+            elif k == "BRANCH" and bcfg[k] == "simd":
+                ret += "+simd"
+            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
+                ret += "+uniform"
 
         return ret
 
@@ -202,8 +190,14 @@ if __name__ == "__main__":
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
+            obj = parse_results(output, rcfg, bcfg, get_name(bcfg))
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit_snoop.json")
+    save_json(all_results, out_file)
+
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <output.json>")
+        sys.exit(1)
+
+    out_file = sys.argv[1]

@@ -1,13 +1,14 @@
 #!/bin/python3
 
-import os
-import subprocess
 import json
+import os
 import re
+import subprocess
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
 USE_PERF = False
+
 
 def build(defines):
     define_flags = [f"-D{k}={v}" for k, v in defines.items()]
@@ -23,38 +24,44 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = [
-        "sudo", "/usr/bin/perf", "stat",
-        "-e", counters_str,
-        "--"
-    ] + dramhit_args
+    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
-counters = [
-    "cycles",
-    "uops_dispatched.port_2_3_10",
-    "uops_issued.any"
-]
+counters = ["cycles", "uops_dispatched.port_2_3_10", "uops_issued.any"]
+
 
 def run(run_cfg):
     results = []
 
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
-        "--find_queue", "64",
-        "--ht-fill", str(run_cfg["fill_factor"]),
-        "--ht-type", "3",
-        "--insert-factor", str(run_cfg["insertFactor"]),
-        "--read-factor", str(run_cfg["readFactor"]),
-        "--num-threads", str(run_cfg["numThreads"]),
-        "--numa-split", str(run_cfg["numa_policy"]),
-        "--no-prefetch", "0",
-        "--mode", "14",
-        "--ht-size", str(run_cfg["size"]),
-        "--skew", "0.01",
-        "--hw-pref", "0",
-        "--batch-len", "16"
+        "--find_queue",
+        "64",
+        "--ht-fill",
+        str(run_cfg["fill_factor"]),
+        "--ht-type",
+        "3",
+        "--insert-factor",
+        str(run_cfg["insertFactor"]),
+        "--read-factor",
+        str(run_cfg["readFactor"]),
+        "--num-threads",
+        str(run_cfg["numThreads"]),
+        "--numa-split",
+        str(run_cfg["numa_policy"]),
+        "--no-prefetch",
+        "0",
+        "--mode",
+        "11",
+        "--ht-size",
+        str(run_cfg["size"]),
+        "--skew",
+        "0.01",
+        "--hw-pref",
+        "0",
+        "--batch-len",
+        "16",
     ]
 
     cmd = []
@@ -62,10 +69,12 @@ def run(run_cfg):
         cmd = make_perf_command(counters, dramhit_args)
     else:
         cmd = ["sudo"] + dramhit_args
-        
+
     print("Running:", " ".join(cmd))
 
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
     stdout, stderr = proc.communicate()
 
     if proc.returncode != 0:
@@ -73,7 +82,6 @@ def run(run_cfg):
         return None
 
     return (stdout, stderr)
-
 
 
 def parse_results(result, counters, run_cfg, build_cfg, identifier):
@@ -85,7 +93,7 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     result    : tuple (stdout, stderr)
     counters  : list of perf counter names to extract
     run_cfg   : dict (runtime configuration)
-    build_cfg : dict (build configuration)  
+    build_cfg : dict (build configuration)
 
     Returns
     -------
@@ -98,9 +106,9 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
         return "-".join(f"{k}={d[k]}" for k in sorted(d.keys()))
 
     row = {
-        "build_cfg": build_cfg,                 # full dict
+        "build_cfg": build_cfg,  # full dict
         "build_cfg_str": dict_to_str(build_cfg),
-        "run_cfg": run_cfg,                     # full dict
+        "run_cfg": run_cfg,  # full dict
         "run_cfg_str": dict_to_str(run_cfg),
         "identifier": identifier,
     }
@@ -111,7 +119,7 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     row.update(metrics)
 
     # Parse perf counters from stderr
-    
+
     if USE_PERF:
         cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
         counter_dic = {k: None for k in counters}
@@ -135,24 +143,81 @@ if __name__ == "__main__":
     # for insertion, prefetch to l1 is prefetchw.
     # double prefetch is prefetch to l2 then prefetch to l1, must only be used with 2025.
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "OFF", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "branched", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "L1"}, # 2023 + bucket + simd
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"}, # 2025 + bucket + simd + double prefetch
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "PREFETCH": "DOUBLE"}, # 2025_inline + bucket + simd + double prefetch
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON", "PREFETCH": "DOUBLE"}, # 2025_inline + bucket + simd + double prefetch + uniform
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "OFF",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "L1",
+        },  # 2023
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "L1",
+        },  # 2023 + bucket
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "L1",
+        },  # 2023 + bucket + simd
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "L2",
+        },  #
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "DOUBLE",
+        },  # 2025 + bucket + simd + double prefetch
+        {
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "DOUBLE",
+        },  # 2025_inline + bucket + simd + double prefetch
+        {
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "DOUBLE",
+        },  # 2025_inline + bucket + simd + double prefetch + uniform
     ]
-    
+
     run_cfgs = [
-    {"insertFactor": 100, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
-    for f in range(10, 100, 10)
-] + [
-    {"insertFactor": 100, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
-    for f in range(10, 100, 10)
-]
+        {
+            "insertFactor": 100,
+            "readFactor": 100,
+            "numThreads": 64,
+            "numa_policy": 4,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
+    ] + [
+        {
+            "insertFactor": 100,
+            "readFactor": 100,
+            "numThreads": 128,
+            "numa_policy": 1,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
+    ]
 
     all_results = []
-    
+
     def get_name(bcfg):
         ret = bcfg["DRAMHiT_VARIANT"]
         for k in bcfg.keys():
@@ -173,4 +238,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit.json")
+    save_json(all_results, "dramhit_amd.json")

@@ -1,13 +1,13 @@
 #!/bin/python3
 
-# To run: 
+# To run:
 # cd scripts/eurosys_2026/prefetches
 # python3 collect_data.py
 # python3 plot_data.py all_dramhit_results.json test
-import os
-import subprocess
 import json
+import os
 import re
+import subprocess
 import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
@@ -28,11 +28,7 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = [
-        "sudo", "/usr/bin/perf", "stat",
-        "-e", counters_str,
-        "--"
-    ] + dramhit_args
+    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
@@ -40,7 +36,7 @@ counters = [
     "cycles",
     "l1d_pend_miss.fb_full",
     "memory_activity.cycles_l1d_miss",
-    "cycle_activity.stalls_total"
+    "cycle_activity.stalls_total",
 ]
 
 
@@ -50,25 +46,40 @@ def run(run_cfg):
     fill = run_cfg["fill_factor"]
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
-        "--find_queue", "64",
-        "--ht-fill", str(fill),
-        "--ht-type", "3",
-        "--insert-factor", str(run_cfg["insertFactor"]),
-        "--read-factor", str(run_cfg["readFactor"]),
-        "--num-threads", str(run_cfg["numThreads"]),
-        "--numa-split", str(run_cfg["numa_policy"]),
-        "--no-prefetch", "0",
-        "--mode", "14",
-        "--ht-size", str(run_cfg["size"]),
-        "--skew", "0.01",
-        "--hw-pref", "0",
-        "--batch-len", "16"
+        "--find_queue",
+        "64",
+        "--ht-fill",
+        str(fill),
+        "--ht-type",
+        "3",
+        "--insert-factor",
+        str(run_cfg["insertFactor"]),
+        "--read-factor",
+        str(run_cfg["readFactor"]),
+        "--num-threads",
+        str(run_cfg["numThreads"]),
+        "--numa-split",
+        str(run_cfg["numa_policy"]),
+        "--no-prefetch",
+        "0",
+        "--mode",
+        "11",
+        "--ht-size",
+        str(run_cfg["size"]),
+        "--skew",
+        "0.01",
+        "--hw-pref",
+        "0",
+        "--batch-len",
+        "16",
     ]
 
     cmd = make_perf_command(counters, dramhit_args)
     print("Running:", " ".join(cmd))
 
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
     stdout, stderr = proc.communicate()
 
     if proc.returncode != 0:
@@ -76,7 +87,6 @@ def run(run_cfg):
         return None
 
     return (stdout, stderr)
-
 
 
 def parse_results(result, counters, run_cfg, build_cfg, identifier):
@@ -101,9 +111,9 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
         return "-".join(f"{k}={d[k]}" for k in sorted(d.keys()))
 
     row = {
-        "build_cfg": build_cfg,                 # full dict
+        "build_cfg": build_cfg,  # full dict
         "build_cfg_str": dict_to_str(build_cfg),
-        "run_cfg": run_cfg,                     # full dict
+        "run_cfg": run_cfg,  # full dict
         "run_cfg_str": dict_to_str(run_cfg),
         "identifier": identifier,
     }
@@ -140,23 +150,65 @@ if __name__ == "__main__":
 
     # Build configurations
     build_cfgs = [
-        {"PREFETCH":"DOUBLE","DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"PREFETCH":"L1","DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"PREFETCH":"L2","DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"PREFETCH":"L3","DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        {"PREFETCH":"NTA","DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-
+        {
+            "PREFETCH": "DOUBLE",
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+        },
+        {
+            "PREFETCH": "L1",
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+        },
+        {
+            "PREFETCH": "L2",
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+        },
+        {
+            "PREFETCH": "L3",
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+        },
+        {
+            "PREFETCH": "NTA",
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+        },
     ]
 
     # Run configurations (example: vary fill_factor, others fixed)
     run_cfgs = [
-    {"insertFactor": 1, "readFactor": 100, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
-    for f in range(10, 100, 10)
-] + [
-    {"insertFactor": 1, "readFactor": 100, "numThreads": 128, "numa_policy": 1, "size": 536870912, "fill_factor": f}
-    for f in range(10, 100, 10)
-]
-
+        {
+            "insertFactor": 1,
+            "readFactor": 100,
+            "numThreads": 64,
+            "numa_policy": 4,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
+    ] + [
+        {
+            "insertFactor": 1,
+            "readFactor": 100,
+            "numThreads": 128,
+            "numa_policy": 1,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
+    ]
 
     all_results = []
 
@@ -164,7 +216,9 @@ if __name__ == "__main__":
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, "-".join(str(v) for v in bcfg.values()))
+            obj = parse_results(
+                output, counters, rcfg, bcfg, "-".join(str(v) for v in bcfg.values())
+            )
             all_results.append(obj)
 
     # Save all results into a single JSON file

@@ -361,7 +361,10 @@ void Application::shard_thread(int tid,
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
     case UNIFORM:
-      this->test.uniform.run(sh, kmer_ht, barrier);
+     //this->test.zipf.run(sh, kmer_ht, 0.01, config.seed,
+     //                   config.num_threads, barrier);
+     this->test.uniform.run(sh, kmer_ht, barrier);
+
     default:
       break;
   }

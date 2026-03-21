@@ -1,0 +1,1559 @@
+  branch-instructions OR branches                    [Hardware event]
+  branch-misses                                      [Hardware event]
+  cache-misses                                       [Hardware event]
+  cache-references                                   [Hardware event]
+  cpu-cycles OR cycles                               [Hardware event]
+  instructions                                       [Hardware event]
+  stalled-cycles-frontend OR idle-cycles-frontend    [Hardware event]
+  alignment-faults                                   [Software event]
+  bpf-output                                         [Software event]
+  cgroup-switches                                    [Software event]
+  context-switches OR cs                             [Software event]
+  cpu-clock                                          [Software event]
+  cpu-migrations OR migrations                       [Software event]
+  dummy                                              [Software event]
+  emulation-faults                                   [Software event]
+  major-faults                                       [Software event]
+  minor-faults                                       [Software event]
+  page-faults OR faults                              [Software event]
+  task-clock                                         [Software event]
+
+tool:
+  duration_time
+  user_time
+  system_time
+
+cache:
+  L1-dcache-loads OR cpu/L1-dcache-loads/
+  L1-dcache-load-misses OR cpu/L1-dcache-load-misses/
+  L1-dcache-prefetches OR cpu/L1-dcache-prefetches/
+  L1-icache-loads OR cpu/L1-icache-loads/
+  L1-icache-load-misses OR cpu/L1-icache-load-misses/
+  dTLB-loads OR cpu/dTLB-loads/
+  dTLB-load-misses OR cpu/dTLB-load-misses/
+  iTLB-loads OR cpu/iTLB-loads/
+  iTLB-load-misses OR cpu/iTLB-load-misses/
+  branch-loads OR cpu/branch-loads/
+  branch-load-misses OR cpu/branch-load-misses/
+  branch-instructions OR cpu/branch-instructions/    [Kernel PMU event]
+  branch-misses OR cpu/branch-misses/                [Kernel PMU event]
+  cache-misses OR cpu/cache-misses/                  [Kernel PMU event]
+  cache-references OR cpu/cache-references/          [Kernel PMU event]
+  cpu-cycles OR cpu/cpu-cycles/                      [Kernel PMU event]
+  instructions OR cpu/instructions/                  [Kernel PMU event]
+  stalled-cycles-frontend OR cpu/stalled-cycles-frontend/[Kernel PMU event]
+  amd_iommu_0/cmd_processed/                         [Kernel PMU event]
+  amd_iommu_0/cmd_processed_inv/                     [Kernel PMU event]
+  amd_iommu_0/ign_rd_wr_mmio_1ff8h/                  [Kernel PMU event]
+  amd_iommu_0/int_dte_hit/                           [Kernel PMU event]
+  amd_iommu_0/int_dte_mis/                           [Kernel PMU event]
+  amd_iommu_0/mem_dte_hit/                           [Kernel PMU event]
+  amd_iommu_0/mem_dte_mis/                           [Kernel PMU event]
+  amd_iommu_0/mem_iommu_tlb_pde_hit/                 [Kernel PMU event]
+  amd_iommu_0/mem_iommu_tlb_pde_mis/                 [Kernel PMU event]
+  amd_iommu_0/mem_iommu_tlb_pte_hit/                 [Kernel PMU event]
+  amd_iommu_0/mem_iommu_tlb_pte_mis/                 [Kernel PMU event]
+  amd_iommu_0/mem_pass_excl/                         [Kernel PMU event]
+  amd_iommu_0/mem_pass_pretrans/                     [Kernel PMU event]
+  amd_iommu_0/mem_pass_untrans/                      [Kernel PMU event]
+  amd_iommu_0/mem_target_abort/                      [Kernel PMU event]
+  amd_iommu_0/mem_trans_total/                       [Kernel PMU event]
+  amd_iommu_0/page_tbl_read_gst/                     [Kernel PMU event]
+  amd_iommu_0/page_tbl_read_nst/                     [Kernel PMU event]
+  amd_iommu_0/page_tbl_read_tot/                     [Kernel PMU event]
+  amd_iommu_0/smi_blk/                               [Kernel PMU event]
+  amd_iommu_0/smi_recv/                              [Kernel PMU event]
+  amd_iommu_0/tlb_inv/                               [Kernel PMU event]
+  amd_iommu_0/vapic_int_guest/                       [Kernel PMU event]
+  amd_iommu_0/vapic_int_non_guest/                   [Kernel PMU event]
+  amd_iommu_1/cmd_processed/                         [Kernel PMU event]
+  amd_iommu_1/cmd_processed_inv/                     [Kernel PMU event]
+  amd_iommu_1/ign_rd_wr_mmio_1ff8h/                  [Kernel PMU event]
+  amd_iommu_1/int_dte_hit/                           [Kernel PMU event]
+  amd_iommu_1/int_dte_mis/                           [Kernel PMU event]
+  amd_iommu_1/mem_dte_hit/                           [Kernel PMU event]
+  amd_iommu_1/mem_dte_mis/                           [Kernel PMU event]
+  amd_iommu_1/mem_iommu_tlb_pde_hit/                 [Kernel PMU event]
+  amd_iommu_1/mem_iommu_tlb_pde_mis/                 [Kernel PMU event]
+  amd_iommu_1/mem_iommu_tlb_pte_hit/                 [Kernel PMU event]
+  amd_iommu_1/mem_iommu_tlb_pte_mis/                 [Kernel PMU event]
+  amd_iommu_1/mem_pass_excl/                         [Kernel PMU event]
+  amd_iommu_1/mem_pass_pretrans/                     [Kernel PMU event]
+  amd_iommu_1/mem_pass_untrans/                      [Kernel PMU event]
+  amd_iommu_1/mem_target_abort/                      [Kernel PMU event]
+  amd_iommu_1/mem_trans_total/                       [Kernel PMU event]
+  amd_iommu_1/page_tbl_read_gst/                     [Kernel PMU event]
+  amd_iommu_1/page_tbl_read_nst/                     [Kernel PMU event]
+  amd_iommu_1/page_tbl_read_tot/                     [Kernel PMU event]
+  amd_iommu_1/smi_blk/                               [Kernel PMU event]
+  amd_iommu_1/smi_recv/                              [Kernel PMU event]
+  amd_iommu_1/tlb_inv/                               [Kernel PMU event]
+  amd_iommu_1/vapic_int_guest/                       [Kernel PMU event]
+  amd_iommu_1/vapic_int_non_guest/                   [Kernel PMU event]
+  amd_iommu_2/cmd_processed/                         [Kernel PMU event]
+  amd_iommu_2/cmd_processed_inv/                     [Kernel PMU event]
+  amd_iommu_2/ign_rd_wr_mmio_1ff8h/                  [Kernel PMU event]
+  amd_iommu_2/int_dte_hit/                           [Kernel PMU event]
+  amd_iommu_2/int_dte_mis/                           [Kernel PMU event]
+  amd_iommu_2/mem_dte_hit/                           [Kernel PMU event]
+  amd_iommu_2/mem_dte_mis/                           [Kernel PMU event]
+  amd_iommu_2/mem_iommu_tlb_pde_hit/                 [Kernel PMU event]
+  amd_iommu_2/mem_iommu_tlb_pde_mis/                 [Kernel PMU event]
+  amd_iommu_2/mem_iommu_tlb_pte_hit/                 [Kernel PMU event]
+  amd_iommu_2/mem_iommu_tlb_pte_mis/                 [Kernel PMU event]
+  amd_iommu_2/mem_pass_excl/                         [Kernel PMU event]
+  amd_iommu_2/mem_pass_pretrans/                     [Kernel PMU event]
+  amd_iommu_2/mem_pass_untrans/                      [Kernel PMU event]
+  amd_iommu_2/mem_target_abort/                      [Kernel PMU event]
+  amd_iommu_2/mem_trans_total/                       [Kernel PMU event]
+  amd_iommu_2/page_tbl_read_gst/                     [Kernel PMU event]
+  amd_iommu_2/page_tbl_read_nst/                     [Kernel PMU event]
+  amd_iommu_2/page_tbl_read_tot/                     [Kernel PMU event]
+  amd_iommu_2/smi_blk/                               [Kernel PMU event]
+  amd_iommu_2/smi_recv/                              [Kernel PMU event]
+  amd_iommu_2/tlb_inv/                               [Kernel PMU event]
+  amd_iommu_2/vapic_int_guest/                       [Kernel PMU event]
+  amd_iommu_2/vapic_int_non_guest/                   [Kernel PMU event]
+  amd_iommu_3/cmd_processed/                         [Kernel PMU event]
+  amd_iommu_3/cmd_processed_inv/                     [Kernel PMU event]
+  amd_iommu_3/ign_rd_wr_mmio_1ff8h/                  [Kernel PMU event]
+  amd_iommu_3/int_dte_hit/                           [Kernel PMU event]
+  amd_iommu_3/int_dte_mis/                           [Kernel PMU event]
+  amd_iommu_3/mem_dte_hit/                           [Kernel PMU event]
+  amd_iommu_3/mem_dte_mis/                           [Kernel PMU event]
+  amd_iommu_3/mem_iommu_tlb_pde_hit/                 [Kernel PMU event]
+  amd_iommu_3/mem_iommu_tlb_pde_mis/                 [Kernel PMU event]
+  amd_iommu_3/mem_iommu_tlb_pte_hit/                 [Kernel PMU event]
+  amd_iommu_3/mem_iommu_tlb_pte_mis/                 [Kernel PMU event]
+  amd_iommu_3/mem_pass_excl/                         [Kernel PMU event]
+  amd_iommu_3/mem_pass_pretrans/                     [Kernel PMU event]
+  amd_iommu_3/mem_pass_untrans/                      [Kernel PMU event]
+  amd_iommu_3/mem_target_abort/                      [Kernel PMU event]
+  amd_iommu_3/mem_trans_total/                       [Kernel PMU event]
+  amd_iommu_3/page_tbl_read_gst/                     [Kernel PMU event]
+  amd_iommu_3/page_tbl_read_nst/                     [Kernel PMU event]
+  amd_iommu_3/page_tbl_read_tot/                     [Kernel PMU event]
+  amd_iommu_3/smi_blk/                               [Kernel PMU event]
+  amd_iommu_3/smi_recv/                              [Kernel PMU event]
+  amd_iommu_3/tlb_inv/                               [Kernel PMU event]
+  amd_iommu_3/vapic_int_guest/                       [Kernel PMU event]
+  amd_iommu_3/vapic_int_non_guest/                   [Kernel PMU event]
+  msr/aperf/                                         [Kernel PMU event]
+  msr/irperf/                                        [Kernel PMU event]
+  msr/mperf/                                         [Kernel PMU event]
+  msr/tsc/                                           [Kernel PMU event]
+  power/energy-pkg/                                  [Kernel PMU event]
+
+cache:
+  ls_inef_sw_pref.all OR cpu/ls_inef_sw_pref.all/
+
+data fabric:
+  amd_df/local_processor_read_data_beats_cs0/
+  amd_df/local_processor_read_data_beats_cs1/
+  amd_df/local_processor_read_data_beats_cs10/
+  amd_df/local_processor_read_data_beats_cs11/
+  amd_df/local_processor_read_data_beats_cs2/
+  amd_df/local_processor_read_data_beats_cs3/
+  amd_df/local_processor_read_data_beats_cs4/
+  amd_df/local_processor_read_data_beats_cs5/
+  amd_df/local_processor_read_data_beats_cs6/
+  amd_df/local_processor_read_data_beats_cs7/
+  amd_df/local_processor_read_data_beats_cs8/
+  amd_df/local_processor_read_data_beats_cs9/
+  amd_df/local_processor_write_data_beats_cs0/
+  amd_df/local_processor_write_data_beats_cs1/
+  amd_df/local_processor_write_data_beats_cs10/
+  amd_df/local_processor_write_data_beats_cs11/
+  amd_df/local_processor_write_data_beats_cs2/
+  amd_df/local_processor_write_data_beats_cs3/
+  amd_df/local_processor_write_data_beats_cs4/
+  amd_df/local_processor_write_data_beats_cs5/
+  amd_df/local_processor_write_data_beats_cs6/
+  amd_df/local_processor_write_data_beats_cs7/
+  amd_df/local_processor_write_data_beats_cs8/
+  amd_df/local_processor_write_data_beats_cs9/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm0/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm1/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm2/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm3/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm4/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm5/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm6/
+  amd_df/local_socket_inf0_inbound_data_beats_ccm7/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm0/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm1/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm2/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm3/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm4/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm5/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm6/
+  amd_df/local_socket_inf0_outbound_data_beats_ccm7/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm0/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm1/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm2/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm3/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm4/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm5/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm6/
+  amd_df/local_socket_inf1_inbound_data_beats_ccm7/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm0/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm1/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm2/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm3/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm4/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm5/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm6/
+  amd_df/local_socket_inf1_outbound_data_beats_ccm7/
+  amd_df/local_socket_outbound_data_beats_link0/
+  amd_df/local_socket_outbound_data_beats_link1/
+  amd_df/local_socket_outbound_data_beats_link2/
+  amd_df/local_socket_outbound_data_beats_link3/
+  amd_df/local_socket_outbound_data_beats_link4/
+  amd_df/local_socket_outbound_data_beats_link5/
+  amd_df/local_socket_outbound_data_beats_link6/
+  amd_df/local_socket_outbound_data_beats_link7/
+  amd_df/local_socket_upstream_read_beats_iom0/
+  amd_df/local_socket_upstream_read_beats_iom1/
+  amd_df/local_socket_upstream_read_beats_iom2/
+  amd_df/local_socket_upstream_read_beats_iom3/
+  amd_df/local_socket_upstream_write_beats_iom0/
+  amd_df/local_socket_upstream_write_beats_iom1/
+  amd_df/local_socket_upstream_write_beats_iom2/
+  amd_df/local_socket_upstream_write_beats_iom3/
+  amd_df/remote_processor_read_data_beats_cs0/
+  amd_df/remote_processor_read_data_beats_cs1/
+  amd_df/remote_processor_read_data_beats_cs10/
+  amd_df/remote_processor_read_data_beats_cs11/
+  amd_df/remote_processor_read_data_beats_cs2/
+  amd_df/remote_processor_read_data_beats_cs3/
+  amd_df/remote_processor_read_data_beats_cs4/
+  amd_df/remote_processor_read_data_beats_cs5/
+  amd_df/remote_processor_read_data_beats_cs6/
+  amd_df/remote_processor_read_data_beats_cs7/
+  amd_df/remote_processor_read_data_beats_cs8/
+  amd_df/remote_processor_read_data_beats_cs9/
+  amd_df/remote_processor_write_data_beats_cs0/
+  amd_df/remote_processor_write_data_beats_cs1/
+  amd_df/remote_processor_write_data_beats_cs10/
+  amd_df/remote_processor_write_data_beats_cs11/
+  amd_df/remote_processor_write_data_beats_cs2/
+  amd_df/remote_processor_write_data_beats_cs3/
+  amd_df/remote_processor_write_data_beats_cs4/
+  amd_df/remote_processor_write_data_beats_cs5/
+  amd_df/remote_processor_write_data_beats_cs6/
+  amd_df/remote_processor_write_data_beats_cs7/
+  amd_df/remote_processor_write_data_beats_cs8/
+  amd_df/remote_processor_write_data_beats_cs9/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm0/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm1/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm2/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm3/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm4/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm5/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm6/
+  amd_df/remote_socket_inf0_inbound_data_beats_ccm7/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm0/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm1/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm2/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm3/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm4/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm5/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm6/
+  amd_df/remote_socket_inf0_outbound_data_beats_ccm7/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm0/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm1/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm2/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm3/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm4/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm5/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm6/
+  amd_df/remote_socket_inf1_inbound_data_beats_ccm7/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm0/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm1/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm2/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm3/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm4/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm5/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm6/
+  amd_df/remote_socket_inf1_outbound_data_beats_ccm7/
+  amd_df/remote_socket_upstream_read_beats_iom0/
+  amd_df/remote_socket_upstream_read_beats_iom1/
+  amd_df/remote_socket_upstream_read_beats_iom2/
+  amd_df/remote_socket_upstream_read_beats_iom3/
+  amd_df/remote_socket_upstream_write_beats_iom0/
+  amd_df/remote_socket_upstream_write_beats_iom1/
+  amd_df/remote_socket_upstream_write_beats_iom2/
+  amd_df/remote_socket_upstream_write_beats_iom3/
+
+memory controller:
+  amd_umc_0/umc_act_cmd.all/
+  amd_umc_0/umc_act_cmd.rd/
+  amd_umc_0/umc_act_cmd.wr/
+  amd_umc_0/umc_cas_cmd.all/
+  amd_umc_0/umc_cas_cmd.rd/
+  amd_umc_0/umc_cas_cmd.wr/
+  amd_umc_0/umc_data_slot_clks.all/
+  amd_umc_0/umc_data_slot_clks.rd/
+  amd_umc_0/umc_data_slot_clks.wr/
+  amd_umc_0/umc_mem_clk/
+  amd_umc_0/umc_pchg_cmd.all/
+  amd_umc_0/umc_pchg_cmd.rd/
+  amd_umc_0/umc_pchg_cmd.wr/
+  amd_umc_1/umc_act_cmd.all/
+  amd_umc_1/umc_act_cmd.rd/
+  amd_umc_1/umc_act_cmd.wr/
+  amd_umc_1/umc_cas_cmd.all/
+  amd_umc_1/umc_cas_cmd.rd/
+  amd_umc_1/umc_cas_cmd.wr/
+  amd_umc_1/umc_data_slot_clks.all/
+  amd_umc_1/umc_data_slot_clks.rd/
+  amd_umc_1/umc_data_slot_clks.wr/
+  amd_umc_1/umc_mem_clk/
+  amd_umc_1/umc_pchg_cmd.all/
+  amd_umc_1/umc_pchg_cmd.rd/
+  amd_umc_1/umc_pchg_cmd.wr/
+  amd_umc_10/umc_act_cmd.all/
+  amd_umc_10/umc_act_cmd.rd/
+  amd_umc_10/umc_act_cmd.wr/
+  amd_umc_10/umc_cas_cmd.all/
+  amd_umc_10/umc_cas_cmd.rd/
+  amd_umc_10/umc_cas_cmd.wr/
+  amd_umc_10/umc_data_slot_clks.all/
+  amd_umc_10/umc_data_slot_clks.rd/
+  amd_umc_10/umc_data_slot_clks.wr/
+  amd_umc_10/umc_mem_clk/
+  amd_umc_10/umc_pchg_cmd.all/
+  amd_umc_10/umc_pchg_cmd.rd/
+  amd_umc_10/umc_pchg_cmd.wr/
+  amd_umc_11/umc_act_cmd.all/
+  amd_umc_11/umc_act_cmd.rd/
+  amd_umc_11/umc_act_cmd.wr/
+  amd_umc_11/umc_cas_cmd.all/
+  amd_umc_11/umc_cas_cmd.rd/
+  amd_umc_11/umc_cas_cmd.wr/
+  amd_umc_11/umc_data_slot_clks.all/
+  amd_umc_11/umc_data_slot_clks.rd/
+  amd_umc_11/umc_data_slot_clks.wr/
+  amd_umc_11/umc_mem_clk/
+  amd_umc_11/umc_pchg_cmd.all/
+  amd_umc_11/umc_pchg_cmd.rd/
+  amd_umc_11/umc_pchg_cmd.wr/
+  amd_umc_2/umc_act_cmd.all/
+  amd_umc_2/umc_act_cmd.rd/
+  amd_umc_2/umc_act_cmd.wr/
+  amd_umc_2/umc_cas_cmd.all/
+  amd_umc_2/umc_cas_cmd.rd/
+  amd_umc_2/umc_cas_cmd.wr/
+  amd_umc_2/umc_data_slot_clks.all/
+  amd_umc_2/umc_data_slot_clks.rd/
+  amd_umc_2/umc_data_slot_clks.wr/
+  amd_umc_2/umc_mem_clk/
+  amd_umc_2/umc_pchg_cmd.all/
+  amd_umc_2/umc_pchg_cmd.rd/
+  amd_umc_2/umc_pchg_cmd.wr/
+  amd_umc_3/umc_act_cmd.all/
+  amd_umc_3/umc_act_cmd.rd/
+  amd_umc_3/umc_act_cmd.wr/
+  amd_umc_3/umc_cas_cmd.all/
+  amd_umc_3/umc_cas_cmd.rd/
+  amd_umc_3/umc_cas_cmd.wr/
+  amd_umc_3/umc_data_slot_clks.all/
+  amd_umc_3/umc_data_slot_clks.rd/
+  amd_umc_3/umc_data_slot_clks.wr/
+  amd_umc_3/umc_mem_clk/
+  amd_umc_3/umc_pchg_cmd.all/
+  amd_umc_3/umc_pchg_cmd.rd/
+  amd_umc_3/umc_pchg_cmd.wr/
+  amd_umc_4/umc_act_cmd.all/
+  amd_umc_4/umc_act_cmd.rd/
+  amd_umc_4/umc_act_cmd.wr/
+  amd_umc_4/umc_cas_cmd.all/
+  amd_umc_4/umc_cas_cmd.rd/
+  amd_umc_4/umc_cas_cmd.wr/
+  amd_umc_4/umc_data_slot_clks.all/
+  amd_umc_4/umc_data_slot_clks.rd/
+  amd_umc_4/umc_data_slot_clks.wr/
+  amd_umc_4/umc_mem_clk/
+  amd_umc_4/umc_pchg_cmd.all/
+  amd_umc_4/umc_pchg_cmd.rd/
+  amd_umc_4/umc_pchg_cmd.wr/
+  amd_umc_5/umc_act_cmd.all/
+  amd_umc_5/umc_act_cmd.rd/
+  amd_umc_5/umc_act_cmd.wr/
+  amd_umc_5/umc_cas_cmd.all/
+  amd_umc_5/umc_cas_cmd.rd/
+  amd_umc_5/umc_cas_cmd.wr/
+  amd_umc_5/umc_data_slot_clks.all/
+  amd_umc_5/umc_data_slot_clks.rd/
+  amd_umc_5/umc_data_slot_clks.wr/
+  amd_umc_5/umc_mem_clk/
+  amd_umc_5/umc_pchg_cmd.all/
+  amd_umc_5/umc_pchg_cmd.rd/
+  amd_umc_5/umc_pchg_cmd.wr/
+  amd_umc_6/umc_act_cmd.all/
+  amd_umc_6/umc_act_cmd.rd/
+  amd_umc_6/umc_act_cmd.wr/
+  amd_umc_6/umc_cas_cmd.all/
+  amd_umc_6/umc_cas_cmd.rd/
+  amd_umc_6/umc_cas_cmd.wr/
+  amd_umc_6/umc_data_slot_clks.all/
+  amd_umc_6/umc_data_slot_clks.rd/
+  amd_umc_6/umc_data_slot_clks.wr/
+  amd_umc_6/umc_mem_clk/
+  amd_umc_6/umc_pchg_cmd.all/
+  amd_umc_6/umc_pchg_cmd.rd/
+  amd_umc_6/umc_pchg_cmd.wr/
+  amd_umc_7/umc_act_cmd.all/
+  amd_umc_7/umc_act_cmd.rd/
+  amd_umc_7/umc_act_cmd.wr/
+  amd_umc_7/umc_cas_cmd.all/
+  amd_umc_7/umc_cas_cmd.rd/
+  amd_umc_7/umc_cas_cmd.wr/
+  amd_umc_7/umc_data_slot_clks.all/
+  amd_umc_7/umc_data_slot_clks.rd/
+  amd_umc_7/umc_data_slot_clks.wr/
+  amd_umc_7/umc_mem_clk/
+  amd_umc_7/umc_pchg_cmd.all/
+  amd_umc_7/umc_pchg_cmd.rd/
+  amd_umc_7/umc_pchg_cmd.wr/
+  amd_umc_8/umc_act_cmd.all/
+  amd_umc_8/umc_act_cmd.rd/
+  amd_umc_8/umc_act_cmd.wr/
+  amd_umc_8/umc_cas_cmd.all/
+  amd_umc_8/umc_cas_cmd.rd/
+  amd_umc_8/umc_cas_cmd.wr/
+  amd_umc_8/umc_data_slot_clks.all/
+  amd_umc_8/umc_data_slot_clks.rd/
+  amd_umc_8/umc_data_slot_clks.wr/
+  amd_umc_8/umc_mem_clk/
+  amd_umc_8/umc_pchg_cmd.all/
+  amd_umc_8/umc_pchg_cmd.rd/
+  amd_umc_8/umc_pchg_cmd.wr/
+  amd_umc_9/umc_act_cmd.all/
+  amd_umc_9/umc_act_cmd.rd/
+  amd_umc_9/umc_act_cmd.wr/
+  amd_umc_9/umc_cas_cmd.all/
+  amd_umc_9/umc_cas_cmd.rd/
+  amd_umc_9/umc_cas_cmd.wr/
+  amd_umc_9/umc_data_slot_clks.all/
+  amd_umc_9/umc_data_slot_clks.rd/
+  amd_umc_9/umc_data_slot_clks.wr/
+  amd_umc_9/umc_mem_clk/
+  amd_umc_9/umc_pchg_cmd.all/
+  amd_umc_9/umc_pchg_cmd.rd/
+  amd_umc_9/umc_pchg_cmd.wr/
+
+branch:
+  bp_de_redirect
+       [Instruction decoder corrects the predicted target and resteers the
+        branch predictor]
+  bp_dyn_ind_pred
+       [Dynamic indirect predictions (branch used the indirect predictor to
+        make a prediction)]
+  bp_l2_btb_correct
+       [L2 branch prediction overrides existing prediction (speculative)]
+  ex_ret_brn
+       [Retired branch instructions (all types of architectural control flow
+        changes, including exceptions and interrupts)]
+  ex_ret_brn_far
+       [Retired far control transfers (far call/jump/return, IRET, SYSCALL and
+        SYSRET, plus exceptions and interrupts). Far control transfers are not
+        subject to branch prediction]
+  ex_ret_brn_ind_misp
+       [Retired indirect branch instructions mispredicted (only EX
+        mispredicts). Each misprediction incurs the same penalty as a
+        mispredicted conditional branch instruction]
+  ex_ret_brn_misp
+       [Retired branch instructions mispredicted]
+  ex_ret_brn_tkn
+       [Retired taken branch instructions (all types of architectural control
+        flow changes, including exceptions and interrupts)]
+  ex_ret_brn_tkn_misp
+       [Retired taken branch instructions mispredicted]
+  ex_ret_cond
+       [Retired conditional branch instructions]
+  ex_ret_ind_brch_instr
+       [Retired indirect branch instructions]
+  ex_ret_msprd_brnch_instr_dir_msmtch
+       [Retired branch instructions mispredicted due to direction mismatch]
+  ex_ret_near_ret
+       [Retired near returns (RET or RET Iw)]
+  ex_ret_near_ret_mispred
+       [Retired near returns mispredicted. Each misprediction incurs the same
+        penalty as a mispredicted conditional branch instruction]
+  ex_ret_uncond_brnch_instr
+       [Retired unconditional branch instructions]
+  ex_ret_uncond_brnch_instr_mispred
+       [Retired unconditional indirect branch instructions mispredicted]
+
+cache:
+  ic_cache_fill_l2
+       [Instruction cache lines (64 bytes) fulfilled from the L2 cache]
+  ic_cache_fill_sys
+       [Instruction cache lines (64 bytes) fulfilled from system memory or
+        another cache]
+  ic_tag_hit_miss.all_instruction_cache_accesses
+       [Instruction cache accesses of all types]
+  ic_tag_hit_miss.instruction_cache_hit
+       [Instruction cache hits]
+  ic_tag_hit_miss.instruction_cache_miss
+       [Instruction cache misses]
+  l2_cache_req_stat.all
+       [Core to L2 cache requests (not including L2 prefetch) for data and
+        instruction cache access]
+  l2_cache_req_stat.dc_access_in_l2
+       [Core to L2 cache requests (not including L2 prefetch) for data cache
+        access]
+  l2_cache_req_stat.dc_hit_in_l2
+       [Core to L2 cache requests (not including L2 prefetch) for data cache
+        hits]
+  l2_cache_req_stat.ic_access_in_l2
+       [Core to L2 cache requests (not including L2 prefetch) for instruction
+        cache access]
+  l2_cache_req_stat.ic_dc_hit_in_l2
+       [Core to L2 cache requests (not including L2 prefetch) for data and
+        instruction cache hits]
+  l2_cache_req_stat.ic_dc_miss_in_l2
+       [Core to L2 cache requests (not including L2 prefetch) for data and
+        instruction cache misses]
+  l2_cache_req_stat.ic_fill_hit_s
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        instruction cache hit non-modifiable line in L2]
+  l2_cache_req_stat.ic_fill_hit_x
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        instruction cache hit modifiable line in L2]
+  l2_cache_req_stat.ic_fill_miss
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        instruction cache request miss in L2]
+  l2_cache_req_stat.ic_hit_in_l2
+       [Core to L2 cache requests (not including L2 prefetch) for instruction
+        cache hits]
+  l2_cache_req_stat.ls_rd_blk_c
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        data cache request miss in L2]
+  l2_cache_req_stat.ls_rd_blk_cs
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        data cache shared read hit in L2]
+  l2_cache_req_stat.ls_rd_blk_l_hit_s
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        data cache read hit non-modifiable line in L2]
+  l2_cache_req_stat.ls_rd_blk_l_hit_x
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        data cache read hit modifiable line in L2]
+  l2_cache_req_stat.ls_rd_blk_x
+       [Core to L2 cache requests (not including L2 prefetch) with status:
+        data cache store or state change hit in L2]
+  l2_pf_hit_l2.all
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        all types]
+  l2_pf_hit_l2.l1_region
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L1Region (fetch additional lines into L1 cache when the data
+        access for a given instruction tends to be followed by a consistent
+        pattern of other accesses within a localized region)]
+  l2_pf_hit_l2.l1_stream
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L1Stream (fetch additional sequential lines into L1 cache)]
+  l2_pf_hit_l2.l1_stride
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L1Stride (fetch additional lines into L1 cache when each access
+        is a constant distance from the previous)]
+  l2_pf_hit_l2.l2_burst
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L2Burst (aggressively fetch additional sequential lines into L2
+        cache)]
+  l2_pf_hit_l2.l2_next_line
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L2NextLine (fetch the next line into L2 cache)]
+  l2_pf_hit_l2.l2_stream
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L2Stream (fetch additional sequential lines into L2 cache)]
+  l2_pf_hit_l2.l2_stride
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L2Stride (fetch additional lines into L2 cache when each access
+        is at a constant distance from the previous)]
+  l2_pf_hit_l2.l2_up_down
+       [L2 prefetches accepted by the L2 pipeline which hit in the L2 cache of
+        type L2UpDown (fetch the next or previous line into L2 cache for all
+        memory accesses)]
+  l2_pf_miss_l2_hit_l3.all
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache cache of all types]
+  l2_pf_miss_l2_hit_l3.l1_region
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L1Region (fetch additional lines into L1
+        cache when the data access for a given instruction tends to be
+        followed by a consistent pattern of other accesses within a localized
+        region)]
+  l2_pf_miss_l2_hit_l3.l1_stream
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L1Stream (fetch additional sequential
+        lines into L1 cache)]
+  l2_pf_miss_l2_hit_l3.l1_stride
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L1Stride (fetch additional lines into L1
+        cache when each access is a constant distance from the previous)]
+  l2_pf_miss_l2_hit_l3.l2_burst
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L2Burst (aggressively fetch additional
+        sequential lines into L2 cache)]
+  l2_pf_miss_l2_hit_l3.l2_next_line
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L2NextLine (fetch the next line into L2
+        cache)]
+  l2_pf_miss_l2_hit_l3.l2_stream
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L2Stream (fetch additional sequential
+        lines into L2 cache)]
+  l2_pf_miss_l2_hit_l3.l2_stride
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L2Stride (fetch additional lines into L2
+        cache when each access is a constant distance from the previous)]
+  l2_pf_miss_l2_hit_l3.l2_up_down
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 cache and
+        hit in the L3 cache of type L2UpDown (fetch the next or previous line
+        into L2 cache for all memory accesses)]
+  l2_pf_miss_l2_l3.all
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of all types]
+  l2_pf_miss_l2_l3.l1_region
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L1Region (fetch additional lines into L1 cache when the
+        data access for a given instruction tends to be followed by a
+        consistent pattern of other accesses within a localized region)]
+  l2_pf_miss_l2_l3.l1_stream
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L1Stream (fetch additional sequential lines into L1
+        cache)]
+  l2_pf_miss_l2_l3.l1_stride
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L1Stride (fetch additional lines into L1 cache when
+        each access is a constant distance from the previous)]
+  l2_pf_miss_l2_l3.l2_burst
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L2Burst (aggressively fetch additional sequential lines
+        into L2 cache)]
+  l2_pf_miss_l2_l3.l2_next_line
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L2NextLine (fetch the next line into L2 cache)]
+  l2_pf_miss_l2_l3.l2_stream
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L2Stream (fetch additional sequential lines into L2
+        cache)]
+  l2_pf_miss_l2_l3.l2_stride
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L2Stride (fetch additional lines into L2 cache when
+        each access is a constant distance from the previous)]
+  l2_pf_miss_l2_l3.l2_up_down
+       [L2 prefetches accepted by the L2 pipeline which miss the L2 and the L3
+        caches of type L2UpDown (fetch the next or previous line into L2 cache
+        for all memory accesses)]
+  l2_request_g1.all
+       [L2 cache requests of all types]
+  l2_request_g1.all_dc
+       [L2 cache requests of common types from L1 data cache (including
+        prefetches)]
+  l2_request_g1.all_no_prefetch
+       [L2 cache requests of common types not including prefetches]
+  l2_request_g1.cacheable_ic_read
+       [L2 cache requests: instruction cache reads]
+  l2_request_g1.change_to_x
+       [L2 cache requests: data cache state change to writable, check L2 for
+        current state]
+  l2_request_g1.group2
+       [L2 cache requests of non-cacheable type (non-cached data and
+        instructions reads, self-modifying code checks)]
+  l2_request_g1.l2_hw_pf
+       [L2 cache requests: from hardware prefetchers to prefetch directly into
+        L2 (hit or miss)]
+  l2_request_g1.ls_rd_blk_c_s
+       [L2 cache requests: data cache shared reads]
+  l2_request_g1.prefetch_l2_cmd
+       [L2 cache requests: prefetch directly into L2]
+  l2_request_g1.rd_blk_l
+       [L2 cache requests: data cache reads including hardware and software
+        prefetch]
+  l2_request_g1.rd_blk_x
+       [L2 cache requests: data cache stores]
+  ls_alloc_mab_count
+       [In-flight L1 data cache misses i.e. Miss Address Buffer (MAB)
+        allocations each cycle]
+  ls_any_fills_from_sys.all
+       [Any data cache fills from all types of data sources]
+  ls_any_fills_from_sys.all_dram_io
+       [Any data cache fills from either DRAM or MMIO in any NUMA node (same
+        or different socket)]
+  ls_any_fills_from_sys.alternate_memories
+       [Any data cache fills from extension memory]
+  ls_any_fills_from_sys.dram_io_all
+       [Any data cache fills from either DRAM or MMIO in any NUMA node (same
+        or different socket)]
+  ls_any_fills_from_sys.dram_io_far
+       [Any data cache fills from either DRAM or MMIO in a different NUMA node
+        (same or different socket)]
+  ls_any_fills_from_sys.dram_io_near
+       [Any data cache fills from either DRAM or MMIO in the same NUMA node]
+  ls_any_fills_from_sys.far_all
+       [Any data cache fills from either cache of another CCX, DRAM or MMIO
+        when the address was in a different NUMA node (same or different
+        socket)]
+  ls_any_fills_from_sys.far_cache
+       [Any data cache fills from cache of another CCX when the address was in
+        a different NUMA node]
+  ls_any_fills_from_sys.local_all
+       [Any data cache fills from local L2 cache or L3 cache or different L2
+        cache in the same CCX]
+  ls_any_fills_from_sys.local_ccx
+       [Any data cache fills from L3 cache or different L2 cache in the same
+        CCX]
+  ls_any_fills_from_sys.local_l2
+       [Any data cache fills from local L2 cache]
+  ls_any_fills_from_sys.near_cache
+       [Any data cache fills from cache of another CCX when the address was in
+        the same NUMA node]
+  ls_any_fills_from_sys.remote_cache
+       [Any data cache fills from cache of another CCX when the address was in
+        the same or a different NUMA node]
+  ls_dmnd_fills_from_sys.all
+       [Demand data cache fills from all types of data sources]
+  ls_dmnd_fills_from_sys.alternate_memories
+       [Demand data cache fills from extension memory]
+  ls_dmnd_fills_from_sys.dram_io_far
+       [Demand data cache fills from either DRAM or MMIO in a different NUMA
+        node (same or different socket)]
+  ls_dmnd_fills_from_sys.dram_io_near
+       [Demand data cache fills from either DRAM or MMIO in the same NUMA node]
+  ls_dmnd_fills_from_sys.far_cache
+       [Demand data cache fills from cache of another CCX when the address was
+        in a different NUMA node]
+  ls_dmnd_fills_from_sys.local_ccx
+       [Demand data cache fills from L3 cache or different L2 cache in the
+        same CCX]
+  ls_dmnd_fills_from_sys.local_l2
+       [Demand data cache fills from local L2 cache]
+  ls_dmnd_fills_from_sys.near_cache
+       [Demand data cache fills from cache of another CCX when the address was
+        in the same NUMA node]
+  ls_hw_pf_dc_fills.all
+       [Hardware prefetch data cache fills from all types of data sources]
+  ls_hw_pf_dc_fills.alternate_memories
+       [Hardware prefetch data cache fills from extension memory]
+  ls_hw_pf_dc_fills.dram_io_far
+       [Hardware prefetch data cache fills from either DRAM or MMIO in a
+        different NUMA node (same or different socket)]
+  ls_hw_pf_dc_fills.dram_io_near
+       [Hardware prefetch data cache fills from either DRAM or MMIO in the
+        same NUMA node]
+  ls_hw_pf_dc_fills.far_cache
+       [Hardware prefetch data cache fills from cache of another CCX when the
+        address was in a different NUMA node]
+  ls_hw_pf_dc_fills.local_ccx
+       [Hardware prefetch data cache fills from L3 cache or different L2 cache
+        in the same CCX]
+  ls_hw_pf_dc_fills.local_l2
+       [Hardware prefetch data cache fills from local L2 cache]
+  ls_hw_pf_dc_fills.near_cache
+       [Hardware prefetch data cache fills from cache of another CCX when the
+        address was in the same NUMA node]
+  ls_inef_sw_pref.data_pipe_sw_pf_dc_hit
+       [Software prefetches that did not fetch data outside of the processor
+        core as the PREFETCH instruction saw a data cache hit]
+  ls_inef_sw_pref.mab_mch_cnt
+       [Software prefetches that did not fetch data outside of the processor
+        core as the PREFETCH instruction saw a match on an already allocated
+        Miss Address Buffer (MAB)]
+  ls_mab_alloc.all_allocations
+       [Miss Address Buffer (MAB) entries allocated by a Load-Store (LS) pipe
+        for all types of allocations]
+  ls_mab_alloc.hardware_prefetcher_allocations
+       [Miss Address Buffer (MAB) entries allocated by a Load-Store (LS) pipe
+        for hardware prefetcher allocations]
+  ls_mab_alloc.load_store_allocations
+       [Miss Address Buffer (MAB) entries allocated by a Load-Store (LS) pipe
+        for load-store allocations]
+  ls_pref_instr_disp.all
+       [Software prefetch instructions dispatched (speculative) of all types]
+  ls_pref_instr_disp.prefetch
+       [Software prefetch instructions dispatched (speculative) of type
+        PrefetchT0 (move data to all cache levels), T1 (move data to all cache
+        levels except L1) and T2 (move data to all cache levels except L1 and
+        L2)]
+  ls_pref_instr_disp.prefetch_nta
+       [Software prefetch instructions dispatched (speculative) of type
+        PrefetchNTA (move data with minimum cache pollution i.e. non-temporal
+        access)]
+  ls_pref_instr_disp.prefetch_w
+       [Software prefetch instructions dispatched (speculative) of type
+        PrefetchW (move data to L1 cache and mark it modifiable)]
+  ls_sw_pf_dc_fills.all
+       [Software prefetch data cache fills from all types of data sources]
+  ls_sw_pf_dc_fills.alternate_memories
+       [Software prefetch data cache fills from extension memory]
+  ls_sw_pf_dc_fills.dram_io_far
+       [Software prefetch data cache fills from either DRAM or MMIO in a
+        different NUMA node (same or different socket)]
+  ls_sw_pf_dc_fills.dram_io_near
+       [Software prefetch data cache fills from either DRAM or MMIO in the
+        same NUMA node]
+  ls_sw_pf_dc_fills.far_cache
+       [Software prefetch data cache fills from cache of another CCX in a
+        different NUMA node]
+  ls_sw_pf_dc_fills.local_ccx
+       [Software prefetch data cache fills from L3 cache or different L2 cache
+        in the same CCX]
+  ls_sw_pf_dc_fills.local_l2
+       [Software prefetch data cache fills from local L2 cache]
+  ls_sw_pf_dc_fills.near_cache
+       [Software prefetch data cache fills from cache of another CCX in the
+        same NUMA node]
+  op_cache_hit_miss.all_op_cache_accesses
+       [Op cache accesses of all types]
+  op_cache_hit_miss.op_cache_hit
+       [Op cache hits]
+  op_cache_hit_miss.op_cache_miss
+       [Op cache misses]
+  l3_lookup_state.all_coherent_accesses_to_l3
+       [L3 cache requests for all coherent accesses. Unit: amd_l3]
+  l3_lookup_state.l3_hit
+       [L3 cache hits. Unit: amd_l3]
+  l3_lookup_state.l3_miss
+       [L3 cache misses. Unit: amd_l3]
+  l3_xi_sampled_latency.all
+       [Average sampled latency from all data sources. Unit: amd_l3]
+  l3_xi_sampled_latency.dram_far
+       [Average sampled latency when data is sourced from DRAM in a different
+        NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency.dram_near
+       [Average sampled latency when data is sourced from DRAM in the same
+        NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency.ext_far
+       [Average sampled latency when data is sourced from extension memory
+        (CXL) in a different NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency.ext_near
+       [Average sampled latency when data is sourced from extension memory
+        (CXL) in the same NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency.far_cache
+       [Average sampled latency when data is sourced from another CCX's cache
+        when the address was in a different NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency.near_cache
+       [Average sampled latency when data is sourced from another CCX's cache
+        when the address was in the same NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency_requests.all
+       [L3 cache fill requests sourced from all data sources. Unit: amd_l3]
+  l3_xi_sampled_latency_requests.dram_far
+       [L3 cache fill requests sourced from DRAM in a different NUMA node.
+        Unit: amd_l3]
+  l3_xi_sampled_latency_requests.dram_near
+       [L3 cache fill requests sourced from DRAM in the same NUMA node. Unit:
+        amd_l3]
+  l3_xi_sampled_latency_requests.ext_far
+       [L3 cache fill requests sourced from extension memory (CXL) in a
+        different NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency_requests.ext_near
+       [L3 cache fill requests sourced from extension memory (CXL) in the same
+        NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency_requests.far_cache
+       [L3 cache fill requests sourced from another CCX's cache when the
+        address was in a different NUMA node. Unit: amd_l3]
+  l3_xi_sampled_latency_requests.near_cache
+       [L3 cache fill requests sourced from another CCX's cache when the
+        address was in the same NUMA node. Unit: amd_l3]
+
+core:
+  ex_div_busy
+       [Number of cycles the divider is busy]
+  ex_div_count
+       [Divide ops executed]
+  ex_no_retire.all
+       [Cycles with no retire for any reason]
+  ex_no_retire.empte
+       [Cycles with no retire due to the lack of valid ops in the retire queue
+        (may be caused by front-end bottlenecks or pipeline redirects)]
+  ex_no_retire.load_not_complete
+       [Cycles with no retire while the oldest op is waiting for load data]
+  ex_no_retire.not_complete
+       [Cycles with no retire while the oldest op is waiting to be executed]
+  ex_no_retire.other
+       [Cycles with no retire caused by other reasons (retire breaks, traps,
+        faults, etc.)]
+  ex_no_retire.thread_not_selected
+       [Cycles with no retire because thread arbitration did not select the
+        thread]
+  ex_ret_fused_instr
+       [Retired fused instructions]
+  ex_ret_instr
+       [Retired instructions]
+  ex_ret_ops
+       [Retired macro-ops]
+  ex_ret_ucode_instr
+       [Retired microcoded instructions]
+  ex_ret_ucode_ops
+       [Retired microcode ops]
+  ex_tagged_ibs_ops.ibs_tagged_ops
+       [Ops tagged by IBS]
+  ex_tagged_ibs_ops.ibs_tagged_ops_ret
+       [Ops tagged by IBS that retired]
+  ls_int_taken
+       [Interrupts taken]
+  ls_locks.bus_lock
+       [Retired Lock instructions which caused a bus lock]
+  ls_not_halted_cyc
+       [Core cycles not in halt]
+  ls_not_halted_p0_cyc.p0_freq_cyc
+       [Reference cycles (P0 frequency) not in halt]
+  ls_ret_cl_flush
+       [Retired CLFLUSH instructions]
+  ls_ret_cpuid
+       [Retired CPUID instructions]
+  ls_smi_rx
+       [SMIs received]
+
+floating point:
+  fp_disp_faults.all
+       [Floating-point dispatch faults of all types]
+  fp_disp_faults.sse_avx_all
+       [Floating-point dispatch faults of all types for SSE and AVX ops]
+  fp_disp_faults.x87_fill_fault
+       [Floating-point dispatch faults for x87 fills]
+  fp_disp_faults.xmm_fill_fault
+       [Floating-point dispatch faults for XMM fills]
+  fp_disp_faults.ymm_fill_fault
+       [Floating-point dispatch faults for YMM fills]
+  fp_disp_faults.ymm_spill_fault
+       [Floating-point dispatch faults for YMM spills]
+  fp_ops_retired_by_type.all
+       [Retired floating-point ops of all types]
+  fp_ops_retired_by_type.scalar_add
+       [Retired scalar floating-point add ops]
+  fp_ops_retired_by_type.scalar_all
+       [Retired scalar floating-point ops of all types]
+  fp_ops_retired_by_type.scalar_blend
+       [Retired scalar floating-point blend ops]
+  fp_ops_retired_by_type.scalar_cmp
+       [Retired scalar floating-point compare ops]
+  fp_ops_retired_by_type.scalar_cvt
+       [Retired scalar floating-point convert ops]
+  fp_ops_retired_by_type.scalar_div
+       [Retired scalar floating-point divide ops]
+  fp_ops_retired_by_type.scalar_mac
+       [Retired scalar floating-point multiply-accumulate ops]
+  fp_ops_retired_by_type.scalar_mul
+       [Retired scalar floating-point multiply ops]
+  fp_ops_retired_by_type.scalar_other
+       [Retired scalar floating-point ops of other types]
+  fp_ops_retired_by_type.scalar_sqrt
+       [Retired scalar floating-point square root ops]
+  fp_ops_retired_by_type.scalar_sub
+       [Retired scalar floating-point subtract ops]
+  fp_ops_retired_by_type.vector_add
+       [Retired vector floating-point add ops]
+  fp_ops_retired_by_type.vector_all
+       [Retired vector floating-point ops of all types]
+  fp_ops_retired_by_type.vector_blend
+       [Retired vector floating-point blend ops]
+  fp_ops_retired_by_type.vector_cmp
+       [Retired vector floating-point compare ops]
+  fp_ops_retired_by_type.vector_cvt
+       [Retired vector floating-point convert ops]
+  fp_ops_retired_by_type.vector_div
+       [Retired vector floating-point divide ops]
+  fp_ops_retired_by_type.vector_logical
+       [Retired vector floating-point logical ops]
+  fp_ops_retired_by_type.vector_mac
+       [Retired vector floating-point multiply-accumulate ops]
+  fp_ops_retired_by_type.vector_mul
+       [Retired vector floating-point multiply ops]
+  fp_ops_retired_by_type.vector_other
+       [Retired vector floating-point ops of other types]
+  fp_ops_retired_by_type.vector_shuffle
+       [Retired vector floating-point shuffle ops (may include instructions
+        not necessarily thought of as including shuffles e.g. horizontal add,
+        dot product, and certain MOV instructions)]
+  fp_ops_retired_by_type.vector_sqrt
+       [Retired vector floating-point square root ops]
+  fp_ops_retired_by_type.vector_sub
+       [Retired vector floating-point subtract ops]
+  fp_ops_retired_by_width.all
+       [Retired floating-point ops of all widths]
+  fp_ops_retired_by_width.mmx_uops_retired
+       [Retired MMX floating-point ops]
+  fp_ops_retired_by_width.pack_128_uops_retired
+       [Retired packed 128-bit floating-point ops]
+  fp_ops_retired_by_width.pack_256_uops_retired
+       [Retired packed 256-bit floating-point ops]
+  fp_ops_retired_by_width.pack_512_uops_retired
+       [Retired packed 512-bit floating-point ops]
+  fp_ops_retired_by_width.scalar_uops_retired
+       [Retired scalar floating-point ops]
+  fp_ops_retired_by_width.x87_uops_retired
+       [Retired x87 floating-point ops]
+  fp_pack_ops_retired.all
+       [Retired packed floating-point ops of all types]
+  fp_pack_ops_retired.fp128_add
+       [Retired 128-bit packed floating-point add ops]
+  fp_pack_ops_retired.fp128_all
+       [Retired 128-bit packed floating-point ops of all types]
+  fp_pack_ops_retired.fp128_blend
+       [Retired 128-bit packed floating-point blend ops]
+  fp_pack_ops_retired.fp128_cmp
+       [Retired 128-bit packed floating-point compare ops]
+  fp_pack_ops_retired.fp128_cvt
+       [Retired 128-bit packed floating-point convert ops]
+  fp_pack_ops_retired.fp128_div
+       [Retired 128-bit packed floating-point divide ops]
+  fp_pack_ops_retired.fp128_logical
+       [Retired 128-bit packed floating-point logical ops]
+  fp_pack_ops_retired.fp128_mac
+       [Retired 128-bit packed floating-point multiply-accumulate ops]
+  fp_pack_ops_retired.fp128_mul
+       [Retired 128-bit packed floating-point multiply ops]
+  fp_pack_ops_retired.fp128_other
+       [Retired 128-bit packed floating-point ops of other types]
+  fp_pack_ops_retired.fp128_shuffle
+       [Retired 128-bit packed floating-point shuffle ops (may include
+        instructions not necessarily thought of as including shuffles e.g.
+        horizontal add, dot product, and certain MOV instructions)]
+  fp_pack_ops_retired.fp128_sqrt
+       [Retired 128-bit packed floating-point square root ops]
+  fp_pack_ops_retired.fp128_sub
+       [Retired 128-bit packed floating-point subtract ops]
+  fp_pack_ops_retired.fp256_add
+       [Retired 256-bit packed floating-point add ops]
+  fp_pack_ops_retired.fp256_all
+       [Retired 256-bit packed floating-point ops of all types]
+  fp_pack_ops_retired.fp256_blend
+       [Retired 256-bit packed floating-point blend ops]
+  fp_pack_ops_retired.fp256_cmp
+       [Retired 256-bit packed floating-point compare ops]
+  fp_pack_ops_retired.fp256_cvt
+       [Retired 256-bit packed floating-point convert ops]
+  fp_pack_ops_retired.fp256_div
+       [Retired 256-bit packed floating-point divide ops]
+  fp_pack_ops_retired.fp256_logical
+       [Retired 256-bit packed floating-point logical ops]
+  fp_pack_ops_retired.fp256_mac
+       [Retired 256-bit packed floating-point multiply-accumulate ops]
+  fp_pack_ops_retired.fp256_mul
+       [Retired 256-bit packed floating-point multiply ops]
+  fp_pack_ops_retired.fp256_other
+       [Retired 256-bit packed floating-point ops of other types]
+  fp_pack_ops_retired.fp256_shuffle
+       [Retired 256-bit packed floating-point shuffle ops (may include
+        instructions not necessarily thought of as including shuffles e.g.
+        horizontal add, dot product, and certain MOV instructions)]
+  fp_pack_ops_retired.fp256_sqrt
+       [Retired 256-bit packed floating-point square root ops]
+  fp_pack_ops_retired.fp256_sub
+       [Retired 256-bit packed floating-point subtract ops]
+  fp_ret_sse_avx_ops.add_sub_flops
+       [Retired SSE and AVX floating-point add and subtract ops]
+  fp_ret_sse_avx_ops.all
+       [Retired SSE and AVX floating-point ops of all types]
+  fp_ret_sse_avx_ops.bfloat_mac_flops
+       [Retired SSE and AVX floating-point bfloat multiply-accumulate ops
+        (each operation is counted as 2 ops)]
+  fp_ret_sse_avx_ops.div_flops
+       [Retired SSE and AVX floating-point divide and square root ops]
+  fp_ret_sse_avx_ops.mac_flops
+       [Retired SSE and AVX floating-point multiply-accumulate ops (each
+        operation is counted as 2 ops)]
+  fp_ret_sse_avx_ops.mult_flops
+       [Retired SSE and AVX floating-point multiply ops]
+  fp_ret_x87_fp_ops.add_sub_ops
+       [Retired x87 floating-point add and subtract ops]
+  fp_ret_x87_fp_ops.all
+       [Retired x87 floating-point ops of all types]
+  fp_ret_x87_fp_ops.div_sqrt_ops
+       [Retired x87 floating-point divide and square root ops]
+  fp_ret_x87_fp_ops.mul_ops
+       [Retired x87 floating-point multiply ops]
+  fp_retired_ser_ops.all
+       [Retired SSE and AVX serializing ops of all types]
+  fp_retired_ser_ops.sse_bot_ret
+       [Retired SSE and AVX bottom-executing ops. Bottom-executing ops wait
+        for all older ops to retire before executing]
+  fp_retired_ser_ops.sse_ctrl_ret
+       [Retired SSE and AVX control word mispredict traps]
+  fp_retired_ser_ops.x87_bot_ret
+       [Retired x87 bottom-executing ops. Bottom-executing ops wait for all
+        older ops to retire before executing]
+  fp_retired_ser_ops.x87_ctrl_ret
+       [Retired x87 control word mispredict traps due to mispredictions in RC
+        or PC, or changes in exception mask bits]
+  packed_int_op_type.all
+       [Retired packed integer ops of all types]
+  packed_int_op_type.int128_add
+       [Retired 128-bit packed integer add ops]
+  packed_int_op_type.int128_aes
+       [Retired 128-bit packed integer AES ops]
+  packed_int_op_type.int128_all
+       [Retired 128-bit packed integer ops of all types]
+  packed_int_op_type.int128_clm
+       [Retired 128-bit packed integer CLM ops]
+  packed_int_op_type.int128_cmp
+       [Retired 128-bit packed integer compare ops]
+  packed_int_op_type.int128_logical
+       [Retired 128-bit packed integer logical ops]
+  packed_int_op_type.int128_mac
+       [Retired 128-bit packed integer multiply-accumulate ops]
+  packed_int_op_type.int128_mov
+       [Retired 128-bit packed integer MOV ops]
+  packed_int_op_type.int128_mul
+       [Retired 128-bit packed integer multiply ops]
+  packed_int_op_type.int128_other
+       [Retired 128-bit packed integer ops of other types]
+  packed_int_op_type.int128_pack
+       [Retired 128-bit packed integer pack ops]
+  packed_int_op_type.int128_sha
+       [Retired 128-bit packed integer SHA ops]
+  packed_int_op_type.int128_shift
+       [Retired 128-bit packed integer shift ops]
+  packed_int_op_type.int128_shuffle
+       [Retired 128-bit packed integer shuffle ops (may include instructions
+        not necessarily thought of as including shuffles e.g. horizontal add,
+        dot product, and certain MOV instructions)]
+  packed_int_op_type.int128_sub
+       [Retired 128-bit packed integer subtract ops]
+  packed_int_op_type.int256_add
+       [Retired 256-bit packed integer add ops]
+  packed_int_op_type.int256_all
+       [Retired 256-bit packed integer ops of all types]
+  packed_int_op_type.int256_cmp
+       [Retired 256-bit packed integer compare ops]
+  packed_int_op_type.int256_logical
+       [Retired 256-bit packed integer logical ops]
+  packed_int_op_type.int256_mac
+       [Retired 256-bit packed integer multiply-accumulate ops]
+  packed_int_op_type.int256_mov
+       [Retired 256-bit packed integer MOV ops]
+  packed_int_op_type.int256_mul
+       [Retired 256-bit packed integer multiply ops]
+  packed_int_op_type.int256_other
+       [Retired 256-bit packed integer ops of other types]
+  packed_int_op_type.int256_pack
+       [Retired 256-bit packed integer pack ops]
+  packed_int_op_type.int256_shift
+       [Retired 256-bit packed integer shift ops]
+  packed_int_op_type.int256_shuffle
+       [Retired 256-bit packed integer shuffle ops (may include instructions
+        not necessarily thought of as including shuffles e.g. horizontal add,
+        dot product, and certain MOV instructions)]
+  packed_int_op_type.int256_sub
+       [Retired 256-bit packed integer subtract ops]
+  sse_avx_ops_retired.all
+       [Retired SSE, AVX and MMX integer ops of all types]
+  sse_avx_ops_retired.mmx_add
+       [Retired MMX integer add]
+  sse_avx_ops_retired.mmx_all
+       [Retired MMX integer ops of all types]
+  sse_avx_ops_retired.mmx_cmp
+       [Retired MMX integer compare ops]
+  sse_avx_ops_retired.mmx_logical
+       [Retired MMX integer logical ops]
+  sse_avx_ops_retired.mmx_mac
+       [Retired MMX integer multiply-accumulate ops]
+  sse_avx_ops_retired.mmx_mov
+       [Retired MMX integer MOV ops]
+  sse_avx_ops_retired.mmx_mul
+       [Retired MMX integer multiply ops]
+  sse_avx_ops_retired.mmx_other
+       [Retired MMX integer multiply ops of other types]
+  sse_avx_ops_retired.mmx_pack
+       [Retired MMX integer pack ops]
+  sse_avx_ops_retired.mmx_shift
+       [Retired MMX integer shift ops]
+  sse_avx_ops_retired.mmx_shuffle
+       [Retired MMX integer shuffle ops (may include instructions not
+        necessarily thought of as including shuffles e.g. horizontal add, dot
+        product, and certain MOV instructions)]
+  sse_avx_ops_retired.mmx_sub
+       [Retired MMX integer subtract ops]
+  sse_avx_ops_retired.sse_avx_add
+       [Retired SSE and AVX integer add ops]
+  sse_avx_ops_retired.sse_avx_aes
+       [Retired SSE and AVX integer AES ops]
+  sse_avx_ops_retired.sse_avx_all
+       [Retired SSE and AVX integer ops of all types]
+  sse_avx_ops_retired.sse_avx_clm
+       [Retired SSE and AVX integer CLM ops]
+  sse_avx_ops_retired.sse_avx_cmp
+       [Retired SSE and AVX integer compare ops]
+  sse_avx_ops_retired.sse_avx_logical
+       [Retired SSE and AVX integer logical ops]
+  sse_avx_ops_retired.sse_avx_mac
+       [Retired SSE and AVX integer multiply-accumulate ops]
+  sse_avx_ops_retired.sse_avx_mov
+       [Retired SSE and AVX integer MOV ops]
+  sse_avx_ops_retired.sse_avx_mul
+       [Retired SSE and AVX integer multiply ops]
+  sse_avx_ops_retired.sse_avx_other
+       [Retired SSE and AVX integer ops of other types]
+  sse_avx_ops_retired.sse_avx_pack
+       [Retired SSE and AVX integer pack ops]
+  sse_avx_ops_retired.sse_avx_sha
+       [Retired SSE and AVX integer SHA ops]
+  sse_avx_ops_retired.sse_avx_shift
+       [Retired SSE and AVX integer shift ops]
+  sse_avx_ops_retired.sse_avx_shuffle
+       [Retired SSE and AVX integer shuffle ops (may include instructions not
+        necessarily thought of as including shuffles e.g. horizontal add, dot
+        product, and certain MOV instructions)]
+  sse_avx_ops_retired.sse_avx_sub
+       [Retired SSE and AVX integer subtract ops]
+
+memory:
+  bp_l1_tlb_fetch_hit.all
+       [Instruction fetches that hit in the L1 ITLB for all page sizes]
+  bp_l1_tlb_fetch_hit.if1g
+       [Instruction fetches that hit in the L1 ITLB for 1G pages]
+  bp_l1_tlb_fetch_hit.if2m
+       [Instruction fetches that hit in the L1 ITLB for 2M pages]
+  bp_l1_tlb_fetch_hit.if4k
+       [Instruction fetches that hit in the L1 ITLB for 4k or coalesced pages.
+        A coalesced page is a 16k page created from four adjacent 4k pages]
+  bp_l1_tlb_miss_l2_tlb_hit
+       [Instruction fetches that miss in the L1 ITLB but hit in the L2 ITLB]
+  bp_l1_tlb_miss_l2_tlb_miss.all
+       [Instruction fetches that miss in both the L1 and L2 ITLBs (page-table
+        walks are requested) for all page sizes]
+  bp_l1_tlb_miss_l2_tlb_miss.coalesced_4k
+       [Instruction fetches that miss in both the L1 and L2 ITLBs (page-table
+        walks are requested) for coalesced pages. A coalesced page is a 16k
+        page created from four adjacent 4k pages]
+  bp_l1_tlb_miss_l2_tlb_miss.if1g
+       [Instruction fetches that miss in both the L1 and L2 ITLBs (page-table
+        walks are requested) for 1G pages]
+  bp_l1_tlb_miss_l2_tlb_miss.if2m
+       [Instruction fetches that miss in both the L1 and L2 ITLBs (page-table
+        walks are requested) for 2M pages]
+  bp_l1_tlb_miss_l2_tlb_miss.if4k
+       [Instruction fetches that miss in both the L1 and L2 ITLBs (page-table
+        walks are requested) for 4k pages]
+  ls_bad_status2.stli_other
+       [Store-to-load conflicts (load unable to complete due to a
+        non-forwardable conflict with an older store)]
+  ls_dispatch.ld_dispatch
+       [Number of memory load operations dispatched to the load-store unit]
+  ls_dispatch.ld_st_dispatch
+       [Number of memory load-store operations dispatched to the load-store
+        unit]
+  ls_dispatch.store_dispatch
+       [Number of memory store operations dispatched to the load-store unit]
+  ls_l1_d_tlb_miss.all
+       [L1 DTLB misses for all page sizes]
+  ls_l1_d_tlb_miss.all_l2_miss
+       [L1 DTLB misses with L2 DTLB misses (page-table walks are requested)
+        for all page sizes]
+  ls_l1_d_tlb_miss.tlb_reload_1g_l2_hit
+       [L1 DTLB misses with L2 DTLB hits for 1G pages]
+  ls_l1_d_tlb_miss.tlb_reload_1g_l2_miss
+       [L1 DTLB misses with L2 DTLB misses (page-table walks are requested)
+        for 1G pages]
+  ls_l1_d_tlb_miss.tlb_reload_2m_l2_hit
+       [L1 DTLB misses with L2 DTLB hits for 2M pages]
+  ls_l1_d_tlb_miss.tlb_reload_2m_l2_miss
+       [L1 DTLB misses with L2 DTLB misses (page-table walks are requested)
+        for 2M pages]
+  ls_l1_d_tlb_miss.tlb_reload_4k_l2_hit
+       [L1 DTLB misses with L2 DTLB hits for 4k pages]
+  ls_l1_d_tlb_miss.tlb_reload_4k_l2_miss
+       [L1 DTLB misses with L2 DTLB misses (page-table walks are requested)
+        for 4k pages]
+  ls_l1_d_tlb_miss.tlb_reload_coalesced_page_hit
+       [L1 DTLB misses with L2 DTLB hits for coalesced pages. A coalesced page
+        is a 16k page created from four adjacent 4k pages]
+  ls_l1_d_tlb_miss.tlb_reload_coalesced_page_miss
+       [L1 DTLB misses with L2 DTLB misses (page-table walks are requested)
+        for coalesced pages. A coalesced page is a 16k page created from four
+        adjacent 4k pages]
+  ls_misal_loads.ma4k
+       [4kB misaligned (page crossing) loads]
+  ls_misal_loads.ma64
+       [64B misaligned (cacheline crossing) loads]
+  ls_st_commit_cancel2.st_commit_cancel_wcb_full
+       [Non-cacheable store commits cancelled due to the non-cacheable commit
+        buffer being full]
+  ls_stlf
+       [Store-to-load-forward (STLF) hits]
+  ls_tlb_flush.all
+       [All TLB Flushes]
+
+other:
+  de_dis_dispatch_token_stalls1.fp_flush_recovery_stall
+       [Number of cycles dispatch is stalled for floating-point flush recovery]
+  de_dis_dispatch_token_stalls1.fp_reg_file_rsrc_stall
+       [Number of cycles dispatch is stalled for floating-point register file
+        tokens]
+  de_dis_dispatch_token_stalls1.fp_sch_rsrc_stall
+       [Number of cycles dispatch is stalled for floating-point scheduler
+        tokens]
+  de_dis_dispatch_token_stalls1.int_phy_reg_file_rsrc_stall
+       [Number of cycles dispatch is stalled for integer physical register
+        file tokens]
+  de_dis_dispatch_token_stalls1.load_queue_rsrc_stall
+       [Number of cycles dispatch is stalled for Load queue token]
+  de_dis_dispatch_token_stalls1.store_queue_rsrc_stall
+       [Number of cycles dispatch is stalled for store queue tokens]
+  de_dis_dispatch_token_stalls1.taken_brnch_buffer_rsrc
+       [Number of cycles dispatch is stalled for taken branch buffer tokens]
+  de_dis_dispatch_token_stalls2.int_sch0_token_stall
+       [Number of cycles dispatch is stalled for integer scheduler queue 0
+        tokens]
+  de_dis_dispatch_token_stalls2.int_sch1_token_stall
+       [Number of cycles dispatch is stalled for integer scheduler queue 1
+        tokens]
+  de_dis_dispatch_token_stalls2.int_sch2_token_stall
+       [Number of cycles dispatch is stalled for integer scheduler queue 2
+        tokens]
+  de_dis_dispatch_token_stalls2.int_sch3_token_stall
+       [Number of cycles dispatch is stalled for integer scheduler queue 3
+        tokens]
+  de_dis_dispatch_token_stalls2.retire_token_stall
+       [Number of cycles dispatch is stalled for retire queue tokens]
+  de_dis_ops_from_decoder.any_fp_dispatch
+       [Number of ops dispatched to the floating-point unit]
+  de_dis_ops_from_decoder.disp_op_type.any_integer_dispatch
+       [Number of ops dispatched to the integer execution unit]
+  de_no_dispatch_per_slot.backend_stalls
+       [In each cycle counts ops unable to dispatch because of back-end stalls]
+  de_no_dispatch_per_slot.no_ops_from_frontend
+       [In each cycle counts dispatch slots left empty because the front-end
+        did not supply ops]
+  de_no_dispatch_per_slot.smt_contention
+       [In each cycle counts ops unable to dispatch because the dispatch cycle
+        was granted to the other SMT thread]
+  de_op_queue_empty
+       [Cycles when the op queue is empty. Such cycles indicate that the
+        front-end is not delivering instructions fast enough]
+  de_src_op_disp.all
+       [Ops dispatched from any source]
+  de_src_op_disp.decoder
+       [Ops fetched from instruction cache and dispatched]
+  de_src_op_disp.loop_buffer
+       [Ops dispatched from loop buffer]
+  de_src_op_disp.op_cache
+       [Ops fetched from op cache and dispatched]
+  resyncs_or_nc_redirects
+       [Pipeline restarts not caused by branch mispredicts]
+
+recommended:
+  all_data_cache_accesses
+       [All data cache accesses]
+  rNNN                                               [Raw hardware event descriptor]
+  cpu/t1=v1[,t2=v2,t3 ...]/modifier                  [Raw hardware event descriptor]
+       [(see 'man perf-list' on how to encode it)]
+  mem:<addr>[/len][:access]                          [Hardware breakpoint]
+
+Metric Groups:
+
+No_group:
+  ic_fetch_miss_ratio
+       [Instruction cache miss ratio for all fetches. An instruction cache
+        miss will not be counted by this metric if it is an OC hit]
+  macro_ops_retired
+       [Macro-ops retired]
+  op_cache_fetch_miss_ratio
+       [Op cache miss ratio for all fetches]
+  sse_avx_stalls
+       [Mixed SSE/AVX stalls]
+  total_dispatch_slots
+       [Total dispatch slots (upto 6 instructions can be dispatched in each
+        cycle)]
+
+PipelineL1:
+  backend_bound
+       [Fraction of dispatch slots that remained unused because of backend
+        stalls]
+  bad_speculation
+       [Fraction of dispatched ops that did not retire]
+  frontend_bound
+       [Fraction of dispatch slots that remained unused because the frontend
+        did not supply enough instructions/ops]
+  retiring
+       [Fraction of dispatch slots used by ops that retired]
+  smt_contention
+       [Fraction of dispatch slots that remained unused because the other
+        thread was selected]
+
+PipelineL2:
+  backend_bound_cpu
+       [Fraction of dispatch slots that remained unused because of stalls not
+        related to the memory subsystem]
+  backend_bound_memory
+       [Fraction of dispatch slots that remained unused because of stalls due
+        to the memory subsystem]
+  bad_speculation_mispredicts
+       [Fraction of dispatched ops that were flushed due to branch mispredicts]
+  bad_speculation_pipeline_restarts
+       [Fraction of dispatched ops that were flushed due to pipeline restarts
+        (resyncs)]
+  frontend_bound_bandwidth
+       [Fraction of dispatch slots that remained unused because of a bandwidth
+        bottleneck in the frontend (such as decode or op cache fetch
+        bandwidth)]
+  frontend_bound_latency
+       [Fraction of dispatch slots that remained unused because of a latency
+        bottleneck in the frontend (such as instruction cache or TLB misses)]
+  retiring_fastpath
+       [Fraction of dispatch slots used by fastpath ops that retired]
+  retiring_microcode
+       [Fraction of dispatch slots used by microcode ops that retired]
+
+backend_bound_group:
+  backend_bound_cpu
+       [Fraction of dispatch slots that remained unused because of stalls not
+        related to the memory subsystem]
+  backend_bound_memory
+       [Fraction of dispatch slots that remained unused because of stalls due
+        to the memory subsystem]
+
+bad_speculation_group:
+  bad_speculation_mispredicts
+       [Fraction of dispatched ops that were flushed due to branch mispredicts]
+  bad_speculation_pipeline_restarts
+       [Fraction of dispatched ops that were flushed due to pipeline restarts
+        (resyncs)]
+
+branch_prediction:
+  branch_misprediction_ratio
+       [Execution-time branch misprediction ratio (non-speculative)]
+
+data_fabric:
+  dram_read_data_for_local_processor
+       [DRAM read data for local processor]
+  dram_read_data_for_remote_processor
+       [DRAM read data for remote processor]
+  dram_write_data_for_local_processor
+       [DRAM write data for local processor]
+  dram_write_data_for_remote_processor
+       [DRAM write data for remote processor]
+  local_socket_inbound_data_to_cpu
+       [Local socket inbound data to the CPU (e.g. read data)]
+  local_socket_outbound_data_from_all_links
+       [Outbound data from all links (local socket)]
+  local_socket_outbound_data_from_cpu
+       [Local socket outbound data from the CPU (e.g. write data)]
+  local_socket_upstream_dma_read_data
+       [Local socket upstream DMA read data]
+  local_socket_upstream_dma_write_data
+       [Local socket upstream DMA write data]
+  remote_socket_inbound_data_to_cpu
+       [Remote socket inbound data to the CPU (e.g. read data)]
+  remote_socket_outbound_data_from_cpu
+       [Remote socket outbound data from the CPU (e.g. write data)]
+  remote_socket_upstream_dma_read_data
+       [Remote socket upstream DMA read data]
+  remote_socket_upstream_dma_write_data
+       [Remote socket upstream DMA write data]
+
+decoder:
+  macro_ops_dispatched
+       [Macro-ops dispatched]
+
+frontend_bound_group:
+  frontend_bound_bandwidth
+       [Fraction of dispatch slots that remained unused because of a bandwidth
+        bottleneck in the frontend (such as decode or op cache fetch
+        bandwidth)]
+  frontend_bound_latency
+       [Fraction of dispatch slots that remained unused because of a latency
+        bottleneck in the frontend (such as instruction cache or TLB misses)]
+
+l1_dcache:
+  all_l1_data_cache_fills
+       [All L1 data cache fills]
+  l1_data_cache_fills_from_different_ccx
+       [L1 data cache fills from another CCX cache in any NUMA node]
+  l1_data_cache_fills_from_memory
+       [L1 data cache fills from DRAM or MMIO in any NUMA node]
+  l1_data_cache_fills_from_remote_node
+       [L1 data cache fills from a different NUMA node]
+  l1_data_cache_fills_from_same_ccx
+       [L1 data cache fills from within the same CCX]
+  l1_demand_data_cache_fills_from_far_cache
+       [L1 demand data cache fills from another CCX cache in a different NUMA
+        node]
+  l1_demand_data_cache_fills_from_far_memory
+       [L1 demand data cache fills from DRAM or MMIO in a different NUMA node]
+  l1_demand_data_cache_fills_from_local_l2
+       [L1 demand data cache fills from local L2 cache]
+  l1_demand_data_cache_fills_from_near_cache
+       [L1 demand data cache fills from another CCX cache in the same NUMA
+        node]
+  l1_demand_data_cache_fills_from_near_memory
+       [L1 demand data cache fills from DRAM or MMIO in the same NUMA node]
+  l1_demand_data_cache_fills_from_same_ccx
+       [L1 demand data cache fills from within the same CCX]
+
+l2_cache:
+  all_l2_cache_accesses
+       [All L2 cache accesses]
+  all_l2_cache_hits
+       [All L2 cache hits]
+  all_l2_cache_misses
+       [All L2 cache misses]
+  l2_cache_accesses_from_l1_dc_misses
+       [L2 cache accesses from L1 data cache misses (including prefetch)]
+  l2_cache_accesses_from_l1_ic_misses
+       [L2 cache accesses from L1 instruction cache misses (including
+        prefetch)]
+  l2_cache_accesses_from_l2_hwpf
+       [L2 cache accesses from L2 cache hardware prefetcher]
+  l2_cache_hits_from_l1_dc_miss
+       [L2 cache hits from L1 data cache misses]
+  l2_cache_hits_from_l1_ic_miss
+       [L2 cache hits from L1 instruction cache misses]
+  l2_cache_hits_from_l2_hwpf
+       [L2 cache hits from L2 cache hardware prefetcher]
+  l2_cache_misses_from_l1_dc_miss
+       [L2 cache misses from L1 data cache misses]
+  l2_cache_misses_from_l1_ic_miss
+       [L2 cache misses from L1 instruction cache misses]
+  l2_cache_misses_from_l2_hwpf
+       [L2 cache misses from L2 cache hardware prefetcher]
+
+l3_cache:
+  l3_cache_accesses
+       [L3 cache accesses]
+  l3_misses
+       [L3 misses (including cacheline state change requests)]
+  l3_read_miss_latency
+       [Average L3 read miss latency (in core clocks)]
+
+memory_controller:
+  umc_activate_cmd_rate
+       [Memory controller ACTIVATE command rate]
+  umc_cas_cmd_rate
+       [Memory controller CAS command rate]
+  umc_cas_cmd_read_ratio
+       [Ratio of memory controller CAS commands for reads]
+  umc_cas_cmd_write_ratio
+       [Ratio of memory controller CAS commands for writes]
+  umc_data_bus_utilization
+       [Memory controller data bus utilization]
+  umc_mem_bandwidth
+       [Estimated combined memory bandwidth]
+  umc_mem_read_bandwidth
+       [Estimated memory read bandwidth]
+  umc_mem_write_bandwidth
+       [Estimated memory write bandwidth]
+  umc_precharge_cmd_rate
+       [Memory controller PRECHARGE command rate]
+
+retiring_group:
+  retiring_fastpath
+       [Fraction of dispatch slots used by fastpath ops that retired]
+  retiring_microcode
+       [Fraction of dispatch slots used by microcode ops that retired]
+
+tlb:
+  all_tlbs_flushed
+       [All TLBs flushed]
+  l1_dtlb_misses
+       [L1 data TLB misses]
+  l1_itlb_misses
+       [L1 instruction TLB misses]
+  l2_dtlb_misses
+       [L2 data TLB misses and data page walks]
+  l2_itlb_misses
+       [L2 instruction TLB misses and instruction page walks]

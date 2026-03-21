@@ -1,7 +1,6 @@
-import subprocess
-import re
-import statistics
 import json
+import re
+import subprocess
 import sys
 
 numThreads = 128
@@ -12,35 +11,36 @@ DRAMHIT23 = 8
 TBB = 9
 MODE = 13
 fill = 70
-base = int(1024 * 1024 * 1024 / 16) # 1GB, 2GB, 4GB, 8GB 
+base = int(1024 * 1024 * 1024 / 16)  # 1GB, 2GB, 4GB, 8GB
+
 
 def run_once(cmd: str):
     """Run a command and return its stdout as string."""
-    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    return proc.stdout, proc.stderr 
+    proc = subprocess.run(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+    )
+    return proc.stdout, proc.stderr
 
-import math
 
-def run_ht_dual(name: str, ht_type: int
-                , hw_pref: int, results: dict):
+def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
     # htsizes = [base_size // (2**i) for i in range(10)]
     results[name] = []
-    for fill in [10,70]:
+    for fill in [10, 70]:
         for exp in range(0, 4, 1):
-            htsize = int(base << exp) 
-            rsize = int((htsize * float(fill/100)) // numThreads * numThreads)
+            htsize = int(base << exp)
+            rsize = int((htsize * float(fill / 100)) // numThreads * numThreads)
             repeat = 100
 
             cmd_base = f"""
             /opt/DRAMHiT/build/dramhit
             --find_queue 64 --ht-type {ht_type}
-            --num-threads {numThreads} --numa-split {numa_policy} 
+            --num-threads {numThreads} --numa-split {numa_policy}
             --no-prefetch 0 --insert-factor {repeat}
-            --mode {MODE} --ht-size {htsize} --hw-pref {hw_pref} 
+            --mode {MODE} --ht-size {htsize} --hw-pref {hw_pref}
             --batch-len 16 --relation_r_size {rsize}
             """
             cmd_base = " ".join(cmd_base.split())  # clean whitespace
-            
+
             print(cmd_base)
 
             out, err = run_once("sudo " + cmd_base)
@@ -57,15 +57,12 @@ def run_ht_dual(name: str, ht_type: int
 
             mops = matches[-1]
             print(f"htsize={htsize} fill={fill} mops={mops}")
-            results[name].append({
-                "rsize": rsize,
-                "htsize": htsize,
-                "mops": mops,
-                "fill": fill
-            })
+            results[name].append(
+                {"rsize": rsize, "htsize": htsize, "mops": mops, "fill": fill}
+            )
+
 
 if __name__ == "__main__":
-
     if len(sys.argv) < 2:
         print("Usage: python script.py <output.json>")
         sys.exit(1)
@@ -76,7 +73,9 @@ if __name__ == "__main__":
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
         "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON "
-        "-DGROWT=ON", shell=True, check=True
+        "-DGROWT=ON",
+        shell=True,
+        check=True,
     )
     subprocess.run("cmake --build /opt/DRAMHiT/build", shell=True, check=True)
 
@@ -91,4 +90,4 @@ if __name__ == "__main__":
     with open(json_out_file, "w") as f:
         json.dump(all_results, f, indent=2)
 
-    print("\nFinal results saved to "+json_out_file)
+    print("\nFinal results saved to " + json_out_file)

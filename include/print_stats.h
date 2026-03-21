@@ -13,7 +13,7 @@ extern double *g_find_bw;
 #endif
 // CHANGE ME DEPENDING ON MACHINE
 /*From /proc/cpuinfo*/
-#define CPUFREQ_MHZ (2500.0)
+// #define CPUFREQ_MHZ defined by cmake
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
 inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {

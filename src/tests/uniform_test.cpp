@@ -120,7 +120,6 @@ OpTimings do_uniform_inserts(
     do_uniform_batch_insertion(hashtable, batches, config.batch_len, idx);
 
     if (id == 0) {
-      cur_phase = ExecPhase::insertions;
       zipfian_inserts = true;
       zipfian_iter = j;
     }
@@ -152,11 +151,6 @@ OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
     return {1, 1};
   }
 
-  if (id == 0) {
-    cur_phase = ExecPhase::finds;
-    zipfian_finds = false;
-  }
-
   std::uint64_t found = 0;
   const uint64_t ops_per_iter = HT_TESTS_NUM_INSERTS;
   const uint64_t batches = ops_per_iter / config.batch_len;
@@ -168,8 +162,8 @@ OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
     idx = id * ops_per_iter;
 
     // All thread wait here, and record start
-
     if (id == 0) {
+      cur_phase = ExecPhase::finds;
       zipfian_finds = false;
     }
     sync_barrier->arrive_and_wait();

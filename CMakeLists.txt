@@ -32,8 +32,10 @@ option(GROWT "growt hashtable" OFF)
 option(CLHT " CLHT hashtable" OFF)
 option(CAS_NO_ABSTRACT "remove abstract so method can be inlined" OFF)
 option(CAS_PREFETCHW "enable prefetch write for insert " OFF)
-
 option(CAS_FAST_PATH "minimize branch in cas" ON)
+
+set(CPUFREQ_MHZ "3250.0" CACHE STRING "Target CPU frequency in MHz")
+add_definitions(-DCPUFREQ_MHZ=${CPUFREQ_MHZ})
 
 if(CAS_PREFETCHW)
     add_definitions(-DCAS_PREFETCHW)
@@ -42,13 +44,13 @@ if(CAS_FAST_PATH)
     add_definitions(-DFAST_PATH)
 endif()
 
-if(CAS_NO_ABSTRACT) 
+if(CAS_NO_ABSTRACT)
         add_definitions(-DCAS_NO_ABSTRACT)
-endif() 
+endif()
 
-if(CAS_FIND_BANDWIDTH_TEST) 
+if(CAS_FIND_BANDWIDTH_TEST)
         add_definitions(-DCAS_FIND_BANDWIDTH_TEST)
-endif() 
+endif()
 
 if(READ_BEFORE_CAS)
     add_definitions(-DREAD_BEFORE_CAS)
@@ -60,7 +62,7 @@ endif()
 
 if(BUDDY_QUEUE)
     add_definitions(-DBUDDY_QUEUE)
-endif() 
+endif()
 
 # Define a single option variable with 3 choices for find_batch()
 set(DRAMHiT_VARIANT "2025" CACHE STRING "Choose DRAMHiT variant: 2023, 2025, 2025_INLINE")
@@ -105,7 +107,7 @@ endif()
 
 if(BUCKETIZATION)
     add_definitions(-DBUCKETIZATION)
-endif() 
+endif()
 
 # Check g++ version
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -152,7 +154,7 @@ add_library(dramhit_lib
     "src/misc_lib.cpp"
 )
 target_include_directories(dramhit_lib PUBLIC include lib/plog/include/ lib)
-target_link_libraries(dramhit_lib PRIVATE 
+target_link_libraries(dramhit_lib PRIVATE
     eth_hashjoin
     numa
 )
@@ -193,7 +195,7 @@ if(BUILD_APP)
     )
 
     if(GROWT)
-        #if find fails, scripts/install_tbb.sh 
+        #if find fails, scripts/install_tbb.sh
         list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/growt/oneapi-tbb-2022.2.0/lib/cmake/tbb")
         find_package(TBB REQUIRED)
         if (NOT TBB_FOUND)
@@ -246,24 +248,24 @@ endif()
 if(FAST_RANGE)
     message(WARNING "fastrange on")
     add_definitions(-DFAST_RANGE)
-endif() 
+endif()
 
 if(PART_ID)
     message(WARNING "part_id enabled")
     add_definitions(-DPART_ID)
-endif() 
+endif()
 
 if(UNIFORM_PROBING)
     message(WARNING "uniform hashtable")
     add_definitions(-DUNIFORM_HT_SUPPORT)
-endif() 
+endif()
 
 if(AVX_SUPPORT)
     message(WARNING "SIMD supported, you may set BRANCH variable to simd")
     add_definitions(-DAVX_SUPPORT)
 else()
     message(WARNING "SIMD not supported")
-endif() 
+endif()
 
 set(branch_types simd cmov branched)
 
@@ -271,7 +273,7 @@ if(AVX_SUPPORT)
     set(BRANCH branched CACHE STRING "Branch style")
 else()
     set(BRANCH cmov CACHE STRING "Branch style")
-endif() 
+endif()
 
 set_property(CACHE BRANCH PROPERTY STRINGS ${branch_types})
 if (NOT BRANCH IN_LIST branch_types)
