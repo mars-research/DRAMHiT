@@ -1,17 +1,13 @@
 #!/bin/python3
 
-# To run:
-# cd scripts/eurosys_2026/prefetches
-# python3 collect_data.py
-# python3 plot_data.py all_dramhit_results.json test
 import json
 import os
 import re
 import subprocess
-import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
+USE_PERF = True
 
 
 def build(defines):
@@ -34,20 +30,19 @@ def make_perf_command(counters, dramhit_args):
 
 counters = [
     "cycles",
-    "ls_alloc_mab_count",
-    "de_no_dispatch_per_slot.backend_stalls",
+    "ls_dispatch.ld_st_dispatch",
+    "ls_dispatch.ld_dispatch",
+    "ls_dispatch.store_dispatch",
 ]
 
 
 def run(run_cfg):
-
-    fill = run_cfg["fill_factor"]
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
         "--find_queue",
         "64",
         "--ht-fill",
-        str(fill),
+        str(run_cfg["fill_factor"]),
         "--ht-type",
         "3",
         "--insert-factor",
@@ -72,7 +67,12 @@ def run(run_cfg):
         "16",
     ]
 
-    cmd = make_perf_command(counters, dramhit_args)
+    cmd = []
+    if USE_PERF:
+        cmd = make_perf_command(counters, dramhit_args)
+    else:
+        cmd = ["sudo"] + dramhit_args
+
     print("Running:", " ".join(cmd))
 
     proc = subprocess.Popen(
@@ -122,13 +122,15 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     row.update(metrics)
 
     # Parse perf counters from stderr
-    cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
-    counter_dic = {k: None for k in counters}
-    for val, name in cnt_pattern.findall(stderr):
-        clean_val = int(val.replace(",", ""))
-        if name in counters:
-            counter_dic[name] = clean_val
-    row.update(counter_dic)
+
+    if USE_PERF:
+        cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
+        counter_dic = {k: None for k in counters}
+        for val, name in cnt_pattern.findall(stderr):
+            clean_val = int(val.replace(",", ""))
+            if name in counters:
+                counter_dic[name] = clean_val
+        row.update(counter_dic)
 
     return row
 
@@ -140,52 +142,46 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python script.py <output.json>")
-        sys.exit(1)
-
-    out_file = sys.argv[1]
-
     # Build configurations
     build_cfgs = [
         {
+            "identifier": "Base",
+            "DRAMHiT_VARIANT": "2025",
+            "CAS_NO_ABSTRACT": "OFF",
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
         },
         {
-            "PREFETCH": "L1",
+            "identifier": "Compiler Inline",
             "DRAMHiT_VARIANT": "2025",
+            "CAS_NO_ABSTRACT": "ON",
+            "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
         },
         {
-            "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025",
+            "identifier": "Manual Inline",
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "CAS_NO_ABSTRACT": "OFF",
+            "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
         },
         {
-            "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "ON",
-        },
-        {
-            "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025",
+            "identifier": "Manual+Compiler Inline",
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "CAS_NO_ABSTRACT": "ON",
+            "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
         },
     ]
 
-    # Run configurations (example: vary fill_factor, others fixed)
     run_cfgs = [
         {
             "insertFactor": 1,
@@ -197,17 +193,14 @@ if __name__ == "__main__":
         }
         for f in range(10, 100, 10)
     ]
-
     all_results = []
 
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(
-                output, counters, rcfg, bcfg, "-".join(str(v) for v in bcfg.values())
-            )
+            obj = parse_results(output, counters, rcfg, bcfg, bcfg["identifier"])
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, out_file)
+    save_json(all_results, "amd.json")
