@@ -232,11 +232,14 @@ void sync_complete(void) {
   } else if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
     if (cur_phase == ExecPhase::recording && g_app_record_start) {
       g_app_record_duration = RDTSC_START();
+      PLOGI.printf("task, start @ %lu cycles", g_app_record_duration);
       cur_phase = ExecPhase::none;
     } else if (cur_phase == ExecPhase::recording && !g_app_record_start) {
-      g_app_record_duration = RDTSCP() - g_app_record_duration;
+      uint64_t end = RDTSCP();
+      PLOGI.printf("task, end @ %lu cycles", end);
+      g_app_record_duration = end - g_app_record_duration;
       cur_phase = ExecPhase::none;
-      PLOGV.printf("task duration %lu cycles", g_app_record_duration);
+      PLOGI.printf("task duration %lu cycles", g_app_record_duration);
     }
 
   }

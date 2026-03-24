@@ -8,19 +8,16 @@ DRAMHIT=3
 GROWT=6
 DRAMHIT23=8
 
-
 # Ensure correct usage
-if [ "$#" -ne 3 ]; then
-     echo "Usage: $0 <small|large> <numa_policy> <num_threads> ʕ•ᴥ•ʔ"
-     exit 1
-fi
+# if [ "$#" -ne 3 ]; then
+#      echo "Usage: $0 <small|large> <numa_policy> <num_threads> ʕ•ᴥ•ʔ"
+#      exit 1
+# fi
 #if [ "$#" -ne 2 ]; then
 #    echo "Usage: $0 <small|large> <num_threads> ʕ•ᴥ•ʔ"
 #    exit 1
 #fi
-test=$1
-numa_policy=$2
-numThreads=$3
+
 
 if [ "$numa_policy" = "single-local" ]; then
     numa_policy=4
@@ -30,6 +27,8 @@ elif [ "$numa_policy" = "dual" ]; then
     numa_policy=1
 fi
 
+numa_policy=4
+size=134217728
 #TEST 256 KB
 if [ "$test" = "small" ]; then
     size=524288
@@ -57,15 +56,15 @@ fi
 fill=70
 
 HASHJOIN=13
-rsize=375809638
 ZIPFIAN=11
 UNIFORM=14
+
+rsize=536870912
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
 #do
-    cmd="--perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv \
-    --find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $UNIFORM --ht-size $size --skew 0.8\
+    cmd="--find_queue 64 --ht-fill $fill --ht-type $GROWT --insert-factor $insertFactor --read-factor $readFactor\
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $HASHJOIN --ht-size $size --skew 0.8\
     --hw-pref 0 --batch-len 16 --relation_r_size $rsize"
     echo $(pwd)/build/dramhit $cmd
     sudo $(pwd)/build/dramhit $cmd

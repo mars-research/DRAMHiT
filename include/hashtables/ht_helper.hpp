@@ -28,7 +28,7 @@ constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
 constexpr auto MAP_FLAGS_1GB =
     MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
 constexpr auto MAP_FLAGS_2MB =
-    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+    MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS;
 constexpr auto ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
 constexpr auto TWOMB_PAGE_SZ = 2ULL * 1024 * 1024;
 
@@ -161,7 +161,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     PLOGI.printf("mmap returns %p", addr);
   }
   *out_fd = fd;
-  
+
   if(alloc_sz >= ONEGB_PAGE_SZ){
     distribute_mem_to_nodes(addr, alloc_sz,
                           (kmercounter::numa_policy_threads)config.numa_split);

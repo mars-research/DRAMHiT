@@ -16,14 +16,6 @@ struct Kmer_base {
   uint16_t count;
 } PACKED;
 
-#if (KEY_LEN == 4)
-using key_type = std::uint32_t;
-#elif (KEY_LEN == 8)
-using key_type = std::uint64_t;
-#endif
-
-using value_type = key_type;
-
 struct Kmer_KV {
   Kmer_base kb;              // 20 + 2 bytes
   uint64_t kmer_hash;        // 8 bytes
@@ -431,7 +423,7 @@ struct Aggr_KV {
     auto this_key = reinterpret_cast<__m64>(this->key);
     auto key_in = reinterpret_cast<__m64>(elem->key);
     auto empty_key = reinterpret_cast<__m64>(empty.key);
-    
+
     auto equal_mask = _mm_cmpeq_pi32(key_in, this_key);
     auto empty_mask = _mm_cmpeq_pi32(empty_key, this_key);
 

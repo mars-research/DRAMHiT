@@ -5,6 +5,9 @@
 #include <sys/mman.h>  // mmap, munmap
 
 #define HUGEPAGE_FILE "/mnt/huge/hugepagefile"
+#define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
+#define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
+
 template <typename T>
 struct huge_page_allocator {
   constexpr static std::size_t huge_page_size_2mb = 1 << 21;  // 2 MiB
@@ -70,7 +73,7 @@ struct huge_page_allocator {
       throw std::bad_alloc();
     }
 
-    PLOGV.printf("huge page %p with sz %lu mapped", p, alloc_sz);
+    // PLOGI.printf("hugepage alloc: huge page %p with sz %lu mapped", p, alloc_sz);
 
     return p;
   }
@@ -83,7 +86,7 @@ struct huge_page_allocator {
 
     if (p) {
       munmap(p, alloc_sz);
-      PLOGV.printf("huge page %p with sz %lu unmapped", p, alloc_sz);
+      // PLOGI.printf("hugepage alloc: huge page %p with sz %lu unmapped", p, alloc_sz);
     }
   }
 };

@@ -35,6 +35,7 @@ using key_type = std::uint64_t;
 
 using value_type = key_type;
 
+
 enum class BRANCHKIND { WithBranch, NoBranch_Cmove, NoBranch_Simd };
 
 #if defined(BRANCHLESS_CMOVE)
