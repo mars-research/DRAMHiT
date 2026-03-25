@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cstdint>
 #include <tuple>
 
 #include "fastrange.h"
@@ -66,31 +67,17 @@ auto get_ht_size = [](int ncons) {
 
 std::vector<key_type> *g_zipf_values;
 
-void init_zipfian_dist_hj(double skew, int64_t seed, uint64_t size) {
+void init_zipfian_dist(double skew, int64_t seed, uint64_t size) {
   std::uint64_t keyrange_width = (1ull << 63);
   if constexpr (std::is_same_v<key_type, std::uint32_t>) {
     keyrange_width = (1ull << 31);
   }
 
-  g_zipf_values = new std::vector<key_type>(size); //old zipf test
-  zipf_distribution_apache distribution(keyrange_width, skew, seed);
-  for (auto &value : *g_zipf_values) {
-    value = distribution.sample();
-  }
-}
+  g_zipf_values = new std::vector<key_type>(size);
 
-void init_zipfian_dist(double skew, int64_t seed) {
-  std::uint64_t keyrange_width = (1ull << 63);
-  if constexpr (std::is_same_v<key_type, std::uint32_t>) {
-    keyrange_width = (1ull << 31);
-  }
-
-  g_zipf_values = new std::vector<key_type>(HT_TESTS_NUM_INSERTS); //old zipf test
-  PLOG_INFO << "HT_TESTS_NUM_INSERTS " << HT_TESTS_NUM_INSERTS;
   std::stringstream cache_name{};
-  cache_name << "/opt/zipfian/" << config.skew << "_" << config.ht_size << "_" << config.ht_fill << ".bin";
+  cache_name << "/opt/zipfian/" << config.skew << "_" << config.seed << "_" << size << ".bin";
   std::ifstream cache{cache_name.str().c_str()};
-
   PLOG_INFO << cache_name.str() << " " << cache.is_open();
   if (cache.is_open()) {
     cache.read(reinterpret_cast<char *>(g_zipf_values->data()),
@@ -100,8 +87,11 @@ void init_zipfian_dist(double skew, int64_t seed) {
     zipf_distribution_apache distribution(keyrange_width, skew, seed);
     PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);
 
+    key_type k = 1;
     for (auto &value : *g_zipf_values) {
-      value = distribution.sample();
+      k = distribution.sample();
+      if(k == 0 ) value = 1;
+      else value = k;
     }
     PLOGI.printf("Zipfian dist generated. size %zu", g_zipf_values->size());
     std::ofstream cache_out{cache_name.str().c_str()};

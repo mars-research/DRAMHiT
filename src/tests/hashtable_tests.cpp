@@ -45,7 +45,6 @@ extern pcm::PCMCounters pcm_cnt;
 
 void sync_complete(void);
 
-extern uint64_t HT_TESTS_NUM_INSERTS;
 extern ExecPhase cur_phase;
 extern uint64_t *g_insert_durations;
 extern uint64_t *g_find_durations;
@@ -81,7 +80,7 @@ void do_batch_insertion(
         __builtin_prefetch(&zipf_set.at(idx + 16), false, 3);
       }
 
-      value = zipf_set.at(idx);  // len 1024,  zipf[2 * 1024]
+      value = zipf_set.at(idx);
 
       items[i].key = items[i].value = value;
       items[i].id = idx;
@@ -132,7 +131,7 @@ uint64_t do_batch_find(
         __builtin_prefetch(&zipf_set.at(idx + 16), false, 3);
       }
 
-      value = zipf_set.at(idx);  // len 1024,  zipf[2 * 1024]
+      value = zipf_set.at(idx);
 
       items[i].key = value;
       items[i].id = idx;
@@ -168,8 +167,8 @@ OpTimings do_zipfian_inserts(
     std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
   if (config.insert_factor == 0) return {1, 1};
 
-  const uint64_t ops_per_iter = HT_TESTS_NUM_INSERTS;
-  const uint64_t batches = HT_TESTS_NUM_INSERTS / config.batch_len;
+  const uint64_t ops_per_iter = zipf_set.size();
+  const uint64_t batches = ops_per_iter / config.batch_len;
 
   uint64_t start, end;
 
@@ -189,16 +188,6 @@ OpTimings do_zipfian_inserts(
       zipfian_iter = j;
     }
     sync_barrier->arrive_and_wait();
-
-    // if (id == 0) {
-    //   cur_phase = ExecPhase::none;
-    // }
-    // sync_barrier->arrive_and_wait();
-    // // don't clear last insert iteration, or ht will be empty for finds
-    // if (id == 0 && j + 1 < config.insert_factor) {
-    //   hashtable->clear();
-    // }
-    // sync_barrier->arrive_and_wait();
   }
 
   uint64_t duration = 0;
@@ -222,7 +211,7 @@ OpTimings do_zipfian_gets(
   }
 
   std::uint64_t found = 0;
-  const uint64_t ops_per_iter = HT_TESTS_NUM_INSERTS;
+  const uint64_t ops_per_iter = zipf_set.size();
   const uint64_t batches = ops_per_iter / config.batch_len;
 
   uint64_t start;
@@ -260,15 +249,18 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   OpTimings insert_timings{};
   OpTimings find_timings{};
 
+  uint64_t partition_size = g_zipf_values->size() / config.num_threads;
+
   // get zipfian here.
   std::vector<key_type, huge_page_allocator<key_type>> zipf_set_local(
-      HT_TESTS_NUM_INSERTS,            // initial size
+      partition_size,            // initial size
       huge_page_allocator<key_type>()  // allocator instance
   );
 
-  uint64_t starting_offset = shard->shard_idx * HT_TESTS_NUM_INSERTS;
-  for (size_t i = 0; i < HT_TESTS_NUM_INSERTS; i++) {
-    zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);
+  uint64_t starting_offset = shard->shard_idx * partition_size;
+  for (size_t i = 0; i < partition_size; i++) {
+    if(i+starting_offset < g_zipf_values->size())
+        zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);
   }
 
   if(shard->shard_idx == 0)

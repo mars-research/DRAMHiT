@@ -1,12 +1,14 @@
 #ifndef _PRINT_STATS_H
 #define _PRINT_STATS_H
 
+#include <cstdint>
 #include "hashtables/base_kht.hpp"
+#include "types.hpp"
 
 namespace kmercounter {
 
-extern uint64_t *g_find_durations;
-extern uint64_t *g_insert_durations;
+// extern uint64_t *g_find_durations;
+// extern uint64_t *g_insert_durations;
 
 #if defined(WITH_PCM)
 extern double *g_find_bw;
@@ -33,8 +35,6 @@ inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
   sh->stats->max_distance_from_bucket = kmer_ht->max_distance_from_bucket;
 #endif
 }
-
-
 
 inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t total_inserts = 0;
@@ -117,12 +117,27 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t num_threads = config.num_threads;
 
   avg_find_duration = total_find_cycles / num_threads;
-
   avg_insert_duration = total_insert_cycles / num_threads;
 
   find_mops = (double)((CPUFREQ_MHZ * total_finds) / avg_find_duration);
   insert_mops = (double)((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
 
+  printf("global_find_cycle : %lu, find_ops : %lu\n", avg_find_duration, total_finds);
+  printf("global_insert_cycle : %lu, insert_ops : %lu\n", avg_insert_duration, total_inserts);
+
+  printf("{ set_cycles : %" PRIu64 ", get_cycles : %" PRIu64 ",",
+         cycles_per_insert, cycles_per_find);
+  printf(" set_mops : %.3f, get_mops : %.3f }\n", insert_mops, find_mops);
+
+  if(config.mode == HASHJOIN) {
+      printf("build_phrase_mops: %.3f, cycle : %lu\n", insert_mops, avg_insert_duration);
+      printf("probe_phrase_mops: %.3f, cycle : %lu\n", find_mops, avg_find_duration);
+
+      uint64_t sum_op = total_finds + total_inserts;
+      uint64_t cycles = avg_find_duration + avg_insert_duration;
+      printf("throughput_mops: %.3f\n", sum_op/cycles);
+  }
+#ifdef COMMENT_OUT
   printf("===============================================================\n");
 
   if (config.insert_factor > 0) {
@@ -188,12 +203,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
           "===============================================================\n");
     }
   }
-
-  printf("{ set_cycles : %" PRIu64 ", get_cycles : %" PRIu64
-          ",",
-         cycles_per_insert, cycles_per_find);
-  printf(" set_mops : %.3f, get_mops : %.3f }\n",
-         insert_mops, find_mops);
+#endif
 
 #ifdef WITH_PCM
   if (config.read_factor > 0) {
@@ -207,8 +217,6 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     printf("{ find_avg_bw : %.3f}\n", avg_bw);
   }
 #endif
-
-  printf("===============================================================\n");
 }
 
 }  // namespace kmercounter

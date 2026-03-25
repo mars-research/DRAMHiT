@@ -421,7 +421,7 @@ class CASHashTable : public BaseHashTable {
 
   void flush_insert_queue(collector_type *collector) override {
     size_t curr_queue_sz = get_insert_queue_sz();
-    while (curr_queue_sz != 0) {
+    while (curr_queue_sz > 0) {
       pop_insert_queue(collector);
       curr_queue_sz--;
     }
@@ -432,12 +432,12 @@ class CASHashTable : public BaseHashTable {
 
   size_t flush_find_queue(ValuePairs &vp, collector_type *collector) override {
     size_t curr_queue_sz = get_find_queue_sz();
-    while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
+    while ((curr_queue_sz > 0) && (vp.first < config.batch_len)) {
       pop_find_queue(vp, collector);  // gurantee to reduce curr_queue_sz
       curr_queue_sz--;
     }
 
-    return curr_queue_sz;
+    return curr_queue_sz; // how many has been flushed
   }
 
   inline size_t get_find_queue_sz() {

@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <ctime>
 #include <fstream>
 #include <functional>
@@ -15,6 +16,7 @@
 #include "./hashtables/array_kht.hpp"
 #include "./hashtables/cas23_kht.hpp"
 #include "./hashtables/cas_kht.hpp"
+#include "helper.hpp"
 #include "numa.hpp"
 
 #ifdef GROWT
@@ -66,8 +68,7 @@ uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
-extern void init_zipfian_dist(double skew, int64_t seed);
-extern void init_zipfian_dist_hj(double skew, int64_t seed, uint64_t size);
+extern void init_zipfian_dist(double skew, int64_t seed, uint64_t size);
 
 #ifdef WITH_PERFCPP
 MultithreadCounter EVENTCOUNTERS;
@@ -77,21 +78,6 @@ MultithreadCounter EVENTCOUNTERS;
 static pcm::PCMCounters g_pcm_cnt;
 #endif
 
-// void sync_complete(void);
-uint64_t sum_total_ops(Shard *all_sh, Configuration &config) {
-  uint64_t ops = 0;
-  for (uint32_t k = 0; k < config.num_threads; k++)
-    ops += all_sh[k].stats->insertions.op_count;
-  return ops;
-}
-
-void print_stats_simple(uint64_t duration, uint64_t ops) {
-  printf("duration : %lu, ops : %lu\n", duration, ops);
-
-  double mops = (double)((CPUFREQ_MHZ * ops) / duration);
-  uint64_t cpo = (duration * config.num_threads) / ops;
-  printf("cpo : %lu, mops : %.3f\n", cpo, mops);
-}
 // default configuration
 const Configuration def = {
     .kmer_create_data_base = 524288,
@@ -185,7 +171,7 @@ void sync_complete(void) {
   }
 #endif
 
-  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
+  if (config.mode == ZIPFIAN) {
     if (cur_phase == ExecPhase::finds) {
       if (!zipfian_finds) {
 #if defined(WITH_PCM)
@@ -230,19 +216,20 @@ void sync_complete(void) {
         delete g_zipf_values;
       }
     }
-  } else if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
-    if (cur_phase == ExecPhase::recording && g_app_record_start) {
-      g_app_record_duration = RDTSC_START();
-      PLOGI.printf("task, start @ %lu cycles", g_app_record_duration);
+  } else if (config.mode == HASHJOIN) {
+    if (cur_phase == ExecPhase::insertions && g_app_record_start) {
+      g_insert_start = RDTSCP();
       cur_phase = ExecPhase::none;
-    } else if (cur_phase == ExecPhase::recording && !g_app_record_start) {
-      uint64_t end = RDTSCP();
-      PLOGI.printf("task, end @ %lu cycles", end);
-      g_app_record_duration = end - g_app_record_duration;
+    } else if (cur_phase == ExecPhase::insertions && !g_app_record_start) {
+      g_insert_end = RDTSCP();
       cur_phase = ExecPhase::none;
-      PLOGI.printf("task duration %lu cycles", g_app_record_duration);
+    } else if (cur_phase == ExecPhase::finds && g_app_record_start) {
+      g_find_start = RDTSCP();
+      cur_phase = ExecPhase::none;
+    } else if (cur_phase == ExecPhase::finds && !g_app_record_start) {
+      g_find_end = RDTSCP();
+      cur_phase = ExecPhase::none;
     }
-
   }
 }
 
@@ -290,6 +277,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   }
 
   return kmer_ht;
+}
+
+uint64_t get_gigbytes(size_t num_kv) {
+  return num_kv * (sizeof(key_type) + sizeof(value_type)) / (1024 * 1024 * 1024);
 }
 
 void free_ht(BaseHashTable *kmer_ht) { delete kmer_ht; }
@@ -490,19 +481,13 @@ int Application::spawn_shard_threads() {
     }
   }
   // if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
-  if (config.mode == FASTQ_WITH_INSERT || config.mode == HASHJOIN) {
-    print_stats_simple(g_app_record_duration,
-                       sum_total_ops(this->shards, config));
-  } else {
-    print_stats(this->shards, config);
-  }
-  //}
+  print_stats(this->shards, config);
 
 #ifdef WITH_PERFCPP
   EVENTCOUNTERS.print();
 #endif
 
-  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
+  if (config.mode == ZIPFIAN) {
     free(g_insert_durations);
     free(g_find_durations);
   }
@@ -758,8 +743,6 @@ int Application::process(int argc, char *argv[]) {
       } else {
         config.ht_size = max(config.relation_r_size, config.ht_size);
       }
-      PLOGI.printf("hashjoin workload sz %lu, ht_size %lu",
-                   config.relation_r_size, config.ht_size);
     }
 
     switch (config.ht_type) {
@@ -825,16 +808,11 @@ int Application::process(int argc, char *argv[]) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
+  if (config.mode == ZIPFIAN) {
     g_insert_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.insert_factor);
     g_find_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.read_factor);
-
-    if (config.mode == ZIPFIAN)
-    {
-      init_zipfian_dist(config.skew, config.seed);
-    }
 
 #ifdef WITH_PCM
     g_find_bw = (double *)malloc(sizeof(double) * config.read_factor);
@@ -842,10 +820,22 @@ int Application::process(int argc, char *argv[]) {
 #endif
   }
 
-  if (config.mode == HASHJOIN)
+  if (config.mode == ZIPFIAN)
   {
-    config.skew = 0.01;
-    init_zipfian_dist_hj(config.skew, config.seed, config.relation_r_size);
+    uint64_t size = config.ht_size * config.ht_fill/100;
+    init_zipfian_dist(config.skew, config.seed, size);
+  } else if (config.mode == HASHJOIN) {
+    uint64_t size = config.relation_r_size + config.relation_s_size;
+    config.ht_size = config.relation_r_size * 100 / config.ht_fill;
+
+    if(config.ht_size % 2 != 0) {
+        config.ht_size = utils::next_pow2(config.ht_size);
+    }
+    PLOGI.printf("hashjoin workload sz %lu (%lu gb), ht_size %lu (%lu gb)",
+                 config.relation_r_size, get_gigbytes(config.relation_r_size),
+                 config.ht_size, get_gigbytes(config.ht_size));
+
+    init_zipfian_dist(config.skew, config.seed, size);
   }
 
   if ((config.mode == BQ_TESTS_YES_BQ) ||
