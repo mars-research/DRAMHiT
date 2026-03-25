@@ -67,6 +67,7 @@ uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew, int64_t seed);
+extern void init_zipfian_dist_hj(double skew, int64_t seed, uint64_t size);
 
 #ifdef WITH_PERFCPP
 MultithreadCounter EVENTCOUNTERS;
@@ -839,6 +840,12 @@ int Application::process(int argc, char *argv[]) {
     g_find_bw = (double *)malloc(sizeof(double) * config.read_factor);
     g_insert_bw = (double *)malloc(sizeof(double) * config.insert_factor);
 #endif
+  }
+
+  if (config.mode == HASHJOIN)
+  {
+    config.skew = 0.01;
+    init_zipfian_dist_hj(config.skew, config.seed, config.relation_r_size);
   }
 
   if ((config.mode == BQ_TESTS_YES_BQ) ||

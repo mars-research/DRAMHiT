@@ -10,6 +10,7 @@
 #include <barrier>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -36,13 +37,18 @@ namespace kmercounter {
 extern ExecPhase cur_phase;
 extern bool g_app_record_start;
 
+extern std::vector<key_type> *g_zipf_values;
+
 using JoinArrayElement = std::array<uint64_t, 3>;
 
 using MaterializeVector = std::vector<JoinArrayElement>;
 
-using HugepageVec = std::vector<KeyValuePair, huge_page_allocator<KeyValuePair>>;
+using Element = KeyValuePair;
+using HugepageAlloc = huge_page_allocator<Element>;
+using HugepageVec = std::vector<Element, HugepageAlloc>;
+HugepageAlloc hugepage_alloc_inst_hj;
 
-huge_page_allocator<KeyValuePair> hugepage_alloc_inst_hj;
+#define PREFETCH_AHEAD_X_CACHELINE 4
 
 void ht_do_insert(BaseHashTable *ht, HugepageVec &workload, uint32_t partition_offset) {
     uint32_t requests_num = workload.size();
@@ -64,7 +70,7 @@ void ht_do_insert(BaseHashTable *ht, HugepageVec &workload, uint32_t partition_o
           __builtin_prefetch(&workload.at(idx + ele_num_per_cache_line), false, 2);
         }
 
-        kv = workload.at(idx);  // len 1024,  zipf[2 * 1024]
+        // kv = workload.at(idx);  // len 1024,  zipf[2 * 1024]
         items[i].key = kv.key;
         items[i].value = kv.value;
         items[i].id = idx + partition_offset; // as long as we know per batch differneces
@@ -76,13 +82,12 @@ void ht_do_insert(BaseHashTable *ht, HugepageVec &workload, uint32_t partition_o
 
     // in case batch size is not divisible
     size_t residule_num = requests_num - batch_len * batch_num;
-    assert(residule_num == (requests_num - idx));
     if (residule_num > 0) {
       for (int i = 0; i < residule_num; i++) {
         if ((idx & ele_num_per_cache_line) && (idx + ele_num_per_cache_line < workload.size())) {
             __builtin_prefetch(&workload.at(idx + ele_num_per_cache_line), false, 2);
         }
-        kv = workload.at(idx);
+        // kv = workload.at(idx);
         items[i].key = kv.key;
         items[i].value = kv.value;
         items[i].id = idx;
@@ -91,13 +96,12 @@ void ht_do_insert(BaseHashTable *ht, HugepageVec &workload, uint32_t partition_o
       ht->insert_batch(InsertFindArguments(items, residule_num), collector);
     }
 
-    assert(idx == requests_num-1);
     ht->flush_insert_queue(collector);
     free(items);
 }
 
 void ht_do_find(BaseHashTable *ht, HugepageVec &workload, uint32_t partition_offset) {
-    uint32_t completed_requests = 0;
+    uint32_t found = 0;
     uint32_t requests_num = workload.size();
 
     uint32_t batch_len = config.batch_len;
@@ -105,60 +109,54 @@ void ht_do_find(BaseHashTable *ht, HugepageVec &workload, uint32_t partition_off
     FindResult *results = new FindResult[batch_len];
     ValuePairs vp = std::make_pair(0, results);
     InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(64, sizeof(InsertFindArgument) * batch_len);
-    KeyValuePair kv;
+    Element e;
     size_t batch_num = requests_num / batch_len;
-    size_t ele_num_per_cache_line = CACHELINE_SIZE / sizeof(KeyValuePair);
-    assert(ele_num_per_cache_line % 2 == 0);
+    size_t ele_num_per_cache_line = CACHELINE_SIZE / sizeof(Element);
+    size_t prefetches_ahead = ele_num_per_cache_line * PREFETCH_AHEAD_X_CACHELINE;
     size_t idx = 0;
 
     // force ele_num_per_cache_line pow of 2. 2 < 16
     for (unsigned int n = 0; n < batch_num; n++) {
       // on each batch, populate find args
       for (int i = 0; i < batch_len; i++) {
-        if ((idx & ele_num_per_cache_line) && (idx + ele_num_per_cache_line < workload.size())) {
-          // fetch next line
-          __builtin_prefetch(&workload.at(idx + ele_num_per_cache_line), false, 2);
+        if (!(idx & (ele_num_per_cache_line-1)) && (idx + prefetches_ahead < requests_num)) {
+            __builtin_prefetch(&workload.at(idx + prefetches_ahead), false, 3);
         }
-
-        kv = workload.at(idx);  // len 1024,  zipf[2 * 1024]
-        items[i].key = kv.key;
+        e = workload.at(idx);
+        items[i].key = e.key;
         items[i].id = idx + partition_offset; // as long as we know per batch differneces
         idx++;
       }
 
       vp.first = 0;
       ht->find_batch(InsertFindArguments(items, batch_len), vp, collector);
-      completed_requests += vp.first;
+      found += vp.first;
     }
 
     // in case batch size is not divisible
-    size_t residule_num = requests_num - batch_len * batch_num;
-    assert(residule_num == (requests_num - idx));
-    if (residule_num > 0) {
-      for (int i = 0; i < residule_num; i++) {
-        if ((idx & ele_num_per_cache_line) && (idx + ele_num_per_cache_line < workload.size())) {
-            __builtin_prefetch(&workload.at(idx + ele_num_per_cache_line), false, 2);
-        }
-        kv = workload.at(idx);
-        items[i].key = kv.key;
-        items[i].id = idx;
-        idx++;
-      }
-      vp.first = 0;
-      ht->find_batch(InsertFindArguments(items, residule_num), vp, collector);
-      completed_requests += vp.first;
-    }
-
-    assert(idx == requests_num-1);
+    // size_t residule_num = requests_num - batch_len * batch_num;
+    // if (residule_num > 0) {
+    //   for (int i = 0; i < residule_num; i++) {
+    //     if ((idx & ele_num_per_cache_line) && (idx + ele_num_per_cache_line < workload.size())) {
+    //         __builtin_prefetch(&workload.at(idx + ele_num_per_cache_line), false, 2);
+    //     }
+    //     kv = workload.at(idx);
+    //     items[i].key = kv.key;
+    //     items[i].id = idx + partition_offset;
+    //     idx++;
+    //   }
+    //   vp.first = 0;
+    //   ht->find_batch(InsertFindArguments(items, residule_num), vp, collector);
+    //   found += vp.first;
+    // }
 
     // Now do whatever is left
     vp.first = 0;
     while (ht->flush_find_queue(vp, collector) > 0) {
-      completed_requests += vp.first;
+      found += vp.first;
       vp.first = 0;
     }
 
-    assert(completed_requests == requests_num) ;
     free(items);
 }
 
@@ -168,11 +166,11 @@ void hashjoin(Shard* sh, HugepageVec& t1, HugepageVec& t2,
               BaseHashTable* ht, MaterializeVector* mvec, bool materialize,
               std::barrier<std::function<void()>>* barrier) {
   uint64_t offset = t1.size() * sh->shard_idx;
-  ht_do_insert(ht, t1, offset);
-  if (sh->shard_idx == 0) {
-    cur_phase = ExecPhase::none;
-  }
-  barrier->arrive_and_wait();
+  // ht_do_insert(ht, t1, offset);
+  // if (sh->shard_idx == 0) {
+  //   cur_phase = ExecPhase::none;
+  // }
+  // barrier->arrive_and_wait();
   ht_do_find(ht, t2, offset);
   // Build hashtable from t1.
  // HTBatchRunner batch_runner(ht);
@@ -207,48 +205,59 @@ void HashjoinTest::join_relations_generated(Shard* sh,
                                             const Configuration& config,
                                             BaseHashTable* ht, bool materialize,
                                             std::barrier<VoidFn>* barrier) {
-  input_reader::PartitionedEthRelationGenerator t1(
-      "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
-      config.num_threads, config.relation_r_size);
+  // input_reader::PartitionedEthRelationGenerator t1(
+  //     "r.tbl", DEFAULT_R_SEED, config.relation_r_size, sh->shard_idx,
+  //     config.num_threads, config.relation_r_size);
 
-  input_reader::PartitionedEthRelationGenerator t2(
-      "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
-      config.num_threads, config.relation_r_size);
+  // input_reader::PartitionedEthRelationGenerator t2(
+  //     "s.tbl", DEFAULT_S_SEED, config.relation_r_size, sh->shard_idx,
+  //     config.num_threads, config.relation_r_size);
 
-  input_reader::SizedInputReader<KeyValuePair>* r1 = (input_reader::SizedInputReader<KeyValuePair>*)&t1;
-  input_reader::SizedInputReader<KeyValuePair>* r2  = (input_reader::SizedInputReader<KeyValuePair>*)&t2;
+  // input_reader::SizedInputReader<KeyValuePair>* r1 = (input_reader::SizedInputReader<KeyValuePair>*)&t1;
+  // input_reader::SizedInputReader<KeyValuePair>* r2  = (input_reader::SizedInputReader<KeyValuePair>*)&t2;
 
   uint64_t partition_sz = config.relation_r_size / config.num_threads;
-  std::vector<KeyValuePair, huge_page_allocator<KeyValuePair>> build_relation(
+  HugepageVec build_relation(
      partition_sz,
      hugepage_alloc_inst_hj
   );
-  std::vector<KeyValuePair, huge_page_allocator<KeyValuePair>> read_relation(
-     partition_sz,
-     hugepage_alloc_inst_hj
-  );
+
+  //std::vector<KeyValuePair, huge_page_allocator<KeyValuePair>> read_relation(
+  //   partition_sz,
+  //   hugepage_alloc_inst_hj
+  //);
+
   uint64_t ri = 0;
-  for (KeyValuePair kv; r1->next(&kv);) {
-      if(ri >= build_relation.size()) {
-          PLOGE.printf("huge vector lendth is too small");
-          return;
-      }
-      build_relation.at(ri) = kv;
-      ri++;
+
+  Element e;
+  for(int i=0; i<partition_sz; i++){
+      key_type v = g_zipf_values->at(i+partition_sz*sh->shard_idx);
+      e.key = v;
+      e.value = 0xff;
+      build_relation.at(i) = e;
   }
 
-  ri = 0;
-  for (KeyValuePair kv; r2->next(&kv);) {
-      if(ri >= read_relation.size()) {
-          PLOGE.printf("huge vector lendth is too small");
-          return;
-      }
-      read_relation.at(ri) = kv;
-      ri++;
-  }
+  // for (KeyValuePair kv; r1->next(&kv);) {
+  //     if(ri >= build_relation.size()) {
+  //         PLOGE.printf("huge vector lendth is too small");
+  //         return;
+  //     }
+  //     build_relation.at(ri) = kv;
+  //     ri++;
+  // }
+
+  // ri = 0;
+  // for (KeyValuePair kv; r2->next(&kv);) {
+  //     if(ri >= read_relation.size()) {
+  //         PLOGE.printf("huge vector lendth is too small");
+  //         return;
+  //     }
+  //     read_relation.at(ri) = kv;
+  //     ri++;
+  // }
 
   MaterializeVector* mt{};
-  if (materialize) mt = new MaterializeVector(t1.size());
+  // if (materialize) mt = new MaterializeVector(t1.size());
 
   // Wait for all readers finish initializing.
 
@@ -258,7 +267,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   }
   barrier->arrive_and_wait();
 
-  hashjoin(sh, build_relation, read_relation, ht, mt, materialize, barrier);
+  hashjoin(sh, build_relation, build_relation, ht, mt, materialize, barrier);
 
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::recording;
@@ -282,3 +291,5 @@ void HashjoinTest::join_relations_from_files(Shard* sh,
   input_reader::KeyValueCsvPreloadReader t2(config.relation_s, sh->shard_idx,
                                             config.num_threads, "|");
 }  // namespace kmercounter
+
+}

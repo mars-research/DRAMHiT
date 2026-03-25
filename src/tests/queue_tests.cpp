@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
@@ -64,6 +65,19 @@ auto get_ht_size = [](int ncons) {
 };
 
 std::vector<key_type> *g_zipf_values;
+
+void init_zipfian_dist_hj(double skew, int64_t seed, uint64_t size) {
+  std::uint64_t keyrange_width = (1ull << 63);
+  if constexpr (std::is_same_v<key_type, std::uint32_t>) {
+    keyrange_width = (1ull << 31);
+  }
+
+  g_zipf_values = new std::vector<key_type>(size); //old zipf test
+  zipf_distribution_apache distribution(keyrange_width, skew, seed);
+  for (auto &value : *g_zipf_values) {
+    value = distribution.sample();
+  }
+}
 
 void init_zipfian_dist(double skew, int64_t seed) {
   std::uint64_t keyrange_width = (1ull << 63);
