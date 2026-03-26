@@ -1,0 +1,1 @@
+/opt/DRAMHiT/build/dramhit --ht-type 8 --hw-pref 0 --ht-fill 50 --relation_r_size 268435456 --relation_s_size 268435456 --find_queue 64 --num-threads 64 --numa-split 4 --no-prefetch 0 --insert-factor 1 --read-factor 1 --mode 13 --batch-len 16 --skew 0.01 --seed 1774551337382868027

@@ -330,8 +330,8 @@ class NumaPolicyQueues : public Numa {
 enum numa_policy_threads {
   THREADS_SPLIT_SEPARATE_NODES = 1,
   THREADS_ASSIGN_SEQUENTIAL = 2,
-  THREADS_REMOTE_NUMA_NODE = 3, 
-  THREADS_LOCAL_NUMA_NODE = 4, 
+  THREADS_REMOTE_NUMA_NODE = 3,
+  THREADS_LOCAL_NUMA_NODE = 4,
   THREADS_NO_MEM_DISTRIBUTION = 5,
   THREADS_SPLIT_EVEN_NODES = 6
 };
@@ -375,7 +375,7 @@ class NumaPolicyThreads : public Numa {
   std::set<uint32_t> unassigned_cpu_list;
 
   void generate_cpu_list() {
-    assert(this->config_num_threads <= 
+    assert(this->config_num_threads <=
            static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
     // return numa node 0 threads.
@@ -391,14 +391,6 @@ class NumaPolicyThreads : public Numa {
         this->unassigned_cpu_list.erase(cpu_assigned);
       }
 
-      for(size_t i =0; i< assigned_cpu_list.size();i++)
-      {
-        cout<< assigned_cpu_list[i];
-        if(i< assigned_cpu_list.size()-1 )
-        cout << ", ";
-
-      }
-      cout<<endl;
       return;
     }
 

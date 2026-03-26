@@ -2,6 +2,7 @@
 #define _PRINT_STATS_H
 
 #include <cstdint>
+
 #include "hashtables/base_kht.hpp"
 #include "types.hpp"
 
@@ -41,6 +42,7 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t total_insert_cycles = 0;
   uint64_t total_find_cycles = 0;
   uint64_t total_finds = 0;
+  uint64_t total_found = 0;
 
   uint64_t max_find_duration = 0;
   uint64_t max_insert_duration = 0;
@@ -50,6 +52,9 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 
   uint64_t total_upsert_cycles = 0;
   uint64_t total_upsert = 0;
+
+  uint64_t ht_fill = 0;
+  uint64_t ht_capacity = 0;
 
 #ifdef CALC_STATS
   uint64_t all_total_avg_read_length = 0;
@@ -66,6 +71,10 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     total_find_cycles += all_sh[k].stats->finds.duration;
     total_upsert += all_sh[k].stats->upsertions.op_count;
     total_upsert_cycles += all_sh[k].stats->upsertions.duration;
+    total_found += all_sh[k].stats->found;
+
+    ht_fill += all_sh[k].stats->ht_fill;
+    ht_capacity += all_sh[k].stats->ht_capacity;
 
     max_find_duration = all_sh[k].stats->finds.duration > max_find_duration
                             ? all_sh[k].stats->finds.duration
@@ -98,11 +107,10 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
 
 #endif
 
-  double find_mops = 0.0, insert_mops = 0.0, upsert_mops = 0.0;
+  uint64_t find_mops = 0, insert_mops = 0;
 
   uint64_t cycles_per_insert = 0;
   uint64_t cycles_per_find = 0;
-  uint64_t cycles_per_upsert = 0;
 
   if (total_finds > 0) {
     cycles_per_find = total_find_cycles / total_finds;
@@ -112,30 +120,43 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
     cycles_per_insert = total_insert_cycles / total_inserts;
   }
 
-  if (total_upsert > 0) cycles_per_upsert = total_upsert_cycles / total_upsert;
-
   uint64_t num_threads = config.num_threads;
 
   avg_find_duration = total_find_cycles / num_threads;
   avg_insert_duration = total_insert_cycles / num_threads;
 
-  find_mops = (double)((CPUFREQ_MHZ * total_finds) / avg_find_duration);
-  insert_mops = (double)((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
+  find_mops = ((CPUFREQ_MHZ * total_finds) / avg_find_duration);
+  insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
 
-  printf("global_find_cycle : %lu, find_ops : %lu\n", avg_find_duration, total_finds);
-  printf("global_insert_cycle : %lu, insert_ops : %lu\n", avg_insert_duration, total_inserts);
-
-  printf("{ set_cycles : %" PRIu64 ", get_cycles : %" PRIu64 ",",
-         cycles_per_insert, cycles_per_find);
-  printf(" set_mops : %.3f, get_mops : %.3f }\n", insert_mops, find_mops);
-
-  if(config.mode == HASHJOIN) {
-      printf("build_phrase_mops: %.3f, cycle : %lu\n", insert_mops, avg_insert_duration);
-      printf("probe_phrase_mops: %.3f, cycle : %lu\n", find_mops, avg_find_duration);
-
+  if (config.mode == HASHJOIN) {
       uint64_t sum_op = total_finds + total_inserts;
-      uint64_t cycles = avg_find_duration + avg_insert_duration;
-      printf("throughput_mops: %.3f\n", sum_op/cycles);
+      uint64_t join_cycles = avg_find_duration + avg_insert_duration;
+      uint64_t throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
+    PLOGI.printf(
+        "\n"
+        "============================================\n"
+        "build_phrase_mops : %lu, cycle_per_op : %lu\n"
+        "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
+        "joined : %lu out of %lu, %.2f%%\n"
+        "throughput_mops: %lu\n"
+        "============================================\n",
+        insert_mops, cycles_per_insert,
+        find_mops, cycles_per_find,
+        total_found, config.relation_s_size,
+        total_found * 100.0 / config.relation_s_size, throughput);
+  } else {
+    PLOGI.printf(
+        "\n"
+        "============================================\n"
+        "found : %lu, fill_factor : %.3f \n"
+        "global_find_cycle : %lu, find_ops : %lu\n"
+        "global_insert_cycle : %lu, insert_ops : %lu\n"
+        "set_cycles : %lu, get_cycles : %lu, "
+        "set_mops : %lu, get_mops : %lu "
+        "============================================\n",
+        total_found, (ht_fill * 1.0 / ht_capacity), avg_find_duration,
+        total_finds, avg_insert_duration, total_inserts, cycles_per_insert,
+        cycles_per_find, insert_mops, find_mops);
   }
 #ifdef COMMENT_OUT
   printf("===============================================================\n");

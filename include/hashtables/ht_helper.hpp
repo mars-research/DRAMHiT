@@ -129,7 +129,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
     perror("");
     exit(1);
   } else {
-    PLOGI.printf("opened file %s", FILE_NAME);
+    // PLOGI.printf("opened file %s", FILE_NAME);
   }
 
   if (alloc_sz % 2) {

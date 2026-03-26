@@ -35,3 +35,4 @@ CMakeCache.txt
 cmake.check_cache
 tester/
 results/
+cache/

@@ -33,7 +33,7 @@
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
 
-#define DEBUG_HJ
+// #define DEBUG_HJ
 #ifdef DEBUG_HJ
 
 #define ASSERT_TRUE(expr)                                            \
@@ -50,6 +50,9 @@
 #define ASSERT_TRUE(expr)
 
 #endif
+
+#define PREFETCH_AHEAD_X_CACHELINE 4
+#define MATERIALIZE
 
 namespace kmercounter {
 
@@ -73,8 +76,6 @@ using HugepageAlloc = huge_page_allocator<Element>;
 using HugepageVec = std::vector<Element, HugepageAlloc>;
 HugepageAlloc hugepage_alloc_inst_relation;
 
-#define PREFETCH_AHEAD_X_CACHELINE 4
-#define MATERIALIZE
 
 bool hj_test_contains(HugepageVec& vec, key_type k, value_type v) {
   for (const auto& e : vec) {
@@ -131,12 +132,27 @@ void ht_do_insert(BaseHashTable* ht, HugepageVec& workload) {
       items[i].id = idx;
       idx++;
     }
+
     ht->insert_batch(InsertFindArguments(items, residule_num), collector);
   }
 
   ht->flush_insert_queue(collector);
   free(items);
 }
+
+// void materialize(JoinVec& mvec, const HugepageVec& probe, const ValuePairs& vp, size_t m_idx)
+// {
+//     FindResult result;
+//     Element probe_elem;
+//     for (int i = 0; i < vp.first; i++) {
+//       result = vp.second[i];
+//       ASSERT_TRUE(result.id < workload.size());
+//       probe_elem = probe[result.id];  // basically random reads
+//       ASSERT_TRUE(probe_elem.key != 0);
+//       mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
+//       m_idx++;
+//     }
+// }
 
 uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   uint64_t found = 0;
@@ -185,7 +201,7 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
       ASSERT_TRUE(vp.first <= batch_len);
       result = vp.second[i];
       ASSERT_TRUE(result.id < workload.size());
-      probe_elem = workload[result.id];  // basically random reads
+      probe_elem = workload[result.id];  // basically random reads if r and s overlaps
       ASSERT_TRUE(probe_elem.key != 0);
       mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
       m_idx++;
@@ -304,16 +320,16 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
 
   sh->stats->finds.op_count = probe.size();
   sh->stats->finds.duration = g_find_end - g_find_start;
+  sh->stats->found = found;
+  sh->stats->ht_fill = ht->get_fill();
+  sh->stats->ht_capacity = ht->get_capacity();
 
-  // test, for each element in join relation, probe k, probe value, build value
-  // the probe key should exists in build relation.
 
 #ifdef DEBUG_HJ
 
+    PLOGI.printf("joined %lu out %lu, %.2f", found, probe.size(),
+             found * 100.0 / probe.size());
   PLOGI.printf("get fill %.3f", (double)ht->get_fill() / ht->get_capacity());
-  PLOGI.printf("joined %lu out %lu, %.2f", found, probe.size(),
-               found * 100.0 / probe.size());
-
   // functional correctness
   ASSERT_TRUE(mvec.size() == probe.size());
   uint64_t matched_count = 0;
@@ -326,8 +342,10 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
   }
   PLOGI.printf("matched_count %lu", matched_count);
 
-  dump_workloads(build, probe, mvec);
-  ASSERT_TRUE(found == matched_count);
+  if (found != matched_count) {
+    dump_workloads(build, probe, mvec);
+    ASSERT_TRUE(false);
+  }
 
   JoinElement je;
   for (int i = 0; i < found; i++) {

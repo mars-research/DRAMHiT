@@ -67,10 +67,17 @@ class CASHashTable : public BaseHashTable {
   CASHashTable(uint64_t c, uint32_t queue_sz, uint8_t tid)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
-    this->find_queue_sz = kmercounter::utils::next_pow2(queue_sz);
-    this->insert_queue_sz = find_queue_sz;
+    if(capacity % KV_IN_CACHELINE != 0)  {
+        PLOGE.printf("Capacity %lu is not a multiple of KV_IN_CACHELINE %d\n", capacity, KV_IN_CACHELINE);
+        abort();
+    }
 
-    assert(capacity % KV_IN_CACHELINE == 0);
+    this->insert_queue_sz = this->find_queue_sz = queue_sz;
+
+    if(find_queue_sz > 0 && find_queue_sz % 2 != 0) {
+        PLOGE.printf("Queue size %lu is not a power of 2\n", find_queue_sz);
+        abort();
+    }
 
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
@@ -81,7 +88,7 @@ class CASHashTable : public BaseHashTable {
 
         PLOGI.printf("Hashtable base: %p Hashtable size: %lu", this->hashtable,
                      this->capacity);
-        PLOGI.printf("queue item sz: %d", sizeof(KVQ));
+        PLOGI.printf("queue sz: %lu, queue item sz: %d", find_queue_sz, sizeof(KVQ));
       }
       this->ref_cnt++;
     }
@@ -763,48 +770,6 @@ class CASHashTable : public BaseHashTable {
     for (size_t i = 0; i < this->capacity; i += 4) {
       _mm_clflush(&this->hashtable[i]);
     }
-
-    // uint64 count = 0;
-    // for (int j = 0; j < 10; j++)
-    //   // count += this->get_fill();
-    //   for (size_t i = 0; i < this->capacity; i += 4) {
-    //     //   // _mm_clflush(&this->hashtable[i]);
-    //     __builtin_prefetch(&this->hashtable[i], false, 1);
-    //     //   // count += this->hashtable[i].kvpair.key;
-    //     count++;
-    //   }
-    // printf("[JOSH] %d\n", count);
-    //   return count;
-    // constexpr size_t DUMMY_HT_BYTES = 500 * 1024 * 1024;  // 100MB
-    // constexpr size_t DUMMY_HT_CAPACITY = DUMMY_HT_BYTES / sizeof(KV);
-
-    // // Allocate
-    // KV *dummy_ht = (KV *)malloc(DUMMY_HT_BYTES);
-    // assert(dummy_ht != nullptr);
-
-    // // Optional: zero init so we can test fill
-    // memset(dummy_ht, 0, DUMMY_HT_BYTES);
-
-    // // Simple is_empty logic
-    // auto is_empty = [](const KV &kv) -> bool {
-    //   static const KV zero = {};
-    //   return memcmp(&kv, &zero, sizeof(KV)) == 0;
-    // };
-
-    // // Count non-empty entries
-    // size_t count = 0;
-    // for (int j = 0; j < 10; j++)
-    //   for (size_t i = 0; i < DUMMY_HT_CAPACITY; i++) {
-    //     if (!is_empty(dummy_ht[i])) {
-    //       count++;
-    //     }
-    //   }
-    // // printf("Dummy HT fill: %lu entries\n", count);
-
-    // // Free
-    // free(dummy_ht);
-
-    // return count;
   }
 
   size_t get_capacity() const override { return this->capacity; }

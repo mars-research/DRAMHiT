@@ -76,7 +76,7 @@ void init_zipfian_dist(double skew, int64_t seed, uint64_t size) {
   g_zipf_values = new std::vector<key_type>(size);
 
   std::stringstream cache_name{};
-  cache_name << "/opt/zipfian/" << config.skew << "_" << config.seed << "_" << size << ".bin";
+  cache_name << "cache/" << config.skew << "_" << config.seed << "_" << size << ".bin";
   std::ifstream cache{cache_name.str().c_str()};
   PLOG_INFO << cache_name.str() << " " << cache.is_open();
   if (cache.is_open()) {
