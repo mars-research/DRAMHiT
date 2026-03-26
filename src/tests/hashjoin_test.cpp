@@ -33,6 +33,9 @@
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
 
+#define DEBUG_HJ
+#ifdef DEBUG_HJ
+
 #define ASSERT_TRUE(expr)                                            \
   do {                                                               \
     if (!(expr)) {                                                   \
@@ -41,6 +44,12 @@
       std::abort();                                                  \
     }                                                                \
   } while (false)
+
+#else
+
+#define ASSERT_TRUE(expr)
+
+#endif
 
 namespace kmercounter {
 
@@ -133,20 +142,15 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   uint64_t found = 0;
   uint32_t requests_num = workload.size();
   uint32_t batch_len = config.batch_len;
+
   collector_type* const collector{};
   FindResult* results = new FindResult[batch_len];
   ValuePairs vp = std::make_pair(0, results);
   InsertFindArgument* items = (InsertFindArgument*)aligned_alloc(
       64, sizeof(InsertFindArgument) * batch_len);
+
   Element e;
-
-  // ensure that batch num is right
-  size_t issued_batch_num = 0;
-  size_t expected_batch_num = requests_num / batch_len;
-  if (requests_num % batch_len) {
-    expected_batch_num++;
-  }
-
+  size_t batch_num = requests_num / batch_len;
   size_t ele_num_per_cache_line = CACHELINE_SIZE / sizeof(Element);
   size_t prefetches_ahead = ele_num_per_cache_line * PREFETCH_AHEAD_X_CACHELINE;
   size_t idx = 0;
@@ -155,29 +159,7 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   Element probe_elem;
   FindResult result;
   uint32_t batch_idx = 0;
-  ASSERT_TRUE(batch_len % 2 == 0);
-
-  for (unsigned int n = 0; n < requests_num; n++) {
-    if (!(n & (ele_num_per_cache_line - 1)) &&
-        (n + prefetches_ahead < requests_num)) {
-      __builtin_prefetch(&workload.at(n + prefetches_ahead), false, 3);
-    }
-
-    e = workload[n];
-    batch_idx = n & (batch_len - 1);
-    items[batch_idx].key = e.key;
-    items[batch_idx].id = n;  // keep track of which request this is.
-    batch_idx++;
-
-    if (batch_idx == 0) {
-      vp.first = 0;
-      ht->find_batch(InsertFindArguments(items, batch_len), vp, collector);
-      found += vp.first;
-      issued_batch_num++;
-    }
-  }
-
-  ASSERT_TRUE(issued_batch_num == batch_num);
+  ASSERT_TRUE(batch_len % 2 == 0 && batch_len > 0);
 
   // force ele_num_per_cache_line pow of 2. 2 < 16
   for (unsigned int n = 0; n < batch_num; n++) {
@@ -197,7 +179,6 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
     vp.first = 0;
     ht->find_batch(InsertFindArguments(items, batch_len), vp, collector);
     found += vp.first;
-    PLOGI.printf("found %lu", found);
     // do actual join, might have to prefetch this as well ....
 #ifdef MATERIALIZE
     for (int i = 0; i < vp.first; i++) {
@@ -230,8 +211,11 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
     found += vp.first;
 #ifdef MATERIALIZE
     for (int i = 0; i < vp.first; i++) {
-      result = results[i];
+      ASSERT_TRUE(vp.first <= batch_len);
+      result = vp.second[i];
+      ASSERT_TRUE(result.id < workload.size());
       probe_elem = workload[result.id];  // basically random reads
+      ASSERT_TRUE(probe_elem.key != 0);
       mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
       m_idx++;
     }
@@ -246,7 +230,6 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
       break;
     }
     found += vp.first;
-    PLOGI.printf("flushing found %lu", found);
 #ifdef MATERIALIZE
     for (int i = 0; i < vp.first; i++) {
       ASSERT_TRUE(vp.first <= batch_len);
@@ -266,8 +249,8 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
 }
 
 void dump_workloads(HugepageVec& build, HugepageVec& probe, JoinVec& mvec) {
-  PLOGI.printf("build size: %lu, probe size: %lu, mvec size: %lu\n",
-               build.size(), probe.size(), mvec.size());
+  PLOGI.printf("build size: %lu, probe size: %lu, mvec size: %lu", build.size(),
+               probe.size(), mvec.size());
   for (size_t i = 0; i < build.size(); i++) {
     PLOGI.printf("build[%lu] key: %lu, value: %lu", i, build[i].key,
                  build[i].value);
@@ -325,11 +308,27 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
   // test, for each element in join relation, probe k, probe value, build value
   // the probe key should exists in build relation.
 
+#ifdef DEBUG_HJ
+
   PLOGI.printf("get fill %.3f", (double)ht->get_fill() / ht->get_capacity());
   PLOGI.printf("joined %lu out %lu, %.2f", found, probe.size(),
-               found / probe.size());
+               found * 100.0 / probe.size());
 
+  // functional correctness
   ASSERT_TRUE(mvec.size() == probe.size());
+  uint64_t matched_count = 0;
+  for (const auto& be : build) {
+    for (const auto& pe : probe) {
+      if (pe.key == be.key) {
+        matched_count++;
+      }
+    }
+  }
+  PLOGI.printf("matched_count %lu", matched_count);
+
+  dump_workloads(build, probe, mvec);
+  ASSERT_TRUE(found == matched_count);
+
   JoinElement je;
   for (int i = 0; i < found; i++) {
     ASSERT_TRUE(found <= mvec.size());
@@ -350,8 +349,7 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
       abort();
     }
   }
-
-  dump_workloads(build, probe, mvec);
+#endif
 }
 
 void HashjoinTest::join_relations_generated(Shard* sh,
@@ -365,9 +363,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   // Why do we do this ? on numa machine, we can ensure workload are local
   // access.
   HugepageVec build_relation(partition_sz_r, hugepage_alloc_inst_relation);
-
   HugepageVec probe_relation(partition_sz_s, hugepage_alloc_inst_relation);
-
   JoinVec join_relation(partition_sz_s, hugepage_alloc_inst_join);
 
   // Copy data from global vec into hugepage back vec.
@@ -400,7 +396,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     probe_relation.at(i) = e;
   }
 
-  hashjoin(sh, build_relation, build_relation, join_relation, ht, barrier);
+  hashjoin(sh, build_relation, probe_relation, join_relation, ht, barrier);
 }
 
 void HashjoinTest::join_relations_from_files(Shard* sh,
