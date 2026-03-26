@@ -176,6 +176,7 @@ struct Configuration {
   uint32_t find_queue_sz;
   std::string perf_cnt_path;
   std::string perf_def_path;
+  bool test;
 
   void dump_configuration() {
     printf("Run configuration {\n");

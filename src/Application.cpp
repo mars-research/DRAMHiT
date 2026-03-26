@@ -122,6 +122,7 @@ const Configuration def = {
     .find_queue_sz = 16,
     .perf_cnt_path = "",
     .perf_def_path = "",
+    .test = false,
 };  // TODO enum
 
 // for synchronization of threads
@@ -654,7 +655,11 @@ int Application::process(int argc, char *argv[]) {
         "insert-snapshot",
         po::value<uint64_t>(&config.insert_snapshot)
             ->default_value(def.insert_snapshot),
-        "Get performance stats on ith iter insert");
+        "Get performance stats on ith iter insert")(
+        "test",
+        po::value<bool>(&config.test)
+            ->default_value(def.test),
+        "Test the run");
 
     papi_init();
     po::variables_map vm;

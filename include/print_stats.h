@@ -11,6 +11,8 @@ namespace kmercounter {
 // extern uint64_t *g_find_durations;
 // extern uint64_t *g_insert_durations;
 
+extern std::vector<key_type>* g_zipf_values;
+
 #if defined(WITH_PCM)
 extern double *g_find_bw;
 #endif
@@ -129,6 +131,34 @@ inline void print_stats(Shard *all_sh, Configuration &config) {
   insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
 
   if (config.mode == HASHJOIN) {
+
+      if(config.test)
+      {
+        uint64_t join_answer = 0;
+        if(config.relation_r_size+ config.relation_s_size != g_zipf_values->size()) {
+            PLOGE.printf("OOO %lu %lu", config.relation_r_size+ config.relation_s_size, g_zipf_values->size() );
+            abort();
+        }
+
+        // need to generate data using a ordered set .....
+        for(uint64_t j=config.relation_r_size;j <config.relation_s_size+config.relation_r_size; j++){
+            for(uint64_t i=0; i<config.relation_r_size; i++){
+                if(g_zipf_values->at(i) == g_zipf_values->at(j)){
+                    join_answer++;
+                    break;
+                }
+            }
+        }
+
+        if (total_found != join_answer) {
+            PLOGE.printf("hashjoin failed, solution: %lu answer: %lu",
+                join_answer, total_found);
+        }else {
+            PLOGI.printf("hashjoin passed, solution: %lu answer: %lu",
+                join_answer, total_found);
+        }
+      }
+
       uint64_t sum_op = total_finds + total_inserts;
       uint64_t join_cycles = avg_find_duration + avg_insert_duration;
       uint64_t throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);

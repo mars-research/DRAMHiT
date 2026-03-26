@@ -33,7 +33,7 @@
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
 
-// #define DEBUG_HJ
+#define DEBUG_HJ
 #ifdef DEBUG_HJ
 
 #define ASSERT_TRUE(expr)                                            \
@@ -323,51 +323,6 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
   sh->stats->found = found;
   sh->stats->ht_fill = ht->get_fill();
   sh->stats->ht_capacity = ht->get_capacity();
-
-
-#ifdef DEBUG_HJ
-
-    PLOGI.printf("joined %lu out %lu, %.2f", found, probe.size(),
-             found * 100.0 / probe.size());
-  PLOGI.printf("get fill %.3f", (double)ht->get_fill() / ht->get_capacity());
-  // functional correctness
-  ASSERT_TRUE(mvec.size() == probe.size());
-  uint64_t matched_count = 0;
-  for (const auto& be : build) {
-    for (const auto& pe : probe) {
-      if (pe.key == be.key) {
-        matched_count++;
-      }
-    }
-  }
-  PLOGI.printf("matched_count %lu", matched_count);
-
-  if (found != matched_count) {
-    dump_workloads(build, probe, mvec);
-    ASSERT_TRUE(false);
-  }
-
-  JoinElement je;
-  for (int i = 0; i < found; i++) {
-    ASSERT_TRUE(found <= mvec.size());
-    je = mvec[i];
-    if (!hj_test_contains(probe, je.k, je.v1)) {
-      PLOGE.printf(
-          "@ mvec[%lu] probe didn't find key %lu, value1: %lu, value2: %lu", i,
-          je.k, je.v1, je.v2);
-      dump_workloads(build, probe, mvec);
-      abort();
-    }
-
-    if (!hj_test_contains(build, je.k, je.v2)) {
-      PLOGE.printf(
-          "@ mvec[%lu] build didn't find key %lu, value1: %lu, value2: %lu", i,
-          je.k, je.v1, je.v2);
-      dump_workloads(build, probe, mvec);
-      abort();
-    }
-  }
-#endif
 }
 
 void HashjoinTest::join_relations_generated(Shard* sh,
