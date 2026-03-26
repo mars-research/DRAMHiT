@@ -333,6 +333,9 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   uint64_t partition_sz_r = config.relation_r_size / config.num_threads;
   uint64_t partition_sz_s = config.relation_s_size / config.num_threads;
 
+  // need to generate using zipf for un ordered sets , while set.size() != partion_sz
+  // we keep populate.
+
   // Why do we do this ? on numa machine, we can ensure workload are local
   // access.
   HugepageVec build_relation(partition_sz_r, hugepage_alloc_inst_relation);
