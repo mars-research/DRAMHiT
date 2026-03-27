@@ -33,7 +33,7 @@
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
 
-#define DEBUG_HJ
+// #define DEBUG_HJ
 #ifdef DEBUG_HJ
 
 #define ASSERT_TRUE(expr)                                            \
@@ -75,7 +75,6 @@ using Element = KeyValuePair;
 using HugepageAlloc = huge_page_allocator<Element>;
 using HugepageVec = std::vector<Element, HugepageAlloc>;
 HugepageAlloc hugepage_alloc_inst_relation;
-
 
 bool hj_test_contains(HugepageVec& vec, key_type k, value_type v) {
   for (const auto& e : vec) {
@@ -140,7 +139,8 @@ void ht_do_insert(BaseHashTable* ht, HugepageVec& workload) {
   free(items);
 }
 
-// void materialize(JoinVec& mvec, const HugepageVec& probe, const ValuePairs& vp, size_t m_idx)
+// void materialize(JoinVec& mvec, const HugepageVec& probe, const ValuePairs&
+// vp, size_t m_idx)
 // {
 //     FindResult result;
 //     Element probe_elem;
@@ -162,6 +162,7 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   collector_type* const collector{};
   FindResult* results = new FindResult[batch_len];
   ValuePairs vp = std::make_pair(0, results);
+
   InsertFindArgument* items = (InsertFindArgument*)aligned_alloc(
       64, sizeof(InsertFindArgument) * batch_len);
 
@@ -176,6 +177,9 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   FindResult result;
   uint32_t batch_idx = 0;
   ASSERT_TRUE(batch_len % 2 == 0 && batch_len > 0);
+
+  FindResult* prefetched_results = new FindResult[batch_len];
+  ValuePairs prefetched_vp = std::make_pair(0, prefetched_results);
 
   // force ele_num_per_cache_line pow of 2. 2 < 16
   for (unsigned int n = 0; n < batch_num; n++) {
@@ -195,20 +199,53 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
     vp.first = 0;
     ht->find_batch(InsertFindArguments(items, batch_len), vp, collector);
     found += vp.first;
+
     // do actual join, might have to prefetch this as well ....
 #ifdef MATERIALIZE
+#ifdef NOPREFETCH_JOINRESULT
     for (int i = 0; i < vp.first; i++) {
       ASSERT_TRUE(vp.first <= batch_len);
       result = vp.second[i];
       ASSERT_TRUE(result.id < workload.size());
-      probe_elem = workload[result.id];  // basically random reads if r and s overlaps
+      probe_elem =
+          workload[result.id];  // basically random reads if r and s overlaps
       ASSERT_TRUE(probe_elem.key != 0);
       mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
       m_idx++;
     }
+#else
+    for (int i = 0; i < prefetched_vp.first; i++) {
+      result = prefetched_vp.second[i];
+      probe_elem = workload[result.id];  // basically random reads if r and s overlaps
+      mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
+      m_idx++;
+    }
+
+    for (int i = 0; i < vp.first; i++) {
+      ASSERT_TRUE(vp.first <= batch_len);
+      result = vp.second[i];
+      ASSERT_TRUE(result.id < workload.size());
+      __builtin_prefetch(&workload[result.id], false, 3);
+      __builtin_prefetch(&mvec[(m_idx+i)], true, 3);
+    }
+
+    prefetched_vp.first = vp.first;
+    prefetched_vp.second = vp.second;
+#endif
 #endif
   }
 
+#ifndef NOPREFETCH_JOINRESULT
+  // last iteration of loop will not actually saving last batch of the result
+  for (int i = 0; i < prefetched_vp.first; i++) {
+    result = prefetched_vp.second[i];
+    probe_elem = workload[result.id];  // basically random reads if r and s overlaps
+    mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
+    m_idx++;
+  }
+#endif
+
+  // The rest are corner cases, don't need performance boost as bad. keep it simple
   // in case batch size is not divisible
   size_t residule_num = requests_num - batch_len * batch_num;
   if (residule_num > 0) {
@@ -261,6 +298,7 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
 
   free(items);
   delete results;
+  delete prefetched_results;
   return found;
 }
 
@@ -333,19 +371,22 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   uint64_t partition_sz_r = config.relation_r_size / config.num_threads;
   uint64_t partition_sz_s = config.relation_s_size / config.num_threads;
 
-  // need to generate using zipf for un ordered sets , while set.size() != partion_sz
-  // we keep populate.
+  if (sh->shard_idx == config.num_threads - 1) {
+    partition_sz_r += config.relation_r_size % config.num_threads;
+    partition_sz_s += config.relation_s_size % config.num_threads;
+  }
 
-  // Why do we do this ? on numa machine, we can ensure workload are local
-  // access.
+  // This is slow as we need to copy.
+  // But it ensures huge page and numa correctness.
+  // This is good enough for generated workload,
+  // if it aint broke, don't fix it....
   HugepageVec build_relation(partition_sz_r, hugepage_alloc_inst_relation);
   HugepageVec probe_relation(partition_sz_s, hugepage_alloc_inst_relation);
   JoinVec join_relation(partition_sz_s, hugepage_alloc_inst_join);
-
   // Copy data from global vec into hugepage back vec.
   Element e;
   uint64_t workload_idx = 0;
-  uint64_t offset = partition_sz_r * sh->shard_idx;
+  uint64_t offset = config.relation_r_size / config.num_threads * sh->shard_idx;
   for (int i = 0; i < partition_sz_r; i++) {
     workload_idx = i + offset;
     if (workload_idx >= g_zipf_values->size()) {
@@ -359,7 +400,8 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   }
 
   workload_idx = 0;
-  offset = config.relation_r_size + partition_sz_s * sh->shard_idx;
+  offset = config.relation_r_size +
+           config.relation_s_size / config.num_threads * sh->shard_idx;
   for (int i = 0; i < partition_sz_s; i++) {
     workload_idx = i + offset;
     if (workload_idx >= g_zipf_values->size()) {

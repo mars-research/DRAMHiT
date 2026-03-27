@@ -356,6 +356,15 @@ class NumaPolicyThreads : public Numa {
     return os;
   }
 
+  int get_numa_node(uint32_t cpu) const {
+    for(int i=0; i<nodes.size(); i++)
+    {
+        // if(nodes[i].cpu_list.contains(cpu))
+        //     return i;
+    }
+    return -1;
+  }
+
   std::vector<uint32_t> get_assigned_cpu_list() {
     // std::cout << *this << std::endl;
     return this->assigned_cpu_list;

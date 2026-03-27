@@ -21,6 +21,7 @@ class JoinRunConfig:
         r_size: int,
         ht_fill: int,
         skew: float,
+        test: int,
     ):
         self.name = name
         self.ht_type = ht_type
@@ -29,6 +30,7 @@ class JoinRunConfig:
         self.s_size = s_size
         self.r_size = r_size
         self.skew = skew
+        self.test = test
 
 
 class RegexStatsMatch:
@@ -136,6 +138,7 @@ if __name__ == "__main__":
                 r_size=r_size,
                 ht_fill=50,
                 skew=0.01,
+                test=1,
             )
         )
     )

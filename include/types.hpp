@@ -253,9 +253,22 @@ struct Kmer_s {
 
 struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
+  size_t numa_node;      // node it belongs to
+  size_t assigned_cpu;   // cpu it is pinned
+
+  // hashjoin
+  uint64_t r_start;
+  uint64_t r_end;
+  uint64_t s_start;
+  uint64_t s_end;
+
   off64_t f_start;    // start byte into file
   off64_t f_end;      // end byte into file
+
+  // statistics
   thread_stats* stats;
+
+  // not sure ....
   Kmer_s* kmer_big_pool;
   Kmer_s* kmer_small_pool;
   Kmer_s* pool;

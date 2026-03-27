@@ -2,22 +2,21 @@
 #define _PRINT_STATS_H
 
 #include <cstdint>
+#include <iostream>
+#include <unordered_map>
+#include <vector>
 
 #include "hashtables/base_kht.hpp"
 #include "types.hpp"
 
 namespace kmercounter {
 
-// extern uint64_t *g_find_durations;
-// extern uint64_t *g_insert_durations;
-
-extern std::vector<key_type>* g_zipf_values;
+// I hate this ....
 
 #if defined(WITH_PCM)
 extern double *g_find_bw;
 #endif
-// CHANGE ME DEPENDING ON MACHINE
-/*From /proc/cpuinfo*/
+
 // #define CPUFREQ_MHZ defined by cmake
 static const float one_cycle_ns = ((float)1000 / CPUFREQ_MHZ);
 
@@ -39,236 +38,8 @@ inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
-inline void print_stats(Shard *all_sh, Configuration &config) {
-  uint64_t total_inserts = 0;
-  uint64_t total_insert_cycles = 0;
-  uint64_t total_find_cycles = 0;
-  uint64_t total_finds = 0;
-  uint64_t total_found = 0;
+uint64_t calculate_expected_join_size(uint64_t r_size, uint64_t s_size);
 
-  uint64_t max_find_duration = 0;
-  uint64_t max_insert_duration = 0;
-
-  uint64_t avg_find_duration = 0;
-  uint64_t avg_insert_duration = 0;
-
-  uint64_t total_upsert_cycles = 0;
-  uint64_t total_upsert = 0;
-
-  uint64_t ht_fill = 0;
-  uint64_t ht_capacity = 0;
-
-#ifdef CALC_STATS
-  uint64_t all_total_avg_read_length = 0;
-  uint64_t all_total_num_sequences = 0;
-  uint64_t all_total_reprobes = 0;
-  uint64_t all_total_find_cycles = 0;
-  [[maybe_unused]] double all_total_find_time_ns = 0;
-#endif
-
-  for (int k = 0; k < config.num_threads; k++) {
-    total_insert_cycles += all_sh[k].stats->insertions.duration;
-    total_inserts += all_sh[k].stats->insertions.op_count;
-    total_finds += all_sh[k].stats->finds.op_count;
-    total_find_cycles += all_sh[k].stats->finds.duration;
-    total_upsert += all_sh[k].stats->upsertions.op_count;
-    total_upsert_cycles += all_sh[k].stats->upsertions.duration;
-    total_found += all_sh[k].stats->found;
-
-    ht_fill += all_sh[k].stats->ht_fill;
-    ht_capacity += all_sh[k].stats->ht_capacity;
-
-    max_find_duration = all_sh[k].stats->finds.duration > max_find_duration
-                            ? all_sh[k].stats->finds.duration
-                            : max_find_duration;
-    max_insert_duration =
-        all_sh[k].stats->insertions.duration > max_insert_duration
-            ? all_sh[k].stats->insertions.duration
-            : max_insert_duration;
-#ifdef CALC_STATS
-    // all_total_num_sequences += all_sh[k].stats->num_sequences;
-    // all_total_avg_read_length += all_sh[k].stats->avg_read_length;
-    all_total_reprobes += all_sh[k].stats->num_reprobes;
-    // all_total_find_time_ns =
-    //(double)all_sh[k].finds.duration * one_cycle_ns;
-#endif
-  }  // end for loop across all threads.
-
-#ifdef CALC_STATS
-
-  printf(
-      "{total_reprobes : %llu, total_finds : %llu, avg_cachelines_accessed : "
-      "%.4f}\n",
-      (unsigned long long)all_total_reprobes, (unsigned long long)total_finds,
-      (all_total_reprobes + total_finds) / (double)total_finds);
-  printf("{reprobe_factor : %.4f}\n",
-         (all_total_reprobes + total_finds) / (double)total_finds);
-
-  // printf("{Avg cycles: %.4f}\n", (double)total_find_cycles/
-  // (double)config.num_threads);
-
-#endif
-
-  uint64_t find_mops = 0, insert_mops = 0;
-
-  uint64_t cycles_per_insert = 0;
-  uint64_t cycles_per_find = 0;
-
-  if (total_finds > 0) {
-    cycles_per_find = total_find_cycles / total_finds;
-  }
-
-  if (total_inserts > 0) {
-    cycles_per_insert = total_insert_cycles / total_inserts;
-  }
-
-  uint64_t num_threads = config.num_threads;
-
-  avg_find_duration = total_find_cycles / num_threads;
-  avg_insert_duration = total_insert_cycles / num_threads;
-
-  find_mops = ((CPUFREQ_MHZ * total_finds) / avg_find_duration);
-  insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
-
-  if (config.mode == HASHJOIN) {
-
-      if(config.test)
-      {
-        uint64_t join_answer = 0;
-        if(config.relation_r_size+ config.relation_s_size != g_zipf_values->size()) {
-            PLOGE.printf("OOO %lu %lu", config.relation_r_size+ config.relation_s_size, g_zipf_values->size() );
-            abort();
-        }
-
-        // need to generate data using a ordered set .....
-        for(uint64_t j=config.relation_r_size;j <config.relation_s_size+config.relation_r_size; j++){
-            for(uint64_t i=0; i<config.relation_r_size; i++){
-                if(g_zipf_values->at(i) == g_zipf_values->at(j)){
-                    join_answer++;
-                    break;
-                }
-            }
-        }
-
-        if (total_found != join_answer) {
-            PLOGE.printf("hashjoin failed, solution: %lu answer: %lu",
-                join_answer, total_found);
-        }else {
-            PLOGI.printf("hashjoin passed, solution: %lu answer: %lu",
-                join_answer, total_found);
-        }
-      }
-
-      uint64_t sum_op = total_finds + total_inserts;
-      uint64_t join_cycles = avg_find_duration + avg_insert_duration;
-      uint64_t throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
-    PLOGI.printf(
-        "\n"
-        "============================================\n"
-        "build_phrase_mops : %lu, cycle_per_op : %lu\n"
-        "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
-        "joined : %lu out of %lu, %.2f%%\n"
-        "throughput_mops: %lu\n"
-        "============================================\n",
-        insert_mops, cycles_per_insert,
-        find_mops, cycles_per_find,
-        total_found, config.relation_s_size,
-        total_found * 100.0 / config.relation_s_size, throughput);
-  } else {
-    PLOGI.printf(
-        "\n"
-        "============================================\n"
-        "found : %lu, fill_factor : %.3f \n"
-        "global_find_cycle : %lu, find_ops : %lu\n"
-        "global_insert_cycle : %lu, insert_ops : %lu\n"
-        "set_cycles : %lu, get_cycles : %lu, "
-        "set_mops : %lu, get_mops : %lu "
-        "============================================\n",
-        total_found, (ht_fill * 1.0 / ht_capacity), avg_find_duration,
-        total_finds, avg_insert_duration, total_inserts, cycles_per_insert,
-        cycles_per_find, insert_mops, find_mops);
-  }
-#ifdef COMMENT_OUT
-  printf("===============================================================\n");
-
-  if (config.insert_factor > 0) {
-    uint64_t op_per_iter = total_inserts / config.insert_factor;
-
-    uint64_t total_insert_duration_over_all_run = 0;
-    for (int i = 0; i < config.insert_factor; i++) {
-      total_insert_duration_over_all_run += g_insert_durations[i];
-    }
-    printf(
-        "average_insert_task_duration : %lu, total_insert_tas_duration : %lu\n",
-        total_insert_duration_over_all_run / config.insert_factor,
-        total_insert_duration_over_all_run);
-
-    printf("insert_ops : %lu, insert_ops_per_run : %lu\n", total_inserts,
-           op_per_iter);
-
-    if (config.insert_snapshot > 0) {
-      printf(
-          "=========================Snapshot "
-          "info============================\n");
-
-      for (int i = 0; i < config.insert_factor; i++) {
-        uint64_t snapshot_duration = g_insert_durations[i];
-        printf(
-            "Insert snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops "
-            "%lu\n",
-            i, snapshot_duration, op_per_iter,
-            (snapshot_duration * config.num_threads) / op_per_iter,
-            ((uint64_t)(CPUFREQ_MHZ * op_per_iter) / snapshot_duration));
-      }
-      printf(
-          "===============================================================\n");
-    }
-  }
-
-  if (config.read_factor > 0) {
-    uint64_t op_per_iter = total_finds / config.read_factor;
-    uint64_t total_find_duration_over_all_run = 0;
-    for (int i = 0; i < config.read_factor; i++) {
-      total_find_duration_over_all_run += g_find_durations[i];
-    }
-    printf("average_find_task_duration : %lu, total_find_duration : %lu\n",
-           total_find_duration_over_all_run / config.read_factor,
-           total_find_duration_over_all_run);
-
-    printf("find_ops : %lu, find_ops_per_run : %lu\n", total_finds,
-           op_per_iter);
-
-    if (config.read_snapshot > 0) {
-      printf(
-          "=====================Snapshot info============================\n");
-
-      for (int i = 0; i < config.read_factor; i++) {
-        uint64_t snapshot_duration = g_find_durations[i];
-        printf(
-            "Read snapshot iter %lu, duration %lu, op %lu, cpo %lu, mops %lu\n",
-            i, snapshot_duration, op_per_iter,
-            (snapshot_duration * config.num_threads) / op_per_iter,
-            ((uint64_t)(CPUFREQ_MHZ * op_per_iter) / snapshot_duration));
-      }
-      printf(
-          "===============================================================\n");
-    }
-  }
-#endif
-
-#ifdef WITH_PCM
-  if (config.read_factor > 0) {
-    double avg_bw = 0;
-
-    for (int i = 0; i < config.read_factor; i++) {
-      // printf("iter: %d, bw:%.3f\n", i, g_find_bw[i]);
-      avg_bw += g_find_bw[i];
-    }
-    avg_bw = avg_bw / config.read_factor;
-    printf("{ find_avg_bw : %.3f}\n", avg_bw);
-  }
-#endif
-}
-
+void print_stats(Shard *all_sh, Configuration &config);
 }  // namespace kmercounter
 #endif  // _STATS_H

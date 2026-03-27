@@ -59,8 +59,8 @@
 #include "PCMCounter.hpp"
 #endif
 
-#include "zipf_distribution.hpp"
 #include "utils/hugepage_allocator.hpp"
+#include "zipf_distribution.hpp"
 namespace kmercounter {
 
 class LynxQueue;
@@ -157,7 +157,6 @@ uint64_t g_app_record_duration;
 
 extern std::vector<key_type> *g_zipf_values;
 
-
 void sync_complete(void) {
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
@@ -207,13 +206,10 @@ void sync_complete(void) {
         if (zipfian_iter < config.insert_factor) {
           g_insert_durations[zipfian_iter] = g_insert_end - g_insert_start;
           PLOGV.printf("insert duration %lu", g_insert_durations[zipfian_iter]);
-
         }
       }
     } else {
-
-      if(cur_phase == ExecPhase::free_global_zipfian_values)
-      {
+      if (cur_phase == ExecPhase::free_global_zipfian_values) {
         delete g_zipf_values;
       }
     }
@@ -281,7 +277,8 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 }
 
 uint64_t get_gigbytes(size_t num_kv) {
-  return num_kv * (sizeof(key_type) + sizeof(value_type)) / (1024 * 1024 * 1024);
+  return num_kv * (sizeof(key_type) + sizeof(value_type)) /
+         (1024 * 1024 * 1024);
 }
 
 void free_ht(BaseHashTable *kmer_ht) { delete kmer_ht; }
@@ -357,9 +354,9 @@ void Application::shard_thread(int tid,
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
     case UNIFORM:
-     //this->test.zipf.run(sh, kmer_ht, 0.01, config.seed,
-     //                   config.num_threads, barrier);
-     this->test.uniform.run(sh, kmer_ht, barrier);
+      // this->test.zipf.run(sh, kmer_ht, 0.01, config.seed,
+      //                    config.num_threads, barrier);
+      this->test.uniform.run(sh, kmer_ht, barrier);
 
     default:
       break;
@@ -385,25 +382,43 @@ done:
 }
 
 int Application::spawn_shard_threads() {
+  if (config.num_threads >
+      static_cast<uint32_t>(this->n->get_num_total_cpus())) {
+    PLOGE.printf(
+        "More threads configured than cores available (Note: one "
+        "cpu assigned completely for synchronization)");
+    exit(-1);
+  }
   cpu_set_t cpuset;
-
   this->shards = (Shard *)std::aligned_alloc(
       CACHE_LINE_SIZE, sizeof(Shard) * config.num_threads);
-
   memset(this->shards, 0, sizeof(Shard) * config.num_threads);
 
-  size_t seg_sz = 0;
+  // get the shard cpu, numa node first.
+  // we will pin cpu later
+  int sh_idx = 0;
+  for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
+    Shard *sh = &this->shards[sh_idx];
+    sh->assigned_cpu = assigned_cpu;
+    sh->shard_idx = sh_idx;
+    sh->numa_node = this->np->get_numa_node(assigned_cpu);
+    sh_idx++;
+  }
 
   if (config.mode == FASTQ_WITH_INSERT) {
     config.in_file_sz = get_file_size(config.in_file.c_str());
     PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
-    seg_sz = config.in_file_sz / config.num_threads;
+    size_t seg_sz = config.in_file_sz / config.num_threads;
     if (seg_sz < 4096) {
       seg_sz = 4096;
     }
-  }
 
-  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
+    for (int i = 0; i < config.num_threads; i++) {
+      Shard &sh = this->shards[i];
+      sh.f_start = round_up(seg_sz * sh.shard_idx, PAGE_SIZE);
+      sh.f_end = round_up(seg_sz * (sh.shard_idx + 1), PAGE_SIZE);
+    }
+  } else if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
     if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
         config.ht_type == GROWHT || config.ht_type == CAS23HTPP ||
@@ -420,72 +435,44 @@ int Application::spawn_shard_threads() {
     }
   }
 
-  /*   TODO don't spawn threads if f_start >= in_file_sz
-    Not doing it now, as it has implications for num_threads,
-    which is used in calculating stats */
-
-  /*   TODO use PGROUNDUP instead of round_up()
-    #define PGROUNDUP(sz) (((sz)+PGSIZE−1) & ~(PGSIZE−1))
-    #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE−1)) */
-
-  if (config.num_threads >
-      static_cast<uint32_t>(this->n->get_num_total_cpus())) {
-    PLOGE.printf(
-        "More threads configured than cores available (Note: one "
-        "cpu assigned completely for synchronization)");
-    exit(-1);
-  }
-
 #ifdef WITH_PCM
-
   g_pcm_cnt.init();
 #endif
 
+  // Run !
   std::function<void()> on_sync_complete = sync_complete;
-
   std::barrier barrier(config.num_threads, on_sync_complete);
-  uint32_t i = 0;
 
-  for (uint32_t assigned_cpu : this->np->get_assigned_cpu_list()) {
-    if (assigned_cpu == 0) continue;
-    Shard *sh = &this->shards[i];
-    sh->shard_idx = i;
-    sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
-    sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    auto _thread = std::thread(&Application::shard_thread, this, i, &barrier);
+  for (int i = 1; i < config.num_threads; i++) {
+    Shard &sh = this->shards[i];
     CPU_ZERO(&cpuset);
-    CPU_SET(assigned_cpu, &cpuset);
+    CPU_SET(sh.assigned_cpu, &cpuset);
+    auto _thread =
+        std::thread(&Application::shard_thread, this, sh.shard_idx, &barrier);
     pthread_setaffinity_np(_thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-    PLOGV.printf("Thread %u: affinity: %u", sh->shard_idx, assigned_cpu);
     this->threads.push_back(std::move(_thread));
-    i += 1;
   }
 
-  // Pin main application thread to cpu 0 and run our thread routine
+  // logical index 0, is master thread, which will wait for all other threads
+  Shard *sh = &this->shards[0];
   CPU_ZERO(&cpuset);
-  CPU_SET(0, &cpuset);
+  CPU_SET(sh->assigned_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  PLOGV.printf("Thread 'main': affinity: %u", 0);
-
-  PLOGV.printf("Running master thread with id %d", i);
-  {
-    Shard *sh = &this->shards[i];
-    sh->shard_idx = i;
-    sh->f_start = round_up(seg_sz * sh->shard_idx, PAGE_SIZE);
-    sh->f_end = round_up(seg_sz * (sh->shard_idx + 1), PAGE_SIZE);
-    this->shard_thread(i, &barrier);
-  }
+  this->shard_thread(0, &barrier);
 
   for (auto &th : this->threads) {
     if (th.joinable()) {
       th.join();
     }
   }
-  // if ((config.mode != CACHE_MISS) && (config.mode != HASHJOIN)) {
+
   print_stats(this->shards, config);
 
 #ifdef WITH_PERFCPP
   EVENTCOUNTERS.print();
+#endif
+#ifdef WITH_PCM
+  g_pcm_cnt.clean();
 #endif
 
   if (config.mode == ZIPFIAN) {
@@ -493,12 +480,7 @@ int Application::spawn_shard_threads() {
     free(g_find_durations);
   }
 
-#ifdef WITH_PCM
-  g_pcm_cnt.clean();
-#endif
-
   std::free(this->shards);
-
   return 0;
 }
 
@@ -656,9 +638,7 @@ int Application::process(int argc, char *argv[]) {
         po::value<uint64_t>(&config.insert_snapshot)
             ->default_value(def.insert_snapshot),
         "Get performance stats on ith iter insert")(
-        "test",
-        po::value<bool>(&config.test)
-            ->default_value(def.test),
+        "test", po::value<bool>(&config.test)->default_value(def.test),
         "Test the run");
 
     papi_init();
@@ -687,7 +667,7 @@ int Application::process(int argc, char *argv[]) {
     }
 
 #ifdef HARDCODE_PREFETCH_H14A
-    //config.dump_configuration();
+    // config.dump_configuration();
     msr_ctrl->msr_open();
     // Control hw prefetcher msr
     if (vm["hw-pref"].as<bool>()) {
@@ -825,16 +805,15 @@ int Application::process(int argc, char *argv[]) {
 #endif
   }
 
-  if (config.mode == ZIPFIAN)
-  {
-    uint64_t size = config.ht_size * config.ht_fill/100;
+  if (config.mode == ZIPFIAN) {
+    uint64_t size = config.ht_size * config.ht_fill / 100;
     init_zipfian_dist(config.skew, config.seed, size);
   } else if (config.mode == HASHJOIN) {
     uint64_t size = config.relation_r_size + config.relation_s_size;
     config.ht_size = config.relation_r_size * 100 / config.ht_fill;
 
-    if(config.ht_size % 2 != 0) {
-        config.ht_size = utils::next_pow2(config.ht_size);
+    if (config.ht_size % 2 != 0) {
+      config.ht_size = utils::next_pow2(config.ht_size);
     }
     PLOGI.printf("hashjoin workload sz %lu (%lu gb), ht_size %lu (%lu gb)",
                  config.relation_r_size, get_gigbytes(config.relation_r_size),
@@ -878,7 +857,6 @@ int Application::process(int argc, char *argv[]) {
         exit(-1);
     }
   }
-
 
   this->spawn_shard_threads();
 
