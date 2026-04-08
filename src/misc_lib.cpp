@@ -274,7 +274,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
         "global_find_cycle : %lu, find_ops : %lu\n"
         "global_insert_cycle : %lu, insert_ops : %lu\n"
         "set_cycles : %lu, get_cycles : %lu, "
-        "set_mops : %lu, get_mops : %lu "
+        "set_mops : %lu, get_mops : %lu\n"
         "============================================\n",
         total_found, (ht_fill * 1.0 / ht_capacity), avg_find_duration,
         total_finds, avg_insert_duration, total_inserts, cycles_per_insert,

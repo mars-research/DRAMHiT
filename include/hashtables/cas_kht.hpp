@@ -291,7 +291,6 @@ class CASHashTable : public BaseHashTable {
               // hashtable idx at which data is to be inserted
 
               size_t idx = q->idx;
-              // idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
               KV *curr;
 
               uint64_t *bucket = (uint64_t *)&this->hashtable[idx];
@@ -313,9 +312,7 @@ class CASHashTable : public BaseHashTable {
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
               if (ept_cmp != 0) {
                 idx += (_bit_scan_forward(ept_cmp) >> 1);
-              } else {  // we didn;t find emty key
-                idx += 4;
-                retry = 1;
+              } else {  // we didn;t find empty key
                 goto retry_add_to_queue;
               }
 
@@ -352,17 +349,18 @@ class CASHashTable : public BaseHashTable {
               uint64_t old_hash = q->key_hash;
               uint64_t hash = this->hash(&old_hash);
               idx = hash & (this->capacity - 1);
-              idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-
+              idx = idx & ~(size_t)KEYS_IN_CACHELINE_MASK;
               this->insert_queue[head].key_hash = hash;
+#else
+              idx += KV_IN_CACHELINE;
+              idx = idx & (this->capacity - 1);
 #endif
 
               prefetch_insert(idx);
-
               this->insert_queue[head].key = q->key;
               this->insert_queue[head].key_id = q->key_id;
               this->insert_queue[head].value = q->value;
-              this->insert_queue[head].idx = idx;
+              this->insert_queue[head].idx = idx ;
 
 #ifdef LATENCY_COLLECTION
               this->insert_queue[head].timer_id = q->timer_id;
