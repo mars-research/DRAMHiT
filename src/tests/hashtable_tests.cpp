@@ -253,18 +253,17 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   // get zipfian here.
   std::vector<key_type, huge_page_allocator<key_type>> zipf_set_local(
-      partition_size,            // initial size
+      partition_size,                  // initial size
       huge_page_allocator<key_type>()  // allocator instance
   );
 
   uint64_t starting_offset = shard->shard_idx * partition_size;
   for (size_t i = 0; i < partition_size; i++) {
-    if(i+starting_offset < g_zipf_values->size())
-        zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);
+    if (i + starting_offset < g_zipf_values->size())
+      zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);
   }
 
-  if(shard->shard_idx == 0)
-  {
+  if (shard->shard_idx == 0) {
     cur_phase = ExecPhase::free_global_zipfian_values;
   }
   sync_barrier->arrive_and_wait();
@@ -288,9 +287,15 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   //     __itt_event_create("insert_test", strlen("insert_test"));
   // __itt_event_start(insert_event);
 #endif
+  if (shard->shard_idx == 0) {
+    PLOGI.printf("zipfian test insert start");
+  }
   insert_timings =
       do_zipfian_inserts(hashtable, skew, zipf_seed, count, shard->shard_idx,
                          sync_barrier, zipf_set_local);
+  if (shard->shard_idx == 0) {
+    PLOGI.printf("zipfian test insert end");
+  }
 #ifdef WITH_VTUNE_LIB
   //__itt_event_end(insert_event);
 #endif
@@ -336,9 +341,16 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   __itt_resume();
 #endif
 
+  if (shard->shard_idx == 0) {
+    PLOGI.printf("zipfian test find start");
+  }
+
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
                                  sync_barrier, zipf_set_local);
 
+  if (shard->shard_idx == 0) {
+    PLOGI.printf("zipfian test find end");
+  }
 #if defined(WITH_PCM)
   // if (shard->shard_idx == 0) {
   //   pcm_cnt.stop_bw();

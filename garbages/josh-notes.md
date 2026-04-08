@@ -1,3 +1,16 @@
+
+amd 2025 70%fill 8GB
+set_cycles : 141, get_cycles : 101, set_mops : 1474, get_mops : 2041
+
+2025 + no_abstract
+set_cycles : 137, get_cycles : 101, set_mops : 1517, get_mops : 2046
+
+amd 2025 inline 
+set_cycles : 137, get_cycles : 103, set_mops : 1514, get_mops : 2000
+
+inline + no_abstract
+set_cycles : 136, get_cycles : 105, set_mops : 1527, get_mops : 1980
+
 # 2025
 /opt/DRAMHiT/build/dramhit --perf_cnt_path ./perf_cnt.txt --perf_def_path ./perf-cpp/perf_list.csv --find_queue 64 --ht-fill 90 --ht-type 3 --insert-factor 1 --read-factor 1 --num-threads 64 --numa-split 4 --no-prefetch 0 --mode 11 --ht-size 268435456 --skew 1.1 --hw-pref 0 --batch-len 16
 2025-09-19 08:30:40.288 INFO  [1581693] [initializeLogger@17] ------------------------
