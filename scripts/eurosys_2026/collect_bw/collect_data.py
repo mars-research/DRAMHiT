@@ -17,7 +17,7 @@ def main():
         "--",
         "/opt/DRAMHiT/build/dramhit",
         "--ht-type",
-        "3",
+        "3",  # 3 for dramblast, 8 for dramhit
         "--hw-pref",
         "0",
         "--ht-fill",
@@ -31,7 +31,7 @@ def main():
         "--no-prefetch",
         "0",
         "--insert-factor",
-        "1",
+        "100",
         "--read-factor",
         "100",
         "--mode",

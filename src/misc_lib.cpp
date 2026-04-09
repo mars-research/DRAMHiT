@@ -261,11 +261,11 @@ void print_stats(Shard *all_sh, Configuration &config) {
         "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
         "joined : %lu out of %lu, %.2f%%\n"
         "fill : %lu out of %lu, %.2f%%\n"
-        "throughput_mops : %lu\n"
+        "throughput_mops : %lu, ops: %lu, duration: %lu\n"
         "============================================\n",
         insert_mops, cycles_per_insert, find_mops, cycles_per_find, total_found,
         config.relation_s_size, total_found * 100.0 / config.relation_s_size,
-        ht_fill, ht_capacity, ht_fill * 100.0 / ht_capacity, throughput);
+        ht_fill, ht_capacity, ht_fill * 100.0 / ht_capacity, throughput, sum_op, join_cycles);
   } else {
     PLOGI.printf(
         "\n"

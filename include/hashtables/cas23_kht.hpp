@@ -50,7 +50,7 @@ class CAS23HashTable : public BaseHashTable {
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
-        PLOGV.printf("Hashtable base: %p Hashtable size: %lu\n",
+        PLOGI.printf("CAS23 Hashtable base: %p Hashtable size: %lu",
                      this->hashtable, this->capacity);
       }
       this->ref_cnt++;
@@ -408,7 +408,7 @@ class CAS23HashTable : public BaseHashTable {
     if (curr->kvpair.key == 0) {
       if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
         return;
-      } 
+      }
     }
 
     if (curr->compare_key(q)) {

@@ -11,7 +11,8 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
-#include <cstdlib>  // Required for std::abort()
+#include <cstdlib>     // Required for std::abort()
+#include <filesystem>  // Required for checking file existence and size
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -32,6 +33,7 @@
 #include "tests/HashjoinTest.hpp"
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
+#include "zipf_distribution.hpp"
 
 // #define DEBUG_HJ
 #ifdef DEBUG_HJ
@@ -75,6 +77,95 @@ using Element = KeyValuePair;
 using HugepageAlloc = huge_page_allocator<Element>;
 using HugepageVec = std::vector<Element, HugepageAlloc>;
 HugepageAlloc hugepage_alloc_inst_relation;
+
+void init_hashjoin_dist(double skew, int64_t seed, uint64_t r_size,
+                        uint64_t s_size) {
+  uint64_t total_size = r_size + s_size;
+  size_t expected_bytes = total_size * sizeof(key_type);
+
+  // Clean up if re-initializing
+  if (g_zipf_values != nullptr) {
+    delete g_zipf_values;
+    PLOGE.printf("g_zipf_values should be null");
+    abort();
+  }
+
+  // Allocate the global vector
+  g_zipf_values = new std::vector<key_type>(total_size);
+
+  // ---------------------------------------------------------
+  // Dynamically generate the filename based on parameters
+  // ---------------------------------------------------------
+  std::ostringstream filename_stream;
+  filename_stream << "hashjoin"
+                  << "_r" << r_size << "_s" << s_size << "_skew" << skew
+                  << "_seed" << seed << ".bin";
+
+  std::string filename = filename_stream.str();
+  // ---------------------------------------------------------
+  // STEP 1: Attempt to load from disk
+  // ---------------------------------------------------------
+  if (std::filesystem::exists(filename)) {
+    // Validate file size to ensure our parameters haven't changed
+    if (std::filesystem::file_size(filename) == expected_bytes) {
+      std::cout << "Loading cached dataset from disk (" << filename << ")..."
+                << std::endl;
+
+      std::ifstream infile(filename, std::ios::binary);
+      if (infile) {
+        // Read the entire binary block directly into the vector's memory
+        infile.read(reinterpret_cast<char*>(g_zipf_values->data()),
+                    expected_bytes);
+        return;  // Successfully loaded, exit function early
+      }
+    } else {
+      std::cout << "Cache size mismatch (parameters changed?). Regenerating..."
+                << std::endl;
+    }
+  }
+
+  // ---------------------------------------------------------
+  // STEP 2: Generate from scratch (Cache miss)
+  // ---------------------------------------------------------
+  std::cout << "Generating new Zipfian dataset..." << std::endl;
+
+  std::uint64_t keyrange_width = (1ull << 63);
+  if constexpr (std::is_same_v<key_type, std::uint32_t>) {
+    keyrange_width = (1ull << 31);
+  }
+  zipf_distribution_apache distribution(keyrange_width, skew, seed);
+
+  // Populate R (Unique)
+  std::unordered_set<key_type> unique_keys;
+  unique_keys.reserve(r_size);
+
+  uint64_t r_index = 0;
+  while (r_index < r_size) {
+    key_type k = distribution.sample();
+    if (unique_keys.insert(k).second) {
+      (*g_zipf_values)[r_index] = k;
+      r_index++;
+    }
+  }
+
+  // Populate S (Non-unique)
+  for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
+    (*g_zipf_values)[r_size + s_index] = distribution.sample();
+  }
+
+  // ---------------------------------------------------------
+  // STEP 3: Save to disk for next time
+  // ---------------------------------------------------------
+  std::cout << "Saving dataset to disk..." << std::endl;
+  std::ofstream outfile(filename, std::ios::binary);
+  if (outfile) {
+    // Write the entire vector memory block to disk
+    outfile.write(reinterpret_cast<const char*>(g_zipf_values->data()),
+                  expected_bytes);
+  } else {
+    std::cerr << "Warning: Failed to open file for writing!" << std::endl;
+  }
+}
 
 bool hj_test_contains(HugepageVec& vec, key_type k, value_type v) {
   for (const auto& e : vec) {
@@ -216,7 +307,8 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
 #else
     for (int i = 0; i < prefetched_vp.first; i++) {
       result = prefetched_vp.second[i];
-      probe_elem = workload[result.id];  // basically random reads if r and s overlaps
+      probe_elem =
+          workload[result.id];  // basically random reads if r and s overlaps
       mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
       m_idx++;
     }
@@ -226,7 +318,7 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
       result = vp.second[i];
       ASSERT_TRUE(result.id < workload.size());
       __builtin_prefetch(&workload[result.id], false, 3);
-      __builtin_prefetch(&mvec[(m_idx+i)], true, 3);
+      __builtin_prefetch(&mvec[(m_idx + i)], true, 3);
     }
 
     prefetched_vp.first = vp.first;
@@ -239,14 +331,15 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   // last iteration of loop will not actually saving last batch of the result
   for (int i = 0; i < prefetched_vp.first; i++) {
     result = prefetched_vp.second[i];
-    probe_elem = workload[result.id];  // basically random reads if r and s overlaps
+    probe_elem =
+        workload[result.id];  // basically random reads if r and s overlaps
     mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
     m_idx++;
   }
 #endif
 
-  // The rest are corner cases, don't need performance boost as bad. keep it simple
-  // in case batch size is not divisible
+  // The rest are corner cases, don't need performance boost as bad. keep it
+  // simple in case batch size is not divisible
   size_t residule_num = requests_num - batch_len * batch_num;
   if (residule_num > 0) {
     for (int i = 0; i < residule_num; i++) {
@@ -362,6 +455,64 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
   sh->stats->ht_fill = ht->get_fill();
   sh->stats->ht_capacity = ht->get_capacity();
 }
+
+
+// class RadixBucket{
+
+//     HugepageVec* v;
+//     RadixBucket(uint64_t size){
+
+//     }
+// };
+
+
+// /**
+//  * On a high level,
+//  */
+// void partitionjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
+//               BaseHashTable* ht, std::barrier<std::function<void()>>* barrier) {
+
+//     // we need to pick radix correctly though. each bucket must fit l2/2 (hyperthreading)
+//     //
+//     //
+
+//     uint64_t radix = config.num_threads - 1; // config.num_threads is pow(2)
+
+//     // initialize bucket, we need to collect bucket stats.
+//     // must do it other bucket size is gonna be size of workload.
+//     // so if chunk is 1gb, bucket is also 1gb, and bckets will be 1gb * num_threads
+//     //
+//     // sync
+//     //
+
+//     // Partition phase
+//     uint64_t bucket_id = 0; //
+//     for k in build{
+//        bucket_id = k & radix_bit;
+//        R_Buckets[bucket_id]->insert(k,v);
+//     }
+
+//     for k in probe{
+//         bucket_id = k & radix_bit;
+//         S_Buckets[bucket_id]->insert(k,v);
+//     }
+
+//     ht->bucket_radix_insert(key_type, value_type, sh->shard_idx);
+
+//     // Sync
+//     // Join phase
+
+//     RadixBucket* rb = R_Buckets[sh->shard_idx];
+//     RadixBucket* sb = S_Buckets[sh->shard_idx];
+
+//     for e in rb {
+//         ht->insert(e)
+//     }
+
+//     for e in sb {
+//         ht->find(e)
+//     }
+// }
 
 void HashjoinTest::join_relations_generated(Shard* sh,
                                             const Configuration& config,

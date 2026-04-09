@@ -36,3 +36,4 @@ cmake.check_cache
 tester/
 results/
 cache/
+*.bin
