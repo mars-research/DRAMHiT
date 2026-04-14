@@ -230,21 +230,6 @@ void ht_do_insert(BaseHashTable* ht, HugepageVec& workload) {
   free(items);
 }
 
-// void materialize(JoinVec& mvec, const HugepageVec& probe, const ValuePairs&
-// vp, size_t m_idx)
-// {
-//     FindResult result;
-//     Element probe_elem;
-//     for (int i = 0; i < vp.first; i++) {
-//       result = vp.second[i];
-//       ASSERT_TRUE(result.id < workload.size());
-//       probe_elem = probe[result.id];  // basically random reads
-//       ASSERT_TRUE(probe_elem.key != 0);
-//       mvec[m_idx] = {probe_elem.key, probe_elem.value, result.value};
-//       m_idx++;
-//     }
-// }
-
 uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   uint64_t found = 0;
   uint32_t requests_num = workload.size();
@@ -456,62 +441,145 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
   sh->stats->ht_capacity = ht->get_capacity();
 }
 
+// Partition Join
 
-// class RadixBucket{
+// 64-Byte Cache Line aligned buffer
+// struct alignas(64) CacheLineBuffer {
+//   Element e[4];
+//   uint32_t count = 0;
 
-//     HugepageVec* v;
-//     RadixBucket(uint64_t size){
-
-//     }
+//   inline void flush_nt(void* addr) {
+//     __m512i data = _mm512_load_si512(reinterpret_cast<const __m512i*>(e));
+//     _mm512_stream_si512(reinterpret_cast<__m512i*>(addr), data);
+//     count = 0;
+//   }
 // };
 
+// class RadixBucket {
+//  public:
+//   HugepageVec v;
+//   CacheLineBuffer buffer;
+//   uint64_t write_idx;
 
-// /**
-//  * On a high level,
-//  */
-// void partitionjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
-//               BaseHashTable* ht, std::barrier<std::function<void()>>* barrier) {
+//   RadixBucket(uint64_t size) : write_idx(0) { v.resize(size); }
 
-//     // we need to pick radix correctly though. each bucket must fit l2/2 (hyperthreading)
-//     //
-//     //
+//   inline void insert(Element& e) {
+//     buffer.tuples[buffer.count++] = e;
 
-//     uint64_t radix = config.num_threads - 1; // config.num_threads is pow(2)
+//     // Once we have a full cache-line (4 tuples), flush it
+//     if (buffer.count == 4) {
+//       buffer.flush_nt(&v[write_idx]);
+//       write_idx += 4;
+//     }
+//   }
 
-//     // initialize bucket, we need to collect bucket stats.
-//     // must do it other bucket size is gonna be size of workload.
-//     // so if chunk is 1gb, bucket is also 1gb, and bckets will be 1gb * num_threads
-//     //
-//     // sync
-//     //
+//   // Crucial: Flush any remaining tuples at the end of the partition phase
+//   inline void flush_remainder() {
+//     for (uint32_t i = 0; i < buffer.count; ++i) {
+//       v[write_idx++] = buffer.tuples[i];
+//     }
+//     buffer.count = 0;
+//   }
+// };
 
-//     // Partition phase
-//     uint64_t bucket_id = 0; //
-//     for k in build{
-//        bucket_id = k & radix_bit;
-//        R_Buckets[bucket_id]->insert(k,v);
+// std::vector<std::vector<RadixBucket*>> Global_R_Buckets;
+// std::vector<std::vector<RadixBucket*>> Global_S_Buckets;
+
+// void radix_join(Shard* sh, HugepageVec& build, HugepageVec& probe,
+//                 JoinVec& mvec, std::barrier<std::function<void()>>* barrier) {
+//   if (sh->shard_idx == 0) {
+//     Global_R_Buckets.resize(config.num_threads);
+//     Global_S_Buckets.resize(config.num_threads);
+//   }
+
+//   uint64_t bucket_num = 1 << config.radix;
+//   uint64_t radix_mask = bucket_num - 1;
+
+//   uint64_t t_id = sh->shard_idx;
+
+//   // Set up
+//   std::vector<RadixBucket*> R_Buckets(bucket_num);
+//   std::vector<RadixBucket*> S_Buckets(bucket_num);
+
+//   uint64_t r_estimated_size = (build.size() / bucket_num) * 1.2;
+//   uint64_t s_estimated_size = (probe.size() / bucket_num) * 1.2;
+
+//   for (uint64_t i = 0; i < config.num_threads; ++i) {
+//     R_Buckets[i] = new RadixBucket(r_estimated_size);
+//     S_Buckets[i] = new RadixBucket(s_estimated_size);
+//   }
+
+//   if (sh->shard_idx == 0) {
+//     cur_phase = ExecPhase::insertions;
+//     g_app_record_start = true;
+//   }
+//   barrier->arrive_and_wait();
+
+//   // Partition phrase
+//   Element e;
+//   uint64_t bucket_id;
+//   for (size_t i = 0; i < build.size(); ++i) {
+//     e = build[i];
+//     bucket_id = e.key & radix_mask;
+//     R_Buckets[bucket_id]->insert(e);
+//   }
+
+//   for (size_t i = 0; i < probe.size(); ++i) {
+//     e = probe[i];
+//     bucket_id = e.key & radix_mask;
+//     S_Buckets[bucke_id]->insert(e);
+//   }
+
+//   // Flush remainders that didn't fill a full cache line
+//   for (uint64_t i = 0; i < config.num_threads; ++i) {
+//     R_Buckets[i]->flush_remainder();
+//     S_Buckets[i]->flush_remainder();
+//   }
+
+//   // Register thread-local buckets globally for the join phase
+//   Global_R_Buckets[t_id] = R_Buckets;
+//   Global_S_Buckets[t_id] = S_Buckets;
+
+//   if (sh->shard_idx == 0) {
+//     cur_phase = ExecPhase::insertions;
+//     g_app_record_start = false;
+//   }
+//   barrier->arrive_and_wait();
+//   sh->stats->insertions.op_count = build.size() + probe.size();
+//   sh->stats->insertions.duration = g_insert_end - g_insert_start;
+
+//   if (sh->shard_idx == 0) {
+//     cur_phase = ExecPhase::finds;
+//     g_app_record_start = true;
+//   }
+//   barrier->arrive_and_wait();
+
+//   // Join phase, this should be fast.
+//   for (int part_id = t_id; part_id < bucket_num;
+//        part_id += config.num_threads) {
+//     std::unordered_map<key_type, value_type> ht;
+
+//     // gather all buckets for this partition from all other threads
+//     // build the table
+//     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
+//       RadixBucket* rb = Global_R_Buckets[thread_i][part_id];
+//       for (uint64_t i = 0; i < rb->write_idx; ++i) {
+//         ht.insert(rb->v[i].key, rb->v[i].value);
+//       }
 //     }
 
-//     for k in probe{
-//         bucket_id = k & radix_bit;
-//         S_Buckets[bucket_id]->insert(k,v);
-//     }
+//     if (sh->shard_idx == 0) {
+//     cur_phase = ExecPhase::finds;
+//     g_app_record_start = false;
+//   }
+//   barrier->arrive_and_wait();
+//   sh->stats->finds.op_count = build.size() + probe.size();
+//   sh->stats->finds.duration = g_find_end - g_find_start;
 
-//     ht->bucket_radix_insert(key_type, value_type, sh->shard_idx);
-
-//     // Sync
-//     // Join phase
-
-//     RadixBucket* rb = R_Buckets[sh->shard_idx];
-//     RadixBucket* sb = S_Buckets[sh->shard_idx];
-
-//     for e in rb {
-//         ht->insert(e)
-//     }
-
-//     for e in sb {
-//         ht->find(e)
-//     }
+//   for (uint64_t i = 0; i < config.num_threads; ++i) {
+//     delete R_Buckets[i];
+//     delete S_Buckets[i];
+//   }
 // }
 
 void HashjoinTest::join_relations_generated(Shard* sh,
@@ -565,6 +633,10 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     probe_relation.at(i) = e;
   }
 
+  // if(config.radix_partition)
+
+  // radix_join(sh, build_relation, probe_relation, join_relation, barrier);
+  // else
   hashjoin(sh, build_relation, probe_relation, join_relation, ht, barrier);
 }
 
@@ -576,6 +648,6 @@ void HashjoinTest::join_relations_from_files(Shard* sh,
                                             config.num_threads, "|");
   input_reader::KeyValueCsvPreloadReader t2(config.relation_s, sh->shard_idx,
                                             config.num_threads, "|");
-}  // namespace kmercounter
+}
 
 }  // namespace kmercounter

@@ -69,7 +69,8 @@ uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew, int64_t seed, uint64_t size);
-extern void init_hashjoin_dist(double skew, int64_t seed, uint64_t r_size, uint64_t s_size);
+extern void init_hashjoin_dist(double skew, int64_t seed, uint64_t r_size,
+                               uint64_t s_size);
 
 #ifdef WITH_PERFCPP
 MultithreadCounter EVENTCOUNTERS;
@@ -246,8 +247,8 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 #endif
     case CAS23HTPP:
 #ifdef CAS_NO_ABSTRACT
-    PLOGE.printf("cas 23 doesn't support no abstract methods feature");
-    abort();
+      PLOGE.printf("cas 23 doesn't support no abstract methods feature");
+      abort();
 #endif
       kmer_ht = new CAS23HashTable<KVType, ItemQueue>(sz);
       break;
@@ -359,10 +360,6 @@ void Application::shard_thread(int tid,
       this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
       break;
     case UNIFORM:
-      // this->test.zipf.run(sh, kmer_ht, 0.01, config.seed,
-      //                    config.num_threads, barrier);
-      PLOGE.printf("use zipfian test with skew = 0.01 instead");
-      abort();
       this->test.uniform.run(sh, kmer_ht, barrier);
 
     default:
@@ -822,11 +819,13 @@ int Application::process(int argc, char *argv[]) {
     if (config.ht_size % 2 != 0) {
       config.ht_size = utils::next_pow2(config.ht_size);
     }
-    PLOGI.printf("hashjoin build sz %lu (%lu gb), initialize ht_size %lu (%lu gb)",
-                 config.relation_r_size, get_gigbytes(config.relation_r_size),
-                 config.ht_size, get_gigbytes(config.ht_size));
+    PLOGI.printf(
+        "hashjoin build sz %lu (%lu gb), initialize ht_size %lu (%lu gb)",
+        config.relation_r_size, get_gigbytes(config.relation_r_size),
+        config.ht_size, get_gigbytes(config.ht_size));
 
-    init_hashjoin_dist(config.skew, config.seed, config.relation_r_size, config.relation_s_size);
+    init_hashjoin_dist(config.skew, config.seed, config.relation_r_size,
+                       config.relation_s_size);
   }
 
   if ((config.mode == BQ_TESTS_YES_BQ) ||

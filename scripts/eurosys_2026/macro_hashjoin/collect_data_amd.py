@@ -14,28 +14,17 @@ one_gb = 1 << 26  # kvpair is 16 bytes
 class JoinRunConfig:
     def __init__(
         self,
-        name: str,
         ht_type: int,
-        hw_pref: int,
         s_size: int,
         r_size: int,
         ht_fill: int,
         skew: float,
-        test: int,
     ):
-        self.name = name
         self.ht_type = ht_type
         self.ht_fill = ht_fill
-        self.hw_pref = hw_pref
         self.s_size = s_size
         self.r_size = r_size
         self.skew = skew
-        self.test = test
-
-
-class RegexStatsMatch:
-    def __init__(self, mops: float):
-        self.mops = mops
 
 
 def run_once(cmd: str):
@@ -50,11 +39,12 @@ def get_cmd(config: JoinRunConfig):
     cmd = f"""
         /opt/DRAMHiT/build/dramhit
         --ht-type {config.ht_type}
-        --hw-pref {config.hw_pref}
         --ht-fill {config.ht_fill}
         --relation_r_size {config.r_size}
         --relation_s_size {config.s_size}
         --skew {config.skew}
+        --seed 1775762435926593848
+        --hw-pref 0
         --find_queue 64
         --num-threads 64
         --numa-split 4
@@ -69,85 +59,31 @@ def get_cmd(config: JoinRunConfig):
     return cmd
 
 
-def run_collect(config, results):
-    out, err = run_once(get_cmd(config))
-    matches = re.findall(r"mops\s*:\s*([\d.]+)", out)
+def run(cmd: str):
+    out, err = run_once(cmd)
+    matches = re.findall(r"throughput_mops\s*:\s*([\d.]+)", out)
+
+    print(f"Command: {cmd}")
+    print("---- Output  ----")
+    print(out)
+    print("---- End of output ----")
+
     if not matches:
         print("\nError: could not parse mops values")
-        print(f"Command: {get_cmd(config)}")
-        print("---- Output  ----")
-        print(out)
         print(err)
-        print("---- End of output ----")
         sys.exit(1)
-    mops = float(matches[0])
 
+    return float(matches[0])
 
-# def run(name: str, ht_type: int, hw_pref: int, results: dict):
-#     for rsize in join_workload:
-#         htsize = int(rsize * 2)  # 50% fill factor
-#         repeat = 100
-
-#         print(cmd_base)
-#         out, err = run_once("sudo " + cmd_base)
-#         matches = re.findall(r"mops\s*:\s*([\d.]+)", out)
-
-#         if not matches:
-#             print("\nError: could not parse mops values")
-#             print(f"Command: {cmd_base}")
-#             print("---- Output  ----")
-#             print(out)
-#             print(err)
-#             print("---- End of output ----")
-#             sys.exit(1)
-
-#         mops = matches[-1]
-#         fill = rsize / htsize * 100
-#         print(f"rsize={rsize} htsize={htsize} fill={fill} mops={mops}")
-#         results[name].append(
-#             {"rsize": rsize, "htsize": htsize, "mops": mops, "fill": fill}
-#         )
-
-# fix on a size and vary skew ness.
-#
-# skew gives us different amount of overlaps between r and s
-# we know lower skew meaning we are just simply inserting and reading
-# on seperate data sets
-#
-# On high skew, 1.00 skew is about 30% overlaps between r and s
-#
-# a plot of mops vs skew. expect,
-# so we need to either prefetch carefully to avoid
-#
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python script.py <output.json>")
         sys.exit(1)
 
-    r_size = one_gb * 4
-    s_size = one_gb * 4
-
-    print(
-        get_cmd(
-            JoinRunConfig(
-                name="dramhit_2025",
-                ht_type=DRAMHIT25,
-                hw_pref=0,
-                s_size=s_size,
-                r_size=r_size,
-                ht_fill=50,
-                skew=0.01,
-                test=1,
-            )
-        )
-    )
-
-    exit()
-
     json_out_file = sys.argv[1]
+
     # rebuild project
-    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
         "-DDRAMHiT_VARIANT=2025_INLINE -DCAS_NO_ABSTRACT=OFF -DBUCKETIZATION=ON -DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON "
@@ -160,27 +96,35 @@ if __name__ == "__main__":
     # store results
     all_results = {}
 
-    r_size = one_gb * 4
-    s_size = one_gb * 4
+    r_size = one_gb * 1
+    s_size = one_gb * 8
+    configs = [
+        # Join config for 10 - 90 htfill for r_size (build) 1g, s_size 8g, skewness 0.01 (uniform)
+        # Join config for 10 - 90 htfill for r_size (build) 1g, s_size 8g, skewness 0.05 (some skewness)
+        #
+        JoinRunConfig(
+            ht_type=DRAMHIT25,
+            ht_fill=50,
+            r_size=r_size,
+            s_size=s_size,
+            skew=0.01,
+        ),
+        JoinRunConfig(
+            ht_type=DRAMHIT23,
+            ht_fill=50,
+            r_size=r_size,
+            s_size=s_size,
+            skew=0.01,
+        ),
+    ]
 
-    print(
-        get_cmd(
-            JoinRunConfig(
-                name="dramhit_2025",
-                ht_type=DRAMHIT25,
-                hw_pref=0,
-                s_size=s_size,
-                r_size=r_size,
-                ht_fill=0.5,
-            )
-        )
-    )
-    # run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
-    # run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
-    # run_ht_dual("GROWT", GROWT, 1, all_results)
+    for c in configs:
+        mops = run(get_cmd(c))
+        key = str(c.ht_type)
+        # This ensures the list exists before you try to append to it
+        all_results.setdefault(key, []).append({"mops": mops})
 
     # save to JSON
-    # with open(json_out_file, "w") as f:
-    # json.dump(all_results, f, indent=2)
-
-    # print("\nFinal results saved to " + json_out_file)
+    with open(json_out_file, "w") as f:
+        json.dump(all_results, f, indent=2)
+    print("\nFinal results saved to " + json_out_file)
