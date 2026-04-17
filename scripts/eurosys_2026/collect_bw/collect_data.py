@@ -31,7 +31,7 @@ def main():
         "--no-prefetch",
         "0",
         "--insert-factor",
-        "100",
+        "1",
         "--read-factor",
         "100",
         "--mode",

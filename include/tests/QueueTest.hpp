@@ -51,7 +51,7 @@ class QueueTest {
                        bool is_join,
                        std::barrier<std::function<void()>>* barrier);
 
-  void init_queues(uint32_t nprod, uint32_t ncons);
+  //void init_queues(uint32_t nprod, uint32_t ncons);
 };
 
 }  // namespace kmercounter

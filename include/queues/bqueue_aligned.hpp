@@ -22,7 +22,7 @@ class BQueueAligned {
   public:
     const uint64_t CONGESTION_PENALTY = 250 / 2;
     static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
-    const data_t BQ_MAGIC_KV = data_t(BQ_MAGIC_64BIT, BQ_MAGIC_64BIT);
+    // const data_t BQ_MAGIC_KV =  data_t(BQ_MAGIC_64BIT, BQ_MAGIC_64BIT);
 
     typedef struct {
       volatile uint32_t head;
@@ -242,8 +242,8 @@ class BQueueAligned {
 
       cq->backtrack_flag = 1;
 
-      while (enqueue(p, c, BQ_MAGIC_KV) != 0)
-      ;
+      //while (enqueue(p, c, BQ_MAGIC_KV) != 0)
+      //;
 
     }
 

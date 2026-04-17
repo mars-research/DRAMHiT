@@ -15,10 +15,6 @@
 #include <numeric>
 #include <sstream>
 #include <thread>
-
-#include "misc_lib.h"
-#include "queues/section_queues.hpp"
-#include "sync.h"
 #include "xorwow.hpp"
 
 namespace kmercounter {

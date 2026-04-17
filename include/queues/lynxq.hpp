@@ -1,6 +1,6 @@
 /*Lynx is a lock-free single-producer/single-consumer software
-queue for fine-grained communictaion. Copyright (C) 2016  
-Konstantina Mitropoulou, Vasileios Porpodas, Xiaochun Zhang and 
+queue for fine-grained communictaion. Copyright (C) 2016
+Konstantina Mitropoulou, Vasileios Porpodas, Xiaochun Zhang and
 Timothy M. Jones.
 
 Lynx is free software; you can redistribute it and/or
@@ -15,10 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  
-02110-1301, USA. 
- 
-More information about Lynx can be found at 
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
+
+More information about Lynx can be found at
 https://www.repository.cam.ac.uk/handle/1810/255384
 */
 
@@ -358,7 +358,7 @@ const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
 
   if (mprotect(addr, size, prot) == -1) {
     dump();
-    fatal_error("mprotect error: addr:%p, size:0x%lx, prot:%d\n", 
+    fatal_error("mprotect error: addr:%p, size:0x%lx, prot:%d\n",
         addr, size, prot);
   }
   return (char *)addr;
@@ -546,7 +546,7 @@ struct Regs {
 typedef struct Regs Regs;
 
 /* Collect the register ids and their values into REGS */
-static inline void collect_regs (Regs *regs, cs_x86_op *mem_op, csh handle, 
+static inline void collect_regs (Regs *regs, cs_x86_op *mem_op, csh handle,
 				 const ucontext_t *context) {
   regs->reg_base = mem_op->mem.base;
   regs->reg_index = mem_op->mem.index;
@@ -561,7 +561,7 @@ static inline void collect_regs (Regs *regs, cs_x86_op *mem_op, csh handle,
     regs->reg_index_value = get_reg_value (context, regs->reg_index);
   if (regs->reg_segment != X86_REG_INVALID)
     regs->reg_segment_value = get_reg_value (context, regs->reg_segment);
-  assert (regs->reg_base != INT_MIN && regs->mem_disp != UINT_MAX && "not initialized"); 
+  assert (regs->reg_base != INT_MIN && regs->mem_disp != UINT_MAX && "not initialized");
 }
 
 inline char *lynxQ::get_new_redzone_left (char *curr_redzone) {
@@ -577,7 +577,7 @@ static inline bool index_is_in_redzone (char *index, char *redzone) {
 }
 
 static inline bool is_expected_redzone (char *index, char *redzone) {
-  return (index == redzone); 
+  return (index == redzone);
 }
 
 void setup_signal_handler() {
@@ -839,7 +839,7 @@ static void redzone_do_push(const char *redzone_str,
     ;
   }
   COMPILER_BARRIER;
-  /* We now know that the other thread's redzone is set. 
+  /* We now know that the other thread's redzone is set.
      Set our next expected redzone. */
   queue->push_expected_rz = (expect_rz1) ? queue->redzone2 : queue->redzone1;
   COMPILER_BARRIER;
@@ -1003,7 +1003,7 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
 
   /* If we are at the end of the QUEUE, rewind the index to the begining. */
   /* NOTE: this has to run first because in the beginning pop() is trapped
-           inside redzone_end and therefore the index does not match the 
+           inside redzone_end and therefore the index does not match the
            pop expected redzone. */
   if (index >= queue->QUEUE + queue->queue_size) {
     auto [new_base_value, reg_base_to_update] =
@@ -1152,7 +1152,7 @@ static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
 
   /* If we are at the end of the QUEUE, rewind the index to the begining. */
   /* NOTE: this has to run first because in the beginning pop() is trapped
-           inside redzone_end and therefore the index does not match the 
+           inside redzone_end and therefore the index does not match the
            pop expected redzone. */
   if (index >= queue->QUEUE + queue->queue_size) {
     auto [handle, mem_op] = decode_insn(context, &memo);
@@ -1258,7 +1258,7 @@ class LynxQueue {
     cons_queue_t **all_cqueues;
 
     static const uint64_t BQ_MAGIC_64BIT = 0xD221A6BE96E04673UL;
-    const data_t BQ_MAGIC_KV = data_t(BQ_MAGIC_64BIT, BQ_MAGIC_64BIT);
+    // const data_t BQ_MAGIC_KV = data_t(BQ_MAGIC_64BIT, BQ_MAGIC_64BIT);
 
     void init_prod_queues() {
       // map queues and producer_metadata

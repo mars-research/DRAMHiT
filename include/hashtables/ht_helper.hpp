@@ -6,10 +6,8 @@
 #include <plog/Log.h>
 #include <sys/mman.h>
 #include <unistd.h>
-
+#include "numa.hpp"
 #include <cstring>
-
-#include "base_kht.hpp"
 #include "hashtables/kvtypes.hpp"
 
 namespace kmercounter {
@@ -111,17 +109,6 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   uint64_t alloc_sz = capacity * sizeof(T);
   auto current_node = numa_node_of_cpu(sched_getcpu());
 
-  // if (alloc_sz < ONEGB_PAGE_SZ) {
-  //   PLOGI.printf("Allocating memory on node %d", current_node);
-  //   addr = (T *)(aligned_alloc(PAGE_SIZE, capacity * sizeof(T)));
-  //   if (!addr) {
-  //     perror("aligned_alloc:");
-  //     exit(1);
-  //   }
-  //   if (alloc_sz < (2 * PAGE_SIZE)) {
-  //     goto skip_mbind;
-  //   }
-  // } else {
   int fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
 
   if (fd < 0) {
@@ -164,7 +151,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
 
   if(alloc_sz >= ONEGB_PAGE_SZ){
     distribute_mem_to_nodes(addr, alloc_sz,
-                          (kmercounter::numa_policy_threads)config.numa_split);
+                          (numa_policy_threads)config.numa_split);
   }
 
   memset(addr, 0, capacity * sizeof(T));
@@ -176,15 +163,12 @@ void free_mem(T *addr, uint64_t capacity, int id, int fd) {
   size_t alloc_sz = capacity * sizeof(T);
   alloc_sz = round_hugepage(alloc_sz);
 
-  // if (alloc_sz < ONEGB_PAGE_SZ) {
-  //   free(addr);
-  // } else {
   if (addr) {
     munmap(addr, capacity * sizeof(T));
     PLOGI.printf("%p with sz %lu unmapped", addr, capacity * sizeof(T));
   }
-  //}
 }
+
 
 }  // namespace kmercounter
 

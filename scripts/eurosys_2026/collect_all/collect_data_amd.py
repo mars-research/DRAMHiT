@@ -51,9 +51,10 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
+        "--seed 1775762440565610239",
     ]
 
-    cmd = ["sudo"] + dramhit_args
+    cmd = dramhit_args
 
     print("Running:", " ".join(cmd))
 
@@ -178,7 +179,7 @@ if __name__ == "__main__":
             "insertFactor": 100,
             "readFactor": 100,
             "numThreads": 64,
-            "numa_policy": 4,
+            "numa_policy": 1,
             "size": 536870912,
             "fill_factor": f,
         }

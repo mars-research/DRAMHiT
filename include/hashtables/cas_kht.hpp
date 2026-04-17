@@ -582,19 +582,19 @@ class CASHashTable : public BaseHashTable {
       for (auto &data : kp) {
       retry:
 
+#ifdef DOUBLE_PREFETCH
         // Prefetch next tail bucket
         uint32_t next_tail = (tail + 7) & FIND_QUEUE_SZ_MASK;
         const void *next_tail_addr =
             &this->hashtable[this->find_queue[next_tail].idx];
         __builtin_prefetch(next_tail_addr, false, 3);
-
+#endif
         q = &this->find_queue[tail];
         uint32_t idx = q->idx;
         key = q->key;
 
         bucket = (uint64_t *)&this->hashtable[idx];
         key_vector = _mm512_set1_epi64(key);
-        // cacheline = _mm512_set1_epi64(key);
         cacheline = _mm512_load_si512(bucket);
 
         key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
@@ -625,7 +625,7 @@ class CASHashTable : public BaseHashTable {
             idx += CACHELINE_SIZE / sizeof(KV);
             idx = idx & HT_BUCKET_MASK;
 #endif
-            __builtin_prefetch(&this->hashtable[idx], false, 1);
+            prefetch_find(idx);
 
 #ifdef UNIFORM_HT_SUPPORT
             this->find_queue[head].key_hash = hash;
@@ -657,7 +657,7 @@ class CASHashTable : public BaseHashTable {
 
         uint32_t new_idx = hash & HT_BUCKET_MASK;
 
-        __builtin_prefetch(&this->hashtable[new_idx], false, 1);
+        prefetch_read(new_idx);
         this->find_queue[head].key = key_data->key;
         this->find_queue[head].idx = new_idx;
         this->find_queue[head].key_id = key_data->id;

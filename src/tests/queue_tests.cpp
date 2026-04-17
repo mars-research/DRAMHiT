@@ -5,25 +5,16 @@
 #include <cstdint>
 #include <tuple>
 
-#include "fastrange.h"
 #include "hasher.hpp"
 #include "hashtables/ht_helper.hpp"
 #include "hashtables/simple_kht.hpp"
-#include "helper.hpp"
-#include "input_reader/csv.hpp"
-#include "input_reader/eth_rel_gen.hpp"
-#include "input_reader/fastq.hpp"
 #include "misc_lib.h"
 #include "print_stats.h"
-#include "queues/bqueue_aligned.hpp"
-#include "queues/lynxq.hpp"
 #include "queues/section_queues.hpp"
 #include "sync.h"
 #include "tests/QueueTest.hpp"
-#include "utils/hugepage_allocator.hpp"
 #include "utils/vtune.hpp"
 #include "xorwow.hpp"
-#include "zipf.h"
 #include "zipf_distribution.hpp"
 
 #define PGROUNDDOWN(x) (x & ~(PAGESIZE - 1))
@@ -708,7 +699,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
     PLOGD.printf("Dist to nodes tid %u", tid);
     auto *part_ht = reinterpret_cast<PartitionedHashStore<KVType, ItemQueue>*>(ktable);
     void *ht_mem = part_ht->hashtable[part_ht->id];
-    distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size(), (kmercounter::numa_policy_threads) 0);
+    // distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size(), (kmercounter::numa_policy_threads) 0);
   }
 
   FindResult *results = new FindResult[config.batch_len];
@@ -869,18 +860,18 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
 #endif
 }
 
-template <typename T>
-void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
-  PLOG_DEBUG.printf("Initializing queues");
-  if (std::is_same<T, kmercounter::LynxQueue>::value) {
-    this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
-  } else if (std::is_same<T, kmercounter::BQueueAligned>::value) {
-    this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
-  } else if (std::is_same<T, kmercounter::SectionQueue>::value) {
-    this->QUEUE_SIZE = 4;
-  }
-  this->queues = new T(nprod, ncons, this->QUEUE_SIZE, this->npq);
-}
+// template <typename T>
+// void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
+//   PLOG_DEBUG.printf("Initializing queues");
+//   if (std::is_same<T, kmercounter::LynxQueue>::value) {
+//     this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
+//   } else if (std::is_same<T, kmercounter::BQueueAligned>::value) {
+//     this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
+//   } else if (std::is_same<T, kmercounter::SectionQueue>::value) {
+//     this->QUEUE_SIZE = 4;
+//   }
+//   this->queues = new T(nprod, ncons, this->QUEUE_SIZE, this->npq);
+// }
 
 template <typename T>
 void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
@@ -1051,7 +1042,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n, bool is_join,
   this->shards = (Shard *)calloc(sizeof(Shard), cfg->num_threads);
 
   // Init queues
-  this->init_queues(cfg->n_prod, cfg->n_cons);
+  // this->init_queues(cfg->n_prod, cfg->n_cons);
 
   std::function<void()> on_completion = []() noexcept {
     // For debugging

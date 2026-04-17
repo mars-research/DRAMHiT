@@ -1,6 +1,5 @@
 #include "Application.hpp"
 
-#include <errno.h>
 #include <pthread.h>
 #include <time.h>
 #include <zlib.h>
@@ -13,29 +12,10 @@
 #include <fstream>
 #include <functional>
 
-#include "./hashtables/array_kht.hpp"
-#include "./hashtables/cas23_kht.hpp"
-#include "./hashtables/cas_kht.hpp"
 #include "helper.hpp"
 #include "numa.hpp"
-
-#ifdef GROWT
-#include "hashtables/growt_kht.hpp"
-#include "hashtables/tbb_kht.hpp"
-#endif
-
-#ifdef CLHT
-#include "hashtables/clht_kht.hpp"
-#endif
-
-#ifdef PART_ID
-#include "./hashtables/multi_kht.hpp"
-#include "./hashtables/simple_kht.hpp"
-#endif
-
 #include "misc_lib.h"
 #include "print_stats.h"
-#include "tests/PrefetchTest.hpp"
 #include "types.hpp"
 
 #if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
@@ -173,7 +153,7 @@ void sync_complete(void) {
   }
 #endif
 
-  if (config.mode == ZIPFIAN) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     if (cur_phase == ExecPhase::finds) {
       if (!zipfian_finds) {
 #if defined(WITH_PCM)
@@ -232,62 +212,15 @@ void sync_complete(void) {
   }
 }
 
-BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
-  BaseHashTable *kmer_ht = NULL;
-
-  // Create hash table
-  switch (config.ht_type) {
-#ifdef PART_ID
-    case MULTI_HT:
-      kmer_ht = new MultiHashTable<KVType, ItemQueue>(sz);
-      break;
-    case PARTITIONED_HT:
-      kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
-      break;
-#endif
-    case CAS23HTPP:
-#ifdef CAS_NO_ABSTRACT
-      PLOGE.printf("cas 23 doesn't support no abstract methods feature");
-      abort();
-#endif
-      kmer_ht = new CAS23HashTable<KVType, ItemQueue>(sz);
-      break;
-#ifdef GROWT
-    case GROWHT:
-      kmer_ht = new GrowtHashTable(sz);
-      break;
-    case TBB_HT:
-      kmer_ht = new TBB_HashTable(sz);
-      break;
-#endif
-    case CASHTPP:
-      kmer_ht =
-          new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz, id);
-      break;
-    case ARRAY_HT:
-      kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);
-      break;
-#ifdef CLHT
-    case CLHT_HT:
-      // clht_create already allocates mem
-      kmer_ht = new CLHT_HashTable(sz);
-      break;
-#endif
-    default:
-      PLOG_FATAL.printf("HT type not implemented");
-      exit(-1);
-      break;
-  }
-
-  return kmer_ht;
-}
-
 uint64_t get_gigbytes(size_t num_kv) {
   return num_kv * (sizeof(key_type) + sizeof(value_type)) /
          (1024 * 1024 * 1024);
 }
 
-void free_ht(BaseHashTable *kmer_ht) { delete kmer_ht; }
+void free_ht(BaseHashTable *kmer_ht) {
+    if(kmer_ht != NULL)
+        delete kmer_ht;
+}
 
 void Application::shard_thread(int tid,
                                std::barrier<std::function<void()>> *barrier) {
@@ -311,6 +244,8 @@ void Application::shard_thread(int tid,
     case UNIFORM:
 
     case HASHJOIN:
+        kmer_ht = NULL;
+        break;
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
@@ -479,7 +414,7 @@ int Application::spawn_shard_threads() {
   g_pcm_cnt.clean();
 #endif
 
-  if (config.mode == ZIPFIAN) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     free(g_insert_durations);
     free(g_find_durations);
   }
@@ -797,7 +732,7 @@ int Application::process(int argc, char *argv[]) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if (config.mode == ZIPFIAN) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM ) {
     g_insert_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.insert_factor);
     g_find_durations =

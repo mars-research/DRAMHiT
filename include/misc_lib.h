@@ -19,4 +19,8 @@ uint64_t calc_num_kmers(uint64_t l, uint8_t k);
 int find_last_N(const char *c);
 uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz);
 
+#include "hashtables/base_kht.hpp"
+namespace kmercounter{
+BaseHashTable* init_ht(const uint64_t sz, uint8_t id);
+}
 #endif  //_MISC_LIB_H

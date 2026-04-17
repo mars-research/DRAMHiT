@@ -1,5 +1,4 @@
 #include "misc_lib.h"
-
 #include "print_stats.h"
 
 uint64_t get_file_size(const char *fn) {
@@ -48,6 +47,8 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz) {
 
 #include "numa.hpp"
 #include "types.hpp"
+#include "hashtables/kvtypes.cpp"
+#include "all_ht_types.hpp"
 
 namespace kmercounter {
 
@@ -270,13 +271,13 @@ void print_stats(Shard *all_sh, Configuration &config) {
     PLOGI.printf(
         "\n"
         "============================================\n"
-        "found : %lu, fill_factor : %.3f \n"
+        "found : %lu,\n"
         "global_find_cycle : %lu, find_ops : %lu\n"
         "global_insert_cycle : %lu, insert_ops : %lu\n"
         "set_cycles : %lu, get_cycles : %lu, "
         "set_mops : %lu, get_mops : %lu\n"
         "============================================\n",
-        total_found, (ht_fill * 1.0 / ht_capacity), avg_find_duration,
+        total_found, avg_find_duration,
         total_finds, avg_insert_duration, total_inserts, cycles_per_insert,
         cycles_per_find, insert_mops, find_mops);
   }
@@ -360,5 +361,55 @@ void print_stats(Shard *all_sh, Configuration &config) {
     printf("{ find_avg_bw : %.3f}\n", avg_bw);
   }
 #endif
+}
+
+BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
+  BaseHashTable *kmer_ht = NULL;
+
+  // Create hash table
+  switch (config.ht_type) {
+#ifdef PART_ID
+    case MULTI_HT:
+      kmer_ht = new MultiHashTable<KVType, ItemQueue>(sz);
+      break;
+    case PARTITIONED_HT:
+      kmer_ht = new PartitionedHashStore<KVType, ItemQueue>(sz, id);
+      break;
+#endif
+    case CAS23HTPP:
+#ifdef CAS_NO_ABSTRACT
+      PLOGE.printf("cas 23 doesn't support no abstract methods feature");
+      abort();
+#endif
+      kmer_ht = new CAS23HashTable<KVType, ItemQueue>(sz);
+      break;
+#ifdef GROWT
+    case GROWHT:
+      kmer_ht = new GrowtHashTable(sz);
+      break;
+    case TBB_HT:
+      kmer_ht = new TBB_HashTable(sz);
+      break;
+#endif
+    case CASHTPP:
+      kmer_ht =
+          new CASHashTable<KVType, ItemQueue>(sz, config.find_queue_sz, id);
+      break;
+    case ARRAY_HT:
+      kmer_ht = new ArrayHashTable<Value, ItemQueue>(sz);
+      break;
+#ifdef CLHT
+    case CLHT_HT:
+      // clht_create already allocates mem
+      kmer_ht = new CLHT_HashTable(sz);
+      break;
+#endif
+    default:
+      PLOG_FATAL.printf("HT type not implemented");
+      exit(-1);
+      break;
+  }
+
+  return kmer_ht;
 }
 }  // namespace kmercounter
