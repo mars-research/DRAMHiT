@@ -53,7 +53,7 @@ disable_cstate() {
 # Let us be normal ....
 disable_turbo() {
 
-	echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+	echo 0 | sudo tee /sys/devices/system/cpu/cpufreq/boost
 
 #	if ! [ -x "$(command -v ${RDMSR})" ]; then
 #		echo "Installing msr-tools ..."

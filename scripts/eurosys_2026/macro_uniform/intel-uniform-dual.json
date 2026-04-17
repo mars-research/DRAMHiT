@@ -1,0 +1,114 @@
+{
+  "dramhit_2025": [
+    {
+      "fill": 10,
+      "htsize": 536870912,
+      "set_mops": "1998",
+      "get_mops": "3517"
+    },
+    {
+      "fill": 20,
+      "htsize": 536870912,
+      "set_mops": "2037",
+      "get_mops": "3629"
+    },
+    {
+      "fill": 30,
+      "htsize": 536870912,
+      "set_mops": "2026",
+      "get_mops": "3659"
+    },
+    {
+      "fill": 40,
+      "htsize": 536870912,
+      "set_mops": "1945",
+      "get_mops": "3617"
+    },
+    {
+      "fill": 50,
+      "htsize": 536870912,
+      "set_mops": "2030",
+      "get_mops": "3339"
+    },
+    {
+      "fill": 60,
+      "htsize": 536870912,
+      "set_mops": "1994",
+      "get_mops": "2823"
+    },
+    {
+      "fill": 70,
+      "htsize": 536870912,
+      "set_mops": "1899",
+      "get_mops": "2228"
+    },
+    {
+      "fill": 80,
+      "htsize": 536870912,
+      "set_mops": "1654",
+      "get_mops": "1397"
+    },
+    {
+      "fill": 90,
+      "htsize": 536870912,
+      "set_mops": "1512",
+      "get_mops": "802"
+    }
+  ],
+  "dramhit_2023": [
+    {
+      "fill": 10,
+      "htsize": 536870912,
+      "set_mops": "2041",
+      "get_mops": "3359"
+    },
+    {
+      "fill": 20,
+      "htsize": 536870912,
+      "set_mops": "2017",
+      "get_mops": "3287"
+    },
+    {
+      "fill": 30,
+      "htsize": 536870912,
+      "set_mops": "1967",
+      "get_mops": "3198"
+    },
+    {
+      "fill": 40,
+      "htsize": 536870912,
+      "set_mops": "1917",
+      "get_mops": "2735"
+    },
+    {
+      "fill": 50,
+      "htsize": 536870912,
+      "set_mops": "1844",
+      "get_mops": "2391"
+    },
+    {
+      "fill": 60,
+      "htsize": 536870912,
+      "set_mops": "1761",
+      "get_mops": "1938"
+    },
+    {
+      "fill": 70,
+      "htsize": 536870912,
+      "set_mops": "1638",
+      "get_mops": "1446"
+    },
+    {
+      "fill": 80,
+      "htsize": 536870912,
+      "set_mops": "1475",
+      "get_mops": "776"
+    },
+    {
+      "fill": 90,
+      "htsize": 536870912,
+      "set_mops": "1137",
+      "get_mops": "267"
+    }
+  ]
+}

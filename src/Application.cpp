@@ -242,7 +242,8 @@ void Application::shard_thread(int tid,
     case RW_RATIO:
     case ZIPFIAN:
     case UNIFORM:
-
+        kmer_ht = init_ht(config.ht_size, sh->shard_idx);
+        break;
     case HASHJOIN:
         kmer_ht = NULL;
         break;

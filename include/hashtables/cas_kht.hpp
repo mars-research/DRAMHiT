@@ -625,7 +625,7 @@ class CASHashTable : public BaseHashTable {
             idx += CACHELINE_SIZE / sizeof(KV);
             idx = idx & HT_BUCKET_MASK;
 #endif
-            prefetch_find(idx);
+            prefetch_read(idx);
 
 #ifdef UNIFORM_HT_SUPPORT
             this->find_queue[head].key_hash = hash;
