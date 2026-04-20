@@ -1,14 +1,15 @@
 #!/bin/python3
 
-import os
-import subprocess
 import json
+import os
 import re
+import subprocess
 import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
 USE_PERF = False
+
 
 def build(defines):
     define_flags = [f"-D{k}={v}" for k, v in defines.items()]
@@ -24,38 +25,51 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = [
-        "sudo", "/usr/bin/perf", "stat",
-        "-e", counters_str,
-        "--"
-    ] + dramhit_args
+    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
+
 
 counters = [
     "cycles",
     "br_inst_retired.all_branches",
     "uops_issued.any",
-    "br_misp_retired.all_branches"
+    "br_misp_retired.all_branches",
 ]
+
 
 def run(run_cfg):
     results = []
 
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
-        "--find_queue", "64",
-        "--ht-fill", str(run_cfg["fill_factor"]),
-        "--ht-type", "3",
-        "--insert-factor", str(run_cfg["insertFactor"]),
-        "--read-factor", str(run_cfg["readFactor"]),
-        "--num-threads", str(run_cfg["numThreads"]),
-        "--numa-split", str(run_cfg["numa_policy"]),
-        "--no-prefetch", "0",
-        "--mode", "14",
-        "--ht-size", str(run_cfg["size"]),
-        "--skew", "0.01",
-        "--hw-pref", "0",
-        "--batch-len", "16"
+        "--find_queue",
+        "64",
+        "--ht-fill",
+        str(run_cfg["fill_factor"]),
+        "--ht-type",
+        "3",
+        "--insert-factor",
+        str(run_cfg["insertFactor"]),
+        "--read-factor",
+        str(run_cfg["readFactor"]),
+        "--num-threads",
+        str(run_cfg["numThreads"]),
+        "--numa-split",
+        str(run_cfg["numa_policy"]),
+        "--no-prefetch",
+        "0",
+        "--mode",
+        "11",
+        "--ht-size",
+        str(run_cfg["size"]),
+        "--skew",
+        "0.01",
+        "--hw-pref",
+        "0",
+        "--batch-len",
+        "16",
+        "--seed",
+        "1776656037950831164",
     ]
 
     cmd = []
@@ -63,10 +77,12 @@ def run(run_cfg):
         cmd = make_perf_command(counters, dramhit_args)
     else:
         cmd = ["sudo"] + dramhit_args
-        
+
     print("Running:", " ".join(cmd))
 
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
     stdout, stderr = proc.communicate()
 
     if proc.returncode != 0:
@@ -74,7 +90,6 @@ def run(run_cfg):
         return None
 
     return (stdout, stderr)
-
 
 
 def parse_results(result, counters, run_cfg, build_cfg, identifier):
@@ -86,7 +101,7 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     result    : tuple (stdout, stderr)
     counters  : list of perf counter names to extract
     run_cfg   : dict (runtime configuration)
-    build_cfg : dict (build configuration)  
+    build_cfg : dict (build configuration)
 
     Returns
     -------
@@ -99,9 +114,9 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
         return "-".join(f"{k}={d[k]}" for k in sorted(d.keys()))
 
     row = {
-        "build_cfg": build_cfg,                 # full dict
+        "build_cfg": build_cfg,  # full dict
         "build_cfg_str": dict_to_str(build_cfg),
-        "run_cfg": run_cfg,                     # full dict
+        "run_cfg": run_cfg,  # full dict
         "run_cfg_str": dict_to_str(run_cfg),
         "identifier": identifier,
     }
@@ -112,7 +127,7 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     row.update(metrics)
 
     # Parse perf counters from stderr
-    
+
     if USE_PERF:
         cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
         counter_dic = {k: None for k in counters}
@@ -132,7 +147,6 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
-
     if len(sys.argv) < 2:
         print("Usage: python script.py <output.json>")
         sys.exit(1)
@@ -141,28 +155,45 @@ if __name__ == "__main__":
 
     # Build configurations
     build_cfgs = [
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "DOUBLE"},
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "L3"},
-        {"DRAMHiT_VARIANT": "2025", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "L3"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"OFF", "PREFETCH" : "L3"},
-        {"DRAMHiT_VARIANT": "2025_INLINE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "OFF", "CAS_PREFETCHW":"ON", "PREFETCH" : "L3"},
+        {
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "DOUBLE",
+            "READ_BEFORE_CAS": "OFF",
+            "CPUFREQ_MHZ": "2500",
+        },
+        {
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "DOUBLE",
+            "READ_BEFORE_CAS": "ON",
+            "CPUFREQ_MHZ": "2500",
+        },
     ]
 
     run_cfgs = [
-    {"insertFactor": 10, "readFactor": 1, "numThreads": 64, "numa_policy": 4, "size": 536870912, "fill_factor": f}
-    for f in range(10, 100, 10)
-] 
+        {
+            "insertFactor": 1,
+            "readFactor": 1,
+            "numThreads": 128,
+            "numa_policy": 1,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
+    ]
 
     all_results = []
-    
+
     def get_name(bcfg):
         ret = ""
         for k in bcfg.keys():
-            ret += "{" + k + "-" + bcfg[k] + "}" 
-        
+            ret += "{" + k + "-" + bcfg[k] + "}"
+
         return ret
 
     for bcfg in build_cfgs:

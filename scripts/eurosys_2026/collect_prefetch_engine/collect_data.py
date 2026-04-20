@@ -147,6 +147,7 @@ if __name__ == "__main__":
 
     out_file = sys.argv[1]
 
+    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     # Build configurations
     build_cfgs = [
         {
@@ -155,6 +156,7 @@ if __name__ == "__main__":
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "DRAMHiT_VARIANT": "2025",
@@ -162,30 +164,32 @@ if __name__ == "__main__":
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
     ]
 
     # Run configurations (example: vary fill_factor, others fixed)
+    # run_cfgs = [
+    #     {
+    #         "insertFactor": 100,
+    #         "readFactor": 100,
+    #         "numThreads": 64,
+    #         "numa_policy": 4,
+    #         "size": 536870912,
+    #         "fill_factor": f,
+    #     }
+    #     for f in range(10, 100, 10)
+    # ] +
     run_cfgs = [
         {
-            "insertFactor": 100,
-            "readFactor": 100,
-            "numThreads": 64,
-            "numa_policy": 4,
-            "size": 536870912,
-            "fill_factor": f,
-        }
-        for f in range(10, 100, 10)
-    ] + [
-        {
-            "insertFactor": 100,
-            "readFactor": 100,
+            "insertFactor": 10,
+            "readFactor": 10,
             "numThreads": 128,
             "numa_policy": 1,
             "size": 536870912,
             "fill_factor": f,
         }
-        for f in range(10, 10, 10)
+        for f in range(10, 100, 10)
     ]
 
     def get_name(bcfg):
