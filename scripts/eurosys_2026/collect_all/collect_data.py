@@ -238,4 +238,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit_amd.json")
+    save_json(all_results, "dramhit.json")

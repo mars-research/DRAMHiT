@@ -4,7 +4,7 @@ import json
 import os
 import re
 import subprocess
-import time
+import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
@@ -63,11 +63,13 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
-        "--seed",
-        "1775762440565610239",
     ]
 
-    cmd = dramhit_args
+    cmd = []
+    if USE_PERF:
+        cmd = make_perf_command(counters, dramhit_args)
+    else:
+        cmd = ["sudo"] + dramhit_args
 
     print("Running:", " ".join(cmd))
 
@@ -117,9 +119,6 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     metrics = {k: float(v) for k, v in kv_pattern.findall(stdout)}
     row.update(metrics)
 
-    print("Program output")
-    print(stdout)
-
     # Parse perf counters from stderr
 
     if USE_PERF:
@@ -141,58 +140,30 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
-    # Build configurations
+    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
+
     build_cfgs = [
         {
-            "DRAMHiT_VARIANT": "2025",
-            "CALC_STATS": "ON",
-            "BUCKETIZATION": "OFF",
-            "BRANCH": "branched",
-            "UNIFORM_PROBING": "OFF",
-            "PREFETCH": "DOUBLE",
-            "CPUFREQ_MHZ": "2500",
-        },
-        {
-            "DRAMHiT_VARIANT": "2025",
-            "CALC_STATS": "ON",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "branched",
-            "UNIFORM_PROBING": "OFF",
-            "PREFETCH": "DOUBLE",
-            "CPUFREQ_MHZ": "2500",
-        },
-        {
-            "DRAMHiT_VARIANT": "2025",
-            "CALC_STATS": "ON",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
-        },
+        },  # 2025_inline + bucket + simd + double prefetch
         {
-            "DRAMHiT_VARIANT": "2025",
-            "CALC_STATS": "ON",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
-        },
+        },  # 2025_inline + bucket + simd + double prefetch + uniform
     ]
+
     run_cfgs = [
         {
-            "insertFactor": 1,
-            "readFactor": 100,
-            "numThreads": 64,
-            "numa_policy": 4,
-            "size": 536870912,
-            "fill_factor": f,
-        }
-        for f in range(10, 100, 10)
-    ] + [
-        {
-            "insertFactor": 1,
+            "insertFactor": 100,
             "readFactor": 100,
             "numThreads": 128,
             "numa_policy": 1,
@@ -204,12 +175,25 @@ if __name__ == "__main__":
 
     all_results = []
 
+    def get_name(bcfg):
+        ret = bcfg["DRAMHiT_VARIANT"]
+        for k in bcfg.keys():
+            if k == "BUCKETIZATION" and bcfg[k] == "ON":
+                ret += "+bucket"
+            elif k == "BRANCH" and bcfg[k] == "simd":
+                ret += "+simd"
+            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
+                ret += "+uniform"
+
+        return ret
+
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, "")
+            obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
             all_results.append(obj)
-            time.sleep(1)
 
-    save_json(all_results, "dramhit_reprobe_intel.json")
+    # Save all results into a single JSON file
+    out_file = sys.argv[1]
+    save_json(all_results, out_file)

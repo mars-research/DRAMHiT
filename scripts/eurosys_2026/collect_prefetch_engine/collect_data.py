@@ -24,7 +24,7 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
@@ -68,6 +68,8 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
+        "--seed",
+        "1776656037950831164",
     ]
 
     cmd = make_perf_command(counters, dramhit_args)
@@ -78,6 +80,7 @@ def run(run_cfg):
     )
     stdout, stderr = proc.communicate()
 
+    print(stdout)
     if proc.returncode != 0:
         print("Error:", stderr)
         return None
@@ -147,27 +150,25 @@ if __name__ == "__main__":
     # Build configurations
     build_cfgs = [
         {
-            "DRAMHiT_VARIANT": "2023_INLINE",
+            "DRAMHiT_VARIANT": "2023",
             "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
-            "UNIFORM_PROBING": "OFF",
+            "UNIFORM_PROBING": "ON",
         },
         {
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
-            "UNIFORM_PROBING": "OFF",
+            "UNIFORM_PROBING": "ON",
         },
-        #    {"DRAMHiT_VARIANT": "2023", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
-        #    {"DRAMHiT_VARIANT": "2025", "PREFETCH": "DOUBLE", "BUCKETIZATION": "ON", "BRANCH": "simd", "UNIFORM_PROBING": "ON"},
     ]
 
     # Run configurations (example: vary fill_factor, others fixed)
     run_cfgs = [
         {
-            "insertFactor": 1,
+            "insertFactor": 100,
             "readFactor": 100,
             "numThreads": 64,
             "numa_policy": 4,
@@ -177,14 +178,14 @@ if __name__ == "__main__":
         for f in range(10, 100, 10)
     ] + [
         {
-            "insertFactor": 1,
+            "insertFactor": 100,
             "readFactor": 100,
             "numThreads": 128,
             "numa_policy": 1,
             "size": 536870912,
             "fill_factor": f,
         }
-        for f in range(10, 100, 10)
+        for f in range(10, 10, 10)
     ]
 
     def get_name(bcfg):
