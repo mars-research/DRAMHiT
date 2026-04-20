@@ -57,9 +57,11 @@ extern std::vector<key_type> *g_zipf_values;
 
 static inline uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
 
-void do_batch_insertion(
-    BaseHashTable *ht, uint64_t batch_num, uint32_t batch_len, uint64_t idx,
-    std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
+using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
+using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
+HashTableTestHugepageAlloc hugepage_alloc_inst_ht_test;
+
+uint32_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
 #if defined(CAS_NO_ABSTRACT)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
@@ -69,25 +71,29 @@ void do_batch_insertion(
   collector->claim();
 #else
 
+  uint64_t request_num = workload.size();
+  uint64_t batch_len = config.batch_len;
+  uint64_t batch_num = request_num / batch_len;
   collector_type *const collector{};
 #endif
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
-  uint64_t value;
-  for (unsigned int n = 0; n < batch_num; ++n) {
+  key_type value;
+  uint32_t idx = 0;
+  for (auto n = 0; n < batch_num; ++n) {
     for (int i = 0; i < batch_len; i++) {
-      if (!(idx & 7) && idx + 16 < zipf_set.size()) {
-        __builtin_prefetch(&zipf_set.at(idx + 16), false, 3);
+      if (!(idx & 7) && idx + 16 < request_num) {
+        __builtin_prefetch(&workload.at(idx + 16), false, 3);
       }
 
-      value = zipf_set.at(idx);
+      value = workload.at(idx);
 
       items[i].key = items[i].value = value;
       items[i].id = idx;
       idx++;
     }
 
-    InsertFindArguments keypairs(items, config.batch_len);
+    InsertFindArguments keypairs(items, batch_len);
 
 #if defined(CAS_NO_ABSTRACT)
     cas_ht->insert_batch_inline(keypairs, collector);
@@ -96,18 +102,46 @@ void do_batch_insertion(
 #endif
   }
 
+  uint64_t residue_num = request_num - batch_len * batch_num;
+  if (residue_num > 0) {
+    for (auto i = 0; i < residue_num; i++) {
+      if (!(idx & 7) && (idx + 16 < request_num)) {
+        __builtin_prefetch(&workload.at(idx + 16), false, 3);
+      }
+      value = workload.at(idx);
+      items[i].key = items[i].value = value;
+      items[i].id = idx;
+      idx++;
+    }
+    InsertFindArguments keypairs(items, residue_num);
+#if defined(CAS_NO_ABSTRACT)
+    cas_ht->insert_batch_inline(keypairs, collector);
+#else
+    ht->insert_batch(keypairs, collector);
+#endif
+  }
   ht->flush_insert_queue(collector);
   free(items);
+
+  return idx;
 }
 
-uint64_t do_batch_find(
-    BaseHashTable *ht, uint64_t batch_num, uint32_t batch_len, uint32_t idx,
-    std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
+struct ht_do_batch_find_ret {
+  uint32_t idx;
+  uint32_t found;
+};
+
+uint32_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+                       uint32_t *found_res) {
 #if defined(CAS_NO_ABSTRACT)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
 #endif
-  uint64_t found = 0;
+  uint32_t found = 0;
+  uint32_t idx = 0;
+  uint64_t request_num = workload.size();
+  uint32_t batch_len = config.batch_len;
+  uint64_t batch_num = request_num / batch_len;
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
   collector->claim();
@@ -115,25 +149,25 @@ uint64_t do_batch_find(
   collector_type *const collector{};
 #endif
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
-      64, sizeof(InsertFindArgument) * config.batch_len);
+      64, sizeof(InsertFindArgument) * batch_len);
 
 #ifdef BUDDY_QUEUE
-  FindResult *results = new FindResult[(config.batch_len * 2)];
+  FindResult *results = new FindResult[(batch_len * 2)];
 #else
-  FindResult *results = new FindResult[config.batch_len];
+  FindResult *results = new FindResult[batch_len];
 #endif
 
   ValuePairs vp = std::make_pair(0, results);
-  uint32_t value;
-  for (unsigned int n = 0; n < batch_num; ++n) {
-    for (int i = 0; i < batch_len; i++) {
-      if (!(idx & 7) && idx + 16 < zipf_set.size()) {
-        __builtin_prefetch(&zipf_set.at(idx + 16), false, 3);
+  key_type value;
+  for (uint64_t n = 0; n < batch_num; ++n) {
+    for (uint32_t i = 0; i < batch_len; i++) {
+      if (!(idx & 7) && idx + 16 < request_num) {
+        __builtin_prefetch(&workload.at(idx + 16), false, 3);
       }
 
-      value = zipf_set.at(idx);
+      value = workload.at(idx);
 
-      items[i].key = value;
+      items[i].key = items[i].value = value;
       items[i].id = idx;
       idx++;
     }
@@ -141,24 +175,51 @@ uint64_t do_batch_find(
     vp.first = 0;
 
 #if defined(CAS_NO_ABSTRACT)
-    cas_ht->find_batch_inline(InsertFindArguments(items, config.batch_len), vp,
+    cas_ht->find_batch_inline(InsertFindArguments(items, batch_len), vp,
                               collector);
 #else
-    ht->find_batch(InsertFindArguments(items, config.batch_len), vp, collector);
+    ht->find_batch(InsertFindArguments(items, batch_len), vp, collector);
 #endif
 
     found += vp.first;
   }
 
-  vp.first = 0;
-  while (ht->flush_find_queue(vp, collector) > 0) {
-    found += vp.first;
+  uint64_t residue_num = request_num - batch_len * batch_num;
+  if (residue_num > 0) {
+    for (auto i = 0; i < residue_num; i++) {
+      if (!(idx & 7) && (idx + 16 < request_num)) {
+        __builtin_prefetch(&workload.at(idx + 16), false, 3);
+      }
+      value = workload.at(idx);
+      items[i].key = items[i].value = value;
+      items[i].id = idx;
+      idx++;
+    }
+
     vp.first = 0;
+#if defined(CAS_NO_ABSTRACT)
+    cas_ht->find_batch_inline(InsertFindArguments(items, residue_num), vp,
+                              collector);
+#else
+    ht->find_batch(InsertFindArguments(items, residue_num), vp, collector);
+#endif
+
+    found += vp.first;
+  }
+
+  while (true) {
+    vp.first = 0;
+    size_t cur_queue_sz = ht->flush_find_queue(vp, collector);
+    if (vp.first == 0 && cur_queue_sz == 0) {
+      break;
+    }
+    found += vp.first;
   }
 
   free(items);
 
-  return found;
+  *found_res = found;
+  return idx;
 }
 
 OpTimings do_zipfian_inserts(
@@ -167,21 +228,15 @@ OpTimings do_zipfian_inserts(
     std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
   if (config.insert_factor == 0) return {1, 1};
 
-  const uint64_t ops_per_iter = zipf_set.size();
-  const uint64_t batches = ops_per_iter / config.batch_len;
-
-  uint64_t start, end;
-
+  uint32_t ops = 0;
   for (auto j = 0u; j < config.insert_factor; j++) {
-    uint64_t idx = 0;
-
     if (id == 0) {
       cur_phase = ExecPhase::insertions;
       zipfian_inserts = false;
     }
     sync_barrier->arrive_and_wait();
 
-    do_batch_insertion(hashtable, batches, config.batch_len, idx, zipf_set);
+    ops += do_batch_insertion(hashtable, zipf_set);
 
     if (id == 0) {
       zipfian_inserts = true;
@@ -191,42 +246,30 @@ OpTimings do_zipfian_inserts(
   }
 
   uint64_t duration = 0;
-  uint64_t ops = 0;
   for (int i = 0; i < config.insert_factor; i++)
     duration += g_insert_durations[i];
-  ops = ops_per_iter * config.insert_factor;
-
-  // free(durations);
-  //  duration = duration / config.num_threads;
 
   return {duration, ops};
 }
 
-OpTimings do_zipfian_gets(
-    BaseHashTable *hashtable, unsigned int num_threads, unsigned int id,
-    auto sync_barrier,
-    std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
+OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
+                          unsigned int id, auto sync_barrier,
+                          HashTableTestVec &zipf_set, uint32_t *found) {
   if (config.read_factor == 0) {
     return {1, 1};
   }
 
-  std::uint64_t found = 0;
-  const uint64_t ops_per_iter = zipf_set.size();
-  const uint64_t batches = ops_per_iter / config.batch_len;
-
-  uint64_t start;
-  uint64_t end;
-
+  uint32_t ops = 0;
+  uint32_t found_per_turn = 0;
+  *found = 0;
   for (auto j = 0u; j < config.read_factor; j++) {
-    uint64_t value, idx;
-    idx = 0;
-
     if (id == 0) {
       cur_phase = ExecPhase::finds;
       zipfian_finds = false;
     }
     sync_barrier->arrive_and_wait();
-    found = do_batch_find(hashtable, batches, config.batch_len, idx, zipf_set);
+    ops += do_batch_find(hashtable, zipf_set, &found_per_turn);
+    *found = *found + found_per_turn;
     if (id == 0) {
       zipfian_finds = true;
       zipfian_iter = j;
@@ -235,10 +278,7 @@ OpTimings do_zipfian_gets(
   }
 
   uint64_t duration = 0;
-  uint64_t ops = 0;
-
   for (int i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
-  ops = ops_per_iter * config.read_factor;
 
   return {duration, ops};
 }
@@ -251,14 +291,18 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   uint64_t partition_size = g_zipf_values->size() / config.num_threads;
 
+  if (shard->shard_idx == config.num_threads - 1)
+    partition_size += g_zipf_values->size() % config.num_threads;
+
   // get zipfian here.
-  std::vector<key_type, huge_page_allocator<key_type>> zipf_set_local(
-      partition_size,                  // initial size
-      huge_page_allocator<key_type>()  // allocator instance
+  HashTableTestVec zipf_set_local(
+      partition_size,              // initial size
+      hugepage_alloc_inst_ht_test  // allocator instance
   );
 
+
   uint64_t starting_offset = shard->shard_idx * partition_size;
-  for (size_t i = 0; i < partition_size; i++) {
+  for (auto i = 0; i < partition_size; i++) {
     if (i + starting_offset < g_zipf_values->size())
       zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);
   }
@@ -345,8 +389,9 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     PLOGI.printf("zipfian test find start");
   }
 
+  uint32_t found = 0;
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
-                                 sync_barrier, zipf_set_local);
+                                 sync_barrier, zipf_set_local, &found);
 
   if (shard->shard_idx == 0) {
     PLOGI.printf("zipfian test find end");
@@ -364,6 +409,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
 
   shard->stats->finds = find_timings;
   shard->stats->ht_fill = config.ht_fill;
+  shard->stats->found = found;
   get_ht_stats(shard, hashtable);
 
   if (shard->shard_idx == 0) {

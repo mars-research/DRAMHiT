@@ -268,16 +268,17 @@ void print_stats(Shard *all_sh, Configuration &config) {
         config.relation_s_size, total_found * 100.0 / config.relation_s_size,
         ht_fill, ht_capacity, ht_fill * 100.0 / ht_capacity, throughput, sum_op, join_cycles);
   } else {
+    uint64_t expected_found = config.ht_size * config.ht_fill / 100 * config.read_factor;
     PLOGI.printf(
         "\n"
         "============================================\n"
-        "found : %lu,\n"
+        "found : %lu, expected_found : %lu\n"
         "global_find_cycle : %lu, find_ops : %lu\n"
         "global_insert_cycle : %lu, insert_ops : %lu\n"
         "set_cycles : %lu, get_cycles : %lu, "
         "set_mops : %lu, get_mops : %lu\n"
         "============================================\n",
-        total_found, avg_find_duration,
+        total_found, expected_found, avg_find_duration,
         total_finds, avg_insert_duration, total_inserts, cycles_per_insert,
         cycles_per_find, insert_mops, find_mops);
   }

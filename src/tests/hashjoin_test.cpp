@@ -5,7 +5,6 @@
 // https://dev.mysql.com/worklog/task/?id=13377
 // * Optimize hash table in hash join:
 // https://dev.mysql.com/worklog/task/?id=13459
-
 #include <unistd.h>
 #include <atomic>
 #include <barrier>
@@ -399,12 +398,11 @@ void dump_workloads(HugepageVec& build, HugepageVec& probe, JoinVec& mvec) {
   }
 }
 
-
 /// Perform hashjoin on relation `t1` and `t2`.
 /// `t1` is the primary key relation and `t2` is the foreign key relation.
 void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
               std::barrier<std::function<void()>>* barrier) {
-  BaseHashTable* ht = init_ht(config.relation_r_size, sh->shard_idx);
+  BaseHashTable* ht = init_ht(config.ht_size, sh->shard_idx);
   // Measure Build
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::insertions;
@@ -445,7 +443,6 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
   sh->stats->ht_capacity = ht->get_capacity();
 }
 
-
 std::vector<BaseHashTable*> Global_HashTables;
 
 // Partition Join
@@ -468,8 +465,8 @@ class RadixBucket {
   uint64_t write_idx;
   uint64_t size;
   RadixBucket(uint64_t estimate) : write_idx(0), size(0) {
-      v.resize(estimate);
-      size = estimate;
+    v.resize(estimate);
+    size = estimate;
   }
 
   inline void insert(Element& e) {
@@ -490,8 +487,8 @@ class RadixBucket {
     buffer.count = 0;
 
     // write idx is always right
-    if(write_idx != size){
-        v.resize(write_idx);
+    if (write_idx != size) {
+      v.resize(write_idx);
     }
   }
 };
@@ -499,8 +496,8 @@ class RadixBucket {
 std::vector<std::vector<RadixBucket*>> Global_R_Buckets;
 std::vector<std::vector<RadixBucket*>> Global_S_Buckets;
 void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
-                             JoinVec& mvec,
-                             std::barrier<std::function<void()>>* barrier) {
+                   JoinVec& mvec,
+                   std::barrier<std::function<void()>>* barrier) {
   uint64_t partition_num = 1 << 10;
   uint64_t radix_mask = partition_num - 1;
   uint64_t tid = sh->shard_idx;
@@ -539,8 +536,8 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   }
 
   for (size_t i = 0; i < partition_num; ++i) {
-      local_r[i]->flush();
-      local_s[i]->flush();
+    local_r[i]->flush();
+    local_s[i]->flush();
   }
 
   Global_R_Buckets[tid] = local_r;
@@ -573,14 +570,19 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
 
   barrier->arrive_and_wait();
 
-  for(BaseHashTable* ht: Global_HashTables){
-     delete ht;
+  for (BaseHashTable* ht : Global_HashTables) {
+    delete ht;
+  }
+
+  for (size_t i = 0; i < partition_num; ++i) {
+    delete local_r[i];
+    delete local_s[i];
   }
 }
 // num_partitions
 std::vector<std::vector<uint64_t>> Global_Histogram;
-void radixjoin(Shard* sh, HugepageVec& build, HugepageVec& probe,
-                  JoinVec& mvec, std::barrier<std::function<void()>>* barrier) {
+void radixjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
+               std::barrier<std::function<void()>>* barrier) {
   uint64_t partition_num = 1 << 10;
   uint64_t radix_mask = partition_num - 1;
   uint64_t tid = sh->shard_idx;
@@ -633,11 +635,10 @@ void radixjoin(Shard* sh, HugepageVec& build, HugepageVec& probe,
   }
   barrier->arrive_and_wait();
 
-  for(BaseHashTable* ht: Global_HashTables){
-     delete ht;
+  for (BaseHashTable* ht : Global_HashTables) {
+    delete ht;
   }
 }
-
 
 #define HJ
 
@@ -692,14 +693,14 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     probe_relation.at(i) = e;
   }
 
-  #ifdef HJ
+#ifdef HJ
   hashjoin(sh, build_relation, probe_relation, join_relation, barrier);
-  #elif RJ16
+#elif RJ16
   radixjoin2016(sh, build_relation, probe_relation, join_relation, barrier);
-  #elif RJ
+#elif RJ
   radixjoin(sh, build_relation, probe_relation, join_relation, barrier);
-  #else
-  #endif
+#else
+#endif
 }
 
 void HashjoinTest::join_relations_from_files(Shard* sh,
