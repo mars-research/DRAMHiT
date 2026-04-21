@@ -1,6 +1,5 @@
 import json
 import re
-import statistics
 import subprocess
 import sys
 
@@ -10,6 +9,10 @@ DRAMHIT25 = 3
 GROWT = 6
 DRAMHIT23 = 8
 MODE = 11
+
+one_gb = 1 << 26
+htsize = one_gb * 8
+repeat = 100
 
 
 def run_once(cmd: str):
@@ -23,8 +26,6 @@ def run_once(cmd: str):
 def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
     results[name] = []
     for fill in range(10, 100, 10):
-        htsize = int(1024 * 1024 * 1024 / 16 * 8)  # 8GB
-        repeat = 100
         cmd_base = f"""
         /opt/DRAMHiT/build/dramhit
         --find_queue 64
@@ -82,8 +83,8 @@ if __name__ == "__main__":
     subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
-        "-DDRAMHiT_VARIANT=2025 -DBUCKETIZATION=ON "
-        "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON "
+        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON "
+        "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON"
         "-DGROWT=ON",
         shell=True,
         check=True,

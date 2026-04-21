@@ -72,10 +72,12 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
-        "--seed 1775762440565610239",
+        "--seed",
+        "1775762440565610239",
     ]
 
     cmd = make_perf_command(counters, dramhit_args)
+    # cmd = dramhit_args
     print("Running:", " ".join(cmd))
 
     proc = subprocess.Popen(
@@ -85,9 +87,7 @@ def run(run_cfg):
 
     if proc.returncode != 0:
         print("Error:", stderr)
-        print("Error coe :", proc.returncode)
         return None
-
     return (stdout, stderr)
 
 
@@ -223,9 +223,8 @@ if __name__ == "__main__":
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(
-                output, counters, rcfg, bcfg, "-".join(str(v) for v in bcfg.values())
-            )
+            obj = parse_results(output, counters, rcfg, bcfg, bcfg["PREFETCH"])
+
             all_results.append(obj)
 
     # Save all results into a single JSON file

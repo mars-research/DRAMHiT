@@ -57,7 +57,7 @@ def plot_json(json_file, output_file):
 
     row = 2
     col = 2
-    fig, axes = plt.subplots(row, col, figsize=(19, 7))
+    fig, axes = plt.subplots(row, col, figsize=(12, 7))
 
     cnt = 0
     for df in datasets:

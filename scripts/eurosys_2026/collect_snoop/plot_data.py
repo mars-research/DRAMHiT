@@ -10,7 +10,7 @@ from matplotlib.lines import Line2D
 
 row = 1
 col = 1
-fig, axes = plt.subplots(row, col, figsize=(12, 12))
+fig, axes = plt.subplots(row, col, figsize=(5, 5))
 
 
 def plot_json(json_file_dir, json_file_snoop, output_file):
@@ -33,27 +33,21 @@ def plot_json(json_file_dir, json_file_snoop, output_file):
         # Parse into dict
         bcfg = dict(part.split("=", 1) for part in build_cfg.split("-"))
         ret = ""
-        if bcfg["DRAMHiT_VARIANT"] == "2025":
-            ret += "base"
-        elif bcfg["DRAMHiT_VARIANT"] == "2025_INLINE":
-            ret += "inline"
+        # if bcfg["DRAMHiT_VARIANT"] == "2025":
+        #     ret += "base"
+        # elif bcfg["DRAMHiT_VARIANT"] == "2025_INLINE":
+        #     ret += "inline"
 
         for k in bcfg.keys():
-            if k == "BUCKETIZATION" and bcfg[k] == "ON":
-                ret += "+bucket"
-            elif k == "BRANCH" and bcfg[k] == "simd":
-                ret += "+simd"
-            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
+            if k == "UNIFORM_PROBING" and bcfg[k] == "ON":
                 ret += "+uniform"
             elif k == "UNIFORM_PROBING" and bcfg[k] == "OFF":
                 ret += "+linear"
-            elif k == "PREFETCH" and bcfg[k] == "DOUBLE":
-                ret += "+2prefetch"
 
         return ret
 
-    df["build_cfg_str"] = df["build_cfg_str"].apply(make_identifier)
-    df["identifier"] = df["build_cfg_str"] + "+" + df["firmware-mode"]
+    df["identifier"] = df["build_cfg_str"].apply(make_identifier)
+    df["identifier"] = df["firmware-mode"] + df["identifier"]
     ids1 = df["identifier"].unique()
     palette = sns.color_palette("rocket", n_colors=len(ids1))
     palette = palette[::-1]  # reverse the palette

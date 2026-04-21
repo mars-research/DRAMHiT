@@ -12,7 +12,7 @@ MODE = 11
 
 one_gb = 1 << 26
 htsize = one_gb * 8
-repeat = 1
+repeat = 100
 
 
 def run_once(cmd: str):
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
         "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON "
-        "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON"
+        "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON"
         "-DGROWT=ON",
         shell=True,
         check=True,
@@ -103,12 +103,12 @@ if __name__ == "__main__":
     run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
     run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
 
-    # subprocess.run(
-    #     "/opt/DRAMHiT/scripts/prefetch_control.sh on",
-    #     shell=True,
-    #     check=True,
-    # )
-    # run_ht_dual("GROWT", GROWT, 1, all_results)
+    subprocess.run(
+        "/opt/DRAMHiT/scripts/prefetch_control.sh on",
+        shell=True,
+        check=True,
+    )
+    run_ht_dual("GROWT", GROWT, 1, all_results)
 
     # save to JSON
     with open(json_out_file, "w") as f:

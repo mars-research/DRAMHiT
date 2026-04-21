@@ -149,6 +149,7 @@ if __name__ == "__main__":
             "BRANCH": "branched",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "DOUBLE",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "DRAMHiT_VARIANT": "2025",
@@ -157,6 +158,7 @@ if __name__ == "__main__":
             "BRANCH": "branched",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "DOUBLE",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "DRAMHiT_VARIANT": "2025",
@@ -165,6 +167,7 @@ if __name__ == "__main__":
             "BRANCH": "simd",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "DOUBLE",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "DRAMHiT_VARIANT": "2025",
@@ -173,6 +176,7 @@ if __name__ == "__main__":
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
             "PREFETCH": "DOUBLE",
+            "CPUFREQ_MHZ": "3250",
         },
     ]
     run_cfgs = [
@@ -189,20 +193,12 @@ if __name__ == "__main__":
 
     all_results = []
 
-    def get_name(bcfg):
-        keys = ["DRAMHiT_VARIANT", "BUCKETIZATION", "UNIFORM_PROBING"]
-        ret = ""
-        for k in keys:
-            ret += "{" + k + "-" + bcfg[k] + "}"
-
-        return ret
-
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
+            obj = parse_results(output, counters, rcfg, bcfg, "")
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "amd-reprobe.json")
+    save_json(all_results, "amd.json")

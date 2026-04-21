@@ -117,9 +117,6 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     metrics = {k: float(v) for k, v in kv_pattern.findall(stdout)}
     row.update(metrics)
 
-    print("Program output")
-    print(stdout)
-
     # Parse perf counters from stderr
 
     if USE_PERF:
@@ -210,6 +207,5 @@ if __name__ == "__main__":
             output = run(rcfg)
             obj = parse_results(output, counters, rcfg, bcfg, "")
             all_results.append(obj)
-            time.sleep(1)
 
-    save_json(all_results, "dramhit_reprobe_intel.json")
+    save_json(all_results, "intel.json")

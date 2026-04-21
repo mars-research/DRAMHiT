@@ -4,6 +4,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
@@ -53,7 +54,7 @@ def run(run_cfg):
         "--no-prefetch",
         "0",
         "--mode",
-        "14",
+        "11",
         "--ht-size",
         str(run_cfg["size"]),
         "--skew",
@@ -62,7 +63,8 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
-        "--seed 1775762440565610239",
+        "--seed",
+        "1775762440565610239",
     ]
 
     cmd = []
@@ -143,6 +145,7 @@ if __name__ == "__main__":
     # Build configurations
     build_cfgs = [
         {
+            "identifier": "Base",
             "DRAMHiT_VARIANT": "2025",
             "CAS_NO_ABSTRACT": "ON",
             "PREFETCH": "DOUBLE",
@@ -152,6 +155,7 @@ if __name__ == "__main__":
             "CPUFREQ_MHZ": "2500",
         },
         {
+            "identifier": "Compiler Inline",
             "DRAMHiT_VARIANT": "2025_INLINE",
             "CAS_NO_ABSTRACT": "ON",
             "PREFETCH": "DOUBLE",
@@ -161,6 +165,7 @@ if __name__ == "__main__":
             "CPUFREQ_MHZ": "2500",
         },
         {
+            "identifier": "Manual Inline",
             "DRAMHiT_VARIANT": "2025",
             "CAS_NO_ABSTRACT": "OFF",
             "PREFETCH": "DOUBLE",
@@ -170,6 +175,7 @@ if __name__ == "__main__":
             "CPUFREQ_MHZ": "2500",
         },
         {
+            "identifier": "Manual+Compiler Inline",
             "DRAMHiT_VARIANT": "2025_INLINE",
             "CAS_NO_ABSTRACT": "OFF",
             "PREFETCH": "DOUBLE",
@@ -190,24 +196,26 @@ if __name__ == "__main__":
             "fill_factor": f,
         }
         for f in range(10, 100, 10)
+    ] + [
+        {
+            "insertFactor": 1,
+            "readFactor": 100,
+            "numThreads": 128,
+            "numa_policy": 1,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
     ]
 
     all_results = []
-
-    def get_name(bcfg):
-        keys = ["DRAMHiT_VARIANT", "CAS_NO_ABSTRACT"]
-        ret = ""
-        for k in bcfg.keys():
-            ret += "{" + k + "-" + bcfg[k] + "}"
-
-        return ret
 
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
+            obj = parse_results(output, counters, rcfg, bcfg, bcfg["identifier"])
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit_snoop.json")
+    save_json(all_results, "intel.json")

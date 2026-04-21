@@ -65,7 +65,8 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
-        "--seed 1775762440565610239",
+        "--seed",
+        "1775762440565610239",
     ]
 
     cmd = []
@@ -153,6 +154,7 @@ if __name__ == "__main__":
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "identifier": "Compiler Inline",
@@ -162,6 +164,7 @@ if __name__ == "__main__":
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "identifier": "Manual Inline",
@@ -171,6 +174,7 @@ if __name__ == "__main__":
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "identifier": "Manual+Compiler Inline",
@@ -180,6 +184,7 @@ if __name__ == "__main__":
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
     ]
 

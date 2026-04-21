@@ -35,7 +35,7 @@ def plot_dram_data(file_path):
     df = pd.DataFrame(rows)
 
     # Styling
-    sns.set_theme(style="whitegrid", palette="muted")
+    sns.set_theme()
     fig, axes = plt.subplots(1, 2, figsize=(15, 6))
 
     # Graph 1: Get MOPS
@@ -51,13 +51,13 @@ def plot_dram_data(file_path):
     axes[1].set_xlabel("Fill Factor (%)")
 
     plt.tight_layout()
-    plt.savefig("graph.png")
+    plt.savefig(sys.argv[2])
     plt.close()
 
 
 if __name__ == "__main__":
     # Ensure a file path was provided
-    if len(sys.argv) < 2:
-        print("Usage: python script_name.py <path_to_data.json>")
+    if len(sys.argv) < 3:
+        print("Usage: python script_name.py <path_to_data.json> <out.png>")
     else:
         plot_dram_data(sys.argv[1])
