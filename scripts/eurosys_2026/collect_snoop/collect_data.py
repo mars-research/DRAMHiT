@@ -141,7 +141,6 @@ def save_json(data, filename):
 
 if __name__ == "__main__":
     subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
-
     build_cfgs = [
         {
             "DRAMHiT_VARIANT": "2025_INLINE",

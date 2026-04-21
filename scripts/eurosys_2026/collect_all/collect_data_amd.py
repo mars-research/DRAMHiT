@@ -179,7 +179,7 @@ if __name__ == "__main__":
             "insertFactor": 100,
             "readFactor": 100,
             "numThreads": 64,
-            "numa_policy": 1,
+            "numa_policy": 4,
             "size": 536870912,
             "fill_factor": f,
         }

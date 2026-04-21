@@ -70,6 +70,7 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
+        "--seed 1775762440565610239",
     ]
 
     cmd = make_perf_command(counters, dramhit_args)

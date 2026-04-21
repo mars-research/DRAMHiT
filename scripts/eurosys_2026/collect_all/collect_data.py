@@ -4,6 +4,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
@@ -62,6 +63,7 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
+        "--seed 1775762440565610239",
     ]
 
     cmd = []
@@ -139,9 +141,7 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
-    # Build configurations
-    # for insertion, prefetch to l1 is prefetchw.
-    # double prefetch is prefetch to l2 then prefetch to l1, must only be used with 2025.
+    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     build_cfgs = [
         {
             "DRAMHiT_VARIANT": "2025",
@@ -149,49 +149,48 @@ if __name__ == "__main__":
             "BRANCH": "branched",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "L1",
-        },  # 2023
+            "CPUFREQ_MHZ": "2500",
+        },  # Base
         {
             "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "branched",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "L1",
-        },  # 2023 + bucket
+            "CPUFREQ_MHZ": "2500",
+        },  # Base + bucket
         {
             "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "L1",
-        },  # 2023 + bucket + simd
-        {
-            "DRAMHiT_VARIANT": "2025",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "ON",
-            "PREFETCH": "L2",
-        },  #
+            "CPUFREQ_MHZ": "2500",
+        },  # Base + bucket + simd
         {
             "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "DOUBLE",
-        },  # 2025 + bucket + simd + double prefetch
+            "CPUFREQ_MHZ": "2500",
+        },  # Base + bucket + simd + double prefetch
         {
             "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "OFF",
             "PREFETCH": "DOUBLE",
-        },  # 2025_inline + bucket + simd + double prefetch
+            "CPUFREQ_MHZ": "2500",
+        },  # Inline + bucket + simd + double prefetch
         {
             "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
             "PREFETCH": "DOUBLE",
-        },  # 2025_inline + bucket + simd + double prefetch + uniform
+            "CPUFREQ_MHZ": "2500",
+        },  # Inline + bucket + simd + double prefetch + uniform
     ]
 
     run_cfgs = [
@@ -238,4 +237,5 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "dramhit.json")
+    out_file = sys.argv[1]
+    save_json(all_results, out_file)

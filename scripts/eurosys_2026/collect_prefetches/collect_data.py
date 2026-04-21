@@ -72,6 +72,7 @@ def run(run_cfg):
         "0",
         "--batch-len",
         "16",
+        "--seed 1775762440565610239",
     ]
 
     cmd = make_perf_command(counters, dramhit_args)
@@ -84,6 +85,7 @@ def run(run_cfg):
 
     if proc.returncode != 0:
         print("Error:", stderr)
+        print("Error coe :", proc.returncode)
         return None
 
     return (stdout, stderr)
@@ -152,38 +154,43 @@ if __name__ == "__main__":
     build_cfgs = [
         {
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "L1",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
     ]
 
