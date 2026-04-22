@@ -9,7 +9,6 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 
 counters = [
-    "cycles",
     "ls_alloc_mab_count",
     "de_no_dispatch_per_slot.backend_stalls",
 ]
@@ -33,7 +32,7 @@ def plot_json(json_file, output_file):
     sns.set_theme()
 
     row = 1
-    col = 4
+    col = 3
     plot_w = 4
     fig, axes = plt.subplots(row, col, figsize=(col * plot_w, row * plot_w))
     cnt = 0
@@ -75,6 +74,16 @@ def plot_json(json_file, output_file):
         Line2D([0], [0], color=palette[i], marker="o", label=uid)
         for i, uid in enumerate(unique_ids)
     ]
+
+    for ax in axes:
+        ax.grid(True, which="major", axis="both", linestyle="--")
+        ticks = ax.get_yticks()
+        if len(ticks) > 1:
+            step_value = ticks[1] - ticks[0]
+            ymin, ymax = ax.get_ylim()
+            remainder = ymax % step_value
+            if remainder != 0:
+                ax.set_ylim(ymin, ymax + remainder)
 
     fig.legend(
         fontsize=8, handles=custom_lines, loc="upper center", ncol=len(unique_ids)

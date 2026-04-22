@@ -29,7 +29,6 @@ def make_perf_command(counters, dramhit_args):
 
 
 counters = [
-    "cycles",
     "ls_dispatch.ld_st_dispatch",
     "ls_dispatch.ld_dispatch",
     "ls_dispatch.store_dispatch",
@@ -191,7 +190,7 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 100,
+            "readFactor": 500,
             "numThreads": 64,
             "numa_policy": 4,
             "size": 536870912,

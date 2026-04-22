@@ -1,3 +1,9 @@
+
+
+# save generated zipf data
+mkdir -p /opt/DRAMHiT/cache
+
+
 # cd collect_prefetch_engine
 # python3 collect_data.py snoop_dramhit_results.json
 # python3 plot_data.py snoop_dramhit_results.json snoop.png
@@ -30,5 +36,5 @@
 
 cd macro_zipfian
 ./collect_macro_benchmark.sh
-python3 plot.py 
+python3 plot.py
 cd ..

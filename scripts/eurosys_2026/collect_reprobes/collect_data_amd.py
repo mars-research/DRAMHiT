@@ -182,7 +182,7 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 100,
+            "readFactor": 500,
             "numThreads": 64,
             "numa_policy": 4,
             "size": 536870912,

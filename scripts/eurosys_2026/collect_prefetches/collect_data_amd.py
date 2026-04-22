@@ -152,38 +152,43 @@ if __name__ == "__main__":
     build_cfgs = [
         {
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "PREFETCH": "L1",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
         {
             "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "3250",
         },
     ]
 
@@ -191,7 +196,7 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 100,
+            "readFactor": 500,
             "numThreads": 64,
             "numa_policy": 4,
             "size": 536870912,

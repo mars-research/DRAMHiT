@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import json
+import math
 import sys
 
 import matplotlib.pyplot as plt
@@ -9,7 +10,6 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 
 counters = [
-    "cycles",
     "ls_dispatch.ld_st_dispatch",
     "ls_dispatch.ld_dispatch",
     "ls_dispatch.store_dispatch",
@@ -32,9 +32,9 @@ def plot_json(json_file, output_file):
     sns.set_theme()
 
     row = 1
-    col = 5
+    col = 4
     cnt = 0
-    fig, axes = plt.subplots(row, col, figsize=(15, 3))
+    fig, axes = plt.subplots(row, col, figsize=(15, 4))
     ax = axes[cnt]
     cnt += 1
     sns.lineplot(
@@ -64,6 +64,16 @@ def plot_json(json_file, output_file):
         )
         ax.set_xlabel("fill factor")
         ax.set_ylabel(counter)
+
+    for ax in axes:
+        ax.grid(True, which="major", axis="both", linestyle="--")
+        ticks = ax.get_yticks()
+        if len(ticks) > 1:
+            step_value = ticks[1] - ticks[0]
+            ymin, ymax = ax.get_ylim()
+            remainder = ymax % step_value
+            if remainder != 0:
+                ax.set_ylim(ymin, ymax + remainder)
     # Legend
     unique_ids = df["identifier"].unique()
     palette = sns.color_palette(n_colors=len(unique_ids))
