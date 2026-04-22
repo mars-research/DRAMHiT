@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-CPU_FREQ_KHZ=3250000
+CPU_FREQ_KHZ=2500000
 #RDMSR=$(which rdmsr)
 #WRMSR=$(which wrmsr)
 #echo $RDMSR

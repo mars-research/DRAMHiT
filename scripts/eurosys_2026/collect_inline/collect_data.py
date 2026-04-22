@@ -147,7 +147,7 @@ if __name__ == "__main__":
         {
             "identifier": "Base",
             "DRAMHiT_VARIANT": "2025",
-            "CAS_NO_ABSTRACT": "ON",
+            "CAS_NO_ABSTRACT": "OFF",
             "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         },
         {
             "identifier": "Compiler Inline",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "CAS_NO_ABSTRACT": "ON",
             "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
@@ -166,7 +166,7 @@ if __name__ == "__main__":
         },
         {
             "identifier": "Manual Inline",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "CAS_NO_ABSTRACT": "OFF",
             "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
@@ -177,7 +177,7 @@ if __name__ == "__main__":
         {
             "identifier": "Manual+Compiler Inline",
             "DRAMHiT_VARIANT": "2025_INLINE",
-            "CAS_NO_ABSTRACT": "OFF",
+            "CAS_NO_ABSTRACT": "ON",
             "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",

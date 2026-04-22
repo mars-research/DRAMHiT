@@ -61,7 +61,7 @@ using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
 using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
 HashTableTestHugepageAlloc hugepage_alloc_inst_ht_test;
 
-uint32_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
+uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
 #if defined(CAS_NO_ABSTRACT)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
@@ -79,7 +79,7 @@ uint32_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
   InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
       64, sizeof(InsertFindArgument) * config.batch_len);
   key_type value;
-  uint32_t idx = 0;
+  uint64_t idx = 0;
   for (auto n = 0; n < batch_num; ++n) {
     for (int i = 0; i < batch_len; i++) {
       if (!(idx & 7) && idx + 16 < request_num) {
@@ -131,17 +131,17 @@ struct ht_do_batch_find_ret {
   uint32_t found;
 };
 
-uint32_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
                        uint32_t *found_res) {
 #if defined(CAS_NO_ABSTRACT)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
 #endif
-  uint32_t found = 0;
-  uint32_t idx = 0;
   uint64_t request_num = workload.size();
   uint32_t batch_len = config.batch_len;
   uint64_t batch_num = request_num / batch_len;
+  uint64_t found = 0;
+  uint64_t idx = 0;
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
   collector->claim();
@@ -228,7 +228,7 @@ OpTimings do_zipfian_inserts(
     std::vector<key_type, huge_page_allocator<key_type>> &zipf_set) {
   if (config.insert_factor == 0) return {1, 1};
 
-  uint32_t ops = 0;
+  uint64_t ops = 0;
   for (auto j = 0u; j < config.insert_factor; j++) {
     if (id == 0) {
       cur_phase = ExecPhase::insertions;
@@ -254,13 +254,13 @@ OpTimings do_zipfian_inserts(
 
 OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
                           unsigned int id, auto sync_barrier,
-                          HashTableTestVec &zipf_set, uint32_t *found) {
+                          HashTableTestVec &zipf_set, uint64_t *found) {
   if (config.read_factor == 0) {
     return {1, 1};
   }
 
   uint32_t ops = 0;
-  uint32_t found_per_turn = 0;
+  uint64_t found_per_turn = 0;
   *found = 0;
   for (auto j = 0u; j < config.read_factor; j++) {
     if (id == 0) {
@@ -389,7 +389,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
     PLOGI.printf("zipfian test find start");
   }
 
-  uint32_t found = 0;
+  uint64_t found = 0;
   find_timings = do_zipfian_gets(hashtable, count, shard->shard_idx,
                                  sync_barrier, zipf_set_local, &found);
 

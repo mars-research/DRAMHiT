@@ -3,149 +3,149 @@
     {
       "fill": 10,
       "htsize": 536870912,
-      "set_mops": "2592",
-      "get_mops": "4078"
+      "set_mops": "2636",
+      "get_mops": "4543"
     },
     {
       "fill": 20,
       "htsize": 536870912,
-      "set_mops": "2570",
-      "get_mops": "4278"
+      "set_mops": "2597",
+      "get_mops": "4436"
     },
     {
       "fill": 30,
       "htsize": 536870912,
-      "set_mops": "2476",
-      "get_mops": "4471"
+      "set_mops": "2571",
+      "get_mops": "4427"
     },
     {
       "fill": 40,
       "htsize": 536870912,
-      "set_mops": "2421",
-      "get_mops": "4231"
+      "set_mops": "2542",
+      "get_mops": "4362"
     },
     {
       "fill": 50,
       "htsize": 536870912,
-      "set_mops": "2310",
-      "get_mops": "4330"
+      "set_mops": "2483",
+      "get_mops": "4216"
     },
     {
       "fill": 60,
       "htsize": 536870912,
-      "set_mops": "2272",
-      "get_mops": "3884"
+      "set_mops": "2451",
+      "get_mops": "4074"
     },
     {
       "fill": 70,
       "htsize": 536870912,
-      "set_mops": "2374",
-      "get_mops": "3938"
+      "set_mops": "2377",
+      "get_mops": "3824"
     },
     {
       "fill": 80,
       "htsize": 536870912,
-      "set_mops": "2031",
-      "get_mops": "3398"
+      "set_mops": "2230",
+      "get_mops": "3488"
     },
     {
       "fill": 90,
       "htsize": 536870912,
-      "set_mops": "1927",
-      "get_mops": "2964"
+      "set_mops": "2025",
+      "get_mops": "2936"
     }
   ],
   "dramhit_2023": [
     {
       "fill": 10,
       "htsize": 536870912,
-      "set_mops": "2455",
-      "get_mops": "4137"
+      "set_mops": "2574",
+      "get_mops": "4122"
     },
     {
       "fill": 20,
       "htsize": 536870912,
-      "set_mops": "2416",
-      "get_mops": "3907"
+      "set_mops": "2507",
+      "get_mops": "4001"
     },
     {
       "fill": 30,
       "htsize": 536870912,
-      "set_mops": "2374",
-      "get_mops": "3913"
+      "set_mops": "2463",
+      "get_mops": "3843"
     },
     {
       "fill": 40,
       "htsize": 536870912,
-      "set_mops": "2342",
-      "get_mops": "3395"
+      "set_mops": "2413",
+      "get_mops": "3668"
     },
     {
       "fill": 50,
       "htsize": 536870912,
-      "set_mops": "2280",
-      "get_mops": "3178"
+      "set_mops": "2346",
+      "get_mops": "3482"
     },
     {
       "fill": 60,
       "htsize": 536870912,
-      "set_mops": "2189",
-      "get_mops": "3305"
+      "set_mops": "2255",
+      "get_mops": "3159"
     },
     {
       "fill": 70,
       "htsize": 536870912,
-      "set_mops": "2059",
-      "get_mops": "2817"
+      "set_mops": "2150",
+      "get_mops": "2843"
     },
     {
       "fill": 80,
       "htsize": 536870912,
-      "set_mops": "1893",
-      "get_mops": "2430"
+      "set_mops": "1951",
+      "get_mops": "2476"
     },
     {
       "fill": 90,
       "htsize": 536870912,
-      "set_mops": "1452",
-      "get_mops": "1921"
+      "set_mops": "1518",
+      "get_mops": "1890"
     }
   ],
   "GROWT": [
     {
       "fill": 10,
       "htsize": 536870912,
-      "set_mops": "516",
-      "get_mops": "467"
+      "set_mops": "458",
+      "get_mops": "476"
     },
     {
       "fill": 20,
       "htsize": 536870912,
-      "set_mops": "368",
-      "get_mops": "269"
+      "set_mops": "327",
+      "get_mops": "271"
     },
     {
       "fill": 30,
       "htsize": 536870912,
-      "set_mops": "283",
-      "get_mops": "220"
+      "set_mops": "264",
+      "get_mops": "221"
     },
     {
       "fill": 40,
       "htsize": 536870912,
-      "set_mops": "220",
-      "get_mops": "180"
+      "set_mops": "205",
+      "get_mops": "181"
     },
     {
       "fill": 50,
       "htsize": 536870912,
-      "set_mops": "139",
-      "get_mops": "129"
+      "set_mops": "132",
+      "get_mops": "128"
     },
     {
       "fill": 60,
       "htsize": 536870912,
-      "set_mops": "30",
+      "set_mops": "29",
       "get_mops": "29"
     },
     {

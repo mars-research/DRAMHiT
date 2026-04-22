@@ -553,6 +553,7 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
       ht_sz += Global_R_Buckets[thread_i][part_id]->write_idx;
     }
 
+    // TODO: config.ht_type =
     BaseHashTable* ht = init_ht(ht_sz, tid);
 
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {

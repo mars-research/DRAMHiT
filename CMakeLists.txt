@@ -34,7 +34,13 @@ option(CAS_NO_ABSTRACT "remove abstract so method can be inlined" OFF)
 option(CAS_PREFETCHW "enable prefetch write for insert " OFF)
 option(CAS_FAST_PATH "minimize branch in cas" ON)
 
-set(CPUFREQ_MHZ "3250.0" CACHE STRING "Target CPU frequency in MHz")
+
+# Check if the user forgot to define CPUFREQ_MHZ or left it blank
+if(NOT DEFINED CPUFREQ_MHZ OR "${CPUFREQ_MHZ}" STREQUAL "")
+    message(FATAL_ERROR "CPUFREQ_MHZ is required! Please provide it during configuration using: cmake -DCPUFREQ_MHZ=<value> ...")
+endif()
+
+set(CPUFREQ_MHZ "${CPUFREQ_MHZ}" CACHE STRING "Target CPU frequency in MHz" FORCE)
 add_definitions(-DCPUFREQ_MHZ=${CPUFREQ_MHZ})
 
 if(CAS_PREFETCHW)
