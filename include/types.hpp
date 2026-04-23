@@ -72,6 +72,7 @@ typedef enum {
   RW_RATIO = 12,
   HASHJOIN = 13,
   UNIFORM = 14,
+  BW = 15,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -177,6 +178,7 @@ struct Configuration {
   std::string perf_cnt_path;
   std::string perf_def_path;
   bool test;
+  bool sequential;
 
   void dump_configuration() {
     printf("Run configuration {\n");
@@ -186,7 +188,7 @@ struct Configuration {
     printf("  ht_type %u - %s\n", ht_type, ht_type_strings[ht_type]);
     printf("  ht_size %" PRIu64 " (%" PRIu64 " GiB)\n", ht_size,
            (ht_size * (KEY_SIZE+VALUE_SIZE)  ) / (1024*1024*1024)); // elements*KVsize/ GiB (in bytes)
-    printf("  K %" PRIu64 "\n", K);
+    printf("  K %" PRIu32 "\n", K);
     printf("  P(read) %f\n", pread);
     printf("  Pollution Ratio %u\n", pollute_ratio);
     printf("BQUEUES:\n  n_prod %u | n_cons %u\n", n_prod, n_cons);

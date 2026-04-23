@@ -39,7 +39,7 @@ static inline uint64_t RDTSCP(void) {
 #define TABLE_SIZE (uint64_t) (1 << 27)  // 4 GB
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
-// #define RANDOM_ACCESS
+#define RANDOM_ACCESS
 #define READ
 #define STRIDE 1024
 
@@ -117,8 +117,8 @@ void *walk_table(void *arg) {
   int node = t->node;
   int iter = t->iter;
   int num_threads = t->num_threads;
-  uint32_t WORKLOAD_PER_THREAD = TABLE_SIZE / num_threads;
-  uint32_t offset = tid * WORKLOAD_PER_THREAD;
+  uint64_t WORKLOAD_PER_THREAD = TABLE_SIZE / num_threads;
+  uint64_t offset = tid * WORKLOAD_PER_THREAD;
 
   pin_self_to_cpu(cpu);
 
@@ -140,7 +140,9 @@ void *walk_table(void *arg) {
 #else
     idx = (i + offset) & (TABLE_SIZE - 1);
 #endif
-    _mm_prefetch(&table[idx], 1);
+
+    sum += table[idx].value;
+    //_mm_prefetch(&table[idx], 1);
   }
 
   return NULL;
@@ -157,7 +159,7 @@ int spawn_threads(int node, int num_threads, int iter) {
 
   if (count < num_threads) {
     printf(
-        "not enough physical cpus on node %d, max cpu %d, requesoftwarested "
+        "not enough physical cpus on node %d, max cpu %d, requested: "
         "%d\n",
         node, count, num_threads);
     goto cleanup;
@@ -247,7 +249,7 @@ int main(int argc, char **argv) {
   duration = RDTSCP() - duration;
   double sec = (double)((duration / CPU_FREQ)/1000000000);
   uint64_t cachelines = (uint64_t)TABLE_SIZE * (uint64_t)iter;
-  uint64_t bw = cachelines * sizeof(cacheline_t) / ((1 << 30) * sec) ;
+  uint64_t bw = (cachelines * sizeof(cacheline_t) / (1 << 30)) / sec ;
   printf(
       "duration %lu\nsec %.3f\ncachelines %lu\nbw %lu "
       "GB/s\n",

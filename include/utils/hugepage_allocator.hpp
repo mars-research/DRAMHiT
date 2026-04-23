@@ -3,6 +3,8 @@
 // adapted from https://rigtorp.se/hugepages/
 
 #include <sys/mman.h>  // mmap, munmap
+#include <fcntl.h>
+#include "plog/Log.h"
 
 #define HUGEPAGE_FILE "/mnt/huge/hugepagefile"
 #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)

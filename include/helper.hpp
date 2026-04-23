@@ -1,7 +1,8 @@
 #pragma once
 
 #include <cstdlib>
-
+#include <cstring>
+#include <cstdint>
 namespace kmercounter {
 namespace utils {
 
