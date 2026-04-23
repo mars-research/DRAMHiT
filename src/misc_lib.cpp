@@ -216,10 +216,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
 
 #endif
 
-  ht_fill = ht_fill / config.num_threads;
-  ht_capacity = ht_capacity / config.num_threads;
   uint64_t find_mops = 0, insert_mops = 0;
-
   uint64_t cycles_per_insert = 0;
   uint64_t cycles_per_find = 0;
 
@@ -233,11 +230,20 @@ void print_stats(Shard *all_sh, Configuration &config) {
 
   uint64_t num_threads = config.num_threads;
 
-  avg_find_duration = total_find_cycles / num_threads;
-  avg_insert_duration = total_insert_cycles / num_threads;
+  if(num_threads > 0){
+      ht_fill = ht_fill / num_threads;
+      ht_capacity = ht_capacity / num_threads;
+      avg_find_duration = total_find_cycles / num_threads;
+      avg_insert_duration = total_insert_cycles / num_threads;
+  }
 
-  find_mops = ((CPUFREQ_MHZ * total_finds) / avg_find_duration);
-  insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
+  if(avg_find_duration > 0 ) {
+      find_mops = ((CPUFREQ_MHZ * total_finds) / avg_find_duration);
+  }
+
+  if(avg_insert_duration > 0){
+      insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
+  }
 
   if (config.mode == HASHJOIN) {
     if (config.test) {
@@ -255,7 +261,12 @@ void print_stats(Shard *all_sh, Configuration &config) {
 
     uint64_t sum_op = total_finds + total_inserts;
     uint64_t join_cycles = avg_find_duration + avg_insert_duration;
-    uint64_t throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
+
+    uint64_t throughput = 0;
+    if(join_cycles > 0){
+        throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
+    }
+
     PLOGI.printf(
         "\n"
         "============================================\n"
@@ -271,7 +282,11 @@ void print_stats(Shard *all_sh, Configuration &config) {
   } else if(config.mode == BW){
       uint64_t bytes = total_finds * 64ULL;
       double sec = avg_find_duration / (CPUFREQ_MHZ * 1000000.0);
-      double bw = ((double)bytes / (1ULL << 30)) / sec;
+      double bw = 0.0;
+      if(sec > 0.0) {
+         bw = ((double)bytes / (1ULL << 30)) / sec;
+      }
+
       PLOGI.printf(
           "\n"
           "============================================\n"

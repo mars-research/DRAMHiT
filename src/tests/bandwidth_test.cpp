@@ -38,7 +38,7 @@ void BandwidthTest::run(Shard *sh, const Configuration &config, std::barrier<Voi
   uint64_t size = utils::next_pow2(config.ht_size);
 
   if (sh->shard_idx == 0) {
-      PLOGI.printf("allocating %lu mb", (size*64ULL/(1024ULL*1024ULL)));
+      PLOGI.printf("allocating %lu mb per thread", (size*64ULL/(1024ULL*1024ULL)));
   }
 
   Vec arr(size,hugepage_allocator_inst_bw);
