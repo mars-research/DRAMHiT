@@ -132,7 +132,7 @@ struct ht_do_batch_find_ret {
 };
 
 uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
-                       uint32_t *found_res) {
+                       uint64_t *found_res) {
 #if defined(CAS_NO_ABSTRACT)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
@@ -259,7 +259,7 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
     return {1, 1};
   }
 
-  uint32_t ops = 0;
+  uint64_t ops = 0;
   uint64_t found_per_turn = 0;
   *found = 0;
   for (auto j = 0u; j < config.read_factor; j++) {
