@@ -13,8 +13,8 @@
 #include <functional>
 
 #include "helper.hpp"
-#include "numa.hpp"
 #include "misc_lib.h"
+#include "numa.hpp"
 #include "print_stats.h"
 #include "types.hpp"
 
@@ -105,6 +105,7 @@ const Configuration def = {
     .perf_cnt_path = "",
     .perf_def_path = "",
     .test = false,
+    .sequential = false,
 };  // TODO enum
 
 // for synchronization of threads
@@ -195,7 +196,7 @@ void sync_complete(void) {
         delete g_zipf_values;
       }
     }
-  } else if (config.mode == HASHJOIN) {
+  } else {
     if (cur_phase == ExecPhase::insertions && g_app_record_start) {
       g_insert_start = RDTSCP();
       cur_phase = ExecPhase::none;
@@ -218,8 +219,7 @@ uint64_t get_gigbytes(size_t num_kv) {
 }
 
 void free_ht(BaseHashTable *kmer_ht) {
-    if(kmer_ht != NULL)
-        delete kmer_ht;
+  if (kmer_ht != NULL) delete kmer_ht;
 }
 
 void Application::shard_thread(int tid,
@@ -242,11 +242,12 @@ void Application::shard_thread(int tid,
     case RW_RATIO:
     case ZIPFIAN:
     case UNIFORM:
-        kmer_ht = init_ht(config.ht_size, sh->shard_idx);
-        break;
+      kmer_ht = init_ht(config.ht_size, sh->shard_idx);
+      break;
+    case BW:
     case HASHJOIN:
-        kmer_ht = NULL;
-        break;
+      kmer_ht = NULL;
+      break;
     case BQ_TESTS_NO_BQ:
       kmer_ht = init_ht(config.ht_size, sh->shard_idx);
       break;
@@ -298,6 +299,8 @@ void Application::shard_thread(int tid,
     case UNIFORM:
       this->test.uniform.run(sh, kmer_ht, barrier);
 
+    case BW:
+      this->test.bw.run(sh, config, barrier);
     default:
       break;
   }
@@ -579,7 +582,9 @@ int Application::process(int argc, char *argv[]) {
             ->default_value(def.insert_snapshot),
         "Get performance stats on ith iter insert")(
         "test", po::value<bool>(&config.test)->default_value(def.test),
-        "Test the run");
+        "Test the run")("sequential",
+                        po::value<bool>(&config.sequential)->default_value(def.sequential),
+                        "bw test sequential access");
 
     papi_init();
     po::variables_map vm;
@@ -704,10 +709,14 @@ int Application::process(int argc, char *argv[]) {
         break;
 #endif
       default:
-        PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
-                     config.ht_type);
-        PLOG_INFO.printf("Exiting");
-        exit(0);
+        if(config.mode == BW){
+         PLOGI.printf("no ht needed");
+        }else {
+            PLOGE.printf("Unknown HT type %u! Specify using --ht-type",
+                         config.ht_type);
+            PLOG_INFO.printf("Exiting");
+            exit(0);
+        }
     }
 
     if (config.ht_fill > 0 && config.ht_fill < 100) {
@@ -733,7 +742,7 @@ int Application::process(int argc, char *argv[]) {
     bq_load = BQUEUE_LOAD::HtInsert;
   }
 
-  if (config.mode == ZIPFIAN || config.mode == UNIFORM ) {
+  if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
     g_insert_durations =
         (uint64_t *)malloc(sizeof(uint64_t) * config.insert_factor);
     g_find_durations =

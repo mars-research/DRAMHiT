@@ -10,6 +10,7 @@
 #include "HashjoinTest.hpp"
 #include "RWRatioTest.hpp"
 #include "UniformTest.hpp"
+#include "BandwidthTest.hpp"
 
 
 namespace kmercounter {
@@ -31,6 +32,7 @@ class Tests {
   HashjoinTest hj;
   RWRatioTest rw;
   UniformTest uniform;
+  BandwidthTest bw;
 
   Tests() {
   }

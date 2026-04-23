@@ -177,6 +177,7 @@ if(BUILD_APP)
         "src/tests/cachemiss_test.cpp"
         "src/tests/kmer_tests.cpp"
         "src/tests/hashjoin_test.cpp"
+        "src/tests/bandwidth_test.cpp"
         "src/tests/uniform_test.cpp"
         "src/tests/rw_ratio.cpp"
         "src/tests/synth_test.cpp"

@@ -1,4 +1,5 @@
 #include "misc_lib.h"
+#include <cstdint>
 #include "print_stats.h"
 
 uint64_t get_file_size(const char *fn) {
@@ -267,6 +268,16 @@ void print_stats(Shard *all_sh, Configuration &config) {
         insert_mops, cycles_per_insert, find_mops, cycles_per_find, total_found,
         config.relation_s_size, total_found * 100.0 / config.relation_s_size,
         ht_fill, ht_capacity, ht_fill * 100.0 / ht_capacity, throughput, sum_op, join_cycles);
+  } else if(config.mode == BW){
+      uint64_t bytes = total_finds * 64ULL;
+      double sec = avg_find_duration / (CPUFREQ_MHZ * 1000000.0);
+      double bw = ((double)bytes / (1ULL << 30)) / sec;
+      PLOGI.printf(
+          "\n"
+          "============================================\n"
+          "mem: %lu bytes, took %.3f sec, bandwidth: %.1f GB/s\n"
+          "============================================\n",
+          bytes, sec, bw);
   } else {
     uint64_t expected_found = config.ht_size * config.ht_fill / 100 * config.read_factor;
     PLOGI.printf(

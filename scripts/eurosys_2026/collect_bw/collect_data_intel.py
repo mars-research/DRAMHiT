@@ -25,9 +25,9 @@ def main():
         "--find_queue",
         "64",
         "--num-threads",
-        "64",
+        "128",
         "--numa-split",
-        "4",
+        "1",
         "--no-prefetch",
         "0",
         "--insert-factor",
@@ -64,7 +64,7 @@ def main():
     find_reads = []
     find_writes = []
 
-    print("Running command and parsing output...\n")
+    print("Running command and parsing output: \n")
 
     try:
         # Start the process, combining stderr into stdout for chronological parsing
