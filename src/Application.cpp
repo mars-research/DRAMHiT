@@ -344,7 +344,13 @@ int Application::spawn_shard_threads() {
     Shard *sh = &this->shards[sh_idx];
     sh->assigned_cpu = assigned_cpu;
     sh->shard_idx = sh_idx;
-    sh->numa_node = this->np->get_numa_node(assigned_cpu);
+    int node  = this->np->get_numa_node(assigned_cpu);
+    sh->numa_node = (size_t) node;
+    if(node < 0){
+        PLOGE.printf("unknown noode for shard %u cpu %u", sh->shard_idx, sh->assigned_cpu);
+    }else {
+        PLOGI.printf("shard %u assigned to %u at numa node %u", sh->shard_idx, sh->assigned_cpu, sh->numa_node);
+    }
     sh_idx++;
   }
 

@@ -1,0 +1,258 @@
+[
+    {
+        "threads": 1,
+        "bandwidth_GBps": 21.2
+    },
+    {
+        "threads": 2,
+        "bandwidth_GBps": 41.3
+    },
+    {
+        "threads": 3,
+        "bandwidth_GBps": 63.2
+    },
+    {
+        "threads": 4,
+        "bandwidth_GBps": 84.8
+    },
+    {
+        "threads": 5,
+        "bandwidth_GBps": 105.3
+    },
+    {
+        "threads": 6,
+        "bandwidth_GBps": 125.6
+    },
+    {
+        "threads": 7,
+        "bandwidth_GBps": 145.5
+    },
+    {
+        "threads": 8,
+        "bandwidth_GBps": 166.5
+    },
+    {
+        "threads": 9,
+        "bandwidth_GBps": 182.9
+    },
+    {
+        "threads": 10,
+        "bandwidth_GBps": 202.2
+    },
+    {
+        "threads": 11,
+        "bandwidth_GBps": 221.9
+    },
+    {
+        "threads": 12,
+        "bandwidth_GBps": 241.3
+    },
+    {
+        "threads": 13,
+        "bandwidth_GBps": 259.2
+    },
+    {
+        "threads": 14,
+        "bandwidth_GBps": 277.1
+    },
+    {
+        "threads": 15,
+        "bandwidth_GBps": 291.3
+    },
+    {
+        "threads": 16,
+        "bandwidth_GBps": 309.5
+    },
+    {
+        "threads": 17,
+        "bandwidth_GBps": 326.7
+    },
+    {
+        "threads": 18,
+        "bandwidth_GBps": 346.4
+    },
+    {
+        "threads": 19,
+        "bandwidth_GBps": 360.4
+    },
+    {
+        "threads": 20,
+        "bandwidth_GBps": 376.7
+    },
+    {
+        "threads": 21,
+        "bandwidth_GBps": 390.1
+    },
+    {
+        "threads": 22,
+        "bandwidth_GBps": 406.1
+    },
+    {
+        "threads": 23,
+        "bandwidth_GBps": 416.9
+    },
+    {
+        "threads": 24,
+        "bandwidth_GBps": 426.7
+    },
+    {
+        "threads": 25,
+        "bandwidth_GBps": 442.4
+    },
+    {
+        "threads": 26,
+        "bandwidth_GBps": 449.9
+    },
+    {
+        "threads": 27,
+        "bandwidth_GBps": 454.3
+    },
+    {
+        "threads": 28,
+        "bandwidth_GBps": 459.5
+    },
+    {
+        "threads": 29,
+        "bandwidth_GBps": 448.5
+    },
+    {
+        "threads": 30,
+        "bandwidth_GBps": 452.4
+    },
+    {
+        "threads": 31,
+        "bandwidth_GBps": 442.7
+    },
+    {
+        "threads": 32,
+        "bandwidth_GBps": 451.5
+    },
+    {
+        "threads": 33,
+        "bandwidth_GBps": 440.7
+    },
+    {
+        "threads": 34,
+        "bandwidth_GBps": 449.6
+    },
+    {
+        "threads": 35,
+        "bandwidth_GBps": 441.9
+    },
+    {
+        "threads": 36,
+        "bandwidth_GBps": 450.0
+    },
+    {
+        "threads": 37,
+        "bandwidth_GBps": 444.5
+    },
+    {
+        "threads": 38,
+        "bandwidth_GBps": 451.5
+    },
+    {
+        "threads": 39,
+        "bandwidth_GBps": 447.5
+    },
+    {
+        "threads": 40,
+        "bandwidth_GBps": 453.6
+    },
+    {
+        "threads": 41,
+        "bandwidth_GBps": 448.3
+    },
+    {
+        "threads": 42,
+        "bandwidth_GBps": 456.4
+    },
+    {
+        "threads": 43,
+        "bandwidth_GBps": 449.4
+    },
+    {
+        "threads": 44,
+        "bandwidth_GBps": 456.0
+    },
+    {
+        "threads": 45,
+        "bandwidth_GBps": 447.8
+    },
+    {
+        "threads": 46,
+        "bandwidth_GBps": 454.6
+    },
+    {
+        "threads": 47,
+        "bandwidth_GBps": 445.0
+    },
+    {
+        "threads": 48,
+        "bandwidth_GBps": 450.6
+    },
+    {
+        "threads": 49,
+        "bandwidth_GBps": 441.1
+    },
+    {
+        "threads": 50,
+        "bandwidth_GBps": 446.9
+    },
+    {
+        "threads": 51,
+        "bandwidth_GBps": 438.1
+    },
+    {
+        "threads": 52,
+        "bandwidth_GBps": 443.8
+    },
+    {
+        "threads": 53,
+        "bandwidth_GBps": 436.1
+    },
+    {
+        "threads": 54,
+        "bandwidth_GBps": 440.7
+    },
+    {
+        "threads": 55,
+        "bandwidth_GBps": 433.4
+    },
+    {
+        "threads": 56,
+        "bandwidth_GBps": 438.2
+    },
+    {
+        "threads": 57,
+        "bandwidth_GBps": 431.4
+    },
+    {
+        "threads": 58,
+        "bandwidth_GBps": 435.5
+    },
+    {
+        "threads": 59,
+        "bandwidth_GBps": 430.3
+    },
+    {
+        "threads": 60,
+        "bandwidth_GBps": 434.9
+    },
+    {
+        "threads": 61,
+        "bandwidth_GBps": 429.4
+    },
+    {
+        "threads": 62,
+        "bandwidth_GBps": 434.2
+    },
+    {
+        "threads": 63,
+        "bandwidth_GBps": 428.4
+    },
+    {
+        "threads": 64,
+        "bandwidth_GBps": 432.0
+    }
+]
