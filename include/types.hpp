@@ -255,7 +255,7 @@ struct Kmer_s {
 
 struct Shard {
   uint8_t shard_idx;  // equivalent to a thread_id
-  size_t numa_node;      // node it belongs to
+  int numa_node;      // node it belongs to
   size_t assigned_cpu;   // cpu it is pinned
 
   // hashjoin

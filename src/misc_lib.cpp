@@ -1,6 +1,41 @@
-#include "misc_lib.h"
+
 #include <cstdint>
+#include <numaif.h>
+#include "misc_lib.h"
 #include "print_stats.h"
+#include "types.hpp"
+#include "hashtables/kvtypes.cpp"
+
+int find_remote_node(int current_node) {
+    if (numa_available() < 0) {
+        return -1;
+    }
+
+    int max_node = numa_max_node();
+    int remote_node = -1;
+
+    for (int i = 0; i <= max_node; i++) {
+        if (i != current_node && numa_bitmask_isbitset(numa_all_nodes_ptr, i)) {
+            remote_node = i;
+            break;
+        }
+    }
+    return remote_node;
+}
+
+bool move_memory_to_node(void* addr, uint64_t size, int to_node){
+
+    unsigned long nodemask = (1UL << to_node);
+
+    long ret = mbind(addr, size, MPOL_BIND, &nodemask, sizeof(nodemask) * 8, MPOL_MF_MOVE);
+
+    if (ret != 0) {
+        PLOGE.printf("mbind failed to migrate memory to remote node");
+        return false;
+    }
+
+    return true;
+}
 
 uint64_t get_file_size(const char *fn) {
   int fd = open(fn, O_RDONLY);
@@ -44,83 +79,11 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz) {
   return sum;
 }
 
-#include <numaif.h>
-
-#include "numa.hpp"
-#include "types.hpp"
-#include "hashtables/kvtypes.cpp"
-#include "all_ht_types.hpp"
 
 namespace kmercounter {
 
 extern Configuration config;
 extern std::vector<key_type> *g_zipf_values;
-
-void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
-                             numa_policy_threads policy) {
-  // Check if there is only one NUMA node
-  if (numa_num_configured_nodes() == 1) {
-    PLOG_INFO.printf(
-        "Only one NUMA node available, skipping memory distribution.");
-    return;
-  }
-
-  if (policy == THREADS_REMOTE_NUMA_NODE) {
-    unsigned long nodemask = 1UL << 1;
-    unsigned long maxnode = sizeof(nodemask) * 8;
-
-    long ret = mbind(addr, alloc_sz, MPOL_BIND, &nodemask, maxnode,
-                     MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-    }
-  } else if ((policy == THREADS_LOCAL_NUMA_NODE ||
-              policy == THREADS_NO_MEM_DISTRIBUTION)) {
-    unsigned long nodemask = 1UL << 0;
-    unsigned long maxnode = sizeof(nodemask) * 8;
-
-    long ret = mbind(addr, alloc_sz, MPOL_BIND, &nodemask, maxnode,
-                     MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-    }
-  } else if (policy == THREADS_SPLIT_EVEN_NODES) {
-    uint64_t sz = alloc_sz >> 1;
-    void *u_addr = addr + sz;
-
-    unsigned long nodemask = 1UL << 0;
-    unsigned long maxnode = sizeof(nodemask) * 8;
-
-    long ret = mbind(addr, sz, MPOL_BIND, &nodemask, maxnode,
-                     MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d | addr: %p | sz: %lu", ret, errno,
-                   addr, sz);
-    }
-
-    nodemask = 1UL << 1;
-    maxnode = sizeof(nodemask) * 8;
-
-    ret = mbind(u_addr, sz, MPOL_BIND, &nodemask, maxnode,
-                MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-    }
-  } else {
-    long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
-                     *numa_all_nodes_ptr->maskp, MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-    }
-  }
-
-  PLOGI.printf("addr %p, alloc_sz %lu", addr, alloc_sz);
-}
 
 // g_zipf_values is global ....
 uint64_t calculate_expected_join_size(uint64_t r_size, uint64_t s_size) {
@@ -259,7 +222,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
       }
     }
 
-    uint64_t sum_op = total_finds + total_inserts;
+    uint64_t sum_op = config.relation_r_size + config.relation_s_size;
     uint64_t join_cycles = avg_find_duration + avg_insert_duration;
 
     uint64_t throughput = 0;
@@ -273,12 +236,11 @@ void print_stats(Shard *all_sh, Configuration &config) {
         "build_phrase_mops : %lu, cycle_per_op : %lu\n"
         "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
         "joined : %lu out of %lu, %.2f%%\n"
-        "fill : %lu out of %lu, %.2f%%\n"
         "throughput_mops : %lu, ops: %lu, duration: %lu\n"
         "============================================\n",
-        insert_mops, cycles_per_insert, find_mops, cycles_per_find, total_found,
-        config.relation_s_size, total_found * 100.0 / config.relation_s_size,
-        ht_fill, ht_capacity, ht_fill * 100.0 / ht_capacity, throughput, sum_op, join_cycles);
+        insert_mops, cycles_per_insert, find_mops, cycles_per_find,
+        total_found, config.relation_s_size, total_found * 100.0 / config.relation_s_size,
+        throughput, sum_op, join_cycles);
   } else if(config.mode == BW){
       uint64_t bytes = total_finds * 64ULL;
       double sec = avg_find_duration / (CPUFREQ_MHZ * 1000000.0);

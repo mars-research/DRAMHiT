@@ -2,13 +2,13 @@
 #define _HT_HELPER_H
 
 #include <fcntl.h>
-#include <numa.h>
-#include <plog/Log.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include "numa.hpp"
 #include <cstring>
+#include <plog/Log.h>
+#include "numa.hpp"
 #include "hashtables/kvtypes.hpp"
+#include <numaif.h>
 
 namespace kmercounter {
 /* AB: 1GB page table code is from
@@ -42,9 +42,71 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
   return addr & ~CACHE_BLOCK_MASK;
 }
 
-void distribute_mem_to_nodes(void *addr, size_t alloc_sz,
-                             numa_policy_threads policy);
+inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
+                             numa_policy_threads policy) {
+  // Check if there is only one NUMA node
+  if (numa_num_configured_nodes() == 1) {
+    PLOG_INFO.printf(
+        "Only one NUMA node available, skipping memory distribution.");
+    return;
+  }
 
+  if (policy == THREADS_REMOTE_NUMA_NODE) {
+    unsigned long nodemask = 1UL << 1;
+    unsigned long maxnode = sizeof(nodemask) * 8;
+
+    long ret = mbind(addr, alloc_sz, MPOL_BIND, &nodemask, maxnode,
+                     MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+    }
+  } else if ((policy == THREADS_LOCAL_NUMA_NODE ||
+              policy == THREADS_NO_MEM_DISTRIBUTION)) {
+    unsigned long nodemask = 1UL << 0;
+    unsigned long maxnode = sizeof(nodemask) * 8;
+
+    long ret = mbind(addr, alloc_sz, MPOL_BIND, &nodemask, maxnode,
+                     MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+    }
+  } else if (policy == THREADS_SPLIT_EVEN_NODES) {
+    uint64_t sz = alloc_sz >> 1;
+    void *u_addr = addr + sz;
+
+    unsigned long nodemask = 1UL << 0;
+    unsigned long maxnode = sizeof(nodemask) * 8;
+
+    long ret = mbind(addr, sz, MPOL_BIND, &nodemask, maxnode,
+                     MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d | addr: %p | sz: %lu", ret, errno,
+                   addr, sz);
+    }
+
+    nodemask = 1UL << 1;
+    maxnode = sizeof(nodemask) * 8;
+
+    ret = mbind(u_addr, sz, MPOL_BIND, &nodemask, maxnode,
+                MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+    }
+  } else {
+    long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
+                     *numa_all_nodes_ptr->maskp, MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+    }
+  }
+
+  PLOGI.printf("addr %p, alloc_sz %lu", addr, alloc_sz);
+}
 template <bool WRITE>
 inline void prefetch_object(const void *addr, uint64_t size) {
   // uint64_t _addr = cache_block_aligned_addr((uint64_t)addr);

@@ -2,8 +2,8 @@
 #define _MISC_LIB_H
 
 #include "types.hpp"
-
 #include <x86intrin.h>
+#include "numa.hpp"
 
 extern "C" {
 #include "fcntl.h"
@@ -19,7 +19,10 @@ uint64_t calc_num_kmers(uint64_t l, uint8_t k);
 int find_last_N(const char *c);
 uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz);
 
-#include "hashtables/base_kht.hpp"
+int find_remote_node(int current_node);
+bool move_memory_to_node(void* addr, uint64_t size, int to_node);
+
+#include "all_ht_types.hpp"
 namespace kmercounter{
 BaseHashTable* init_ht(const uint64_t sz, uint8_t id);
 }

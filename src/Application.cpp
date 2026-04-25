@@ -74,7 +74,7 @@ const Configuration def = {
     .K = 20,
     .num_threads = 1,
     .mode = BQ_TESTS_YES_BQ,  // TODO enum
-    .numa_split = 3,
+    .numa_split = 4,
     .ht_type = 0,
     .ht_fill = 70,
     .ht_size = HT_TESTS_HT_SIZE,
@@ -151,7 +151,6 @@ void sync_complete(void) {
     PLOGI.printf("Starting counters");
     if (!bw_counters) bw_counters = new MemoryBwCounters(2);
     bw_counters->start();
-  }
 #endif
 
   if (config.mode == ZIPFIAN || config.mode == UNIFORM) {
@@ -344,10 +343,10 @@ int Application::spawn_shard_threads() {
     Shard *sh = &this->shards[sh_idx];
     sh->assigned_cpu = assigned_cpu;
     sh->shard_idx = sh_idx;
-    int node  = this->np->get_numa_node(assigned_cpu);
-    sh->numa_node = (size_t) node;
-    if(node < 0){
-        PLOGE.printf("unknown noode for shard %u cpu %u", sh->shard_idx, sh->assigned_cpu);
+    sh->numa_node = this->np->get_numa_node(assigned_cpu);
+    if(sh->numa_node < 0){
+        PLOGE.printf("unknown node for shard %u cpu %u", sh->shard_idx, sh->assigned_cpu);
+        abort();
     }else {
         PLOGI.printf("shard %u assigned to %u at numa node %u", sh->shard_idx, sh->assigned_cpu, sh->numa_node);
     }
@@ -806,6 +805,8 @@ int Application::process(int argc, char *argv[]) {
       case THREADS_LOCAL_NUMA_NODE:
       case THREADS_NO_MEM_DISTRIBUTION:
       case THREADS_SPLIT_EVEN_NODES:
+      case THREADS_ALL_NODES_REMOTE_ACCESS:
+      case THREADS_ALL_NODES_LOCAL_ACCESS:
         this->np = new NumaPolicyThreads(
             config.num_threads, (numa_policy_threads)config.numa_split);
         break;

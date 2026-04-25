@@ -333,7 +333,9 @@ enum numa_policy_threads {
   THREADS_REMOTE_NUMA_NODE = 3,
   THREADS_LOCAL_NUMA_NODE = 4,
   THREADS_NO_MEM_DISTRIBUTION = 5,
-  THREADS_SPLIT_EVEN_NODES = 6
+  THREADS_SPLIT_EVEN_NODES = 6,
+  THREADS_ALL_NODES_REMOTE_ACCESS = 7,
+  THREADS_ALL_NODES_LOCAL_ACCESS = 8
 };
 
 class NumaPolicyThreads : public Numa {
@@ -404,7 +406,8 @@ class NumaPolicyThreads : public Numa {
       return;
     }
 
-    if (this->np == THREADS_SPLIT_SEPARATE_NODES || this->np == THREADS_NO_MEM_DISTRIBUTION || this->np == THREADS_SPLIT_EVEN_NODES) {
+    if (this->np == THREADS_SPLIT_SEPARATE_NODES || this->np == THREADS_NO_MEM_DISTRIBUTION || this->np == THREADS_SPLIT_EVEN_NODES
+        ||this->np == THREADS_ALL_NODES_LOCAL_ACCESS || this->np == THREADS_ALL_NODES_REMOTE_ACCESS) {
       int num_nodes = Numa::get_num_nodes();
       uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0, last_cpu_idx = 0;
       uint32_t threads_per_node =

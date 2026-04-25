@@ -1,6 +1,7 @@
 #ifndef HASHTABLES_ALL_HPP
 #define HASHTABLES_ALL_HPP
 
+#include "hashtables/base_kht.hpp"
 #include "hashtables/array_kht.hpp"
 #include "hashtables/cas23_kht.hpp"
 #include "hashtables/cas_kht.hpp"

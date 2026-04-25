@@ -10,8 +10,8 @@ import seaborn as sns
 def main():
     # Configuration
     max_threads = 64
-    json_filename = "bandwidth_results.json"
-    plot_filename = "bandwidth_plot.png"
+    json_filename = "remote_bandwidth_results.json"
+    plot_filename = "remote_bandwidth_plot.png"
 
     # Regex to extract the bandwidth value
     # Example target string: "mem: 16384 bytes, took 0.000 sec, bandwidth: 1.4 GB/s"
@@ -32,7 +32,7 @@ def main():
             "--mode",
             "15",
             "--numa-split",
-            "1",
+            "7",
             "--num-threads",
             str(threads),
         ]

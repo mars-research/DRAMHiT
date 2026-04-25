@@ -439,8 +439,12 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
   sh->stats->finds.op_count = probe.size();
   sh->stats->finds.duration = g_find_end - g_find_start;
   sh->stats->found = found;
-  sh->stats->ht_fill = ht->get_fill();
-  sh->stats->ht_capacity = ht->get_capacity();
+
+  if(sh->shard_idx == 0){
+    uint64_t fill = ht->get_fill();
+    uint64_t capacity = ht->get_capacity();
+    PLOGI.printf("hashtable fill %lu out of %lu", fill, capacity);
+  }
 }
 
 std::vector<BaseHashTable*> Global_HashTables;
@@ -503,11 +507,16 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   uint64_t tid = sh->shard_idx;
 
   if (tid == 0) {
-    cur_phase = ExecPhase::none;
     Global_HashTables.resize(partition_num);
     Global_R_Buckets.resize(config.num_threads);
     Global_S_Buckets.resize(config.num_threads);
+
+    cur_phase = ExecPhase::insertions;
+    g_app_record_start = true;
   }
+
+  // Partition phase
+  barrier->arrive_and_wait();
 
   std::vector<RadixBucket*> local_r;
   std::vector<RadixBucket*> local_s;
@@ -543,33 +552,63 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   Global_R_Buckets[tid] = local_r;
   Global_S_Buckets[tid] = local_s;
 
+  if (tid == 0) {
+    cur_phase = ExecPhase::insertions;
+    g_app_record_start = false;
+  }
   barrier->arrive_and_wait();
+  sh->stats->insertions.duration = g_insert_end - g_insert_start;
+  sh->stats->insertions.op_count = build.size();
 
   // Join
-  for (int part_id = tid; part_id < partition_num;
+  if (tid == 0) {
+    cur_phase = ExecPhase::finds;
+    g_app_record_start = true;
+  }
+  barrier->arrive_and_wait();
+
+  uint64_t found = 0;
+  for (size_t part_id = tid; part_id < partition_num;
        part_id += config.num_threads) {
     uint64_t ht_sz = 0;
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       ht_sz += Global_R_Buckets[thread_i][part_id]->write_idx;
     }
+    // BaseHashTable* ht = init_ht(ht_sz, tid);
 
-    // TODO: config.ht_type =
-    BaseHashTable* ht = init_ht(ht_sz, tid);
-
+    // insert
+    std::unordered_set<key_type> ht(ht_sz);
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       RadixBucket* b = Global_R_Buckets[thread_i][part_id];
-      ht_do_insert(ht, b->v);
+      //ht_do_insert(ht, b->v);
+      //
+      for(uint32_t i = 0; i < b->v.size(); i++) {
+         ht.insert(b->v[i].key);
+      }
     }
 
+    // find
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       RadixBucket* b = Global_S_Buckets[thread_i][part_id];
-      ht_do_find(ht, b->v, mvec);
+      // ht_do_find(ht, b->v, mvec);
+      for(uint32_t i = 0; i < b->v.size(); i++) {
+         if(ht.find(b->v[i].key) != ht.end())
+             found++;
+      }
     }
 
-    Global_HashTables[part_id] = ht;
+    // Global_HashTables[part_id] = ht;
   }
 
+  if (tid == 0) {
+    cur_phase = ExecPhase::finds;
+    g_app_record_start = false;
+  }
   barrier->arrive_and_wait();
+
+  sh->stats->finds.duration = g_find_end - g_find_start;
+  sh->stats->finds.op_count = probe.size();
+  sh->stats->found = found;
 
   for (BaseHashTable* ht : Global_HashTables) {
     delete ht;
