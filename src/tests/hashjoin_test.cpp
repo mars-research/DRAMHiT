@@ -98,9 +98,9 @@ void init_hashjoin_dist(double skew, int64_t seed, uint64_t r_size,
   // Dynamically generate the filename based on parameters
   // ---------------------------------------------------------
   std::ostringstream filename_stream;
+  // Don't include seed, as it is just current time during init, so never caches anything
   filename_stream << "hashjoin"
-                  << "_r" << r_size << "_s" << s_size << "_skew" << skew
-                  << "_seed" << seed << ".bin";
+                  << "_r" << r_size << "_s" << s_size << "_skew" << skew << ".bin";
 
   std::string filename = filename_stream.str();
   // ---------------------------------------------------------
