@@ -1,0 +1,963 @@
+  unc_cha_rxc_ipq0_reject.ak_non_upi
+  unc_cha_rxc_ipq0_reject.iv_non_upi
+  unc_cha_rxc_irq0_reject.ak_non_upi
+  unc_cha_rxc_irq0_reject.iv_non_upi
+  unc_cha_rxc_ismq0_reject.ak_non_upi
+  unc_cha_rxc_ismq0_reject.iv_non_upi
+  unc_cha_rxc_ismq0_retry.ak_non_upi
+  unc_cha_rxc_ismq0_retry.iv_non_upi
+  unc_cha_rxc_other0_retry.ak_non_upi
+  unc_cha_rxc_other0_retry.iv_non_upi
+  unc_cha_rxc_prq0_reject.ak_non_upi
+  unc_cha_rxc_prq0_reject.iv_non_upi
+  unc_cha_rxc_req_q0_retry.ak_non_upi
+  unc_cha_rxc_req_q0_retry.iv_non_upi
+  unc_cha_rxc_rrq0_reject.ak_non_upi
+  unc_cha_rxc_rrq0_reject.iv_non_upi
+  unc_cha_rxc_wbq0_reject.ak_non_upi
+  unc_cha_rxc_wbq0_reject.iv_non_upi
+  unc_m2m_direct2upi_not_taken_credits
+  unc_m2m_direct2upi_not_taken_dirstate
+  unc_m2m_direct2upi_not_taken_dirstate.cisgress
+  unc_m2m_direct2upi_not_taken_dirstate.egress
+  unc_m2m_direct2upi_not_taken_dirstate.non_cisgress
+  unc_m2m_direct2upi_taken
+  unc_m2m_direct2upi_txn_override
+  unc_m2m_direct2upi_txn_override.cisgress
+  unc_m2m_direct2upitxn_override.pmm_hit
+  unc_m2m_prefcam_demand_drops.ch0_upi
+  unc_m2m_prefcam_demand_drops.ch1_upi
+  unc_m2m_prefcam_demand_drops.upi_allch
+  unc_m2m_prefcam_demand_merge.upi_allch
+  unc_m2m_prefcam_inserts.ch0_upi
+  unc_m2m_prefcam_inserts.ch1_upi
+  unc_m2m_prefcam_inserts.upi_allch
+  unc_m3upi_cha_ad_credits_empty.req
+       [CBox AD Credits Empty : Requests. Unit: uncore_m3upi]
+  unc_m3upi_cha_ad_credits_empty.snp
+       [CBox AD Credits Empty : Snoops. Unit: uncore_m3upi]
+  unc_m3upi_cha_ad_credits_empty.vna
+       [CBox AD Credits Empty : VNA Messages. Unit: uncore_m3upi]
+  unc_m3upi_cha_ad_credits_empty.wb
+       [CBox AD Credits Empty : Writebacks. Unit: uncore_m3upi]
+  unc_m3upi_clockticks
+       [M3UPI Clockticks. Unit: uncore_m3upi]
+  unc_m3upi_cms_clockticks
+       [M3UPI CMS Clockticks. Unit: uncore_m3upi]
+  unc_m3upi_d2c_sent
+       [D2C Sent. Unit: uncore_m3upi]
+  unc_m3upi_d2u_sent
+       [D2U Sent. Unit: uncore_m3upi]
+  unc_m3upi_egress_ordering.iv_snoopgo_dn
+        uncore_m3upi]
+  unc_m3upi_egress_ordering.iv_snoopgo_up
+       [Egress Blocking due to Ordering requirements : Up. Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.iio1_ncb
+        (1 VN0 credit only). Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.iio2_ncb
+       [M2 BL Credits Empty : IIO2. Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.iio3_ncb
+       [M2 BL Credits Empty : IIO3. Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.iio4_ncb
+       [M2 BL Credits Empty : IIO4. Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.iio5_ncb
+       [M2 BL Credits Empty : IIO5. Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.ncs
+        them together. Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.ncs_sel
+       [M2 BL Credits Empty : Selected M2p BL NCS credits. Unit: uncore_m3upi]
+  unc_m3upi_m2_bl_credits_empty.ubox_ncb
+       [M2 BL Credits Empty : IIO5. Unit: uncore_m3upi]
+  unc_m3upi_multi_slot_rcvd.ad_slot0
+       [Multi Slot Flit Received : AD - Slot 0. Unit: uncore_m3upi]
+  unc_m3upi_multi_slot_rcvd.ad_slot1
+       [Multi Slot Flit Received : AD - Slot 1. Unit: uncore_m3upi]
+  unc_m3upi_multi_slot_rcvd.ad_slot2
+       [Multi Slot Flit Received : AD - Slot 2. Unit: uncore_m3upi]
+  unc_m3upi_multi_slot_rcvd.ak_slot0
+       [Multi Slot Flit Received : AK - Slot 0. Unit: uncore_m3upi]
+  unc_m3upi_multi_slot_rcvd.ak_slot2
+       [Multi Slot Flit Received : AK - Slot 2. Unit: uncore_m3upi]
+  unc_m3upi_multi_slot_rcvd.bl_slot0
+       [Multi Slot Flit Received : BL - Slot 0. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn0.ad_req
+       [Lost Arb for VN0 : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn0.ad_rsp
+       [Lost Arb for VN0 : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn0.ad_snp
+       [Lost Arb for VN0 : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn0.bl_ncb
+       [Lost Arb for VN0 : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn0.bl_ncs
+       [Lost Arb for VN0 : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn0.bl_rsp
+       [Lost Arb for VN0 : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn0.bl_wb
+       [Lost Arb for VN0 : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn1.ad_req
+       [Lost Arb for VN1 : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn1.ad_rsp
+       [Lost Arb for VN1 : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn1.ad_snp
+       [Lost Arb for VN1 : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn1.bl_ncb
+       [Lost Arb for VN1 : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn1.bl_ncs
+       [Lost Arb for VN1 : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn1.bl_rsp
+       [Lost Arb for VN1 : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_lost_vn1.bl_wb
+       [Lost Arb for VN1 : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.adbl_parallel_win_vn0
+       [Arb Miscellaneous : AD, BL Parallel Win VN0. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.adbl_parallel_win_vn1
+       [Arb Miscellaneous : AD, BL Parallel Win VN1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.all_parallel_win
+       [Arb Miscellaneous : Max Parallel Win. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.no_prog_ad_vn0
+       [Arb Miscellaneous : No Progress on Pending AD VN0. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.no_prog_ad_vn1
+       [Arb Miscellaneous : No Progress on Pending AD VN1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.no_prog_bl_vn0
+       [Arb Miscellaneous : No Progress on Pending BL VN0. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.no_prog_bl_vn1
+       [Arb Miscellaneous : No Progress on Pending BL VN1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_misc.vn01_parallel_win
+       [Arb Miscellaneous : VN0, VN1 Parallel Win. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn0.ad_req
+       [No Credits to Arb for VN0 : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn0.ad_rsp
+       [No Credits to Arb for VN0 : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn0.ad_snp
+       [No Credits to Arb for VN0 : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn0.bl_ncb
+       [No Credits to Arb for VN0 : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn0.bl_ncs
+       [No Credits to Arb for VN0 : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn0.bl_rsp
+       [No Credits to Arb for VN0 : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn0.bl_wb
+       [No Credits to Arb for VN0 : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn1.ad_req
+       [No Credits to Arb for VN1 : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn1.ad_rsp
+       [No Credits to Arb for VN1 : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn1.ad_snp
+       [No Credits to Arb for VN1 : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn1.bl_ncb
+       [No Credits to Arb for VN1 : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn1.bl_ncs
+       [No Credits to Arb for VN1 : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn1.bl_rsp
+       [No Credits to Arb for VN1 : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_nocrd_vn1.bl_wb
+       [No Credits to Arb for VN1 : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn0.ad_req
+       [Can't Arb for VN0 : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn0.ad_rsp
+       [Can't Arb for VN0 : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn0.ad_snp
+       [Can't Arb for VN0 : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn0.bl_ncb
+       [Can't Arb for VN0 : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn0.bl_ncs
+       [Can't Arb for VN0 : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn0.bl_rsp
+       [Can't Arb for VN0 : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn0.bl_wb
+       [Can't Arb for VN0 : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn1.ad_req
+       [Can't Arb for VN1 : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn1.ad_rsp
+       [Can't Arb for VN1 : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn1.ad_snp
+       [Can't Arb for VN1 : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn1.bl_ncb
+       [Can't Arb for VN1 : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn1.bl_ncs
+       [Can't Arb for VN1 : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn1.bl_rsp
+       [Can't Arb for VN1 : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_arb_noreq_vn1.bl_wb
+       [Can't Arb for VN1 : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_bypassed.ad_s0_bl_arb
+       [Ingress Queue Bypasses : AD to Slot 0 on BL Arb. Unit: uncore_m3upi]
+  unc_m3upi_rxc_bypassed.ad_s0_idle
+       [Ingress Queue Bypasses : AD to Slot 0 on Idle. Unit: uncore_m3upi]
+  unc_m3upi_rxc_bypassed.ad_s1_bl_slot
+       [Ingress Queue Bypasses : AD + BL to Slot 1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_bypassed.ad_s2_bl_slot
+       [Ingress Queue Bypasses : AD + BL to Slot 2. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_misc.any_bgf_fifo
+       [Miscellaneous Credit Events : Any In BGF FIFO. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_misc.any_bgf_path
+       [Miscellaneous Credit Events : Any in BGF Path. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_misc.lt1_for_d2k
+       [Miscellaneous Credit Events. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_misc.lt2_for_d2k
+       [Miscellaneous Credit Events. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_misc.vn0_no_d2k_for_arb
+       [Miscellaneous Credit Events : No D2K For Arb. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_misc.vn1_no_d2k_for_arb
+       [Miscellaneous Credit Events. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.consumed
+       [Credit Occupancy : Credits Consumed. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.d2k_crd
+       [Credit Occupancy : D2K Credits. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.flits_in_fifo
+       [Credit Occupancy : Packets in BGF FIFO. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.flits_in_path
+       [Credit Occupancy : Packets in BGF Path. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.p1p_fifo
+       [Credit Occupancy. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.p1p_total
+       [Credit Occupancy. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.txq_crd
+       [Credit Occupancy : Transmit Credits. Unit: uncore_m3upi]
+  unc_m3upi_rxc_crd_occ.vna_in_use
+       [Credit Occupancy : VNA In Use. Unit: uncore_m3upi]
+  unc_m3upi_rxc_cycles_ne_vn0.ad_req
+        uncore_m3upi]
+  unc_m3upi_rxc_cycles_ne_vn0.ad_rsp
+        uncore_m3upi]
+  unc_m3upi_rxc_cycles_ne_vn0.ad_snp
+        uncore_m3upi]
+  unc_m3upi_rxc_cycles_ne_vn0.bl_ncb
+        uncore_m3upi]
+  unc_m3upi_rxc_cycles_ne_vn0.bl_ncs
+        uncore_m3upi]
+  unc_m3upi_rxc_cycles_ne_vn0.bl_rsp
+        uncore_m3upi]
+  unc_m3upi_rxc_cycles_ne_vn0.bl_wb
+        uncore_m3upi]
+  unc_m3upi_rxc_data_flits_not_sent.all
+       [Data Flit Not Sent : All. Unit: uncore_m3upi]
+  unc_m3upi_rxc_data_flits_not_sent.no_bgf
+       [Data Flit Not Sent : No BGF Credits. Unit: uncore_m3upi]
+  unc_m3upi_rxc_data_flits_not_sent.no_txq
+       [Data Flit Not Sent : No TxQ Credits. Unit: uncore_m3upi]
+  unc_m3upi_rxc_data_flits_not_sent.tsv_hi
+       [Data Flit Not Sent : TSV High. Unit: uncore_m3upi]
+  unc_m3upi_rxc_data_flits_not_sent.valid_for_flit
+       [Data Flit Not Sent : Cycle valid for Flit. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.accum
+       [Flit Gen - Header 1 : Accumulate. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.accum_read
+       [Flit Gen - Header 1 : Accumulate Ready. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.accum_wasted
+       [Flit Gen - Header 1 : Accumulate Wasted. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.ahead_blocked
+       [Flit Gen - Header 1 : Run-Ahead - Blocked. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.ahead_msg1_after
+       [Flit Gen - Header 1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.ahead_msg1_during
+       [Flit Gen - Header 1 : Run-Ahead - Message. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.ahead_msg2_after
+       [Flit Gen - Header 1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr1.ahead_msg2_sent
+       [Flit Gen - Header 1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr2.par
+       [Flit Gen - Header 2 : Parallel Ok. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr2.par_flit
+       [Flit Gen - Header 2 : Parallel Flit Finished. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr2.par_msg
+       [Flit Gen - Header 2 : Parallel Message. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr2.rmstall
+       [Flit Gen - Header 2 : Rate-matching Stall. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flit_gen_hdr2.rmstall_nomsg
+        uncore_m3upi]
+  unc_m3upi_rxc_flits_gen_bl.p0_wait
+       [Generating BL Data Flit Sequence : Wait on Pump 0. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_gen_bl.p1_wait
+       [Generating BL Data Flit Sequence : Wait on Pump 1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_gen_bl.p1p_at_limit
+       [Generating BL Data Flit Sequence. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_gen_bl.p1p_busy
+       [Generating BL Data Flit Sequence. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_gen_bl.p1p_fifo_full
+       [Generating BL Data Flit Sequence. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_gen_bl.p1p_hold_p0
+       [Generating BL Data Flit Sequence. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_gen_bl.p1p_to_limbo
+       [Generating BL Data Flit Sequence. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_misc.s2req_in_holdoff
+       [UNC_M3UPI_RxC_FLITS_MISC.S2REQ_IN_HOLDOFF. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_misc.s2req_in_service
+       [UNC_M3UPI_RxC_FLITS_MISC.S2REQ_IN_SERVICE. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_misc.s2req_received
+       [UNC_M3UPI_RxC_FLITS_MISC.S2REQ_RECEIVED. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_misc.s2req_withdrawn
+       [UNC_M3UPI_RxC_FLITS_MISC.S2REQ_WITHDRAWN. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_slot_bl.all
+       [Slotting BL Message Into Header Flit : All. Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_slot_bl.need_data
+        uncore_m3upi]
+  unc_m3upi_rxc_flits_slot_bl.p0_wait
+        uncore_m3upi]
+  unc_m3upi_rxc_flits_slot_bl.p1_not_req
+        uncore_m3upi]
+  unc_m3upi_rxc_flits_slot_bl.p1_not_req_but_bubble
+        Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_slot_bl.p1_not_req_not_avail
+        Unit: uncore_m3upi]
+  unc_m3upi_rxc_flits_slot_bl.p1_wait
+        uncore_m3upi]
+  unc_m3upi_rxc_hdr_flit_not_sent.all
+       [Header Not Sent : All. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flit_not_sent.no_bgf_crd
+       [Header Not Sent : No BGF Credits. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flit_not_sent.no_bgf_no_msg
+        uncore_m3upi]
+  unc_m3upi_rxc_hdr_flit_not_sent.no_txq_crd
+       [Header Not Sent : No TxQ Credits. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flit_not_sent.no_txq_no_msg
+        uncore_m3upi]
+  unc_m3upi_rxc_hdr_flit_not_sent.tsv_hi
+       [Header Not Sent : TSV High. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flit_not_sent.valid_for_flit
+       [Header Not Sent : Cycle valid for Flit. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flits_sent.1_msg
+       [Sent Header Flit : One Message. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flits_sent.1_msg_vnx
+       [Sent Header Flit : One Message in non-VNA. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flits_sent.2_msgs
+       [Sent Header Flit : Two Messages. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flits_sent.3_msgs
+       [Sent Header Flit : Three Messages. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flits_sent.slots_1
+       [Sent Header Flit : One Slot Taken. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flits_sent.slots_2
+       [Sent Header Flit : Two Slots Taken. Unit: uncore_m3upi]
+  unc_m3upi_rxc_hdr_flits_sent.slots_3
+       [Sent Header Flit : All Slots Taken. Unit: uncore_m3upi]
+  unc_m3upi_rxc_held.cant_slot_ad
+       [Message Held : Can't Slot AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_held.cant_slot_bl
+       [Message Held : Can't Slot BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_held.parallel_attempt
+       [Message Held : Parallel Attempt. Unit: uncore_m3upi]
+  unc_m3upi_rxc_held.parallel_success
+       [Message Held : Parallel Success. Unit: uncore_m3upi]
+  unc_m3upi_rxc_held.vn0
+       [Message Held : VN0. Unit: uncore_m3upi]
+  unc_m3upi_rxc_held.vn1
+       [Message Held : VN1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn0.ad_req
+       [VN0 message can't slot into flit : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn0.ad_rsp
+       [VN0 message can't slot into flit : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn0.ad_snp
+       [VN0 message can't slot into flit : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn0.bl_ncb
+       [VN0 message can't slot into flit : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn0.bl_ncs
+       [VN0 message can't slot into flit : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn0.bl_rsp
+       [VN0 message can't slot into flit : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn0.bl_wb
+       [VN0 message can't slot into flit : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn1.ad_req
+       [VN1 message can't slot into flit : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn1.ad_rsp
+       [VN1 message can't slot into flit : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn1.ad_snp
+       [VN1 message can't slot into flit : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn1.bl_ncb
+       [VN1 message can't slot into flit : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn1.bl_ncs
+       [VN1 message can't slot into flit : NCS on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn1.bl_rsp
+       [VN1 message can't slot into flit : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_packing_miss_vn1.bl_wb
+       [VN1 message can't slot into flit : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd.any_in_use
+       [Remote VNA Credits : Any In Use. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd.corrected
+       [Remote VNA Credits : Corrected. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd.lt1
+       [Remote VNA Credits : Level < 1. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd.lt10
+       [Remote VNA Credits : Level < 10. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd.lt4
+       [Remote VNA Credits : Level < 4. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd.lt5
+       [Remote VNA Credits : Level < 5. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.req_adbl_alloc_l5
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.REQ_ADBL_ALLOC_L5. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.req_vn01_alloc_lt10
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.REQ_VN01_ALLOC_LT10. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.vn0_just_ad
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.VN0_JUST_AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.vn0_just_bl
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.VN0_JUST_BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.vn0_only
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.VN0_ONLY. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.vn1_just_ad
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.VN1_JUST_AD. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.vn1_just_bl
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.VN1_JUST_BL. Unit: uncore_m3upi]
+  unc_m3upi_rxc_vna_crd_misc.vn1_only
+       [UNC_M3UPI_RxC_VNA_CRD_MISC.VN1_ONLY. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn0_req
+       [Failed ARB for AD : VN0 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn0_rsp
+       [Failed ARB for AD : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn0_snp
+       [Failed ARB for AD : VN0 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn0_wb
+       [Failed ARB for AD : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn1_req
+       [Failed ARB for AD : VN1 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn1_rsp
+       [Failed ARB for AD : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn1_snp
+       [Failed ARB for AD : VN1 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_arb_fail.vn1_wb
+       [Failed ARB for AD : VN1 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_bypass
+       [AD FlowQ Bypass. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_bypass.ad_slot0
+       [AD FlowQ Bypass. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_bypass.ad_slot1
+       [AD FlowQ Bypass. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_bypass.ad_slot2
+       [AD FlowQ Bypass. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_bypass.bl_early_rsp
+       [AD FlowQ Bypass. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn0_req
+       [AD Flow Q Not Empty : VN0 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn0_rsp
+       [AD Flow Q Not Empty : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn0_snp
+       [AD Flow Q Not Empty : VN0 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn0_wb
+       [AD Flow Q Not Empty : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn1_req
+       [AD Flow Q Not Empty : VN1 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn1_rsp
+       [AD Flow Q Not Empty : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn1_snp
+       [AD Flow Q Not Empty : VN1 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_cycles_ne.vn1_wb
+       [AD Flow Q Not Empty : VN1 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_inserts.vn0_req
+       [AD Flow Q Inserts : VN0 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_inserts.vn0_rsp
+       [AD Flow Q Inserts : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_inserts.vn0_snp
+       [AD Flow Q Inserts : VN0 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_inserts.vn0_wb
+       [AD Flow Q Inserts : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_inserts.vn1_req
+       [AD Flow Q Inserts : VN1 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_inserts.vn1_rsp
+       [AD Flow Q Inserts : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_inserts.vn1_snp
+       [AD Flow Q Inserts : VN1 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_occupancy.vn0_req
+       [AD Flow Q Occupancy : VN0 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_occupancy.vn0_rsp
+       [AD Flow Q Occupancy : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_occupancy.vn0_snp
+       [AD Flow Q Occupancy : VN0 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_occupancy.vn0_wb
+       [AD Flow Q Occupancy : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_occupancy.vn1_req
+       [AD Flow Q Occupancy : VN1 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_occupancy.vn1_rsp
+       [AD Flow Q Occupancy : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ad_flq_occupancy.vn1_snp
+       [AD Flow Q Occupancy : VN1 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_ak_flq_inserts
+       [AK Flow Q Inserts. Unit: uncore_m3upi]
+  unc_m3upi_txc_ak_flq_occupancy
+       [AK Flow Q Occupancy. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn0_ncb
+       [Failed ARB for BL : VN0 NCB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn0_ncs
+       [Failed ARB for BL : VN0 NCS Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn0_rsp
+       [Failed ARB for BL : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn0_wb
+       [Failed ARB for BL : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn1_ncb
+       [Failed ARB for BL : VN1 NCS Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn1_ncs
+       [Failed ARB for BL : VN1 NCB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn1_rsp
+       [Failed ARB for BL : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_arb_fail.vn1_wb
+       [Failed ARB for BL : VN1 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn0_req
+       [BL Flow Q Not Empty : VN0 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn0_rsp
+       [BL Flow Q Not Empty : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn0_snp
+       [BL Flow Q Not Empty : VN0 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn0_wb
+       [BL Flow Q Not Empty : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn1_req
+       [BL Flow Q Not Empty : VN1 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn1_rsp
+       [BL Flow Q Not Empty : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn1_snp
+       [BL Flow Q Not Empty : VN1 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_cycles_ne.vn1_wb
+       [BL Flow Q Not Empty : VN1 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn0_ncb
+       [BL Flow Q Inserts : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn0_ncs
+       [BL Flow Q Inserts : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn0_rsp
+       [BL Flow Q Inserts : VN0 NCS Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn0_wb
+       [BL Flow Q Inserts : VN0 NCB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn1_ncb
+       [BL Flow Q Inserts : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn1_ncs
+       [BL Flow Q Inserts : VN1 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn1_rsp
+       [BL Flow Q Inserts : VN1_NCB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_inserts.vn1_wb
+       [BL Flow Q Inserts : VN1_NCS Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn0_ncb
+       [BL Flow Q Occupancy : VN0 NCB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn0_ncs
+       [BL Flow Q Occupancy : VN0 NCS Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn0_rsp
+       [BL Flow Q Occupancy : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn0_wb
+       [BL Flow Q Occupancy : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn1_ncb
+       [BL Flow Q Occupancy : VN1_NCS Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn1_ncs
+       [BL Flow Q Occupancy : VN1_NCB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn1_rsp
+       [BL Flow Q Occupancy : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_flq_occupancy.vn1_wb
+       [BL Flow Q Occupancy : VN1 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_wb_flq_occupancy.vn0_local
+       [BL Flow Q Occupancy : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_wb_flq_occupancy.vn0_through
+       [BL Flow Q Occupancy : VN0 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_wb_flq_occupancy.vn0_wrpull
+       [BL Flow Q Occupancy : VN0 NCB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_wb_flq_occupancy.vn1_local
+       [BL Flow Q Occupancy : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_wb_flq_occupancy.vn1_through
+       [BL Flow Q Occupancy : VN1 WB Messages. Unit: uncore_m3upi]
+  unc_m3upi_txc_bl_wb_flq_occupancy.vn1_wrpull
+       [BL Flow Q Occupancy : VN1_NCS Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_ad_credits_empty.vn0_req
+       [UPI0 AD Credits Empty : VN0 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_ad_credits_empty.vn0_rsp
+       [UPI0 AD Credits Empty : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_ad_credits_empty.vn0_snp
+       [UPI0 AD Credits Empty : VN0 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_ad_credits_empty.vn1_req
+       [UPI0 AD Credits Empty : VN1 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_ad_credits_empty.vn1_rsp
+       [UPI0 AD Credits Empty : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_ad_credits_empty.vn1_snp
+       [UPI0 AD Credits Empty : VN1 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_ad_credits_empty.vna
+       [UPI0 AD Credits Empty : VNA. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_bl_credits_empty.vn0_ncs_ncb
+       [UPI0 BL Credits Empty : VN0 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_bl_credits_empty.vn0_rsp
+       [UPI0 BL Credits Empty : VN0 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_bl_credits_empty.vn0_wb
+       [UPI0 BL Credits Empty : VN0 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_bl_credits_empty.vn1_ncs_ncb
+       [UPI0 BL Credits Empty : VN1 RSP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_bl_credits_empty.vn1_rsp
+       [UPI0 BL Credits Empty : VN1 REQ Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_bl_credits_empty.vn1_wb
+       [UPI0 BL Credits Empty : VN1 SNP Messages. Unit: uncore_m3upi]
+  unc_m3upi_upi_peer_bl_credits_empty.vna
+       [UPI0 BL Credits Empty : VNA. Unit: uncore_m3upi]
+  unc_m3upi_upi_prefetch_spawn
+       [FlowQ Generated Prefetch. Unit: uncore_m3upi]
+  unc_m3upi_vn0_credits_used.ncb
+       [VN0 Credit Used : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn0_credits_used.ncs
+       [VN0 Credit Used : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn0_credits_used.req
+       [VN0 Credit Used : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn0_credits_used.rsp
+       [VN0 Credit Used : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn0_credits_used.snp
+       [VN0 Credit Used : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn0_credits_used.wb
+       [VN0 Credit Used : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn0_no_credits.ncb
+       [VN0 No Credits : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn0_no_credits.ncs
+       [VN0 No Credits : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn0_no_credits.req
+       [VN0 No Credits : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn0_no_credits.rsp
+       [VN0 No Credits : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn0_no_credits.snp
+       [VN0 No Credits : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn0_no_credits.wb
+       [VN0 No Credits : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn1_credits_used.ncb
+       [VN1 Credit Used : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn1_credits_used.ncs
+       [VN1 Credit Used : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn1_credits_used.req
+       [VN1 Credit Used : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn1_credits_used.rsp
+       [VN1 Credit Used : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn1_credits_used.snp
+       [VN1 Credit Used : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn1_credits_used.wb
+       [VN1 Credit Used : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn1_no_credits.ncb
+       [VN1 No Credits : WB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn1_no_credits.ncs
+       [VN1 No Credits : NCB on BL. Unit: uncore_m3upi]
+  unc_m3upi_vn1_no_credits.req
+       [VN1 No Credits : REQ on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn1_no_credits.rsp
+       [VN1 No Credits : RSP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn1_no_credits.snp
+       [VN1 No Credits : SNP on AD. Unit: uncore_m3upi]
+  unc_m3upi_vn1_no_credits.wb
+       [VN1 No Credits : RSP on BL. Unit: uncore_m3upi]
+  unc_m3upi_wb_occ_compare.bothnonzero_rt_eq_localdest_vn0
+        uncore_m3upi]
+  unc_m3upi_wb_occ_compare.bothnonzero_rt_eq_localdest_vn1
+        uncore_m3upi]
+  unc_m3upi_wb_occ_compare.bothnonzero_rt_gt_localdest_vn0
+        uncore_m3upi]
+  unc_m3upi_wb_occ_compare.bothnonzero_rt_gt_localdest_vn1
+        uncore_m3upi]
+  unc_m3upi_wb_occ_compare.bothnonzero_rt_lt_localdest_vn0
+        uncore_m3upi]
+  unc_m3upi_wb_occ_compare.bothnonzero_rt_lt_localdest_vn1
+        uncore_m3upi]
+  unc_m3upi_wb_occ_compare.rt_eq_localdest_vn0
+       [UNC_M3UPI_WB_OCC_COMPARE.RT_EQ_LOCALDEST_VN0. Unit: uncore_m3upi]
+  unc_m3upi_wb_occ_compare.rt_eq_localdest_vn1
+       [UNC_M3UPI_WB_OCC_COMPARE.RT_EQ_LOCALDEST_VN1. Unit: uncore_m3upi]
+  unc_m3upi_wb_occ_compare.rt_gt_localdest_vn0
+       [UNC_M3UPI_WB_OCC_COMPARE.RT_GT_LOCALDEST_VN0. Unit: uncore_m3upi]
+  unc_m3upi_wb_occ_compare.rt_gt_localdest_vn1
+       [UNC_M3UPI_WB_OCC_COMPARE.RT_GT_LOCALDEST_VN1. Unit: uncore_m3upi]
+  unc_m3upi_wb_occ_compare.rt_lt_localdest_vn0
+       [UNC_M3UPI_WB_OCC_COMPARE.RT_LT_LOCALDEST_VN0. Unit: uncore_m3upi]
+  unc_m3upi_wb_occ_compare.rt_lt_localdest_vn1
+       [UNC_M3UPI_WB_OCC_COMPARE.RT_LT_LOCALDEST_VN1. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.local_and_rt_vn0
+       [UNC_M3UPI_WB_PENDING.LOCAL_AND_RT_VN0. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.local_and_rt_vn1
+       [UNC_M3UPI_WB_PENDING.LOCAL_AND_RT_VN1. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.localdest_vn0
+       [UNC_M3UPI_WB_PENDING.LOCALDEST_VN0. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.localdest_vn1
+       [UNC_M3UPI_WB_PENDING.LOCALDEST_VN1. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.routethru_vn0
+       [UNC_M3UPI_WB_PENDING.ROUTETHRU_VN0. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.routethru_vn1
+       [UNC_M3UPI_WB_PENDING.ROUTETHRU_VN1. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.waiting4pull_vn0
+       [UNC_M3UPI_WB_PENDING.WAITING4PULL_VN0. Unit: uncore_m3upi]
+  unc_m3upi_wb_pending.waiting4pull_vn1
+       [UNC_M3UPI_WB_PENDING.WAITING4PULL_VN1. Unit: uncore_m3upi]
+  unc_m3upi_xpt_pftch.arb
+       [UNC_M3UPI_XPT_PFTCH.ARB. Unit: uncore_m3upi]
+  unc_m3upi_xpt_pftch.arrived
+       [UNC_M3UPI_XPT_PFTCH.ARRIVED. Unit: uncore_m3upi]
+  unc_m3upi_xpt_pftch.bypass
+       [UNC_M3UPI_XPT_PFTCH.BYPASS. Unit: uncore_m3upi]
+  unc_m3upi_xpt_pftch.flitted
+       [UNC_M3UPI_XPT_PFTCH.FLITTED. Unit: uncore_m3upi]
+  unc_m3upi_xpt_pftch.lost_arb
+       [UNC_M3UPI_XPT_PFTCH.LOST_ARB. Unit: uncore_m3upi]
+  unc_m3upi_xpt_pftch.lost_old
+       [UNC_M3UPI_XPT_PFTCH.LOST_OLD. Unit: uncore_m3upi]
+  unc_m3upi_xpt_pftch.lost_qfull
+       [UNC_M3UPI_XPT_PFTCH.LOST_QFULL. Unit: uncore_m3upi]
+  unc_upi_clockticks
+       [UPI Clockticks. Unit: uncore_upi]
+  unc_upi_direct_attempts.d2c
+       [Direct packet attempts : D2C. Unit: uncore_upi]
+  unc_upi_direct_attempts.d2k
+       [Direct packet attempts : D2K. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.ad_vna_eq0
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.AD_VNA_EQ0. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.ad_vna_eq1
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.AD_VNA_EQ1. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.ad_vna_eq2
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.AD_VNA_EQ2. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.ak_vna_eq0
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.AK_VNA_EQ0. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.ak_vna_eq1
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.AK_VNA_EQ1. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.ak_vna_eq2
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.AK_VNA_EQ2. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.ak_vna_eq3
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.AK_VNA_EQ3. Unit: uncore_upi]
+  unc_upi_flowq_no_vna_crd.bl_vna_eq0
+       [UNC_UPI_FLOWQ_NO_VNA_CRD.BL_VNA_EQ0. Unit: uncore_upi]
+  unc_upi_l1_power_cycles
+       [Cycles in L1. Unit: uncore_upi]
+  unc_upi_m3_byp_blocked.bgf_crd
+       [UNC_UPI_M3_BYP_BLOCKED.BGF_CRD. Unit: uncore_upi]
+  unc_upi_m3_byp_blocked.flowq_ad_vna_le2
+       [UNC_UPI_M3_BYP_BLOCKED.FLOWQ_AD_VNA_LE2. Unit: uncore_upi]
+  unc_upi_m3_byp_blocked.flowq_ak_vna_le3
+       [UNC_UPI_M3_BYP_BLOCKED.FLOWQ_AK_VNA_LE3. Unit: uncore_upi]
+  unc_upi_m3_byp_blocked.flowq_bl_vna_eq0
+       [UNC_UPI_M3_BYP_BLOCKED.FLOWQ_BL_VNA_EQ0. Unit: uncore_upi]
+  unc_upi_m3_byp_blocked.gv_block
+       [UNC_UPI_M3_BYP_BLOCKED.GV_BLOCK. Unit: uncore_upi]
+  unc_upi_m3_crd_return_blocked
+       [UNC_UPI_M3_CRD_RETURN_BLOCKED. Unit: uncore_upi]
+  unc_upi_m3_rxq_blocked.bgf_crd
+       [UNC_UPI_M3_RXQ_BLOCKED.BGF_CRD. Unit: uncore_upi]
+  unc_upi_m3_rxq_blocked.flowq_ad_vna_btw_2_thresh
+       [UNC_UPI_M3_RXQ_BLOCKED.FLOWQ_AD_VNA_BTW_2_THRESH. Unit: uncore_upi]
+  unc_upi_m3_rxq_blocked.flowq_ad_vna_le2
+       [UNC_UPI_M3_RXQ_BLOCKED.FLOWQ_AD_VNA_LE2. Unit: uncore_upi]
+  unc_upi_m3_rxq_blocked.flowq_ak_vna_le3
+       [UNC_UPI_M3_RXQ_BLOCKED.FLOWQ_AK_VNA_LE3. Unit: uncore_upi]
+  unc_upi_m3_rxq_blocked.flowq_bl_vna_btw_0_thresh
+       [UNC_UPI_M3_RXQ_BLOCKED.FLOWQ_BL_VNA_BTW_0_THRESH. Unit: uncore_upi]
+  unc_upi_m3_rxq_blocked.flowq_bl_vna_eq0
+       [UNC_UPI_M3_RXQ_BLOCKED.FLOWQ_BL_VNA_EQ0. Unit: uncore_upi]
+  unc_upi_m3_rxq_blocked.gv_block
+       [UNC_UPI_M3_RXQ_BLOCKED.GV_BLOCK. Unit: uncore_upi]
+  unc_upi_phy_init_cycles
+       [Cycles where phy is not in L0, L0c, L0p, L1. Unit: uncore_upi]
+  unc_upi_power_l1_nack
+       [L1 Req Nack. Unit: uncore_upi]
+  unc_upi_power_l1_req
+       [L1 Req (same as L1 Ack). Unit: uncore_upi]
+  unc_upi_req_slot2_from_m3.ack
+       [UNC_UPI_REQ_SLOT2_FROM_M3.ACK. Unit: uncore_upi]
+  unc_upi_req_slot2_from_m3.vn0
+       [UNC_UPI_REQ_SLOT2_FROM_M3.VN0. Unit: uncore_upi]
+  unc_upi_req_slot2_from_m3.vn1
+       [UNC_UPI_REQ_SLOT2_FROM_M3.VN1. Unit: uncore_upi]
+  unc_upi_req_slot2_from_m3.vna
+       [UNC_UPI_REQ_SLOT2_FROM_M3.VNA. Unit: uncore_upi]
+  unc_upi_rxl0_power_cycles
+       [Cycles in L0. Unit: uncore_upi]
+  unc_upi_rxl0p_power_cycles
+       [Cycles in L0p. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.data
+       [UNC_UPI_RxL_ANY_FLITS.DATA. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.llcrd
+       [UNC_UPI_RxL_ANY_FLITS.LLCRD. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.llctrl
+       [UNC_UPI_RxL_ANY_FLITS.LLCTRL. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.null
+       [UNC_UPI_RxL_ANY_FLITS.NULL. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.prothdr
+       [UNC_UPI_RxL_ANY_FLITS.PROTHDR. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.slot0
+       [UNC_UPI_RxL_ANY_FLITS.SLOT0. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.slot1
+       [UNC_UPI_RxL_ANY_FLITS.SLOT1. Unit: uncore_upi]
+  unc_upi_rxl_any_flits.slot2
+       [UNC_UPI_RxL_ANY_FLITS.SLOT2. Unit: uncore_upi]
+  unc_upi_rxl_basic_hdr_match.ncb
+        uncore_upi]
+  unc_upi_rxl_basic_hdr_match.ncb_opc
+        Opcode. Unit: uncore_upi]
+  unc_upi_rxl_basic_hdr_match.ncs
+        uncore_upi]
+  unc_upi_rxl_basic_hdr_match.ncs_opc
+        Opcode. Unit: uncore_upi]
+  unc_upi_rxl_bypassed.slot0
+       [RxQ Flit Buffer Bypassed : Slot 0. Unit: uncore_upi]
+  unc_upi_rxl_bypassed.slot1
+       [RxQ Flit Buffer Bypassed : Slot 1. Unit: uncore_upi]
+  unc_upi_rxl_bypassed.slot2
+       [RxQ Flit Buffer Bypassed : Slot 2. Unit: uncore_upi]
+  unc_upi_rxl_crc_errors
+       [CRC Errors Detected. Unit: uncore_upi]
+  unc_upi_rxl_crc_llr_req_transmit
+       [LLR Requests Sent. Unit: uncore_upi]
+  unc_upi_rxl_credits_consumed_vn0
+       [VN0 Credit Consumed. Unit: uncore_upi]
+  unc_upi_rxl_credits_consumed_vn1
+       [VN1 Credit Consumed. Unit: uncore_upi]
+  unc_upi_rxl_credits_consumed_vna
+       [VNA Credit Consumed. Unit: uncore_upi]
+  unc_upi_rxl_flits.all_data
+       [Valid Flits Received : All Data. Unit: uncore_upi]
+  unc_upi_rxl_flits.all_null
+       [Null FLITs received from any slot. Unit: uncore_upi]
+  unc_upi_rxl_flits.data
+       [Valid Flits Received : Data. Unit: uncore_upi]
+  unc_upi_rxl_flits.idle
+       [Valid Flits Received : Idle. Unit: uncore_upi]
+  unc_upi_rxl_flits.llcrd
+       [Valid Flits Received : LLCRD Not Empty. Unit: uncore_upi]
+  unc_upi_rxl_flits.llctrl
+       [Valid Flits Received : LLCTRL. Unit: uncore_upi]
+  unc_upi_rxl_flits.non_data
+       [Valid Flits Received : All Non Data. Unit: uncore_upi]
+  unc_upi_rxl_flits.null
+       [Valid Flits Received : Slot NULL or LLCRD Empty. Unit: uncore_upi]
+  unc_upi_rxl_flits.prothdr
+       [Valid Flits Received : Protocol Header. Unit: uncore_upi]
+  unc_upi_rxl_flits.slot0
+       [Valid Flits Received : Slot 0. Unit: uncore_upi]
+  unc_upi_rxl_flits.slot1
+       [Valid Flits Received : Slot 1. Unit: uncore_upi]
+  unc_upi_rxl_flits.slot2
+       [Valid Flits Received : Slot 2. Unit: uncore_upi]
+  unc_upi_rxl_inserts.slot0
+       [RxQ Flit Buffer Allocations : Slot 0. Unit: uncore_upi]
+  unc_upi_rxl_inserts.slot1
+       [RxQ Flit Buffer Allocations : Slot 1. Unit: uncore_upi]
+  unc_upi_rxl_inserts.slot2
+       [RxQ Flit Buffer Allocations : Slot 2. Unit: uncore_upi]
+  unc_upi_rxl_occupancy.slot0
+       [RxQ Occupancy - All Packets : Slot 0. Unit: uncore_upi]
+  unc_upi_rxl_occupancy.slot1
+       [RxQ Occupancy - All Packets : Slot 1. Unit: uncore_upi]
+  unc_upi_rxl_occupancy.slot2
+       [RxQ Occupancy - All Packets : Slot 2. Unit: uncore_upi]
+  unc_upi_rxl_slot_bypass.s0_rxq1
+       [UNC_UPI_RxL_SLOT_BYPASS.S0_RXQ1. Unit: uncore_upi]
+  unc_upi_rxl_slot_bypass.s0_rxq2
+       [UNC_UPI_RxL_SLOT_BYPASS.S0_RXQ2. Unit: uncore_upi]
+  unc_upi_rxl_slot_bypass.s1_rxq0
+       [UNC_UPI_RxL_SLOT_BYPASS.S1_RXQ0. Unit: uncore_upi]
+  unc_upi_rxl_slot_bypass.s1_rxq2
+       [UNC_UPI_RxL_SLOT_BYPASS.S1_RXQ2. Unit: uncore_upi]
+  unc_upi_rxl_slot_bypass.s2_rxq0
+       [UNC_UPI_RxL_SLOT_BYPASS.S2_RXQ0. Unit: uncore_upi]
+  unc_upi_rxl_slot_bypass.s2_rxq1
+       [UNC_UPI_RxL_SLOT_BYPASS.S2_RXQ1. Unit: uncore_upi]
+  unc_upi_txl0_power_cycles
+       [Cycles in L0. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.cfg_ctl
+       [UNC_UPI_TxL0P_CLK_ACTIVE.CFG_CTL. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.dfx
+       [UNC_UPI_TxL0P_CLK_ACTIVE.DFX. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.retry
+       [UNC_UPI_TxL0P_CLK_ACTIVE.RETRY. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.rxq
+       [UNC_UPI_TxL0P_CLK_ACTIVE.RXQ. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.rxq_bypass
+       [UNC_UPI_TxL0P_CLK_ACTIVE.RXQ_BYPASS. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.rxq_cred
+       [UNC_UPI_TxL0P_CLK_ACTIVE.RXQ_CRED. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.spare
+       [UNC_UPI_TxL0P_CLK_ACTIVE.SPARE. Unit: uncore_upi]
+  unc_upi_txl0p_clk_active.txq
+       [UNC_UPI_TxL0P_CLK_ACTIVE.TXQ. Unit: uncore_upi]
+  unc_upi_txl0p_power_cycles
+       [Cycles in L0p. Unit: uncore_upi]
+  unc_upi_txl0p_power_cycles_ll_enter
+       [UNC_UPI_TxL0P_POWER_CYCLES_LL_ENTER. Unit: uncore_upi]
+  unc_upi_txl0p_power_cycles_m3_exit
+       [UNC_UPI_TxL0P_POWER_CYCLES_M3_EXIT. Unit: uncore_upi]
+  unc_upi_txl_any_flits.data
+       [UNC_UPI_TxL_ANY_FLITS.DATA. Unit: uncore_upi]
+  unc_upi_txl_any_flits.llcrd
+       [UNC_UPI_TxL_ANY_FLITS.LLCRD. Unit: uncore_upi]
+  unc_upi_txl_any_flits.llctrl
+       [UNC_UPI_TxL_ANY_FLITS.LLCTRL. Unit: uncore_upi]
+  unc_upi_txl_any_flits.null
+       [UNC_UPI_TxL_ANY_FLITS.NULL. Unit: uncore_upi]
+  unc_upi_txl_any_flits.prothdr
+       [UNC_UPI_TxL_ANY_FLITS.PROTHDR. Unit: uncore_upi]
+  unc_upi_txl_any_flits.slot0
+       [UNC_UPI_TxL_ANY_FLITS.SLOT0. Unit: uncore_upi]
+  unc_upi_txl_any_flits.slot1
+       [UNC_UPI_TxL_ANY_FLITS.SLOT1. Unit: uncore_upi]
+  unc_upi_txl_any_flits.slot2
+       [UNC_UPI_TxL_ANY_FLITS.SLOT2. Unit: uncore_upi]
+  unc_upi_txl_basic_hdr_match.ncb
+        uncore_upi]
+  unc_upi_txl_basic_hdr_match.ncb_opc
+        Opcode. Unit: uncore_upi]
+  unc_upi_txl_basic_hdr_match.ncs
+        uncore_upi]
+  unc_upi_txl_basic_hdr_match.ncs_opc
+        Opcode. Unit: uncore_upi]
+  unc_upi_txl_bypassed
+       [Tx Flit Buffer Bypassed. Unit: uncore_upi]
+  unc_upi_txl_flits.all_data
+       [Valid Flits Sent : All Data. Unit: uncore_upi]
+  unc_upi_txl_flits.all_llcrd
+       [Valid Flits Sent : All LLCRD Not Empty. Unit: uncore_upi]
+  unc_upi_txl_flits.all_llctrl
+       [Valid Flits Sent : All LLCTRL. Unit: uncore_upi]
+  unc_upi_txl_flits.all_null
+       [All Null Flits. Unit: uncore_upi]
+  unc_upi_txl_flits.all_prothdr
+       [Valid Flits Sent : All Protocol Header. Unit: uncore_upi]
+  unc_upi_txl_flits.data
+       [Valid Flits Sent : Data. Unit: uncore_upi]
+  unc_upi_txl_flits.idle
+       [Valid Flits Sent : Idle. Unit: uncore_upi]
+  unc_upi_txl_flits.llcrd
+       [Valid Flits Sent : LLCRD Not Empty. Unit: uncore_upi]
+  unc_upi_txl_flits.llctrl
+       [Valid Flits Sent : LLCTRL. Unit: uncore_upi]
+  unc_upi_txl_flits.non_data
+       [Valid Flits Sent : All Non Data. Unit: uncore_upi]
+  unc_upi_txl_flits.null
+       [Valid Flits Sent : Slot NULL or LLCRD Empty. Unit: uncore_upi]
+  unc_upi_txl_flits.prothdr
+       [Valid Flits Sent : Protocol Header. Unit: uncore_upi]
+  unc_upi_txl_flits.slot0
+       [Valid Flits Sent : Slot 0. Unit: uncore_upi]
+  unc_upi_txl_flits.slot1
+       [Valid Flits Sent : Slot 1. Unit: uncore_upi]
+  unc_upi_txl_flits.slot2
+       [Valid Flits Sent : Slot 2. Unit: uncore_upi]
+  unc_upi_txl_inserts
+       [Tx Flit Buffer Allocations. Unit: uncore_upi]
+  unc_upi_txl_occupancy
+       [Tx Flit Buffer Occupancy. Unit: uncore_upi]
+  unc_upi_vna_credit_return_blocked_vn01
+       [UNC_UPI_VNA_CREDIT_RETURN_BLOCKED_VN01. Unit: uncore_upi]
+  unc_upi_vna_credit_return_occupancy
+       [VNA Credits Pending Return - Occupancy. Unit: uncore_upi]
+  unc_m2p_remote_ded_p2p_crd_taken_0.upi0_drs
+  unc_m2p_remote_ded_p2p_crd_taken_0.upi0_ncb
+  unc_m2p_remote_ded_p2p_crd_taken_0.upi0_ncs
+  unc_m2p_remote_ded_p2p_crd_taken_0.upi1_drs
+  unc_m2p_remote_ded_p2p_crd_taken_0.upi1_ncb
+  unc_m2p_remote_ded_p2p_crd_taken_0.upi1_ncs
+  unc_m2p_remote_ded_p2p_crd_taken_1.upi2_drs
+  unc_m2p_remote_ded_p2p_crd_taken_1.upi2_ncb
+  unc_m2p_remote_ded_p2p_crd_taken_1.upi2_ncs
+  unc_m2p_remote_p2p_ded_returned.upi0_ncb
+  unc_m2p_remote_p2p_ded_returned.upi0_ncs
+  unc_m2p_remote_p2p_ded_returned.upi1_ncb
+  unc_m2p_remote_p2p_ded_returned.upi1_ncs
+  unc_m2p_remote_p2p_ded_returned.upi2_ncb
+  unc_m2p_remote_p2p_ded_returned.upi2_ncs
+  unc_m2p_remote_shar_p2p_crd_taken_0.upi0_drs
+  unc_m2p_remote_shar_p2p_crd_taken_0.upi0_ncb
+  unc_m2p_remote_shar_p2p_crd_taken_0.upi0_ncs
+  unc_m2p_remote_shar_p2p_crd_taken_0.upi1_drs
+  unc_m2p_remote_shar_p2p_crd_taken_0.upi1_ncb
+  unc_m2p_remote_shar_p2p_crd_taken_0.upi1_ncs
+  unc_m2p_remote_shar_p2p_crd_taken_1.upi2_drs
+  unc_m2p_remote_shar_p2p_crd_taken_1.upi2_ncb
+  unc_m2p_remote_shar_p2p_crd_taken_1.upi2_ncs
+  unc_m2p_remote_shar_p2p_crd_wait_0.upi0_drs
+  unc_m2p_remote_shar_p2p_crd_wait_0.upi0_ncb
+  unc_m2p_remote_shar_p2p_crd_wait_0.upi0_ncs
+  unc_m2p_remote_shar_p2p_crd_wait_0.upi1_drs
+  unc_m2p_remote_shar_p2p_crd_wait_0.upi1_ncb
+  unc_m2p_remote_shar_p2p_crd_wait_0.upi1_ncs
+  unc_m2p_remote_shar_p2p_crd_wait_1.upi2_drs
+  unc_m2p_remote_shar_p2p_crd_wait_1.upi2_ncb
+  unc_m2p_remote_shar_p2p_crd_wait_1.upi2_ncs
+  unc_m2p_rxc_cycles_ne.upi_ncb
+  unc_m2p_rxc_cycles_ne.upi_ncs
+  unc_m2p_rxc_inserts.upi_ncb
+  unc_m2p_rxc_inserts.upi_ncs

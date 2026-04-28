@@ -82,6 +82,7 @@ void BandwidthTest::run(Shard *sh, const Configuration &config,
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::finds;
     g_app_record_start = true;
+    PLOGI.printf("Bandwidth test start");
   }
   barrier->arrive_and_wait();
 
@@ -100,6 +101,7 @@ void BandwidthTest::run(Shard *sh, const Configuration &config,
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::finds;
     g_app_record_start = false;
+    PLOGI.printf("Bandwidth test end");
   }
   barrier->arrive_and_wait();
 
