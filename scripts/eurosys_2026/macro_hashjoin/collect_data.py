@@ -36,8 +36,9 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
             --find_queue 64 --ht-type {ht_type}
             --num-threads {numThreads} --numa-split {numa_policy}
             --no-prefetch 0 --insert-factor {repeat}
-            --mode {MODE} --ht-size {htsize} --hw-pref {hw_pref}
+            --mode {MODE} --ht-fill {ht_fill}
             --batch-len 16 --relation_r_size {rsize}
+            --relation_s_size {ssize}
             """
             cmd_base = " ".join(cmd_base.split())  # clean whitespace
 

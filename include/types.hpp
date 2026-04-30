@@ -73,6 +73,8 @@ typedef enum {
   HASHJOIN = 13,
   UNIFORM = 14,
   BW = 15,
+  PARTITIONJOINV1 = 16,
+  PARTITIONJOINV2 = 17,
 } run_mode_t;
 
 // XXX: If you add/modify a mode, update the `ht_type_strings` in
@@ -179,6 +181,7 @@ struct Configuration {
   std::string perf_def_path;
   bool test;
   bool sequential;
+  uint32_t radix;
 
   void dump_configuration() {
     printf("Run configuration {\n");

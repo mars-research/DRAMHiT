@@ -208,7 +208,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
       insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
   }
 
-  if (config.mode == HASHJOIN) {
+  if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 || config.mode == PARTITIONJOINV2) {
     if (config.test) {
       uint64_t join_answer = calculate_expected_join_size(
           config.relation_r_size, config.relation_s_size);
@@ -230,17 +230,39 @@ void print_stats(Shard *all_sh, Configuration &config) {
         throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
     }
 
-    PLOGI.printf(
-        "\n"
-        "============================================\n"
-        "build_phrase_mops : %lu, cycle_per_op : %lu\n"
-        "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
-        "joined : %lu out of %lu, %.2f%%\n"
-        "throughput_mops : %lu, ops: %lu, duration: %lu\n"
-        "============================================\n",
-        insert_mops, cycles_per_insert, find_mops, cycles_per_find,
-        total_found, config.relation_s_size, total_found * 100.0 / config.relation_s_size,
-        throughput, sum_op, join_cycles);
+    if(config.mode != HASHJOIN){
+
+        uint64_t part_cpo = 0;
+        if(avg_insert_duration >0)
+            part_cpo = sum_op / avg_insert_duration;
+
+        uint64_t join_cpo = 0;
+        if(avg_find_duration > 0)
+           join_cpo = sum_op / avg_find_duration;
+
+        PLOGI.printf(
+            "\n"
+            "partition phase cycles: %lu, op: %lu, cpo: %lu\n"
+            "join phase cycles: %lu, op: %lu, cpo: %lu\n"
+            "throughput mops: %lu\n"
+            "\n",
+            avg_insert_duration, sum_op, part_cpo,
+            avg_find_duration, sum_op, join_cpo,
+            throughput
+        );
+    }else {
+        PLOGI.printf(
+            "\n"
+            "============================================\n"
+            "build_phrase_mops : %lu, cycle_per_op : %lu\n"
+            "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
+            "joined : %lu out of %lu, %.2f%%\n"
+            "throughput_mops : %lu, ops: %lu, duration: %lu\n"
+            "============================================\n",
+            insert_mops, cycles_per_insert, find_mops, cycles_per_find,
+            total_found, config.relation_s_size, total_found * 100.0 / config.relation_s_size,
+            throughput, sum_op, join_cycles);
+    }
   } else if(config.mode == BW){
       uint64_t bytes = total_finds * 64ULL;
       double sec = avg_find_duration / (CPUFREQ_MHZ * 1000000.0);
@@ -352,6 +374,12 @@ void print_stats(Shard *all_sh, Configuration &config) {
 #endif
 }
 
+
+inline uint64_t get_gigbytes(size_t num_kv) {
+  return num_kv * (sizeof(key_type) + sizeof(value_type)) /
+         (1024 * 1024 * 1024);
+}
+
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
 
@@ -398,6 +426,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       exit(-1);
       break;
   }
+
+  PLOGI.printf(
+      "ht_size %lu (%lu gb)",
+      config.ht_size, get_gigbytes(config.ht_size));
 
   return kmer_ht;
 }

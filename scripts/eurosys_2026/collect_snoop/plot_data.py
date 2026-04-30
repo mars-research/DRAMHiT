@@ -9,8 +9,8 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 
 row = 1
-col = 1
-fig, axes = plt.subplots(row, col, figsize=(5, 5))
+col = 2
+fig, axes = plt.subplots(row, col, figsize=(10, 5))
 
 
 def plot_json(json_file_dir, json_file_snoop, output_file):
@@ -60,7 +60,7 @@ def plot_json(json_file_dir, json_file_snoop, output_file):
 
     fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=2)
 
-    ax = axes
+    ax = axes[0]
     sns.lineplot(
         data=df,
         x="run_cfg.fill_factor",
@@ -70,12 +70,25 @@ def plot_json(json_file_dir, json_file_snoop, output_file):
         ax=ax,
         legend=False,
     )
-    ax.set_title("Dual - Find Throughput")
+    ax.set_title("Find Throughput")
     ax.set_xlabel("Fill Factor(%)")
     ax.set_ylabel("Find Mops (Millions)")
     ax.grid(True, which="major", axis="both", linestyle="--")
     # ax.set_xlim(0)
-    # ax.set_ylim(0)
+    ax = axes[1]
+    sns.lineplot(
+        data=df,
+        x="run_cfg.fill_factor",
+        y="set_mops",
+        hue="identifier",
+        marker="o",
+        ax=ax,
+        legend=False,
+    )
+    ax.set_title("Insert Throughput")
+    ax.set_xlabel("Fill Factor(%)")
+    ax.set_ylabel("Insert Mops (Millions)")
+    ax.grid(True, which="major", axis="both", linestyle="--")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig(output_file, dpi=300)

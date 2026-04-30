@@ -19,12 +19,18 @@ class JoinRunConfig:
         r_size: int,
         ht_fill: int,
         skew: float,
+        threads: int,
+        numa: int,
+        seed: int,
     ):
         self.ht_type = ht_type
         self.ht_fill = ht_fill
         self.s_size = s_size
         self.r_size = r_size
         self.skew = skew
+        self.threads = threads
+        self.numa = numa
+        self.seed = seed
 
 
 def run_once(cmd: str):
@@ -43,16 +49,14 @@ def get_cmd(config: JoinRunConfig):
         --relation_r_size {config.r_size}
         --relation_s_size {config.s_size}
         --skew {config.skew}
-        --seed 1775762435926593848
+        --numa-split {config.numa}
+        --num-threads {config.threads}
+        --seed {config.seed}
         --hw-pref 0
         --find_queue 64
-        --num-threads 64
-        --numa-split 4
-        --no-prefetch 0
-        --insert-factor 1
-        --read-factor 1
-        --mode 13
         --batch-len 16
+        --no-prefetch 0
+        --mode 13
         """
 
     cmd = " ".join(cmd.split())
@@ -99,23 +103,16 @@ if __name__ == "__main__":
     r_size = one_gb * 1
     s_size = one_gb * 8
     configs = [
-        # Join config for 10 - 90 htfill for r_size (build) 1g, s_size 8g, skewness 0.01 (uniform)
-        # Join config for 10 - 90 htfill for r_size (build) 1g, s_size 8g, skewness 0.05 (some skewness)
-        #
         JoinRunConfig(
             ht_type=DRAMHIT25,
             ht_fill=50,
             r_size=r_size,
             s_size=s_size,
             skew=0.01,
-        ),
-        JoinRunConfig(
-            ht_type=DRAMHIT23,
-            ht_fill=50,
-            r_size=r_size,
-            s_size=s_size,
-            skew=0.01,
-        ),
+            threads=64,
+            numa=4,
+            seed=0xDEADBEEF,
+        )
     ]
 
     for c in configs:
