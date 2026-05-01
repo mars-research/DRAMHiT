@@ -1,8 +1,16 @@
 
 # hashjoin example
-/opt/DRAMHiT/build/dramhit --ht-type 3 --hw-pref 0 --ht-fill 50 --relation_r_size 268435456 --relation_s_size 268435456 --find_queue 64 --num-threads 64 --numa-split 4 --no-prefetch 0 --insert-factor 1 --read-factor 1 --mode 13 --batch-len 16 --skew 0.01 --seed 1774551337382868027
+/opt/DRAMHiT/build/dramhit --ht-type 3 --hw-pref 0 --ht-fill 50 --relation_r_size 268435456 --relation_s_size 268435456 --find_queue 64 --num-threads 64 --numa-split 4 --no-prefetch 0 --mode 13 --batch-len 16 --skew 0.01 --seed 1774551337382868027
 
-/opt/DRAMHiT/build/dramhit --ht-type 3 --hw-pref 0 --ht-fill 50 --relation_r_size 1024 --relation_s_size 1024 --find_queue 64 --num-threads 64 --numa-split 4 --no-prefetch 0 --mode 13 --batch-len 16 --skew 0.01 --seed 1774551337382868027
-
-#zipfian example
+# hashtable test example
 /opt/DRAMHiT/build/dramhit --ht-type 3 --hw-pref 0 --ht-fill 70 --find_queue 64 --num-threads 64 --numa-split 4 --no-prefetch 0 --insert-factor 1 --read-factor 100 --mode 11 --batch-len 16 --skew 0.01 --seed 1774551337382868027 --ht-size 536870912
+
+# radix join, using 1, as 0.01 actually cause radix hash function & super skewed in buckets.
+/opt/DRAMHiT/build/dramhit --ht-type 3 --hw-pref 0 --ht-fill 50 --relation_r_size 64000000 --relation_s_size 640000000 --num-threads 64 --numa-split 4 --no-prefetch 0 --mode 16 --batch-len 16 --skew 1.00 --seed 1774551337382868027 --radix 10
+
+
+/opt/DRAMHiT/build/dramhit --ht-type 3 --hw-pref 0 --ht-fill 50 --relation_r_size 64000000 --relation_s_size 640000000 --find_queue 64 --num-threads 64 --numa-split 4 --no-prefetch 0 --mode 13 --batch-len 16 --skew 1.00 --seed 1774551337382868027
+
+duration:
+768558420
+956330538

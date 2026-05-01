@@ -7,9 +7,11 @@
 // https://dev.mysql.com/worklog/task/?id=13459
 #include <unistd.h>
 
+#include <algorithm>
 #include <atomic>
 #include <barrier>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>     // Required for std::abort()
@@ -22,6 +24,7 @@
 #include <unordered_set>
 
 #include "constants.hpp"
+#include "eth_hashjoin/src/types.h"
 #include "hashtables/base_kht.hpp"
 #include "hashtables/batch_runner/batch_runner.hpp"
 #include "hashtables/kvtypes.hpp"
@@ -38,6 +41,7 @@
 #include "zipf_distribution.hpp"
 
 //#define DEBUG_HJ
+//#define MATERIALIZE
 #ifdef DEBUG_HJ
 
 #define ASSERT_TRUE(expr)                                            \
@@ -56,7 +60,6 @@
 #endif
 
 #define PREFETCH_AHEAD_X_CACHELINE 4
-#define MATERIALIZE
 
 namespace kmercounter {
 
@@ -496,14 +499,132 @@ class RadixBucket {
       ASSERT_TRUE(v_idx <= v_end);
       v[v_idx++] = buffer.tuples[i];
     }
-    // PLOGI.printf("id %u flushed v_start %lu v_end %lu v_idx %lu v_len %lu", v_id, v_start, v_end, v_idx, v_len);
+    // PLOGI.printf("id %u flushed v_start %lu v_end %lu v_idx %lu v_len %lu",
+    // v_id, v_start, v_enKV* d, v_idx, v_len);
     buffer.count = 0;
+  }
+};
+
+class RadixArrayHashTable {
+ public:
+  HugepageVec& vec;
+  uint64_t size;
+  static const key_type empty_key = 0;
+  static const value_type empty_value = 0;
+  Hasher hasher;
+  RadixArrayHashTable(uint64_t sz, HugepageVec& v_ref) : size(sz), vec(v_ref) {}
+
+  uint64_t hash(key_type k) { return (hasher(&k, 64) & (size - 1)); }
+
+  void insert(Element& e) {
+    uint64_t idx = hash(e.key);
+    while (1) {
+      ASSERT_TRUE(idx < size);
+      if (vec[idx].key == empty_key) {
+        vec[idx] = e;
+        return;
+      }
+
+      if (vec[idx].key == e.key) {
+        vec[idx].value = e.value;
+        return;
+      }
+      idx++;
+      idx = idx & (size - 1);
+    }
+  }
+
+  value_type find(Element& e) {
+    uint64_t idx = hash(e.key);
+    while (1) {
+      ASSERT_TRUE(idx < size);
+      if (vec[idx].key == empty_key) {
+        return empty_value;
+      }
+
+      if (vec[idx].key == e.key) {
+        return vec[idx].value;
+      }
+      idx++;
+      idx = idx & (size - 1);
+    }
   }
 };
 
 std::vector<std::vector<RadixBucket*>> Global_R_Buckets;
 std::vector<std::vector<RadixBucket*>> Global_S_Buckets;
 std::vector<std::vector<uint64_t>> Global_Histogram;
+
+inline void print_histogram_stats(const std::vector<uint64_t>& histogram,
+                                  int tid, char* str) {
+  if (histogram.empty()) {
+    PLOGI.printf("[tid: %d] Histogram is empty.\n", tid);
+    return;
+  }
+
+  uint64_t min_val = std::numeric_limits<uint64_t>::max();
+  uint64_t max_val = 0;
+  uint64_t sum = 0;
+
+  // Pass 1: Get Min, Max, and Sum for the Average
+  for (uint64_t val : histogram) {
+    min_val = std::min(min_val, val);
+    max_val = std::max(max_val, val);
+    sum += val;
+  }
+
+  double avg = static_cast<double>(sum) / histogram.size();
+
+  // Pass 2: Calculate the sum of squared differences for Variance
+  double variance_sum = 0.0;
+  for (uint64_t val : histogram) {
+    double diff = static_cast<double>(val) - avg;
+    variance_sum += (diff * diff);  // Square the difference
+  }
+
+  // Calculate Variance and Standard Deviation
+  double variance = variance_sum / histogram.size();
+  double std_dev = std::sqrt(variance);
+
+  // --- Construct the atomic output string ---
+  std::string output;
+  char buffer[512];  // Buffer for formatting individual lines
+
+  // Append stats
+  snprintf(buffer, sizeof(buffer),
+           "\n%s [tid: %d] min: %lu, max: %lu, avg: %.1f, std_dev: %.2f\n", str,
+           tid, min_val, max_val, avg, std_dev);
+  output += buffer;
+
+  // Append histogram header
+  snprintf(buffer, sizeof(buffer),
+           "--- Histogram Visualization [tid: %d] ---\n", tid);
+  output += buffer;
+
+  const int MAX_BAR_LENGTH = 30;
+
+  // Append each bucket's visual bar
+  for (size_t i = 0; i < histogram.size(); ++i) {
+    uint64_t val = histogram[i];
+
+    int num_asterisks = 0;
+    if (max_val > 0) {
+      num_asterisks = static_cast<int>((static_cast<double>(val) / max_val) *
+                                       MAX_BAR_LENGTH);
+    }
+
+    std::string bar(num_asterisks, '*');
+
+    snprintf(buffer, sizeof(buffer), "Bucket %3zu | %-50s (%lu)\n", i,
+             bar.c_str(), val);
+    output += buffer;
+  }
+
+  output += "-----------------------------------------\n";
+
+  // Single atomic log call to prevent thread interleaving
+  PLOGI.printf("%s", output.c_str());
+}
 
 void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
                    JoinVec& mvec,
@@ -547,10 +668,6 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     s_histogram[bucket_id]++;
   }
 
-  // TODO this is using too much huge pages
-  // wee need allocate 1 contigous memory region using hugepage
-  // and assign offset and length for each partitions. length is historgram[i].
-  //
   std::vector<RadixBucket*> local_r(partition_num);
   std::vector<RadixBucket*> local_s(partition_num);
   // 1. Calculate the total padded sizes first
@@ -581,9 +698,6 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     local_r[i] = new RadixBucket(r_offset, r_offset + r_capacity, r_length,
                                  build_storage, i);
 
-    //PLOGI.printf("r_start=%lu r_end=%lu actual_length=%lu padded_cap=%lu",
-    //             r_offset, r_offset + r_capacity, r_length, r_capacity);
-
     r_offset += r_capacity;  // Advance by the aligned capacity
 
     // --- PROBE (S) ---
@@ -592,9 +706,6 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
 
     local_s[i] = new RadixBucket(s_offset, s_offset + s_capacity, s_length,
                                  probe_storage, i);
-
-    //PLOGI.printf("s_start=%lu s_end=%lu actual_length=%lu padded_cap=%lu",
-    //             s_offset, s_offset + s_capacity, s_length, s_capacity);
 
     s_offset += s_capacity;  // Advance by the aligned capacity
   }
@@ -631,6 +742,10 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   barrier->arrive_and_wait();
   sh->stats->insertions.duration = g_insert_end - g_insert_start;
   sh->stats->insertions.op_count = build.size() + probe.size();
+#ifdef DEBUG_HJ
+  print_histogram_stats(r_histogram, tid, "r");
+  print_histogram_stats(s_histogram, tid, "s");
+#endif
 
   // Join Phase
   if (tid == 0) {
@@ -639,7 +754,9 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   }
   barrier->arrive_and_wait();
 
+
   uint64_t found = 0;
+#ifdef RADIX_DO_JOIN
   for (size_t part_id = tid; part_id < partition_num;
        part_id += config.num_threads) {
     uint64_t build_sz = 0;
@@ -649,29 +766,41 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     }
     // BaseHashTable* ht = init_ht(ht_sz, tid);
 
-    // insert
     uint64_t ht_sz = build_sz * 100 / config.ht_fill;
-    std::unordered_set<key_type> ht(ht_sz);
+    ht_sz = kmercounter::utils::next_pow2(ht_sz);
+#ifdef DEBUG_HJ
+    //PLOGI.printf("part id %lu hashtable sz %lu MB, build_sz %lu MB", part_id,
+    //             (ht_sz * sizeof(Element) / (1024 * 1024)), build_sz * sizeof(Element)/(1024 * 1024));
+#endif
+    HugepageVec ht_storage(ht_sz, hugepage_alloc_inst_relation);
+    for(uint64_t i = 0; i<ht_sz; i++)
+        ht_storage[i].key = ht_storage[i].value = 0;
+    RadixArrayHashTable ht(ht_sz, ht_storage);
+
+    // std::unordered_set<key_type> ht(ht_sz);
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       RadixBucket* b = Global_R_Buckets[thread_i][part_id];
       // ht_do_insert(ht, b->v);
-      //
       for (uint32_t i = b->v_start; i < b->v_start + b->v_len; i++) {
-        ht.insert(b->v[i].key);
+        // ht.insert(b->v[i]);
       }
     }
 
+    #ifdef DEBUG_HJ
+       // PLOGI.printf("part id %lu insertion done", part_id);
+    #endif
     // find
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       RadixBucket* b = Global_S_Buckets[thread_i][part_id];
       // ht_do_find(ht, b->v, mvec);
       for (uint32_t i = b->v_start; i < b->v_start + b->v_len; i++) {
-        if (ht.find(b->v[i].key) != ht.end()) found++;
+        //if (ht.find(b->v[i]) > 0) found++;
       }
     }
 
     // Global_HashTables[part_id] = ht;
   }
+#endif
 
   if (tid == 0) {
     cur_phase = ExecPhase::finds;

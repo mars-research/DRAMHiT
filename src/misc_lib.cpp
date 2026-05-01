@@ -230,25 +230,29 @@ void print_stats(Shard *all_sh, Configuration &config) {
         throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
     }
 
+    uint64_t throughput_cpo = 0;
+    if(sum_op > 0)
+        throughput_cpo = join_cycles / sum_op;
+
     if(config.mode != HASHJOIN){
 
         uint64_t part_cpo = 0;
         if(avg_insert_duration >0)
-            part_cpo = sum_op / avg_insert_duration;
+            part_cpo = avg_insert_duration / sum_op;
 
         uint64_t join_cpo = 0;
         if(avg_find_duration > 0)
-           join_cpo = sum_op / avg_find_duration;
+           join_cpo = avg_find_duration / sum_op;
 
         PLOGI.printf(
             "\n"
-            "partition phase cycles: %lu, op: %lu, cpo: %lu\n"
-            "join phase cycles: %lu, op: %lu, cpo: %lu\n"
-            "throughput mops: %lu\n"
+            "partition phase cycles: %lu, partition_cpo: %lu\n"
+            "join phase cycles: %lu, join_cpo: %lu\n"
+            "throughput mops: %lu, throughput_cpo: %lu, duration: %lu\n"
             "\n",
-            avg_insert_duration, sum_op, part_cpo,
-            avg_find_duration, sum_op, join_cpo,
-            throughput
+            avg_insert_duration, part_cpo,
+            avg_find_duration, join_cpo,
+            throughput, throughput_cpo, join_cycles
         );
     }else {
         PLOGI.printf(
@@ -427,9 +431,11 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
   }
 
-  PLOGI.printf(
-      "ht_size %lu (%lu gb)",
-      config.ht_size, get_gigbytes(config.ht_size));
+  if(id == 0) {
+      PLOGI.printf(
+          "ht_size %lu (%lu gb)",
+          config.ht_size, get_gigbytes(config.ht_size));
+  }
 
   return kmer_ht;
 }
