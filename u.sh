@@ -9,26 +9,28 @@ GROWT=6
 DRAMHIT23=8
 
 # Ensure correct usage
-# if [ "$#" -ne 3 ]; then
-#      echo "Usage: $0 <small|large> <numa_policy> <num_threads> ʕ•ᴥ•ʔ"
-#      exit 1
-# fi
-#if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 3 ]; then
+     echo "Usage: $0 <small|large> <numa_policy> <num_threads> ʕ•ᴥ•ʔ"
+     exit 1
+fi
+# if [ "$#" -ne 2 ]; then
 #    echo "Usage: $0 <small|large> <num_threads> ʕ•ᴥ•ʔ"
 #    exit 1
-#fi
-
+# fi
+test=$1
+numa_policy=$2
+numThreads=$3
 
 if [ "$numa_policy" = "single-local" ]; then
     numa_policy=4
 elif [ "$numa_policy" = "single-remote" ]; then
     numa_policy=3
+elif [ "$numa_policy" = "even" ]; then
+    numa_policy=6
 elif [ "$numa_policy" = "dual" ]; then
     numa_policy=1
 fi
 
-numa_policy=4
-size=134217728
 #TEST 256 KB
 if [ "$test" = "small" ]; then
     size=524288
@@ -38,13 +40,13 @@ if [ "$test" = "small" ]; then
 elif [ "$test" = "large" ]; then
     # size=4294967296
     # size=268435456
-    #size=536870912
+    size=536870912
 
     # size=1073741824
     # size=268435456
-    size=134217728
-    insertFactor=10
-    readFactor=10
+    # size=134217728
+    insertFactor=1
+    readFactor=1000
 fi
 
 # size=134217728
@@ -60,14 +62,27 @@ ZIPFIAN=11
 UNIFORM=14
 
 rsize=536870912
+
+HOME_DIR=/opt/DRAMHiT
+cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE
+cmake --build $HOME_DIR/build
+
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
 #do
-    cmd="--find_queue 64 --ht-fill $fill --ht-type $GROWT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $HASHJOIN --ht-size $size --skew 0.8\
+
+
+FILE_NAME=one-synch-bw.txt
+    cmd="--find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16 --relation_r_size $rsize"
     echo $(pwd)/build/dramhit $cmd
-    sudo $(pwd)/build/dramhit $cmd
+    # sudo $(pwd)/build/dramhit $cmd
+    
+    # sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 100 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
+    sudo /usr/bin/perf stat -a -M umc_data_bus_utilization -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
+    sudo $(pwd)/build/dramhit $cmd >> $FILE_NAME
+    
     #echo $(pwd)/build/dramhit $cmd
 #done
 
