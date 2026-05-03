@@ -24,9 +24,9 @@ extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
 constexpr auto MAP_FLAGS_1GB =
-    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE;
 constexpr auto MAP_FLAGS_2MB =
-    MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS;
+    MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE;
 constexpr auto ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
 constexpr auto TWOMB_PAGE_SZ = 2ULL * 1024 * 1024;
 

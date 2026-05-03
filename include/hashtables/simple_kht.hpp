@@ -94,7 +94,7 @@ auto empty_key_cmp = [](__m512i cacheline, size_t cidx) {
 
 #endif
 
-} 
+}
 
 // TODO use char and bit manipulation instead of bit fields in Kmer_KV:
 // https://stackoverflow.com/questions/1283221/algorithm-for-copying-n-bits-at-arbitrary-position-from-one-int-to-another
@@ -451,7 +451,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
     }
     return;
   }
-#endif 
+#endif
 
   void __insert_noprefetch_branched(const void *data, collector_type* collector) {
     KVQ *key_data = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
@@ -511,7 +511,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         __insert_noprefetch_simd(data);
       #else
         __insert_noprefetch_branched(data, collector);
-      #endif 
+      #endif
     }
   }
 
@@ -930,7 +930,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       #else
         return __find_branchless_cmov(q, vp);
       #endif
-      
+
     }
   }
 
@@ -1260,8 +1260,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         __insert_branchless_cmov(q);
       } else if constexpr (branching == BRANCHKIND::NoBranch_Simd) {
         #ifdef AVX_SUPPORT
-          __insert_branchless_simd(q); 
-        #else 
+          __insert_branchless_simd(q);
+        #else
           __insert_branchless_cmov(q);
         #endif
       }

@@ -76,12 +76,12 @@ using JoinElement = struct {
 };
 using JoinHugepageAlloc = huge_page_allocator<JoinElement>;
 using JoinVec = std::vector<JoinElement, JoinHugepageAlloc>;
-JoinHugepageAlloc hugepage_alloc_inst_join;
+JoinHugepageAlloc hugepage_alloc_inst_join_element;
 
 using Element = KeyValuePair;
 using HugepageAlloc = huge_page_allocator<Element>;
 using HugepageVec = std::vector<Element, HugepageAlloc>;
-HugepageAlloc hugepage_alloc_inst_relation;
+HugepageAlloc hugepage_alloc_inst_element;
 
 void init_hashjoin_dist(double skew, int64_t seed, uint64_t r_size,
                         uint64_t s_size) {
@@ -402,8 +402,8 @@ void dump_workloads(HugepageVec& build, HugepageVec& probe, JoinVec& mvec) {
 void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
               std::barrier<std::function<void()>>* barrier) {
   uint64_t ht_size = config.relation_r_size * 100 / config.ht_fill;
-  // config.ht_size = utils::next_pow2(config.ht_size);
   BaseHashTable* ht = init_ht(ht_size, sh->shard_idx);
+  // config.ht_size = utils::next_pow2(config.ht_size);
   // Measure Build
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::insertions;
@@ -465,14 +465,14 @@ struct alignas(64) CacheLineBuffer {
 
 class RadixBucket {
  public:
-  HugepageVec& v;  // v_offset to v_offset + size
+  Element* v;  // v_offset to v_offset + size
   CacheLineBuffer buffer;
   uint64_t v_start;
   uint64_t v_end;
   uint64_t v_idx;
   uint64_t v_len;
   size_t v_id;
-  RadixBucket(uint64_t start, uint64_t end, uint64_t len, HugepageVec& v_ref,
+  RadixBucket(uint64_t start, uint64_t end, uint64_t len, Element* v_ref,
               size_t id)
       : v(v_ref),
         v_idx(start),
@@ -507,12 +507,12 @@ class RadixBucket {
 
 class RadixArrayHashTable {
  public:
-  HugepageVec& vec;
+  Element* vec;
   uint64_t size;
   static const key_type empty_key = 0;
   static const value_type empty_value = 0;
   Hasher hasher;
-  RadixArrayHashTable(uint64_t sz, HugepageVec& v_ref) : size(sz), vec(v_ref) {}
+  RadixArrayHashTable(uint64_t sz, Element* v_ref) : size(sz), vec(v_ref) {}
 
   uint64_t hash(key_type k) { return (hasher(&k, 64) & (size - 1)); }
 
@@ -633,19 +633,8 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   uint64_t radix_mask = partition_num - 1;
   uint64_t tid = sh->shard_idx;
 
-  if (tid == 0) {
-    Global_HashTables.resize(partition_num);
-    Global_R_Buckets.resize(config.num_threads);
-    Global_S_Buckets.resize(config.num_threads);
-    Global_Histogram.resize(config.num_threads);
-
-    cur_phase = ExecPhase::insertions;
-    g_app_record_start = true;
-    PLOGI.printf("partition num %lu %u", partition_num, config.radix);
-  }
-  barrier->arrive_and_wait();
-
-  // compute size of each radix bucket
+  std::vector<RadixBucket*> local_r(partition_num);
+  std::vector<RadixBucket*> local_s(partition_num);
   std::vector<uint64_t> r_histogram(partition_num);
   std::vector<uint64_t> s_histogram(partition_num);
   for (size_t i = 0; i < partition_num; ++i) {
@@ -653,6 +642,24 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     s_histogram[i] = 0;
   }
 
+  if (tid == 0) {
+   // Global_HashTables.resize(partition_num);
+    Global_R_Buckets.resize(config.num_threads);
+    Global_S_Buckets.resize(config.num_threads);
+   // Global_Histogram.resize(config.num_threads);
+
+    cur_phase = ExecPhase::insertions;
+    g_app_record_start = true;
+    PLOGI.printf("partition num %lu %u", partition_num, config.radix);
+  }
+  barrier->arrive_and_wait();
+
+
+  if (tid == 0) {
+    cur_phase = ExecPhase::finds;
+    g_app_record_start = true;
+  }
+  barrier->arrive_and_wait();
   uint64_t bucket_id;
   for (size_t i = 0; i < build.size(); ++i) {
     Element& e = build[i];
@@ -668,8 +675,17 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     s_histogram[bucket_id]++;
   }
 
-  std::vector<RadixBucket*> local_r(partition_num);
-  std::vector<RadixBucket*> local_s(partition_num);
+  uint64_t phrase1_cycle = 0;
+  if (tid == 0) {
+    cur_phase = ExecPhase::finds;
+    g_app_record_start = false;
+  }
+  barrier->arrive_and_wait();
+  if(tid == 0) {
+      phrase1_cycle = g_find_end - g_find_start;
+      PLOGI.printf("took %lu cycles for phrase1", phrase1_cycle);
+  }
+
   // 1. Calculate the total padded sizes first
   uint64_t total_build_capacity = 0;
   uint64_t total_probe_capacity = 0;
@@ -680,10 +696,18 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     total_probe_capacity += (s_histogram[i] + 3) & ~3ULL;
   }
 
-  // 2. Allocate the slightly larger storage
-  HugepageVec build_storage(total_build_capacity, hugepage_alloc_inst_relation);
-  HugepageVec probe_storage(total_probe_capacity, hugepage_alloc_inst_relation);
+  uint64_t duration;
+  if(tid == 0){
+      duration = RDTSC_START();
+  }
+  // 2. Allocate memory for buckets, this is avoid frequent mmap call
+  Element* build_storage = hugepage_alloc_inst_element.allocate(total_build_capacity);
+  Element* probe_storage = hugepage_alloc_inst_element.allocate(total_probe_capacity);
 
+  if(tid == 0){
+      duration = RDTSCP() - duration;
+      PLOGI.printf("took %lu cycles for allocation", duration);
+  }
   // 3. Set up the buckets
   uint64_t r_offset = 0;
   uint64_t s_offset = 0;
@@ -710,6 +734,11 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     s_offset += s_capacity;  // Advance by the aligned capacity
   }
 
+  if (tid == 0) {
+    cur_phase = ExecPhase::finds;
+    g_app_record_start = true;
+  }
+  barrier->arrive_and_wait();
   for (size_t i = 0; i < build.size(); ++i) {
     Element& e = build[i];
     bucket_id = e.key & radix_mask;
@@ -734,6 +763,17 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   Global_R_Buckets[tid] = local_r;
   Global_S_Buckets[tid] = local_s;
 
+  uint64_t phrase3_cycle = 0;
+  if (tid == 0) {
+    cur_phase = ExecPhase::finds;
+    g_app_record_start = false;
+  }
+  barrier->arrive_and_wait();
+  if(tid == 0) {
+      phrase3_cycle = g_find_end - g_find_start;
+      PLOGI.printf("took %lu cycles for phrase3", phrase3_cycle);
+  }
+
   // Completion of partition phrase
   if (tid == 0) {
     cur_phase = ExecPhase::insertions;
@@ -742,6 +782,7 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   barrier->arrive_and_wait();
   sh->stats->insertions.duration = g_insert_end - g_insert_start;
   sh->stats->insertions.op_count = build.size() + probe.size();
+
 #ifdef DEBUG_HJ
   print_histogram_stats(r_histogram, tid, "r");
   print_histogram_stats(s_histogram, tid, "s");
@@ -772,7 +813,7 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     //PLOGI.printf("part id %lu hashtable sz %lu MB, build_sz %lu MB", part_id,
     //             (ht_sz * sizeof(Element) / (1024 * 1024)), build_sz * sizeof(Element)/(1024 * 1024));
 #endif
-    HugepageVec ht_storage(ht_sz, hugepage_alloc_inst_relation);
+    HugepageVec ht_storage(ht_sz, hugepage_alloc_inst_element);
     for(uint64_t i = 0; i<ht_sz; i++)
         ht_storage[i].key = ht_storage[i].value = 0;
     RadixArrayHashTable ht(ht_sz, ht_storage);
@@ -812,9 +853,9 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   sh->stats->finds.op_count = build.size() + probe.size();
   sh->stats->found = found;
 
-  for (BaseHashTable* ht : Global_HashTables) {
-    delete ht;
-  }
+  //for (BaseHashTable* ht : Global_HashTables) {
+  //  delete ht;
+  //}
 
   for (size_t i = 0; i < partition_num; ++i) {
     delete local_r[i];
@@ -898,9 +939,9 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   // But it ensures huge page and numa correctness.
   // This is good enough for generated workload,
   // if it aint broke, don't fix it....
-  HugepageVec build_relation(partition_sz_r, hugepage_alloc_inst_relation);
-  HugepageVec probe_relation(partition_sz_s, hugepage_alloc_inst_relation);
-  JoinVec join_relation(partition_sz_s, hugepage_alloc_inst_join);
+  HugepageVec build_relation(partition_sz_r, hugepage_alloc_inst_element);
+  HugepageVec probe_relation(partition_sz_s, hugepage_alloc_inst_element);
+  JoinVec join_relation(partition_sz_s, hugepage_alloc_inst_join_element);
   // Copy data from global vec into hugepage back vec.
   Element e;
   uint64_t workload_idx = 0;
