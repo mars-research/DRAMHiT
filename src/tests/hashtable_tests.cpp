@@ -229,25 +229,26 @@ OpTimings do_zipfian_inserts(
   if (config.insert_factor == 0) return {1, 1};
 
   uint64_t ops = 0;
+  if (id == 0) {
+    cur_phase = ExecPhase::insertions;
+    zipfian_inserts = false;
+  }
+  sync_barrier->arrive_and_wait();
+
   for (auto j = 0u; j < config.insert_factor; j++) {
-    if (id == 0) {
-      cur_phase = ExecPhase::insertions;
-      zipfian_inserts = false;
-    }
-    sync_barrier->arrive_and_wait();
-
     ops += do_batch_insertion(hashtable, zipf_set);
-
-    if (id == 0) {
-      zipfian_inserts = true;
-      zipfian_iter = j;
-    }
-    sync_barrier->arrive_and_wait();
   }
 
+  if (id == 0) {
+    zipfian_inserts = true;
+    zipfian_iter = 0;
+  }
+  sync_barrier->arrive_and_wait();
+
   uint64_t duration = 0;
-  for (int i = 0; i < config.insert_factor; i++)
-    duration += g_insert_durations[i];
+  // for (int i = 0; i < config.insert_factor; i++)  duration +=
+  // g_insert_durations[i];
+  duration += g_insert_durations[0];
 
   return {duration, ops};
 }
@@ -262,23 +263,27 @@ OpTimings do_zipfian_gets(BaseHashTable *hashtable, unsigned int num_threads,
   uint64_t ops = 0;
   uint64_t found_per_turn = 0;
   *found = 0;
+  if (id == 0) {
+    cur_phase = ExecPhase::finds;
+    zipfian_finds = false;
+  }
+  sync_barrier->arrive_and_wait();
+
   for (auto j = 0u; j < config.read_factor; j++) {
-    if (id == 0) {
-      cur_phase = ExecPhase::finds;
-      zipfian_finds = false;
-    }
-    sync_barrier->arrive_and_wait();
     ops += do_batch_find(hashtable, zipf_set, &found_per_turn);
     *found = *found + found_per_turn;
-    if (id == 0) {
-      zipfian_finds = true;
-      zipfian_iter = j;
-    }
-    sync_barrier->arrive_and_wait();
   }
 
+  if (id == 0) {
+    zipfian_finds = true;
+    zipfian_iter = 0;
+  }
+  sync_barrier->arrive_and_wait();
+
   uint64_t duration = 0;
-  for (int i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
+  // for (int i = 0; i < config.read_factor; i++) duration +=
+  // g_find_durations[i];
+  duration += g_find_durations[0];
 
   return {duration, ops};
 }
@@ -299,7 +304,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
       partition_size,              // initial size
       hugepage_alloc_inst_ht_test  // allocator instance
   );
-
 
   uint64_t starting_offset = shard->shard_idx * partition_size;
   for (auto i = 0; i < partition_size; i++) {

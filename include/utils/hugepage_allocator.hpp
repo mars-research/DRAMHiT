@@ -62,7 +62,7 @@ struct huge_page_allocator {
       exit(1);
     }
 
-    auto MAP_FLAGS = MAP_PRIVATE | MAP_HUGETLB |
+    auto MAP_FLAGS = MAP_PRIVATE | MAP_HUGETLB | MAP_ANONYMOUS | 
                      (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
 
     auto p = static_cast<T *>(

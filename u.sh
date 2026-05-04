@@ -46,7 +46,7 @@ elif [ "$test" = "large" ]; then
     # size=268435456
     # size=134217728
     insertFactor=1
-    readFactor=1000
+    readFactor=100
 fi
 
 # size=134217728
@@ -64,7 +64,7 @@ UNIFORM=14
 rsize=536870912
 
 HOME_DIR=/opt/DRAMHiT
-cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE
+cmake -S $HOME_DIR -B $HOME_DIR/build -DCALC_STATS=OFF -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE
 cmake --build $HOME_DIR/build
 
 #for skew in $(seq 0.01 0.5 2.0);
@@ -72,16 +72,17 @@ cmake --build $HOME_DIR/build
 #do
 
 
-FILE_NAME=one-synch-bw.txt
+FILE_NAME=output.txt
     cmd="--find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
+    --num-threads $numThreads --seed 2190830198 --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16 --relation_r_size $rsize"
     echo $(pwd)/build/dramhit $cmd
     # sudo $(pwd)/build/dramhit $cmd
     
-    # sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 100 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
-    sudo /usr/bin/perf stat -a -M umc_data_bus_utilization -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
-    sudo $(pwd)/build/dramhit $cmd >> $FILE_NAME
+    # sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
+    # # sudo /usr/bin/perf stat -a -M umc_data_bus_utilization -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
+    # sudo $(pwd)/build/dramhit $cmd > $FILE_NAME
+    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd &> $FILE_NAME
     
     #echo $(pwd)/build/dramhit $cmd
 #done

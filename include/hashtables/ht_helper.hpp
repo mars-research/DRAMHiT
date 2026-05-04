@@ -2,13 +2,15 @@
 #define _HT_HELPER_H
 
 #include <fcntl.h>
+#include <numaif.h>
+#include <plog/Log.h>
 #include <sys/mman.h>
 #include <unistd.h>
+
 #include <cstring>
-#include <plog/Log.h>
-#include "numa.hpp"
+
 #include "hashtables/kvtypes.hpp"
-#include <numaif.h>
+#include "numa.hpp"
 
 namespace kmercounter {
 /* AB: 1GB page table code is from
@@ -23,10 +25,8 @@ namespace kmercounter {
 extern Configuration config;
 constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
-constexpr auto MAP_FLAGS_1GB =
-    MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE;
-constexpr auto MAP_FLAGS_2MB =
-    MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE;
+constexpr auto MAP_FLAGS_1GB = MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+constexpr auto MAP_FLAGS_2MB = MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS;
 constexpr auto ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
 constexpr auto TWOMB_PAGE_SZ = 2ULL * 1024 * 1024;
 
@@ -43,7 +43,7 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
 }
 
 inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
-                             numa_policy_threads policy) {
+                                    numa_policy_threads policy) {
   // Check if there is only one NUMA node
   if (numa_num_configured_nodes() == 1) {
     PLOG_INFO.printf(
@@ -73,28 +73,30 @@ inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
     }
   } else if (policy == THREADS_SPLIT_EVEN_NODES) {
-    uint64_t sz = alloc_sz >> 1;
-    void *u_addr = addr + sz;
+    int num_nodes = numa_num_configured_nodes();  // Should return 4 on your AMD
+    uint64_t chunk_sz = alloc_sz / num_nodes;
 
-    unsigned long nodemask = 1UL << 0;
-    unsigned long maxnode = sizeof(nodemask) * 8;
+    for (int i = 0; i < num_nodes; i++) {
+      void *chunk_ptr = (uint8_t *)addr + (i * chunk_sz);
 
-    long ret = mbind(addr, sz, MPOL_BIND, &nodemask, maxnode,
-                     MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d | addr: %p | sz: %lu", ret, errno,
-                   addr, sz);
-    }
+      // If it's the last node, take the remainder to avoid rounding errors
+      uint64_t current_sz =
+          (i == num_nodes - 1) ? (alloc_sz - (i * chunk_sz)) : chunk_sz;
 
-    nodemask = 1UL << 1;
-    maxnode = sizeof(nodemask) * 8;
+      unsigned long nodemask = (1UL << i);
+      // maxnode must be at least the highest node ID + 1
+      unsigned long maxnode = i + 2;
 
-    ret = mbind(u_addr, sz, MPOL_BIND, &nodemask, maxnode,
-                MPOL_MF_MOVE | MPOL_MF_STRICT);
-    if (ret < 0) {
-      perror("mbind");
-      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+      long ret = mbind(chunk_ptr, current_sz, MPOL_BIND, &nodemask, maxnode,
+                       MPOL_MF_MOVE | MPOL_MF_STRICT);
+
+      if (ret < 0) {
+        PLOGE.printf("mbind failed for node %d: %s (addr: %p, sz: %lu)", i,
+                     strerror(errno), chunk_ptr, current_sz);
+        assert(0);
+      } else {
+        PLOGV.printf("Successfully bound %lu bytes to node %d", current_sz, i);
+      }
     }
   } else {
     long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
@@ -191,12 +193,13 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
 
   if (alloc_sz < ONEGB_PAGE_SZ) {
     flags = MAP_FLAGS_2MB;
-    PLOGI.printf("allocating %lu 2mb pages bytes %lu", alloc_sz/TWOMB_PAGE_SZ, alloc_sz);
+    PLOGI.printf("allocating %lu 2mb pages bytes %lu", alloc_sz / TWOMB_PAGE_SZ,
+                 alloc_sz);
   } else {
     flags = MAP_FLAGS_1GB;
-    PLOGI.printf("allocating %lu 1gb pages bytes %lu", alloc_sz/ONEGB_PAGE_SZ, alloc_sz);
+    PLOGI.printf("allocating %lu 1gb pages bytes %lu", alloc_sz / ONEGB_PAGE_SZ,
+                 alloc_sz);
   }
-
 
   addr = (T *)mmap(ADDR, alloc_sz, PROT_RW, flags, fd, 0);
 
@@ -211,9 +214,9 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   }
   *out_fd = fd;
 
-  if(alloc_sz >= ONEGB_PAGE_SZ){
+  if (alloc_sz >= ONEGB_PAGE_SZ) {
     distribute_mem_to_nodes(addr, alloc_sz,
-                          (numa_policy_threads)config.numa_split);
+                            (numa_policy_threads)config.numa_split);
   }
 
   memset(addr, 0, capacity * sizeof(T));
@@ -230,7 +233,6 @@ void free_mem(T *addr, uint64_t capacity, int id, int fd) {
     PLOGI.printf("%p with sz %lu unmapped", addr, capacity * sizeof(T));
   }
 }
-
 
 }  // namespace kmercounter
 
