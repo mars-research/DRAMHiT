@@ -83,6 +83,11 @@ using HugepageAlloc = huge_page_allocator<Element>;
 using HugepageVec = std::vector<Element, HugepageAlloc>;
 HugepageAlloc hugepage_alloc_inst_element;
 
+
+#define ELE_NUM_PER_CACHE_LINE ((CACHELINE_SIZE) / sizeof(Element))
+#define PREFETCHES_AHEAD ((ELE_NUM_PER_CACHE_LINE) * (PREFETCH_AHEAD_X_CACHELINE))
+
+
 void init_hashjoin_dist(double skew, int64_t seed, uint64_t r_size,
                         uint64_t s_size) {
   uint64_t total_size = r_size + s_size;
@@ -189,17 +194,15 @@ void ht_do_insert(BaseHashTable* ht, HugepageVec& workload) {
   InsertFindArgument* items = (InsertFindArgument*)aligned_alloc(
       64, sizeof(InsertFindArgument) * batch_len);
   size_t batch_num = requests_num / batch_len;
-  size_t ele_num_per_cache_line = CACHELINE_SIZE / sizeof(Element);
-  size_t prefetches_ahead = ele_num_per_cache_line * PREFETCH_AHEAD_X_CACHELINE;
   size_t idx = 0;
 
-  // force ele_num_per_cache_line pow of 2. 2 < 16
+  // force ELE_NUM_PER_CACHE_LINE pow of 2. 2 < 16
   for (unsigned int n = 0; n < batch_num; n++) {
     // on each batch, populate find args
     for (unsigned int i = 0; i < batch_len; i++) {
-      if (!(idx & (ele_num_per_cache_line - 1)) &&
-          (idx + prefetches_ahead < requests_num)) {
-        __builtin_prefetch(&workload[idx + prefetches_ahead], false, 3);
+      if (!(idx & (ELE_NUM_PER_CACHE_LINE - 1)) &&
+          (idx + PREFETCHES_AHEAD < requests_num)) {
+        __builtin_prefetch(&workload[idx + PREFETCHES_AHEAD], false, 3);
       }
 
       Element& e = workload[idx];
@@ -216,9 +219,9 @@ void ht_do_insert(BaseHashTable* ht, HugepageVec& workload) {
   size_t residue_num = requests_num - batch_len * batch_num;
   if (residue_num > 0) {
     for (size_t i = 0; i < residue_num; i++) {
-      if (!(idx & (ele_num_per_cache_line - 1)) &&
-          (idx + prefetches_ahead < requests_num)) {
-        __builtin_prefetch(&workload[idx + prefetches_ahead], false, 3);
+      if (!(idx & (ELE_NUM_PER_CACHE_LINE - 1)) &&
+          (idx + PREFETCHES_AHEAD < requests_num)) {
+        __builtin_prefetch(&workload[idx + PREFETCHES_AHEAD], false, 3);
       }
       Element& e = workload[idx];
       items[i].key = e.key;
@@ -247,8 +250,6 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
       64, sizeof(InsertFindArgument) * batch_len);
 
   size_t batch_num = requests_num / batch_len;
-  size_t ele_num_per_cache_line = CACHELINE_SIZE / sizeof(Element);
-  size_t prefetches_ahead = ele_num_per_cache_line * PREFETCH_AHEAD_X_CACHELINE;
   size_t idx = 0;
   size_t m_idx = 0;
 
@@ -257,13 +258,13 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   FindResult* prefetched_results = new FindResult[batch_len];
   ValuePairs prefetched_vp = std::make_pair(0, prefetched_results);
 
-  // force ele_num_per_cache_line pow of 2. 2 < 16
+  // force ELE_NUM_PER_CACHE_LINE pow of 2. 2 < 16
   for (unsigned int n = 0; n < batch_num; n++) {
     // on each batch, populate find args
     for (unsigned int i = 0; i < batch_len; i++) {
-      if (!(idx & (ele_num_per_cache_line - 1)) &&
-          (idx + prefetches_ahead < requests_num)) {
-        __builtin_prefetch(&workload[idx + prefetches_ahead], false, 3);
+      if (!(idx & (ELE_NUM_PER_CACHE_LINE - 1)) &&
+          (idx + PREFETCHES_AHEAD < requests_num)) {
+        __builtin_prefetch(&workload[idx + PREFETCHES_AHEAD], false, 3);
       }
       Element& e = workload[idx];
       items[i].key = e.key;
@@ -328,9 +329,9 @@ uint64_t ht_do_find(BaseHashTable* ht, HugepageVec& workload, JoinVec& mvec) {
   size_t residue_num = requests_num - batch_len * batch_num;
   if (residue_num > 0) {
     for (size_t i = 0; i < residue_num; i++) {
-      if (!(idx & (ele_num_per_cache_line - 1)) &&
-          (idx + prefetches_ahead < requests_num)) {
-        __builtin_prefetch(&workload[idx + prefetches_ahead], false, 3);
+      if (!(idx & (ELE_NUM_PER_CACHE_LINE - 1)) &&
+          (idx + PREFETCHES_AHEAD < requests_num)) {
+        __builtin_prefetch(&workload[idx + PREFETCHES_AHEAD], false, 3);
       }
       Element& e = workload[idx];
       items[i].key = e.key;
@@ -739,6 +740,7 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     g_app_record_start = true;
   }
   barrier->arrive_and_wait();
+
   for (size_t i = 0; i < build.size(); ++i) {
     Element& e = build[i];
     bucket_id = e.key & radix_mask;

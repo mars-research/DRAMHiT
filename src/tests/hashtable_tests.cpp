@@ -72,7 +72,7 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
 #else
 
   uint64_t request_num = workload.size();
-  uint64_t batch_len = config.batch_len;
+  uint32_t batch_len = config.batch_len;
   uint64_t batch_num = request_num / batch_len;
   collector_type *const collector{};
 #endif
@@ -80,13 +80,13 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
       64, sizeof(InsertFindArgument) * config.batch_len);
   key_type value;
   uint64_t idx = 0;
-  for (auto n = 0; n < batch_num; ++n) {
-    for (int i = 0; i < batch_len; i++) {
+  for (uint64_t n = 0; n < batch_num; ++n) {
+    for (uint32_t i = 0; i < batch_len; i++) {
       if (!(idx & 7) && idx + 16 < request_num) {
-        __builtin_prefetch(&workload.at(idx + 16), false, 3);
+        __builtin_prefetch(&workload[idx + 16], false, 3);
       }
 
-      value = workload.at(idx);
+      value = workload[idx];
 
       items[i].key = items[i].value = value;
       items[i].id = idx;
@@ -104,11 +104,11 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
 
   uint64_t residue_num = request_num - batch_len * batch_num;
   if (residue_num > 0) {
-    for (auto i = 0; i < residue_num; i++) {
+    for (uint64_t i = 0; i < residue_num; i++) {
       if (!(idx & 7) && (idx + 16 < request_num)) {
-        __builtin_prefetch(&workload.at(idx + 16), false, 3);
+        __builtin_prefetch(&workload[idx + 16], false, 3);
       }
-      value = workload.at(idx);
+      value = workload[idx];
       items[i].key = items[i].value = value;
       items[i].id = idx;
       idx++;
@@ -162,10 +162,10 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
   for (uint64_t n = 0; n < batch_num; ++n) {
     for (uint32_t i = 0; i < batch_len; i++) {
       if (!(idx & 7) && idx + 16 < request_num) {
-        __builtin_prefetch(&workload.at(idx + 16), false, 3);
+        __builtin_prefetch(&workload[idx + 16], false, 3);
       }
 
-      value = workload.at(idx);
+      value = workload[idx];
 
       items[i].key = items[i].value = value;
       items[i].id = idx;
@@ -188,9 +188,9 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
   if (residue_num > 0) {
     for (auto i = 0; i < residue_num; i++) {
       if (!(idx & 7) && (idx + 16 < request_num)) {
-        __builtin_prefetch(&workload.at(idx + 16), false, 3);
+        __builtin_prefetch(&workload[idx + 16], false, 3);
       }
-      value = workload.at(idx);
+      value = workload[idx];
       items[i].key = items[i].value = value;
       items[i].id = idx;
       idx++;

@@ -431,12 +431,6 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
   }
 
-  if(id == 0) {
-      PLOGI.printf(
-          "ht_size %lu (%lu gb)",
-          config.ht_size, get_gigbytes(config.ht_size));
-  }
-
   return kmer_ht;
 }
 }  // namespace kmercounter

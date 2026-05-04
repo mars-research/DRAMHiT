@@ -86,8 +86,8 @@ class CASHashTable : public BaseHashTable {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
 
-        PLOGI.printf("Hashtable base: %p Hashtable size: %lu", this->hashtable,
-                     this->capacity);
+        PLOGI.printf("Hashtable base: %p Hashtable size: %lu, %lu GB", this->hashtable,
+                     this->capacity, (this->capacity*sizeof(KV)) / (1024ULL * 1024ULL * 1024ULL));
         PLOGI.printf("queue sz: %lu, queue item sz: %d", find_queue_sz, sizeof(KVQ));
       }
       this->ref_cnt++;
