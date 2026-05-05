@@ -173,15 +173,16 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   uint64_t alloc_sz = capacity * sizeof(T);
   auto current_node = numa_node_of_cpu(sched_getcpu());
 
-  int fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
+  int fd = -1;
+  // int fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
 
-  if (fd < 0) {
-    PLOGE.printf("Couldn't open file %s:", FILE_NAME);
-    perror("");
-    exit(1);
-  } else {
-    // PLOGI.printf("opened file %s", FILE_NAME);
-  }
+  // if (fd < 0) {
+  //   PLOGE.printf("Couldn't open file %s:", FILE_NAME);
+  //   perror("");
+  //   exit(1);
+  // } else {
+  //   // PLOGI.printf("opened file %s", FILE_NAME);
+  // }
 
   if (alloc_sz % 2) {
     PLOGE.printf("alloc sz is not divisible by 2, alloc_sz %lu", alloc_sz);
@@ -201,12 +202,12 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
                  alloc_sz);
   }
 
-  addr = (T *)mmap(ADDR, alloc_sz, PROT_RW, flags, fd, 0);
+  addr = (T *)mmap(ADDR, alloc_sz, PROT_RW, flags, -1, 0);
 
-  close(fd);
-  unlink(FILE_NAME);
+  //close(fd);
+  //unlink(FILE_NAME);
   if (addr == MAP_FAILED) {
-    unlink(FILE_NAME);
+    //unlink(FILE_NAME);
     PLOGE.printf("mmap failed");
     exit(1);
   } else {

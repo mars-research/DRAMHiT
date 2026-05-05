@@ -299,9 +299,10 @@ void sync_complete(void) {
         break;
       case UNIFORM:
         this->test.uniform.run(sh, kmer_ht, barrier);
-
+        break;
       case BW:
         this->test.bw.run(sh, config, barrier);
+        break;
       default:
         PLOGE.printf("Unknown Mode");
         abort();

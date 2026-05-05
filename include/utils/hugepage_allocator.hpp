@@ -2,8 +2,9 @@
 
 // adapted from https://rigtorp.se/hugepages/
 
-#include <sys/mman.h>  // mmap, munmap
 #include <fcntl.h>
+#include <sys/mman.h>  // mmap, munmap
+
 #include "plog/Log.h"
 
 #define HUGEPAGE_FILE "/mnt/huge/hugepagefile"
@@ -54,28 +55,35 @@ struct huge_page_allocator {
 
     std::tie(is_1gb, alloc_sz) = get_rounded_alloc_size(raw_alloc_sz);
 
-    int fd = open(HUGEPAGE_FILE, O_CREAT | O_RDWR, 0755);
+    // int fd = open(HUGEPAGE_FILE, O_CREAT | O_RDWR, 0755);
 
-    if (fd < 0) {
-      PLOGE.printf("Couldn't open file %s:", HUGEPAGE_FILE);
-      perror("");
-      exit(1);
-    }
-
-    auto MAP_FLAGS = MAP_PRIVATE | MAP_HUGETLB | MAP_ANONYMOUS | 
+    // if (fd < 0) {
+    //   PLOGE.printf("Couldn't open file %s:", HUGEPAGE_FILE);
+    //   perror("");
+    //   exit(1);
+    // }
+// #define MMAP_POPULATE
+#ifndef MMAP_POPULATE
+    auto MAP_FLAGS = MAP_PRIVATE | MAP_HUGETLB | MAP_ANONYMOUS |
                      (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
+#else
+
+    auto MAP_FLAGS = MAP_PRIVATE | MAP_HUGETLB | MAP_ANONYMOUS | MAP_POPULATE |
+                     (is_1gb ? MAP_HUGE_1GB : MAP_HUGE_2MB);
+#endif
 
     auto p = static_cast<T *>(
-        mmap(nullptr, alloc_sz, PROT_READ | PROT_WRITE, MAP_FLAGS, fd, 0));
-    close(fd);
-    unlink(HUGEPAGE_FILE);
+        mmap(nullptr, alloc_sz, PROT_READ | PROT_WRITE, MAP_FLAGS, -1, 0));
+    // close(fd);
+    // unlink(HUGEPAGE_FILE);
 
     if (p == MAP_FAILED) {
       PLOGE.printf("map failed %d", errno);
       throw std::bad_alloc();
     }
 
-    // PLOGI.printf("hugepage alloc: huge page %p with sz %lu mapped", p, alloc_sz);
+    // PLOGI.printf("hugepage alloc: huge page %p with sz %lu mapped", p,
+    // alloc_sz);
 
     return p;
   }
@@ -88,7 +96,8 @@ struct huge_page_allocator {
 
     if (p) {
       munmap(p, alloc_sz);
-      // PLOGI.printf("hugepage alloc: huge page %p with sz %lu unmapped", p, alloc_sz);
+      // PLOGI.printf("hugepage alloc: huge page %p with sz %lu unmapped", p,
+      // alloc_sz);
     }
   }
 };

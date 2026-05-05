@@ -2,6 +2,7 @@
 #include "misc_lib.h"
 #include "numa.hpp"
 #include "plog/Log.h"
+#include "sync.h"
 #include "tests/BandwidthTest.hpp"
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
@@ -11,17 +12,17 @@ namespace kmercounter {
 extern ExecPhase cur_phase;
 extern bool g_app_record_start;
 extern uint64_t g_find_start, g_find_end;
+extern uint64_t g_insert_start, g_insert_end;
 
 using Cacheline = struct {
   char pad[64];
 };
 using BWHugepageAlloc = huge_page_allocator<Cacheline>;
-using Vec = std::vector<Cacheline, BWHugepageAlloc>;
-BWHugepageAlloc hugepage_allocator_inst_bw;
+// BWHugepageAlloc hugepage_allocator_inst_bw;
 
 inline uint64_t knuth64(uint64_t x) { return x * 11400714819323198485ULL; }
 
-inline void prefetch(const Vec &vec, uint64_t idx) {
+inline void prefetch(const Cacheline* vec, uint64_t idx) {
 #if L1_PREFETCH
   __builtin_prefetch(&vec[idx], false, 3);
 #elif L2_PREFETCH
@@ -44,39 +45,67 @@ inline void prefetch(const Vec &vec, uint64_t idx) {
 void BandwidthTest::run(Shard *sh, const Configuration &config,
                         std::barrier<VoidFn> *barrier) {
   uint64_t size = utils::next_pow2(config.ht_size);
-
+  uint64_t SIZE_2MB = 2ULL * 1024 * 1024;
+  uint64_t SIZE_1GB = 1ULL * 1024 * 1024 * 1024;
+  uint64_t bytes = size * sizeof(Cacheline);
+  if (bytes > SIZE_1GB) {
+    bytes = (((bytes - 1) / SIZE_1GB) + 1) * SIZE_1GB;
+  } else {
+    bytes = (((bytes - 1) / SIZE_2MB) + 1) * SIZE_2MB;
+  }
   if (sh->shard_idx == 0) {
-    PLOGI.printf("allocating %lu mb per thread",
-                 (size * 64ULL / (1024ULL * 1024ULL)));
+    PLOGI.printf("allocating %lu mb per thread", (bytes / (1024ULL * 1024ULL)));
   }
-
-  // Initialize
-  Vec arr(size, hugepage_allocator_inst_bw);
-  for (uint64_t i = 0; i < size; i++) {
-    arr[i].pad[0] = 'c';
-  }
-
+  int to_node = sh->numa_node;
   if (config.numa_split == THREADS_REMOTE_NUMA_NODE ||
       config.numa_split == THREADS_ALL_NODES_REMOTE_ACCESS) {
-    int to_node;
     if ((to_node = find_remote_node(sh->numa_node)) < 0) {
       PLOGE.printf("failed to find remote node");
       abort();
     }
+  }
 
-    uint64_t SIZE_2MB = 2ULL * 1024 * 1024;
-    uint64_t SIZE_1GB = 1ULL * 1024 * 1024 * 1024;
-    uint64_t bytes = size * sizeof(Cacheline);
-    if (bytes > SIZE_1GB) {
-      bytes = (((bytes - 1) / SIZE_1GB) + 1) * SIZE_1GB;
-    } else {
-      bytes = (((bytes - 1) / SIZE_2MB) + 1) * SIZE_2MB;
-    }
+  // Use rdtsc because mmap might be fast ?
+  uint64_t start, end;
+  if (sh->shard_idx == 0) {
+    start = RDTSC_START();
+  }
 
-    if (!move_memory_to_node((void *)(&arr[0]), bytes, to_node)) {
-      PLOGE.printf("failed to migrate workload into remote memory");
-      abort();
-    }
+  // MMAP
+  BWHugepageAlloc hugepage_allocator_inst_bw;
+
+  Cacheline* arr = hugepage_allocator_inst_bw.allocate(size);
+
+  if (!move_memory_to_node((void *)(&arr[0]), bytes, to_node)) {
+    PLOGE.printf("failed to migrate workload memory");
+    abort();
+  }
+
+  if (sh->shard_idx == 0) {
+    end = RDTSCP();
+    PLOGI.printf("took %lu cycles per cacheline on mmap and mbind",
+                 (end - start) / size);
+  }
+
+  if (sh->shard_idx == 0) {
+    cur_phase = ExecPhase::insertions;
+    g_app_record_start = true;
+  }
+  barrier->arrive_and_wait();
+
+  // write to every cache line
+  for (uint64_t i = 0; i < size; i++) {
+    arr[i].pad[0] = 'c';
+  }
+
+  if (sh->shard_idx == 0) {
+    cur_phase = ExecPhase::insertions;
+    g_app_record_start = false;
+  }
+  barrier->arrive_and_wait();
+  if (sh->shard_idx == 0) {
+    PLOGI.printf("took %lu cycles per cacheline on write",
+                 (g_insert_end - g_insert_start) / size);
   }
 
   if (sh->shard_idx == 0) {
@@ -107,6 +136,12 @@ void BandwidthTest::run(Shard *sh, const Configuration &config,
 
   sh->stats->finds.op_count = size;
   sh->stats->finds.duration = g_find_end - g_find_start;
+  if (sh->shard_idx == 0) {
+    PLOGI.printf("took %lu cycles per cacheline on read",
+                 (g_find_end - g_find_start) / size);
+  }
+
+  hugepage_allocator_inst_bw.deallocate(arr, size);
 
 }  // run
 

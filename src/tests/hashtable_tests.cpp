@@ -59,7 +59,6 @@ static inline uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
 
 using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
 using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
-HashTableTestHugepageAlloc hugepage_alloc_inst_ht_test;
 
 uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
 #if defined(CAS_NO_ABSTRACT)
@@ -299,6 +298,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   if (shard->shard_idx == config.num_threads - 1)
     partition_size += g_zipf_values->size() % config.num_threads;
 
+
+  HashTableTestHugepageAlloc hugepage_alloc_inst_ht_test;
   // get zipfian here.
   HashTableTestVec zipf_set_local(
       partition_size,              // initial size

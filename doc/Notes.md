@@ -1,5 +1,22 @@
 
 
+# 05/05
+
+mmap experiements.
+data produced on single socket amd machine.
+
+1gb pages per thread, all thread first 
+1. mmap + mbind to bring workload into local memory
+2. write into each cacheline
+3. read from each cachline
+
+each point has  mmap+mbind/write/read   (unit: cycles per cacheline)
+
+---------  | map_populate    | no map_populate | 
+32 threads | 51/46/1         | 0/98/1       | 
+64 threads | 835/92/2        | 0/183/2      |
+
+
 # 08/14
 
 We turn off the directory feature in BIOS, now reporting all numbers 
@@ -694,4 +711,3 @@ engine also increases due to potential misses (not sure why, cpu cache likely wi
 1. More reprobes in total when we run large table ?
 
 -----------------------
-
