@@ -24,8 +24,8 @@ def plot_json(json_file_dir, json_file_snoop, output_file):
     df_dir = pd.json_normalize(data_dir, sep=".")
     df_snoop = pd.json_normalize(data_snoop, sep=".")
 
-    df_dir["firmware-mode"] = "directory"
-    df_snoop["firmware-mode"] = "snoop"
+    df_dir["firmware-mode"] = "nps1"
+    df_snoop["firmware-mode"] = "nps4"
 
     df = pd.concat([df_dir, df_snoop], ignore_index=True)
 
@@ -97,7 +97,7 @@ def plot_json(json_file_dir, json_file_snoop, output_file):
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        print("Usage: python plot_dramhit.py <dir.json> <snoop.json> <output.png>")
+        print("Usage: python plot_dramhit.py <nps1.json> <nps4.json> <output.png>")
         sys.exit(1)
 
     json_file_dir = sys.argv[1]

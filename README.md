@@ -1,29 +1,22 @@
 # DRAMHiT
 [![Build and Test](https://github.com/mars-research/DRAMHiT/actions/workflows/build.yml/badge.svg)](https://github.com/mars-research/kmer-counting-hash-table/actions/workflows/build.yml)
 
-## Build
-
-### Download the source
+### Get Source
 ```
 git clone git@github.com:mars-research/DRAMHiT.git --recursive
 ```
 
-### Install dependencies
+### Dependencies
 
-#### Optional 1(recommended): Nix shell.
-If Nix is not installed, install Nix.
+Nix manages all project dependencies.
+Install nix if your system doesn't have nix
 ```bash
 curl -L https://nixos.org/nix/install | sh
 ```
-Use nix shell. 
-```bash
-nix-shell
-```
-All the dependencies should be available in the nix shell now.
 
-#### Option 2: Manual installation.
+Use following script to enter nix development shell
 ```bash
-sudo apt install libnuma-dev libboost-program-options-dev cmake libabsl-dev libcapstone-dev
+./nix-dev-shell.sh
 ```
 
 ### Setup the machine
@@ -34,48 +27,43 @@ sudo apt install libnuma-dev libboost-program-options-dev cmake libabsl-dev libc
 ./scripts/setup.sh
 ```
 
-#### Option 2: Maunal setup
-
-- Set all cpus to run at a constant frequency
+You alternatively can do similar for amd machine
 ```
-./scripts/constant_freq.sh
+./scripts/setup_amd.sh
 ```
-- Enable hugepages (both 2MiB and 1GiB)
-```
-./scripts/enable_hugepages.sh
-```
-- Disable hardware prefetching
-```
-./scripts/prefetch_control.sh off
-```
-- (Optional)Enable/disable hyperthreading
-```
-./scripts/toggle_hyperthreading.sh
-```
-
-### Build
+### Config build
 * Setup build directory
 ```
 cmake -S . -B build 
 ```
 
-* Build
+Note that above command will not set up build unless 
+you provide -DCPUFREQ_MHZ=XXXX
+
+This is the constant frequency of the cpu pinned by 
+setup scripts.
+
+### Build
 ```
 cmake --build build/
 ```
 
 ### Configure build with ccmake (optional)
 
+This is cmd line gui tool you can use to see all 
+build time configuration if you don't want to 
+use standard cmake ways -DVAR.
+
 On command line, install and start ccmake
 
 ```
 sudo apt install cmake-curses-gui
-ccmake PATH_TO_CMAKE
+ccmake ./build
 ```
 
 ### Run
 ```
-sudo ./build/dramhit
+./build/dramhit --help
 ```
 
 ### Test
