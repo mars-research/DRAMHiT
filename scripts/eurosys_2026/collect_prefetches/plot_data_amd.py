@@ -24,7 +24,7 @@ def plot_json(json_file, output_file):
 
     df = pd.json_normalize(data, sep=".")
 
-    df = df[df["run_cfg.numa_policy"] == 4]
+    df = df[df["run_cfg.numa_policy"] == 1]
     df["run_cfg.fill_factor"] = pd.to_numeric(df["run_cfg.fill_factor"])
     df["prefetch_id"] = df["identifier"].str.split("-").str[0]
 
