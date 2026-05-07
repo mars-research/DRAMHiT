@@ -55,6 +55,7 @@ def plot_json(json_file, output_file):
             legend=False,
             ax=ax,
         )
+        ax.set_ylim(bottom=0)
         ax.set_title("Fill Factor vs Find Mops")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Find Mops")
@@ -85,6 +86,7 @@ def plot_json(json_file, output_file):
             marker="o",
             ax=ax,
         )
+        ax.set_ylim(bottom=0)
         ax.set_title(f"Fill Factor vs Stall Cycles/Find")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Stall Cycles/Find")
@@ -99,6 +101,7 @@ def plot_json(json_file, output_file):
             marker="o",
             ax=ax,
         )
+        ax.set_ylim(bottom=0)
         ax.set_title(f"Fill Factor vs FB full cycle/Find")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("FB full cycle/Find")
