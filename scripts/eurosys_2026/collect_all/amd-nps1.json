@@ -1,0 +1,1892 @@
+[
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 53687091000.0,
+    "expected_found": 53687091000.0,
+    "global_find_cycle": 61305012957.0,
+    "find_ops": 53687091000.0,
+    "global_insert_cycle": 95876813435.0,
+    "insert_ops": 53687091000.0,
+    "set_cycles": 114.0,
+    "get_cycles": 73.0,
+    "set_mops": 1819.0,
+    "get_mops": 2846.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 107374182000.0,
+    "expected_found": 107374182000.0,
+    "global_find_cycle": 124665563522.0,
+    "find_ops": 107374182000.0,
+    "global_insert_cycle": 193670255707.0,
+    "insert_ops": 107374182000.0,
+    "set_cycles": 115.0,
+    "get_cycles": 74.0,
+    "set_mops": 1801.0,
+    "get_mops": 2799.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 161061273000.0,
+    "expected_found": 161061273000.0,
+    "global_find_cycle": 189343744395.0,
+    "find_ops": 161061273000.0,
+    "global_insert_cycle": 293694210940.0,
+    "insert_ops": 161061273000.0,
+    "set_cycles": 116.0,
+    "get_cycles": 75.0,
+    "set_mops": 1782.0,
+    "get_mops": 2764.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 214748364000.0,
+    "expected_found": 214748364000.0,
+    "global_find_cycle": 257088800085.0,
+    "find_ops": 214748364000.0,
+    "global_insert_cycle": 399743306690.0,
+    "insert_ops": 214748364000.0,
+    "set_cycles": 119.0,
+    "get_cycles": 76.0,
+    "set_mops": 1745.0,
+    "get_mops": 2714.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 268435456000.0,
+    "expected_found": 268435456000.0,
+    "global_find_cycle": 334410661585.0,
+    "find_ops": 268435456000.0,
+    "global_insert_cycle": 517696290638.0,
+    "insert_ops": 268435456000.0,
+    "set_cycles": 123.0,
+    "get_cycles": 79.0,
+    "set_mops": 1685.0,
+    "get_mops": 2608.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 322122547000.0,
+    "expected_found": 322122547000.0,
+    "global_find_cycle": 429277551268.0,
+    "find_ops": 322122547000.0,
+    "global_insert_cycle": 656815073135.0,
+    "insert_ops": 322122547000.0,
+    "set_cycles": 130.0,
+    "get_cycles": 85.0,
+    "set_mops": 1593.0,
+    "get_mops": 2438.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 375809638000.0,
+    "expected_found": 375809638000.0,
+    "global_find_cycle": 562510408785.0,
+    "find_ops": 375809638000.0,
+    "global_insert_cycle": 825968379015.0,
+    "insert_ops": 375809638000.0,
+    "set_cycles": 140.0,
+    "get_cycles": 95.0,
+    "set_mops": 1478.0,
+    "get_mops": 2171.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 429496729000.0,
+    "expected_found": 429496729000.0,
+    "global_find_cycle": 782899655330.0,
+    "find_ops": 429496729000.0,
+    "global_insert_cycle": 1054704540045.0,
+    "insert_ops": 429496729000.0,
+    "set_cycles": 157.0,
+    "get_cycles": 116.0,
+    "set_mops": 1323.0,
+    "get_mops": 1782.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025",
+    "found": 483183820000.0,
+    "expected_found": 483183820000.0,
+    "global_find_cycle": 1228063910873.0,
+    "find_ops": 483183820000.0,
+    "global_insert_cycle": 1553984914495.0,
+    "insert_ops": 483183820000.0,
+    "set_cycles": 205.0,
+    "get_cycles": 162.0,
+    "set_mops": 1010.0,
+    "get_mops": 1278.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 53687091000.0,
+    "expected_found": 53687091000.0,
+    "global_find_cycle": 60328971658.0,
+    "find_ops": 53687091000.0,
+    "global_insert_cycle": 93958303303.0,
+    "insert_ops": 53687091000.0,
+    "set_cycles": 112.0,
+    "get_cycles": 71.0,
+    "set_mops": 1857.0,
+    "get_mops": 2892.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 107374182000.0,
+    "expected_found": 107374182000.0,
+    "global_find_cycle": 120410544963.0,
+    "find_ops": 107374182000.0,
+    "global_insert_cycle": 187204797325.0,
+    "insert_ops": 107374182000.0,
+    "set_cycles": 111.0,
+    "get_cycles": 71.0,
+    "set_mops": 1864.0,
+    "get_mops": 2898.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 161061273000.0,
+    "expected_found": 161061273000.0,
+    "global_find_cycle": 181618612500.0,
+    "find_ops": 161061273000.0,
+    "global_insert_cycle": 281649475543.0,
+    "insert_ops": 161061273000.0,
+    "set_cycles": 111.0,
+    "get_cycles": 72.0,
+    "set_mops": 1858.0,
+    "get_mops": 2882.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 214748364000.0,
+    "expected_found": 214748364000.0,
+    "global_find_cycle": 247430193757.0,
+    "find_ops": 214748364000.0,
+    "global_insert_cycle": 379090768420.0,
+    "insert_ops": 214748364000.0,
+    "set_cycles": 112.0,
+    "get_cycles": 73.0,
+    "set_mops": 1841.0,
+    "get_mops": 2820.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 268435456000.0,
+    "expected_found": 268435456000.0,
+    "global_find_cycle": 322749652225.0,
+    "find_ops": 268435456000.0,
+    "global_insert_cycle": 486644512088.0,
+    "insert_ops": 268435456000.0,
+    "set_cycles": 116.0,
+    "get_cycles": 76.0,
+    "set_mops": 1792.0,
+    "get_mops": 2703.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 322122547000.0,
+    "expected_found": 322122547000.0,
+    "global_find_cycle": 411311250968.0,
+    "find_ops": 322122547000.0,
+    "global_insert_cycle": 615896167997.0,
+    "insert_ops": 322122547000.0,
+    "set_cycles": 122.0,
+    "get_cycles": 81.0,
+    "set_mops": 1699.0,
+    "get_mops": 2545.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 375809638000.0,
+    "expected_found": 375809638000.0,
+    "global_find_cycle": 544304307105.0,
+    "find_ops": 375809638000.0,
+    "global_insert_cycle": 774446107955.0,
+    "insert_ops": 375809638000.0,
+    "set_cycles": 131.0,
+    "get_cycles": 92.0,
+    "set_mops": 1577.0,
+    "get_mops": 2243.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 429496729000.0,
+    "expected_found": 429496729000.0,
+    "global_find_cycle": 745644813810.0,
+    "find_ops": 429496729000.0,
+    "global_insert_cycle": 995602325510.0,
+    "insert_ops": 429496729000.0,
+    "set_cycles": 148.0,
+    "get_cycles": 111.0,
+    "set_mops": 1402.0,
+    "get_mops": 1872.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket",
+    "found": 483183820000.0,
+    "expected_found": 483183820000.0,
+    "global_find_cycle": 1130078574885.0,
+    "find_ops": 483183820000.0,
+    "global_insert_cycle": 1466930259633.0,
+    "insert_ops": 483183820000.0,
+    "set_cycles": 194.0,
+    "get_cycles": 149.0,
+    "set_mops": 1070.0,
+    "get_mops": 1389.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 53687091000.0,
+    "expected_found": 53687091000.0,
+    "global_find_cycle": 61847364443.0,
+    "find_ops": 53687091000.0,
+    "global_insert_cycle": 96173232058.0,
+    "insert_ops": 53687091000.0,
+    "set_cycles": 114.0,
+    "get_cycles": 73.0,
+    "set_mops": 1814.0,
+    "get_mops": 2821.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 107374182000.0,
+    "expected_found": 107374182000.0,
+    "global_find_cycle": 123803625497.0,
+    "find_ops": 107374182000.0,
+    "global_insert_cycle": 193173255340.0,
+    "insert_ops": 107374182000.0,
+    "set_cycles": 115.0,
+    "get_cycles": 73.0,
+    "set_mops": 1806.0,
+    "get_mops": 2818.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 161061273000.0,
+    "expected_found": 161061273000.0,
+    "global_find_cycle": 186891413832.0,
+    "find_ops": 161061273000.0,
+    "global_insert_cycle": 290922425137.0,
+    "insert_ops": 161061273000.0,
+    "set_cycles": 115.0,
+    "get_cycles": 74.0,
+    "set_mops": 1799.0,
+    "get_mops": 2800.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 214748364000.0,
+    "expected_found": 214748364000.0,
+    "global_find_cycle": 250884351933.0,
+    "find_ops": 214748364000.0,
+    "global_insert_cycle": 391854912020.0,
+    "insert_ops": 214748364000.0,
+    "set_cycles": 116.0,
+    "get_cycles": 74.0,
+    "set_mops": 1781.0,
+    "get_mops": 2781.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 268435456000.0,
+    "expected_found": 268435456000.0,
+    "global_find_cycle": 319301469175.0,
+    "find_ops": 268435456000.0,
+    "global_insert_cycle": 498354942963.0,
+    "insert_ops": 268435456000.0,
+    "set_cycles": 118.0,
+    "get_cycles": 76.0,
+    "set_mops": 1750.0,
+    "get_mops": 2732.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 322122547000.0,
+    "expected_found": 322122547000.0,
+    "global_find_cycle": 395455554423.0,
+    "find_ops": 322122547000.0,
+    "global_insert_cycle": 617832124552.0,
+    "insert_ops": 322122547000.0,
+    "set_cycles": 122.0,
+    "get_cycles": 78.0,
+    "set_mops": 1694.0,
+    "get_mops": 2647.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 375809638000.0,
+    "expected_found": 375809638000.0,
+    "global_find_cycle": 493610287268.0,
+    "find_ops": 375809638000.0,
+    "global_insert_cycle": 771234252392.0,
+    "insert_ops": 375809638000.0,
+    "set_cycles": 131.0,
+    "get_cycles": 84.0,
+    "set_mops": 1583.0,
+    "get_mops": 2474.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 429496729000.0,
+    "expected_found": 429496729000.0,
+    "global_find_cycle": 664499509277.0,
+    "find_ops": 429496729000.0,
+    "global_insert_cycle": 997069766810.0,
+    "insert_ops": 429496729000.0,
+    "set_cycles": 148.0,
+    "get_cycles": 99.0,
+    "set_mops": 1399.0,
+    "get_mops": 2100.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 483183820000.0,
+    "expected_found": 483183820000.0,
+    "global_find_cycle": 1191393317107.0,
+    "find_ops": 483183820000.0,
+    "global_insert_cycle": 1464810858225.0,
+    "insert_ops": 483183820000.0,
+    "set_cycles": 194.0,
+    "get_cycles": 157.0,
+    "set_mops": 1072.0,
+    "get_mops": 1318.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 53687091000.0,
+    "expected_found": 53687091000.0,
+    "global_find_cycle": 37727719315.0,
+    "find_ops": 53687091000.0,
+    "global_insert_cycle": 95836788873.0,
+    "insert_ops": 53687091000.0,
+    "set_cycles": 114.0,
+    "get_cycles": 44.0,
+    "set_mops": 1820.0,
+    "get_mops": 4624.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 107374182000.0,
+    "expected_found": 107374182000.0,
+    "global_find_cycle": 81444888070.0,
+    "find_ops": 107374182000.0,
+    "global_insert_cycle": 192133178445.0,
+    "insert_ops": 107374182000.0,
+    "set_cycles": 114.0,
+    "get_cycles": 48.0,
+    "set_mops": 1816.0,
+    "get_mops": 4284.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 161061273000.0,
+    "expected_found": 161061273000.0,
+    "global_find_cycle": 119168606115.0,
+    "find_ops": 161061273000.0,
+    "global_insert_cycle": 289858033335.0,
+    "insert_ops": 161061273000.0,
+    "set_cycles": 115.0,
+    "get_cycles": 47.0,
+    "set_mops": 1805.0,
+    "get_mops": 4392.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 214748364000.0,
+    "expected_found": 214748364000.0,
+    "global_find_cycle": 157440648885.0,
+    "find_ops": 214748364000.0,
+    "global_insert_cycle": 390030472780.0,
+    "insert_ops": 214748364000.0,
+    "set_cycles": 116.0,
+    "get_cycles": 46.0,
+    "set_mops": 1789.0,
+    "get_mops": 4432.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 268435456000.0,
+    "expected_found": 268435456000.0,
+    "global_find_cycle": 201380949770.0,
+    "find_ops": 268435456000.0,
+    "global_insert_cycle": 494803899492.0,
+    "insert_ops": 268435456000.0,
+    "set_cycles": 117.0,
+    "get_cycles": 48.0,
+    "set_mops": 1763.0,
+    "get_mops": 4332.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 322122547000.0,
+    "expected_found": 322122547000.0,
+    "global_find_cycle": 260986269733.0,
+    "find_ops": 322122547000.0,
+    "global_insert_cycle": 608694177552.0,
+    "insert_ops": 322122547000.0,
+    "set_cycles": 120.0,
+    "get_cycles": 51.0,
+    "set_mops": 1719.0,
+    "get_mops": 4011.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 375809638000.0,
+    "expected_found": 375809638000.0,
+    "global_find_cycle": 320343722335.0,
+    "find_ops": 375809638000.0,
+    "global_insert_cycle": 738702557938.0,
+    "insert_ops": 375809638000.0,
+    "set_cycles": 125.0,
+    "get_cycles": 54.0,
+    "set_mops": 1653.0,
+    "get_mops": 3812.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 429496729000.0,
+    "expected_found": 429496729000.0,
+    "global_find_cycle": 412132998680.0,
+    "find_ops": 429496729000.0,
+    "global_insert_cycle": 905346468390.0,
+    "insert_ops": 429496729000.0,
+    "set_cycles": 134.0,
+    "get_cycles": 61.0,
+    "set_mops": 1541.0,
+    "get_mops": 3386.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L2"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=L2-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "found": 483183820000.0,
+    "expected_found": 483183820000.0,
+    "global_find_cycle": 583292670675.0,
+    "find_ops": 483183820000.0,
+    "global_insert_cycle": 1148792201310.0,
+    "insert_ops": 483183820000.0,
+    "set_cycles": 152.0,
+    "get_cycles": 77.0,
+    "set_mops": 1366.0,
+    "get_mops": 2692.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 53687091000.0,
+    "expected_found": 53687091000.0,
+    "global_find_cycle": 36789912998.0,
+    "find_ops": 53687091000.0,
+    "global_insert_cycle": 88024607613.0,
+    "insert_ops": 53687091000.0,
+    "set_cycles": 104.0,
+    "get_cycles": 43.0,
+    "set_mops": 1982.0,
+    "get_mops": 4742.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 107374182000.0,
+    "expected_found": 107374182000.0,
+    "global_find_cycle": 75219989227.0,
+    "find_ops": 107374182000.0,
+    "global_insert_cycle": 186700278960.0,
+    "insert_ops": 107374182000.0,
+    "set_cycles": 111.0,
+    "get_cycles": 44.0,
+    "set_mops": 1869.0,
+    "get_mops": 4639.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 161061273000.0,
+    "expected_found": 161061273000.0,
+    "global_find_cycle": 112332806268.0,
+    "find_ops": 161061273000.0,
+    "global_insert_cycle": 264592218475.0,
+    "insert_ops": 161061273000.0,
+    "set_cycles": 105.0,
+    "get_cycles": 44.0,
+    "set_mops": 1978.0,
+    "get_mops": 4659.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 214748364000.0,
+    "expected_found": 214748364000.0,
+    "global_find_cycle": 151863695717.0,
+    "find_ops": 214748364000.0,
+    "global_insert_cycle": 371712592160.0,
+    "insert_ops": 214748364000.0,
+    "set_cycles": 110.0,
+    "get_cycles": 45.0,
+    "set_mops": 1877.0,
+    "get_mops": 4595.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 268435456000.0,
+    "expected_found": 268435456000.0,
+    "global_find_cycle": 204995105770.0,
+    "find_ops": 268435456000.0,
+    "global_insert_cycle": 439797638930.0,
+    "insert_ops": 268435456000.0,
+    "set_cycles": 104.0,
+    "get_cycles": 48.0,
+    "set_mops": 1983.0,
+    "get_mops": 4255.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 322122547000.0,
+    "expected_found": 322122547000.0,
+    "global_find_cycle": 246621456705.0,
+    "find_ops": 322122547000.0,
+    "global_insert_cycle": 578747292272.0,
+    "insert_ops": 322122547000.0,
+    "set_cycles": 114.0,
+    "get_cycles": 48.0,
+    "set_mops": 1808.0,
+    "get_mops": 4244.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 375809638000.0,
+    "expected_found": 375809638000.0,
+    "global_find_cycle": 319531248367.0,
+    "find_ops": 375809638000.0,
+    "global_insert_cycle": 650758972987.0,
+    "insert_ops": 375809638000.0,
+    "set_cycles": 110.0,
+    "get_cycles": 54.0,
+    "set_mops": 1876.0,
+    "get_mops": 3822.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 429496729000.0,
+    "expected_found": 429496729000.0,
+    "global_find_cycle": 445994825250.0,
+    "find_ops": 429496729000.0,
+    "global_insert_cycle": 962431139150.0,
+    "insert_ops": 429496729000.0,
+    "set_cycles": 143.0,
+    "get_cycles": 66.0,
+    "set_mops": 1450.0,
+    "get_mops": 3129.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025+bucket+simd",
+    "found": 483183820000.0,
+    "expected_found": 483183820000.0,
+    "global_find_cycle": 802996230238.0,
+    "find_ops": 483183820000.0,
+    "global_insert_cycle": 1251419718380.0,
+    "insert_ops": 483183820000.0,
+    "set_cycles": 165.0,
+    "get_cycles": 106.0,
+    "set_mops": 1254.0,
+    "get_mops": 1955.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 53687091000.0,
+    "expected_found": 53687091000.0,
+    "global_find_cycle": 35439727245.0,
+    "find_ops": 53687091000.0,
+    "global_insert_cycle": 93024116575.0,
+    "insert_ops": 53687091000.0,
+    "set_cycles": 110.0,
+    "get_cycles": 42.0,
+    "set_mops": 1875.0,
+    "get_mops": 4923.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 107374182000.0,
+    "expected_found": 107374182000.0,
+    "global_find_cycle": 73997354177.0,
+    "find_ops": 107374182000.0,
+    "global_insert_cycle": 164094621665.0,
+    "insert_ops": 107374182000.0,
+    "set_cycles": 97.0,
+    "get_cycles": 44.0,
+    "set_mops": 2126.0,
+    "get_mops": 4715.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 161061273000.0,
+    "expected_found": 161061273000.0,
+    "global_find_cycle": 110703289905.0,
+    "find_ops": 161061273000.0,
+    "global_insert_cycle": 255807226285.0,
+    "insert_ops": 161061273000.0,
+    "set_cycles": 101.0,
+    "get_cycles": 43.0,
+    "set_mops": 2046.0,
+    "get_mops": 4728.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 214748364000.0,
+    "expected_found": 214748364000.0,
+    "global_find_cycle": 147358028870.0,
+    "find_ops": 214748364000.0,
+    "global_insert_cycle": 339907655978.0,
+    "insert_ops": 214748364000.0,
+    "set_cycles": 101.0,
+    "get_cycles": 43.0,
+    "set_mops": 2053.0,
+    "get_mops": 4736.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 268435456000.0,
+    "expected_found": 268435456000.0,
+    "global_find_cycle": 192045447653.0,
+    "find_ops": 268435456000.0,
+    "global_insert_cycle": 453765741813.0,
+    "insert_ops": 268435456000.0,
+    "set_cycles": 108.0,
+    "get_cycles": 45.0,
+    "set_mops": 1922.0,
+    "get_mops": 4542.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 322122547000.0,
+    "expected_found": 322122547000.0,
+    "global_find_cycle": 240525788133.0,
+    "find_ops": 322122547000.0,
+    "global_insert_cycle": 582003952725.0,
+    "insert_ops": 322122547000.0,
+    "set_cycles": 115.0,
+    "get_cycles": 47.0,
+    "set_mops": 1798.0,
+    "get_mops": 4352.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 375809638000.0,
+    "expected_found": 375809638000.0,
+    "global_find_cycle": 310531750815.0,
+    "find_ops": 375809638000.0,
+    "global_insert_cycle": 729186288220.0,
+    "insert_ops": 375809638000.0,
+    "set_cycles": 124.0,
+    "get_cycles": 52.0,
+    "set_mops": 1674.0,
+    "get_mops": 3933.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 429496729000.0,
+    "expected_found": 429496729000.0,
+    "global_find_cycle": 450406642952.0,
+    "find_ops": 429496729000.0,
+    "global_insert_cycle": 904901849248.0,
+    "insert_ops": 429496729000.0,
+    "set_cycles": 134.0,
+    "get_cycles": 67.0,
+    "set_mops": 1542.0,
+    "get_mops": 3099.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd",
+    "found": 483183820000.0,
+    "expected_found": 483183820000.0,
+    "global_find_cycle": 836275250070.0,
+    "find_ops": 483183820000.0,
+    "global_insert_cycle": 1186906828542.0,
+    "insert_ops": 483183820000.0,
+    "set_cycles": 157.0,
+    "get_cycles": 110.0,
+    "set_mops": 1323.0,
+    "get_mops": 1877.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 53687091000.0,
+    "expected_found": 53687091000.0,
+    "global_find_cycle": 35822285005.0,
+    "find_ops": 53687091000.0,
+    "global_insert_cycle": 83815751013.0,
+    "insert_ops": 53687091000.0,
+    "set_cycles": 99.0,
+    "get_cycles": 42.0,
+    "set_mops": 2081.0,
+    "get_mops": 4870.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 107374182000.0,
+    "expected_found": 107374182000.0,
+    "global_find_cycle": 72235689533.0,
+    "find_ops": 107374182000.0,
+    "global_insert_cycle": 179349495130.0,
+    "insert_ops": 107374182000.0,
+    "set_cycles": 106.0,
+    "get_cycles": 43.0,
+    "set_mops": 1945.0,
+    "get_mops": 4830.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 161061273000.0,
+    "expected_found": 161061273000.0,
+    "global_find_cycle": 109940111287.0,
+    "find_ops": 161061273000.0,
+    "global_insert_cycle": 244833034420.0,
+    "insert_ops": 161061273000.0,
+    "set_cycles": 97.0,
+    "get_cycles": 43.0,
+    "set_mops": 2137.0,
+    "get_mops": 4761.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 214748364000.0,
+    "expected_found": 214748364000.0,
+    "global_find_cycle": 149710723500.0,
+    "find_ops": 214748364000.0,
+    "global_insert_cycle": 375322196957.0,
+    "insert_ops": 214748364000.0,
+    "set_cycles": 111.0,
+    "get_cycles": 44.0,
+    "set_mops": 1859.0,
+    "get_mops": 4661.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 268435456000.0,
+    "expected_found": 268435456000.0,
+    "global_find_cycle": 194525825618.0,
+    "find_ops": 268435456000.0,
+    "global_insert_cycle": 418458049783.0,
+    "insert_ops": 268435456000.0,
+    "set_cycles": 99.0,
+    "get_cycles": 46.0,
+    "set_mops": 2084.0,
+    "get_mops": 4484.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 322122547000.0,
+    "expected_found": 322122547000.0,
+    "global_find_cycle": 246555240133.0,
+    "find_ops": 322122547000.0,
+    "global_insert_cycle": 590887665225.0,
+    "insert_ops": 322122547000.0,
+    "set_cycles": 117.0,
+    "get_cycles": 48.0,
+    "set_mops": 1771.0,
+    "get_mops": 4246.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 375809638000.0,
+    "expected_found": 375809638000.0,
+    "global_find_cycle": 302551548130.0,
+    "find_ops": 375809638000.0,
+    "global_insert_cycle": 716167402568.0,
+    "insert_ops": 375809638000.0,
+    "set_cycles": 121.0,
+    "get_cycles": 51.0,
+    "set_mops": 1705.0,
+    "get_mops": 4036.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 429496729000.0,
+    "expected_found": 429496729000.0,
+    "global_find_cycle": 385518117335.0,
+    "find_ops": 429496729000.0,
+    "global_insert_cycle": 802040406862.0,
+    "insert_ops": 429496729000.0,
+    "set_cycles": 119.0,
+    "get_cycles": 57.0,
+    "set_mops": 1740.0,
+    "get_mops": 3620.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 1000,
+      "readFactor": 1000,
+      "numThreads": 64,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=1000-numThreads=64-numa_policy=1-readFactor=1000-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "found": 483183820000.0,
+    "expected_found": 483183820000.0,
+    "global_find_cycle": 535879954837.0,
+    "find_ops": 483183820000.0,
+    "global_insert_cycle": 1098596461040.0,
+    "insert_ops": 483183820000.0,
+    "set_cycles": 145.0,
+    "get_cycles": 70.0,
+    "set_mops": 1429.0,
+    "get_mops": 2930.0
+  }
+]
