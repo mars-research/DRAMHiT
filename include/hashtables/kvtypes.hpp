@@ -90,6 +90,9 @@ struct ItemQueue {
 #if defined(COMPARE_HASH) || defined(UNIFORM_HT_SUPPORT)
   uint64_t key_hash;  // 8 bytes
 #endif
+#ifdef PART_ID
+   uint32_t part_id;
+#endif
 };
 
 static_assert(offsetof(struct ItemQueue, key) == 0, "key must be first");

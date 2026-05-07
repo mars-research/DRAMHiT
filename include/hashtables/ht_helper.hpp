@@ -27,9 +27,9 @@ constexpr auto ADDR = static_cast<void *>(0x0ULL);
 constexpr auto PROT_RW = PROT_READ | PROT_WRITE;
 constexpr auto MAP_FLAGS_1GB = MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
 constexpr auto MAP_FLAGS_2MB = MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS;
-constexpr auto ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
-constexpr auto TWOMB_PAGE_SZ = 2ULL * 1024 * 1024;
 
+constexpr uint64_t ONEGB_PAGE_SZ = 1ULL * 1024 * 1024 * 1024;
+constexpr uint64_t TWOMB_PAGE_SZ = 2ULL * 1024 * 1024;
 constexpr uint64_t CACHE_BLOCK_BITS = 6;
 constexpr uint64_t CACHE_BLOCK_MASK = (1ULL << CACHE_BLOCK_BITS) - 1;
 
@@ -162,7 +162,7 @@ static inline void prefetch_with_write(Kmer_KV *k) {
   k->padding[0] = 1;
 }
 
-inline size_t round_hugepage(size_t n) {
+inline uint64_t round_hugepage(uint64_t n) {
   if (n < ONEGB_PAGE_SZ) return (((n - 1) / TWOMB_PAGE_SZ) + 1) * TWOMB_PAGE_SZ;
   return (((n - 1) / ONEGB_PAGE_SZ) + 1) * ONEGB_PAGE_SZ;
 }
@@ -215,23 +215,23 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   }
   *out_fd = fd;
 
-  if (alloc_sz >= ONEGB_PAGE_SZ) {
+  //if (alloc_sz >= ONEGB_PAGE_SZ) {
     distribute_mem_to_nodes(addr, alloc_sz,
                             (numa_policy_threads)config.numa_split);
-  }
+    // }
 
-  memset(addr, 0, capacity * sizeof(T));
+  memset(addr, 0, alloc_sz);
   return addr;
 }
 
 template <class T>
 void free_mem(T *addr, uint64_t capacity, int id, int fd) {
-  size_t alloc_sz = capacity * sizeof(T);
+  uint64_t alloc_sz = capacity * sizeof(T);
   alloc_sz = round_hugepage(alloc_sz);
 
   if (addr) {
-    munmap(addr, capacity * sizeof(T));
-    PLOGI.printf("%p with sz %lu unmapped", addr, capacity * sizeof(T));
+    munmap(addr, alloc_sz);
+    PLOGI.printf("%p with sz %lu unmapped", addr, alloc_sz);
   }
 }
 

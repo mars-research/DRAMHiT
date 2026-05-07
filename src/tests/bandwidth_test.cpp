@@ -6,6 +6,7 @@
 #include "tests/BandwidthTest.hpp"
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
+#include "helper.hpp"
 
 namespace kmercounter {
 
@@ -18,7 +19,6 @@ using Cacheline = struct {
   char pad[64];
 };
 using BWHugepageAlloc = huge_page_allocator<Cacheline>;
-// BWHugepageAlloc hugepage_allocator_inst_bw;
 
 inline uint64_t knuth64(uint64_t x) { return x * 11400714819323198485ULL; }
 
@@ -42,44 +42,36 @@ inline void prefetch(const Cacheline* vec, uint64_t idx) {
  * @param current_node The NUMA node the thread is currently executing on.
  * @return true if migration succeeded, false otherwise.
  */
-void BandwidthTest::run(Shard *sh, const Configuration &config,
-                        std::barrier<VoidFn> *barrier) {
+void BandwidthTest::run(Shard* sh, const Configuration& config,
+                        std::barrier<VoidFn>* barrier) {
   uint64_t size = utils::next_pow2(config.ht_size);
-  uint64_t SIZE_2MB = 2ULL * 1024 * 1024;
-  uint64_t SIZE_1GB = 1ULL * 1024 * 1024 * 1024;
-  uint64_t bytes = size * sizeof(Cacheline);
-  if (bytes > SIZE_1GB) {
-    bytes = (((bytes - 1) / SIZE_1GB) + 1) * SIZE_1GB;
-  } else {
-    bytes = (((bytes - 1) / SIZE_2MB) + 1) * SIZE_2MB;
-  }
+  uint64_t start, end;
   if (sh->shard_idx == 0) {
-    PLOGI.printf("allocating %lu mb per thread", (bytes / (1024ULL * 1024ULL)));
+      PLOGI.printf("allocating %lu mb per thread",
+                   (size * sizeof(Cacheline)) / (1024ULL * 1024ULL));
+    start = RDTSC_START();
   }
-  int to_node = sh->numa_node;
+
+  BWHugepageAlloc hugepage_allocator_inst_bw;
+  Cacheline* arr = hugepage_allocator_inst_bw.allocate(size);
+
   if (config.numa_split == THREADS_REMOTE_NUMA_NODE ||
       config.numa_split == THREADS_ALL_NODES_REMOTE_ACCESS) {
+    int to_node = sh->numa_node;
     if ((to_node = find_remote_node(sh->numa_node)) < 0) {
       PLOGE.printf("failed to find remote node");
       abort();
     }
+
+    if (!move_memory_to_node((void*)(&arr[0]),
+                             hugepage_allocator_inst_bw.get_actual_bytes(size),
+                             to_node)) {
+      PLOGE.printf("failed to migrate workload memory");
+      abort();
+    }
   }
 
-  // Use rdtsc because mmap might be fast ?
-  uint64_t start, end;
-  if (sh->shard_idx == 0) {
-    start = RDTSC_START();
-  }
-
-  // MMAP
-  BWHugepageAlloc hugepage_allocator_inst_bw;
-
-  Cacheline* arr = hugepage_allocator_inst_bw.allocate(size);
-
-  if (!move_memory_to_node((void *)(&arr[0]), bytes, to_node)) {
-    PLOGE.printf("failed to migrate workload memory");
-    abort();
-  }
+  hugepage_allocator_inst_bw.prefault(arr, size);
 
   if (sh->shard_idx == 0) {
     end = RDTSCP();
@@ -93,9 +85,10 @@ void BandwidthTest::run(Shard *sh, const Configuration &config,
   }
   barrier->arrive_and_wait();
 
-  // write to every cache line
+  __m512i zero_vec_512 = _mm512_setzero_si512();
+
   for (uint64_t i = 0; i < size; i++) {
-    arr[i].pad[0] = 'c';
+    _mm512_stream_si512((__m512i*)&arr[i], zero_vec_512);
   }
 
   if (sh->shard_idx == 0) {

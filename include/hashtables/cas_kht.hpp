@@ -58,7 +58,8 @@ class CASHashTable : public BaseHashTable {
   uint32_t FIND_QUEUE_SZ_MASK;
   uint64_t HT_BUCKET_MASK;
 
-#define KEYMSK ((__mmask8)(0b01010101))
+  const static __mmask8 KEYMSK = 0b01010101;
+// #define KEYMSK ((__mmask8)(0b01010101))
 #define PREFETCH_INSERT_NEXT_DISTANCE 8
 #define PREFETCH_FIND_NEXT_DISTANCE 8
 

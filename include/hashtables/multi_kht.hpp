@@ -402,7 +402,7 @@ class MultiHashTable : public BaseHashTable {
     size_t offset = q->idx - idx;
 
     KV *curr_cacheline = &this->backup_hashtable[idx];
-    uint64_t found = curr_cacheline->find_simd(q, &retry, vp, offset);
+    uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
 
     if (retry) {
 #ifdef UNIFORM_HT_SUPPORT
@@ -446,7 +446,7 @@ class MultiHashTable : public BaseHashTable {
 
     KV *entry = &this->hashtable[idx];
     uint64_t retry;
-    uint64_t found = entry->find_simd(q, &retry, vp, offset);
+    uint64_t found = entry->find_simd(q, &retry, vp);
 
     if (retry) {
 #ifdef FAST_RANGE

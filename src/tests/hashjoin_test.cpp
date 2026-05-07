@@ -6,7 +6,6 @@
 // * Optimize hash table in hash join:
 // https://dev.mysql.com/worklog/task/?id=13459
 #include <unistd.h>
-
 #include <algorithm>
 #include <atomic>
 #include <barrier>
@@ -32,14 +31,15 @@
 #include "input_reader/eth_rel_gen.hpp"
 #include "misc_lib.h"
 #include "plog/Log.h"
-#include "print_stats.h"
-#include "queues/section_queues.hpp"
+//#include "print_stats.h"
+//#include "queues/section_queues.hpp"
 #include "sync.h"
 #include "tests/HashjoinTest.hpp"
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
+#include "utils/hugepage_arena.hpp"
 #include "zipf_distribution.hpp"
-
+#include "hasher.hpp"
 // #define DEBUG_HJ
 // #define MATERIALIZE
 #ifdef DEBUG_HJ
@@ -81,6 +81,10 @@ using Element = KeyValuePair;
 using HugepageAlloc = huge_page_allocator<Element>;
 using HugepageVec = std::vector<Element, HugepageAlloc>;
 
+JoinHugepageAlloc hugepage_alloc_inst_join_element;
+HugepageAlloc hugepage_alloc_inst_element;
+
+#define CACHELINE_SIZE 64
 #define ELE_NUM_PER_CACHE_LINE ((CACHELINE_SIZE) / sizeof(Element))
 #define PREFETCHES_AHEAD \
   ((ELE_NUM_PER_CACHE_LINE) * (PREFETCH_AHEAD_X_CACHELINE))
@@ -401,7 +405,7 @@ void hashjoin(Shard* sh, HugepageVec& build, HugepageVec& probe, JoinVec& mvec,
               std::barrier<std::function<void()>>* barrier) {
   uint64_t ht_size = config.relation_r_size * 100 / config.ht_fill;
   BaseHashTable* ht = init_ht(ht_size, sh->shard_idx);
-  // config.ht_size = utils::next_pow2(config.ht_size);
+
   // Measure Build
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::insertions;
@@ -624,6 +628,11 @@ inline void print_histogram_stats(const std::vector<uint64_t>& histogram,
   PLOGI.printf("%s", output.c_str());
 }
 
+struct NumaHugepageStats {
+    uint64_t free_1gb_pages;
+    uint64_t free_2mb_pages;
+};
+
 void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
                    JoinVec& mvec,
                    std::barrier<std::function<void()>>* barrier) {
@@ -640,11 +649,15 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     s_histogram[i] = 0;
   }
 
+  // set it to a static number of 5gb
+  // ensure it has enough warmed-up and zeroed local hugepages
+  // per thread warmed-up memory
+  HugepageArena<Element> arena(1,50);
+
   if (tid == 0) {
-    // Global_HashTables.resize(partition_num);
     Global_R_Buckets.resize(config.num_threads);
     Global_S_Buckets.resize(config.num_threads);
-    // Global_Histogram.resize(config.num_threads);
+
 
     cur_phase = ExecPhase::insertions;
     g_app_record_start = true;
@@ -698,11 +711,13 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     duration = RDTSC_START();
   }
   // 2. Allocate memory for buckets
-  HugepageAlloc hugepage_alloc_inst_element;
-  Element* build_storage =
-      hugepage_alloc_inst_element.allocate(total_build_capacity);
-  Element* probe_storage =
-      hugepage_alloc_inst_element.allocate(total_probe_capacity);
+  Element* build_storage = arena.alloc(total_build_capacity);
+  Element* probe_storage = arena.alloc(total_probe_capacity);
+
+  // Element* build_storage = hugepage_alloc_inst_element.allocate(total_build_capacity);
+  // Element* probe_storage = hugepage_alloc_inst_element.allocate(total_probe_capacity);
+  // hugepage_alloc_inst_element.prefault(build_storage, total_build_capacity);
+  // hugepage_alloc_inst_element.prefault(probe_storage, total_probe_capacity);
 
   if (tid == 0) {
     duration = RDTSCP() - duration;
@@ -772,7 +787,7 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   barrier->arrive_and_wait();
   if (tid == 0) {
     phrase3_cycle = g_find_end - g_find_start;
-    PLOGI.printf("took %lu cycles for phrase3", phrase3_cycle);
+    PLOGI.printf("took %lu cycles, %lu cycle per item phrase3", phrase3_cycle, phrase3_cycle/(build.size()+probe.size()));
   }
 
   // Completion of partition phrase
@@ -797,6 +812,8 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
   barrier->arrive_and_wait();
 
   uint64_t found = 0;
+
+// #define RADIX_DO_JOIN
 #ifdef RADIX_DO_JOIN
   for (size_t part_id = tid; part_id < partition_num;
        part_id += config.num_threads) {
@@ -814,9 +831,7 @@ void radixjoin2016(Shard* sh, HugepageVec& build, HugepageVec& probe,
     //              (ht_sz * sizeof(Element) / (1024 * 1024)), build_sz *
     //              sizeof(Element)/(1024 * 1024));
 #endif
-    HugepageVec ht_storage(ht_sz, hugepage_alloc_inst_element);
-    for (uint64_t i = 0; i < ht_sz; i++)
-      ht_storage[i].key = ht_storage[i].value = 0;
+    Element* ht_storage = arena.alloc(ht_sz);
     RadixArrayHashTable ht(ht_sz, ht_storage);
 
     // std::unordered_set<key_type> ht(ht_sz);
@@ -939,8 +954,13 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     partition_sz_s += config.relation_s_size % config.num_threads;
   }
 
-  JoinHugepageAlloc hugepage_alloc_inst_join_element;
-  HugepageAlloc hugepage_alloc_inst_element;
+
+  //HugepageArena<Element> arena(partition_sz_r+partition_sz_s,0);
+  //HugepageArena<JoinElement> arena_material(partition_sz_s,0);
+  //Element* build_relation = arena.alloc(partition_sz_r);
+  //Element* probe_relation = arena.alloc(partition_sz_s);
+  //JoinElement* join_relation = arena_material.alloc(parittion_sz_s);
+
   // This is slow as we need to copy.
   // But it ensures huge page and numa correctness.
   // This is good enough for generated workload,
@@ -948,6 +968,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   HugepageVec build_relation(partition_sz_r, hugepage_alloc_inst_element);
   HugepageVec probe_relation(partition_sz_s, hugepage_alloc_inst_element);
   JoinVec join_relation(partition_sz_s, hugepage_alloc_inst_join_element);
+
   // Copy data from global vec into hugepage back vec.
   Element e;
   uint64_t workload_idx = 0;
@@ -961,7 +982,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     key_type v = g_zipf_values->at(workload_idx);
     e.key = v;
     e.value = 0xef;
-    build_relation.at(i) = e;
+    build_relation[i] = e;
   }
 
   workload_idx = 0;
@@ -976,7 +997,7 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     key_type v = g_zipf_values->at(workload_idx);
     e.key = v;
     e.value = 0xde;
-    probe_relation.at(i) = e;
+    probe_relation[i] = e;
   }
 
   if (config.mode == HASHJOIN) {

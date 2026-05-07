@@ -13,8 +13,8 @@ data produced on single socket amd machine.
 each point has  mmap+mbind/write/read   (unit: cycles per cacheline)
 
 ---------  | map_populate    | no map_populate | 
-32 threads | 51/46/1         | 0/98/1       | 
-64 threads | 835/92/2        | 0/183/2      |
+32 threads | 51/20/1         | 52/20/1       | 
+64 threads | 1599/43/2       | 953/42/2      |
 
 
 # 08/14

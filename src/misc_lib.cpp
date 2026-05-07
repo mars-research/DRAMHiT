@@ -5,6 +5,7 @@
 #include "print_stats.h"
 #include "types.hpp"
 #include "hashtables/kvtypes.cpp"
+#include "all_ht_types.hpp"
 
 int find_remote_node(int current_node) {
     if (numa_available() < 0) {
@@ -27,10 +28,10 @@ bool move_memory_to_node(void* addr, uint64_t size, int to_node){
 
     unsigned long nodemask = (1UL << to_node);
 
-    long ret = mbind(addr, size, MPOL_BIND, &nodemask, sizeof(nodemask) * 8, MPOL_MF_MOVE);
+    long ret = mbind(addr, size, MPOL_BIND, &nodemask, sizeof(nodemask) * 8, MPOL_MF_MOVE | MPOL_MF_STRICT);
 
     if (ret != 0) {
-        PLOGE.printf("mbind failed to migrate memory to remote node");
+        PLOGE.printf("mbind failed to migrate memory to node %d", to_node);
         return false;
     }
 
@@ -232,27 +233,27 @@ void print_stats(Shard *all_sh, Configuration &config) {
 
     uint64_t throughput_cpo = 0;
     if(sum_op > 0)
-        throughput_cpo = join_cycles / sum_op;
+        throughput_cpo = (total_find_cycles + total_insert_cycles)/sum_op;
 
     if(config.mode != HASHJOIN){
 
         uint64_t part_cpo = 0;
         if(avg_insert_duration >0)
-            part_cpo = avg_insert_duration / sum_op;
+            part_cpo = total_insert_cycles / sum_op;
 
         uint64_t join_cpo = 0;
         if(avg_find_duration > 0)
-           join_cpo = avg_find_duration / sum_op;
+           join_cpo = total_find_cycles/ sum_op;
 
         PLOGI.printf(
             "\n"
             "partition phase cycles: %lu, partition_cpo: %lu\n"
             "join phase cycles: %lu, join_cpo: %lu\n"
-            "throughput mops: %lu, throughput_cpo: %lu, duration: %lu\n"
+            "throughput_mops: %lu, duration: %lu, cycle_per_tuple: %lu\n"
             "\n",
             avg_insert_duration, part_cpo,
             avg_find_duration, join_cpo,
-            throughput, throughput_cpo, join_cycles
+            throughput, join_cycles, throughput_cpo
         );
     }else {
         PLOGI.printf(
@@ -261,11 +262,11 @@ void print_stats(Shard *all_sh, Configuration &config) {
             "build_phrase_mops : %lu, cycle_per_op : %lu\n"
             "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
             "joined : %lu out of %lu, %.2f%%\n"
-            "throughput_mops : %lu, ops: %lu, duration: %lu\n"
+            "throughput_mops : %lu, ops: %lu, duration: %lu, cycle_per_tuple: %lu\n"
             "============================================\n",
             insert_mops, cycles_per_insert, find_mops, cycles_per_find,
             total_found, config.relation_s_size, total_found * 100.0 / config.relation_s_size,
-            throughput, sum_op, join_cycles);
+            throughput, sum_op, join_cycles, throughput_cpo);
     }
   } else if(config.mode == BW){
       uint64_t bytes = total_finds * 64ULL;

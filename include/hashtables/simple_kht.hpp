@@ -29,7 +29,8 @@
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
-#include "misc_lib.h"
+// #include "misc_lib.h"
+#include "base_kht.hpp"
 #include "plog/Log.h"
 #include "sync.h"
 

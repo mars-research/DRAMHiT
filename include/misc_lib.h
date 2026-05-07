@@ -22,7 +22,7 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz);
 int find_remote_node(int current_node);
 bool move_memory_to_node(void* addr, uint64_t size, int to_node);
 
-#include "all_ht_types.hpp"
+#include "hashtables/base_kht.hpp"
 namespace kmercounter{
 BaseHashTable* init_ht(const uint64_t sz, uint8_t id);
 }
