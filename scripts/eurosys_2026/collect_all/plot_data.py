@@ -19,15 +19,12 @@ def plot_json(json_file, output_file):
         data = json.load(f)
 
     # Convert to pandas DataFrame
-    df = pd.DataFrame(data)
-
     df = pd.json_normalize(data, sep=".")
 
-    df_single = df[df["run_cfg.numa_policy"] == 4]
-    df_dual = df[df["run_cfg.numa_policy"] == 1]
+    df_single = df[df["run_cfg.numa_policy"] == 4].copy()
+    df_dual = df[df["run_cfg.numa_policy"] == 1].copy()
 
     def make_identifier(build_cfg: str) -> str:
-        # Parse into dict
         bcfg = dict(part.split("=", 1) for part in build_cfg.split("-"))
         ret = ""
         if bcfg["DRAMHiT_VARIANT"] == "2025":
@@ -35,109 +32,76 @@ def plot_json(json_file, output_file):
         elif bcfg["DRAMHiT_VARIANT"] == "2025_INLINE":
             ret += "inline"
 
-        for k in bcfg.keys():
-            if k == "BUCKETIZATION" and bcfg[k] == "ON":
+        for k, v in bcfg.items():
+            if k == "BUCKETIZATION" and v == "ON":
                 ret += "+bucket"
-            elif k == "BRANCH" and bcfg[k] == "simd":
+            elif k == "BRANCH" and v == "simd":
                 ret += "+simd"
-            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
+            elif k == "UNIFORM_PROBING" and v == "ON":
                 ret += "+uniform"
-            elif k == "PREFETCH" and bcfg[k] == "DOUBLE":
+            elif k == "PREFETCH" and v == "DOUBLE":
                 ret += "+2prefetch"
-
         return ret
 
     df_single["build_cfg_str"] = df_single["build_cfg_str"].apply(make_identifier)
     df_dual["build_cfg_str"] = df_dual["build_cfg_str"].apply(make_identifier)
 
     ids1 = df_single["build_cfg_str"].unique()
-    ids2 = df_dual["build_cfg_str"].unique()
-
-    if (ids1 != ids2).any():
-        raise ValueError(
-            f"Identifiers mismatch.\nOnly in df_single: {ids1 - ids2}\nOnly in df_other: {ids2 - ids1}"
-        )
-    palette = sns.color_palette("rocket", n_colors=len(ids1))
-    palette = palette[::-1]  # reverse the palette
-    sns.set_theme(style="whitegrid", palette=palette)
+    
+    # Use colorblind palette
+    palette = sns.color_palette("colorblind", n_colors=len(ids1))
+    sns.set_theme(style="whitegrid")
 
     custom_lines = [
         Line2D([0], [0], color=palette[i], marker="o", label=uid)
         for i, uid in enumerate(ids1)
     ]
 
-    fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=2)
+    fig.legend(fontsize=9, handles=custom_lines, loc="upper center", ncol=3)
 
+    # Left Column: Set (Insertions) | Right Column: Get (Finds)
+
+    # Plot 0,0: Single Set
     ax = axes[0][0]
-    sns.lineplot(
-        data=df_single,
-        x="run_cfg.fill_factor",
-        y="get_mops",
-        hue="build_cfg_str",
-        marker="o",
-        ax=ax,
-        legend=False,
-    )
+    sns.lineplot(data=df_single, x="run_cfg.fill_factor", y="set_mops", hue="build_cfg_str", 
+                 marker="o", ax=ax, legend=False, palette=palette)
+    ax.set_title("Single socket - Set Throughput")
+    ax.set_xlabel("Fill Factor(%)")
+    ax.set_ylabel("Set Mops")
+    ax.set_ylim(bottom=0)
+    ax.grid(True, which="both", axis="both", linestyle="--")
+
+    # Plot 0,1: Single Find
+    ax = axes[0][1]
+    sns.lineplot(data=df_single, x="run_cfg.fill_factor", y="get_mops", hue="build_cfg_str", 
+                 marker="o", ax=ax, legend=False, palette=palette)
     ax.set_title("Single socket - Find Throughput")
     ax.set_xlabel("Fill Factor(%)")
     ax.set_ylabel("Find Mops (Millions)")
-    ax.grid(True, which="major", axis="both", linestyle="--")
-    # ax.set_xlim(0)
-    # ax.set_ylim(0)
+    ax.set_ylim(bottom=0)
+    ax.grid(True, which="both", axis="both", linestyle="--")
 
-    ax = axes[0][1]
-    sns.lineplot(
-        data=df_single,
-        x="run_cfg.fill_factor",
-        y="set_mops",
-        hue="build_cfg_str",
-        marker="o",
-        ax=ax,
-        legend=False,
-    )
-    ax.set_title(f"Single socket - Set Throughput")
+    # Plot 1,0: Dual Set
+    ax = axes[1][0]
+    sns.lineplot(data=df_dual, x="run_cfg.fill_factor", y="set_mops", hue="build_cfg_str", 
+                 marker="o", ax=ax, legend=False, palette=palette)
+    ax.set_title("Dual socket - Set Throughput")
     ax.set_xlabel("Fill Factor(%)")
     ax.set_ylabel("Set Mops")
-    ax.grid(True, which="major", axis="both", linestyle="--")
-    # ax.set_xlim(0)
-    # ax.set_ylim(0)
+    ax.set_ylim(bottom=0)
+    ax.grid(True, which="both", axis="both", linestyle="--")
 
-    ax = axes[1][0]
-    sns.lineplot(
-        data=df_dual,
-        x="run_cfg.fill_factor",
-        y="get_mops",
-        hue="build_cfg_str",
-        marker="o",
-        ax=ax,
-        legend=False,
-    )
+    # Plot 1,1: Dual Find
+    ax = axes[1][1]
+    sns.lineplot(data=df_dual, x="run_cfg.fill_factor", y="get_mops", hue="build_cfg_str", 
+                 marker="o", ax=ax, legend=False, palette=palette)
     ax.set_title("Dual socket - Find Throughput")
     ax.set_xlabel("Fill Factor(%)")
     ax.set_ylabel("Find Mops")
-    ax.grid(True, which="major", axis="both", linestyle="--")
-    # ax.set_xlim(0)
-    # ax.set_ylim(0)
+    ax.set_ylim(bottom=0)
+    ax.grid(True, which="both", axis="both", linestyle="--")
 
-    ax = axes[1][1]
-    sns.lineplot(
-        data=df_dual,
-        x="run_cfg.fill_factor",
-        y="set_mops",
-        hue="build_cfg_str",
-        marker="o",
-        ax=ax,
-        legend=False,
-    )
-    ax.set_title(f"Dual socket - Set Throughput")
-    ax.set_xlabel("Fill Factor(%)")
-    ax.set_ylabel("Set Mops")
-    ax.grid(True, which="major", axis="both", linestyle="--")
-
-    # ax.set_xlim(0)
-    # ax.set_ylim(0)
-
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.tight_layout(rect=[0, 0, 1, 0.93])
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 
@@ -147,6 +111,4 @@ if __name__ == "__main__":
         print("Usage: python plot_dramhit.py <input.json> <output.png>")
         sys.exit(1)
 
-    json_file = sys.argv[1]
-    output_file = sys.argv[2]
-    plot_json(json_file, output_file)
+    plot_json(sys.argv[1], sys.argv[2])
