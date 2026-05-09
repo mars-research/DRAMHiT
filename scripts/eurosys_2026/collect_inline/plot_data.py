@@ -47,7 +47,7 @@ def plot_json(json_file, output_file):
             ax=ax,
             legend=False,
         )
-        ax.set_ylim(bottom=0)
+        # ax.set_ylim(bottom=0)
         ax.set_title("Throughput")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Find Mops")
@@ -78,7 +78,7 @@ def plot_json(json_file, output_file):
             ax=ax,
             legend=False,
         )
-        ax.set_ylim(bottom=0)
+        # ax.set_ylim(bottom=0)
         ax.set_title("mem uops/find")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Memory Uops/Find")
@@ -93,7 +93,7 @@ def plot_json(json_file, output_file):
             ax=ax,
             legend=False,
         )
-        ax.set_ylim(bottom=0)
+        # ax.set_ylim(bottom=0)
         ax.set_title("Relative Mem Uops")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Mem Uops / All Uops")

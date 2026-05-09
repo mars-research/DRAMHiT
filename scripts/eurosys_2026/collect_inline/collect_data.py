@@ -189,7 +189,7 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 1000,
+            "readFactor": 100,
             "numThreads": 64,
             "numa_policy": 4,
             "size": 536870912,
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     ] + [
         {
             "insertFactor": 1,
-            "readFactor": 1000,
+            "readFactor": 100,
             "numThreads": 128,
             "numa_policy": 1,
             "size": 536870912,
@@ -218,4 +218,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "intel-paper.json")
+    save_json(all_results, "fine-synch-100.json")

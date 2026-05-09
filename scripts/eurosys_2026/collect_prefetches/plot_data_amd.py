@@ -48,6 +48,7 @@ def plot_json(json_file, output_file):
         legend=False,
         ax=ax,
     )
+    ax.set_ylim(bottom=0)
     ax.set_xlabel("Fill Factor")
     ax.set_ylabel("Get Mops")
 
@@ -64,6 +65,7 @@ def plot_json(json_file, output_file):
             legend=False,
             ax=ax,
         )
+        ax.set_ylim(bottom=0)
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel(counter)
 
@@ -83,7 +85,9 @@ def plot_json(json_file, output_file):
             ymin, ymax = ax.get_ylim()
             remainder = ymax % step_value
             if remainder != 0:
-                ax.set_ylim(ymin, ymax + remainder)
+                ax.set_ylim(0, ymax + (step_value - remainder))
+            else:
+                ax.set_ylim(bottom=0)
 
     fig.legend(
         fontsize=8, handles=custom_lines, loc="upper center", ncol=len(unique_ids)

@@ -154,6 +154,22 @@ if __name__ == "__main__":
         },  # Base
         {
             "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "OFF",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "L2",
+            "CPUFREQ_MHZ": "2500",
+        },  # Base + L2 prefetch
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "OFF",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "OFF",
+            "PREFETCH": "DOUBLE",
+            "CPUFREQ_MHZ": "2500",
+        },  # Base + double prefetch
+        {
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "branched",
             "UNIFORM_PROBING": "OFF",
@@ -170,20 +186,20 @@ if __name__ == "__main__":
         },  # Base + bucket + simd
         {
             "DRAMHiT_VARIANT": "2025",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "OFF",
-            "PREFETCH": "DOUBLE",
+            "BUCKETIZATION": "OFF",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "L1",
             "CPUFREQ_MHZ": "2500",
-        },  # Base + bucket + simd + double prefetch
+        },  # Base + uniform
         {
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
-            "UNIFORM_PROBING": "OFF",
+            "UNIFORM_PROBING": "ON",
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
-        },  # Inline + bucket + simd + double prefetch
+        },  # base + bucket + simd + uniform + double prefetch
         {
             "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
@@ -191,7 +207,48 @@ if __name__ == "__main__":
             "UNIFORM_PROBING": "ON",
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
-        },  # Inline + bucket + simd + double prefetch + uniform
+        },  # inline + bucket + simd + uniform + double prefetch
+
+        # {
+        #     "DRAMHiT_VARIANT": "2025",
+        #     "BUCKETIZATION": "ON",
+        #     "BRANCH": "branched",
+        #     "UNIFORM_PROBING": "OFF",
+        #     "PREFETCH": "DOUBLE",
+        #     "CPUFREQ_MHZ": "2500",
+        # },  # Base + double prefetch + bucket
+        # {
+        #     "DRAMHiT_VARIANT": "2025",
+        #     "BUCKETIZATION": "ON",
+        #     "BRANCH": "simd",
+        #     "UNIFORM_PROBING": "OFF",
+        #     "PREFETCH": "DOUBLE",
+        #     "CPUFREQ_MHZ": "2500",
+        # },  # Base + double prefetch + bucket + simd
+        # # {
+        # #     "DRAMHiT_VARIANT": "2025",
+        # #     "BUCKETIZATION": "ON",
+        # #     "BRANCH": "simd",
+        # #     "UNIFORM_PROBING": "OFF",
+        # #     "PREFETCH": "DOUBLE",
+        # #     "CPUFREQ_MHZ": "2500",
+        # # },  # Base + bucket + simd + double prefetch
+        # {
+        #     "DRAMHiT_VARIANT": "2025_INLINE",
+        #     "BUCKETIZATION": "ON",
+        #     "BRANCH": "simd",
+        #     "UNIFORM_PROBING": "OFF",
+        #     "PREFETCH": "DOUBLE",
+        #     "CPUFREQ_MHZ": "2500",
+        # },  # Inline + double prefetch + bucket + simd
+        # {
+        #     "DRAMHiT_VARIANT": "2025_INLINE",
+        #     "BUCKETIZATION": "ON",
+        #     "BRANCH": "simd",
+        #     "UNIFORM_PROBING": "ON",
+        #     "PREFETCH": "DOUBLE",
+        #     "CPUFREQ_MHZ": "2500",
+        # },  # Inline + double prefetch + bucket + simd + uniform
     ]
 
     run_cfgs = [

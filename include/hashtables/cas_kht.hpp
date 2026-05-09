@@ -68,16 +68,17 @@ class CASHashTable : public BaseHashTable {
   CASHashTable(uint64_t c, uint32_t queue_sz, uint8_t tid)
       : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
-    if(capacity % KV_IN_CACHELINE != 0)  {
-        PLOGE.printf("Capacity %lu is not a multiple of KV_IN_CACHELINE %d\n", capacity, KV_IN_CACHELINE);
-        abort();
+    if (capacity % KV_IN_CACHELINE != 0) {
+      PLOGE.printf("Capacity %lu is not a multiple of KV_IN_CACHELINE %d\n",
+                   capacity, KV_IN_CACHELINE);
+      abort();
     }
 
     this->insert_queue_sz = this->find_queue_sz = queue_sz;
 
-    if(find_queue_sz > 0 && find_queue_sz % 2 != 0) {
-        PLOGE.printf("Queue size %lu is not a power of 2\n", find_queue_sz);
-        abort();
+    if (find_queue_sz > 0 && find_queue_sz % 2 != 0) {
+      PLOGE.printf("Queue size %lu is not a power of 2\n", find_queue_sz);
+      abort();
     }
 
     {
@@ -87,9 +88,12 @@ class CASHashTable : public BaseHashTable {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
 
-        PLOGI.printf("Hashtable base: %p Hashtable size: %lu, %lu GB", this->hashtable,
-                     this->capacity, (this->capacity*sizeof(KV)) / (1024ULL * 1024ULL * 1024ULL));
-        PLOGI.printf("queue sz: %lu, queue item sz: %d", find_queue_sz, sizeof(KVQ));
+        PLOGI.printf(
+            "Hashtable base: %p Hashtable size: %lu, %lu GB", this->hashtable,
+            this->capacity,
+            (this->capacity * sizeof(KV)) / (1024ULL * 1024ULL * 1024ULL));
+        PLOGI.printf("queue sz: %lu, queue item sz: %d", find_queue_sz,
+                     sizeof(KVQ));
       }
       this->ref_cnt++;
     }
@@ -361,7 +365,7 @@ class CASHashTable : public BaseHashTable {
               this->insert_queue[head].key = q->key;
               this->insert_queue[head].key_id = q->key_id;
               this->insert_queue[head].value = q->value;
-              this->insert_queue[head].idx = idx ;
+              this->insert_queue[head].idx = idx;
 
 #ifdef LATENCY_COLLECTION
               this->insert_queue[head].timer_id = q->timer_id;
@@ -443,7 +447,7 @@ class CASHashTable : public BaseHashTable {
       curr_queue_sz--;
     }
 
-    return curr_queue_sz; // how many has been flushed
+    return curr_queue_sz;  // how many has been flushed
   }
 
   inline size_t get_find_queue_sz() {
@@ -898,6 +902,20 @@ class CASHashTable : public BaseHashTable {
       if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
         goto try_find;
       }
+
+#ifdef UNIFORM_HT_SUPPORT
+      uint64_t old_hash = q->key_hash;
+      uint64_t hash = this->hash(&old_hash);
+      idx = hash & (this->capacity - 1);
+#ifdef BUCKETIZATION
+      idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
+#endif
+      this->find_queue[this->find_head].key_hash = hash;
+#else
+      // we don't need this part of code, because branched idx already at start of next cacheline
+      // idx += CACHELINE_SIZE / sizeof(KV);
+      // idx = idx & (this->capacity - 1);
+#endif
 
       // key is at a different cacheline, prefetch and delay the find
 

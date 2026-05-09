@@ -12,15 +12,14 @@ row = 2
 col = 2
 fig, axes = plt.subplots(row, col, figsize=(12, 12))
 
+# Distinct shapes to cycle through
+MARKERS = ["o", "s", "^", "D", "v", "p", "*", "X"]
 
 def plot_json(json_file, output_file):
-    # Load JSON data
     with open(json_file, "r") as f:
         data = json.load(f)
 
-    # Convert to pandas DataFrame
     df = pd.json_normalize(data, sep=".")
-
     df_single = df[df["run_cfg.numa_policy"] == 4].copy()
     df_dual = df[df["run_cfg.numa_policy"] == 1].copy()
 
@@ -41,74 +40,68 @@ def plot_json(json_file, output_file):
                 ret += "+uniform"
             elif k == "PREFETCH" and v == "DOUBLE":
                 ret += "+2prefetch"
+            elif k == "PREFETCH" and v == "L2":
+                ret += "+L2"
         return ret
 
     df_single["build_cfg_str"] = df_single["build_cfg_str"].apply(make_identifier)
     df_dual["build_cfg_str"] = df_dual["build_cfg_str"].apply(make_identifier)
 
     ids1 = df_single["build_cfg_str"].unique()
-    
-    # Use colorblind palette
     palette = sns.color_palette("colorblind", n_colors=len(ids1))
+    color_map = dict(zip(ids1, palette))
+    
     sns.set_theme(style="whitegrid")
 
-    custom_lines = [
-        Line2D([0], [0], color=palette[i], marker="o", label=uid)
-        for i, uid in enumerate(ids1)
-    ]
+    # Legend with hollow shapes and unique dashes
+    custom_lines = []
+    # We use a temporary plot to grab the default dashes Seaborn generates
+    temp_ax = plt.figure().add_subplot(111)
+    sns.lineplot(data=df_single, x="run_cfg.fill_factor", y="set_mops", 
+                 hue="build_cfg_str", style="build_cfg_str", ax=temp_ax, palette=color_map)
+    
+    for i, (uid, line) in enumerate(zip(ids1, temp_ax.get_lines())):
+        custom_lines.append(Line2D([0], [0], color=color_map[uid], 
+                           marker=MARKERS[i % len(MARKERS)], 
+                           linestyle=line.get_linestyle(), 
+                           markerfacecolor="none", markeredgecolor=color_map[uid],
+                           markeredgewidth=1.5, markersize=8, label=uid))
+    plt.close(temp_ax.figure)
 
     fig.legend(fontsize=9, handles=custom_lines, loc="upper center", ncol=3)
 
-    # Left Column: Set (Insertions) | Right Column: Get (Finds)
+    plot_configs = [
+        (df_single, axes[0][0], "set_mops", "Single socket - Set Throughput", "Set Mops"),
+        (df_single, axes[0][1], "get_mops", "Single socket - Find Throughput", "Find Mops (Millions)"),
+        (df_dual, axes[1][0], "set_mops", "Dual socket - Set Throughput", "Set Mops"),
+        (df_dual, axes[1][1], "get_mops", "Dual socket - Find Throughput", "Find Mops"),
+    ]
 
-    # Plot 0,0: Single Set
-    ax = axes[0][0]
-    sns.lineplot(data=df_single, x="run_cfg.fill_factor", y="set_mops", hue="build_cfg_str", 
-                 marker="o", ax=ax, legend=False, palette=palette)
-    ax.set_title("Single socket - Set Throughput")
-    ax.set_xlabel("Fill Factor(%)")
-    ax.set_ylabel("Set Mops")
-    ax.set_ylim(bottom=0)
-    ax.grid(True, which="both", axis="both", linestyle="--")
+    for df_sub, ax, y_col, title, y_label in plot_configs:
+        sns.lineplot(
+            data=df_sub, x="run_cfg.fill_factor", y=y_col, 
+            hue="build_cfg_str", style="build_cfg_str", 
+            dashes=True, markers=MARKERS[:len(ids1)], 
+            ax=ax, legend=False, palette=color_map
+        )
+        
+        # Force markers to be hollow and match line color
+        for line in ax.get_lines():
+            line.set_markerfacecolor("none")
+            line.set_markeredgecolor(line.get_color())
+            line.set_markeredgewidth(1.5)
+            line.set_markersize(4)
 
-    # Plot 0,1: Single Find
-    ax = axes[0][1]
-    sns.lineplot(data=df_single, x="run_cfg.fill_factor", y="get_mops", hue="build_cfg_str", 
-                 marker="o", ax=ax, legend=False, palette=palette)
-    ax.set_title("Single socket - Find Throughput")
-    ax.set_xlabel("Fill Factor(%)")
-    ax.set_ylabel("Find Mops (Millions)")
-    ax.set_ylim(bottom=0)
-    ax.grid(True, which="both", axis="both", linestyle="--")
-
-    # Plot 1,0: Dual Set
-    ax = axes[1][0]
-    sns.lineplot(data=df_dual, x="run_cfg.fill_factor", y="set_mops", hue="build_cfg_str", 
-                 marker="o", ax=ax, legend=False, palette=palette)
-    ax.set_title("Dual socket - Set Throughput")
-    ax.set_xlabel("Fill Factor(%)")
-    ax.set_ylabel("Set Mops")
-    ax.set_ylim(bottom=0)
-    ax.grid(True, which="both", axis="both", linestyle="--")
-
-    # Plot 1,1: Dual Find
-    ax = axes[1][1]
-    sns.lineplot(data=df_dual, x="run_cfg.fill_factor", y="get_mops", hue="build_cfg_str", 
-                 marker="o", ax=ax, legend=False, palette=palette)
-    ax.set_title("Dual socket - Find Throughput")
-    ax.set_xlabel("Fill Factor(%)")
-    ax.set_ylabel("Find Mops")
-    ax.set_ylim(bottom=0)
-    ax.grid(True, which="both", axis="both", linestyle="--")
+        ax.set_title(title)
+        ax.set_xlabel("Fill Factor(%)")
+        ax.set_ylabel(y_label)
+        ax.set_ylim(bottom=0)
+        ax.grid(True, which="both", axis="both", linestyle="--")
 
     plt.tight_layout(rect=[0, 0, 1, 0.93])
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 
-
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python plot_dramhit.py <input.json> <output.png>")
-        sys.exit(1)
-
-    plot_json(sys.argv[1], sys.argv[2])
+    if len(sys.argv) == 3:
+        plot_json(sys.argv[1], sys.argv[2])
