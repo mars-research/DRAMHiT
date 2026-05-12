@@ -185,7 +185,7 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
 
   uint64_t residue_num = request_num - batch_len * batch_num;
   if (residue_num > 0) {
-    for (auto i = 0; i < residue_num; i++) {
+    for (uint64_t i = 0; i < residue_num; i++) {
       if (!(idx & 7) && (idx + 16 < request_num)) {
         __builtin_prefetch(&workload[idx + 16], false, 3);
       }
@@ -307,7 +307,7 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable, double skew,
   );
 
   uint64_t starting_offset = shard->shard_idx * partition_size;
-  for (auto i = 0; i < partition_size; i++) {
+  for (uint64_t  i = 0; i < partition_size; i++) {
     if (i + starting_offset < g_zipf_values->size())
       zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);
   }

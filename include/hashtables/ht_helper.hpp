@@ -171,9 +171,9 @@ template <class T>
 T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   T *addr;
   uint64_t alloc_sz = capacity * sizeof(T);
-  auto current_node = numa_node_of_cpu(sched_getcpu());
 
   int fd = -1;
+  //  auto current_node = numa_node_of_cpu(sched_getcpu());
   // int fd = open(FILE_NAME, O_CREAT | O_RDWR, 0755);
 
   // if (fd < 0) {

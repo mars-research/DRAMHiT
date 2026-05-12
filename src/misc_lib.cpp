@@ -137,7 +137,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
   [[maybe_unused]] double all_total_find_time_ns = 0;
 #endif
 
-  for (int k = 0; k < config.num_threads; k++) {
+  for (uint32_t k = 0; k < config.num_threads; k++) {
     total_insert_cycles += all_sh[k].stats->insertions.duration;
     total_inserts += all_sh[k].stats->insertions.op_count;
     total_finds += all_sh[k].stats->finds.op_count;
@@ -247,8 +247,8 @@ void print_stats(Shard *all_sh, Configuration &config) {
 
         PLOGI.printf(
             "\n"
-            "partition phase cycles: %lu, partition_cpo: %lu\n"
-            "join phase cycles: %lu, join_cpo: %lu\n"
+            "partition phase cycles: %lu, partition_cycle_per_tuple: %lu\n"
+            "join phase cycles: %lu, join_cycle_per_tuple: %lu\n"
             "throughput_mops: %lu, duration: %lu, cycle_per_tuple: %lu\n"
             "\n",
             avg_insert_duration, part_cpo,
