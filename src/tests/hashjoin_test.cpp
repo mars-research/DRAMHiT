@@ -667,8 +667,9 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe,
   huge_page_allocator<char> byte_allocator;
   RadixBucket* local_r = bucket_allocator.allocate(partition_num);
   RadixBucket* local_s = bucket_allocator.allocate(partition_num);
-  std::vector<uint64_t> r_histogram(partition_num);
-  std::vector<uint64_t> s_histogram(partition_num);
+  uint64_t* r_histogram = (uint64_t*) byte_allocator.allocate(partition_num*sizeof(uint64_t));
+  uint64_t* s_histogram = (uint64_t*) byte_allocator.allocate(partition_num*sizeof(uint64_t));
+
   for (size_t i = 0; i < partition_num; ++i) {
     r_histogram[i] = 0;
     s_histogram[i] = 0;
@@ -950,6 +951,8 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe,
     byte_allocator.deallocate((char*) Global_S_Buckets, config.num_threads * sizeof(RadixBucket*));
   }
 
+  byte_allocator.deallocate((char*) r_histogram, partition_num*sizeof(uint64_t));
+  byte_allocator.deallocate((char*) s_histogram, partition_num*sizeof(uint64_t));
   bucket_allocator.deallocate(local_r, partition_num);
   bucket_allocator.deallocate(local_s, partition_num);
 }
