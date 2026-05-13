@@ -3,7 +3,7 @@
 
 ### Get Source
 ```
-git clone git@github.com:mars-research/DRAMHiT.git --recursive
+git clone --recursive https://github.com/mars-research/DRAMHiT.git
 ```
 
 ### Dependencies
@@ -34,14 +34,11 @@ You alternatively can do similar for amd machine
 ### Config build
 * Setup build directory
 ```
-cmake -S . -B build 
+cmake -S . -B build -DCPUFREQ_MHZ=XXXX 
 ```
 
-Note that above command will not set up build unless 
-you provide -DCPUFREQ_MHZ=XXXX
-
-This is the constant frequency of the cpu pinned by 
-setup scripts.
+You can find XXXX by looking at constant frequency pinned by 
+setup scripts. Those setup scripts are machine specific. 
 
 ### Build
 ```

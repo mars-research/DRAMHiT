@@ -1,41 +1,65 @@
 
-#include <cstdint>
-#include <numaif.h>
 #include "misc_lib.h"
+
+#include <numaif.h>
+
+#include <cstdint>
+
+#include "all_ht_types.hpp"
+#include "hashtables/ht_helper.hpp"
+#include "hashtables/kvtypes.cpp"
 #include "print_stats.h"
 #include "types.hpp"
-#include "hashtables/kvtypes.cpp"
-#include "all_ht_types.hpp"
 
 int find_remote_node(int current_node) {
-    if (numa_available() < 0) {
-        return -1;
-    }
+  if (numa_available() < 0) {
+    return -1;
+  }
 
-    int max_node = numa_max_node();
-    int remote_node = -1;
+  int max_node = numa_max_node();
+  int remote_node = -1;
 
-    for (int i = 0; i <= max_node; i++) {
-        if (i != current_node && numa_bitmask_isbitset(numa_all_nodes_ptr, i)) {
-            remote_node = i;
-            break;
-        }
+  for (int i = 0; i <= max_node; i++) {
+    if (i != current_node && numa_bitmask_isbitset(numa_all_nodes_ptr, i)) {
+      remote_node = i;
+      break;
     }
-    return remote_node;
+  }
+  return remote_node;
 }
 
-bool move_memory_to_node(void* addr, uint64_t size, int to_node){
+bool distribute_memory_to_nodes(void *addr, uint64_t alloc_sz) {
+  if (numa_available() < 0) {
+    PLOGE.printf("Machine doesn't have more than 1 node");
+    abort();
+  }
+  struct bitmask *nodes_mask = numa_get_mems_allowed();
 
-    unsigned long nodemask = (1UL << to_node);
+  int ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE,
+                  nodes_mask->maskp, nodes_mask->size, MPOL_MF_MOVE);
 
-    long ret = mbind(addr, size, MPOL_BIND, &nodemask, sizeof(nodemask) * 8, MPOL_MF_MOVE | MPOL_MF_STRICT);
+  if (ret != 0) {
+    PLOGE.printf("mbind failed to interleave memory: %s", strerror(errno));
+    numa_bitmask_free(nodes_mask);
+    return false;
+  }
 
-    if (ret != 0) {
-        PLOGE.printf("mbind failed to migrate memory to node %d", to_node);
-        return false;
-    }
+  numa_bitmask_free(nodes_mask);
+  return true;
+}
 
-    return true;
+bool move_memory_to_node(void *addr, uint64_t size, int to_node) {
+  unsigned long nodemask = (1UL << to_node);
+
+  long ret = mbind(addr, size, MPOL_BIND, &nodemask, sizeof(nodemask) * 8,
+                   MPOL_MF_MOVE | MPOL_MF_STRICT);
+
+  if (ret != 0) {
+    PLOGE.printf("mbind failed to migrate memory to node %d", to_node);
+    return false;
+  }
+
+  return true;
 }
 
 uint64_t get_file_size(const char *fn) {
@@ -79,7 +103,6 @@ uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz) {
   for (uint64_t i = 0; i < sz; i += PAGE_SIZE) sum += fmap[i];
   return sum;
 }
-
 
 namespace kmercounter {
 
@@ -194,22 +217,23 @@ void print_stats(Shard *all_sh, Configuration &config) {
 
   uint64_t num_threads = config.num_threads;
 
-  if(num_threads > 0){
-      ht_fill = ht_fill / num_threads;
-      ht_capacity = ht_capacity / num_threads;
-      avg_find_duration = total_find_cycles / num_threads;
-      avg_insert_duration = total_insert_cycles / num_threads;
+  if (num_threads > 0) {
+    ht_fill = ht_fill / num_threads;
+    ht_capacity = ht_capacity / num_threads;
+    avg_find_duration = total_find_cycles / num_threads;
+    avg_insert_duration = total_insert_cycles / num_threads;
   }
 
-  if(avg_find_duration > 0 ) {
-      find_mops = ((CPUFREQ_MHZ * total_finds) / avg_find_duration);
+  if (avg_find_duration > 0) {
+    find_mops = ((CPUFREQ_MHZ * total_finds) / avg_find_duration);
   }
 
-  if(avg_insert_duration > 0){
-      insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
+  if (avg_insert_duration > 0) {
+    insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
   }
 
-  if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 || config.mode == PARTITIONJOINV2) {
+  if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 ||
+      config.mode == PARTITIONJOINV2) {
     if (config.test) {
       uint64_t join_answer = calculate_expected_join_size(
           config.relation_r_size, config.relation_s_size);
@@ -227,63 +251,61 @@ void print_stats(Shard *all_sh, Configuration &config) {
     uint64_t join_cycles = avg_find_duration + avg_insert_duration;
 
     uint64_t throughput = 0;
-    if(join_cycles > 0){
-        throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
+    if (join_cycles > 0) {
+      throughput = ((CPUFREQ_MHZ * sum_op) / join_cycles);
     }
 
     uint64_t throughput_cpo = 0;
-    if(sum_op > 0)
-        throughput_cpo = (total_find_cycles + total_insert_cycles)/sum_op;
+    if (sum_op > 0)
+      throughput_cpo = (total_find_cycles + total_insert_cycles) / sum_op;
 
-    if(config.mode != HASHJOIN){
+    if (config.mode != HASHJOIN) {
+      uint64_t part_cpo = 0;
+      if (avg_insert_duration > 0) part_cpo = total_insert_cycles / sum_op;
 
-        uint64_t part_cpo = 0;
-        if(avg_insert_duration >0)
-            part_cpo = total_insert_cycles / sum_op;
-
-        uint64_t join_cpo = 0;
-        if(avg_find_duration > 0)
-           join_cpo = total_find_cycles/ sum_op;
-
-        PLOGI.printf(
-            "\n"
-            "partition phase cycles: %lu, partition_cycle_per_tuple: %lu\n"
-            "join phase cycles: %lu, join_cycle_per_tuple: %lu\n"
-            "throughput_mops: %lu, duration: %lu, cycle_per_tuple: %lu\n"
-            "\n",
-            avg_insert_duration, part_cpo,
-            avg_find_duration, join_cpo,
-            throughput, join_cycles, throughput_cpo
-        );
-    }else {
-        PLOGI.printf(
-            "\n"
-            "============================================\n"
-            "build_phrase_mops : %lu, cycle_per_op : %lu\n"
-            "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
-            "joined : %lu out of %lu, %.2f%%\n"
-            "throughput_mops : %lu, ops: %lu, duration: %lu, cycle_per_tuple: %lu\n"
-            "============================================\n",
-            insert_mops, cycles_per_insert, find_mops, cycles_per_find,
-            total_found, config.relation_s_size, total_found * 100.0 / config.relation_s_size,
-            throughput, sum_op, join_cycles, throughput_cpo);
-    }
-  } else if(config.mode == BW){
-      uint64_t bytes = total_finds * 64ULL;
-      double sec = avg_find_duration / (CPUFREQ_MHZ * 1000000.0);
-      double bw = 0.0;
-      if(sec > 0.0) {
-         bw = ((double)bytes / (1ULL << 30)) / sec;
-      }
+      uint64_t join_cpo = 0;
+      if (avg_find_duration > 0) join_cpo = total_find_cycles / sum_op;
 
       PLOGI.printf(
           "\n"
+          "partition phase cycles: %lu, partition_cycle_per_tuple: %lu\n"
+          "join phase cycles: %lu, join_cycle_per_tuple: %lu\n"
+          "throughput_mops: %lu, duration: %lu, cycle_per_tuple: %lu\n"
+          "\n",
+          avg_insert_duration, part_cpo, avg_find_duration, join_cpo,
+          throughput, join_cycles, throughput_cpo);
+    } else {
+      PLOGI.printf(
+          "\n"
           "============================================\n"
-          "mem: %lu bytes, took %.3f sec, bandwidth: %.1f GB/s\n"
+          "build_phrase_mops : %lu, cycle_per_op : %lu\n"
+          "probe_phrase_mops : %lu, cycle_per_op : %lu\n"
+          "joined : %lu out of %lu, %.2f%%\n"
+          "throughput_mops : %lu, ops: %lu, duration: %lu, cycle_per_tuple: "
+          "%lu\n"
           "============================================\n",
-          bytes, sec, bw);
+          insert_mops, cycles_per_insert, find_mops, cycles_per_find,
+          total_found, config.relation_s_size,
+          total_found * 100.0 / config.relation_s_size, throughput, sum_op,
+          join_cycles, throughput_cpo);
+    }
+  } else if (config.mode == BW) {
+    uint64_t bytes = total_finds * 64ULL;
+    double sec = avg_find_duration / (CPUFREQ_MHZ * 1000000.0);
+    double bw = 0.0;
+    if (sec > 0.0) {
+      bw = ((double)bytes / (1ULL << 30)) / sec;
+    }
+
+    PLOGI.printf(
+        "\n"
+        "============================================\n"
+        "mem: %lu bytes, took %.3f sec, bandwidth: %.1f GB/s\n"
+        "============================================\n",
+        bytes, sec, bw);
   } else {
-    uint64_t expected_found = config.ht_size * config.ht_fill / 100 * config.read_factor;
+    uint64_t expected_found =
+        config.ht_size * config.ht_fill / 100 * config.read_factor;
     PLOGI.printf(
         "\n"
         "============================================\n"
@@ -293,9 +315,9 @@ void print_stats(Shard *all_sh, Configuration &config) {
         "set_cycles : %lu, get_cycles : %lu, "
         "set_mops : %lu, get_mops : %lu\n"
         "============================================\n",
-        total_found, expected_found, avg_find_duration,
-        total_finds, avg_insert_duration, total_inserts, cycles_per_insert,
-        cycles_per_find, insert_mops, find_mops);
+        total_found, expected_found, avg_find_duration, total_finds,
+        avg_insert_duration, total_inserts, cycles_per_insert, cycles_per_find,
+        insert_mops, find_mops);
   }
 #ifdef COMMENT_OUT
   printf("===============================================================\n");
@@ -378,7 +400,6 @@ void print_stats(Shard *all_sh, Configuration &config) {
   }
 #endif
 }
-
 
 inline uint64_t get_gigbytes(size_t num_kv) {
   return num_kv * (sizeof(key_type) + sizeof(value_type)) /

@@ -2,6 +2,7 @@
 #include "misc_lib.h"
 #include "numa.hpp"
 #include "plog/Log.h"
+#include "queues/section_queues.hpp"
 #include "sync.h"
 #include "tests/BandwidthTest.hpp"
 #include "types.hpp"
@@ -69,6 +70,12 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
       PLOGE.printf("failed to migrate workload memory");
       abort();
     }
+  }else if(config.numa_split == THREADS_SPLIT_EVEN_NODES)
+  {
+      if(!distribute_memory_to_nodes((void*)arr, hugepage_allocator_inst_bw.get_actual_bytes(size))){
+          PLOGE.printf("failed to distribute workload memory");
+          abort();
+      }
   }
 
   hugepage_allocator_inst_bw.prefault(arr, size);
