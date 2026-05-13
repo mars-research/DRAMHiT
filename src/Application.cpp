@@ -816,8 +816,13 @@ void sync_complete(void) {
           exit(-1);
       }
     }
-
-    this->spawn_shard_threads();
+    if((config.mode == FASTQ_WITH_INSERT) &&
+         (config.ht_type == PARTITIONED_HT))
+            this->test.qt.run_test(&config, this->n, false, this->npq);
+    else{
+      this->spawn_shard_threads();
+  }
+    
 
     return 0;
   }
