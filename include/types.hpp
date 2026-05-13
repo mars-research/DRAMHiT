@@ -182,6 +182,7 @@ struct Configuration {
   bool test;
   bool sequential;
   uint32_t radix;
+  double hit_rate;
 
   void dump_configuration() {
     printf("Run configuration {\n");

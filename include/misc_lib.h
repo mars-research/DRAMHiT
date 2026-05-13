@@ -19,6 +19,7 @@ uint64_t calc_num_kmers(uint64_t l, uint8_t k);
 int find_last_N(const char *c);
 uint64_t __attribute__((optimize("O0"))) touchpages(char *fmap, size_t sz);
 
+bool distribute_memory_to_nodes(void *addr, uint64_t alloc_sz);
 int find_remote_node(int current_node);
 bool move_memory_to_node(void* addr, uint64_t size, int to_node);
 

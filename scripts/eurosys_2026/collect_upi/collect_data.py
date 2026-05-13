@@ -16,34 +16,22 @@ def main():
 
     mode = "remote"
     numa = 7
-    json_filename = "bandwidth_results_upi.json"
-    plot_filename = "bandwidth_plot_upi.png"
 
+    mode = "local"
     # Check if an argument is passed and if it is "local"
     if len(sys.argv) > 1 and sys.argv[1] == "local":
         mode = "local"
         numa = 1
-
-        # Split the filename and extension, then append "_local"
-        json_base, json_ext = os.path.splitext(json_filename)
-        json_filename = f"{json_base}_local{json_ext}"
-
-        plot_base, plot_ext = os.path.splitext(plot_filename)
-        plot_filename = f"{plot_base}_local{plot_ext}"
-
+    elif len(sys.argv) > 1 and sys.argv[1] == "mixed":
+        mode = "mixed"
+        numa = 6
     else:
         # Fallback for anything else (remote)
         mode = "remote"
         numa = 7
 
-        # Split the filename and extension, then append "_remote"
-        json_base, json_ext = os.path.splitext(json_filename)
-        json_filename = f"{json_base}_remote{json_ext}"
-
-        plot_base, plot_ext = os.path.splitext(plot_filename)
-        plot_filename = f"{plot_base}_remote{plot_ext}"
-
-    interval_sec = INTERVAL_MS / 1000.0
+    json_filename = f"bandwidth_results_upi_{mode}.json"
+    plot_filename = f"bandwidth_plot_upi_{mode}.png"
 
     # Regex to extract the bandwidth value from DRAMHiT
     bw_pattern = re.compile(r"bandwidth:\s*([0-9.]+)\s*GB/s")

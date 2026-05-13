@@ -1,0 +1,889 @@
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           52 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  64
+On-line CPU(s) list:                     0-63
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD EPYC 9354P 32-Core Processor
+CPU family:                              25
+Model:                                   17
+Thread(s) per core:                      2
+Core(s) per socket:                      32
+Socket(s):                               1
+Stepping:                                1
+BogoMIPS:                                6499.44
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd amd_ppin cppc amd_ibpb_ret arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid overflow_recov succor smca fsrm flush_l1d debug_swap ibpb_exit_to_user
+Virtualization:                          AMD-V
+L1d cache:                               1 MiB (32 instances)
+L1i cache:                               1 MiB (32 instances)
+L2 cache:                                32 MiB (32 instances)
+L3 cache:                                256 MiB (8 instances)
+NUMA node(s):                            4
+NUMA node0 CPU(s):                       0-7,32-39
+NUMA node1 CPU(s):                       8-15,40-47
+NUMA node2 CPU(s):                       16-23,48-55
+NUMA node3 CPU(s):                       24-31,56-63
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+2026-05-11 18:17:52.012 INFO  [31585] [initializeLogger@17] ------------------------
+2026-05-11 18:17:52.012 INFO  [31585] [initializeLogger@18] Plog library initialized
+2026-05-11 18:17:52.012 INFO  [31585] [initializeLogger@19] ------------------------
+2026-05-11 18:17:52.012 INFO  [31585] [main@27] Starting dramhit
+2026-05-11 18:17:52.013 INFO  [31585] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:17:52.013 INFO  [31585] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:17:52.180 INFO  [31585] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778537871931750726_53687091.bin 0
+2026-05-11 18:17:52.180 INFO  [31585] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778537871931750726
+2026-05-11 18:17:54.165 INFO  [31585] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 53687091
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:17:54.166 INFO  [31585] [kmercounter::Application::spawn_shard_threads@382] total kv 53687091, num_threads 64, op per thread (per run) 838860
+2026-05-11 18:17:54.167 INFO  [31617] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:17:54.167 INFO  [31617] [kmercounter::calloc_ht@214] mmap returns 0x72c380000000
+2026-05-11 18:17:54.167 INFO  [31617] [kmercounter::distribute_mem_to_nodes@110] addr 0x72c380000000, alloc_sz 8589934592
+2026-05-11 18:17:54.608 INFO  [31617] [KVQ>::CASHashTable@91] Hashtable base: 0x72c380000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:17:54.608 INFO  [31617] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:17:54.638 INFO  [31585] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:18:23.527 INFO  [31585] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:18:23.540 INFO  [31585] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:18:34.446 INFO  [31585] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:18:34.446 INFO  [31585] [kmercounter::ZipfianTest::run@426] get fill 0.100
+2026-05-11 18:18:34.666 INFO  [31585] [kmercounter::free_mem@234] 0x72c380000000 with sz 8589934592 unmapped
+2026-05-11 18:18:34.666 INFO  [31585] [kmercounter::print_stats@287] 
+============================================
+found : 53687091000, expected_found : 53687091000
+global_find_cycle : 35438705803, find_ops : 53687091000
+global_insert_cycle : 93880395472, insert_ops : 53687091000
+set_cycles : 111, get_cycles : 42, set_mops : 1858, get_mops : 4923
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 10 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:18:34.779 INFO  [31748] [initializeLogger@17] ------------------------
+2026-05-11 18:18:34.779 INFO  [31748] [initializeLogger@18] Plog library initialized
+2026-05-11 18:18:34.779 INFO  [31748] [initializeLogger@19] ------------------------
+2026-05-11 18:18:34.779 INFO  [31748] [main@27] Starting dramhit
+2026-05-11 18:18:34.779 INFO  [31748] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:18:34.779 INFO  [31748] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:18:34.959 INFO  [31748] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778537914696470162_107374182.bin 0
+2026-05-11 18:18:34.960 INFO  [31748] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778537914696470162
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 107374182
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:18:38.933 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:18:38.934 INFO  [31748] [kmercounter::Application::spawn_shard_threads@382] total kv 107374182, num_threads 64, op per thread (per run) 1677721
+2026-05-11 18:18:38.934 INFO  [31754] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:18:38.934 INFO  [31754] [kmercounter::calloc_ht@214] mmap returns 0x72d040000000
+2026-05-11 18:18:38.934 INFO  [31754] [kmercounter::distribute_mem_to_nodes@110] addr 0x72d040000000, alloc_sz 8589934592
+2026-05-11 18:18:39.380 INFO  [31754] [KVQ>::CASHashTable@91] Hashtable base: 0x72d040000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:18:39.380 INFO  [31754] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:18:39.421 INFO  [31748] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:19:36.521 INFO  [31748] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:19:36.570 INFO  [31748] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:19:59.394 INFO  [31748] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:19:59.394 INFO  [31748] [kmercounter::ZipfianTest::run@426] get fill 0.200
+2026-05-11 18:19:59.610 INFO  [31748] [kmercounter::free_mem@234] 0x72d040000000 with sz 8589934592 unmapped
+2026-05-11 18:19:59.610 INFO  [31748] [kmercounter::print_stats@287] 
+============================================
+found : 107374182000, expected_found : 107374182000
+global_find_cycle : 74161056288, find_ops : 107374182000
+global_insert_cycle : 185575191717, insert_ops : 107374182000
+set_cycles : 110, get_cycles : 44, set_mops : 1880, get_mops : 4705
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 20 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:19:59.719 INFO  [31829] [initializeLogger@17] ------------------------
+2026-05-11 18:19:59.719 INFO  [31829] [initializeLogger@18] Plog library initialized
+2026-05-11 18:19:59.719 INFO  [31829] [initializeLogger@19] ------------------------
+2026-05-11 18:19:59.720 INFO  [31829] [main@27] Starting dramhit
+2026-05-11 18:19:59.720 INFO  [31829] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:19:59.720 INFO  [31829] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:19:59.846 INFO  [31829] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778537999638810026_161061273.bin 0
+2026-05-11 18:19:59.846 INFO  [31829] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778537999638810026
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 161061273
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:20:05.806 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:20:05.807 INFO  [31829] [kmercounter::Application::spawn_shard_threads@382] total kv 161061273, num_threads 64, op per thread (per run) 2516582
+2026-05-11 18:20:05.807 INFO  [31835] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:20:05.807 INFO  [31835] [kmercounter::calloc_ht@214] mmap returns 0x7513c0000000
+2026-05-11 18:20:05.807 INFO  [31835] [kmercounter::distribute_mem_to_nodes@110] addr 0x7513c0000000, alloc_sz 8589934592
+2026-05-11 18:20:06.247 INFO  [31835] [KVQ>::CASHashTable@91] Hashtable base: 0x7513c0000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:20:06.248 INFO  [31835] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:20:06.296 INFO  [31829] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:21:33.638 INFO  [31829] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:21:33.728 INFO  [31829] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:22:07.885 INFO  [31829] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:22:07.885 INFO  [31829] [kmercounter::ZipfianTest::run@426] get fill 0.300
+2026-05-11 18:22:08.094 INFO  [31829] [kmercounter::free_mem@234] 0x7513c0000000 with sz 8589934592 unmapped
+2026-05-11 18:22:08.095 INFO  [31829] [kmercounter::print_stats@287] 
+============================================
+found : 161061273000, expected_found : 161061273000
+global_find_cycle : 110985651010, find_ops : 161061273000
+global_insert_cycle : 283856460712, insert_ops : 161061273000
+set_cycles : 112, get_cycles : 44, set_mops : 1844, get_mops : 4716
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 30 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:22:08.205 INFO  [31959] [initializeLogger@17] ------------------------
+2026-05-11 18:22:08.205 INFO  [31959] [initializeLogger@18] Plog library initialized
+2026-05-11 18:22:08.205 INFO  [31959] [initializeLogger@19] ------------------------
+2026-05-11 18:22:08.205 INFO  [31959] [main@27] Starting dramhit
+2026-05-11 18:22:08.205 INFO  [31959] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:22:08.205 INFO  [31959] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:22:08.447 INFO  [31959] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778538128121714272_214748364.bin 0
+2026-05-11 18:22:08.447 INFO  [31959] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778538128121714272
+2026-05-11 18:22:16.400 INFO  [31959] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 214748364
+2026-05-11 18:22:16.400 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:22:16.400 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:22:16.400 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:22:16.400 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:22:16.400 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:22:16.401 INFO  [31959] [kmercounter::Application::spawn_shard_threads@382] total kv 214748364, num_threads 64, op per thread (per run) 3355443
+2026-05-11 18:22:16.401 INFO  [32011] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:22:16.401 INFO  [32011] [kmercounter::calloc_ht@214] mmap returns 0x7b9d00000000
+2026-05-11 18:22:16.402 INFO  [32011] [kmercounter::distribute_mem_to_nodes@110] addr 0x7b9d00000000, alloc_sz 8589934592
+2026-05-11 18:22:16.842 INFO  [32011] [KVQ>::CASHashTable@91] Hashtable base: 0x7b9d00000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:22:16.842 INFO  [32011] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:22:16.912 INFO  [31959] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:24:14.065 INFO  [31959] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:24:14.209 INFO  [31959] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:24:59.834 INFO  [31959] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:24:59.834 INFO  [31959] [kmercounter::ZipfianTest::run@426] get fill 0.400
+2026-05-11 18:25:00.045 INFO  [31959] [kmercounter::free_mem@234] 0x7b9d00000000 with sz 8589934592 unmapped
+2026-05-11 18:25:00.045 INFO  [31959] [kmercounter::print_stats@287] 
+============================================
+found : 214748364000, expected_found : 214748364000
+global_find_cycle : 148269128085, find_ops : 214748364000
+global_insert_cycle : 380743260170, insert_ops : 214748364000
+set_cycles : 113, get_cycles : 44, set_mops : 1833, get_mops : 4707
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 40 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:25:00.153 INFO  [32133] [initializeLogger@17] ------------------------
+2026-05-11 18:25:00.153 INFO  [32133] [initializeLogger@18] Plog library initialized
+2026-05-11 18:25:00.153 INFO  [32133] [initializeLogger@19] ------------------------
+2026-05-11 18:25:00.153 INFO  [32133] [main@27] Starting dramhit
+2026-05-11 18:25:00.153 INFO  [32133] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:25:00.153 INFO  [32133] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:25:00.429 INFO  [32133] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778538300072361647_268435456.bin 0
+2026-05-11 18:25:00.430 INFO  [32133] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778538300072361647
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 268435456
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:25:10.360 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:25:10.361 INFO  [32133] [kmercounter::Application::spawn_shard_threads@382] total kv 268435456, num_threads 64, op per thread (per run) 4194304
+2026-05-11 18:25:10.361 INFO  [32142] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:25:10.361 INFO  [32142] [kmercounter::calloc_ht@214] mmap returns 0x77ec40000000
+2026-05-11 18:25:10.361 INFO  [32142] [kmercounter::distribute_mem_to_nodes@110] addr 0x77ec40000000, alloc_sz 8589934592
+2026-05-11 18:25:10.804 INFO  [32142] [KVQ>::CASHashTable@91] Hashtable base: 0x77ec40000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:25:10.804 INFO  [32142] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:25:10.889 INFO  [32133] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:27:40.606 INFO  [32133] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:27:40.801 INFO  [32133] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:28:39.252 INFO  [32133] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:28:39.252 INFO  [32133] [kmercounter::ZipfianTest::run@426] get fill 0.500
+2026-05-11 18:28:39.461 INFO  [32133] [kmercounter::free_mem@234] 0x77ec40000000 with sz 8589934592 unmapped
+2026-05-11 18:28:39.462 INFO  [32133] [kmercounter::print_stats@287] 
+============================================
+found : 268435456000, expected_found : 268435456000
+global_find_cycle : 189960179500, find_ops : 268435456000
+global_insert_cycle : 486574680963, insert_ops : 268435456000
+set_cycles : 116, get_cycles : 45, set_mops : 1792, get_mops : 4592
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 50 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:28:39.571 INFO  [32217] [initializeLogger@17] ------------------------
+2026-05-11 18:28:39.571 INFO  [32217] [initializeLogger@18] Plog library initialized
+2026-05-11 18:28:39.571 INFO  [32217] [initializeLogger@19] ------------------------
+2026-05-11 18:28:39.571 INFO  [32217] [main@27] Starting dramhit
+2026-05-11 18:28:39.571 INFO  [32217] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:28:39.571 INFO  [32217] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:28:39.887 INFO  [32217] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778538519487990946_322122547.bin 0
+2026-05-11 18:28:39.887 INFO  [32217] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778538519487990946
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 322122547
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:28:51.799 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:28:51.800 INFO  [32217] [kmercounter::Application::spawn_shard_threads@382] total kv 322122547, num_threads 64, op per thread (per run) 5033164
+2026-05-11 18:28:51.800 INFO  [32222] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:28:51.800 INFO  [32222] [kmercounter::calloc_ht@214] mmap returns 0x71a440000000
+2026-05-11 18:28:51.800 INFO  [32222] [kmercounter::distribute_mem_to_nodes@110] addr 0x71a440000000, alloc_sz 8589934592
+2026-05-11 18:28:52.241 INFO  [32222] [KVQ>::CASHashTable@91] Hashtable base: 0x71a440000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:28:52.241 INFO  [32222] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:28:52.340 INFO  [32217] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:31:58.015 INFO  [32217] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:31:58.259 INFO  [32217] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:33:13.220 INFO  [32217] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:33:13.220 INFO  [32217] [kmercounter::ZipfianTest::run@426] get fill 0.600
+2026-05-11 18:33:13.428 INFO  [32217] [kmercounter::free_mem@234] 0x71a440000000 with sz 8589934592 unmapped
+2026-05-11 18:33:13.428 INFO  [32217] [kmercounter::print_stats@287] 
+============================================
+found : 322122547000, expected_found : 322122547000
+global_find_cycle : 243610193385, find_ops : 322122547000
+global_insert_cycle : 603436361938, insert_ops : 322122547000
+set_cycles : 119, get_cycles : 48, set_mops : 1734, get_mops : 4297
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 60 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:33:13.536 INFO  [32301] [initializeLogger@17] ------------------------
+2026-05-11 18:33:13.536 INFO  [32301] [initializeLogger@18] Plog library initialized
+2026-05-11 18:33:13.536 INFO  [32301] [initializeLogger@19] ------------------------
+2026-05-11 18:33:13.537 INFO  [32301] [main@27] Starting dramhit
+2026-05-11 18:33:13.537 INFO  [32301] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:33:13.537 INFO  [32301] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:33:14.010 INFO  [32301] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778538793455445286_375809638.bin 0
+2026-05-11 18:33:14.011 INFO  [32301] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778538793455445286
+2026-05-11 18:33:27.930 INFO  [32301] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 375809638
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:33:27.931 INFO  [32301] [kmercounter::Application::spawn_shard_threads@382] total kv 375809638, num_threads 64, op per thread (per run) 5872025
+2026-05-11 18:33:27.931 INFO  [32307] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:33:27.932 INFO  [32307] [kmercounter::calloc_ht@214] mmap returns 0x7cb3c0000000
+2026-05-11 18:33:27.932 INFO  [32307] [kmercounter::distribute_mem_to_nodes@110] addr 0x7cb3c0000000, alloc_sz 8589934592
+2026-05-11 18:33:28.373 INFO  [32307] [KVQ>::CASHashTable@91] Hashtable base: 0x7cb3c0000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:33:28.374 INFO  [32307] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:33:28.477 INFO  [32301] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:37:15.411 INFO  [32301] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:37:15.706 INFO  [32301] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:38:46.944 INFO  [32301] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:38:46.944 INFO  [32301] [kmercounter::ZipfianTest::run@426] get fill 0.700
+2026-05-11 18:38:47.161 INFO  [32301] [kmercounter::free_mem@234] 0x7cb3c0000000 with sz 8589934592 unmapped
+2026-05-11 18:38:47.162 INFO  [32301] [kmercounter::print_stats@287] 
+============================================
+found : 375809638000, expected_found : 375809638000
+global_find_cycle : 296509015335, find_ops : 375809638000
+global_insert_cycle : 737530314170, insert_ops : 375809638000
+set_cycles : 125, get_cycles : 50, set_mops : 1656, get_mops : 4119
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 70 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:38:47.271 INFO  [32392] [initializeLogger@17] ------------------------
+2026-05-11 18:38:47.271 INFO  [32392] [initializeLogger@18] Plog library initialized
+2026-05-11 18:38:47.271 INFO  [32392] [initializeLogger@19] ------------------------
+2026-05-11 18:38:47.271 INFO  [32392] [main@27] Starting dramhit
+2026-05-11 18:38:47.271 INFO  [32392] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:38:47.271 INFO  [32392] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:38:47.899 INFO  [32392] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778539127188158787_429496729.bin 0
+2026-05-11 18:38:47.899 INFO  [32392] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778539127188158787
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 429496729
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:39:03.786 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:39:03.787 INFO  [32392] [kmercounter::Application::spawn_shard_threads@382] total kv 429496729, num_threads 64, op per thread (per run) 6710886
+2026-05-11 18:39:03.787 INFO  [32397] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:39:03.787 INFO  [32397] [kmercounter::calloc_ht@214] mmap returns 0x71c540000000
+2026-05-11 18:39:03.787 INFO  [32397] [kmercounter::distribute_mem_to_nodes@110] addr 0x71c540000000, alloc_sz 8589934592
+2026-05-11 18:39:04.228 INFO  [32397] [KVQ>::CASHashTable@91] Hashtable base: 0x71c540000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:39:04.228 INFO  [32397] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:39:04.342 INFO  [32392] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:43:41.498 INFO  [32392] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:43:41.838 INFO  [32392] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:45:38.211 INFO  [32392] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:45:38.211 INFO  [32392] [kmercounter::ZipfianTest::run@426] get fill 0.800
+2026-05-11 18:45:38.429 INFO  [32392] [kmercounter::free_mem@234] 0x71c540000000 with sz 8589934592 unmapped
+2026-05-11 18:45:38.430 INFO  [32392] [kmercounter::print_stats@287] 
+============================================
+found : 429496729000, expected_found : 429496729000
+global_find_cycle : 378167683530, find_ops : 429496729000
+global_insert_cycle : 900747165403, insert_ops : 429496729000
+set_cycles : 134, get_cycles : 56, set_mops : 1549, get_mops : 3691
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 80 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1
+2026-05-11 18:45:38.537 INFO  [32494] [initializeLogger@17] ------------------------
+2026-05-11 18:45:38.537 INFO  [32494] [initializeLogger@18] Plog library initialized
+2026-05-11 18:45:38.537 INFO  [32494] [initializeLogger@19] ------------------------
+2026-05-11 18:45:38.537 INFO  [32494] [main@27] Starting dramhit
+2026-05-11 18:45:38.538 INFO  [32494] [kmercounter::Application::process@705] Hashtable type : Cas HT
+2026-05-11 18:45:38.538 INFO  [32494] [kmercounter::Application::process@750] Dropping the page cache
+2026-05-11 18:45:39.412 INFO  [32494] [kmercounter::init_zipfian_dist@72] /opt/DRAMHiT/cache/0.01_1778539538456774061_483183820.bin 0
+2026-05-11 18:45:39.412 INFO  [32494] [kmercounter::init_zipfian_dist@79] Initializing global zipf with skew 0.010000, seed 1778539538456774061
+2026-05-11 18:45:57.284 INFO  [32494] [kmercounter::init_zipfian_dist@87] Zipfian dist generated. size 483183820
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 0 assigned to 0 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 1 assigned to 1 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 2 assigned to 2 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 3 assigned to 3 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 4 assigned to 4 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 5 assigned to 5 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 6 assigned to 6 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 7 assigned to 7 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 8 assigned to 32 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 9 assigned to 33 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 10 assigned to 34 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 11 assigned to 35 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 12 assigned to 36 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 13 assigned to 37 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 14 assigned to 38 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 15 assigned to 39 at numa node 0
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 16 assigned to 8 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 17 assigned to 9 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 18 assigned to 10 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 19 assigned to 11 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 20 assigned to 12 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 21 assigned to 13 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 22 assigned to 14 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 23 assigned to 15 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 24 assigned to 40 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 25 assigned to 41 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 26 assigned to 42 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 27 assigned to 43 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 28 assigned to 44 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 29 assigned to 45 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 30 assigned to 46 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 31 assigned to 47 at numa node 1
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 32 assigned to 16 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 33 assigned to 17 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 34 assigned to 18 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 35 assigned to 19 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 36 assigned to 20 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 37 assigned to 21 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 38 assigned to 22 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 39 assigned to 23 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 40 assigned to 48 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 41 assigned to 49 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 42 assigned to 50 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 43 assigned to 51 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 44 assigned to 52 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 45 assigned to 53 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 46 assigned to 54 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 47 assigned to 55 at numa node 2
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 48 assigned to 24 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 49 assigned to 25 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 50 assigned to 26 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 51 assigned to 27 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 52 assigned to 28 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 53 assigned to 29 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 54 assigned to 30 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 55 assigned to 31 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 56 assigned to 56 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 57 assigned to 57 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 58 assigned to 58 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 59 assigned to 59 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 60 assigned to 60 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 61 assigned to 61 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 62 assigned to 62 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@357] shard 63 assigned to 63 at numa node 3
+2026-05-11 18:45:57.285 INFO  [32494] [kmercounter::Application::spawn_shard_threads@382] total kv 483183820, num_threads 64, op per thread (per run) 7549747
+2026-05-11 18:45:57.285 INFO  [32500] [kmercounter::calloc_ht@201] allocating 8 1gb pages bytes 8589934592
+2026-05-11 18:45:57.286 INFO  [32500] [kmercounter::calloc_ht@214] mmap returns 0x78f640000000
+2026-05-11 18:45:57.286 INFO  [32500] [kmercounter::distribute_mem_to_nodes@110] addr 0x78f640000000, alloc_sz 8589934592
+2026-05-11 18:45:57.727 INFO  [32500] [KVQ>::CASHashTable@91] Hashtable base: 0x78f640000000 Hashtable size: 536870912, 8 GB
+2026-05-11 18:45:57.727 INFO  [32500] [KVQ>::CASHashTable@95] queue sz: 64, queue item sz: 32
+2026-05-11 18:45:57.846 INFO  [32494] [kmercounter::ZipfianTest::run@340] zipfian test insert start
+2026-05-11 18:51:47.270 INFO  [32494] [kmercounter::ZipfianTest::run@346] zipfian test insert end
+2026-05-11 18:51:47.668 INFO  [32494] [kmercounter::ZipfianTest::run@394] zipfian test find start
+2026-05-11 18:54:30.174 INFO  [32494] [kmercounter::ZipfianTest::run@402] zipfian test find end
+2026-05-11 18:54:30.174 INFO  [32494] [kmercounter::ZipfianTest::run@426] get fill 0.900
+2026-05-11 18:54:30.390 INFO  [32494] [kmercounter::free_mem@234] 0x78f640000000 with sz 8589934592 unmapped
+2026-05-11 18:54:30.390 INFO  [32494] [kmercounter::print_stats@287] 
+============================================
+found : 483183820000, expected_found : 483183820000
+global_find_cycle : 528123658335, find_ops : 483183820000
+global_insert_cycle : 1135617325798, insert_ops : 483183820000
+set_cycles : 150, get_cycles : 69, set_mops : 1382, get_mops : 2973
+============================================
+
+/opt/DRAMHiT/scripts/eurosys_2026/collect_nps/build/dramhit --find_queue 64 --ht-fill 90 --ht-type 3 --insert-factor 1000 --read-factor 1000 --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 536870912 --skew 0.01 --hw-pref 0 --batch-len 16 --relation_r_size 1

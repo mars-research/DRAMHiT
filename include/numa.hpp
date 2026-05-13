@@ -359,9 +359,9 @@ class NumaPolicyThreads : public Numa {
   }
 
   int get_numa_node(uint32_t cpu) const {
-    for(int i=0; i<nodes.size(); i++)
+    for(size_t i=0; i<nodes.size(); i++)
     {
-        for(int  j=0; j<nodes[i].cpu_list.size(); j++)
+        for(size_t j=0; j<nodes[i].cpu_list.size(); j++)
             if(nodes[i].cpu_list[j] == cpu)
                 return i;
     }

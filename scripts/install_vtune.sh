@@ -31,13 +31,17 @@ sudo apt update
 #   Or install other version since it must match your vtune gui version. Can check available versions with:
 #apt-cache policy intel-oneapi-vtune
 # My gui app is version 2025, so looked it up with:
-# apt-cache policy intel-oneapi-vtune | grep 2025
+# apt-cache policy intel-oneapi-vtune | grep 2026
 
 # Jerry's install version
 # sudo apt install -y intel-oneapi-vtune=2025.1.0-683
 
 # Josh's install version
-sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
+# sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
+
+# Lets upgrade to latest version as of 5/9/26
+sudo apt install -y intel-oneapi-vtune=2026.0.0-325
+
 
 #   Installs in dir:
 #/opt/intel/oneapi/vtune/latest/bin64/vtune

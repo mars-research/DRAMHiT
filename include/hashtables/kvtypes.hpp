@@ -466,7 +466,7 @@ struct Aggr_KV {
 struct KVPair {
   key_type key;
   value_type value;
-} PACKED;
+};
 
 std::ostream &operator<<(std::ostream &strm, const KVPair &item);
 
@@ -793,7 +793,7 @@ struct Item {
         : "rbx", "r12", "r13", "r14", "r15", "cc", "memory");
     return found;
   };
-} PACKED;
+};
 
 struct Value {
   value_type value;
@@ -856,11 +856,12 @@ struct Value {
 
 } PACKED;
 
-#ifdef NOAGGR
+// No more aggr_kv
+//#ifdef NOAGGR
 using KVType = Item;
-#else
-using KVType = Aggr_KV;
-#endif
+//#else
+//using KVType = Aggr_KV;
+//#endif
 
 
 }  // namespace kmercounter

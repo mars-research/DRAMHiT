@@ -49,7 +49,7 @@ uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
 extern void init_zipfian_dist(double skew, int64_t seed, uint64_t size);
-extern void init_hashjoin_dist(double skew, int64_t seed, uint64_t r_size,
+extern void init_hashjoin_dist(double skew, double hit_rate, int64_t seed, uint64_t r_size,
                                uint64_t s_size);
 
 #ifdef WITH_PERFCPP
@@ -107,10 +107,11 @@ const Configuration def = {
     .test = false,
     .sequential = false,
     .radix = 10,
+    .hit_rate = 0.5,
 };  // TODO enum
 
 // for synchronization of threads
-static uint64_t ready = 0;
+// static uint64_t ready = 0;
 static std::atomic_uint num_entered{};
 
 #if defined(WITH_PAPI_LIB)
@@ -213,7 +214,6 @@ void sync_complete(void) {
       }
     }
   }
-
 
   void free_ht(BaseHashTable * kmer_ht) {
     if (kmer_ht != NULL) delete kmer_ht;
@@ -368,7 +368,7 @@ void sync_complete(void) {
         seg_sz = 4096;
       }
 
-      for (int i = 0; i < config.num_threads; i++) {
+      for (uint32_t i = 0; i < config.num_threads; i++) {
         Shard &sh = this->shards[i];
         sh.f_start = round_up(seg_sz * sh.shard_idx, PAGE_SIZE);
         sh.f_end = round_up(seg_sz * (sh.shard_idx + 1), PAGE_SIZE);
@@ -400,7 +400,7 @@ void sync_complete(void) {
     std::function<void()> on_sync_complete = sync_complete;
     std::barrier barrier(config.num_threads, on_sync_complete);
 
-    for (int i = 1; i < config.num_threads; i++) {
+    for (uint32_t i = 1; i < config.num_threads; i++) {
       Shard &sh = this->shards[i];
       CPU_ZERO(&cpuset);
       CPU_SET(sh.assigned_cpu, &cpuset);
@@ -609,7 +609,10 @@ void sync_complete(void) {
           po::value<bool>(&config.sequential)->default_value(def.sequential),
           "bw test sequential access")(
           "radix", po::value<uint32_t>(&config.radix)->default_value(def.radix),
-          "radix partition join bits partition number = 2^radix");
+          "radix partition join bits partition number = 2^radix")(
+          "associativity",
+          po::value<double>(&config.hit_rate)->default_value(def.hit_rate),
+          "set associativity of hashjoin");
 
       papi_init();
       po::variables_map vm;
@@ -689,7 +692,6 @@ void sync_complete(void) {
         }
       }
 
-
       switch (config.ht_type) {
 #ifdef PART_ID
         case PARTITIONED_HT:
@@ -699,7 +701,6 @@ void sync_complete(void) {
         case MULTI_HT:
           PLOG_INFO.printf("Hashtable type : Multi HT");
           break;
-
 #endif
         case CASHTPP:
           PLOG_INFO.printf("Hashtable type : Cas HT");
@@ -773,9 +774,9 @@ void sync_complete(void) {
     if (config.mode == ZIPFIAN) {
       uint64_t size = config.ht_size * config.ht_fill / 100;
       init_zipfian_dist(config.skew, config.seed, size);
-    } else if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 || config.mode == PARTITIONJOINV2) {
-
-      init_hashjoin_dist(config.skew, config.seed, config.relation_r_size,
+    } else if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 ||
+               config.mode == PARTITIONJOINV2) {
+      init_hashjoin_dist(config.skew, config.hit_rate, config.seed, config.relation_r_size,
                          config.relation_s_size);
     }
 

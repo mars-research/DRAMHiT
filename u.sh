@@ -55,7 +55,7 @@ fi
 # insertFactor=1000000
 # numThreads=1
 
-fill=70
+
 
 HASHJOIN=13
 ZIPFIAN=11
@@ -64,13 +64,14 @@ UNIFORM=14
 rsize=536870912
 
 HOME_DIR=/opt/DRAMHiT
-cmake -S $HOME_DIR -B $HOME_DIR/build -DCALC_STATS=OFF -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE
+cmake -S $HOME_DIR -B $HOME_DIR/build -DCALC_STATS=ON -DCPUFREQ_MHZ=2500 -DDRAMHiT_VARIANT=2025 -DBUCKETIZATION=OFF -DBRANCH=branched -DUNIFORM_PROBING=OFF -DPREFETCH=L1
 cmake --build $HOME_DIR/build
 
 #for skew in $(seq 0.01 0.5 2.0);
 #for fill in $(seq 10 10 10);
 #do
 
+fill=90
 
 FILE_NAME=output.txt
     cmd="--find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
@@ -82,8 +83,9 @@ FILE_NAME=output.txt
     # sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
     # # sudo /usr/bin/perf stat -a -M umc_data_bus_utilization -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
     # sudo $(pwd)/build/dramhit $cmd > $FILE_NAME
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd &> $FILE_NAME
-    
+    # sudo /usr/bin/perf stat -e UNC_M_CAS_COUNT.ALL -I 1000 -- $HOME_DIR/build/dramhit $cmd &> $FILE_NAME
+    sudo $HOME_DIR/build/dramhit $cmd &>> $FILE_NAME
+
     #echo $(pwd)/build/dramhit $cmd
 #done
 

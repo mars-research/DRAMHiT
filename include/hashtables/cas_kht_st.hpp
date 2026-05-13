@@ -1,15 +1,5 @@
-/// Compare-and-swap(CAS) with linear probing hashtable based off of
-/// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
-/// Key and values are stored directly in the table.
-/// CASHashtable is not parititioned, meaning that there will be
-/// at max one instance of it. All threads will share the same
-/// instance.
-/// The original one is called the casht and the one we modified with
-/// batching + prefetching though is called casht++.
-// TODO bloom filters for high frequency kmers?
-
-#ifndef HASHTABLES_CAS_KHT_HPP
-#define HASHTABLES_CAS_KHT_HPP
+#ifndef HASHTABLES_CAS_KHT_SINGLE_THREAD_HPP
+#define HASHTABLES_CAS_KHT_SINGLE_THREAD_HPP
 
 #include <xmmintrin.h>
 
@@ -19,39 +9,25 @@
 #include <iostream>
 #include <mutex>
 #include <type_traits>
-
 #include "constants.hpp"
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "plog/Log.h"
-#include "sync.h"
-#include "xorwow.hpp"
 
 namespace kmercounter {
 
 template <typename KV, typename KVQ>
-class CASHashTable : public BaseHashTable {
+class CASHashTableSingleThread : public BaseHashTable {
  public:
-  /// The global instance is shared by all threads.
-  static KV *hashtable;
-  /// A dedicated slot for the empty value.
   static uint64_t empty_slot_;
-  /// True if the empty value is inserted.
   static bool empty_slot_exists_;
-
-  /// File descriptor backs the memory
-  int fd;
-  int id;
+  KV *hashtable;
   size_t data_length, key_length;
   const static uint64_t CACHELINE_SIZE = 64;
   const static uint64_t KV_IN_CACHELINE = CACHELINE_SIZE / sizeof(KV);
   const static uint64_t KEYS_IN_CACHELINE_MASK =
       (CACHELINE_SIZE / sizeof(KV)) - 1;
-
-  uint8_t tid;
-  uint8_t cpuid;
-
   uint32_t find_queue_sz;
   uint32_t insert_queue_sz;
   uint32_t INSERT_QUEUE_SZ_MASK;
@@ -59,14 +35,11 @@ class CASHashTable : public BaseHashTable {
   uint64_t HT_BUCKET_MASK;
 
   const static __mmask8 KEYMSK = 0b01010101;
-// #define KEYMSK ((__mmask8)(0b01010101))
-#define PREFETCH_INSERT_NEXT_DISTANCE 8
-#define PREFETCH_FIND_NEXT_DISTANCE 8
+  const static uint64_t PREFETCH_INSERT_NEXT_DISTANCE = 8;
+  const static uint64_t PREFETCH_FIND_NEXT_DISTANCE = 8;
 
-  CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
-
-  CASHashTable(uint64_t c, uint32_t queue_sz, uint8_t tid)
-      : fd(-1), id(1), find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
+  CASHashTableSingleThread(uint64_t c, uint32_t queue_sz, KV *hashtable)
+      : find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->capacity = kmercounter::utils::next_pow2(c);
     if (capacity % KV_IN_CACHELINE != 0) {
       PLOGE.printf("Capacity %lu is not a multiple of KV_IN_CACHELINE %d\n",
@@ -81,30 +54,10 @@ class CASHashTable : public BaseHashTable {
       abort();
     }
 
-    {
-      const std::lock_guard<std::mutex> lock(ht_init_mutex);
-
-      if (!this->hashtable) {
-        assert(this->ref_cnt == 0);
-        this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
-
-        PLOGI.printf(
-            "Hashtable base: %p Hashtable size: %lu, %lu GB", this->hashtable,
-            this->capacity,
-            (this->capacity * sizeof(KV)) / (1024ULL * 1024ULL * 1024ULL));
-        PLOGI.printf("queue sz: %lu, queue item sz: %d", find_queue_sz,
-                     sizeof(KVQ));
-      }
-      this->ref_cnt++;
-    }
-
-    this->tid = sched_getcpu();
-    this->cpuid = tid >= 28 ? tid - 28 : tid;
+    this->hashtable = hashtable;
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
     this->data_length = empty_item.data_length();
-
-    PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, insert_queue_sz * sizeof(KVQ)));
     this->find_queue = (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
@@ -115,19 +68,9 @@ class CASHashTable : public BaseHashTable {
         (uint32_t)((this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK));
   }
 
-  ~CASHashTable() {
+  ~CASHashTableSingleThread() {
     free(find_queue);
     free(insert_queue);
-
-    // Deallocate the global hashtable if ref_cnt goes down to zero.
-    {
-      const std::lock_guard<std::mutex> lock(ht_init_mutex);
-      this->ref_cnt--;
-      if (this->ref_cnt == 0) {
-        free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
-        this->hashtable = nullptr;
-      }
-    }
   }
 
   void clear() override { memset(this->hashtable, 0, capacity * sizeof(KV)); }
@@ -912,9 +855,9 @@ class CASHashTable : public BaseHashTable {
 #endif
       this->find_queue[this->find_head].key_hash = hash;
 #else
-      // we don't need this part of code, because branched idx already at start of next cacheline
-      // idx += CACHELINE_SIZE / sizeof(KV);
-      // idx = idx & (this->capacity - 1);
+      // we don't need this part of code, because branched idx already at start
+      // of next cacheline idx += CACHELINE_SIZE / sizeof(KV); idx = idx &
+      // (this->capacity - 1);
 #endif
 
       // key is at a different cacheline, prefetch and delay the find
@@ -1208,20 +1151,12 @@ class CASHashTable : public BaseHashTable {
   }
 };
 
-/// Static variables
 template <class KV, class KVQ>
-KV *CASHashTable<KV, KVQ>::hashtable = nullptr;
+uint64_t CASHashTableSingleThread<KV, KVQ>::empty_slot_ = 0;
 
 template <class KV, class KVQ>
-uint64_t CASHashTable<KV, KVQ>::empty_slot_ = 0;
+bool CASHashTableSingleThread<KV, KVQ>::empty_slot_exists_ = false;
 
-template <class KV, class KVQ>
-bool CASHashTable<KV, KVQ>::empty_slot_exists_ = false;
 
-template <class KV, class KVQ>
-std::mutex CASHashTable<KV, KVQ>::ht_init_mutex;
-
-template <class KV, class KVQ>
-uint32_t CASHashTable<KV, KVQ>::ref_cnt = 0;
 }  // namespace kmercounter
 #endif  // HASHTABLES_CAS_KHT_HPP
