@@ -493,13 +493,14 @@ class alignas(64) RadixBucket {
 
   inline void flush() {
     while (v_idx & 0x3) {
-      v[v_idx] = buffer.tuples[v_idx&0x3];
+      v[v_idx] = buffer.tuples[v_idx & 0x3];
       v_idx++;
     }
   }
 };
 
-static_assert(sizeof(RadixBucket) == 128,"Radix bucket size should be 128bytes");
+static_assert(sizeof(RadixBucket) == 128,
+              "Radix bucket size should be 128bytes");
 
 class RadixArrayHashTable {
  public:
@@ -508,6 +509,7 @@ class RadixArrayHashTable {
   static const key_type empty_key = 0;
   static const value_type empty_value = 0;
   Hasher hasher;
+  uint64_t total_probes = 0;
 
   RadixArrayHashTable(uint64_t sz, Element* v_ref) : vec(v_ref), size(sz) {
     // Best practice: Ensure size is actually a power of 2
@@ -521,54 +523,47 @@ class RadixArrayHashTable {
 
   inline void insert(const Element& e) {
     uint64_t idx = hash(e.key);
-    vec[idx] = e;
-    return;
-    uint64_t probes = 0;  // Guard against infinite loops
 
-    while (probes < size) {
-      // Assuming ASSERT_TRUE compiles out in Release
-      ASSERT_TRUE(idx < size);
-
-      if (vec[idx].key == empty_key) {
-        vec[idx] = e;
-        return;
-      }
-
-      if (vec[idx].key == e.key) {
-        vec[idx].value = e.value;
-        return;
-      }
-
-      idx = (idx + 1) & (size - 1);
-      probes++;
+  try_insert:
+    if (vec[idx].key == empty_key) {
+      vec[idx] = e;
+      return;
     }
 
-    // If you reach here, the table is 100% full.
-    throw std::runtime_error("HashTable is full!");
+    if (vec[idx].key == e.key) {
+      vec[idx].value = e.value;
+      return;
+    }
+
+    idx = (idx + 1) & (size - 1);
+    // if ((idx & 0x3) == 0) {
+    //  __builtin_prefetch(&vec[(((idx & ~3ULL) + 4) & (size - 1))], 1, 2);
+    // }
+
+    goto try_insert;
   }
 
-  inline value_type find(const Element& e) {
+  inline int find(const Element& e, value_type& v) {
     uint64_t idx = hash(e.key);
-    return vec[idx].value;
 
-    uint64_t probes = 0;
-
-    while (probes < size) {
-      ASSERT_TRUE(idx < size);
-
-      if (vec[idx].key == empty_key) {
-        return empty_value;
-      }
-
-      if (vec[idx].key == e.key) {
-        return vec[idx].value;
-      }
-
-      idx = (idx + 1) & (size - 1);
-      probes++;
+  try_find:
+    total_probes++;
+    if (vec[idx].key == e.key) {
+      v = vec[idx].value;
+      return 1;
     }
 
-    return empty_value;
+    if (vec[idx].key == empty_key) {
+      return 0;
+    }
+
+    idx = (idx + 1) & (size - 1);
+
+    // if ((idx & 0x3) == 0) {
+    //  __builtin_prefetch(&vec[(((idx & ~3ULL) + 4) & (size - 1))], 0, 2);
+    // }
+
+    goto try_find;
   }
 };
 
@@ -786,6 +781,10 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
     local_r[bucket_id].insert(e);
   }
 
+  for (size_t i = 0; i < partition_num; ++i) {
+    local_r[i].flush();
+  }
+
   for (size_t i = 0; i < partition_sz_s; ++i) {
     Element& e = probe[i];
     bucket_id = radix_hash(e.key, radix_mask);
@@ -794,10 +793,7 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   }
 
   for (size_t i = 0; i < partition_num; ++i) {
-    local_r[i].flush();
     local_s[i].flush();
-    ASSERT_TRUE(local_r[i].v_start + local_r[i].v_len == local_r[i].v_idx);
-    ASSERT_TRUE(local_s[i].v_start + local_s[i].v_len == local_s[i].v_idx);
   }
 
   Global_R_Buckets[tid] = local_r;
@@ -855,20 +851,16 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
     avg_ht_sz += ht_sz;
 
     Element* ht_storage = arena.aligned_alloc(ht_sz, CACHELINE_SIZE);
-    RadixArrayHashTable ht(ht_sz, ht_storage);
-
-    // for (size_t i = 0; i < ht_sz; i += ELE_NUM_PER_CACHE_LINE) {
-    //     __builtin_prefetch(&ht_storage[i], 1, 2);
-    // }
 
     static_assert(sizeof(Item) == sizeof(Element),
                   "Size mismatch between Item and Element");
     static_assert(alignof(Item) == alignof(Element),
                   "Alignment mismatch between Item and Element");
 
-    // BaseHashTable* cas_ht;
-    // cas_ht = new CASHashTableSingleThread<Item, ItemQueue>(ht_sz,
-    // config.find_queue_sz, (Item*) ht_storage);
+    RadixArrayHashTable ht(ht_sz, ht_storage);
+    // BaseHashTable* cas_ht = new CASHashTableSingleThread<Item, ItemQueue>(
+    //      ht_sz, config.find_queue_sz, (Item*)ht_storage);
+
     //  if (tid == 0) {
     //    PLOGI.printf("part id %lu hashtable sz %lu KB, build_sz %lu KB",
     //    part_id,
@@ -883,7 +875,7 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
       const uint32_t start = 0;
       const uint32_t end = b->v_len;
 
-      // ht_do_insert((BaseHashTable*) cas_ht, tuples, end);
+      // ht_do_insert((BaseHashTable*)cas_ht, tuples, end);
       for (uint32_t i = start; i < end; i++) {
         ht.insert(tuples[i]);
       }
@@ -908,18 +900,19 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
       const uint32_t start = 0;
       const uint32_t end = b->v_len;
 
-      // ht_do_find((BaseHashTable*) cas_ht, tuples, mvec, end);
-      //  if (start < end) {
-      //    __builtin_prefetch(&tuples[start], 0,
-      //                       2);  // 0 = read, 1 = low temporal locality
-      //  }
+      // ht_do_find((BaseHashTable*)cas_ht, tuples, mvec, end);
+      //
 
+      value_type ret_v;
       for (uint32_t i = start; i < end; i++) {
         find_issued++;
-        // if (ht.find(tuples[i]) > 0) found++;
-        ht.find(tuples[i]);
+        ht.find(tuples[i], ret_v);
       }
     }
+
+    // if (tid == 0) {
+    //   PLOGI.printf("probes per find %lu", ht.total_probes / find_issued);
+    // }
 
     // if (tid == 0) {
     //   duration = RDTSCP() - duration;
@@ -932,8 +925,8 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   avg_ht_sz = avg_ht_sz / num_ht_build;
 
   if (tid == 0) {
-    PLOGI.printf("average_hashtable_sz: %lu MB",
-                 (avg_ht_sz * sizeof(Element) / (1024 * 1024)));
+    PLOGI.printf("average_hashtable_sz: %lu KB",
+                 (avg_ht_sz * sizeof(Element) / (1024)));
   }
 
   if (tid == 0) {

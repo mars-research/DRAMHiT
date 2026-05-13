@@ -16,6 +16,8 @@
 #include "utils/vtune.hpp"
 #include "xorwow.hpp"
 #include "zipf_distribution.hpp"
+#include "queues/lynxq.hpp"
+#include "queues/bqueue_aligned.hpp"
 
 #define PGROUNDDOWN(x) (x & ~(PAGESIZE - 1))
 
@@ -860,18 +862,18 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
 #endif
 }
 
-// template <typename T>
-// void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
-//   PLOG_DEBUG.printf("Initializing queues");
-//   if (std::is_same<T, kmercounter::LynxQueue>::value) {
-//     this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
-//   } else if (std::is_same<T, kmercounter::BQueueAligned>::value) {
-//     this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
-//   } else if (std::is_same<T, kmercounter::SectionQueue>::value) {
-//     this->QUEUE_SIZE = 4;
-//   }
-//   this->queues = new T(nprod, ncons, this->QUEUE_SIZE, this->npq);
-// }
+template <typename T>
+void QueueTest<T>::init_queues(uint32_t nprod, uint32_t ncons) {
+ PLOG_DEBUG.printf("Initializing queues");
+ if (std::is_same<T, kmercounter::LynxQueue>::value) {
+   this->QUEUE_SIZE = QueueTest::LYNX_QUEUE_SIZE;
+ } else if (std::is_same<T, kmercounter::BQueueAligned>::value) {
+   this->QUEUE_SIZE = QueueTest::BQ_QUEUE_SIZE;
+ } else if (std::is_same<T, kmercounter::SectionQueue>::value) {
+   this->QUEUE_SIZE = 4;
+ }
+ this->queues = new T(nprod, ncons, this->QUEUE_SIZE, this->npq);
+}
 
 template <typename T>
 void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
@@ -1042,7 +1044,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n, bool is_join,
   this->shards = (Shard *)calloc(sizeof(Shard), cfg->num_threads);
 
   // Init queues
-  // this->init_queues(cfg->n_prod, cfg->n_cons);
+  this->init_queues(cfg->n_prod, cfg->n_cons);
 
   std::function<void()> on_completion = []() noexcept {
     // For debugging

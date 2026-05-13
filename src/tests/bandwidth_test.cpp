@@ -2,7 +2,6 @@
 #include "misc_lib.h"
 #include "numa.hpp"
 #include "plog/Log.h"
-#include "queues/section_queues.hpp"
 #include "sync.h"
 #include "tests/BandwidthTest.hpp"
 #include "types.hpp"
