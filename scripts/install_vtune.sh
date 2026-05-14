@@ -33,14 +33,14 @@ sudo apt update
 # My gui app is version 2025, so looked it up with:
 # apt-cache policy intel-oneapi-vtune | grep 2026
 
-# Jerry's install version
+# Josh's install version
 # sudo apt install -y intel-oneapi-vtune=2025.1.0-683
 
-# Josh's install version
-# sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
+# Jerry's install version
+sudo apt install -y intel-oneapi-vtune=2025.0.0-1129
 
 # Lets upgrade to latest version as of 5/9/26
-sudo apt install -y intel-oneapi-vtune=2026.0.0-325
+# sudo apt install -y intel-oneapi-vtune=2026.0.0-325
 
 
 #   Installs in dir:
@@ -56,10 +56,10 @@ sudo ./insmod-sep -r -g redshift-PG0
 
 #Now to use inside the vtune gui application click the ssh option and fill out your info:
 # Example:
-#   SSH Destination: 
+#   SSH Destination:
 # USER@clnode199.clemson.cloudlab.us
 
-#   VTune Profiler installation directory:  
+#   VTune Profiler installation directory:
 # /opt/intel/oneapi/vtune/latest/
 
 
@@ -69,10 +69,9 @@ sudo ./insmod-sep -r -g redshift-PG0
 ## Installing from vtune-gui (note it doesn't include event markers library):
 #   After 'deploying' from app, install drivers:
 #    cd /tmp/vtune_profiler_2025.0.0.629072/sepdk/src
-#    sudo ./build-driver 
+#    sudo ./build-driver
 #    ./insmod-sep -q
 #    groups
 #    sudo ./insmod-sep -r -g dramhit-PG0
 #    ./insmod-sep -q
 # go back to home directory...
-

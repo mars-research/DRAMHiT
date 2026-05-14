@@ -38,11 +38,13 @@
 #include "hasher.hpp"
 #include "hashtables/cas_kht_st.hpp"
 #include "helper.hpp"
+#include "print_stats.h"
 #include "sync.h"
 #include "tests/HashjoinTest.hpp"
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
 #include "utils/hugepage_arena.hpp"
+#include "utils/vtune.hpp"
 #include "zipf_distribution.hpp"
 // #include "hashtables/cas_kht_st.hpp"
 // #define DEBUG_HJ
@@ -458,49 +460,26 @@ void hashjoin(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   }
 }
 
-std::vector<BaseHashTable*> Global_HashTables;
-
-// Partition Join
-// 64-Byte Cache Line aligned buffer
 struct alignas(64) CacheLineBuffer {
   Element tuples[4];
-  inline void flush_nt(void* addr) {
+  uint64_t counter;
+
+  inline bool insert(Element& e) {
+    tuples[counter & 0x3] = e;
+    counter++;
+
+    // if counter is multiple of 4, after increment, time to flush
+    return ((counter & 0x3) == 0);
+  }
+
+  inline void reset() { counter = 0; }
+
+  inline void flush_nt(Element* bucket) {
+    void* addr = &bucket[counter - 4];
     __m512i data = _mm512_load_si512(reinterpret_cast<const __m512i*>(tuples));
     _mm512_stream_si512(reinterpret_cast<__m512i*>(addr), data);
   }
 };
-
-class alignas(64) RadixBucket {
- public:
-  CacheLineBuffer buffer;
-  Element* v;      // Pointer to the EXACT start of this bucket's slice
-  uint64_t v_idx;  // Local write index, always starts at 0
-  uint64_t v_cap;  // The padded capacity (replaces v_end for boundary checks)
-  uint64_t v_len;  // The actual number of tuples
-  size_t v_id;
-
-  RadixBucket(Element* slice_start, uint64_t capacity, uint64_t len, size_t id)
-      : v(slice_start), v_idx(0), v_cap(capacity), v_len(len), v_id(id) {}
-
-  inline void insert(Element& e) {
-    buffer.tuples[v_idx & 0x3] = e;
-    v_idx++;
-
-    if ((v_idx & 0x3) == 0) {
-      buffer.flush_nt(&v[v_idx - 4]);
-    }
-  }
-
-  inline void flush() {
-    while (v_idx & 0x3) {
-      v[v_idx] = buffer.tuples[v_idx & 0x3];
-      v_idx++;
-    }
-  }
-};
-
-static_assert(sizeof(RadixBucket) == 128,
-              "Radix bucket size should be 128bytes");
 
 class RadixArrayHashTable {
  public:
@@ -509,19 +488,16 @@ class RadixArrayHashTable {
   static const key_type empty_key = 0;
   static const value_type empty_value = 0;
   Hasher hasher;
-  uint64_t total_probes = 0;
+  uint64_t found;
 
-  RadixArrayHashTable(uint64_t sz, Element* v_ref) : vec(v_ref), size(sz) {
-    // Best practice: Ensure size is actually a power of 2
-    // so that `idx & (size - 1)` actually works correctly.
-  }
+  RadixArrayHashTable(Element* v_ref) : vec(v_ref) {}
 
   // FIXED: Read exactly the bytes of the key, no more.
   inline uint64_t hash(key_type k) {
     return (hasher(&k, sizeof(key_type)) & (size - 1));
   }
 
-  inline void insert(const Element& e) {
+  void insert(const Element& e) {
     uint64_t idx = hash(e.key);
 
   try_insert:
@@ -536,20 +512,17 @@ class RadixArrayHashTable {
     }
 
     idx = (idx + 1) & (size - 1);
-    // if ((idx & 0x3) == 0) {
-    //  __builtin_prefetch(&vec[(((idx & ~3ULL) + 4) & (size - 1))], 1, 2);
-    // }
 
     goto try_insert;
   }
 
-  inline int find(const Element& e, value_type& v) {
+  bool find(const Element& e, value_type& v) {
     uint64_t idx = hash(e.key);
 
   try_find:
-    total_probes++;
     if (vec[idx].key == e.key) {
       v = vec[idx].value;
+      found++;
       return 1;
     }
 
@@ -559,86 +532,172 @@ class RadixArrayHashTable {
 
     idx = (idx + 1) & (size - 1);
 
-    // if ((idx & 0x3) == 0) {
-    //  __builtin_prefetch(&vec[(((idx & ~3ULL) + 4) & (size - 1))], 0, 2);
-    // }
-
+    if(idx&0x3 == 0) {
+        return 0;
+    }
     goto try_find;
   }
 };
 
-RadixBucket** Global_R_Buckets;
-RadixBucket** Global_S_Buckets;
+#ifdef WITH_VTUNE_LIB
+const auto histogram_event =
+    __itt_event_create("histogram", strlen("histogram"));
+const auto partition_event =
+    __itt_event_create("partition", strlen("partition"));
+const auto join_event = __itt_event_create("join", strlen("join"));
+#endif
 
-inline void print_histogram_stats(const std::vector<uint64_t>& histogram,
-                                  int tid, char* str) {
-  if (histogram.empty()) {
-    PLOGI.printf("[tid: %d] Histogram is empty.\n", tid);
-    return;
+struct RelationInfo {
+  Element* workload;
+  uint64_t workload_sz;
+
+  uint64_t partition_num;
+  uint64_t r_msk;
+
+  // below array are all partition_num length
+  Element** buckets;
+
+  // buckets second level length is indicated by histogram
+  uint64_t* histogram;
+
+  // shared by R and S
+  CacheLineBuffer* swbs;
+};
+
+void preallocate_phase(RelationInfo& info, HugepageArena& arena) {
+  uint64_t* histogram = info.histogram;
+  for (size_t i = 0; i < info.workload_sz; ++i) {
+    Element& e = info.workload[i];
+    uint64_t bucket_id = radix_hash(e.key, info.r_msk);
+    histogram[bucket_id]++;
   }
 
-  uint64_t min_val = std::numeric_limits<uint64_t>::max();
-  uint64_t max_val = 0;
-  uint64_t sum = 0;
+  for (size_t i = 0; i < info.partition_num; ++i) {
+    // round up to 4
+    uint64_t capacity = (histogram[i] + 3) & ~3ULL;
+    info.buckets[i] =
+        (Element*)arena.aligned_alloc(capacity * sizeof(Element), 64);
+  }
+}
 
-  // Pass 1: Get Min, Max, and Sum for the Average
-  for (uint64_t val : histogram) {
-    min_val = std::min(min_val, val);
-    max_val = std::max(max_val, val);
-    sum += val;
+// partition s
+void partition_phase(RelationInfo& info) {
+  uint64_t bucket_id;
+  CacheLineBuffer* buffer;
+
+  for (size_t i = 0; i < info.workload_sz; ++i) {
+    Element& e = info.workload[i];
+    bucket_id = radix_hash(e.key, info.r_msk);
+    buffer = &info.swbs[bucket_id];
+    if (buffer->insert(e)) {
+      buffer->flush_nt(info.buckets[bucket_id]);
+    }
   }
 
-  double avg = static_cast<double>(sum) / histogram.size();
+  for (size_t i = 0; i < info.partition_num; ++i) {
+    uint64_t counter = info.swbs[i].counter;
+    uint8_t left = counter & 0x3;
 
-  // Pass 2: Calculate the sum of squared differences for Variance
-  double variance_sum = 0.0;
-  for (uint64_t val : histogram) {
-    double diff = static_cast<double>(val) - avg;
-    variance_sum += (diff * diff);  // Square the difference
+    // Calculate the absolute index where the leftovers should start
+    uint64_t base_idx = counter & ~3ULL;
+
+    for (uint8_t j = 0; j < left; j++) {
+      // Write to base_idx + j, NOT just j
+      info.buckets[i][base_idx + j] = info.swbs[i].tuples[j];
+    }
+    info.swbs[i].reset();
   }
+}
 
-  // Calculate Variance and Standard Deviation
-  double variance = variance_sum / histogram.size();
-  double std_dev = std::sqrt(variance);
+struct GlobalRelationInfo {
+  Element** r_buckets;
+  uint64_t* r_histogram;
 
-  // --- Construct the atomic output string ---
-  std::string output;
-  char buffer[512];  // Buffer for formatting individual lines
+  Element** s_buckets;
+  uint64_t* s_histogram;
+};
 
-  // Append stats
-  snprintf(buffer, sizeof(buffer),
-           "\n%s [tid: %d] min: %lu, max: %lu, avg: %.1f, std_dev: %.2f\n", str,
-           tid, min_val, max_val, avg, std_dev);
-  output += buffer;
-
-  // Append histogram header
-  snprintf(buffer, sizeof(buffer),
-           "--- Histogram Visualization [tid: %d] ---\n", tid);
-  output += buffer;
-
-  const int MAX_BAR_LENGTH = 30;
-
-  // Append each bucket's visual bar
-  for (size_t i = 0; i < histogram.size(); ++i) {
-    uint64_t val = histogram[i];
-
-    int num_asterisks = 0;
-    if (max_val > 0) {
-      num_asterisks = static_cast<int>((static_cast<double>(val) / max_val) *
-                                       MAX_BAR_LENGTH);
+GlobalRelationInfo* global_info;
+uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
+                     uint64_t partition_num) {
+  uint64_t max_ht_sz = 0;
+  uint64_t ht_nums =
+      (partition_num + config.num_threads - 1) / config.num_threads;
+  uint64_t* ht_szs =
+      (uint64_t*)arena.aligned_alloc(sizeof(uint64_t) * ht_nums, 64);
+  uint64_t ht_id = 0;
+  for (size_t part_id = tid; part_id < partition_num;
+       part_id += config.num_threads) {
+    uint64_t build_sz = 0;
+    for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
+      build_sz += global_info[thread_i].r_histogram[part_id];
     }
 
-    std::string bar(num_asterisks, '*');
+    uint64_t ht_sz = build_sz * 100 / config.ht_fill;
+    ht_sz = utils::next_pow2(ht_sz);
+    if (max_ht_sz < ht_sz) max_ht_sz = ht_sz;
 
-    snprintf(buffer, sizeof(buffer), "Bucket %3zu | %-50s (%lu)\n", i,
-             bar.c_str(), val);
-    output += buffer;
+    ht_szs[ht_id] = ht_sz;
+    ht_id++;
   }
 
-  output += "-----------------------------------------\n";
+  // in theory could even reuse swb.
+  Element* ht_array =
+      (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
 
-  // Single atomic log call to prevent thread interleaving
-  PLOGI.printf("%s", output.c_str());
+  // PLOGI.printf("array size %lu kb", sizeof(Element) * max_ht_sz / 1024);
+  ht_id = 0;
+
+  RadixArrayHashTable ht(ht_array);
+
+  uint64_t found = 0;
+  for (size_t part_id = tid; part_id < partition_num;
+       part_id += config.num_threads) {
+    uint64_t ht_sz = ht_szs[ht_id];
+    ht_id++;
+    ht.size = ht_sz;
+    ht.found = 0;
+
+    memset(ht_array, 0, ht_sz * sizeof(Element));
+
+    const uint32_t ahead = 64;
+
+    for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
+      uint64_t sz = global_info[thread_i].r_histogram[part_id];
+      Element* tuples = global_info[thread_i].r_buckets[part_id];
+      for (uint32_t i = 0; i < sz; i++) {
+        if (!(i & 0x3) && (i + ahead< sz)) {
+          __builtin_prefetch(&tuples[i + ahead], false, 2);
+        }
+
+        ht.insert(tuples[i]);
+
+        if ((sz > 16) && (i < (sz - 16))) {
+          __builtin_prefetch(&global_info[thread_i].r_buckets[part_id], false,
+                             3);
+        }
+      }
+    }
+
+    for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
+      uint64_t sz = global_info[thread_i].s_histogram[part_id];
+      Element* tuples = global_info[thread_i].s_buckets[part_id];
+      uint64_t ret_v;
+      for (uint32_t i = 0; i < sz; i++) {
+        if (!(i & 0x3) && (i + ahead < sz)) {
+          __builtin_prefetch(&tuples[i + ahead ], false, 2);
+        }
+        ht.find(tuples[i], ret_v);
+        if (i < sz - 4) {
+          __builtin_prefetch(&global_info[thread_i].r_buckets[part_id], false,
+              3);
+        }
+      }
+    }
+    found += ht.found;
+  }
+
+  return found;
 }
 
 void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
@@ -647,289 +706,90 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   uint64_t partition_num = 1 << config.radix;
   uint64_t radix_mask = partition_num - 1;
   uint64_t tid = sh->shard_idx;
+  // TODO, estimate per thread needed memory and break into GB and mb.
+  // also look at per thread memory quota from filesystem, so it doesn't
+  // try to allocate over the limits
+  HugepageArena arena(1, 10);
 
-  huge_page_allocator<RadixBucket> bucket_allocator;
-  RadixBucket* local_r = bucket_allocator.allocate(partition_num);
-  RadixBucket* local_s = bucket_allocator.allocate(partition_num);
+  // they can share swbs.
+  CacheLineBuffer* swbs = (CacheLineBuffer*)arena.aligned_alloc(
+      sizeof(CacheLineBuffer) * partition_num, 64);
 
-  huge_page_allocator<char> byte_allocator;
-  uint64_t* r_histogram =
-      (uint64_t*)byte_allocator.allocate(partition_num * sizeof(uint64_t));
-  uint64_t* s_histogram =
-      (uint64_t*)byte_allocator.allocate(partition_num * sizeof(uint64_t));
+  RelationInfo r_info;
+  r_info.r_msk = radix_mask;
+  r_info.partition_num = partition_num;
+  r_info.buckets =
+      (Element**)arena.aligned_alloc(sizeof(Element*) * partition_num, 64);
+  r_info.histogram =
+      (uint64_t*)arena.aligned_alloc(sizeof(uint64_t) * partition_num, 64);
+  r_info.workload = build;
+  r_info.workload_sz = partition_sz_r;
+  r_info.swbs = swbs;
 
-  HugepageArena<Element> arena(1, 0);
-
-  for (size_t i = 0; i < partition_num; ++i) {
-    r_histogram[i] = 0;
-    s_histogram[i] = 0;
-    // buffer_slots[i] = 0;
-  }
-
-  // Arena mmap hugepages and zero them.
-  // This is done so that because radix must
-  // first do a histogram building to determine
-  // size of radix buckets.
-  // In a more realistic system like db,
-  // there will be some allocator that essentially
-  // will keep system memory warm.
+  RelationInfo s_info;
+  s_info.r_msk = radix_mask;
+  s_info.partition_num = partition_num;
+  s_info.buckets =
+      (Element**)arena.aligned_alloc(sizeof(Element*) * partition_num, 64);
+  s_info.histogram =
+      (uint64_t*)arena.aligned_alloc(sizeof(uint64_t) * partition_num, 64);
+  s_info.workload = probe;
+  s_info.workload_sz = partition_sz_s;
+  s_info.swbs = swbs;
 
   if (tid == 0) {
-    Global_R_Buckets = (RadixBucket**)byte_allocator.allocate(
-        sizeof(RadixBucket*) * config.num_threads);
-    Global_S_Buckets = (RadixBucket**)byte_allocator.allocate(
-        sizeof(RadixBucket*) * config.num_threads);
+    // should be smaller than a page
+    global_info = (GlobalRelationInfo*)aligned_alloc(
+        64, sizeof(GlobalRelationInfo) * config.num_threads);
+
+#ifdef WITH_VTUNE_LIB
+    __itt_event_start(partition_event);
+#endif
     cur_phase = ExecPhase::insertions;
     g_app_record_start = true;
-    PLOGI.printf("partition num %lu %u", partition_num, config.radix);
+    PLOGI.printf("Partition phase start\n partition num %lu", partition_num);
   }
   barrier->arrive_and_wait();
 
-  // if (tid == 0) {
-  //   cur_phase = ExecPhase::finds;
-  //   g_app_record_start = true;
-  // }
-  // barrier->arrive_and_wait();
-  uint64_t bucket_id;
-  for (size_t i = 0; i < partition_sz_r; ++i) {
-    Element& e = build[i];
-    bucket_id = radix_hash(e.key, radix_mask);
-    ASSERT_TRUE(bucket_id < partition_num);
-    r_histogram[bucket_id]++;
-  }
+  // partition build
+  preallocate_phase(r_info, arena);
+  partition_phase(r_info);
+  global_info[tid].r_histogram = r_info.histogram;
+  global_info[tid].r_buckets = r_info.buckets;
 
-  for (size_t i = 0; i < partition_sz_s; ++i) {
-    Element& e = probe[i];
-    bucket_id = radix_hash(e.key, radix_mask);
-    ASSERT_TRUE(bucket_id < partition_num);
-    s_histogram[bucket_id]++;
-  }
+  preallocate_phase(s_info, arena);
+  partition_phase(s_info);
+  global_info[tid].s_histogram = s_info.histogram;
+  global_info[tid].s_buckets = s_info.buckets;
 
-  // uint64_t phrase1_cycle = 0;
-  // if (tid == 0) {
-  //   cur_phase = ExecPhase::finds;
-  //   g_app_record_start = false;
-  // }
-  // barrier->arrive_and_wait();
-  // if (tid == 0) {
-  //   phrase1_cycle = g_find_end - g_find_start;
-  //   PLOGI.printf("took %lu cycles for phrase1", phrase1_cycle);
-  // }
-
-  // 1. Calculate the total padded sizes first
-  uint64_t total_build_capacity = 0;
-  uint64_t total_probe_capacity = 0;
-
-  for (size_t i = 0; i < partition_num; ++i) {
-    // (x + 3) & ~3ULL rounds up to the nearest multiple of 4
-    total_build_capacity += (r_histogram[i] + 3) & ~3ULL;
-    total_probe_capacity += (s_histogram[i] + 3) & ~3ULL;
-  }
-
-  // uint64_t duration;
-  // if (tid == 0) {
-  //   duration = RDTSC_START();
-  // }
-  // 2. Allocate memory for buckets
-  // Element* build_storage = arena.aligned_alloc(total_build_capacity, 64);
-  // Element* probe_storage = arena.aligned_alloc(total_probe_capacity, 64);
-
-  // if (tid == 0) {
-  //   duration = RDTSCP() - duration;
-  //   PLOGI.printf("took %lu cycles for allocation", duration);
-  // }
-
-  // 3. Set up the buckets
-  // uint64_t r_offset = 0;
-  // uint64_t s_offset = 0;
-
-  // This add paddings, so each partition bucket is align to cacheline sized
-  for (size_t i = 0; i < partition_num; ++i) {
-    // --- BUILD (R) ---
-    uint64_t r_length = r_histogram[i];
-    uint64_t r_capacity = (r_length + 3) & ~3ULL;  // Padded to multiple of 4
-
-    Element* build_storage = arena.aligned_alloc(r_capacity, 64);
-    new (&local_r[i]) RadixBucket(build_storage, r_capacity, r_length, i);
-
-    // Pass the exact starting pointer of the slice, and the local capacity
-    // new (&local_r[i])
-    //    RadixBucket(build_storage + r_offset, r_capacity, r_length, i);
-    // r_offset += r_capacity;
-
-    // --- PROBE (S) ---
-    uint64_t s_length = s_histogram[i];
-    uint64_t s_capacity = (s_length + 3) & ~3ULL;  // Padded to multiple of 4
-
-    Element* probe_storage = arena.aligned_alloc(s_capacity, 64);
-    new (&local_s[i]) RadixBucket(probe_storage, s_capacity, s_length, i);
-    // new (&local_s[i])
-    //     RadixBucket(probe_storage + s_offset, s_capacity, s_length, i);
-    //  s_offset += s_capacity;
-  }
-
-  // if (tid == 0) {
-  //   cur_phase = ExecPhase::finds;
-  //   g_app_record_start = true;
-  // }
-  // barrier->arrive_and_wait();
-
-  for (size_t i = 0; i < partition_sz_r; ++i) {
-    Element& e = build[i];
-    bucket_id = radix_hash(e.key, radix_mask);
-    ASSERT_TRUE(bucket_id < partition_num);
-    local_r[bucket_id].insert(e);
-  }
-
-  for (size_t i = 0; i < partition_num; ++i) {
-    local_r[i].flush();
-  }
-
-  for (size_t i = 0; i < partition_sz_s; ++i) {
-    Element& e = probe[i];
-    bucket_id = radix_hash(e.key, radix_mask);
-    ASSERT_TRUE(bucket_id < partition_num);
-    local_s[bucket_id].insert(e);
-  }
-
-  for (size_t i = 0; i < partition_num; ++i) {
-    local_s[i].flush();
-  }
-
-  Global_R_Buckets[tid] = local_r;
-  Global_S_Buckets[tid] = local_s;
-
-  // uint64_t phrase3_cycle = 0;
-  // if (tid == 0) {
-  //   cur_phase = ExecPhase::finds;
-  //   g_app_record_start = false;
-  // }
-  // barrier->arrive_and_wait();
-  // if (tid == 0) {
-  //   phrase3_cycle = g_find_end - g_find_start;
-  //   PLOGI.printf("took %lu cycles, %lu cycle per item phrase3",
-  //   phrase3_cycle,
-  //                phrase3_cycle / (partition_sz_r + partition_sz_s));
-  // }
-
-  // Completion of partition phrase
   if (tid == 0) {
+#ifdef WITH_VTUNE_LIB
+    __itt_event_end(partition_event);
+#endif
     cur_phase = ExecPhase::insertions;
     g_app_record_start = false;
+    PLOGI.printf("Partition phase end");
   }
   barrier->arrive_and_wait();
   sh->stats->insertions.duration = g_insert_end - g_insert_start;
   sh->stats->insertions.op_count = partition_sz_r + partition_sz_s;
 
-#ifdef DEBUG_HJ
-  print_histogram_stats(r_histogram, tid, "r");
-  print_histogram_stats(s_histogram, tid, "s");
-#endif
-
-  // Join Phase
   if (tid == 0) {
+#ifdef WITH_VTUNE_LIB
+    __itt_resume();
+    __itt_event_start(join_event);
+#endif
     cur_phase = ExecPhase::finds;
     g_app_record_start = true;
   }
   barrier->arrive_and_wait();
 
-  uint64_t found = 0;
-  uint64_t avg_ht_sz = 0;
-  uint64_t num_ht_build = 0;
-
-  for (size_t part_id = tid; part_id < partition_num;
-       part_id += config.num_threads) {
-    uint64_t build_sz = 0;
-    for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
-      RadixBucket* b = &Global_R_Buckets[thread_i][part_id];
-      build_sz += (b->v_len);
-    }
-
-    uint64_t ht_sz = build_sz * 100 / config.ht_fill;
-    ht_sz = utils::next_pow2(ht_sz);
-    num_ht_build++;
-    avg_ht_sz += ht_sz;
-
-    Element* ht_storage = arena.aligned_alloc(ht_sz, CACHELINE_SIZE);
-
-    static_assert(sizeof(Item) == sizeof(Element),
-                  "Size mismatch between Item and Element");
-    static_assert(alignof(Item) == alignof(Element),
-                  "Alignment mismatch between Item and Element");
-
-    RadixArrayHashTable ht(ht_sz, ht_storage);
-    // BaseHashTable* cas_ht = new CASHashTableSingleThread<Item, ItemQueue>(
-    //      ht_sz, config.find_queue_sz, (Item*)ht_storage);
-
-    //  if (tid == 0) {
-    //    PLOGI.printf("part id %lu hashtable sz %lu KB, build_sz %lu KB",
-    //    part_id,
-    //                 (ht_sz * sizeof(Element)) / (1024),
-    //                 (build_sz * sizeof(Element)) / (1024));
-    //    duration = RDTSC_START();
-    //  }
-
-    for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
-      RadixBucket* b = &Global_R_Buckets[thread_i][part_id];
-      Element* const __restrict__ tuples = b->v;
-      const uint32_t start = 0;
-      const uint32_t end = b->v_len;
-
-      // ht_do_insert((BaseHashTable*)cas_ht, tuples, end);
-      for (uint32_t i = start; i < end; i++) {
-        ht.insert(tuples[i]);
-      }
-    }
-
-    // if (tid == 0) {
-    //  duration = RDTSCP() - duration;
-    //  PLOGI.printf("part id %lu insertion done, duration %lu, cpo %lu",
-    //  part_id,
-    //                 duration, duration / build_sz);
-    // }
-
-    // if (tid == 0) {
-    //   duration = RDTSC_START();
-    // }
-
-    uint64_t find_issued = 0;
-    for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
-      RadixBucket* b = &Global_S_Buckets[thread_i][part_id];
-
-      Element* const __restrict__ tuples = b->v;
-      const uint32_t start = 0;
-      const uint32_t end = b->v_len;
-
-      // ht_do_find((BaseHashTable*)cas_ht, tuples, mvec, end);
-      //
-
-      value_type ret_v;
-      for (uint32_t i = start; i < end; i++) {
-        find_issued++;
-        ht.find(tuples[i], ret_v);
-      }
-    }
-
-    // if (tid == 0) {
-    //   PLOGI.printf("probes per find %lu", ht.total_probes / find_issued);
-    // }
-
-    // if (tid == 0) {
-    //   duration = RDTSCP() - duration;
-    //   PLOGI.printf("part id %lu, find duration %lu, cpo %lu", part_id,
-    //   duration,
-    //                duration / find_issued);
-    // }
-  }
-
-  avg_ht_sz = avg_ht_sz / num_ht_build;
+  uint64_t found = join_phrase(arena, tid, partition_num);
 
   if (tid == 0) {
-    PLOGI.printf("average_hashtable_sz: %lu KB",
-                 (avg_ht_sz * sizeof(Element) / (1024)));
-  }
-
-  if (tid == 0) {
+#ifdef WITH_VTUNE_LIB
+    __itt_event_end(join_event);
+#endif
     cur_phase = ExecPhase::finds;
     g_app_record_start = false;
   }
@@ -940,18 +800,8 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   sh->stats->found = found;
 
   if (tid == 0) {
-    byte_allocator.deallocate((char*)Global_R_Buckets,
-                              config.num_threads * sizeof(RadixBucket*));
-    byte_allocator.deallocate((char*)Global_S_Buckets,
-                              config.num_threads * sizeof(RadixBucket*));
+    free(global_info);
   }
-
-  byte_allocator.deallocate((char*)r_histogram,
-                            partition_num * sizeof(uint64_t));
-  byte_allocator.deallocate((char*)s_histogram,
-                            partition_num * sizeof(uint64_t));
-  bucket_allocator.deallocate(local_r, partition_num);
-  bucket_allocator.deallocate(local_s, partition_num);
 }
 
 void HashjoinTest::join_relations_generated(Shard* sh,
@@ -966,14 +816,6 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     partition_sz_r += config.relation_r_size % config.num_threads;
     partition_sz_s += config.relation_s_size % config.num_threads;
   }
-
-  // This is slow as we need to copy.
-  // But it ensures huge page and numa correctness.
-  // This is good enough for generated workload,
-  // if it aint broke, don't fix it....
-  // HugepageVec build_relation(partition_sz_r, hugepage_alloc_inst_element);
-  // HugepageVec probe_relation(partition_sz_s, hugepage_alloc_inst_element);
-  // JoinVec join_relation(partition_sz_s, hugepage_alloc_inst_join_element);
 
   Element* build_relation =
       hugepage_alloc_inst_element.allocate(partition_sz_r);
@@ -1020,7 +862,6 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     radixjoin2016(sh, build_relation, probe_relation, join_relation, barrier,
                   partition_sz_r, partition_sz_s);
   } else if (config.mode == PARTITIONJOINV2) {
-    // radixjoin(sh, build_relation, probe_relation, join_relation, barrier);
   } else {
     PLOGE.printf("Unsupported mode for join");
     abort();

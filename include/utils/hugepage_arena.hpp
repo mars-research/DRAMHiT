@@ -1,10 +1,10 @@
 #pragma once
-
 #include <sys/mman.h>
-
 #include <cstdint>
 #include <cstring>
 #include <new>
+#include <cstddef>  // Added for std::max_align_t
+#include <cstdlib>
 
 // Standard definitions in case they are missing from your environment's headers
 #ifndef MAP_HUGE_2MB
@@ -14,24 +14,8 @@
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 #endif
 
-template <typename T>
 class HugepageArena {
- private:
-  constexpr static uint64_t SIZE_2MB = 1ULL << 21;
-  constexpr static uint64_t SIZE_1GB = 1ULL << 30;
-  constexpr static uint64_t THRESHOLD = 4ULL * 1024 * 1024;  // 128 MB
-
-  uint64_t capacity_1gb;
-  uint64_t capacity_2mb;
-
-  char* arena_1gb;
-  char* arena_2mb;
-
-  // Tracks the current allocation position within each arena
-  uint64_t offset_1gb;
-  uint64_t offset_2mb;
-
- public:
+public:
   // Constructor takes the number of 1GB pages and 2MB pages
   HugepageArena(uint64_t num_1gb, uint64_t num_2mb) {
     capacity_1gb = num_1gb * SIZE_1GB;
@@ -49,7 +33,7 @@ class HugepageArena {
       void* ptr = mmap(nullptr, capacity_1gb, PROT_READ | PROT_WRITE,
                        base_flags | MAP_HUGE_1GB, -1, 0);
       if (ptr == MAP_FAILED) {
-        PLOGE.printf("fail to map 2mb pages");
+        PLOGE.printf("fail to map 1gb pages");
         throw std::bad_alloc();
       }
       arena_1gb = static_cast<char*>(ptr);
@@ -63,7 +47,7 @@ class HugepageArena {
       if (ptr == MAP_FAILED) {
         // Clean up the 1GB arena if the 2MB allocation fails
         if (arena_1gb) munmap(arena_1gb, capacity_1gb);
-        PLOGE.printf("fail to map 1gb pages");
+        PLOGE.printf("fail to map 2mb pages");
         std::abort();
       }
       arena_2mb = static_cast<char*>(ptr);
@@ -84,7 +68,50 @@ class HugepageArena {
   HugepageArena(const HugepageArena&) = delete;
   HugepageArena& operator=(const HugepageArena&) = delete;
 
-  T* alloc_internal(uint64_t alloc_bytes, uint64_t alignment) {
+  // General purpose aligned allocator
+  void* aligned_alloc(uint64_t alloc_bytes, uint64_t alignment) {
+    // Check if alignment is a power of 2 (required for bitwise alignment math)
+    if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
+        PLOGE.printf("bad alignment: %lu is not a power of 2\n", alignment);
+        throw std::bad_alloc();
+    }
+    return alloc_internal(alloc_bytes, alignment);
+  }
+
+  // General purpose allocator
+  void* alloc(uint64_t alloc_bytes) {
+    // Safest default alignment for generic memory allocations (usually 16 bytes)
+    uint64_t default_alignment = alignof(std::max_align_t);
+    return alloc_internal(alloc_bytes, default_alignment);
+  }
+
+private:
+  constexpr static uint64_t SIZE_2MB = 1ULL << 21;
+  constexpr static uint64_t SIZE_1GB = 1ULL << 30;
+  constexpr static uint64_t THRESHOLD = 4ULL * 1024 * 1024;  // 128 MB
+
+  uint64_t capacity_1gb;
+  uint64_t capacity_2mb;
+
+  char* arena_1gb;
+  char* arena_2mb;
+
+  // Tracks the current allocation position within each arena
+  uint64_t offset_1gb;
+  uint64_t offset_2mb;
+
+  // Internal allocation logic
+  void* alloc_internal(uint64_t alloc_bytes, uint64_t alignment) {
+
+    if (arena_1gb != nullptr) {
+      uint64_t aligned_offset = (offset_1gb + alignment - 1) & ~(alignment - 1);
+
+      if (aligned_offset + alloc_bytes <= capacity_1gb) {
+        char* result = arena_1gb + aligned_offset;
+        offset_1gb = aligned_offset + alloc_bytes;
+        return result;
+      }
+    }
 
     if (arena_2mb != nullptr) {
       uint64_t aligned_offset = (offset_2mb + alignment - 1) & ~(alignment - 1);
@@ -93,40 +120,11 @@ class HugepageArena {
       if (aligned_offset + alloc_bytes <= capacity_2mb) {
         char* result = arena_2mb + aligned_offset;
         offset_2mb = aligned_offset + alloc_bytes;
-        return reinterpret_cast<T*>(result);
+        return result;
       }
     }
-
-    if (arena_1gb != nullptr) {
-      uint64_t aligned_offset = (offset_1gb + alignment - 1) & ~(alignment - 1);
-
-      if (aligned_offset + alloc_bytes <= capacity_1gb) {
-        char* result = arena_1gb + aligned_offset;
-        offset_1gb = aligned_offset + alloc_bytes;
-        return reinterpret_cast<T*>(result);
-      }
-    }
-
     PLOGE.printf("OOM");
-    std::bad_alloc();
-  }
-
-  T* aligned_alloc(uint64_t sz, uint64_t alignment) {
-    uint64_t alloc_bytes = sz * sizeof(T);
-    uint64_t type_alignment = alignof(T);
-    // check alignment is multiple of type_alignemtn
-    if(alignment % type_alignment) {
-        PLOGE.printf("bad alignment user wanted %lu natural type %lu\n", alignment, type_alignment);
-        std::bad_alloc();
-    }
-    return alloc_internal(alloc_bytes, alignment);
-  }
-
-  T* alloc(uint64_t sz) {
-    uint64_t alloc_bytes = sz * sizeof(T);
-    uint64_t alignment = alignof(T);
-
-    return alloc_internal(alloc_bytes, alignment);
+    throw std::bad_alloc(); // Note: Added 'throw' here to actually trigger the exception
   }
 
   // Reset offsets to reuse both slabs without unmapping

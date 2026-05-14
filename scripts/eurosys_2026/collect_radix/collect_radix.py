@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def run_dramhit_experiments():
     # Radix values from 8 to 16 inclusive (script originally had 6 to 16)
-    radix_values = list(range(6, 17))
+    radix_values = list(range(7, 17))
 
     # Data arrays for the 3 lines
     partition_cycles_data = []
@@ -29,9 +29,9 @@ def run_dramhit_experiments():
         "--find_queue",
         "32",
         "--num-threads",
-        "64",
+        "128",
         "--numa-split",
-        "4",
+        "1",
         "--no-prefetch",
         "0",
         "--mode",
@@ -134,7 +134,7 @@ def run_dramhit_experiments():
         plt.tight_layout()
 
         # Save the plot
-        output_filename = "radix_vs_cycles_skew1.00.png"
+        output_filename = "intel_directory_skew_1.00.png"
         plt.savefig(output_filename)
         print(f"\nPlot successfully saved to {output_filename}")
 
