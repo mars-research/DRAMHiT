@@ -15,7 +15,8 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
-#include <cstdlib>     // Required for std::abort()
+#include <cstdlib>  // Required for std::abort()
+#include <cstring>
 #include <filesystem>  // Required for checking file existence and size
 #include <fstream>
 #include <functional>
@@ -160,12 +161,13 @@ void init_hashjoin_dist(double skew, double hit_rate, int64_t seed,
     // Because GOLDEN_PRIME is odd, this is a perfect bijection (no collisions
     // possible)
     (*g_zipf_values)[r_index] = (r_index + seed_offset) * GOLDEN_PRIME;
+    printf("r[%lu] = %lu\n", r_index, g_zipf_values->at(r_index));
   }
 
   // ---------------------------------------------------------
   // 2. Populate Probe Relation S (Skewed + Configurable Hit Rate)
   // ---------------------------------------------------------
-  std::uint64_t keyrange_width = (1ull << 63);
+  std::uint64_t keyrange_width = (1ull << 53) - 1;
   if constexpr (std::is_same_v<key_type, std::uint32_t>) {
     keyrange_width = (1ull << 31);
   }
@@ -177,6 +179,7 @@ void init_hashjoin_dist(double skew, double hit_rate, int64_t seed,
   for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
     uint64_t zipf_val = distribution.sample();
 
+    printf("zipf_val = %lu\n", zipf_val);
     if (match_prob(rng) <= hit_rate) {
       // MATCH: Use the Zipf value to pick a skewed index inside R
       uint64_t r_target_idx = zipf_val % r_size;
@@ -188,7 +191,10 @@ void init_hashjoin_dist(double skew, double hit_rate, int64_t seed,
       (*g_zipf_values)[r_size + s_index] =
           zipf_val;  // (zipf_val + 1) * GOLDEN_PRIME;
     }
+
+    printf("s[%lu] = %lu\n", s_index, g_zipf_values->at(r_size + s_index));
   }
+
 
   std::cout << "Saving dataset to disk..." << std::endl;
   std::ofstream outfile(filename, std::ios::binary);
@@ -532,8 +538,8 @@ class RadixArrayHashTable {
 
     idx = (idx + 1) & (size - 1);
 
-    if(idx&0x3 == 0) {
-        return 0;
+    if (idx & 0x3 == 0) {
+      return 0;
     }
     goto try_find;
   }
@@ -621,38 +627,53 @@ GlobalRelationInfo* global_info;
 uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
                      uint64_t partition_num) {
   uint64_t max_ht_sz = 0;
+  uint64_t max_probe_sz = 0;
+  uint64_t max_build_sz = 0;
+
   uint64_t ht_nums =
       (partition_num + config.num_threads - 1) / config.num_threads;
   uint64_t* ht_szs =
       (uint64_t*)arena.aligned_alloc(sizeof(uint64_t) * ht_nums, 64);
   uint64_t ht_id = 0;
+
+  // Aggregate statistics
   for (size_t part_id = tid; part_id < partition_num;
        part_id += config.num_threads) {
     uint64_t build_sz = 0;
+    uint64_t probe_sz = 0;
+
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       build_sz += global_info[thread_i].r_histogram[part_id];
+      probe_sz += global_info[thread_i].s_histogram[part_id];
     }
 
     uint64_t ht_sz = build_sz * 100 / config.ht_fill;
     ht_sz = utils::next_pow2(ht_sz);
+
     if (max_ht_sz < ht_sz) max_ht_sz = ht_sz;
+    if (max_probe_sz < probe_sz) max_probe_sz = probe_sz;
+    if (max_build_sz < build_sz) max_build_sz = build_sz;
 
     ht_szs[ht_id] = ht_sz;
     ht_id++;
   }
 
-  // in theory could even reuse swb.
-  Element* ht_array =
-      (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
-
-  // PLOGI.printf("array size %lu kb", sizeof(Element) * max_ht_sz / 1024);
-  ht_id = 0;
-
+  Element* ht_array = (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
+  //Element* r = (Element*)arena.aligned_alloc(sizeof(Element) * max_probe_sz, 64);
+  //Element* s = (Element*)arena.aligned_alloc(sizeof(Element) * max_build_sz, 64);
   RadixArrayHashTable ht(ht_array);
 
+
+  PLOGI.printf("tid% lu, array size %lu kb, max_probe_sz %lu, max_build_sz %lu",tid, sizeof(Element) * max_ht_sz / 1024, max_probe_sz, max_build_sz);
+  ht_id = 0;
   uint64_t found = 0;
   for (size_t part_id = tid; part_id < partition_num;
        part_id += config.num_threads) {
+
+    // uint64_t part_duration;
+    //if(tid == 0) part_duration = RDTSC_START();
+
+    // reset hashtable
     uint64_t ht_sz = ht_szs[ht_id];
     ht_id++;
     ht.size = ht_sz;
@@ -660,41 +681,90 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
 
     memset(ht_array, 0, ht_sz * sizeof(Element));
 
-    const uint32_t ahead = 64;
+    uint64_t duration;
+    // Element* src;
+    // uint64_t offset_s = 0;
+    // uint64_t offset_r = 0;
+    // uint64_t chunk_sz;
 
+    // for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
+    //   src = global_info[thread_i].r_buckets[part_id];
+    //   chunk_sz = global_info[thread_i].r_histogram[part_id];
+    //   memcpy(r + offset_r, src, chunk_sz * sizeof(Element));
+    //   offset_r += chunk_sz;
+    // }
+    // for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
+    //   src = global_info[thread_i].s_buckets[part_id];
+    //   chunk_sz = global_info[thread_i].s_histogram[part_id];
+    //   memcpy(s + offset_s, src, chunk_sz * sizeof(Element));
+    //   offset_s += chunk_sz;
+    // }
+
+    // if(tid == 0){
+    //     duration = RDTSCP() - duration;
+    //     PLOGI.printf("set up duration %lu operation %lu, %lu cycles per tuple", duration, offset_r+offset_s, duration/(offset_r+offset_s));
+    // }
+
+    // if(tid == 0) duration = RDTSC_START();
+
+    // for(uint64_t i = 0; i<offset_r; i++){
+    //     ht.insert(r[i]);
+    // }
+
+    // if(tid == 0){
+    //     duration = RDTSCP() - duration;
+    //     PLOGI.printf("insertion duration %lu operation %lu, %lu cycles per tuple", duration, offset_r, duration/offset_r);
+    // }
+
+    // if(tid == 0) duration = RDTSC_START();
+
+    // for(uint64_t i = 0; i<offset_s; i++){
+    //     uint64_t ret_v;
+    //     ht.find(s[i], ret_v);
+    // }
+
+    // if(tid == 0){
+    //     duration = RDTSCP() - duration;
+    //     PLOGI.printf("find duration %lu operation %lu, %lu cycles per tuple", duration, offset_s, duration/offset_s);
+    // }
+
+
+    // if(tid == 0) duration = RDTSC_START();
+
+    uint64_t op_issued = 0;
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       uint64_t sz = global_info[thread_i].r_histogram[part_id];
       Element* tuples = global_info[thread_i].r_buckets[part_id];
       for (uint32_t i = 0; i < sz; i++) {
-        if (!(i & 0x3) && (i + ahead< sz)) {
-          __builtin_prefetch(&tuples[i + ahead], false, 2);
-        }
-
+          op_issued++;
         ht.insert(tuples[i]);
-
-        if ((sz > 16) && (i < (sz - 16))) {
-          __builtin_prefetch(&global_info[thread_i].r_buckets[part_id], false,
-                             3);
-        }
       }
     }
+    // if(tid == 0){
+    //     duration = RDTSCP() - duration;
+    //     PLOGI.printf("insertion duration %lu operation %lu, %lu cycles per tuple", duration, op_issued, duration/op_issued);
+    // }
 
+   //  if(tid == 0) duration = RDTSC_START();
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       uint64_t sz = global_info[thread_i].s_histogram[part_id];
       Element* tuples = global_info[thread_i].s_buckets[part_id];
       uint64_t ret_v;
       for (uint32_t i = 0; i < sz; i++) {
-        if (!(i & 0x3) && (i + ahead < sz)) {
-          __builtin_prefetch(&tuples[i + ahead ], false, 2);
-        }
+          op_issued++;
         ht.find(tuples[i], ret_v);
-        if (i < sz - 4) {
-          __builtin_prefetch(&global_info[thread_i].r_buckets[part_id], false,
-              3);
-        }
       }
     }
     found += ht.found;
+    // if(tid == 0){
+    //     duration = RDTSCP() - duration;
+    //     PLOGI.printf("find duration %lu operation %lu, %lu cycles per tuple", duration, op_issued, duration/op_issued);
+    // }
+
+    // if(tid == 0){
+    //     part_duration = RDTSCP() - part_duration;
+    //     PLOGI.printf("took %lu cycles for partition %lu", part_duration, part_id);
+    // }
   }
 
   return found;
@@ -784,8 +854,11 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   }
   barrier->arrive_and_wait();
 
+  uint64_t duration = RDTSC_START();
   uint64_t found = join_phrase(arena, tid, partition_num);
 
+  duration = RDTSCP() - duration;
+  PLOGI.printf("tid %lu took %lu cycles", tid, duration);
   if (tid == 0) {
 #ifdef WITH_VTUNE_LIB
     __itt_event_end(join_event);
