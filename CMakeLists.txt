@@ -172,7 +172,7 @@ if(BUILD_APP)
     # Build all the source files for the executable.
     add_executable(dramhit
         "src/tests/queue_tests.cpp"
-        "src/tests/hashtable_tests.cpp"
+        "src/tests/zipfian_test.cpp"
         "src/tests/prefetch_tests.cpp"
         "src/tests/cachemiss_test.cpp"
         "src/tests/kmer_tests.cpp"

@@ -17,11 +17,6 @@ namespace kmercounter {
 extern Configuration config;
 
 // data_t represents a k,v pair (2*8B = 16B)
-#if defined(BQUEUE_KMER_TEST)
-typedef Key data_t;
-#else
-typedef KeyValuePair data_t;
-#endif
 
 class SectionQueue;
 

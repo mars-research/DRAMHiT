@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <unistd.h>
 
-typedef uint64_t data_t;
+// typedef uint64_t data_t;
 
 #define FIPC_CACHE_LINE_SIZE  64
 #define SUCCESS   0

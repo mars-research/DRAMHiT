@@ -105,8 +105,9 @@ inline uint64_t radix_hash(uint64_t k, uint64_t r_mask) {
   return (k)&r_mask;
 #endif
 }
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-void init_hashjoin_dist(double skew, double hit_rate, int64_t seed,
+void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
                         uint64_t r_size, uint64_t s_size) {
   uint64_t total_size = r_size + s_size;
   size_t expected_bytes = total_size * sizeof(key_type);
@@ -144,55 +145,34 @@ void init_hashjoin_dist(double skew, double hit_rate, int64_t seed,
 
   std::cout << "Generating hashjoin dataset..." << std::endl;
 
-  // Multiplier to scatter sequential IDs into pseudo-random unique keys
-  constexpr uint64_t GOLDEN_PRIME = 0x9E3779B97F4A7C15ULL;
 
-  // ---------------------------------------------------------
-  // 1. Populate Build Relation R (Guaranteed Unique & Seeded)
-  // ---------------------------------------------------------
-
-  // Set up an RNG specifically for the build phase using the passed seed
-  std::mt19937_64 build_rng(seed);
-  std::uniform_int_distribution<uint64_t> offset_dist(1, 1000000000ULL);
-  uint64_t seed_offset = offset_dist(build_rng);
+  uint64_t seed_offset = (uint64_t)seed;
 
   for (uint64_t r_index = 0; r_index < r_size; ++r_index) {
     // Generate a unique, pseudo-random key influenced by the seed offset
     // Because GOLDEN_PRIME is odd, this is a perfect bijection (no collisions
     // possible)
-    (*g_zipf_values)[r_index] = (r_index + seed_offset) * GOLDEN_PRIME;
-    printf("r[%lu] = %lu\n", r_index, g_zipf_values->at(r_index));
+    (*g_zipf_values)[r_index] = (r_index + seed) * GOLDEN_PRIME;
   }
 
-  // ---------------------------------------------------------
-  // 2. Populate Probe Relation S (Skewed + Configurable Hit Rate)
-  // ---------------------------------------------------------
-  std::uint64_t keyrange_width = (1ull << 53) - 1;
-  if constexpr (std::is_same_v<key_type, std::uint32_t>) {
-    keyrange_width = (1ull << 31);
-  }
+  std::uint64_t keyrange_width = MAX(s_size >> 10, 1024);
   zipf_distribution_apache distribution(keyrange_width, skew, seed);
 
   std::mt19937_64 rng(seed);
   std::uniform_real_distribution<double> match_prob(0.0, 1.0);
 
   for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
-    uint64_t zipf_val = distribution.sample();
+    uint64_t val = distribution.sample() * GOLDEN_PRIME;
 
-    printf("zipf_val = %lu\n", zipf_val);
     if (match_prob(rng) <= hit_rate) {
-      // MATCH: Use the Zipf value to pick a skewed index inside R
-      uint64_t r_target_idx = zipf_val % r_size;
+
+        // use the random value in s to select an index
+      uint64_t r_target_idx = val % r_size;
       (*g_zipf_values)[r_size + s_index] = (*g_zipf_values)[r_target_idx];
     } else {
-      // NO MATCH: Generate a key strictly outside of R's domain.
-      // Since R uses bases 1 to r_size, we use bases > r_size.
-      // We still use zipf_val so the unmatched keys also exhibit skew!
-      (*g_zipf_values)[r_size + s_index] =
-          zipf_val;  // (zipf_val + 1) * GOLDEN_PRIME;
+        // just use the random value
+      (*g_zipf_values)[r_size + s_index] = val;
     }
-
-    printf("s[%lu] = %lu\n", s_index, g_zipf_values->at(r_size + s_index));
   }
 
 

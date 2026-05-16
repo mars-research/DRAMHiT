@@ -68,10 +68,10 @@ typedef enum {
   BQ_TESTS_YES_BQ = 8,
   BQ_TESTS_NO_BQ = 9,
   CACHE_MISS = 10,
-  ZIPFIAN = 11,
+  UNIFORM = 11,
   RW_RATIO = 12,
   HASHJOIN = 13,
-  UNIFORM = 14,
+  ZIPFIAN = 14,
   BW = 15,
   PARTITIONJOINV1 = 16,
   PARTITIONJOINV2 = 17,
@@ -183,6 +183,7 @@ struct Configuration {
   bool sequential;
   uint32_t radix;
   double hit_rate;
+  uint64_t key_range;
 
   void dump_configuration() {
     printf("Run configuration {\n");
@@ -369,6 +370,14 @@ enum class ExecPhase {
 };
 // Can be use for, let's say, cleanup functions.
 using VoidFn = std::function<void()>;
+
+
+// for queues
+#if defined(BQUEUE_KMER_TEST)
+typedef Key data_t;
+#else
+typedef KeyValuePair data_t;
+#endif
 
 }  // namespace kmercounter
 #endif  // TYPES_HPP

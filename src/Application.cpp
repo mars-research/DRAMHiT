@@ -48,8 +48,8 @@ uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
-extern void init_zipfian_dist(double skew, int64_t seed, uint64_t size);
-extern void init_hashjoin_dist(double skew, double hit_rate, int64_t seed, uint64_t r_size,
+extern void init_zipfian_dist(double skew, uint64_t seed, uint64_t size, uint64_t key_range);
+extern void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed, uint64_t r_size,
                                uint64_t s_size);
 
 #ifdef WITH_PERFCPP
@@ -107,7 +107,8 @@ const Configuration def = {
     .test = false,
     .sequential = false,
     .radix = 10,
-    .hit_rate = 0.5,
+    .hit_rate = 1.0,
+    .key_range = std::numeric_limits<uint64_t>::max(),
 };  // TODO enum
 
 // for synchronization of threads
@@ -142,6 +143,9 @@ uint64_t g_app_record_duration;
 
 extern std::vector<key_type> *g_zipf_values;
 
+
+
+void init_uniform_dist(uint64_t seed, uint64_t size);
 void sync_complete(void) {
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
@@ -282,8 +286,7 @@ void sync_complete(void) {
         this->test.cmt.cache_miss_run(sh, kmer_ht);
         break;
       case ZIPFIAN:
-        this->test.zipf.run(sh, kmer_ht, config.skew, config.seed,
-                            config.num_threads, barrier);
+        this->test.zipf.run(sh, kmer_ht, barrier);
         break;
       case RW_RATIO:
         this->test.rw.run(*sh, *kmer_ht, HT_TESTS_NUM_INSERTS, barrier);
@@ -298,7 +301,8 @@ void sync_complete(void) {
         this->test.kmer.count_kmer(sh, config, kmer_ht, barrier);
         break;
       case UNIFORM:
-        this->test.uniform.run(sh, kmer_ht, barrier);
+        // super hacky, but works.
+        this->test.zipf.run(sh, kmer_ht, barrier);
         break;
       case BW:
         this->test.bw.run(sh, config, barrier);
@@ -612,7 +616,9 @@ void sync_complete(void) {
           "radix partition join bits partition number = 2^radix")(
           "associativity",
           po::value<double>(&config.hit_rate)->default_value(def.hit_rate),
-          "set associativity of hashjoin");
+          "set associativity of hashjoin")("key_range",
+          po::value<uint64_t>(&config.key_range)->default_value(def.key_range),
+          "set key range for zipfian");
 
       papi_init();
       po::variables_map vm;
@@ -772,12 +778,24 @@ void sync_complete(void) {
     }
 
     if (config.mode == ZIPFIAN) {
-      uint64_t size = config.ht_size * config.ht_fill / 100;
-      init_zipfian_dist(config.skew, config.seed, size);
+
+      init_zipfian_dist(config.skew, config.seed, config.ht_size, config.key_range);
+
     } else if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 ||
                config.mode == PARTITIONJOINV2) {
       init_hashjoin_dist(config.skew, config.hit_rate, config.seed, config.relation_r_size,
                          config.relation_s_size);
+    } else if(config.mode == UNIFORM)
+    {
+        // this test basically make sure hsahtable is fill up to x%
+        // and run probe on it, used to look for hashtable internal.
+        //
+        // we set skew to 0.01, and generate only a fraction of fill size
+        // because it is basically uniform data, all data will be inserted
+        // the code is same as zipfian test.
+        // super hacky, but whatever.
+        uint64_t size = config.ht_size * config.ht_fill / 100;
+        init_uniform_dist(config.seed, size);
     }
 
     if ((config.mode == BQ_TESTS_YES_BQ) ||

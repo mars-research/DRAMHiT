@@ -9,9 +9,7 @@ namespace kmercounter {
 
 class ZipfianTest {
  public:
-  void run(Shard *sh, BaseHashTable *kmer_ht, 
-    double skew, int64_t seed,
-     unsigned int count, 
+  void run(Shard *sh, BaseHashTable *kmer_ht,
      std::barrier<std::function<void ()>>*);
 };
 
