@@ -74,6 +74,7 @@ namespace kmercounter {
 extern ExecPhase cur_phase;
 extern bool g_app_record_start;
 extern std::vector<key_type>* g_zipf_values;
+extern uint64_t g_zipf_values_size;
 extern uint64_t g_insert_start, g_insert_end;
 extern uint64_t g_find_start, g_find_end;
 
@@ -105,7 +106,32 @@ inline uint64_t radix_hash(uint64_t k, uint64_t r_mask) {
   return (k)&r_mask;
 #endif
 }
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+uint64_t expected_join_size;
+void calculate_expected_join_size() {
+  uint64_t r_size = config.relation_r_size;
+  uint64_t s_size = config.relation_s_size;
+  std::unordered_map<key_type, uint64_t> r_key_counts;
+
+  // 1. Build Phase
+  for (uint64_t i = 0; i < r_size; ++i) {
+    r_key_counts[g_zipf_values->at(i)]++;
+  }
+
+  uint64_t answer = 0;
+  uint64_t s_end = r_size + s_size;
+
+  // 2. Probe Phase
+  for (uint64_t j = r_size; j < s_end; ++j) {
+    auto it = r_key_counts.find(g_zipf_values->at(j));
+    if (it != r_key_counts.end()) {
+      answer++;
+    }
+  }
+
+  expected_join_size = answer;
+  PLOGI.printf("Expected join size: %lu", expected_join_size);
+}
 
 void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
                         uint64_t r_size, uint64_t s_size) {
@@ -119,6 +145,7 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
   }
 
   g_zipf_values = new std::vector<key_type>(total_size);
+  g_zipf_values_size = total_size;
 
   // Update filename to include hit_rate
   std::ostringstream filename_stream;
@@ -136,6 +163,10 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
       if (infile) {
         infile.read(reinterpret_cast<char*>(g_zipf_values->data()),
                     expected_bytes);
+
+        if(config.test){
+            calculate_expected_join_size();
+        }
         return;
       }
     } else {
@@ -145,36 +176,30 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
 
   std::cout << "Generating hashjoin dataset..." << std::endl;
 
-
-  uint64_t seed_offset = (uint64_t)seed;
+  std::mt19937_64 rng(seed);
+  std::uniform_int_distribution<key_type> u_distr(
+      1,
+      std::numeric_limits<key_type>::max()
+  );
 
   for (uint64_t r_index = 0; r_index < r_size; ++r_index) {
-    // Generate a unique, pseudo-random key influenced by the seed offset
-    // Because GOLDEN_PRIME is odd, this is a perfect bijection (no collisions
-    // possible)
-    (*g_zipf_values)[r_index] = (r_index + seed) * GOLDEN_PRIME;
+    g_zipf_values->at(r_index) =  u_distr(rng);
   }
 
-  std::uint64_t keyrange_width = MAX(s_size >> 10, 1024);
-  zipf_distribution_apache distribution(keyrange_width, skew, seed);
-
-  std::mt19937_64 rng(seed);
+  // use zipf distribution to select randon indices in relation r.
+  // one problem with this skew won't really show unless size of relation s
+  // is much bigger than relation r, but that's okay.
+  uint64_t keyrange_width = r_size;
+  zipf_distribution_apache z_distr(keyrange_width, skew, seed);
   std::uniform_real_distribution<double> match_prob(0.0, 1.0);
-
   for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
-    uint64_t val = distribution.sample() * GOLDEN_PRIME;
-
     if (match_prob(rng) <= hit_rate) {
-
-        // use the random value in s to select an index
-      uint64_t r_target_idx = val % r_size;
-      (*g_zipf_values)[r_size + s_index] = (*g_zipf_values)[r_target_idx];
+      uint64_t r_target_idx = z_distr.sample();
+      g_zipf_values->at(r_size + s_index) = g_zipf_values->at(r_target_idx);
     } else {
-        // just use the random value
-      (*g_zipf_values)[r_size + s_index] = val;
+      g_zipf_values->at(r_size + s_index) = u_distr(rng);
     }
   }
-
 
   std::cout << "Saving dataset to disk..." << std::endl;
   std::ofstream outfile(filename, std::ios::binary);
@@ -183,6 +208,13 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
                   expected_bytes);
   } else {
     std::cerr << "Warning: Failed to open file for writing!" << std::endl;
+  }
+
+  if(config.test){
+      calculate_expected_join_size();
+      //TODO calculate distribution collision rate of r (how many non unique keys)
+      //TODO calculate distribution unique keys of s (how many unique keys)
+      //TODO calculate distribution zipf skewness of s (skewness)
   }
 }
 
@@ -474,16 +506,14 @@ class RadixArrayHashTable {
   static const key_type empty_key = 0;
   static const value_type empty_value = 0;
   Hasher hasher;
-  uint64_t found;
 
   RadixArrayHashTable(Element* v_ref) : vec(v_ref) {}
 
-  // FIXED: Read exactly the bytes of the key, no more.
   inline uint64_t hash(key_type k) {
     return (hasher(&k, sizeof(key_type)) & (size - 1));
   }
 
-  void insert(const Element& e) {
+  inline void insert(const Element& e) {
     uint64_t idx = hash(e.key);
 
   try_insert:
@@ -502,13 +532,12 @@ class RadixArrayHashTable {
     goto try_insert;
   }
 
-  bool find(const Element& e, value_type& v) {
+  inline bool find(const Element& e, value_type& v) {
     uint64_t idx = hash(e.key);
 
   try_find:
     if (vec[idx].key == e.key) {
       v = vec[idx].value;
-      found++;
       return 1;
     }
 
@@ -517,10 +546,6 @@ class RadixArrayHashTable {
     }
 
     idx = (idx + 1) & (size - 1);
-
-    if (idx & 0x3 == 0) {
-      return 0;
-    }
     goto try_find;
   }
 };
@@ -639,112 +664,38 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
   }
 
   Element* ht_array = (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
-  //Element* r = (Element*)arena.aligned_alloc(sizeof(Element) * max_probe_sz, 64);
-  //Element* s = (Element*)arena.aligned_alloc(sizeof(Element) * max_build_sz, 64);
   RadixArrayHashTable ht(ht_array);
+  PLOGI.printf("hashtable size %lu kb", max_ht_sz * sizeof(Element) / 1024);
 
-
-  PLOGI.printf("tid% lu, array size %lu kb, max_probe_sz %lu, max_build_sz %lu",tid, sizeof(Element) * max_ht_sz / 1024, max_probe_sz, max_build_sz);
   ht_id = 0;
   uint64_t found = 0;
   for (size_t part_id = tid; part_id < partition_num;
        part_id += config.num_threads) {
 
-    // uint64_t part_duration;
-    //if(tid == 0) part_duration = RDTSC_START();
-
     // reset hashtable
     uint64_t ht_sz = ht_szs[ht_id];
     ht_id++;
     ht.size = ht_sz;
-    ht.found = 0;
 
-    memset(ht_array, 0, ht_sz * sizeof(Element));
+    memset((void*) ht_array, 0, ht_sz * sizeof(Element));
 
-    uint64_t duration;
-    // Element* src;
-    // uint64_t offset_s = 0;
-    // uint64_t offset_r = 0;
-    // uint64_t chunk_sz;
-
-    // for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
-    //   src = global_info[thread_i].r_buckets[part_id];
-    //   chunk_sz = global_info[thread_i].r_histogram[part_id];
-    //   memcpy(r + offset_r, src, chunk_sz * sizeof(Element));
-    //   offset_r += chunk_sz;
-    // }
-    // for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
-    //   src = global_info[thread_i].s_buckets[part_id];
-    //   chunk_sz = global_info[thread_i].s_histogram[part_id];
-    //   memcpy(s + offset_s, src, chunk_sz * sizeof(Element));
-    //   offset_s += chunk_sz;
-    // }
-
-    // if(tid == 0){
-    //     duration = RDTSCP() - duration;
-    //     PLOGI.printf("set up duration %lu operation %lu, %lu cycles per tuple", duration, offset_r+offset_s, duration/(offset_r+offset_s));
-    // }
-
-    // if(tid == 0) duration = RDTSC_START();
-
-    // for(uint64_t i = 0; i<offset_r; i++){
-    //     ht.insert(r[i]);
-    // }
-
-    // if(tid == 0){
-    //     duration = RDTSCP() - duration;
-    //     PLOGI.printf("insertion duration %lu operation %lu, %lu cycles per tuple", duration, offset_r, duration/offset_r);
-    // }
-
-    // if(tid == 0) duration = RDTSC_START();
-
-    // for(uint64_t i = 0; i<offset_s; i++){
-    //     uint64_t ret_v;
-    //     ht.find(s[i], ret_v);
-    // }
-
-    // if(tid == 0){
-    //     duration = RDTSCP() - duration;
-    //     PLOGI.printf("find duration %lu operation %lu, %lu cycles per tuple", duration, offset_s, duration/offset_s);
-    // }
-
-
-    // if(tid == 0) duration = RDTSC_START();
-
-    uint64_t op_issued = 0;
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       uint64_t sz = global_info[thread_i].r_histogram[part_id];
       Element* tuples = global_info[thread_i].r_buckets[part_id];
       for (uint32_t i = 0; i < sz; i++) {
-          op_issued++;
         ht.insert(tuples[i]);
       }
     }
-    // if(tid == 0){
-    //     duration = RDTSCP() - duration;
-    //     PLOGI.printf("insertion duration %lu operation %lu, %lu cycles per tuple", duration, op_issued, duration/op_issued);
-    // }
 
-   //  if(tid == 0) duration = RDTSC_START();
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       uint64_t sz = global_info[thread_i].s_histogram[part_id];
       Element* tuples = global_info[thread_i].s_buckets[part_id];
       uint64_t ret_v;
       for (uint32_t i = 0; i < sz; i++) {
-          op_issued++;
-        ht.find(tuples[i], ret_v);
+        if(ht.find(tuples[i], ret_v))
+            found++;
       }
     }
-    found += ht.found;
-    // if(tid == 0){
-    //     duration = RDTSCP() - duration;
-    //     PLOGI.printf("find duration %lu operation %lu, %lu cycles per tuple", duration, op_issued, duration/op_issued);
-    // }
-
-    // if(tid == 0){
-    //     part_duration = RDTSCP() - part_duration;
-    //     PLOGI.printf("took %lu cycles for partition %lu", part_duration, part_id);
-    // }
   }
 
   return found;
@@ -834,11 +785,11 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   }
   barrier->arrive_and_wait();
 
-  uint64_t duration = RDTSC_START();
+  //uint64_t duration = RDTSC_START();
   uint64_t found = join_phrase(arena, tid, partition_num);
 
-  duration = RDTSCP() - duration;
-  PLOGI.printf("tid %lu took %lu cycles", tid, duration);
+  //duration = RDTSCP() - duration;
+  //PLOGI.printf("tid %lu took %lu cycles", tid, duration);
   if (tid == 0) {
 #ifdef WITH_VTUNE_LIB
     __itt_event_end(join_event);
@@ -907,6 +858,11 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     e.value = 0xde;
     probe_relation[i] = e;
   }
+
+  if(sh->shard_idx == 0){
+      cur_phase = ExecPhase::free_global_zipfian_values;
+  }
+  barrier->arrive_and_wait();
 
   if (config.mode == HASHJOIN) {
     hashjoin(sh, build_relation, probe_relation, join_relation, barrier,

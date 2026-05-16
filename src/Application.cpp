@@ -15,6 +15,7 @@
 #include "helper.hpp"
 #include "misc_lib.h"
 #include "numa.hpp"
+#include "plog/Log.h"
 #include "print_stats.h"
 #include "types.hpp"
 
@@ -48,9 +49,8 @@ uint64_t HT_TESTS_HT_SIZE = (1ull << 30);
 uint64_t HT_TESTS_NUM_INSERTS;
 const uint64_t max_possible_threads = 128;
 extern std::array<uint64_t, max_possible_threads> zipf_gen_timings;
-extern void init_zipfian_dist(double skew, uint64_t seed, uint64_t size, uint64_t key_range);
-extern void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed, uint64_t r_size,
-                               uint64_t s_size);
+extern void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
+                               uint64_t r_size, uint64_t s_size);
 
 #ifdef WITH_PERFCPP
 MultithreadCounter EVENTCOUNTERS;
@@ -108,7 +108,7 @@ const Configuration def = {
     .sequential = false,
     .radix = 10,
     .hit_rate = 1.0,
-    .key_range = std::numeric_limits<uint64_t>::max(),
+    .zipf_scale_factor = 1,
 };  // TODO enum
 
 // for synchronization of threads
@@ -141,12 +141,147 @@ uint64_t g_find_start, g_find_end;
 bool g_app_record_start;
 uint64_t g_app_record_duration;
 
-extern std::vector<key_type> *g_zipf_values;
+uint64_t g_zipf_num_unique_values = 0;
+uint64_t g_zipf_values_size = 0;
+double g_zipf_skewness = 0;
+std::vector<key_type> *g_zipf_values;
+
+extern void calculate_expected_join_size();
+void compute_g_zipf_values_stats() {
+  if (!g_zipf_values || g_zipf_values->empty()) {
+    g_zipf_num_unique_values = 0;
+    g_zipf_skewness = 0.0;
+    return;
+  }
+
+  // 1. Compute frequencies and the sum for the mean
+  std::unordered_map<key_type, uint64_t> frequencies;
+  double sum = 0.0;
+  size_t n = g_zipf_values->size();
+
+  for (const auto &value : *g_zipf_values) {
+    frequencies[value]++;
+    sum += static_cast<double>(value);
+  }
+
+  // The number of unique values is simply the size of our frequency map
+  g_zipf_num_unique_values = frequencies.size();
+
+  // 2. Compute statistical skewness (3rd standardized moment)
+  double mean = sum / n;
+  double m2 = 0.0;  // 2nd central moment (variance * n)
+  double m3 = 0.0;  // 3rd central moment
+
+  // Iterate over unique values instead of all values for efficiency
+  for (const auto &[value, count] : frequencies) {
+    double diff = static_cast<double>(value) - mean;
+    double diff_sq = diff * diff;
+
+    m2 += count * diff_sq;
+    m3 += count * diff_sq * diff;
+  }
+
+  // Calculate final skewness
+  if (m2 == 0.0) {
+    // Variance is 0 (all values in the vector are identical)
+    g_zipf_skewness = 0.0;
+  } else {
+    double variance = m2 / n;
+    double std_dev = std::sqrt(variance);
+
+    // Skewness formula: E[(X - mu)^3] / sigma^3
+    g_zipf_skewness = (m3 / n) / (std_dev * std_dev * std_dev);
+  }
+
+  PLOGI.printf("actual zipfian skew: %f, num_unique_values: %lu", g_zipf_skewness, g_zipf_num_unique_values);
+}
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+void init_zipfian_dist(double skew, uint64_t seed, uint64_t size,
+                       uint64_t key_range) {
+  g_zipf_values = new std::vector<key_type>(size);
+  g_zipf_values_size = size;
+  std::stringstream cache_name{};
+  cache_name << "/opt/DRAMHiT/cache/" << "zipfian" << "_skew" << skew << "_seed"
+             << seed << "_size" << size << "_keyrange" << key_range << ".bin";
+  std::ifstream cache{cache_name.str().c_str()};
+  PLOG_INFO << cache_name.str() << " " << cache.is_open();
+  if (cache.is_open()) {
+    cache.read(reinterpret_cast<char *>(g_zipf_values->data()),
+               g_zipf_values->size() * sizeof(key_type));
+    cache.close();
+  } else {
+    zipf_distribution_apache distribution(key_range, skew, seed);
+    PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);
+
+    key_type k;
+    for (auto &value : *g_zipf_values) {
+      k = distribution.sample();
+      value = MAX(1, k * GOLDEN_PRIME);
+    }
+    PLOGI.printf("Zipfian dist generated. size %zu", g_zipf_values->size());
+    std::ofstream cache_out{cache_name.str().c_str()};
+    cache_out.write(reinterpret_cast<char *>(g_zipf_values->data()),
+                    g_zipf_values->size() * sizeof(key_type));
+    cache_out.close();
+  }
+
+  if(config.test){
+      compute_g_zipf_values_stats();
+  }
+}
+
+void init_uniform_dist(uint64_t seed, uint64_t size) {
+  g_zipf_values = new std::vector<key_type>(size);
+  g_zipf_values_size = size;
+
+  // Updated cache name to reflect "uniform" without the skew parameter
+  std::stringstream cache_name{};
+  cache_name << "/opt/DRAMHiT/cache/uniform_seed" << config.seed << "_size"
+             << size << ".bin";
+
+  std::ifstream cache{cache_name.str().c_str()};
+  PLOG_INFO << cache_name.str() << " " << cache.is_open();
+
+  if (cache.is_open()) {
+    cache.read(reinterpret_cast<char *>(g_zipf_values->data()),
+               g_zipf_values->size() * sizeof(key_type));
+    cache.close();
+  } else {
+    PLOGI.printf(
+        "Initializing global uniform distribution with seed %ld, size %ld",
+        seed, size);
+
+    std::mt19937_64 gen(seed);
+
+    std::uniform_int_distribution<key_type> distr(
+        1, std::numeric_limits<key_type>::max());
+
+    for (auto &value : *g_zipf_values) {
+      value = distr(gen);
+    }
+
+    PLOGI.printf("Uniform dist generated. size %zu", g_zipf_values->size());
+
+    std::ofstream cache_out{cache_name.str().c_str()};
+    cache_out.write(reinterpret_cast<char *>(g_zipf_values->data()),
+                    g_zipf_values->size() * sizeof(key_type));
+    cache_out.close();
+  }
 
 
 
-void init_uniform_dist(uint64_t seed, uint64_t size);
+  if(config.test){
+      compute_g_zipf_values_stats();
+  }
+}
+
 void sync_complete(void) {
+  if (cur_phase == ExecPhase::free_global_zipfian_values && g_zipf_values) {
+    delete g_zipf_values;
+    return;
+  }
 #if defined(WITH_PAPI_LIB)
   if (stop_sync) {
     PLOGI.printf("Stopping counters");
@@ -198,9 +333,6 @@ void sync_complete(void) {
           }
         }
       } else {
-        if (cur_phase == ExecPhase::free_global_zipfian_values) {
-          delete g_zipf_values;
-        }
       }
     } else {
       if (cur_phase == ExecPhase::insertions && g_app_record_start) {
@@ -616,8 +748,9 @@ void sync_complete(void) {
           "radix partition join bits partition number = 2^radix")(
           "associativity",
           po::value<double>(&config.hit_rate)->default_value(def.hit_rate),
-          "set associativity of hashjoin")("key_range",
-          po::value<uint64_t>(&config.key_range)->default_value(def.key_range),
+          "set associativity of hashjoin")(
+          "scale_factor",
+          po::value<uint64_t>(&config.zipf_scale_factor)->default_value(def.zipf_scale_factor),
           "set key range for zipfian");
 
       papi_init();
@@ -778,25 +911,32 @@ void sync_complete(void) {
     }
 
     if (config.mode == ZIPFIAN) {
+      // this should be able to generate entire
+      // hashtable space amount of unique keys
+      uint64_t key_range = config.ht_size;
+      // with suffiecient insert factor, skewness will
+      uint64_t sample_size = config.zipf_scale_factor * key_range;
 
-      init_zipfian_dist(config.skew, config.seed, config.ht_size, config.key_range);
+      // sample_size amount of insert and read will occur.
+      init_zipfian_dist(config.skew, config.seed, sample_size, key_range);
 
     } else if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 ||
                config.mode == PARTITIONJOINV2) {
-      init_hashjoin_dist(config.skew, config.hit_rate, config.seed, config.relation_r_size,
-                         config.relation_s_size);
-    } else if(config.mode == UNIFORM)
-    {
-        // this test basically make sure hsahtable is fill up to x%
-        // and run probe on it, used to look for hashtable internal.
-        //
-        // we set skew to 0.01, and generate only a fraction of fill size
-        // because it is basically uniform data, all data will be inserted
-        // the code is same as zipfian test.
-        // super hacky, but whatever.
-        uint64_t size = config.ht_size * config.ht_fill / 100;
-        init_uniform_dist(config.seed, size);
+      init_hashjoin_dist(config.skew, config.hit_rate, config.seed,
+                         config.relation_r_size, config.relation_s_size);
+    } else if (config.mode == UNIFORM) {
+      // this test basically make sure hsahtable is fill up to x%
+      // and run probe on it, used to look for hashtable internal.
+      //
+      // we set skew to 0.01, and generate only a fraction of fill size
+      // because it is basically uniform data, all data will be inserted
+      // the code is same as zipfian test.
+      // super hacky, but whatever.
+      uint64_t size = config.ht_size * config.ht_fill / 100;
+      init_uniform_dist(config.seed, size);
     }
+
+
 
     if ((config.mode == BQ_TESTS_YES_BQ) ||
         ((config.mode == FASTQ_WITH_INSERT) &&

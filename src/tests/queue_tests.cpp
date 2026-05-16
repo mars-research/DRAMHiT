@@ -61,37 +61,8 @@ auto get_ht_size = [](int ncons) {
   return ht_size;
 };
 
-std::vector<key_type> *g_zipf_values;
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-void init_zipfian_dist(double skew, uint64_t seed, uint64_t size, uint64_t key_range) {
 
-  g_zipf_values = new std::vector<key_type>(size);
-  std::stringstream cache_name{};
-  cache_name << "/opt/DRAMHiT/cache/" << "zipfian" << "_skew" << skew
-             << "_seed" << seed << "_size" << size << "_keyrange"<< key_range <<".bin";
-  std::ifstream cache{cache_name.str().c_str()};
-  PLOG_INFO << cache_name.str() << " " << cache.is_open();
-  if (cache.is_open()) {
-    cache.read(reinterpret_cast<char *>(g_zipf_values->data()),
-               g_zipf_values->size() * sizeof(key_type));
-    cache.close();
-  } else {
-    zipf_distribution_apache distribution(key_range, skew, seed);
-    PLOGI.printf("Initializing global zipf with skew %f, seed %ld", skew, seed);
-
-    key_type k;
-    for (auto &value : *g_zipf_values) {
-      k = distribution.sample();
-      value = MAX(1, k * GOLDEN_PRIME);
-    }
-    PLOGI.printf("Zipfian dist generated. size %zu", g_zipf_values->size());
-    std::ofstream cache_out{cache_name.str().c_str()};
-    cache_out.write(reinterpret_cast<char *>(g_zipf_values->data()),
-                    g_zipf_values->size() * sizeof(key_type));
-    cache_out.close();
-  }
-}
-
+extern std::vector<key_type> *g_zipf_values;
 inline std::tuple<double, uint64_t, uint64_t> get_params(uint32_t n_prod,
                                                          uint32_t n_cons,
                                                          uint32_t tid) {

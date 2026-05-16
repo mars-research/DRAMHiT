@@ -11,3 +11,5 @@
 # hash join
 
 /opt/DRAMHiT/build/dramhit --ht-type 3 --hw-pref 0 --ht-fill 50 --relation_r_size 64000000 --relation_s_size 640000000 --find_queue 64 --num-threads 64 --numa-split 4 --no-prefetch 0 --mode 13 --batch-len 16 --skew 1.00 --seed 1774551337382868027
+
+/opt/DRAMHiT/build/dramhit --ht-type 3 --ht-fill 50 --relation_r_size 64000000 --relation_s_size 64000000  --num-threads 64 --numa-split 4 --mode 16 --skew 0.01 --seed 1774551337382868027 --radix 10

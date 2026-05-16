@@ -43,7 +43,6 @@ extern pcm::PCMCounters pcm_cnt;
 
 void sync_complete(void);
 
-extern std::vector<key_type> *g_zipf_values;
 extern ExecPhase cur_phase;
 extern uint64_t *g_insert_durations;
 extern uint64_t *g_find_durations;
@@ -53,53 +52,7 @@ extern uint64_t zipfian_iter;
 extern bool zipfian_finds;
 extern bool zipfian_inserts;
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-void init_uniform_dist(uint64_t seed, uint64_t size)
-{
-    g_zipf_values = new std::vector<key_type>(size);
-
-    // Updated cache name to reflect "uniform" without the skew parameter
-    std::stringstream cache_name{};
-    cache_name << "/opt/DRAMHiT/cache/uniform_seed" << config.seed
-               << "_size" << size << ".bin";
-
-    std::ifstream cache{cache_name.str().c_str()};
-    PLOG_INFO << cache_name.str() << " " << cache.is_open();
-
-    if (cache.is_open()) {
-        cache.read(reinterpret_cast<char *>(g_zipf_values->data()),
-                   g_zipf_values->size() * sizeof(key_type));
-        cache.close();
-    } else {
-        PLOGI.printf("Initializing global uniform distribution with seed %ld, size %ld", seed, size);
-
-        // 1. Initialize the 64-bit engine with the passed seed
-        std::mt19937_64 gen(seed);
-
-        // 2. Set up the uniform distribution range.
-        // Based on your original code's lower bound logic (MAX(1, ...)),
-        // I am assuming your keys sample from 0 (or 1) up to the maximum possible key value.
-        // Adjust the bounds in brackets if your keys require a specific maximum range limit.
-        std::uniform_int_distribution<key_type> distr(
-            1,
-            std::numeric_limits<key_type>::max()
-        );
-
-        // 3. Fill the vector
-        for (auto &value : *g_zipf_values) {
-            key_type k = distr(gen);
-            value = MAX(1, k * GOLDEN_PRIME);
-        }
-
-        PLOGI.printf("Uniform dist generated. size %zu", g_zipf_values->size());
-
-        std::ofstream cache_out{cache_name.str().c_str()};
-        cache_out.write(reinterpret_cast<char *>(g_zipf_values->data()),
-                        g_zipf_values->size() * sizeof(key_type));
-        cache_out.close();
-    }
-}
-
+extern std::vector<key_type> *g_zipf_values;
 using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
 using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
 
@@ -337,9 +290,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable,
 
   // split global data into chunks. bring into local hugepages memory
   uint64_t data_sz = g_zipf_values->size();
+  uint64_t starting_offset = shard->shard_idx * (data_sz / config.num_threads);
   uint64_t partition_size = data_sz / config.num_threads;
-
-  uint64_t starting_offset = shard->shard_idx * partition_size;
 
   HashTableTestHugepageAlloc hugepage_alloc_inst_ht_test;
   // if it is last threads, it can take over the left over.
@@ -456,7 +408,6 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable,
 #endif
 
   shard->stats->finds = find_timings;
-  shard->stats->ht_fill = config.ht_fill;
   shard->stats->found = found;
   get_ht_stats(shard, hashtable);
 
@@ -466,6 +417,8 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable,
   sync_barrier->arrive_and_wait();
 
   if (shard->shard_idx == 0) {
+      shard->stats->ht_fill = hashtable->get_fill();
+      shard->stats->ht_capacity = hashtable->get_capacity();
     PLOGI.printf("get fill %.3f",
                  (double)hashtable->get_fill() / hashtable->get_capacity());
   }

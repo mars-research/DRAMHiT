@@ -8,8 +8,10 @@
 #include "all_ht_types.hpp"
 #include "hashtables/ht_helper.hpp"
 #include "hashtables/kvtypes.cpp"
+#include "plog/Log.h"
 #include "print_stats.h"
 #include "types.hpp"
+
 
 int find_remote_node(int current_node) {
   if (numa_available() < 0) {
@@ -35,8 +37,8 @@ bool distribute_memory_to_nodes(void *addr, uint64_t alloc_sz) {
   }
   struct bitmask *nodes_mask = numa_get_mems_allowed();
 
-  int ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE,
-                  nodes_mask->maskp, nodes_mask->size, MPOL_MF_MOVE);
+  int ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, nodes_mask->maskp,
+                  nodes_mask->size, MPOL_MF_MOVE);
 
   if (ret != 0) {
     PLOGE.printf("mbind failed to interleave memory: %s", strerror(errno));
@@ -108,31 +110,12 @@ namespace kmercounter {
 
 extern Configuration config;
 extern std::vector<key_type> *g_zipf_values;
+extern uint64_t g_zipf_num_unique_values;
+extern double g_zipf_skewness;
+extern uint64_t expected_join_size;
+extern uint64_t g_zipf_values_size;
 
 // g_zipf_values is global ....
-uint64_t calculate_expected_join_size(uint64_t r_size, uint64_t s_size) {
-  // Map to store frequency of each 64-bit key
-  std::unordered_map<key_type, uint64_t> r_key_counts;
-
-  // 1. Build Phase
-  for (uint64_t i = 0; i < r_size; ++i) {
-    r_key_counts[g_zipf_values->at(i)]++;
-  }
-
-  uint64_t expected_join_size = 0;
-  uint64_t s_end = r_size + s_size;
-
-  // 2. Probe Phase
-  for (uint64_t j = r_size; j < s_end; ++j) {
-    auto it = r_key_counts.find(g_zipf_values->at(j));
-    if (it != r_key_counts.end()) {
-      expected_join_size++;
-    }
-  }
-
-  return expected_join_size;
-}
-
 void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t total_inserts = 0;
   uint64_t total_insert_cycles = 0;
@@ -168,9 +151,6 @@ void print_stats(Shard *all_sh, Configuration &config) {
     total_upsert += all_sh[k].stats->upsertions.op_count;
     total_upsert_cycles += all_sh[k].stats->upsertions.duration;
     total_found += all_sh[k].stats->found;
-
-    ht_fill += all_sh[k].stats->ht_fill;
-    ht_capacity += all_sh[k].stats->ht_capacity;
 
     max_find_duration = all_sh[k].stats->finds.duration > max_find_duration
                             ? all_sh[k].stats->finds.duration
@@ -218,8 +198,8 @@ void print_stats(Shard *all_sh, Configuration &config) {
   uint64_t num_threads = config.num_threads;
 
   if (num_threads > 0) {
-    ht_fill = ht_fill / num_threads;
-    ht_capacity = ht_capacity / num_threads;
+    ht_fill = all_sh[0].stats->ht_fill;
+    ht_capacity = all_sh[0].stats->ht_capacity;
     avg_find_duration = total_find_cycles / num_threads;
     avg_insert_duration = total_insert_cycles / num_threads;
   }
@@ -235,8 +215,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
   if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 ||
       config.mode == PARTITIONJOINV2) {
     if (config.test) {
-      uint64_t join_answer = calculate_expected_join_size(
-          config.relation_r_size, config.relation_s_size);
+      uint64_t join_answer = expected_join_size;
 
       if (total_found != join_answer) {
         PLOGE.printf("hashjoin failed, solution: %lu answer: %lu", join_answer,
@@ -304,19 +283,36 @@ void print_stats(Shard *all_sh, Configuration &config) {
         "============================================\n",
         bytes, sec, bw);
   } else {
-    uint64_t expected_found =
-        config.ht_size * config.ht_fill / 100 * config.read_factor;
+      // assume all elements are unique
+
+    if(config.test){
+
+        uint64_t expected_fill = g_zipf_num_unique_values;
+        uint64_t expected_found = g_zipf_values_size * config.read_factor;
+        uint64_t actual_fill = ht_fill;
+
+        if(expected_fill != actual_fill){
+            PLOGE.printf("fill: %lu != expecetd_fill: %lu", actual_fill, expected_fill);
+        }
+
+        if(expected_found != total_found){
+            PLOGE.printf("found: %lu != expected_found: %lu", total_found, expected_found);
+        }
+    }
+
     PLOGI.printf(
         "\n"
         "============================================\n"
-        "found : %lu, expected_found : %lu\n"
-        "global_find_cycle : %lu, find_ops : %lu\n"
+        "fill : %lu, capacity : %lu, fill_factor : %f\n"
+        "global_find_cycle : %lu, find_ops : %lu, found : %lu\n"
         "global_insert_cycle : %lu, insert_ops : %lu\n"
         "set_cycles : %lu, get_cycles : %lu, "
         "set_mops : %lu, get_mops : %lu\n"
         "============================================\n",
-        total_found, expected_found, avg_find_duration, total_finds,
-        avg_insert_duration, total_inserts, cycles_per_insert, cycles_per_find,
+        ht_fill, ht_capacity, (double) (ht_fill / (double)ht_capacity),
+        avg_find_duration, total_finds, total_found,
+        avg_insert_duration, total_inserts,
+        cycles_per_insert, cycles_per_find,
         insert_mops, find_mops);
   }
 #ifdef COMMENT_OUT
@@ -455,4 +451,6 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 
   return kmer_ht;
 }
+
+
 }  // namespace kmercounter

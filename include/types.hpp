@@ -183,7 +183,7 @@ struct Configuration {
   bool sequential;
   uint32_t radix;
   double hit_rate;
-  uint64_t key_range;
+  uint64_t zipf_scale_factor;
 
   void dump_configuration() {
     printf("Run configuration {\n");

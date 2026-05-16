@@ -38,7 +38,6 @@ inline void get_ht_stats(Shard *sh, BaseHashTable *kmer_ht) {
 #endif
 }
 
-uint64_t calculate_expected_join_size(uint64_t r_size, uint64_t s_size);
 
 void print_stats(Shard *all_sh, Configuration &config);
 }  // namespace kmercounter

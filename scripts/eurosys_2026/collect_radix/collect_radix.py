@@ -18,8 +18,6 @@ def run_dramhit_experiments():
         "/opt/DRAMHiT/build/dramhit",
         "--ht-type",
         "3",
-        "--hw-pref",
-        "0",
         "--ht-fill",
         "50",
         "--relation_r_size",
@@ -29,19 +27,15 @@ def run_dramhit_experiments():
         "--find_queue",
         "32",
         "--num-threads",
-        "128",
+        "64",
         "--numa-split",
-        "1",
-        "--no-prefetch",
-        "0",
+        "4",
         "--mode",
-        "16",
-        "--batch-len",
         "16",
         "--associativity",
         "1.00",
         "--skew",
-        "1.00",
+        "0.01",
         "--seed",
         "1774551337382868027",
     ]
@@ -134,7 +128,7 @@ def run_dramhit_experiments():
         plt.tight_layout()
 
         # Save the plot
-        output_filename = "intel_directory_skew_1.00.png"
+        output_filename = "intel_single_socket_directory_radix.png"
         plt.savefig(output_filename)
         print(f"\nPlot successfully saved to {output_filename}")
 
