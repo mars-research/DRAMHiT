@@ -38,7 +38,7 @@ bool distribute_memory_to_nodes(void *addr, uint64_t alloc_sz) {
   struct bitmask *nodes_mask = numa_get_mems_allowed();
 
   int ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, nodes_mask->maskp,
-                  nodes_mask->size, MPOL_MF_MOVE);
+                  nodes_mask->size, MPOL_MF_MOVE | MPOL_MF_STRICT);
 
   if (ret != 0) {
     PLOGE.printf("mbind failed to interleave memory: %s", strerror(errno));

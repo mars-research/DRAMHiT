@@ -1,0 +1,194 @@
+[
+    {
+        "threads": 1,
+        "app_bandwidth_GBps": 19.1,
+        "upi_tx_data_GBps": 0.024688741923658962,
+        "upi_tx_nondata_GBps": 20.39611800684163
+    },
+    {
+        "threads": 2,
+        "app_bandwidth_GBps": 38.2,
+        "upi_tx_data_GBps": 0.019720693761135513,
+        "upi_tx_nondata_GBps": 36.19416647471038
+    },
+    {
+        "threads": 3,
+        "app_bandwidth_GBps": 56.7,
+        "upi_tx_data_GBps": 0.02180047336692143,
+        "upi_tx_nondata_GBps": 54.07761486027373
+    },
+    {
+        "threads": 4,
+        "app_bandwidth_GBps": 75.1,
+        "upi_tx_data_GBps": 0.05876496025939545,
+        "upi_tx_nondata_GBps": 57.329894477726796
+    },
+    {
+        "threads": 5,
+        "app_bandwidth_GBps": 92.9,
+        "upi_tx_data_GBps": 0.022105307554638715,
+        "upi_tx_nondata_GBps": 70.61857470751862
+    },
+    {
+        "threads": 6,
+        "app_bandwidth_GBps": 110.3,
+        "upi_tx_data_GBps": 0.023195776844417572,
+        "upi_tx_nondata_GBps": 84.33805559849367
+    },
+    {
+        "threads": 7,
+        "app_bandwidth_GBps": 127.2,
+        "upi_tx_data_GBps": 0.0733952358694244,
+        "upi_tx_nondata_GBps": 85.98880562976797
+    },
+    {
+        "threads": 8,
+        "app_bandwidth_GBps": 143.5,
+        "upi_tx_data_GBps": 0.025649317466550393,
+        "upi_tx_nondata_GBps": 96.0597505923226
+    },
+    {
+        "threads": 9,
+        "app_bandwidth_GBps": 158.8,
+        "upi_tx_data_GBps": 0.2466465452781919,
+        "upi_tx_nondata_GBps": 99.47297612358156
+    },
+    {
+        "threads": 10,
+        "app_bandwidth_GBps": 174.0,
+        "upi_tx_data_GBps": 0.047840974576447384,
+        "upi_tx_nondata_GBps": 104.82700337954113
+    },
+    {
+        "threads": 11,
+        "app_bandwidth_GBps": 187.8,
+        "upi_tx_data_GBps": 0.7408175179191674,
+        "upi_tx_nondata_GBps": 109.39419171914618
+    },
+    {
+        "threads": 12,
+        "app_bandwidth_GBps": 200.2,
+        "upi_tx_data_GBps": 0.6813881491720875,
+        "upi_tx_nondata_GBps": 113.05691117855876
+    },
+    {
+        "threads": 13,
+        "app_bandwidth_GBps": 212.3,
+        "upi_tx_data_GBps": 0.5177109960137513,
+        "upi_tx_nondata_GBps": 116.22042749492589
+    },
+    {
+        "threads": 14,
+        "app_bandwidth_GBps": 223.0,
+        "upi_tx_data_GBps": 0.5812491473106924,
+        "upi_tx_nondata_GBps": 118.79862074856895
+    },
+    {
+        "threads": 15,
+        "app_bandwidth_GBps": 231.7,
+        "upi_tx_data_GBps": 0.733274663420893,
+        "upi_tx_nondata_GBps": 120.87477280832344
+    },
+    {
+        "threads": 16,
+        "app_bandwidth_GBps": 237.7,
+        "upi_tx_data_GBps": 0.7529915970902434,
+        "upi_tx_nondata_GBps": 122.33045299164918
+    },
+    {
+        "threads": 17,
+        "app_bandwidth_GBps": 240.9,
+        "upi_tx_data_GBps": 0.4169359559253155,
+        "upi_tx_nondata_GBps": 123.19663269551424
+    },
+    {
+        "threads": 18,
+        "app_bandwidth_GBps": 242.1,
+        "upi_tx_data_GBps": 0.5939139121761748,
+        "upi_tx_nondata_GBps": 123.67223436929694
+    },
+    {
+        "threads": 19,
+        "app_bandwidth_GBps": 242.8,
+        "upi_tx_data_GBps": 0.6076750523517105,
+        "upi_tx_nondata_GBps": 123.87364810093278
+    },
+    {
+        "threads": 20,
+        "app_bandwidth_GBps": 243.2,
+        "upi_tx_data_GBps": 0.2832289301042768,
+        "upi_tx_nondata_GBps": 123.89837699748455
+    },
+    {
+        "threads": 21,
+        "app_bandwidth_GBps": 244.7,
+        "upi_tx_data_GBps": 0.564001609157265,
+        "upi_tx_nondata_GBps": 124.01142753709892
+    },
+    {
+        "threads": 22,
+        "app_bandwidth_GBps": 246.4,
+        "upi_tx_data_GBps": 0.15949153057315188,
+        "upi_tx_nondata_GBps": 124.10533084136883
+    },
+    {
+        "threads": 23,
+        "app_bandwidth_GBps": 247.7,
+        "upi_tx_data_GBps": 0.1050302919568029,
+        "upi_tx_nondata_GBps": 124.14647794736794
+    },
+    {
+        "threads": 24,
+        "app_bandwidth_GBps": 249.4,
+        "upi_tx_data_GBps": 0.06360010145551519,
+        "upi_tx_nondata_GBps": 124.16773289976655
+    },
+    {
+        "threads": 25,
+        "app_bandwidth_GBps": 251.2,
+        "upi_tx_data_GBps": 0.05816212147671229,
+        "upi_tx_nondata_GBps": 124.27966868632691
+    },
+    {
+        "threads": 26,
+        "app_bandwidth_GBps": 252.7,
+        "upi_tx_data_GBps": 0.06931951284677924,
+        "upi_tx_nondata_GBps": 124.35971786612134
+    },
+    {
+        "threads": 27,
+        "app_bandwidth_GBps": 254.2,
+        "upi_tx_data_GBps": 0.46377670986870173,
+        "upi_tx_nondata_GBps": 124.41153670680637
+    },
+    {
+        "threads": 28,
+        "app_bandwidth_GBps": 255.8,
+        "upi_tx_data_GBps": 0.7303714934299851,
+        "upi_tx_nondata_GBps": 124.53019731609493
+    },
+    {
+        "threads": 29,
+        "app_bandwidth_GBps": 257.2,
+        "upi_tx_data_GBps": 0.3134201243519282,
+        "upi_tx_nondata_GBps": 124.52907709470222
+    },
+    {
+        "threads": 30,
+        "app_bandwidth_GBps": 258.0,
+        "upi_tx_data_GBps": 0.5269699283666865,
+        "upi_tx_nondata_GBps": 124.58101792627072
+    },
+    {
+        "threads": 31,
+        "app_bandwidth_GBps": 257.7,
+        "upi_tx_data_GBps": 0.4041730510948437,
+        "upi_tx_nondata_GBps": 124.46279900050232
+    },
+    {
+        "threads": 32,
+        "app_bandwidth_GBps": 257.1,
+        "upi_tx_data_GBps": 0.3556323241907676,
+        "upi_tx_nondata_GBps": 124.34783548881909
+    }
+]

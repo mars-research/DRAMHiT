@@ -335,7 +335,8 @@ enum numa_policy_threads {
   THREADS_NO_MEM_DISTRIBUTION = 5,
   THREADS_SPLIT_EVEN_NODES = 6,
   THREADS_ALL_NODES_REMOTE_ACCESS = 7,
-  THREADS_ALL_NODES_LOCAL_ACCESS = 8
+  THREADS_ALL_NODES_LOCAL_ACCESS = 8,
+  THREADS_MIXED_NUMA_NODE = 9
 };
 
 class NumaPolicyThreads : public Numa {
@@ -391,7 +392,7 @@ class NumaPolicyThreads : public Numa {
            static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
     // return numa node 0 threads.
-    if (this->np == THREADS_REMOTE_NUMA_NODE || this->np == THREADS_LOCAL_NUMA_NODE) {
+    if (this->np == THREADS_REMOTE_NUMA_NODE || this->np == THREADS_LOCAL_NUMA_NODE || this->np == THREADS_MIXED_NUMA_NODE) {
       if (this->config_num_threads > nodes[0].cpu_list.size()) {
         std::cout << "too many threads to be scheduled on nodes 0" << std::endl;
         exit(-1);

@@ -1,4 +1,6 @@
 
+#include "hashtables/ht_helper.hpp"
+#include "helper.hpp"
 #include "misc_lib.h"
 #include "numa.hpp"
 #include "plog/Log.h"
@@ -6,7 +8,6 @@
 #include "tests/BandwidthTest.hpp"
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
-#include "helper.hpp"
 
 namespace kmercounter {
 
@@ -45,15 +46,27 @@ inline void prefetch(const Cacheline* vec, uint64_t idx) {
 void BandwidthTest::run(Shard* sh, const Configuration& config,
                         std::barrier<VoidFn>* barrier) {
   uint64_t size = utils::next_pow2(config.ht_size);
+  uint64_t total_bytes = size * sizeof(Cacheline);
+
+  // Round up total_bytes to the nearest 2MB (2 * 1024 * 1024 = 2097152 bytes)
+  constexpr uint64_t HUGEPAGE_2MB = 2ULL * 1024ULL * 1024ULL;
+  uint64_t alloc_size = (total_bytes + HUGEPAGE_2MB - 1) & ~(HUGEPAGE_2MB - 1);
+
   uint64_t start, end;
   if (sh->shard_idx == 0) {
-      PLOGI.printf("allocating %lu mb per thread",
-                   (size * sizeof(Cacheline)) / (1024ULL * 1024ULL));
+    PLOGI.printf("allocating %lu mb per thread",
+                 alloc_size / (1024ULL * 1024ULL));
     start = RDTSC_START();
   }
 
-  BWHugepageAlloc hugepage_allocator_inst_bw;
-  Cacheline* arr = hugepage_allocator_inst_bw.allocate(size);
+  Cacheline* arr = (Cacheline*)mmap(
+      nullptr, alloc_size, PROT_READ | PROT_WRITE,
+      MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
+
+  if (arr == MAP_FAILED) {
+    PLOGE.printf("fail to map 2mb pages");
+    throw std::bad_alloc();
+  }
 
   if (config.numa_split == THREADS_REMOTE_NUMA_NODE ||
       config.numa_split == THREADS_ALL_NODES_REMOTE_ACCESS) {
@@ -64,20 +77,24 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     }
 
     if (!move_memory_to_node((void*)(&arr[0]),
-                             hugepage_allocator_inst_bw.get_actual_bytes(size),
+                             alloc_size,
                              to_node)) {
       PLOGE.printf("failed to migrate workload memory");
       abort();
     }
-  }else if(config.numa_split == THREADS_SPLIT_EVEN_NODES)
-  {
-      if(!distribute_memory_to_nodes((void*)arr, hugepage_allocator_inst_bw.get_actual_bytes(size))){
-          PLOGE.printf("failed to distribute workload memory");
-          abort();
-      }
+  } else if (config.numa_split == THREADS_SPLIT_EVEN_NODES ||
+             config.numa_split == THREADS_MIXED_NUMA_NODE) {
+    if (!distribute_memory_to_nodes(
+            (void*)arr, alloc_size)) {
+      PLOGE.printf("failed to distribute workload memory");
+      abort();
+    }
   }
 
-  hugepage_allocator_inst_bw.prefault(arr, size);
+  volatile char* fault_ptr = reinterpret_cast<volatile char*>(arr);
+  for (uint64_t offset = 0; offset < alloc_size; offset += HUGEPAGE_2MB) {
+    fault_ptr[offset] = 0;
+  }
 
   if (sh->shard_idx == 0) {
     end = RDTSCP();
@@ -140,7 +157,7 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
                  (g_find_end - g_find_start) / size);
   }
 
-  hugepage_allocator_inst_bw.deallocate(arr, size);
+  munmap(arr, alloc_size);
 
 }  // run
 

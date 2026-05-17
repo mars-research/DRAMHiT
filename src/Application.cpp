@@ -967,6 +967,7 @@ void sync_complete(void) {
         case THREADS_SPLIT_EVEN_NODES:
         case THREADS_ALL_NODES_REMOTE_ACCESS:
         case THREADS_ALL_NODES_LOCAL_ACCESS:
+        case THREADS_MIXED_NUMA_NODE:
           this->np = new NumaPolicyThreads(
               config.num_threads, (numa_policy_threads)config.numa_split);
           break;

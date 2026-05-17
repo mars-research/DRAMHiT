@@ -13,22 +13,42 @@ def main():
     # Configuration
     max_threads = 64
     INTERVAL_MS = 10  # perf stat interval in milliseconds
-
-    mode = "remote"
-    numa = 7
-
     mode = "local"
-    # Check if an argument is passed and if it is "local"
-    if len(sys.argv) > 1 and sys.argv[1] == "local":
-        mode = "local"
-        numa = 1
-    elif len(sys.argv) > 1 and sys.argv[1] == "mixed":
-        mode = "mixed"
-        numa = 6
+    numa = 1
+    min_threads = 1
+
+    if len(sys.argv) > 1:
+        mode = sys.argv[1]
+
+        if mode == "local_dual":
+            numa = 1
+            max_threads = 64
+            min_threads = 2
+        elif mode == "mixed_dual":
+            numa = 6
+            max_threads = 64
+            min_threads = 2
+        elif mode == "remote_dual":
+            numa = 7
+            max_threads = 64
+            min_threads = 2
+        elif mode == "local_single":
+            numa = 4
+            max_threads = 32
+            min_threads = 1
+        elif mode == "remote_single":
+            numa = 3
+            max_threads = 32
+            min_threads = 1
+        elif mode == "mixed_single":
+            numa = 9
+            max_threads = 32
+            min_threads = 1
     else:
-        # Fallback for anything else (remote)
-        mode = "remote"
-        numa = 7
+        print(
+            "No mode specified. Using default mode: <work_pattern>_<socket>, e.g. mixed_single, remote_dual "
+        )
+        return
 
     json_filename = f"bandwidth_results_upi_{mode}.json"
     plot_filename = f"bandwidth_plot_upi_{mode}.png"
@@ -40,7 +60,7 @@ def main():
 
     print(f"Interval set to {INTERVAL_MS}ms. Taking the MAX sample for UPI bandwidth.")
 
-    for threads in range(2, max_threads + 1, 2):
+    for threads in range(min_threads, max_threads + 1, min_threads):
         # We wrap the target command inside perf stat.
         # Removed the "-x," flag to use standard whitespace-separated output.
         cmd = [
@@ -68,7 +88,7 @@ def main():
             "--num-threads",
             str(threads),
         ]
-
+        print(" ".join(cmd))
         try:
             # Popen with STDOUT to merge stdout/stderr, reading line by line asynchronously
             process = subprocess.Popen(
@@ -148,13 +168,20 @@ def main():
 
             # Calculate GB/s for EACH captured interval and find the max
             # clockticks are aggregated over 6 links and 2.5ghz
+            required_keys = {"tx_d", "tx_nd", "clockticks"}
+
             for ts, data in interval_data.items():
-                current_tx_gbps = (data["tx_d"] * 100) / (
-                    data["clockticks"]
-                )  # packet size 64/9 according to doc
-                current_rx_gbps = (data["tx_nd"] * 110) / (
-                    data["clockticks"]
-                )  # (gb * 8 /(1<<30)) / (tick / (6*2.5*10^9))
+                # 1. Sanity Check: Ensure all required keys exist
+                if not required_keys.issubset(data.keys()):
+                    continue  # Drop/skip this data point if any key is missing
+
+                # 2. Safety Check: Prevent division by zero
+                if data["clockticks"] == 0:
+                    continue
+
+                # 3. Process the data
+                current_tx_gbps = (data["tx_d"] * 100) / data["clockticks"]
+                current_rx_gbps = (data["tx_nd"] * 110) / data["clockticks"]
 
                 if current_tx_gbps > max_upi_tx_gbps:
                     max_upi_tx_gbps = current_tx_gbps
