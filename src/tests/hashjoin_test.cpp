@@ -164,8 +164,8 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
         infile.read(reinterpret_cast<char*>(g_zipf_values->data()),
                     expected_bytes);
 
-        if(config.test){
-            calculate_expected_join_size();
+        if (config.test) {
+          calculate_expected_join_size();
         }
         return;
       }
@@ -178,26 +178,43 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
 
   std::mt19937_64 rng(seed);
   std::uniform_int_distribution<key_type> u_distr(
-      1,
-      std::numeric_limits<key_type>::max()
-  );
+      1, std::numeric_limits<key_type>::max());
 
   for (uint64_t r_index = 0; r_index < r_size; ++r_index) {
-    g_zipf_values->at(r_index) =  u_distr(rng);
+    g_zipf_values->at(r_index) = u_distr(rng);
   }
 
   // use zipf distribution to select randon indices in relation r.
   // one problem with this skew won't really show unless size of relation s
   // is much bigger than relation r, but that's okay.
+
   uint64_t keyrange_width = r_size;
+
+  // Minimum required ratio of samples to keys.
+  // Increase this (e.g., 1000, 10000) for a more accurate skew representation.
+  constexpr uint64_t target_density = 100;
+
+  // If the current ratio falls below our target...
+  if ((s_size / keyrange_width) < target_density) {
+    PLOGI.printf(
+        "Current sample scale (%lu) below target scale factor (%lu). Adjusting "
+        "keyrange width.\n",
+        s_size / keyrange_width, target_density);
+    // ...shrink the keyrange width to satisfy the density requirement
+    keyrange_width = s_size / target_density;
+
+    // Safety fallback: ensure keyrange_width is at least 1
+    keyrange_width = std::max(static_cast<uint64_t>(1), keyrange_width);
+  }
+
   zipf_distribution_apache z_distr(keyrange_width, skew, seed);
   std::uniform_real_distribution<double> match_prob(0.0, 1.0);
   for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
+    uint64_t zipf_v = z_distr.sample();
     if (match_prob(rng) <= hit_rate) {
-      uint64_t r_target_idx = z_distr.sample();
-      g_zipf_values->at(r_size + s_index) = g_zipf_values->at(r_target_idx);
+      g_zipf_values->at(r_size + s_index) = g_zipf_values->at(zipf_v);
     } else {
-      g_zipf_values->at(r_size + s_index) = u_distr(rng);
+      g_zipf_values->at(r_size + s_index) = zipf_v * GOLDEN_PRIME;
     }
   }
 
@@ -210,11 +227,12 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
     std::cerr << "Warning: Failed to open file for writing!" << std::endl;
   }
 
-  if(config.test){
-      calculate_expected_join_size();
-      //TODO calculate distribution collision rate of r (how many non unique keys)
-      //TODO calculate distribution unique keys of s (how many unique keys)
-      //TODO calculate distribution zipf skewness of s (skewness)
+  if (config.test) {
+    calculate_expected_join_size();
+    // TODO calculate distribution collision rate of r (how many non unique
+    // keys)
+    // TODO calculate distribution unique keys of s (how many unique keys)
+    // TODO calculate distribution zipf skewness of s (skewness)
   }
 }
 
@@ -663,7 +681,8 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
     ht_id++;
   }
 
-  Element* ht_array = (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
+  Element* ht_array =
+      (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
   RadixArrayHashTable ht(ht_array);
   PLOGI.printf("hashtable size %lu kb", max_ht_sz * sizeof(Element) / 1024);
 
@@ -671,13 +690,12 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
   uint64_t found = 0;
   for (size_t part_id = tid; part_id < partition_num;
        part_id += config.num_threads) {
-
     // reset hashtable
     uint64_t ht_sz = ht_szs[ht_id];
     ht_id++;
     ht.size = ht_sz;
 
-    memset((void*) ht_array, 0, ht_sz * sizeof(Element));
+    memset((void*)ht_array, 0, ht_sz * sizeof(Element));
 
     for (uint64_t thread_i = 0; thread_i < config.num_threads; ++thread_i) {
       uint64_t sz = global_info[thread_i].r_histogram[part_id];
@@ -692,8 +710,7 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
       Element* tuples = global_info[thread_i].s_buckets[part_id];
       uint64_t ret_v;
       for (uint32_t i = 0; i < sz; i++) {
-        if(ht.find(tuples[i], ret_v))
-            found++;
+        if (ht.find(tuples[i], ret_v)) found++;
       }
     }
   }
@@ -710,7 +727,22 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   // TODO, estimate per thread needed memory and break into GB and mb.
   // also look at per thread memory quota from filesystem, so it doesn't
   // try to allocate over the limits
-  HugepageArena arena(1, 10);
+
+  uint64_t estimate_bytes_needed =
+      sizeof(CacheLineBuffer) * partition_num +
+      sizeof(Element) * (partition_sz_r + partition_sz_s) +
+      (partition_sz_r) * sizeof(Element) + 2 * 1024 * 1024;
+
+  constexpr uint64_t one_gb_sz = 1024ULL * 1024ULL * 1024ULL;
+  constexpr uint64_t two_mb_sz = 2 * 1024ULL * 1024ULL;
+  uint64_t one_gb_needed = estimate_bytes_needed / one_gb_sz;
+  uint64_t two_mb_needed =
+      estimate_bytes_needed < one_gb_sz
+          ? estimate_bytes_needed / two_mb_sz + 1
+          : (estimate_bytes_needed - one_gb_needed * one_gb_sz) / two_mb_sz;
+  PLOGI.printf("reseving %lu 1gb pages, %lu 2mb pages", one_gb_needed,
+               two_mb_needed);
+  HugepageArena arena(one_gb_needed, two_mb_needed);
 
   // they can share swbs.
   CacheLineBuffer* swbs = (CacheLineBuffer*)arena.aligned_alloc(
@@ -785,11 +817,11 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   }
   barrier->arrive_and_wait();
 
-  //uint64_t duration = RDTSC_START();
+  // uint64_t duration = RDTSC_START();
   uint64_t found = join_phrase(arena, tid, partition_num);
+  // duration = RDTSCP() - duration;
+  // PLOGI.printf("tid %lu took %lu cycles", tid, duration);
 
-  //duration = RDTSCP() - duration;
-  //PLOGI.printf("tid %lu took %lu cycles", tid, duration);
   if (tid == 0) {
 #ifdef WITH_VTUNE_LIB
     __itt_event_end(join_event);
@@ -825,8 +857,10 @@ void HashjoinTest::join_relations_generated(Shard* sh,
       hugepage_alloc_inst_element.allocate(partition_sz_r);
   Element* probe_relation =
       hugepage_alloc_inst_element.allocate(partition_sz_s);
-  JoinElement* join_relation =
-      hugepage_alloc_inst_join_element.allocate(partition_sz_s);
+  JoinElement* join_relation = nullptr;
+
+  if (materialize)
+    join_relation = hugepage_alloc_inst_join_element.allocate(partition_sz_s);
 
   // Copy data from global vec into hugepage back vec.
   Element e;
@@ -859,8 +893,8 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     probe_relation[i] = e;
   }
 
-  if(sh->shard_idx == 0){
-      cur_phase = ExecPhase::free_global_zipfian_values;
+  if (sh->shard_idx == 0) {
+    cur_phase = ExecPhase::free_global_zipfian_values;
   }
   barrier->arrive_and_wait();
 
@@ -878,7 +912,9 @@ void HashjoinTest::join_relations_generated(Shard* sh,
 
   hugepage_alloc_inst_element.deallocate(build_relation, partition_sz_r);
   hugepage_alloc_inst_element.deallocate(probe_relation, partition_sz_s);
-  hugepage_alloc_inst_join_element.deallocate(join_relation, partition_sz_s);
+
+  if (materialize)
+    hugepage_alloc_inst_join_element.deallocate(join_relation, partition_sz_s);
 }
 
 void HashjoinTest::join_relations_from_files(Shard* sh,
