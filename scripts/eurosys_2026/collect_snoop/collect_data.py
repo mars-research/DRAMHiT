@@ -57,8 +57,6 @@ def run(run_cfg):
         "11",
         "--ht-size",
         str(run_cfg["size"]),
-        "--skew",
-        "0.01",
         "--hw-pref",
         "0",
         "--batch-len",
@@ -146,14 +144,6 @@ if __name__ == "__main__":
             "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
-            "UNIFORM_PROBING": "OFF",
-            "PREFETCH": "DOUBLE",
-            "CPUFREQ_MHZ": "2500",
-        },  # 2025_inline + bucket + simd + double prefetch
-        {
-            "DRAMHiT_VARIANT": "2025_INLINE",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
@@ -162,8 +152,8 @@ if __name__ == "__main__":
 
     run_cfgs = [
         {
-            "insertFactor": 100,
-            "readFactor": 100,
+            "insertFactor": 1,
+            "readFactor": 1,
             "numThreads": 128,
             "numa_policy": 1,
             "size": 536870912,
