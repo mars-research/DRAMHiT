@@ -3,6 +3,8 @@ import sys
 import os
 import matplotlib.pyplot as plt
 
+STREAM = (289336.8/1000)  # GB/s, from STREAM, MLC, or custom BW test
+
 
 def parse_perf_data(file_path):
 
@@ -98,6 +100,8 @@ def plot_bandwidth(all_results):
             label=label
         )
 
+    axes[0].axhline(STREAM, linestyle='--', linewidth=2, label='STREAM')
+
     axes[0].set_title('Insert Memory Bandwidth')
     axes[0].set_xlabel('Fill Factor (%)')
     axes[0].set_ylabel('Bandwidth (GB/s)')
@@ -123,6 +127,8 @@ def plot_bandwidth(all_results):
             linestyle='-',
             label=label
         )
+
+    axes[1].axhline(STREAM, linestyle='--', linewidth=2, label='STREAM')
 
     axes[1].set_title('Find Memory Bandwidth')
     axes[1].set_xlabel('Fill Factor (%)')

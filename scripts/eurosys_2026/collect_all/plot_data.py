@@ -12,18 +12,22 @@ row = 2
 col = 2
 fig, axes = plt.subplots(row, col, figsize=(12, 12))
 
-# Distinct shapes to cycle through
-MARKERS = ["o", "s", "^", "D", "v", "p", "*", "X"]
 
 def plot_json(json_file, output_file):
+    # Load JSON data
     with open(json_file, "r") as f:
         data = json.load(f)
 
+    # Convert to pandas DataFrame
+    df = pd.DataFrame(data)
+
     df = pd.json_normalize(data, sep=".")
-    df_single = df[df["run_cfg.numa_policy"] == 4].copy()
-    df_dual = df[df["run_cfg.numa_policy"] == 1].copy()
+
+    df_single = df[df["run_cfg.numa_policy"] == 4]
+    df_dual = df[df["run_cfg.numa_policy"] == 1]
 
     def make_identifier(build_cfg: str) -> str:
+        # Parse into dict
         bcfg = dict(part.split("=", 1) for part in build_cfg.split("-"))
         ret = ""
         if bcfg["DRAMHiT_VARIANT"] == "2025":
@@ -31,77 +35,118 @@ def plot_json(json_file, output_file):
         elif bcfg["DRAMHiT_VARIANT"] == "2025_INLINE":
             ret += "inline"
 
-        for k, v in bcfg.items():
-            if k == "BUCKETIZATION" and v == "ON":
+        for k in bcfg.keys():
+            if k == "BUCKETIZATION" and bcfg[k] == "ON":
                 ret += "+bucket"
-            elif k == "BRANCH" and v == "simd":
+            elif k == "BRANCH" and bcfg[k] == "simd":
                 ret += "+simd"
-            elif k == "UNIFORM_PROBING" and v == "ON":
+            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
                 ret += "+uniform"
-            elif k == "PREFETCH" and v == "DOUBLE":
+            elif k == "PREFETCH" and bcfg[k] == "DOUBLE":
                 ret += "+2prefetch"
-            elif k == "PREFETCH" and v == "L2":
-                ret += "+L2"
+
         return ret
 
     df_single["build_cfg_str"] = df_single["build_cfg_str"].apply(make_identifier)
     df_dual["build_cfg_str"] = df_dual["build_cfg_str"].apply(make_identifier)
 
     ids1 = df_single["build_cfg_str"].unique()
-    palette = sns.color_palette("colorblind", n_colors=len(ids1))
-    color_map = dict(zip(ids1, palette))
-    
-    sns.set_theme(style="whitegrid")
+    ids2 = df_dual["build_cfg_str"].unique()
 
-    # Legend with hollow shapes and unique dashes
-    custom_lines = []
-    # We use a temporary plot to grab the default dashes Seaborn generates
-    temp_ax = plt.figure().add_subplot(111)
-    sns.lineplot(data=df_single, x="run_cfg.fill_factor", y="set_mops", 
-                 hue="build_cfg_str", style="build_cfg_str", ax=temp_ax, palette=color_map)
-    
-    for i, (uid, line) in enumerate(zip(ids1, temp_ax.get_lines())):
-        custom_lines.append(Line2D([0], [0], color=color_map[uid], 
-                           marker=MARKERS[i % len(MARKERS)], 
-                           linestyle=line.get_linestyle(), 
-                           markerfacecolor="none", markeredgecolor=color_map[uid],
-                           markeredgewidth=1.5, markersize=8, label=uid))
-    plt.close(temp_ax.figure)
+    if (ids1 != ids2).any():
+        raise ValueError(
+            f"Identifiers mismatch.\nOnly in df_single: {ids1 - ids2}\nOnly in df_other: {ids2 - ids1}"
+        )
+    palette = sns.color_palette("rocket", n_colors=len(ids1))
+    palette = palette[::-1]  # reverse the palette
+    sns.set_theme(style="whitegrid", palette=palette)
 
-    fig.legend(fontsize=9, handles=custom_lines, loc="upper center", ncol=3)
-
-    plot_configs = [
-        (df_single, axes[0][0], "set_mops", "Single socket - Set Throughput", "Set Mops"),
-        (df_single, axes[0][1], "get_mops", "Single socket - Find Throughput", "Find Mops (Millions)"),
-        (df_dual, axes[1][0], "set_mops", "Dual socket - Set Throughput", "Set Mops"),
-        (df_dual, axes[1][1], "get_mops", "Dual socket - Find Throughput", "Find Mops"),
+    custom_lines = [
+        Line2D([0], [0], color=palette[i], marker="o", label=uid)
+        for i, uid in enumerate(ids1)
     ]
 
-    for df_sub, ax, y_col, title, y_label in plot_configs:
-        sns.lineplot(
-            data=df_sub, x="run_cfg.fill_factor", y=y_col, 
-            hue="build_cfg_str", style="build_cfg_str", 
-            dashes=True, markers=MARKERS[:len(ids1)], 
-            ax=ax, legend=False, palette=color_map
-        )
-        
-        # Force markers to be hollow and match line color
-        for line in ax.get_lines():
-            line.set_markerfacecolor("none")
-            line.set_markeredgecolor(line.get_color())
-            line.set_markeredgewidth(1.5)
-            line.set_markersize(4)
+    fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=2)
 
-        ax.set_title(title)
-        ax.set_xlabel("Fill Factor(%)")
-        ax.set_ylabel(y_label)
-        ax.set_ylim(bottom=0)
-        ax.grid(True, which="both", axis="both", linestyle="--")
+    ax = axes[0][0]
+    sns.lineplot(
+        data=df_single,
+        x="run_cfg.fill_factor",
+        y="get_mops",
+        hue="build_cfg_str",
+        marker="o",
+        ax=ax,
+        legend=False,
+    )
+    ax.set_title("Single socket - Find Throughput")
+    ax.set_xlabel("Fill Factor(%)")
+    ax.set_ylabel("Find Mops (Millions)")
+    ax.grid(True, which="major", axis="both", linestyle="--")
+    # ax.set_xlim(0)
+    # ax.set_ylim(0)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.93])
+    ax = axes[0][1]
+    sns.lineplot(
+        data=df_single,
+        x="run_cfg.fill_factor",
+        y="set_mops",
+        hue="build_cfg_str",
+        marker="o",
+        ax=ax,
+        legend=False,
+    )
+    ax.set_title(f"Single socket - Set Throughput")
+    ax.set_xlabel("Fill Factor(%)")
+    ax.set_ylabel("Set Mops")
+    ax.grid(True, which="major", axis="both", linestyle="--")
+    # ax.set_xlim(0)
+    # ax.set_ylim(0)
+
+    ax = axes[1][0]
+    sns.lineplot(
+        data=df_dual,
+        x="run_cfg.fill_factor",
+        y="get_mops",
+        hue="build_cfg_str",
+        marker="o",
+        ax=ax,
+        legend=False,
+    )
+    ax.set_title("Dual socket - Find Throughput")
+    ax.set_xlabel("Fill Factor(%)")
+    ax.set_ylabel("Find Mops")
+    ax.grid(True, which="major", axis="both", linestyle="--")
+    # ax.set_xlim(0)
+    # ax.set_ylim(0)
+
+    ax = axes[1][1]
+    sns.lineplot(
+        data=df_dual,
+        x="run_cfg.fill_factor",
+        y="set_mops",
+        hue="build_cfg_str",
+        marker="o",
+        ax=ax,
+        legend=False,
+    )
+    ax.set_title(f"Dual socket - Set Throughput")
+    ax.set_xlabel("Fill Factor(%)")
+    ax.set_ylabel("Set Mops")
+    ax.grid(True, which="major", axis="both", linestyle="--")
+
+    # ax.set_xlim(0)
+    # ax.set_ylim(0)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 
+
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        plot_json(sys.argv[1], sys.argv[2])
+    if len(sys.argv) != 3:
+        print("Usage: python plot_dramhit.py <input.json> <output.png>")
+        sys.exit(1)
+
+    json_file = sys.argv[1]
+    output_file = sys.argv[2]
+    plot_json(json_file, output_file)
