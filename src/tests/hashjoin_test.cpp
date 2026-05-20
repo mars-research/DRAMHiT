@@ -184,37 +184,56 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
     g_zipf_values->at(r_index) = u_distr(rng);
   }
 
-  // use zipf distribution to select randon indices in relation r.
-  // one problem with this skew won't really show unless size of relation s
-  // is much bigger than relation r, but that's okay.
-
-  uint64_t keyrange_width = r_size;
-
-  // Minimum required ratio of samples to keys.
-  // Increase this (e.g., 1000, 10000) for a more accurate skew representation.
-  constexpr uint64_t target_density = 100;
-
-  // If the current ratio falls below our target...
-  if ((s_size / keyrange_width) < target_density) {
+  if (skew < 0.1) {
     PLOGI.printf(
-        "Current sample scale (%lu) below target scale factor (%lu). Adjusting "
-        "keyrange width.\n",
-        s_size / keyrange_width, target_density);
-    // ...shrink the keyrange width to satisfy the density requirement
-    keyrange_width = s_size / target_density;
+        "skew is too low, simply generating relation S with uniform "
+        "distribution");
+    // just use uniform
+    std::uniform_int_distribution<key_type> s_u_distr(0, r_size);
+    std::uniform_real_distribution<double> match_prob(0.0, 1.0);
+    for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
+      uint64_t v = s_u_distr(rng);
+      if (match_prob(rng) <= hit_rate) {
+        g_zipf_values->at(r_size + s_index) = g_zipf_values->at(v);
+      } else {
+        g_zipf_values->at(r_size + s_index) = v * GOLDEN_PRIME;
+      }
+    }
+  } else {
+    // use zipf distribution to select randon indices in relation r.
+    // one problem with this skew won't really show unless size of relation s
+    // is much bigger than relation r, but that's okay.
 
-    // Safety fallback: ensure keyrange_width is at least 1
-    keyrange_width = std::max(static_cast<uint64_t>(1), keyrange_width);
-  }
+    uint64_t keyrange_width = r_size;
 
-  zipf_distribution_apache z_distr(keyrange_width, skew, seed);
-  std::uniform_real_distribution<double> match_prob(0.0, 1.0);
-  for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
-    uint64_t zipf_v = z_distr.sample();
-    if (match_prob(rng) <= hit_rate) {
-      g_zipf_values->at(r_size + s_index) = g_zipf_values->at(zipf_v);
-    } else {
-      g_zipf_values->at(r_size + s_index) = zipf_v * GOLDEN_PRIME;
+    // Minimum required ratio of samples to keys.
+    // Increase this (e.g., 1000, 10000) for a more accurate skew
+    // representation.
+    constexpr uint64_t target_density = 100;
+
+    // If the current ratio falls below our target...
+    if ((s_size / keyrange_width) < target_density) {
+      PLOGI.printf(
+          "Current sample scale (%lu) below target scale factor (%lu). "
+          "Adjusting "
+          "keyrange width.",
+          s_size / keyrange_width, target_density);
+      // ...shrink the keyrange width to satisfy the density requirement
+      keyrange_width = s_size / target_density;
+
+      // Safety fallback: ensure keyrange_width is at least 1
+      keyrange_width = std::max(static_cast<uint64_t>(1), keyrange_width);
+    }
+
+    zipf_distribution_apache z_distr(keyrange_width, skew, seed);
+    std::uniform_real_distribution<double> match_prob(0.0, 1.0);
+    for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
+      uint64_t zipf_v = z_distr.sample();
+      if (match_prob(rng) <= hit_rate) {
+        g_zipf_values->at(r_size + s_index) = g_zipf_values->at(zipf_v);
+      } else {
+        g_zipf_values->at(r_size + s_index) = zipf_v * GOLDEN_PRIME;
+      }
     }
   }
 
@@ -740,7 +759,7 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
       estimate_bytes_needed < one_gb_sz
           ? estimate_bytes_needed / two_mb_sz + 1
           : (estimate_bytes_needed - one_gb_needed * one_gb_sz) / two_mb_sz;
-  PLOGI.printf("reseving %lu 1gb pages, %lu 2mb pages", one_gb_needed,
+  PLOGI.printf("reserving %lu 1gb pages, %lu 2mb pages", one_gb_needed,
                two_mb_needed);
   HugepageArena arena(one_gb_needed, two_mb_needed);
 
@@ -853,10 +872,28 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     partition_sz_s += config.relation_s_size % config.num_threads;
   }
 
-  Element* build_relation =
-      hugepage_alloc_inst_element.allocate(partition_sz_r);
-  Element* probe_relation =
-      hugepage_alloc_inst_element.allocate(partition_sz_s);
+  uint64_t estimate_bytes_needed =
+      sizeof(Element) * (partition_sz_r + partition_sz_s);
+
+  constexpr uint64_t one_gb_sz = 1024ULL * 1024ULL * 1024ULL;
+  constexpr uint64_t two_mb_sz = 2 * 1024ULL * 1024ULL;
+  uint64_t one_gb_needed = estimate_bytes_needed / one_gb_sz;
+  uint64_t two_mb_needed =
+      estimate_bytes_needed < one_gb_sz
+          ? estimate_bytes_needed / two_mb_sz + 1
+          : (estimate_bytes_needed - one_gb_needed * one_gb_sz) / two_mb_sz;
+  if(estimate_bytes_needed < one_gb_sz && estimate_bytes_needed > 200 * two_mb_sz) {
+      one_gb_needed = 1;
+      two_mb_needed = 0;
+  }
+
+  HugepageArena arena(one_gb_needed, two_mb_needed);
+  PLOGI.printf("reserving %lu 1gb pages, %lu 2mb pages", one_gb_needed,
+               two_mb_needed);
+  Element* build_relation = (Element*) arena.aligned_alloc(sizeof(Element) * partition_sz_r, 16);
+      //hugepage_alloc_inst_element.allocate(partition_sz_r);
+  Element* probe_relation  = (Element*) arena.aligned_alloc(sizeof(Element) * partition_sz_s, 16);
+      //hugepage_alloc_inst_element.allocate(partition_sz_s);
   JoinElement* join_relation = nullptr;
 
   if (materialize)
@@ -910,8 +947,8 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     abort();
   }
 
-  hugepage_alloc_inst_element.deallocate(build_relation, partition_sz_r);
-  hugepage_alloc_inst_element.deallocate(probe_relation, partition_sz_s);
+  //hugepage_alloc_inst_element.deallocate(build_relation, partition_sz_r);
+  //hugepage_alloc_inst_element.deallocate(probe_relation, partition_sz_s);
 
   if (materialize)
     hugepage_alloc_inst_join_element.deallocate(join_relation, partition_sz_s);

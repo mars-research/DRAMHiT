@@ -21,9 +21,9 @@ def run_dramhit_experiments():
         "--ht-fill",
         "50",
         "--relation_r_size",
-        "256000000",
+        "64000000",
         "--relation_s_size",
-        "256000000",
+        "64000000",
         "--find_queue",
         "32",
         "--num-threads",
@@ -35,7 +35,7 @@ def run_dramhit_experiments():
         "--associativity",
         "1.00",
         "--skew",
-        "0.01",
+        "0.1",
         "--seed",
         "1774551337382868027",
     ]
@@ -128,7 +128,7 @@ def run_dramhit_experiments():
         plt.tight_layout()
 
         # Save the plot
-        output_filename = "intel_single_socket_directory_radix.png"
+        output_filename = "amd_equal_relation_radix.png"
         plt.savefig(output_filename)
         print(f"\nPlot successfully saved to {output_filename}")
 
