@@ -208,47 +208,23 @@ if __name__ == "__main__":
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
         },  # inline + bucket + simd + uniform + double prefetch
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "OFF",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "DOUBLE",
+            "CPUFREQ_MHZ": "2500",
+        },  # base + uniform + double prefetch
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "L1",
+            "CPUFREQ_MHZ": "2500",
+        },  # base + bucket + simd + uniform + L1
 
-        # {
-        #     "DRAMHiT_VARIANT": "2025",
-        #     "BUCKETIZATION": "ON",
-        #     "BRANCH": "branched",
-        #     "UNIFORM_PROBING": "OFF",
-        #     "PREFETCH": "DOUBLE",
-        #     "CPUFREQ_MHZ": "2500",
-        # },  # Base + double prefetch + bucket
-        # {
-        #     "DRAMHiT_VARIANT": "2025",
-        #     "BUCKETIZATION": "ON",
-        #     "BRANCH": "simd",
-        #     "UNIFORM_PROBING": "OFF",
-        #     "PREFETCH": "DOUBLE",
-        #     "CPUFREQ_MHZ": "2500",
-        # },  # Base + double prefetch + bucket + simd
-        # # {
-        # #     "DRAMHiT_VARIANT": "2025",
-        # #     "BUCKETIZATION": "ON",
-        # #     "BRANCH": "simd",
-        # #     "UNIFORM_PROBING": "OFF",
-        # #     "PREFETCH": "DOUBLE",
-        # #     "CPUFREQ_MHZ": "2500",
-        # # },  # Base + bucket + simd + double prefetch
-        # {
-        #     "DRAMHiT_VARIANT": "2025_INLINE",
-        #     "BUCKETIZATION": "ON",
-        #     "BRANCH": "simd",
-        #     "UNIFORM_PROBING": "OFF",
-        #     "PREFETCH": "DOUBLE",
-        #     "CPUFREQ_MHZ": "2500",
-        # },  # Inline + double prefetch + bucket + simd
-        # {
-        #     "DRAMHiT_VARIANT": "2025_INLINE",
-        #     "BUCKETIZATION": "ON",
-        #     "BRANCH": "simd",
-        #     "UNIFORM_PROBING": "ON",
-        #     "PREFETCH": "DOUBLE",
-        #     "CPUFREQ_MHZ": "2500",
-        # },  # Inline + double prefetch + bucket + simd + uniform
     ]
 
     run_cfgs = [

@@ -40,8 +40,7 @@ def plot_json(json_file, output_file):
     df_single["build_cfg_str"] = df_single["build_cfg_str"].apply(make_identifier)
     ids1 = sorted(df_single["build_cfg_str"].unique())
 
-    # --- UPDATED: Colorblind-friendly Palette (Viridis) ---
-    palette = sns.color_palette("colorblind", n_colors=len(ids1))
+    palette = sns.color_palette("tab10", n_colors=len(ids1))
     sns.set_theme(style="whitegrid")
 
     # Create the figure
@@ -80,6 +79,7 @@ def plot_json(json_file, output_file):
     ax.set_title("Single socket - Set Throughput")
     ax.set_xlabel("Fill Factor (%)")
     ax.set_ylabel("Set Mops (million/sec)")
+    ax.set_ylim(bottom=0)
     # Bring back gray outlines (spines)
     for spine in ax.spines.values():
         spine.set_visible(True)
