@@ -10,14 +10,14 @@ L2_BYTES = 1 * 1024 * 1024  # 1mb per hyperthread
 
 
 # single
-num_threads = 64
-numa = 4
-numa_name = "intel_single"
+# num_threads = 64
+# numa = 4
+# numa_name = "intel_single"
 
 # dual socket
-# num_threads = 128
-# numa = 1
-# numa_name = "intel_dual"
+num_threads = 128
+numa = 1
+numa_name = "intel_dual_snoop"
 
 
 # the goal here is reduce keep radix high enough to make each paritition size fit into l2
@@ -45,20 +45,20 @@ one_gb = int(1024 * 1024 * 1024 / 16)
 
 default_build_sz = one_gb
 # 1. Define the parameter to vary (X-axis)
-# PARAM_NAME = "skew"
-# PARAM_VALUES = [round(0.1 + i * 0.1, 1) for i in range(12)]
+PARAM_NAME = "skew"
+PARAM_VALUES = [round(0.1 + i * 0.1, 1) for i in range(12)]
 
 
-PARAM_NAME = "relation_size"
-PARAM_VALUES = [
-    256 * one_mb,
-    512 * one_mb,
-    1 * one_gb,
-    2 * one_gb,
-    4 * one_gb,
-    8 * one_gb,
-    16 * one_gb,
-]
+# PARAM_NAME = "relation_size"
+# PARAM_VALUES = [
+#     256 * one_mb,
+#     512 * one_mb,
+#     1 * one_gb,
+#     2 * one_gb,
+#     4 * one_gb,
+#     8 * one_gb,
+#     16 * one_gb,
+# ]
 
 # Paths to the executables
 PREFETCH_SCRIPT = "/opt/DRAMHiT/scripts/prefetch_control.sh"
