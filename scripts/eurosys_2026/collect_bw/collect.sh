@@ -39,8 +39,8 @@ elif [ "$test" = "large" ]; then
     # size=4294967296
     # size=268435456
     size=536870912
-    insertFactor=100
-    readFactor=100
+    insertFactor=1000
+    readFactor=1000
 fi
 
 ZIPFIAN=11
@@ -53,7 +53,7 @@ cmake --build $HOME_DIR/build
 
 # EVENTS="unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr"
 # EVENTS="umc_mem_bandwidth"
-FILE_NAME=dramblast.txt
+FILE_NAME=dramblast-intel.txt
 lscpu &> $FILE_NAME
 for fill in $(seq 10 10 90);
 do
@@ -61,14 +61,15 @@ do
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16 --relation_r_size 1"
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    # sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
 
     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
 done
 
 
 
-FILE_NAME=dramhit.txt
+FILE_NAME=dramhit-intel.txt
 lscpu &> $FILE_NAME
 for fill in $(seq 10 10 90);
 do
@@ -76,7 +77,8 @@ do
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16 --relation_r_size 1"
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    # sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
 
     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
 done
@@ -84,7 +86,7 @@ done
 
 
 
-FILE_NAME=growt.txt
+FILE_NAME=growt-intel.txt
 lscpu &> $FILE_NAME
 for fill in $(seq 10 10 90);
 do
@@ -92,7 +94,8 @@ do
     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
     --hw-pref 0 --batch-len 16 --relation_r_size 1"
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    # sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
 
     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
 done
