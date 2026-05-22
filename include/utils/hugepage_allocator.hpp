@@ -38,7 +38,8 @@ struct huge_page_allocator {
     auto is_1gb = false;
     uint64_t alloc_sz = 0;
 
-    if (raw_alloc_sz > (huge_page_size_2mb * 100)) {
+    // a lot of 2mb hugepages can be consumed.
+    if (raw_alloc_sz > (huge_page_size_2mb * 500)) {
       is_1gb = true;
       alloc_sz = round_to_huge_page_size(raw_alloc_sz, is_1gb);
     } else {

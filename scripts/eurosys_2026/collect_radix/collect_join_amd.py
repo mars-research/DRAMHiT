@@ -6,20 +6,28 @@ from unittest.loader import defaultTestLoader
 
 import matplotlib.pyplot as plt
 
-THREAD_NUM = 64
-L1_BYTES = int(1 * 1024 * 1024 / THREAD_NUM)
-L2_BYTES = 1 * 1024 * 1024
-L3_BYTES = int(256 * 1024 * 1024 / THREAD_NUM)
+L2_BYTES = 512 * 1024  # 0.5mb per hyperthread
+
+# single
+num_threads = 64
+numa = 4
+numa_name = "amd_single"
 
 
 # the goal here is reduce keep radix high enough to make each paritition size fit into l2
 # while keep radix low enough parition runtime doesn't blow up because partition must maintin
 # 2^radix amount of cachelines.
-def get_optimal_radix(build_sz):
-    radix = max(6, math.ceil(math.log(build_sz * 16 / L2_BYTES, 2)))
+def get_optimal_radix(build_sz, ht_fill):
 
-    if pow(2, radix) * 64 > L2_BYTES:
-        print("input size is too big, partition runtime must spill out")
+    # fit into l2.
+    optimal_join_size = L2_BYTES * ht_fill / 100
+    radix = max(6, math.ceil(math.log(build_sz * 16 / optimal_join_size, 2)))
+
+    # if build size is too large, then give a warning for partition.
+    if pow(2, radix) * 64 >= L2_BYTES:
+        print(
+            f"input size is too big, partition runtime will go up, build_sz {build_sz / (1024 * 1024)} MB radix {radix}"
+        )
 
     return radix
 
@@ -30,10 +38,10 @@ one_gb = int(1024 * 1024 * 1024 / 16)
 # CONFIGURATION
 # =============================================================================
 
+default_build_sz = one_gb
 # 1. Define the parameter to vary (X-axis)
 PARAM_NAME = "skew"
 PARAM_VALUES = [round(0.1 + i * 0.1, 1) for i in range(12)]
-default_build_sz = one_gb
 
 # --- Examples for exploring other directions ---
 
@@ -49,16 +57,6 @@ default_build_sz = one_gb
 #     16 * one_gb,
 # ]
 
-# PARAM_NAME = "relation_s_size"
-# default_build_sz = 256 * one_mb
-# PARAM_VALUES = [
-#     default_build_sz,  # ht fill 50%, 2x, 0.5 gb
-#     3 * default_build_sz,  # ht fill 25%, 4x, 1 gb
-#     7 * default_build_sz,  # ht fill 13%, 8x, 2gb
-#     15 * default_build_sz,  # ht fill 7%, 16x, 4gb
-#     31 * default_build_sz,  # ht fill 4%, 32x, 8gb
-#     63 * default_build_sz,  # ht fill 2%, 64x, 16gb
-# ]
 
 # Paths to the executables
 PREFETCH_SCRIPT = "/opt/DRAMHiT/scripts/prefetch_control_amd.sh"
@@ -71,8 +69,8 @@ HASH_JOIN_DEFAULTS = {
     "relation_r_size": default_build_sz,
     "relation_s_size": 15 * default_build_sz,
     "find_queue": 64,
-    "num-threads": 64,
-    "numa-split": 4,
+    "num-threads": num_threads,
+    "numa-split": numa,
     "no-prefetch": 0,
     "mode": 13,
     "batch-len": 16,
@@ -87,8 +85,8 @@ RADIX_JOIN_DEFAULTS = {
     "ht-fill": 50,
     "relation_r_size": default_build_sz,
     "relation_s_size": 15 * default_build_sz,
-    "num-threads": 64,
-    "numa-split": 4,
+    "num-threads": num_threads,
+    "numa-split": numa,
     "mode": 16,
     "skew": 0.01,
     "seed": 1774551337382868027,
@@ -114,19 +112,20 @@ def build_command(defaults_dict, param_name, param_value):
     if param_name == "relation_size":
         args["relation_r_size"] = param_value
         args["relation_s_size"] = param_value
-        args["radix"] = get_optimal_radix(args["relation_r_size"])
-    elif param_name == "relation_s_size":
-        args["relation_r_size"] = default_build_sz
-        args["relation_s_size"] = param_value
-        target_size = param_value + default_build_sz
-        ht_fill = math.ceil((default_build_sz * 100) / target_size)
-        args["ht-fill"] = ht_fill
-        args["radix"] = get_optimal_radix(args["relation_r_size"])
     else:
         args[param_name] = param_value  # Override the specific parameter being tested
-        args["radix"] = get_optimal_radix(args["relation_r_size"])
+
+    if args["mode"] == 13:
+        # hash join can use same space as used by radix join
+        build_sz = args["relation_r_size"]
+        probe_sz = args["relation_s_size"]
+        ht_fill = math.ceil((build_sz * 100) / (build_sz + probe_sz))
+        args["ht-fill"] = ht_fill
+    else:
+        args["radix"] = get_optimal_radix(args["relation_r_size"], args["ht-fill"])
 
     cmd = [DRAMHIT_EXEC]
+
     for key, val in args.items():
         cmd.extend([f"--{key}", str(val)])
     return cmd
@@ -160,6 +159,15 @@ def run_and_parse(cmd):
 def main():
     print(f"Starting Benchmark. Varying '--{PARAM_NAME}' across: {PARAM_VALUES}\n")
 
+    subprocess.run(
+        "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
+        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON "
+        "-DGROWT=ON",
+        shell=True,
+        check=True,
+    )
+    subprocess.run("cmake --build /opt/DRAMHiT/build", shell=True, check=True)
+
     results = {
         "param_name": PARAM_NAME,
         "param_values": PARAM_VALUES,
@@ -187,7 +195,7 @@ def main():
     # =========================================================================
     # SAVE DATA TO JSON
     # =========================================================================
-    json_filename = f"benchmark_results_{PARAM_NAME}.json"
+    json_filename = f"{numa_name}_{PARAM_NAME}.json"
     with open(json_filename, "w") as f:
         json.dump(results, f, indent=4)
     print(f"[*] Data saved to {json_filename}")
@@ -224,7 +232,7 @@ def main():
     plt.tight_layout()
 
     # Save to PNG
-    png_filename = f"benchmark_plot_{PARAM_NAME}.png"
+    png_filename = f"{numa_name}_{PARAM_NAME}.png"
     plt.savefig(png_filename, dpi=300)
     print(f"[*] Plot saved to {png_filename}")
 

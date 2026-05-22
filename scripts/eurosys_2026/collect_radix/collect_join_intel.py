@@ -10,21 +10,20 @@ L2_BYTES = 1 * 1024 * 1024  # 1mb per hyperthread
 
 
 # single
-# num_threads = 64
-# numa = 4
-# numa_name = "intel_dual"
+num_threads = 64
+numa = 4
+numa_name = "intel_single"
 
 # dual socket
-num_threads = 128
-numa = 1
-numa_name = "intel_single"
+# num_threads = 128
+# numa = 1
+# numa_name = "intel_dual"
 
 
 # the goal here is reduce keep radix high enough to make each paritition size fit into l2
 # while keep radix low enough parition runtime doesn't blow up because partition must maintin
 # 2^radix amount of cachelines.
 def get_optimal_radix(build_sz, ht_fill):
-
     # fit into l2.
     optimal_join_size = L2_BYTES * ht_fill / 100
     radix = max(6, math.ceil(math.log(build_sz * 16 / optimal_join_size, 2)))
@@ -32,7 +31,7 @@ def get_optimal_radix(build_sz, ht_fill):
     # if build size is too large, then give a warning for partition.
     if pow(2, radix) * 64 >= L2_BYTES:
         print(
-            f"input size is too big, partition runtime must spill out, build_sz {build_sz / (1024 * 1024)} MB radix {radix}"
+            f"input size is too big, partition runtime will go up, build_sz {build_sz / (1024 * 1024)} MB radix {radix}"
         )
 
     return radix
@@ -49,8 +48,6 @@ default_build_sz = one_gb
 # PARAM_NAME = "skew"
 # PARAM_VALUES = [round(0.1 + i * 0.1, 1) for i in range(12)]
 
-# --- Examples for exploring other directions ---
-
 
 PARAM_NAME = "relation_size"
 PARAM_VALUES = [
@@ -62,17 +59,6 @@ PARAM_VALUES = [
     8 * one_gb,
     16 * one_gb,
 ]
-
-# PARAM_NAME = "relation_s_size"
-# default_build_sz = 256 * one_mb
-# PARAM_VALUES = [
-#     default_build_sz,  # ht fill 50%, 2x, 0.5 gb
-#     3 * default_build_sz,  # ht fill 25%, 4x, 1 gb
-#     7 * default_build_sz,  # ht fill 13%, 8x, 2gb
-#     15 * default_build_sz,  # ht fill 7%, 16x, 4gb
-#     31 * default_build_sz,  # ht fill 4%, 32x, 8gb
-#     63 * default_build_sz,  # ht fill 2%, 64x, 16gb
-# ]
 
 # Paths to the executables
 PREFETCH_SCRIPT = "/opt/DRAMHiT/scripts/prefetch_control.sh"
@@ -174,6 +160,15 @@ def run_and_parse(cmd):
 
 def main():
     print(f"Starting Benchmark. Varying '--{PARAM_NAME}' across: {PARAM_VALUES}\n")
+
+    subprocess.run(
+        "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
+        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON "
+        "-DGROWT=ON",
+        shell=True,
+        check=True,
+    )
+    subprocess.run("cmake --build /opt/DRAMHiT/build", shell=True, check=True)
 
     results = {
         "param_name": PARAM_NAME,
