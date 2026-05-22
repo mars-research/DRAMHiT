@@ -93,6 +93,10 @@ using HugepageVec = std::vector<Element, HugepageAlloc>;
 JoinHugepageAlloc hugepage_alloc_inst_join_element;
 HugepageAlloc hugepage_alloc_inst_element;
 
+
+//HugepageArena* arena;
+
+
 #define CACHELINE_SIZE 64
 #define ELE_NUM_PER_CACHE_LINE ((CACHELINE_SIZE) / sizeof(Element))
 #define PREFETCHES_AHEAD \
@@ -189,14 +193,13 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
         "skew is too low, simply generating relation S with uniform "
         "distribution");
     // just use uniform
-    std::uniform_int_distribution<key_type> s_u_distr(0, r_size);
     std::uniform_real_distribution<double> match_prob(0.0, 1.0);
     for (uint64_t s_index = 0; s_index < s_size; ++s_index) {
-      uint64_t v = s_u_distr(rng);
+      uint64_t v = (s_index + seed) * GOLDEN_PRIME;
       if (match_prob(rng) <= hit_rate) {
-        g_zipf_values->at(r_size + s_index) = g_zipf_values->at(v);
+        g_zipf_values->at(r_size + s_index) = g_zipf_values->at((v % r_size));
       } else {
-        g_zipf_values->at(r_size + s_index) = v * GOLDEN_PRIME;
+        g_zipf_values->at(r_size + s_index) = v;
       }
     }
   } else {
@@ -743,14 +746,18 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   uint64_t partition_num = 1 << config.radix;
   uint64_t radix_mask = partition_num - 1;
   uint64_t tid = sh->shard_idx;
-  // TODO, estimate per thread needed memory and break into GB and mb.
-  // also look at per thread memory quota from filesystem, so it doesn't
-  // try to allocate over the limits
+
+  uint64_t estimate_radix_join_size =
+      ((config.relation_r_size * 2 * 100 * sizeof(Element)) /
+       (partition_num * config.ht_fill));
 
   uint64_t estimate_bytes_needed =
-      sizeof(CacheLineBuffer) * partition_num +
-      sizeof(Element) * (partition_sz_r + partition_sz_s) +
-      (partition_sz_r) * sizeof(Element) + 2 * 1024 * 1024;
+      sizeof(CacheLineBuffer) * partition_num + //swe
+      sizeof(uint64_t) * partition_num * 2 +  // histogram
+      sizeof(Element*) * partition_num * 2 +  // local_buckets*
+      2 * 1024 * 1024 + // extra 2mb page
+      estimate_radix_join_size + // hashtable
+      (partition_sz_s + partition_sz_r) * sizeof(Element); // inner buckets
 
   constexpr uint64_t one_gb_sz = 1024ULL * 1024ULL * 1024ULL;
   constexpr uint64_t two_mb_sz = 2 * 1024ULL * 1024ULL;
@@ -859,10 +866,25 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   }
 }
 
+
+HugepageArena* arenas;
+
 void HashjoinTest::join_relations_generated(Shard* sh,
                                             const Configuration& config,
                                             BaseHashTable* ht, bool materialize,
                                             std::barrier<VoidFn>* barrier) {
+
+    // todo:
+    // get number of numa nodes in system
+    // initiliaze arenas for each node.
+    // for each arena, initilize with
+    //
+    //
+    // if test mode is hashjoin
+    //  config.relation_r_size * config.ht_fill / 100
+    //  config.relation_r_size + config.relation_s_size
+    //
+
   // global zipf value first populate relation_r, then append relation_s.
   uint64_t partition_sz_r = config.relation_r_size / config.num_threads;
   uint64_t partition_sz_s = config.relation_s_size / config.num_threads;
@@ -882,18 +904,21 @@ void HashjoinTest::join_relations_generated(Shard* sh,
       estimate_bytes_needed < one_gb_sz
           ? estimate_bytes_needed / two_mb_sz + 1
           : (estimate_bytes_needed - one_gb_needed * one_gb_sz) / two_mb_sz;
-  if(estimate_bytes_needed < one_gb_sz && estimate_bytes_needed > 200 * two_mb_sz) {
-      one_gb_needed = 1;
-      two_mb_needed = 0;
+  if (estimate_bytes_needed < one_gb_sz &&
+      estimate_bytes_needed > 409 * two_mb_sz) { // over 80%, then round up to 1gb
+    one_gb_needed = 1;
+    two_mb_needed = 0;
   }
 
   HugepageArena arena(one_gb_needed, two_mb_needed);
   PLOGI.printf("reserving %lu 1gb pages, %lu 2mb pages", one_gb_needed,
                two_mb_needed);
-  Element* build_relation = (Element*) arena.aligned_alloc(sizeof(Element) * partition_sz_r, 16);
-      //hugepage_alloc_inst_element.allocate(partition_sz_r);
-  Element* probe_relation  = (Element*) arena.aligned_alloc(sizeof(Element) * partition_sz_s, 16);
-      //hugepage_alloc_inst_element.allocate(partition_sz_s);
+  Element* build_relation =
+      (Element*)arena.aligned_alloc(sizeof(Element) * partition_sz_r, 16);
+  // hugepage_alloc_inst_element.allocate(partition_sz_r);
+  Element* probe_relation =
+      (Element*)arena.aligned_alloc(sizeof(Element) * partition_sz_s, 16);
+  // hugepage_alloc_inst_element.allocate(partition_sz_s);
   JoinElement* join_relation = nullptr;
 
   if (materialize)
@@ -947,8 +972,8 @@ void HashjoinTest::join_relations_generated(Shard* sh,
     abort();
   }
 
-  //hugepage_alloc_inst_element.deallocate(build_relation, partition_sz_r);
-  //hugepage_alloc_inst_element.deallocate(probe_relation, partition_sz_s);
+  // hugepage_alloc_inst_element.deallocate(build_relation, partition_sz_r);
+  // hugepage_alloc_inst_element.deallocate(probe_relation, partition_sz_s);
 
   if (materialize)
     hugepage_alloc_inst_join_element.deallocate(join_relation, partition_sz_s);

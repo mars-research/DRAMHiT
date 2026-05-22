@@ -3,8 +3,9 @@
 #include <cstdint>
 #include <cstring>
 #include <new>
-#include <cstddef>  // Added for std::max_align_t
 #include <cstdlib>
+#include <cstddef>
+#include <mutex>
 
 // Standard definitions in case they are missing from your environment's headers
 #ifndef MAP_HUGE_2MB
@@ -85,6 +86,27 @@ public:
     return alloc_internal(alloc_bytes, default_alignment);
   }
 
+  // Reset offsets to reuse both slabs without unmapping
+  void reset() {
+    std::lock_guard<std::mutex> lock(arena_mutex);
+    offset_1gb = 0;
+    offset_2mb = 0;
+  }
+
+  // Getters for debugging/telemetry
+  uint64_t get_capacity_1gb() const { return capacity_1gb; }
+  uint64_t get_capacity_2mb() const { return capacity_2mb; }
+
+  uint64_t get_used_1gb() const {
+    std::lock_guard<std::mutex> lock(arena_mutex);
+    return offset_1gb;
+  }
+
+  uint64_t get_used_2mb() const {
+    std::lock_guard<std::mutex> lock(arena_mutex);
+    return offset_2mb;
+  }
+
 private:
   constexpr static uint64_t SIZE_2MB = 1ULL << 21;
   constexpr static uint64_t SIZE_1GB = 1ULL << 30;
@@ -100,8 +122,13 @@ private:
   uint64_t offset_1gb;
   uint64_t offset_2mb;
 
+  // Mutex to protect concurrent access to offsets
+  mutable std::mutex arena_mutex;
+
   // Internal allocation logic
   void* alloc_internal(uint64_t alloc_bytes, uint64_t alignment) {
+    // Lock the mutex for the duration of the allocation
+    std::lock_guard<std::mutex> lock(arena_mutex);
 
     if (arena_1gb != nullptr) {
       uint64_t aligned_offset = (offset_1gb + alignment - 1) & ~(alignment - 1);
@@ -123,19 +150,8 @@ private:
         return result;
       }
     }
+
     PLOGE.printf("OOM");
-    throw std::bad_alloc(); // Note: Added 'throw' here to actually trigger the exception
+    throw std::bad_alloc();
   }
-
-  // Reset offsets to reuse both slabs without unmapping
-  void reset() {
-    offset_1gb = 0;
-    offset_2mb = 0;
-  }
-
-  // Getters for debugging/telemetry
-  uint64_t get_capacity_1gb() const { return capacity_1gb; }
-  uint64_t get_capacity_2mb() const { return capacity_2mb; }
-  uint64_t get_used_1gb() const { return offset_1gb; }
-  uint64_t get_used_2mb() const { return offset_2mb; }
 };

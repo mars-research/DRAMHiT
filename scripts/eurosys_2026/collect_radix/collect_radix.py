@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def run_dramhit_experiments():
     # Radix values from 8 to 16 inclusive (script originally had 6 to 16)
-    radix_values = list(range(7, 17))
+    radix_values = list(range(10, 16))
 
     # Data arrays for the 3 lines
     partition_cycles_data = []
@@ -21,21 +21,21 @@ def run_dramhit_experiments():
         "--ht-fill",
         "50",
         "--relation_r_size",
-        "64000000",
+        "1073741824",
         "--relation_s_size",
-        "64000000",
+        "1073741824",
         "--find_queue",
         "32",
         "--num-threads",
-        "64",
+        "128",
         "--numa-split",
-        "4",
+        "1",
         "--mode",
         "16",
         "--associativity",
         "1.00",
         "--skew",
-        "0.1",
+        "0.01",
         "--seed",
         "1774551337382868027",
     ]
@@ -128,7 +128,7 @@ def run_dramhit_experiments():
         plt.tight_layout()
 
         # Save the plot
-        output_filename = "amd_equal_relation_radix.png"
+        output_filename = "intel_dual_equal_relation_radix.png"
         plt.savefig(output_filename)
         print(f"\nPlot successfully saved to {output_filename}")
 

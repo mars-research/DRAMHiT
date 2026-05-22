@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
-NUM_2MB_PAGES_PERNODE=25000
-NUM_1GB_PAGES_PERNODE=100
+# Assign arguments to variables with defaults
+# If $1 is empty, use 25000; if $2 is empty, use 100
+NUM_2MB_PAGES_PERNODE=${2:-25000}
+NUM_1GB_PAGES_PERNODE=${1:-100}
 
+# Output the values to confirm
+echo "NUM_2MB_PAGES_PERNODE set to: $NUM_2MB_PAGES_PERNODE"
+echo "NUM_1GB_PAGES_PERNODE set to: $NUM_1GB_PAGES_PERNODE"
 
 # Enable 2MB pages
 echo always | sudo tee /sys/kernel/mm/transparent_hugepage/enabled &> /dev/null
