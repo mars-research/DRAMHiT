@@ -237,18 +237,17 @@ if __name__ == "__main__":
             "fill_factor": f,
         }
         for f in range(10, 100, 10)
-    ] 
-    # + [
-    #     {
-    #         "insertFactor": 100,
-    #         "readFactor": 100,
-    #         "numThreads": 128,
-    #         "numa_policy": 1,
-    #         "size": 536870912,
-    #         "fill_factor": f,
-    #     }
-    #     for f in range(10, 100, 10)
-    # ]
+    ] + [
+        {
+            "insertFactor": 100,
+            "readFactor": 100,
+            "numThreads": 128,
+            "numa_policy": 1,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
+    ]
 
     all_results = []
 
