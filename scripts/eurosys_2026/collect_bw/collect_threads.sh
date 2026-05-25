@@ -1,8 +1,3 @@
-#  rm build/CMakeCache.txt
-#     cmake -S . -B build
-#     cmake --build build/ --clean-first
-#  sudo apt-get install cmake-curses-gui
-#  nix develop --extra-experimental-features nix-command --extra-experimental-features flakes
 #  To run: nohup bash ./collect_threads.sh large even 64
 
 DRAMHIT=3
@@ -10,14 +5,16 @@ GROWT=6
 DRAMHIT23=8
 
 # Ensure correct usage
-if [ "$#" -ne 3 ]; then
-     echo "Usage: $0 <small|large> <numa_policy> <num_threads> ʕ•ᴥ•ʔ"
+# Ensure correct usage
+if [ "$#" -ne 4 ]; then
+     echo "Usage: $0 <small|large> <numa_policy> <num_threads> <amd|intel> ʕ•ᴥ•ʔ"
      exit 1
 fi
 
 test=$1
 numa_policy=$2
 numThreads=$3
+arch=$4
 
 if [ "$numa_policy" = "single-local" ]; then
     numa_policy=4
@@ -47,21 +44,27 @@ ZIPFIAN=11
 
 
 HOME_DIR=/opt/DRAMHiT
-cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DGROWT=ON
-cmake --build $HOME_DIR/build
-
+if [ "$arch" = "amd" ]; then
+    cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DGROWT=ON
+else
+    cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=2500 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DGROWT=ON
+fi
 
 # EVENTS="unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr"
 # EVENTS="umc_mem_bandwidth"
 FILE_NAME=dramblast-threads.txt
 lscpu &> $FILE_NAME
-for threads in 1 2 4 8 16 32 64
+for threads in 1 $(seq 2 2 64);
 do
     cmd="--find_queue 64 --ht-fill 70 --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
     --num-threads $threads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16 --relation_r_size 1"
+    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    if [ "$arch" = "amd" ]; then
+        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    else
+        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    fi
 
     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
 done
@@ -70,14 +73,17 @@ done
 
 FILE_NAME=dramhit-threads.txt
 lscpu &> $FILE_NAME
-for threads in 1 2 4 8 16 32 64
+for threads in 1 $(seq 2 2 64);
 do
     cmd="--find_queue 64 --ht-fill 70 --ht-type $DRAMHIT23 --insert-factor $insertFactor --read-factor $readFactor\
     --num-threads $threads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16 --relation_r_size 1"
+    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-
+    if [ "$arch" = "amd" ]; then
+        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    else
+        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    fi
     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
 done
 
@@ -86,14 +92,17 @@ done
 
 FILE_NAME=growt-threads.txt
 lscpu &> $FILE_NAME
-for threads in 1 2 4 8 16 32 64
+for threads in 1 $(seq 2 2 64);
 do
     cmd="--find_queue 64 --ht-fill 70 --ht-type $GROWT --insert-factor $insertFactor --read-factor $readFactor\
     --num-threads $threads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16 --relation_r_size 1"
+    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-
+    if [ "$arch" = "amd" ]; then
+        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    else
+        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    fi
     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
 done
 

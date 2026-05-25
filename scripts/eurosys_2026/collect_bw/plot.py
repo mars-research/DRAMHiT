@@ -59,17 +59,19 @@ def parse_perf_data(file_path):
     insert_avgs_gbs = []
     find_avgs_gbs = []
 
+    # maybe change 
+    trim = 5
     for data in insert_data:
 
         # Exclude first and last 2 samples if possible
-        trimmed = data[2:-2] if len(data) > 4 else data
+        trimmed = data[trim:-trim] if len(data) > 2 * trim else data
 
         avg_mb = sum(trimmed) / len(trimmed) if trimmed else 0
         insert_avgs_gbs.append(avg_mb / 1000.0)
 
     for data in find_data:
 
-        trimmed = data[2:-2] if len(data) > 4 else data
+        trimmed = data[trim:-trim] if len(data) > 2 * trim else data
 
         avg_mb = sum(trimmed) / len(trimmed) if trimmed else 0
         find_avgs_gbs.append(avg_mb / 1000.0)

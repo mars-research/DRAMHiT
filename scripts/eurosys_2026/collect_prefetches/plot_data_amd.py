@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.lines import Line2D
 
-counters = [
+COUNTERS = [
     "ls_alloc_mab_count",
     "de_no_dispatch_per_slot.backend_stalls",
 ]
@@ -20,16 +20,24 @@ def plot_json(json_file, output_file):
         data = json.load(f)
 
     # Convert to pandas DataFrame
-    df = pd.DataFrame(data)
-
     df = pd.json_normalize(data, sep=".")
 
+    # Filter and process data
     df = df[df["run_cfg.numa_policy"] == 1]
     df["run_cfg.fill_factor"] = pd.to_numeric(df["run_cfg.fill_factor"])
     df["prefetch_id"] = df["identifier"].str.split("-").str[0]
 
-    # Set Seaborn style
-    sns.set_theme()
+    # Force absolute white backgrounds and clear custom style parameter overrides
+    sns.set_theme(
+        style="whitegrid",
+        rc={
+            "axes.facecolor": "white",
+            "figure.facecolor": "white",
+            "grid.color": "#e0e0e0",
+        },
+    )
+    unique_ids = df["prefetch_id"].unique()
+    palette = sns.color_palette(n_colors=len(unique_ids))
 
     row = 1
     col = 3
@@ -37,6 +45,7 @@ def plot_json(json_file, output_file):
     fig, axes = plt.subplots(row, col, figsize=(col * plot_w, row * plot_w))
     cnt = 0
 
+    # Plot primary metric
     ax = axes[cnt]
     cnt += 1
     sns.lineplot(
@@ -44,6 +53,7 @@ def plot_json(json_file, output_file):
         x="run_cfg.fill_factor",
         y="get_mops",
         hue="prefetch_id",
+        palette=palette,
         marker="o",
         legend=False,
         ax=ax,
@@ -52,7 +62,8 @@ def plot_json(json_file, output_file):
     ax.set_xlabel("Fill Factor")
     ax.set_ylabel("Get Mops")
 
-    for counter in counters:
+    # Plot additional performance counters
+    for counter in COUNTERS:
         df[counter] = df[counter] / df["find_ops"]
         ax = axes[cnt]
         cnt += 1
@@ -61,6 +72,7 @@ def plot_json(json_file, output_file):
             x="run_cfg.fill_factor",
             y=counter,
             hue="prefetch_id",
+            palette=palette,
             marker="o",
             legend=False,
             ax=ax,
@@ -69,14 +81,13 @@ def plot_json(json_file, output_file):
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel(counter)
 
-    unique_ids = df["prefetch_id"].unique()
-    palette = sns.color_palette(n_colors=len(unique_ids))
-
+    # Generate custom legend mapping matching the line colors
     custom_lines = [
         Line2D([0], [0], color=palette[i], marker="o", label=uid)
         for i, uid in enumerate(unique_ids)
     ]
 
+    # Adjust axis limits and grid layout
     for ax in axes:
         ax.grid(True, which="major", axis="both", linestyle="--")
         ticks = ax.get_yticks()
@@ -94,7 +105,6 @@ def plot_json(json_file, output_file):
     )
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 

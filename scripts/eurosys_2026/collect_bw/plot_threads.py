@@ -8,7 +8,7 @@ STREAM = (289336.8/1000)  # GB/s, from STREAM, MLC, or custom BW test
 
 def parse_perf_data(file_path):
 
-    threads = [1, 2, 4, 8, 16, 32, 64]
+    threads = [1] + list(range(2, 65, 2))
 
     insert_data = []
     find_data = []
@@ -57,17 +57,17 @@ def parse_perf_data(file_path):
     # Calculate averages and convert to GB/s
     insert_avgs_gbs = []
     find_avgs_gbs = []
-
+    trim = 3
     for data in insert_data:
 
-        trimmed = data[2:-2] if len(data) > 4 else data
+        trimmed = data[trim:-trim] if len(data) > 2 * trim else data
 
         avg_mb = sum(trimmed) / len(trimmed) if trimmed else 0
         insert_avgs_gbs.append(avg_mb / 1000.0)
 
     for data in find_data:
 
-        trimmed = data[2:-2] if len(data) > 4 else data
+        trimmed = data[trim:-trim] if len(data) > 2 * trim else data
 
         avg_mb = sum(trimmed) / len(trimmed) if trimmed else 0
         find_avgs_gbs.append(avg_mb / 1000.0)
