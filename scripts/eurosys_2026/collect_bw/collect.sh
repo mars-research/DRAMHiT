@@ -1,4 +1,5 @@
 #  To run: nohup bash ./collect.sh large even 64 amd
+# nohup bash ./collect.sh large single-local 64 intel
 
 DRAMHIT=3
 GROWT=6
@@ -53,24 +54,24 @@ fi
 cmake --build $HOME_DIR/build
 
 
-# EVENTS="unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr"
-# EVENTS="umc_mem_bandwidth"
-FILE_NAME=dramblast.txt
-lscpu &> $FILE_NAME
-for fill in $(seq 10 10 90);
-do
-    cmd="--find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
+EVENTS="unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr"
+EVENTS="umc_mem_bandwidth"
+# FILE_NAME=dramblast.txt
+# lscpu &> $FILE_NAME
+# for fill in $(seq 10 10 90);
+# do
+#     cmd="--find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
+#     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
+#     --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
     
-    if [ "$arch" = "amd" ]; then
-        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    else
-        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    fi
+#     if [ "$arch" = "amd" ]; then
+#         sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+#     else
+#         sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+#     fi
 
-    echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
-done
+#     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
+# done
 
 
 
@@ -94,20 +95,20 @@ done
 
 
 
-# FILE_NAME=growt.txt
-# lscpu &> $FILE_NAME
-# for fill in $(seq 10 10 90);
-# do
-#     cmd="--find_queue 64 --ht-fill $fill --ht-type $GROWT --insert-factor $insertFactor --read-factor $readFactor\
-#     --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-#     --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
+FILE_NAME=growt.txt
+lscpu &> $FILE_NAME
+for fill in $(seq 10 10 90);
+do
+    cmd="--find_queue 64 --ht-fill $fill --ht-type $GROWT --insert-factor $insertFactor --read-factor $readFactor\
+    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
+    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
     
-#     if [ "$arch" = "amd" ]; then
-#         sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-#     else
-#         sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-#     fi
-#     echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
-# done
+    if [ "$arch" = "amd" ]; then
+        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    else
+        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
+    fi
+    echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
+done
 
 

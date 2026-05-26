@@ -4,7 +4,8 @@ import os
 import matplotlib.pyplot as plt
 
 STREAM = (289336.8/1000)  # GB/s, from STREAM, MLC, or custom BW test
-
+# STREAM = 250
+STREAM_LABEL_NAME = "STREAM"
 
 def parse_perf_data(file_path):
 
@@ -17,8 +18,8 @@ def parse_perf_data(file_path):
     current_run_insert = []
     current_run_find = []
 
-    # Regex to capture the float value before MB/s
-    bw_pattern = re.compile(r"#\s+([0-9.]+)\s+MB/s\s+umc_mem_bandwidth")
+    # Matches either AMD (captures float before MB/s) or Intel (captures digits/commas before event)
+    bw_pattern = re.compile(r"(?:#\s+([0-9.]+)\s+MB/s\s+umc_mem_bandwidth)|(?:([\d,]+)\s+unc_m_cas_count\.all)")
 
     with open(file_path, 'r') as f:
         for line in f:
@@ -40,13 +41,16 @@ def parse_perf_data(file_path):
                 current_phase = None
                 find_data.append(current_run_find)
 
-            # If we are inside a phase, look for bandwidth lines
-            elif current_phase and "umc_mem_bandwidth" in line:
+            # Look for either bandwidth lines
+            elif current_phase and ("umc_mem_bandwidth" in line or "unc_m_cas_count.all" in line):
 
                 match = bw_pattern.search(line)
 
                 if match:
-                    bw_mb = float(match.group(1))
+                    if match.group(1):  # AMD path
+                        bw_mb = float(match.group(1))
+                    else:  # Intel path: (CAS * 64 bytes) / 1e6 to scale to MB/s equivalent for your /1000.0 step below
+                        bw_mb = (float(match.group(2).replace(',', '')) * 64) / 1e6
 
                     if current_phase == "insert":
                         current_run_insert.append(bw_mb)
@@ -98,7 +102,7 @@ def plot_bandwidth(all_results):
             label=label
         )
 
-    axes[0].axhline(STREAM, linestyle='--', linewidth=2, label='STREAM')
+    axes[0].axhline(STREAM, linestyle='--', linewidth=2, label=STREAM_LABEL_NAME)
 
     axes[0].set_title('Insert Memory Bandwidth (Fill=70)')
     axes[0].set_xlabel('Threads')
@@ -126,7 +130,7 @@ def plot_bandwidth(all_results):
             label=label
         )
 
-    axes[1].axhline(STREAM, linestyle='--', linewidth=2, label='STREAM')
+    axes[1].axhline(STREAM, linestyle='--', linewidth=2, label=STREAM_LABEL_NAME)
 
     axes[1].set_title('Find Memory Bandwidth (Fill=70)')
     axes[1].set_xlabel('Threads')
@@ -138,7 +142,7 @@ def plot_bandwidth(all_results):
 
     plt.tight_layout()
 
-    plt.savefig('bandwidth_plots.pdf')
+    plt.savefig('bandwidth_plots_threads.pdf')
 
     print("Plots successfully saved as 'bandwidth_plots.pdf'.")
 

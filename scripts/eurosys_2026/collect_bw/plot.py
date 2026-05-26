@@ -4,8 +4,8 @@ import os
 import matplotlib.pyplot as plt
 
 STREAM = (289336.8/1000)  # GB/s, from STREAM, MLC, or custom BW test
-
-
+# STREAM = 250
+STREAM_LABEL_NAME = "STREAM"
 def parse_perf_data(file_path):
 
     # Generates [10, 20, 30, 40, 50, 60, 70, 80, 90]
@@ -18,8 +18,8 @@ def parse_perf_data(file_path):
     current_run_insert = []
     current_run_find = []
 
-    # Regex to capture the float value before MB/s
-    bw_pattern = re.compile(r"#\s+([0-9.]+)\s+MB/s\s+umc_mem_bandwidth")
+    # MINIMAL CHANGE: Matches either AMD (Group 1) or Intel (Group 2)
+    bw_pattern = re.compile(r"(?:#\s+([0-9.]+)\s+MB/s\s+umc_mem_bandwidth)|(?:([\d,]+)\s+unc_m_cas_count\.all)")
 
     with open(file_path, 'r') as f:
         for line in f:
@@ -41,13 +41,17 @@ def parse_perf_data(file_path):
                 current_phase = None
                 find_data.append(current_run_find)
 
-            # If we are inside a phase, look for bandwidth lines
-            elif current_phase and "umc_mem_bandwidth" in line:
+            # MINIMAL CHANGE: Look for either bandwidth string if inside a phase
+            elif current_phase and ("umc_mem_bandwidth" in line or "unc_m_cas_count.all" in line):
 
                 match = bw_pattern.search(line)
 
                 if match:
-                    bw_mb = float(match.group(1))
+                    # MINIMAL CHANGE: Branch parsing logic depending on which regex group matched
+                    if match.group(1):  # AMD path
+                        bw_mb = float(match.group(1))
+                    else:  # Intel path: (CAS * 64 bytes) / 1e6 to scale to MB/s equivalent
+                        bw_mb = (float(match.group(2).replace(',', '')) * 64) / 1e6
 
                     if current_phase == "insert":
                         current_run_insert.append(bw_mb)
@@ -59,8 +63,7 @@ def parse_perf_data(file_path):
     insert_avgs_gbs = []
     find_avgs_gbs = []
 
-    # maybe change 
-    trim = 5
+    trim = 2
     for data in insert_data:
 
         # Exclude first and last 2 samples if possible
@@ -102,7 +105,7 @@ def plot_bandwidth(all_results):
             label=label
         )
 
-    axes[0].axhline(STREAM, linestyle='--', linewidth=2, label='STREAM')
+    axes[0].axhline(STREAM, linestyle='--', linewidth=2, label=STREAM_LABEL_NAME)
 
     axes[0].set_title('Insert Memory Bandwidth')
     axes[0].set_xlabel('Fill Factor (%)')
@@ -130,7 +133,7 @@ def plot_bandwidth(all_results):
             label=label
         )
 
-    axes[1].axhline(STREAM, linestyle='--', linewidth=2, label='STREAM')
+    axes[1].axhline(STREAM, linestyle='--', linewidth=2, label=STREAM_LABEL_NAME)
 
     axes[1].set_title('Find Memory Bandwidth')
     axes[1].set_xlabel('Fill Factor (%)')
