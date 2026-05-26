@@ -14,6 +14,8 @@ def plot_json(json_file, output_file):
 
     # Convert to pandas DataFrame
     df = pd.json_normalize(data, sep=".")
+
+    # CHANGE DEPENDING ON AMD/INTEL (intel 1 is dual socket, 4 is single socket)
     df_single = df[df["run_cfg.numa_policy"] == 1].copy()
 
     def make_identifier(build_cfg: str) -> str:

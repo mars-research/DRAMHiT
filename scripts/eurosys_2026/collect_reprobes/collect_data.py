@@ -176,6 +176,15 @@ if __name__ == "__main__":
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
         },
+        {
+            "DRAMHiT_VARIANT": "2025",
+            "CALC_STATS": "ON",
+            "BUCKETIZATION": "OFF",
+            "BRANCH": "branched",
+            "UNIFORM_PROBING": "ON",
+            "PREFETCH": "DOUBLE",
+            "CPUFREQ_MHZ": "2500",
+        },
     ]
     run_cfgs = [
         {
@@ -208,4 +217,4 @@ if __name__ == "__main__":
             obj = parse_results(output, counters, rcfg, bcfg, "")
             all_results.append(obj)
 
-    save_json(all_results, "intel.json")
+    save_json(all_results, "intel-paper.json")
