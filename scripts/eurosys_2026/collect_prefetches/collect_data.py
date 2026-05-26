@@ -152,7 +152,7 @@ if __name__ == "__main__":
     build_cfgs = [
         {
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "L1",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -184,7 +184,15 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
+        },
+        {
+            "PREFETCH": "NONE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",

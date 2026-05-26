@@ -986,6 +986,8 @@ class CASHashTable : public BaseHashTable {
     __builtin_prefetch(&this->hashtable[idx], false, 1);
 #elif NTA_PREFETCH
     __builtin_prefetch(&this->hashtable[idx], false, 0);
+#elif NONE_PREFETCH
+    // do nothing...
 #endif
   }
 
