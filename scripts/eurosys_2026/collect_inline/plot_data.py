@@ -14,32 +14,53 @@ def plot_json(json_file, output_file):
     with open(json_file, "r") as f:
         data = json.load(f)
 
-    df = pd.DataFrame(data)
     df = pd.json_normalize(data, sep=".")
 
     df_single = df[df["run_cfg.numa_policy"] == 4]
-    df_dual = df[df["run_cfg.numa_policy"] == 1]
-    datasets = [df_single, df_dual]
-    for df in datasets:
-        df["normalized_ops"] = df["uops_dispatched.port_2_3_10"] / df["find_ops"]
-        df["relative_mem_uops"] = (
-            df["uops_dispatched.port_2_3_10"] / df["uops_issued.any"]
+    # df_dual = df[df["run_cfg.numa_policy"] == 1]
+    df_dual = df[df["run_cfg.numa_policy"] == -999]
+    
+    # Filter out empty dataframes completely from the tracking list
+    all_datasets = [df_single, df_dual]
+    active_datasets = [d for d in all_datasets if not d.empty]
+    
+    if not active_datasets:
+        print("[Error] No data found for single or dual socket configurations.")
+        sys.exit(1)
+    
+    for dataset in active_datasets:
+        dataset["normalized_ops"] = dataset["uops_dispatched.port_2_3_10"] / dataset["find_ops"]
+        dataset["relative_mem_uops"] = (
+            dataset["uops_dispatched.port_2_3_10"] / dataset["uops_issued.any"]
         )
-    # Set Seaborn style
-    sns.set_theme()
 
-    row = 2
-    col = 3
-    fig, axes = plt.subplots(row, col, figsize=(15, 9))
+    # Configure a clean academic style: white background with light gray gridlines
+    sns.set_theme(style="whitegrid", rc={
+        "grid.color": "#e0e0e0",
+        "grid.linestyle": "--",
+        "axes.edgecolor": "#7f7f7f",
+        "axes.linewidth": 1.0
+    })
 
-    cnt = 0
+    # Dynamically scale grid row size based on active datasets
+    num_rows = len(active_datasets)
+    num_cols = 3
+    
+    # Adjust overall figure height proportionally
+    fig_height = 4.5 if num_rows == 1 else 9
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, fig_height))
 
-    # Plot 1: Throughput
-    for df in datasets:
+    # Force axes array to be 2D even if there's only 1 row to keep index looping uniform
+    if num_rows == 1:
+        axes = [axes]
+
+    for cnt, dataset in enumerate(active_datasets):
         rax = axes[cnt]
+        
+        # Plot 1: Throughput
         ax = rax[0]
         sns.lineplot(
-            data=df,
+            data=dataset,
             x="run_cfg.fill_factor",
             y="get_mops",
             hue="identifier",
@@ -47,30 +68,15 @@ def plot_json(json_file, output_file):
             ax=ax,
             legend=False,
         )
-        # ax.set_ylim(bottom=0)
+        ax.set_ylim(bottom=0)
         ax.set_title("Throughput")
-        ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Find Mops")
+        ax.set_xlabel("Fill Factor (%)")
+        ax.set_ylabel("Find Mops (million/sec)")
 
-        MODE = ""
-        if cnt == 0:
-            MODE = "Single Socket"
-        else:
-            MODE = "Dual Socket"
-        ax.text(
-            0.1,
-            1.2,
-            MODE,  # (x,y) in axes coords
-            transform=ax.transAxes,  # relative to the axis
-            ha="right",
-            va="top",
-            fontsize=12,
-            fontweight="bold",
-        )
-
+        # Plot 2: Mem Uops per Find
         ax = rax[1]
         sns.lineplot(
-            data=df,
+            data=dataset,
             x="run_cfg.fill_factor",
             y="normalized_ops",
             hue="identifier",
@@ -78,14 +84,15 @@ def plot_json(json_file, output_file):
             ax=ax,
             legend=False,
         )
-        # ax.set_ylim(bottom=0)
+        ax.set_ylim(bottom=0)
         ax.set_title("mem uops/find")
-        ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Memory Uops/Find")
+        ax.set_xlabel("Fill Factor (%)")
+        ax.set_ylabel("Memory Uops / Find")
 
+        # Plot 3: Relative Mem Uops
         ax = rax[2]
         sns.lineplot(
-            data=df,
+            data=dataset,
             x="run_cfg.fill_factor",
             y="relative_mem_uops",
             hue="identifier",
@@ -93,21 +100,25 @@ def plot_json(json_file, output_file):
             ax=ax,
             legend=False,
         )
-        # ax.set_ylim(bottom=0)
+        ax.set_ylim(bottom=0)
         ax.set_title("Relative Mem Uops")
-        ax.set_xlabel("Fill Factor")
+        ax.set_xlabel("Fill Factor (%)")
         ax.set_ylabel("Mem Uops / All Uops")
-        cnt += 1
 
-    # Legend
-    unique_ids = df["identifier"].unique()
+    # Aggregate identifiers safely across whatever active dataframes are present
+    combined_df = pd.concat(active_datasets)
+    unique_ids = sorted(combined_df["identifier"].unique())
     palette = sns.color_palette(n_colors=len(unique_ids))
     custom_lines = [
         Line2D([0], [0], color=palette[i], marker="o", label=uid)
         for i, uid in enumerate(unique_ids)
     ]
-    fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=3)
-    plt.tight_layout(rect=[0, 0, 1, 0.90])
+    
+    # Push layout spacer down depending on single or multi-row layout bounds
+    rect_top = 0.85 if num_rows == 1 else 0.92
+    
+    fig.legend(fontsize=9, handles=custom_lines, loc="upper center", ncol=4, frameon=True, edgecolor="#7f7f7f")
+    plt.tight_layout(rect=[0, 0, 1, rect_top])
     plt.savefig(output_file, dpi=300)
     print(f"[OK] Plots saved to {output_file}")
 

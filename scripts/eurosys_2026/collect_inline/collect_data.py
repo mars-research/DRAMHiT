@@ -218,4 +218,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "fine-synch-100.json")
+    save_json(all_results, "intel-paper.json")
