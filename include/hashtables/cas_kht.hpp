@@ -324,7 +324,7 @@ class CASHashTable : public BaseHashTable {
             try_insert:
               curr = &this->hashtable[idx];
 #ifdef READ_BEFORE_CAS
-              if (curr->kvpair.key == 0)
+              if (curr->is_empty())
 #endif
                 if (__sync_bool_compare_and_swap((__int128 *)curr, 0,
                                                  *(__int128 *)q)) {
@@ -1067,7 +1067,7 @@ class CASHashTable : public BaseHashTable {
     // it will request for exclusive state unneccesarrily.
 
 #ifdef READ_BEFORE_CAS
-    if (curr->kvpair.key == 0)
+    if (curr->is_empty())
 #endif
       if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
         return 0;

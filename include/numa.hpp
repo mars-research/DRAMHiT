@@ -279,6 +279,7 @@ class NumaPolicyQueues : public Numa {
       auto prod_config = get_num_nodes_and_cpus_reqd(this->config_num_prod);
       auto cons_config = get_num_nodes_and_cpus_reqd(this->config_num_cons);
 
+      printf("Inside of the case with separate numa nodes in numa.hpp\n");
       /* check nodes required vs. available */
       std::cout << "prod_config: "
                 << "num_nodes_reqd: " << std::get<0>(prod_config) << ", "

@@ -405,7 +405,7 @@ class CAS23HashTable : public BaseHashTable {
   try_insert:
     KV *curr = &this->hashtable[idx];
 
-    if (curr->kvpair.key == 0) {
+    if (curr->is_empty()) {
       if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
         return;
       }

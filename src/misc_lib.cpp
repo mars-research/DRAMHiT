@@ -163,7 +163,9 @@ void print_stats(Shard *all_sh, Configuration &config) {
   for (uint32_t k = 0; k < config.num_threads; k++) {
     total_insert_cycles += all_sh[k].stats->insertions.duration;
     total_inserts += all_sh[k].stats->insertions.op_count;
+
     total_finds += all_sh[k].stats->finds.op_count;
+        //printf("total finds for thread %llu, is, %llu\n", k, total_finds);
     total_find_cycles += all_sh[k].stats->finds.duration;
     total_upsert += all_sh[k].stats->upsertions.op_count;
     total_upsert_cycles += all_sh[k].stats->upsertions.duration;

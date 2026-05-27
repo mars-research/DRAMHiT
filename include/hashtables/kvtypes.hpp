@@ -858,9 +858,9 @@ struct Value {
 
 // No more aggr_kv
 //#ifdef NOAGGR
-using KVType = Item;
+//using KVType = Item;
 //#else
-//using KVType = Aggr_KV;
+using KVType = Aggr_KV;
 //#endif
 
 

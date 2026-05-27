@@ -16,6 +16,7 @@
 #include "utils/vtune.hpp"
 #include "xorwow.hpp"
 #include "zipf_distribution.hpp"
+#include "input_reader/fastq.hpp"
 #include "queues/lynxq.hpp"
 #include "queues/bqueue_aligned.hpp"
 
@@ -293,6 +294,7 @@ void QueueTest<T>::producer_thread(
     auto item_id = 0u;
     std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> items{};
 
+    // combine with the if/else above? 
 #if defined(BQUEUE_KMER_TEST)
     for (; reader->next(&kmer);) {
 #else
@@ -582,8 +584,10 @@ void QueueTest<T>::consumer_thread(
         //PLOGV.printf("sizeof items %zu | size of kv.key %zu",
         //          sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
-#if !defined(BQUEUE_KMER_TEST)
-        items[data_idx].value = kv.value;
+#if defined(BQUEUE_KMER_TEST)
+    items[data_idx].value = 1;   // increment count by 1 per kmer occurrence
+#else
+    items[data_idx].value = kv.value;
 #endif
 
         // for (auto i = 0u; i < num_nops; i++) asm volatile("nop");
