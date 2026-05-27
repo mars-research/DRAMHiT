@@ -620,6 +620,9 @@ void QueueTest<T>::consumer_thread(
     }
   }
 
+  if (bq_load == BQUEUE_LOAD::HtInsert && kmer_ht != nullptr) {
+    kmer_ht->flush_insert_queue(collector);
+  }
   auto t_end = RDTSCP();
 
   if (tid == n_prod) vtune::event_end(event);

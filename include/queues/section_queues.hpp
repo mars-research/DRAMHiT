@@ -419,7 +419,7 @@ class SectionQueue {
     auto pcq = &this->all_pc_queues[p][c];
     auto pq = &this->all_pqueues[p][c];
     enqueue(pq, p, c, BQ_MAGIC_KV);
-    pcq->enqSharedPtr = (data_t *)0xdeadbeef;
+    pcq->enqSharedPtr = pq->enqPtr;
   }
 
   void pop_done(uint32_t p, uint32_t c) {
