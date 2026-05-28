@@ -11,6 +11,7 @@
 #include "print_stats.h"
 #include "types.hpp"
 
+
 int find_remote_node(int current_node) {
   if (numa_available() < 0) {
     return -1;
@@ -35,8 +36,8 @@ bool distribute_memory_to_nodes(void *addr, uint64_t alloc_sz) {
   }
   struct bitmask *nodes_mask = numa_get_mems_allowed();
 
-  int ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE,
-                  nodes_mask->maskp, nodes_mask->size, MPOL_MF_MOVE);
+  int ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, nodes_mask->maskp,
+                  nodes_mask->size, MPOL_MF_MOVE);
 
   if (ret != 0) {
     PLOGE.printf("mbind failed to interleave memory: %s", strerror(errno));
@@ -165,7 +166,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
     total_inserts += all_sh[k].stats->insertions.op_count;
 
     total_finds += all_sh[k].stats->finds.op_count;
-        //printf("total finds for thread %llu, is, %llu\n", k, total_finds);
+    // printf("total finds for thread %llu, is, %llu\n", k, total_finds);
     total_find_cycles += all_sh[k].stats->finds.duration;
     total_upsert += all_sh[k].stats->upsertions.op_count;
     total_upsert_cycles += all_sh[k].stats->upsertions.duration;
@@ -410,7 +411,6 @@ inline uint64_t get_gigbytes(size_t num_kv) {
 
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
-
   // Create hash table
   switch (config.ht_type) {
 #ifdef PART_ID
@@ -428,6 +428,12 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 #endif
       kmer_ht = new CAS23HashTable<KVType, ItemQueue>(sz);
       break;
+
+    case CASSTHTPP:
+      kmer_ht = new CASHashTableSingleThread<KVType, ItemQueue>(
+          sz, config.find_queue_sz, id);
+      break;
+
 #ifdef GROWT
     case GROWHT:
       kmer_ht = new GrowtHashTable(sz);

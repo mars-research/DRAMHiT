@@ -9,11 +9,13 @@
 #include <iostream>
 #include <mutex>
 #include <type_traits>
+
 #include "constants.hpp"
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
 #include "plog/Log.h"
+
 
 namespace kmercounter {
 
@@ -37,6 +39,55 @@ class CASHashTableSingleThread : public BaseHashTable {
   const static __mmask8 KEYMSK = 0b01010101;
   const static uint64_t PREFETCH_INSERT_NEXT_DISTANCE = 8;
   const static uint64_t PREFETCH_FIND_NEXT_DISTANCE = 8;
+  bool construc1 = false;
+
+  CASHashTableSingleThread(uint64_t c, uint32_t queue_sz, uint32_t id)
+      : find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
+    this->construc1 = true;
+    this->capacity = kmercounter::utils::next_pow2(c);
+
+    if (capacity % KV_IN_CACHELINE != 0) {
+      PLOGE.printf("Capacity %lu is not a multiple of KV_IN_CACHELINE %d\n",
+                   capacity, KV_IN_CACHELINE);
+      abort();
+    }
+
+    this->insert_queue_sz = this->find_queue_sz = queue_sz;
+
+    if (find_queue_sz > 0 && find_queue_sz % 2 != 0) {
+      PLOGE.printf("Queue size %lu is not a power of 2\n", find_queue_sz);
+      abort();
+    }
+
+    // Allocate hashtable via mmap with 2MB hugepages
+    size_t ht_size = this->capacity * sizeof(KV);
+    this->hashtable =
+        (KV *)mmap(nullptr, ht_size, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
+    if (this->hashtable == MAP_FAILED) {
+      // Fall back to regular mmap if hugepages unavailable
+      PLOGE.printf("mmap hugepages failed, falling back to regular mmap");
+      this->hashtable = (KV *)mmap(nullptr, ht_size, PROT_READ | PROT_WRITE,
+                                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_2MB, -1, 0);
+      if (this->hashtable == MAP_FAILED) {
+        PLOGE.printf("mmap failed!");
+        abort();
+      }
+    }
+
+    this->empty_item = this->empty_item.get_empty_key();
+    this->key_length = empty_item.key_length();
+    this->data_length = empty_item.data_length();
+    this->insert_queue =
+        (KVQ *)(aligned_alloc(64, insert_queue_sz * sizeof(KVQ)));
+    this->find_queue = (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
+    this->FIND_QUEUE_SZ_MASK = this->find_queue_sz - 1;
+    this->INSERT_QUEUE_SZ_MASK = this->insert_queue_sz - 1;
+    this->HT_BUCKET_MASK =
+        (uint32_t)((this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK));
+  }
+
+
 
   CASHashTableSingleThread(uint64_t c, uint32_t queue_sz, KV *hashtable)
       : find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
@@ -67,10 +118,13 @@ class CASHashTableSingleThread : public BaseHashTable {
     this->HT_BUCKET_MASK =
         (uint32_t)((this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK));
   }
-
+  
   ~CASHashTableSingleThread() {
     free(find_queue);
     free(insert_queue);
+    if (construc1) {  // typo fixed: constru1 → construc1
+      munmap(hashtable, this->capacity * sizeof(KV));  // free mmap allocation
+    }
   }
 
   void clear() override { memset(this->hashtable, 0, capacity * sizeof(KV)); }
@@ -1010,7 +1064,7 @@ class CASHashTableSingleThread : public BaseHashTable {
     // it will request for exclusive state unneccesarrily.
 
 #ifdef READ_BEFORE_CAS
-    if (curr->kvpair.key == 0)
+    if (curr->is_empty())
 #endif
       if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
         return 0;
@@ -1156,7 +1210,6 @@ uint64_t CASHashTableSingleThread<KV, KVQ>::empty_slot_ = 0;
 
 template <class KV, class KVQ>
 bool CASHashTableSingleThread<KV, KVQ>::empty_slot_exists_ = false;
-
 
 }  // namespace kmercounter
 #endif  // HASHTABLES_CAS_KHT_HPP

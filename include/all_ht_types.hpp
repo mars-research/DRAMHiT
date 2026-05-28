@@ -5,6 +5,7 @@
 #include "hashtables/array_kht.hpp"
 #include "hashtables/cas23_kht.hpp"
 #include "hashtables/cas_kht.hpp"
+#include "hashtables/cas_kht_st.hpp"
 
 #ifdef GROWT
 #include "hashtables/growt_kht.hpp"

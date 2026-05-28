@@ -60,8 +60,8 @@ class CASHashTable : public BaseHashTable {
 
   const static __mmask8 KEYMSK = 0b01010101;
 // #define KEYMSK ((__mmask8)(0b01010101))
-#define PREFETCH_INSERT_NEXT_DISTANCE 8
-#define PREFETCH_FIND_NEXT_DISTANCE 8
+  const static uint64_t PREFETCH_INSERT_NEXT_DISTANCE = 8;
+  const static uint64_t PREFETCH_FIND_NEXT_DISTANCE = 8;
 
   CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
 
