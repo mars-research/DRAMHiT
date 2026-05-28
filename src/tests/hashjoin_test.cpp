@@ -533,9 +533,14 @@ struct alignas(64) CacheLineBuffer {
   inline void reset() { counter = 0; }
 
   inline void flush_nt(Element* bucket) {
+    #ifdef AVX_SUPPORT
     void* addr = &bucket[counter - 4];
     __m512i data = _mm512_load_si512(reinterpret_cast<const __m512i*>(tuples));
     _mm512_stream_si512(reinterpret_cast<__m512i*>(addr), data);
+    #else
+    std::cerr << "AVX_SUPPORT not enabled but flush_nt() in hashjoin_test.cpp" << std::endl;
+    std::abort();
+    #endif
   }
 };
 

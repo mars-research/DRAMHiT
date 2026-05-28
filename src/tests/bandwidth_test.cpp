@@ -108,11 +108,16 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   }
   barrier->arrive_and_wait();
 
+    #ifdef AVX_SUPPORT
   __m512i zero_vec_512 = _mm512_setzero_si512();
 
   for (uint64_t i = 0; i < size; i++) {
     _mm512_stream_si512((__m512i*)&arr[i], zero_vec_512);
   }
+    #else
+    std::cerr << "AVX_SUPPORT not enabled but in bandwidth_test.cpp" << std::endl;
+    std::abort();
+    #endif
 
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::insertions;
