@@ -404,6 +404,8 @@ void QueueTest<T>::producer_thread(
   } else {
     sh->stats->enqueues.duration = (t_end - t_start);
     sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
+    sh->stats->finds.duration = (t_end - t_start);
+    sh->stats->finds.op_count = transaction_id * config.insert_factor;
   }
 
 #ifdef LATENCY_COLLECTION
