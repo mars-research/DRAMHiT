@@ -406,6 +406,7 @@ void QueueTest<T>::producer_thread(
   } else {
     sh->stats->enqueues.duration = (t_end - t_start);
     sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
+    sh->stats->insertions.op_count = 0;
     sh->stats->finds.duration = (t_end - t_start);
     sh->stats->finds.op_count = transaction_id * config.insert_factor;
   }
@@ -908,6 +909,18 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
 
   // 1) Insert using bqueues
   this->insert_with_queues(cfg, n, is_join, npq);
+
+
+  // aggregate throughput timing
+  uint64_t sum_op = 0;
+  uint64_t max_duration = 0;
+    for (uint32_t i = 0; i < cfg->num_threads; i++) {
+        sum_op += shards[i].stats->insertions.op_count;
+        max_duration = std::max(max_duration, shards[i].stats->insertions.duration);
+  }
+  double mops = (CPUFREQ_MHZ * sum_op) / (double)max_duration;
+  PLOGI.printf("Aggregate insert throughput: %.2f Mops", mops);
+
 
 #ifdef LATENCY_COLLECTION
   collectors.clear();
