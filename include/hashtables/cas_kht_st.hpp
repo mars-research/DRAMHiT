@@ -304,7 +304,7 @@ class CASHashTableSingleThread : public BaseHashTable {
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
               if (key_cmp > 0) {
                 __mmask8 offset = _bit_scan_forward(key_cmp);
-                bucket[(offset + 1)] = q->value;
+                bucket[(offset + 1)] += 1;
                 break;
               }
 
@@ -313,7 +313,11 @@ class CASHashTableSingleThread : public BaseHashTable {
               __mmask8 ept_cmp =
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
               if (ept_cmp != 0) {
-                idx += (_bit_scan_forward(ept_cmp) >> 1);
+                __mmask8 offset = _bit_scan_forward(ept_cmp);
+                bucket[offset] = q->key;     
+                bucket[(offset + 1)] = 1;
+                break;
+                //idx += (_bit_scan_forward(ept_cmp) >> 1);
               } else {  // we didn;t find empty key
                 goto retry_add_to_queue;
               }
@@ -321,7 +325,7 @@ class CASHashTableSingleThread : public BaseHashTable {
             try_insert:
               curr = &this->hashtable[idx];
 #ifdef READ_BEFORE_CAS
-              if (curr->kvpair.key == 0)
+              if (curr->is_empty())
 #endif
                 if (__sync_bool_compare_and_swap((__int128 *)curr, 0,
                                                  *(__int128 *)q)) {
@@ -1011,7 +1015,7 @@ class CASHashTableSingleThread : public BaseHashTable {
         _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
     if (key_cmp > 0) {
       __mmask8 offset = _bit_scan_forward(key_cmp);
-      bucket[(offset + 1)] = q->value;
+      bucket[(offset + 1)] += 1;
       //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long
       // int)q->value);
       return 0;
@@ -1022,7 +1026,11 @@ class CASHashTableSingleThread : public BaseHashTable {
     __mmask8 ept_cmp =
         _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
     if (ept_cmp != 0) {
-      idx += (_bit_scan_forward(ept_cmp) >> 1);  // |-, -, 0, 0|
+      __mmask8 offset = _bit_scan_forward(ept_cmp);
+      //idx += (_bit_scan_forward(ept_cmp) >> 1);  // |-, -, 0, 0|
+      bucket[offset] = q->key;     
+      bucket[(offset + 1)] = 1;
+      return  0;
     } else {
 #ifdef UNIFORM_HT_SUPPORT
       uint64_t old_hash = q->key_hash;
@@ -1059,7 +1067,6 @@ class CASHashTableSingleThread : public BaseHashTable {
     // cpu 2
   try_insert:
     curr = &this->hashtable[idx];
-
     // we first check if key is 0.if we use cas,
     // it will request for exclusive state unneccesarrily.
 

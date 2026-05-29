@@ -374,9 +374,9 @@ void QueueTest<T>::producer_thread(
         }
       }
 
-      for (auto p = 0u; p < config.pollute_ratio; ++p)
-        prefetch_object<true>(
-            &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+      // for (auto p = 0u; p < config.pollute_ratio; ++p)
+      //   prefetch_object<true>(
+      //       &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
       transaction_id++;
     }
@@ -407,8 +407,9 @@ void QueueTest<T>::producer_thread(
     sh->stats->enqueues.duration = (t_end - t_start);
     sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
     sh->stats->insertions.op_count = 0;
-    sh->stats->finds.duration = (t_end - t_start);
-    sh->stats->finds.op_count = transaction_id * config.insert_factor;
+    sh->stats->insertions.duration = 0;
+    // sh->stats->finds.duration = (t_end - t_start);
+    // sh->stats->finds.op_count = transaction_id * config.insert_factor;
   }
 
 #ifdef LATENCY_COLLECTION
@@ -914,12 +915,19 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
   // aggregate throughput timing
   uint64_t sum_op = 0;
   uint64_t max_duration = 0;
+  uint64_t sum_op_enq = 0;
+  uint64_t max_duration_enq = 0;
     for (uint32_t i = 0; i < cfg->num_threads; i++) {
         sum_op += shards[i].stats->insertions.op_count;
+        sum_op_enq += shards[i].stats->enqueues.op_count;
         max_duration = std::max(max_duration, shards[i].stats->insertions.duration);
+        max_duration_enq = std::max(max_duration_enq, shards[i].stats->enqueues.duration);
+
   }
   double mops = (CPUFREQ_MHZ * sum_op) / (double)max_duration;
-  PLOGI.printf("Aggregate insert throughput: %.2f Mops", mops);
+
+  PLOGI.printf("Aggregate insert throughput: %.2f\n Mops Aggregate insertions duration: %lu\n Mops Aggregate enqueues duration: %lu",
+      mops, max_duration, max_duration_enq);
 
 
 #ifdef LATENCY_COLLECTION
