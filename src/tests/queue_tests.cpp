@@ -262,8 +262,13 @@ void QueueTest<T>::producer_thread(
   }
 
   auto ht_size = config.ht_size / n_cons;
-  const auto ktable = init_ht(ht_size, sh->shard_idx);
-  this->ht_vec->at(tid) = ktable;
+
+BaseHashTable *ktable = nullptr;
+
+ if (cfg->rw_queues) {   // only needed when producers do local finds
+    const auto ktable = init_ht(ht_size, sh->shard_idx);
+    this->ht_vec->at(tid) = ktable;
+}
 
   std::bernoulli_distribution coin{config.pread};
   xorwow_urbg urbg{};

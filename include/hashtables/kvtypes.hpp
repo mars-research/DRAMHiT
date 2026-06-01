@@ -102,6 +102,11 @@ static_assert(offsetof(struct ItemQueue, value) == sizeof(key_type), "value must
 std::ostream &operator<<(std::ostream &os, const ItemQueue &q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow
+
+// 2026 fixed above bug with
+// items[data_idx].value = 1;  // increment count by 1 per kmer occurrence
+// inside of queue_tests
+
 struct Aggr_KV {
   using queue = ItemQueue;
 
