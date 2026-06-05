@@ -38,3 +38,5 @@ results/
 cache/
 *.bin
 ht_output*
+*.png
+*.txt

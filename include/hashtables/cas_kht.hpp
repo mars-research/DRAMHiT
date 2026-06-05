@@ -1014,7 +1014,7 @@ class CASHashTable : public BaseHashTable {
         _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
     if (key_cmp > 0) {
       __mmask8 offset = _bit_scan_forward(key_cmp);
-      bucket[(offset + 1)] = q->value;
+      bucket[(offset + 1)] += 1;
       //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long
       // int)q->value);
       return 0;

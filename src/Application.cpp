@@ -101,7 +101,7 @@ const Configuration def = {
     .delimitor = "|",
     .rw_queues = false,
     .pollute_ratio = 0,
-    .find_queue_sz = 16,
+    .find_queue_sz = 64,
     .perf_cnt_path = "",
     .perf_def_path = "",
     .test = false,
@@ -696,7 +696,6 @@ void sync_complete(void) {
 #ifdef PART_ID
         case PARTITIONED_HT:
           PLOG_INFO.printf("Hashtable type : Paritioned HT");
-          config.ht_size /= config.num_threads;
           break;
         case MULTI_HT:
           PLOG_INFO.printf("Hashtable type : Multi HT");
