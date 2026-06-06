@@ -180,7 +180,7 @@ struct Configuration {
   std::string perf_cnt_path;
   std::string perf_def_path;
   bool test;
-  bool sequential;
+  uint64_t sequential;
   uint32_t radix;
   double hit_rate;
   uint64_t zipf_scale_factor;

@@ -742,7 +742,7 @@ void sync_complete(void) {
           "test", po::value<bool>(&config.test)->default_value(def.test),
           "Test the run")(
           "sequential",
-          po::value<bool>(&config.sequential)->default_value(def.sequential),
+          po::value<uint64_t>(&config.sequential)->default_value(def.sequential),
           "bw test sequential access")(
           "radix", po::value<uint32_t>(&config.radix)->default_value(def.radix),
           "radix partition join bits partition number = 2^radix")(

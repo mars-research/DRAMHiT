@@ -8,6 +8,9 @@
 #include "tests/BandwidthTest.hpp"
 #include "types.hpp"
 #include "utils/hugepage_allocator.hpp"
+#ifdef WITH_VTUNE_LIB
+#include <ittnotify.h>
+#endif
 
 namespace kmercounter {
 
@@ -76,16 +79,13 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
       abort();
     }
 
-    if (!move_memory_to_node((void*)(&arr[0]),
-                             alloc_size,
-                             to_node)) {
+    if (!move_memory_to_node((void*)(&arr[0]), alloc_size, to_node)) {
       PLOGE.printf("failed to migrate workload memory");
       abort();
     }
   } else if (config.numa_split == THREADS_SPLIT_EVEN_NODES ||
              config.numa_split == THREADS_MIXED_NUMA_NODE) {
-    if (!distribute_memory_to_nodes(
-            (void*)arr, alloc_size)) {
+    if (!distribute_memory_to_nodes((void*)arr, alloc_size)) {
       PLOGE.printf("failed to distribute workload memory");
       abort();
     }
@@ -108,16 +108,16 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   }
   barrier->arrive_and_wait();
 
-    #ifdef AVX_SUPPORT
+#ifdef AVX_SUPPORT
   __m512i zero_vec_512 = _mm512_setzero_si512();
 
   for (uint64_t i = 0; i < size; i++) {
     _mm512_stream_si512((__m512i*)&arr[i], zero_vec_512);
   }
-    #else
-    std::cerr << "AVX_SUPPORT not enabled but in bandwidth_test.cpp" << std::endl;
-    std::abort();
-    #endif
+#else
+  std::cerr << "AVX_SUPPORT not enabled but in bandwidth_test.cpp" << std::endl;
+  std::abort();
+#endif
 
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::insertions;
@@ -136,15 +136,40 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   }
   barrier->arrive_and_wait();
 
-  if (config.sequential) {
+#ifdef WITH_VTUNE_LIB
+  static const auto vtune_event =
+      __itt_event_create("find_workload", strlen("find_workload"));
+  __itt_event_start(vtune_event);
+#endif
+  // Sequential Reads
+  if (config.sequential == 1) {
     for (uint64_t i = 0; i < size; i++) {
       prefetch(arr, i);
     }
-  } else {
+  }
+  // Random Reads
+  else if (config.sequential == 0) {
     uint64_t idx = 0;
     for (uint64_t i = 0; i < size; i++) {
       idx = knuth64(i) & (size - 1);
       prefetch(arr, idx);
+    }
+  }
+  // 1Read + 1Write
+  else if (config.sequential == 2) {
+    // printf(":3 \n\n");
+    uint64_t idx = 0;
+    for (uint64_t i = 0; (i + 64) < size; i += 64) {
+      uint64_t offset = i + 64;
+      for (uint64_t j = i; j < offset; j++) {
+        idx = knuth64(j) & (size - 1);
+        prefetch(arr, idx);
+      }
+
+      for (uint64_t k = i; k < offset; k++) {
+        idx = knuth64(k) & (size - 1);
+        *(uint64_t*)&arr[idx] = 14;
+      }
     }
   }
 
@@ -153,9 +178,19 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     g_app_record_start = false;
     PLOGI.printf("Bandwidth test end");
   }
+
+#ifdef WITH_VTUNE_LIB
+  __itt_event_end(vtune_event);
+#endif
   barrier->arrive_and_wait();
 
-  sh->stats->finds.op_count = size;
+  if (config.sequential == 2) {
+    // account that we are doing 2 memory transactions, ie, 1 read and 1 write
+    sh->stats->finds.op_count = size * 2;
+  } else {
+    sh->stats->finds.op_count = size;
+  }
+
   sh->stats->finds.duration = g_find_end - g_find_start;
   if (sh->shard_idx == 0) {
     PLOGI.printf("took %lu cycles per cacheline on read",
