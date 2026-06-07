@@ -273,7 +273,8 @@ void print_stats(Shard *all_sh, Configuration &config) {
     double sec = avg_find_duration / (CPUFREQ_MHZ * 1000000.0);
     double bw = 0.0;
     if (sec > 0.0) {
-      bw = ((double)bytes / (1ULL << 30)) / sec;
+      // bytes to GB
+      bw = ((double)bytes / (1000*1000*1000)) / sec;
     }
 
     PLOGI.printf(

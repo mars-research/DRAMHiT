@@ -141,37 +141,54 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
       __itt_event_create("find_workload", strlen("find_workload"));
   __itt_event_start(vtune_event);
 #endif
-  // Sequential Reads
-  if (config.sequential == 1) {
-    for (uint64_t i = 0; i < size; i++) {
-      prefetch(arr, i);
-    }
-  }
-  // Random Reads
-  else if (config.sequential == 0) {
-    uint64_t idx = 0;
-    for (uint64_t i = 0; i < size; i++) {
-      idx = knuth64(i) & (size - 1);
-      prefetch(arr, idx);
-    }
-  }
-  // 1Read + 1Write
-  else if (config.sequential == 2) {
-    // printf(":3 \n\n");
-    uint64_t idx = 0;
-    for (uint64_t i = 0; (i + 64) < size; i += 64) {
-      uint64_t offset = i + 64;
-      for (uint64_t j = i; j < offset; j++) {
-        idx = knuth64(j) & (size - 1);
-        prefetch(arr, idx);
-      }
 
-      for (uint64_t k = i; k < offset; k++) {
-        idx = knuth64(k) & (size - 1);
-        *(uint64_t*)&arr[idx] = 14;
+  for (int repeat_iterations = 0; repeat_iterations < config.read_factor;
+       repeat_iterations++) {
+    // Sequential Reads
+    if (config.sequential == 1) {
+      for (uint64_t i = 0; i < size; i++) {
+        prefetch(arr, i);
       }
     }
-  }
+    // Random Reads
+    else if (config.sequential == 0) {
+      uint64_t dummy_sum = 0;
+      uint64_t idx = 0;
+      
+      for (uint64_t i = 0; (i + 64) < size; i += 64) {
+        uint64_t offset = i + 64;
+        for (uint64_t j = i; j < offset; j++) {
+          idx = knuth64(j) & (size - 1);
+          prefetch(arr, idx);
+        }
+        
+        for (uint64_t k = i; k < offset; k++) {
+          idx = knuth64(k) & (size - 1);
+          dummy_sum += *(reinterpret_cast<const uint64_t*>(&arr[idx]));
+        }
+      }
+      // so it doesn't optimize out
+      asm volatile("" : : "g"(dummy_sum) : "memory");
+
+    }
+    // 1Read + 1Write
+    else if (config.sequential == 2) {
+      // printf(":3 \n\n");
+      uint64_t idx = 0;
+      for (uint64_t i = 0; (i + 64) < size; i += 64) {
+        uint64_t offset = i + 64;
+        for (uint64_t j = i; j < offset; j++) {
+          idx = knuth64(j) & (size - 1);
+          prefetch(arr, idx);
+        }
+
+        for (uint64_t k = i; k < offset; k++) {
+          idx = knuth64(k) & (size - 1);
+          *(uint64_t*)&arr[idx] = 14;
+        }
+      }
+    }
+  }  // end repeat experiment iterations
 
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::finds;
@@ -186,9 +203,9 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
 
   if (config.sequential == 2) {
     // account that we are doing 2 memory transactions, ie, 1 read and 1 write
-    sh->stats->finds.op_count = size * 2;
+    sh->stats->finds.op_count = (size * config.read_factor) * 2;
   } else {
-    sh->stats->finds.op_count = size;
+    sh->stats->finds.op_count = size * config.read_factor;
   }
 
   sh->stats->finds.duration = g_find_end - g_find_start;

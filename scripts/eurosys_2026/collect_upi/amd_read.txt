@@ -1,0 +1,1295 @@
+#           time             counts unit events
+     1.000500924         15,924,285      umc_cas_cmd.wr                   #   1019.2 MB/s  umc_mem_write_bandwidth
+     1.000500924      1,000,500,924 ns   duration_time                                                         
+     1.000500924         22,335,673      umc_cas_cmd.rd                   #   1429.5 MB/s  umc_mem_read_bandwidth
+     1.000500924      1,000,500,924 ns   duration_time                                                         
+     1.000500924         38,257,900      umc_cas_cmd.all                  #   2448.5 MB/s  umc_mem_bandwidth   
+     1.000500924      1,000,500,924 ns   duration_time                                                         
+2026-06-07 19:02:27.433 INFO  [54463] [initializeLogger@17] ------------------------
+2026-06-07 19:02:27.434 INFO  [54463] [initializeLogger@18] Plog library initialized
+2026-06-07 19:02:27.434 INFO  [54463] [initializeLogger@19] ------------------------
+2026-06-07 19:02:27.435 INFO  [54463] [main@27] Starting dramhit
+2026-06-07 19:02:27.437 INFO  [54463] [kmercounter::Application::process@868] no ht needed
+2026-06-07 19:02:27.437 INFO  [54463] [kmercounter::Application::process@890] Dropping the page cache
+     2.002500201         12,218,084      umc_cas_cmd.wr                   #    782.0 MB/s  umc_mem_write_bandwidth
+     2.002500201      1,001,999,277 ns   duration_time                                                         
+     2.002500201         25,630,806      umc_cas_cmd.rd                   #   1640.4 MB/s  umc_mem_read_bandwidth
+     2.002500201      1,001,999,277 ns   duration_time                                                         
+     2.002500201         37,849,506      umc_cas_cmd.all                  #   2422.4 MB/s  umc_mem_bandwidth   
+     2.002500201      1,001,999,277 ns   duration_time                                                         
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 1 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 2 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 3 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 4 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 5 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 6 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 7 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 8 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 9 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 10 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 11 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 12 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 13 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 14 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 15 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 16 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 17 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 18 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 19 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 20 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 21 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 22 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 23 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 24 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 25 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 26 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 27 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 28 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 29 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 30 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 31 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 32 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 33 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 34 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 35 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 36 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 37 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 38 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 39 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 40 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 41 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 42 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 43 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 44 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 45 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 46 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 47 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 48 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 49 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 50 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 51 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 52 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 53 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 54 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 55 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 56 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 57 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 58 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 59 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 60 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 61 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 62 at numa node 0
+2026-06-07 19:02:27.595 INFO  [54463] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 63 at numa node 0
+2026-06-07 19:02:27.601 INFO  [54463] [kmercounter::BandwidthTest::run@60] allocating 1024 mb per thread
+2026-06-07 19:02:28.095 INFO  [54463] [kmercounter::BandwidthTest::run@101] took 95 cycles per cacheline on mmap and mbind
+2026-06-07 19:02:28.321 INFO  [54463] [kmercounter::BandwidthTest::run@128] took 43 cycles per cacheline on write
+2026-06-07 19:02:28.321 INFO  [54463] [kmercounter::BandwidthTest::run@135] Bandwidth test start
+     3.005541489      2,150,483,283      umc_cas_cmd.wr                   # 137630.9 MB/s  umc_mem_write_bandwidth
+     3.005541489      1,003,041,288 ns   duration_time                                                         
+     3.005541489      2,270,201,399      umc_cas_cmd.rd                   # 145292.9 MB/s  umc_mem_read_bandwidth
+     3.005541489      1,003,041,288 ns   duration_time                                                         
+     3.005541489      4,421,071,733      umc_cas_cmd.all                  # 282948.6 MB/s  umc_mem_bandwidth   
+     3.005541489      1,003,041,288 ns   duration_time                                                         
+     4.012520794          4,372,359      umc_cas_cmd.wr                   #    279.8 MB/s  umc_mem_write_bandwidth
+     4.012520794      1,006,979,305 ns   duration_time                                                         
+     4.012520794      5,475,669,849      umc_cas_cmd.rd                   # 350442.9 MB/s  umc_mem_read_bandwidth
+     4.012520794      1,006,979,305 ns   duration_time                                                         
+     4.012520794      5,480,055,084      umc_cas_cmd.all                  # 350723.5 MB/s  umc_mem_bandwidth   
+     4.012520794      1,006,979,305 ns   duration_time                                                         
+     5.014535931          4,297,305      umc_cas_cmd.wr                   #    275.0 MB/s  umc_mem_write_bandwidth
+     5.014535931      1,002,015,137 ns   duration_time                                                         
+     5.014535931      5,449,492,637      umc_cas_cmd.rd                   # 348767.5 MB/s  umc_mem_read_bandwidth
+     5.014535931      1,002,015,137 ns   duration_time                                                         
+     5.014535931      5,453,781,912      umc_cas_cmd.all                  # 349042.0 MB/s  umc_mem_bandwidth   
+     5.014535931      1,002,015,137 ns   duration_time                                                         
+     6.017519729          4,459,338      umc_cas_cmd.wr                   #    285.4 MB/s  umc_mem_write_bandwidth
+     6.017519729      1,002,983,798 ns   duration_time                                                         
+     6.017519729      5,453,484,234      umc_cas_cmd.rd                   # 349023.0 MB/s  umc_mem_read_bandwidth
+     6.017519729      1,002,983,798 ns   duration_time                                                         
+     6.017519729      5,457,941,709      umc_cas_cmd.all                  # 349308.3 MB/s  umc_mem_bandwidth   
+     6.017519729      1,002,983,798 ns   duration_time                                                         
+     7.022525811          4,666,123      umc_cas_cmd.wr                   #    298.6 MB/s  umc_mem_write_bandwidth
+     7.022525811      1,005,006,082 ns   duration_time                                                         
+     7.022525811      5,461,904,523      umc_cas_cmd.rd                   # 349561.9 MB/s  umc_mem_read_bandwidth
+     7.022525811      1,005,006,082 ns   duration_time                                                         
+     7.022525811      5,466,571,017      umc_cas_cmd.all                  # 349860.5 MB/s  umc_mem_bandwidth   
+     7.022525811      1,005,006,082 ns   duration_time                                                         
+     8.027529082          4,490,030      umc_cas_cmd.wr                   #    287.4 MB/s  umc_mem_write_bandwidth
+     8.027529082      1,005,003,271 ns   duration_time                                                         
+     8.027529082      5,463,708,889      umc_cas_cmd.rd                   # 349677.4 MB/s  umc_mem_read_bandwidth
+     8.027529082      1,005,003,271 ns   duration_time                                                         
+     8.027529082      5,468,196,850      umc_cas_cmd.all                  # 349964.6 MB/s  umc_mem_bandwidth   
+     8.027529082      1,005,003,271 ns   duration_time                                                         
+     9.029535259          4,275,039      umc_cas_cmd.wr                   #    273.6 MB/s  umc_mem_write_bandwidth
+     9.029535259      1,002,006,177 ns   duration_time                                                         
+     9.029535259      5,449,501,558      umc_cas_cmd.rd                   # 348768.1 MB/s  umc_mem_read_bandwidth
+     9.029535259      1,002,006,177 ns   duration_time                                                         
+     9.029535259      5,453,782,565      umc_cas_cmd.all                  # 349042.1 MB/s  umc_mem_bandwidth   
+     9.029535259      1,002,006,177 ns   duration_time                                                         
+    10.035523602          4,287,836      umc_cas_cmd.wr                   #    274.4 MB/s  umc_mem_write_bandwidth
+    10.035523602      1,005,988,343 ns   duration_time                                                         
+    10.035523602      5,472,367,975      umc_cas_cmd.rd                   # 350231.6 MB/s  umc_mem_read_bandwidth
+    10.035523602      1,005,988,343 ns   duration_time                                                         
+    10.035523602      5,476,653,873      umc_cas_cmd.all                  # 350505.8 MB/s  umc_mem_bandwidth   
+    10.035523602      1,005,988,343 ns   duration_time                                                         
+    11.037529489          4,283,153      umc_cas_cmd.wr                   #    274.1 MB/s  umc_mem_write_bandwidth
+    11.037529489      1,002,005,887 ns   duration_time                                                         
+    11.037529489      5,449,898,991      umc_cas_cmd.rd                   # 348793.5 MB/s  umc_mem_read_bandwidth
+    11.037529489      1,002,005,887 ns   duration_time                                                         
+    11.037529489      5,454,178,713      umc_cas_cmd.all                  # 349067.4 MB/s  umc_mem_bandwidth   
+    11.037529489      1,002,005,887 ns   duration_time                                                         
+    12.043518682          4,292,410      umc_cas_cmd.wr                   #    274.7 MB/s  umc_mem_write_bandwidth
+    12.043518682      1,005,989,193 ns   duration_time                                                         
+    12.043518682      5,471,944,625      umc_cas_cmd.rd                   # 350204.5 MB/s  umc_mem_read_bandwidth
+    12.043518682      1,005,989,193 ns   duration_time                                                         
+    12.043518682      5,476,231,729      umc_cas_cmd.all                  # 350478.8 MB/s  umc_mem_bandwidth   
+    12.043518682      1,005,989,193 ns   duration_time                                                         
+    13.045534418          4,276,430      umc_cas_cmd.wr                   #    273.7 MB/s  umc_mem_write_bandwidth
+    13.045534418      1,002,015,736 ns   duration_time                                                         
+    13.045534418      5,449,869,939      umc_cas_cmd.rd                   # 348791.7 MB/s  umc_mem_read_bandwidth
+    13.045534418      1,002,015,736 ns   duration_time                                                         
+    13.045534418      5,454,156,712      umc_cas_cmd.all                  # 349066.0 MB/s  umc_mem_bandwidth   
+    13.045534418      1,002,015,736 ns   duration_time                                                         
+    14.050528390          4,300,165      umc_cas_cmd.wr                   #    275.2 MB/s  umc_mem_write_bandwidth
+    14.050528390      1,004,993,972 ns   duration_time                                                         
+    14.050528390      5,465,275,879      umc_cas_cmd.rd                   # 349777.7 MB/s  umc_mem_read_bandwidth
+    14.050528390      1,004,993,972 ns   duration_time                                                         
+    14.050528390      5,469,573,676      umc_cas_cmd.all                  # 350052.7 MB/s  umc_mem_bandwidth   
+    14.050528390      1,004,993,972 ns   duration_time                                                         
+    15.052531867          4,259,956      umc_cas_cmd.wr                   #    272.6 MB/s  umc_mem_write_bandwidth
+    15.052531867      1,002,003,477 ns   duration_time                                                         
+    15.052531867      5,450,195,390      umc_cas_cmd.rd                   # 348812.5 MB/s  umc_mem_read_bandwidth
+    15.052531867      1,002,003,477 ns   duration_time                                                         
+    15.052531867      5,454,452,265      umc_cas_cmd.all                  # 349084.9 MB/s  umc_mem_bandwidth   
+    15.052531867      1,002,003,477 ns   duration_time                                                         
+    16.057520598          4,314,063      umc_cas_cmd.wr                   #    276.1 MB/s  umc_mem_write_bandwidth
+    16.057520598      1,004,988,731 ns   duration_time                                                         
+    16.057520598      5,467,220,019      umc_cas_cmd.rd                   # 349902.1 MB/s  umc_mem_read_bandwidth
+    16.057520598      1,004,988,731 ns   duration_time                                                         
+    16.057520598      5,471,535,892      umc_cas_cmd.all                  # 350178.3 MB/s  umc_mem_bandwidth   
+    16.057520598      1,004,988,731 ns   duration_time                                                         
+    17.063532941          4,303,854      umc_cas_cmd.wr                   #    275.4 MB/s  umc_mem_write_bandwidth
+    17.063532941      1,006,012,343 ns   duration_time                                                         
+    17.063532941      5,471,694,972      umc_cas_cmd.rd                   # 350188.5 MB/s  umc_mem_read_bandwidth
+    17.063532941      1,006,012,343 ns   duration_time                                                         
+    17.063532941      5,475,995,426      umc_cas_cmd.all                  # 350463.7 MB/s  umc_mem_bandwidth   
+    17.063532941      1,006,012,343 ns   duration_time                                                         
+    18.065532808          4,277,167      umc_cas_cmd.wr                   #    273.7 MB/s  umc_mem_write_bandwidth
+    18.065532808      1,001,999,867 ns   duration_time                                                         
+    18.065532808      5,449,797,927      umc_cas_cmd.rd                   # 348787.1 MB/s  umc_mem_read_bandwidth
+    18.065532808      1,001,999,867 ns   duration_time                                                         
+    18.065532808      5,454,075,025      umc_cas_cmd.all                  # 349060.8 MB/s  umc_mem_bandwidth   
+    18.065532808      1,001,999,867 ns   duration_time                                                         
+    19.070525179          6,062,929      umc_cas_cmd.wr                   #    388.0 MB/s  umc_mem_write_bandwidth
+    19.070525179      1,004,992,371 ns   duration_time                                                         
+    19.070525179      5,452,217,342      umc_cas_cmd.rd                   # 348941.9 MB/s  umc_mem_read_bandwidth
+    19.070525179      1,004,992,371 ns   duration_time                                                         
+    19.070525179      5,458,280,751      umc_cas_cmd.all                  # 349330.0 MB/s  umc_mem_bandwidth   
+    19.070525179      1,004,992,371 ns   duration_time                                                         
+    20.074510799          5,355,441      umc_cas_cmd.wr                   #    342.7 MB/s  umc_mem_write_bandwidth
+    20.074510799      1,003,985,620 ns   duration_time                                                         
+    20.074510799      5,453,329,682      umc_cas_cmd.rd                   # 349013.1 MB/s  umc_mem_read_bandwidth
+    20.074510799      1,003,985,620 ns   duration_time                                                         
+    20.074510799      5,458,665,399      umc_cas_cmd.all                  # 349354.6 MB/s  umc_mem_bandwidth   
+    20.074510799      1,003,985,620 ns   duration_time                                                         
+    21.077522197          5,576,789      umc_cas_cmd.wr                   #    356.9 MB/s  umc_mem_write_bandwidth
+    21.077522197      1,003,011,398 ns   duration_time                                                         
+    21.077522197      5,446,354,598      umc_cas_cmd.rd                   # 348566.7 MB/s  umc_mem_read_bandwidth
+    21.077522197      1,003,011,398 ns   duration_time                                                         
+    21.077522197      5,451,953,776      umc_cas_cmd.all                  # 348925.0 MB/s  umc_mem_bandwidth   
+    21.077522197      1,003,011,398 ns   duration_time                                                         
+    22.081518947          5,580,611      umc_cas_cmd.wr                   #    357.2 MB/s  umc_mem_write_bandwidth
+    22.081518947      1,003,996,750 ns   duration_time                                                         
+    22.081518947      5,452,364,620      umc_cas_cmd.rd                   # 348951.3 MB/s  umc_mem_read_bandwidth
+    22.081518947      1,003,996,750 ns   duration_time                                                         
+    22.081518947      5,457,937,917      umc_cas_cmd.all                  # 349308.0 MB/s  umc_mem_bandwidth   
+    22.081518947      1,003,996,750 ns   duration_time                                                         
+    23.086535694          5,524,315      umc_cas_cmd.wr                   #    353.6 MB/s  umc_mem_write_bandwidth
+    23.086535694      1,005,016,747 ns   duration_time                                                         
+    23.086535694      5,457,769,586      umc_cas_cmd.rd                   # 349297.3 MB/s  umc_mem_read_bandwidth
+    23.086535694      1,005,016,747 ns   duration_time                                                         
+    23.086535694      5,463,304,645      umc_cas_cmd.all                  # 349651.5 MB/s  umc_mem_bandwidth   
+    23.086535694      1,005,016,747 ns   duration_time                                                         
+    24.090521194          5,274,545      umc_cas_cmd.wr                   #    337.6 MB/s  umc_mem_write_bandwidth
+    24.090521194      1,003,985,500 ns   duration_time                                                         
+    24.090521194      5,453,991,702      umc_cas_cmd.rd                   # 349055.5 MB/s  umc_mem_read_bandwidth
+    24.090521194      1,003,985,500 ns   duration_time                                                         
+    24.090521194      5,459,259,030      umc_cas_cmd.all                  # 349392.6 MB/s  umc_mem_bandwidth   
+    24.090521194      1,003,985,500 ns   duration_time                                                         
+    25.095530245          6,641,041      umc_cas_cmd.wr                   #    425.0 MB/s  umc_mem_write_bandwidth
+    25.095530245      1,005,009,051 ns   duration_time                                                         
+    25.095530245      5,274,636,090      umc_cas_cmd.rd                   # 337576.7 MB/s  umc_mem_read_bandwidth
+    25.095530245      1,005,009,051 ns   duration_time                                                         
+    25.095530245      5,281,253,343      umc_cas_cmd.all                  # 338000.2 MB/s  umc_mem_bandwidth   
+    25.095530245      1,005,009,051 ns   duration_time                                                         
+    26.099529735          6,379,135      umc_cas_cmd.wr                   #    408.3 MB/s  umc_mem_write_bandwidth
+    26.099529735      1,003,999,490 ns   duration_time                                                         
+    26.099529735      5,348,566,294      umc_cas_cmd.rd                   # 342308.2 MB/s  umc_mem_read_bandwidth
+    26.099529735      1,003,999,490 ns   duration_time                                                         
+    26.099529735      5,354,977,830      umc_cas_cmd.all                  # 342718.6 MB/s  umc_mem_bandwidth   
+    26.099529735      1,003,999,490 ns   duration_time                                                         
+#           time             counts unit events
+    27.103520045          5,417,544      umc_cas_cmd.wr                   #    346.7 MB/s  umc_mem_write_bandwidth
+    27.103520045      1,003,990,310 ns   duration_time                                                         
+    27.103520045      5,452,577,534      umc_cas_cmd.rd                   # 348965.0 MB/s  umc_mem_read_bandwidth
+    27.103520045      1,003,990,310 ns   duration_time                                                         
+    27.103520045      5,457,998,002      umc_cas_cmd.all                  # 349311.9 MB/s  umc_mem_bandwidth   
+    27.103520045      1,003,990,310 ns   duration_time                                                         
+    28.107523464          5,456,195      umc_cas_cmd.wr                   #    349.2 MB/s  umc_mem_write_bandwidth
+    28.107523464      1,004,003,419 ns   duration_time                                                         
+    28.107523464      5,451,719,221      umc_cas_cmd.rd                   # 348910.0 MB/s  umc_mem_read_bandwidth
+    28.107523464      1,004,003,419 ns   duration_time                                                         
+    28.107523464      5,457,170,958      umc_cas_cmd.all                  # 349258.9 MB/s  umc_mem_bandwidth   
+    28.107523464      1,004,003,419 ns   duration_time                                                         
+    29.111522354          5,276,696      umc_cas_cmd.wr                   #    337.7 MB/s  umc_mem_write_bandwidth
+    29.111522354      1,003,998,890 ns   duration_time                                                         
+    29.111522354      5,453,575,630      umc_cas_cmd.rd                   # 349028.8 MB/s  umc_mem_read_bandwidth
+    29.111522354      1,003,998,890 ns   duration_time                                                         
+    29.111522354      5,458,845,064      umc_cas_cmd.all                  # 349366.1 MB/s  umc_mem_bandwidth   
+    29.111522354      1,003,998,890 ns   duration_time                                                         
+    30.115519334          5,590,141      umc_cas_cmd.wr                   #    357.8 MB/s  umc_mem_write_bandwidth
+    30.115519334      1,003,996,980 ns   duration_time                                                         
+    30.115519334      5,451,938,006      umc_cas_cmd.rd                   # 348924.0 MB/s  umc_mem_read_bandwidth
+    30.115519334      1,003,996,980 ns   duration_time                                                         
+    30.115519334      5,457,533,020      umc_cas_cmd.all                  # 349282.1 MB/s  umc_mem_bandwidth   
+    30.115519334      1,003,996,980 ns   duration_time                                                         
+    31.119521463          5,349,730      umc_cas_cmd.wr                   #    342.4 MB/s  umc_mem_write_bandwidth
+    31.119521463      1,004,002,129 ns   duration_time                                                         
+    31.119521463      5,453,495,359      umc_cas_cmd.rd                   # 349023.7 MB/s  umc_mem_read_bandwidth
+    31.119521463      1,004,002,129 ns   duration_time                                                         
+    31.119521463      5,458,838,978      umc_cas_cmd.all                  # 349365.7 MB/s  umc_mem_bandwidth   
+    31.119521463      1,004,002,129 ns   duration_time                                                         
+    32.123565763          4,448,819      umc_cas_cmd.wr                   #    284.7 MB/s  umc_mem_write_bandwidth
+    32.123565763      1,004,044,300 ns   duration_time                                                         
+    32.123565763      5,459,574,452      umc_cas_cmd.rd                   # 349412.8 MB/s  umc_mem_read_bandwidth
+    32.123565763      1,004,044,300 ns   duration_time                                                         
+    32.123565763      5,464,107,359      umc_cas_cmd.all                  # 349702.9 MB/s  umc_mem_bandwidth   
+    32.123565763      1,004,044,300 ns   duration_time                                                         
+    33.130533597          4,718,058      umc_cas_cmd.wr                   #    302.0 MB/s  umc_mem_write_bandwidth
+    33.130533597      1,006,967,834 ns   duration_time                                                         
+    33.130533597      5,474,350,014      umc_cas_cmd.rd                   # 350358.4 MB/s  umc_mem_read_bandwidth
+    33.130533597      1,006,967,834 ns   duration_time                                                         
+    33.130533597      5,478,988,178      umc_cas_cmd.all                  # 350655.2 MB/s  umc_mem_bandwidth   
+    33.130533597      1,006,967,834 ns   duration_time                                                         
+    34.132531964          4,344,679      umc_cas_cmd.wr                   #    278.1 MB/s  umc_mem_write_bandwidth
+    34.132531964      1,001,998,367 ns   duration_time                                                         
+    34.132531964      5,448,582,962      umc_cas_cmd.rd                   # 348709.3 MB/s  umc_mem_read_bandwidth
+    34.132531964      1,001,998,367 ns   duration_time                                                         
+    34.132531964      5,452,940,987      umc_cas_cmd.all                  # 348988.2 MB/s  umc_mem_bandwidth   
+    34.132531964      1,001,998,367 ns   duration_time                                                         
+    35.137521985          4,288,537      umc_cas_cmd.wr                   #    274.5 MB/s  umc_mem_write_bandwidth
+    35.137521985      1,004,990,021 ns   duration_time                                                         
+    35.137521985      5,466,185,442      umc_cas_cmd.rd                   # 349835.9 MB/s  umc_mem_read_bandwidth
+    35.137521985      1,004,990,021 ns   duration_time                                                         
+    35.137521985      5,470,454,285      umc_cas_cmd.all                  # 350109.1 MB/s  umc_mem_bandwidth   
+    35.137521985      1,004,990,021 ns   duration_time                                                         
+    36.139533542          4,301,952      umc_cas_cmd.wr                   #    275.3 MB/s  umc_mem_write_bandwidth
+    36.139533542      1,002,011,557 ns   duration_time                                                         
+    36.139533542      5,449,517,620      umc_cas_cmd.rd                   # 348769.1 MB/s  umc_mem_read_bandwidth
+    36.139533542      1,002,011,557 ns   duration_time                                                         
+    36.139533542      5,453,820,589      umc_cas_cmd.all                  # 349044.5 MB/s  umc_mem_bandwidth   
+    36.139533542      1,002,011,557 ns   duration_time                                                         
+    37.143525571          4,293,787      umc_cas_cmd.wr                   #    274.8 MB/s  umc_mem_write_bandwidth
+    37.143525571      1,003,992,029 ns   duration_time                                                         
+    37.143525571      5,461,932,096      umc_cas_cmd.rd                   # 349563.7 MB/s  umc_mem_read_bandwidth
+    37.143525571      1,003,992,029 ns   duration_time                                                         
+    37.143525571      5,466,232,081      umc_cas_cmd.all                  # 349838.9 MB/s  umc_mem_bandwidth   
+    37.143525571      1,003,992,029 ns   duration_time                                                         
+    38.148535883          5,114,082      umc_cas_cmd.wr                   #    327.3 MB/s  umc_mem_write_bandwidth
+    38.148535883      1,005,010,312 ns   duration_time                                                         
+    38.148535883      5,457,707,576      umc_cas_cmd.rd                   # 349293.3 MB/s  umc_mem_read_bandwidth
+    38.148535883      1,005,010,312 ns   duration_time                                                         
+    38.148535883      5,462,827,479      umc_cas_cmd.all                  # 349621.0 MB/s  umc_mem_bandwidth   
+    38.148535883      1,005,010,312 ns   duration_time                                                         
+    39.153651514          4,661,667      umc_cas_cmd.wr                   #    298.3 MB/s  umc_mem_write_bandwidth
+    39.153651514      1,005,115,631 ns   duration_time                                                         
+    39.153651514      5,463,771,063      umc_cas_cmd.rd                   # 349681.3 MB/s  umc_mem_read_bandwidth
+    39.153651514      1,005,115,631 ns   duration_time                                                         
+    39.153651514      5,468,419,097      umc_cas_cmd.all                  # 349978.8 MB/s  umc_mem_bandwidth   
+    39.153651514      1,005,115,631 ns   duration_time                                                         
+    40.158520586          4,443,795      umc_cas_cmd.wr                   #    284.4 MB/s  umc_mem_write_bandwidth
+    40.158520586      1,004,869,072 ns   duration_time                                                         
+    40.158520586      5,463,106,350      umc_cas_cmd.rd                   # 349638.8 MB/s  umc_mem_read_bandwidth
+    40.158520586      1,004,869,072 ns   duration_time                                                         
+    40.158520586      5,467,548,840      umc_cas_cmd.all                  # 349923.1 MB/s  umc_mem_bandwidth   
+    40.158520586      1,004,869,072 ns   duration_time                                                         
+    41.162520575          5,130,189      umc_cas_cmd.wr                   #    328.3 MB/s  umc_mem_write_bandwidth
+    41.162520575      1,003,999,989 ns   duration_time                                                         
+    41.162520575      5,454,708,690      umc_cas_cmd.rd                   # 349101.4 MB/s  umc_mem_read_bandwidth
+    41.162520575      1,003,999,989 ns   duration_time                                                         
+    41.162520575      5,459,841,494      umc_cas_cmd.all                  # 349429.9 MB/s  umc_mem_bandwidth   
+    41.162520575      1,003,999,989 ns   duration_time                                                         
+    42.166523985          4,613,950      umc_cas_cmd.wr                   #    295.3 MB/s  umc_mem_write_bandwidth
+    42.166523985      1,004,003,410 ns   duration_time                                                         
+    42.166523985      5,457,030,975      umc_cas_cmd.rd                   # 349250.0 MB/s  umc_mem_read_bandwidth
+    42.166523985      1,004,003,410 ns   duration_time                                                         
+    42.166523985      5,461,646,093      umc_cas_cmd.all                  # 349545.3 MB/s  umc_mem_bandwidth   
+    42.166523985      1,004,003,410 ns   duration_time                                                         
+    43.171518446          5,239,361      umc_cas_cmd.wr                   #    335.3 MB/s  umc_mem_write_bandwidth
+    43.171518446      1,004,994,461 ns   duration_time                                                         
+    43.171518446      5,456,748,286      umc_cas_cmd.rd                   # 349231.9 MB/s  umc_mem_read_bandwidth
+    43.171518446      1,004,994,461 ns   duration_time                                                         
+    43.171518446      5,461,993,817      umc_cas_cmd.all                  # 349567.6 MB/s  umc_mem_bandwidth   
+    43.171518446      1,004,994,461 ns   duration_time                                                         
+    44.173537073          4,696,341      umc_cas_cmd.wr                   #    300.6 MB/s  umc_mem_write_bandwidth
+    44.173537073      1,002,018,627 ns   duration_time                                                         
+    44.173537073      5,444,308,041      umc_cas_cmd.rd                   # 348435.7 MB/s  umc_mem_read_bandwidth
+    44.173537073      1,002,018,627 ns   duration_time                                                         
+    44.173537073      5,449,002,022      umc_cas_cmd.all                  # 348736.1 MB/s  umc_mem_bandwidth   
+    44.173537073      1,002,018,627 ns   duration_time                                                         
+    45.177517302          4,503,201      umc_cas_cmd.wr                   #    288.2 MB/s  umc_mem_write_bandwidth
+    45.177517302      1,003,980,229 ns   duration_time                                                         
+    45.177517302      5,457,903,180      umc_cas_cmd.rd                   # 349305.8 MB/s  umc_mem_read_bandwidth
+    45.177517302      1,003,980,229 ns   duration_time                                                         
+    45.177517302      5,462,402,414      umc_cas_cmd.all                  # 349593.8 MB/s  umc_mem_bandwidth   
+    45.177517302      1,003,980,229 ns   duration_time                                                         
+    46.181519842          4,693,586      umc_cas_cmd.wr                   #    300.4 MB/s  umc_mem_write_bandwidth
+    46.181519842      1,004,002,540 ns   duration_time                                                         
+    46.181519842      5,455,970,901      umc_cas_cmd.rd                   # 349182.1 MB/s  umc_mem_read_bandwidth
+    46.181519842      1,004,002,540 ns   duration_time                                                         
+    46.181519842      5,460,667,304      umc_cas_cmd.all                  # 349482.7 MB/s  umc_mem_bandwidth   
+    46.181519842      1,004,002,540 ns   duration_time                                                         
+    47.185520442          4,506,471      umc_cas_cmd.wr                   #    288.4 MB/s  umc_mem_write_bandwidth
+    47.185520442      1,004,000,600 ns   duration_time                                                         
+    47.185520442      5,458,349,404      umc_cas_cmd.rd                   # 349334.4 MB/s  umc_mem_read_bandwidth
+    47.185520442      1,004,000,600 ns   duration_time                                                         
+    47.185520442      5,462,852,612      umc_cas_cmd.all                  # 349622.6 MB/s  umc_mem_bandwidth   
+    47.185520442      1,004,000,600 ns   duration_time                                                         
+    48.189520021          4,383,564      umc_cas_cmd.wr                   #    280.5 MB/s  umc_mem_write_bandwidth
+    48.189520021      1,003,999,579 ns   duration_time                                                         
+    48.189520021      5,458,799,609      umc_cas_cmd.rd                   # 349363.2 MB/s  umc_mem_read_bandwidth
+    48.189520021      1,003,999,579 ns   duration_time                                                         
+    48.189520021      5,463,185,622      umc_cas_cmd.all                  # 349643.9 MB/s  umc_mem_bandwidth   
+    48.189520021      1,003,999,579 ns   duration_time                                                         
+    49.193518431          4,456,414      umc_cas_cmd.wr                   #    285.2 MB/s  umc_mem_write_bandwidth
+    49.193518431      1,003,998,410 ns   duration_time                                                         
+    49.193518431      5,459,212,878      umc_cas_cmd.rd                   # 349389.6 MB/s  umc_mem_read_bandwidth
+    49.193518431      1,003,998,410 ns   duration_time                                                         
+    49.193518431      5,463,669,683      umc_cas_cmd.all                  # 349674.9 MB/s  umc_mem_bandwidth   
+    49.193518431      1,003,998,410 ns   duration_time                                                         
+    50.197520241          4,530,056      umc_cas_cmd.wr                   #    289.9 MB/s  umc_mem_write_bandwidth
+    50.197520241      1,004,001,810 ns   duration_time                                                         
+    50.197520241      5,458,373,297      umc_cas_cmd.rd                   # 349335.9 MB/s  umc_mem_read_bandwidth
+    50.197520241      1,004,001,810 ns   duration_time                                                         
+    50.197520241      5,462,908,766      umc_cas_cmd.all                  # 349626.2 MB/s  umc_mem_bandwidth   
+    50.197520241      1,004,001,810 ns   duration_time                                                         
+    51.201521941          4,410,308      umc_cas_cmd.wr                   #    282.3 MB/s  umc_mem_write_bandwidth
+    51.201521941      1,004,001,700 ns   duration_time                                                         
+    51.201521941      5,459,723,517      umc_cas_cmd.rd                   # 349422.3 MB/s  umc_mem_read_bandwidth
+    51.201521941      1,004,001,700 ns   duration_time                                                         
+    51.201521941      5,464,131,478      umc_cas_cmd.all                  # 349704.4 MB/s  umc_mem_bandwidth   
+    51.201521941      1,004,001,700 ns   duration_time                                                         
+    52.205527920          4,855,819      umc_cas_cmd.wr                   #    310.8 MB/s  umc_mem_write_bandwidth
+    52.205527920      1,004,005,979 ns   duration_time                                                         
+    52.205527920      5,454,094,189      umc_cas_cmd.rd                   # 349062.0 MB/s  umc_mem_read_bandwidth
+    52.205527920      1,004,005,979 ns   duration_time                                                         
+    52.205527920      5,458,944,567      umc_cas_cmd.all                  # 349372.5 MB/s  umc_mem_bandwidth   
+    52.205527920      1,004,005,979 ns   duration_time                                                         
+#           time             counts unit events
+    53.209526930          4,572,296      umc_cas_cmd.wr                   #    292.6 MB/s  umc_mem_write_bandwidth
+    53.209526930      1,003,999,010 ns   duration_time                                                         
+    53.209526930      5,456,795,746      umc_cas_cmd.rd                   # 349234.9 MB/s  umc_mem_read_bandwidth
+    53.209526930      1,003,999,010 ns   duration_time                                                         
+    53.209526930      5,461,381,314      umc_cas_cmd.all                  # 349528.4 MB/s  umc_mem_bandwidth   
+    53.209526930      1,003,999,010 ns   duration_time                                                         
+    54.215535913          4,810,824      umc_cas_cmd.wr                   #    307.9 MB/s  umc_mem_write_bandwidth
+    54.215535913      1,006,008,983 ns   duration_time                                                         
+    54.215535913      5,466,856,522      umc_cas_cmd.rd                   # 349878.8 MB/s  umc_mem_read_bandwidth
+    54.215535913      1,006,008,983 ns   duration_time                                                         
+    54.215535913      5,471,661,044      umc_cas_cmd.all                  # 350186.3 MB/s  umc_mem_bandwidth   
+    54.215535913      1,006,008,983 ns   duration_time                                                         
+    55.217536080          4,685,630      umc_cas_cmd.wr                   #    299.9 MB/s  umc_mem_write_bandwidth
+    55.217536080      1,002,000,167 ns   duration_time                                                         
+    55.217536080      5,445,103,808      umc_cas_cmd.rd                   # 348486.6 MB/s  umc_mem_read_bandwidth
+    55.217536080      1,002,000,167 ns   duration_time                                                         
+    55.217536080      5,449,786,228      umc_cas_cmd.all                  # 348786.3 MB/s  umc_mem_bandwidth   
+    55.217536080      1,002,000,167 ns   duration_time                                                         
+    56.223520982          4,743,405      umc_cas_cmd.wr                   #    303.6 MB/s  umc_mem_write_bandwidth
+    56.223520982      1,005,984,902 ns   duration_time                                                         
+    56.223520982      5,466,817,871      umc_cas_cmd.rd                   # 349876.3 MB/s  umc_mem_read_bandwidth
+    56.223520982      1,005,984,902 ns   duration_time                                                         
+    56.223520982      5,471,568,947      umc_cas_cmd.all                  # 350180.4 MB/s  umc_mem_bandwidth   
+    56.223520982      1,005,984,902 ns   duration_time                                                         
+    57.225534769          4,904,660      umc_cas_cmd.wr                   #    313.9 MB/s  umc_mem_write_bandwidth
+    57.225534769      1,002,013,787 ns   duration_time                                                         
+    57.225534769      5,443,465,755      umc_cas_cmd.rd                   # 348381.8 MB/s  umc_mem_read_bandwidth
+    57.225534769      1,002,013,787 ns   duration_time                                                         
+    57.225534769      5,448,359,301      umc_cas_cmd.all                  # 348695.0 MB/s  umc_mem_bandwidth   
+    57.225534769      1,002,013,787 ns   duration_time                                                         
+    58.231524272          4,554,809      umc_cas_cmd.wr                   #    291.5 MB/s  umc_mem_write_bandwidth
+    58.231524272      1,005,989,503 ns   duration_time                                                         
+    58.231524272      5,468,107,023      umc_cas_cmd.rd                   # 349958.8 MB/s  umc_mem_read_bandwidth
+    58.231524272      1,005,989,503 ns   duration_time                                                         
+    58.231524272      5,472,659,346      umc_cas_cmd.all                  # 350250.2 MB/s  umc_mem_bandwidth   
+    58.231524272      1,005,989,503 ns   duration_time                                                         
+    59.239535578          4,813,346      umc_cas_cmd.wr                   #    308.1 MB/s  umc_mem_write_bandwidth
+    59.239535578      1,008,011,306 ns   duration_time                                                         
+    59.239535578      5,477,674,118      umc_cas_cmd.rd                   # 350571.1 MB/s  umc_mem_read_bandwidth
+    59.239535578      1,008,011,306 ns   duration_time                                                         
+    59.239535578      5,482,509,750      umc_cas_cmd.all                  # 350880.6 MB/s  umc_mem_bandwidth   
+    59.239535578      1,008,011,306 ns   duration_time                                                         
+    60.245525011          4,785,651      umc_cas_cmd.wr                   #    306.3 MB/s  umc_mem_write_bandwidth
+    60.245525011      1,005,989,433 ns   duration_time                                                         
+    60.245525011      5,465,568,992      umc_cas_cmd.rd                   # 349796.4 MB/s  umc_mem_read_bandwidth
+    60.245525011      1,005,989,433 ns   duration_time                                                         
+    60.245525011      5,470,349,046      umc_cas_cmd.all                  # 350102.3 MB/s  umc_mem_bandwidth   
+    60.245525011      1,005,989,433 ns   duration_time                                                         
+    61.247533007          4,312,633      umc_cas_cmd.wr                   #    276.0 MB/s  umc_mem_write_bandwidth
+    61.247533007      1,002,007,996 ns   duration_time                                                         
+    61.247533007      5,449,771,110      umc_cas_cmd.rd                   # 348785.4 MB/s  umc_mem_read_bandwidth
+    61.247533007      1,002,007,996 ns   duration_time                                                         
+    61.247533007      5,454,070,307      umc_cas_cmd.all                  # 349060.5 MB/s  umc_mem_bandwidth   
+    61.247533007      1,002,007,996 ns   duration_time                                                         
+    62.250520395          4,390,006      umc_cas_cmd.wr                   #    281.0 MB/s  umc_mem_write_bandwidth
+    62.250520395      1,002,987,388 ns   duration_time                                                         
+    62.250520395      5,454,082,070      umc_cas_cmd.rd                   # 349061.3 MB/s  umc_mem_read_bandwidth
+    62.250520395      1,002,987,388 ns   duration_time                                                         
+    62.250520395      5,458,474,027      umc_cas_cmd.all                  # 349342.3 MB/s  umc_mem_bandwidth   
+    62.250520395      1,002,987,388 ns   duration_time                                                         
+    63.254516985          4,336,639      umc_cas_cmd.wr                   #    277.5 MB/s  umc_mem_write_bandwidth
+    63.254516985      1,003,996,590 ns   duration_time                                                         
+    63.254516985      5,460,851,555      umc_cas_cmd.rd                   # 349494.5 MB/s  umc_mem_read_bandwidth
+    63.254516985      1,003,996,590 ns   duration_time                                                         
+    63.254516985      5,465,195,545      umc_cas_cmd.all                  # 349772.5 MB/s  umc_mem_bandwidth   
+    63.254516985      1,003,996,590 ns   duration_time                                                         
+    64.258522665          4,425,000      umc_cas_cmd.wr                   #    283.2 MB/s  umc_mem_write_bandwidth
+    64.258522665      1,004,005,680 ns   duration_time                                                         
+    64.258522665      5,460,395,598      umc_cas_cmd.rd                   # 349465.3 MB/s  umc_mem_read_bandwidth
+    64.258522665      1,004,005,680 ns   duration_time                                                         
+    64.258522665      5,464,808,258      umc_cas_cmd.all                  # 349747.7 MB/s  umc_mem_bandwidth   
+    64.258522665      1,004,005,680 ns   duration_time                                                         
+    65.262521384          4,714,813      umc_cas_cmd.wr                   #    301.7 MB/s  umc_mem_write_bandwidth
+    65.262521384      1,003,998,719 ns   duration_time                                                         
+    65.262521384      5,455,614,858      umc_cas_cmd.rd                   # 349159.4 MB/s  umc_mem_read_bandwidth
+    65.262521384      1,003,998,719 ns   duration_time                                                         
+    65.262521384      5,460,334,715      umc_cas_cmd.all                  # 349461.4 MB/s  umc_mem_bandwidth   
+    65.262521384      1,003,998,719 ns   duration_time                                                         
+    66.266516744          4,759,854      umc_cas_cmd.wr                   #    304.6 MB/s  umc_mem_write_bandwidth
+    66.266516744      1,003,995,360 ns   duration_time                                                         
+    66.266516744      5,454,737,873      umc_cas_cmd.rd                   # 349103.2 MB/s  umc_mem_read_bandwidth
+    66.266516744      1,003,995,360 ns   duration_time                                                         
+    66.266516744      5,459,494,950      umc_cas_cmd.all                  # 349407.7 MB/s  umc_mem_bandwidth   
+    66.266516744      1,003,995,360 ns   duration_time                                                         
+    67.270521044          4,461,335      umc_cas_cmd.wr                   #    285.5 MB/s  umc_mem_write_bandwidth
+    67.270521044      1,004,004,300 ns   duration_time                                                         
+    67.270521044      5,458,469,061      umc_cas_cmd.rd                   # 349342.0 MB/s  umc_mem_read_bandwidth
+    67.270521044      1,004,004,300 ns   duration_time                                                         
+    67.270521044      5,462,942,845      umc_cas_cmd.all                  # 349628.3 MB/s  umc_mem_bandwidth   
+    67.270521044      1,004,004,300 ns   duration_time                                                         
+    68.274523273          4,870,726      umc_cas_cmd.wr                   #    311.7 MB/s  umc_mem_write_bandwidth
+    68.274523273      1,004,002,229 ns   duration_time                                                         
+    68.274523273      5,453,796,823      umc_cas_cmd.rd                   # 349043.0 MB/s  umc_mem_read_bandwidth
+    68.274523273      1,004,002,229 ns   duration_time                                                         
+    68.274523273      5,458,669,508      umc_cas_cmd.all                  # 349354.8 MB/s  umc_mem_bandwidth   
+    68.274523273      1,004,002,229 ns   duration_time                                                         
+    69.278522083          4,688,157      umc_cas_cmd.wr                   #    300.0 MB/s  umc_mem_write_bandwidth
+    69.278522083      1,003,998,810 ns   duration_time                                                         
+    69.278522083      5,456,266,978      umc_cas_cmd.rd                   # 349201.1 MB/s  umc_mem_read_bandwidth
+    69.278522083      1,003,998,810 ns   duration_time                                                         
+    69.278522083      5,460,933,794      umc_cas_cmd.all                  # 349499.8 MB/s  umc_mem_bandwidth   
+    69.278522083      1,003,998,810 ns   duration_time                                                         
+    70.284543776          4,841,275      umc_cas_cmd.wr                   #    309.8 MB/s  umc_mem_write_bandwidth
+    70.284543776      1,006,021,693 ns   duration_time                                                         
+    70.284543776      5,465,892,775      umc_cas_cmd.rd                   # 349817.1 MB/s  umc_mem_read_bandwidth
+    70.284543776      1,006,021,693 ns   duration_time                                                         
+    70.284543776      5,470,747,569      umc_cas_cmd.all                  # 350127.8 MB/s  umc_mem_bandwidth   
+    70.284543776      1,006,021,693 ns   duration_time                                                         
+    71.289521557          4,642,521      umc_cas_cmd.wr                   #    297.1 MB/s  umc_mem_write_bandwidth
+    71.289521557      1,004,977,781 ns   duration_time                                                         
+    71.289521557      5,462,864,358      umc_cas_cmd.rd                   # 349623.3 MB/s  umc_mem_read_bandwidth
+    71.289521557      1,004,977,781 ns   duration_time                                                         
+    71.289521557      5,467,502,963      umc_cas_cmd.all                  # 349920.2 MB/s  umc_mem_bandwidth   
+    71.289521557      1,004,977,781 ns   duration_time                                                         
+    72.294519079          4,641,683      umc_cas_cmd.wr                   #    297.1 MB/s  umc_mem_write_bandwidth
+    72.294519079      1,004,997,522 ns   duration_time                                                         
+    72.294519079      5,461,525,110      umc_cas_cmd.rd                   # 349537.6 MB/s  umc_mem_read_bandwidth
+    72.294519079      1,004,997,522 ns   duration_time                                                         
+    72.294519079      5,466,170,178      umc_cas_cmd.all                  # 349834.9 MB/s  umc_mem_bandwidth   
+    72.294519079      1,004,997,522 ns   duration_time                                                         
+    73.298519178          4,726,161      umc_cas_cmd.wr                   #    302.5 MB/s  umc_mem_write_bandwidth
+    73.298519178      1,004,000,099 ns   duration_time                                                         
+    73.298519178      5,456,090,220      umc_cas_cmd.rd                   # 349189.8 MB/s  umc_mem_read_bandwidth
+    73.298519178      1,004,000,099 ns   duration_time                                                         
+    73.298519178      5,460,809,772      umc_cas_cmd.all                  # 349491.8 MB/s  umc_mem_bandwidth   
+    73.298519178      1,004,000,099 ns   duration_time                                                         
+    74.303522740          4,784,775      umc_cas_cmd.wr                   #    306.2 MB/s  umc_mem_write_bandwidth
+    74.303522740      1,005,003,562 ns   duration_time                                                         
+    74.303522740      5,462,772,777      umc_cas_cmd.rd                   # 349617.5 MB/s  umc_mem_read_bandwidth
+    74.303522740      1,005,003,562 ns   duration_time                                                         
+    74.303522740      5,467,549,843      umc_cas_cmd.all                  # 349923.2 MB/s  umc_mem_bandwidth   
+    74.303522740      1,005,003,562 ns   duration_time                                                         
+    75.305534556          4,482,497      umc_cas_cmd.wr                   #    286.9 MB/s  umc_mem_write_bandwidth
+    75.305534556      1,002,011,816 ns   duration_time                                                         
+    75.305534556      5,448,053,272      umc_cas_cmd.rd                   # 348675.4 MB/s  umc_mem_read_bandwidth
+    75.305534556      1,002,011,816 ns   duration_time                                                         
+    75.305534556      5,452,559,753      umc_cas_cmd.all                  # 348963.8 MB/s  umc_mem_bandwidth   
+    75.305534556      1,002,011,816 ns   duration_time                                                         
+    76.308518534          4,404,250      umc_cas_cmd.wr                   #    281.9 MB/s  umc_mem_write_bandwidth
+    76.308518534      1,002,983,978 ns   duration_time                                                         
+    76.308518534      5,454,469,061      umc_cas_cmd.rd                   # 349086.0 MB/s  umc_mem_read_bandwidth
+    76.308518534      1,002,983,978 ns   duration_time                                                         
+    76.308518534      5,458,854,669      umc_cas_cmd.all                  # 349366.7 MB/s  umc_mem_bandwidth   
+    76.308518534      1,002,983,978 ns   duration_time                                                         
+    77.312522094          4,412,310      umc_cas_cmd.wr                   #    282.4 MB/s  umc_mem_write_bandwidth
+    77.312522094      1,004,003,560 ns   duration_time                                                         
+    77.312522094      5,460,475,446      umc_cas_cmd.rd                   # 349470.4 MB/s  umc_mem_read_bandwidth
+    77.312522094      1,004,003,560 ns   duration_time                                                         
+    77.312522094      5,464,895,446      umc_cas_cmd.all                  # 349753.3 MB/s  umc_mem_bandwidth   
+    77.312522094      1,004,003,560 ns   duration_time                                                         
+    78.316520934          4,463,838      umc_cas_cmd.wr                   #    285.7 MB/s  umc_mem_write_bandwidth
+    78.316520934      1,003,998,840 ns   duration_time                                                         
+    78.316520934      5,459,622,554      umc_cas_cmd.rd                   # 349415.8 MB/s  umc_mem_read_bandwidth
+    78.316520934      1,003,998,840 ns   duration_time                                                         
+    78.316520934      5,464,087,671      umc_cas_cmd.all                  # 349701.6 MB/s  umc_mem_bandwidth   
+    78.316520934      1,003,998,840 ns   duration_time                                                         
+#           time             counts unit events
+    79.320520353          4,876,365      umc_cas_cmd.wr                   #    312.1 MB/s  umc_mem_write_bandwidth
+    79.320520353      1,003,999,419 ns   duration_time                                                         
+    79.320520353      5,452,845,814      umc_cas_cmd.rd                   # 348982.1 MB/s  umc_mem_read_bandwidth
+    79.320520353      1,003,999,419 ns   duration_time                                                         
+    79.320520353      5,457,718,628      umc_cas_cmd.all                  # 349294.0 MB/s  umc_mem_bandwidth   
+    79.320520353      1,003,999,419 ns   duration_time                                                         
+    80.324524633          4,546,880      umc_cas_cmd.wr                   #    291.0 MB/s  umc_mem_write_bandwidth
+    80.324524633      1,004,004,280 ns   duration_time                                                         
+    80.324524633      5,457,406,851      umc_cas_cmd.rd                   # 349274.0 MB/s  umc_mem_read_bandwidth
+    80.324524633      1,004,004,280 ns   duration_time                                                         
+    80.324524633      5,461,933,162      umc_cas_cmd.all                  # 349563.7 MB/s  umc_mem_bandwidth   
+    80.324524633      1,004,004,280 ns   duration_time                                                         
+    81.328526693          4,547,660      umc_cas_cmd.wr                   #    291.1 MB/s  umc_mem_write_bandwidth
+    81.328526693      1,004,002,060 ns   duration_time                                                         
+    81.328526693      5,457,005,791      umc_cas_cmd.rd                   # 349248.4 MB/s  umc_mem_read_bandwidth
+    81.328526693      1,004,002,060 ns   duration_time                                                         
+    81.328526693      5,461,565,976      umc_cas_cmd.all                  # 349540.2 MB/s  umc_mem_bandwidth   
+    81.328526693      1,004,002,060 ns   duration_time                                                         
+    82.333531024          4,606,584      umc_cas_cmd.wr                   #    294.8 MB/s  umc_mem_write_bandwidth
+    82.333531024      1,005,004,331 ns   duration_time                                                         
+    82.333531024      5,462,590,835      umc_cas_cmd.rd                   # 349605.8 MB/s  umc_mem_read_bandwidth
+    82.333531024      1,005,004,331 ns   duration_time                                                         
+    82.333531024      5,467,291,968      umc_cas_cmd.all                  # 349906.7 MB/s  umc_mem_bandwidth   
+    82.333531024      1,005,004,331 ns   duration_time                                                         
+    83.338530565          4,853,909      umc_cas_cmd.wr                   #    310.7 MB/s  umc_mem_write_bandwidth
+    83.338530565      1,004,999,541 ns   duration_time                                                         
+    83.338530565      5,459,089,906      umc_cas_cmd.rd                   # 349381.8 MB/s  umc_mem_read_bandwidth
+    83.338530565      1,004,999,541 ns   duration_time                                                         
+    83.338530565      5,463,854,516      umc_cas_cmd.all                  # 349686.7 MB/s  umc_mem_bandwidth   
+    83.338530565      1,004,999,541 ns   duration_time                                                         
+    84.342559725          4,593,095      umc_cas_cmd.wr                   #    294.0 MB/s  umc_mem_write_bandwidth
+    84.342559725      1,004,029,160 ns   duration_time                                                         
+    84.342559725      5,456,583,676      umc_cas_cmd.rd                   # 349221.4 MB/s  umc_mem_read_bandwidth
+    84.342559725      1,004,029,160 ns   duration_time                                                         
+    84.342559725      5,461,180,793      umc_cas_cmd.all                  # 349515.6 MB/s  umc_mem_bandwidth   
+    84.342559725      1,004,029,160 ns   duration_time                                                         
+    85.346523495          4,495,222      umc_cas_cmd.wr                   #    287.7 MB/s  umc_mem_write_bandwidth
+    85.346523495      1,003,963,770 ns   duration_time                                                         
+    85.346523495      5,457,797,479      umc_cas_cmd.rd                   # 349299.0 MB/s  umc_mem_read_bandwidth
+    85.346523495      1,003,963,770 ns   duration_time                                                         
+    85.346523495      5,462,299,580      umc_cas_cmd.all                  # 349587.2 MB/s  umc_mem_bandwidth   
+    85.346523495      1,003,963,770 ns   duration_time                                                         
+    86.352540778          4,629,038      umc_cas_cmd.wr                   #    296.3 MB/s  umc_mem_write_bandwidth
+    86.352540778      1,006,017,283 ns   duration_time                                                         
+    86.352540778      5,467,334,183      umc_cas_cmd.rd                   # 349909.4 MB/s  umc_mem_read_bandwidth
+    86.352540778      1,006,017,283 ns   duration_time                                                         
+    86.352540778      5,471,958,025      umc_cas_cmd.all                  # 350205.3 MB/s  umc_mem_bandwidth   
+    86.352540778      1,006,017,283 ns   duration_time                                                         
+    87.360535809          4,577,187      umc_cas_cmd.wr                   #    292.9 MB/s  umc_mem_write_bandwidth
+    87.360535809      1,007,995,031 ns   duration_time                                                         
+    87.360535809      5,479,372,665      umc_cas_cmd.rd                   # 350679.9 MB/s  umc_mem_read_bandwidth
+    87.360535809      1,007,995,031 ns   duration_time                                                         
+    87.360535809      5,483,955,184      umc_cas_cmd.all                  # 350973.1 MB/s  umc_mem_bandwidth   
+    87.360535809      1,007,995,031 ns   duration_time                                                         
+    88.364520558          4,397,896      umc_cas_cmd.wr                   #    281.5 MB/s  umc_mem_write_bandwidth
+    88.364520558      1,003,984,749 ns   duration_time                                                         
+    88.364520558      5,459,266,263      umc_cas_cmd.rd                   # 349393.0 MB/s  umc_mem_read_bandwidth
+    88.364520558      1,003,984,749 ns   duration_time                                                         
+    88.364520558      5,463,662,589      umc_cas_cmd.all                  # 349674.4 MB/s  umc_mem_bandwidth   
+    88.364520558      1,003,984,749 ns   duration_time                                                         
+    89.368524268          4,397,832      umc_cas_cmd.wr                   #    281.5 MB/s  umc_mem_write_bandwidth
+    89.368524268      1,004,003,710 ns   duration_time                                                         
+    89.368524268      5,459,750,109      umc_cas_cmd.rd                   # 349424.0 MB/s  umc_mem_read_bandwidth
+    89.368524268      1,004,003,710 ns   duration_time                                                         
+    89.368524268      5,464,148,147      umc_cas_cmd.all                  # 349705.5 MB/s  umc_mem_bandwidth   
+    89.368524268      1,004,003,710 ns   duration_time                                                         
+    90.372518877          4,275,179      umc_cas_cmd.wr                   #    273.6 MB/s  umc_mem_write_bandwidth
+    90.372518877      1,003,994,609 ns   duration_time                                                         
+    90.372518877      5,461,143,627      umc_cas_cmd.rd                   # 349513.2 MB/s  umc_mem_read_bandwidth
+    90.372518877      1,003,994,609 ns   duration_time                                                         
+    90.372518877      5,465,416,587      umc_cas_cmd.all                  # 349786.7 MB/s  umc_mem_bandwidth   
+    90.372518877      1,003,994,609 ns   duration_time                                                         
+    91.376522936          4,281,692      umc_cas_cmd.wr                   #    274.0 MB/s  umc_mem_write_bandwidth
+    91.376522936      1,004,004,059 ns   duration_time                                                         
+    91.376522936      5,460,827,163      umc_cas_cmd.rd                   # 349492.9 MB/s  umc_mem_read_bandwidth
+    91.376522936      1,004,004,059 ns   duration_time                                                         
+    91.376522936      5,465,102,153      umc_cas_cmd.all                  # 349766.5 MB/s  umc_mem_bandwidth   
+    91.376522936      1,004,004,059 ns   duration_time                                                         
+    92.379566184          4,803,744      umc_cas_cmd.wr                   #    307.4 MB/s  umc_mem_write_bandwidth
+    92.379566184      1,003,043,248 ns   duration_time                                                         
+    92.379566184      5,449,094,094      umc_cas_cmd.rd                   # 348742.0 MB/s  umc_mem_read_bandwidth
+    92.379566184      1,003,043,248 ns   duration_time                                                         
+    92.379566184      5,453,905,008      umc_cas_cmd.all                  # 349049.9 MB/s  umc_mem_bandwidth   
+    92.379566184      1,003,043,248 ns   duration_time                                                         
+    93.384528835          4,543,207      umc_cas_cmd.wr                   #    290.8 MB/s  umc_mem_write_bandwidth
+    93.384528835      1,004,962,651 ns   duration_time                                                         
+    93.384528835      5,462,069,645      umc_cas_cmd.rd                   # 349572.5 MB/s  umc_mem_read_bandwidth
+    93.384528835      1,004,962,651 ns   duration_time                                                         
+    93.384528835      5,466,604,842      umc_cas_cmd.all                  # 349862.7 MB/s  umc_mem_bandwidth   
+    93.384528835      1,004,962,651 ns   duration_time                                                         
+    94.388530064          4,474,055      umc_cas_cmd.wr                   #    286.3 MB/s  umc_mem_write_bandwidth
+    94.388530064      1,004,001,229 ns   duration_time                                                         
+    94.388530064      5,458,368,172      umc_cas_cmd.rd                   # 349335.6 MB/s  umc_mem_read_bandwidth
+    94.388530064      1,004,001,229 ns   duration_time                                                         
+    94.388530064      5,462,860,834      umc_cas_cmd.all                  # 349623.1 MB/s  umc_mem_bandwidth   
+    94.388530064      1,004,001,229 ns   duration_time                                                         
+    95.392528724          4,670,728      umc_cas_cmd.wr                   #    298.9 MB/s  umc_mem_write_bandwidth
+    95.392528724      1,003,998,660 ns   duration_time                                                         
+    95.392528724      5,456,282,677      umc_cas_cmd.rd                   # 349202.1 MB/s  umc_mem_read_bandwidth
+    95.392528724      1,003,998,660 ns   duration_time                                                         
+    95.392528724      5,460,942,963      umc_cas_cmd.all                  # 349500.3 MB/s  umc_mem_bandwidth   
+    95.392528724      1,003,998,660 ns   duration_time                                                         
+    96.398529476          4,823,403      umc_cas_cmd.wr                   #    308.7 MB/s  umc_mem_write_bandwidth
+    96.398529476      1,006,000,752 ns   duration_time                                                         
+    96.398529476      5,464,935,296      umc_cas_cmd.rd                   # 349755.9 MB/s  umc_mem_read_bandwidth
+    96.398529476      1,006,000,752 ns   duration_time                                                         
+    96.398529476      5,469,761,119      umc_cas_cmd.all                  # 350064.7 MB/s  umc_mem_bandwidth   
+    96.398529476      1,006,000,752 ns   duration_time                                                         
+    97.402531456          4,661,752      umc_cas_cmd.wr                   #    298.4 MB/s  umc_mem_write_bandwidth
+    97.402531456      1,004,001,980 ns   duration_time                                                         
+    97.402531456      5,456,158,866      umc_cas_cmd.rd                   # 349194.2 MB/s  umc_mem_read_bandwidth
+    97.402531456      1,004,001,980 ns   duration_time                                                         
+    97.402531456      5,460,814,193      umc_cas_cmd.all                  # 349492.1 MB/s  umc_mem_bandwidth   
+    97.402531456      1,004,001,980 ns   duration_time                                                         
+    98.408520898          4,523,837      umc_cas_cmd.wr                   #    289.5 MB/s  umc_mem_write_bandwidth
+    98.408520898      1,005,989,442 ns   duration_time                                                         
+    98.408520898      5,467,322,371      umc_cas_cmd.rd                   # 349908.6 MB/s  umc_mem_read_bandwidth
+    98.408520898      1,005,989,442 ns   duration_time                                                         
+    98.408520898      5,471,854,088      umc_cas_cmd.all                  # 350198.7 MB/s  umc_mem_bandwidth   
+    98.408520898      1,005,989,442 ns   duration_time                                                         
+    99.410542674          4,596,467      umc_cas_cmd.wr                   #    294.2 MB/s  umc_mem_write_bandwidth
+    99.410542674      1,002,021,776 ns   duration_time                                                         
+    99.410542674      5,445,374,491      umc_cas_cmd.rd                   # 348504.0 MB/s  umc_mem_read_bandwidth
+    99.410542674      1,002,021,776 ns   duration_time                                                         
+    99.410542674      5,449,967,327      umc_cas_cmd.all                  # 348797.9 MB/s  umc_mem_bandwidth   
+    99.410542674      1,002,021,776 ns   duration_time                                                         
+   100.414522944          4,555,979      umc_cas_cmd.wr                   #    291.6 MB/s  umc_mem_write_bandwidth
+   100.414522944      1,003,980,270 ns   duration_time                                                         
+   100.414522944      5,457,579,169      umc_cas_cmd.rd                   # 349285.1 MB/s  umc_mem_read_bandwidth
+   100.414522944      1,003,980,270 ns   duration_time                                                         
+   100.414522944      5,462,190,836      umc_cas_cmd.all                  # 349580.2 MB/s  umc_mem_bandwidth   
+   100.414522944      1,003,980,270 ns   duration_time                                                         
+   101.421529018          4,365,882      umc_cas_cmd.wr                   #    279.4 MB/s  umc_mem_write_bandwidth
+   101.421529018      1,007,006,074 ns   duration_time                                                         
+   101.421529018      5,476,860,671      umc_cas_cmd.rd                   # 350519.1 MB/s  umc_mem_read_bandwidth
+   101.421529018      1,007,006,074 ns   duration_time                                                         
+   101.421529018      5,481,161,323      umc_cas_cmd.all                  # 350794.3 MB/s  umc_mem_bandwidth   
+   101.421529018      1,007,006,074 ns   duration_time                                                         
+   102.424533096          4,611,215      umc_cas_cmd.wr                   #    295.1 MB/s  umc_mem_write_bandwidth
+   102.424533096      1,003,004,078 ns   duration_time                                                         
+   102.424533096      5,458,288,889      umc_cas_cmd.rd                   # 349330.5 MB/s  umc_mem_read_bandwidth
+   102.424533096      1,003,004,078 ns   duration_time                                                         
+   102.424533096      5,462,941,366      umc_cas_cmd.all                  # 349628.2 MB/s  umc_mem_bandwidth   
+   102.424533096      1,003,004,078 ns   duration_time                                                         
+   103.432527452          4,359,283      umc_cas_cmd.wr                   #    279.0 MB/s  umc_mem_write_bandwidth
+   103.432527452      1,007,994,356 ns   duration_time                                                         
+   103.432527452      5,476,911,254      umc_cas_cmd.rd                   # 350522.3 MB/s  umc_mem_read_bandwidth
+   103.432527452      1,007,994,356 ns   duration_time                                                         
+   103.432527452      5,481,231,890      umc_cas_cmd.all                  # 350798.8 MB/s  umc_mem_bandwidth   
+   103.432527452      1,007,994,356 ns   duration_time                                                         
+   104.434536728          4,271,251      umc_cas_cmd.wr                   #    273.4 MB/s  umc_mem_write_bandwidth
+   104.434536728      1,002,009,276 ns   duration_time                                                         
+   104.434536728      5,450,264,596      umc_cas_cmd.rd                   # 348816.9 MB/s  umc_mem_read_bandwidth
+   104.434536728      1,002,009,276 ns   duration_time                                                         
+   104.434536728      5,454,542,243      umc_cas_cmd.all                  # 349090.7 MB/s  umc_mem_bandwidth   
+   104.434536728      1,002,009,276 ns   duration_time                                                         
+#           time             counts unit events
+   105.439521169          4,742,816      umc_cas_cmd.wr                   #    303.5 MB/s  umc_mem_write_bandwidth
+   105.439521169      1,004,984,441 ns   duration_time                                                         
+   105.439521169      5,461,092,693      umc_cas_cmd.rd                   # 349509.9 MB/s  umc_mem_read_bandwidth
+   105.439521169      1,004,984,441 ns   duration_time                                                         
+   105.439521169      5,465,838,153      umc_cas_cmd.all                  # 349813.6 MB/s  umc_mem_bandwidth   
+   105.439521169      1,004,984,441 ns   duration_time                                                         
+   106.441534575          4,550,661      umc_cas_cmd.wr                   #    291.2 MB/s  umc_mem_write_bandwidth
+   106.441534575      1,002,013,406 ns   duration_time                                                         
+   106.441534575      5,445,645,312      umc_cas_cmd.rd                   # 348521.3 MB/s  umc_mem_read_bandwidth
+   106.441534575      1,002,013,406 ns   duration_time                                                         
+   106.441534575      5,450,186,662      umc_cas_cmd.all                  # 348811.9 MB/s  umc_mem_bandwidth   
+   106.441534575      1,002,013,406 ns   duration_time                                                         
+   107.447529747          4,443,779      umc_cas_cmd.wr                   #    284.4 MB/s  umc_mem_write_bandwidth
+   107.447529747      1,005,995,172 ns   duration_time                                                         
+   107.447529747      5,469,195,362      umc_cas_cmd.rd                   # 350028.5 MB/s  umc_mem_read_bandwidth
+   107.447529747      1,005,995,172 ns   duration_time                                                         
+   107.447529747      5,473,652,602      umc_cas_cmd.all                  # 350313.8 MB/s  umc_mem_bandwidth   
+   107.447529747      1,005,995,172 ns   duration_time                                                         
+   108.449541124          4,681,635      umc_cas_cmd.wr                   #    299.6 MB/s  umc_mem_write_bandwidth
+   108.449541124      1,002,011,377 ns   duration_time                                                         
+   108.449541124      5,444,486,761      umc_cas_cmd.rd                   # 348447.2 MB/s  umc_mem_read_bandwidth
+   108.449541124      1,002,011,377 ns   duration_time                                                         
+   108.449541124      5,449,155,351      umc_cas_cmd.all                  # 348745.9 MB/s  umc_mem_bandwidth   
+   108.449541124      1,002,011,377 ns   duration_time                                                         
+   109.453528533          4,672,781      umc_cas_cmd.wr                   #    299.1 MB/s  umc_mem_write_bandwidth
+   109.453528533      1,003,987,409 ns   duration_time                                                         
+   109.453528533      5,456,291,926      umc_cas_cmd.rd                   # 349202.7 MB/s  umc_mem_read_bandwidth
+   109.453528533      1,003,987,409 ns   duration_time                                                         
+   109.453528533      5,460,970,733      umc_cas_cmd.all                  # 349502.1 MB/s  umc_mem_bandwidth   
+   109.453528533      1,003,987,409 ns   duration_time                                                         
+   110.457522822          4,765,990      umc_cas_cmd.wr                   #    305.0 MB/s  umc_mem_write_bandwidth
+   110.457522822      1,003,994,289 ns   duration_time                                                         
+   110.457522822      5,454,754,053      umc_cas_cmd.rd                   # 349104.3 MB/s  umc_mem_read_bandwidth
+   110.457522822      1,003,994,289 ns   duration_time                                                         
+   110.457522822      5,459,517,267      umc_cas_cmd.all                  # 349409.1 MB/s  umc_mem_bandwidth   
+   110.457522822      1,003,994,289 ns   duration_time                                                         
+   111.461524022          4,481,803      umc_cas_cmd.wr                   #    286.8 MB/s  umc_mem_write_bandwidth
+   111.461524022      1,004,001,200 ns   duration_time                                                         
+   111.461524022      5,458,395,073      umc_cas_cmd.rd                   # 349337.3 MB/s  umc_mem_read_bandwidth
+   111.461524022      1,004,001,200 ns   duration_time                                                         
+   111.461524022      5,462,863,715      umc_cas_cmd.all                  # 349623.3 MB/s  umc_mem_bandwidth   
+   111.461524022      1,004,001,200 ns   duration_time                                                         
+   112.465519811          4,538,936      umc_cas_cmd.wr                   #    290.5 MB/s  umc_mem_write_bandwidth
+   112.465519811      1,003,995,789 ns   duration_time                                                         
+   112.465519811      5,456,785,003      umc_cas_cmd.rd                   # 349234.2 MB/s  umc_mem_read_bandwidth
+   112.465519811      1,003,995,789 ns   duration_time                                                         
+   112.465519811      5,461,330,040      umc_cas_cmd.all                  # 349525.1 MB/s  umc_mem_bandwidth   
+   112.465519811      1,003,995,789 ns   duration_time                                                         
+   113.469523660          4,675,743      umc_cas_cmd.wr                   #    299.2 MB/s  umc_mem_write_bandwidth
+   113.469523660      1,004,003,849 ns   duration_time                                                         
+   113.469523660      5,456,542,119      umc_cas_cmd.rd                   # 349218.7 MB/s  umc_mem_read_bandwidth
+   113.469523660      1,004,003,849 ns   duration_time                                                         
+   113.469523660      5,461,221,509      umc_cas_cmd.all                  # 349518.2 MB/s  umc_mem_bandwidth   
+   113.469523660      1,004,003,849 ns   duration_time                                                         
+   114.476518375          4,329,505      umc_cas_cmd.wr                   #    277.1 MB/s  umc_mem_write_bandwidth
+   114.476518375      1,006,994,715 ns   duration_time                                                         
+   114.476518375      5,476,760,364      umc_cas_cmd.rd                   # 350512.7 MB/s  umc_mem_read_bandwidth
+   114.476518375      1,006,994,715 ns   duration_time                                                         
+   114.476518375      5,481,094,542      umc_cas_cmd.all                  # 350790.1 MB/s  umc_mem_bandwidth   
+   114.476518375      1,006,994,715 ns   duration_time                                                         
+   115.478535631          4,375,329      umc_cas_cmd.wr                   #    280.0 MB/s  umc_mem_write_bandwidth
+   115.478535631      1,002,017,256 ns   duration_time                                                         
+   115.478535631      5,449,276,119      umc_cas_cmd.rd                   # 348753.7 MB/s  umc_mem_read_bandwidth
+   115.478535631      1,002,017,256 ns   duration_time                                                         
+   115.478535631      5,453,650,467      umc_cas_cmd.all                  # 349033.6 MB/s  umc_mem_bandwidth   
+   115.478535631      1,002,017,256 ns   duration_time                                                         
+   116.484520183          4,364,415      umc_cas_cmd.wr                   #    279.3 MB/s  umc_mem_write_bandwidth
+   116.484520183      1,005,984,552 ns   duration_time                                                         
+   116.484520183      5,471,537,068      umc_cas_cmd.rd                   # 350178.4 MB/s  umc_mem_read_bandwidth
+   116.484520183      1,005,984,552 ns   duration_time                                                         
+   116.484520183      5,475,898,335      umc_cas_cmd.all                  # 350457.5 MB/s  umc_mem_bandwidth   
+   116.484520183      1,005,984,552 ns   duration_time                                                         
+   117.486534790          4,354,665      umc_cas_cmd.wr                   #    278.7 MB/s  umc_mem_write_bandwidth
+   117.486534790      1,002,014,607 ns   duration_time                                                         
+   117.486534790      5,450,245,158      umc_cas_cmd.rd                   # 348815.7 MB/s  umc_mem_read_bandwidth
+   117.486534790      1,002,014,607 ns   duration_time                                                         
+   117.486534790      5,454,606,989      umc_cas_cmd.all                  # 349094.8 MB/s  umc_mem_bandwidth   
+   117.486534790      1,002,014,607 ns   duration_time                                                         
+   118.489523247          4,707,348      umc_cas_cmd.wr                   #    301.3 MB/s  umc_mem_write_bandwidth
+   118.489523247      1,002,988,457 ns   duration_time                                                         
+   118.489523247      5,450,629,307      umc_cas_cmd.rd                   # 348840.3 MB/s  umc_mem_read_bandwidth
+   118.489523247      1,002,988,457 ns   duration_time                                                         
+   118.489523247      5,455,336,578      umc_cas_cmd.all                  # 349141.5 MB/s  umc_mem_bandwidth   
+   118.489523247      1,002,988,457 ns   duration_time                                                         
+   119.493527957          4,577,158      umc_cas_cmd.wr                   #    292.9 MB/s  umc_mem_write_bandwidth
+   119.493527957      1,004,004,710 ns   duration_time                                                         
+   119.493527957      5,457,399,188      umc_cas_cmd.rd                   # 349273.5 MB/s  umc_mem_read_bandwidth
+   119.493527957      1,004,004,710 ns   duration_time                                                         
+   119.493527957      5,461,976,053      umc_cas_cmd.all                  # 349566.5 MB/s  umc_mem_bandwidth   
+   119.493527957      1,004,004,710 ns   duration_time                                                         
+   120.497524016          4,480,071      umc_cas_cmd.wr                   #    286.7 MB/s  umc_mem_write_bandwidth
+   120.497524016      1,003,996,059 ns   duration_time                                                         
+   120.497524016      5,458,345,580      umc_cas_cmd.rd                   # 349334.1 MB/s  umc_mem_read_bandwidth
+   120.497524016      1,003,996,059 ns   duration_time                                                         
+   120.497524016      5,462,829,309      umc_cas_cmd.all                  # 349621.1 MB/s  umc_mem_bandwidth   
+   120.497524016      1,003,996,059 ns   duration_time                                                         
+   121.501520625          4,666,559      umc_cas_cmd.wr                   #    298.7 MB/s  umc_mem_write_bandwidth
+   121.501520625      1,003,996,609 ns   duration_time                                                         
+   121.501520625      5,457,212,022      umc_cas_cmd.rd                   # 349261.6 MB/s  umc_mem_read_bandwidth
+   121.501520625      1,003,996,609 ns   duration_time                                                         
+   121.501520625      5,461,868,514      umc_cas_cmd.all                  # 349559.6 MB/s  umc_mem_bandwidth   
+   121.501520625      1,003,996,609 ns   duration_time                                                         
+   122.505518205          4,629,552      umc_cas_cmd.wr                   #    296.3 MB/s  umc_mem_write_bandwidth
+   122.505518205      1,003,997,580 ns   duration_time                                                         
+   122.505518205      5,456,433,914      umc_cas_cmd.rd                   # 349211.8 MB/s  umc_mem_read_bandwidth
+   122.505518205      1,003,997,580 ns   duration_time                                                         
+   122.505518205      5,461,054,624      umc_cas_cmd.all                  # 349507.5 MB/s  umc_mem_bandwidth   
+   122.505518205      1,003,997,580 ns   duration_time                                                         
+   123.510524066          4,750,096      umc_cas_cmd.wr                   #    304.0 MB/s  umc_mem_write_bandwidth
+   123.510524066      1,005,005,861 ns   duration_time                                                         
+   123.510524066      5,460,771,027      umc_cas_cmd.rd                   # 349489.3 MB/s  umc_mem_read_bandwidth
+   123.510524066      1,005,005,861 ns   duration_time                                                         
+   123.510524066      5,465,531,526      umc_cas_cmd.all                  # 349794.0 MB/s  umc_mem_bandwidth   
+   123.510524066      1,005,005,861 ns   duration_time                                                         
+   124.512531212          4,502,945      umc_cas_cmd.wr                   #    288.2 MB/s  umc_mem_write_bandwidth
+   124.512531212      1,002,007,146 ns   duration_time                                                         
+   124.512531212      5,446,874,430      umc_cas_cmd.rd                   # 348600.0 MB/s  umc_mem_read_bandwidth
+   124.512531212      1,002,007,146 ns   duration_time                                                         
+   124.512531212      5,451,361,548      umc_cas_cmd.all                  # 348887.1 MB/s  umc_mem_bandwidth   
+   124.512531212      1,002,007,146 ns   duration_time                                                         
+   125.518518094          4,532,919      umc_cas_cmd.wr                   #    290.1 MB/s  umc_mem_write_bandwidth
+   125.518518094      1,005,986,882 ns   duration_time                                                         
+   125.518518094      5,468,258,654      umc_cas_cmd.rd                   # 349968.6 MB/s  umc_mem_read_bandwidth
+   125.518518094      1,005,986,882 ns   duration_time                                                         
+   125.518518094      5,472,810,666      umc_cas_cmd.all                  # 350259.9 MB/s  umc_mem_bandwidth   
+   125.518518094      1,005,986,882 ns   duration_time                                                         
+   126.520532321          4,644,958      umc_cas_cmd.wr                   #    297.3 MB/s  umc_mem_write_bandwidth
+   126.520532321      1,002,014,227 ns   duration_time                                                         
+   126.520532321      5,446,087,936      umc_cas_cmd.rd                   # 348549.6 MB/s  umc_mem_read_bandwidth
+   126.520532321      1,002,014,227 ns   duration_time                                                         
+   126.520532321      5,450,729,681      umc_cas_cmd.all                  # 348846.7 MB/s  umc_mem_bandwidth   
+   126.520532321      1,002,014,227 ns   duration_time                                                         
+   127.526520343          4,465,593      umc_cas_cmd.wr                   #    285.8 MB/s  umc_mem_write_bandwidth
+   127.526520343      1,005,988,022 ns   duration_time                                                         
+   127.526520343      5,469,943,902      umc_cas_cmd.rd                   # 350076.4 MB/s  umc_mem_read_bandwidth
+   127.526520343      1,005,988,022 ns   duration_time                                                         
+   127.526520343      5,474,412,342      umc_cas_cmd.all                  # 350362.4 MB/s  umc_mem_bandwidth   
+   127.526520343      1,005,988,022 ns   duration_time                                                         
+   128.528530780          4,287,755      umc_cas_cmd.wr                   #    274.4 MB/s  umc_mem_write_bandwidth
+   128.528530780      1,002,010,437 ns   duration_time                                                         
+   128.528530780      5,450,212,332      umc_cas_cmd.rd                   # 348813.6 MB/s  umc_mem_read_bandwidth
+   128.528530780      1,002,010,437 ns   duration_time                                                         
+   128.528530780      5,454,490,918      umc_cas_cmd.all                  # 349087.4 MB/s  umc_mem_bandwidth   
+   128.528530780      1,002,010,437 ns   duration_time                                                         
+   129.534523242          4,454,465      umc_cas_cmd.wr                   #    285.1 MB/s  umc_mem_write_bandwidth
+   129.534523242      1,005,992,462 ns   duration_time                                                         
+   129.534523242      5,471,092,466      umc_cas_cmd.rd                   # 350149.9 MB/s  umc_mem_read_bandwidth
+   129.534523242      1,005,992,462 ns   duration_time                                                         
+   129.534523242      5,475,551,610      umc_cas_cmd.all                  # 350435.3 MB/s  umc_mem_bandwidth   
+   129.534523242      1,005,992,462 ns   duration_time                                                         
+   130.536526658          6,137,273      umc_cas_cmd.wr                   #    392.8 MB/s  umc_mem_write_bandwidth
+   130.536526658      1,002,003,416 ns   duration_time                                                         
+   130.536526658      5,405,203,545      umc_cas_cmd.rd                   # 345933.0 MB/s  umc_mem_read_bandwidth
+   130.536526658      1,002,003,416 ns   duration_time                                                         
+   130.536526658      5,411,326,537      umc_cas_cmd.all                  # 346324.9 MB/s  umc_mem_bandwidth   
+   130.536526658      1,002,003,416 ns   duration_time                                                         
+#           time             counts unit events
+   131.542538651          7,179,769      umc_cas_cmd.wr                   #    459.5 MB/s  umc_mem_write_bandwidth
+   131.542538651      1,006,011,993 ns   duration_time                                                         
+   131.542538651      5,441,808,845      umc_cas_cmd.rd                   # 348275.8 MB/s  umc_mem_read_bandwidth
+   131.542538651      1,006,011,993 ns   duration_time                                                         
+   131.542538651      5,449,018,055      umc_cas_cmd.all                  # 348737.2 MB/s  umc_mem_bandwidth   
+   131.542538651      1,006,011,993 ns   duration_time                                                         
+   132.548527093          5,914,155      umc_cas_cmd.wr                   #    378.5 MB/s  umc_mem_write_bandwidth
+   132.548527093      1,005,988,442 ns   duration_time                                                         
+   132.548527093      5,457,053,148      umc_cas_cmd.rd                   # 349251.4 MB/s  umc_mem_read_bandwidth
+   132.548527093      1,005,988,442 ns   duration_time                                                         
+   132.548527093      5,462,957,291      umc_cas_cmd.all                  # 349629.3 MB/s  umc_mem_bandwidth   
+   132.548527093      1,005,988,442 ns   duration_time                                                         
+   133.554531796          5,814,823      umc_cas_cmd.wr                   #    372.1 MB/s  umc_mem_write_bandwidth
+   133.554531796      1,006,004,703 ns   duration_time                                                         
+   133.554531796      5,459,301,543      umc_cas_cmd.rd                   # 349395.3 MB/s  umc_mem_read_bandwidth
+   133.554531796      1,006,004,703 ns   duration_time                                                         
+   133.554531796      5,465,115,258      umc_cas_cmd.all                  # 349767.4 MB/s  umc_mem_bandwidth   
+   133.554531796      1,006,004,703 ns   duration_time                                                         
+   134.559542877          5,363,093      umc_cas_cmd.wr                   #    343.2 MB/s  umc_mem_write_bandwidth
+   134.559542877      1,005,011,081 ns   duration_time                                                         
+   134.559542877      5,455,361,059      umc_cas_cmd.rd                   # 349143.1 MB/s  umc_mem_read_bandwidth
+   134.559542877      1,005,011,081 ns   duration_time                                                         
+   134.559542877      5,460,712,526      umc_cas_cmd.all                  # 349485.6 MB/s  umc_mem_bandwidth   
+   134.559542877      1,005,011,081 ns   duration_time                                                         
+   135.565528919          5,864,991      umc_cas_cmd.wr                   #    375.4 MB/s  umc_mem_write_bandwidth
+   135.565528919      1,005,986,042 ns   duration_time                                                         
+   135.565528919      5,458,691,891      umc_cas_cmd.rd                   # 349356.3 MB/s  umc_mem_read_bandwidth
+   135.565528919      1,005,986,042 ns   duration_time                                                         
+   135.565528919      5,464,575,933      umc_cas_cmd.all                  # 349732.9 MB/s  umc_mem_bandwidth   
+   135.565528919      1,005,986,042 ns   duration_time                                                         
+   136.575531748          4,695,700      umc_cas_cmd.wr                   #    300.5 MB/s  umc_mem_write_bandwidth
+   136.575531748      1,010,002,829 ns   duration_time                                                         
+   136.575531748      5,489,298,667      umc_cas_cmd.rd                   # 351315.1 MB/s  umc_mem_read_bandwidth
+   136.575531748      1,010,002,829 ns   duration_time                                                         
+   136.575531748      5,493,993,614      umc_cas_cmd.all                  # 351615.6 MB/s  umc_mem_bandwidth   
+   136.575531748      1,010,002,829 ns   duration_time                                                         
+   137.578566736          5,103,081      umc_cas_cmd.wr                   #    326.6 MB/s  umc_mem_write_bandwidth
+   137.578566736      1,003,034,988 ns   duration_time                                                         
+   137.578566736      5,448,774,533      umc_cas_cmd.rd                   # 348721.6 MB/s  umc_mem_read_bandwidth
+   137.578566736      1,003,034,988 ns   duration_time                                                         
+   137.578566736      5,453,869,794      umc_cas_cmd.all                  # 349047.7 MB/s  umc_mem_bandwidth   
+   137.578566736      1,003,034,988 ns   duration_time                                                         
+   138.589511407          5,050,536      umc_cas_cmd.wr                   #    323.2 MB/s  umc_mem_write_bandwidth
+   138.589511407      1,010,944,671 ns   duration_time                                                         
+   138.589511407      5,492,568,777      umc_cas_cmd.rd                   # 351524.4 MB/s  umc_mem_read_bandwidth
+   138.589511407      1,010,944,671 ns   duration_time                                                         
+   138.589511407      5,497,626,657      umc_cas_cmd.all                  # 351848.1 MB/s  umc_mem_bandwidth   
+   138.589511407      1,010,944,671 ns   duration_time                                                         
+   139.592557435          4,562,082      umc_cas_cmd.wr                   #    292.0 MB/s  umc_mem_write_bandwidth
+   139.592557435      1,003,046,028 ns   duration_time                                                         
+   139.592557435      5,452,032,150      umc_cas_cmd.rd                   # 348930.1 MB/s  umc_mem_read_bandwidth
+   139.592557435      1,003,046,028 ns   duration_time                                                         
+   139.592557435      5,456,591,903      umc_cas_cmd.all                  # 349221.9 MB/s  umc_mem_bandwidth   
+   139.592557435      1,003,046,028 ns   duration_time                                                         
+   140.598531257          4,735,042      umc_cas_cmd.wr                   #    303.0 MB/s  umc_mem_write_bandwidth
+   140.598531257      1,005,973,822 ns   duration_time                                                         
+   140.598531257      5,467,014,194      umc_cas_cmd.rd                   # 349888.9 MB/s  umc_mem_read_bandwidth
+   140.598531257      1,005,973,822 ns   duration_time                                                         
+   140.598531257      5,471,742,622      umc_cas_cmd.all                  # 350191.5 MB/s  umc_mem_bandwidth   
+   140.598531257      1,005,973,822 ns   duration_time                                                         
+   141.604125639          4,915,561      umc_cas_cmd.wr                   #    314.6 MB/s  umc_mem_write_bandwidth
+   141.604125639      1,005,594,382 ns   duration_time                                                         
+   141.604125639      5,464,404,847      umc_cas_cmd.rd                   # 349721.9 MB/s  umc_mem_read_bandwidth
+   141.604125639      1,005,594,382 ns   duration_time                                                         
+   141.604125639      5,469,318,841      umc_cas_cmd.all                  # 350036.4 MB/s  umc_mem_bandwidth   
+   141.604125639      1,005,594,382 ns   duration_time                                                         
+   142.610144842          4,651,685      umc_cas_cmd.wr                   #    297.7 MB/s  umc_mem_write_bandwidth
+   142.610144842      1,006,019,203 ns   duration_time                                                         
+   142.610144842      5,468,212,141      umc_cas_cmd.rd                   # 349965.6 MB/s  umc_mem_read_bandwidth
+   142.610144842      1,006,019,203 ns   duration_time                                                         
+   142.610144842      5,472,869,438      umc_cas_cmd.all                  # 350263.6 MB/s  umc_mem_bandwidth   
+   142.610144842      1,006,019,203 ns   duration_time                                                         
+   143.616563275          4,460,448      umc_cas_cmd.wr                   #    285.5 MB/s  umc_mem_write_bandwidth
+   143.616563275      1,006,418,433 ns   duration_time                                                         
+   143.616563275      5,471,113,942      umc_cas_cmd.rd                   # 350151.3 MB/s  umc_mem_read_bandwidth
+   143.616563275      1,006,418,433 ns   duration_time                                                         
+   143.616563275      5,475,569,049      umc_cas_cmd.all                  # 350436.4 MB/s  umc_mem_bandwidth   
+   143.616563275      1,006,418,433 ns   duration_time                                                         
+   144.622529457          4,360,443      umc_cas_cmd.wr                   #    279.1 MB/s  umc_mem_write_bandwidth
+   144.622529457      1,005,966,182 ns   duration_time                                                         
+   144.622529457      5,470,654,264      umc_cas_cmd.rd                   # 350121.9 MB/s  umc_mem_read_bandwidth
+   144.622529457      1,005,966,182 ns   duration_time                                                         
+   144.622529457      5,475,017,358      umc_cas_cmd.all                  # 350401.1 MB/s  umc_mem_bandwidth   
+   144.622529457      1,005,966,182 ns   duration_time                                                         
+   145.628170589          4,330,041      umc_cas_cmd.wr                   #    277.1 MB/s  umc_mem_write_bandwidth
+   145.628170589      1,005,641,132 ns   duration_time                                                         
+   145.628170589      5,469,898,176      umc_cas_cmd.rd                   # 350073.5 MB/s  umc_mem_read_bandwidth
+   145.628170589      1,005,641,132 ns   duration_time                                                         
+   145.628170589      5,474,398,820      umc_cas_cmd.all                  # 350361.5 MB/s  umc_mem_bandwidth   
+   145.628170589      1,005,641,132 ns   duration_time                                                         
+   146.634550992          4,456,895      umc_cas_cmd.wr                   #    285.2 MB/s  umc_mem_write_bandwidth
+   146.634550992      1,006,380,403 ns   duration_time                                                         
+   146.634550992      5,471,133,304      umc_cas_cmd.rd                   # 350152.5 MB/s  umc_mem_read_bandwidth
+   146.634550992      1,006,380,403 ns   duration_time                                                         
+   146.634550992      5,475,421,329      umc_cas_cmd.all                  # 350427.0 MB/s  umc_mem_bandwidth   
+   146.634550992      1,006,380,403 ns   duration_time                                                         
+   147.640535865          4,501,022      umc_cas_cmd.wr                   #    288.1 MB/s  umc_mem_write_bandwidth
+   147.640535865      1,005,984,873 ns   duration_time                                                         
+   147.640535865      5,469,778,253      umc_cas_cmd.rd                   # 350065.8 MB/s  umc_mem_read_bandwidth
+   147.640535865      1,005,984,873 ns   duration_time                                                         
+   147.640535865      5,474,280,212      umc_cas_cmd.all                  # 350353.9 MB/s  umc_mem_bandwidth   
+   147.640535865      1,005,984,873 ns   duration_time                                                         
+   148.651541496          4,588,271      umc_cas_cmd.wr                   #    293.6 MB/s  umc_mem_write_bandwidth
+   148.651541496      1,011,005,631 ns   duration_time                                                         
+   148.651541496      5,497,356,524      umc_cas_cmd.rd                   # 351830.8 MB/s  umc_mem_read_bandwidth
+   148.651541496      1,011,005,631 ns   duration_time                                                         
+   148.651541496      5,501,939,098      umc_cas_cmd.all                  # 352124.1 MB/s  umc_mem_bandwidth   
+   148.651541496      1,011,005,631 ns   duration_time                                                         
+   149.654558324          4,255,828      umc_cas_cmd.wr                   #    272.4 MB/s  umc_mem_write_bandwidth
+   149.654558324      1,003,016,828 ns   duration_time                                                         
+   149.654558324      5,455,546,998      umc_cas_cmd.rd                   # 349155.0 MB/s  umc_mem_read_bandwidth
+   149.654558324      1,003,016,828 ns   duration_time                                                         
+   149.654558324      5,459,806,378      umc_cas_cmd.all                  # 349427.6 MB/s  umc_mem_bandwidth   
+   149.654558324      1,003,016,828 ns   duration_time                                                         
+   150.660536486          4,350,695      umc_cas_cmd.wr                   #    278.4 MB/s  umc_mem_write_bandwidth
+   150.660536486      1,005,978,162 ns   duration_time                                                         
+   150.660536486      5,470,906,652      umc_cas_cmd.rd                   # 350138.0 MB/s  umc_mem_read_bandwidth
+   150.660536486      1,005,978,162 ns   duration_time                                                         
+   150.660536486      5,475,259,529      umc_cas_cmd.all                  # 350416.6 MB/s  umc_mem_bandwidth   
+   150.660536486      1,005,978,162 ns   duration_time                                                         
+   151.666110825          4,313,055      umc_cas_cmd.wr                   #    276.0 MB/s  umc_mem_write_bandwidth
+   151.666110825      1,005,574,339 ns   duration_time                                                         
+   151.666110825      5,469,419,287      umc_cas_cmd.rd                   # 350042.8 MB/s  umc_mem_read_bandwidth
+   151.666110825      1,005,574,339 ns   duration_time                                                         
+   151.666110825      5,473,735,576      umc_cas_cmd.all                  # 350319.1 MB/s  umc_mem_bandwidth   
+   151.666110825      1,005,574,339 ns   duration_time                                                         
+   152.671554229          4,304,863      umc_cas_cmd.wr                   #    275.5 MB/s  umc_mem_write_bandwidth
+   152.671554229      1,005,443,404 ns   duration_time                                                         
+   152.671554229      5,469,092,578      umc_cas_cmd.rd                   # 350021.9 MB/s  umc_mem_read_bandwidth
+   152.671554229      1,005,443,404 ns   duration_time                                                         
+   152.671554229      5,473,382,330      umc_cas_cmd.all                  # 350296.5 MB/s  umc_mem_bandwidth   
+   152.671554229      1,005,443,404 ns   duration_time                                                         
+   153.677533213          4,309,051      umc_cas_cmd.wr                   #    275.8 MB/s  umc_mem_write_bandwidth
+   153.677533213      1,005,978,984 ns   duration_time                                                         
+   153.677533213      5,470,752,905      umc_cas_cmd.rd                   # 350128.2 MB/s  umc_mem_read_bandwidth
+   153.677533213      1,005,978,984 ns   duration_time                                                         
+   153.677533213      5,475,068,989      umc_cas_cmd.all                  # 350404.4 MB/s  umc_mem_bandwidth   
+   153.677533213      1,005,978,984 ns   duration_time                                                         
+   154.683110747          4,252,451      umc_cas_cmd.wr                   #    272.2 MB/s  umc_mem_write_bandwidth
+   154.683110747      1,005,577,534 ns   duration_time                                                         
+   154.683110747      5,469,876,562      umc_cas_cmd.rd                   # 350072.1 MB/s  umc_mem_read_bandwidth
+   154.683110747      1,005,577,534 ns   duration_time                                                         
+   154.683110747      5,474,133,520      umc_cas_cmd.all                  # 350344.5 MB/s  umc_mem_bandwidth   
+   154.683110747      1,005,577,534 ns   duration_time                                                         
+   155.688554380          4,336,946      umc_cas_cmd.wr                   #    277.6 MB/s  umc_mem_write_bandwidth
+   155.688554380      1,005,443,633 ns   duration_time                                                         
+   155.688554380      5,468,334,032      umc_cas_cmd.rd                   # 349973.4 MB/s  umc_mem_read_bandwidth
+   155.688554380      1,005,443,633 ns   duration_time                                                         
+   155.688554380      5,472,680,716      umc_cas_cmd.all                  # 350251.6 MB/s  umc_mem_bandwidth   
+   155.688554380      1,005,443,633 ns   duration_time                                                         
+   156.694533265          4,408,921      umc_cas_cmd.wr                   #    282.2 MB/s  umc_mem_write_bandwidth
+   156.694533265      1,005,978,885 ns   duration_time                                                         
+   156.694533265      5,471,328,441      umc_cas_cmd.rd                   # 350165.0 MB/s  umc_mem_read_bandwidth
+   156.694533265      1,005,978,885 ns   duration_time                                                         
+   156.694533265      5,475,732,313      umc_cas_cmd.all                  # 350446.9 MB/s  umc_mem_bandwidth   
+   156.694533265      1,005,978,885 ns   duration_time                                                         
+#           time             counts unit events
+   157.700140338          4,942,725      umc_cas_cmd.wr                   #    316.3 MB/s  umc_mem_write_bandwidth
+   157.700140338      1,005,607,073 ns   duration_time                                                         
+   157.700140338      5,462,075,734      umc_cas_cmd.rd                   # 349572.8 MB/s  umc_mem_read_bandwidth
+   157.700140338      1,005,607,073 ns   duration_time                                                         
+   157.700140338      5,467,008,386      umc_cas_cmd.all                  # 349888.5 MB/s  umc_mem_bandwidth   
+   157.700140338      1,005,607,073 ns   duration_time                                                         
+   158.706523863          4,805,088      umc_cas_cmd.wr                   #    307.5 MB/s  umc_mem_write_bandwidth
+   158.706523863      1,006,383,525 ns   duration_time                                                         
+   158.706523863      5,467,223,081      umc_cas_cmd.rd                   # 349902.3 MB/s  umc_mem_read_bandwidth
+   158.706523863      1,006,383,525 ns   duration_time                                                         
+   158.706523863      5,472,035,059      umc_cas_cmd.all                  # 350210.2 MB/s  umc_mem_bandwidth   
+   158.706523863      1,006,383,525 ns   duration_time                                                         
+   159.710521944          4,528,923      umc_cas_cmd.wr                   #    289.9 MB/s  umc_mem_write_bandwidth
+   159.710521944      1,003,998,081 ns   duration_time                                                         
+   159.710521944      5,457,201,358      umc_cas_cmd.rd                   # 349260.9 MB/s  umc_mem_read_bandwidth
+   159.710521944      1,003,998,081 ns   duration_time                                                         
+   159.710521944      5,461,718,563      umc_cas_cmd.all                  # 349550.0 MB/s  umc_mem_bandwidth   
+   159.710521944      1,003,998,081 ns   duration_time                                                         
+   160.715525427          4,625,622      umc_cas_cmd.wr                   #    296.0 MB/s  umc_mem_write_bandwidth
+   160.715525427      1,005,003,483 ns   duration_time                                                         
+   160.715525427      5,461,575,254      umc_cas_cmd.rd                   # 349540.8 MB/s  umc_mem_read_bandwidth
+   160.715525427      1,005,003,483 ns   duration_time                                                         
+   160.715525427      5,466,214,953      umc_cas_cmd.all                  # 349837.8 MB/s  umc_mem_bandwidth   
+   160.715525427      1,005,003,483 ns   duration_time                                                         
+   161.719575079          4,865,252      umc_cas_cmd.wr                   #    311.4 MB/s  umc_mem_write_bandwidth
+   161.719575079      1,004,049,652 ns   duration_time                                                         
+   161.719575079      5,454,814,529      umc_cas_cmd.rd                   # 349108.1 MB/s  umc_mem_read_bandwidth
+   161.719575079      1,004,049,652 ns   duration_time                                                         
+   161.719575079      5,459,677,289      umc_cas_cmd.all                  # 349419.3 MB/s  umc_mem_bandwidth   
+   161.719575079      1,004,049,652 ns   duration_time                                                         
+   162.726524674          4,617,103      umc_cas_cmd.wr                   #    295.5 MB/s  umc_mem_write_bandwidth
+   162.726524674      1,006,949,595 ns   duration_time                                                         
+   162.726524674      5,472,549,104      umc_cas_cmd.rd                   # 350243.1 MB/s  umc_mem_read_bandwidth
+   162.726524674      1,006,949,595 ns   duration_time                                                         
+   162.726524674      5,477,193,696      umc_cas_cmd.all                  # 350540.4 MB/s  umc_mem_bandwidth   
+   162.726524674      1,006,949,595 ns   duration_time                                                         
+   163.729535944          4,518,455      umc_cas_cmd.wr                   #    289.2 MB/s  umc_mem_write_bandwidth
+   163.729535944      1,003,011,270 ns   duration_time                                                         
+   163.729535944      5,451,809,824      umc_cas_cmd.rd                   # 348915.8 MB/s  umc_mem_read_bandwidth
+   163.729535944      1,003,011,270 ns   duration_time                                                         
+   163.729535944      5,456,305,843      umc_cas_cmd.all                  # 349203.6 MB/s  umc_mem_bandwidth   
+   163.729535944      1,003,011,270 ns   duration_time                                                         
+   164.734521607          4,581,050      umc_cas_cmd.wr                   #    293.2 MB/s  umc_mem_write_bandwidth
+   164.734521607      1,004,985,663 ns   duration_time                                                         
+   164.734521607      5,462,464,077      umc_cas_cmd.rd                   # 349597.7 MB/s  umc_mem_read_bandwidth
+   164.734521607      1,004,985,663 ns   duration_time                                                         
+   164.734521607      5,467,041,688      umc_cas_cmd.all                  # 349890.7 MB/s  umc_mem_bandwidth   
+   164.734521607      1,004,985,663 ns   duration_time                                                         
+   165.738521568          4,529,398      umc_cas_cmd.wr                   #    289.9 MB/s  umc_mem_write_bandwidth
+   165.738521568      1,003,999,961 ns   duration_time                                                         
+   165.738521568      5,457,924,962      umc_cas_cmd.rd                   # 349307.2 MB/s  umc_mem_read_bandwidth
+   165.738521568      1,003,999,961 ns   duration_time                                                         
+   165.738521568      5,462,439,045      umc_cas_cmd.all                  # 349596.1 MB/s  umc_mem_bandwidth   
+   165.738521568      1,003,999,961 ns   duration_time                                                         
+   166.743523721          4,327,449      umc_cas_cmd.wr                   #    277.0 MB/s  umc_mem_write_bandwidth
+   166.743523721      1,005,002,153 ns   duration_time                                                         
+   166.743523721      5,465,431,029      umc_cas_cmd.rd                   # 349787.6 MB/s  umc_mem_read_bandwidth
+   166.743523721      1,005,002,153 ns   duration_time                                                         
+   166.743523721      5,469,775,028      umc_cas_cmd.all                  # 350065.6 MB/s  umc_mem_bandwidth   
+   166.743523721      1,005,002,153 ns   duration_time                                                         
+   167.747542242          4,619,973      umc_cas_cmd.wr                   #    295.7 MB/s  umc_mem_write_bandwidth
+   167.747542242      1,004,018,521 ns   duration_time                                                         
+   167.747542242      5,457,298,333      umc_cas_cmd.rd                   # 349267.1 MB/s  umc_mem_read_bandwidth
+   167.747542242      1,004,018,521 ns   duration_time                                                         
+   167.747542242      5,461,931,980      umc_cas_cmd.all                  # 349563.6 MB/s  umc_mem_bandwidth   
+   167.747542242      1,004,018,521 ns   duration_time                                                         
+   168.754521878          4,378,068      umc_cas_cmd.wr                   #    280.2 MB/s  umc_mem_write_bandwidth
+   168.754521878      1,006,979,636 ns   duration_time                                                         
+   168.754521878      5,475,356,717      umc_cas_cmd.rd                   # 350422.8 MB/s  umc_mem_read_bandwidth
+   168.754521878      1,006,979,636 ns   duration_time                                                         
+   168.754521878      5,479,712,239      umc_cas_cmd.all                  # 350701.6 MB/s  umc_mem_bandwidth   
+   168.754521878      1,006,979,636 ns   duration_time                                                         
+   169.756553366          4,314,704      umc_cas_cmd.wr                   #    276.1 MB/s  umc_mem_write_bandwidth
+   169.756553366      1,002,031,488 ns   duration_time                                                         
+   169.756553366      5,449,858,293      umc_cas_cmd.rd                   # 348790.9 MB/s  umc_mem_read_bandwidth
+   169.756553366      1,002,031,488 ns   duration_time                                                         
+   169.756553366      5,454,450,904      umc_cas_cmd.all                  # 349084.9 MB/s  umc_mem_bandwidth   
+   169.756553366      1,002,031,488 ns   duration_time                                                         
+   170.762520360          4,312,384      umc_cas_cmd.wr                   #    276.0 MB/s  umc_mem_write_bandwidth
+   170.762520360      1,005,966,994 ns   duration_time                                                         
+   170.762520360      5,470,580,782      umc_cas_cmd.rd                   # 350117.2 MB/s  umc_mem_read_bandwidth
+   170.762520360      1,005,966,994 ns   duration_time                                                         
+   170.762520360      5,474,626,711      umc_cas_cmd.all                  # 350376.1 MB/s  umc_mem_bandwidth   
+   170.762520360      1,005,966,994 ns   duration_time                                                         
+   171.766522682          4,304,993      umc_cas_cmd.wr                   #    275.5 MB/s  umc_mem_write_bandwidth
+   171.766522682      1,004,002,322 ns   duration_time                                                         
+   171.766522682      5,459,841,192      umc_cas_cmd.rd                   # 349429.8 MB/s  umc_mem_read_bandwidth
+   171.766522682      1,004,002,322 ns   duration_time                                                         
+   171.766522682      5,464,140,010      umc_cas_cmd.all                  # 349705.0 MB/s  umc_mem_bandwidth   
+   171.766522682      1,004,002,322 ns   duration_time                                                         
+   172.772534876          4,305,851      umc_cas_cmd.wr                   #    275.6 MB/s  umc_mem_write_bandwidth
+   172.772534876      1,006,012,194 ns   duration_time                                                         
+   172.772534876      5,472,393,177      umc_cas_cmd.rd                   # 350233.2 MB/s  umc_mem_read_bandwidth
+   172.772534876      1,006,012,194 ns   duration_time                                                         
+   172.772534876      5,476,691,617      umc_cas_cmd.all                  # 350508.3 MB/s  umc_mem_bandwidth   
+   172.772534876      1,006,012,194 ns   duration_time                                                         
+   173.774535324          4,324,452      umc_cas_cmd.wr                   #    276.8 MB/s  umc_mem_write_bandwidth
+   173.774535324      1,002,000,448 ns   duration_time                                                         
+   173.774535324      5,449,568,070      umc_cas_cmd.rd                   # 348772.4 MB/s  umc_mem_read_bandwidth
+   173.774535324      1,002,000,448 ns   duration_time                                                         
+   173.774535324      5,453,891,304      umc_cas_cmd.all                  # 349049.0 MB/s  umc_mem_bandwidth   
+   173.774535324      1,002,000,448 ns   duration_time                                                         
+   174.780520648          4,263,754      umc_cas_cmd.wr                   #    272.9 MB/s  umc_mem_write_bandwidth
+   174.780520648      1,005,985,324 ns   duration_time                                                         
+   174.780520648      5,471,565,445      umc_cas_cmd.rd                   # 350180.2 MB/s  umc_mem_read_bandwidth
+   174.780520648      1,005,985,324 ns   duration_time                                                         
+   174.780520648      5,475,833,378      umc_cas_cmd.all                  # 350453.3 MB/s  umc_mem_bandwidth   
+   174.780520648      1,005,985,324 ns   duration_time                                                         
+   175.782535806          4,776,198      umc_cas_cmd.wr                   #    305.7 MB/s  umc_mem_write_bandwidth
+   175.782535806      1,002,015,158 ns   duration_time                                                         
+   175.782535806      5,443,655,703      umc_cas_cmd.rd                   # 348394.0 MB/s  umc_mem_read_bandwidth
+   175.782535806      1,002,015,158 ns   duration_time                                                         
+   175.782535806      5,448,386,382      umc_cas_cmd.all                  # 348696.7 MB/s  umc_mem_bandwidth   
+   175.782535806      1,002,015,158 ns   duration_time                                                         
+   176.787527869          4,637,362      umc_cas_cmd.wr                   #    296.8 MB/s  umc_mem_write_bandwidth
+   176.787527869      1,004,992,063 ns   duration_time                                                         
+   176.787527869      5,462,138,997      umc_cas_cmd.rd                   # 349576.9 MB/s  umc_mem_read_bandwidth
+   176.787527869      1,004,992,063 ns   duration_time                                                         
+   176.787527869      5,466,839,717      umc_cas_cmd.all                  # 349877.7 MB/s  umc_mem_bandwidth   
+   176.787527869      1,004,992,063 ns   duration_time                                                         
+   177.789521367          4,449,289      umc_cas_cmd.wr                   #    284.8 MB/s  umc_mem_write_bandwidth
+   177.789521367      1,001,993,498 ns   duration_time                                                         
+   177.789521367      5,448,078,069      umc_cas_cmd.rd                   # 348677.0 MB/s  umc_mem_read_bandwidth
+   177.789521367      1,001,993,498 ns   duration_time                                                         
+   177.789521367      5,452,583,462      umc_cas_cmd.all                  # 348965.3 MB/s  umc_mem_bandwidth   
+   177.789521367      1,001,993,498 ns   duration_time                                                         
+   178.793523498          4,691,182      umc_cas_cmd.wr                   #    300.2 MB/s  umc_mem_write_bandwidth
+   178.793523498      1,004,002,131 ns   duration_time                                                         
+   178.793523498      5,456,329,367      umc_cas_cmd.rd                   # 349205.1 MB/s  umc_mem_read_bandwidth
+   178.793523498      1,004,002,131 ns   duration_time                                                         
+   178.793523498      5,460,947,312      umc_cas_cmd.all                  # 349500.6 MB/s  umc_mem_bandwidth   
+   178.793523498      1,004,002,131 ns   duration_time                                                         
+   179.797518859          4,677,167      umc_cas_cmd.wr                   #    299.3 MB/s  umc_mem_write_bandwidth
+   179.797518859      1,003,995,361 ns   duration_time                                                         
+   179.797518859      5,455,856,481      umc_cas_cmd.rd                   # 349174.8 MB/s  umc_mem_read_bandwidth
+   179.797518859      1,003,995,361 ns   duration_time                                                         
+   179.797518859      5,460,537,099      umc_cas_cmd.all                  # 349474.4 MB/s  umc_mem_bandwidth   
+   179.797518859      1,003,995,361 ns   duration_time                                                         
+   180.801526661          4,734,644      umc_cas_cmd.wr                   #    303.0 MB/s  umc_mem_write_bandwidth
+   180.801526661      1,004,007,802 ns   duration_time                                                         
+   180.801526661      5,456,355,236      umc_cas_cmd.rd                   # 349206.7 MB/s  umc_mem_read_bandwidth
+   180.801526661      1,004,007,802 ns   duration_time                                                         
+   180.801526661      5,461,090,549      umc_cas_cmd.all                  # 349509.8 MB/s  umc_mem_bandwidth   
+   180.801526661      1,004,007,802 ns   duration_time                                                         
+   181.806521563          4,633,729      umc_cas_cmd.wr                   #    296.6 MB/s  umc_mem_write_bandwidth
+   181.806521563      1,004,994,902 ns   duration_time                                                         
+   181.806521563      5,462,483,287      umc_cas_cmd.rd                   # 349598.9 MB/s  umc_mem_read_bandwidth
+   181.806521563      1,004,994,902 ns   duration_time                                                         
+   181.806521563      5,467,115,106      umc_cas_cmd.all                  # 349895.4 MB/s  umc_mem_bandwidth   
+   181.806521563      1,004,994,902 ns   duration_time                                                         
+   182.811525256          4,528,523      umc_cas_cmd.wr                   #    289.8 MB/s  umc_mem_write_bandwidth
+   182.811525256      1,005,003,693 ns   duration_time                                                         
+   182.811525256      5,463,167,799      umc_cas_cmd.rd                   # 349642.7 MB/s  umc_mem_read_bandwidth
+   182.811525256      1,005,003,693 ns   duration_time                                                         
+   182.811525256      5,467,700,224      umc_cas_cmd.all                  # 349932.8 MB/s  umc_mem_bandwidth   
+   182.811525256      1,005,003,693 ns   duration_time                                                         
+#           time             counts unit events
+   183.813535454          4,669,690      umc_cas_cmd.wr                   #    298.9 MB/s  umc_mem_write_bandwidth
+   183.813535454      1,002,010,198 ns   duration_time                                                         
+   183.813535454      5,444,554,030      umc_cas_cmd.rd                   # 348451.5 MB/s  umc_mem_read_bandwidth
+   183.813535454      1,002,010,198 ns   duration_time                                                         
+   183.813535454      5,449,222,294      umc_cas_cmd.all                  # 348750.2 MB/s  umc_mem_bandwidth   
+   183.813535454      1,002,010,198 ns   duration_time                                                         
+   184.817524485          4,369,586      umc_cas_cmd.wr                   #    279.7 MB/s  umc_mem_write_bandwidth
+   184.817524485      1,003,989,031 ns   duration_time                                                         
+   184.817524485      5,460,207,529      umc_cas_cmd.rd                   # 349453.3 MB/s  umc_mem_read_bandwidth
+   184.817524485      1,003,989,031 ns   duration_time                                                         
+   184.817524485      5,464,576,069      umc_cas_cmd.all                  # 349732.9 MB/s  umc_mem_bandwidth   
+   184.817524485      1,003,989,031 ns   duration_time                                                         
+   185.821520877          4,370,276      umc_cas_cmd.wr                   #    279.7 MB/s  umc_mem_write_bandwidth
+   185.821520877      1,003,996,392 ns   duration_time                                                         
+   185.821520877      5,459,843,569      umc_cas_cmd.rd                   # 349430.0 MB/s  umc_mem_read_bandwidth
+   185.821520877      1,003,996,392 ns   duration_time                                                         
+   185.821520877      5,464,213,046      umc_cas_cmd.all                  # 349709.6 MB/s  umc_mem_bandwidth   
+   185.821520877      1,003,996,392 ns   duration_time                                                         
+   186.825522828          4,345,114      umc_cas_cmd.wr                   #    278.1 MB/s  umc_mem_write_bandwidth
+   186.825522828      1,004,001,951 ns   duration_time                                                         
+   186.825522828      5,460,072,482      umc_cas_cmd.rd                   # 349444.6 MB/s  umc_mem_read_bandwidth
+   186.825522828      1,004,001,951 ns   duration_time                                                         
+   186.825522828      5,464,424,412      umc_cas_cmd.all                  # 349723.2 MB/s  umc_mem_bandwidth   
+   186.825522828      1,004,001,951 ns   duration_time                                                         
+   187.830526841          4,340,929      umc_cas_cmd.wr                   #    277.8 MB/s  umc_mem_write_bandwidth
+   187.830526841      1,005,004,013 ns   duration_time                                                         
+   187.830526841      5,465,230,611      umc_cas_cmd.rd                   # 349774.8 MB/s  umc_mem_read_bandwidth
+   187.830526841      1,005,004,013 ns   duration_time                                                         
+   187.830526841      5,469,560,931      umc_cas_cmd.all                  # 350051.9 MB/s  umc_mem_bandwidth   
+   187.830526841      1,005,004,013 ns   duration_time                                                         
+   188.832529209          4,492,314      umc_cas_cmd.wr                   #    287.5 MB/s  umc_mem_write_bandwidth
+   188.832529209      1,002,002,368 ns   duration_time                                                         
+   188.832529209      5,447,436,109      umc_cas_cmd.rd                   # 348635.9 MB/s  umc_mem_read_bandwidth
+   188.832529209      1,002,002,368 ns   duration_time                                                         
+   188.832529209      5,451,921,087      umc_cas_cmd.all                  # 348922.9 MB/s  umc_mem_bandwidth   
+   188.832529209      1,002,002,368 ns   duration_time                                                         
+   189.836524500          4,832,960      umc_cas_cmd.wr                   #    309.3 MB/s  umc_mem_write_bandwidth
+   189.836524500      1,003,995,291 ns   duration_time                                                         
+   189.836524500      5,453,547,623      umc_cas_cmd.rd                   # 349027.0 MB/s  umc_mem_read_bandwidth
+   189.836524500      1,003,995,291 ns   duration_time                                                         
+   189.836524500      5,458,380,458      umc_cas_cmd.all                  # 349336.3 MB/s  umc_mem_bandwidth   
+   189.836524500      1,003,995,291 ns   duration_time                                                         
+   190.841528133          4,701,999      umc_cas_cmd.wr                   #    300.9 MB/s  umc_mem_write_bandwidth
+   190.841528133      1,005,003,633 ns   duration_time                                                         
+   190.841528133      5,460,781,646      umc_cas_cmd.rd                   # 349490.0 MB/s  umc_mem_read_bandwidth
+   190.841528133      1,005,003,633 ns   duration_time                                                         
+   190.841528133      5,465,488,972      umc_cas_cmd.all                  # 349791.3 MB/s  umc_mem_bandwidth   
+   190.841528133      1,005,003,633 ns   duration_time                                                         
+   191.845522604          4,573,980      umc_cas_cmd.wr                   #    292.7 MB/s  umc_mem_write_bandwidth
+   191.845522604      1,003,994,471 ns   duration_time                                                         
+   191.845522604      5,457,047,421      umc_cas_cmd.rd                   # 349251.0 MB/s  umc_mem_read_bandwidth
+   191.845522604      1,003,994,471 ns   duration_time                                                         
+   191.845522604      5,461,628,889      umc_cas_cmd.all                  # 349544.2 MB/s  umc_mem_bandwidth   
+   191.845522604      1,003,994,471 ns   duration_time                                                         
+   192.849521875          4,594,468      umc_cas_cmd.wr                   #    294.0 MB/s  umc_mem_write_bandwidth
+   192.849521875      1,003,999,271 ns   duration_time                                                         
+   192.849521875      5,456,904,723      umc_cas_cmd.rd                   # 349241.9 MB/s  umc_mem_read_bandwidth
+   192.849521875      1,003,999,271 ns   duration_time                                                         
+   192.849521875      5,461,496,467      umc_cas_cmd.all                  # 349535.8 MB/s  umc_mem_bandwidth   
+   192.849521875      1,003,999,271 ns   duration_time                                                         
+   193.855532909          4,907,124      umc_cas_cmd.wr                   #    314.1 MB/s  umc_mem_write_bandwidth
+   193.855532909      1,006,011,034 ns   duration_time                                                         
+   193.855532909      5,464,816,981      umc_cas_cmd.rd                   # 349748.3 MB/s  umc_mem_read_bandwidth
+   193.855532909      1,006,011,034 ns   duration_time                                                         
+   193.855532909      5,469,723,463      umc_cas_cmd.all                  # 350062.3 MB/s  umc_mem_bandwidth   
+   193.855532909      1,006,011,034 ns   duration_time                                                         
+   194.857533777          4,575,011      umc_cas_cmd.wr                   #    292.8 MB/s  umc_mem_write_bandwidth
+   194.857533777      1,002,000,868 ns   duration_time                                                         
+   194.857533777      5,446,154,154      umc_cas_cmd.rd                   # 348553.9 MB/s  umc_mem_read_bandwidth
+   194.857533777      1,002,000,868 ns   duration_time                                                         
+   194.857533777      5,450,726,343      umc_cas_cmd.all                  # 348846.5 MB/s  umc_mem_bandwidth   
+   194.857533777      1,002,000,868 ns   duration_time                                                         
+   195.862576410          4,524,070      umc_cas_cmd.wr                   #    289.5 MB/s  umc_mem_write_bandwidth
+   195.862576410      1,005,042,633 ns   duration_time                                                         
+   195.862576410      5,462,552,981      umc_cas_cmd.rd                   # 349603.4 MB/s  umc_mem_read_bandwidth
+   195.862576410      1,005,042,633 ns   duration_time                                                         
+   195.862576410      5,467,075,499      umc_cas_cmd.all                  # 349892.8 MB/s  umc_mem_bandwidth   
+   195.862576410      1,005,042,633 ns   duration_time                                                         
+   196.865524290          4,628,116      umc_cas_cmd.wr                   #    296.2 MB/s  umc_mem_write_bandwidth
+   196.865524290      1,002,947,880 ns   duration_time                                                         
+   196.865524290      5,451,048,656      umc_cas_cmd.rd                   # 348867.1 MB/s  umc_mem_read_bandwidth
+   196.865524290      1,002,947,880 ns   duration_time                                                         
+   196.865524290      5,455,677,942      umc_cas_cmd.all                  # 349163.4 MB/s  umc_mem_bandwidth   
+   196.865524290      1,002,947,880 ns   duration_time                                                         
+   197.869527391          4,443,684      umc_cas_cmd.wr                   #    284.4 MB/s  umc_mem_write_bandwidth
+   197.869527391      1,004,003,101 ns   duration_time                                                         
+   197.869527391      5,458,979,392      umc_cas_cmd.rd                   # 349374.7 MB/s  umc_mem_read_bandwidth
+   197.869527391      1,004,003,101 ns   duration_time                                                         
+   197.869527391      5,463,435,399      umc_cas_cmd.all                  # 349659.9 MB/s  umc_mem_bandwidth   
+   197.869527391      1,004,003,101 ns   duration_time                                                         
+   198.874521954          4,354,772      umc_cas_cmd.wr                   #    278.7 MB/s  umc_mem_write_bandwidth
+   198.874521954      1,004,994,563 ns   duration_time                                                         
+   198.874521954      5,465,612,174      umc_cas_cmd.rd                   # 349799.2 MB/s  umc_mem_read_bandwidth
+   198.874521954      1,004,994,563 ns   duration_time                                                         
+   198.874521954      5,470,097,102      umc_cas_cmd.all                  # 350086.2 MB/s  umc_mem_bandwidth   
+   198.874521954      1,004,994,563 ns   duration_time                                                         
+   199.881528109          4,425,017      umc_cas_cmd.wr                   #    283.2 MB/s  umc_mem_write_bandwidth
+   199.881528109      1,007,006,155 ns   duration_time                                                         
+   199.881528109      5,474,753,634      umc_cas_cmd.rd                   # 350384.2 MB/s  umc_mem_read_bandwidth
+   199.881528109      1,007,006,155 ns   duration_time                                                         
+   199.881528109      5,479,026,871      umc_cas_cmd.all                  # 350657.7 MB/s  umc_mem_bandwidth   
+   199.881528109      1,007,006,155 ns   duration_time                                                         
+   200.883519608          4,297,339      umc_cas_cmd.wr                   #    275.0 MB/s  umc_mem_write_bandwidth
+   200.883519608      1,001,991,499 ns   duration_time                                                         
+   200.883519608      4,979,234,843      umc_cas_cmd.rd                   # 318671.0 MB/s  umc_mem_read_bandwidth
+   200.883519608      1,001,991,499 ns   duration_time                                                         
+   200.883519608      4,983,280,922      umc_cas_cmd.all                  # 318930.0 MB/s  umc_mem_bandwidth   
+   200.883519608      1,001,991,499 ns   duration_time                                                         
+2026-06-07 19:05:46.757 INFO  [54463] [kmercounter::BandwidthTest::run@196] Bandwidth test end
+2026-06-07 19:05:46.784 INFO  [54463] [kmercounter::BandwidthTest::run@213] took 38445 cycles per cacheline on read
+2026-06-07 19:05:46.802 INFO  [54463] [kmercounter::print_stats@280] 
+============================================
+mem: 68719476736000 bytes, took 198.463 sec, bandwidth: 346.3 GB/s
+============================================
+
+   201.406100181          1,156,031      umc_cas_cmd.wr                   #     74.0 MB/s  umc_mem_write_bandwidth
+   201.406100181        522,580,573 ns   duration_time                                                         
+   201.406100181        585,023,660      umc_cas_cmd.rd                   #  37441.5 MB/s  umc_mem_read_bandwidth
+   201.406100181        522,580,573 ns   duration_time                                                         
+   201.406100181        586,051,316      umc_cas_cmd.all                  #  37507.3 MB/s  umc_mem_bandwidth   
+   201.406100181        522,580,573 ns   duration_time                                                         
