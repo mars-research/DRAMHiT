@@ -1,0 +1,108 @@
+---------------------------------------------
+Analyzing: zipfian_skew0.01_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.01
+Computed Skew: 0.2835
+WARNING: Skew deviates by 0.2735 (Threshold: 0.15)
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.1_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.1
+Computed Skew: 0.3011
+WARNING: Skew deviates by 0.2011 (Threshold: 0.15)
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.2_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.2
+Computed Skew: 0.3549
+WARNING: Skew deviates by 0.1549 (Threshold: 0.15)
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.3_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.3
+Computed Skew: 0.4318
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.4_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.4
+Computed Skew: 0.5215
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.5_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.5
+Computed Skew: 0.6193
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.6_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.6
+Computed Skew: 0.7223
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.7_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.7
+Computed Skew: 0.8266
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.8_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.8
+Computed Skew: 0.9226
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew0.9_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 0.9
+Computed Skew: 0.9898
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew1_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 1.0
+Computed Skew: 1.0090
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew1.1_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 1.1
+Computed Skew: 0.9946
+---------------------------------------------
+---------------------------------------------
+Analyzing: zipfian_skew1.2_seed2190830198_size41943040_keyrange4194304.bin
+---------------------------------------------
+Dataset Type: Pure Zipfian
+Expected Size: 41943040
+Expected Skew: 1.2
+Computed Skew: 0.9884
+WARNING: Skew deviates by 0.2116 (Threshold: 0.15)
+---------------------------------------------

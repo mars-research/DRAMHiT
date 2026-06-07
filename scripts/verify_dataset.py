@@ -91,7 +91,7 @@ def check_hashjoin(filepath, filename):
 
 
 def check_zipfian(filepath, filename):
-    pattern = r"zipfian_skew([\d.]+)_seed(\d+)_size(\d+)\.bin"
+    pattern = r"zipfian_skew([\d.]+)_seed(\d+)_size(\d+)_keyrange(\d+)\.bin"
     match = re.match(pattern, filename)
 
     if not match:
