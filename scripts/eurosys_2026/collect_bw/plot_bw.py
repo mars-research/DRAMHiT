@@ -3,11 +3,15 @@ import sys
 import os
 import matplotlib.pyplot as plt
 
-STREAM = (289336.8/1000)  # GB/s, from STREAM, MLC, or custom BW test
-# STREAM = 250
-STREAM_LABEL_NAME = "STREAM"
-def parse_perf_data(file_path):
+# Separate baseline constants (GB/s) for independent adjustment
+STREAM_INSERT = 255.6 
+STREAM_FIND = 346.3
 
+STREAM_INSERT_LABEL = "synthetic_1read_1write"
+STREAM_FIND_LABEL = "synthetic_read"
+
+
+def parse_perf_data(file_path):
     # Generates [10, 20, 30, 40, 50, 60, 70, 80, 90]
     fill_factors = list(range(10, 100, 10))
 
@@ -23,7 +27,6 @@ def parse_perf_data(file_path):
 
     with open(file_path, 'r') as f:
         for line in f:
-
             # Check for phase markers
             if "zipfian test insert start" in line:
                 current_phase = "insert"
@@ -43,9 +46,7 @@ def parse_perf_data(file_path):
 
             # MINIMAL CHANGE: Look for either bandwidth string if inside a phase
             elif current_phase and ("umc_mem_bandwidth" in line or "unc_m_cas_count.all" in line):
-
                 match = bw_pattern.search(line)
-
                 if match:
                     # MINIMAL CHANGE: Branch parsing logic depending on which regex group matched
                     if match.group(1):  # AMD path
@@ -55,7 +56,6 @@ def parse_perf_data(file_path):
 
                     if current_phase == "insert":
                         current_run_insert.append(bw_mb)
-
                     elif current_phase == "find":
                         current_run_find.append(bw_mb)
 
@@ -65,17 +65,13 @@ def parse_perf_data(file_path):
 
     trim = 2
     for data in insert_data:
-
         # Exclude first and last 2 samples if possible
         trimmed = data[trim:-trim] if len(data) > 2 * trim else data
-
         avg_mb = sum(trimmed) / len(trimmed) if trimmed else 0
         insert_avgs_gbs.append(avg_mb / 1000.0)
 
     for data in find_data:
-
         trimmed = data[trim:-trim] if len(data) > 2 * trim else data
-
         avg_mb = sum(trimmed) / len(trimmed) if trimmed else 0
         find_avgs_gbs.append(avg_mb / 1000.0)
 
@@ -83,7 +79,6 @@ def parse_perf_data(file_path):
 
 
 def plot_bandwidth(all_results):
-
     # Create side-by-side graphs
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
@@ -91,9 +86,7 @@ def plot_bandwidth(all_results):
     # INSERT GRAPH (LEFT)
     #
     for label, fill_factors, insert_avgs, _ in all_results:
-
         n_insert = min(len(fill_factors), len(insert_avgs))
-
         x_insert = fill_factors[:n_insert]
         y_insert = insert_avgs[:n_insert]
 
@@ -105,7 +98,8 @@ def plot_bandwidth(all_results):
             label=label
         )
 
-    axes[0].axhline(STREAM, linestyle='--', linewidth=2, label=STREAM_LABEL_NAME)
+    # Added color='red' and adjusted to use the insert-specific baseline and label
+    axes[0].axhline(STREAM_INSERT, color='red', linestyle='--', linewidth=2, label=STREAM_INSERT_LABEL)
 
     axes[0].set_title('Insert Memory Bandwidth')
     axes[0].set_xlabel('Fill Factor (%)')
@@ -119,9 +113,7 @@ def plot_bandwidth(all_results):
     # FIND GRAPH (RIGHT)
     #
     for label, fill_factors, _, find_avgs in all_results:
-
         n_find = min(len(fill_factors), len(find_avgs))
-
         x_find = fill_factors[:n_find]
         y_find = find_avgs[:n_find]
 
@@ -133,7 +125,8 @@ def plot_bandwidth(all_results):
             label=label
         )
 
-    axes[1].axhline(STREAM, linestyle='--', linewidth=2, label=STREAM_LABEL_NAME)
+    # Added color='red' and adjusted to use the find-specific baseline and label
+    axes[1].axhline(STREAM_FIND, color='red', linestyle='--', linewidth=2, label=STREAM_FIND_LABEL)
 
     axes[1].set_title('Find Memory Bandwidth')
     axes[1].set_xlabel('Fill Factor (%)')
@@ -146,15 +139,12 @@ def plot_bandwidth(all_results):
     plt.tight_layout()
 
     # Save both graphs into one PDF
-    plt.savefig('bandwidth_plots.pdf')
-
-    print("Plots successfully saved as 'bandwidth_plots.pdf'.")
-
+    plt.savefig('test.pdf')
+    print("Plots successfully saved as 'test.pdf'.")
     plt.show()
 
 
 if __name__ == "__main__":
-
     if len(sys.argv) < 2:
         print(f"Usage: python {sys.argv[0]} <file1.txt> [file2.txt ...]")
         sys.exit(1)
@@ -162,9 +152,7 @@ if __name__ == "__main__":
     all_results = []
 
     for file_path in sys.argv[1:]:
-
         fill_factors, insert_avgs, find_avgs = parse_perf_data(file_path)
-
         label = os.path.splitext(os.path.basename(file_path))[0]
 
         print(f"\nResults for {file_path}")
