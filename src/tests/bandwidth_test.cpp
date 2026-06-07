@@ -154,14 +154,14 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     else if (config.sequential == 0) {
       uint64_t dummy_sum = 0;
       uint64_t idx = 0;
-      
+
       for (uint64_t i = 0; (i + 64) < size; i += 64) {
         uint64_t offset = i + 64;
         for (uint64_t j = i; j < offset; j++) {
           idx = knuth64(j) & (size - 1);
           prefetch(arr, idx);
         }
-        
+
         for (uint64_t k = i; k < offset; k++) {
           idx = knuth64(k) & (size - 1);
           dummy_sum += *(reinterpret_cast<const uint64_t*>(&arr[idx]));
@@ -186,6 +186,33 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
           idx = knuth64(k) & (size - 1);
           *(uint64_t*)&arr[idx] = 14;
         }
+      }
+    }
+    // 1.2 Read  1 Write
+    else if (config.sequential == 3) {
+      uint64_t dummy_sum = 0;
+      uint64_t idx = 0;
+      for (uint64_t i = 0; (i + 64) < size; i += 64) {
+        uint64_t offset = i + 64;
+        for (uint64_t j = i; j < offset; j++) {
+          idx = knuth64(j) & (size - 1);
+          prefetch(arr, idx);
+        }
+        //This controls number of writes. ratio is 64/X, ie for 53: 64/52 ~= 1.2, or 1.2 reads for 1 write
+        uint64_t write_offset = i + 53;
+
+        for (uint64_t k = i; k < write_offset; k++) {
+          idx = knuth64(k) & (size - 1);
+          *(uint64_t*)&arr[idx] = 14;
+        }
+
+        //read rest of non-written cachelines, without this loop prefetches are dropped on AMD
+        uint64_t read_offset = write_offset;
+        for (uint64_t k = read_offset; k < offset; k++) {
+          idx = knuth64(k) & (size - 1);
+          dummy_sum += *(reinterpret_cast<const uint64_t*>(&arr[idx]));
+        }
+        asm volatile("" : : "g"(dummy_sum) : "memory");
       }
     }
   }  // end repeat experiment iterations

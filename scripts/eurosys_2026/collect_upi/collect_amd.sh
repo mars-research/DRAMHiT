@@ -35,6 +35,8 @@ if [ "$test" = "read" ]; then
 workload=0
 elif [ "$test" = "rw" ]; then
 workload=2
+elif [ "$test" = "1.2rw" ]; then
+workload=3
 fi
 
 
