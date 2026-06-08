@@ -164,8 +164,8 @@ void print_stats(Shard *all_sh, Configuration &config) {
   for (uint32_t k = 0; k < config.num_threads; k++) {
     total_insert_cycles += all_sh[k].stats->insertions.duration;
     total_inserts += all_sh[k].stats->insertions.op_count;
-    printf("Total insertions for thread %lu: %lu\n", k, all_sh[k].stats->insertions.op_count);
-    printf("Total insertion time for thread %lu: %lu\n", k, all_sh[k].stats->insertions.duration);
+    //printf("Total insertions for thread %lu: %lu\n", k, all_sh[k].stats->insertions.op_count);
+    //printf("Total insertion time for thread %lu: %lu\n", k, all_sh[k].stats->insertions.duration);
     total_finds += all_sh[k].stats->finds.op_count;
     // printf("total finds for thread %llu, is, %llu\n", k, total_finds);
     total_find_cycles += all_sh[k].stats->finds.duration;
@@ -174,6 +174,7 @@ void print_stats(Shard *all_sh, Configuration &config) {
     total_found += all_sh[k].stats->found;
 
     ht_fill += all_sh[k].stats->ht_fill;
+    printf("total fill for table is, %llu\n", ht_fill);
     ht_capacity += all_sh[k].stats->ht_capacity;
 
     max_find_duration = all_sh[k].stats->finds.duration > max_find_duration

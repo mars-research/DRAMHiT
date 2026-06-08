@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 NUM_2MB_PAGES_PERNODE=24000
-NUM_1GB_PAGES_PERNODE=100
+NUM_1GB_PAGES_PERNODE=128
 
 
 # Enable 2MB pages

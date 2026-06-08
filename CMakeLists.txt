@@ -91,6 +91,7 @@ else()
     message(FATAL_ERROR "Invalid DRAMHiT_VARIANT: ${DRAMHiT_VARIANT}")
 endif()
 
+
 # Define a single option variable with X choices for PREFETCH
 set(PREFETCH "DOUBLE" CACHE STRING "Choose PREFETCH: DOUBLE, L1, L2, L3, NTA")
 # Tell CMake what the valid values are (for GUIs like ccmake / cmake-gui)

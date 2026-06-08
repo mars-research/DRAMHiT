@@ -42,7 +42,7 @@ namespace { // This prevents definition collision
 // utility constants and lambdas for SIMD operations
 constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / KV_SIZE;
 
-const size_t MAX_PARTITIONS = 64;
+const size_t MAX_PARTITIONS = 256;
 
 #ifdef AVX_SUPPORT
 
