@@ -10,9 +10,26 @@ STREAM_FIND = 346.3
 STREAM_INSERT_LABEL = "synthetic_1read_1write"
 STREAM_FIND_LABEL = "synthetic_read"
 
+# NEW BASELINES
+BASELINES = [
+    ("r", 342.3),
+    ("rw", 271.4),
+    ("stream+rw", 297.0),
+    ("1.5R_1W", 280.0),
+]
+
+# USE TAB10 COLORS
+TAB10 = plt.get_cmap("tab10").colors
+
+BASELINE_COLORS = {
+    "r": TAB10[0],          # blue
+    "rw": TAB10[1],         # orange
+    "stream+rw": TAB10[2],  # green
+    "1.5R_1W": TAB10[3],    # red
+}
+
 
 def parse_perf_data(file_path):
-    # Generates [10, 20, 30, 40, 50, 60, 70, 80, 90]
     fill_factors = list(range(10, 100, 10))
 
     insert_data = []
@@ -22,12 +39,13 @@ def parse_perf_data(file_path):
     current_run_insert = []
     current_run_find = []
 
-    # MINIMAL CHANGE: Matches either AMD (Group 1) or Intel (Group 2)
-    bw_pattern = re.compile(r"(?:#\s+([0-9.]+)\s+MB/s\s+umc_mem_bandwidth)|(?:([\d,]+)\s+unc_m_cas_count\.all)")
+    bw_pattern = re.compile(
+        r"(?:#\s+([0-9.]+)\s+MB/s\s+umc_mem_bandwidth)"
+        r"|(?:([\d,]+)\s+unc_m_cas_count\.all)"
+    )
 
     with open(file_path, 'r') as f:
         for line in f:
-            # Check for phase markers
             if "zipfian test insert start" in line:
                 current_phase = "insert"
                 current_run_insert = []
@@ -44,14 +62,12 @@ def parse_perf_data(file_path):
                 current_phase = None
                 find_data.append(current_run_find)
 
-            # MINIMAL CHANGE: Look for either bandwidth string if inside a phase
             elif current_phase and ("umc_mem_bandwidth" in line or "unc_m_cas_count.all" in line):
                 match = bw_pattern.search(line)
                 if match:
-                    # MINIMAL CHANGE: Branch parsing logic depending on which regex group matched
                     if match.group(1):  # AMD path
                         bw_mb = float(match.group(1))
-                    else:  # Intel path: (CAS * 64 bytes) / 1e6 to scale to MB/s equivalent
+                    else:
                         bw_mb = (float(match.group(2).replace(',', '')) * 64) / 1e6
 
                     if current_phase == "insert":
@@ -59,13 +75,11 @@ def parse_perf_data(file_path):
                     elif current_phase == "find":
                         current_run_find.append(bw_mb)
 
-    # Calculate averages and convert to GB/s
     insert_avgs_gbs = []
     find_avgs_gbs = []
 
     trim = 2
     for data in insert_data:
-        # Exclude first and last 2 samples if possible
         trimmed = data[trim:-trim] if len(data) > 2 * trim else data
         avg_mb = sum(trimmed) / len(trimmed) if trimmed else 0
         insert_avgs_gbs.append(avg_mb / 1000.0)
@@ -79,66 +93,141 @@ def parse_perf_data(file_path):
 
 
 def plot_bandwidth(all_results):
-    # Create side-by-side graphs
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
+    # Track max value to dynamically sync the Y-axis limits
+    max_y_val = max([val for _, val in BASELINES])  # Start with the highest baseline
+
     #
-    # INSERT GRAPH (LEFT)
+    # INSERT GRAPH
     #
-    for label, fill_factors, insert_avgs, _ in all_results:
+    for idx, (label, fill_factors, insert_avgs, _) in enumerate(all_results):
         n_insert = min(len(fill_factors), len(insert_avgs))
         x_insert = fill_factors[:n_insert]
         y_insert = insert_avgs[:n_insert]
+        
+        if y_insert:
+            max_y_val = max(max_y_val, max(y_insert))
 
+        data_color = TAB10[(4 + idx) % 10]
+
+        # zorder=3 keeps dynamic lines safely above the baselines
         axes[0].plot(
             x_insert,
             y_insert,
             marker='o',
             linestyle='-',
-            label=label
+            color=data_color,
+            label=label,
+            zorder=3
         )
 
-    # Added color='red' and adjusted to use the insert-specific baseline and label
-    axes[0].axhline(STREAM_INSERT, color='red', linestyle='--', linewidth=2, label=STREAM_INSERT_LABEL)
+    # Baselines (INSERT)
+    for name, val in BASELINES:
+        # zorder=1 forces synthetic benchmarks below the parsed metrics
+        axes[0].axhline(
+            val,
+            linestyle='--',
+            linewidth=2,
+            color=BASELINE_COLORS.get(name, None),
+            label=name,
+            zorder=1
+        )
 
     axes[0].set_title('Insert Memory Bandwidth')
     axes[0].set_xlabel('Fill Factor (%)')
     axes[0].set_ylabel('Bandwidth (GB/s)')
-    axes[0].set_xticks(fill_factors)
-    axes[0].set_ylim(bottom=0)   # Start y-axis at 0
-    axes[0].grid(True, linestyle='--', alpha=0.7)
-    axes[0].legend()
+    axes[0].set_xticks(list(range(10, 100, 10)))
+    axes[0].grid(True, linestyle='--', alpha=0.7, zorder=0)
 
     #
-    # FIND GRAPH (RIGHT)
+    # FIND GRAPH
     #
-    for label, fill_factors, _, find_avgs in all_results:
+    for idx, (label, fill_factors, _, find_avgs) in enumerate(all_results):
         n_find = min(len(fill_factors), len(find_avgs))
         x_find = fill_factors[:n_find]
         y_find = find_avgs[:n_find]
+        
+        if y_find:
+            max_y_val = max(max_y_val, max(y_find))
+
+        data_color = TAB10[(4 + idx) % 10]
 
         axes[1].plot(
             x_find,
             y_find,
             marker='s',
             linestyle='-',
-            label=label
+            color=data_color,
+            label=label,
+            zorder=3
         )
 
-    # Added color='red' and adjusted to use the find-specific baseline and label
-    axes[1].axhline(STREAM_FIND, color='red', linestyle='--', linewidth=2, label=STREAM_FIND_LABEL)
+    # Baselines (FIND)
+    for name, val in BASELINES:
+        axes[1].axhline(
+            val,
+            linestyle='--',
+            linewidth=2,
+            color=BASELINE_COLORS.get(name, None),
+            label=name,
+            zorder=1
+        )
 
     axes[1].set_title('Find Memory Bandwidth')
     axes[1].set_xlabel('Fill Factor (%)')
     axes[1].set_ylabel('Bandwidth (GB/s)')
-    axes[1].set_xticks(fill_factors)
-    axes[1].set_ylim(bottom=0)   # Start y-axis at 0
-    axes[1].grid(True, linestyle='--', alpha=0.7)
-    axes[1].legend()
+    axes[1].set_xticks(list(range(10, 100, 10)))
+    axes[1].grid(True, linestyle='--', alpha=0.7, zorder=0)
 
-    plt.tight_layout()
+    #
+    # SYNCHRONIZE Y-AXIS LIMITS
+    #
+    y_limit_top = max_y_val * 1.05 
+    axes[0].set_ylim(bottom=0, top=y_limit_top)
+    axes[1].set_ylim(bottom=0, top=y_limit_top)
 
-    # Save both graphs into one PDF
+    #
+    # GLOBAL LEGEND (TOP) WITH CUSTOM ORDER
+    #
+    handles, labels = axes[0].get_legend_handles_labels()
+    
+    # Define primary sorting intent
+    priority_order = ["dramblast", "dramhit", "growt"]
+    
+    # Map out chunks: Priority matches -> other parsed text logs -> static baselines
+    priority_items = []
+    other_items = []
+    baseline_items = []
+    
+    baseline_names = [b[0] for b in BASELINES]
+
+    for h, l in zip(handles, labels):
+        if l in priority_order:
+            priority_items.append((h, l))
+        elif l in baseline_names:
+            baseline_items.append((h, l))
+        else:
+            other_items.append((h, l))
+            
+    # Sub-sort priority items strictly to match the list declaration order
+    priority_items.sort(key=lambda x: priority_order.index(x[1]))
+    
+    # Combine everything back together in a clear structural chain
+    sorted_pairs = priority_items + other_items + baseline_items
+    sorted_handles = [p[0] for p in sorted_pairs]
+    sorted_labels = [p[1] for p in sorted_pairs]
+
+    fig.legend(
+        sorted_handles,
+        sorted_labels,
+        loc='upper center',
+        ncol=len(sorted_labels),  # Force columns equal to length so it's always single-row
+        frameon=True
+    )
+
+    plt.tight_layout(rect=[0, 0, 1, 0.90])
+
     plt.savefig('test.pdf')
     print("Plots successfully saved as 'test.pdf'.")
     plt.show()

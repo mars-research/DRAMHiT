@@ -1,0 +1,1158 @@
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target xxhash
+[ 35%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 44%] Built target cityhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[ 52%] Building CXX object CMakeFiles/dramhit.dir/src/tests/bandwidth_test.cpp.o
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp: In member function 'void kmercounter::BandwidthTest::run(kmercounter::Shard*, const kmercounter::Configuration&, std::barrier<std::function<void()> >*)':
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:200:53: warning: comparison of integer expressions of different signedness: 'int' and 'const uint64_t' {aka 'const long unsigned int'} [-Wsign-compare]
+  200 |   for (int repeat_iterations = 0; repeat_iterations < config.read_factor;
+      |                                   ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:209:16: warning: unused variable 'dummy_sum' [-Wunused-variable]
+  209 |       uint64_t dummy_sum = 0;
+      |                ^~~~~~~~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:211:16: warning: unused variable 'stream_idx' [-Wunused-variable]
+  211 |       uint64_t stream_idx = 0;
+      |                ^~~~~~~~~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:311:16: warning: unused variable 'idx' [-Wunused-variable]
+  311 |       uint64_t idx = 0;
+      |                ^~~
+[ 55%] Linking CXX executable dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/scripts/eurosys_2026/collect_upi/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 0 --read-factor 100
+2026-06-08 22:31:58.362 INFO  [169249] [initializeLogger@17] ------------------------
+2026-06-08 22:31:58.362 INFO  [169249] [initializeLogger@18] Plog library initialized
+2026-06-08 22:31:58.362 INFO  [169249] [initializeLogger@19] ------------------------
+2026-06-08 22:31:58.362 INFO  [169249] [main@27] Starting dramhit
+2026-06-08 22:31:58.362 INFO  [169249] [kmercounter::Application::process@868] no ht needed
+2026-06-08 22:31:58.362 INFO  [169249] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 1 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 2 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 3 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 4 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 5 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 6 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 7 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 8 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 9 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 10 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 11 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 12 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 13 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 14 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 15 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 16 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 17 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 18 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 19 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 20 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 21 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 22 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 23 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 24 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 25 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 26 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 27 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 28 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 29 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 30 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 31 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 32 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 33 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 34 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 35 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 36 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 37 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 38 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 39 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 40 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 41 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 42 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 43 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 44 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 45 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 46 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 47 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 48 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 49 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 50 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 51 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 52 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 53 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 54 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 55 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 56 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 57 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 58 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 59 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 60 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 61 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 62 at numa node 0
+2026-06-08 22:31:58.547 INFO  [169249] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 63 at numa node 0
+2026-06-08 22:31:58.555 INFO  [169249] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000648317        236,550,315      umc_cas_cmd.wr                   #  15139.2 MB/s  umc_mem_write_bandwidth
+     1.000648317      1,000,648,317 ns   duration_time                                                         
+     1.000648317        239,470,246      umc_cas_cmd.rd                   #  15326.1 MB/s  umc_mem_read_bandwidth
+     1.000648317      1,000,648,317 ns   duration_time                                                         
+     1.000648317        476,029,236      umc_cas_cmd.all                  #  30465.9 MB/s  umc_mem_bandwidth   
+     1.000648317      1,000,648,317 ns   duration_time                                                         
+     2.002645624        131,769,654      umc_cas_cmd.wr                   #   8433.3 MB/s  umc_mem_write_bandwidth
+     2.002645624      1,001,997,307 ns   duration_time                                                         
+     2.002645624        132,569,782      umc_cas_cmd.rd                   #   8484.5 MB/s  umc_mem_read_bandwidth
+     2.002645624      1,001,997,307 ns   duration_time                                                         
+     2.002645624        264,338,525      umc_cas_cmd.all                  #  16917.7 MB/s  umc_mem_bandwidth   
+     2.002645624      1,001,997,307 ns   duration_time                                                         
+     3.004643722        131,318,317      umc_cas_cmd.wr                   #   8404.4 MB/s  umc_mem_write_bandwidth
+     3.004643722      1,001,998,098 ns   duration_time                                                         
+     3.004643722        132,063,185      umc_cas_cmd.rd                   #   8452.0 MB/s  umc_mem_read_bandwidth
+     3.004643722      1,001,998,098 ns   duration_time                                                         
+     3.004643722        263,380,887      umc_cas_cmd.all                  #  16856.4 MB/s  umc_mem_bandwidth   
+     3.004643722      1,001,998,098 ns   duration_time                                                         
+     4.006644419        132,160,343      umc_cas_cmd.wr                   #   8458.3 MB/s  umc_mem_write_bandwidth
+     4.006644419      1,002,000,697 ns   duration_time                                                         
+     4.006644419        132,891,316      umc_cas_cmd.rd                   #   8505.0 MB/s  umc_mem_read_bandwidth
+     4.006644419      1,002,000,697 ns   duration_time                                                         
+     4.006644419        265,051,909      umc_cas_cmd.all                  #  16963.3 MB/s  umc_mem_bandwidth   
+     4.006644419      1,002,000,697 ns   duration_time                                                         
+     5.008646257        131,142,142      umc_cas_cmd.wr                   #   8393.1 MB/s  umc_mem_write_bandwidth
+     5.008646257      1,002,001,838 ns   duration_time                                                         
+     5.008646257        132,496,469      umc_cas_cmd.rd                   #   8479.8 MB/s  umc_mem_read_bandwidth
+     5.008646257      1,002,001,838 ns   duration_time                                                         
+     5.008646257        263,638,340      umc_cas_cmd.all                  #  16872.9 MB/s  umc_mem_bandwidth   
+     5.008646257      1,002,001,838 ns   duration_time                                                         
+     6.010645234        131,315,913      umc_cas_cmd.wr                   #   8404.2 MB/s  umc_mem_write_bandwidth
+     6.010645234      1,001,998,977 ns   duration_time                                                         
+     6.010645234        131,546,121      umc_cas_cmd.rd                   #   8419.0 MB/s  umc_mem_read_bandwidth
+     6.010645234      1,001,998,977 ns   duration_time                                                         
+     6.010645234        262,861,974      umc_cas_cmd.all                  #  16823.2 MB/s  umc_mem_bandwidth   
+     6.010645234      1,001,998,977 ns   duration_time                                                         
+2026-06-08 22:32:05.007 INFO  [169249] [kmercounter::BandwidthTest::run@112] took 2499 cycles per cacheline on mmap and mbind
+2026-06-08 22:32:05.120 INFO  [169249] [kmercounter::BandwidthTest::run@183] took 43 cycles per cacheline on write
+2026-06-08 22:32:05.120 INFO  [169249] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+     7.013681613        743,943,650      umc_cas_cmd.wr                   #  47612.4 MB/s  umc_mem_write_bandwidth
+     7.013681613      1,003,036,379 ns   duration_time                                                         
+     7.013681613        530,961,390      umc_cas_cmd.rd                   #  33981.5 MB/s  umc_mem_read_bandwidth
+     7.013681613      1,003,036,379 ns   duration_time                                                         
+     7.013681613      1,275,266,540      umc_cas_cmd.all                  #  81617.1 MB/s  umc_mem_bandwidth   
+     7.013681613      1,003,036,379 ns   duration_time                                                         
+     8.017659082          3,895,374      umc_cas_cmd.wr                   #    249.3 MB/s  umc_mem_write_bandwidth
+     8.017659082      1,003,977,469 ns   duration_time                                                         
+     8.017659082      5,436,954,929      umc_cas_cmd.rd                   # 347965.1 MB/s  umc_mem_read_bandwidth
+     8.017659082      1,003,977,469 ns   duration_time                                                         
+     8.017659082      5,440,842,713      umc_cas_cmd.all                  # 348213.9 MB/s  umc_mem_bandwidth   
+     8.017659082      1,003,977,469 ns   duration_time                                                         
+     9.022669182          3,917,795      umc_cas_cmd.wr                   #    250.7 MB/s  umc_mem_write_bandwidth
+     9.022669182      1,005,010,100 ns   duration_time                                                         
+     9.022669182      5,423,964,443      umc_cas_cmd.rd                   # 347133.7 MB/s  umc_mem_read_bandwidth
+     9.022669182      1,005,010,100 ns   duration_time                                                         
+     9.022669182      5,427,872,528      umc_cas_cmd.all                  # 347383.8 MB/s  umc_mem_bandwidth   
+     9.022669182      1,005,010,100 ns   duration_time                                                         
+    10.024677299          3,886,415      umc_cas_cmd.wr                   #    248.7 MB/s  umc_mem_write_bandwidth
+    10.024677299      1,002,008,117 ns   duration_time                                                         
+    10.024677299      5,409,589,254      umc_cas_cmd.rd                   # 346213.7 MB/s  umc_mem_read_bandwidth
+    10.024677299      1,002,008,117 ns   duration_time                                                         
+    10.024677299      5,413,495,717      umc_cas_cmd.all                  # 346463.7 MB/s  umc_mem_bandwidth   
+    10.024677299      1,002,008,117 ns   duration_time                                                         
+    11.028667119          3,885,371      umc_cas_cmd.wr                   #    248.7 MB/s  umc_mem_write_bandwidth
+    11.028667119      1,003,989,820 ns   duration_time                                                         
+    11.028667119      5,430,148,069      umc_cas_cmd.rd                   # 347529.5 MB/s  umc_mem_read_bandwidth
+    11.028667119      1,003,989,820 ns   duration_time                                                         
+    11.028667119      5,434,030,699      umc_cas_cmd.all                  # 347778.0 MB/s  umc_mem_bandwidth   
+    11.028667119      1,003,989,820 ns   duration_time                                                         
+    12.032660218          4,101,476      umc_cas_cmd.wr                   #    262.5 MB/s  umc_mem_write_bandwidth
+    12.032660218      1,003,993,099 ns   duration_time                                                         
+    12.032660218      5,447,223,892      umc_cas_cmd.rd                   # 348622.3 MB/s  umc_mem_read_bandwidth
+    12.032660218      1,003,993,099 ns   duration_time                                                         
+    12.032660218      5,451,318,671      umc_cas_cmd.all                  # 348884.4 MB/s  umc_mem_bandwidth   
+    12.032660218      1,003,993,099 ns   duration_time                                                         
+    13.037662557          3,892,346      umc_cas_cmd.wr                   #    249.1 MB/s  umc_mem_write_bandwidth
+    13.037662557      1,005,002,339 ns   duration_time                                                         
+    13.037662557      5,458,556,277      umc_cas_cmd.rd                   # 349347.6 MB/s  umc_mem_read_bandwidth
+    13.037662557      1,005,002,339 ns   duration_time                                                         
+    13.037662557      5,462,463,642      umc_cas_cmd.all                  # 349597.7 MB/s  umc_mem_bandwidth   
+    13.037662557      1,005,002,339 ns   duration_time                                                         
+    14.039678265          3,881,842      umc_cas_cmd.wr                   #    248.4 MB/s  umc_mem_write_bandwidth
+    14.039678265      1,002,015,708 ns   duration_time                                                         
+    14.039678265      5,367,802,416      umc_cas_cmd.rd                   # 343539.4 MB/s  umc_mem_read_bandwidth
+    14.039678265      1,002,015,708 ns   duration_time                                                         
+    14.039678265      5,371,665,939      umc_cas_cmd.all                  # 343786.6 MB/s  umc_mem_bandwidth   
+    14.039678265      1,002,015,708 ns   duration_time                                                         
+    15.043663274          3,892,220      umc_cas_cmd.wr                   #    249.1 MB/s  umc_mem_write_bandwidth
+    15.043663274      1,003,985,009 ns   duration_time                                                         
+    15.043663274      5,385,104,396      umc_cas_cmd.rd                   # 344646.7 MB/s  umc_mem_read_bandwidth
+    15.043663274      1,003,985,009 ns   duration_time                                                         
+    15.043663274      5,388,974,209      umc_cas_cmd.all                  # 344894.3 MB/s  umc_mem_bandwidth   
+    15.043663274      1,003,985,009 ns   duration_time                                                         
+    16.047662173          3,875,689      umc_cas_cmd.wr                   #    248.0 MB/s  umc_mem_write_bandwidth
+    16.047662173      1,003,998,899 ns   duration_time                                                         
+    16.047662173      5,377,772,880      umc_cas_cmd.rd                   # 344177.5 MB/s  umc_mem_read_bandwidth
+    16.047662173      1,003,998,899 ns   duration_time                                                         
+    16.047662173      5,381,767,135      umc_cas_cmd.all                  # 344433.1 MB/s  umc_mem_bandwidth   
+    16.047662173      1,003,998,899 ns   duration_time                                                         
+2026-06-08 22:32:15.019 INFO  [169249] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+2026-06-08 22:32:15.159 INFO  [169249] [kmercounter::BandwidthTest::run@355] took 3889 cycles per cacheline on read
+2026-06-08 22:32:15.165 INFO  [169249] [kmercounter::print_stats@280] 
+============================================
+mem: 3435973836800 bytes, took 10.038 sec, bandwidth: 342.3 GB/s
+============================================
+
+    17.014301465          3,510,987      umc_cas_cmd.wr                   #    224.7 MB/s  umc_mem_write_bandwidth
+    17.014301465        966,639,292 ns   duration_time                                                         
+    17.014301465      4,726,468,173      umc_cas_cmd.rd                   # 302494.0 MB/s  umc_mem_read_bandwidth
+    17.014301465        966,639,292 ns   duration_time                                                         
+    17.014301465      4,729,517,975      umc_cas_cmd.all                  # 302689.2 MB/s  umc_mem_bandwidth   
+    17.014301465        966,639,292 ns   duration_time                                                         
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target xxhash
+[ 35%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 44%] Built target cityhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/scripts/eurosys_2026/collect_upi/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 2 --read-factor 100
+2026-06-08 22:32:15.835 INFO  [169367] [initializeLogger@17] ------------------------
+2026-06-08 22:32:15.835 INFO  [169367] [initializeLogger@18] Plog library initialized
+2026-06-08 22:32:15.835 INFO  [169367] [initializeLogger@19] ------------------------
+2026-06-08 22:32:15.835 INFO  [169367] [main@27] Starting dramhit
+2026-06-08 22:32:15.835 INFO  [169367] [kmercounter::Application::process@868] no ht needed
+2026-06-08 22:32:15.835 INFO  [169367] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 1 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 2 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 3 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 4 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 5 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 6 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 7 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 8 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 9 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 10 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 11 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 12 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 13 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 14 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 15 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 16 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 17 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 18 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 19 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 20 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 21 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 22 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 23 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 24 at numa node 0
+2026-06-08 22:32:15.886 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 25 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 26 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 27 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 28 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 29 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 30 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 31 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 32 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 33 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 34 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 35 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 36 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 37 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 38 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 39 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 40 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 41 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 42 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 43 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 44 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 45 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 46 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 47 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 48 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 49 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 50 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 51 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 52 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 53 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 54 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 55 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 56 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 57 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 58 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 59 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 60 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 61 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 62 at numa node 0
+2026-06-08 22:32:15.887 INFO  [169367] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 63 at numa node 0
+2026-06-08 22:32:15.891 INFO  [169367] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000946517        172,193,711      umc_cas_cmd.wr                   #  11020.4 MB/s  umc_mem_write_bandwidth
+     1.000946517      1,000,946,517 ns   duration_time                                                         
+     1.000946517        175,403,190      umc_cas_cmd.rd                   #  11225.8 MB/s  umc_mem_read_bandwidth
+     1.000946517      1,000,946,517 ns   duration_time                                                         
+     1.000946517        347,606,558      umc_cas_cmd.all                  #  22246.8 MB/s  umc_mem_bandwidth   
+     1.000946517      1,000,946,517 ns   duration_time                                                         
+     2.002949945        132,078,120      umc_cas_cmd.wr                   #   8453.0 MB/s  umc_mem_write_bandwidth
+     2.002949945      1,002,003,428 ns   duration_time                                                         
+     2.002949945        132,732,981      umc_cas_cmd.rd                   #   8494.9 MB/s  umc_mem_read_bandwidth
+     2.002949945      1,002,003,428 ns   duration_time                                                         
+     2.002949945        264,810,177      umc_cas_cmd.all                  #  16947.9 MB/s  umc_mem_bandwidth   
+     2.002949945      1,002,003,428 ns   duration_time                                                         
+     3.004949692        131,368,167      umc_cas_cmd.wr                   #   8407.6 MB/s  umc_mem_write_bandwidth
+     3.004949692      1,001,999,747 ns   duration_time                                                         
+     3.004949692        132,388,133      umc_cas_cmd.rd                   #   8472.8 MB/s  umc_mem_read_bandwidth
+     3.004949692      1,001,999,747 ns   duration_time                                                         
+     3.004949692        263,756,503      umc_cas_cmd.all                  #  16880.4 MB/s  umc_mem_bandwidth   
+     3.004949692      1,001,999,747 ns   duration_time                                                         
+     4.006949740        131,851,585      umc_cas_cmd.wr                   #   8438.5 MB/s  umc_mem_write_bandwidth
+     4.006949740      1,002,000,048 ns   duration_time                                                         
+     4.006949740        132,637,288      umc_cas_cmd.rd                   #   8488.8 MB/s  umc_mem_read_bandwidth
+     4.006949740      1,002,000,048 ns   duration_time                                                         
+     4.006949740        264,488,684      umc_cas_cmd.all                  #  16927.3 MB/s  umc_mem_bandwidth   
+     4.006949740      1,002,000,048 ns   duration_time                                                         
+     5.008950817        130,801,014      umc_cas_cmd.wr                   #   8371.3 MB/s  umc_mem_write_bandwidth
+     5.008950817      1,002,001,077 ns   duration_time                                                         
+     5.008950817        131,577,674      umc_cas_cmd.rd                   #   8421.0 MB/s  umc_mem_read_bandwidth
+     5.008950817      1,002,001,077 ns   duration_time                                                         
+     5.008950817        262,378,342      umc_cas_cmd.all                  #  16792.2 MB/s  umc_mem_bandwidth   
+     5.008950817      1,002,001,077 ns   duration_time                                                         
+     6.010950175        132,280,100      umc_cas_cmd.wr                   #   8465.9 MB/s  umc_mem_write_bandwidth
+     6.010950175      1,001,999,358 ns   duration_time                                                         
+     6.010950175        133,029,305      umc_cas_cmd.rd                   #   8513.9 MB/s  umc_mem_read_bandwidth
+     6.010950175      1,001,999,358 ns   duration_time                                                         
+     6.010950175        265,309,909      umc_cas_cmd.all                  #  16979.8 MB/s  umc_mem_bandwidth   
+     6.010950175      1,001,999,358 ns   duration_time                                                         
+     7.012952822        131,710,632      umc_cas_cmd.wr                   #   8429.5 MB/s  umc_mem_write_bandwidth
+     7.012952822      1,002,002,647 ns   duration_time                                                         
+     7.012952822        132,414,330      umc_cas_cmd.rd                   #   8474.5 MB/s  umc_mem_read_bandwidth
+     7.012952822      1,002,002,647 ns   duration_time                                                         
+     7.012952822        264,125,078      umc_cas_cmd.all                  #  16904.0 MB/s  umc_mem_bandwidth   
+     7.012952822      1,002,002,647 ns   duration_time                                                         
+2026-06-08 22:32:23.342 INFO  [169367] [kmercounter::BandwidthTest::run@112] took 2886 cycles per cacheline on mmap and mbind
+2026-06-08 22:32:23.456 INFO  [169367] [kmercounter::BandwidthTest::run@183] took 43 cycles per cacheline on write
+2026-06-08 22:32:23.456 INFO  [169367] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+     8.015986191      1,104,157,456      umc_cas_cmd.wr                   #  70666.1 MB/s  umc_mem_write_bandwidth
+     8.015986191      1,003,033,369 ns   duration_time                                                         
+     8.015986191        572,402,193      umc_cas_cmd.rd                   #  36633.7 MB/s  umc_mem_read_bandwidth
+     8.015986191      1,003,033,369 ns   duration_time                                                         
+     8.015986191      1,677,099,244      umc_cas_cmd.all                  # 107334.4 MB/s  umc_mem_bandwidth   
+     8.015986191      1,003,033,369 ns   duration_time                                                         
+     9.024003433      2,177,297,784      umc_cas_cmd.wr                   # 139347.1 MB/s  umc_mem_write_bandwidth
+     9.024003433      1,008,017,242 ns   duration_time                                                         
+     9.024003433      2,180,239,954      umc_cas_cmd.rd                   # 139535.4 MB/s  umc_mem_read_bandwidth
+     9.024003433      1,008,017,242 ns   duration_time                                                         
+     9.024003433      4,357,599,335      umc_cas_cmd.all                  # 278886.4 MB/s  umc_mem_bandwidth   
+     9.024003433      1,008,017,242 ns   duration_time                                                         
+    10.030978244      2,178,657,955      umc_cas_cmd.wr                   # 139434.1 MB/s  umc_mem_write_bandwidth
+    10.030978244      1,006,974,811 ns   duration_time                                                         
+    10.030978244      2,181,574,258      umc_cas_cmd.rd                   # 139620.8 MB/s  umc_mem_read_bandwidth
+    10.030978244      1,006,974,811 ns   duration_time                                                         
+    10.030978244      4,360,191,055      umc_cas_cmd.all                  # 279052.2 MB/s  umc_mem_bandwidth   
+    10.030978244      1,006,974,811 ns   duration_time                                                         
+    11.036968164      2,178,294,186      umc_cas_cmd.wr                   # 139410.8 MB/s  umc_mem_write_bandwidth
+    11.036968164      1,005,989,920 ns   duration_time                                                         
+    11.036968164      2,181,109,254      umc_cas_cmd.rd                   # 139591.0 MB/s  umc_mem_read_bandwidth
+    11.036968164      1,005,989,920 ns   duration_time                                                         
+    11.036968164      4,359,428,888      umc_cas_cmd.all                  # 279003.4 MB/s  umc_mem_bandwidth   
+    11.036968164      1,005,989,920 ns   duration_time                                                         
+    12.044979557      2,182,742,755      umc_cas_cmd.wr                   # 139695.5 MB/s  umc_mem_write_bandwidth
+    12.044979557      1,008,011,393 ns   duration_time                                                         
+    12.044979557      2,185,511,719      umc_cas_cmd.rd                   # 139872.8 MB/s  umc_mem_read_bandwidth
+    12.044979557      1,008,011,393 ns   duration_time                                                         
+    12.044979557      4,368,226,108      umc_cas_cmd.all                  # 279566.5 MB/s  umc_mem_bandwidth   
+    12.044979557      1,008,011,393 ns   duration_time                                                         
+    13.049960706      2,175,721,998      umc_cas_cmd.wr                   # 139246.2 MB/s  umc_mem_write_bandwidth
+    13.049960706      1,004,981,149 ns   duration_time                                                         
+    13.049960706      2,178,569,646      umc_cas_cmd.rd                   # 139428.5 MB/s  umc_mem_read_bandwidth
+    13.049960706      1,004,981,149 ns   duration_time                                                         
+    13.049960706      4,354,287,286      umc_cas_cmd.all                  # 278674.4 MB/s  umc_mem_bandwidth   
+    13.049960706      1,004,981,149 ns   duration_time                                                         
+    14.056976258      2,180,989,467      umc_cas_cmd.wr                   # 139583.3 MB/s  umc_mem_write_bandwidth
+    14.056976258      1,007,015,552 ns   duration_time                                                         
+    14.056976258      2,183,829,505      umc_cas_cmd.rd                   # 139765.1 MB/s  umc_mem_read_bandwidth
+    14.056976258      1,007,015,552 ns   duration_time                                                         
+    14.056976258      4,364,842,443      umc_cas_cmd.all                  # 279349.9 MB/s  umc_mem_bandwidth   
+    14.056976258      1,007,015,552 ns   duration_time                                                         
+    15.060955867      2,172,099,672      umc_cas_cmd.wr                   # 139014.4 MB/s  umc_mem_write_bandwidth
+    15.060955867      1,003,979,609 ns   duration_time                                                         
+    15.060955867      2,175,148,744      umc_cas_cmd.rd                   # 139209.5 MB/s  umc_mem_read_bandwidth
+    15.060955867      1,003,979,609 ns   duration_time                                                         
+    15.060955867      4,347,215,209      umc_cas_cmd.all                  # 278221.8 MB/s  umc_mem_bandwidth   
+    15.060955867      1,003,979,609 ns   duration_time                                                         
+    16.068977759      2,184,178,240      umc_cas_cmd.wr                   # 139787.4 MB/s  umc_mem_write_bandwidth
+    16.068977759      1,008,021,892 ns   duration_time                                                         
+    16.068977759      2,187,006,174      umc_cas_cmd.rd                   # 139968.4 MB/s  umc_mem_read_bandwidth
+    16.068977759      1,008,021,892 ns   duration_time                                                         
+    16.068977759      4,371,210,896      umc_cas_cmd.all                  # 279757.5 MB/s  umc_mem_bandwidth   
+    16.068977759      1,008,021,892 ns   duration_time                                                         
+    17.072973518      2,174,794,792      umc_cas_cmd.wr                   # 139186.9 MB/s  umc_mem_write_bandwidth
+    17.072973518      1,003,995,759 ns   duration_time                                                         
+    17.072973518      2,177,622,511      umc_cas_cmd.rd                   # 139367.8 MB/s  umc_mem_read_bandwidth
+    17.072973518      1,003,995,759 ns   duration_time                                                         
+    17.072973518      4,352,379,798      umc_cas_cmd.all                  # 278552.3 MB/s  umc_mem_bandwidth   
+    17.072973518      1,003,995,759 ns   duration_time                                                         
+    18.078971499      2,180,645,041      umc_cas_cmd.wr                   # 139561.3 MB/s  umc_mem_write_bandwidth
+    18.078971499      1,005,997,981 ns   duration_time                                                         
+    18.078971499      2,183,490,231      umc_cas_cmd.rd                   # 139743.4 MB/s  umc_mem_read_bandwidth
+    18.078971499      1,005,997,981 ns   duration_time                                                         
+    18.078971499      4,364,148,697      umc_cas_cmd.all                  # 279305.5 MB/s  umc_mem_bandwidth   
+    18.078971499      1,005,997,981 ns   duration_time                                                         
+    19.085973840      2,183,113,475      umc_cas_cmd.wr                   # 139719.3 MB/s  umc_mem_write_bandwidth
+    19.085973840      1,007,002,341 ns   duration_time                                                         
+    19.085973840      2,186,027,216      umc_cas_cmd.rd                   # 139905.7 MB/s  umc_mem_read_bandwidth
+    19.085973840      1,007,002,341 ns   duration_time                                                         
+    19.085973840      4,369,157,610      umc_cas_cmd.all                  # 279626.1 MB/s  umc_mem_bandwidth   
+    19.085973840      1,007,002,341 ns   duration_time                                                         
+    20.088999778      2,173,483,957      umc_cas_cmd.wr                   # 139103.0 MB/s  umc_mem_write_bandwidth
+    20.088999778      1,003,025,938 ns   duration_time                                                         
+    20.088999778      2,176,362,690      umc_cas_cmd.rd                   # 139287.2 MB/s  umc_mem_read_bandwidth
+    20.088999778      1,003,025,938 ns   duration_time                                                         
+    20.088999778      4,349,853,693      umc_cas_cmd.all                  # 278390.6 MB/s  umc_mem_bandwidth   
+    20.088999778      1,003,025,938 ns   duration_time                                                         
+    21.096971770      2,185,840,879      umc_cas_cmd.wr                   # 139893.8 MB/s  umc_mem_write_bandwidth
+    21.096971770      1,007,971,992 ns   duration_time                                                         
+    21.096971770      2,190,288,941      umc_cas_cmd.rd                   # 140178.5 MB/s  umc_mem_read_bandwidth
+    21.096971770      1,007,971,992 ns   duration_time                                                         
+    21.096971770      4,376,102,094      umc_cas_cmd.all                  # 280070.5 MB/s  umc_mem_bandwidth   
+    21.096971770      1,007,971,992 ns   duration_time                                                         
+    22.101970600      2,179,498,344      umc_cas_cmd.wr                   # 139487.9 MB/s  umc_mem_write_bandwidth
+    22.101970600      1,004,998,830 ns   duration_time                                                         
+    22.101970600      2,185,218,509      umc_cas_cmd.rd                   # 139854.0 MB/s  umc_mem_read_bandwidth
+    22.101970600      1,004,998,830 ns   duration_time                                                         
+    22.101970600      4,364,746,059      umc_cas_cmd.all                  # 279343.7 MB/s  umc_mem_bandwidth   
+    22.101970600      1,004,998,830 ns   duration_time                                                         
+    23.108002240      2,180,321,345      umc_cas_cmd.wr                   # 139540.6 MB/s  umc_mem_write_bandwidth
+    23.108002240      1,006,031,640 ns   duration_time                                                         
+    23.108002240      2,183,972,116      umc_cas_cmd.rd                   # 139774.2 MB/s  umc_mem_read_bandwidth
+    23.108002240      1,006,031,640 ns   duration_time                                                         
+    23.108002240      4,364,270,671      umc_cas_cmd.all                  # 279313.3 MB/s  umc_mem_bandwidth   
+    23.108002240      1,006,031,640 ns   duration_time                                                         
+    24.111972920      2,175,651,483      umc_cas_cmd.wr                   # 139241.7 MB/s  umc_mem_write_bandwidth
+    24.111972920      1,003,970,680 ns   duration_time                                                         
+    24.111972920      2,178,638,885      umc_cas_cmd.rd                   # 139432.9 MB/s  umc_mem_read_bandwidth
+    24.111972920      1,003,970,680 ns   duration_time                                                         
+    24.111972920      4,354,288,923      umc_cas_cmd.all                  # 278674.5 MB/s  umc_mem_bandwidth   
+    24.111972920      1,003,970,680 ns   duration_time                                                         
+    25.117978590      2,178,645,005      umc_cas_cmd.wr                   # 139433.3 MB/s  umc_mem_write_bandwidth
+    25.117978590      1,006,005,670 ns   duration_time                                                         
+    25.117978590      2,181,753,047      umc_cas_cmd.rd                   # 139632.2 MB/s  umc_mem_read_bandwidth
+    25.117978590      1,006,005,670 ns   duration_time                                                         
+    25.117978590      4,360,406,652      umc_cas_cmd.all                  # 279066.0 MB/s  umc_mem_bandwidth   
+    25.117978590      1,006,005,670 ns   duration_time                                                         
+    26.122976670      2,176,509,501      umc_cas_cmd.wr                   # 139296.6 MB/s  umc_mem_write_bandwidth
+    26.122976670      1,004,998,080 ns   duration_time                                                         
+    26.122976670      2,179,421,342      umc_cas_cmd.rd                   # 139483.0 MB/s  umc_mem_read_bandwidth
+    26.122976670      1,004,998,080 ns   duration_time                                                         
+    26.122976670      4,355,915,438      umc_cas_cmd.all                  # 278778.6 MB/s  umc_mem_bandwidth   
+    26.122976670      1,004,998,080 ns   duration_time                                                         
+#           time             counts unit events
+    27.129979751      2,181,342,452      umc_cas_cmd.wr                   # 139605.9 MB/s  umc_mem_write_bandwidth
+    27.129979751      1,007,003,081 ns   duration_time                                                         
+    27.129979751      2,184,253,135      umc_cas_cmd.rd                   # 139792.2 MB/s  umc_mem_read_bandwidth
+    27.129979751      1,007,003,081 ns   duration_time                                                         
+    27.129979751      4,365,570,932      umc_cas_cmd.all                  # 279396.5 MB/s  umc_mem_bandwidth   
+    27.129979751      1,007,003,081 ns   duration_time                                                         
+    28.135977268      2,179,494,456      umc_cas_cmd.wr                   # 139487.6 MB/s  umc_mem_write_bandwidth
+    28.135977268      1,005,997,517 ns   duration_time                                                         
+    28.135977268      2,185,214,945      umc_cas_cmd.rd                   # 139853.8 MB/s  umc_mem_read_bandwidth
+    28.135977268      1,005,997,517 ns   duration_time                                                         
+    28.135977268      4,364,727,799      umc_cas_cmd.all                  # 279342.6 MB/s  umc_mem_bandwidth   
+    28.135977268      1,005,997,517 ns   duration_time                                                         
+    29.139964008      2,173,232,543      umc_cas_cmd.wr                   # 139086.9 MB/s  umc_mem_write_bandwidth
+    29.139964008      1,003,986,740 ns   duration_time                                                         
+    29.139964008      2,176,852,494      umc_cas_cmd.rd                   # 139318.6 MB/s  umc_mem_read_bandwidth
+    29.139964008      1,003,986,740 ns   duration_time                                                         
+    29.139964008      4,350,094,393      umc_cas_cmd.all                  # 278406.0 MB/s  umc_mem_bandwidth   
+    29.139964008      1,003,986,740 ns   duration_time                                                         
+    30.144958358      2,174,637,540      umc_cas_cmd.wr                   # 139176.8 MB/s  umc_mem_write_bandwidth
+    30.144958358      1,004,994,350 ns   duration_time                                                         
+    30.144958358      2,177,586,579      umc_cas_cmd.rd                   # 139365.5 MB/s  umc_mem_read_bandwidth
+    30.144958358      1,004,994,350 ns   duration_time                                                         
+    30.144958358      4,352,220,254      umc_cas_cmd.all                  # 278542.1 MB/s  umc_mem_bandwidth   
+    30.144958358      1,004,994,350 ns   duration_time                                                         
+    31.152965630      2,184,853,369      umc_cas_cmd.wr                   # 139830.6 MB/s  umc_mem_write_bandwidth
+    31.152965630      1,008,007,272 ns   duration_time                                                         
+    31.152965630      2,187,726,298      umc_cas_cmd.rd                   # 140014.5 MB/s  umc_mem_read_bandwidth
+    31.152965630      1,008,007,272 ns   duration_time                                                         
+    31.152965630      4,372,565,111      umc_cas_cmd.all                  # 279844.2 MB/s  umc_mem_bandwidth   
+    31.152965630      1,008,007,272 ns   duration_time                                                         
+2026-06-08 22:32:46.952 INFO  [169367] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+    32.155963489      2,023,336,757      umc_cas_cmd.wr                   # 129493.6 MB/s  umc_mem_write_bandwidth
+    32.155963489      1,002,997,859 ns   duration_time                                                         
+    32.155963489      2,023,303,491      umc_cas_cmd.rd                   # 129491.4 MB/s  umc_mem_read_bandwidth
+    32.155963489      1,002,997,859 ns   duration_time                                                         
+    32.155963489      4,046,376,928      umc_cas_cmd.all                  # 258968.1 MB/s  umc_mem_bandwidth   
+    32.155963489      1,002,997,859 ns   duration_time                                                         
+2026-06-08 22:32:48.776 INFO  [169367] [kmercounter::BandwidthTest::run@355] took 9809 cycles per cacheline on read
+2026-06-08 22:32:48.782 INFO  [169367] [kmercounter::print_stats@280] 
+============================================
+mem: 6871947673600 bytes, took 25.319 sec, bandwidth: 271.4 GB/s
+============================================
+
+    33.157948267      1,192,117,990      umc_cas_cmd.wr                   #  76295.6 MB/s  umc_mem_write_bandwidth
+    33.157948267      1,001,984,778 ns   duration_time                                                         
+    33.157948267      1,191,519,444      umc_cas_cmd.rd                   #  76257.2 MB/s  umc_mem_read_bandwidth
+    33.157948267      1,001,984,778 ns   duration_time                                                         
+    33.157948267      2,383,363,060      umc_cas_cmd.all                  # 152535.2 MB/s  umc_mem_bandwidth   
+    33.157948267      1,001,984,778 ns   duration_time                                                         
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target xxhash
+[ 35%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 44%] Built target cityhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/scripts/eurosys_2026/collect_upi/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 5 --read-factor 100
+2026-06-08 22:32:49.446 INFO  [169602] [initializeLogger@17] ------------------------
+2026-06-08 22:32:49.446 INFO  [169602] [initializeLogger@18] Plog library initialized
+2026-06-08 22:32:49.446 INFO  [169602] [initializeLogger@19] ------------------------
+2026-06-08 22:32:49.446 INFO  [169602] [main@27] Starting dramhit
+2026-06-08 22:32:49.446 INFO  [169602] [kmercounter::Application::process@868] no ht needed
+2026-06-08 22:32:49.446 INFO  [169602] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 1 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 2 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 3 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 4 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 5 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 6 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 7 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 8 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 9 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 10 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 11 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 12 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 13 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 14 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 15 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 16 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 17 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 18 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 19 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 20 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 21 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 22 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 23 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 24 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 25 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 26 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 27 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 28 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 29 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 30 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 31 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 32 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 33 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 34 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 35 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 36 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 37 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 38 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 39 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 40 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 41 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 42 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 43 at numa node 0
+2026-06-08 22:32:49.559 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 44 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 45 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 46 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 47 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 48 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 49 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 50 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 51 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 52 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 53 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 54 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 55 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 56 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 57 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 58 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 59 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 60 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 61 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 62 at numa node 0
+2026-06-08 22:32:49.560 INFO  [169602] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 63 at numa node 0
+2026-06-08 22:32:49.564 INFO  [169602] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000625337        262,010,711      umc_cas_cmd.wr                   #  16768.7 MB/s  umc_mem_write_bandwidth
+     1.000625337      1,000,625,337 ns   duration_time                                                         
+     1.000625337        265,557,431      umc_cas_cmd.rd                   #  16995.7 MB/s  umc_mem_read_bandwidth
+     1.000625337      1,000,625,337 ns   duration_time                                                         
+     1.000625337        527,580,100      umc_cas_cmd.all                  #  33765.1 MB/s  umc_mem_bandwidth   
+     1.000625337      1,000,625,337 ns   duration_time                                                         
+     2.002620165        131,278,484      umc_cas_cmd.wr                   #   8401.8 MB/s  umc_mem_write_bandwidth
+     2.002620165      1,001,994,828 ns   duration_time                                                         
+     2.002620165        132,484,361      umc_cas_cmd.rd                   #   8479.0 MB/s  umc_mem_read_bandwidth
+     2.002620165      1,001,994,828 ns   duration_time                                                         
+     2.002620165        263,761,266      umc_cas_cmd.all                  #  16880.7 MB/s  umc_mem_bandwidth   
+     2.002620165      1,001,994,828 ns   duration_time                                                         
+     3.004615183        131,957,149      umc_cas_cmd.wr                   #   8445.3 MB/s  umc_mem_write_bandwidth
+     3.004615183      1,001,995,018 ns   duration_time                                                         
+     3.004615183        132,738,087      umc_cas_cmd.rd                   #   8495.2 MB/s  umc_mem_read_bandwidth
+     3.004615183      1,001,995,018 ns   duration_time                                                         
+     3.004615183        264,694,637      umc_cas_cmd.all                  #  16940.5 MB/s  umc_mem_bandwidth   
+     3.004615183      1,001,995,018 ns   duration_time                                                         
+     4.006618631        132,256,612      umc_cas_cmd.wr                   #   8464.4 MB/s  umc_mem_write_bandwidth
+     4.006618631      1,002,003,448 ns   duration_time                                                         
+     4.006618631        133,053,028      umc_cas_cmd.rd                   #   8515.4 MB/s  umc_mem_read_bandwidth
+     4.006618631      1,002,003,448 ns   duration_time                                                         
+     4.006618631        265,296,423      umc_cas_cmd.all                  #  16979.0 MB/s  umc_mem_bandwidth   
+     4.006618631      1,002,003,448 ns   duration_time                                                         
+2026-06-08 22:32:53.286 INFO  [169602] [kmercounter::BandwidthTest::run@112] took 1441 cycles per cacheline on mmap and mbind
+2026-06-08 22:32:54.169 INFO  [169602] [kmercounter::BandwidthTest::run@183] took 88 cycles per cacheline on write
+2026-06-08 22:32:54.169 INFO  [169602] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+     5.011658401      2,233,825,240      umc_cas_cmd.wr                   # 142964.8 MB/s  umc_mem_write_bandwidth
+     5.011658401      1,005,039,770 ns   duration_time                                                         
+     5.011658401      1,198,613,287      umc_cas_cmd.rd                   #  76711.3 MB/s  umc_mem_read_bandwidth
+     5.011658401      1,005,039,770 ns   duration_time                                                         
+     5.011658401      3,432,999,805      umc_cas_cmd.all                  # 219712.0 MB/s  umc_mem_bandwidth   
+     5.011658401      1,005,039,770 ns   duration_time                                                         
+     6.017645582      2,103,794,081      umc_cas_cmd.wr                   # 134642.8 MB/s  umc_mem_write_bandwidth
+     6.017645582      1,005,987,181 ns   duration_time                                                         
+     6.017645582      2,451,280,239      umc_cas_cmd.rd                   # 156881.9 MB/s  umc_mem_read_bandwidth
+     6.017645582      1,005,987,181 ns   duration_time                                                         
+     6.017645582      4,555,066,642      umc_cas_cmd.all                  # 291524.3 MB/s  umc_mem_bandwidth   
+     6.017645582      1,005,987,181 ns   duration_time                                                         
+     7.022634592      2,111,586,818      umc_cas_cmd.wr                   # 135141.6 MB/s  umc_mem_write_bandwidth
+     7.022634592      1,004,989,010 ns   duration_time                                                         
+     7.022634592      2,438,791,497      umc_cas_cmd.rd                   # 156082.7 MB/s  umc_mem_read_bandwidth
+     7.022634592      1,004,989,010 ns   duration_time                                                         
+     7.022634592      4,550,387,280      umc_cas_cmd.all                  # 291224.8 MB/s  umc_mem_bandwidth   
+     7.022634592      1,004,989,010 ns   duration_time                                                         
+     8.028642593      2,109,772,415      umc_cas_cmd.wr                   # 135025.4 MB/s  umc_mem_write_bandwidth
+     8.028642593      1,006,008,001 ns   duration_time                                                         
+     8.028642593      2,433,093,998      umc_cas_cmd.rd                   # 155718.0 MB/s  umc_mem_read_bandwidth
+     8.028642593      1,006,008,001 ns   duration_time                                                         
+     8.028642593      4,542,882,976      umc_cas_cmd.all                  # 290744.5 MB/s  umc_mem_bandwidth   
+     8.028642593      1,006,008,001 ns   duration_time                                                         
+     9.031662792      2,105,867,155      umc_cas_cmd.wr                   # 134775.5 MB/s  umc_mem_write_bandwidth
+     9.031662792      1,003,020,199 ns   duration_time                                                         
+     9.031662792      2,426,737,581      umc_cas_cmd.rd                   # 155311.2 MB/s  umc_mem_read_bandwidth
+     9.031662792      1,003,020,199 ns   duration_time                                                         
+     9.031662792      4,532,592,118      umc_cas_cmd.all                  # 290085.9 MB/s  umc_mem_bandwidth   
+     9.031662792      1,003,020,199 ns   duration_time                                                         
+    10.038644974      2,119,643,645      umc_cas_cmd.wr                   # 135657.2 MB/s  umc_mem_write_bandwidth
+    10.038644974      1,006,982,182 ns   duration_time                                                         
+    10.038644974      2,441,010,339      umc_cas_cmd.rd                   # 156224.7 MB/s  umc_mem_read_bandwidth
+    10.038644974      1,006,982,182 ns   duration_time                                                         
+    10.038644974      4,560,663,389      umc_cas_cmd.all                  # 291882.5 MB/s  umc_mem_bandwidth   
+    10.038644974      1,006,982,182 ns   duration_time                                                         
+    11.042677413      2,111,841,487      umc_cas_cmd.wr                   # 135157.9 MB/s  umc_mem_write_bandwidth
+    11.042677413      1,004,032,439 ns   duration_time                                                         
+    11.042677413      2,431,198,820      umc_cas_cmd.rd                   # 155596.7 MB/s  umc_mem_read_bandwidth
+    11.042677413      1,004,032,439 ns   duration_time                                                         
+    11.042677413      4,543,040,450      umc_cas_cmd.all                  # 290754.6 MB/s  umc_mem_bandwidth   
+    11.042677413      1,004,032,439 ns   duration_time                                                         
+    12.049633505      2,118,127,582      umc_cas_cmd.wr                   # 135560.2 MB/s  umc_mem_write_bandwidth
+    12.049633505      1,006,956,092 ns   duration_time                                                         
+    12.049633505      2,431,676,175      umc_cas_cmd.rd                   # 155627.3 MB/s  umc_mem_read_bandwidth
+    12.049633505      1,006,956,092 ns   duration_time                                                         
+    12.049633505      4,549,802,777      umc_cas_cmd.all                  # 291187.4 MB/s  umc_mem_bandwidth   
+    12.049633505      1,006,956,092 ns   duration_time                                                         
+    13.053658714      2,113,733,064      umc_cas_cmd.wr                   # 135278.9 MB/s  umc_mem_write_bandwidth
+    13.053658714      1,004,025,209 ns   duration_time                                                         
+    13.053658714      2,424,002,020      umc_cas_cmd.rd                   # 155136.1 MB/s  umc_mem_read_bandwidth
+    13.053658714      1,004,025,209 ns   duration_time                                                         
+    13.053658714      4,537,771,665      umc_cas_cmd.all                  # 290417.4 MB/s  umc_mem_bandwidth   
+    13.053658714      1,004,025,209 ns   duration_time                                                         
+    14.061654647      2,114,827,128      umc_cas_cmd.wr                   # 135348.9 MB/s  umc_mem_write_bandwidth
+    14.061654647      1,007,995,933 ns   duration_time                                                         
+    14.061654647      2,431,705,597      umc_cas_cmd.rd                   # 155629.2 MB/s  umc_mem_read_bandwidth
+    14.061654647      1,007,995,933 ns   duration_time                                                         
+    14.061654647      4,546,475,424      umc_cas_cmd.all                  # 290974.4 MB/s  umc_mem_bandwidth   
+    14.061654647      1,007,995,933 ns   duration_time                                                         
+    15.064673446      2,106,461,554      umc_cas_cmd.wr                   # 134813.5 MB/s  umc_mem_write_bandwidth
+    15.064673446      1,003,018,799 ns   duration_time                                                         
+    15.064673446      2,420,384,231      umc_cas_cmd.rd                   # 154904.6 MB/s  umc_mem_read_bandwidth
+    15.064673446      1,003,018,799 ns   duration_time                                                         
+    15.064673446      4,526,844,628      umc_cas_cmd.all                  # 289718.1 MB/s  umc_mem_bandwidth   
+    15.064673446      1,003,018,799 ns   duration_time                                                         
+    16.070641586      2,111,763,209      umc_cas_cmd.wr                   # 135152.8 MB/s  umc_mem_write_bandwidth
+    16.070641586      1,005,968,140 ns   duration_time                                                         
+    16.070641586      2,428,272,156      umc_cas_cmd.rd                   # 155409.4 MB/s  umc_mem_read_bandwidth
+    16.070641586      1,005,968,140 ns   duration_time                                                         
+    16.070641586      4,540,063,698      umc_cas_cmd.all                  # 290564.1 MB/s  umc_mem_bandwidth   
+    16.070641586      1,005,968,140 ns   duration_time                                                         
+    17.075637587      2,108,735,172      umc_cas_cmd.wr                   # 134959.1 MB/s  umc_mem_write_bandwidth
+    17.075637587      1,004,996,001 ns   duration_time                                                         
+    17.075637587      2,430,472,897      umc_cas_cmd.rd                   # 155550.3 MB/s  umc_mem_read_bandwidth
+    17.075637587      1,004,996,001 ns   duration_time                                                         
+    17.075637587      4,539,205,222      umc_cas_cmd.all                  # 290509.1 MB/s  umc_mem_bandwidth   
+    17.075637587      1,004,996,001 ns   duration_time                                                         
+    18.083653489      2,116,821,444      umc_cas_cmd.wr                   # 135476.6 MB/s  umc_mem_write_bandwidth
+    18.083653489      1,008,015,902 ns   duration_time                                                         
+    18.083653489      2,446,125,261      umc_cas_cmd.rd                   # 156552.0 MB/s  umc_mem_read_bandwidth
+    18.083653489      1,008,015,902 ns   duration_time                                                         
+    18.083653489      4,562,948,655      umc_cas_cmd.all                  # 292028.7 MB/s  umc_mem_bandwidth   
+    18.083653489      1,008,015,902 ns   duration_time                                                         
+    19.086675328      2,107,466,377      umc_cas_cmd.wr                   # 134877.8 MB/s  umc_mem_write_bandwidth
+    19.086675328      1,003,021,839 ns   duration_time                                                         
+    19.086675328      2,430,984,158      umc_cas_cmd.rd                   # 155583.0 MB/s  umc_mem_read_bandwidth
+    19.086675328      1,003,021,839 ns   duration_time                                                         
+    19.086675328      4,538,444,202      umc_cas_cmd.all                  # 290460.4 MB/s  umc_mem_bandwidth   
+    19.086675328      1,003,021,839 ns   duration_time                                                         
+    20.092647599      2,113,006,754      umc_cas_cmd.wr                   # 135232.4 MB/s  umc_mem_write_bandwidth
+    20.092647599      1,005,972,271 ns   duration_time                                                         
+    20.092647599      2,433,518,525      umc_cas_cmd.rd                   # 155745.2 MB/s  umc_mem_read_bandwidth
+    20.092647599      1,005,972,271 ns   duration_time                                                         
+    20.092647599      4,546,525,557      umc_cas_cmd.all                  # 290977.6 MB/s  umc_mem_bandwidth   
+    20.092647599      1,005,972,271 ns   duration_time                                                         
+    21.097646069      2,112,104,795      umc_cas_cmd.wr                   # 135174.7 MB/s  umc_mem_write_bandwidth
+    21.097646069      1,004,998,470 ns   duration_time                                                         
+    21.097646069      2,427,195,275      umc_cas_cmd.rd                   # 155340.5 MB/s  umc_mem_read_bandwidth
+    21.097646069      1,004,998,470 ns   duration_time                                                         
+    21.097646069      4,539,286,067      umc_cas_cmd.all                  # 290514.3 MB/s  umc_mem_bandwidth   
+    21.097646069      1,004,998,470 ns   duration_time                                                         
+    22.104706351      2,116,400,632      umc_cas_cmd.wr                   # 135449.6 MB/s  umc_mem_write_bandwidth
+    22.104706351      1,007,060,282 ns   duration_time                                                         
+    22.104706351      2,433,516,116      umc_cas_cmd.rd                   # 155745.0 MB/s  umc_mem_read_bandwidth
+    22.104706351      1,007,060,282 ns   duration_time                                                         
+    22.104706351      4,549,902,836      umc_cas_cmd.all                  # 291193.8 MB/s  umc_mem_bandwidth   
+    22.104706351      1,007,060,282 ns   duration_time                                                         
+    23.111671173      2,118,144,543      umc_cas_cmd.wr                   # 135561.3 MB/s  umc_mem_write_bandwidth
+    23.111671173      1,006,964,822 ns   duration_time                                                         
+    23.111671173      2,436,183,134      umc_cas_cmd.rd                   # 155915.7 MB/s  umc_mem_read_bandwidth
+    23.111671173      1,006,964,822 ns   duration_time                                                         
+    23.111671173      4,554,337,987      umc_cas_cmd.all                  # 291477.6 MB/s  umc_mem_bandwidth   
+    23.111671173      1,006,964,822 ns   duration_time                                                         
+    24.118676634      2,118,686,961      umc_cas_cmd.wr                   # 135596.0 MB/s  umc_mem_write_bandwidth
+    24.118676634      1,007,005,461 ns   duration_time                                                         
+    24.118676634      2,440,754,138      umc_cas_cmd.rd                   # 156208.3 MB/s  umc_mem_read_bandwidth
+    24.118676634      1,007,005,461 ns   duration_time                                                         
+    24.118676634      4,559,473,755      umc_cas_cmd.all                  # 291806.3 MB/s  umc_mem_bandwidth   
+    24.118676634      1,007,005,461 ns   duration_time                                                         
+    25.125273745      2,116,160,328      umc_cas_cmd.wr                   # 135434.3 MB/s  umc_mem_write_bandwidth
+    25.125273745      1,006,597,111 ns   duration_time                                                         
+    25.125273745      2,431,315,340      umc_cas_cmd.rd                   # 155604.2 MB/s  umc_mem_read_bandwidth
+    25.125273745      1,006,597,111 ns   duration_time                                                         
+    25.125273745      4,547,481,994      umc_cas_cmd.all                  # 291038.8 MB/s  umc_mem_bandwidth   
+    25.125273745      1,006,597,111 ns   duration_time                                                         
+    26.132271187      2,117,977,953      umc_cas_cmd.wr                   # 135550.6 MB/s  umc_mem_write_bandwidth
+    26.132271187      1,006,997,442 ns   duration_time                                                         
+    26.132271187      2,429,184,614      umc_cas_cmd.rd                   # 155467.8 MB/s  umc_mem_read_bandwidth
+    26.132271187      1,006,997,442 ns   duration_time                                                         
+    26.132271187      4,547,149,235      umc_cas_cmd.all                  # 291017.6 MB/s  umc_mem_bandwidth   
+    26.132271187      1,006,997,442 ns   duration_time                                                         
+#           time             counts unit events
+    27.139274419      2,117,673,187      umc_cas_cmd.wr                   # 135531.1 MB/s  umc_mem_write_bandwidth
+    27.139274419      1,007,003,232 ns   duration_time                                                         
+    27.139274419      2,427,353,390      umc_cas_cmd.rd                   # 155350.6 MB/s  umc_mem_read_bandwidth
+    27.139274419      1,007,003,232 ns   duration_time                                                         
+    27.139274419      4,545,062,117      umc_cas_cmd.all                  # 290884.0 MB/s  umc_mem_bandwidth   
+    27.139274419      1,007,003,232 ns   duration_time                                                         
+    28.147543561      2,120,067,411      umc_cas_cmd.wr                   # 135684.3 MB/s  umc_mem_write_bandwidth
+    28.147543561      1,008,269,142 ns   duration_time                                                         
+    28.147543561      2,430,727,145      umc_cas_cmd.rd                   # 155566.5 MB/s  umc_mem_read_bandwidth
+    28.147543561      1,008,269,142 ns   duration_time                                                         
+    28.147543561      4,550,751,872      umc_cas_cmd.all                  # 291248.1 MB/s  umc_mem_bandwidth   
+    28.147543561      1,008,269,142 ns   duration_time                                                         
+    29.153650652      2,115,533,443      umc_cas_cmd.wr                   # 135394.1 MB/s  umc_mem_write_bandwidth
+    29.153650652      1,006,107,091 ns   duration_time                                                         
+    29.153650652      2,421,933,553      umc_cas_cmd.rd                   # 155003.7 MB/s  umc_mem_read_bandwidth
+    29.153650652      1,006,107,091 ns   duration_time                                                         
+    29.153650652      4,537,431,972      umc_cas_cmd.all                  # 290395.6 MB/s  umc_mem_bandwidth   
+    29.153650652      1,006,107,091 ns   duration_time                                                         
+2026-06-08 22:33:18.951 INFO  [169602] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+    30.156620941      1,930,079,450      umc_cas_cmd.wr                   # 123525.1 MB/s  umc_mem_write_bandwidth
+    30.156620941      1,002,970,289 ns   duration_time                                                         
+    30.156620941      2,466,070,743      umc_cas_cmd.rd                   # 157828.5 MB/s  umc_mem_read_bandwidth
+    30.156620941      1,002,970,289 ns   duration_time                                                         
+    30.156620941      4,395,870,903      umc_cas_cmd.all                  # 281335.7 MB/s  umc_mem_bandwidth   
+    30.156620941      1,002,970,289 ns   duration_time                                                         
+2026-06-08 22:33:20.202 INFO  [169602] [kmercounter::BandwidthTest::run@355] took 10085 cycles per cacheline on read
+2026-06-08 22:33:20.208 INFO  [169602] [kmercounter::print_stats@280] 
+============================================
+mem: 7730941132800 bytes, took 26.031 sec, bandwidth: 297.0 GB/s
+============================================
+
+    30.982867388        924,505,253      umc_cas_cmd.wr                   #  59168.3 MB/s  umc_mem_write_bandwidth
+    30.982867388        826,246,447 ns   duration_time                                                         
+    30.982867388      1,325,633,591      umc_cas_cmd.rd                   #  84840.5 MB/s  umc_mem_read_bandwidth
+    30.982867388        826,246,447 ns   duration_time                                                         
+    30.982867388      2,249,877,576      umc_cas_cmd.all                  # 143992.2 MB/s  umc_mem_bandwidth   
+    30.982867388        826,246,447 ns   duration_time                                                         
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target xxhash
+[ 35%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 44%] Built target cityhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/scripts/eurosys_2026/collect_upi/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 3 --read-factor 100
+2026-06-08 22:33:20.863 INFO  [169879] [initializeLogger@17] ------------------------
+2026-06-08 22:33:20.863 INFO  [169879] [initializeLogger@18] Plog library initialized
+2026-06-08 22:33:20.863 INFO  [169879] [initializeLogger@19] ------------------------
+2026-06-08 22:33:20.864 INFO  [169879] [main@27] Starting dramhit
+2026-06-08 22:33:20.864 INFO  [169879] [kmercounter::Application::process@868] no ht needed
+2026-06-08 22:33:20.864 INFO  [169879] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 1 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 2 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 3 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 4 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 5 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 6 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 7 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 8 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 9 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 10 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 11 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 12 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 13 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 14 at numa node 0
+2026-06-08 22:33:20.957 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 15 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 16 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 17 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 18 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 19 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 20 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 21 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 22 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 23 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 24 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 25 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 26 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 27 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 28 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 29 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 30 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 31 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 32 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 33 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 34 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 35 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 36 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 37 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 38 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 39 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 40 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 41 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 42 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 43 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 44 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 45 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 46 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 47 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 48 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 49 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 50 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 51 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 52 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 53 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 54 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 55 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 56 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 57 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 58 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 59 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 60 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 61 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 62 at numa node 0
+2026-06-08 22:33:20.958 INFO  [169879] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 63 at numa node 0
+2026-06-08 22:33:20.963 INFO  [169879] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000062796        248,432,172      umc_cas_cmd.wr                   #  15899.7 MB/s  umc_mem_write_bandwidth
+     1.000062796      1,000,062,796 ns   duration_time                                                         
+     1.000062796        251,576,190      umc_cas_cmd.rd                   #  16100.9 MB/s  umc_mem_read_bandwidth
+     1.000062796      1,000,062,796 ns   duration_time                                                         
+     1.000062796        500,017,994      umc_cas_cmd.all                  #  32001.2 MB/s  umc_mem_bandwidth   
+     1.000062796      1,000,062,796 ns   duration_time                                                         
+     2.002058954        131,337,992      umc_cas_cmd.wr                   #   8405.6 MB/s  umc_mem_write_bandwidth
+     2.002058954      1,001,996,158 ns   duration_time                                                         
+     2.002058954        132,258,990      umc_cas_cmd.rd                   #   8464.6 MB/s  umc_mem_read_bandwidth
+     2.002058954      1,001,996,158 ns   duration_time                                                         
+     2.002058954        263,597,289      umc_cas_cmd.all                  #  16870.2 MB/s  umc_mem_bandwidth   
+     2.002058954      1,001,996,158 ns   duration_time                                                         
+     3.004069742        132,015,804      umc_cas_cmd.wr                   #   8449.0 MB/s  umc_mem_write_bandwidth
+     3.004069742      1,002,010,788 ns   duration_time                                                         
+     3.004069742        133,026,536      umc_cas_cmd.rd                   #   8513.7 MB/s  umc_mem_read_bandwidth
+     3.004069742      1,002,010,788 ns   duration_time                                                         
+     3.004069742        265,043,530      umc_cas_cmd.all                  #  16962.8 MB/s  umc_mem_bandwidth   
+     3.004069742      1,002,010,788 ns   duration_time                                                         
+     4.006058770        132,020,036      umc_cas_cmd.wr                   #   8449.3 MB/s  umc_mem_write_bandwidth
+     4.006058770      1,001,989,028 ns   duration_time                                                         
+     4.006058770        132,675,690      umc_cas_cmd.rd                   #   8491.2 MB/s  umc_mem_read_bandwidth
+     4.006058770      1,001,989,028 ns   duration_time                                                         
+     4.006058770        264,694,193      umc_cas_cmd.all                  #  16940.4 MB/s  umc_mem_bandwidth   
+     4.006058770      1,001,989,028 ns   duration_time                                                         
+     5.008061958        131,341,266      umc_cas_cmd.wr                   #   8405.8 MB/s  umc_mem_write_bandwidth
+     5.008061958      1,002,003,188 ns   duration_time                                                         
+     5.008061958        132,027,741      umc_cas_cmd.rd                   #   8449.8 MB/s  umc_mem_read_bandwidth
+     5.008061958      1,002,003,188 ns   duration_time                                                         
+     5.008061958        263,369,233      umc_cas_cmd.all                  #  16855.6 MB/s  umc_mem_bandwidth   
+     5.008061958      1,002,003,188 ns   duration_time                                                         
+     6.010059756        131,405,096      umc_cas_cmd.wr                   #   8409.9 MB/s  umc_mem_write_bandwidth
+     6.010059756      1,001,997,798 ns   duration_time                                                         
+     6.010059756        132,132,539      umc_cas_cmd.rd                   #   8456.5 MB/s  umc_mem_read_bandwidth
+     6.010059756      1,001,997,798 ns   duration_time                                                         
+     6.010059756        263,538,018      umc_cas_cmd.all                  #  16866.4 MB/s  umc_mem_bandwidth   
+     6.010059756      1,001,997,798 ns   duration_time                                                         
+     7.012087414        139,941,670      umc_cas_cmd.wr                   #   8956.3 MB/s  umc_mem_write_bandwidth
+     7.012087414      1,002,027,658 ns   duration_time                                                         
+     7.012087414        142,255,939      umc_cas_cmd.rd                   #   9104.4 MB/s  umc_mem_read_bandwidth
+     7.012087414      1,002,027,658 ns   duration_time                                                         
+     7.012087414        282,226,099      umc_cas_cmd.all                  #  18062.5 MB/s  umc_mem_bandwidth   
+     7.012087414      1,002,027,658 ns   duration_time                                                         
+2026-06-08 22:33:27.794 INFO  [169879] [kmercounter::BandwidthTest::run@112] took 2646 cycles per cacheline on mmap and mbind
+2026-06-08 22:33:27.906 INFO  [169879] [kmercounter::BandwidthTest::run@183] took 43 cycles per cacheline on write
+2026-06-08 22:33:27.907 INFO  [169879] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+     8.017102704      1,923,948,662      umc_cas_cmd.wr                   # 123132.7 MB/s  umc_mem_write_bandwidth
+     8.017102704      1,005,015,290 ns   duration_time                                                         
+     8.017102704      2,088,773,739      umc_cas_cmd.rd                   # 133681.5 MB/s  umc_mem_read_bandwidth
+     8.017102704      1,005,015,290 ns   duration_time                                                         
+     8.017102704      4,013,195,903      umc_cas_cmd.all                  # 256844.5 MB/s  umc_mem_bandwidth   
+     8.017102704      1,005,015,290 ns   duration_time                                                         
+     9.024697047      1,730,414,910      umc_cas_cmd.wr                   # 110746.6 MB/s  umc_mem_write_bandwidth
+     9.024697047      1,007,594,343 ns   duration_time                                                         
+     9.024697047      2,638,613,750      umc_cas_cmd.rd                   # 168871.3 MB/s  umc_mem_read_bandwidth
+     9.024697047      1,007,594,343 ns   duration_time                                                         
+     9.024697047      4,369,042,644      umc_cas_cmd.all                  # 279618.7 MB/s  umc_mem_bandwidth   
+     9.024697047      1,007,594,343 ns   duration_time                                                         
+    10.028137045      1,723,827,176      umc_cas_cmd.wr                   # 110324.9 MB/s  umc_mem_write_bandwidth
+    10.028137045      1,003,439,998 ns   duration_time                                                         
+    10.028137045      2,628,531,662      umc_cas_cmd.rd                   # 168226.0 MB/s  umc_mem_read_bandwidth
+    10.028137045      1,003,439,998 ns   duration_time                                                         
+    10.028137045      4,352,363,004      umc_cas_cmd.all                  # 278551.2 MB/s  umc_mem_bandwidth   
+    10.028137045      1,003,439,998 ns   duration_time                                                         
+    11.034742097      1,728,474,766      umc_cas_cmd.wr                   # 110622.4 MB/s  umc_mem_write_bandwidth
+    11.034742097      1,006,605,052 ns   duration_time                                                         
+    11.034742097      2,635,720,119      umc_cas_cmd.rd                   # 168686.1 MB/s  umc_mem_read_bandwidth
+    11.034742097      1,006,605,052 ns   duration_time                                                         
+    11.034742097      4,364,201,553      umc_cas_cmd.all                  # 279308.9 MB/s  umc_mem_bandwidth   
+    11.034742097      1,006,605,052 ns   duration_time                                                         
+    12.039725277      1,730,171,505      umc_cas_cmd.wr                   # 110731.0 MB/s  umc_mem_write_bandwidth
+    12.039725277      1,004,983,180 ns   duration_time                                                         
+    12.039725277      2,638,164,906      umc_cas_cmd.rd                   # 168842.6 MB/s  umc_mem_read_bandwidth
+    12.039725277      1,004,983,180 ns   duration_time                                                         
+    12.039725277      4,368,312,111      umc_cas_cmd.all                  # 279572.0 MB/s  umc_mem_bandwidth   
+    12.039725277      1,004,983,180 ns   duration_time                                                         
+    13.046109548      1,731,203,114      umc_cas_cmd.wr                   # 110797.0 MB/s  umc_mem_write_bandwidth
+    13.046109548      1,006,384,271 ns   duration_time                                                         
+    13.046109548      2,639,869,085      umc_cas_cmd.rd                   # 168951.6 MB/s  umc_mem_read_bandwidth
+    13.046109548      1,006,384,271 ns   duration_time                                                         
+    13.046109548      4,371,122,807      umc_cas_cmd.all                  # 279751.9 MB/s  umc_mem_bandwidth   
+    13.046109548      1,006,384,271 ns   duration_time                                                         
+    14.052140979      1,729,982,397      umc_cas_cmd.wr                   # 110718.9 MB/s  umc_mem_write_bandwidth
+    14.052140979      1,006,031,431 ns   duration_time                                                         
+    14.052140979      2,637,932,794      umc_cas_cmd.rd                   # 168827.7 MB/s  umc_mem_read_bandwidth
+    14.052140979      1,006,031,431 ns   duration_time                                                         
+    14.052140979      4,367,870,420      umc_cas_cmd.all                  # 279543.7 MB/s  umc_mem_bandwidth   
+    14.052140979      1,006,031,431 ns   duration_time                                                         
+    15.058729691      1,730,386,552      umc_cas_cmd.wr                   # 110744.7 MB/s  umc_mem_write_bandwidth
+    15.058729691      1,006,588,712 ns   duration_time                                                         
+    15.058729691      2,638,550,428      umc_cas_cmd.rd                   # 168867.2 MB/s  umc_mem_read_bandwidth
+    15.058729691      1,006,588,712 ns   duration_time                                                         
+    15.058729691      4,369,108,423      umc_cas_cmd.all                  # 279622.9 MB/s  umc_mem_bandwidth   
+    15.058729691      1,006,588,712 ns   duration_time                                                         
+    16.065135452      1,731,903,512      umc_cas_cmd.wr                   # 110841.8 MB/s  umc_mem_write_bandwidth
+    16.065135452      1,006,405,761 ns   duration_time                                                         
+    16.065135452      2,640,867,898      umc_cas_cmd.rd                   # 169015.5 MB/s  umc_mem_read_bandwidth
+    16.065135452      1,006,405,761 ns   duration_time                                                         
+    16.065135452      4,372,612,833      umc_cas_cmd.all                  # 279847.2 MB/s  umc_mem_bandwidth   
+    16.065135452      1,006,405,761 ns   duration_time                                                         
+    17.071704953      1,733,339,789      umc_cas_cmd.wr                   # 110933.7 MB/s  umc_mem_write_bandwidth
+    17.071704953      1,006,569,501 ns   duration_time                                                         
+    17.071704953      2,643,032,091      umc_cas_cmd.rd                   # 169154.1 MB/s  umc_mem_read_bandwidth
+    17.071704953      1,006,569,501 ns   duration_time                                                         
+    17.071704953      4,376,338,460      umc_cas_cmd.all                  # 280085.7 MB/s  umc_mem_bandwidth   
+    17.071704953      1,006,569,501 ns   duration_time                                                         
+    18.079110275      1,736,083,243      umc_cas_cmd.wr                   # 111109.3 MB/s  umc_mem_write_bandwidth
+    18.079110275      1,007,405,322 ns   duration_time                                                         
+    18.079110275      2,647,296,549      umc_cas_cmd.rd                   # 169427.0 MB/s  umc_mem_read_bandwidth
+    18.079110275      1,007,405,322 ns   duration_time                                                         
+    18.079110275      4,383,430,943      umc_cas_cmd.all                  # 280539.6 MB/s  umc_mem_bandwidth   
+    18.079110275      1,007,405,322 ns   duration_time                                                         
+    19.087120818      1,735,709,473      umc_cas_cmd.wr                   # 111085.4 MB/s  umc_mem_write_bandwidth
+    19.087120818      1,008,010,543 ns   duration_time                                                         
+    19.087120818      2,646,655,936      umc_cas_cmd.rd                   # 169386.0 MB/s  umc_mem_read_bandwidth
+    19.087120818      1,008,010,543 ns   duration_time                                                         
+    19.087120818      4,382,342,837      umc_cas_cmd.all                  # 280469.9 MB/s  umc_mem_bandwidth   
+    19.087120818      1,008,010,543 ns   duration_time                                                         
+    20.093154529      1,730,056,359      umc_cas_cmd.wr                   # 110723.6 MB/s  umc_mem_write_bandwidth
+    20.093154529      1,006,033,711 ns   duration_time                                                         
+    20.093154529      2,638,151,151      umc_cas_cmd.rd                   # 168841.7 MB/s  umc_mem_read_bandwidth
+    20.093154529      1,006,033,711 ns   duration_time                                                         
+    20.093154529      4,368,210,401      umc_cas_cmd.all                  # 279565.5 MB/s  umc_mem_bandwidth   
+    20.093154529      1,006,033,711 ns   duration_time                                                         
+    21.099121640      1,729,303,060      umc_cas_cmd.wr                   # 110675.4 MB/s  umc_mem_write_bandwidth
+    21.099121640      1,005,967,111 ns   duration_time                                                         
+    21.099121640      2,636,841,373      umc_cas_cmd.rd                   # 168757.8 MB/s  umc_mem_read_bandwidth
+    21.099121640      1,005,967,111 ns   duration_time                                                         
+    21.099121640      4,366,120,631      umc_cas_cmd.all                  # 279431.7 MB/s  umc_mem_bandwidth   
+    21.099121640      1,005,967,111 ns   duration_time                                                         
+    22.109113343      1,738,099,810      umc_cas_cmd.wr                   # 111238.4 MB/s  umc_mem_write_bandwidth
+    22.109113343      1,009,991,703 ns   duration_time                                                         
+    22.109113343      2,650,276,204      umc_cas_cmd.rd                   # 169617.7 MB/s  umc_mem_read_bandwidth
+    22.109113343      1,009,991,703 ns   duration_time                                                         
+    22.109113343      4,388,383,496      umc_cas_cmd.all                  # 280856.5 MB/s  umc_mem_bandwidth   
+    22.109113343      1,009,991,703 ns   duration_time                                                         
+    23.116753816      1,733,063,640      umc_cas_cmd.wr                   # 110916.1 MB/s  umc_mem_write_bandwidth
+    23.116753816      1,007,640,473 ns   duration_time                                                         
+    23.116753816      2,642,646,426      umc_cas_cmd.rd                   # 169129.4 MB/s  umc_mem_read_bandwidth
+    23.116753816      1,007,640,473 ns   duration_time                                                         
+    23.116753816      4,375,820,019      umc_cas_cmd.all                  # 280052.5 MB/s  umc_mem_bandwidth   
+    23.116753816      1,007,640,473 ns   duration_time                                                         
+    24.121713956      1,730,293,755      umc_cas_cmd.wr                   # 110738.8 MB/s  umc_mem_write_bandwidth
+    24.121713956      1,004,960,140 ns   duration_time                                                         
+    24.121713956      2,638,365,378      umc_cas_cmd.rd                   # 168855.4 MB/s  umc_mem_read_bandwidth
+    24.121713956      1,004,960,140 ns   duration_time                                                         
+    24.121713956      4,368,607,443      umc_cas_cmd.all                  # 279590.9 MB/s  umc_mem_bandwidth   
+    24.121713956      1,004,960,140 ns   duration_time                                                         
+    25.127200026      1,733,896,735      umc_cas_cmd.wr                   # 110969.4 MB/s  umc_mem_write_bandwidth
+    25.127200026      1,005,486,070 ns   duration_time                                                         
+    25.127200026      2,643,956,960      umc_cas_cmd.rd                   # 169213.2 MB/s  umc_mem_read_bandwidth
+    25.127200026      1,005,486,070 ns   duration_time                                                         
+    25.127200026      4,377,813,732      umc_cas_cmd.all                  # 280180.1 MB/s  umc_mem_bandwidth   
+    25.127200026      1,005,486,070 ns   duration_time                                                         
+    26.134083658      1,755,476,422      umc_cas_cmd.wr                   # 112350.5 MB/s  umc_mem_write_bandwidth
+    26.134083658      1,006,883,632 ns   duration_time                                                         
+    26.134083658      2,677,051,506      umc_cas_cmd.rd                   # 171331.3 MB/s  umc_mem_read_bandwidth
+    26.134083658      1,006,883,632 ns   duration_time                                                         
+    26.134083658      4,432,499,889      umc_cas_cmd.all                  # 283680.0 MB/s  umc_mem_bandwidth   
+    26.134083658      1,006,883,632 ns   duration_time                                                         
+2026-06-08 22:33:47.727 INFO  [169879] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+#           time             counts unit events
+    27.137064787      1,741,089,814      umc_cas_cmd.wr                   # 111429.7 MB/s  umc_mem_write_bandwidth
+    27.137064787      1,002,981,129 ns   duration_time                                                         
+    27.137064787      2,654,192,282      umc_cas_cmd.rd                   # 169868.3 MB/s  umc_mem_read_bandwidth
+    27.137064787      1,002,981,129 ns   duration_time                                                         
+    27.137064787      4,395,012,667      umc_cas_cmd.all                  # 281280.8 MB/s  umc_mem_bandwidth   
+    27.137064787      1,002,981,129 ns   duration_time                                                         
+    28.139059971        989,725,607      umc_cas_cmd.wr                   #  63342.4 MB/s  umc_mem_write_bandwidth
+    28.139059971      1,001,995,184 ns   duration_time                                                         
+    28.139059971      1,505,990,609      umc_cas_cmd.rd                   #  96383.4 MB/s  umc_mem_read_bandwidth
+    28.139059971      1,001,995,184 ns   duration_time                                                         
+    28.139059971      2,495,545,035      umc_cas_cmd.all                  # 159714.9 MB/s  umc_mem_bandwidth   
+    28.139059971      1,001,995,184 ns   duration_time                                                         
+2026-06-08 22:33:48.882 INFO  [169879] [kmercounter::BandwidthTest::run@355] took 8126 cycles per cacheline on read
+2026-06-08 22:33:48.888 INFO  [169879] [kmercounter::print_stats@280] 
+============================================
+mem: 6871947673600 bytes, took 20.976 sec, bandwidth: 327.6 GB/s
+============================================
+
+    28.235787995         33,549,932      umc_cas_cmd.wr                   #   2147.2 MB/s  umc_mem_write_bandwidth
+    28.235787995         96,728,024 ns   duration_time                                                         
+    28.235787995         51,062,484      umc_cas_cmd.rd                   #   3268.0 MB/s  umc_mem_read_bandwidth
+    28.235787995         96,728,024 ns   duration_time                                                         
+    28.235787995         84,545,945      umc_cas_cmd.all                  #   5410.9 MB/s  umc_mem_bandwidth   
+    28.235787995         96,728,024 ns   duration_time                                                         

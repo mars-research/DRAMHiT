@@ -17,7 +17,7 @@ namespace kmercounter {
 enum AccessPattern {
   READ = 0,
   RW = 2,
-  RATIO_RW_ = 3,
+  RATIO_RW = 3,
   SEQ_READ = 4,
   STREAMING_KEYS_RANDOM_READ = 5
 };
@@ -33,6 +33,8 @@ using Cacheline = struct {
 using BWHugepageAlloc = huge_page_allocator<Cacheline>;
 
 inline uint64_t knuth64(uint64_t x) { return x * 11400714819323198485ULL; }
+
+inline uint64_t read_ratio;
 
 inline void prefetch(const Cacheline* vec, uint64_t idx) {
 #if L1_PREFETCH
@@ -271,10 +273,13 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
         }
       }
     }
-    // 1.2 Read  1 Write
-    else if (config.sequential == 3) {
+    // 1.X ratio Read  1 Write
+    else if (config.sequential == RATIO_RW) {
       uint64_t dummy_sum = 0;
       uint64_t idx = 0;
+
+      uint64_t write_ratio = 42;
+      read_ratio = 64 / write_ratio;
       for (uint64_t i = 0; (i + 64) < size; i += 64) {
         uint64_t offset = i + 64;
         for (uint64_t j = i; j < offset; j++) {
@@ -283,7 +288,7 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
         }
         // This controls number of writes. ratio is 64/X, ie for 53: 64/52
         // ~= 1.2, or 1.2 reads for 1 write
-        uint64_t write_offset = i + 53;
+        uint64_t write_offset = i + write_ratio;
 
         for (uint64_t k = i; k < write_offset; k++) {
           idx = knuth64(k) & (size - 1);
@@ -332,7 +337,11 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   if (config.sequential == 2 || config.sequential == 4) {
     // account that we are doing 2 memory transactions, ie, 1 read and 1 write
     sh->stats->finds.op_count = (size * config.read_factor) * 2;
-  } else if (config.sequential == STREAMING_KEYS_RANDOM_READ) {
+  } else if (config.sequential == RATIO_RW) {
+    sh->stats->finds.op_count = (size * config.read_factor) * 2;
+  }
+
+  else if (config.sequential == STREAMING_KEYS_RANDOM_READ) {
     // too account that every 4th read we perform an extra sequential read. ie 1
     // read + 1 write + .25 read note this is not the same as 1.2 ratio read, as
     // the .25 read is sequential read of a private array

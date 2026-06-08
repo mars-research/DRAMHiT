@@ -35,7 +35,7 @@ if [ "$test" = "r" ]; then
 workload=0
 elif [ "$test" = "rw" ]; then
 workload=2
-elif [ "$test" = "1.2rw" ]; then
+elif [ "$test" = "ratio" ]; then
 workload=3
 elif [ "$test" = "seq_rw" ]; then
 workload=4
@@ -70,7 +70,8 @@ cmake --build $HOME_DIR/build
     echo $(pwd)/build/dramhit $cmd
     # sudo $(pwd)/build/dramhit $cmd
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth,umc_mem_read_bandwidth,umc_mem_write_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd &> $FILE_NAME
+    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth,umc_mem_read_bandwidth,umc_mem_write_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd 
+    # &> $FILE_NAME
     # # sudo /usr/bin/perf stat -a -M umc_data_bus_utilization -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
     # sudo $(pwd)/build/dramhit $cmd > $FILE_NAME
     # sudo /usr/bin/perf stat -e UNC_M_CAS_COUNT.ALL -I 1000 -- $HOME_DIR/build/dramhit $cmd &> $FILE_NAME
