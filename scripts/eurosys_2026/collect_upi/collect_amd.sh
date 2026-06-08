@@ -12,14 +12,14 @@ DRAMHIT23=8
 
 # Ensure correct usage
 if [ "$#" -ne 4 ]; then
-     echo "Usage: $0 <read|rw> <numa_policy> <num_threads> <CPU_MHZ>ʕ•ᴥ•ʔ"
+     echo "Usage: $0 <CPU_MHZ> <numa_policy> <num_threads> <test>ʕ•ᴥ•ʔ"
      exit 1
 fi
 
-test=$1
+CPU_FREQ=$1
 numa_policy=$2
 numThreads=$3
-CPU_FREQ=$4
+test=$4
 
 if [ "$numa_policy" = "single-local" ]; then
     numa_policy=4
@@ -31,19 +31,25 @@ elif [ "$numa_policy" = "dual" ]; then
     numa_policy=1
 fi
 
-if [ "$test" = "read" ]; then
+if [ "$test" = "r" ]; then
 workload=0
 elif [ "$test" = "rw" ]; then
 workload=2
 elif [ "$test" = "1.2rw" ]; then
 workload=3
+elif [ "$test" = "seq_rw" ]; then
+workload=4
+elif [ "$test" = "stream_rw" ]; then
+workload=5
 fi
 
 
 insertFactor=1
-readFactor=1000
+readFactor=100
 # 1GB per threads
-size=16777216
+# size=16777216
+size=8388608
+# size=2097152
 
 HASHJOIN=13
 ZIPFIAN=14
@@ -73,6 +79,9 @@ cmake --build $HOME_DIR/build
 
 
 # results in output.txt
-# ./collect.sh rw single-local 64 3250
-# ./collect.sh read single-local 64 3250
-# objdump -d /opt/DRAMHiT/build/dramhit | grep 'prefetcht1'
+# ./collect_amd.sh 3250  single-local 64 rw
+# ./collect_amd.sh 3250  single-local 64 read
+# ./collect_amd.sh 3250  single-local 64 seq_rw
+
+# objdump -d /opt/DRAMHiT/build/dramhit | grep 'prefetcht1' 
+# objdump -d /opt/DRAMHiT/build/dramhit | grep -i vmovdqa
