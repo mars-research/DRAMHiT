@@ -109,53 +109,53 @@ Consolidate compiler generated dependencies of target dramhit
 2026-06-08 22:12:47.398 INFO  [130084] [kmercounter::BandwidthTest::run@83] allocating 512 mb per thread
 2026-06-08 22:12:47.803 INFO  [130084] [kmercounter::BandwidthTest::run@138] took 120 cycles per cacheline on mmap and mbind
 #           time             counts unit events
-     1.000276534      1,617,566,487      unc_m_cas_count.all                                                   
-     1.000276534        561,209,449      unc_m_cas_count.rd                                                    
-     1.000276534      1,057,594,719      unc_m_cas_count.wr                                                    
+ 1.000276534    103.524 GB/s unc_m_cas_count.all
+ 1.000276534     35.917 GB/s unc_m_cas_count.rd
+ 1.000276534     67.686 GB/s unc_m_cas_count.wr
 2026-06-08 22:12:47.979 INFO  [130084] [kmercounter::BandwidthTest::run@222] took 52 cycles per cacheline on write
 2026-06-08 22:12:47.979 INFO  [130084] [kmercounter::BandwidthTest::run@229] Bandwidth test start
-     2.005239185      3,806,626,427      unc_m_cas_count.all                                                   
-     2.005239185      3,755,874,894      unc_m_cas_count.rd                                                    
-     2.005239185         49,651,098      unc_m_cas_count.wr                                                    
-     3.007230137      3,812,657,809      unc_m_cas_count.all                                                   
-     3.007230137      3,805,776,483      unc_m_cas_count.rd                                                    
-     3.007230137          6,888,474      unc_m_cas_count.wr                                                    
-     4.010226779      3,800,890,425      unc_m_cas_count.all                                                   
-     4.010226779      3,797,604,838      unc_m_cas_count.rd                                                    
-     4.010226779          3,273,249      unc_m_cas_count.wr                                                    
-     5.012225897      3,800,348,820      unc_m_cas_count.all                                                   
-     5.012225897      3,796,584,774      unc_m_cas_count.rd                                                    
-     5.012225897          3,762,880      unc_m_cas_count.wr                                                    
-     6.014224637      3,800,959,630      unc_m_cas_count.all                                                   
-     6.014224637      3,797,594,895      unc_m_cas_count.rd                                                    
-     6.014224637          3,363,656      unc_m_cas_count.wr                                                    
-     7.016227762      3,800,590,626      unc_m_cas_count.all                                                   
-     7.016227762      3,797,194,523      unc_m_cas_count.rd                                                    
-     7.016227762          3,396,157      unc_m_cas_count.wr                                                    
-     8.018225629      3,804,752,797      unc_m_cas_count.all                                                   
-     8.018225629      3,801,517,742      unc_m_cas_count.rd                                                    
-     8.018225629          3,243,624      unc_m_cas_count.wr                                                    
-     9.021224900      3,804,728,031      unc_m_cas_count.all                                                   
-     9.021224900      3,801,493,656      unc_m_cas_count.rd                                                    
-     9.021224900          3,248,592      unc_m_cas_count.wr                                                    
-    10.024225398      3,800,832,810      unc_m_cas_count.all                                                   
-    10.024225398      3,797,489,410      unc_m_cas_count.rd                                                    
-    10.024225398          3,326,245      unc_m_cas_count.wr                                                    
-    11.026226442      3,803,976,429      unc_m_cas_count.all                                                   
-    11.026226442      3,800,621,754      unc_m_cas_count.rd                                                    
-    11.026226442          3,358,284      unc_m_cas_count.wr                                                    
-    12.029224315      3,804,543,282      unc_m_cas_count.all                                                   
-    12.029224315      3,801,231,396      unc_m_cas_count.rd                                                    
-    12.029224315          3,305,857      unc_m_cas_count.wr                                                    
-    13.032225685      3,800,948,180      unc_m_cas_count.all                                                   
-    13.032225685      3,797,645,380      unc_m_cas_count.rd                                                    
-    13.032225685          3,302,911      unc_m_cas_count.wr                                                    
-    14.034226274      3,803,900,714      unc_m_cas_count.all                                                   
-    14.034226274      3,800,526,747      unc_m_cas_count.rd                                                    
-    14.034226274          3,376,179      unc_m_cas_count.wr                                                    
-    15.037227588      3,804,118,382      unc_m_cas_count.all                                                   
-    15.037227588      3,800,738,772      unc_m_cas_count.rd                                                    
-    15.037227588          3,380,313      unc_m_cas_count.wr                                                    
+ 2.005239185    243.624 GB/s unc_m_cas_count.all
+ 2.005239185    240.376 GB/s unc_m_cas_count.rd
+ 2.005239185      3.178 GB/s unc_m_cas_count.wr
+ 3.007230137    244.010 GB/s unc_m_cas_count.all
+ 3.007230137    243.570 GB/s unc_m_cas_count.rd
+ 3.007230137      0.441 GB/s unc_m_cas_count.wr
+ 4.010226779    243.257 GB/s unc_m_cas_count.all
+ 4.010226779    243.047 GB/s unc_m_cas_count.rd
+ 4.010226779      0.209 GB/s unc_m_cas_count.wr
+ 5.012225897    243.222 GB/s unc_m_cas_count.all
+ 5.012225897    242.981 GB/s unc_m_cas_count.rd
+ 5.012225897      0.241 GB/s unc_m_cas_count.wr
+ 6.014224637    243.261 GB/s unc_m_cas_count.all
+ 6.014224637    243.046 GB/s unc_m_cas_count.rd
+ 6.014224637      0.215 GB/s unc_m_cas_count.wr
+ 7.016227762    243.238 GB/s unc_m_cas_count.all
+ 7.016227762    243.020 GB/s unc_m_cas_count.rd
+ 7.016227762      0.217 GB/s unc_m_cas_count.wr
+ 8.018225629    243.504 GB/s unc_m_cas_count.all
+ 8.018225629    243.297 GB/s unc_m_cas_count.rd
+ 8.018225629      0.208 GB/s unc_m_cas_count.wr
+ 9.021224900    243.503 GB/s unc_m_cas_count.all
+ 9.021224900    243.296 GB/s unc_m_cas_count.rd
+ 9.021224900      0.208 GB/s unc_m_cas_count.wr
+10.024225398    243.253 GB/s unc_m_cas_count.all
+10.024225398    243.039 GB/s unc_m_cas_count.rd
+10.024225398      0.213 GB/s unc_m_cas_count.wr
+11.026226442    243.454 GB/s unc_m_cas_count.all
+11.026226442    243.240 GB/s unc_m_cas_count.rd
+11.026226442      0.215 GB/s unc_m_cas_count.wr
+12.029224315    243.491 GB/s unc_m_cas_count.all
+12.029224315    243.279 GB/s unc_m_cas_count.rd
+12.029224315      0.212 GB/s unc_m_cas_count.wr
+13.032225685    243.261 GB/s unc_m_cas_count.all
+13.032225685    243.049 GB/s unc_m_cas_count.rd
+13.032225685      0.211 GB/s unc_m_cas_count.wr
+14.034226274    243.450 GB/s unc_m_cas_count.all
+14.034226274    243.234 GB/s unc_m_cas_count.rd
+14.034226274      0.216 GB/s unc_m_cas_count.wr
+15.037227588    243.464 GB/s unc_m_cas_count.all
+15.037227588    243.247 GB/s unc_m_cas_count.rd
+15.037227588      0.216 GB/s unc_m_cas_count.wr
 2026-06-08 22:13:02.211 INFO  [130084] [kmercounter::BandwidthTest::run@394] Bandwidth test end
 2026-06-08 22:13:02.293 INFO  [130084] [kmercounter::BandwidthTest::run@420] took 4265 cycles per cacheline on read
 2026-06-08 22:13:02.302 INFO  [130084] [kmercounter::print_stats@280] 
@@ -163,9 +163,9 @@ Consolidate compiler generated dependencies of target dramhit
 mem: 3435973836800 bytes, took 14.314 sec, bandwidth: 240.1 GB/s
 ============================================
 
-    15.355747596        629,331,478      unc_m_cas_count.all                                                   
-    15.355747596        628,170,457      unc_m_cas_count.rd                                                    
-    15.355747596          1,024,658      unc_m_cas_count.wr                                                    
+15.355747596     40.277 GB/s unc_m_cas_count.all
+15.355747596     40.203 GB/s unc_m_cas_count.rd
+15.355747596      0.066 GB/s unc_m_cas_count.wr
 -- Build type: RelWithDebInfo
 CMake Warning at CMakeLists.txt:254 (message):
   Hasher type selected was: crc
@@ -279,112 +279,112 @@ Consolidate compiler generated dependencies of target dramhit
 2026-06-08 22:13:03.649 INFO  [130274] [kmercounter::BandwidthTest::run@222] took 52 cycles per cacheline on write
 2026-06-08 22:13:03.649 INFO  [130274] [kmercounter::BandwidthTest::run@229] Bandwidth test start
 #           time             counts unit events
-     1.000931169      1,812,674,701      unc_m_cas_count.all                                                   
-     1.000931169        638,930,368      unc_m_cas_count.rd                                                    
-     1.000931169      1,174,082,094      unc_m_cas_count.wr                                                    
-     2.005919299      3,101,547,123      unc_m_cas_count.all                                                   
-     2.005919299      1,551,640,120      unc_m_cas_count.rd                                                    
-     2.005919299      1,549,902,508      unc_m_cas_count.wr                                                    
-     3.008913076      3,102,849,946      unc_m_cas_count.all                                                   
-     3.008913076      1,551,596,987      unc_m_cas_count.rd                                                    
-     3.008913076      1,551,257,013      unc_m_cas_count.wr                                                    
-     4.012910734      3,094,043,922      unc_m_cas_count.all                                                   
-     4.012910734      1,547,110,188      unc_m_cas_count.rd                                                    
-     4.012910734      1,546,933,828      unc_m_cas_count.wr                                                    
-     5.014911342      3,093,831,802      unc_m_cas_count.all                                                   
-     5.014911342      1,546,989,038      unc_m_cas_count.rd                                                    
-     5.014911342      1,546,851,953      unc_m_cas_count.wr                                                    
-     6.016912619      3,100,169,839      unc_m_cas_count.all                                                   
-     6.016912619      1,550,164,699      unc_m_cas_count.rd                                                    
-     6.016912619      1,549,998,730      unc_m_cas_count.wr                                                    
-     7.020910307      3,099,848,165      unc_m_cas_count.all                                                   
-     7.020910307      1,549,989,239      unc_m_cas_count.rd                                                    
-     7.020910307      1,549,848,619      unc_m_cas_count.wr                                                    
-     8.024916737      3,096,845,437      unc_m_cas_count.all                                                   
-     8.024916737      1,548,496,551      unc_m_cas_count.rd                                                    
-     8.024916737      1,548,339,105      unc_m_cas_count.wr                                                    
-     9.027910723      3,093,459,325      unc_m_cas_count.all                                                   
-     9.027910723      1,546,798,951      unc_m_cas_count.rd                                                    
-     9.027910723      1,546,661,381      unc_m_cas_count.wr                                                    
-    10.029910542      3,093,393,186      unc_m_cas_count.all                                                   
-    10.029910542      1,546,782,626      unc_m_cas_count.rd                                                    
-    10.029910542      1,546,624,551      unc_m_cas_count.wr                                                    
-    11.031910775      3,099,972,375      unc_m_cas_count.all                                                   
-    11.031910775      1,550,067,196      unc_m_cas_count.rd                                                    
-    11.031910775      1,549,889,545      unc_m_cas_count.wr                                                    
-    12.035909959      3,094,044,910      unc_m_cas_count.all                                                   
-    12.035909959      1,547,124,479      unc_m_cas_count.rd                                                    
-    12.035909959      1,546,944,649      unc_m_cas_count.wr                                                    
-    13.037915261      3,100,467,530      unc_m_cas_count.all                                                   
-    13.037915261      1,550,375,652      unc_m_cas_count.rd                                                    
-    13.037915261      1,550,083,990      unc_m_cas_count.wr                                                    
-    14.041910272      3,093,774,081      unc_m_cas_count.all                                                   
-    14.041910272      1,546,958,222      unc_m_cas_count.rd                                                    
-    14.041910272      1,546,795,458      unc_m_cas_count.wr                                                    
-    15.043910465      3,099,577,468      unc_m_cas_count.all                                                   
-    15.043910465      1,549,868,865      unc_m_cas_count.rd                                                    
-    15.043910465      1,549,708,411      unc_m_cas_count.wr                                                    
-    16.047910491      3,096,985,264      unc_m_cas_count.all                                                   
-    16.047910491      1,548,581,608      unc_m_cas_count.rd                                                    
-    16.047910491      1,548,433,484      unc_m_cas_count.wr                                                    
-    17.051909876      3,099,410,844      unc_m_cas_count.all                                                   
-    17.051909876      1,549,769,757      unc_m_cas_count.rd                                                    
-    17.051909876      1,549,608,390      unc_m_cas_count.wr                                                    
-    18.054912973      3,093,409,080      unc_m_cas_count.all                                                   
-    18.054912973      1,546,784,541      unc_m_cas_count.rd                                                    
-    18.054912973      1,546,637,088      unc_m_cas_count.wr                                                    
-    19.056910434      3,099,675,586      unc_m_cas_count.all                                                   
-    19.056910434      1,549,930,021      unc_m_cas_count.rd                                                    
-    19.056910434      1,549,759,833      unc_m_cas_count.wr                                                    
-    20.060910845      3,100,059,910      unc_m_cas_count.all                                                   
-    20.060910845      1,550,131,145      unc_m_cas_count.rd                                                    
-    20.060910845      1,549,919,794      unc_m_cas_count.wr                                                    
-    21.064910234      3,093,540,430      unc_m_cas_count.all                                                   
-    21.064910234      1,546,856,874      unc_m_cas_count.rd                                                    
-    21.064910234      1,546,687,200      unc_m_cas_count.wr                                                    
-    22.066910282      3,093,756,813      unc_m_cas_count.all                                                   
-    22.066910282      1,546,968,106      unc_m_cas_count.rd                                                    
-    22.066910282      1,546,783,941      unc_m_cas_count.wr                                                    
-    23.068910217      3,099,555,246      unc_m_cas_count.all                                                   
-    23.068910217      1,549,864,636      unc_m_cas_count.rd                                                    
-    23.068910217      1,549,680,701      unc_m_cas_count.wr                                                    
-    24.072912793      3,096,902,021      unc_m_cas_count.all                                                   
-    24.072912793      1,548,539,171      unc_m_cas_count.rd                                                    
-    24.072912793      1,548,377,153      unc_m_cas_count.wr                                                    
-    25.075910449      3,100,041,563      unc_m_cas_count.all                                                   
-    25.075910449      1,550,118,338      unc_m_cas_count.rd                                                    
-    25.075910449      1,549,926,550      unc_m_cas_count.wr                                                    
-    26.079910192      3,093,824,662      unc_m_cas_count.all                                                   
-    26.079910192      1,547,004,357      unc_m_cas_count.rd                                                    
-    26.079910192      1,546,818,141      unc_m_cas_count.wr                                                    
+ 1.000931169    116.011 GB/s unc_m_cas_count.all
+ 1.000931169     40.892 GB/s unc_m_cas_count.rd
+ 1.000931169     75.141 GB/s unc_m_cas_count.wr
+ 2.005919299    198.499 GB/s unc_m_cas_count.all
+ 2.005919299     99.305 GB/s unc_m_cas_count.rd
+ 2.005919299     99.194 GB/s unc_m_cas_count.wr
+ 3.008913076    198.582 GB/s unc_m_cas_count.all
+ 3.008913076     99.302 GB/s unc_m_cas_count.rd
+ 3.008913076     99.280 GB/s unc_m_cas_count.wr
+ 4.012910734    198.019 GB/s unc_m_cas_count.all
+ 4.012910734     99.015 GB/s unc_m_cas_count.rd
+ 4.012910734     99.004 GB/s unc_m_cas_count.wr
+ 5.014911342    198.005 GB/s unc_m_cas_count.all
+ 5.014911342     99.007 GB/s unc_m_cas_count.rd
+ 5.014911342     98.999 GB/s unc_m_cas_count.wr
+ 6.016912619    198.411 GB/s unc_m_cas_count.all
+ 6.016912619     99.211 GB/s unc_m_cas_count.rd
+ 6.016912619     99.200 GB/s unc_m_cas_count.wr
+ 7.020910307    198.390 GB/s unc_m_cas_count.all
+ 7.020910307     99.199 GB/s unc_m_cas_count.rd
+ 7.020910307     99.190 GB/s unc_m_cas_count.wr
+ 8.024916737    198.198 GB/s unc_m_cas_count.all
+ 8.024916737     99.104 GB/s unc_m_cas_count.rd
+ 8.024916737     99.094 GB/s unc_m_cas_count.wr
+ 9.027910723    197.981 GB/s unc_m_cas_count.all
+ 9.027910723     98.995 GB/s unc_m_cas_count.rd
+ 9.027910723     98.986 GB/s unc_m_cas_count.wr
+10.029910542    197.977 GB/s unc_m_cas_count.all
+10.029910542     98.994 GB/s unc_m_cas_count.rd
+10.029910542     98.984 GB/s unc_m_cas_count.wr
+11.031910775    198.398 GB/s unc_m_cas_count.all
+11.031910775     99.204 GB/s unc_m_cas_count.rd
+11.031910775     99.193 GB/s unc_m_cas_count.wr
+12.035909959    198.019 GB/s unc_m_cas_count.all
+12.035909959     99.016 GB/s unc_m_cas_count.rd
+12.035909959     99.004 GB/s unc_m_cas_count.wr
+13.037915261    198.430 GB/s unc_m_cas_count.all
+13.037915261     99.224 GB/s unc_m_cas_count.rd
+13.037915261     99.205 GB/s unc_m_cas_count.wr
+14.041910272    198.002 GB/s unc_m_cas_count.all
+14.041910272     99.005 GB/s unc_m_cas_count.rd
+14.041910272     98.995 GB/s unc_m_cas_count.wr
+15.043910465    198.373 GB/s unc_m_cas_count.all
+15.043910465     99.192 GB/s unc_m_cas_count.rd
+15.043910465     99.181 GB/s unc_m_cas_count.wr
+16.047910491    198.207 GB/s unc_m_cas_count.all
+16.047910491     99.109 GB/s unc_m_cas_count.rd
+16.047910491     99.100 GB/s unc_m_cas_count.wr
+17.051909876    198.362 GB/s unc_m_cas_count.all
+17.051909876     99.185 GB/s unc_m_cas_count.rd
+17.051909876     99.175 GB/s unc_m_cas_count.wr
+18.054912973    197.978 GB/s unc_m_cas_count.all
+18.054912973     98.994 GB/s unc_m_cas_count.rd
+18.054912973     98.985 GB/s unc_m_cas_count.wr
+19.056910434    198.379 GB/s unc_m_cas_count.all
+19.056910434     99.196 GB/s unc_m_cas_count.rd
+19.056910434     99.185 GB/s unc_m_cas_count.wr
+20.060910845    198.404 GB/s unc_m_cas_count.all
+20.060910845     99.208 GB/s unc_m_cas_count.rd
+20.060910845     99.195 GB/s unc_m_cas_count.wr
+21.064910234    197.987 GB/s unc_m_cas_count.all
+21.064910234     98.999 GB/s unc_m_cas_count.rd
+21.064910234     98.988 GB/s unc_m_cas_count.wr
+22.066910282    198.000 GB/s unc_m_cas_count.all
+22.066910282     99.006 GB/s unc_m_cas_count.rd
+22.066910282     98.994 GB/s unc_m_cas_count.wr
+23.068910217    198.372 GB/s unc_m_cas_count.all
+23.068910217     99.191 GB/s unc_m_cas_count.rd
+23.068910217     99.180 GB/s unc_m_cas_count.wr
+24.072912793    198.202 GB/s unc_m_cas_count.all
+24.072912793     99.107 GB/s unc_m_cas_count.rd
+24.072912793     99.096 GB/s unc_m_cas_count.wr
+25.075910449    198.403 GB/s unc_m_cas_count.all
+25.075910449     99.208 GB/s unc_m_cas_count.rd
+25.075910449     99.195 GB/s unc_m_cas_count.wr
+26.079910192    198.005 GB/s unc_m_cas_count.all
+26.079910192     99.008 GB/s unc_m_cas_count.rd
+26.079910192     98.996 GB/s unc_m_cas_count.wr
 #           time             counts unit events
-    27.081911953      3,099,963,823      unc_m_cas_count.all                                                   
-    27.081911953      1,550,074,065      unc_m_cas_count.rd                                                    
-    27.081911953      1,549,886,807      unc_m_cas_count.wr                                                    
-    28.085910484      3,093,748,111      unc_m_cas_count.all                                                   
-    28.085910484      1,546,948,443      unc_m_cas_count.rd                                                    
-    28.085910484      1,546,788,914      unc_m_cas_count.wr                                                    
-    29.087912095      3,099,479,124      unc_m_cas_count.all                                                   
-    29.087912095      1,549,832,929      unc_m_cas_count.rd                                                    
-    29.087912095      1,549,677,855      unc_m_cas_count.wr                                                    
-    30.091913036      3,093,417,165      unc_m_cas_count.all                                                   
-    30.091913036      1,546,780,221      unc_m_cas_count.rd                                                    
-    30.091913036      1,546,621,142      unc_m_cas_count.wr                                                    
-    31.093910315      3,099,769,245      unc_m_cas_count.all                                                   
-    31.093910315      1,549,963,239      unc_m_cas_count.rd                                                    
-    31.093910315      1,549,778,968      unc_m_cas_count.wr                                                    
-    32.097910177      3,093,909,834      unc_m_cas_count.all                                                   
-    32.097910177      1,547,048,606      unc_m_cas_count.rd                                                    
-    32.097910177      1,546,872,598      unc_m_cas_count.wr                                                    
-    33.099911554      3,099,894,347      unc_m_cas_count.all                                                   
-    33.099911554      1,550,038,385      unc_m_cas_count.rd                                                    
-    33.099911554      1,549,879,331      unc_m_cas_count.wr                                                    
-    34.103910454      3,096,773,248      unc_m_cas_count.all                                                   
-    34.103910454      1,548,468,791      unc_m_cas_count.rd                                                    
-    34.103910454      1,548,292,971      unc_m_cas_count.wr                                                    
-    35.106910291      3,099,668,801      unc_m_cas_count.all                                                   
-    35.106910291      1,549,929,810      unc_m_cas_count.rd                                                    
-    35.106910291      1,549,759,550      unc_m_cas_count.wr                                                    
+27.081911953    198.398 GB/s unc_m_cas_count.all
+27.081911953     99.205 GB/s unc_m_cas_count.rd
+27.081911953     99.193 GB/s unc_m_cas_count.wr
+28.085910484    198.000 GB/s unc_m_cas_count.all
+28.085910484     99.005 GB/s unc_m_cas_count.rd
+28.085910484     98.994 GB/s unc_m_cas_count.wr
+29.087912095    198.367 GB/s unc_m_cas_count.all
+29.087912095     99.189 GB/s unc_m_cas_count.rd
+29.087912095     99.179 GB/s unc_m_cas_count.wr
+30.091913036    197.979 GB/s unc_m_cas_count.all
+30.091913036     98.994 GB/s unc_m_cas_count.rd
+30.091913036     98.984 GB/s unc_m_cas_count.wr
+31.093910315    198.385 GB/s unc_m_cas_count.all
+31.093910315     99.198 GB/s unc_m_cas_count.rd
+31.093910315     99.186 GB/s unc_m_cas_count.wr
+32.097910177    198.010 GB/s unc_m_cas_count.all
+32.097910177     99.011 GB/s unc_m_cas_count.rd
+32.097910177     99.000 GB/s unc_m_cas_count.wr
+33.099911554    198.393 GB/s unc_m_cas_count.all
+33.099911554     99.202 GB/s unc_m_cas_count.rd
+33.099911554     99.192 GB/s unc_m_cas_count.wr
+34.103910454    198.193 GB/s unc_m_cas_count.all
+34.103910454     99.102 GB/s unc_m_cas_count.rd
+34.103910454     99.091 GB/s unc_m_cas_count.wr
+35.106910291    198.379 GB/s unc_m_cas_count.all
+35.106910291     99.196 GB/s unc_m_cas_count.rd
+35.106910291     99.185 GB/s unc_m_cas_count.wr
 2026-06-08 22:13:38.508 INFO  [130274] [kmercounter::BandwidthTest::run@394] Bandwidth test end
 2026-06-08 22:13:38.536 INFO  [130274] [kmercounter::BandwidthTest::run@420] took 10397 cycles per cacheline on read
 2026-06-08 22:13:38.545 INFO  [130274] [kmercounter::print_stats@280] 
@@ -392,9 +392,9 @@ Consolidate compiler generated dependencies of target dramhit
 mem: 6871947673600 bytes, took 34.887 sec, bandwidth: 197.0 GB/s
 ============================================
 
-    35.868606556      2,048,558,132      unc_m_cas_count.all                                                   
-    35.868606556      1,024,053,762      unc_m_cas_count.rd                                                    
-    35.868606556      1,024,150,684      unc_m_cas_count.wr                                                    
+35.868606556    131.108 GB/s unc_m_cas_count.all
+35.868606556     65.539 GB/s unc_m_cas_count.rd
+35.868606556     65.546 GB/s unc_m_cas_count.wr
 -- Build type: RelWithDebInfo
 CMake Warning at CMakeLists.txt:254 (message):
   Hasher type selected was: crc
@@ -506,129 +506,129 @@ Consolidate compiler generated dependencies of target dramhit
 2026-06-08 22:13:39.315 INFO  [130406] [kmercounter::BandwidthTest::run@83] allocating 512 mb per thread
 2026-06-08 22:13:39.733 INFO  [130406] [kmercounter::BandwidthTest::run@138] took 124 cycles per cacheline on mmap and mbind
 #           time             counts unit events
-     1.000822406      1,606,553,812      unc_m_cas_count.all                                                   
-     1.000822406        794,731,149      unc_m_cas_count.rd                                                    
-     1.000822406        811,872,087      unc_m_cas_count.wr                                                    
+ 1.000822406    102.819 GB/s unc_m_cas_count.all
+ 1.000822406     50.863 GB/s unc_m_cas_count.rd
+ 1.000822406     51.960 GB/s unc_m_cas_count.wr
 2026-06-08 22:13:40.603 INFO  [130406] [kmercounter::BandwidthTest::run@222] took 131 cycles per cacheline on write
 2026-06-08 22:13:40.603 INFO  [130406] [kmercounter::BandwidthTest::run@229] Bandwidth test start
-     2.005833598      2,868,785,147      unc_m_cas_count.all                                                   
-     2.005833598      1,036,791,135      unc_m_cas_count.rd                                                    
-     2.005833598      1,832,214,894      unc_m_cas_count.wr                                                    
-     3.007821164      3,634,619,078      unc_m_cas_count.all                                                   
-     3.007821164      2,281,176,102      unc_m_cas_count.rd                                                    
-     3.007821164      1,353,444,170      unc_m_cas_count.wr                                                    
-     4.009820823      3,717,048,606      unc_m_cas_count.all                                                   
-     4.009820823      2,335,148,400      unc_m_cas_count.rd                                                    
-     4.009820823      1,381,891,139      unc_m_cas_count.wr                                                    
-     5.013820774      3,637,789,872      unc_m_cas_count.all                                                   
-     5.013820774      2,283,887,148      unc_m_cas_count.rd                                                    
-     5.013820774      1,353,919,788      unc_m_cas_count.wr                                                    
-     6.017821680      3,700,712,183      unc_m_cas_count.all                                                   
-     6.017821680      2,324,518,460      unc_m_cas_count.rd                                                    
-     6.017821680      1,376,190,590      unc_m_cas_count.wr                                                    
-     7.020822489      3,659,433,027      unc_m_cas_count.all                                                   
-     7.020822489      2,297,847,588      unc_m_cas_count.rd                                                    
-     7.020822489      1,361,599,694      unc_m_cas_count.wr                                                    
-     8.024819452      3,680,604,485      unc_m_cas_count.all                                                   
-     8.024819452      2,311,398,271      unc_m_cas_count.rd                                                    
-     8.024819452      1,369,195,941      unc_m_cas_count.wr                                                    
-     9.028819720      3,691,979,941      unc_m_cas_count.all                                                   
-     9.028819720      2,318,882,997      unc_m_cas_count.rd                                                    
-     9.028819720      1,373,084,610      unc_m_cas_count.wr                                                    
-    10.032820940      3,664,006,307      unc_m_cas_count.all                                                   
-    10.032820940      2,300,642,220      unc_m_cas_count.rd                                                    
-    10.032820940      1,363,373,588      unc_m_cas_count.wr                                                    
-    11.036824101      3,715,639,074      unc_m_cas_count.all                                                   
-    11.036824101      2,334,242,223      unc_m_cas_count.rd                                                    
-    11.036824101      1,381,390,711      unc_m_cas_count.wr                                                    
-    12.040820149      3,660,972,249      unc_m_cas_count.all                                                   
-    12.040820149      2,298,751,654      unc_m_cas_count.rd                                                    
-    12.040820149      1,362,214,361      unc_m_cas_count.wr                                                    
-    13.044820872      3,714,806,000      unc_m_cas_count.all                                                   
-    13.044820872      2,333,860,969      unc_m_cas_count.rd                                                    
-    13.044820872      1,380,943,243      unc_m_cas_count.wr                                                    
-    14.046819839      3,665,772,658      unc_m_cas_count.all                                                   
-    14.046819839      2,301,985,487      unc_m_cas_count.rd                                                    
-    14.046819839      1,363,776,390      unc_m_cas_count.wr                                                    
-    15.050819765      3,705,647,315      unc_m_cas_count.all                                                   
-    15.050819765      2,328,012,866      unc_m_cas_count.rd                                                    
-    15.050819765      1,377,643,411      unc_m_cas_count.wr                                                    
-    16.052820910      3,682,372,030      unc_m_cas_count.all                                                   
-    16.052820910      2,312,856,112      unc_m_cas_count.rd                                                    
-    16.052820910      1,369,519,110      unc_m_cas_count.wr                                                    
-    17.057821150      3,700,426,844      unc_m_cas_count.all                                                   
-    17.057821150      2,324,504,862      unc_m_cas_count.rd                                                    
-    17.057821150      1,375,929,093      unc_m_cas_count.wr                                                    
-    18.061819997      3,703,306,562      unc_m_cas_count.all                                                   
-    18.061819997      2,326,528,870      unc_m_cas_count.rd                                                    
-    18.061819997      1,376,772,896      unc_m_cas_count.wr                                                    
-    19.065820688      3,683,609,062      unc_m_cas_count.all                                                   
-    19.065820688      2,313,755,151      unc_m_cas_count.rd                                                    
-    19.065820688      1,369,847,506      unc_m_cas_count.wr                                                    
-    20.069819236      3,716,408,776      unc_m_cas_count.all                                                   
-    20.069819236      2,335,076,617      unc_m_cas_count.rd                                                    
-    20.069819236      1,381,344,991      unc_m_cas_count.wr                                                    
-    21.073821325      3,678,594,517      unc_m_cas_count.all                                                   
-    21.073821325      2,310,593,314      unc_m_cas_count.rd                                                    
-    21.073821325      1,367,996,980      unc_m_cas_count.wr                                                    
-    22.078820592      3,716,692,014      unc_m_cas_count.all                                                   
-    22.078820592      2,335,297,992      unc_m_cas_count.rd                                                    
-    22.078820592      1,381,390,222      unc_m_cas_count.wr                                                    
-    23.081820161      3,682,586,918      unc_m_cas_count.all                                                   
-    23.081820161      2,313,418,074      unc_m_cas_count.rd                                                    
-    23.081820161      1,369,354,019      unc_m_cas_count.wr                                                    
-    24.084819360      3,702,073,658      unc_m_cas_count.all                                                   
-    24.084819360      2,325,962,214      unc_m_cas_count.rd                                                    
-    24.084819360      1,375,929,068      unc_m_cas_count.wr                                                    
-    25.086819598      3,689,004,437      unc_m_cas_count.all                                                   
-    25.086819598      2,317,625,135      unc_m_cas_count.rd                                                    
-    25.086819598      1,371,374,974      unc_m_cas_count.wr                                                    
-    26.088819332      3,700,726,264      unc_m_cas_count.all                                                   
-    26.088819332      2,325,080,697      unc_m_cas_count.rd                                                    
-    26.088819332      1,375,648,322      unc_m_cas_count.wr                                                    
+ 2.005833598    183.602 GB/s unc_m_cas_count.all
+ 2.005833598     66.355 GB/s unc_m_cas_count.rd
+ 2.005833598    117.262 GB/s unc_m_cas_count.wr
+ 3.007821164    232.616 GB/s unc_m_cas_count.all
+ 3.007821164    145.995 GB/s unc_m_cas_count.rd
+ 3.007821164     86.620 GB/s unc_m_cas_count.wr
+ 4.009820823    237.891 GB/s unc_m_cas_count.all
+ 4.009820823    149.449 GB/s unc_m_cas_count.rd
+ 4.009820823     88.441 GB/s unc_m_cas_count.wr
+ 5.013820774    232.819 GB/s unc_m_cas_count.all
+ 5.013820774    146.169 GB/s unc_m_cas_count.rd
+ 5.013820774     86.651 GB/s unc_m_cas_count.wr
+ 6.017821680    236.846 GB/s unc_m_cas_count.all
+ 6.017821680    148.769 GB/s unc_m_cas_count.rd
+ 6.017821680     88.076 GB/s unc_m_cas_count.wr
+ 7.020822489    234.204 GB/s unc_m_cas_count.all
+ 7.020822489    147.062 GB/s unc_m_cas_count.rd
+ 7.020822489     87.142 GB/s unc_m_cas_count.wr
+ 8.024819452    235.559 GB/s unc_m_cas_count.all
+ 8.024819452    147.929 GB/s unc_m_cas_count.rd
+ 8.024819452     87.629 GB/s unc_m_cas_count.wr
+ 9.028819720    236.287 GB/s unc_m_cas_count.all
+ 9.028819720    148.409 GB/s unc_m_cas_count.rd
+ 9.028819720     87.877 GB/s unc_m_cas_count.wr
+10.032820940    234.496 GB/s unc_m_cas_count.all
+10.032820940    147.241 GB/s unc_m_cas_count.rd
+10.032820940     87.256 GB/s unc_m_cas_count.wr
+11.036824101    237.801 GB/s unc_m_cas_count.all
+11.036824101    149.392 GB/s unc_m_cas_count.rd
+11.036824101     88.409 GB/s unc_m_cas_count.wr
+12.040820149    234.302 GB/s unc_m_cas_count.all
+12.040820149    147.120 GB/s unc_m_cas_count.rd
+12.040820149     87.182 GB/s unc_m_cas_count.wr
+13.044820872    237.748 GB/s unc_m_cas_count.all
+13.044820872    149.367 GB/s unc_m_cas_count.rd
+13.044820872     88.380 GB/s unc_m_cas_count.wr
+14.046819839    234.609 GB/s unc_m_cas_count.all
+14.046819839    147.327 GB/s unc_m_cas_count.rd
+14.046819839     87.282 GB/s unc_m_cas_count.wr
+15.050819765    237.161 GB/s unc_m_cas_count.all
+15.050819765    148.993 GB/s unc_m_cas_count.rd
+15.050819765     88.169 GB/s unc_m_cas_count.wr
+16.052820910    235.672 GB/s unc_m_cas_count.all
+16.052820910    148.023 GB/s unc_m_cas_count.rd
+16.052820910     87.649 GB/s unc_m_cas_count.wr
+17.057821150    236.827 GB/s unc_m_cas_count.all
+17.057821150    148.768 GB/s unc_m_cas_count.rd
+17.057821150     88.059 GB/s unc_m_cas_count.wr
+18.061819997    237.012 GB/s unc_m_cas_count.all
+18.061819997    148.898 GB/s unc_m_cas_count.rd
+18.061819997     88.113 GB/s unc_m_cas_count.wr
+19.065820688    235.751 GB/s unc_m_cas_count.all
+19.065820688    148.080 GB/s unc_m_cas_count.rd
+19.065820688     87.670 GB/s unc_m_cas_count.wr
+20.069819236    237.850 GB/s unc_m_cas_count.all
+20.069819236    149.445 GB/s unc_m_cas_count.rd
+20.069819236     88.406 GB/s unc_m_cas_count.wr
+21.073821325    235.430 GB/s unc_m_cas_count.all
+21.073821325    147.878 GB/s unc_m_cas_count.rd
+21.073821325     87.552 GB/s unc_m_cas_count.wr
+22.078820592    237.868 GB/s unc_m_cas_count.all
+22.078820592    149.459 GB/s unc_m_cas_count.rd
+22.078820592     88.409 GB/s unc_m_cas_count.wr
+23.081820161    235.686 GB/s unc_m_cas_count.all
+23.081820161    148.059 GB/s unc_m_cas_count.rd
+23.081820161     87.639 GB/s unc_m_cas_count.wr
+24.084819360    236.933 GB/s unc_m_cas_count.all
+24.084819360    148.862 GB/s unc_m_cas_count.rd
+24.084819360     88.059 GB/s unc_m_cas_count.wr
+25.086819598    236.096 GB/s unc_m_cas_count.all
+25.086819598    148.328 GB/s unc_m_cas_count.rd
+25.086819598     87.768 GB/s unc_m_cas_count.wr
+26.088819332    236.846 GB/s unc_m_cas_count.all
+26.088819332    148.805 GB/s unc_m_cas_count.rd
+26.088819332     88.041 GB/s unc_m_cas_count.wr
 #           time             counts unit events
-    27.093819517      3,706,100,061      unc_m_cas_count.all                                                   
-    27.093819517      2,328,614,622      unc_m_cas_count.rd                                                    
-    27.093819517      1,377,491,688      unc_m_cas_count.wr                                                    
-    28.096819217      3,695,666,107      unc_m_cas_count.all                                                   
-    28.096819217      2,321,871,546      unc_m_cas_count.rd                                                    
-    28.096819217      1,373,786,577      unc_m_cas_count.wr                                                    
-    29.100819648      3,708,838,011      unc_m_cas_count.all                                                   
-    29.100819648      2,330,439,978      unc_m_cas_count.rd                                                    
-    29.100819648      1,378,387,264      unc_m_cas_count.wr                                                    
-    30.104819852      3,691,276,159      unc_m_cas_count.all                                                   
-    30.104819852      2,319,249,554      unc_m_cas_count.rd                                                    
-    30.104819852      1,372,058,520      unc_m_cas_count.wr                                                    
-    31.106821642      3,707,932,197      unc_m_cas_count.all                                                   
-    31.106821642      2,329,881,055      unc_m_cas_count.rd                                                    
-    31.106821642      1,378,029,672      unc_m_cas_count.wr                                                    
-    32.110821176      3,701,367,451      unc_m_cas_count.all                                                   
-    32.110821176      2,325,674,615      unc_m_cas_count.rd                                                    
-    32.110821176      1,375,704,940      unc_m_cas_count.wr                                                    
-    33.114819650      3,704,788,272      unc_m_cas_count.all                                                   
-    33.114819650      2,327,869,727      unc_m_cas_count.rd                                                    
-    33.114819650      1,376,922,470      unc_m_cas_count.wr                                                    
-    34.118819496      3,702,053,388      unc_m_cas_count.all                                                   
-    34.118819496      2,326,085,615      unc_m_cas_count.rd                                                    
-    34.118819496      1,375,965,881      unc_m_cas_count.wr                                                    
-    35.122819960      3,696,247,661      unc_m_cas_count.all                                                   
-    35.122819960      2,322,463,847      unc_m_cas_count.rd                                                    
-    35.122819960      1,373,789,634      unc_m_cas_count.wr                                                    
-    36.124819415      3,701,866,180      unc_m_cas_count.all                                                   
-    36.124819415      2,325,932,991      unc_m_cas_count.rd                                                    
-    36.124819415      1,375,903,573      unc_m_cas_count.wr                                                    
-    37.128820616      3,697,379,999      unc_m_cas_count.all                                                   
-    37.128820616      2,323,199,594      unc_m_cas_count.rd                                                    
-    37.128820616      1,374,204,133      unc_m_cas_count.wr                                                    
-    38.130819269      3,703,120,653      unc_m_cas_count.all                                                   
-    38.130819269      2,326,757,278      unc_m_cas_count.rd                                                    
-    38.130819269      1,376,351,090      unc_m_cas_count.wr                                                    
-    39.134819293      3,706,479,440      unc_m_cas_count.all                                                   
-    39.134819293      2,328,944,393      unc_m_cas_count.rd                                                    
-    39.134819293      1,377,534,361      unc_m_cas_count.wr                                                    
-    40.138819598      3,694,207,545      unc_m_cas_count.all                                                   
-    40.138819598      2,321,239,365      unc_m_cas_count.rd                                                    
-    40.138819598      1,373,147,404      unc_m_cas_count.wr                                                    
+27.093819517    237.190 GB/s unc_m_cas_count.all
+27.093819517    149.031 GB/s unc_m_cas_count.rd
+27.093819517     88.159 GB/s unc_m_cas_count.wr
+28.096819217    236.523 GB/s unc_m_cas_count.all
+28.096819217    148.600 GB/s unc_m_cas_count.rd
+28.096819217     87.922 GB/s unc_m_cas_count.wr
+29.100819648    237.366 GB/s unc_m_cas_count.all
+29.100819648    149.148 GB/s unc_m_cas_count.rd
+29.100819648     88.217 GB/s unc_m_cas_count.wr
+30.104819852    236.242 GB/s unc_m_cas_count.all
+30.104819852    148.432 GB/s unc_m_cas_count.rd
+30.104819852     87.812 GB/s unc_m_cas_count.wr
+31.106821642    237.308 GB/s unc_m_cas_count.all
+31.106821642    149.112 GB/s unc_m_cas_count.rd
+31.106821642     88.194 GB/s unc_m_cas_count.wr
+32.110821176    236.888 GB/s unc_m_cas_count.all
+32.110821176    148.843 GB/s unc_m_cas_count.rd
+32.110821176     88.045 GB/s unc_m_cas_count.wr
+33.114819650    237.106 GB/s unc_m_cas_count.all
+33.114819650    148.984 GB/s unc_m_cas_count.rd
+33.114819650     88.123 GB/s unc_m_cas_count.wr
+34.118819496    236.931 GB/s unc_m_cas_count.all
+34.118819496    148.869 GB/s unc_m_cas_count.rd
+34.118819496     88.062 GB/s unc_m_cas_count.wr
+35.122819960    236.560 GB/s unc_m_cas_count.all
+35.122819960    148.638 GB/s unc_m_cas_count.rd
+35.122819960     87.923 GB/s unc_m_cas_count.wr
+36.124819415    236.919 GB/s unc_m_cas_count.all
+36.124819415    148.860 GB/s unc_m_cas_count.rd
+36.124819415     88.058 GB/s unc_m_cas_count.wr
+37.128820616    236.632 GB/s unc_m_cas_count.all
+37.128820616    148.685 GB/s unc_m_cas_count.rd
+37.128820616     87.949 GB/s unc_m_cas_count.wr
+38.130819269    237.000 GB/s unc_m_cas_count.all
+38.130819269    148.912 GB/s unc_m_cas_count.rd
+38.130819269     88.086 GB/s unc_m_cas_count.wr
+39.134819293    237.215 GB/s unc_m_cas_count.all
+39.134819293    149.052 GB/s unc_m_cas_count.rd
+39.134819293     88.162 GB/s unc_m_cas_count.wr
+40.138819598    236.429 GB/s unc_m_cas_count.all
+40.138819598    148.559 GB/s unc_m_cas_count.rd
+40.138819598     87.881 GB/s unc_m_cas_count.wr
 2026-06-08 22:14:19.962 INFO  [130406] [kmercounter::BandwidthTest::run@394] Bandwidth test end
 2026-06-08 22:14:20.064 INFO  [130406] [kmercounter::BandwidthTest::run@420] took 11760 cycles per cacheline on read
 2026-06-08 22:14:20.073 INFO  [130406] [kmercounter::print_stats@280] 
@@ -636,12 +636,12 @@ Consolidate compiler generated dependencies of target dramhit
 mem: 7730941132800 bytes, took 39.461 sec, bandwidth: 195.9 GB/s
 ============================================
 
-    41.141820787      3,015,789,815      unc_m_cas_count.all                                                   
-    41.141820787      1,896,163,657      unc_m_cas_count.rd                                                    
-    41.141820787      1,119,181,535      unc_m_cas_count.wr                                                    
-    41.155370405            289,748      unc_m_cas_count.all                                                   
-    41.155370405            151,356      unc_m_cas_count.rd                                                    
-    41.155370405            137,347      unc_m_cas_count.wr                                                    
+41.141820787    193.011 GB/s unc_m_cas_count.all
+41.141820787    121.354 GB/s unc_m_cas_count.rd
+41.141820787     71.628 GB/s unc_m_cas_count.wr
+41.155370405      0.019 GB/s unc_m_cas_count.all
+41.155370405      0.010 GB/s unc_m_cas_count.rd
+41.155370405      0.009 GB/s unc_m_cas_count.wr
 -- Build type: RelWithDebInfo
 CMake Warning at CMakeLists.txt:254 (message):
   Hasher type selected was: crc
@@ -755,94 +755,94 @@ Consolidate compiler generated dependencies of target dramhit
 2026-06-08 22:14:21.422 INFO  [130565] [kmercounter::BandwidthTest::run@222] took 52 cycles per cacheline on write
 2026-06-08 22:14:21.422 INFO  [130565] [kmercounter::BandwidthTest::run@229] Bandwidth test start
 #           time             counts unit events
-     1.000629329      1,870,684,468      unc_m_cas_count.all                                                   
-     1.000629329        688,586,810      unc_m_cas_count.rd                                                    
-     1.000629329      1,182,368,674      unc_m_cas_count.wr                                                    
-     2.005619618      3,149,338,529      unc_m_cas_count.all                                                   
-     2.005619618      1,901,325,988      unc_m_cas_count.rd                                                    
-     2.005619618      1,248,009,469      unc_m_cas_count.wr                                                    
-     3.007619716      3,146,709,448      unc_m_cas_count.all                                                   
-     3.007619716      1,899,748,133      unc_m_cas_count.rd                                                    
-     3.007619716      1,246,973,193      unc_m_cas_count.wr                                                    
-     4.009618368      3,146,802,136      unc_m_cas_count.all                                                   
-     4.009618368      1,899,874,076      unc_m_cas_count.rd                                                    
-     4.009618368      1,247,098,473      unc_m_cas_count.wr                                                    
-     5.011618396      3,149,134,877      unc_m_cas_count.all                                                   
-     5.011618396      1,901,109,461      unc_m_cas_count.rd                                                    
-     5.011618396      1,247,835,776      unc_m_cas_count.wr                                                    
-     6.014620167      3,153,084,411      unc_m_cas_count.all                                                   
-     6.014620167      1,903,583,519      unc_m_cas_count.rd                                                    
-     6.014620167      1,249,516,457      unc_m_cas_count.wr                                                    
-     7.018617985      3,146,652,086      unc_m_cas_count.all                                                   
-     7.018617985      1,899,715,892      unc_m_cas_count.rd                                                    
-     7.018617985      1,246,926,949      unc_m_cas_count.wr                                                    
-     8.020617817      3,149,993,578      unc_m_cas_count.all                                                   
-     8.020617817      1,901,726,606      unc_m_cas_count.rd                                                    
-     8.020617817      1,248,284,024      unc_m_cas_count.wr                                                    
-     9.023618089      3,146,601,194      unc_m_cas_count.all                                                   
-     9.023618089      1,899,676,985      unc_m_cas_count.rd                                                    
-     9.023618089      1,246,919,362      unc_m_cas_count.wr                                                    
-    10.025619808      3,146,784,527      unc_m_cas_count.all                                                   
-    10.025619808      1,899,758,650      unc_m_cas_count.rd                                                    
-    10.025619808      1,247,010,076      unc_m_cas_count.wr                                                    
-    11.027617708      3,152,976,997      unc_m_cas_count.all                                                   
-    11.027617708      1,903,511,753      unc_m_cas_count.rd                                                    
-    11.027617708      1,249,493,401      unc_m_cas_count.wr                                                    
-    12.031617783      3,146,648,409      unc_m_cas_count.all                                                   
-    12.031617783      1,899,682,597      unc_m_cas_count.rd                                                    
-    12.031617783      1,246,941,794      unc_m_cas_count.wr                                                    
-    13.033617438      3,146,584,456      unc_m_cas_count.all                                                   
-    13.033617438      1,899,690,166      unc_m_cas_count.rd                                                    
-    13.033617438      1,246,906,570      unc_m_cas_count.wr                                                    
-    14.035618158      3,152,785,179      unc_m_cas_count.all                                                   
-    14.035618158      1,903,418,913      unc_m_cas_count.rd                                                    
-    14.035618158      1,249,357,368      unc_m_cas_count.wr                                                    
-    15.039619606      3,146,357,208      unc_m_cas_count.all                                                   
-    15.039619606      1,899,532,758      unc_m_cas_count.rd                                                    
-    15.039619606      1,246,816,266      unc_m_cas_count.wr                                                    
-    16.041617378      3,152,951,079      unc_m_cas_count.all                                                   
-    16.041617378      1,903,495,039      unc_m_cas_count.rd                                                    
-    16.041617378      1,249,444,483      unc_m_cas_count.wr                                                    
-    17.045617341      3,153,012,421      unc_m_cas_count.all                                                   
-    17.045617341      1,903,563,469      unc_m_cas_count.rd                                                    
-    17.045617341      1,249,482,447      unc_m_cas_count.wr                                                    
-    18.049619079      3,149,762,100      unc_m_cas_count.all                                                   
-    18.049619079      1,901,569,148      unc_m_cas_count.rd                                                    
-    18.049619079      1,248,174,308      unc_m_cas_count.wr                                                    
-    19.052619356      3,152,864,678      unc_m_cas_count.all                                                   
-    19.052619356      1,903,459,627      unc_m_cas_count.rd                                                    
-    19.052619356      1,249,427,087      unc_m_cas_count.wr                                                    
-    20.056618878      3,149,832,252      unc_m_cas_count.all                                                   
-    20.056618878      1,901,600,489      unc_m_cas_count.rd                                                    
-    20.056618878      1,248,208,904      unc_m_cas_count.wr                                                    
-    21.059617669      3,152,789,275      unc_m_cas_count.all                                                   
-    21.059617669      1,903,421,210      unc_m_cas_count.rd                                                    
-    21.059617669      1,249,374,672      unc_m_cas_count.wr                                                    
-    22.063618742      3,146,471,248      unc_m_cas_count.all                                                   
-    22.063618742      1,899,600,510      unc_m_cas_count.rd                                                    
-    22.063618742      1,246,871,290      unc_m_cas_count.wr                                                    
-    23.065617473      3,152,714,471      unc_m_cas_count.all                                                   
-    23.065617473      1,903,365,647      unc_m_cas_count.rd                                                    
-    23.065617473      1,249,355,616      unc_m_cas_count.wr                                                    
-    24.069617763      3,146,503,043      unc_m_cas_count.all                                                   
-    24.069617763      1,899,624,550      unc_m_cas_count.rd                                                    
-    24.069617763      1,246,866,605      unc_m_cas_count.wr                                                    
-    25.071617328      3,152,628,907      unc_m_cas_count.all                                                   
-    25.071617328      1,903,328,077      unc_m_cas_count.rd                                                    
-    25.071617328      1,249,303,245      unc_m_cas_count.wr                                                    
-    26.075622428      3,146,656,972      unc_m_cas_count.all                                                   
-    26.075622428      1,899,718,293      unc_m_cas_count.rd                                                    
-    26.075622428      1,246,939,119      unc_m_cas_count.wr                                                    
+ 1.000629329    119.724 GB/s unc_m_cas_count.all
+ 1.000629329     44.070 GB/s unc_m_cas_count.rd
+ 1.000629329     75.672 GB/s unc_m_cas_count.wr
+ 2.005619618    201.558 GB/s unc_m_cas_count.all
+ 2.005619618    121.685 GB/s unc_m_cas_count.rd
+ 2.005619618     79.873 GB/s unc_m_cas_count.wr
+ 3.007619716    201.389 GB/s unc_m_cas_count.all
+ 3.007619716    121.584 GB/s unc_m_cas_count.rd
+ 3.007619716     79.806 GB/s unc_m_cas_count.wr
+ 4.009618368    201.395 GB/s unc_m_cas_count.all
+ 4.009618368    121.592 GB/s unc_m_cas_count.rd
+ 4.009618368     79.814 GB/s unc_m_cas_count.wr
+ 5.011618396    201.545 GB/s unc_m_cas_count.all
+ 5.011618396    121.671 GB/s unc_m_cas_count.rd
+ 5.011618396     79.861 GB/s unc_m_cas_count.wr
+ 6.014620167    201.797 GB/s unc_m_cas_count.all
+ 6.014620167    121.829 GB/s unc_m_cas_count.rd
+ 6.014620167     79.969 GB/s unc_m_cas_count.wr
+ 7.018617985    201.386 GB/s unc_m_cas_count.all
+ 7.018617985    121.582 GB/s unc_m_cas_count.rd
+ 7.018617985     79.803 GB/s unc_m_cas_count.wr
+ 8.020617817    201.600 GB/s unc_m_cas_count.all
+ 8.020617817    121.711 GB/s unc_m_cas_count.rd
+ 8.020617817     79.890 GB/s unc_m_cas_count.wr
+ 9.023618089    201.382 GB/s unc_m_cas_count.all
+ 9.023618089    121.579 GB/s unc_m_cas_count.rd
+ 9.023618089     79.803 GB/s unc_m_cas_count.wr
+10.025619808    201.394 GB/s unc_m_cas_count.all
+10.025619808    121.585 GB/s unc_m_cas_count.rd
+10.025619808     79.809 GB/s unc_m_cas_count.wr
+11.027617708    201.791 GB/s unc_m_cas_count.all
+11.027617708    121.825 GB/s unc_m_cas_count.rd
+11.027617708     79.968 GB/s unc_m_cas_count.wr
+12.031617783    201.385 GB/s unc_m_cas_count.all
+12.031617783    121.580 GB/s unc_m_cas_count.rd
+12.031617783     79.804 GB/s unc_m_cas_count.wr
+13.033617438    201.381 GB/s unc_m_cas_count.all
+13.033617438    121.580 GB/s unc_m_cas_count.rd
+13.033617438     79.802 GB/s unc_m_cas_count.wr
+14.035618158    201.778 GB/s unc_m_cas_count.all
+14.035618158    121.819 GB/s unc_m_cas_count.rd
+14.035618158     79.959 GB/s unc_m_cas_count.wr
+15.039619606    201.367 GB/s unc_m_cas_count.all
+15.039619606    121.570 GB/s unc_m_cas_count.rd
+15.039619606     79.796 GB/s unc_m_cas_count.wr
+16.041617378    201.789 GB/s unc_m_cas_count.all
+16.041617378    121.824 GB/s unc_m_cas_count.rd
+16.041617378     79.964 GB/s unc_m_cas_count.wr
+17.045617341    201.793 GB/s unc_m_cas_count.all
+17.045617341    121.828 GB/s unc_m_cas_count.rd
+17.045617341     79.967 GB/s unc_m_cas_count.wr
+18.049619079    201.585 GB/s unc_m_cas_count.all
+18.049619079    121.700 GB/s unc_m_cas_count.rd
+18.049619079     79.883 GB/s unc_m_cas_count.wr
+19.052619356    201.783 GB/s unc_m_cas_count.all
+19.052619356    121.821 GB/s unc_m_cas_count.rd
+19.052619356     79.963 GB/s unc_m_cas_count.wr
+20.056618878    201.589 GB/s unc_m_cas_count.all
+20.056618878    121.702 GB/s unc_m_cas_count.rd
+20.056618878     79.885 GB/s unc_m_cas_count.wr
+21.059617669    201.779 GB/s unc_m_cas_count.all
+21.059617669    121.819 GB/s unc_m_cas_count.rd
+21.059617669     79.960 GB/s unc_m_cas_count.wr
+22.063618742    201.374 GB/s unc_m_cas_count.all
+22.063618742    121.574 GB/s unc_m_cas_count.rd
+22.063618742     79.800 GB/s unc_m_cas_count.wr
+23.065617473    201.774 GB/s unc_m_cas_count.all
+23.065617473    121.815 GB/s unc_m_cas_count.rd
+23.065617473     79.959 GB/s unc_m_cas_count.wr
+24.069617763    201.376 GB/s unc_m_cas_count.all
+24.069617763    121.576 GB/s unc_m_cas_count.rd
+24.069617763     79.799 GB/s unc_m_cas_count.wr
+25.071617328    201.768 GB/s unc_m_cas_count.all
+25.071617328    121.813 GB/s unc_m_cas_count.rd
+25.071617328     79.955 GB/s unc_m_cas_count.wr
+26.075622428    201.386 GB/s unc_m_cas_count.all
+26.075622428    121.582 GB/s unc_m_cas_count.rd
+26.075622428     79.804 GB/s unc_m_cas_count.wr
 #           time             counts unit events
-    27.077618516      3,152,988,347      unc_m_cas_count.all                                                   
-    27.077618516      1,903,511,305      unc_m_cas_count.rd                                                    
-    27.077618516      1,249,478,326      unc_m_cas_count.wr                                                    
-    28.081618928      3,152,946,431      unc_m_cas_count.all                                                   
-    28.081618928      1,903,492,875      unc_m_cas_count.rd                                                    
-    28.081618928      1,249,459,699      unc_m_cas_count.wr                                                    
-    29.085619234      3,152,848,993      unc_m_cas_count.all                                                   
-    29.085619234      1,903,421,801      unc_m_cas_count.rd                                                    
-    29.085619234      1,249,431,230      unc_m_cas_count.wr                                                    
+27.077618516    201.791 GB/s unc_m_cas_count.all
+27.077618516    121.825 GB/s unc_m_cas_count.rd
+27.077618516     79.967 GB/s unc_m_cas_count.wr
+28.081618928    201.789 GB/s unc_m_cas_count.all
+28.081618928    121.824 GB/s unc_m_cas_count.rd
+28.081618928     79.965 GB/s unc_m_cas_count.wr
+29.085619234    201.782 GB/s unc_m_cas_count.all
+29.085619234    121.819 GB/s unc_m_cas_count.rd
+29.085619234     79.964 GB/s unc_m_cas_count.wr
 2026-06-08 22:14:49.811 INFO  [130565] [kmercounter::BandwidthTest::run@394] Bandwidth test end
 2026-06-08 22:14:49.849 INFO  [130565] [kmercounter::BandwidthTest::run@420] took 8472 cycles per cacheline on read
 2026-06-08 22:14:49.859 INFO  [130565] [kmercounter::print_stats@280] 
@@ -850,6 +850,6 @@ Consolidate compiler generated dependencies of target dramhit
 mem: 6871947673600 bytes, took 28.427 sec, bandwidth: 241.7 GB/s
 ============================================
 
-    29.393484833        652,198,698      unc_m_cas_count.all                                                   
-    29.393484833        393,367,737      unc_m_cas_count.rd                                                    
-    29.393484833        258,549,587      unc_m_cas_count.wr                                                    
+29.393484833     41.741 GB/s unc_m_cas_count.all
+29.393484833     25.176 GB/s unc_m_cas_count.rd
+29.393484833     16.547 GB/s unc_m_cas_count.wr

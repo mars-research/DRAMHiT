@@ -16,10 +16,10 @@ BASELINES = [
     # ("rw", 271.4),
     # ("stream+rw", 297.0),
     # ("1.5r_1w", 280.0),
-    ("r", 254.0),
-    ("rw", 289.0),
-    ("stream+rw", 281),
-    ("1.5r_1w", 284), 
+    ("r", 243.0),
+    ("rw", 198.0),
+    ("stream+rw", 236),
+    ("1.5r_1w", 201), 
 ]
 
 # USE TAB10 COLORS
@@ -29,7 +29,7 @@ BASELINE_COLORS = {
     "r": TAB10[0],          # blue
     "rw": TAB10[1],         # orange
     "stream+rw": TAB10[2],  # green
-    "1.5R_1W": TAB10[3],    # red
+    "1.5r_1w": TAB10[3],    # red
 }
 
 

@@ -24,10 +24,10 @@ mem: 6871947673600 bytes, took 20.976 sec, bandwidth: 280.0 GB/s
 
 > python plot_bw.py intel/dramblast.txt intel/dramhit.txt intel/growt.txt 
 
-r: 254
-rw: 289
-stream+rw: 281
-1.5r_1w: 284
+    ("r", 243.0),
+    ("rw", 198.0),
+    ("stream+rw", 236),
+    ("1.5r_1w", 201),
 
 
 u1399218@node-0:/opt/DRAMHiT/scripts/eurosys_2026/collect_upi$ sudo /opt/DRAMHiT/tools/mlc/mlc --bandwidth_matrix -U
