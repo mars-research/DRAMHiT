@@ -11,15 +11,16 @@ DRAMHIT23=8
 
 
 # Ensure correct usage
-if [ "$#" -ne 4 ]; then
-     echo "Usage: $0 <CPU_MHZ> <numa_policy> <num_threads> <test>ʕ•ᴥ•ʔ"
+if [ "$#" -ne 5 ]; then
+     echo "Usage: $0 <CPU_MHZ> <numa_policy> <num_threads> <amd|intel> <test>ʕ•ᴥ•ʔ"
      exit 1
 fi
 
 CPU_FREQ=$1
 numa_policy=$2
 numThreads=$3
-test=$4
+platform=$4
+test=$5
 
 if [ "$numa_policy" = "single-local" ]; then
     numa_policy=4
@@ -41,6 +42,8 @@ elif [ "$test" = "seq_rw" ]; then
 workload=4
 elif [ "$test" = "stream_rw" ]; then
 workload=5
+elif [ "$test" = "cas" ]; then
+workload=6
 fi
 
 
@@ -67,22 +70,19 @@ cmake --build $HOME_DIR/build
     FILE_NAME=output.txt
     cmd="--num-threads 64 --numa-split $numa_policy --mode $BW --ht-size $size --sequential $workload --read-factor $readFactor" 
 
-    echo $(pwd)/build/dramhit $cmd
+    echo $HOME_DIR/build/dramhit $cmd
     # sudo $(pwd)/build/dramhit $cmd
     
-    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth,umc_mem_read_bandwidth,umc_mem_write_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd 
-    # &> $FILE_NAME
-    # # sudo /usr/bin/perf stat -a -M umc_data_bus_utilization -I 1000 -- $HOME_DIR/build/dramhit $cmd > /dev/null 2> $FILE_NAME
-    # sudo $(pwd)/build/dramhit $cmd > $FILE_NAME
-    # sudo /usr/bin/perf stat -e UNC_M_CAS_COUNT.ALL -I 1000 -- $HOME_DIR/build/dramhit $cmd &> $FILE_NAME
-    # sudo $HOME_DIR/build/dramhit $cmd  
-    # echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
-
+if [ "$platform" = "amd" ]; then
+    sudo /usr/bin/perf stat -a -M umc_mem_bandwidth,umc_mem_read_bandwidth,umc_mem_write_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd
+else
+    sudo /usr/bin/perf stat -e unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr -I 1000 -- $HOME_DIR/build/dramhit $cmd
+fi
 
 # results in output.txt
-# ./collect_amd.sh 3250  single-local 64 rw
-# ./collect_amd.sh 3250  single-local 64 read
-# ./collect_amd.sh 3250  single-local 64 seq_rw
+# ./collect_amd.sh 3250  single-local 64 amd rw
+# ./collect_amd.sh 3250  single-local 64 amd read
+# ./collect_amd.sh 3250  single-local 64 amd seq_rw
 
 # objdump -d /opt/DRAMHiT/build/dramhit | grep 'prefetcht1' 
 # objdump -d /opt/DRAMHiT/build/dramhit | grep -i vmovdqa

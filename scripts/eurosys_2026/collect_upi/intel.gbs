@@ -1,0 +1,892 @@
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 0 --read-factor 100
+2026-06-08 19:07:48.574 INFO  [80014] [initializeLogger@17] ------------------------
+2026-06-08 19:07:48.574 INFO  [80014] [initializeLogger@18] Plog library initialized
+2026-06-08 19:07:48.574 INFO  [80014] [initializeLogger@19] ------------------------
+2026-06-08 19:07:48.574 INFO  [80014] [main@27] Starting dramhit
+2026-06-08 19:07:48.574 INFO  [80014] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:07:48.574 INFO  [80014] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:07:48.684 INFO  [80014] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+ 1.000960783     35.305 GB/s unc_m_cas_count.all
+ 1.000960783     17.771 GB/s unc_m_cas_count.rd
+ 1.000960783     17.535 GB/s unc_m_cas_count.wr
+ 2.002957952     12.456 GB/s unc_m_cas_count.all
+ 2.002957952      6.236 GB/s unc_m_cas_count.rd
+ 2.002957952      6.219 GB/s unc_m_cas_count.wr
+ 3.003959788     12.440 GB/s unc_m_cas_count.all
+ 3.003959788      6.233 GB/s unc_m_cas_count.rd
+ 3.003959788      6.208 GB/s unc_m_cas_count.wr
+ 4.004957638     12.328 GB/s unc_m_cas_count.all
+ 4.004957638      6.180 GB/s unc_m_cas_count.rd
+ 4.004957638      6.148 GB/s unc_m_cas_count.wr
+ 5.005956696      8.905 GB/s unc_m_cas_count.all
+ 5.005956696      4.467 GB/s unc_m_cas_count.rd
+ 5.005956696      4.437 GB/s unc_m_cas_count.wr
+ 6.006957618      8.947 GB/s unc_m_cas_count.all
+ 6.006957618      4.487 GB/s unc_m_cas_count.rd
+ 6.006957618      4.460 GB/s unc_m_cas_count.wr
+ 7.007959715      8.917 GB/s unc_m_cas_count.all
+ 7.007959715      4.472 GB/s unc_m_cas_count.rd
+ 7.007959715      4.445 GB/s unc_m_cas_count.wr
+ 8.008957559      8.925 GB/s unc_m_cas_count.all
+ 8.008957559      4.477 GB/s unc_m_cas_count.rd
+ 8.008957559      4.449 GB/s unc_m_cas_count.wr
+ 9.009956433      8.945 GB/s unc_m_cas_count.all
+ 9.009956433      4.486 GB/s unc_m_cas_count.rd
+ 9.009956433      4.459 GB/s unc_m_cas_count.wr
+10.010956787      8.784 GB/s unc_m_cas_count.all
+10.010956787      4.405 GB/s unc_m_cas_count.rd
+10.010956787      4.379 GB/s unc_m_cas_count.wr
+2026-06-08 19:07:59.210 INFO  [80014] [kmercounter::BandwidthTest::run@112] took 3136 cycles per cacheline on mmap and mbind
+11.011958803     36.147 GB/s unc_m_cas_count.all
+11.011958803      8.372 GB/s unc_m_cas_count.rd
+11.011958803     27.784 GB/s unc_m_cas_count.wr
+2026-06-08 19:07:59.398 INFO  [80014] [kmercounter::BandwidthTest::run@183] took 55 cycles per cacheline on write
+2026-06-08 19:07:59.398 INFO  [80014] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+12.012956854    248.627 GB/s unc_m_cas_count.all
+12.012956854    233.598 GB/s unc_m_cas_count.rd
+12.012956854     15.025 GB/s unc_m_cas_count.wr
+13.016956390    254.234 GB/s unc_m_cas_count.all
+13.016956390    254.077 GB/s unc_m_cas_count.rd
+13.016956390      0.157 GB/s unc_m_cas_count.wr
+14.019956455    254.489 GB/s unc_m_cas_count.all
+14.019956455    254.335 GB/s unc_m_cas_count.rd
+14.019956455      0.154 GB/s unc_m_cas_count.wr
+15.023956796    254.000 GB/s unc_m_cas_count.all
+15.023956796    253.842 GB/s unc_m_cas_count.rd
+15.023956796      0.158 GB/s unc_m_cas_count.wr
+16.025956274    254.242 GB/s unc_m_cas_count.all
+16.025956274    254.085 GB/s unc_m_cas_count.rd
+16.025956274      0.157 GB/s unc_m_cas_count.wr
+17.028960682    254.242 GB/s unc_m_cas_count.all
+17.028960682    254.083 GB/s unc_m_cas_count.rd
+17.028960682      0.159 GB/s unc_m_cas_count.wr
+18.031955799    254.238 GB/s unc_m_cas_count.all
+18.031955799    254.079 GB/s unc_m_cas_count.rd
+18.031955799      0.159 GB/s unc_m_cas_count.wr
+19.034956295    254.246 GB/s unc_m_cas_count.all
+19.034956295    254.085 GB/s unc_m_cas_count.rd
+19.034956295      0.162 GB/s unc_m_cas_count.wr
+20.037956803    254.242 GB/s unc_m_cas_count.all
+20.037956803    254.078 GB/s unc_m_cas_count.rd
+20.037956803      0.164 GB/s unc_m_cas_count.wr
+21.040956362    253.997 GB/s unc_m_cas_count.all
+21.040956362    253.835 GB/s unc_m_cas_count.rd
+21.040956362      0.161 GB/s unc_m_cas_count.wr
+22.042958091    254.243 GB/s unc_m_cas_count.all
+22.042958091    254.080 GB/s unc_m_cas_count.rd
+22.042958091      0.163 GB/s unc_m_cas_count.wr
+23.045957455    225.226 GB/s unc_m_cas_count.all
+23.045957455    225.073 GB/s unc_m_cas_count.rd
+23.045957455      0.149 GB/s unc_m_cas_count.wr
+24.048956856    159.174 GB/s unc_m_cas_count.all
+24.048956856    159.069 GB/s unc_m_cas_count.rd
+24.048956856      0.105 GB/s unc_m_cas_count.wr
+25.051956838    147.945 GB/s unc_m_cas_count.all
+25.051956838    147.845 GB/s unc_m_cas_count.rd
+25.051956838      0.099 GB/s unc_m_cas_count.wr
+2026-06-08 19:08:13.701 INFO  [80014] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+26.053958565    119.735 GB/s unc_m_cas_count.all
+26.053958565    119.644 GB/s unc_m_cas_count.rd
+26.053958565      0.091 GB/s unc_m_cas_count.wr
+2026-06-08 19:08:15.005 INFO  [80014] [kmercounter::BandwidthTest::run@355] took 4651 cycles per cacheline on read
+2026-06-08 19:08:15.006 INFO  [80014] [kmercounter::print_stats@280] 
+============================================
+mem: 3435973836800 bytes, took 15.607 sec, bandwidth: 220.2 GB/s
+============================================
+
+#           time             counts unit events
+26.710143398     58.883 GB/s unc_m_cas_count.all
+26.710143398     58.806 GB/s unc_m_cas_count.rd
+26.710143398      0.076 GB/s unc_m_cas_count.wr
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 2 --read-factor 100
+2026-06-08 19:08:15.632 INFO  [80199] [initializeLogger@17] ------------------------
+2026-06-08 19:08:15.632 INFO  [80199] [initializeLogger@18] Plog library initialized
+2026-06-08 19:08:15.632 INFO  [80199] [initializeLogger@19] ------------------------
+2026-06-08 19:08:15.632 INFO  [80199] [main@27] Starting dramhit
+2026-06-08 19:08:15.632 INFO  [80199] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:08:15.632 INFO  [80199] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:08:15.679 INFO  [80199] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+ 1.000763544     19.115 GB/s unc_m_cas_count.all
+ 1.000763544      9.621 GB/s unc_m_cas_count.rd
+ 1.000763544      9.495 GB/s unc_m_cas_count.wr
+ 2.002764831     12.458 GB/s unc_m_cas_count.all
+ 2.002764831      6.239 GB/s unc_m_cas_count.rd
+ 2.002764831      6.220 GB/s unc_m_cas_count.wr
+ 3.003764659     12.364 GB/s unc_m_cas_count.all
+ 3.003764659      6.193 GB/s unc_m_cas_count.rd
+ 3.003764659      6.171 GB/s unc_m_cas_count.wr
+ 4.004763686     12.443 GB/s unc_m_cas_count.all
+ 4.004763686      6.231 GB/s unc_m_cas_count.rd
+ 4.004763686      6.212 GB/s unc_m_cas_count.wr
+ 5.005764446     12.438 GB/s unc_m_cas_count.all
+ 5.005764446      6.227 GB/s unc_m_cas_count.rd
+ 5.005764446      6.211 GB/s unc_m_cas_count.wr
+ 6.006762863      9.876 GB/s unc_m_cas_count.all
+ 6.006762863      4.951 GB/s unc_m_cas_count.rd
+ 6.006762863      4.925 GB/s unc_m_cas_count.wr
+ 7.007762929      8.875 GB/s unc_m_cas_count.all
+ 7.007762929      4.452 GB/s unc_m_cas_count.rd
+ 7.007762929      4.423 GB/s unc_m_cas_count.wr
+ 8.008763331      8.959 GB/s unc_m_cas_count.all
+ 8.008763331      4.494 GB/s unc_m_cas_count.rd
+ 8.008763331      4.465 GB/s unc_m_cas_count.wr
+ 9.009763304      8.895 GB/s unc_m_cas_count.all
+ 9.009763304      4.461 GB/s unc_m_cas_count.rd
+ 9.009763304      4.434 GB/s unc_m_cas_count.wr
+10.010763811      8.940 GB/s unc_m_cas_count.all
+10.010763811      4.485 GB/s unc_m_cas_count.rd
+10.010763811      4.455 GB/s unc_m_cas_count.wr
+11.011764069      8.948 GB/s unc_m_cas_count.all
+11.011764069      4.488 GB/s unc_m_cas_count.rd
+11.011764069      4.460 GB/s unc_m_cas_count.wr
+12.012765597      8.875 GB/s unc_m_cas_count.all
+12.012765597      4.452 GB/s unc_m_cas_count.rd
+12.012765597      4.424 GB/s unc_m_cas_count.wr
+2026-06-08 19:08:27.805 INFO  [80199] [kmercounter::BandwidthTest::run@112] took 3613 cycles per cacheline on mmap and mbind
+2026-06-08 19:08:28.238 INFO  [80199] [kmercounter::BandwidthTest::run@183] took 55 cycles per cacheline on write
+2026-06-08 19:08:28.238 INFO  [80199] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+13.013764743     84.685 GB/s unc_m_cas_count.all
+13.013764743     25.296 GB/s unc_m_cas_count.rd
+13.013764743     59.402 GB/s unc_m_cas_count.wr
+14.016762112    289.510 GB/s unc_m_cas_count.all
+14.016762112    145.314 GB/s unc_m_cas_count.rd
+14.016762112    144.196 GB/s unc_m_cas_count.wr
+15.020763091    288.976 GB/s unc_m_cas_count.all
+15.020763091    145.042 GB/s unc_m_cas_count.rd
+15.020763091    143.933 GB/s unc_m_cas_count.wr
+16.022764156    289.488 GB/s unc_m_cas_count.all
+16.022764156    145.295 GB/s unc_m_cas_count.rd
+16.022764156    144.192 GB/s unc_m_cas_count.wr
+17.026762060    289.317 GB/s unc_m_cas_count.all
+17.026762060    145.222 GB/s unc_m_cas_count.rd
+17.026762060    144.096 GB/s unc_m_cas_count.wr
+18.029764297    288.951 GB/s unc_m_cas_count.all
+18.029764297    145.032 GB/s unc_m_cas_count.rd
+18.029764297    143.918 GB/s unc_m_cas_count.wr
+19.031763139    289.572 GB/s unc_m_cas_count.all
+19.031763139    145.346 GB/s unc_m_cas_count.rd
+19.031763139    144.227 GB/s unc_m_cas_count.wr
+20.035763626    289.474 GB/s unc_m_cas_count.all
+20.035763626    145.292 GB/s unc_m_cas_count.rd
+20.035763626    144.181 GB/s unc_m_cas_count.wr
+21.039765418    289.533 GB/s unc_m_cas_count.all
+21.039765418    145.321 GB/s unc_m_cas_count.rd
+21.039765418    144.212 GB/s unc_m_cas_count.wr
+22.043761418    289.543 GB/s unc_m_cas_count.all
+22.043761418    145.329 GB/s unc_m_cas_count.rd
+22.043761418    144.215 GB/s unc_m_cas_count.wr
+23.047762560    289.572 GB/s unc_m_cas_count.all
+23.047762560    145.343 GB/s unc_m_cas_count.rd
+23.047762560    144.229 GB/s unc_m_cas_count.wr
+24.051763637    289.584 GB/s unc_m_cas_count.all
+24.051763637    145.353 GB/s unc_m_cas_count.rd
+24.051763637    144.231 GB/s unc_m_cas_count.wr
+25.055762346    289.591 GB/s unc_m_cas_count.all
+25.055762346    145.355 GB/s unc_m_cas_count.rd
+25.055762346    144.237 GB/s unc_m_cas_count.wr
+26.059761480    288.670 GB/s unc_m_cas_count.all
+26.059761480    144.893 GB/s unc_m_cas_count.rd
+26.059761480    143.777 GB/s unc_m_cas_count.wr
+#           time             counts unit events
+27.060761654    289.058 GB/s unc_m_cas_count.all
+27.060761654    145.092 GB/s unc_m_cas_count.rd
+27.060761654    143.965 GB/s unc_m_cas_count.wr
+28.062763877    289.585 GB/s unc_m_cas_count.all
+28.062763877    145.353 GB/s unc_m_cas_count.rd
+28.062763877    144.232 GB/s unc_m_cas_count.wr
+29.066765478    289.746 GB/s unc_m_cas_count.all
+29.066765478    145.467 GB/s unc_m_cas_count.rd
+29.066765478    144.279 GB/s unc_m_cas_count.wr
+30.070767619    289.817 GB/s unc_m_cas_count.all
+30.070767619    145.500 GB/s unc_m_cas_count.rd
+30.070767619    144.317 GB/s unc_m_cas_count.wr
+31.074764078    289.565 GB/s unc_m_cas_count.all
+31.074764078    145.346 GB/s unc_m_cas_count.rd
+31.074764078    144.219 GB/s unc_m_cas_count.wr
+32.078761523    289.542 GB/s unc_m_cas_count.all
+32.078761523    145.330 GB/s unc_m_cas_count.rd
+32.078761523    144.213 GB/s unc_m_cas_count.wr
+33.082762411    288.958 GB/s unc_m_cas_count.all
+33.082762411    145.035 GB/s unc_m_cas_count.rd
+33.082762411    143.923 GB/s unc_m_cas_count.wr
+34.084762390    289.566 GB/s unc_m_cas_count.all
+34.084762390    145.346 GB/s unc_m_cas_count.rd
+34.084762390    144.220 GB/s unc_m_cas_count.wr
+35.088762987    286.702 GB/s unc_m_cas_count.all
+35.088762987    143.891 GB/s unc_m_cas_count.rd
+35.088762987    142.813 GB/s unc_m_cas_count.wr
+36.092764430    245.749 GB/s unc_m_cas_count.all
+36.092764430    123.251 GB/s unc_m_cas_count.rd
+36.092764430    122.491 GB/s unc_m_cas_count.wr
+2026-06-08 19:08:51.994 INFO  [80199] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+37.096763715    175.119 GB/s unc_m_cas_count.all
+37.096763715     88.054 GB/s unc_m_cas_count.rd
+37.096763715     87.061 GB/s unc_m_cas_count.wr
+2026-06-08 19:08:53.186 INFO  [80199] [kmercounter::BandwidthTest::run@355] took 7435 cycles per cacheline on read
+2026-06-08 19:08:53.187 INFO  [80199] [kmercounter::print_stats@280] 
+============================================
+mem: 6871947673600 bytes, took 24.948 sec, bandwidth: 275.4 GB/s
+============================================
+
+37.835501851     80.100 GB/s unc_m_cas_count.all
+37.835501851     40.424 GB/s unc_m_cas_count.rd
+37.835501851     39.674 GB/s unc_m_cas_count.wr
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 5 --read-factor 100
+2026-06-08 19:08:53.812 INFO  [80359] [initializeLogger@17] ------------------------
+2026-06-08 19:08:53.812 INFO  [80359] [initializeLogger@18] Plog library initialized
+2026-06-08 19:08:53.812 INFO  [80359] [initializeLogger@19] ------------------------
+2026-06-08 19:08:53.812 INFO  [80359] [main@27] Starting dramhit
+2026-06-08 19:08:53.813 INFO  [80359] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:08:53.813 INFO  [80359] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:08:53.908 INFO  [80359] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+ 1.000170955     93.118 GB/s unc_m_cas_count.all
+ 1.000170955     46.790 GB/s unc_m_cas_count.rd
+ 1.000170955     46.328 GB/s unc_m_cas_count.wr
+ 2.002168101      8.988 GB/s unc_m_cas_count.all
+ 2.002168101      4.509 GB/s unc_m_cas_count.rd
+ 2.002168101      4.479 GB/s unc_m_cas_count.wr
+ 3.003171565      8.875 GB/s unc_m_cas_count.all
+ 3.003171565      4.455 GB/s unc_m_cas_count.rd
+ 3.003171565      4.420 GB/s unc_m_cas_count.wr
+ 4.004167246      8.950 GB/s unc_m_cas_count.all
+ 4.004167246      4.489 GB/s unc_m_cas_count.rd
+ 4.004167246      4.460 GB/s unc_m_cas_count.wr
+ 5.005169594     10.411 GB/s unc_m_cas_count.all
+ 5.005169594      5.232 GB/s unc_m_cas_count.rd
+ 5.005169594      5.179 GB/s unc_m_cas_count.wr
+2026-06-08 19:08:59.030 INFO  [80359] [kmercounter::BandwidthTest::run@112] took 1526 cycles per cacheline on mmap and mbind
+ 6.006168135    110.884 GB/s unc_m_cas_count.all
+ 6.006168135     38.817 GB/s unc_m_cas_count.rd
+ 6.006168135     72.077 GB/s unc_m_cas_count.wr
+2026-06-08 19:08:59.735 INFO  [80359] [kmercounter::BandwidthTest::run@183] took 107 cycles per cacheline on write
+2026-06-08 19:08:59.735 INFO  [80359] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+ 7.008168696    266.032 GB/s unc_m_cas_count.all
+ 7.008168696    143.614 GB/s unc_m_cas_count.rd
+ 7.008168696    122.420 GB/s unc_m_cas_count.wr
+ 8.012168681    281.876 GB/s unc_m_cas_count.all
+ 8.012168681    176.457 GB/s unc_m_cas_count.rd
+ 8.012168681    105.419 GB/s unc_m_cas_count.wr
+ 9.016168734    281.885 GB/s unc_m_cas_count.all
+ 9.016168734    176.461 GB/s unc_m_cas_count.rd
+ 9.016168734    105.424 GB/s unc_m_cas_count.wr
+10.020169380    281.888 GB/s unc_m_cas_count.all
+10.020169380    176.465 GB/s unc_m_cas_count.rd
+10.020169380    105.423 GB/s unc_m_cas_count.wr
+11.024170159    281.595 GB/s unc_m_cas_count.all
+11.024170159    176.278 GB/s unc_m_cas_count.rd
+11.024170159    105.317 GB/s unc_m_cas_count.wr
+12.027169388    281.951 GB/s unc_m_cas_count.all
+12.027169388    176.507 GB/s unc_m_cas_count.rd
+12.027169388    105.443 GB/s unc_m_cas_count.wr
+13.031167291    281.939 GB/s unc_m_cas_count.all
+13.031167291    176.500 GB/s unc_m_cas_count.rd
+13.031167291    105.439 GB/s unc_m_cas_count.wr
+14.035167840    281.360 GB/s unc_m_cas_count.all
+14.035167840    176.133 GB/s unc_m_cas_count.rd
+14.035167840    105.227 GB/s unc_m_cas_count.wr
+15.037168396    281.680 GB/s unc_m_cas_count.all
+15.037168396    176.341 GB/s unc_m_cas_count.rd
+15.037168396    105.339 GB/s unc_m_cas_count.wr
+16.040166723    281.921 GB/s unc_m_cas_count.all
+16.040166723    176.487 GB/s unc_m_cas_count.rd
+16.040166723    105.435 GB/s unc_m_cas_count.wr
+17.044169269    281.958 GB/s unc_m_cas_count.all
+17.044169269    176.519 GB/s unc_m_cas_count.rd
+17.044169269    105.442 GB/s unc_m_cas_count.wr
+18.048167264    281.884 GB/s unc_m_cas_count.all
+18.048167264    176.455 GB/s unc_m_cas_count.rd
+18.048167264    105.426 GB/s unc_m_cas_count.wr
+19.052168357    281.384 GB/s unc_m_cas_count.all
+19.052168357    176.154 GB/s unc_m_cas_count.rd
+19.052168357    105.230 GB/s unc_m_cas_count.wr
+20.054166738    281.674 GB/s unc_m_cas_count.all
+20.054166738    176.336 GB/s unc_m_cas_count.rd
+20.054166738    105.337 GB/s unc_m_cas_count.wr
+21.057175116    281.980 GB/s unc_m_cas_count.all
+21.057175116    176.532 GB/s unc_m_cas_count.rd
+21.057175116    105.447 GB/s unc_m_cas_count.wr
+22.061168497    282.027 GB/s unc_m_cas_count.all
+22.061168497    176.557 GB/s unc_m_cas_count.rd
+22.061168497    105.469 GB/s unc_m_cas_count.wr
+23.065167267    281.520 GB/s unc_m_cas_count.all
+23.065167267    176.232 GB/s unc_m_cas_count.rd
+23.065167267    105.289 GB/s unc_m_cas_count.wr
+24.068167589    281.340 GB/s unc_m_cas_count.all
+24.068167589    176.122 GB/s unc_m_cas_count.rd
+24.068167589    105.218 GB/s unc_m_cas_count.wr
+25.070166626    281.770 GB/s unc_m_cas_count.all
+25.070166626    176.395 GB/s unc_m_cas_count.rd
+25.070166626    105.374 GB/s unc_m_cas_count.wr
+26.074167420    281.518 GB/s unc_m_cas_count.all
+26.074167420    176.227 GB/s unc_m_cas_count.rd
+26.074167420    105.291 GB/s unc_m_cas_count.wr
+#           time             counts unit events
+27.076167373    281.377 GB/s unc_m_cas_count.all
+27.076167373    176.149 GB/s unc_m_cas_count.rd
+27.076167373    105.229 GB/s unc_m_cas_count.wr
+28.078166781    281.696 GB/s unc_m_cas_count.all
+28.078166781    176.342 GB/s unc_m_cas_count.rd
+28.078166781    105.354 GB/s unc_m_cas_count.wr
+29.081167211    281.544 GB/s unc_m_cas_count.all
+29.081167211    176.251 GB/s unc_m_cas_count.rd
+29.081167211    105.293 GB/s unc_m_cas_count.wr
+30.084166416    281.372 GB/s unc_m_cas_count.all
+30.084166416    176.144 GB/s unc_m_cas_count.rd
+30.084166416    105.229 GB/s unc_m_cas_count.wr
+31.086167738    281.782 GB/s unc_m_cas_count.all
+31.086167738    176.405 GB/s unc_m_cas_count.rd
+31.086167738    105.376 GB/s unc_m_cas_count.wr
+32.090168710    282.102 GB/s unc_m_cas_count.all
+32.090168710    176.602 GB/s unc_m_cas_count.rd
+32.090168710    105.500 GB/s unc_m_cas_count.wr
+33.094168861    281.930 GB/s unc_m_cas_count.all
+33.094168861    176.493 GB/s unc_m_cas_count.rd
+33.094168861    105.437 GB/s unc_m_cas_count.wr
+34.098169120    281.920 GB/s unc_m_cas_count.all
+34.098169120    176.485 GB/s unc_m_cas_count.rd
+34.098169120    105.435 GB/s unc_m_cas_count.wr
+35.102168060    281.892 GB/s unc_m_cas_count.all
+35.102168060    176.465 GB/s unc_m_cas_count.rd
+35.102168060    105.426 GB/s unc_m_cas_count.wr
+36.106168943    281.898 GB/s unc_m_cas_count.all
+36.106168943    176.472 GB/s unc_m_cas_count.rd
+36.106168943    105.426 GB/s unc_m_cas_count.wr
+37.110166874    281.938 GB/s unc_m_cas_count.all
+37.110166874    176.499 GB/s unc_m_cas_count.rd
+37.110166874    105.440 GB/s unc_m_cas_count.wr
+38.114166201    281.944 GB/s unc_m_cas_count.all
+38.114166201    176.501 GB/s unc_m_cas_count.rd
+38.114166201    105.444 GB/s unc_m_cas_count.wr
+2026-06-08 19:09:32.592 INFO  [80359] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+39.118167176    238.952 GB/s unc_m_cas_count.all
+39.118167176    151.173 GB/s unc_m_cas_count.rd
+39.118167176     87.767 GB/s unc_m_cas_count.wr
+2026-06-08 19:09:32.670 INFO  [80359] [kmercounter::BandwidthTest::run@355] took 9815 cycles per cacheline on read
+2026-06-08 19:09:32.671 INFO  [80359] [kmercounter::print_stats@280] 
+============================================
+mem: 7730941132800 bytes, took 32.935 sec, bandwidth: 234.7 GB/s
+============================================
+
+39.147044971      0.288 GB/s unc_m_cas_count.all
+39.147044971      0.178 GB/s unc_m_cas_count.rd
+39.147044971      0.109 GB/s unc_m_cas_count.wr
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 3 --read-factor 100
+2026-06-08 19:09:33.307 INFO  [80478] [initializeLogger@17] ------------------------
+2026-06-08 19:09:33.307 INFO  [80478] [initializeLogger@18] Plog library initialized
+2026-06-08 19:09:33.307 INFO  [80478] [initializeLogger@19] ------------------------
+2026-06-08 19:09:33.307 INFO  [80478] [main@27] Starting dramhit
+2026-06-08 19:09:33.308 INFO  [80478] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:09:33.308 INFO  [80478] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:09:33.348 INFO  [80478] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+ 1.000701238     60.843 GB/s unc_m_cas_count.all
+ 1.000701238     30.494 GB/s unc_m_cas_count.rd
+ 1.000701238     30.350 GB/s unc_m_cas_count.wr
+ 2.002699539     11.919 GB/s unc_m_cas_count.all
+ 2.002699539      5.967 GB/s unc_m_cas_count.rd
+ 2.002699539      5.952 GB/s unc_m_cas_count.wr
+ 3.003701333      8.935 GB/s unc_m_cas_count.all
+ 3.003701333      4.485 GB/s unc_m_cas_count.rd
+ 3.003701333      4.450 GB/s unc_m_cas_count.wr
+ 4.004700816      8.927 GB/s unc_m_cas_count.all
+ 4.004700816      4.483 GB/s unc_m_cas_count.rd
+ 4.004700816      4.444 GB/s unc_m_cas_count.wr
+ 5.005699842      8.871 GB/s unc_m_cas_count.all
+ 5.005699842      4.450 GB/s unc_m_cas_count.rd
+ 5.005699842      4.421 GB/s unc_m_cas_count.wr
+ 6.006699685      8.951 GB/s unc_m_cas_count.all
+ 6.006699685      4.489 GB/s unc_m_cas_count.rd
+ 6.006699685      4.462 GB/s unc_m_cas_count.wr
+ 7.007699606      8.900 GB/s unc_m_cas_count.all
+ 7.007699606      4.464 GB/s unc_m_cas_count.rd
+ 7.007699606      4.436 GB/s unc_m_cas_count.wr
+ 8.008701960      8.944 GB/s unc_m_cas_count.all
+ 8.008701960      4.486 GB/s unc_m_cas_count.rd
+ 8.008701960      4.458 GB/s unc_m_cas_count.wr
+2026-06-08 19:09:41.828 INFO  [80478] [kmercounter::BandwidthTest::run@112] took 2527 cycles per cacheline on mmap and mbind
+2026-06-08 19:09:42.015 INFO  [80478] [kmercounter::BandwidthTest::run@183] took 55 cycles per cacheline on write
+2026-06-08 19:09:42.015 INFO  [80478] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+ 9.009701142     59.433 GB/s unc_m_cas_count.all
+ 9.009701142     13.612 GB/s unc_m_cas_count.rd
+ 9.009701142     45.831 GB/s unc_m_cas_count.wr
+10.013699101    284.583 GB/s unc_m_cas_count.all
+10.013699101    172.396 GB/s unc_m_cas_count.rd
+10.013699101    112.189 GB/s unc_m_cas_count.wr
+11.016699097    284.952 GB/s unc_m_cas_count.all
+11.016699097    172.626 GB/s unc_m_cas_count.rd
+11.016699097    112.326 GB/s unc_m_cas_count.wr
+12.020699186    284.892 GB/s unc_m_cas_count.all
+12.020699186    172.585 GB/s unc_m_cas_count.rd
+12.020699186    112.306 GB/s unc_m_cas_count.wr
+13.024699296    284.920 GB/s unc_m_cas_count.all
+13.024699296    172.602 GB/s unc_m_cas_count.rd
+13.024699296    112.318 GB/s unc_m_cas_count.wr
+14.028700567    284.956 GB/s unc_m_cas_count.all
+14.028700567    172.627 GB/s unc_m_cas_count.rd
+14.028700567    112.329 GB/s unc_m_cas_count.wr
+15.032701480    284.086 GB/s unc_m_cas_count.all
+15.032701480    172.099 GB/s unc_m_cas_count.rd
+15.032701480    111.995 GB/s unc_m_cas_count.wr
+16.033699931    284.890 GB/s unc_m_cas_count.all
+16.033699931    172.580 GB/s unc_m_cas_count.rd
+16.033699931    112.301 GB/s unc_m_cas_count.wr
+17.037701962    284.614 GB/s unc_m_cas_count.all
+17.037701962    172.419 GB/s unc_m_cas_count.rd
+17.037701962    112.196 GB/s unc_m_cas_count.wr
+18.040700195    284.927 GB/s unc_m_cas_count.all
+18.040700195    172.609 GB/s unc_m_cas_count.rd
+18.040700195    112.317 GB/s unc_m_cas_count.wr
+19.044698886    284.893 GB/s unc_m_cas_count.all
+19.044698886    172.582 GB/s unc_m_cas_count.rd
+19.044698886    112.311 GB/s unc_m_cas_count.wr
+20.048700484    284.907 GB/s unc_m_cas_count.all
+20.048700484    172.595 GB/s unc_m_cas_count.rd
+20.048700484    112.313 GB/s unc_m_cas_count.wr
+21.052699937    284.966 GB/s unc_m_cas_count.all
+21.052699937    172.636 GB/s unc_m_cas_count.rd
+21.052699937    112.330 GB/s unc_m_cas_count.wr
+22.056699630    284.962 GB/s unc_m_cas_count.all
+22.056699630    172.630 GB/s unc_m_cas_count.rd
+22.056699630    112.332 GB/s unc_m_cas_count.wr
+23.060698977    284.975 GB/s unc_m_cas_count.all
+23.060698977    172.639 GB/s unc_m_cas_count.rd
+23.060698977    112.337 GB/s unc_m_cas_count.wr
+24.064702162    284.365 GB/s unc_m_cas_count.all
+24.064702162    172.272 GB/s unc_m_cas_count.rd
+24.064702162    112.093 GB/s unc_m_cas_count.wr
+25.066699305    285.006 GB/s unc_m_cas_count.all
+25.066699305    172.664 GB/s unc_m_cas_count.rd
+25.066699305    112.342 GB/s unc_m_cas_count.wr
+26.070699953    284.586 GB/s unc_m_cas_count.all
+26.070699953    172.398 GB/s unc_m_cas_count.rd
+26.070699953    112.187 GB/s unc_m_cas_count.wr
+#           time             counts unit events
+27.073701035    284.945 GB/s unc_m_cas_count.all
+27.073701035    172.619 GB/s unc_m_cas_count.rd
+27.073701035    112.326 GB/s unc_m_cas_count.wr
+28.077698901    246.067 GB/s unc_m_cas_count.all
+28.077698901    149.040 GB/s unc_m_cas_count.rd
+28.077698901     97.021 GB/s unc_m_cas_count.wr
+2026-06-08 19:10:01.933 INFO  [80478] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+29.081701233    182.374 GB/s unc_m_cas_count.all
+29.081701233    110.486 GB/s unc_m_cas_count.rd
+29.081701233     71.887 GB/s unc_m_cas_count.wr
+30.082701649    157.276 GB/s unc_m_cas_count.all
+30.082701649     95.370 GB/s unc_m_cas_count.rd
+30.082701649     61.904 GB/s unc_m_cas_count.wr
+2026-06-08 19:10:03.227 INFO  [80478] [kmercounter::BandwidthTest::run@355] took 6321 cycles per cacheline on read
+2026-06-08 19:10:03.228 INFO  [80478] [kmercounter::print_stats@280] 
+============================================
+mem: 6871947673600 bytes, took 21.211 sec, bandwidth: 324.0 GB/s
+============================================
+
+30.201079133      4.946 GB/s unc_m_cas_count.all
+30.201079133      3.015 GB/s unc_m_cas_count.rd
+30.201079133      1.930 GB/s unc_m_cas_count.wr

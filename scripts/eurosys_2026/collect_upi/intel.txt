@@ -1,0 +1,892 @@
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 0 --read-factor 100
+2026-06-08 19:07:48.574 INFO  [80014] [initializeLogger@17] ------------------------
+2026-06-08 19:07:48.574 INFO  [80014] [initializeLogger@18] Plog library initialized
+2026-06-08 19:07:48.574 INFO  [80014] [initializeLogger@19] ------------------------
+2026-06-08 19:07:48.574 INFO  [80014] [main@27] Starting dramhit
+2026-06-08 19:07:48.574 INFO  [80014] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:07:48.574 INFO  [80014] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:07:48.681 INFO  [80014] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:07:48.684 INFO  [80014] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000960783        551,646,127      unc_m_cas_count.all                                                   
+     1.000960783        277,668,247      unc_m_cas_count.rd                                                    
+     1.000960783        273,982,705      unc_m_cas_count.wr                                                    
+     2.002957952        194,618,060      unc_m_cas_count.all                                                   
+     2.002957952         97,438,257      unc_m_cas_count.rd                                                    
+     2.002957952         97,177,427      unc_m_cas_count.wr                                                    
+     3.003959788        194,381,254      unc_m_cas_count.all                                                   
+     3.003959788         97,384,559      unc_m_cas_count.rd                                                    
+     3.003959788         96,996,567      unc_m_cas_count.wr                                                    
+     4.004957638        192,619,903      unc_m_cas_count.all                                                   
+     4.004957638         96,558,190      unc_m_cas_count.rd                                                    
+     4.004957638         96,060,761      unc_m_cas_count.wr                                                    
+     5.005956696        139,134,337      unc_m_cas_count.all                                                   
+     5.005956696         69,800,586      unc_m_cas_count.rd                                                    
+     5.005956696         69,333,862      unc_m_cas_count.wr                                                    
+     6.006957618        139,796,316      unc_m_cas_count.all                                                   
+     6.006957618         70,103,870      unc_m_cas_count.rd                                                    
+     6.006957618         69,692,443      unc_m_cas_count.wr                                                    
+     7.007959715        139,322,762      unc_m_cas_count.all                                                   
+     7.007959715         69,874,334      unc_m_cas_count.rd                                                    
+     7.007959715         69,448,401      unc_m_cas_count.wr                                                    
+     8.008957559        139,456,923      unc_m_cas_count.all                                                   
+     8.008957559         69,948,432      unc_m_cas_count.rd                                                    
+     8.008957559         69,508,613      unc_m_cas_count.wr                                                    
+     9.009956433        139,768,137      unc_m_cas_count.all                                                   
+     9.009956433         70,101,345      unc_m_cas_count.rd                                                    
+     9.009956433         69,666,612      unc_m_cas_count.wr                                                    
+    10.010956787        137,253,942      unc_m_cas_count.all                                                   
+    10.010956787         68,826,829      unc_m_cas_count.rd                                                    
+    10.010956787         68,427,054      unc_m_cas_count.wr                                                    
+2026-06-08 19:07:59.210 INFO  [80014] [kmercounter::BandwidthTest::run@112] took 3136 cycles per cacheline on mmap and mbind
+    11.011958803        564,795,094      unc_m_cas_count.all                                                   
+    11.011958803        130,807,212      unc_m_cas_count.rd                                                    
+    11.011958803        434,128,825      unc_m_cas_count.wr                                                    
+2026-06-08 19:07:59.398 INFO  [80014] [kmercounter::BandwidthTest::run@183] took 55 cycles per cacheline on write
+2026-06-08 19:07:59.398 INFO  [80014] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+    12.012956854      3,884,790,070      unc_m_cas_count.all                                                   
+    12.012956854      3,649,968,783      unc_m_cas_count.rd                                                    
+    12.012956854        234,768,844      unc_m_cas_count.wr                                                    
+    13.016956390      3,972,410,731      unc_m_cas_count.all                                                   
+    13.016956390      3,969,955,606      unc_m_cas_count.rd                                                    
+    13.016956390          2,451,740      unc_m_cas_count.wr                                                    
+    14.019956455      3,976,390,693      unc_m_cas_count.all                                                   
+    14.019956455      3,973,977,835      unc_m_cas_count.rd                                                    
+    14.019956455          2,411,798      unc_m_cas_count.wr                                                    
+    15.023956796      3,968,749,749      unc_m_cas_count.all                                                   
+    15.023956796      3,966,282,302      unc_m_cas_count.rd                                                    
+    15.023956796          2,468,430      unc_m_cas_count.wr                                                    
+    16.025956274      3,972,537,430      unc_m_cas_count.all                                                   
+    16.025956274      3,970,083,224      unc_m_cas_count.rd                                                    
+    16.025956274          2,455,478      unc_m_cas_count.wr                                                    
+    17.028960682      3,972,534,602      unc_m_cas_count.all                                                   
+    17.028960682      3,970,042,678      unc_m_cas_count.rd                                                    
+    17.028960682          2,491,612      unc_m_cas_count.wr                                                    
+    18.031955799      3,972,464,261      unc_m_cas_count.all                                                   
+    18.031955799      3,969,984,507      unc_m_cas_count.rd                                                    
+    18.031955799          2,476,769      unc_m_cas_count.wr                                                    
+    19.034956295      3,972,598,242      unc_m_cas_count.all                                                   
+    19.034956295      3,970,077,805      unc_m_cas_count.rd                                                    
+    19.034956295          2,523,873      unc_m_cas_count.wr                                                    
+    20.037956803      3,972,524,244      unc_m_cas_count.all                                                   
+    20.037956803      3,969,962,108      unc_m_cas_count.rd                                                    
+    20.037956803          2,560,218      unc_m_cas_count.wr                                                    
+    21.040956362      3,968,699,251      unc_m_cas_count.all                                                   
+    21.040956362      3,966,177,697      unc_m_cas_count.rd                                                    
+    21.040956362          2,523,083      unc_m_cas_count.wr                                                    
+    22.042958091      3,972,552,660      unc_m_cas_count.all                                                   
+    22.042958091      3,970,004,680      unc_m_cas_count.rd                                                    
+    22.042958091          2,548,381      unc_m_cas_count.wr                                                    
+    23.045957455      3,519,156,964      unc_m_cas_count.all                                                   
+    23.045957455      3,516,773,092      unc_m_cas_count.rd                                                    
+    23.045957455          2,332,302      unc_m_cas_count.wr                                                    
+    24.048956856      2,487,094,667      unc_m_cas_count.all                                                   
+    24.048956856      2,485,460,167      unc_m_cas_count.rd                                                    
+    24.048956856          1,634,314      unc_m_cas_count.wr                                                    
+    25.051956838      2,311,644,789      unc_m_cas_count.all                                                   
+    25.051956838      2,310,078,425      unc_m_cas_count.rd                                                    
+    25.051956838          1,550,661      unc_m_cas_count.wr                                                    
+2026-06-08 19:08:13.701 INFO  [80014] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+    26.053958565      1,870,860,949      unc_m_cas_count.all                                                   
+    26.053958565      1,869,436,093      unc_m_cas_count.rd                                                    
+    26.053958565          1,424,429      unc_m_cas_count.wr                                                    
+2026-06-08 19:08:15.005 INFO  [80014] [kmercounter::BandwidthTest::run@355] took 4651 cycles per cacheline on read
+2026-06-08 19:08:15.006 INFO  [80014] [kmercounter::print_stats@280] 
+============================================
+mem: 3435973836800 bytes, took 15.607 sec, bandwidth: 220.2 GB/s
+============================================
+
+#           time             counts unit events
+    26.710143398        920,053,191      unc_m_cas_count.all                                                   
+    26.710143398        918,843,496      unc_m_cas_count.rd                                                    
+    26.710143398          1,189,255      unc_m_cas_count.wr                                                    
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 2 --read-factor 100
+2026-06-08 19:08:15.632 INFO  [80199] [initializeLogger@17] ------------------------
+2026-06-08 19:08:15.632 INFO  [80199] [initializeLogger@18] Plog library initialized
+2026-06-08 19:08:15.632 INFO  [80199] [initializeLogger@19] ------------------------
+2026-06-08 19:08:15.632 INFO  [80199] [main@27] Starting dramhit
+2026-06-08 19:08:15.632 INFO  [80199] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:08:15.632 INFO  [80199] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:08:15.675 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:08:15.676 INFO  [80199] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:08:15.679 INFO  [80199] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000763544        298,676,588      unc_m_cas_count.all                                                   
+     1.000763544        150,326,231      unc_m_cas_count.rd                                                    
+     1.000763544        148,353,446      unc_m_cas_count.wr                                                    
+     2.002764831        194,663,164      unc_m_cas_count.all                                                   
+     2.002764831         97,481,174      unc_m_cas_count.rd                                                    
+     2.002764831         97,181,666      unc_m_cas_count.wr                                                    
+     3.003764659        193,180,412      unc_m_cas_count.all                                                   
+     3.003764659         96,758,286      unc_m_cas_count.rd                                                    
+     3.003764659         96,422,075      unc_m_cas_count.wr                                                    
+     4.004763686        194,425,735      unc_m_cas_count.all                                                   
+     4.004763686         97,357,526      unc_m_cas_count.rd                                                    
+     4.004763686         97,068,301      unc_m_cas_count.wr                                                    
+     5.005764446        194,337,033      unc_m_cas_count.all                                                   
+     5.005764446         97,294,600      unc_m_cas_count.rd                                                    
+     5.005764446         97,043,981      unc_m_cas_count.wr                                                    
+     6.006762863        154,315,660      unc_m_cas_count.all                                                   
+     6.006762863         77,360,270      unc_m_cas_count.rd                                                    
+     6.006762863         76,952,854      unc_m_cas_count.wr                                                    
+     7.007762929        138,668,723      unc_m_cas_count.all                                                   
+     7.007762929         69,555,149      unc_m_cas_count.rd                                                    
+     7.007762929         69,113,528      unc_m_cas_count.wr                                                    
+     8.008763331        139,989,965      unc_m_cas_count.all                                                   
+     8.008763331         70,220,654      unc_m_cas_count.rd                                                    
+     8.008763331         69,769,373      unc_m_cas_count.wr                                                    
+     9.009763304        138,987,155      unc_m_cas_count.all                                                   
+     9.009763304         69,708,869      unc_m_cas_count.rd                                                    
+     9.009763304         69,278,280      unc_m_cas_count.wr                                                    
+    10.010763811        139,690,224      unc_m_cas_count.all                                                   
+    10.010763811         70,081,630      unc_m_cas_count.rd                                                    
+    10.010763811         69,608,490      unc_m_cas_count.wr                                                    
+    11.011764069        139,814,550      unc_m_cas_count.all                                                   
+    11.011764069         70,132,452      unc_m_cas_count.rd                                                    
+    11.011764069         69,682,175      unc_m_cas_count.wr                                                    
+    12.012765597        138,677,658      unc_m_cas_count.all                                                   
+    12.012765597         69,558,942      unc_m_cas_count.rd                                                    
+    12.012765597         69,118,586      unc_m_cas_count.wr                                                    
+2026-06-08 19:08:27.805 INFO  [80199] [kmercounter::BandwidthTest::run@112] took 3613 cycles per cacheline on mmap and mbind
+2026-06-08 19:08:28.238 INFO  [80199] [kmercounter::BandwidthTest::run@183] took 55 cycles per cacheline on write
+2026-06-08 19:08:28.238 INFO  [80199] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+    13.013764743      1,323,204,298      unc_m_cas_count.all                                                   
+    13.013764743        395,251,064      unc_m_cas_count.rd                                                    
+    13.013764743        928,161,217      unc_m_cas_count.wr                                                    
+    14.016762112      4,523,593,991      unc_m_cas_count.all                                                   
+    14.016762112      2,270,530,309      unc_m_cas_count.rd                                                    
+    14.016762112      2,253,065,773      unc_m_cas_count.wr                                                    
+    15.020763091      4,515,249,505      unc_m_cas_count.all                                                   
+    15.020763091      2,266,282,017      unc_m_cas_count.rd                                                    
+    15.020763091      2,248,955,675      unc_m_cas_count.wr                                                    
+    16.022764156      4,523,245,751      unc_m_cas_count.all                                                   
+    16.022764156      2,270,234,314      unc_m_cas_count.rd                                                    
+    16.022764156      2,253,004,733      unc_m_cas_count.wr                                                    
+    17.026762060      4,520,578,259      unc_m_cas_count.all                                                   
+    17.026762060      2,269,088,020      unc_m_cas_count.rd                                                    
+    17.026762060      2,251,495,567      unc_m_cas_count.wr                                                    
+    18.029764297      4,514,851,940      unc_m_cas_count.all                                                   
+    18.029764297      2,266,127,772      unc_m_cas_count.rd                                                    
+    18.029764297      2,248,726,144      unc_m_cas_count.wr                                                    
+    19.031763139      4,524,569,140      unc_m_cas_count.all                                                   
+    19.031763139      2,271,031,449      unc_m_cas_count.rd                                                    
+    19.031763139      2,253,546,857      unc_m_cas_count.wr                                                    
+    20.035763626      4,523,028,344      unc_m_cas_count.all                                                   
+    20.035763626      2,270,184,564      unc_m_cas_count.rd                                                    
+    20.035763626      2,252,832,086      unc_m_cas_count.wr                                                    
+    21.039765418      4,523,955,207      unc_m_cas_count.all                                                   
+    21.039765418      2,270,640,761      unc_m_cas_count.rd                                                    
+    21.039765418      2,253,313,455      unc_m_cas_count.wr                                                    
+    22.043761418      4,524,105,452      unc_m_cas_count.all                                                   
+    22.043761418      2,270,760,303      unc_m_cas_count.rd                                                    
+    22.043761418      2,253,360,230      unc_m_cas_count.wr                                                    
+    23.047762560      4,524,561,291      unc_m_cas_count.all                                                   
+    23.047762560      2,270,978,675      unc_m_cas_count.rd                                                    
+    23.047762560      2,253,576,578      unc_m_cas_count.wr                                                    
+    24.051763637      4,524,751,501      unc_m_cas_count.all                                                   
+    24.051763637      2,271,139,565      unc_m_cas_count.rd                                                    
+    24.051763637      2,253,604,560      unc_m_cas_count.wr                                                    
+    25.055762346      4,524,866,958      unc_m_cas_count.all                                                   
+    25.055762346      2,271,172,588      unc_m_cas_count.rd                                                    
+    25.055762346      2,253,709,138      unc_m_cas_count.wr                                                    
+    26.059761480      4,510,466,066      unc_m_cas_count.all                                                   
+    26.059761480      2,263,946,858      unc_m_cas_count.rd                                                    
+    26.059761480      2,246,512,051      unc_m_cas_count.wr                                                    
+#           time             counts unit events
+    27.060761654      4,516,524,291      unc_m_cas_count.all                                                   
+    27.060761654      2,267,063,053      unc_m_cas_count.rd                                                    
+    27.060761654      2,249,458,387      unc_m_cas_count.wr                                                    
+    28.062763877      4,524,771,404      unc_m_cas_count.all                                                   
+    28.062763877      2,271,145,630      unc_m_cas_count.rd                                                    
+    28.062763877      2,253,627,221      unc_m_cas_count.wr                                                    
+    29.066765478      4,527,287,426      unc_m_cas_count.all                                                   
+    29.066765478      2,272,923,985      unc_m_cas_count.rd                                                    
+    29.066765478      2,254,355,410      unc_m_cas_count.wr                                                    
+    30.070767619      4,528,387,412      unc_m_cas_count.all                                                   
+    30.070767619      2,273,443,376      unc_m_cas_count.rd                                                    
+    30.070767619      2,254,957,825      unc_m_cas_count.wr                                                    
+    31.074764078      4,524,454,740      unc_m_cas_count.all                                                   
+    31.074764078      2,271,033,666      unc_m_cas_count.rd                                                    
+    31.074764078      2,253,414,713      unc_m_cas_count.wr                                                    
+    32.078761523      4,524,099,613      unc_m_cas_count.all                                                   
+    32.078761523      2,270,776,592      unc_m_cas_count.rd                                                    
+    32.078761523      2,253,328,606      unc_m_cas_count.wr                                                    
+    33.082762411      4,514,976,322      unc_m_cas_count.all                                                   
+    33.082762411      2,266,168,380      unc_m_cas_count.rd                                                    
+    33.082762411      2,248,802,955      unc_m_cas_count.wr                                                    
+    34.084762390      4,524,464,900      unc_m_cas_count.all                                                   
+    34.084762390      2,271,024,280      unc_m_cas_count.rd                                                    
+    34.084762390      2,253,429,892      unc_m_cas_count.wr                                                    
+    35.088762987      4,479,722,414      unc_m_cas_count.all                                                   
+    35.088762987      2,248,297,881      unc_m_cas_count.rd                                                    
+    35.088762987      2,231,446,961      unc_m_cas_count.wr                                                    
+    36.092764430      3,839,833,820      unc_m_cas_count.all                                                   
+    36.092764430      1,925,792,177      unc_m_cas_count.rd                                                    
+    36.092764430      1,913,925,129      unc_m_cas_count.wr                                                    
+2026-06-08 19:08:51.994 INFO  [80199] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+    37.096763715      2,736,233,942      unc_m_cas_count.all                                                   
+    37.096763715      1,375,837,827      unc_m_cas_count.rd                                                    
+    37.096763715      1,360,327,824      unc_m_cas_count.wr                                                    
+2026-06-08 19:08:53.186 INFO  [80199] [kmercounter::BandwidthTest::run@355] took 7435 cycles per cacheline on read
+2026-06-08 19:08:53.187 INFO  [80199] [kmercounter::print_stats@280] 
+============================================
+mem: 6871947673600 bytes, took 24.948 sec, bandwidth: 275.4 GB/s
+============================================
+
+    37.835501851      1,251,559,044      unc_m_cas_count.all                                                   
+    37.835501851        631,626,132      unc_m_cas_count.rd                                                    
+    37.835501851        619,901,160      unc_m_cas_count.wr                                                    
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 5 --read-factor 100
+2026-06-08 19:08:53.812 INFO  [80359] [initializeLogger@17] ------------------------
+2026-06-08 19:08:53.812 INFO  [80359] [initializeLogger@18] Plog library initialized
+2026-06-08 19:08:53.812 INFO  [80359] [initializeLogger@19] ------------------------
+2026-06-08 19:08:53.812 INFO  [80359] [main@27] Starting dramhit
+2026-06-08 19:08:53.813 INFO  [80359] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:08:53.813 INFO  [80359] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:08:53.904 INFO  [80359] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:08:53.908 INFO  [80359] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000170955      1,454,969,588      unc_m_cas_count.all                                                   
+     1.000170955        731,090,199      unc_m_cas_count.rd                                                    
+     1.000170955        723,882,563      unc_m_cas_count.wr                                                    
+     2.002168101        140,435,190      unc_m_cas_count.all                                                   
+     2.002168101         70,451,185      unc_m_cas_count.rd                                                    
+     2.002168101         69,982,623      unc_m_cas_count.wr                                                    
+     3.003171565        138,673,300      unc_m_cas_count.all                                                   
+     3.003171565         69,604,233      unc_m_cas_count.rd                                                    
+     3.003171565         69,069,196      unc_m_cas_count.wr                                                    
+     4.004167246        139,838,149      unc_m_cas_count.all                                                   
+     4.004167246         70,147,195      unc_m_cas_count.rd                                                    
+     4.004167246         69,690,913      unc_m_cas_count.wr                                                    
+     5.005169594        162,673,951      unc_m_cas_count.all                                                   
+     5.005169594         81,754,586      unc_m_cas_count.rd                                                    
+     5.005169594         80,928,088      unc_m_cas_count.wr                                                    
+2026-06-08 19:08:59.030 INFO  [80359] [kmercounter::BandwidthTest::run@112] took 1526 cycles per cacheline on mmap and mbind
+     6.006168135      1,732,563,024      unc_m_cas_count.all                                                   
+     6.006168135        606,513,411      unc_m_cas_count.rd                                                    
+     6.006168135      1,126,204,321      unc_m_cas_count.wr                                                    
+2026-06-08 19:08:59.735 INFO  [80359] [kmercounter::BandwidthTest::run@183] took 107 cycles per cacheline on write
+2026-06-08 19:08:59.735 INFO  [80359] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+     7.008168696      4,156,746,547      unc_m_cas_count.all                                                   
+     7.008168696      2,243,963,547      unc_m_cas_count.rd                                                    
+     7.008168696      1,912,817,060      unc_m_cas_count.wr                                                    
+     8.012168681      4,404,313,456      unc_m_cas_count.all                                                   
+     8.012168681      2,757,135,612      unc_m_cas_count.rd                                                    
+     8.012168681      1,647,173,236      unc_m_cas_count.wr                                                    
+     9.016168734      4,404,447,533      unc_m_cas_count.all                                                   
+     9.016168734      2,757,197,539      unc_m_cas_count.rd                                                    
+     9.016168734      1,647,254,700      unc_m_cas_count.wr                                                    
+    10.020169380      4,404,503,707      unc_m_cas_count.all                                                   
+    10.020169380      2,757,262,134      unc_m_cas_count.rd                                                    
+    10.020169380      1,647,239,041      unc_m_cas_count.wr                                                    
+    11.024170159      4,399,924,069      unc_m_cas_count.all                                                   
+    11.024170159      2,754,341,369      unc_m_cas_count.rd                                                    
+    11.024170159      1,645,573,270      unc_m_cas_count.wr                                                    
+    12.027169388      4,405,480,035      unc_m_cas_count.all                                                   
+    12.027169388      2,757,929,591      unc_m_cas_count.rd                                                    
+    12.027169388      1,647,552,429      unc_m_cas_count.wr                                                    
+    13.031167291      4,405,297,123      unc_m_cas_count.all                                                   
+    13.031167291      2,757,816,117      unc_m_cas_count.rd                                                    
+    13.031167291      1,647,483,841      unc_m_cas_count.wr                                                    
+    14.035167840      4,396,245,368      unc_m_cas_count.all                                                   
+    14.035167840      2,752,084,363      unc_m_cas_count.rd                                                    
+    14.035167840      1,644,172,003      unc_m_cas_count.wr                                                    
+    15.037168396      4,401,251,879      unc_m_cas_count.all                                                   
+    15.037168396      2,755,331,596      unc_m_cas_count.rd                                                    
+    15.037168396      1,645,914,670      unc_m_cas_count.wr                                                    
+    16.040166723      4,405,021,682      unc_m_cas_count.all                                                   
+    16.040166723      2,757,610,870      unc_m_cas_count.rd                                                    
+    16.040166723      1,647,418,428      unc_m_cas_count.wr                                                    
+    17.044169269      4,405,597,809      unc_m_cas_count.all                                                   
+    17.044169269      2,758,113,300      unc_m_cas_count.rd                                                    
+    17.044169269      1,647,528,063      unc_m_cas_count.wr                                                    
+    18.048167264      4,404,444,069      unc_m_cas_count.all                                                   
+    18.048167264      2,757,110,401      unc_m_cas_count.rd                                                    
+    18.048167264      1,647,281,841      unc_m_cas_count.wr                                                    
+    19.052168357      4,396,629,610      unc_m_cas_count.all                                                   
+    19.052168357      2,752,409,087      unc_m_cas_count.rd                                                    
+    19.052168357      1,644,223,760      unc_m_cas_count.wr                                                    
+    20.054166738      4,401,153,381      unc_m_cas_count.all                                                   
+    20.054166738      2,755,255,800      unc_m_cas_count.rd                                                    
+    20.054166738      1,645,890,845      unc_m_cas_count.wr                                                    
+    21.057175116      4,405,933,609      unc_m_cas_count.all                                                   
+    21.057175116      2,758,315,502      unc_m_cas_count.rd                                                    
+    21.057175116      1,647,616,902      unc_m_cas_count.wr                                                    
+    22.061168497      4,406,667,025      unc_m_cas_count.all                                                   
+    22.061168497      2,758,695,408      unc_m_cas_count.rd                                                    
+    22.061168497      1,647,959,893      unc_m_cas_count.wr                                                    
+    23.065167267      4,398,744,988      unc_m_cas_count.all                                                   
+    23.065167267      2,753,622,395      unc_m_cas_count.rd                                                    
+    23.065167267      1,645,138,251      unc_m_cas_count.wr                                                    
+    24.068167589      4,395,941,178      unc_m_cas_count.all                                                   
+    24.068167589      2,751,904,112      unc_m_cas_count.rd                                                    
+    24.068167589      1,644,028,858      unc_m_cas_count.wr                                                    
+    25.070166626      4,402,648,917      unc_m_cas_count.all                                                   
+    25.070166626      2,756,177,857      unc_m_cas_count.rd                                                    
+    25.070166626      1,646,476,244      unc_m_cas_count.wr                                                    
+    26.074167420      4,398,719,071      unc_m_cas_count.all                                                   
+    26.074167420      2,753,540,192      unc_m_cas_count.rd                                                    
+    26.074167420      1,645,177,663      unc_m_cas_count.wr                                                    
+#           time             counts unit events
+    27.076167373      4,396,516,508      unc_m_cas_count.all                                                   
+    27.076167373      2,752,328,902      unc_m_cas_count.rd                                                    
+    27.076167373      1,644,200,907      unc_m_cas_count.wr                                                    
+    28.078166781      4,401,506,381      unc_m_cas_count.all                                                   
+    28.078166781      2,755,346,885      unc_m_cas_count.rd                                                    
+    28.078166781      1,646,150,726      unc_m_cas_count.wr                                                    
+    29.081167211      4,399,119,680      unc_m_cas_count.all                                                   
+    29.081167211      2,753,919,311      unc_m_cas_count.rd                                                    
+    29.081167211      1,645,205,223      unc_m_cas_count.wr                                                    
+    30.084166416      4,396,443,909      unc_m_cas_count.all                                                   
+    30.084166416      2,752,247,755      unc_m_cas_count.rd                                                    
+    30.084166416      1,644,195,882      unc_m_cas_count.wr                                                    
+    31.086167738      4,402,836,469      unc_m_cas_count.all                                                   
+    31.086167738      2,756,334,882      unc_m_cas_count.rd                                                    
+    31.086167738      1,646,493,773      unc_m_cas_count.wr                                                    
+    32.090168710      4,407,847,055      unc_m_cas_count.all                                                   
+    32.090168710      2,759,405,421      unc_m_cas_count.rd                                                    
+    32.090168710      1,648,444,068      unc_m_cas_count.wr                                                    
+    33.094168861      4,405,153,448      unc_m_cas_count.all                                                   
+    33.094168861      2,757,706,090      unc_m_cas_count.rd                                                    
+    33.094168861      1,647,451,784      unc_m_cas_count.wr                                                    
+    34.098169120      4,405,006,534      unc_m_cas_count.all                                                   
+    34.098169120      2,757,578,521      unc_m_cas_count.rd                                                    
+    34.098169120      1,647,423,371      unc_m_cas_count.wr                                                    
+    35.102168060      4,404,559,932      unc_m_cas_count.all                                                   
+    35.102168060      2,757,271,681      unc_m_cas_count.rd                                                    
+    35.102168060      1,647,285,723      unc_m_cas_count.wr                                                    
+    36.106168943      4,404,653,637      unc_m_cas_count.all                                                   
+    36.106168943      2,757,373,177      unc_m_cas_count.rd                                                    
+    36.106168943      1,647,278,276      unc_m_cas_count.wr                                                    
+    37.110166874      4,405,288,042      unc_m_cas_count.all                                                   
+    37.110166874      2,757,795,302      unc_m_cas_count.rd                                                    
+    37.110166874      1,647,498,677      unc_m_cas_count.wr                                                    
+    38.114166201      4,405,382,087      unc_m_cas_count.all                                                   
+    38.114166201      2,757,822,165      unc_m_cas_count.rd                                                    
+    38.114166201      1,647,561,787      unc_m_cas_count.wr                                                    
+2026-06-08 19:09:32.592 INFO  [80359] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+    39.118167176      3,733,624,983      unc_m_cas_count.all                                                   
+    39.118167176      2,362,080,358      unc_m_cas_count.rd                                                    
+    39.118167176      1,371,358,048      unc_m_cas_count.wr                                                    
+2026-06-08 19:09:32.670 INFO  [80359] [kmercounter::BandwidthTest::run@355] took 9815 cycles per cacheline on read
+2026-06-08 19:09:32.671 INFO  [80359] [kmercounter::print_stats@280] 
+============================================
+mem: 7730941132800 bytes, took 32.935 sec, bandwidth: 234.7 GB/s
+============================================
+
+    39.147044971          4,494,023      unc_m_cas_count.all                                                   
+    39.147044971          2,776,644      unc_m_cas_count.rd                                                    
+    39.147044971          1,705,116      unc_m_cas_count.wr                                                    
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target cityhash
+[ 38%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 44%] Built target xxhash
+Consolidate compiler generated dependencies of target fnv
+[ 50%] Built target fnv
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+/opt/DRAMHiT/build/dramhit --num-threads 64 --numa-split 4 --mode 15 --ht-size 8388608 --sequential 3 --read-factor 100
+2026-06-08 19:09:33.307 INFO  [80478] [initializeLogger@17] ------------------------
+2026-06-08 19:09:33.307 INFO  [80478] [initializeLogger@18] Plog library initialized
+2026-06-08 19:09:33.307 INFO  [80478] [initializeLogger@19] ------------------------
+2026-06-08 19:09:33.307 INFO  [80478] [main@27] Starting dramhit
+2026-06-08 19:09:33.308 INFO  [80478] [kmercounter::Application::process@868] no ht needed
+2026-06-08 19:09:33.308 INFO  [80478] [kmercounter::Application::process@890] Dropping the page cache
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 0 assigned to 0 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 1 assigned to 2 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 2 assigned to 4 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 3 assigned to 6 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 4 assigned to 8 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 5 assigned to 10 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 6 assigned to 12 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 7 assigned to 14 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 8 assigned to 16 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 9 assigned to 18 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 10 assigned to 20 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 11 assigned to 22 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 12 assigned to 24 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 13 assigned to 26 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 14 assigned to 28 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 15 assigned to 30 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 16 assigned to 32 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 17 assigned to 34 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 18 assigned to 36 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 19 assigned to 38 at numa node 0
+2026-06-08 19:09:33.344 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 20 assigned to 40 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 21 assigned to 42 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 22 assigned to 44 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 23 assigned to 46 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 24 assigned to 48 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 25 assigned to 50 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 26 assigned to 52 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 27 assigned to 54 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 28 assigned to 56 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 29 assigned to 58 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 30 assigned to 60 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 31 assigned to 62 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 32 assigned to 64 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 33 assigned to 66 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 34 assigned to 68 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 35 assigned to 70 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 36 assigned to 72 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 37 assigned to 74 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 38 assigned to 76 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 39 assigned to 78 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 40 assigned to 80 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 41 assigned to 82 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 42 assigned to 84 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 43 assigned to 86 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 44 assigned to 88 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 45 assigned to 90 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 46 assigned to 92 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 47 assigned to 94 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 48 assigned to 96 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 49 assigned to 98 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 50 assigned to 100 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 51 assigned to 102 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 52 assigned to 104 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 53 assigned to 106 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 54 assigned to 108 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 55 assigned to 110 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 56 assigned to 112 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 57 assigned to 114 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 58 assigned to 116 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 59 assigned to 118 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 60 assigned to 120 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 61 assigned to 122 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 62 assigned to 124 at numa node 0
+2026-06-08 19:09:33.345 INFO  [80478] [kmercounter::Application::spawn_shard_threads@493] shard 63 assigned to 126 at numa node 0
+2026-06-08 19:09:33.348 INFO  [80478] [kmercounter::BandwidthTest::run@70] allocating 512 mb per thread
+#           time             counts unit events
+     1.000701238        950,678,334      unc_m_cas_count.all                                                   
+     1.000701238        476,471,200      unc_m_cas_count.rd                                                    
+     1.000701238        474,212,403      unc_m_cas_count.wr                                                    
+     2.002699539        186,239,206      unc_m_cas_count.all                                                   
+     2.002699539         93,240,436      unc_m_cas_count.rd                                                    
+     2.002699539         92,995,382      unc_m_cas_count.wr                                                    
+     3.003701333        139,608,203      unc_m_cas_count.all                                                   
+     3.003701333         70,074,399      unc_m_cas_count.rd                                                    
+     3.003701333         69,533,783      unc_m_cas_count.wr                                                    
+     4.004700816        139,487,089      unc_m_cas_count.all                                                   
+     4.004700816         70,042,461      unc_m_cas_count.rd                                                    
+     4.004700816         69,444,590      unc_m_cas_count.wr                                                    
+     5.005699842        138,612,661      unc_m_cas_count.all                                                   
+     5.005699842         69,532,613      unc_m_cas_count.rd                                                    
+     5.005699842         69,080,148      unc_m_cas_count.wr                                                    
+     6.006699685        139,858,466      unc_m_cas_count.all                                                   
+     6.006699685         70,147,135      unc_m_cas_count.rd                                                    
+     6.006699685         69,711,422      unc_m_cas_count.wr                                                    
+     7.007699606        139,068,001      unc_m_cas_count.all                                                   
+     7.007699606         69,757,546      unc_m_cas_count.rd                                                    
+     7.007699606         69,310,374      unc_m_cas_count.wr                                                    
+     8.008701960        139,746,353      unc_m_cas_count.all                                                   
+     8.008701960         70,093,222      unc_m_cas_count.rd                                                    
+     8.008701960         69,653,132      unc_m_cas_count.wr                                                    
+2026-06-08 19:09:41.828 INFO  [80478] [kmercounter::BandwidthTest::run@112] took 2527 cycles per cacheline on mmap and mbind
+2026-06-08 19:09:42.015 INFO  [80478] [kmercounter::BandwidthTest::run@183] took 55 cycles per cacheline on write
+2026-06-08 19:09:42.015 INFO  [80478] [kmercounter::BandwidthTest::run@190] Bandwidth test start
+     9.009701142        928,646,960      unc_m_cas_count.all                                                   
+     9.009701142        212,691,043      unc_m_cas_count.rd                                                    
+     9.009701142        716,103,639      unc_m_cas_count.wr                                                    
+    10.013699101      4,446,607,617      unc_m_cas_count.all                                                   
+    10.013699101      2,693,683,528      unc_m_cas_count.rd                                                    
+    10.013699101      1,752,946,689      unc_m_cas_count.wr                                                    
+    11.016699097      4,452,382,311      unc_m_cas_count.all                                                   
+    11.016699097      2,697,286,986      unc_m_cas_count.rd                                                    
+    11.016699097      1,755,087,318      unc_m_cas_count.wr                                                    
+    12.020699186      4,451,433,536      unc_m_cas_count.all                                                   
+    12.020699186      2,696,648,281      unc_m_cas_count.rd                                                    
+    12.020699186      1,754,788,826      unc_m_cas_count.wr                                                    
+    13.024699296      4,451,877,052      unc_m_cas_count.all                                                   
+    13.024699296      2,696,906,395      unc_m_cas_count.rd                                                    
+    13.024699296      1,754,971,526      unc_m_cas_count.wr                                                    
+    14.028700567      4,452,444,366      unc_m_cas_count.all                                                   
+    14.028700567      2,697,300,957      unc_m_cas_count.rd                                                    
+    14.028700567      1,755,148,359      unc_m_cas_count.wr                                                    
+    15.032701480      4,438,844,513      unc_m_cas_count.all                                                   
+    15.032701480      2,689,054,378      unc_m_cas_count.rd                                                    
+    15.032701480      1,749,923,090      unc_m_cas_count.wr                                                    
+    16.033699931      4,451,399,326      unc_m_cas_count.all                                                   
+    16.033699931      2,696,556,492      unc_m_cas_count.rd                                                    
+    16.033699931      1,754,708,535      unc_m_cas_count.wr                                                    
+    17.037701962      4,447,096,629      unc_m_cas_count.all                                                   
+    17.037701962      2,694,041,664      unc_m_cas_count.rd                                                    
+    17.037701962      1,753,068,596      unc_m_cas_count.wr                                                    
+    18.040700195      4,451,981,401      unc_m_cas_count.all                                                   
+    18.040700195      2,697,013,962      unc_m_cas_count.rd                                                    
+    18.040700195      1,754,948,044      unc_m_cas_count.wr                                                    
+    19.044698886      4,451,455,586      unc_m_cas_count.all                                                   
+    19.044698886      2,696,594,545      unc_m_cas_count.rd                                                    
+    19.044698886      1,754,865,535      unc_m_cas_count.wr                                                    
+    20.048700484      4,451,679,152      unc_m_cas_count.all                                                   
+    20.048700484      2,696,796,138      unc_m_cas_count.rd                                                    
+    20.048700484      1,754,883,914      unc_m_cas_count.wr                                                    
+    21.052699937      4,452,589,709      unc_m_cas_count.all                                                   
+    21.052699937      2,697,442,958      unc_m_cas_count.rd                                                    
+    21.052699937      1,755,149,582      unc_m_cas_count.wr                                                    
+    22.056699630      4,452,532,577      unc_m_cas_count.all                                                   
+    22.056699630      2,697,336,866      unc_m_cas_count.rd                                                    
+    22.056699630      1,755,186,839      unc_m_cas_count.wr                                                    
+    23.060698977      4,452,741,175      unc_m_cas_count.all                                                   
+    23.060698977      2,697,489,896      unc_m_cas_count.rd                                                    
+    23.060698977      1,755,257,967      unc_m_cas_count.wr                                                    
+    24.064702162      4,443,196,879      unc_m_cas_count.all                                                   
+    24.064702162      2,691,744,534      unc_m_cas_count.rd                                                    
+    24.064702162      1,751,451,785      unc_m_cas_count.wr                                                    
+    25.066699305      4,453,223,238      unc_m_cas_count.all                                                   
+    25.066699305      2,697,873,823      unc_m_cas_count.rd                                                    
+    25.066699305      1,755,346,072      unc_m_cas_count.wr                                                    
+    26.070699953      4,446,648,755      unc_m_cas_count.all                                                   
+    26.070699953      2,693,726,513      unc_m_cas_count.rd                                                    
+    26.070699953      1,752,924,150      unc_m_cas_count.wr                                                    
+#           time             counts unit events
+    27.073701035      4,452,269,885      unc_m_cas_count.all                                                   
+    27.073701035      2,697,170,565      unc_m_cas_count.rd                                                    
+    27.073701035      1,755,098,440      unc_m_cas_count.wr                                                    
+    28.077698901      3,844,804,475      unc_m_cas_count.all                                                   
+    28.077698901      2,328,742,250      unc_m_cas_count.rd                                                    
+    28.077698901      1,515,948,659      unc_m_cas_count.wr                                                    
+2026-06-08 19:10:01.933 INFO  [80478] [kmercounter::BandwidthTest::run@329] Bandwidth test end
+    29.081701233      2,849,590,401      unc_m_cas_count.all                                                   
+    29.081701233      1,726,343,981      unc_m_cas_count.rd                                                    
+    29.081701233      1,123,227,310      unc_m_cas_count.wr                                                    
+    30.082701649      2,457,434,592      unc_m_cas_count.all                                                   
+    30.082701649      1,490,162,612      unc_m_cas_count.rd                                                    
+    30.082701649        967,255,419      unc_m_cas_count.wr                                                    
+2026-06-08 19:10:03.227 INFO  [80478] [kmercounter::BandwidthTest::run@355] took 6321 cycles per cacheline on read
+2026-06-08 19:10:03.228 INFO  [80478] [kmercounter::print_stats@280] 
+============================================
+mem: 6871947673600 bytes, took 21.211 sec, bandwidth: 324.0 GB/s
+============================================
+
+    30.201079133         77,275,088      unc_m_cas_count.all                                                   
+    30.201079133         47,106,265      unc_m_cas_count.rd                                                    
+    30.201079133         30,148,444      unc_m_cas_count.wr                                                    

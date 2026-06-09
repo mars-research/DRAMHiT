@@ -19,7 +19,8 @@ enum AccessPattern {
   RW = 2,
   RATIO_RW = 3,
   SEQ_READ = 4,
-  STREAMING_KEYS_RANDOM_READ = 5
+  STREAMING_KEYS_RANDOM_READ = 5,
+  CAS_INSERT = 6
 };
 
 extern ExecPhase cur_phase;
@@ -255,7 +256,33 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
       // so it doesn't optimize out
       asm volatile("" : : "g"(dummy_sum) : "memory");
 
+    } else if (config.sequential == CAS_INSERT) {
+      // printf("josh\n");
+      uint64_t stride = 64;
+      uint64_t idx = 0;
+      for (uint64_t i = 0; (i + stride) < size; i += stride) {
+        uint64_t offset = i + stride;
+        for (uint64_t j = i; j < offset; j++) {
+          idx = knuth64(j) & (size - 1);
+          prefetch(arr, idx);
+        }
+
+        for (uint64_t k = i; k < offset; k++) {
+          idx = knuth64(k) & (size - 1);
+
+          uint64_t* ptr = (uint64_t*)&arr[idx];
+
+          uint64_t expected;
+          uint64_t desired = k;
+
+          do {
+            expected = *ptr;
+          } while (!__sync_bool_compare_and_swap(ptr, expected, desired));
+        }
+      }
+
     }
+
     // 1Read + 1Write
     else if (config.sequential == 2) {
       uint64_t stride = 64;
