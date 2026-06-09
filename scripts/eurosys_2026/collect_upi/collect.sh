@@ -34,6 +34,8 @@ fi
 
 if [ "$test" = "r" ]; then
 workload=0
+elif [ "$test" = "seq_r" ]; then
+workload=1
 elif [ "$test" = "rw" ]; then
 workload=2
 elif [ "$test" = "ratio" ]; then
@@ -48,7 +50,7 @@ fi
 
 
 insertFactor=1
-readFactor=100
+readFactor=200
 # 1GB per threads
 # size=16777216
 size=8388608

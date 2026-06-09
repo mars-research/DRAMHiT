@@ -37,3 +37,32 @@ Numa node            0       1
 > /opt/DRAMHiT/build/dramhit --num-threads 72 --numa-split 4 --mode 15 --ht-size 16777216 --sequential 0
 
 155GB reads
+
+
+
+
+# Bw tables
+config, single_socket, dual_socket
+, remote local mixed, remote local mixed
+
+theoretical r,
+theoretical rw,
+random read,
+random rw,
+seq r,
+seq rw,
+
+# amd
+config, single_socket
+, local
+
+theoretical r, 460.8
+theoretical rw, 460.8
+random read, 353.6
+random rw, 294.9
+seq r, 346.5
+seq rw, 292.0
+
+Amd MLC: seq, random
+351458.3
+267622.0

@@ -16,9 +16,10 @@ namespace kmercounter {
 
 enum AccessPattern {
   READ = 0,
+  SEQUENTIAL_READ = 1,
   RW = 2,
   RATIO_RW = 3,
-  SEQ_READ = 4,
+  SEQ_READ_WRITE = 4,
   STREAMING_KEYS_RANDOM_READ = 5,
   CAS_INSERT = 6
 };
@@ -76,23 +77,29 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
 
   // Round up total_bytes to the nearest 2MB (2 * 1024 * 1024 = 2097152 bytes)
   constexpr uint64_t HUGEPAGE_2MB = 2ULL * 1024ULL * 1024ULL;
-  uint64_t alloc_size = (total_bytes + HUGEPAGE_2MB - 1) & ~(HUGEPAGE_2MB - 1);
+  constexpr uint64_t HUGEPAGE_1GB = 1024ULL * 1024ULL * 1024ULL;
+  uint64_t alloc_size_1gb_pages =
+      (total_bytes + HUGEPAGE_1GB - 1) & ~(HUGEPAGE_1GB - 1);
+  uint64_t alloc_size_2mb_pages =
+      (total_bytes + HUGEPAGE_2MB - 1) & ~(HUGEPAGE_2MB - 1);
 
   uint64_t start, end;
-  if (sh->shard_idx == 0) {
-    PLOGI.printf("allocating %lu mb per thread",
-                 alloc_size / (1024ULL * 1024ULL));
-    start = RDTSC_START();
-  }
 
+  constexpr auto MAP_FLAGS =
+      MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
+  uint64_t alloc_size = alloc_size_1gb_pages;
   Cacheline* stream_arr;
-  Cacheline* arr = (Cacheline*)mmap(
-      nullptr, alloc_size, PROT_READ | PROT_WRITE,
-      MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
+  Cacheline* arr = (Cacheline*)mmap(nullptr, alloc_size, PROT_READ | PROT_WRITE,
+                                    MAP_FLAGS, -1, 0);
 
   if (arr == MAP_FAILED) {
     PLOGE.printf("fail to map 1GB pages");
     throw std::bad_alloc();
+  }
+  if (sh->shard_idx == 0) {
+    PLOGI.printf("allocating %lu mb per thread",
+                 alloc_size / (1024ULL * 1024ULL));
+    start = RDTSC_START();
   }
 
   if (config.numa_split == THREADS_LOCAL_NUMA_NODE) {
@@ -239,10 +246,25 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   for (int repeat_iterations = 0; repeat_iterations < config.read_factor;
        repeat_iterations++) {
     // Sequential Reads
-    if (config.sequential == 1) {
-      for (uint64_t i = 0; i < size; i++) {
-        prefetch(arr, i);
+
+    if (config.sequential == SEQUENTIAL_READ) {
+      uint64_t dummy_sum = 0;
+      uint64_t idx = 0;
+      uint64_t stride = 128;
+
+      for (uint64_t i = 0; (i + stride) < size; i += stride) {
+        uint64_t offset = i + stride;
+        for (uint64_t j = i; j < offset; j++) {
+          prefetch(arr, j);
+        }
+        // we have to do this so amd doesn't ignore prefetches
+        for (uint64_t k = i; k < offset; k++) {
+          dummy_sum += *(reinterpret_cast<const uint64_t*>(&arr[k]));
+        }
       }
+      // so it doesn't optimize out
+      asm volatile("" : : "g"(dummy_sum) : "memory");
+
     } else if (config.sequential == STREAMING_KEYS_RANDOM_READ) {
       uint64_t stride = 64;
       uint64_t dummy_sum = 0;
@@ -275,12 +297,13 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     }  // end STREAMING_KEYS_RANDOM_READ
 
     // Random Reads
-    else if (config.sequential == 0) {
+    else if (config.sequential == READ) {
       uint64_t dummy_sum = 0;
       uint64_t idx = 0;
+      uint64_t stride = 64;
 
-      for (uint64_t i = 0; (i + 64) < size; i += 64) {
-        uint64_t offset = i + 64;
+      for (uint64_t i = 0; (i + stride) < size; i += stride) {
+        uint64_t offset = i + stride;
         for (uint64_t j = i; j < offset; j++) {
           idx = knuth64(j) & (size - 1);
           prefetch(arr, idx);
@@ -322,7 +345,7 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     }
 
     // 1Read + 1Write
-    else if (config.sequential == 2) {
+    else if (config.sequential == RW) {
       uint64_t stride = 64;
       uint64_t idx = 0;
       for (uint64_t i = 0; (i + stride) < size; i += stride) {
@@ -342,17 +365,17 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     else if (config.sequential == RATIO_RW) {
       uint64_t dummy_sum = 0;
       uint64_t idx = 0;
-
+      uint64_t stride = 64;
+      // write_ratio = 1/X=1.5 , or whatever ratio u want
       uint64_t write_ratio = 42;
-      read_ratio = 64 / write_ratio;
-      for (uint64_t i = 0; (i + 64) < size; i += 64) {
-        uint64_t offset = i + 64;
+      read_ratio = stride / write_ratio;
+      for (uint64_t i = 0; (i + stride) < size; i += stride) {
+        uint64_t offset = i + stride;
         for (uint64_t j = i; j < offset; j++) {
           idx = knuth64(j) & (size - 1);
           prefetch(arr, idx);
         }
-        // This controls number of writes. ratio is 64/X, ie for 53: 64/52
-        // ~= 1.2, or 1.2 reads for 1 write
+
         uint64_t write_offset = i + write_ratio;
 
         for (uint64_t k = i; k < write_offset; k++) {
@@ -372,11 +395,12 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     }
 
     // 1Read + 1Write sequential
-    else if (config.sequential == 4) {
+    else if (config.sequential == SEQ_READ_WRITE) {
       uint64_t idx = 0;
+      uint64_t stride = 128;
 
-      for (uint64_t i = 0; (i + 64) < size; i += 64) {
-        uint64_t offset = i + 64;
+      for (uint64_t i = 0; (i + stride) < size; i += stride) {
+        uint64_t offset = i + stride;
         for (uint64_t j = i; j < offset; j++) {
           prefetch(arr, j);
         }
@@ -399,7 +423,7 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
 #endif
   barrier->arrive_and_wait();
 
-  if (config.sequential == 2 || config.sequential == 4) {
+  if (config.sequential == RW || config.sequential == 4) {
     // account that we are doing 2 memory transactions, ie, 1 read and 1 write
     sh->stats->finds.op_count = (size * config.read_factor) * 2;
   } else if (config.sequential == RATIO_RW) {
