@@ -29,7 +29,6 @@ static inline uint64_t RDTSC_START(void) {
 
   return ((uint64_t)cycles_high << 32) | cycles_low;
 }
-
 /**
  * CITE:
  * http://www.intel.com/content/www/us/en/embedded/training/ia-32-ia-64-benchmark-code-execution-paper.html
@@ -109,28 +108,9 @@ void free_mem(cacheline_t* ptr, size_t len) {
 static inline uint32_t hash_knuth(uint32_t x) { return x * 2654435761u; }
 
 
-uint64_t ITER = 100000;
-uint64_t MAX_BATCH_SZ = 50;
+uint64_t ITER = 500;
+uint64_t MAX_BATCH_SZ = 30;
 uint64_t DUMMY = 0;
-
-uint64_t get_overhead(uint64_t batch_sz, uint32_t* workload) {
-  uint64_t duration = 0;
-  uint64_t start_cycles, end_cycles;
-
-  for (int j = 0; j < ITER; j++) {
-    start_cycles = RDTSC_START();
-    uint32_t idx = 0;
-    for (uint64_t i = 0; i < batch_sz; i++) {
-      idx = workload[i];
-      DUMMY += idx; // Make sure load actually happens
-    }
-    end_cycles = RDTSCP();
-    duration += end_cycles - start_cycles;
-  }
-
-  duration = duration / ITER;
-  return duration;
-}
 
 uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint32_t* workload) {
   uint64_t start_cycles, end_cycles;
@@ -158,6 +138,9 @@ void evict_cache(cacheline_t* mem, uint64_t len)
 }
 
 int main(int argc, char** argv) {
+
+	srandom(time(NULL));
+
   uint64_t mem_len = 4096;  // 4k
   uint64_t exp_cycle = 0;
   cacheline_t* mem = alloc_mem(mem_len * CACHELINE_SIZE);
@@ -165,21 +148,23 @@ int main(int argc, char** argv) {
       mem[i].data[0] = 'p';
 
   uint32_t* workload = malloc(sizeof(uint32_t) * MAX_BATCH_SZ);
-  for (int i = 0; i < MAX_BATCH_SZ; i++) {
-    workload[i] = hash_knuth(i) % mem_len;
-  }
   uint64_t overhead = 0;
+  uint64_t seed = 0;
   for (uint32_t batch_sz = 5; batch_sz <= MAX_BATCH_SZ; batch_sz++) {
     exp_cycle = 0;
-    overhead = get_overhead(batch_sz, workload); //overhead of accessing workload
-    for (int i = 0; i < ITER; i++) {
-      evict_cache(mem, mem_len); // make sure the loads are not hitting caches.
-      // sleep_ms(1);
-      exp_cycle += lfb_experiment(mem, batch_sz, workload);
-    }
-    exp_cycle = exp_cycle / ITER;
 
-    if(exp_cycle < overhead) exp_cycle = overhead;
+    for (int i = 0; i < ITER; i++) {
+      seed = random();
+      evict_cache(mem, mem_len);
+      for (int i = 0; i < batch_sz; i++) {
+    	workload[i] = hash_knuth(i+seed) % mem_len;
+      }
+      sleep_ms(5);
+      exp_cycle += lfb_experiment(mem, batch_sz, workload);
+      sleep_ms(5);
+    }
+
+    exp_cycle = exp_cycle / ITER;
     printf("batch_sz: %u, duration: %lu, overhead: %lu, cycle_per_op: %lu\n", batch_sz, exp_cycle, overhead, (exp_cycle - overhead)/batch_sz);
   }
 
