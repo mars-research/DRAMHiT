@@ -59,3 +59,7 @@ Using all the threads from each core if Hyper-threading is enabled
 Numa node            0       1
        0        159004.2        147900.4
        1        147842.0        159100.3
+
+
+
+> python plot_mops.py  amd/dramhit.txt amd/dramblast.txt amd/growt.txt

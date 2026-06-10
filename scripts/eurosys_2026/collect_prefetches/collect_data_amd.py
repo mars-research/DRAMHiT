@@ -36,6 +36,7 @@ counters = [
     "cycles",
     "ls_alloc_mab_count",
     "de_no_dispatch_per_slot.backend_stalls",
+    "ls_mab_alloc.all_allocations",
 ]
 
 
