@@ -14,10 +14,16 @@ if [ "$1" = "amd" ]; then
     ./collect.sh 3250 single-local 64 amd stream_rw &>> "$FILE_NAME"
     ./collect.sh 3250 single-local 64 amd ratio &>> "$FILE_NAME"
 else
-    ./collect.sh 2500 single-local 64 intel r &>  "$FILE_NAME"
-    ./collect.sh 2500 single-local 64 intel rw &>> "$FILE_NAME"
-    ./collect.sh 2500 single-local 64 intel stream_rw &>> "$FILE_NAME"
-    ./collect.sh 2500 single-local 64 intel ratio &>> "$FILE_NAME"
+    # ./collect.sh 2500 single-local 64 intel r &>  "$FILE_NAME"
+    # ./collect.sh 2500 single-local 64 intel rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 single-local 64 intel stream_rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 single-local 64 intel ratio &>> "$FILE_NAME"
+
+    # dual socket
+    ./collect.sh 2500 even 64 intel r &>  "$FILE_NAME"
+    ./collect.sh 2500 even 64 intel rw &>> "$FILE_NAME"
+    ./collect.sh 2500 even 64 intel stream_rw &>> "$FILE_NAME"
+    ./collect.sh 2500 even 64 intel ratio &>> "$FILE_NAME"
 
     # intel's pmu events report memory transactions, ie, 64 bytes each, normalize to GBs
   awk '

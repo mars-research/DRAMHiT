@@ -67,6 +67,12 @@ if [[ "$2" == "even" || "$2" == "mixed" ]]; then
     size=33554432
 fi
 
+
+# if [[ "$5" == "stream_rw" ]]; then
+#     size=8388608
+# fi
+
+
 HASHJOIN=13
 ZIPFIAN=14
 UNIFORM=11
