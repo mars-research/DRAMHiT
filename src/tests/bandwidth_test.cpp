@@ -102,7 +102,7 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     start = RDTSC_START();
   }
 
-  if (config.numa_split == THREADS_LOCAL_NUMA_NODE) {
+  if (config.numa_split == THREADS_LOCAL_NUMA_NODE || config.numa_split == THREADS_ALL_NODES_LOCAL_ACCESS) {
     int to_node = find_local_node(sh->numa_node);
     if (to_node < 0) {
       PLOGE.printf("failed to find local node");
@@ -158,14 +158,14 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
       throw std::bad_alloc();
     }
 
-    if (config.numa_split == THREADS_LOCAL_NUMA_NODE) {
+    if (config.numa_split == THREADS_LOCAL_NUMA_NODE || config.numa_split == THREADS_ALL_NODES_LOCAL_ACCESS) {
       int to_node = find_local_node(sh->numa_node);
       if (to_node < 0) {
         PLOGE.printf("failed to find local node");
         abort();
       }
 
-      if (!move_memory_to_node((void*)arr, alloc_size, to_node)) {
+      if (!move_memory_to_node((void*)stream_arr, alloc_size, to_node)) {
         PLOGE.printf("failed to bind workload memory to local node");
         abort();
       }

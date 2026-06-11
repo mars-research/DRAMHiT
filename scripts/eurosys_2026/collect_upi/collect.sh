@@ -26,10 +26,16 @@ if [ "$numa_policy" = "single-local" ]; then
     numa_policy=4
 elif [ "$numa_policy" = "single-remote" ]; then
     numa_policy=3
+elif [ "$numa_policy" = "all-local" ]; then
+    numa_policy=8
+elif [ "$numa_policy" = "all-remote" ]; then
+    numa_policy=7
 elif [ "$numa_policy" = "even" ]; then
     numa_policy=6
 elif [ "$numa_policy" = "dual" ]; then
     numa_policy=1
+elif [ "$numa_policy" = "mixed" ]; then
+    numa_policy=9
 fi
 
 if [ "$test" = "r" ]; then
@@ -50,11 +56,16 @@ fi
 
 
 insertFactor=1
-readFactor=200
+readFactor=100
 # 1GB per threads
 # size=16777216
 size=8388608
-# size=2097152
+# size=33554432
+
+# # we need this for MIXED, since we use 1Gb pages, we need at least 2Gb to allocate among 2 numa nodes
+if [[ "$2" == "even" || "$2" == "mixed" ]]; then
+    size=33554432
+fi
 
 HASHJOIN=13
 ZIPFIAN=14
@@ -70,7 +81,7 @@ cmake --build $HOME_DIR/build
 
 
     FILE_NAME=output.txt
-    cmd="--num-threads 64 --numa-split $numa_policy --mode $BW --ht-size $size --sequential $workload --read-factor $readFactor" 
+    cmd="--num-threads $numThreads --numa-split $numa_policy --mode $BW --ht-size $size --sequential $workload --read-factor $readFactor" 
 
     echo $HOME_DIR/build/dramhit $cmd
     # sudo $(pwd)/build/dramhit $cmd

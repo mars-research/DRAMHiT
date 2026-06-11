@@ -31,10 +31,39 @@ if [ "$1" = "amd" ]; then
     ./collect.sh 3250 single-local 64 amd seq_r &>> "$FILE_NAME"
     ./collect.sh 3250 single-local 64 amd seq_rw &>> "$FILE_NAME"
 else
-    ./collect.sh 2500 single-local 64 intel r &>  "$FILE_NAME"
-    ./collect.sh 2500 single-local 64 intel rw &>> "$FILE_NAME"
-    ./collect.sh 2500 single-local 64 intel seq_r &>> "$FILE_NAME"
-    ./collect.sh 2500 single-local 64 intel seq_rw &>> "$FILE_NAME"
+    # Single Local
+    # ./collect.sh 2500 single-local 64 intel r &>  "$FILE_NAME"
+    # ./collect.sh 2500 single-local 64 intel rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 single-local 64 intel seq_r &>> "$FILE_NAME"
+    # ./collect.sh 2500 single-local 64 intel seq_rw &>> "$FILE_NAME"
+    # Single Remote
+    # ./collect.sh 2500 single-remote 64 intel r &>  "$FILE_NAME"
+    # ./collect.sh 2500 single-remote 64 intel rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 single-remote 64 intel seq_r &>> "$FILE_NAME"
+    # ./collect.sh 2500 single-remote 64 intel seq_rw &>> "$FILE_NAME"
+    # Single MIXED
+    # ./collect.sh 2500 mixed 64 intel r &>  "$FILE_NAME"
+    # ./collect.sh 2500 mixed 64 intel rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 mixed 64 intel seq_r &>> "$FILE_NAME"
+    # ./collect.sh 2500 mixed 64 intel seq_rw &>> "$FILE_NAME"
+
+    #   DUAL SOCKET
+    # Single Local
+    # ./collect.sh 2500 all-local 128 intel r &>  "$FILE_NAME"
+    # ./collect.sh 2500 all-local 128 intel rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 all-local 128 intel seq_r &>> "$FILE_NAME"
+    # ./collect.sh 2500 all-local 128 intel seq_rw &>> "$FILE_NAME"
+    # Single Remote
+    # ./collect.sh 2500 all-remote 128 intel r &>  "$FILE_NAME"
+    # ./collect.sh 2500 all-remote 128 intel rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 all-remote 128 intel seq_r &>> "$FILE_NAME"
+    # ./collect.sh 2500 all-remote 128 intel seq_rw &>> "$FILE_NAME"
+    # # Single MIXED
+    # ./collect.sh 2500 even 64 intel r &>  "$FILE_NAME"
+    # ./collect.sh 2500 even 64 intel rw &>> "$FILE_NAME"
+    # ./collect.sh 2500 even 64 intel seq_r &>> "$FILE_NAME"
+    # ./collect.sh 2500 even 64 intel seq_rw &>> "$FILE_NAME"
+    
 
     # intel's pmu events report memory transactions, ie, 64 bytes each, normalize to GBs
   awk '
