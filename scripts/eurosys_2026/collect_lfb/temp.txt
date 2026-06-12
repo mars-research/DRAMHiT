@@ -1,0 +1,37 @@
+
+jerryidk@dramhit:~/DRAMHiT/scripts/eurosys_2026/collect_lfb$ perf stat -I1000 -e ls_alloc_mab_count -e ls_mab_alloc.all_allocations -e cycles ./prefetch 0 1000000000 1
+
+LD:
+
+1 thread:
+    27.026968235     34,060,612,070      ls_alloc_mab_count
+    27.026968235         86,173,645      ls_mab_alloc.all_allocations
+    27.026968235      3,253,052,628      cycles
+
+mab activation per cycle: 11
+
+2 threads:
+    44.043964204     54,554,491,163      ls_alloc_mab_count
+    44.043964204        137,216,596      ls_mab_alloc.all_allocations
+    44.043964204      6,506,083,447      cycles
+
+mab activation per cycle: 17
+
+cycles is 2 threads, so needs to divide by 2.
+So it seems like MAB size is 17.
+however, need to repeat this on intel to check if this is capable of detecting size 16 of LFB.
+
+
+PREFETCH T1 (L2)
+
+1thread:
+    17.016964367      9,623,326,557      ls_alloc_mab_count
+    17.016964367        252,276,135      ls_mab_alloc.all_allocations
+    17.016964367      3,253,246,694      cycles
+mab: 3
+
+2 threads:
+    34.033958141     13,088,409,601      ls_alloc_mab_count
+    34.033958141        341,468,977      ls_mab_alloc.all_allocations
+    34.033958141      6,506,012,207      cycles
+mab: 4

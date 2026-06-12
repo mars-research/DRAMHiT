@@ -1,0 +1,3 @@
+gcc -O3 -mavx512f -pthread prefetch_test.c -o prefetch_test
+perf stat -I1000 -e ls_alloc_mab_count -e ls_mab_alloc.all_allocations -e cycles ./prefetch 0 1000000000 2
+gcc batch_test.c -O1 -mcrc32 -o batch_test
