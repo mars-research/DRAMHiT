@@ -1,4 +1,7 @@
 
+
+AMD machine data:
+
 jerryidk@dramhit:~/DRAMHiT/scripts/eurosys_2026/collect_lfb$ perf stat -I1000 -e ls_alloc_mab_count -e ls_mab_alloc.all_allocations -e cycles ./prefetch 0 1000000000 1
 
 LD:

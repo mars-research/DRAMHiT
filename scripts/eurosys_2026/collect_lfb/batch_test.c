@@ -5,24 +5,32 @@
 #include <stdint.h>
 #include <time.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <sys/mman.h>
 #include <x86intrin.h>
 #include <immintrin.h>
 
-// Macro toggle defaults if none are passed via -D
-#if defined(USE_AVX512_LOAD)
-    #define MODE_STR "AVX512_LOAD"
-#elif defined(USE_PREFETCH_L1)
-    #define MODE_STR "PREFETCH_L1"
-#elif defined(USE_PREFETCH_L2)
-    #define MODE_STR "PREFETCH_L2"
-#elif defined(USE_PREFETCH_L3)
-    #define MODE_STR "PREFETCH_L3"
-#elif defined(USE_PREFETCH_NTA)
-    #define MODE_STR "PREFETCH_NTA"
-#else
-    #define MODE_STR "REGULAR_LOAD"
-#endif
+// Runtime Instruction Modes
+typedef enum {
+    MODE_REGULAR_LOAD = 0,
+    MODE_AVX512_LOAD,
+    MODE_PREFETCH_L1,
+    MODE_PREFETCH_L2,
+    MODE_PREFETCH_L3,
+    MODE_PREFETCH_NTA
+} inst_mode_t;
+
+const char* get_mode_str(inst_mode_t mode) {
+    switch(mode) {
+        case MODE_AVX512_LOAD: return "AVX512_LOAD";
+        case MODE_PREFETCH_L1: return "PREFETCH_L1";
+        case MODE_PREFETCH_L2: return "PREFETCH_L2";
+        case MODE_PREFETCH_L3: return "PREFETCH_L3";
+        case MODE_PREFETCH_NTA: return "PREFETCH_NTA";
+        case MODE_REGULAR_LOAD:
+        default: return "REGULAR_LOAD";
+    }
+}
 
 // Hardware CRC32 Hash Macro for random access indexing
 #define HASH_CRC32(seed, val) __builtin_ia32_crc32di(seed, val)
@@ -107,34 +115,57 @@ void evict_cache(cacheline_t* mem, uint64_t len) {
     }
 }
 
-uint64_t ITER = 1000; // Default iterations, overridden by CLI
+uint64_t ITER = 1000;
 uint64_t DUMMY = 0;
 
-// Target attributes ensure explicit compilation matching for hardware features
 __attribute__((target("avx512f,sse4.2")))
-uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint32_t* workload) {
+uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint32_t* workload, inst_mode_t mode) {
     uint64_t start_cycles, end_cycles;
     uint32_t idx = 0;
 
     asm volatile("" ::: "memory");
     start_cycles = RDTSC_START();
 
-    for (uint64_t i = 0; i < batch_sz; i++) {
-        idx = workload[i];
-        #if defined(USE_AVX512_LOAD)
-            __m512i vec = _mm512_loadu_si512((const void*)&mem[idx]);
-            DUMMY += ((uint8_t*)&vec)[0];
-        #elif defined(USE_PREFETCH_L1)
-            _mm_prefetch((const char*)&mem[idx], _MM_HINT_T0);
-        #elif defined(USE_PREFETCH_L2)
-            _mm_prefetch((const char*)&mem[idx], _MM_HINT_T1);
-        #elif defined(USE_PREFETCH_L3)
-            _mm_prefetch((const char*)&mem[idx], _MM_HINT_T2);
-        #elif defined(USE_PREFETCH_NTA)
-            _mm_prefetch((const char*)&mem[idx], _MM_HINT_NTA);
-        #else
-            DUMMY += (uint8_t)(mem[idx].data[0]);
-        #endif
+    // The switch statement surrounds the loops to prevent branching inside the timing block
+    switch (mode) {
+        case MODE_AVX512_LOAD:
+            for (uint64_t i = 0; i < batch_sz; i++) {
+                idx = workload[i];
+                __m512i vec = _mm512_loadu_si512((const void*)&mem[idx]);
+                DUMMY += ((uint8_t*)&vec)[0];
+            }
+            break;
+        case MODE_PREFETCH_L1:
+            for (uint64_t i = 0; i < batch_sz; i++) {
+                idx = workload[i];
+                _mm_prefetch((const char*)&mem[idx], _MM_HINT_T0);
+            }
+            break;
+        case MODE_PREFETCH_L2:
+            for (uint64_t i = 0; i < batch_sz; i++) {
+                idx = workload[i];
+                _mm_prefetch((const char*)&mem[idx], _MM_HINT_T1);
+            }
+            break;
+        case MODE_PREFETCH_L3:
+            for (uint64_t i = 0; i < batch_sz; i++) {
+                idx = workload[i];
+                _mm_prefetch((const char*)&mem[idx], _MM_HINT_T2);
+            }
+            break;
+        case MODE_PREFETCH_NTA:
+            for (uint64_t i = 0; i < batch_sz; i++) {
+                idx = workload[i];
+                _mm_prefetch((const char*)&mem[idx], _MM_HINT_NTA);
+            }
+            break;
+        case MODE_REGULAR_LOAD:
+        default:
+            for (uint64_t i = 0; i < batch_sz; i++) {
+                idx = workload[i];
+                DUMMY += (uint8_t)(mem[idx].data[0]);
+            }
+            break;
     }
 
     end_cycles = RDTSCP();
@@ -143,26 +174,57 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint32_t* workload)
     return (end_cycles - start_cycles);
 }
 
+void print_help(const char* prog_name) {
+    printf("Usage: %s [OPTIONS]\n\n", prog_name);
+    printf("Options:\n");
+    printf("  -h          Print this help message\n");
+    printf("  -m MODE     Select instruction mode (default: 0)\n");
+    printf("                0: REGULAR_LOAD\n");
+    printf("                1: AVX512_LOAD\n");
+    printf("                2: PREFETCH_L1\n");
+    printf("                3: PREFETCH_L2\n");
+    printf("                4: PREFETCH_L3\n");
+    printf("                5: PREFETCH_NTA\n");
+    printf("  -b MIN-MAX  Set batch size range (e.g., 5-40, default: 5-40)\n");
+    printf("  -i ITER     Number of iterations (default: 1000)\n");
+    printf("  -o FILE     Output CSV file path (default: data.csv)\n");
+}
+
 int main(int argc, char** argv) {
     srandom(time(NULL));
     uint32_t min_batch = 5;
     uint32_t max_batch = 40;
     char* file_path = "data.csv";
+    inst_mode_t mode = MODE_REGULAR_LOAD;
+    int opt;
 
-    // Command-line parsing: supports <min> <max> <iter> <file> OR <min-max> <iter> <file>
-    if (argc >= 2) {
-        if (strchr(argv[1], '-')) {
-            if (sscanf(argv[1], "%u-%u", &min_batch, &max_batch) != 2) {
-                fprintf(stderr, "Invalid format string. Use Min-Max (e.g. 10-20)\n");
+    // Command-line parsing via getopt
+    while ((opt = getopt(argc, argv, "hm:b:i:o:")) != -1) {
+        switch (opt) {
+            case 'h':
+                print_help(argv[0]);
+                return 0;
+            case 'm':
+                mode = (inst_mode_t)atoi(optarg);
+                if (mode < 0 || mode > 5) {
+                    fprintf(stderr, "Error: Invalid mode selected.\n");
+                    return 1;
+                }
+                break;
+            case 'b':
+                if (sscanf(optarg, "%u-%u", &min_batch, &max_batch) == 1) {
+                    max_batch = min_batch; // Handle single number input gracefully
+                }
+                break;
+            case 'i':
+                ITER = strtoull(optarg, NULL, 10);
+                break;
+            case 'o':
+                file_path = optarg;
+                break;
+            default:
+                print_help(argv[0]);
                 return 1;
-            }
-            if (argc >= 3) ITER = strtoull(argv[2], NULL, 10);
-            if (argc >= 4) file_path = argv[3];
-        } else {
-            min_batch = atoi(argv[1]);
-            if (argc >= 3) max_batch = atoi(argv[2]);
-            if (argc >= 4) ITER = strtoull(argv[3], NULL, 10);
-            if (argc >= 5) file_path = argv[4];
         }
     }
 
@@ -180,13 +242,10 @@ int main(int argc, char** argv) {
     stats_t* batch_stats = calloc(max_batch + 1, sizeof(stats_t));
     uint64_t* sample_buffer = malloc(sizeof(uint64_t) * ITER);
 
-    printf("Executing benchmark using mode: [%s]\n", MODE_STR);
+    printf("Executing benchmark using mode: [%s]\n", get_mode_str(mode));
     printf("Evaluating batch spectrum from size %u to %u across %lu iterations...\n\n", min_batch, max_batch, ITER);
 
-    // To compute the marginal value of the lower limit, we record min_batch - 1
-    uint32_t start_loop_sz = (min_batch > 1) ? (min_batch - 1) : 1;
-
-    for (uint32_t batch_sz = start_loop_sz; batch_sz <= max_batch; batch_sz++) {
+    for (uint32_t batch_sz = min_batch; batch_sz <= max_batch; batch_sz++) {
         uint64_t sum_cycles = 0;
 
         for (uint64_t i = 0; i < ITER; i++) {
@@ -198,7 +257,7 @@ int main(int argc, char** argv) {
             }
             sleep_ms(2);
 
-            uint64_t duration = lfb_experiment(mem, batch_sz, workload);
+            uint64_t duration = lfb_experiment(mem, batch_sz, workload, mode);
             sample_buffer[i] = duration;
             sum_cycles += duration;
         }
@@ -224,44 +283,21 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Write file and stdout headers
-    const char* header = "mode,batch_size,min,max,avg,median,marg_min,marg_max,marg_avg,marg_median";
+    // Write file and stdout headers (removed marginal stats)
+    const char* header = "mode,batch_size,min,max,avg,median";
     fprintf(csv_file, "%s\n", header);
     printf("--- CSV Results Output ---\n");
     printf("%s\n", header);
 
     for (uint32_t b = min_batch; b <= max_batch; b++) {
-        // Marginal calculations (current state minus previous state)
-        int64_t m_min = 0, m_max = 0, m_avg = 0, m_med = 0;
-
-        if (b > 1) {
-            m_min = (int64_t)batch_stats[b].min - (int64_t)batch_stats[b - 1].min;
-            m_max = (int64_t)batch_stats[b].max - (int64_t)batch_stats[b - 1].max;
-            m_avg = (int64_t)batch_stats[b].avg - (int64_t)batch_stats[b - 1].avg;
-            m_med = (int64_t)batch_stats[b].median - (int64_t)batch_stats[b - 1].median;
-        } else {
-            m_min = batch_stats[b].min;
-            m_max = batch_stats[b].max;
-            m_avg = batch_stats[b].avg;
-            m_med = batch_stats[b].median;
-        }
-
-        // Guard against slight background variances making the marginal delta negative
-        if (m_min < 0) m_min = 0;
-        if (m_max < 0) m_max = 0;
-        if (m_avg < 0) m_avg = 0;
-        if (m_med < 0) m_med = 0;
-
         // Stream results simultaneously to stdout and file
-        fprintf(csv_file, "%s,%u,%lu,%lu,%lu,%lu,%ld,%ld,%ld,%ld\n",
-                MODE_STR, b,
-                batch_stats[b].min, batch_stats[b].max, batch_stats[b].avg, batch_stats[b].median,
-                m_min, m_max, m_avg, m_med);
+        fprintf(csv_file, "%s,%u,%lu,%lu,%lu,%lu\n",
+                get_mode_str(mode), b,
+                batch_stats[b].min, batch_stats[b].max, batch_stats[b].avg, batch_stats[b].median);
 
-        printf("%s,%u,%lu,%lu,%lu,%lu,%ld,%ld,%ld,%ld\n",
-                MODE_STR, b,
-                batch_stats[b].min, batch_stats[b].max, batch_stats[b].avg, batch_stats[b].median,
-                m_min, m_max, m_avg, m_med);
+        printf("%s,%u,%lu,%lu,%lu,%lu\n",
+                get_mode_str(mode), b,
+                batch_stats[b].min, batch_stats[b].max, batch_stats[b].avg, batch_stats[b].median);
     }
 
     fclose(csv_file);
