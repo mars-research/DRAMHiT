@@ -38,3 +38,48 @@ mab: 3
     34.033958141        341,468,977      ls_mab_alloc.all_allocations
     34.033958141      6,506,012,207      cycles
 mab: 4
+
+
+
+full memory bandwidht
+
+LD:
+    24.037995044  1,813,579,546,594      ls_alloc_mab_count
+    24.037995044      3,871,197,988      ls_mab_alloc.all_allocations
+    24.037995044    208,162,857,616      cycles
+(1813 / 32) / (208 / 64) = 17
+
+PREFETCH T0:
+    10.010986174  2,051,663,260,388      ls_alloc_mab_count
+    10.010986174      4,140,224,895      ls_mab_alloc.all_allocations
+    10.010986174    208,145,572,462      cycles
+mab: 19
+
+PREFETCH T1:
+     9.008968530     59,721,444,838      ls_alloc_mab_count
+     9.008968530     39,572,981,538      ls_mab_alloc.all_allocations
+     9.008968530    157,358,474,275      cycles
+mab: 0
+
+
+
+AMD, better decisions
+
+1. decouple prefetch T1 from prefetch T0 and load.
+
+Even though prefetch T1 allocate mab entry, but it immediately retires. This allows programmer
+to more freelu prefetch without worrying about destroying microarchitecture performance.
+This is better semantic than intel, where prefetch T1 waits data to arrive to l2, thus
+stall entire cpu pipeline (seen by batch sz test).
+
+2. decouple MAB from l1 memory request.
+
+AMD uses larger load queue to decouple cpu reliance on MAB buffer, which
+gave cpu a larger OOO window to compute non-memory related instructions.
+As upon more urgent instruction such as load and prefetchT0 (whose mab entry must
+wait until memory request successfully bring data into l1), and a full mab,
+cpu can continue process other instructions while waiting for mab.
+
+2 questions
+1. why prefetch to t0 amd load seems can allocate different amount of MAB ? where load stalls after 18th, prefetch to t0 at 19th.
+2. why aren't they 24 ? why do they always bottleneck at 18 or 19th. Support by both hardware counter and batch test.

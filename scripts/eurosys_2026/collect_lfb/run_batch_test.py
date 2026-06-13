@@ -51,7 +51,7 @@ def run_benchmark():
         ]
 
         print(f"Running mode: {name} (Command: {' '.join(cmd)})")
-        # subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)
 
         # Load the generated CSV into a pandas DataFrame
         df = pd.read_csv(csv_filename)
