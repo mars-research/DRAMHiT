@@ -20,7 +20,7 @@ MODES = {"Regular Load": 0, "Prefetch T0 (L1)": 2, "Prefetch T1 (L2)": 3}
 def compile_c_program():
     """Compiles the C benchmark program."""
     print(f"Compiling {C_FILE}...")
-    compile_cmd = ["gcc", C_FILE, "-O1", "-mcrc32", "-o", "batch_test"]
+    compile_cmd = ["gcc", C_FILE, "-O3", "-mcrc32", "-o", "batch_test"]
     try:
         subprocess.run(compile_cmd, check=True)
         print("Compilation successful.\n")
