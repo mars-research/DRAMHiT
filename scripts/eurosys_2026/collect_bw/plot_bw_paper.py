@@ -1,7 +1,21 @@
 import re
 import sys
 import os
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ==========================================
+# EXTRACTED STYLE DECISIONS APPLIED HERE
+# ==========================================
+rc_fonts = {
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ["Linux Libertine O"],
+    "font.weight": "bold",
+}
+mpl.rcParams.update(rc_fonts)
+sns.set_context("paper")
 
 # Separate baseline constants (GB/s) for independent adjustment
 STREAM_INSERT = 255.6 
@@ -10,28 +24,33 @@ STREAM_FIND = 346.3
 STREAM_INSERT_LABEL = "synthetic_1read_1write"
 STREAM_FIND_LABEL = "synthetic_read"
 
-# NEW BASELINES
-BASELINES = [
-    # ("r", 342.3),
-    # ("rw", 271.4),
-    # ("stream+rw", 297.0),
-    # ("1.5r_1w", 280.0),
-    ("r", 243.0),
-    ("rw", 198.0),
-    ("stream+rw", 236),
-    ("1.5r_1w", 201), 
+# ==========================================
+# SEPARATED BASELINES FOR AMD AND INTEL
+# ==========================================
+BASELINES_AMD = [
+    ("r", 342.3),
+    ("rw", 271.4),
+    ("stream+rw", 297.0),
+    ("1.5r_1w", 280.0),
 ]
 
-# USE TAB10 COLORS
-TAB10 = plt.get_cmap("tab10").colors
+BASELINES_INTEL = [
+    ("r", 243.0),
+    ("rw", 198.0),
+    ("stream+rw", 236.0),
+    ("1.5r_1w", 201.0), 
+]
+
+# USE SEABORN 'ROCKET' PALETTE INSTEAD OF TAB10
+# Generate enough colors for baselines + dynamic plots
+PALETTE = sns.color_palette("rocket", n_colors=10)
 
 BASELINE_COLORS = {
-    "r": TAB10[0],          # blue
-    "rw": TAB10[1],         # orange
-    "stream+rw": TAB10[2],  # green
-    "1.5r_1w": TAB10[3],    # red
+    "r": PALETTE[0],          
+    "rw": PALETTE[1],         
+    "stream+rw": PALETTE[2],  
+    "1.5r_1w": PALETTE[3],    
 }
-
 
 def parse_perf_data(file_path):
     fill_factors = list(range(10, 100, 10))
@@ -96,11 +115,13 @@ def parse_perf_data(file_path):
     return fill_factors, insert_avgs_gbs, find_avgs_gbs
 
 
-def plot_bandwidth(all_results):
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+def plot_bandwidth(all_results, active_baselines):
+    # STYLE: Dynamic sizing based on plot_sz
+    plot_sz = 5
+    fig, axes = plt.subplots(1, 2, figsize=(2 * plot_sz, 1 * plot_sz))
 
     # Track max value to dynamically sync the Y-axis limits
-    max_y_val = max([val for _, val in BASELINES])  # Start with the highest baseline
+    max_y_val = max([val for _, val in active_baselines])  # Start with the highest baseline
 
     #
     # INSERT GRAPH
@@ -113,7 +134,7 @@ def plot_bandwidth(all_results):
         if y_insert:
             max_y_val = max(max_y_val, max(y_insert))
 
-        data_color = TAB10[(4 + idx) % 10]
+        data_color = PALETTE[(4 + idx) % 10]
 
         # zorder=3 keeps dynamic lines safely above the baselines
         axes[0].plot(
@@ -127,7 +148,7 @@ def plot_bandwidth(all_results):
         )
 
     # Baselines (INSERT)
-    for name, val in BASELINES:
+    for name, val in active_baselines:
         # zorder=1 forces synthetic benchmarks below the parsed metrics
         axes[0].axhline(
             val,
@@ -138,11 +159,12 @@ def plot_bandwidth(all_results):
             zorder=1
         )
 
-    axes[0].set_title('Insert Memory Bandwidth')
-    axes[0].set_xlabel('Fill Factor (%)')
+    # STYLE: Updated titles and explicit grid definitions
+    axes[0].set_title('Insert Memory Bandwidth', fontsize=12, fontweight="bold")
+    axes[0].set_xlabel(r'Fill Factor (\%)')
     axes[0].set_ylabel('Bandwidth (GB/s)')
     axes[0].set_xticks(list(range(10, 100, 10)))
-    axes[0].grid(True, linestyle='--', alpha=0.7, zorder=0)
+    axes[0].grid(True, which="major", axis="both", linestyle="--", alpha=0.7, zorder=0)
 
     #
     # FIND GRAPH
@@ -155,12 +177,12 @@ def plot_bandwidth(all_results):
         if y_find:
             max_y_val = max(max_y_val, max(y_find))
 
-        data_color = TAB10[(4 + idx) % 10]
+        data_color = PALETTE[(4 + idx) % 10]
 
         axes[1].plot(
             x_find,
             y_find,
-            marker='s',
+            marker='o', # Standardized to 'o' based on style script
             linestyle='-',
             color=data_color,
             label=label,
@@ -168,7 +190,7 @@ def plot_bandwidth(all_results):
         )
 
     # Baselines (FIND)
-    for name, val in BASELINES:
+    for name, val in active_baselines:
         axes[1].axhline(
             val,
             linestyle='--',
@@ -178,11 +200,12 @@ def plot_bandwidth(all_results):
             zorder=1
         )
 
-    axes[1].set_title('Find Memory Bandwidth')
-    axes[1].set_xlabel('Fill Factor (%)')
+    # STYLE: Updated titles and explicit grid definitions
+    axes[1].set_title('Find Memory Bandwidth', fontsize=12, fontweight="bold")
+    axes[1].set_xlabel(r'Fill Factor (\%)')
     axes[1].set_ylabel('Bandwidth (GB/s)')
     axes[1].set_xticks(list(range(10, 100, 10)))
-    axes[1].grid(True, linestyle='--', alpha=0.7, zorder=0)
+    axes[1].grid(True, which="major", axis="both", linestyle="--", alpha=0.7, zorder=0)
 
     #
     # SYNCHRONIZE Y-AXIS LIMITS
@@ -204,7 +227,7 @@ def plot_bandwidth(all_results):
     other_items = []
     baseline_items = []
     
-    baseline_names = [b[0] for b in BASELINES]
+    baseline_names = [b[0] for b in active_baselines]
 
     for h, l in zip(handles, labels):
         if l in priority_order:
@@ -222,29 +245,45 @@ def plot_bandwidth(all_results):
     sorted_handles = [p[0] for p in sorted_pairs]
     sorted_labels = [p[1] for p in sorted_pairs]
 
+    # STYLE: Adjusted bounding box to closely match layout requirements
     fig.legend(
         sorted_handles,
         sorted_labels,
         loc='upper center',
-        ncol=len(sorted_labels),  # Force columns equal to length so it's always single-row
+        ncol=len(sorted_labels),
+        bbox_to_anchor=(0.5, 0.98),
         frameon=True
     )
 
-    plt.tight_layout(rect=[0, 0, 1, 0.90])
+    plt.tight_layout(rect=[0, 0, 1, 0.88])
 
-    plt.savefig('test.pdf')
-    print("Plots successfully saved as 'test.pdf'.")
+    # STYLE: Added dpi requirement
+    plt.savefig('test.pdf', dpi=300)
+    print("[OK] Plots successfully saved as 'test.pdf'.")
     plt.show()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Usage: python {sys.argv[0]} <file1.txt> [file2.txt ...]")
+    # Updated length check to 3 to account for the arch argument + at least one file
+    if len(sys.argv) < 3:
+        print(f"Usage: python {sys.argv[0]} <amd|intel> <file1.txt> [file2.txt ...]")
+        sys.exit(1)
+
+    arch_arg = sys.argv[1].lower()
+    if arch_arg == "amd":
+        selected_baselines = BASELINES_AMD
+        print("[INFO] Utilizing AMD memory baselines.")
+    elif arch_arg == "intel":
+        selected_baselines = BASELINES_INTEL
+        print("[INFO] Utilizing Intel memory baselines.")
+    else:
+        print("Error: First argument must be either 'amd' or 'intel'.")
         sys.exit(1)
 
     all_results = []
 
-    for file_path in sys.argv[1:]:
+    # Shifted to read files starting from sys.argv[2:]
+    for file_path in sys.argv[2:]:
         fill_factors, insert_avgs, find_avgs = parse_perf_data(file_path)
         label = os.path.splitext(os.path.basename(file_path))[0]
 
@@ -256,4 +295,5 @@ if __name__ == "__main__":
             (label, fill_factors, insert_avgs, find_avgs)
         )
 
-    plot_bandwidth(all_results)
+    # Pass the actively selected baselines to the plot function
+    plot_bandwidth(all_results, selected_baselines)
