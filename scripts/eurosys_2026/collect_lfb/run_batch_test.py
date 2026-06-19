@@ -10,7 +10,7 @@ C_FILE = "batch_test.c"
 EXECUTABLE = "./batch_test"
 MIN_BATCH = 10
 MAX_BATCH = 40
-ITERATIONS = 10
+ITERATIONS = 100
 
 # Mapping descriptive names to the C program's mode integers
 # 0: REGULAR_LOAD, 2: PREFETCH_L1 (T0), 3: PREFETCH_L2 (T1)
