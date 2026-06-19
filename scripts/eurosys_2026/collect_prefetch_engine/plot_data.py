@@ -12,7 +12,7 @@ from matplotlib.lines import Line2D
 counters = [
     "cycles",
     "l1d_pend_miss.fb_full",
-    "memory_activity.cycles_l1d_miss",
+    "exe_activity.bound_on_loads",
     "cycle_activity.stalls_total",
 ]
 
@@ -38,10 +38,13 @@ def plot_json(json_file, output_file):
     for df in datasets:
         df["normalized_stall"] = df["cycle_activity.stalls_total"] / df["find_ops"]
         df["normalized_fb_full"] = df["l1d_pend_miss.fb_full"] / df["find_ops"]
+        df["stall_ratio"] = (
+            df["exe_activity.bound_on_loads"] / df["cycle_activity.stalls_total"]
+        )
 
     # Set Seaborn style
 
-    identifier = "build_cfg_str"
+    identifier = "identifier"
     sns.set_theme()
 
     row = 2

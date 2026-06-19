@@ -36,12 +36,12 @@ elif [ "$test" = "large" ]; then
     # size=4294967296
     # size=268435456
     size=536870912
-    insertFactor=1000
-    readFactor=1000
+    insertFactor=100
+    readFactor=100
 fi
 
 ZIPFIAN=11
-
+SEED=1774551337382868027
 
 HOME_DIR=/opt/DRAMHiT
 
@@ -53,64 +53,31 @@ fi
 
 cmake --build $HOME_DIR/build
 
+# Define the shared function
+run_benchmark() {
+    local out_file="$1"
+    local ht_type="$2"
 
-# EVENTS="unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr"
-# EVENTS="umc_mem_bandwidth"
+    # Log CPU info to the file (overwrites previous content)
+    lscpu &> "$out_file"
 
+    for fill in $(seq 10 10 90); do
+        local cmd="--find_queue 64 --ht-fill $fill --ht-type $ht_type --insert-factor $insertFactor --read-factor $readFactor \
+        --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size \
+        --hw-pref 0 --batch-len 16 --seed $SEED"
 
-FILE_NAME=dramblast.txt
-lscpu &> $FILE_NAME
-for fill in $(seq 10 10 90);
-do
-    cmd="--find_queue 64 --ht-fill $fill --ht-type $DRAMHIT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
-    
-    if [ "$arch" = "amd" ]; then
-        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    else
-        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    fi
+        if [ "$arch" = "amd" ]; then
+            sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- "$HOME_DIR/build/dramhit" $cmd  &>> "$out_file"
+        else
+            sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- "$HOME_DIR/build/dramhit" $cmd  &>> "$out_file"
+        fi
 
-    echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
-done
+        # Log the exact command run
+        echo "$(pwd)/build/dramhit $cmd" &>> "$out_file"
+    done
+}
 
-
-
-FILE_NAME=dramhit.txt
-lscpu &> $FILE_NAME
-for fill in $(seq 10 10 90);
-do
-    cmd="--find_queue 64 --ht-fill $fill --ht-type $DRAMHIT23 --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
-    
-    if [ "$arch" = "amd" ]; then
-        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    else
-        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    fi
-
-    echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
-done
-
-
-
-
-FILE_NAME=growt.txt
-lscpu &> $FILE_NAME
-for fill in $(seq 10 10 90);
-do
-    cmd="--find_queue 64 --ht-fill $fill --ht-type $GROWT --insert-factor $insertFactor --read-factor $readFactor\
-    --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size --skew 0.01\
-    --hw-pref 0 --batch-len 16 --relation_r_size 1 --seed 1"
-    
-    if [ "$arch" = "amd" ]; then
-        sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    else
-        sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- $HOME_DIR/build/dramhit $cmd  &>> $FILE_NAME
-    fi
-    echo $(pwd)/build/dramhit $cmd &>> $FILE_NAME
-done
-
-
+# Execute the function for each configuration
+run_benchmark "dramblast.txt" "$DRAMHIT"
+run_benchmark "dramhit.txt"   "$DRAMHIT23"
+# run_benchmark "growt.txt"     "$GROWT"

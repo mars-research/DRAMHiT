@@ -10,7 +10,7 @@ C_FILE = "batch_test.c"
 EXECUTABLE = "./batch_test"
 MIN_BATCH = 10
 MAX_BATCH = 40
-ITERATIONS = 1000
+ITERATIONS = 10
 
 # Mapping descriptive names to the C program's mode integers
 # 0: REGULAR_LOAD, 2: PREFETCH_L1 (T0), 3: PREFETCH_L2 (T1)
@@ -86,8 +86,7 @@ def plot_results(results):
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("cycles_per_op.png")
-    print("Saved 'cycles_per_op.png'")
+    plt.savefig("intel_batch_1.png")
 
     # --- Plot 2: Nth Operation vs. Nth Operation Cycle Cost ---
     plt.figure(figsize=(10, 6))
@@ -108,8 +107,7 @@ def plot_results(results):
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("nth_op_cycle.png")
-    print("Saved 'nth_op_cycle.png'")
+    plt.savefig("intel_batch_2.png")
 
 
 def main():

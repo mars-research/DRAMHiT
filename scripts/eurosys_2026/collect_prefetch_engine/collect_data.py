@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import statistics
 import subprocess
 import sys
 
@@ -24,21 +25,19 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["perf", "stat", "-I", "1000", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
 counters = [
     "cycles",
-    "l1d_pend_miss.fb_full",
-    "memory_activity.cycles_l1d_miss",
-    "cycle_activity.stalls_total",
+    "l1d_pend_miss.fb_full",  # cycles demand load has waited to enter lfb.
+    "exe_activity.bound_on_loads",  # numbers of stalls due to demand load is outstanding
+    "cycle_activity.stalls_total",  # total number of stalls
 ]
 
 
 def run(run_cfg):
-    results = []
-
     fill = run_cfg["fill_factor"]
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
@@ -75,61 +74,110 @@ def run(run_cfg):
     cmd = make_perf_command(counters, dramhit_args)
     print("Running:", " ".join(cmd))
 
+    # Redirect stderr to stdout to merge the streams chronologically
     proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
     )
-    stdout, stderr = proc.communicate()
+    merged_output, _ = proc.communicate()
 
-    print(stdout)
+    print(merged_output)
     if proc.returncode != 0:
-        print("Error:", stderr)
+        print("Error during execution. Check output above.")
         return None
 
-    return (stdout, stderr)
+    return merged_output
 
 
-def parse_results(result, counters, run_cfg, build_cfg, identifier):
+def parse_results(merged_output, counters, run_cfg, build_cfg, identifier):
     """
-    Parse a single run's output (stdout, stderr) into a single dictionary.
+    Parse a single run's merged output into a single dictionary.
 
     Parameters
     ----------
-    result    : tuple (stdout, stderr)
-    counters  : list of perf counter names to extract
-    run_cfg   : dict (runtime configuration)
-    build_cfg : dict (build configuration)
+    merged_output : str (combined stdout and stderr)
+    counters      : list of perf counter names to extract
+    run_cfg       : dict (runtime configuration)
+    build_cfg     : dict (build configuration)
+    identifier    : str
 
     Returns
     -------
     dict : one consolidated record
     """
-    stdout, stderr = result
 
     # Helper: stable string for configs
     def dict_to_str(d):
         return "-".join(f"{k}={d[k]}" for k in sorted(d.keys()))
 
     row = {
-        "build_cfg": build_cfg,  # full dict
+        "build_cfg": build_cfg,
         "build_cfg_str": dict_to_str(build_cfg),
-        "run_cfg": run_cfg,  # full dict
+        "run_cfg": run_cfg,
         "run_cfg_str": dict_to_str(run_cfg),
         "identifier": identifier,
     }
 
-    # Parse stdout metrics like: { set_mops : 320000.000, get_mops : 4250.550, ... }
+    # 1. Parse program metrics (e.g., { set_mops : 320000.000 ... })
     kv_pattern = re.compile(r"(\w+)\s:\s([\d\.]+)")
-    metrics = {k: float(v) for k, v in kv_pattern.findall(stdout)}
+    metrics = {k: float(v) for k, v in kv_pattern.findall(merged_output)}
     row.update(metrics)
 
-    # Parse perf counters from stderr
+    # 2. Capture Overall Summary
+    # By iterating through all matches, the dictionary naturally keeps the last
+    # seen value, which corresponds to the final perf summary block at the end.
     cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
     counter_dic = {k: None for k in counters}
-    for val, name in cnt_pattern.findall(stderr):
+    for val, name in cnt_pattern.findall(merged_output):
         clean_val = int(val.replace(",", ""))
         if name in counters:
             counter_dic[name] = clean_val
     row.update(counter_dic)
+
+    # 3. Capture and process interval samples between markers
+    state = None
+    samples = {"find": {c: [] for c in counters}, "insert": {c: [] for c in counters}}
+
+    # Matches interval lines e.g.: "  4.006025360    139,817,801,090      cycles"
+    interval_pattern = re.compile(r"^\s*[\d\.]+\s+([\d,]+)\s+([\w\.-]+)")
+
+    for line in merged_output.splitlines():
+        if "zipfian test find start" in line:
+            state = "find"
+            continue
+        elif "zipfian test find end" in line:
+            state = None
+            continue
+        elif "zipfian test insert start" in line:
+            state = "insert"
+            continue
+        elif "zipfian test insert end" in line:
+            state = None
+            continue
+
+        if state:
+            match = interval_pattern.search(line)
+            if match:
+                val_str, name = match.groups()
+                if name in counters:
+                    clean_val = int(val_str.replace(",", ""))
+                    samples[state][name].append(clean_val)
+
+    # 4. Calculate min, max, avg, and median for each phase
+    for phase in ["find", "insert"]:
+        for c in counters:
+            data = samples[phase][c]
+            prefix = f"{phase}_{c}"
+
+            if data:
+                row[f"{prefix}_avg"] = statistics.mean(data)
+                row[f"{prefix}_median"] = statistics.median(data)
+                row[f"{prefix}_max"] = max(data)
+                row[f"{prefix}_min"] = min(data)
+            else:
+                row[f"{prefix}_avg"] = None
+                row[f"{prefix}_median"] = None
+                row[f"{prefix}_max"] = None
+                row[f"{prefix}_min"] = None
 
     return row
 
@@ -147,12 +195,12 @@ if __name__ == "__main__":
 
     out_file = sys.argv[1]
 
-    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
+    # subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     # Build configurations
     build_cfgs = [
         {
             "DRAMHiT_VARIANT": "2023",
-            "PREFETCH": "DOUBLE",
+            "PREFETCH": "L1",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -160,7 +208,7 @@ if __name__ == "__main__":
         },
         {
             "DRAMHiT_VARIANT": "2025",
-            "PREFETCH": "DOUBLE",
+            "PREFETCH": "L1",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -168,53 +216,38 @@ if __name__ == "__main__":
         },
     ]
 
-    # Run configurations (example: vary fill_factor, others fixed)
-    # run_cfgs = [
-    #     {
-    #         "insertFactor": 100,
-    #         "readFactor": 100,
-    #         "numThreads": 64,
-    #         "numa_policy": 4,
-    #         "size": 536870912,
-    #         "fill_factor": f,
-    #     }
-    #     for f in range(10, 100, 10)
-    # ] +
     run_cfgs = [
         {
             "insertFactor": 10,
-            "readFactor": 10,
-            "numThreads": 128,
-            "numa_policy": 1,
+            "readFactor": 1000,
+            "numThreads": 64,
+            "numa_policy": 4,
             "size": 536870912,
-            "fill_factor": f,
-        }
-        for f in range(10, 100, 10)
+            "fill_factor": 10,
+        },
+        {
+            "insertFactor": 10,
+            "readFactor": 1000,
+            "numThreads": 64,
+            "numa_policy": 4,
+            "size": 536870912,
+            "fill_factor": 70,
+        },
+        # for f in range(10, 20, 10)
     ]
 
     def get_name(bcfg):
-        ret = bcfg["DRAMHiT_VARIANT"]
-        for k in bcfg.keys():
-            if k == "BUCKETIZATION" and bcfg[k] == "ON":
-                ret += "+bucket"
-            elif k == "BRANCH" and bcfg[k] == "simd":
-                ret += "+simd"
-            elif k == "UNIFORM_PROBING" and bcfg[k] == "ON":
-                ret += "+uniform"
-            elif k == "UNIFORM_PROBING" and bcfg[k] == "OFF":
-                ret += "+linear"
-            elif k == "PREFETCH" and bcfg[k] == "L1":
-                ret += "+l1prefetch"
-        return ret
+        return bcfg["DRAMHiT_VARIANT"]
 
     all_results = []
 
     for bcfg in build_cfgs:
         build(bcfg)
         for rcfg in run_cfgs:
-            output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, get_name(bcfg))
-            all_results.append(obj)
+            merged_output = run(rcfg)
+            if merged_output:
+                obj = parse_results(merged_output, counters, rcfg, bcfg, get_name(bcfg))
+                all_results.append(obj)
 
     # Save all results into a single JSON file
     save_json(all_results, out_file)

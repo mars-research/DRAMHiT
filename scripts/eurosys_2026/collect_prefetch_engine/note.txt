@@ -1,0 +1,37 @@
+
+
+Modern CPU has enough OOO window, even if we gets stuck on a prefetch instruction or demand load,
+it can still continue to execute other instructions.
+
+
+
+prefetch engine technique improves throughput, only when we are not bottlenecking on the underlying bandwidth.
+It is a technique that helps the hashtable workload achieving memory throughput.
+
+A list technique:
+
+- Bucketization (Memory by saving memory bandwidth)
+- SIMD (Compute by using paralism)
+- Prefetch engine (Memory, by minimizing stalls due to , but won't work if program can already saturate memory bandwidth)
+- Prefetch instruction ()
+
+Treat cpu execution backend as finite resources, where we roughly categorize them as
+compute/memory.
+
+Compute are synchronous, 3 - 4 cycles.
+Memory are asynchronous, depends data locality and system bandwidth and system load factor, 3 - 200 cycles.
+
+we treat cpu and memory as 2 separate network devices or NIC, where they can transmit and receive information.
+This, gives us more fine-grained way to think about those techniques. For example,
+prefetch engine improve performance by increasing amount of transmit rate on cpu end, but if memory controller
+is saturated (recv bandwidth), system throughput will remain bottlenecked. Also any OOO cpu would continue processing
+compute instructions
+
+
+
+prefetch instruction
+
+First, we need to satruate memory. This can be done by optimizing computes
+Once program can saturate the memory bandwidth, only way to achieve throughput is by optimizing computes,
+such as bound checking, faster hash function, efficient utilization of SIMD instruction, and
+prefetch inst semantic awareness.
