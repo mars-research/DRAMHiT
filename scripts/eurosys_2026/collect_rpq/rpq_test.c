@@ -10,6 +10,10 @@
 #include <time.h>
 #include <unistd.h>
 #include <x86intrin.h>
+#include <sys/mman.h>
+#include <assert.h>
+#include <stddef.h>
+
 static inline uint64_t RDTSC_START(void) {
   unsigned cycles_low, cycles_high;
 
@@ -39,7 +43,7 @@ static inline uint64_t RDTSCP(void) {
 #define TABLE_SIZE (uint64_t) (1 << 27)  // 4 GB
 #define ALIGNMENT 64          // 64-byte alignment (cache line size)
 #define CACHELINE_SIZE 64     // cache line size in bytes
-#define RANDOM_ACCESS
+//#define RANDOM_ACCESS
 #define READ
 #define STRIDE 1024
 
@@ -61,6 +65,7 @@ typedef struct {
   int cpu;
   int iter;
   int num_threads;
+  uint64_t sum;
   pthread_barrier_t *barrier;
 } thread_arg_t;
 
@@ -145,6 +150,8 @@ void *walk_table(void *arg) {
     //_mm_prefetch(&table[idx], 1);
   }
 
+  t->sum = sum;
+  
   return NULL;
 }
 
@@ -175,6 +182,7 @@ int spawn_threads(int node, int num_threads, int iter) {
     args[i].barrier = &barrier;
     args[i].iter = iter;
     args[i].num_threads = (uint32_t)num_threads;
+    args[i].sum = 0;
 
     if (pthread_create(&threads[i], NULL, walk_table, &args[i]) != 0) {
       perror("pthread_create failed");
@@ -197,14 +205,30 @@ cleanup:
 
 
 
+
+// Ensure MAP_HUGE_1GB is defined, as it might be missing in older glibc headers
+#ifndef MAP_HUGE_1GB
+#define MAP_HUGE_1GB (30 << 26) // 26 is MAP_HUGE_SHIFT
+#endif
+
 void *alloc_table(size_t size, size_t numa_node) {
-  size_t page_sz = 4096;
+  // Set page size to 1GB
+  size_t page_sz = 1ULL << 30; 
   size_t obj_sz = ((size + page_sz - 1) / page_sz) * page_sz;
-  void *mem = aligned_alloc(page_sz, obj_sz);
-  assert(mem != NULL);
+
+  // Allocate memory using mmap with 1GB hugepages
+  void *mem = mmap(NULL, obj_sz, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_1GB,
+                   -1, 0);
+                   
+  // mmap returns MAP_FAILED on error, not NULL
+  assert(mem != MAP_FAILED);
+
+  // Bind the allocated memory to the specific NUMA node
   unsigned long nodemask = 1UL << numa_node;
   assert(mbind(mem, obj_sz, MPOL_BIND, &nodemask, sizeof(nodemask) * 8,
                MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
+
   return mem;
 }
 
@@ -254,6 +278,8 @@ int main(int argc, char **argv) {
       "duration %lu\nsec %.3f\ncachelines %lu\nbw %lu "
       "GB/s\n",
       duration, sec, cachelines, bw);
-  free(table);
+
+  munmap(table, TABLE_SIZE * sizeof(cacheline_t));
+
   return 0;
 }

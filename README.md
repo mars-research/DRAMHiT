@@ -11,7 +11,7 @@ git clone --recursive https://github.com/mars-research/DRAMHiT.git
 Nix manages all project dependencies.
 Install nix if your system doesn't have nix
 ```bash
-curl -L https://nixos.org/nix/install | sh
+curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --no-daemon
 ```
 
 Use following script to enter nix development shell
