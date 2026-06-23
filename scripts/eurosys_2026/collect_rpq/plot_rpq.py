@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
+import sys
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
-import sys
 
 if len(sys.argv) < 2:
     print(f"Usage: {sys.argv[0]} <csv_file>")
@@ -15,50 +15,61 @@ csv_file = sys.argv[1]
 df = pd.read_csv(csv_file)
 
 # Compute derived metrics
-df["occupancy_rate"] = (df["unc_m_rpq_occupancy_pch0"] + df["unc_m_rpq_occupancy_pch1"])/ df["duration"]
-df["insert_rate"] = (df["unc_m_rpq_inserts.pch0"] + df["unc_m_rpq_inserts.pch1"])/ df["duration"]
+df["occupancy_rate"] = (
+    df["unc_m_rpq_occupancy_pch0"] + df["unc_m_rpq_occupancy_pch1"]
+) / df["duration"]
+df["insert_rate"] = (df["unc_m_rpq_inserts.pch0"] + df["unc_m_rpq_inserts.pch1"]) / df[
+    "duration"
+]
 
 sns.set_theme(style="whitegrid")
 
-plt.rcParams.update({
-    #"font.family": "monospace",   # or "sans-serif", "monospace", "DejaVu Sans", etc.
-    "font.size": 12,          # default size for everything
-    "axes.titlesize": 14,     # title font size
-    "axes.labelsize": 12,     # x/y label size
-    "xtick.labelsize": 10,    # x tick label size
-    "ytick.labelsize": 10,    # y tick label size
-})
+plt.rcParams.update(
+    {
+        # "font.family": "monospace",   # or "sans-serif", "monospace", "DejaVu Sans", etc.
+        "font.size": 12,  # default size for everything
+        "axes.titlesize": 14,  # title font size
+        "axes.labelsize": 12,  # x/y label size
+        "xtick.labelsize": 10,  # x tick label size
+        "ytick.labelsize": 10,  # y tick label size
+    }
+)
+
 # Create figure with 3 subplots
-fig, axes = plt.subplots(1, 3, figsize=(12, 4), constrained_layout=True)
+fig, axes = plt.subplots(1, 3, figsize=(15, 5), constrained_layout=True)
 
+# Common kwargs for seaborn to ensure both lines show up nicely
+plot_kwargs = {
+    "data": df,
+    "x": "num_threads",
+    "hue": "access_pattern",
+    "style": "access_pattern",
+    "markers": True,
+    "dashes": False,
+}
 
-
-    
-# for ax in axes:
-#     sns.despine(ax=ax)  # removes top and right by default
-#     ax.spines["bottom"].set_visible(False)  # remove x=0 spine
-#     ax.spines["left"].set_visible(False)    # remove y=0 spine
-    
 # Bandwidth
-sns.lineplot(data=df, x="num_threads", y="bw", marker="o", ax=axes[0])
+sns.lineplot(y="bw", ax=axes[0], **plot_kwargs)
 axes[0].set_ylabel("Bandwidth (GB/s)")
 axes[0].set_xlabel("Number of Threads")
+axes[0].set_title("Bandwidth Scaling")
 
 # RPQ Occupancy
-sns.lineplot(data=df, x="num_threads", y="occupancy_rate", marker="o", ax=axes[1])
+sns.lineplot(y="occupancy_rate", ax=axes[1], **plot_kwargs)
 axes[1].set_ylabel("RPQ Occupancy/Cycle")
 axes[1].set_xlabel("Number of Threads")
+axes[1].set_title("RPQ Occupancy")
 
 # RPQ Inserts
-sns.lineplot(data=df, x="num_threads", y="insert_rate", marker="o", ax=axes[2])
+sns.lineplot(y="insert_rate", ax=axes[2], **plot_kwargs)
 axes[2].set_ylabel("RPQ Allocated/Cycle")
 axes[2].set_xlabel("Number of Threads")
+axes[2].set_title("RPQ Inserts")
 
 for ax in axes:
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     ax.grid(True, which="major", axis="both", linestyle="--")
 
-#plt.tight_layout()  # leave space for suptitle
-plt.savefig("rpq.pdf")
-
+plt.savefig("rpq.png")
+print("Plot successfully saved to rpq.png")
