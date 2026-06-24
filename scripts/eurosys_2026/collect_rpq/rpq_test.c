@@ -4,15 +4,14 @@
 #include <numa.h>
 #include <numaif.h>
 #include <pthread.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
 #include <x86intrin.h>
-#include <sys/mman.h>
-#include <assert.h>
-#include <stddef.h>
 
 static inline uint64_t RDTSC_START(void) {
   unsigned cycles_low, cycles_high;
@@ -39,10 +38,9 @@ static inline uint64_t RDTSCP(void) {
 
   return ((uint64_t)cycles_high << 32) | cycles_low;
 }
-#define TABLE_SIZE (uint64_t) (1 << 28)
-#define ALIGNMENT 64          // 64-byte alignment (cache line size)
-#define CACHELINE_SIZE 64     // cache line size in bytes
-#define READ
+#define TABLE_SIZE (uint64_t)(1 << 28)
+#define ALIGNMENT 64       // 64-byte alignment (cache line size)
+#define CACHELINE_SIZE 64  // cache line size in bytes
 #define STRIDE 1024
 
 #define LOCAL 0
@@ -51,7 +49,8 @@ static inline uint64_t RDTSCP(void) {
 #define CACHELOCAL 1
 #define CACHEREMOTE 0
 
-typedef struct { uint64_t value;
+typedef struct {
+  uint64_t value;
   char pad[CACHELINE_SIZE - sizeof(uint64_t)];
 } cacheline_t;
 cacheline_t *table;
@@ -121,7 +120,7 @@ void *walk_table(void *arg) {
   int num_threads = t->num_threads;
   uint64_t WORKLOAD_PER_THREAD = TABLE_SIZE / num_threads;
   uint64_t offset = tid * WORKLOAD_PER_THREAD;
-  uint64_t seed = iter + 0xdeadbeaf + tid;
+  uint64_t seed = 0xdeadbeaf; //iter + 0xdeadbeaf + tid;
   pin_self_to_cpu(cpu);
 
   if (cpu != sched_getcpu()) {
@@ -143,8 +142,23 @@ void *walk_table(void *arg) {
     idx = (i + offset) & (TABLE_SIZE - 1);
 #endif
 
-    //sum += table[idx].value;
-    _mm_prefetch(&table[idx], 1);
+// Completed memory operations
+#if defined(READ)
+    sum += table[idx].value;
+#elif defined(WRITE)
+    table[idx].value = sum;
+#elif defined(PREFETCH_T0)
+    _mm_prefetch((const void *)&table[idx], _MM_HINT_T0);
+#elif defined(PREFETCH_T1)
+    _mm_prefetch((const void *)&table[idx], _MM_HINT_T1);
+#elif defined(PREFETCH_T2)
+    _mm_prefetch((const void *)&table[idx], _MM_HINT_T2);
+#elif defined(PREFETCH_NTA)
+    _mm_prefetch((const void *)&table[idx], _MM_HINT_NTA);
+#else
+    // Default fallback to READ
+    sum += table[idx].value;
+#endif
   }
 
   t->sum = sum;
@@ -175,7 +189,7 @@ int spawn_threads(int node, int num_threads, int iter) {
   for (int i = 0; i < num_threads; i++) {
     args[i].tid = i;
     args[i].cpu = cpus[i];
-    printf("tid %d to cpu %d\n", i, cpus[i]);
+    // printf("tid %d to cpu %d\n", i, cpus[i]);
     args[i].node = node;
     args[i].barrier = &barrier;
     args[i].iter = iter;
@@ -201,12 +215,9 @@ cleanup:
   return success;
 }
 
-
-
-
 // Ensure MAP_HUGE_1GB is defined, as it might be missing in older glibc headers
 #ifndef MAP_HUGE_1GB
-#define MAP_HUGE_1GB (30 << 26) // 26 is MAP_HUGE_SHIFT
+#define MAP_HUGE_1GB (30 << 26)  // 26 is MAP_HUGE_SHIFT
 #endif
 
 void *alloc_table(size_t size, size_t numa_node) {
@@ -214,13 +225,12 @@ void *alloc_table(size_t size, size_t numa_node) {
   size_t page_sz = 1ULL << 30;
   size_t obj_sz = ((size + page_sz - 1) / page_sz) * page_sz;
 
-
   printf("allocate %lu gb pages\n", (size / page_sz));
 
   // Allocate memory using mmap with 1GB hugepages
-  void *mem = mmap(NULL, obj_sz, PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_1GB,
-                   -1, 0);
+  void *mem =
+      mmap(NULL, obj_sz, PROT_READ | PROT_WRITE,
+           MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_1GB, -1, 0);
 
   // mmap returns MAP_FAILED on error, not NULL
   assert(mem != MAP_FAILED);
@@ -266,18 +276,20 @@ int main(int argc, char **argv) {
 
   for (int i = 0; i < TABLE_SIZE; i++) table[i].value = 1;
 
-
   uint64_t duration = RDTSC_START();
 
   for (int i = 0; i < iter; i++) spawn_threads(0, num_threads, iter);
 
   duration = RDTSCP() - duration;
-  double sec = (double)((duration / CPU_FREQ)/1000000000);
+  double sec = (double)((duration / CPU_FREQ) / 1000000000);
   uint64_t cachelines = (uint64_t)TABLE_SIZE * (uint64_t)iter;
-  double bwf = (double)(cachelines * sizeof(cacheline_t) * (double)CPU_FREQ) / duration;
+  double bwf =
+      (double)(cachelines * sizeof(cacheline_t) * (double)CPU_FREQ) / duration;
   printf(
-      "duration %lu\nsec %.3f\ncachelines %lu\nbw %.1f "
-      "GB/s\n",
+      "duration %lu\n"
+      "sec %.3f\n"
+      "cachelines %lu\n"
+      "bw %.1f GB/s\n",
       duration, sec, cachelines, bwf);
 
   munmap(table, TABLE_SIZE * sizeof(cacheline_t));

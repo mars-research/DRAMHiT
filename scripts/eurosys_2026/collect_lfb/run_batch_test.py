@@ -14,7 +14,13 @@ ITERATIONS = 100
 
 # Mapping descriptive names to the C program's mode integers
 # 0: REGULAR_LOAD, 2: PREFETCH_L1 (T0), 3: PREFETCH_L2 (T1)
-MODES = {"Regular Load": 0, "Prefetch T0 (L1)": 2, "Prefetch T1 (L2)": 3}
+MODES = {
+    "Regular Load": 0,
+    "Prefetch T0 (L1)": 2,
+    "Prefetch T1 (L2)": 3,
+    "Prefetch T2": 4,
+    "Prefetch NTA": 5,
+}
 
 
 def compile_c_program():

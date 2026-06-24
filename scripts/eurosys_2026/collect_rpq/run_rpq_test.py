@@ -11,11 +11,11 @@ import seaborn as sns
 # --- Step 0: Compile both versions of rpq_test.c ---
 builds = {
     "sequential": {
-        "compile_cmd": "gcc -O3 rpq_test.c -lnuma -o rpq_seq",
+        "compile_cmd": "gcc -O3 rpq_test.c -lnuma -o rpq_seq -DPREFETCH_T1",
         "exe": "./rpq_seq",
     },
     "random": {
-        "compile_cmd": "gcc -O3 rpq_test.c -lnuma -o rpq_rand -DRANDOM_ACCESS",
+        "compile_cmd": "gcc -O3 rpq_test.c -lnuma -o rpq_rand -DRANDOM_ACCESS -DPREFETCH_T1",
         "exe": "./rpq_rand",
     },
 }
@@ -91,7 +91,7 @@ for mode, build in builds.items():
 
 # Save CSV
 print("\nSaving results to data.csv...")
-with open("data.csv", "w", newline="") as f:
+with open("data_pref_l2.csv", "w", newline="") as f:
     # Ensure 'access_pattern' is the very first column in the CSV for readability
     fieldnames = ["access_pattern"] + [
         k for k in results[0].keys() if k != "access_pattern"
