@@ -85,5 +85,5 @@ for ax in axes:
     ax.set_ylim(bottom=0)
     ax.grid(True, which="major", axis="both", linestyle="--")
 
-plt.savefig("rpq.png")
+plt.savefig("rpq_sub.png")
 print("Plot successfully saved to rpq.png")

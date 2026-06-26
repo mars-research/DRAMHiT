@@ -40,7 +40,7 @@ results = []
 for mode, build in builds.items():
     print(f"Running experiments for {mode} access...")
 
-    for num_threads in range(1, 32):
+    for num_threads in range(2, 32, 2):
         cmd = cmd_template.format(exe=build["exe"], num_threads=num_threads)
         proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         output = proc.stdout + proc.stderr  # combine stdout + stderr

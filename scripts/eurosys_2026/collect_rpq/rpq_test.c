@@ -46,6 +46,9 @@ static inline uint64_t RDTSCP(void) {
 #define LOCAL 0
 #define REMOTE 1
 
+// numa node 0 and 1 are physical socket 0.
+#define SUB_CLUSTER_LOCAL 3 // Binary 0011 (Nodes 0 and 1)
+
 #define CACHELOCAL 1
 #define CACHEREMOTE 0
 
@@ -56,7 +59,7 @@ typedef struct {
 cacheline_t *table;
 
 typedef struct {
-  int node;
+  unsigned long nodemask; // Changed to support multiple nodes
   int tid;
   int cpu;
   int iter;
@@ -65,12 +68,25 @@ typedef struct {
   pthread_barrier_t *barrier;
 } thread_arg_t;
 
-void bind_to_node(int node) {
-  if (numa_run_on_node(node) != 0) {
-    perror("numa_run_on_node");
+
+// NEW: Binds the calling thread's execution affinity to all CPUs across the requested nodes
+void bind_to_nodemask(unsigned long nodemask) {
+  struct bitmask *mask = numa_allocate_nodemask();
+
+  // Set the bits in the numa bitmask based on our unsigned long nodemask
+  for (int i = 0; i < sizeof(nodemask) * 8; i++) {
+    if (nodemask & (1UL << i)) {
+      numa_bitmask_setbit(mask, i);
+    }
+  }
+
+  // Allow execution on any CPU within the specified nodes
+  if (numa_run_on_node_mask(mask) != 0) {
+    perror("numa_run_on_node_mask");
     exit(EXIT_FAILURE);
   }
-  numa_set_preferred(node);
+
+  numa_free_nodemask(mask);
 }
 
 int pin_self_to_cpu(int cpu) {
@@ -87,27 +103,65 @@ int pin_self_to_cpu(int cpu) {
   return 0;
 }
 
-int get_numa_cpuids(int node, int *cpu_ids, int max_len) {
+// UPDATED: Balances the requested CPUs evenly across all nodes in the nodemask
+int get_numa_cpuids(unsigned long nodemask, int *cpu_ids, int max_len) {
   if (numa_available() < 0) {
     fprintf(stderr, "NUMA is not available.\n");
     return -1;
   }
 
-  struct bitmask *cpumask = numa_allocate_cpumask();
-  if (numa_node_to_cpus(node, cpumask) != 0) {
-    perror("numa_node_to_cpus");
-    numa_free_cpumask(cpumask);
-    return -1;
-  }
+  int max_node = numa_max_node();
+  int active_nodes = 0;
 
-  int count = 0;
-  for (int i = 0; i < cpumask->size && count < max_len; i++) {
-    if (numa_bitmask_isbitset(cpumask, i)) {
-      cpu_ids[count++] = i;
+  // 1. Count how many nodes were requested in the mask
+  for (int i = 0; i <= max_node; i++) {
+    if (nodemask & (1UL << i)) {
+      active_nodes++;
     }
   }
 
-  numa_free_cpumask(cpumask);
+  if (active_nodes == 0) return 0;
+
+  // 2. Calculate how many CPUs to take from each node
+  int base_cpus_per_node = max_len / active_nodes;
+  int remainder = max_len % active_nodes; // In case total threads isn't perfectly divisible
+
+  int count = 0;
+
+  // 3. Fetch the exact balanced amount from each requested node
+  for (int node = 0; node <= max_node; node++) {
+    if (nodemask & (1UL << node)) {
+
+      // Distribute the remainder evenly if (max_len % active_nodes != 0)
+      int cpus_to_get = base_cpus_per_node + (remainder > 0 ? 1 : 0);
+      if (remainder > 0) remainder--;
+
+      struct bitmask *cpumask = numa_allocate_cpumask();
+
+      if (numa_node_to_cpus(node, cpumask) == 0) {
+        int node_cpus_collected = 0;
+
+        // Collect CPUs until we hit the balanced limit for THIS node
+        for (int i = 0; i < cpumask->size && node_cpus_collected < cpus_to_get; i++) {
+          if (numa_bitmask_isbitset(cpumask, i)) {
+            cpu_ids[count++] = i;
+            node_cpus_collected++;
+          }
+        }
+
+        // Safety check if the node has fewer physical cores than requested
+        if (node_cpus_collected < cpus_to_get) {
+          fprintf(stderr, "Warning: Node %d only has %d available CPUs, but %d were requested for balance.\n",
+                  node, node_cpus_collected, cpus_to_get);
+        }
+      } else {
+        perror("numa_node_to_cpus");
+      }
+
+      numa_free_cpumask(cpumask);
+    }
+  }
+
   return count;
 }
 
@@ -115,13 +169,16 @@ void *walk_table(void *arg) {
   thread_arg_t *t = (thread_arg_t *)arg;
   int cpu = t->cpu;
   int tid = t->tid;
-  int node = t->node;
+  unsigned long nodemask = t->nodemask;
   int iter = t->iter;
   int num_threads = t->num_threads;
   uint64_t WORKLOAD_PER_THREAD = TABLE_SIZE / num_threads;
   uint64_t offset = tid * WORKLOAD_PER_THREAD;
   uint64_t seed = 0xdeadbeaf; //iter + 0xdeadbeaf + tid;
+
   pin_self_to_cpu(cpu);
+
+  //printf("thread %lu to cpu %lu\n", tid, cpu);
 
   if (cpu != sched_getcpu()) {
     printf("cpu doesnt match expected: %d sched: %d\n", cpu, sched_getcpu());
@@ -166,20 +223,23 @@ void *walk_table(void *arg) {
   return NULL;
 }
 
-int spawn_threads(int node, int num_threads, int iter) {
+// UPDATED: Accepts nodemask instead of node
+int spawn_threads(unsigned long nodemask, int num_threads, int iter) {
   int success = 0;
 
   pthread_t *threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
   thread_arg_t *args =
       (thread_arg_t *)malloc(sizeof(thread_arg_t) * num_threads);
   int *cpus = (int *)malloc(num_threads * sizeof(int));
-  int count = get_numa_cpuids(node, cpus, num_threads);
+
+  // Fetch CPUs across all nodes specified in the mask
+  int count = get_numa_cpuids(nodemask, cpus, num_threads);
 
   if (count < num_threads) {
     printf(
-        "not enough physical cpus on node %d, max cpu %d, requested: "
+        "not enough physical cpus on requested nodes, max cpu %d, requested: "
         "%d\n",
-        node, count, num_threads);
+        count, num_threads);
     goto cleanup;
   }
 
@@ -189,8 +249,7 @@ int spawn_threads(int node, int num_threads, int iter) {
   for (int i = 0; i < num_threads; i++) {
     args[i].tid = i;
     args[i].cpu = cpus[i];
-    // printf("tid %d to cpu %d\n", i, cpus[i]);
-    args[i].node = node;
+    args[i].nodemask = nodemask; // Track the mask
     args[i].barrier = &barrier;
     args[i].iter = iter;
     args[i].num_threads = (uint32_t)num_threads;
@@ -220,7 +279,8 @@ cleanup:
 #define MAP_HUGE_1GB (30 << 26)  // 26 is MAP_HUGE_SHIFT
 #endif
 
-void *alloc_table(size_t size, size_t numa_node) {
+// To interleave across node 0 and 1, pass: (1UL << 0) | (1UL << 1) which is 3
+void *alloc_table(size_t size, unsigned long nodemask) {
   // Set page size to 1GB
   size_t page_sz = 1ULL << 30;
   size_t obj_sz = ((size + page_sz - 1) / page_sz) * page_sz;
@@ -235,9 +295,8 @@ void *alloc_table(size_t size, size_t numa_node) {
   // mmap returns MAP_FAILED on error, not NULL
   assert(mem != MAP_FAILED);
 
-  // Bind the allocated memory to the specific NUMA node
-  unsigned long nodemask = 1UL << numa_node;
-  assert(mbind(mem, obj_sz, MPOL_BIND, &nodemask, sizeof(nodemask) * 8,
+  // Use MPOL_INTERLEAVE instead of MPOL_BIND
+  assert(mbind(mem, obj_sz, MPOL_INTERLEAVE, &nodemask, 64,
                MPOL_MF_MOVE | MPOL_MF_STRICT) == 0);
 
   return mem;
@@ -265,9 +324,11 @@ int main(int argc, char **argv) {
   }
   srand(time(NULL));
 
-  bind_to_node(0);
+  // UPDATED: Bind the master process execution affinity to all requested nodes
+  bind_to_nodemask(SUB_CLUSTER_LOCAL);
 
-  table = (cacheline_t *)alloc_table(TABLE_SIZE * sizeof(cacheline_t), LOCAL);
+  // Allocate the 16GB table interleaved over the nodes
+  table = (cacheline_t *)alloc_table(TABLE_SIZE * sizeof(cacheline_t), SUB_CLUSTER_LOCAL);
 
   if (table == NULL) {
     perror("alloc table failed");
@@ -278,7 +339,8 @@ int main(int argc, char **argv) {
 
   uint64_t duration = RDTSC_START();
 
-  for (int i = 0; i < iter; i++) spawn_threads(0, num_threads, iter);
+  // UPDATED: Spawn threads passing the cluster mask
+  for (int i = 0; i < iter; i++) spawn_threads(SUB_CLUSTER_LOCAL, num_threads, iter);
 
   duration = RDTSCP() - duration;
   double sec = (double)((duration / CPU_FREQ) / 1000000000);
