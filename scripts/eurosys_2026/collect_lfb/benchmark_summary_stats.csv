@@ -1,0 +1,25 @@
+Instruction,Event,Sample_Count,Min,Median,Max
+Load,ls_alloc_mab_count,74,4974121555,6928662154,6932886566
+Load,ls_mab_alloc.all_allocations,74,17222497,22458184,22474780
+Load,cycles,74,375833267,380583549,380795032
+Load,ls_sw_pf_dc_fills.all,74,9323,12999,17441
+AVX512 Load,ls_alloc_mab_count,74,32841062,7043165724,7204692537
+AVX512 Load,ls_mab_alloc.all_allocations,74,2024747,22667561,22706112
+AVX512 Load,cycles,74,62903416,380581480,380738927
+AVX512 Load,ls_sw_pf_dc_fills.all,74,2,13149,25076
+Prefetch T0,ls_alloc_mab_count,21,825131657,6836683578,7463155247
+Prefetch T0,ls_mab_alloc.all_allocations,21,5365179,38706477,38883765
+Prefetch T0,cycles,21,137032125,380594461,380707321
+Prefetch T0,ls_sw_pf_dc_fills.all,21,1579728,10693724,15323107
+Prefetch T1,ls_alloc_mab_count,10,1658805883,5297522313,5318718216
+Prefetch T1,ls_mab_alloc.all_allocations,10,45941774,148906105,181949600
+Prefetch T1,cycles,10,337714312,380633140,380691905
+Prefetch T1,ls_sw_pf_dc_fills.all,10,26,78343,79001
+Prefetch T2,ls_alloc_mab_count,10,319283076,5302125397,5313902861
+Prefetch T2,ls_mab_alloc.all_allocations,10,17138963,148999133,276476818
+Prefetch T2,cycles,10,116823911,380603049,380709982
+Prefetch T2,ls_sw_pf_dc_fills.all,10,27,78181,79284
+Prefetch NTA,ls_alloc_mab_count,21,4422077215,6803294640,7466641047
+Prefetch NTA,ls_mab_alloc.all_allocations,21,17560343,38825839,39419303
+Prefetch NTA,cycles,21,319791176,380608144,380764341
+Prefetch NTA,ls_sw_pf_dc_fills.all,21,8178890,10824025,15832955

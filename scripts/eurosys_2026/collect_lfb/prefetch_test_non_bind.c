@@ -17,6 +17,9 @@
 #define MEMORY_SIZE (8ULL * 1024 * 1024 * 1024)
 #define NUM_CACHELINES (MEMORY_SIZE / CACHELINE_SIZE)
 
+// How many cachelines to look ahead for prefetching
+#define PREFETCH_AHEAD 16
+
 // Hugepage flags
 #ifndef MAP_HUGE_1GB
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
@@ -94,19 +97,15 @@ cacheline_t* alloc_8gb_memory() {
         printf("  -> Success with 1GB Hugepages.\n");
     }
 
-    // Touch memory to ensure physical allocation
-    cacheline_t* mem = (cacheline_t*)ptr;
-    #pragma omp parallel for
-    for (uint64_t i = 0; i < NUM_CACHELINES; i += (4096 / CACHELINE_SIZE)) {
-        mem[i].data[0] = 1;
-    }
-    return mem;
+    memset(ptr, 1, MEMORY_SIZE);
+    return ptr;
 }
 
 // Thread payload loop
 __attribute__((target("avx512f,sse4.2")))
 void* worker_thread(void* arg) {
     thread_ctx_t* ctx = (thread_ctx_t*)arg;
+
 
     // Pin to specific logical CPU
     cpu_set_t cpuset;
@@ -139,22 +138,27 @@ void* worker_thread(void* arg) {
             break;
         case INST_PREFETCH_T0:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_T0);
+                // Prefetch ahead to hide latency, dummy load current to enforce execution
+                _mm_prefetch((const char*)&mem[workload[i + PREFETCH_AHEAD]], _MM_HINT_T0);
+                dummy += mem[workload[i]].data[0]; 
             }
             break;
         case INST_PREFETCH_T1:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_T1);
+                _mm_prefetch((const char*)&mem[workload[i + PREFETCH_AHEAD]], _MM_HINT_T1);
+                dummy += mem[workload[i]].data[0]; 
             }
             break;
         case INST_PREFETCH_T2:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_T2);
+                _mm_prefetch((const char*)&mem[workload[i + PREFETCH_AHEAD]], _MM_HINT_T2);
+                dummy += mem[workload[i]].data[0]; 
             }
             break;
         case INST_PREFETCH_NTA:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_NTA);
+                _mm_prefetch((const char*)&mem[workload[i + PREFETCH_AHEAD]], _MM_HINT_NTA);
+                dummy += mem[workload[i]].data[0]; 
             }
             break;
     }
@@ -214,8 +218,8 @@ int main(int argc, char** argv) {
             "Prefetch NTA"
         };
 
-        // Print the indication of the execute type
-        printf("Execute Type: %s\n", inst_names[inst_type]);
+    // Print the indication of the execute type
+    printf("Execute Type: %s\n", inst_names[inst_type]);
     int core_a, core_b;
     get_cpu1_siblings(&core_a, &core_b);
 
@@ -239,14 +243,22 @@ int main(int argc, char** argv) {
 
         printf("Initializing workload for Thread %d (Pinned to Logical CPU %d)...\n", t, ctx[t].logical_cpu);
 
-        // Allocate and populate thread-specific random workload
-        ctx[t].workload = malloc(num_ops * sizeof(uint64_t));
+        // Allocate workload WITH padding for the prefetch lookahead
+        // This prevents Out-Of-Bounds memory accesses at the end of the loop 
+        // without needing slow 'if' statements inside the benchmark
+        ctx[t].workload = malloc((num_ops + PREFETCH_AHEAD) * sizeof(uint64_t));
         srandom(time(NULL) ^ (t * 19937)); // Different seed per thread
 
+        // Fill the primary workload
         for (uint64_t i = 0; i < num_ops; i++) {
             // Generates a 31-bit random index across the cacheline space
             uint64_t rand_idx = ((uint64_t)random() | ((uint64_t)random() << 31)) % NUM_CACHELINES;
             ctx[t].workload[i] = rand_idx;
+        }
+
+        // Pad the tail of the array to satisfy the +16 lookahead
+        for (uint64_t i = 0; i < PREFETCH_AHEAD; i++) {
+            ctx[t].workload[num_ops + i] = ctx[t].workload[i];
         }
     }
 
@@ -265,8 +277,7 @@ int main(int argc, char** argv) {
         printf("Thread %d (CPU %d):\n", t, ctx[t].logical_cpu);
         printf("  Total Cycles: %lu\n", ctx[t].duration_cycles);
         printf("  Cycles/Op:    %.2f\n", cpo);
-
-        printf("  (Dummy: %lu)\n", ctx[t].dummy_accumulator);
+            printf("  (Dummy: %lu)\n", ctx[t].dummy_accumulator);
         free(ctx[t].workload);
     }
 

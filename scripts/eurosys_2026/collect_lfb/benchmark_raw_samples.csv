@@ -1,0 +1,841 @@
+Instruction,Event,Sample_Index,Value
+Load,ls_alloc_mab_count,1,4974121555
+Load,ls_alloc_mab_count,2,6929505943
+Load,ls_alloc_mab_count,3,6932048389
+Load,ls_alloc_mab_count,4,6928913962
+Load,ls_alloc_mab_count,5,6928809249
+Load,ls_alloc_mab_count,6,6929168454
+Load,ls_alloc_mab_count,7,6930836829
+Load,ls_alloc_mab_count,8,6928482905
+Load,ls_alloc_mab_count,9,6929641639
+Load,ls_alloc_mab_count,10,6928275432
+Load,ls_alloc_mab_count,11,6927318180
+Load,ls_alloc_mab_count,12,6927964214
+Load,ls_alloc_mab_count,13,6927767743
+Load,ls_alloc_mab_count,14,6928622144
+Load,ls_alloc_mab_count,15,6931123586
+Load,ls_alloc_mab_count,16,6930231775
+Load,ls_alloc_mab_count,17,6926793334
+Load,ls_alloc_mab_count,18,6927231663
+Load,ls_alloc_mab_count,19,6929830280
+Load,ls_alloc_mab_count,20,6927807812
+Load,ls_alloc_mab_count,21,6929458007
+Load,ls_alloc_mab_count,22,6930327093
+Load,ls_alloc_mab_count,23,6928797246
+Load,ls_alloc_mab_count,24,6931186724
+Load,ls_alloc_mab_count,25,6930187119
+Load,ls_alloc_mab_count,26,6925646706
+Load,ls_alloc_mab_count,27,6927977875
+Load,ls_alloc_mab_count,28,6929012661
+Load,ls_alloc_mab_count,29,6932886566
+Load,ls_alloc_mab_count,30,6928640008
+Load,ls_alloc_mab_count,31,6924607164
+Load,ls_alloc_mab_count,32,6924107265
+Load,ls_alloc_mab_count,33,6929156987
+Load,ls_alloc_mab_count,34,6928755804
+Load,ls_alloc_mab_count,35,6925341590
+Load,ls_alloc_mab_count,36,6928658181
+Load,ls_alloc_mab_count,37,6928903908
+Load,ls_alloc_mab_count,38,6930165647
+Load,ls_alloc_mab_count,39,6928359406
+Load,ls_alloc_mab_count,40,6927436427
+Load,ls_alloc_mab_count,41,6925624245
+Load,ls_alloc_mab_count,42,6927976995
+Load,ls_alloc_mab_count,43,6927372721
+Load,ls_alloc_mab_count,44,6926231326
+Load,ls_alloc_mab_count,45,6928237427
+Load,ls_alloc_mab_count,46,6926396945
+Load,ls_alloc_mab_count,47,6928463772
+Load,ls_alloc_mab_count,48,6930753047
+Load,ls_alloc_mab_count,49,6925971247
+Load,ls_alloc_mab_count,50,6928666127
+Load,ls_alloc_mab_count,51,6929456277
+Load,ls_alloc_mab_count,52,6928719636
+Load,ls_alloc_mab_count,53,6928187397
+Load,ls_alloc_mab_count,54,6932619156
+Load,ls_alloc_mab_count,55,6931016025
+Load,ls_alloc_mab_count,56,6931481970
+Load,ls_alloc_mab_count,57,6925842346
+Load,ls_alloc_mab_count,58,6928456293
+Load,ls_alloc_mab_count,59,6929819036
+Load,ls_alloc_mab_count,60,6929123507
+Load,ls_alloc_mab_count,61,6929630889
+Load,ls_alloc_mab_count,62,6927875565
+Load,ls_alloc_mab_count,63,6928334104
+Load,ls_alloc_mab_count,64,6929969157
+Load,ls_alloc_mab_count,65,6927720515
+Load,ls_alloc_mab_count,66,6927950374
+Load,ls_alloc_mab_count,67,6927920634
+Load,ls_alloc_mab_count,68,6928864727
+Load,ls_alloc_mab_count,69,6929035604
+Load,ls_alloc_mab_count,70,6928678363
+Load,ls_alloc_mab_count,71,6926187625
+Load,ls_alloc_mab_count,72,6929379326
+Load,ls_alloc_mab_count,73,6930922528
+Load,ls_alloc_mab_count,74,5120802218
+Load,ls_mab_alloc.all_allocations,1,17222497
+Load,ls_mab_alloc.all_allocations,2,22347663
+Load,ls_mab_alloc.all_allocations,3,22458369
+Load,ls_mab_alloc.all_allocations,4,22465949
+Load,ls_mab_alloc.all_allocations,5,22464101
+Load,ls_mab_alloc.all_allocations,6,22461954
+Load,ls_mab_alloc.all_allocations,7,22460028
+Load,ls_mab_alloc.all_allocations,8,22466958
+Load,ls_mab_alloc.all_allocations,9,22461661
+Load,ls_mab_alloc.all_allocations,10,22463193
+Load,ls_mab_alloc.all_allocations,11,22461301
+Load,ls_mab_alloc.all_allocations,12,22453043
+Load,ls_mab_alloc.all_allocations,13,22452788
+Load,ls_mab_alloc.all_allocations,14,22445783
+Load,ls_mab_alloc.all_allocations,15,22468312
+Load,ls_mab_alloc.all_allocations,16,22464394
+Load,ls_mab_alloc.all_allocations,17,22448400
+Load,ls_mab_alloc.all_allocations,18,22452224
+Load,ls_mab_alloc.all_allocations,19,22470904
+Load,ls_mab_alloc.all_allocations,20,22416788
+Load,ls_mab_alloc.all_allocations,21,22391495
+Load,ls_mab_alloc.all_allocations,22,22465556
+Load,ls_mab_alloc.all_allocations,23,22449348
+Load,ls_mab_alloc.all_allocations,24,22473979
+Load,ls_mab_alloc.all_allocations,25,22455339
+Load,ls_mab_alloc.all_allocations,26,22451727
+Load,ls_mab_alloc.all_allocations,27,22461526
+Load,ls_mab_alloc.all_allocations,28,22460532
+Load,ls_mab_alloc.all_allocations,29,22469913
+Load,ls_mab_alloc.all_allocations,30,22467242
+Load,ls_mab_alloc.all_allocations,31,22463642
+Load,ls_mab_alloc.all_allocations,32,22447310
+Load,ls_mab_alloc.all_allocations,33,22454344
+Load,ls_mab_alloc.all_allocations,34,22457313
+Load,ls_mab_alloc.all_allocations,35,22441878
+Load,ls_mab_alloc.all_allocations,36,22464996
+Load,ls_mab_alloc.all_allocations,37,22458715
+Load,ls_mab_alloc.all_allocations,38,22409725
+Load,ls_mab_alloc.all_allocations,39,22398299
+Load,ls_mab_alloc.all_allocations,40,22452675
+Load,ls_mab_alloc.all_allocations,41,22455460
+Load,ls_mab_alloc.all_allocations,42,22462838
+Load,ls_mab_alloc.all_allocations,43,22456958
+Load,ls_mab_alloc.all_allocations,44,22457689
+Load,ls_mab_alloc.all_allocations,45,22453307
+Load,ls_mab_alloc.all_allocations,46,22447789
+Load,ls_mab_alloc.all_allocations,47,22458024
+Load,ls_mab_alloc.all_allocations,48,22466972
+Load,ls_mab_alloc.all_allocations,49,22451659
+Load,ls_mab_alloc.all_allocations,50,22464458
+Load,ls_mab_alloc.all_allocations,51,22459423
+Load,ls_mab_alloc.all_allocations,52,22454272
+Load,ls_mab_alloc.all_allocations,53,22454962
+Load,ls_mab_alloc.all_allocations,54,22450305
+Load,ls_mab_alloc.all_allocations,55,22367964
+Load,ls_mab_alloc.all_allocations,56,22462123
+Load,ls_mab_alloc.all_allocations,57,22449036
+Load,ls_mab_alloc.all_allocations,58,22462874
+Load,ls_mab_alloc.all_allocations,59,22461184
+Load,ls_mab_alloc.all_allocations,60,22469189
+Load,ls_mab_alloc.all_allocations,61,22474780
+Load,ls_mab_alloc.all_allocations,62,22453772
+Load,ls_mab_alloc.all_allocations,63,22458345
+Load,ls_mab_alloc.all_allocations,64,22460196
+Load,ls_mab_alloc.all_allocations,65,22450667
+Load,ls_mab_alloc.all_allocations,66,22464538
+Load,ls_mab_alloc.all_allocations,67,22462455
+Load,ls_mab_alloc.all_allocations,68,22462319
+Load,ls_mab_alloc.all_allocations,69,22465126
+Load,ls_mab_alloc.all_allocations,70,22463975
+Load,ls_mab_alloc.all_allocations,71,22456464
+Load,ls_mab_alloc.all_allocations,72,22420317
+Load,ls_mab_alloc.all_allocations,73,22426930
+Load,ls_mab_alloc.all_allocations,74,19259074
+Load,cycles,1,380417383
+Load,cycles,2,380579217
+Load,cycles,3,380621817
+Load,cycles,4,380572468
+Load,cycles,5,380554111
+Load,cycles,6,380627871
+Load,cycles,7,380569903
+Load,cycles,8,380582667
+Load,cycles,9,380588090
+Load,cycles,10,380579388
+Load,cycles,11,380595795
+Load,cycles,12,380577715
+Load,cycles,13,380577097
+Load,cycles,14,380561041
+Load,cycles,15,380795032
+Load,cycles,16,380593883
+Load,cycles,17,380583791
+Load,cycles,18,380597430
+Load,cycles,19,380583223
+Load,cycles,20,380597316
+Load,cycles,21,380596495
+Load,cycles,22,380656655
+Load,cycles,23,380583967
+Load,cycles,24,380653592
+Load,cycles,25,380566128
+Load,cycles,26,380462270
+Load,cycles,27,380575322
+Load,cycles,28,380581389
+Load,cycles,29,380613202
+Load,cycles,30,380585506
+Load,cycles,31,380521718
+Load,cycles,32,380473372
+Load,cycles,33,380650820
+Load,cycles,34,380599952
+Load,cycles,35,380411377
+Load,cycles,36,380566857
+Load,cycles,37,380606868
+Load,cycles,38,380589247
+Load,cycles,39,380562740
+Load,cycles,40,380584807
+Load,cycles,41,380588957
+Load,cycles,42,380585494
+Load,cycles,43,380699288
+Load,cycles,44,380562011
+Load,cycles,45,380559867
+Load,cycles,46,380582218
+Load,cycles,47,380601044
+Load,cycles,48,380599150
+Load,cycles,49,380561783
+Load,cycles,50,380489724
+Load,cycles,51,380588278
+Load,cycles,52,380599866
+Load,cycles,53,380581839
+Load,cycles,54,380631915
+Load,cycles,55,380557938
+Load,cycles,56,380562775
+Load,cycles,57,380563292
+Load,cycles,58,380588295
+Load,cycles,59,380580846
+Load,cycles,60,380578169
+Load,cycles,61,380658806
+Load,cycles,62,380608275
+Load,cycles,63,380600298
+Load,cycles,64,380583308
+Load,cycles,65,380563621
+Load,cycles,66,380618479
+Load,cycles,67,380609037
+Load,cycles,68,380588500
+Load,cycles,69,380480692
+Load,cycles,70,380563321
+Load,cycles,71,380554443
+Load,cycles,72,380584442
+Load,cycles,73,380642806
+Load,cycles,74,375833267
+Load,ls_sw_pf_dc_fills.all,1,17441
+Load,ls_sw_pf_dc_fills.all,2,12603
+Load,ls_sw_pf_dc_fills.all,3,13203
+Load,ls_sw_pf_dc_fills.all,4,13225
+Load,ls_sw_pf_dc_fills.all,5,13095
+Load,ls_sw_pf_dc_fills.all,6,12895
+Load,ls_sw_pf_dc_fills.all,7,13170
+Load,ls_sw_pf_dc_fills.all,8,12962
+Load,ls_sw_pf_dc_fills.all,9,13044
+Load,ls_sw_pf_dc_fills.all,10,13091
+Load,ls_sw_pf_dc_fills.all,11,12986
+Load,ls_sw_pf_dc_fills.all,12,13013
+Load,ls_sw_pf_dc_fills.all,13,12831
+Load,ls_sw_pf_dc_fills.all,14,13062
+Load,ls_sw_pf_dc_fills.all,15,12925
+Load,ls_sw_pf_dc_fills.all,16,13046
+Load,ls_sw_pf_dc_fills.all,17,12977
+Load,ls_sw_pf_dc_fills.all,18,13024
+Load,ls_sw_pf_dc_fills.all,19,13188
+Load,ls_sw_pf_dc_fills.all,20,12862
+Load,ls_sw_pf_dc_fills.all,21,12931
+Load,ls_sw_pf_dc_fills.all,22,13144
+Load,ls_sw_pf_dc_fills.all,23,13053
+Load,ls_sw_pf_dc_fills.all,24,12949
+Load,ls_sw_pf_dc_fills.all,25,12946
+Load,ls_sw_pf_dc_fills.all,26,13018
+Load,ls_sw_pf_dc_fills.all,27,13010
+Load,ls_sw_pf_dc_fills.all,28,13180
+Load,ls_sw_pf_dc_fills.all,29,13534
+Load,ls_sw_pf_dc_fills.all,30,12776
+Load,ls_sw_pf_dc_fills.all,31,13122
+Load,ls_sw_pf_dc_fills.all,32,12959
+Load,ls_sw_pf_dc_fills.all,33,12859
+Load,ls_sw_pf_dc_fills.all,34,12947
+Load,ls_sw_pf_dc_fills.all,35,12964
+Load,ls_sw_pf_dc_fills.all,36,12920
+Load,ls_sw_pf_dc_fills.all,37,13090
+Load,ls_sw_pf_dc_fills.all,38,12739
+Load,ls_sw_pf_dc_fills.all,39,12525
+Load,ls_sw_pf_dc_fills.all,40,12771
+Load,ls_sw_pf_dc_fills.all,41,13134
+Load,ls_sw_pf_dc_fills.all,42,13103
+Load,ls_sw_pf_dc_fills.all,43,12988
+Load,ls_sw_pf_dc_fills.all,44,12846
+Load,ls_sw_pf_dc_fills.all,45,13144
+Load,ls_sw_pf_dc_fills.all,46,12695
+Load,ls_sw_pf_dc_fills.all,47,12788
+Load,ls_sw_pf_dc_fills.all,48,12961
+Load,ls_sw_pf_dc_fills.all,49,13151
+Load,ls_sw_pf_dc_fills.all,50,13499
+Load,ls_sw_pf_dc_fills.all,51,13401
+Load,ls_sw_pf_dc_fills.all,52,12976
+Load,ls_sw_pf_dc_fills.all,53,12693
+Load,ls_sw_pf_dc_fills.all,54,12876
+Load,ls_sw_pf_dc_fills.all,55,12814
+Load,ls_sw_pf_dc_fills.all,56,13396
+Load,ls_sw_pf_dc_fills.all,57,13014
+Load,ls_sw_pf_dc_fills.all,58,13104
+Load,ls_sw_pf_dc_fills.all,59,13099
+Load,ls_sw_pf_dc_fills.all,60,13013
+Load,ls_sw_pf_dc_fills.all,61,12984
+Load,ls_sw_pf_dc_fills.all,62,13033
+Load,ls_sw_pf_dc_fills.all,63,13230
+Load,ls_sw_pf_dc_fills.all,64,12982
+Load,ls_sw_pf_dc_fills.all,65,12691
+Load,ls_sw_pf_dc_fills.all,66,12812
+Load,ls_sw_pf_dc_fills.all,67,12813
+Load,ls_sw_pf_dc_fills.all,68,13071
+Load,ls_sw_pf_dc_fills.all,69,13335
+Load,ls_sw_pf_dc_fills.all,70,12986
+Load,ls_sw_pf_dc_fills.all,71,13208
+Load,ls_sw_pf_dc_fills.all,72,12803
+Load,ls_sw_pf_dc_fills.all,73,13015
+Load,ls_sw_pf_dc_fills.all,74,9323
+AVX512 Load,ls_alloc_mab_count,1,2422087968
+AVX512 Load,ls_alloc_mab_count,2,7044406693
+AVX512 Load,ls_alloc_mab_count,3,7042416192
+AVX512 Load,ls_alloc_mab_count,4,7045474730
+AVX512 Load,ls_alloc_mab_count,5,7043477317
+AVX512 Load,ls_alloc_mab_count,6,7043564861
+AVX512 Load,ls_alloc_mab_count,7,7046163206
+AVX512 Load,ls_alloc_mab_count,8,7043357353
+AVX512 Load,ls_alloc_mab_count,9,7044157308
+AVX512 Load,ls_alloc_mab_count,10,7040353830
+AVX512 Load,ls_alloc_mab_count,11,7040212392
+AVX512 Load,ls_alloc_mab_count,12,7045353117
+AVX512 Load,ls_alloc_mab_count,13,7041464494
+AVX512 Load,ls_alloc_mab_count,14,7043576600
+AVX512 Load,ls_alloc_mab_count,15,7043956150
+AVX512 Load,ls_alloc_mab_count,16,7042909310
+AVX512 Load,ls_alloc_mab_count,17,7044210107
+AVX512 Load,ls_alloc_mab_count,18,7043307718
+AVX512 Load,ls_alloc_mab_count,19,7044617216
+AVX512 Load,ls_alloc_mab_count,20,7041677432
+AVX512 Load,ls_alloc_mab_count,21,7039584507
+AVX512 Load,ls_alloc_mab_count,22,7042602549
+AVX512 Load,ls_alloc_mab_count,23,7040410756
+AVX512 Load,ls_alloc_mab_count,24,7044965974
+AVX512 Load,ls_alloc_mab_count,25,7045802792
+AVX512 Load,ls_alloc_mab_count,26,7039705710
+AVX512 Load,ls_alloc_mab_count,27,7040232270
+AVX512 Load,ls_alloc_mab_count,28,7039709574
+AVX512 Load,ls_alloc_mab_count,29,7046156054
+AVX512 Load,ls_alloc_mab_count,30,7042740467
+AVX512 Load,ls_alloc_mab_count,31,7039712762
+AVX512 Load,ls_alloc_mab_count,32,7039171877
+AVX512 Load,ls_alloc_mab_count,33,7044403189
+AVX512 Load,ls_alloc_mab_count,34,7043544586
+AVX512 Load,ls_alloc_mab_count,35,7038769533
+AVX512 Load,ls_alloc_mab_count,36,7043589991
+AVX512 Load,ls_alloc_mab_count,37,7043420460
+AVX512 Load,ls_alloc_mab_count,38,7039915636
+AVX512 Load,ls_alloc_mab_count,39,7043353116
+AVX512 Load,ls_alloc_mab_count,40,7038458717
+AVX512 Load,ls_alloc_mab_count,41,7041272986
+AVX512 Load,ls_alloc_mab_count,42,7042282362
+AVX512 Load,ls_alloc_mab_count,43,7037162945
+AVX512 Load,ls_alloc_mab_count,44,7044923461
+AVX512 Load,ls_alloc_mab_count,45,7045640147
+AVX512 Load,ls_alloc_mab_count,46,7043995223
+AVX512 Load,ls_alloc_mab_count,47,7040093692
+AVX512 Load,ls_alloc_mab_count,48,7042030909
+AVX512 Load,ls_alloc_mab_count,49,7044846517
+AVX512 Load,ls_alloc_mab_count,50,7041063994
+AVX512 Load,ls_alloc_mab_count,51,7043380124
+AVX512 Load,ls_alloc_mab_count,52,7041663737
+AVX512 Load,ls_alloc_mab_count,53,7045132004
+AVX512 Load,ls_alloc_mab_count,54,7043757934
+AVX512 Load,ls_alloc_mab_count,55,7042384612
+AVX512 Load,ls_alloc_mab_count,56,7045710186
+AVX512 Load,ls_alloc_mab_count,57,7044818934
+AVX512 Load,ls_alloc_mab_count,58,7045314858
+AVX512 Load,ls_alloc_mab_count,59,7044367752
+AVX512 Load,ls_alloc_mab_count,60,7039988455
+AVX512 Load,ls_alloc_mab_count,61,7043023730
+AVX512 Load,ls_alloc_mab_count,62,7039450996
+AVX512 Load,ls_alloc_mab_count,63,7042739761
+AVX512 Load,ls_alloc_mab_count,64,7044641425
+AVX512 Load,ls_alloc_mab_count,65,7039289611
+AVX512 Load,ls_alloc_mab_count,66,7041695453
+AVX512 Load,ls_alloc_mab_count,67,7039671682
+AVX512 Load,ls_alloc_mab_count,68,7041995498
+AVX512 Load,ls_alloc_mab_count,69,7072020509
+AVX512 Load,ls_alloc_mab_count,70,7204692537
+AVX512 Load,ls_alloc_mab_count,71,7156004743
+AVX512 Load,ls_alloc_mab_count,72,7189244485
+AVX512 Load,ls_alloc_mab_count,73,6578768521
+AVX512 Load,ls_alloc_mab_count,74,32841062
+AVX512 Load,ls_mab_alloc.all_allocations,1,10530590
+AVX512 Load,ls_mab_alloc.all_allocations,2,22593229
+AVX512 Load,ls_mab_alloc.all_allocations,3,22696385
+AVX512 Load,ls_mab_alloc.all_allocations,4,22595447
+AVX512 Load,ls_mab_alloc.all_allocations,5,22691406
+AVX512 Load,ls_mab_alloc.all_allocations,6,22699744
+AVX512 Load,ls_mab_alloc.all_allocations,7,22592021
+AVX512 Load,ls_mab_alloc.all_allocations,8,22695563
+AVX512 Load,ls_mab_alloc.all_allocations,9,22592926
+AVX512 Load,ls_mab_alloc.all_allocations,10,22686053
+AVX512 Load,ls_mab_alloc.all_allocations,11,22697507
+AVX512 Load,ls_mab_alloc.all_allocations,12,22594313
+AVX512 Load,ls_mab_alloc.all_allocations,13,22700275
+AVX512 Load,ls_mab_alloc.all_allocations,14,22594401
+AVX512 Load,ls_mab_alloc.all_allocations,15,22703675
+AVX512 Load,ls_mab_alloc.all_allocations,16,22685845
+AVX512 Load,ls_mab_alloc.all_allocations,17,22587749
+AVX512 Load,ls_mab_alloc.all_allocations,18,22683345
+AVX512 Load,ls_mab_alloc.all_allocations,19,22603228
+AVX512 Load,ls_mab_alloc.all_allocations,20,22690039
+AVX512 Load,ls_mab_alloc.all_allocations,21,22684259
+AVX512 Load,ls_mab_alloc.all_allocations,22,22596658
+AVX512 Load,ls_mab_alloc.all_allocations,23,22692414
+AVX512 Load,ls_mab_alloc.all_allocations,24,22590902
+AVX512 Load,ls_mab_alloc.all_allocations,25,22698893
+AVX512 Load,ls_mab_alloc.all_allocations,26,22664650
+AVX512 Load,ls_mab_alloc.all_allocations,27,22596786
+AVX512 Load,ls_mab_alloc.all_allocations,28,22688867
+AVX512 Load,ls_mab_alloc.all_allocations,29,22590682
+AVX512 Load,ls_mab_alloc.all_allocations,30,22697656
+AVX512 Load,ls_mab_alloc.all_allocations,31,22572521
+AVX512 Load,ls_mab_alloc.all_allocations,32,22680723
+AVX512 Load,ls_mab_alloc.all_allocations,33,22687185
+AVX512 Load,ls_mab_alloc.all_allocations,34,22601299
+AVX512 Load,ls_mab_alloc.all_allocations,35,22693390
+AVX512 Load,ls_mab_alloc.all_allocations,36,22596235
+AVX512 Load,ls_mab_alloc.all_allocations,37,22693559
+AVX512 Load,ls_mab_alloc.all_allocations,38,22690913
+AVX512 Load,ls_mab_alloc.all_allocations,39,22601418
+AVX512 Load,ls_mab_alloc.all_allocations,40,22696724
+AVX512 Load,ls_mab_alloc.all_allocations,41,22586667
+AVX512 Load,ls_mab_alloc.all_allocations,42,22678827
+AVX512 Load,ls_mab_alloc.all_allocations,43,22685358
+AVX512 Load,ls_mab_alloc.all_allocations,44,22590150
+AVX512 Load,ls_mab_alloc.all_allocations,45,22700113
+AVX512 Load,ls_mab_alloc.all_allocations,46,22595976
+AVX512 Load,ls_mab_alloc.all_allocations,47,22698024
+AVX512 Load,ls_mab_alloc.all_allocations,48,22696148
+AVX512 Load,ls_mab_alloc.all_allocations,49,22582691
+AVX512 Load,ls_mab_alloc.all_allocations,50,22692714
+AVX512 Load,ls_mab_alloc.all_allocations,51,22583253
+AVX512 Load,ls_mab_alloc.all_allocations,52,22697232
+AVX512 Load,ls_mab_alloc.all_allocations,53,22616016
+AVX512 Load,ls_mab_alloc.all_allocations,54,22670472
+AVX512 Load,ls_mab_alloc.all_allocations,55,22676181
+AVX512 Load,ls_mab_alloc.all_allocations,56,22593967
+AVX512 Load,ls_mab_alloc.all_allocations,57,22703334
+AVX512 Load,ls_mab_alloc.all_allocations,58,22662226
+AVX512 Load,ls_mab_alloc.all_allocations,59,22632669
+AVX512 Load,ls_mab_alloc.all_allocations,60,22689159
+AVX512 Load,ls_mab_alloc.all_allocations,61,22596999
+AVX512 Load,ls_mab_alloc.all_allocations,62,22706112
+AVX512 Load,ls_mab_alloc.all_allocations,63,22695171
+AVX512 Load,ls_mab_alloc.all_allocations,64,22589833
+AVX512 Load,ls_mab_alloc.all_allocations,65,22685871
+AVX512 Load,ls_mab_alloc.all_allocations,66,22591457
+AVX512 Load,ls_mab_alloc.all_allocations,67,22686675
+AVX512 Load,ls_mab_alloc.all_allocations,68,22649638
+AVX512 Load,ls_mab_alloc.all_allocations,69,21738870
+AVX512 Load,ls_mab_alloc.all_allocations,70,17345831
+AVX512 Load,ls_mab_alloc.all_allocations,71,18865124
+AVX512 Load,ls_mab_alloc.all_allocations,72,17952377
+AVX512 Load,ls_mab_alloc.all_allocations,73,16692232
+AVX512 Load,ls_mab_alloc.all_allocations,74,2024747
+AVX512 Load,cycles,1,380184121
+AVX512 Load,cycles,2,380548417
+AVX512 Load,cycles,3,380574292
+AVX512 Load,cycles,4,380577921
+AVX512 Load,cycles,5,380585033
+AVX512 Load,cycles,6,380738927
+AVX512 Load,cycles,7,380579103
+AVX512 Load,cycles,8,380576665
+AVX512 Load,cycles,9,380595910
+AVX512 Load,cycles,10,380581892
+AVX512 Load,cycles,11,380594996
+AVX512 Load,cycles,12,380587101
+AVX512 Load,cycles,13,380579389
+AVX512 Load,cycles,14,380584300
+AVX512 Load,cycles,15,380710643
+AVX512 Load,cycles,16,380583758
+AVX512 Load,cycles,17,380583526
+AVX512 Load,cycles,18,380581511
+AVX512 Load,cycles,19,380580015
+AVX512 Load,cycles,20,380586807
+AVX512 Load,cycles,21,380588181
+AVX512 Load,cycles,22,380552665
+AVX512 Load,cycles,23,380579465
+AVX512 Load,cycles,24,380651971
+AVX512 Load,cycles,25,380662849
+AVX512 Load,cycles,26,380465235
+AVX512 Load,cycles,27,380580604
+AVX512 Load,cycles,28,380572271
+AVX512 Load,cycles,29,380581165
+AVX512 Load,cycles,30,380573351
+AVX512 Load,cycles,31,380611573
+AVX512 Load,cycles,32,380533720
+AVX512 Load,cycles,33,380679226
+AVX512 Load,cycles,34,380589973
+AVX512 Load,cycles,35,380483574
+AVX512 Load,cycles,36,380592890
+AVX512 Load,cycles,37,380588870
+AVX512 Load,cycles,38,380578232
+AVX512 Load,cycles,39,380573736
+AVX512 Load,cycles,40,380581449
+AVX512 Load,cycles,41,380497284
+AVX512 Load,cycles,42,380577201
+AVX512 Load,cycles,43,380550688
+AVX512 Load,cycles,44,380591188
+AVX512 Load,cycles,45,380574882
+AVX512 Load,cycles,46,380585353
+AVX512 Load,cycles,47,380579071
+AVX512 Load,cycles,48,380592768
+AVX512 Load,cycles,49,380582539
+AVX512 Load,cycles,50,380570851
+AVX512 Load,cycles,51,380586112
+AVX512 Load,cycles,52,380691970
+AVX512 Load,cycles,53,380583388
+AVX512 Load,cycles,54,380590376
+AVX512 Load,cycles,55,380577540
+AVX512 Load,cycles,56,380579077
+AVX512 Load,cycles,57,380567133
+AVX512 Load,cycles,58,380589975
+AVX512 Load,cycles,59,380581839
+AVX512 Load,cycles,60,380578225
+AVX512 Load,cycles,61,380654511
+AVX512 Load,cycles,62,380558718
+AVX512 Load,cycles,63,380681296
+AVX512 Load,cycles,64,380592325
+AVX512 Load,cycles,65,380502702
+AVX512 Load,cycles,66,380445609
+AVX512 Load,cycles,67,380570794
+AVX512 Load,cycles,68,380589126
+AVX512 Load,cycles,69,380590530
+AVX512 Load,cycles,70,380721783
+AVX512 Load,cycles,71,380587015
+AVX512 Load,cycles,72,380579093
+AVX512 Load,cycles,73,380384702
+AVX512 Load,cycles,74,62903416
+AVX512 Load,ls_sw_pf_dc_fills.all,1,25076
+AVX512 Load,ls_sw_pf_dc_fills.all,2,13287
+AVX512 Load,ls_sw_pf_dc_fills.all,3,13322
+AVX512 Load,ls_sw_pf_dc_fills.all,4,13220
+AVX512 Load,ls_sw_pf_dc_fills.all,5,13124
+AVX512 Load,ls_sw_pf_dc_fills.all,6,13189
+AVX512 Load,ls_sw_pf_dc_fills.all,7,12954
+AVX512 Load,ls_sw_pf_dc_fills.all,8,13315
+AVX512 Load,ls_sw_pf_dc_fills.all,9,13237
+AVX512 Load,ls_sw_pf_dc_fills.all,10,13208
+AVX512 Load,ls_sw_pf_dc_fills.all,11,13340
+AVX512 Load,ls_sw_pf_dc_fills.all,12,12957
+AVX512 Load,ls_sw_pf_dc_fills.all,13,12943
+AVX512 Load,ls_sw_pf_dc_fills.all,14,12841
+AVX512 Load,ls_sw_pf_dc_fills.all,15,13223
+AVX512 Load,ls_sw_pf_dc_fills.all,16,13505
+AVX512 Load,ls_sw_pf_dc_fills.all,17,13135
+AVX512 Load,ls_sw_pf_dc_fills.all,18,13511
+AVX512 Load,ls_sw_pf_dc_fills.all,19,13232
+AVX512 Load,ls_sw_pf_dc_fills.all,20,13087
+AVX512 Load,ls_sw_pf_dc_fills.all,21,13200
+AVX512 Load,ls_sw_pf_dc_fills.all,22,13083
+AVX512 Load,ls_sw_pf_dc_fills.all,23,13132
+AVX512 Load,ls_sw_pf_dc_fills.all,24,13062
+AVX512 Load,ls_sw_pf_dc_fills.all,25,13462
+AVX512 Load,ls_sw_pf_dc_fills.all,26,13416
+AVX512 Load,ls_sw_pf_dc_fills.all,27,12956
+AVX512 Load,ls_sw_pf_dc_fills.all,28,13079
+AVX512 Load,ls_sw_pf_dc_fills.all,29,13144
+AVX512 Load,ls_sw_pf_dc_fills.all,30,13442
+AVX512 Load,ls_sw_pf_dc_fills.all,31,12689
+AVX512 Load,ls_sw_pf_dc_fills.all,32,13408
+AVX512 Load,ls_sw_pf_dc_fills.all,33,13228
+AVX512 Load,ls_sw_pf_dc_fills.all,34,13157
+AVX512 Load,ls_sw_pf_dc_fills.all,35,13154
+AVX512 Load,ls_sw_pf_dc_fills.all,36,12988
+AVX512 Load,ls_sw_pf_dc_fills.all,37,13222
+AVX512 Load,ls_sw_pf_dc_fills.all,38,13291
+AVX512 Load,ls_sw_pf_dc_fills.all,39,13069
+AVX512 Load,ls_sw_pf_dc_fills.all,40,13031
+AVX512 Load,ls_sw_pf_dc_fills.all,41,13126
+AVX512 Load,ls_sw_pf_dc_fills.all,42,13379
+AVX512 Load,ls_sw_pf_dc_fills.all,43,12930
+AVX512 Load,ls_sw_pf_dc_fills.all,44,13072
+AVX512 Load,ls_sw_pf_dc_fills.all,45,13768
+AVX512 Load,ls_sw_pf_dc_fills.all,46,13027
+AVX512 Load,ls_sw_pf_dc_fills.all,47,13108
+AVX512 Load,ls_sw_pf_dc_fills.all,48,13186
+AVX512 Load,ls_sw_pf_dc_fills.all,49,12995
+AVX512 Load,ls_sw_pf_dc_fills.all,50,13209
+AVX512 Load,ls_sw_pf_dc_fills.all,51,13184
+AVX512 Load,ls_sw_pf_dc_fills.all,52,13254
+AVX512 Load,ls_sw_pf_dc_fills.all,53,13141
+AVX512 Load,ls_sw_pf_dc_fills.all,54,13202
+AVX512 Load,ls_sw_pf_dc_fills.all,55,13408
+AVX512 Load,ls_sw_pf_dc_fills.all,56,12969
+AVX512 Load,ls_sw_pf_dc_fills.all,57,13502
+AVX512 Load,ls_sw_pf_dc_fills.all,58,13544
+AVX512 Load,ls_sw_pf_dc_fills.all,59,13052
+AVX512 Load,ls_sw_pf_dc_fills.all,60,13133
+AVX512 Load,ls_sw_pf_dc_fills.all,61,12923
+AVX512 Load,ls_sw_pf_dc_fills.all,62,13252
+AVX512 Load,ls_sw_pf_dc_fills.all,63,13248
+AVX512 Load,ls_sw_pf_dc_fills.all,64,13108
+AVX512 Load,ls_sw_pf_dc_fills.all,65,13143
+AVX512 Load,ls_sw_pf_dc_fills.all,66,13318
+AVX512 Load,ls_sw_pf_dc_fills.all,67,13126
+AVX512 Load,ls_sw_pf_dc_fills.all,68,13249
+AVX512 Load,ls_sw_pf_dc_fills.all,69,10772
+AVX512 Load,ls_sw_pf_dc_fills.all,70,2
+AVX512 Load,ls_sw_pf_dc_fills.all,71,4032
+AVX512 Load,ls_sw_pf_dc_fills.all,72,1488
+AVX512 Load,ls_sw_pf_dc_fills.all,73,27
+AVX512 Load,ls_sw_pf_dc_fills.all,74,2
+Prefetch T0,ls_alloc_mab_count,1,1630367104
+Prefetch T0,ls_alloc_mab_count,2,6836683578
+Prefetch T0,ls_alloc_mab_count,3,6835333492
+Prefetch T0,ls_alloc_mab_count,4,6837586387
+Prefetch T0,ls_alloc_mab_count,5,6835476873
+Prefetch T0,ls_alloc_mab_count,6,6840012958
+Prefetch T0,ls_alloc_mab_count,7,6832186023
+Prefetch T0,ls_alloc_mab_count,8,6831608921
+Prefetch T0,ls_alloc_mab_count,9,6837805304
+Prefetch T0,ls_alloc_mab_count,10,6831724901
+Prefetch T0,ls_alloc_mab_count,11,6828335213
+Prefetch T0,ls_alloc_mab_count,12,6831354785
+Prefetch T0,ls_alloc_mab_count,13,6832919087
+Prefetch T0,ls_alloc_mab_count,14,7233691099
+Prefetch T0,ls_alloc_mab_count,15,7463155247
+Prefetch T0,ls_alloc_mab_count,16,7461353537
+Prefetch T0,ls_alloc_mab_count,17,7459948961
+Prefetch T0,ls_alloc_mab_count,18,7457970913
+Prefetch T0,ls_alloc_mab_count,19,7458853461
+Prefetch T0,ls_alloc_mab_count,20,7460320409
+Prefetch T0,ls_alloc_mab_count,21,825131657
+Prefetch T0,ls_mab_alloc.all_allocations,1,11980011
+Prefetch T0,ls_mab_alloc.all_allocations,2,38756105
+Prefetch T0,ls_mab_alloc.all_allocations,3,38727880
+Prefetch T0,ls_mab_alloc.all_allocations,4,38746527
+Prefetch T0,ls_mab_alloc.all_allocations,5,38732912
+Prefetch T0,ls_mab_alloc.all_allocations,6,38883765
+Prefetch T0,ls_mab_alloc.all_allocations,7,38735848
+Prefetch T0,ls_mab_alloc.all_allocations,8,38744374
+Prefetch T0,ls_mab_alloc.all_allocations,9,38865458
+Prefetch T0,ls_mab_alloc.all_allocations,10,38723068
+Prefetch T0,ls_mab_alloc.all_allocations,11,38565496
+Prefetch T0,ls_mab_alloc.all_allocations,12,38731955
+Prefetch T0,ls_mab_alloc.all_allocations,13,38706477
+Prefetch T0,ls_mab_alloc.all_allocations,14,29410758
+Prefetch T0,ls_mab_alloc.all_allocations,15,24223945
+Prefetch T0,ls_mab_alloc.all_allocations,16,24215273
+Prefetch T0,ls_mab_alloc.all_allocations,17,24213413
+Prefetch T0,ls_mab_alloc.all_allocations,18,24209469
+Prefetch T0,ls_mab_alloc.all_allocations,19,24211642
+Prefetch T0,ls_mab_alloc.all_allocations,20,24224812
+Prefetch T0,ls_mab_alloc.all_allocations,21,5365179
+Prefetch T0,cycles,1,380361609
+Prefetch T0,cycles,2,380573595
+Prefetch T0,cycles,3,380597979
+Prefetch T0,cycles,4,380596423
+Prefetch T0,cycles,5,380600976
+Prefetch T0,cycles,6,380681081
+Prefetch T0,cycles,7,380594461
+Prefetch T0,cycles,8,380580349
+Prefetch T0,cycles,9,380699002
+Prefetch T0,cycles,10,380592270
+Prefetch T0,cycles,11,380607046
+Prefetch T0,cycles,12,380603859
+Prefetch T0,cycles,13,380532123
+Prefetch T0,cycles,14,380571426
+Prefetch T0,cycles,15,380707321
+Prefetch T0,cycles,16,380609692
+Prefetch T0,cycles,17,380573808
+Prefetch T0,cycles,18,380489462
+Prefetch T0,cycles,19,380559759
+Prefetch T0,cycles,20,380616569
+Prefetch T0,cycles,21,137032125
+Prefetch T0,ls_sw_pf_dc_fills.all,1,2297920
+Prefetch T0,ls_sw_pf_dc_fills.all,2,10681861
+Prefetch T0,ls_sw_pf_dc_fills.all,3,10691342
+Prefetch T0,ls_sw_pf_dc_fills.all,4,10704583
+Prefetch T0,ls_sw_pf_dc_fills.all,5,10693724
+Prefetch T0,ls_sw_pf_dc_fills.all,6,10699143
+Prefetch T0,ls_sw_pf_dc_fills.all,7,10689748
+Prefetch T0,ls_sw_pf_dc_fills.all,8,10702613
+Prefetch T0,ls_sw_pf_dc_fills.all,9,10693589
+Prefetch T0,ls_sw_pf_dc_fills.all,10,10677241
+Prefetch T0,ls_sw_pf_dc_fills.all,11,10658567
+Prefetch T0,ls_sw_pf_dc_fills.all,12,10689923
+Prefetch T0,ls_sw_pf_dc_fills.all,13,10674240
+Prefetch T0,ls_sw_pf_dc_fills.all,14,13648586
+Prefetch T0,ls_sw_pf_dc_fills.all,15,15323107
+Prefetch T0,ls_sw_pf_dc_fills.all,16,15318910
+Prefetch T0,ls_sw_pf_dc_fills.all,17,15317177
+Prefetch T0,ls_sw_pf_dc_fills.all,18,15316050
+Prefetch T0,ls_sw_pf_dc_fills.all,19,15315678
+Prefetch T0,ls_sw_pf_dc_fills.all,20,15319930
+Prefetch T0,ls_sw_pf_dc_fills.all,21,1579728
+Prefetch T1,ls_alloc_mab_count,1,1658805883
+Prefetch T1,ls_alloc_mab_count,2,5301272272
+Prefetch T1,ls_alloc_mab_count,3,5295281846
+Prefetch T1,ls_alloc_mab_count,4,5318718216
+Prefetch T1,ls_alloc_mab_count,5,5299762781
+Prefetch T1,ls_alloc_mab_count,6,5302245673
+Prefetch T1,ls_alloc_mab_count,7,5294685159
+Prefetch T1,ls_alloc_mab_count,8,5309109033
+Prefetch T1,ls_alloc_mab_count,9,5291097649
+Prefetch T1,ls_alloc_mab_count,10,3368188836
+Prefetch T1,ls_mab_alloc.all_allocations,1,45941774
+Prefetch T1,ls_mab_alloc.all_allocations,2,148551869
+Prefetch T1,ls_mab_alloc.all_allocations,3,148963826
+Prefetch T1,ls_mab_alloc.all_allocations,4,148613235
+Prefetch T1,ls_mab_alloc.all_allocations,5,148848385
+Prefetch T1,ls_mab_alloc.all_allocations,6,149081748
+Prefetch T1,ls_mab_alloc.all_allocations,7,149080066
+Prefetch T1,ls_mab_alloc.all_allocations,8,148613561
+Prefetch T1,ls_mab_alloc.all_allocations,9,181623590
+Prefetch T1,ls_mab_alloc.all_allocations,10,181949600
+Prefetch T1,cycles,1,380260026
+Prefetch T1,cycles,2,380682283
+Prefetch T1,cycles,3,380645573
+Prefetch T1,cycles,4,380639189
+Prefetch T1,cycles,5,380627091
+Prefetch T1,cycles,6,380691905
+Prefetch T1,cycles,7,380657256
+Prefetch T1,cycles,8,380598163
+Prefetch T1,cycles,9,380611625
+Prefetch T1,cycles,10,337714312
+Prefetch T1,ls_sw_pf_dc_fills.all,1,45605
+Prefetch T1,ls_sw_pf_dc_fills.all,2,78451
+Prefetch T1,ls_sw_pf_dc_fills.all,3,79001
+Prefetch T1,ls_sw_pf_dc_fills.all,4,78660
+Prefetch T1,ls_sw_pf_dc_fills.all,5,77423
+Prefetch T1,ls_sw_pf_dc_fills.all,6,78236
+Prefetch T1,ls_sw_pf_dc_fills.all,7,78749
+Prefetch T1,ls_sw_pf_dc_fills.all,8,78812
+Prefetch T1,ls_sw_pf_dc_fills.all,9,60288
+Prefetch T1,ls_sw_pf_dc_fills.all,10,26
+Prefetch T2,ls_alloc_mab_count,1,3493046534
+Prefetch T2,ls_alloc_mab_count,2,5308410331
+Prefetch T2,ls_alloc_mab_count,3,5296283838
+Prefetch T2,ls_alloc_mab_count,4,5305794490
+Prefetch T2,ls_alloc_mab_count,5,5313902861
+Prefetch T2,ls_alloc_mab_count,6,5305435782
+Prefetch T2,ls_alloc_mab_count,7,5299344943
+Prefetch T2,ls_alloc_mab_count,8,5304905851
+Prefetch T2,ls_alloc_mab_count,9,5244591132
+Prefetch T2,ls_alloc_mab_count,10,319283076
+Prefetch T2,ls_mab_alloc.all_allocations,1,97159851
+Prefetch T2,ls_mab_alloc.all_allocations,2,148976212
+Prefetch T2,ls_mab_alloc.all_allocations,3,149282066
+Prefetch T2,ls_mab_alloc.all_allocations,4,148969207
+Prefetch T2,ls_mab_alloc.all_allocations,5,148639264
+Prefetch T2,ls_mab_alloc.all_allocations,6,149022054
+Prefetch T2,ls_mab_alloc.all_allocations,7,149055088
+Prefetch T2,ls_mab_alloc.all_allocations,8,149105646
+Prefetch T2,ls_mab_alloc.all_allocations,9,276476818
+Prefetch T2,ls_mab_alloc.all_allocations,10,17138963
+Prefetch T2,cycles,1,380468700
+Prefetch T2,cycles,2,380584546
+Prefetch T2,cycles,3,380617642
+Prefetch T2,cycles,4,380619836
+Prefetch T2,cycles,5,380599894
+Prefetch T2,cycles,6,380709982
+Prefetch T2,cycles,7,380568105
+Prefetch T2,cycles,8,380623621
+Prefetch T2,cycles,9,380606205
+Prefetch T2,cycles,10,116823911
+Prefetch T2,ls_sw_pf_dc_fills.all,1,61455
+Prefetch T2,ls_sw_pf_dc_fills.all,2,78432
+Prefetch T2,ls_sw_pf_dc_fills.all,3,78206
+Prefetch T2,ls_sw_pf_dc_fills.all,4,78076
+Prefetch T2,ls_sw_pf_dc_fills.all,5,78404
+Prefetch T2,ls_sw_pf_dc_fills.all,6,78156
+Prefetch T2,ls_sw_pf_dc_fills.all,7,78951
+Prefetch T2,ls_sw_pf_dc_fills.all,8,79284
+Prefetch T2,ls_sw_pf_dc_fills.all,9,3905
+Prefetch T2,ls_sw_pf_dc_fills.all,10,27
+Prefetch NTA,ls_alloc_mab_count,1,5175103022
+Prefetch NTA,ls_alloc_mab_count,2,6796046789
+Prefetch NTA,ls_alloc_mab_count,3,6796853708
+Prefetch NTA,ls_alloc_mab_count,4,6800886245
+Prefetch NTA,ls_alloc_mab_count,5,6803294640
+Prefetch NTA,ls_alloc_mab_count,6,6812617088
+Prefetch NTA,ls_alloc_mab_count,7,6815449764
+Prefetch NTA,ls_alloc_mab_count,8,6803372759
+Prefetch NTA,ls_alloc_mab_count,9,6792257672
+Prefetch NTA,ls_alloc_mab_count,10,6816439241
+Prefetch NTA,ls_alloc_mab_count,11,6804231513
+Prefetch NTA,ls_alloc_mab_count,12,6811632824
+Prefetch NTA,ls_alloc_mab_count,13,6802077215
+Prefetch NTA,ls_alloc_mab_count,14,6793531628
+Prefetch NTA,ls_alloc_mab_count,15,6803765495
+Prefetch NTA,ls_alloc_mab_count,16,6783847027
+Prefetch NTA,ls_alloc_mab_count,17,6786480389
+Prefetch NTA,ls_alloc_mab_count,18,7375506726
+Prefetch NTA,ls_alloc_mab_count,19,7465477798
+Prefetch NTA,ls_alloc_mab_count,20,7466641047
+Prefetch NTA,ls_alloc_mab_count,21,4422077215
+Prefetch NTA,ls_mab_alloc.all_allocations,1,30658601
+Prefetch NTA,ls_mab_alloc.all_allocations,2,38972121
+Prefetch NTA,ls_mab_alloc.all_allocations,3,38711824
+Prefetch NTA,ls_mab_alloc.all_allocations,4,39185003
+Prefetch NTA,ls_mab_alloc.all_allocations,5,39062195
+Prefetch NTA,ls_mab_alloc.all_allocations,6,39134786
+Prefetch NTA,ls_mab_alloc.all_allocations,7,39268988
+Prefetch NTA,ls_mab_alloc.all_allocations,8,39071584
+Prefetch NTA,ls_mab_alloc.all_allocations,9,38633672
+Prefetch NTA,ls_mab_alloc.all_allocations,10,39419303
+Prefetch NTA,ls_mab_alloc.all_allocations,11,38627942
+Prefetch NTA,ls_mab_alloc.all_allocations,12,39360306
+Prefetch NTA,ls_mab_alloc.all_allocations,13,38873781
+Prefetch NTA,ls_mab_alloc.all_allocations,14,38692562
+Prefetch NTA,ls_mab_alloc.all_allocations,15,39111140
+Prefetch NTA,ls_mab_alloc.all_allocations,16,38825839
+Prefetch NTA,ls_mab_alloc.all_allocations,17,38673875
+Prefetch NTA,ls_mab_alloc.all_allocations,18,26228103
+Prefetch NTA,ls_mab_alloc.all_allocations,19,24425295
+Prefetch NTA,ls_mab_alloc.all_allocations,20,25065660
+Prefetch NTA,ls_mab_alloc.all_allocations,21,17560343
+Prefetch NTA,cycles,1,380382817
+Prefetch NTA,cycles,2,380599754
+Prefetch NTA,cycles,3,380592689
+Prefetch NTA,cycles,4,380608144
+Prefetch NTA,cycles,5,380602649
+Prefetch NTA,cycles,6,380680154
+Prefetch NTA,cycles,7,380620070
+Prefetch NTA,cycles,8,380561655
+Prefetch NTA,cycles,9,380612767
+Prefetch NTA,cycles,10,380682166
+Prefetch NTA,cycles,11,380623237
+Prefetch NTA,cycles,12,380605523
+Prefetch NTA,cycles,13,380540737
+Prefetch NTA,cycles,14,380611314
+Prefetch NTA,cycles,15,380764341
+Prefetch NTA,cycles,16,380615712
+Prefetch NTA,cycles,17,380617943
+Prefetch NTA,cycles,18,380616834
+Prefetch NTA,cycles,19,380603530
+Prefetch NTA,cycles,20,380602798
+Prefetch NTA,cycles,21,319791176
+Prefetch NTA,ls_sw_pf_dc_fills.all,1,8178890
+Prefetch NTA,ls_sw_pf_dc_fills.all,2,10773367
+Prefetch NTA,ls_sw_pf_dc_fills.all,3,10751942
+Prefetch NTA,ls_sw_pf_dc_fills.all,4,10851882
+Prefetch NTA,ls_sw_pf_dc_fills.all,5,10824729
+Prefetch NTA,ls_sw_pf_dc_fills.all,6,10846219
+Prefetch NTA,ls_sw_pf_dc_fills.all,7,10878264
+Prefetch NTA,ls_sw_pf_dc_fills.all,8,10824025
+Prefetch NTA,ls_sw_pf_dc_fills.all,9,10696871
+Prefetch NTA,ls_sw_pf_dc_fills.all,10,10921708
+Prefetch NTA,ls_sw_pf_dc_fills.all,11,10714298
+Prefetch NTA,ls_sw_pf_dc_fills.all,12,10898972
+Prefetch NTA,ls_sw_pf_dc_fills.all,13,10758338
+Prefetch NTA,ls_sw_pf_dc_fills.all,14,10727105
+Prefetch NTA,ls_sw_pf_dc_fills.all,15,10836887
+Prefetch NTA,ls_sw_pf_dc_fills.all,16,10740531
+Prefetch NTA,ls_sw_pf_dc_fills.all,17,10722932
+Prefetch NTA,ls_sw_pf_dc_fills.all,18,15155035
+Prefetch NTA,ls_sw_pf_dc_fills.all,19,15812170
+Prefetch NTA,ls_sw_pf_dc_fills.all,20,15832955
+Prefetch NTA,ls_sw_pf_dc_fills.all,21,9269295
