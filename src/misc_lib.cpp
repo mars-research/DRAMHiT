@@ -423,6 +423,9 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
 #endif
       kmer_ht = new CAS23HashTable<KVType, ItemQueue>(sz);
       break;
+    case DLHT_HT:
+      kmer_ht = new DlhtHashTable<KVType, ItemQueue>(sz);
+      break;
 #ifdef GROWT
     case GROWHT:
       kmer_ht = new GrowtHashTable(sz);
