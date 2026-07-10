@@ -79,188 +79,16 @@ class DlhtHashTable : public BaseHashTable {
     }
   }
 
-  void prefetch_queue(QueueType qtype) override {}
-
-  void insert_noprefetch(const void *data, collector_type *collector) override {
-#ifdef LATENCY_COLLECTION
-    const auto timer_start = collector->sync_start();
-#endif
-
-    uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash & (this->capacity - 1);  // modulo
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
-
-    KVQ *elem = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
-
-    for (auto i = 0u; i < this->capacity; i++) {
-      KV *curr = &this->hashtable[idx];
-    retry:
-      if (curr->is_empty()) {
-        bool cas_res = curr->insert_cas(elem);
-        if (cas_res) {
-          break;
-        } else {
-          goto retry;
-        }
-      } else if (curr->compare_key(data)) {
-        curr->update_cas(elem);
-        break;
-      } else {
-        idx++;
-        idx = idx & (this->capacity - 1);
-      }
-    }
-
-#ifdef LATENCY_COLLECTION
-    collector->sync_end(timer_start);
-#endif
-  }
-
-  bool insert(const void *data) {
-    cout << "Not implemented!" << endl;
-    assert(false);
-    return false;
-  }
-
-  // insert a batch
   void insert_batch(const InsertFindArguments &kp,
                     collector_type *collector) override {
-    this->flush_if_needed(collector);
 
-    for (auto &data : kp) {
-      add_to_insert_queue(&data, collector);
-    }
-
-    this->flush_if_needed(collector);
-  }
-
-  // overridden function for insertion
-  void flush_if_needed(collector_type *collector) {
-    size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-    while (curr_queue_sz >= INS_FLUSH_THRESHOLD) {
-      __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
-      curr_queue_sz =
-          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-    }
-    return;
-  }
-
-  void flush_insert_queue(collector_type *collector) override {
-    size_t curr_queue_sz =
-        (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-
-    while (curr_queue_sz != 0) {
-      __insert_one(&this->insert_queue[this->ins_tail], collector);
-      if (++this->ins_tail >= PREFETCH_QUEUE_SIZE) this->ins_tail = 0;
-      curr_queue_sz =
-          (this->ins_head - this->ins_tail) & (PREFETCH_QUEUE_SIZE - 1);
-    }
-  }
-
-  size_t flush_find_queue(ValuePairs &vp, collector_type *collector) override {
-    size_t curr_queue_sz =
-        (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
-
-    while ((curr_queue_sz != 0) && (vp.first < config.batch_len)) {
-      __find_one(&this->find_queue[this->find_tail], vp, collector);
-      if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
-      curr_queue_sz =
-          (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
-    }
-
-    return curr_queue_sz;
-  }
-
-  void flush_if_needed(ValuePairs &vp, collector_type *collector) {
-    size_t curr_queue_sz =
-        (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
-
-    while ((curr_queue_sz > FLUSH_THRESHOLD) && (vp.first < config.batch_len)) {
-      __find_one(&this->find_queue[this->find_tail], vp, collector);
-      if (++this->find_tail >= PREFETCH_FIND_QUEUE_SIZE) this->find_tail = 0;
-      curr_queue_sz =
-          (this->find_head - this->find_tail) & (PREFETCH_FIND_QUEUE_SIZE - 1);
-    }
-    return;
-  }
+                      //TODO
+                    }
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
-    this->flush_if_needed(values, collector);
-
-    for (auto &data : kp) {
-      add_to_find_queue(&data, collector);
-    }
-
-    this->flush_if_needed(values, collector);
-  }
-
-  void *find_noprefetch(const void *data, collector_type *collector) override {
-#ifdef CALC_STATS
-    uint64_t distance_from_bucket = 0;
-#endif
-#ifdef LATENCY_COLLECTION
-    const auto timer_start = collector->sync_start();
-#endif
-
-    uint64_t hash = this->hash((const char *)data);
-    size_t idx = hash;
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
-    InsertFindArgument *item = const_cast<InsertFindArgument *>(
-        reinterpret_cast<const InsertFindArgument *>(data));
-    KV *curr;
-    bool found = false;
-
-    // printf("Thread %" PRIu64 ": Trying memcmp at: %" PRIu64 "\n",
-    // this->thread_id, idx);
-    for (auto i = 0u; i < this->capacity; i++) {
-      idx = idx & (this->capacity - 1);
-      curr = &this->hashtable[idx];
-
-      if (curr->is_empty()) {
-        found = false;
-        goto exit;
-      } else if (curr->compare_key(data)) {
-        found = true;
-        break;
-      }
-#ifdef CALC_STATS
-      distance_from_bucket++;
-#endif
-      idx++;
-    }
-
-#ifdef CALC_STATS
-    if (distance_from_bucket > this->max_distance_from_bucket) {
-      this->max_distance_from_bucket = distance_from_bucket;
-    }
-    this->sum_distance_from_bucket += distance_from_bucket;
-#endif
-  exit:
-#ifdef LATENCY_COLLECTION
-    collector->sync_end(timer_start);
-#endif
-
-    // return empty_element if nothing is found
-    if (!found) {
-      printf("key %" PRIu64 " not found at idx %" PRIu64 " | hash %" PRIu64
-             "\n",
-             item->key, idx, hash);
-      curr = nullptr;
-    }
-
-    return curr;
-  }
-
-  void display() const override {
-    for (size_t i = 0; i < this->capacity; i++) {
-      if (!this->hashtable[i].is_empty()) {
-        cout << this->hashtable[i] << endl;
-      }
-    }
-  }
+                    //TODO
+                  }
 
   size_t get_fill() const override {
     size_t count = 0;
@@ -270,6 +98,32 @@ class DlhtHashTable : public BaseHashTable {
       }
     }
     return count;
+  }
+
+  void flush_insert_queue(collector_type *collector) override {}
+  void prefetch_queue(QueueType qtype) override {}
+
+  void insert_noprefetch(const void *data, collector_type *collector) override {
+  }
+
+  bool insert(const void *data) {
+    cout << "Not implemented!" << endl;
+    assert(false);
+    return false;
+  }
+  size_t flush_find_queue(ValuePairs &vp, collector_type *collector) override {
+    size_t curr_queue_sz = 0;
+    return curr_queue_sz;
+  }
+
+  void *find_noprefetch(const void *data, collector_type *collector) override {}
+
+  void display() const override {
+    for (size_t i = 0; i < this->capacity; i++) {
+      if (!this->hashtable[i].is_empty()) {
+        cout << this->hashtable[i] << endl;
+      }
+    }
   }
 
   size_t get_capacity() const override { return this->capacity; }
@@ -334,140 +188,6 @@ class DlhtHashTable : public BaseHashTable {
         sizeof(this->hashtable[i & (this->capacity - 1)]));
   }
 
-  uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type *collector) {
-    // hashtable idx where the data should be found
-    size_t idx = q->idx;
-    uint64_t found = 0;
-
-  try_find:
-    KV *curr = &this->hashtable[idx];
-    uint64_t retry;
-    found = curr->find(q, &retry, vp);
-
-    if (retry) {
-      // insert back into queue, and prefetch next bucket.
-      // next bucket will be probed in the next run
-      idx++;
-      idx = idx & (this->capacity - 1);  // modulo
-      // |  CACHELINE_SIZE   |
-      // | 0 | 1 | . | . | n | n+1 ....
-      if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
-        goto try_find;
-      }
-
-      this->prefetch_read(idx);
-
-      this->find_queue[this->find_head].key = q->key;
-      this->find_queue[this->find_head].key_id = q->key_id;
-      this->find_queue[this->find_head].idx = idx;
-#ifdef LATENCY_COLLECTION
-      this->find_queue[this->find_head].timer_id = q->timer_id;
-#endif
-
-      this->find_head += 1;
-      this->find_head &= (PREFETCH_FIND_QUEUE_SIZE - 1);
-#ifdef CALC_STATS
-      this->num_reprobes++;
-#endif
-    } else {
-#ifdef LATENCY_COLLECTION
-      collector->end(q->timer_id);
-#endif
-    }
-
-    return found;
-  }
-
-  auto __find_one(KVQ *q, ValuePairs &vp, collector_type *collector) {
-    if (q->key == this->empty_item.get_key()) {
-      __find_empty(q, vp);
-    } else {
-      __find_branched(q, vp, collector);
-    }
-  }
-
-  /// Update or increment the empty key.
-  uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
-    if (empty_slot_exists_) {
-      vp.second[vp.first].id = q->key_id;
-      vp.second[vp.first].value = empty_slot_;
-      vp.first++;
-    }
-    return empty_slot_;
-  }
-
-  void __insert_branched(KVQ *q, collector_type *collector) {
-    // hashtable idx at which data is to be inserted
-    size_t idx = q->idx;
-  try_insert:
-    KV *curr = &this->hashtable[idx];
-
-    if (curr->kvpair.key == 0) {
-      if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
-        return;
-      }
-    }
-
-    if (curr->compare_key(q)) {
-      curr->update_cas(q);
-
-#ifdef LATENCY_COLLECTION
-      collector->end(q->timer_id);
-#endif
-      return;
-    }
-
-    // hashtable_mutexes[pidx].unlock();
-
-    /* insert back into queue, and prefetch next bucket.
-    next bucket will be probed in the next run
-    */
-    idx++;
-    idx = idx & (this->capacity - 1);  // modulo
-
-    // |  CACHELINE_SIZE   |
-    // | 0 | 1 | . | . | n | n+1 ....
-    if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
-      goto try_insert;  // FIXME: @David get rid of the goto for crying out loud
-    }
-
-    prefetch(idx);
-
-    this->insert_queue[this->ins_head].key = q->key;
-    this->insert_queue[this->ins_head].key_id = q->key_id;
-    this->insert_queue[this->ins_head].value = q->value;
-    this->insert_queue[this->ins_head].idx = idx;
-
-#ifdef LATENCY_COLLECTION
-    this->insert_queue[this->ins_head].timer_id = q->timer_id;
-#endif
-
-    ++this->ins_head;
-    this->ins_head &= (PREFETCH_QUEUE_SIZE - 1);
-
-    return;
-  }
-
-  void __insert_one(KVQ *q, collector_type *collector) {
-    if (q->key == this->empty_item.get_key()) {
-      __insert_empty(q);
-    } else {
-      __insert_branched(q, collector);
-    }
-  }
-
-  /// Update or increment the empty key.
-  void __insert_empty(KVQ *q) {
-    if constexpr (std::is_same_v<KV, Item>) {
-      empty_slot_ = q->value;
-    } else if constexpr (std::is_same_v<KV, Aggr_KV>) {
-      empty_slot_ += q->value;
-    } else {
-      assert(false && "Invalid template type");
-    }
-    empty_slot_exists_ = true;
-  }
-
   uint64_t read_hashtable_element(const void *data) override {
     PLOG_FATAL << "Not implemented";
     assert(false);
@@ -475,68 +195,6 @@ class DlhtHashTable : public BaseHashTable {
   }
 
   void clear() override { memset(this->hashtable, 0, capacity * sizeof(KV)); }
-
-  void add_to_insert_queue(void *data, collector_type *collector) {
-    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
-
-#ifdef LATENCY_COLLECTION
-    const auto timer = collector->start();
-#endif
-
-    uint64_t hash = this->hash((const char *)&key_data->key);
-    // Since we use fastrange for partitioned HT, use it
-    // for this HT too for a fair comparison
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
-    size_t idx = hash & (this->capacity - 1);
-
-    // std::cout << " -- Adding " << key_data->key  << " : " << key_data->value
-    // << endl;
-    this->prefetch(idx);
-
-    this->insert_queue[this->ins_head].idx = idx;
-    this->insert_queue[this->ins_head].key = key_data->key;
-    this->insert_queue[this->ins_head].value = key_data->value;
-    this->insert_queue[this->ins_head].key_id = key_data->id;
-
-#ifdef LATENCY_COLLECTION
-    this->insert_queue[this->ins_head].timer_id = timer;
-#endif
-
-#ifdef COMPARE_HASH
-    this->insert_queue[this->ins_head].key_hash = hash;
-#endif
-
-    this->ins_head++;
-    if (this->ins_head >= PREFETCH_QUEUE_SIZE) this->ins_head = 0;
-  }
-
-  void add_to_find_queue(void *data, collector_type *collector) {
-    InsertFindArgument *key_data = reinterpret_cast<InsertFindArgument *>(data);
-
-#ifdef LATENCY_COLLECTION
-    const auto timer = collector->start();
-#endif
-
-    uint64_t hash = this->hash((const char *)&key_data->key);
-    size_t idx = hash & (this->capacity - 1);
-
-    this->prefetch_read(idx);
-
-    this->find_queue[this->find_head].idx = idx;
-    this->find_queue[this->find_head].key = key_data->key;
-    this->find_queue[this->find_head].key_id = key_data->id;
-
-#ifdef LATENCY_COLLECTION
-    this->find_queue[this->find_head].timer_id = timer;
-#endif
-
-#ifdef COMPARE_HASH
-    this->queue[this->find_head].key_hash = hash;
-#endif
-
-    this->find_head++;
-    if (this->find_head >= PREFETCH_FIND_QUEUE_SIZE) this->find_head = 0;
-  }
 };
 
 /// Static variables
