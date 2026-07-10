@@ -1,0 +1,87 @@
+Execute Type: Prefetch NTA
+Attempting to allocate 8GB using 1GB Hugepages...
+  -> Success with 1GB Hugepages.
+#           time             counts unit events
+     0.100113029         15,924,232      ls_any_fills_from_sys.all                                             
+     0.100113029            252,401      ls_pref_instr_disp.all                                                
+     0.100113029         15,955,306      ls_mab_alloc.all_allocations                                          
+     0.100113029                  0      ls_hw_pf_dc_fills.all                                                 
+     0.200339138          9,946,046      ls_any_fills_from_sys.all                                             
+     0.200339138            156,489      ls_pref_instr_disp.all                                                
+     0.200339138         26,721,647      ls_mab_alloc.all_allocations                                          
+     0.200339138                  0      ls_hw_pf_dc_fills.all                                                 
+     0.300513257         10,055,474      ls_any_fills_from_sys.all                                             
+     0.300513257            158,264      ls_pref_instr_disp.all                                                
+     0.300513257         26,831,488      ls_mab_alloc.all_allocations                                          
+     0.300513257                  0      ls_hw_pf_dc_fills.all                                                 
+     0.400717446         14,534,960      ls_any_fills_from_sys.all                                             
+     0.400717446            228,878      ls_pref_instr_disp.all                                                
+     0.400717446         18,757,417      ls_mab_alloc.all_allocations                                          
+     0.400717446                  0      ls_hw_pf_dc_fills.all                                                 
+     0.500913145         11,587,521      ls_any_fills_from_sys.all                                             
+     0.500913145            182,533      ls_pref_instr_disp.all                                                
+     0.500913145         24,144,414      ls_mab_alloc.all_allocations                                          
+     0.500913145                  0      ls_hw_pf_dc_fills.all                                                 
+     0.601085414          9,976,037      ls_any_fills_from_sys.all                                             
+     0.601085414            157,151      ls_pref_instr_disp.all                                                
+     0.601085414         26,751,694      ls_mab_alloc.all_allocations                                          
+     0.601085414                  0      ls_hw_pf_dc_fills.all                                                 
+     0.701273033         12,080,134      ls_any_fills_from_sys.all                                             
+     0.701273033            190,391      ls_pref_instr_disp.all                                                
+     0.701273033         23,116,684      ls_mab_alloc.all_allocations                                          
+     0.701273033                  0      ls_hw_pf_dc_fills.all                                                 
+     0.801473223         14,025,156      ls_any_fills_from_sys.all                                             
+     0.801473223            221,074      ls_pref_instr_disp.all                                                
+     0.801473223         19,768,314      ls_mab_alloc.all_allocations                                          
+     0.801473223                  0      ls_hw_pf_dc_fills.all                                                 
+     0.901662582          9,928,176      ls_any_fills_from_sys.all                                             
+     0.901662582            156,471      ls_pref_instr_disp.all                                                
+     0.901662582         26,704,737      ls_mab_alloc.all_allocations                                          
+     0.901662582                  0      ls_hw_pf_dc_fills.all                                                 
+     1.001859711         10,099,023      ls_any_fills_from_sys.all                                             
+     1.001859711            159,255      ls_pref_instr_disp.all                                                
+     1.001859711         26,874,548      ls_mab_alloc.all_allocations                                          
+     1.001859711                  0      ls_hw_pf_dc_fills.all                                                 
+     1.102026690         16,048,159      ls_any_fills_from_sys.all                                             
+     1.102026690            253,001      ls_pref_instr_disp.all                                                
+     1.102026690         16,053,979      ls_mab_alloc.all_allocations                                          
+     1.102026690                  0      ls_hw_pf_dc_fills.all                                                 
+
+--- Setup ---
+Initializing workload for Thread 0 (Pinned to Logical CPU 1)...
+
+--- Executing Benchmark ---
+     1.202202619         10,623,178      ls_any_fills_from_sys.all                                             
+     1.202202619         92,694,454      ls_pref_instr_disp.all                                                
+     1.202202619         27,251,068      ls_mab_alloc.all_allocations                                          
+     1.202202619                  0      ls_hw_pf_dc_fills.all                                                 
+     1.302375948         16,862,739      ls_any_fills_from_sys.all                                             
+     1.302375948        154,526,457      ls_pref_instr_disp.all                                                
+     1.302375948         16,865,120      ls_mab_alloc.all_allocations                                          
+     1.302375948                  0      ls_hw_pf_dc_fills.all                                                 
+     1.402550667         16,871,663      ls_any_fills_from_sys.all                                             
+     1.402550667        154,687,411      ls_pref_instr_disp.all                                                
+     1.402550667         16,872,883      ls_mab_alloc.all_allocations                                          
+     1.402550667                  0      ls_hw_pf_dc_fills.all                                                 
+     1.502728026         16,874,908      ls_any_fills_from_sys.all                                             
+     1.502728026        154,547,576      ls_pref_instr_disp.all                                                
+     1.502728026         16,876,426      ls_mab_alloc.all_allocations                                          
+     1.502728026                  0      ls_hw_pf_dc_fills.all                                                 
+     1.602904205         16,863,947      ls_any_fills_from_sys.all                                             
+     1.602904205        154,477,729      ls_pref_instr_disp.all                                                
+     1.602904205         16,865,743      ls_mab_alloc.all_allocations                                          
+     1.602904205                  0      ls_hw_pf_dc_fills.all                                                 
+     1.703074824         16,863,930      ls_any_fills_from_sys.all                                             
+     1.703074824        154,681,763      ls_pref_instr_disp.all                                                
+     1.703074824         16,865,355      ls_mab_alloc.all_allocations                                          
+     1.703074824                  0      ls_hw_pf_dc_fills.all                                                 
+
+--- Results ---
+Thread 0 (CPU 1):
+  Total Cycles: 2106624683
+  Cycles/Op:    2.11
+  (Dummy: 0)
+     1.790702075         14,685,100      ls_any_fills_from_sys.all                                             
+     1.790702075        134,573,978      ls_pref_instr_disp.all                                                
+     1.790702075         14,687,117      ls_mab_alloc.all_allocations                                          
+     1.790702075                  0      ls_hw_pf_dc_fills.all                                                 

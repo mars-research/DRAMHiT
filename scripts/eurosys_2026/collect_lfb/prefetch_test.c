@@ -17,10 +17,40 @@
 #define MEMORY_SIZE (8ULL * 1024 * 1024 * 1024)
 #define NUM_CACHELINES (MEMORY_SIZE / CACHELINE_SIZE)
 
+// How many cachelines to look ahead for prefetching
+#define PREFETCH_AHEAD 16
+
 // Hugepage flags
 #ifndef MAP_HUGE_1GB
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 #endif
+
+// --- Macros to define indexing behavior based on compilation flags ---
+#if defined(RANDOM)
+    // state_var acts as a constant seed, creating a fast stateless hash of the integer 'i'
+    #define GET_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)(i)) & (NUM_CACHELINES - 1); \
+        (void)idx_var
+    #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)((i) + PREFETCH_AHEAD)) & (NUM_CACHELINES - 1); \
+        (void)idx_var
+#elif defined(SEQUENTIAL) || defined(SEQUANTIAL)
+    #define GET_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = (i) & (NUM_CACHELINES - 1); \
+        (void)idx_var
+    #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = ((i) + PREFETCH_AHEAD) & (NUM_CACHELINES - 1); \
+        (void)idx_var
+#else
+    // Fallback to original array-based lookup
+    #define GET_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = workload[i]; \
+        (void)idx_var
+    #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = workload[(i) + PREFETCH_AHEAD]; \
+        (void)idx_var
+#endif
+
 
 typedef struct __attribute__((aligned(64))) {
     char data[CACHELINE_SIZE];
@@ -94,13 +124,8 @@ cacheline_t* alloc_8gb_memory() {
         printf("  -> Success with 1GB Hugepages.\n");
     }
 
-    // Touch memory to ensure physical allocation
-    cacheline_t* mem = (cacheline_t*)ptr;
-    #pragma omp parallel for
-    for (uint64_t i = 0; i < NUM_CACHELINES; i += (4096 / CACHELINE_SIZE)) {
-        mem[i].data[0] = 1;
-    }
-    return mem;
+    memset(ptr, 1, MEMORY_SIZE);
+    return ptr;
 }
 
 // Thread payload loop
@@ -121,6 +146,10 @@ void* worker_thread(void* arg) {
     uint64_t* workload = ctx->workload;
     uint64_t dummy = 0;
 
+    // Fast CRC32 Seed Generation using time and random for the thread
+    // This state remains unchanged during the loop, acting as a salt/seed.
+    uint64_t state = _mm_crc32_u64((uint64_t)time(NULL) ^ ctx->thread_id, (uint64_t)random());
+
     asm volatile("" ::: "memory");
     uint64_t start = RDTSC_START();
 
@@ -128,33 +157,61 @@ void* worker_thread(void* arg) {
     switch (ctx->inst_type) {
         case INST_LOAD:
             for (uint64_t i = 0; i < ops; i++) {
-                dummy += mem[workload[i]].data[0];
+                GET_IDX(idx, i, state);
+#ifndef NONE_BIND
+                dummy += mem[idx].data[0];
+#endif
             }
             break;
         case INST_AVX512_LOAD:
             for (uint64_t i = 0; i < ops; i++) {
-                __m512i vec = _mm512_loadu_si512((const void*)&mem[workload[i]]);
+                GET_IDX(idx, i, state);
+                __m512i vec = _mm512_loadu_si512((const void*)&mem[idx]);
+#ifndef NONE_BIND
                 dummy += ((uint8_t*)&vec)[0];
+#else
+                (void)vec; // Suppress unused variable warning if NONE_BIND is defined
+#endif
             }
             break;
         case INST_PREFETCH_T0:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_T0);
+                GET_IDX(idx, i, state);
+                GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
+                _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_T0);
+#ifndef NONE_BIND
+                dummy += mem[idx].data[0]; 
+#endif
             }
             break;
         case INST_PREFETCH_T1:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_T1);
+                GET_IDX(idx, i, state);
+                GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
+                _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_T1);
+#ifndef NONE_BIND
+                dummy += mem[idx].data[0]; 
+#endif
             }
             break;
         case INST_PREFETCH_T2:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_T2);
+                GET_IDX(idx, i, state);
+                GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
+                _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_T2);
+#ifndef NONE_BIND
+                dummy += mem[idx].data[0]; 
+#endif
             }
             break;
         case INST_PREFETCH_NTA:
             for (uint64_t i = 0; i < ops; i++) {
-                _mm_prefetch((const char*)&mem[workload[i]], _MM_HINT_NTA);
+                GET_IDX(idx, i, state);
+                GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
+                _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_NTA);
+#ifndef NONE_BIND
+                dummy += mem[idx].data[0]; 
+#endif
             }
             break;
     }
@@ -214,8 +271,8 @@ int main(int argc, char** argv) {
             "Prefetch NTA"
         };
 
-        // Print the indication of the execute type
-        printf("Execute Type: %s\n", inst_names[inst_type]);
+    // Print the indication of the execute type
+    printf("Execute Type: %s\n", inst_names[inst_type]);
     int core_a, core_b;
     get_cpu1_siblings(&core_a, &core_b);
 
@@ -239,15 +296,25 @@ int main(int argc, char** argv) {
 
         printf("Initializing workload for Thread %d (Pinned to Logical CPU %d)...\n", t, ctx[t].logical_cpu);
 
-        // Allocate and populate thread-specific random workload
-        ctx[t].workload = malloc(num_ops * sizeof(uint64_t));
+// Skip pre-allocating the workload buffer entirely if we evaluate everything on-the-fly inside the loop
+#if !defined(RANDOM) && !defined(SEQUENTIAL) && !defined(SEQUANTIAL)
+        ctx[t].workload = malloc((num_ops + PREFETCH_AHEAD) * sizeof(uint64_t));
         srandom(time(NULL) ^ (t * 19937)); // Different seed per thread
 
+        // Fill the primary workload
         for (uint64_t i = 0; i < num_ops; i++) {
             // Generates a 31-bit random index across the cacheline space
             uint64_t rand_idx = ((uint64_t)random() | ((uint64_t)random() << 31)) % NUM_CACHELINES;
             ctx[t].workload[i] = rand_idx;
         }
+
+        // Pad the tail of the array to satisfy the +16 lookahead
+        for (uint64_t i = 0; i < PREFETCH_AHEAD; i++) {
+            ctx[t].workload[num_ops + i] = ctx[t].workload[i];
+        }
+#else
+        ctx[t].workload = NULL;
+#endif
     }
 
     printf("\n--- Executing Benchmark ---\n");
@@ -265,9 +332,8 @@ int main(int argc, char** argv) {
         printf("Thread %d (CPU %d):\n", t, ctx[t].logical_cpu);
         printf("  Total Cycles: %lu\n", ctx[t].duration_cycles);
         printf("  Cycles/Op:    %.2f\n", cpo);
-
         printf("  (Dummy: %lu)\n", ctx[t].dummy_accumulator);
-        free(ctx[t].workload);
+        free(ctx[t].workload); // Safe to call even if NULL
     }
 
     munmap(mem, MEMORY_SIZE);
