@@ -513,7 +513,7 @@ void sync_complete(void) {
       uint64_t orig_num_inserts = HT_TESTS_NUM_INSERTS;
       if (config.ht_type == CASHTPP || config.ht_type == MULTI_HT ||
           config.ht_type == GROWHT || config.ht_type == CAS23HTPP ||
-          config.ht_type == TBB_HT) {
+          config.ht_type == TBB_HT || config.ht_type == DLHT_HT) {
         HT_TESTS_NUM_INSERTS = HT_TESTS_NUM_INSERTS / config.num_threads;
         PLOGI.printf(
             "total kv %lu, num_threads %u, op per thread (per run) %lu",
@@ -846,6 +846,9 @@ void sync_complete(void) {
           break;
         case CAS23HTPP:
           PLOG_INFO.printf("Hashtable type : CAS2023 HT");
+          break;
+        case DLHT_HT:
+          PLOG_INFO.printf("Hashtable type : DLHT HT");
           break;
         case ARRAY_HT:
           PLOG_INFO.printf("Hashtable type : Array HT");
