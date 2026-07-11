@@ -1,9 +1,39 @@
-/// Closed addressing chaining hash table implementation
-/// follows the inlined implementation of:
-/// https://dl.acm.org/doi/10.1145/3625549.3658682 Resizing is not implemented
-/// as it isn't included in main throughput benchmarks DlhtHashTable is not
-/// parititioned, meaning that there will be at max one instance of it. All
-/// threads will share the same instance.
+/// Closed addressing chaining hash table implementation.
+/// Follows the inlined implementation of:
+/// https://dl.acm.org/doi/10.1145/3625549.3658682
+///
+/// DLHT organizes the primary table into 64-byte primary buckets, each
+/// containing only 3 KV slots. To remain compatible with the benchmark
+/// framework, the reported hash table's "capacity" refers to the total number
+/// of KV entries (16-byte slots) that would fit in memory, i.e., 4 KV pairs per
+/// 64 bytes (8-byte keys and 8-byte values), not the number of primary buckets.
+///
+/// Since DLHT hashes directly to a primary bucket using a modulo operation,
+/// the implementation computes the number of primary buckets as:
+///     capacity * sizeof(KV) / sizeof(Primary_bucket)
+/// This preserves the requested primary table size while producing the
+/// correct bucket count needed for bucket-level indexing.
+///
+/// In addition to the primary table, DLHT allocates an auxiliary link table
+/// equal to 1/8 the size of the primary table. Like the primary table, the
+/// link table is organized into 64-byte buckets, but each containing 4 KV slots.
+/// Rather than being hash-addressed, link buckets are allocated on demand by
+/// atomically incrementing a global link-bucket index, following the design
+/// described in the DLHT paper.
+///
+/// Resizing is not implemented. If an operation would require a resize (e.g.,
+/// no free slot can be found), the implementation reports a fatal error and
+/// aborts. This matches the benchmark configuration, where the table is sized
+/// sufficiently to avoid resizing.
+///
+/// Final fill percentage is reported using the benchmark's capacity
+/// definition (4 KV slots per 64-byte unit), rather than DLHT's usable
+/// primary capacity (3 KV slots per primary bucket). Occupied slots in both
+/// the primary and link tables contribute to the reported fill percentage.
+///
+/// DlhtHashTable is not partitioned, meaning there is at most one instance
+/// shared by all threads.
+
 
 #ifndef HASHTABLES_DLHT_KHT_HPP
 #define HASHTABLES_DLHT_KHT_HPP
