@@ -1,9 +1,9 @@
-/// Compare-and-swap(CAS) with linear probing hashtable based off of
-/// the folklore HT https://arxiv.org/pdf/1601.04017.pdf
-/// Key and values are stored directly in the table.
-/// DlhtHashTable is not parititioned, meaning that there will be
-/// at max one instance of it. All threads will share the same
-/// instance.
+/// Closed addressing chaining hash table implementation
+/// follows the inlined implementation of:
+/// https://dl.acm.org/doi/10.1145/3625549.3658682 Resizing is not implemented
+/// as it isn't included in main throughput benchmarks DlhtHashTable is not
+/// parititioned, meaning that there will be at max one instance of it. All
+/// threads will share the same instance.
 
 #ifndef HASHTABLES_DLHT_KHT_HPP
 #define HASHTABLES_DLHT_KHT_HPP
@@ -27,6 +27,40 @@ class DlhtHashTable : public BaseHashTable {
  public:
   /// The global instance is shared by all threads.
   static KV *hashtable;
+  static KV *links;
+  static std::atomic<uint32_t> link_alloc_idx;
+  struct Slot {
+    uint64_t key = 0;
+    uint64_t value = 0;
+  };
+
+  struct Bin_hdr {
+    //0-1 bin_state (2 bits)
+    //2-31 slot states (15* 2 bits)
+    uint32_t states = 0;
+    uint32_t version = 0;
+  };
+
+  struct Link_meta {
+    uint32_t link_bucket_idx_1 = 0;
+    uint32_t link_bucket_idx_2_3 = 0;
+  };
+
+  struct alignas(64) Primary_bucket {
+    Bin_hdr bin_hdr;
+    Link_meta link_meta;
+    Slot slot_1;
+    Slot slot_2;
+    Slot slot_3;
+  };
+
+  struct alignas(64) Link_bucket {
+    Slot slot_1;
+    Slot slot_2;
+    Slot slot_3;
+    Slot slot_4;
+  };
+
   /// A dedicated slot for the empty value.
   static uint64_t empty_slot_;
   /// True if the empty value is inserted.
@@ -47,8 +81,13 @@ class DlhtHashTable : public BaseHashTable {
       if (!this->hashtable) {
         assert(this->ref_cnt == 0);
         this->hashtable = calloc_ht<KV>(this->capacity, this->id, &this->fd);
+        uint64_t link_alloc_size = this->capacity >> 3;
+        this->links = calloc_ht<KV>(link_alloc_size, this->id, &this->fd);
         PLOGI.printf("DLHT Hashtable base: %p Hashtable size: %lu",
                      this->hashtable, this->capacity);
+
+        PLOGI.printf("DLHT Links base: %p Links size: %lu",
+                     this->links, link_alloc_size);
       }
       this->ref_cnt++;
     }
@@ -74,29 +113,31 @@ class DlhtHashTable : public BaseHashTable {
       this->ref_cnt--;
       if (this->ref_cnt == 0) {
         free_mem<KV>(this->hashtable, this->capacity, this->id, this->fd);
+        uint64_t link_alloc_size = this->capacity >> 3;
+        free_mem<KV>(this->links, link_alloc_size, this->id, this->fd);
         this->hashtable = nullptr;
+        this->links = nullptr;
       }
     }
   }
 
   void insert_batch(const InsertFindArguments &kp,
                     collector_type *collector) override {
-
-                      //TODO
-                    }
+    // TODO
+  }
 
   void find_batch(const InsertFindArguments &kp, ValuePairs &values,
                   collector_type *collector) override {
-                    //TODO
-                  }
+    // TODO
+  }
 
   size_t get_fill() const override {
     size_t count = 0;
-    for (size_t i = 0; i < this->capacity; i++) {
-      if (!this->hashtable[i].is_empty()) {
-        count++;
-      }
-    }
+    // for (size_t i = 0; i < this->capacity; i++) {
+    //   if (!this->hashtable[i].is_empty()) {
+    //     count++;
+    //   }
+    // }
     return count;
   }
 
@@ -111,45 +152,34 @@ class DlhtHashTable : public BaseHashTable {
     assert(false);
     return false;
   }
+
+  // We don't have OOO batches.
   size_t flush_find_queue(ValuePairs &vp, collector_type *collector) override {
-    size_t curr_queue_sz = 0;
-    return curr_queue_sz;
+    return 0;
   }
 
-  void *find_noprefetch(const void *data, collector_type *collector) override {}
+  void *find_noprefetch(const void *data, collector_type *collector) override {
+    cout << "Not implemented!!!" << endl;
+    assert(false);
+  }
 
   void display() const override {
-    for (size_t i = 0; i < this->capacity; i++) {
-      if (!this->hashtable[i].is_empty()) {
-        cout << this->hashtable[i] << endl;
-      }
-    }
+    cout << "Not implemented!!!!" << endl;
+    assert(false);
   }
 
   size_t get_capacity() const override { return this->capacity; }
 
   size_t get_max_count() const override {
     size_t count = 0;
-    for (size_t i = 0; i < this->capacity; i++) {
-      if (this->hashtable[i].get_value() > count) {
-        count = this->hashtable[i].get_value();
-      }
-    }
+    cout << "Not implemented!!!!!!" << endl;
+    assert(false);
     return count;
   }
 
   void print_to_file(std::string &outfile) const override {
-    std::ofstream f(outfile);
-    if (!f) {
-      PLOG_ERROR.printf("Could not open outfile %s", outfile.c_str());
-      return;
-    }
-
-    for (size_t i = 0; i < this->get_capacity(); i++) {
-      if (!this->hashtable[i].is_empty()) {
-        f << this->hashtable[i] << std::endl;
-      }
-    }
+    cout << "Not implemented!!!!!!!" << endl;
+    assert(false);
   }
 
  private:
@@ -170,36 +200,32 @@ class DlhtHashTable : public BaseHashTable {
   uint64_t hash(const void *k) { return hasher_(k, this->key_length); }
 
   void prefetch(uint64_t i) {
-#if defined(PREFETCH_WITH_PREFETCH_INSTR)
-    prefetch_object<true /* write */>(
-        &this->hashtable[i & (this->capacity - 1)],
-        sizeof(this->hashtable[i & (this->capacity - 1)]));
-    // true /*write*/);
-#endif
-
-#if defined(PREFETCH_WITH_WRITE)
-    prefetch_with_write(&this->hashtable[i & (this->capacity - 1)]);
-#endif
+    cout << "Not implemented!!!!!!!!!!" << endl;
+    assert(false);
   };
 
-  void prefetch_read(uint64_t i) {
-    prefetch_object<false /* write */>(
-        &this->hashtable[i & (this->capacity - 1)],
-        sizeof(this->hashtable[i & (this->capacity - 1)]));
-  }
-
   uint64_t read_hashtable_element(const void *data) override {
-    PLOG_FATAL << "Not implemented";
+    cout << "Not implemented!!!!!!!!!!" << endl;
     assert(false);
     return -1;
   }
 
-  void clear() override { memset(this->hashtable, 0, capacity * sizeof(KV)); }
+  void clear() override {
+    cout << "Not implemented!!!!!!!!!!!" << endl;
+    assert(false);
+    memset(this->hashtable, 0, capacity * sizeof(KV));
+  }
 };
 
 /// Static variables
 template <class KV, class KVQ>
 KV *DlhtHashTable<KV, KVQ>::hashtable = nullptr;
+
+template <class KV, class KVQ>
+KV *DlhtHashTable<KV, KVQ>::links = nullptr;
+
+template <class KV, class KVQ>
+std::atomic<uint32_t> DlhtHashTable<KV, KVQ>::link_alloc_idx{0};
 
 template <class KV, class KVQ>
 uint64_t DlhtHashTable<KV, KVQ>::empty_slot_ = 0;
