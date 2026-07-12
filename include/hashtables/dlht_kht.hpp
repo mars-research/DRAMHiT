@@ -55,10 +55,28 @@ namespace kmercounter {
 template <typename KV, typename KVQ>
 class DlhtHashTable : public BaseHashTable {
  public:
+  /// Constants and State Enums
+  static constexpr int MAX_SLOTS = 15;
+  static constexpr uint32_t STATE_MASK = 0x3;
+  
+  // Structural boundaries for the bucket chain
+  static constexpr int PRIMARY_SLOTS = 3;
+  static constexpr int SLOTS_PER_LINK_BUCKET = 4;
+  static constexpr int FIRST_LINK_START = PRIMARY_SLOTS;                                      // 3
+  static constexpr int SECOND_LINK_START = FIRST_LINK_START + SLOTS_PER_LINK_BUCKET;          // 7
+  static constexpr int THIRD_LINK_START = SECOND_LINK_START + SLOTS_PER_LINK_BUCKET;          // 11
+
+  enum SlotState : uint32_t {
+    INVALID = 0,
+    TRY_INSERT = 1,
+    VALID = 2
+  };
+
   /// The global instance is shared by all threads.
   static KV* hashtable;
   static KV* links;
   static std::atomic<uint32_t> link_alloc_idx;
+  
   struct Slot {
     uint64_t key = 0;
     uint64_t value = 0;
@@ -90,9 +108,11 @@ class DlhtHashTable : public BaseHashTable {
     Slot slot_3;
     Slot slot_4;
   };
+  
   static uint64_t num_buckets;
-
   static uint64_t link_alloc_size;
+  static uint64_t max_link_buckets;
+  
   /// A dedicated slot for the empty value.
   static uint64_t empty_slot_;
   /// True if the empty value is inserted.
@@ -130,12 +150,17 @@ class DlhtHashTable : public BaseHashTable {
         }
 
         num_buckets = total_bytes / sizeof(Primary_bucket);
+        
+        uint64_t total_link_bytes = link_alloc_size * sizeof(KV);
+        max_link_buckets = total_link_bytes / sizeof(Link_bucket);
+
         PLOGI.printf("capacity: %lu", this->capacity);
         PLOGI.printf("sizeof(KV): %lu", sizeof(KV));
         PLOGI.printf("sizeof(Primary_bucket): %lu", sizeof(Primary_bucket));
         PLOGI.printf("total_bytes: %lu", total_bytes);
         PLOGI.printf("remainder: %lu", total_bytes % sizeof(Primary_bucket));
         PLOGI.printf("num_buckets: %lu", num_buckets);
+        PLOGI.printf("max_link_buckets: %lu", max_link_buckets);
       }
       this->ref_cnt++;
     }
@@ -168,104 +193,130 @@ class DlhtHashTable : public BaseHashTable {
     }
   }
 
-  // Helper to cleanly resolve the slot pointer, returning nullptr if
-  // unallocated
-  Slot* get_slot(Primary_bucket* pb, int s) {
-    if (s == 0) return &pb->slot_1;
-    if (s == 1) return &pb->slot_2;
-    if (s == 2) return &pb->slot_3;
+  // Inline helpers to abstract bitwise state manipulation
+  inline SlotState extract_state(uint32_t states, int slot_index) const {
+    return static_cast<SlotState>((states >> (2 + slot_index * 2)) & STATE_MASK);
+  }
+
+  inline uint32_t update_state(uint32_t states, int slot_index, SlotState new_state) const {
+    states &= ~(STATE_MASK << (2 + slot_index * 2));
+    states |= (static_cast<uint32_t>(new_state) << (2 + slot_index * 2));
+    return states;
+  }
+
+  // Helper to cleanly resolve the slot pointer, returning nullptr if unallocated
+  Slot* get_slot(Primary_bucket* primary_bucket, int slot_index) {
+    if (slot_index == 0) return &primary_bucket->slot_1;
+    if (slot_index == 1) return &primary_bucket->slot_2;
+    if (slot_index == 2) return &primary_bucket->slot_3;
 
     // Read the link_meta as a raw 64-bit value
-    uint64_t m_val = *(volatile uint64_t*)&pb->link_meta;
-    uint32_t idx_1 = m_val & 0xFFFFFFFF;
-    uint32_t idx_2_3 = m_val >> 32;
+    uint64_t raw_link_meta = *(volatile uint64_t*)&primary_bucket->link_meta;
+    uint32_t first_link_bucket_index = raw_link_meta & 0xFFFFFFFF;
+    uint32_t second_and_third_link_bucket_index = raw_link_meta >> 32;
 
-    Link_bucket* l_table = (Link_bucket*)this->links;
+    Link_bucket* link_table = (Link_bucket*)this->links;
 
-    if (s >= 3 && s < 7) {
-      if (idx_1 == 0) return nullptr;
-      Link_bucket* lb = &l_table[idx_1 - 1];
-      if (s == 3) return &lb->slot_1;
-      if (s == 4) return &lb->slot_2;
-      if (s == 5) return &lb->slot_3;
-      if (s == 6) return &lb->slot_4;
-    } else if (s >= 7 && s < 11) {
-      if (idx_2_3 == 0) return nullptr;
-      Link_bucket* lb = &l_table[idx_2_3 - 1];
-      if (s == 7) return &lb->slot_1;
-      if (s == 8) return &lb->slot_2;
-      if (s == 9) return &lb->slot_3;
-      if (s == 10) return &lb->slot_4;
-    } else if (s >= 11 && s < 15) {
-      if (idx_2_3 == 0) return nullptr;
-      Link_bucket* lb = &l_table[idx_2_3];  // 2nd consecutive bucket
-      if (s == 11) return &lb->slot_1;
-      if (s == 12) return &lb->slot_2;
-      if (s == 13) return &lb->slot_3;
-      if (s == 14) return &lb->slot_4;
+    if (slot_index >= FIRST_LINK_START && slot_index < SECOND_LINK_START) {
+      if (first_link_bucket_index == 0) return nullptr;
+      
+      Link_bucket* link_bucket = &link_table[first_link_bucket_index - 1];
+      if (slot_index == 3) return &link_bucket->slot_1;
+      if (slot_index == 4) return &link_bucket->slot_2;
+      if (slot_index == 5) return &link_bucket->slot_3;
+      if (slot_index == 6) return &link_bucket->slot_4;
+      
+    } else if (slot_index >= SECOND_LINK_START && slot_index < THIRD_LINK_START) {
+      if (second_and_third_link_bucket_index == 0) return nullptr;
+      
+      Link_bucket* link_bucket = &link_table[second_and_third_link_bucket_index - 1];
+      if (slot_index == 7) return &link_bucket->slot_1;
+      if (slot_index == 8) return &link_bucket->slot_2;
+      if (slot_index == 9) return &link_bucket->slot_3;
+      if (slot_index == 10) return &link_bucket->slot_4;
+      
+    } else if (slot_index >= THIRD_LINK_START && slot_index < MAX_SLOTS) {
+      if (second_and_third_link_bucket_index == 0) return nullptr;
+      
+      Link_bucket* link_bucket = &link_table[second_and_third_link_bucket_index];  // 2nd consecutive bucket
+      if (slot_index == 11) return &link_bucket->slot_1;
+      if (slot_index == 12) return &link_bucket->slot_2;
+      if (slot_index == 13) return &link_bucket->slot_3;
+      if (slot_index == 14) return &link_bucket->slot_4;
     }
     return nullptr;
   }
 
   // Atomically allocates and chains a link bucket using Fetch-and-Add
-  void ensure_link(Primary_bucket* pb, int s) {
-    if (s < 3) return;
-    uint64_t* meta_ptr = (uint64_t*)&pb->link_meta;
-    uint64_t exp_val, des_val;
+  void allocate_link_bucket(Primary_bucket* primary_bucket, int slot_index) {
+    if (slot_index < PRIMARY_SLOTS) return;
+    
+    uint64_t* link_meta_ptr = (uint64_t*)&primary_bucket->link_meta;
+    uint64_t expected_value, desired_value;
 
-    if (s >= 3 && s < 7) {
-      exp_val = *(volatile uint64_t*)meta_ptr;
-      while ((exp_val & 0xFFFFFFFF) == 0) {
-        uint32_t new_idx = link_alloc_idx.fetch_add(1) + 1;
-        des_val = (exp_val & 0xFFFFFFFF00000000ULL) | new_idx;
-        if (__sync_bool_compare_and_swap(meta_ptr, exp_val, des_val)) break;
-        exp_val = *(volatile uint64_t*)meta_ptr;
+    if (slot_index >= FIRST_LINK_START && slot_index < SECOND_LINK_START) {
+      expected_value = *(volatile uint64_t*)link_meta_ptr;
+      while ((expected_value & 0xFFFFFFFF) == 0) {
+        uint32_t new_link_index = link_alloc_idx.fetch_add(1) + 1;
+        
+        if (new_link_index > max_link_buckets) {
+          std::cerr << "Resize required: Global link bucket pool exhausted :3\n";
+          abort();
+        }
+
+        desired_value = (expected_value & 0xFFFFFFFF00000000ULL) | new_link_index;
+        if (__sync_bool_compare_and_swap(link_meta_ptr, expected_value, desired_value)) break;
+        expected_value = *(volatile uint64_t*)link_meta_ptr;
       }
-    } else if (s >= 7) {
-      exp_val = *(volatile uint64_t*)meta_ptr;
-      while ((exp_val >> 32) == 0) {
-        uint32_t new_idx = link_alloc_idx.fetch_add(2) + 1;
-        des_val = (exp_val & 0xFFFFFFFFULL) | ((uint64_t)new_idx << 32);
-        if (__sync_bool_compare_and_swap(meta_ptr, exp_val, des_val)) break;
-        exp_val = *(volatile uint64_t*)meta_ptr;
+    } else if (slot_index >= SECOND_LINK_START) {
+      expected_value = *(volatile uint64_t*)link_meta_ptr;
+      while ((expected_value >> 32) == 0) {
+        uint32_t new_link_index = link_alloc_idx.fetch_add(2) + 1;
+        
+        if (new_link_index + 1 > max_link_buckets) {
+          std::cerr << "Resize required: Global link bucket pool exhausted :3\n";
+          abort();
+        }
+
+        desired_value = (expected_value & 0xFFFFFFFFULL) | ((uint64_t)new_link_index << 32);
+        if (__sync_bool_compare_and_swap(link_meta_ptr, expected_value, desired_value)) break;
+        expected_value = *(volatile uint64_t*)link_meta_ptr;
       }
     }
   }
 
   void find_batch(const InsertFindArguments& kp, ValuePairs& vp,
                   collector_type* collector) override {
-    uint64_t mask = (num_buckets)-1;
-    Primary_bucket* p_table = (Primary_bucket*)this->hashtable;
+    uint64_t mask = num_buckets - 1;
+    Primary_bucket* primary_table = (Primary_bucket*)this->hashtable;
 
     // Pass 1: Prefetch memory locations
     for (uint64_t i = 0; i < kp.size(); i++) {
       uint64_t idx = kp[i].key & mask;
-      __builtin_prefetch(&p_table[idx], 0, 1);
+      __builtin_prefetch(&primary_table[idx], 0, 1);
     }
 
     // Pass 2: Execute Gets
     for (uint64_t i = 0; i < kp.size(); i++) {
       uint64_t idx = kp[i].key & mask;
-      Primary_bucket* pb = &p_table[idx];
-      uint64_t* hdr_ptr = (uint64_t*)&pb->bin_hdr;
+      Primary_bucket* primary_bucket = &primary_table[idx];
+      uint64_t* header_ptr = (uint64_t*)&primary_bucket->bin_hdr;
       bool retry;
 
       do {
         retry = false;
 
         // Extract 32-bit states and version from the 64-bit header
-        uint64_t h_val = *(volatile uint64_t*)hdr_ptr;
-        uint32_t states = h_val & 0xFFFFFFFF;
-        uint32_t version = h_val >> 32;
+        uint64_t header_value = *(volatile uint64_t*)header_ptr;
+        uint32_t states = header_value & 0xFFFFFFFF;
+        uint32_t version = header_value >> 32;
 
         bool found = false;
         uint64_t found_val = 0;
 
-        for (int s = 0; s < 15; s++) {
-          // States start at bit 2 (0-1 are bin_state)
-          uint32_t state = (states >> (2 + s * 2)) & 0x3;
-          if (state == 2) {  // 2 == Valid
-            Slot* slot = get_slot(pb, s);
+        for (int slot_index = 0; slot_index < MAX_SLOTS; slot_index++) {
+          if (extract_state(states, slot_index) == VALID) {
+            Slot* slot = get_slot(primary_bucket, slot_index);
             if (slot && slot->key == kp[i].key) {
               found_val = slot->value;
               found = true;
@@ -274,8 +325,8 @@ class DlhtHashTable : public BaseHashTable {
           }
         }
 
-        uint64_t h_check_val = *(volatile uint64_t*)hdr_ptr;
-        uint32_t check_version = h_check_val >> 32;
+        uint64_t check_header_value = *(volatile uint64_t*)header_ptr;
+        uint32_t check_version = check_header_value >> 32;
 
         if (check_version != version) {
           retry = true;
@@ -290,73 +341,67 @@ class DlhtHashTable : public BaseHashTable {
 
   void insert_batch(const InsertFindArguments& kp,
                     collector_type* collector) override {
-    uint64_t mask = (num_buckets)-1;
-    Primary_bucket* p_table = (Primary_bucket*)this->hashtable;
+    uint64_t mask = num_buckets - 1;
+    Primary_bucket* primary_table = (Primary_bucket*)this->hashtable;
 
     // Pass 1: Prefetch memory locations
     for (uint64_t i = 0; i < kp.size(); i++) {
       uint64_t idx = kp[i].key & mask;
-      __builtin_prefetch(&p_table[idx], 1, 1);
+      __builtin_prefetch(&primary_table[idx], 1, 1);
     }
 
     // Pass 2: Execute Inserts
     for (uint64_t i = 0; i < kp.size(); i++) {
       uint64_t idx = kp[i].key & mask;
-      Primary_bucket* pb = &p_table[idx];
-      uint64_t* hdr_ptr = (uint64_t*)&pb->bin_hdr;
+      Primary_bucket* primary_bucket = &primary_table[idx];
+      uint64_t* header_ptr = (uint64_t*)&primary_bucket->bin_hdr;
 
       bool inserted = false;
       while (!inserted) {
-        uint64_t exp_val = *(volatile uint64_t*)hdr_ptr;
-        uint32_t states = exp_val & 0xFFFFFFFF;
-        uint32_t version = exp_val >> 32;
+        uint64_t expected_value = *(volatile uint64_t*)header_ptr;
+        uint32_t states = expected_value & 0xFFFFFFFF;
+        uint32_t version = expected_value >> 32;
 
-        // 1. Find the first Invalid slot (00)
-        int target_s = -1;
-        for (int s = 0; s < 15; s++) {
-          if (((states >> (2 + s * 2)) & 0x3) == 0) {
-            target_s = s;
+        // 1. Find the first Invalid slot
+        int target_slot_index = -1;
+        for (int slot_index = 0; slot_index < MAX_SLOTS; slot_index++) {
+          if (extract_state(states, slot_index) == INVALID) {
+            target_slot_index = slot_index;
             break;
           }
         }
 
-        if (target_s == -1) {
-          std::cerr << "Resize required: capacity exceeded.\n";
+        if (target_slot_index == -1) {
+          std::cerr << "Resize required: capacity exceeded :3\n";
           abort();
         }
 
-        // 2. CAS state from Invalid to TryInsert (01)
-        uint32_t new_states = states;
-        new_states &= ~(3U << (2 + target_s * 2));
-        new_states |= (1U << (2 + target_s * 2));
+        // 2. CAS state from Invalid to TryInsert
+        uint32_t new_states = update_state(states, target_slot_index, TRY_INSERT);
+        uint64_t desired_value = ((uint64_t)(version + 1) << 32) | new_states;
 
-        uint64_t des_val = ((uint64_t)(version + 1) << 32) | new_states;
-
-        if (!__sync_bool_compare_and_swap(hdr_ptr, exp_val, des_val)) {
+        if (!__sync_bool_compare_and_swap(header_ptr, expected_value, desired_value)) {
           continue;  // Retry on failure
         }
 
         // 3. Ensure chained bucket is allocated if past primary slots
-        ensure_link(pb, target_s);
+        allocate_link_bucket(primary_bucket, target_slot_index);
 
         // 4. Fill slot
-        Slot* slot = get_slot(pb, target_s);
+        Slot* slot = get_slot(primary_bucket, target_slot_index);
         slot->key = kp[i].key;
         slot->value = kp[i].value;
 
-        // 5. CAS state from TryInsert to Valid (10)
+        // 5. CAS state from TryInsert to Valid
         while (true) {
-          exp_val = *(volatile uint64_t*)hdr_ptr;
-          states = exp_val & 0xFFFFFFFF;
-          version = exp_val >> 32;
+          expected_value = *(volatile uint64_t*)header_ptr;
+          states = expected_value & 0xFFFFFFFF;
+          version = expected_value >> 32;
 
-          new_states = states;
-          new_states &= ~(3U << (2 + target_s * 2));
-          new_states |= (2U << (2 + target_s * 2));
+          new_states = update_state(states, target_slot_index, VALID);
+          desired_value = ((uint64_t)(version + 1) << 32) | new_states;
 
-          des_val = ((uint64_t)(version + 1) << 32) | new_states;
-
-          if (__sync_bool_compare_and_swap(hdr_ptr, exp_val, des_val)) {
+          if (__sync_bool_compare_and_swap(header_ptr, expected_value, desired_value)) {
             inserted = true;
             break;
           }
@@ -367,16 +412,14 @@ class DlhtHashTable : public BaseHashTable {
 
   size_t get_fill() const override {
     size_t count = 0;
-    Primary_bucket* p_table = (Primary_bucket*)this->hashtable;
+    Primary_bucket* primary_table = (Primary_bucket*)this->hashtable;
 
     for (size_t i = 0; i < num_buckets; i++) {
-      Primary_bucket* pb = &p_table[i];
-      uint32_t states = pb->bin_hdr.states;
+      Primary_bucket* primary_bucket = &primary_table[i];
+      uint32_t states = primary_bucket->bin_hdr.states;
 
-      for (int s = 0; s < 15; s++) {
-        // Shift to the specific slot's 2-bit state and check if it equals 2
-        // (Valid)
-        if (((states >> (2 + s * 2)) & 0x3) == 2) {
+      for (int slot_index = 0; slot_index < MAX_SLOTS; slot_index++) {
+        if (extract_state(states, slot_index) == VALID) {
           count++;
         }
       }
@@ -480,5 +523,9 @@ uint64_t DlhtHashTable<KV, KVQ>::num_buckets = 0;
 
 template <class KV, class KVQ>
 uint64_t DlhtHashTable<KV, KVQ>::link_alloc_size = 0;
+
+template <class KV, class KVQ>
+uint64_t DlhtHashTable<KV, KVQ>::max_link_buckets = 0;
+
 }  // namespace kmercounter
 #endif  // HASHTABLES_DLHT_KHT_HPP
