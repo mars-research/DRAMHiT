@@ -426,6 +426,9 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
     case DLHT_HT:
       kmer_ht = new DlhtHashTable<KVType, ItemQueue>(sz);
       break;
+    case FOLKLORE_HT:
+      kmer_ht = new FolkloreHashTable<KVType, ItemQueue>(sz);
+      break;
 #ifdef GROWT
     case GROWHT:
       kmer_ht = new GrowtHashTable(sz);
