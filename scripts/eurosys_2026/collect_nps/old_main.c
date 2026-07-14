@@ -1,9 +1,9 @@
-#define _GNU_SOURCE // Required for pthread_barrier and CPU affinity
+#define _GNU_SOURCE // Required for pthread_barrier on some systems
+#include <sched.h> // Required for sched_getcpu()
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include <sched.h>
 #include <sys/mman.h>
 #include <numa.h>
 #include <numaif.h>
@@ -20,10 +20,6 @@
 #define MAX_REGIONS 64
 #define NUM_ITERATIONS 100 // Adjust as needed
 
-// Topology Limits
-#define MAX_NUMA_NODES 128
-#define MAX_CPUS_PER_NODE 1024
-
 typedef struct {
     int cpu_node;
     int mem_node;
@@ -37,7 +33,7 @@ typedef struct {
 
 typedef struct {
     int thread_id;
-    int cpu_id;     // Distinct CPU core assigned to this thread
+    int cpu_node;
     int mem_node;
     size_t chunk_size;
     uint64_t *buffer;
@@ -66,12 +62,9 @@ size_t parse_size(const char *str) {
 void *mem_worker(void *arg) {
     thread_arg_t *t = (thread_arg_t *)arg;
 
-    // 1. Pin Thread strictly to the exact assigned CPU ID
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(t->cpu_id, &cpuset);
-    if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) {
-        perror("pthread_setaffinity_np failed");
+    // 1. Pin Thread to requested CPU NUMA node
+    if (numa_run_on_node(t->cpu_node) != 0) {
+        perror("numa_run_on_node failed");
         pthread_exit(NULL);
     }
 
@@ -85,17 +78,22 @@ void *mem_worker(void *arg) {
 
     // 3. Bind strictly to the target memory NUMA node
     unsigned long nodemask = (1UL << t->mem_node);
-    if (mbind(t->buffer, t->chunk_size, MPOL_BIND, &nodemask, sizeof(nodemask)*8, MPOL_MF_STRICT | MPOL_MF_MOVE) != 0) {
+    if (mbind(t->buffer, t->chunk_size, MPOL_BIND, &nodemask, sizeof(nodemask)*8, MPOL_MF_STRICT) != 0) {
         perror("mbind failed in thread");
         pthread_exit(NULL);
     }
 
+    printf("cpu node %d accessing memory node %d size %lu thead %d\n", t->cpu_node, t->mem_node, t->chunk_size, t->thread_id);
     // 4. Write into the memory to force OS to fault physical pages on the target node
     memset(t->buffer, 0, t->chunk_size);
 
     // ==========================================
     // SYNC POINT 1: Wait for all threads to finish allocation
     pthread_barrier_wait(&init_barrier);
+
+    int actual_cpu = sched_getcpu();
+        printf("Worker Thread %d (Assigned to Node %d) is actively running on CPU Core: %d\n",
+               t->thread_id, t->cpu_node, actual_cpu);
 
     // SYNC POINT 2: Wait for main thread to snap the start time
     pthread_barrier_wait(&start_barrier);
@@ -142,29 +140,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s -size <total_size> -pattern \"n0a0t4 n1a1t4 ...\"\n", argv[0]);
         return -1;
     }
-
-    // --- NEW: Map available CPUs per NUMA node ---
-    int max_node = numa_max_node();
-    if (max_node >= MAX_NUMA_NODES) max_node = MAX_NUMA_NODES - 1;
-
-    int available_cpus[MAX_NUMA_NODES][MAX_CPUS_PER_NODE];
-    int next_cpu_idx[MAX_NUMA_NODES] = {0};
-    int total_cpus_in_node[MAX_NUMA_NODES] = {0};
-
-    for (int n = 0; n <= max_node; n++) {
-        struct bitmask *cpus = numa_allocate_cpumask();
-        if (numa_node_to_cpus(n, cpus) == 0) {
-            for (int c = 0; c < cpus->size; c++) {
-                if (numa_bitmask_isbitset(cpus, c)) {
-                    if (total_cpus_in_node[n] < MAX_CPUS_PER_NODE) {
-                        available_cpus[n][total_cpus_in_node[n]++] = c;
-                    }
-                }
-            }
-        }
-        numa_bitmask_free(cpus);
-    }
-    // ---------------------------------------------
 
     // Parse Patterns & Count unique regions
     pattern_t patterns[MAX_PATTERNS];
@@ -225,39 +200,24 @@ int main(int argc, char *argv[]) {
         size_t chunk_per_thread = ((raw_chunk_per_thread + HUGE_PAGE_SIZE - 1) / HUGE_PAGE_SIZE) * HUGE_PAGE_SIZE;
 
         for (int t = 0; t < patterns[p].num_threads; t++) {
-            int node = patterns[p].cpu_node;
-
-            // Check if we have enough distinct CPUs left on this NUMA node
-            if (next_cpu_idx[node] >= total_cpus_in_node[node]) {
-                fprintf(stderr, "Error: Not enough CPUs available on NUMA node %d to satisfy pattern requirement!\n", node);
-                exit(EXIT_FAILURE);
-            }
-
-            // "Pop" the next available distinct CPU from the node's list
-            int assigned_cpu_id = available_cpus[node][next_cpu_idx[node]++];
-
             thread_args[t_idx].thread_id = t_idx;
-            thread_args[t_idx].cpu_id = assigned_cpu_id;
+            thread_args[t_idx].cpu_node = patterns[p].cpu_node;
             thread_args[t_idx].mem_node = patterns[p].mem_node;
             thread_args[t_idx].chunk_size = chunk_per_thread;
 
             actual_total_allocated += chunk_per_thread;
-
-            printf("Spawning Thread %d -> Pinned to CPU %d (Node %d), Target Memory Node %d\n",
-                   t_idx, assigned_cpu_id, node, patterns[p].mem_node);
-
             pthread_create(&threads[t_idx], NULL, mem_worker, &thread_args[t_idx]);
             t_idx++;
         }
     }
 
-    printf("\nSetup: Spawning %d threads across %d memory regions.\n", total_threads, num_regions);
-    printf("Total memory logically partitioned: ~%zu MB.\n\n", actual_total_allocated / (1024*1024));
+    printf("Setup: Spawning %d threads across %d memory regions.\n", total_threads, num_regions);
+    printf("Total memory logically partitioned: ~%zu MB.\n", actual_total_allocated / (1024*1024));
 
     // ==========================================
     // Phase 1: Wait for workers to map, bind, and memset their memory
     pthread_barrier_wait(&init_barrier);
-    printf("-> [1/2] All threads allocated, wrote to local 2MB huge pages, and pinned to cores.\n");
+    printf("-> [1/2] All threads allocated and wrote to local 2MB huge pages.\n");
 
     // Phase 2: Start the timer, then drop the start barrier
     struct timespec start, end;
