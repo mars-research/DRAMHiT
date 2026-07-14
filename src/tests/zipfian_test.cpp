@@ -11,6 +11,8 @@
 
 #include "./hashtables/cas_kht.hpp"
 #include "./hashtables/dlht_kht.hpp"
+#include "./hashtables/folklore_kht.hpp"
+
 
 #include "print_stats.h"
 #include "sync.h"

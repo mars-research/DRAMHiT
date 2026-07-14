@@ -90,6 +90,7 @@ typedef enum {
   CAS23HTPP = 8,
   TBB_HT = 9,
   DLHT_HT = 10,
+  FOLKLORE_HT = 11,
 } ht_type_t;
 
 extern const char* run_mode_strings[];
