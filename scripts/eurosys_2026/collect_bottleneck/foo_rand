@@ -1,0 +1,142 @@
+Requested per-thread size : ~128 MB
+Clamped per-thread size   : 128 MB (Power of 2 & 2MB Aligned)
+
+Spawning Thread 0 -> Pinned to CPU 0 (Node 0), Target Memory Node 0
+Spawning Thread 1 -> Pinned to CPU 1 (Node 0), Target Memory Node 0
+Spawning Thread 2 -> Pinned to CPU 2 (Node 0), Target Memory Node 0
+Spawning Thread 3 -> Pinned to CPU 3 (Node 0), Target Memory Node 0
+Spawning Thread 4 -> Pinned to CPU 4 (Node 0), Target Memory Node 0
+Spawning Thread 5 -> Pinned to CPU 5 (Node 0), Target Memory Node 0
+Spawning Thread 6 -> Pinned to CPU 6 (Node 0), Target Memory Node 0
+Spawning Thread 7 -> Pinned to CPU 7 (Node 0), Target Memory Node 0
+Spawning Thread 8 -> Pinned to CPU 32 (Node 0), Target Memory Node 0
+Spawning Thread 9 -> Pinned to CPU 33 (Node 0), Target Memory Node 0
+Spawning Thread 10 -> Pinned to CPU 34 (Node 0), Target Memory Node 0
+Spawning Thread 11 -> Pinned to CPU 35 (Node 0), Target Memory Node 0
+Spawning Thread 12 -> Pinned to CPU 36 (Node 0), Target Memory Node 0
+Spawning Thread 13 -> Pinned to CPU 37 (Node 0), Target Memory Node 0
+Spawning Thread 14 -> Pinned to CPU 38 (Node 0), Target Memory Node 0
+Spawning Thread 15 -> Pinned to CPU 39 (Node 0), Target Memory Node 0
+Spawning Thread 16 -> Pinned to CPU 8 (Node 1), Target Memory Node 0
+Spawning Thread 17 -> Pinned to CPU 9 (Node 1), Target Memory Node 0
+Spawning Thread 18 -> Pinned to CPU 10 (Node 1), Target Memory Node 0
+Spawning Thread 19 -> Pinned to CPU 11 (Node 1), Target Memory Node 0
+Spawning Thread 20 -> Pinned to CPU 12 (Node 1), Target Memory Node 0
+Spawning Thread 21 -> Pinned to CPU 13 (Node 1), Target Memory Node 0
+Spawning Thread 22 -> Pinned to CPU 14 (Node 1), Target Memory Node 0
+Spawning Thread 23 -> Pinned to CPU 15 (Node 1), Target Memory Node 0
+
+Setup: Spawning 24 threads.
+Total memory allocated across all threads: 3072 MB.
+
+#           time             counts unit events
+     0.100130716        112,889,282      umc_cas_cmd.all                  #  72249.1 MB/s  umc_mem_bandwidth   
+     0.100130716        100,130,716 ns   duration_time                                                         
+-> [1/2] All threads allocated, wrote to local 2MB huge pages, and pinned to cores.
+-> [2/2] Timer started. Beginning reads.
+     0.200842912        145,679,203      umc_cas_cmd.all                  #  93234.7 MB/s  umc_mem_bandwidth   
+     0.200842912        100,712,196 ns   duration_time                                                         
+     0.302917197        148,810,988      umc_cas_cmd.all                  #  95239.0 MB/s  umc_mem_bandwidth   
+     0.302917197        102,074,285 ns   duration_time                                                         
+     0.403517963        148,882,035      umc_cas_cmd.all                  #  95284.5 MB/s  umc_mem_bandwidth   
+     0.403517963        100,600,766 ns   duration_time                                                         
+     0.505328999        150,679,352      umc_cas_cmd.all                  #  96434.8 MB/s  umc_mem_bandwidth   
+     0.505328999        101,811,036 ns   duration_time                                                         
+     0.605908185        148,425,235      umc_cas_cmd.all                  #  94992.2 MB/s  umc_mem_bandwidth   
+     0.605908185        100,579,186 ns   duration_time                                                         
+     0.706516391        148,933,278      umc_cas_cmd.all                  #  95317.3 MB/s  umc_mem_bandwidth   
+     0.706516391        100,608,206 ns   duration_time                                                         
+     0.808320977        150,815,401      umc_cas_cmd.all                  #  96521.9 MB/s  umc_mem_bandwidth   
+     0.808320977        101,804,586 ns   duration_time                                                         
+     0.908895512        148,656,829      umc_cas_cmd.all                  #  95140.4 MB/s  umc_mem_bandwidth   
+     0.908895512        100,574,535 ns   duration_time                                                         
+     1.009492598        148,993,316      umc_cas_cmd.all                  #  95355.7 MB/s  umc_mem_bandwidth   
+     1.009492598        100,597,086 ns   duration_time                                                         
+     1.111321334        151,445,164      umc_cas_cmd.all                  #  96924.9 MB/s  umc_mem_bandwidth   
+     1.111321334        101,828,736 ns   duration_time                                                         
+     1.211904880        149,368,633      umc_cas_cmd.all                  #  95595.9 MB/s  umc_mem_bandwidth   
+     1.211904880        100,583,546 ns   duration_time                                                         
+     1.314037946        152,227,713      umc_cas_cmd.all                  #  97425.7 MB/s  umc_mem_bandwidth   
+     1.314037946        102,133,066 ns   duration_time                                                         
+     1.415062111        152,698,582      umc_cas_cmd.all                  #  97727.1 MB/s  umc_mem_bandwidth   
+     1.415062111        101,024,165 ns   duration_time                                                         
+     1.517894267        148,818,759      umc_cas_cmd.all                  #  95244.0 MB/s  umc_mem_bandwidth   
+     1.517894267        102,832,156 ns   duration_time                                                         
+     1.618498083        149,249,530      umc_cas_cmd.all                  #  95519.7 MB/s  umc_mem_bandwidth   
+     1.618498083        100,603,816 ns   duration_time                                                         
+     1.719076539        148,698,071      umc_cas_cmd.all                  #  95166.8 MB/s  umc_mem_bandwidth   
+     1.719076539        100,578,456 ns   duration_time                                                         
+     1.819670505        148,422,258      umc_cas_cmd.all                  #  94990.2 MB/s  umc_mem_bandwidth   
+     1.819670505        100,593,966 ns   duration_time                                                         
+     1.922049130        153,551,458      umc_cas_cmd.all                  #  98272.9 MB/s  umc_mem_bandwidth   
+     1.922049130        102,378,625 ns   duration_time                                                         
+     2.023895776        148,843,066      umc_cas_cmd.all                  #  95259.6 MB/s  umc_mem_bandwidth   
+     2.023895776        101,846,646 ns   duration_time                                                         
+     2.124494062        149,030,017      umc_cas_cmd.all                  #  95379.2 MB/s  umc_mem_bandwidth   
+     2.124494062        100,598,286 ns   duration_time                                                         
+     2.226322578        150,832,740      umc_cas_cmd.all                  #  96533.0 MB/s  umc_mem_bandwidth   
+     2.226322578        101,828,516 ns   duration_time                                                         
+     2.326907304        148,744,545      umc_cas_cmd.all                  #  95196.5 MB/s  umc_mem_bandwidth   
+     2.326907304        100,584,726 ns   duration_time                                                         
+     2.427508070        148,898,414      umc_cas_cmd.all                  #  95295.0 MB/s  umc_mem_bandwidth   
+     2.427508070        100,600,766 ns   duration_time                                                         
+     2.529323795        150,728,251      umc_cas_cmd.all                  #  96466.1 MB/s  umc_mem_bandwidth   
+     2.529323795        101,815,725 ns   duration_time                                                         
+     2.629902471        148,571,069      umc_cas_cmd.all                  #  95085.5 MB/s  umc_mem_bandwidth   
+     2.629902471        100,578,676 ns   duration_time                                                         
+#           time             counts unit events
+     2.731374577        151,592,235      umc_cas_cmd.all                  #  97019.0 MB/s  umc_mem_bandwidth   
+     2.731374577        101,472,106 ns   duration_time                                                         
+     2.832908293        148,871,144      umc_cas_cmd.all                  #  95277.5 MB/s  umc_mem_bandwidth   
+     2.832908293        101,533,716 ns   duration_time                                                         
+     2.934178599        151,667,134      umc_cas_cmd.all                  #  97067.0 MB/s  umc_mem_bandwidth   
+     2.934178599        101,270,306 ns   duration_time                                                         
+     3.035902774        148,764,915      umc_cas_cmd.all                  #  95209.5 MB/s  umc_mem_bandwidth   
+     3.035902774        101,724,175 ns   duration_time                                                         
+     3.136509950        148,912,236      umc_cas_cmd.all                  #  95303.8 MB/s  umc_mem_bandwidth   
+     3.136509950        100,607,176 ns   duration_time                                                         
+     3.238322856        150,900,689      umc_cas_cmd.all                  #  96576.4 MB/s  umc_mem_bandwidth   
+     3.238322856        101,812,906 ns   duration_time                                                         
+     3.338892462        148,209,161      umc_cas_cmd.all                  #  94853.9 MB/s  umc_mem_bandwidth   
+     3.338892462        100,569,606 ns   duration_time                                                         
+     3.440362508        151,402,046      umc_cas_cmd.all                  #  96897.3 MB/s  umc_mem_bandwidth   
+     3.440362508        101,470,046 ns   duration_time                                                         
+
+============================================
+Configuration   : Inst: 3 | Lookahead: 16
+Mode            : RANDOM (CRC32 Stateless Hash)
+Total Data Read : 300.00 GB
+Time Taken      : 3.3752 seconds
+Bandwidth       : 88.88 GB/s
+dummy value     : 3255307777693712384
+--------------------------------------------
+Cycles Per Operation (per thread):
+  Thread  0 (CPU   0) :   52.13 cycles/op
+  Thread  1 (CPU   1) :   51.98 cycles/op
+  Thread  2 (CPU   2) :   52.17 cycles/op
+  Thread  3 (CPU   3) :   52.22 cycles/op
+  Thread  4 (CPU   4) :   51.75 cycles/op
+  Thread  5 (CPU   5) :   52.07 cycles/op
+  Thread  6 (CPU   6) :   52.10 cycles/op
+  Thread  7 (CPU   7) :   52.20 cycles/op
+  Thread  8 (CPU  32) :   51.90 cycles/op
+  Thread  9 (CPU  33) :   51.96 cycles/op
+  Thread 10 (CPU  34) :   52.19 cycles/op
+  Thread 11 (CPU  35) :   52.30 cycles/op
+  Thread 12 (CPU  36) :   52.11 cycles/op
+  Thread 13 (CPU  37) :   51.92 cycles/op
+  Thread 14 (CPU  38) :   52.09 cycles/op
+  Thread 15 (CPU  39) :   52.06 cycles/op
+  Thread 16 (CPU   8) :   52.17 cycles/op
+  Thread 17 (CPU   9) :   51.92 cycles/op
+  Thread 18 (CPU  10) :   52.08 cycles/op
+  Thread 19 (CPU  11) :   52.22 cycles/op
+  Thread 20 (CPU  12) :   52.18 cycles/op
+  Thread 21 (CPU  13) :   51.55 cycles/op
+  Thread 22 (CPU  14) :   52.03 cycles/op
+  Thread 23 (CPU  15) :   52.09 cycles/op
+============================================
+Average cycle per operation: 52.06 cycles/op
+Predicted peak banwidth: 95.89 GB/s
+     3.480481820         43,546,782      umc_cas_cmd.all                  #  27869.9 MB/s  umc_mem_bandwidth   
+     3.480481820         40,119,312 ns   duration_time                                                         

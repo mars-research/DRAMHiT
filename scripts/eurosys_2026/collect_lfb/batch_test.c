@@ -111,6 +111,7 @@ void free_mem(cacheline_t* ptr, size_t len) {
 
 void evict_cache(cacheline_t* mem, uint64_t len) {
     for (uint64_t i = 0; i < len; i++) {
+        mem[i].data[0] = 0; // demand write to ensure physical cache line useless bit are reset.
         _mm_clflush((const void*)&mem[i]);
     }
 }
@@ -169,6 +170,11 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint64_t seed, uint
 
     end_cycles = RDTSCP();
     asm volatile("" ::: "memory");
+
+    for (uint64_t i = 0; i < batch_sz; i++) {
+        idx = HASH_CRC32(seed, i) & mask;
+        DUMMY += (uint8_t)(mem[idx].data[0]);
+    }
 
     return (end_cycles - start_cycles);
 }
@@ -230,7 +236,7 @@ int main(int argc, char** argv) {
     if (max_batch < min_batch) max_batch = min_batch;
     if (ITER == 0) ITER = 1;
 
-    uint64_t mem_len = 131072; // 2^17
+    uint64_t mem_len = 16896; // size of l1 + l2 cache.
     uint64_t mask = mem_len - 1;
 
     cacheline_t* mem = alloc_mem(mem_len * CACHELINE_SIZE);

@@ -15,11 +15,11 @@ ITERATIONS = 100
 # Mapping descriptive names to the C program's mode integers
 # 0: REGULAR_LOAD, 2: PREFETCH_L1 (T0), 3: PREFETCH_L2 (T1)
 MODES = {
-    "Regular Load": 0,
+    # "Regular Load": 0,
     "Prefetch T0 (L1)": 2,
     "Prefetch T1 (L2)": 3,
-    "Prefetch T2": 4,
-    "Prefetch NTA": 5,
+    #"Prefetch T2": 4,
+    # "Prefetch NTA": 5,
 }
 
 
@@ -92,7 +92,7 @@ def plot_results(results):
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("intel_batch_1.png")
+    plt.savefig("amd_batch_1.png")
 
     # --- Plot 2: Nth Operation vs. Nth Operation Cycle Cost ---
     plt.figure(figsize=(10, 6))
@@ -113,7 +113,7 @@ def plot_results(results):
     plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("intel_batch_2.png")
+    plt.savefig("amd_batch_2.png")
 
 
 def main():

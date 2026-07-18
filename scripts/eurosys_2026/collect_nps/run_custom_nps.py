@@ -24,8 +24,9 @@ REMOTE_CCM_EVENTS = [f"amd_df/remote_socket_inf0_inbound_data_beats_ccm{i}/" for
 CS_EVENTS = [f"amd_df/local_processor_read_data_beats_cs{i}/" for i in range(12)]
 CS_BYTES_PER_BEAT = 64
 
-# Remote CS: Remote Unified Memory Controllers to DDR5 RAM. 64 Bytes per beat.
-REMOTE_CS_EVENTS = [f"amd_df/remote_processor_read_data_beats_cs{i}/" for i in range(12)]
+
+# TODO: Update below to amd_umc_ events. and DON't add line to combine remote cs and local cs.
+REMOTE_CS_EVENTS = [f"amd_umc_{i}/umc_cas_cmd.rd/" for i in range(12)]
 
 def build_pattern(num_threads):
     """
