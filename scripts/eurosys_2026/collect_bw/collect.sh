@@ -4,6 +4,8 @@
 DRAMHIT=3
 GROWT=6
 DRAMHIT23=8
+DLHT=10
+FOLKLORE=11
 
 # Ensure correct usage
 if [ "$#" -ne 4 ]; then
@@ -77,7 +79,31 @@ run_benchmark() {
     done
 }
 
+run_benchmark_32() {
+    local out_file="$1"
+    local ht_type="$2"
+
+    # Log CPU info to the file (overwrites previous content)
+    lscpu &> "$out_file"
+
+    for fill in $(seq 10 10 90); do
+        local cmd="--find_queue 64 --ht-fill $fill --ht-type $ht_type --insert-factor $insertFactor --read-factor $readFactor \
+        --num-threads $numThreads --numa-split $numa_policy --no-prefetch 0 --mode $ZIPFIAN --ht-size $size \
+        --hw-pref 0 --batch-len 32 --seed $SEED"
+
+        if [ "$arch" = "amd" ]; then
+            sudo /usr/bin/perf stat -a -M umc_mem_bandwidth -I 1000 -- "$HOME_DIR/build/dramhit" $cmd  &>> "$out_file"
+        else
+            sudo /usr/bin/perf stat -e unc_m_cas_count.all -I 1000 -- "$HOME_DIR/build/dramhit" $cmd  &>> "$out_file"
+        fi
+
+        # Log the exact command run
+        echo "$(pwd)/build/dramhit $cmd" &>> "$out_file"
+    done
+}
+
 # Execute the function for each configuration
-run_benchmark "dramblast.txt" "$DRAMHIT"
+# run_benchmark_32 "dlht.txt" "$DLHT"
 run_benchmark "dramhit.txt"   "$DRAMHIT23"
+run_benchmark_32 "dramblast.txt"   "$DRAMHIT"
 # run_benchmark "growt.txt"     "$GROWT"
