@@ -63,3 +63,8 @@ Numa node            0       1
 
 
 > python plot_mops.py  amd/dramhit.txt amd/dramblast.txt amd/growt.txt
+
+
+
+python plot_mops.py dramhit.txt dramblast.txt dlht.txt folklore.txt dlht_l2.txt
+python plot_bw.py dramhit.txt dramblast.txt dlht.txt folklore.txt dlht_l2.txt

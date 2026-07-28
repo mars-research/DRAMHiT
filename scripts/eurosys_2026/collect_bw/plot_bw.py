@@ -4,11 +4,7 @@ import os
 import matplotlib.pyplot as plt
 
 # Separate baseline constants (GB/s) for independent adjustment
-STREAM_INSERT = 255.6 
-STREAM_FIND = 346.3
 
-STREAM_INSERT_LABEL = "synthetic_1read_1write"
-STREAM_FIND_LABEL = "synthetic_read"
 
 # NEW BASELINES
 BASELINES = [
@@ -16,10 +12,14 @@ BASELINES = [
     # ("rw", 271.4),
     # ("stream+rw", 297.0),
     # ("1.5r_1w", 280.0),
-    ("r", 243.0),
-    ("rw", 198.0),
-    ("stream+rw", 236),
-    ("1.5r_1w", 201), 
+    # ("r", 243.0),
+    # ("rw", 198.0),
+    # ("stream+rw", 236),
+    # ("1.5r_1w", 201), 
+    ("r", 0),
+    ("rw", 0),
+    ("stream+rw", 0),
+    ("1.5r_1w", 0), 
 ]
 
 # USE TAB10 COLORS

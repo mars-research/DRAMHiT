@@ -251,6 +251,10 @@ class DlhtHashTable : public BaseHashTable {
       // it yet
       if (first_link_bucket_index == 0) return nullptr;
 
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
+
       // otherwise we index into our first link
       Link_bucket* link_bucket = &link_table[first_link_bucket_index - 1];
 
@@ -264,6 +268,10 @@ class DlhtHashTable : public BaseHashTable {
     else if (slot_index >= SECOND_LINK_START && slot_index < THIRD_LINK_START) {
       // again return if unallocated
       if (second_and_third_link_bucket_index == 0) return nullptr;
+
+#ifdef CALC_STATS
+      this->num_reprobes++;
+#endif
 
       // otherwise index into second link
       Link_bucket* link_bucket =
@@ -421,7 +429,7 @@ class DlhtHashTable : public BaseHashTable {
             Slot* slot = get_slot(primary_bucket, slot_index);
             // make sure not nullptr, and check if it matches key we are looking
             // for
-            if (slot && slot->key == kp[i].key) {
+            if (slot->key == kp[i].key) {
               found_val = slot->value;
               found = true;
               break;
@@ -447,11 +455,7 @@ class DlhtHashTable : public BaseHashTable {
       } while (retry);
     }  // end gets loop
   }
-  // need this for as CAS expects uint_64_t
-  inline uint64_t bin_hdr_to_u64(const Bin_hdr& hdr) {
-    return (static_cast<uint64_t>(hdr.version) << 32) |
-           static_cast<uint64_t>(hdr.states);
-  }
+
   void insert_batch(const InsertFindArguments& kp,
                     collector_type* collector) override {
     // used to do a & modulo
@@ -473,7 +477,7 @@ class DlhtHashTable : public BaseHashTable {
       // get pointer of the bin's bin_hdr, is 64 bits and holds:
       Bin_hdr* header_ptr = &primary_bucket->bin_hdr;
 
-      // First perform get algorithm, to see if already inserted
+      // First perform Get algorithm, to see if already inserted
       bool retry;
       bool found;
       uint64_t found_val;
@@ -530,6 +534,7 @@ class DlhtHashTable : public BaseHashTable {
       } while (retry);
 
       if (found) continue;
+      // End Get Algorithm
 
       // wasn't found so do insert on first invalid
       bool inserted = false;
@@ -563,11 +568,12 @@ class DlhtHashTable : public BaseHashTable {
 
         if (!__sync_bool_compare_and_swap(
                 reinterpret_cast<uint64_t*>(header_ptr),
-                bin_hdr_to_u64(expected_value), bin_hdr_to_u64(new_header))) {
-          continue;  // try to find another invalid slot
+                *reinterpret_cast<uint64_t*>(&expected_value),
+                *reinterpret_cast<uint64_t*>(&new_header))) {
+          continue;  // if CAS fails try to find another invalid slot
         }
 
-        // Ensure chained bucket is allocated if past primary slots
+        // Verify chained bucket is allocated if past primary slots, or allocate
         allocate_link_bucket(primary_bucket, target_slot_index);
 
         // Fill slot
@@ -588,14 +594,15 @@ class DlhtHashTable : public BaseHashTable {
           new_header.states = new_states;
           new_header.version = (version + 1);
 
-          // break out of both loops
+          // switch from TryInsert-> Valid and break out of both loops
           if (__sync_bool_compare_and_swap(
                   reinterpret_cast<uint64_t*>(header_ptr),
-                  bin_hdr_to_u64(expected_value), bin_hdr_to_u64(new_header))) {
+                  *reinterpret_cast<uint64_t*>(&expected_value),
+                  *reinterpret_cast<uint64_t*>(&new_header))) {
             inserted = true;
             break;
           }
-          // otherwise we repeat steps 1,2,5 of algorithm, ie get algorithm and
+          // otherwise we repeat steps 1,2,5 of algorithm, ie Get algorithm and
           // CAS again
 
           do {
@@ -646,12 +653,12 @@ class DlhtHashTable : public BaseHashTable {
               // inserts so do nothing for now
               continue;
             }
-            // retry when version don't match
+            // retry when version don't match, ie Get algo again
           } while (retry);
 
           if (found) continue;
 
-        }  // end TRY_INSERT->VALID CAS LOOP
+        }  // If Found stop, otherwise step 5, as per algorithm, which is CAS
       }
     }
   }

@@ -38,7 +38,7 @@ elif [ "$test" = "large" ]; then
     # size=4294967296
     # size=268435456
     size=536870912
-    insertFactor=100
+    insertFactor=1
     readFactor=100
 fi
 
@@ -48,9 +48,9 @@ SEED=1774551337382868027
 HOME_DIR=/opt/DRAMHiT
 
 if [ "$arch" = "amd" ]; then
-    cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DGROWT=ON
+    cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=3250 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DCALC_STATS=OFF
 else
-    cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=2500 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DGROWT=ON
+    cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=2500 -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DUNIFORM_PROBING=ON -DPREFETCH=DOUBLE -DCALC_STATS=OFF
 fi
 
 cmake --build $HOME_DIR/build
@@ -103,7 +103,9 @@ run_benchmark_32() {
 }
 
 # Execute the function for each configuration
-# run_benchmark_32 "dlht.txt" "$DLHT"
 run_benchmark "dramhit.txt"   "$DRAMHIT23"
 run_benchmark_32 "dramblast.txt"   "$DRAMHIT"
+run_benchmark_32 "dlht.txt" "$DLHT"
+run_benchmark_32 "folklore.txt" "$FOLKLORE"
+
 # run_benchmark "growt.txt"     "$GROWT"
