@@ -192,7 +192,7 @@ T *calloc_ht(uint64_t capacity, uint16_t id, int *out_fd) {
   int flags;
   alloc_sz = round_hugepage(alloc_sz);
 
-  if (alloc_sz < ONEGB_PAGE_SZ) {
+  if (alloc_sz <= ONEGB_PAGE_SZ) {
     flags = MAP_FLAGS_2MB;
     PLOGI.printf("allocating %lu 2mb pages bytes %lu", alloc_sz / TWOMB_PAGE_SZ,
                  alloc_sz);

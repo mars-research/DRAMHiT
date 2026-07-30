@@ -392,7 +392,7 @@ class DlhtHashTable : public BaseHashTable {
     // Pass 1: Prefetch memory locations
     for (uint64_t i = 0; i < kp.size(); i++) {
       uint64_t idx = kp[i].key & mask;
-      __builtin_prefetch(&primary_table[idx], 0, 1);
+      __builtin_prefetch(&primary_table[idx], 0, 3);
     }
 
     // Pass 2: Execute Gets
@@ -465,7 +465,7 @@ class DlhtHashTable : public BaseHashTable {
     // Pass 1: Loop through batch, prefetch bin's memory locations
     for (uint64_t i = 0; i < kp.size(); i++) {
       uint64_t idx = kp[i].key & mask;
-      __builtin_prefetch(&primary_table[idx], 1, 1);
+      __builtin_prefetch(&primary_table[idx], 1, 3);
     }
 
     // Pass 2: Execute Inserts
