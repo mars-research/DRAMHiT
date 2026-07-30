@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
 
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
-    printf("-> [2/2] Timer started. Beginning reads.\n");
+    printf("Start perf collection\n");
     pthread_barrier_wait(&start_barrier);
 
     pthread_barrier_wait(&end_barrier);
@@ -354,6 +354,8 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < total_threads; i++) {
         pthread_join(threads[i], NULL);
     }
+
+    printf("End perf collection\n");
 
     double time_taken = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
     size_t total_bytes_read = actual_total_allocated * NUM_ITERATIONS;

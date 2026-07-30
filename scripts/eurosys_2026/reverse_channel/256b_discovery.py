@@ -15,7 +15,7 @@ def parse_count(line):
 
 def get_active_channel(base_line):
     pattern = f"{base_line},{base_line+1},{base_line+2},{base_line+3}"
-    cmd = f"stdbuf -o0 perf stat -a -e amd_umc_0/umc_cas_cmd.rd/,amd_umc_1/umc_cas_cmd.rd/,amd_umc_2/umc_cas_cmd.rd/ -I 100 -- ./mapping_test -p '{pattern}' -n 1000000 2>&1"
+    cmd = f"stdbuf -o0 perf stat -a -e amd_umc_0/umc_cas_cmd.rd/,amd_umc_1/umc_cas_cmd.rd/,amd_umc_2/umc_cas_cmd.rd/ -I 100 -- ./map -p '{pattern}' -n 1000000 2>&1"
 
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, text=True)
 
