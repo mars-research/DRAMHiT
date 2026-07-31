@@ -23,9 +23,9 @@ typedef enum {
 const char* get_mode_str(inst_mode_t mode) {
     switch(mode) {
         case MODE_AVX512_LOAD: return "AVX512_LOAD";
-        case MODE_PREFETCH_L1: return "PREFETCH_L1";
-        case MODE_PREFETCH_L2: return "PREFETCH_L2";
-        case MODE_PREFETCH_L3: return "PREFETCH_L3";
+        case MODE_PREFETCH_L1: return "PREFETCH_T0";
+        case MODE_PREFETCH_L2: return "PREFETCH_T1";
+        case MODE_PREFETCH_L3: return "PREFETCH_T2";
         case MODE_PREFETCH_NTA: return "PREFETCH_NTA";
         case MODE_REGULAR_LOAD:
         default: return "REGULAR_LOAD";
@@ -186,9 +186,9 @@ void print_help(const char* prog_name) {
     printf("  -m MODE     Select instruction mode (default: 0)\n");
     printf("                 0: REGULAR_LOAD\n");
     printf("                 1: AVX512_LOAD\n");
-    printf("                 2: PREFETCH_L1\n");
-    printf("                 3: PREFETCH_L2\n");
-    printf("                 4: PREFETCH_L3\n");
+    printf("                 2: PREFETCH_T0 (L1)\n");
+    printf("                 3: PREFETCH_T1 (L2)\n");
+    printf("                 4: PREFETCH_T2\n");
     printf("                 5: PREFETCH_NTA\n");
     printf("  -b MIN-MAX  Set batch size range (e.g., 5-40, default: 5-40)\n");
     printf("  -i ITER     Number of iterations (default: 1000)\n");

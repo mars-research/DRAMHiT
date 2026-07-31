@@ -9,7 +9,7 @@ import pandas as pd
 C_FILE = "batch_test.c"
 EXECUTABLE = "./batch_test"
 MIN_BATCH = 10
-MAX_BATCH = 40
+MAX_BATCH = 60
 ITERATIONS = 100
 
 # Mapping descriptive names to the C program's mode integers
