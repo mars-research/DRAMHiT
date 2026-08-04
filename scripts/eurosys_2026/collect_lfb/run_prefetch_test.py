@@ -21,12 +21,12 @@ PROGRAMS = {
 
 # The instruction types to loop through
 INST_TYPES = {
-    0: "Load",
-    1: "AVX512_Load",
+    #0: "Load",
+    #1: "AVX512_Load",
     2: "Prefetch_T0",
     3: "Prefetch_T1",
-    4: "Prefetch_T2",
-    5: "Prefetch_NTA",
+    #4: "Prefetch_T2",
+    #5: "Prefetch_NTA",
 }
 
 # The counters passed to perf
@@ -34,7 +34,7 @@ COUNTERS = [
     "ls_any_fills_from_sys.all",
     "ls_pref_instr_disp.all",
     "ls_mab_alloc.all_allocations",
-    "ls_hw_pf_dc_fills.all",
+    "ls_alloc_mab_count",
 ]
 
 

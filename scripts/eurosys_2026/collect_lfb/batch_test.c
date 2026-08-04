@@ -123,6 +123,7 @@ __attribute__((target("avx512f,sse4.2")))
 uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint64_t seed, uint64_t mask, inst_mode_t mode) {
     uint64_t start_cycles, end_cycles;
     uint64_t idx = 0;
+    int do_bind_read = 0;
 
     asm volatile("" ::: "memory");
     start_cycles = RDTSC_START();
@@ -140,24 +141,28 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint64_t seed, uint
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_T0);
             }
+	    do_bind_read = 1;
             break;
         case MODE_PREFETCH_L2:
             for (uint64_t i = 0; i < batch_sz; i++) {
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_T1);
             }
+	    do_bind_read = 1;
             break;
         case MODE_PREFETCH_L3:
             for (uint64_t i = 0; i < batch_sz; i++) {
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_T2);
             }
+	    do_bind_read = 1 ;
             break;
         case MODE_PREFETCH_NTA:
             for (uint64_t i = 0; i < batch_sz; i++) {
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_NTA);
             }
+	    do_bind_read = 1;
             break;
         case MODE_REGULAR_LOAD:
         default:
@@ -171,9 +176,11 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint64_t seed, uint
     end_cycles = RDTSCP();
     asm volatile("" ::: "memory");
 
+    if(do_bind_read){
     for (uint64_t i = 0; i < batch_sz; i++) {
         idx = HASH_CRC32(seed, i) & mask;
         DUMMY += (uint8_t)(mem[idx].data[0]);
+    }
     }
 
     return (end_cycles - start_cycles);

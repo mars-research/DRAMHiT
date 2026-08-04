@@ -1,3 +1,13 @@
+
+Set up machine
+## Turn off hw prefetcher
+
+../../prefetch_control.sh off
+
+## Reserve some hugepages
+
+../../enable_hugepages.sh 10 1000
+
 ### batch_test
 
 Issue batch amount of memory operations and collect duration of the loop.

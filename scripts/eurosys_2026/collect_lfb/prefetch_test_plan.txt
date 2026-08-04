@@ -1,0 +1,5 @@
+Counter for intel to characterize LFB behavior.
+
+- sw_pref_ext_to (amount of prefetch instruction dispatched)
+- l1d_miss_pending (from perf documentation, this should be the same as amount dispatched or fb slot allocated, but not sure)
+- find a counter shows amount of memory requests fullfilled
