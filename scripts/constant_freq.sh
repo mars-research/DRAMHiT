@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -e
 CPU_FREQ_KHZ=2500000
 #RDMSR=$(which rdmsr)
 #WRMSR=$(which wrmsr)
@@ -28,7 +27,7 @@ case "$UNIT" in
         CPU_FREQ_KHZ=$(echo "$NUM / 1" | bc)
         ;;
     *)
-        echo "Usage: $0 3.25GHz"
+        echo "Usage: $0 2.50 GHz"
         exit 1
         ;;
 esac

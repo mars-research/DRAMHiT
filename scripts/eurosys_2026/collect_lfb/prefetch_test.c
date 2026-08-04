@@ -18,7 +18,7 @@
 #define NUM_CACHELINES (MEMORY_SIZE / CACHELINE_SIZE)
 
 // How many cachelines to look ahead for prefetching
-#define PREFETCH_AHEAD 16
+#define PREFETCH_AHEAD 64
 
 // Hugepage flags
 #ifndef MAP_HUGE_1GB
@@ -180,7 +180,7 @@ void* worker_thread(void* arg) {
                 GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
                 _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_T0);
 #ifndef NONE_BIND
-                dummy += mem[idx].data[0]; 
+                dummy += mem[idx].data[0];
 #endif
             }
             break;
@@ -190,7 +190,7 @@ void* worker_thread(void* arg) {
                 GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
                 _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_T1);
 #ifndef NONE_BIND
-                dummy += mem[idx].data[0]; 
+                dummy += mem[idx].data[0];
 #endif
             }
             break;
@@ -200,7 +200,7 @@ void* worker_thread(void* arg) {
                 GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
                 _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_T2);
 #ifndef NONE_BIND
-                dummy += mem[idx].data[0]; 
+                dummy += mem[idx].data[0];
 #endif
             }
             break;
@@ -210,7 +210,7 @@ void* worker_thread(void* arg) {
                 GET_LOOKAHEAD_IDX(idx_lookahead, i, state);
                 _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_NTA);
 #ifndef NONE_BIND
-                dummy += mem[idx].data[0]; 
+                dummy += mem[idx].data[0];
 #endif
             }
             break;

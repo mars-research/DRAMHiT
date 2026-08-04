@@ -1,0 +1,104 @@
+import json
+import re
+import subprocess
+import sys
+
+numThreads = 64
+numa_policy = 10
+DRAMHIT25 = 3
+GROWT = 6
+DRAMHIT23 = 8
+MODE = 11
+
+one_gb = 1 << 26
+htsize = one_gb * 8
+repeat = 100
+
+def run_once(cmd: str):
+    """Run a command and return its stdout as string."""
+    proc = subprocess.run(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+    )
+    return proc.stdout, proc.stderr
+
+
+def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
+    results[name] = []
+    for fill in range(10, 100, 10):
+        cmd_base = f"""
+        ~/DRAMHiT/build/dramhit
+        --find_queue 64
+        --ht-type {ht_type}
+        --num-threads {numThreads}
+        --numa-split {numa_policy}
+        --no-prefetch 0
+        --np_cpu_node 0
+        --np_mem_node 2
+        --insert-factor {repeat}
+        --read-factor {repeat}
+        --mode {MODE}
+        --ht-size {htsize}
+        --ht-fill {fill}
+        --hw-pref {hw_pref}
+        --batch-len 16
+        --skew 0.01
+        --seed 1775762440565610239
+        """
+        cmd_base = " ".join(cmd_base.split())  # clean whitespace
+
+        print(cmd_base)
+
+        out, err = run_once("sudo " + cmd_base)
+        setmatch = re.findall(r"set_mops\s*:\s*([\d.]+)", out)
+        getmatch = re.findall(r"get_mops\s*:\s*([\d.]+)", out)
+
+        if not setmatch or not getmatch:
+            print("\nError: could not parse mops values")
+            print(f"Command: {cmd_base}")
+            print("---- Output  ----")
+            print(out)
+            print(err)
+            print("---- End of output ----")
+            sys.exit(1)
+
+        results[name].append(
+            {
+                "fill": fill,
+                "htsize": htsize,
+                "set_mops": setmatch[-1],
+                "get_mops": getmatch[-1],
+            }
+        )
+        print(
+            f"fill: {fill}, table sz: {int(htsize * 16 / (1 << 30))} GB, set mops: {setmatch[-1]}, get mops: {getmatch[-1]}"
+        )
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <output.json>")
+        sys.exit(1)
+
+    json_out_file = sys.argv[1]
+    # rebuild project
+    subprocess.run(
+        "cmake -S ~/DRAMHiT/ -B ~/DRAMHiT/build "
+        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON "
+        "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON"
+        "-DGROWT=ON",
+        shell=True,
+        check=True,
+    )
+    subprocess.run("cmake --build ~/DRAMHiT/build", shell=True, check=True)
+
+    # store results
+    all_results = {}
+
+    run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
+    run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
+
+    # save to JSON
+    with open(json_out_file, "w") as f:
+        json.dump(all_results, f, indent=2)
+
+    print("\nFinal results saved to " + json_out_file)

@@ -98,7 +98,19 @@ inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
         PLOGV.printf("Successfully bound %lu bytes to node %d", current_sz, i);
       }
     }
-  } else {
+  } else if(policy == THREADS_CUSTOM)
+  {
+      unsigned long nodemask = 1UL << config.np_mem_node;
+      unsigned long maxnode = sizeof(nodemask) * 8;
+
+      long ret = mbind(addr, alloc_sz, MPOL_BIND, &nodemask, maxnode,
+                       MPOL_MF_MOVE | MPOL_MF_STRICT);
+      if (ret < 0) {
+        perror("mbind");
+        PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+      }
+  }
+  else {
     long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
                      *numa_all_nodes_ptr->maskp, MPOL_MF_MOVE | MPOL_MF_STRICT);
     if (ret < 0) {

@@ -336,7 +336,8 @@ enum numa_policy_threads {
   THREADS_SPLIT_EVEN_NODES = 6,
   THREADS_ALL_NODES_REMOTE_ACCESS = 7,
   THREADS_ALL_NODES_LOCAL_ACCESS = 8,
-  THREADS_MIXED_NUMA_NODE = 9
+  THREADS_MIXED_NUMA_NODE = 9,
+  THREADS_CUSTOM = 10
 };
 
 class NumaPolicyThreads : public Numa {
@@ -345,6 +346,15 @@ class NumaPolicyThreads : public Numa {
     this->config_num_threads = num_threads;
     this->nodes = Numa::get_node_config();
     this->np = np;
+    this->init_unassigned_cpus_list();
+    this->generate_cpu_list();
+  }
+
+  NumaPolicyThreads(int num_threads, uint32_t cpu_node) {
+    this->config_num_threads = num_threads;
+    this->nodes = Numa::get_node_config();
+    this->np = THREADS_CUSTOM;
+    this->cpu_node = cpu_node;
     this->init_unassigned_cpus_list();
     this->generate_cpu_list();
   }
@@ -382,6 +392,7 @@ class NumaPolicyThreads : public Numa {
 
  private:
   uint32_t config_num_threads;
+  uint32_t cpu_node;
   numa_policy_threads np;
   std::vector<numa_node_t> nodes;
   std::vector<uint32_t> assigned_cpu_list;
@@ -390,6 +401,27 @@ class NumaPolicyThreads : public Numa {
   void generate_cpu_list() {
     assert(this->config_num_threads <=
            static_cast<uint32_t>(Numa::get_num_total_cpus()));
+
+    if(this->np == THREADS_CUSTOM)
+    {
+        if (this->config_num_threads > nodes[this->cpu_node].cpu_list.size()) {
+          std::cout << "too many threads to be scheduled on nodes 0" << std::endl;
+          exit(-1);
+        }
+
+        if (this->cpu_node >= nodes.size()) {
+          printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+          exit(-1);
+        }
+
+        for (auto i = 0u; i < this->config_num_threads; i++) {
+          uint32_t cpu_assigned = nodes[this->cpu_node].cpu_list[i];
+          this->assigned_cpu_list.push_back(cpu_assigned);
+          this->unassigned_cpu_list.erase(cpu_assigned);
+        }
+
+        return;
+    }
 
     // return numa node 0 threads.
     if (this->np == THREADS_REMOTE_NUMA_NODE || this->np == THREADS_LOCAL_NUMA_NODE || this->np == THREADS_MIXED_NUMA_NODE) {
