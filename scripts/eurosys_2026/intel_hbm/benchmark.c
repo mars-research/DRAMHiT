@@ -144,7 +144,9 @@ void *mem_worker(void *arg) {
     uint64_t local_dummy = 0;
 
     // NEW: Start cycle counter
-    uint64_t start_tsc = __rdtsc();
+    _mm_lfence();
+        uint64_t start_tsc = __rdtsc();
+        _mm_lfence();
 
     // The Read-Only Benchmark Loop
     for (int iter = 0; iter < NUM_ITERATIONS; iter++) {
@@ -206,7 +208,9 @@ void *mem_worker(void *arg) {
     }
 
     // NEW: Stop cycle counter and record
-    uint64_t end_tsc = __rdtsc();
+    unsigned int aux;
+        uint64_t end_tsc = __rdtscp(&aux);
+        _mm_lfence();
     t->elapsed_cycles = end_tsc - start_tsc;
 
     __sync_fetch_and_add(&global_sink, local_dummy);

@@ -13,13 +13,18 @@
 #include <immintrin.h>
 #include <numaif.h> // Required for mbind()
 
+// Make sure RANDOM is defined if neither random or sequential flag is provided
+#if !defined(RANDOM) && !defined(SEQUENTIAL) && !defined(SEQUANTIAL)
+#define RANDOM
+#endif
+
 #define CACHELINE_SIZE 64
 // 8 GB Total Memory
 #define MEMORY_SIZE (8ULL * 1024 * 1024 * 1024)
 #define NUM_CACHELINES (MEMORY_SIZE / CACHELINE_SIZE)
 
-// How many cachelines to look ahead for prefetching
-#define PREFETCH_AHEAD 32
+// How many cachelines to look ahead for prefetching (Now mutable at runtime)
+int prefetch_ahead = 128;
 
 // Hugepage flags
 #ifndef MAP_HUGE_1GB
@@ -33,14 +38,14 @@
         uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)(i)) & (NUM_CACHELINES - 1); \
         (void)idx_var
     #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
-        uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)((i) + PREFETCH_AHEAD)) & (NUM_CACHELINES - 1); \
+        uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)((i) + prefetch_ahead)) & (NUM_CACHELINES - 1); \
         (void)idx_var
 #elif defined(SEQUENTIAL) || defined(SEQUANTIAL)
     #define GET_IDX(idx_var, i, state_var) \
         uint64_t idx_var = (i) & (NUM_CACHELINES - 1); \
         (void)idx_var
     #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
-        uint64_t idx_var = ((i) + PREFETCH_AHEAD) & (NUM_CACHELINES - 1); \
+        uint64_t idx_var = ((i) + prefetch_ahead) & (NUM_CACHELINES - 1); \
         (void)idx_var
 #else
     // Fallback to original array-based lookup
@@ -48,7 +53,7 @@
         uint64_t idx_var = workload[i]; \
         (void)idx_var
     #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
-        uint64_t idx_var = workload[(i) + PREFETCH_AHEAD]; \
+        uint64_t idx_var = workload[(i) + prefetch_ahead]; \
         (void)idx_var
 #endif
 
@@ -259,17 +264,39 @@ void get_cpu1_siblings(int* cpu_a, int* cpu_b) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 5) {
-        fprintf(stderr, "Usage: %s <Inst_Type_0-5> <Num_Ops> <Num_Threads_1-2> <NUMA_Node>\n", argv[0]);
+    int pos_args[4];
+    int pos_count = 0;
+
+    // Parse arguments and allow -ahead to be passed anywhere
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-ahead") == 0) {
+            if (i + 1 < argc) {
+                prefetch_ahead = atoi(argv[++i]);
+            } else {
+                fprintf(stderr, "Error: -ahead requires a numeric value.\n");
+                return 1;
+            }
+        } else {
+            if (pos_count < 4) {
+                pos_args[pos_count++] = i;
+            } else {
+                fprintf(stderr, "Error: Too many positional arguments.\n");
+                pos_count++;
+            }
+        }
+    }
+
+    if (pos_count != 4) {
+        fprintf(stderr, "Usage: %s [-ahead <lookahead_count>] <Inst_Type_0-5> <Num_Ops> <Num_Threads_1-2> <NUMA_Node>\n", argv[0]);
         fprintf(stderr, "Instruction Types:\n  0: Load\n  1: AVX512 Load\n  2: Prefetch T0\n");
         fprintf(stderr, "  3: Prefetch T1\n  4: Prefetch T2\n  5: Prefetch NTA\n");
         return 1;
     }
 
-    int inst_type = atoi(argv[1]);
-    uint64_t num_ops = strtoull(argv[2], NULL, 10);
-    int num_threads = atoi(argv[3]);
-    int numa_node = atoi(argv[4]);
+    int inst_type = atoi(argv[pos_args[0]]);
+    uint64_t num_ops = strtoull(argv[pos_args[1]], NULL, 10);
+    int num_threads = atoi(argv[pos_args[2]]);
+    int numa_node = atoi(argv[pos_args[3]]);
 
     if (num_threads < 1 || num_threads > 2) {
         fprintf(stderr, "Error: Number of threads must be 1 or 2.\n");
@@ -290,7 +317,7 @@ int main(int argc, char** argv) {
         };
 
     // Print the indication of the execute type
-    printf("Execute Type: %s\n", inst_names[inst_type]);
+    printf("Execute Type: %s (Lookahead: %d)\n", inst_names[inst_type], prefetch_ahead);
     int core_a, core_b;
     get_cpu1_siblings(&core_a, &core_b);
 
@@ -316,7 +343,7 @@ int main(int argc, char** argv) {
 
 // Skip pre-allocating the workload buffer entirely if we evaluate everything on-the-fly inside the loop
 #if !defined(RANDOM) && !defined(SEQUENTIAL) && !defined(SEQUANTIAL)
-        ctx[t].workload = malloc((num_ops + PREFETCH_AHEAD) * sizeof(uint64_t));
+        ctx[t].workload = malloc((num_ops + prefetch_ahead) * sizeof(uint64_t));
         srandom(time(NULL) ^ (t * 19937)); // Different seed per thread
 
         // Fill the primary workload
@@ -327,7 +354,7 @@ int main(int argc, char** argv) {
         }
 
         // Pad the tail of the array to satisfy the +16 lookahead
-        for (uint64_t i = 0; i < PREFETCH_AHEAD; i++) {
+        for (uint64_t i = 0; i < prefetch_ahead; i++) {
             ctx[t].workload[num_ops + i] = ctx[t].workload[i];
         }
 #else

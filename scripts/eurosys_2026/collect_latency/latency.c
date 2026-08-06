@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <sched.h>
 #include <stdatomic.h>
+#include <xmmintrin.h> // Required for _mm_prefetch
 
 // Hugepage sizes
 #define SIZE_1GB (1ULL * 1024 * 1024 * 1024)
@@ -25,10 +26,12 @@
 #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
 #endif
 
-// Node structure: 64 bytes total to perfectly align with a cacheline.
+// Node structure: 64 bytes total.
+// We now store both next_idx and lookahead_idx in the same cacheline.
 typedef struct {
     uint64_t next_idx;
-    uint8_t padding[CACHELINE_SIZE - sizeof(uint64_t)];
+    uint64_t lookahead_idx;
+    uint8_t padding[CACHELINE_SIZE - 2 * sizeof(uint64_t)];
 } __attribute__((aligned(CACHELINE_SIZE))) Node;
 
 volatile uint64_t global_counter = 0;
@@ -53,7 +56,6 @@ uint64_t get_physical_core_id(int cpu) {
     f = fopen(path, "r");
     if (f) { fscanf(f, "%d", &pkg_id); fclose(f); }
 
-    // Fallback if topology files don't exist
     if (core_id == -1) return (uint64_t)cpu;
     if (pkg_id == -1) pkg_id = 0;
 
@@ -74,7 +76,6 @@ void* loader_thread_func(void* arg) {
     int mem_node = args->mem_node;
     free(args);
 
-    // 1. Pin this loader thread to the assigned CPU
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(cpu, &cpuset);
@@ -83,15 +84,13 @@ void* loader_thread_func(void* arg) {
         return NULL;
     }
 
-    // 2. Allocate 128MB using 2MB Hugepages
     int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB;
     uint64_t *ptr = mmap(NULL, SIZE_128MB, PROT_READ | PROT_WRITE, mmap_flags, -1, 0);
     if (ptr == MAP_FAILED) {
-        perror("Loader mmap failed (Ensure 2MB hugepages are allocated)");
+        perror("Loader mmap failed");
         return NULL;
     }
 
-    // 3. Bind memory to the specified NUMA memory node
     unsigned long nodemask = (1UL << mem_node);
     if (mbind(ptr, SIZE_128MB, MPOL_BIND, &nodemask, sizeof(nodemask)*8, MPOL_MF_STRICT | MPOL_MF_MOVE) != 0) {
         perror("Loader mbind failed");
@@ -101,15 +100,11 @@ void* loader_thread_func(void* arg) {
 
     uint64_t num_elements = SIZE_128MB / sizeof(uint64_t);
     uint64_t mask = num_elements - 1;
-
     uint64_t idx = 0;
     uint64_t dummy_counter = 0;
 
-    // 4. Infinite loop of random accesses until measurement thread finishes
     while (atomic_load(&keep_running)) {
-        // LCG for fast, pseudo-random cacheline jumps
         idx = (idx * 1103515245ULL + 12345ULL) & mask;
-
         dummy_counter += ptr[idx];
         ptr[idx] = dummy_counter + 1;
     }
@@ -119,8 +114,14 @@ void* loader_thread_func(void* arg) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 5) {
-        fprintf(stderr, "Usage: %s <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0|1>\n", argv[0]);
+    if (argc != 7) {
+        fprintf(stderr, "Usage: %s <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0|1> <lookahead> <prefetch_type>\n", argv[0]);
+        fprintf(stderr, "Prefetch types:\n");
+        fprintf(stderr, "  0 = None\n");
+        fprintf(stderr, "  1 = _MM_HINT_T0  (All cache levels)\n");
+        fprintf(stderr, "  2 = _MM_HINT_T1  (L2 and higher)\n");
+        fprintf(stderr, "  3 = _MM_HINT_T2  (L3 and higher)\n");
+        fprintf(stderr, "  4 = _MM_HINT_NTA (Non-temporal)\n");
         exit(EXIT_FAILURE);
     }
 
@@ -128,6 +129,8 @@ int main(int argc, char *argv[]) {
     int cpu_node = atoi(argv[2]);
     uint64_t iterations = strtoull(argv[3], NULL, 10);
     int loaded = atoi(argv[4]);
+    uint64_t lookahead = (uint64_t)atoi(argv[5]);
+    int prefetch_type = atoi(argv[6]);
 
     if (iterations == 0) {
         fprintf(stderr, "Iterations must be > 0\n");
@@ -157,10 +160,8 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Get the physical core of the main thread so loaders can avoid its hyperthread sibling
     uint64_t main_core = get_physical_core_id(main_cpu);
 
-    // Pin main thread to the selected single CPU
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(main_cpu, &cpuset);
@@ -184,12 +185,10 @@ int main(int argc, char *argv[]) {
             if (numa_bitmask_isbitset(mem_node_cpus, i)) {
                 uint64_t curr_core = get_physical_core_id(i);
 
-                // Never spawn a loader on the same physical core as the main latency thread
                 if (curr_core == main_core) {
                     continue;
                 }
 
-                // Assign loader to this CPU
                 LoaderArgs *args = malloc(sizeof(LoaderArgs));
                 args->cpu_id = i;
                 args->mem_node = mem_node;
@@ -199,7 +198,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        printf("[*] Spawned %d loader threads on NUMA node %d (using all available hyperthreads)\n", num_loaders, mem_node);
+        printf("[*] Spawned %d loader threads on NUMA node %d\n", num_loaders, mem_node);
         numa_free_cpumask(mem_node_cpus);
     }
 
@@ -212,7 +211,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Bind memory to the specified NUMA memory node
     unsigned long nodemask = (1UL << mem_node);
     if (mbind(ptr, SIZE_1GB, MPOL_BIND, &nodemask, sizeof(nodemask)*8, MPOL_MF_STRICT | MPOL_MF_MOVE) != 0) {
         perror("mbind failed to bind memory to NUMA node");
@@ -221,8 +219,9 @@ int main(int argc, char *argv[]) {
     }
     printf("[*] Allocated 1GB hugepage memory on NUMA node %d\n", mem_node);
 
-    // 4. Initialize Random Sequence (Pointer Chasing setup)
+    // 4. Initialize Random Sequence with Embedded Lookahead
     uint64_t num_elements = SIZE_1GB / CACHELINE_SIZE;
+    uint64_t mask = num_elements - 1;
     Node *array = (Node *)ptr;
 
     printf("[*] Initializing %lu cachelines with a random permutation...\n", num_elements);
@@ -247,16 +246,21 @@ int main(int argc, char *argv[]) {
         indices[j] = temp;
     }
 
-    for (uint64_t i = 0; i < num_elements - 1; i++) {
-        array[indices[i]].next_idx = indices[i + 1];
+    // Embed both next_idx and lookahead_idx directly into the array nodes
+    for (uint64_t i = 0; i < num_elements; i++) {
+        array[indices[i]].next_idx = indices[(i + 1) & mask];
+        array[indices[i]].lookahead_idx = indices[(i + lookahead) & mask];
     }
-    array[indices[num_elements - 1]].next_idx = indices[0];
 
+    // We no longer need the indices array during the traversal! Free it now.
     free(indices);
-    printf("[*] Initialization complete. Starting memory traversal.\n\n");
+
+    printf("[*] Initialization complete. Starting memory traversal.\n");
+    printf("[*] Lookahead: %lu cachelines | Prefetch Type: %d\n\n", lookahead, prefetch_type);
 
     // 5. Measure latency across iterations
-    uint64_t curr = 0;
+    uint64_t curr = 0; // Starts at index 0
+    uint64_t sum = 0;
     uint64_t *samples = malloc(iterations * sizeof(uint64_t));
     if (!samples) {
         perror("Failed to allocate samples array");
@@ -267,18 +271,54 @@ int main(int argc, char *argv[]) {
     for (uint64_t it = 0; it < iterations; it++) {
         uint64_t start_tsc = rdtsc();
 
-        for (uint64_t i = 0; i < num_elements; i++) {
-            curr = array[curr].next_idx;
-            global_counter++;
+        switch(prefetch_type) {
+            case 1: // T0
+                for (uint64_t i = 0; i < num_elements; i++) {
+                    _mm_prefetch((const char *)&array[array[curr].lookahead_idx], _MM_HINT_T0);
+                    curr = array[curr].next_idx;
+                    sum += curr;
+                }
+                break;
+            case 2: // T1
+                for (uint64_t i = 0; i < num_elements; i++) {
+                    _mm_prefetch((const char *)&array[array[curr].lookahead_idx], _MM_HINT_T1);
+                    curr = array[curr].next_idx;
+                    sum += curr;
+                }
+                break;
+            case 3: // T2
+                for (uint64_t i = 0; i < num_elements; i++) {
+                    _mm_prefetch((const char *)&array[array[curr].lookahead_idx], _MM_HINT_T2);
+                    curr = array[curr].next_idx;
+                    sum += curr;
+                }
+                break;
+            case 4: // NTA
+                for (uint64_t i = 0; i < num_elements; i++) {
+                    _mm_prefetch((const char *)&array[array[curr].lookahead_idx], _MM_HINT_NTA);
+                    curr = array[curr].next_idx;
+                    sum += curr;
+                }
+                break;
+            case 0: // No prefetch
+            default:
+                for (uint64_t i = 0; i < num_elements; i++) {
+                    curr = array[curr].next_idx;
+                    sum += curr;
+                }
+                break;
         }
 
         uint64_t end_tsc = rdtsc();
         samples[it] = end_tsc - start_tsc;
+        global_counter += num_elements;
+        printf("sample %lu, curr %lu, sum %lu\n",it, curr, sum);
     }
 
     // Stop the loaders
     atomic_store(&keep_running, false);
 
+    // Double layer of protection against Dead Code Elimination
     asm volatile("" : : "r"(curr), "r"(global_counter) : "memory");
 
     // 6. Compute Statistics
@@ -310,6 +350,10 @@ int main(int argc, char *argv[]) {
     printf("Sample Min        : %12lu cycles (%.2f cycles/cacheline)\n", min_cycles, min_cpa);
     printf("Sample Max        : %12lu cycles (%.2f cycles/cacheline)\n", max_cycles, max_cpa);
     printf("Sample Mean / Avg : %12.2f cycles (%.2f cycles/cacheline)\n", mean_cycles, mean_cpa);
+
+    // This print statement is crucial: it forces the compiler to evaluate 'curr'
+    // and thus prevents it from optimizing out the pointer-chasing loop entirely.
+    printf("\n[Anti-Optimization] Final curr value: %lu\n", curr);
 
     // 7. Cleanup
     if (loaded && num_loaders > 0) {

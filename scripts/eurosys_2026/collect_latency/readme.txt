@@ -18,3 +18,13 @@ Usage: ./latency <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0|1>
 To calulated loaded latency on numa node 0.
 
 ./latency 0 0 10 1
+
+
+
+HBM machine:
+
+idle latency:
+
+read: 364
+t0: 14
+t1: 28
