@@ -20,11 +20,28 @@ To calulated loaded latency on numa node 0.
 ./latency 0 0 10 1
 
 
+## Some data
+Intel d760:
 
-HBM machine:
+idle:
+local: 234 cycles per cacheline
+remote: 407 cycles per cacheline
 
-idle latency:
+loaded:
+local: 768 cycles per cacheline
+remote: 981 cycles per cahcline
 
-read: 364
-t0: 14
-t1: 28
+
+d760-HBM machine:
+
+(idle is same as loaded)
+latency:
+
+read:
+  364
+t0:
+  14
+t1:
+  28
+
+AMD machine:

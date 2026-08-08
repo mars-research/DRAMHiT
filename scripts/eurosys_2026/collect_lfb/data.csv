@@ -1,2 +1,0 @@
-mode,batch_size,min,max,avg,median
-PREFETCH_L2,30,65,942,94,65
