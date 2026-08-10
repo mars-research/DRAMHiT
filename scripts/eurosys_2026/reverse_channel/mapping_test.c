@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
     int mem_node = 0;
     struct bitmask *nodemask = numa_allocate_nodemask();
     numa_bitmask_setbit(nodemask, mem_node);
-    if (mbind(ptr, ONE_GB, MPOL_BIND, nodemask->maskp, nodemask->size + 1, 0) < 0) {
+    if (mbind(ptr, ONE_GB, MPOL_BIND, nodemask->maskp, nodemask->size + 1, MPOL_MF_STRICT | MPOL_MF_MOVE) < 0) {
         perror("mbind failed");
         munmap(ptr, ONE_GB);
         return EXIT_FAILURE;
