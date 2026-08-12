@@ -1,0 +1,17 @@
+inst_type,inst_label,threads,loaded,thread0_cycles_per_op,command
+2,PF_T0,1,0,25.04,build/prefetch_rand_nonbind -inst_type 2 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+2,PF_T0,1,1,67.22,build/prefetch_rand_nonbind -inst_type 2 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
+2,PF_T0,2,0,43.55,build/prefetch_rand_nonbind -inst_type 2 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+2,PF_T0,2,1,119.87,build/prefetch_rand_nonbind -inst_type 2 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
+3,PF_T1,1,0,8.06,build/prefetch_rand_nonbind -inst_type 3 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+3,PF_T1,1,1,21.46,build/prefetch_rand_nonbind -inst_type 3 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
+3,PF_T1,2,0,9.99,build/prefetch_rand_nonbind -inst_type 3 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+3,PF_T1,2,1,35.9,build/prefetch_rand_nonbind -inst_type 3 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
+4,PF_T2,1,0,8.06,build/prefetch_rand_nonbind -inst_type 4 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+4,PF_T2,1,1,21.46,build/prefetch_rand_nonbind -inst_type 4 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
+4,PF_T2,2,0,9.99,build/prefetch_rand_nonbind -inst_type 4 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+4,PF_T2,2,1,35.96,build/prefetch_rand_nonbind -inst_type 4 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
+5,PF_NTA,1,0,25.0,build/prefetch_rand_nonbind -inst_type 5 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+5,PF_NTA,1,1,67.2,build/prefetch_rand_nonbind -inst_type 5 -ops 1000000000 -threads 1 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
+5,PF_NTA,2,0,43.53,build/prefetch_rand_nonbind -inst_type 5 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 0
+5,PF_NTA,2,1,120.03,build/prefetch_rand_nonbind -inst_type 5 -ops 1000000000 -threads 2 -mem_node 0 -cpu_node 0 -ahead 64 -loaded 1
