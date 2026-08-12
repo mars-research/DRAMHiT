@@ -1,15 +1,16 @@
+# wrapper script to run dramblast
 # Ensure correct usage
-if [ "$#" -ne 5 ]; then
-     echo "Usage: $0 <CPU_MHZ> <numa_policy> <num_threads> <amd|intel> <test>ʕ•ᴥ•ʔ"
+if [ "$#" -ne 4 ]; then
+     echo "Usage: $0 <numa_policy> <num_threads> <amd|intel> <test>ʕ•ᴥ•ʔ"
      exit 1
 fi
 
-CPU_FREQ=$1
-numa_policy=$2
-numThreads=$3
-platform=$4
-test=$5
+numa_policy=$1
+numThreads=$2
+platform=$3
+test=$4
 
+HOME_DIR=/opt/DRAMHiT
 size=2097152
 BW=15
 readFactor=200
@@ -44,13 +45,6 @@ elif [ "$test" = "cas" ]; then
 workload=6
 fi
 
-#128mb per thread
-
-#HOME_DIR=/opt/DRAMHiT
-#cmake -S $HOME_DIR -B $HOME_DIR/build -DCPUFREQ_MHZ=$CPU_FREQ
-#cmake --build $HOME_DIR/build
-
-FILE_NAME=output.txt
 cmd="--num-threads $numThreads --numa-split $numa_policy --mode $BW --ht-size $size --sequential $workload --read-factor $readFactor"
 echo $HOME_DIR/build/dramhit $cmd
 

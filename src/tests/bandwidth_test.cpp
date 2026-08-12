@@ -86,8 +86,8 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   uint64_t start, end;
 
   constexpr auto MAP_FLAGS =
-      MAP_HUGETLB | MAP_HUGE_1GB | MAP_PRIVATE | MAP_ANONYMOUS;
-  uint64_t alloc_size = alloc_size_1gb_pages;
+      MAP_HUGETLB | MAP_HUGE_2MB | MAP_PRIVATE | MAP_ANONYMOUS;
+  uint64_t alloc_size = alloc_size_2mb_pages;
   Cacheline* stream_arr;
   Cacheline* arr = (Cacheline*)mmap(nullptr, alloc_size, PROT_READ | PROT_WRITE,
                                     MAP_FLAGS, -1, 0);

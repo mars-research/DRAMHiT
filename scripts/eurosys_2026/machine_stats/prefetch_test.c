@@ -11,9 +11,9 @@
 #include <sys/mman.h>
 #include <x86intrin.h>
 #include <immintrin.h>
+#include <numa.h>   // Required for libnuma bitmasks (numa_allocate_cpumask, etc.)
 #include <numaif.h> // Required for mbind()
 
-// Make sure RANDOM is defined if neither random or sequential flag is provided
 #if !defined(RANDOM) && !defined(SEQUENTIAL) && !defined(SEQUANTIAL)
 #define RANDOM
 #endif
@@ -23,17 +23,16 @@
 #define MEMORY_SIZE (8ULL * 1024 * 1024 * 1024)
 #define NUM_CACHELINES (MEMORY_SIZE / CACHELINE_SIZE)
 
-// How many cachelines to look ahead for prefetching (Now mutable at runtime)
+// 128 MB for Busyworker Threads
+#define BUSY_MEM_SIZE (128ULL * 1024 * 1024)
+
 int prefetch_ahead = 128;
 
-// Hugepage flags
 #ifndef MAP_HUGE_1GB
 #define MAP_HUGE_1GB (30 << MAP_HUGE_SHIFT)
 #endif
 
-// --- Macros to define indexing behavior based on compilation flags ---
 #if defined(RANDOM)
-    // state_var acts as a constant seed, creating a fast stateless hash of the integer 'i'
     #define GET_IDX(idx_var, i, state_var) \
         uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)(i)) & (NUM_CACHELINES - 1); \
         (void)idx_var
@@ -48,7 +47,6 @@ int prefetch_ahead = 128;
         uint64_t idx_var = ((i) + prefetch_ahead) & (NUM_CACHELINES - 1); \
         (void)idx_var
 #else
-    // Fallback to original array-based lookup
     #define GET_IDX(idx_var, i, state_var) \
         uint64_t idx_var = workload[i]; \
         (void)idx_var
@@ -81,7 +79,11 @@ typedef struct {
     uint64_t dummy_accumulator;
 } thread_ctx_t;
 
-// Cycle counting functions
+typedef struct {
+    int logical_cpu;
+    volatile int* stop_flag;
+} busyworker_ctx_t;
+
 static inline uint64_t RDTSC_START(void) {
     unsigned cycles_low, cycles_high;
     asm volatile(
@@ -104,18 +106,17 @@ static inline uint64_t RDTSCP(void) {
     return ((uint64_t)cycles_high << 32) | cycles_low;
 }
 
-// Memory Allocation with Hugepage fallbacks and NUMA binding
 cacheline_t* alloc_8gb_memory(int numa_node) {
     printf("Attempting to allocate 8GB using 1GB Hugepages...\n");
     void* ptr = mmap(NULL, MEMORY_SIZE, PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_1GB, -1, 0);
 
     if (ptr == MAP_FAILED) {
-        printf("  -> [WARN] 1GB Hugepages failed (ensure OS is configured). Trying 2MB Hugepages...\n");
+        printf("  -> [WARN] 1GB Hugepages failed. Trying 2MB Hugepages...\n");
         ptr = mmap(NULL, MEMORY_SIZE, PROT_READ | PROT_WRITE,
                    MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
         if (ptr == MAP_FAILED) {
-            printf("  -> [WARN] 2MB Hugepages failed. Falling back to regular 4KB pages.\n");
+            printf("  -> [WARN] 2MB Hugepages failed. Falling back to 4KB pages.\n");
             ptr = mmap(NULL, MEMORY_SIZE, PROT_READ | PROT_WRITE,
                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
             if (ptr == MAP_FAILED) {
@@ -129,10 +130,8 @@ cacheline_t* alloc_8gb_memory(int numa_node) {
         printf("  -> Success with 1GB Hugepages.\n");
     }
 
-    // Bind memory to the specified NUMA node before page faults occur
     if (numa_node >= 0) {
         unsigned long nodemask = 1UL << numa_node;
-        // 64 is the maxnode value for a single unsigned long bitmask on 64-bit systems
         if (mbind(ptr, MEMORY_SIZE, MPOL_BIND, &nodemask, 64, 0) != 0) {
             perror("  -> [ERROR] mbind failed to bind memory to NUMA node");
         } else {
@@ -145,12 +144,110 @@ cacheline_t* alloc_8gb_memory(int numa_node) {
     return ptr;
 }
 
-// Thread payload loop
+// Get the physical core ID of a logical CPU
+int get_physical_core_id(int cpu_id) {
+    char path[256];
+    snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/topology/core_id", cpu_id);
+    FILE *f = fopen(path, "r");
+    if (f) {
+        int core_id = -1;
+        if (fscanf(f, "%d", &core_id) == 1) {
+            fclose(f);
+            return core_id;
+        }
+        fclose(f);
+    }
+    return cpu_id; // Fallback to logical ID if unavailable
+}
+
+// Find measurement cores within the specified NUMA node using libnuma
+int get_measurement_cpus(int target_node, int* core_a, int* core_b) {
+    *core_a = -1;
+    *core_b = -1;
+
+    struct bitmask *node_cpus = numa_allocate_cpumask();
+    if (numa_node_to_cpus(target_node, node_cpus) != 0) {
+        numa_free_cpumask(node_cpus);
+        return -1;
+    }
+
+    // Find the first available CPU in the node
+    for (int i = 0; i < node_cpus->size; i++) {
+        if (numa_bitmask_isbitset(node_cpus, i)) {
+            if (*core_a == -1) {
+                *core_a = i;
+            } else {
+                // Check if this CPU shares the same physical core (hyperthread sibling)
+                if (get_physical_core_id(i) == get_physical_core_id(*core_a)) {
+                    *core_b = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    // If no hyperthread was found, grab the next available core in the same NUMA node
+    if (*core_a != -1 && *core_b == -1) {
+        for (int i = *core_a + 1; i < node_cpus->size; i++) {
+            if (numa_bitmask_isbitset(node_cpus, i)) {
+                *core_b = i;
+                break;
+            }
+        }
+    }
+
+    numa_free_cpumask(node_cpus);
+    return (*core_a != -1) ? 0 : -1;
+}
+
+void* busyworker_thread(void* arg) {
+    busyworker_ctx_t* ctx = (busyworker_ctx_t*)arg;
+
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(ctx->logical_cpu, &cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+    cacheline_t* mem = mmap(NULL, BUSY_MEM_SIZE, PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
+    if (mem == MAP_FAILED) {
+        mem = mmap(NULL, BUSY_MEM_SIZE, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if (mem == MAP_FAILED) return NULL;
+    }
+
+    memset(mem, 1, BUSY_MEM_SIZE);
+
+    uint64_t num_lines = BUSY_MEM_SIZE / CACHELINE_SIZE;
+    uint64_t mask = num_lines - 1;
+    uint64_t dummy = 0;
+    uint64_t state = _mm_crc32_u64((uint64_t)time(NULL), (uint64_t)ctx->logical_cpu);
+
+    uint64_t i = 0;
+    while (!*(ctx->stop_flag)) {
+        for (int b = 0; b < 1024; b++, i++) {
+            // Generate distinct random indices for current execution and lookahead
+            uint64_t idx = _mm_crc32_u64(state, i) & mask;
+            uint64_t idx_lookahead = _mm_crc32_u64(state, i + prefetch_ahead) & mask;
+
+            // Issue Prefetch T1 for the lookahead cacheline
+            _mm_prefetch((const char*)&mem[idx_lookahead], _MM_HINT_T1);
+
+            // Perform actual load to force evaluation
+            dummy += mem[idx].data[0];
+        }
+    }
+
+    asm volatile("" : : "g"(dummy) : "memory");
+    munmap(mem, BUSY_MEM_SIZE);
+
+    return NULL;
+}
+
 __attribute__((target("avx512f,sse4.2")))
 void* worker_thread(void* arg) {
     thread_ctx_t* ctx = (thread_ctx_t*)arg;
 
-    // Pin to specific logical CPU
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(ctx->logical_cpu, &cpuset);
@@ -163,14 +260,11 @@ void* worker_thread(void* arg) {
     uint64_t* workload = ctx->workload;
     uint64_t dummy = 0;
 
-    // Fast CRC32 Seed Generation using time and random for the thread
-    // This state remains unchanged during the loop, acting as a salt/seed.
     uint64_t state = _mm_crc32_u64((uint64_t)time(NULL) ^ ctx->thread_id, (uint64_t)random());
 
     asm volatile("" ::: "memory");
     uint64_t start = RDTSC_START();
 
-    // Loop separated by instruction to avoid branch prediction overhead in the critical path
     switch (ctx->inst_type) {
         case INST_LOAD:
             for (uint64_t i = 0; i < ops; i++) {
@@ -187,7 +281,7 @@ void* worker_thread(void* arg) {
 #ifndef NONE_BIND
                 dummy += ((uint8_t*)&vec)[0];
 #else
-                (void)vec; // Suppress unused variable warning if NONE_BIND is defined
+                (void)vec;
 #endif
             }
             break;
@@ -242,91 +336,81 @@ void* worker_thread(void* arg) {
     return NULL;
 }
 
-// Helper to find the hyperthread sibling of CPU 1
-void get_cpu1_siblings(int* cpu_a, int* cpu_b) {
-    *cpu_a = 0;
-    *cpu_b = -1; // Default if no HT found
-
-    FILE *f = fopen("/sys/devices/system/cpu/cpu0/topology/thread_siblings_list", "r");
-    if (f) {
-        int c1, c2;
-        // Format is usually "1,33" or "1-2" depending on kernel version/topology
-        if (fscanf(f, "%d,%d", &c1, &c2) == 2) {
-            *cpu_b = c2;
-        } else {
-            rewind(f);
-            if (fscanf(f, "%d-%d", &c1, &c2) == 2) {
-                *cpu_b = c2;
-            }
-        }
-        fclose(f);
-    }
+void print_usage(const char* prog_name) {
+    fprintf(stderr, "Usage: %s -inst_type <0-5> -ops <count> [options]\n", prog_name);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -inst_type <0-5>   Instruction type (0: Load, 1: AVX512 Load, 2: PF_T0, 3: PF_T1, 4: PF_T2, 5: PF_NTA)\n");
+    fprintf(stderr, "  -ops <count>       Number of operations to perform\n");
+    fprintf(stderr, "  -threads <1-2>     Number of threads (default: 1)\n");
+    fprintf(stderr, "  -mem_node <node>   NUMA node for memory allocation (default: 0)\n");
+    fprintf(stderr, "  -cpu_node <node>   NUMA node for thread execution (default: 0)\n");
+    fprintf(stderr, "  -ahead <count>     Prefetch lookahead distance (default: 128)\n");
+    fprintf(stderr, "  -loaded <0/1>      Enable loaded background workers (default: 0)\n");
 }
 
 int main(int argc, char** argv) {
-    int pos_args[4];
-    int pos_count = 0;
+    if (numa_available() < 0) {
+        fprintf(stderr, "System does not support NUMA API.\n");
+        return 1;
+    }
 
-    // Parse arguments and allow -ahead to be passed anywhere
+    // Default arguments
+    int enable_loaded = 0;
+    int cpu_node = 0;
+    int mem_numa_node = 0;
+    int num_threads = 1;
+    int inst_type = -1;
+    uint64_t num_ops = 0;
+
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-ahead") == 0) {
-            if (i + 1 < argc) {
-                prefetch_ahead = atoi(argv[++i]);
-            } else {
-                fprintf(stderr, "Error: -ahead requires a numeric value.\n");
-                return 1;
-            }
+        if (strcmp(argv[i], "-ahead") == 0 && i + 1 < argc) {
+            prefetch_ahead = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-loaded") == 0 && i + 1 < argc) {
+            enable_loaded = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-cpu_node") == 0 && i + 1 < argc) {
+            cpu_node = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-inst_type") == 0 && i + 1 < argc) {
+            inst_type = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-ops") == 0 && i + 1 < argc) {
+            num_ops = strtoull(argv[++i], NULL, 10);
+        } else if (strcmp(argv[i], "-threads") == 0 && i + 1 < argc) {
+            num_threads = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-mem_node") == 0 && i + 1 < argc) {
+            mem_numa_node = atoi(argv[++i]);
         } else {
-            if (pos_count < 4) {
-                pos_args[pos_count++] = i;
-            } else {
-                fprintf(stderr, "Error: Too many positional arguments.\n");
-                pos_count++;
-            }
+            fprintf(stderr, "Unknown or incomplete argument: %s\n", argv[i]);
+            print_usage(argv[0]);
+            return 1;
         }
     }
 
-    if (pos_count != 4) {
-        fprintf(stderr, "Usage: %s [-ahead <lookahead_count>] <Inst_Type_0-5> <Num_Ops> <Num_Threads_1-2> <NUMA_Node>\n", argv[0]);
-        fprintf(stderr, "Instruction Types:\n  0: Load\n  1: AVX512 Load\n  2: Prefetch T0\n");
-        fprintf(stderr, "  3: Prefetch T1\n  4: Prefetch T2\n  5: Prefetch NTA\n");
+    // Validate required arguments
+    if (inst_type < 0 || inst_type > 5 || num_ops == 0) {
+        fprintf(stderr, "Error: -inst_type and -ops are required.\n\n");
+        print_usage(argv[0]);
         return 1;
     }
-
-    int inst_type = atoi(argv[pos_args[0]]);
-    uint64_t num_ops = strtoull(argv[pos_args[1]], NULL, 10);
-    int num_threads = atoi(argv[pos_args[2]]);
-    int numa_node = atoi(argv[pos_args[3]]);
 
     if (num_threads < 1 || num_threads > 2) {
-        fprintf(stderr, "Error: Number of threads must be 1 or 2.\n");
-        return 1;
-    }
-    if (numa_node < 0 || numa_node > 63) {
-        fprintf(stderr, "Error: Invalid NUMA node (must be 0-63).\n");
+        fprintf(stderr, "Error: -threads must be 1 or 2.\n");
         return 1;
     }
 
-    const char* inst_names[] = {
-            "Load",
-            "AVX512 Load",
-            "Prefetch T0",
-            "Prefetch T1",
-            "Prefetch T2",
-            "Prefetch NTA"
-        };
-
-    // Print the indication of the execute type
+    const char* inst_names[] = {"Load", "AVX512 Load", "Prefetch T0", "Prefetch T1", "Prefetch T2", "Prefetch NTA"};
     printf("Execute Type: %s (Lookahead: %d)\n", inst_names[inst_type], prefetch_ahead);
+
     int core_a, core_b;
-    get_cpu1_siblings(&core_a, &core_b);
+    if (get_measurement_cpus(cpu_node, &core_a, &core_b) != 0) {
+        fprintf(stderr, "Fatal: Could not find any valid CPUs for CPU Node %d.\n", cpu_node);
+        return 1;
+    }
 
     if (num_threads == 2 && core_b == -1) {
-        fprintf(stderr, "[WARN] Could not find hyperthread sibling for CPU 1 in sysfs. Using CPU 2 as fallback.\n");
+        fprintf(stderr, "[WARN] Could not find secondary CPU in Node %d for thread 2. Using CPU 2 as fallback.\n", cpu_node);
         core_b = 2;
     }
 
-    cacheline_t* mem = alloc_8gb_memory(numa_node);
+    cacheline_t* mem = alloc_8gb_memory(mem_numa_node);
 
     pthread_t threads[2];
     thread_ctx_t ctx[2];
@@ -339,36 +423,62 @@ int main(int argc, char** argv) {
         ctx[t].inst_type = inst_type;
         ctx[t].mem = mem;
 
-        printf("Initializing workload for Thread %d (Pinned to Logical CPU %d)...\n", t, ctx[t].logical_cpu);
+        printf("Initializing workload for Thread %d (Pinned to CPU %d in Node %d)...\n", t, ctx[t].logical_cpu, cpu_node);
 
-// Skip pre-allocating the workload buffer entirely if we evaluate everything on-the-fly inside the loop
 #if !defined(RANDOM) && !defined(SEQUENTIAL) && !defined(SEQUANTIAL)
         ctx[t].workload = malloc((num_ops + prefetch_ahead) * sizeof(uint64_t));
-        srandom(time(NULL) ^ (t * 19937)); // Different seed per thread
-
-        // Fill the primary workload
-        for (uint64_t i = 0; i < num_ops; i++) {
-            // Generates a 31-bit random index across the cacheline space
-            uint64_t rand_idx = ((uint64_t)random() | ((uint64_t)random() << 31)) % NUM_CACHELINES;
-            ctx[t].workload[i] = rand_idx;
-        }
-
-        // Pad the tail of the array to satisfy the +16 lookahead
-        for (uint64_t i = 0; i < prefetch_ahead; i++) {
-            ctx[t].workload[num_ops + i] = ctx[t].workload[i];
-        }
+        srandom(time(NULL) ^ (t * 19937));
+        for (uint64_t i = 0; i < num_ops; i++) ctx[t].workload[i] = ((uint64_t)random() | ((uint64_t)random() << 31)) % NUM_CACHELINES;
+        for (uint64_t i = 0; i < prefetch_ahead; i++) ctx[t].workload[num_ops + i] = ctx[t].workload[i];
 #else
         ctx[t].workload = NULL;
 #endif
     }
 
-    printf("\n--- Executing Benchmark ---\n");
-    for (int t = 0; t < num_threads; t++) {
-        pthread_create(&threads[t], NULL, worker_thread, &ctx[t]);
+    volatile int stop_busyworkers = 0;
+    pthread_t* busy_threads = NULL;
+    busyworker_ctx_t* busy_ctxs = NULL;
+    int num_busy_threads = 0;
+
+    if (enable_loaded == 1) {
+        struct bitmask *cpu_node_cpus = numa_allocate_cpumask();
+        numa_node_to_cpus(cpu_node, cpu_node_cpus);
+
+        busy_threads = malloc(cpu_node_cpus->size * sizeof(pthread_t));
+        busy_ctxs = malloc(cpu_node_cpus->size * sizeof(busyworker_ctx_t));
+
+        int main_core = get_physical_core_id(core_a);
+
+        printf("\n--- Spawning Memory Loading Workers ---\n");
+        for (int i = 0; i < cpu_node_cpus->size; i++) {
+            if (numa_bitmask_isbitset(cpu_node_cpus, i)) {
+                int curr_core = get_physical_core_id(i);
+
+                // Skip logical CPUs that belong to the measurement thread's physical core
+                if (curr_core == main_core) {
+                    continue;
+                }
+
+                busy_ctxs[num_busy_threads].logical_cpu = i;
+                busy_ctxs[num_busy_threads].stop_flag = &stop_busyworkers;
+                pthread_create(&busy_threads[num_busy_threads], NULL, busyworker_thread, &busy_ctxs[num_busy_threads]);
+                num_busy_threads++;
+            }
+        }
+
+        printf("[*] Spawned %d loader threads on NUMA node %d\n", num_busy_threads, cpu_node);
+        numa_free_cpumask(cpu_node_cpus);
     }
 
-    for (int t = 0; t < num_threads; t++) {
-        pthread_join(threads[t], NULL);
+    printf("\n--- Executing Benchmark ---\n");
+    for (int t = 0; t < num_threads; t++) pthread_create(&threads[t], NULL, worker_thread, &ctx[t]);
+    for (int t = 0; t < num_threads; t++) pthread_join(threads[t], NULL);
+
+    if (enable_loaded == 1) {
+        stop_busyworkers = 1;
+        for (int i = 0; i < num_busy_threads; i++) pthread_join(busy_threads[i], NULL);
+        free(busy_threads);
+        free(busy_ctxs);
     }
 
     printf("\n--- Results ---\n");
@@ -378,7 +488,7 @@ int main(int argc, char** argv) {
         printf("  Total Cycles: %lu\n", ctx[t].duration_cycles);
         printf("  Cycles/Op:    %.2f\n", cpo);
         printf("  (Dummy: %lu)\n", ctx[t].dummy_accumulator);
-        free(ctx[t].workload); // Safe to call even if NULL
+        free(ctx[t].workload);
     }
 
     munmap(mem, MEMORY_SIZE);
