@@ -27,11 +27,10 @@ def make_perf_command(counters, dramhit_args):
     cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
-
 counters = [
-    "ls_dispatch.ld_st_dispatch",
-    "ls_dispatch.ld_dispatch",
-    "ls_dispatch.store_dispatch",
+    "ls_dispatch.ld_dispatch", # number of ld issued by lsq
+    "ls_dispatch.store_dispatch", # number of st issued by lsq
+    # "de_no_dispatch_per_slot.backend_stalls", # number of ops unable to dispatch b/c backend (accumulate per cycle)
 ]
 
 

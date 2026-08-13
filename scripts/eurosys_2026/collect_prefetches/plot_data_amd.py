@@ -10,8 +10,8 @@ from matplotlib.lines import Line2D
 
 COUNTERS = [
     "ls_alloc_mab_count",
-    "de_no_dispatch_per_slot.backend_stalls",
     "ls_mab_alloc.all_allocations",
+    "de_dis_dispatch_token_stalls1.load_queue_rsrc_stall",
 ]
 
 MARKERS = [
@@ -141,12 +141,12 @@ def plot_json(json_file, output_file):
     # ------------------------------------------------------------------
 
     for counter in COUNTERS:
-        
-        if counter == "ls_alloc_mab_count" or counter == "de_no_dispatch_per_slot.backend_stalls":
+
+        if counter == "ls_alloc_mab_count":
             df[counter] = df[counter] / df["cycles"]
         else:
             df[counter] = df[counter] / df["find_ops"]
-        # df[counter] = df[counter] / df["find_ops"]
+        #df[counter] = df[counter] / df["find_ops"]
 
         ax = axes[cnt]
         cnt += 1

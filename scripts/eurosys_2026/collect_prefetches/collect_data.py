@@ -1,9 +1,5 @@
 #!/bin/python3
 
-# To run:
-# cd scripts/eurosys_2026/prefetches
-# python3 collect_data.py
-# python3 plot_data.py all_dramhit_results.json test
 import json
 import os
 import re
@@ -28,20 +24,20 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
-# prefetches lead to lower stalls due to load queue
 counters = [
     "cycles",
-    "ls_alloc_mab_count",
-    "ls_mab_alloc.all_allocations",
-    "de_dis_dispatch_token_stalls1.load_queue_rsrc_stall", # number of cycles processor stall due to lack of load queue resources, which bottlnecks
+    "l1d_pend_miss.fb_full",
+    "memory_activity.cycles_l1d_miss",
+    "cycle_activity.stalls_total",
 ]
 
 
 def run(run_cfg):
+    results = []
 
     fill = run_cfg["fill_factor"]
     dramhit_args = [
@@ -66,8 +62,6 @@ def run(run_cfg):
         "11",
         "--ht-size",
         str(run_cfg["size"]),
-        "--skew",
-        "0.01",
         "--hw-pref",
         "0",
         "--batch-len",
@@ -77,6 +71,7 @@ def run(run_cfg):
     ]
 
     cmd = make_perf_command(counters, dramhit_args)
+    # cmd = dramhit_args
     print("Running:", " ".join(cmd))
 
     proc = subprocess.Popen(
@@ -87,7 +82,6 @@ def run(run_cfg):
     if proc.returncode != 0:
         print("Error:", stderr)
         return None
-
     return (stdout, stderr)
 
 
@@ -154,43 +148,51 @@ if __name__ == "__main__":
     build_cfgs = [
         {
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "3250",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "L1",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "3250",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "3250",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "3250",
+            "CPUFREQ_MHZ": "2500",
         },
         {
             "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025_INLINE",
+            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "3250",
+            "CPUFREQ_MHZ": "2500",
+        },
+        {
+            "PREFETCH": "NONE",
+            "DRAMHiT_VARIANT": "2025",
+            "BUCKETIZATION": "ON",
+            "BRANCH": "simd",
+            "UNIFORM_PROBING": "ON",
+            "CPUFREQ_MHZ": "2500",
         },
     ]
 
@@ -198,8 +200,18 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 1000,
+            "readFactor": 100,
             "numThreads": 64,
+            "numa_policy": 4,
+            "size": 536870912,
+            "fill_factor": f,
+        }
+        for f in range(10, 100, 10)
+    ] + [
+        {
+            "insertFactor": 1,
+            "readFactor": 100,
+            "numThreads": 128,
             "numa_policy": 1,
             "size": 536870912,
             "fill_factor": f,

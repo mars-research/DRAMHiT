@@ -63,7 +63,7 @@ def plot_json(json_file, output_file):
             ax=ax,
         )
         ax.set_xlabel("fill factor")
-        ax.set_ylabel(counter)
+        ax.set_ylabel(counter + "/find")
 
     for ax in axes:
         ax.grid(True, which="major", axis="both", linestyle="--")
