@@ -24,12 +24,13 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 counters = [
     "ls_dispatch.ld_dispatch", # number of ld issued by lsq
     "ls_dispatch.store_dispatch", # number of st issued by lsq
+    "cycles",
     # "de_no_dispatch_per_slot.backend_stalls", # number of ops unable to dispatch b/c backend (accumulate per cycle)
 ]
 
@@ -189,7 +190,7 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 100,
+            "readFactor": 1000,
             "numThreads": 64,
             "numa_policy": 4,
             "size": 536870912,
@@ -207,4 +208,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "amd.json")
+    save_json(all_results, "amd-r6615.json")
