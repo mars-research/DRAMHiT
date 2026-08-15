@@ -26,7 +26,7 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
     results[name] = []
     for fill in range(10, 100, 10):
         cmd_base = f"""
-        ~/DRAMHiT/build/dramhit
+        /opt/DRAMHiT/build/dramhit
         --find_queue 64
         --ht-type {ht_type}
         --num-threads {numThreads}
@@ -82,10 +82,10 @@ if __name__ == "__main__":
     json_out_file = sys.argv[1]
     # rebuild project
     subprocess.run(
-        "cmake -S ~/DRAMHiT/ -B ~/DRAMHiT/build "
+        "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
         "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON "
         "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON"
-        "-DGROWT=ON",
+        "-DGROWT=ON -DCPUFREQ_MHZ=2700",
         shell=True,
         check=True,
     )

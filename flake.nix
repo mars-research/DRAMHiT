@@ -40,7 +40,7 @@
         inputsFrom = [
           devShells.prod
         ];
-        nativeBuildInputs = with pkgs; [ 
+        nativeBuildInputs = with pkgs; [
           clang_14
           llvmPackages_14.libllvm
           gcc11
@@ -50,7 +50,7 @@
           openssl
           cmake
           ninja
-        ];  
+        ];
         NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
       };
@@ -63,7 +63,7 @@
           clang-tools
           gdb
           # linuxPackages.perf
-          bc  
+          bc
           ripgrep
           # Python packages for evals plotting.
           python310
@@ -72,7 +72,9 @@
           python310Packages.matplotlib
           python310Packages.seaborn
 
-        ];  
+          # tex ?
+          texlive.combined.scheme-full
+        ];
         NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
       };

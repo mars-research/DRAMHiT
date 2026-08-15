@@ -7,6 +7,20 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from matplotlib.lines import Line2D
+import matplotlib as mpl
+
+rc_fonts = {
+    "text.usetex": True,  # still valid
+    "font.family": "serif",
+    "font.serif": ["Linux Libertine O"],  # your preferred font
+    "font.weight": "bold",
+}
+mpl.rcParams.update(rc_fonts)
+sns.set_context("paper")
+
+palette = sns.color_palette("rocket", n_colors=5)
+palette = palette[::-1]  # reverse the palette
+sns.set_theme(style="whitegrid", palette=palette)
 
 # Hard-coded counter names
 counters = [
@@ -30,7 +44,7 @@ def plot_json(json_file, output_file):
     # df_dual = df[df["run_cfg.numa_policy"] == 1]
     df_dual = df[df["run_cfg.numa_policy"] == -1]
 
-    
+
     # Dynamically build datasets list based on what is actually present or wanted
     datasets = []
     modes = []
@@ -86,7 +100,7 @@ def plot_json(json_file, output_file):
         ax.set_title("Fill Factor vs Find Mops")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Find Mops")
-        
+
         # --- Single / Dual Socket text label removed from here ---
 
         ax = rax[1]
@@ -143,9 +157,9 @@ def plot_json(json_file, output_file):
 
     # Added bbox_to_anchor to snap the legend tightly above the plots
     fig.legend(
-        fontsize=11, 
-        handles=custom_lines, 
-        loc="lower center", 
+        fontsize=11,
+        handles=custom_lines,
+        loc="lower center",
         bbox_to_anchor=(0.5, 0.92 if row == 1 else 0.95),
         ncol=len(unique_ids),
         frameon=False

@@ -9,6 +9,21 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.lines import Line2D
 
+import matplotlib as mpl
+
+rc_fonts = {
+    "text.usetex": True,  # still valid
+    "font.family": "serif",
+    "font.serif": ["Linux Libertine O"],  # your preferred font
+    "font.weight": "bold",
+}
+mpl.rcParams.update(rc_fonts)
+sns.set_context("paper")
+
+palette = sns.color_palette("rocket", n_colors=5)
+palette = palette[::-1]  # reverse the palette
+sns.set_theme(style="whitegrid", palette=palette)
+
 counters = [
     "ls_dispatch.ld_st_dispatch",
     "ls_dispatch.ld_dispatch",

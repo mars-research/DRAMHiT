@@ -8,6 +8,7 @@ import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
+USE_PERF = True
 
 
 def build(defines):
@@ -24,28 +25,22 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
-counters = [
-    "cycles",
-    "l1d_pend_miss.fb_full",
-    "memory_activity.cycles_l1d_miss",
-    "cycle_activity.stalls_total",
-]
+counters = ["cycles", "uops_dispatched.port_2_3_10", "uops_issued.any"]
 
 
 def run(run_cfg):
     results = []
 
-    fill = run_cfg["fill_factor"]
     dramhit_args = [
         os.path.join(BUILD_DIR, "dramhit"),
         "--find_queue",
         "64",
         "--ht-fill",
-        str(fill),
+        str(run_cfg["fill_factor"]),
         "--ht-type",
         "3",
         "--insert-factor",
@@ -56,12 +51,18 @@ def run(run_cfg):
         str(run_cfg["numThreads"]),
         "--numa-split",
         str(run_cfg["numa_policy"]),
+        "--np_cpu_node",
+        "0",
+        "--np_mem_node",
+        "2",
         "--no-prefetch",
         "0",
         "--mode",
         "11",
         "--ht-size",
         str(run_cfg["size"]),
+        "--skew",
+        "0.01",
         "--hw-pref",
         "0",
         "--batch-len",
@@ -70,8 +71,12 @@ def run(run_cfg):
         "1775762440565610239",
     ]
 
-    cmd = make_perf_command(counters, dramhit_args)
-    # cmd = dramhit_args
+    cmd = []
+    if USE_PERF:
+        cmd = make_perf_command(counters, dramhit_args)
+    else:
+        cmd = ["sudo"] + dramhit_args
+
     print("Running:", " ".join(cmd))
 
     proc = subprocess.Popen(
@@ -82,6 +87,7 @@ def run(run_cfg):
     if proc.returncode != 0:
         print("Error:", stderr)
         return None
+
     return (stdout, stderr)
 
 
@@ -120,13 +126,15 @@ def parse_results(result, counters, run_cfg, build_cfg, identifier):
     row.update(metrics)
 
     # Parse perf counters from stderr
-    cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
-    counter_dic = {k: None for k in counters}
-    for val, name in cnt_pattern.findall(stderr):
-        clean_val = int(val.replace(",", ""))
-        if name in counters:
-            counter_dic[name] = clean_val
-    row.update(counter_dic)
+
+    if USE_PERF:
+        cnt_pattern = re.compile(r"([\d,]+)\s+(\S+)")
+        counter_dic = {k: None for k in counters}
+        for val, name in cnt_pattern.findall(stderr):
+            clean_val = int(val.replace(",", ""))
+            if name in counters:
+                counter_dic[name] = clean_val
+        row.update(counter_dic)
 
     return row
 
@@ -138,81 +146,56 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python script.py <output.json>")
-        sys.exit(1)
-
-    out_file = sys.argv[1]
-
     # Build configurations
     build_cfgs = [
         {
+            "identifier": "Base",
+            "DRAMHiT_VARIANT": "2025",
+            "CAS_NO_ABSTRACT": "OFF",
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
-            "PREFETCH": "L1",
+            "identifier": "Compiler Inline",
             "DRAMHiT_VARIANT": "2025",
+            "CAS_NO_ABSTRACT": "ON",
+            "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
-            "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025",
+            "identifier": "Manual Inline",
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "CAS_NO_ABSTRACT": "OFF",
+            "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
-            "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025",
+            "identifier": "Manual+Compiler Inline",
+            "DRAMHiT_VARIANT": "2025_INLINE",
+            "CAS_NO_ABSTRACT": "ON",
+            "PREFETCH": "DOUBLE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
-        },
-        {
-            "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
-        },
-        {
-            "PREFETCH": "NONE",
-            "DRAMHiT_VARIANT": "2025",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
     ]
 
-    # Run configurations (example: vary fill_factor, others fixed)
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 1000,
+            "readFactor": 100,
             "numThreads": 64,
-            "numa_policy": 4,
-            "size": 536870912,
-            "fill_factor": f,
-        }
-        for f in range(10, 100, 10)
-    ] + [
-        {
-            "insertFactor": 1,
-            "readFactor": 1000,
-            "numThreads": 128,
-            "numa_policy": 1,
+            "numa_policy": 10,
             "size": 536870912,
             "fill_factor": f,
         }
@@ -225,9 +208,8 @@ if __name__ == "__main__":
         build(bcfg)
         for rcfg in run_cfgs:
             output = run(rcfg)
-            obj = parse_results(output, counters, rcfg, bcfg, bcfg["PREFETCH"])
-
+            obj = parse_results(output, counters, rcfg, bcfg, bcfg["identifier"])
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, out_file)
+    save_json(all_results, "inline-hbm.json")

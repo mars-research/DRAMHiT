@@ -7,26 +7,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from matplotlib.lines import Line2D
-import matplotlib as mpl
 
-rc_fonts = {
-    "text.usetex": True,  # still valid
-    "font.family": "serif",
-    "font.serif": ["Linux Libertine O"],  # your preferred font
-    "font.weight": "bold",
-}
-mpl.rcParams.update(rc_fonts)
-sns.set_context("paper")
-
-palette = sns.color_palette("rocket", n_colors=5)
-palette = palette[::-1]  # reverse the palette
-sns.set_theme(style="whitegrid", palette=palette)
-
+# Hard-coded counter names
 counters = [
-    "ls_alloc_mab_count",
-    "ls_mab_alloc.all_allocations",
-    "de_dis_dispatch_token_stalls1.load_queue_rsrc_stall",
+    "cycles",
+    "l1d_pend_miss.fb_full",
+    "memory_activity.cycles_l1d_miss",
+    "cycle_activity.stalls_total",
 ]
+
 
 def plot_json(json_file, output_file):
     # Load JSON data
@@ -36,7 +25,7 @@ def plot_json(json_file, output_file):
     df = pd.DataFrame(data)
     df = pd.json_normalize(data, sep=".")
 
-    df_single = df[df["run_cfg.numa_policy"] == 1]
+    df_single = df[df["run_cfg.numa_policy"] == 10]
     # RECOMMENT ME IN FOR DUAL SOCKET NUMBERS
     # df_dual = df[df["run_cfg.numa_policy"] == 1]
     df_dual = df[df["run_cfg.numa_policy"] == -1]
@@ -53,8 +42,8 @@ def plot_json(json_file, output_file):
         modes.append("Dual Socket")
 
     for df_set in datasets:
-        df_set["normalized_mab_size"] = df_set["ls_alloc_mab_count"] / df_set["cycles"]
-        df_set["normalized_mab_alloc_count"] = df_set["ls_mab_alloc.all_allocations"] / df_set["find_ops"]
+        df_set["normalized_stall"] = df_set["cycle_activity.stalls_total"] / df_set["find_ops"]
+        df_set["normalized_fb_full"] = df_set["l1d_pend_miss.fb_full"] / df_set["find_ops"]
         df_set["run_cfg.fill_factor"] = pd.to_numeric(df_set["run_cfg.fill_factor"])
 
     # Force absolute white backgrounds and clear custom style parameter overrides
@@ -94,7 +83,7 @@ def plot_json(json_file, output_file):
             ax=ax,
         )
         ax.set_ylim(bottom=0)
-        ax.set_title("Performance")
+        ax.set_title("Fill Factor vs Find Mops")
         ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Find Mops")
 
@@ -105,7 +94,7 @@ def plot_json(json_file, output_file):
         sns.lineplot(
             data=df_set,
             x="run_cfg.fill_factor",
-            y="normalized_mab_size",
+            y="normalized_stall",
             legend=False,
             hue="prefetch_id",
             palette=palette,
@@ -113,15 +102,15 @@ def plot_json(json_file, output_file):
             ax=ax,
         )
         ax.set_ylim(bottom=0)
-        ax.set_title("Mab Size per cycle")
+        ax.set_title("Fill Factor vs Stall Cycles/Find")
         ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Mab_Size/Cycle")
+        ax.set_ylabel("Stall Cycles/Find")
 
         ax = rax[2]
         sns.lineplot(
             data=df_set,
             x="run_cfg.fill_factor",
-            y="normalized_mab_alloc_count",
+            y="normalized_fb_full",
             legend=False,
             hue="prefetch_id",
             palette=palette,
@@ -129,9 +118,9 @@ def plot_json(json_file, output_file):
             ax=ax,
         )
         ax.set_ylim(bottom=0)
-        ax.set_title("Mab Entry Allocated Per Find")
+        ax.set_title("Fill Factor vs FB full cycle/Find")
         ax.set_xlabel("Fill Factor")
-        ax.set_ylabel("Mab_Alloc/Find")
+        ax.set_ylabel("FB full cycle/Find")
         cnt += 1
 
     # Flatten axes array to style every subplot uniformly

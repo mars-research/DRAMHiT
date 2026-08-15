@@ -1,9 +1,4 @@
 #!/bin/python3
-
-# To run:
-# cd scripts/eurosys_2026/prefetches
-# python3 collect_data.py
-# python3 plot_data.py all_dramhit_results.json test
 import json
 import os
 import re
@@ -12,7 +7,6 @@ import sys
 
 SOURCE_DIR = "/opt/DRAMHiT"
 BUILD_DIR = "/opt/DRAMHiT/build"
-
 
 def build(defines):
     define_flags = [f"-D{k}={v}" for k, v in defines.items()]
@@ -28,7 +22,7 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
@@ -60,6 +54,10 @@ def run(run_cfg):
         str(run_cfg["numThreads"]),
         "--numa-split",
         str(run_cfg["numa_policy"]),
+        "--np_cpu_node",
+        "0",
+        "--np_mem_node",
+        "2",
         "--no-prefetch",
         "0",
         "--mode",
@@ -152,43 +150,43 @@ if __name__ == "__main__":
     build_cfgs = [
         {
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
             "PREFETCH": "L1",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
             "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
             "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
             "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
         {
             "PREFETCH": "NONE",
@@ -196,7 +194,7 @@ if __name__ == "__main__":
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
+            "CPUFREQ_MHZ": "2700",
         },
     ]
 
@@ -204,19 +202,9 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 100,
+            "readFactor": 1000,
             "numThreads": 64,
-            "numa_policy": 4,
-            "size": 536870912,
-            "fill_factor": f,
-        }
-        for f in range(10, 100, 10)
-    ] + [
-        {
-            "insertFactor": 1,
-            "readFactor": 100,
-            "numThreads": 128,
-            "numa_policy": 1,
+            "numa_policy": 10,
             "size": 536870912,
             "fill_factor": f,
         }
@@ -230,7 +218,6 @@ if __name__ == "__main__":
         for rcfg in run_cfgs:
             output = run(rcfg)
             obj = parse_results(output, counters, rcfg, bcfg, bcfg["PREFETCH"])
-
             all_results.append(obj)
 
     # Save all results into a single JSON file

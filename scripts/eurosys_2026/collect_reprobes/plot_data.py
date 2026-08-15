@@ -8,6 +8,20 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.lines import Line2D
 
+import matplotlib as mpl
+
+rc_fonts = {
+    "text.usetex": True,  # still valid
+    "font.family": "serif",
+    "font.serif": ["Linux Libertine O"],  # your preferred font
+    "font.weight": "bold",
+}
+mpl.rcParams.update(rc_fonts)
+sns.set_context("paper")
+
+palette = sns.color_palette("rocket", n_colors=5)
+palette = palette[::-1]  # reverse the palette
+sns.set_theme(style="whitegrid", palette=palette)
 # EDIT ME: Spot to rename legend identifiers (X to Y)
 # If an identifier is not found here, it defaults to its original name.
 LEGEND_REMAP = {
@@ -82,9 +96,9 @@ def plot_json(json_file, output_file):
     fig, axes = plt.subplots(row, col, figsize=(12, 5.0 if row == 1 else 3.5 * row))
 
     unique_ids = datasets[0]["identifier"].unique()
-    
+
     # Switched to the high-contrast qualitative "tab10" palette
-    palette = sns.color_palette("tab10", n_colors=len(unique_ids))
+    # palette = sns.color_palette("tab10", n_colors=len(unique_ids))
 
     cnt = 0
     for df_set in datasets:
@@ -143,13 +157,13 @@ def plot_json(json_file, output_file):
         for i, uid in enumerate(unique_ids)
     ]
 
-    # Adjusted bbox_to_anchor and limited column wrap to 4 items max so it wraps gracefully 
+    # Adjusted bbox_to_anchor and limited column wrap to 4 items max so it wraps gracefully
     # instead of shooting off-screen horizontally.
     fig.legend(
-        fontsize=11, 
-        handles=custom_lines, 
-        loc="lower center", 
-        bbox_to_anchor=(0.5, 0.88 if row == 1 else 0.93), 
+        fontsize=11,
+        handles=custom_lines,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 0.88 if row == 1 else 0.93),
         ncol=min(4, len(unique_ids)),
         frameon=False
     )
