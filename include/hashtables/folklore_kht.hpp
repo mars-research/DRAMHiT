@@ -130,21 +130,18 @@ class FolkloreHashTable : public BaseHashTable {
 
     for (auto i = 0u; i < this->capacity; i++) {
       KV *curr = &this->hashtable[idx];
-    retry:
       if (curr->is_empty()) {
-        bool cas_res = curr->insert_cas(elem);
-        if (cas_res) {
-          break;
-        } else {
-          goto retry;
-        }
-      } else if (curr->compare_key(data)) {
+        if(curr->insert_cas(elem))
+           break;
+      }
+
+      if (curr->compare_key(data)) {
         curr->update_cas(elem);
         break;
-      } else {
-        idx++;
-        idx = idx & (this->capacity - 1);
       }
+
+      idx++;
+      idx = idx & (this->capacity - 1);
     }
   }
 
@@ -160,31 +157,27 @@ class FolkloreHashTable : public BaseHashTable {
 
   void *find_noprefetch(const void *data, collector_type *collector) override {
     uint64_t hash = crc_hash((const char *)data);
-    size_t idx = hash;
-    // size_t idx = fastrange32(hash, this->capacity);  // modulo
+    size_t idx = hash & (this->capacity-1);
+
     InsertFindArgument *item = const_cast<InsertFindArgument *>(
         reinterpret_cast<const InsertFindArgument *>(data));
     KV *curr;
     bool found = false;
 
-    // printf("Thread %" PRIu64 ": Trying memcmp at: %" PRIu64 "\n",
-    // this->thread_id, idx);
     for (auto i = 0u; i < this->capacity; i++) {
-      idx = idx & (this->capacity - 1);
       curr = &this->hashtable[idx];
 
       if (curr->is_empty()) {
         found = false;
-        goto exit;
+        break;
       } else if (curr->compare_key(data)) {
         found = true;
         break;
       }
 
       idx++;
+      idx = idx & (this->capacity - 1);
     }
-
-  exit:
 
     // return empty_element if nothing is found
     if (!found) {
@@ -196,6 +189,7 @@ class FolkloreHashTable : public BaseHashTable {
 
     return curr;
   }
+
   void display() const override {
     for (size_t i = 0; i < this->capacity; i++) {
       if (!this->hashtable[i].is_empty()) {

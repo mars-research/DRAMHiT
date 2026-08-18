@@ -31,7 +31,7 @@ counters = [
     "ls_dispatch.ld_dispatch", # number of ld issued by lsq
     "ls_dispatch.store_dispatch", # number of st issued by lsq
     "cycles",
-    # "de_no_dispatch_per_slot.backend_stalls", # number of ops unable to dispatch b/c backend (accumulate per cycle)
+    "de_no_dispatch_per_slot.backend_stalls", # number of ops unable to dispatch b/c backend (accumulate per cycle)
 ]
 
 
@@ -192,7 +192,7 @@ if __name__ == "__main__":
             "insertFactor": 1,
             "readFactor": 1000,
             "numThreads": 64,
-            "numa_policy": 4,
+            "numa_policy": 1,
             "size": 536870912,
             "fill_factor": f,
         }

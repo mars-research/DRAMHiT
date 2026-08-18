@@ -176,15 +176,6 @@ if __name__ == "__main__":
             "PREFETCH": "DOUBLE",
             "CPUFREQ_MHZ": "2500",
         },
-        {
-            "DRAMHiT_VARIANT": "2025",
-            "CALC_STATS": "ON",
-            "BUCKETIZATION": "OFF",
-            "BRANCH": "branched",
-            "UNIFORM_PROBING": "ON",
-            "PREFETCH": "DOUBLE",
-            "CPUFREQ_MHZ": "2500",
-        },
     ]
     run_cfgs = [
         {

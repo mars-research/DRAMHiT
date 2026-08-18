@@ -8,6 +8,7 @@ using different prefetch inst results in different memory bandwidth.
 - t0 350gb/s
 - t1 400gb/s
 
+
 2. prefetchT1 stalls cpu if continously issued at 16.
 
 for fact 2, explanation is prefetcht1 allocate lfb, and stalls, then

@@ -1,0 +1,255 @@
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target cityhash
+[ 44%] Built target cityhash
+Consolidate compiler generated dependencies of target xxhash
+[ 50%] Built target xxhash
+Consolidate compiler generated dependencies of target dramhit
+[ 52%] Building CXX object CMakeFiles/dramhit.dir/src/tests/hashjoin_test.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:6,
+                 from /opt/DRAMHiT/src/tests/hashjoin_test.cpp:35:
+/opt/DRAMHiT/include/numa.hpp: In member function ‘void kmercounter::NumaPolicyThreads::generate_cpu_list()’:
+/opt/DRAMHiT/include/numa.hpp:413:37: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘uint32_t’ {aka ‘unsigned int’} [-Wformat=]
+  413 |           printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+      |                                   ~~^                    ~~~~~~~~~~~~~~
+      |                                     |                          |
+      |                                     long unsigned int          uint32_t {aka unsigned int}
+      |                                   %u
+[ 55%] Building CXX object CMakeFiles/dramhit.dir/src/tests/bandwidth_test.cpp.o
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/src/tests/bandwidth_test.cpp:2:
+/opt/DRAMHiT/include/numa.hpp: In member function ‘void kmercounter::NumaPolicyThreads::generate_cpu_list()’:
+/opt/DRAMHiT/include/numa.hpp:413:37: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘uint32_t’ {aka ‘unsigned int’} [-Wformat=]
+  413 |           printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+      |                                   ~~^                    ~~~~~~~~~~~~~~
+      |                                     |                          |
+      |                                     long unsigned int          uint32_t {aka unsigned int}
+      |                                   %u
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp: In member function ‘void kmercounter::BandwidthTest::run(kmercounter::Shard*, const kmercounter::Configuration&, std::barrier<std::function<void()> >*)’:
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:246:53: warning: comparison of integer expressions of different signedness: ‘int’ and ‘const uint64_t’ {aka ‘const long unsigned int’} [-Wsign-compare]
+  246 |   for (int repeat_iterations = 0; repeat_iterations < config.read_factor;
+      |                                   ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:252:16: warning: unused variable ‘idx’ [-Wunused-variable]
+  252 |       uint64_t idx = 0;
+      |                ^~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:270:16: warning: unused variable ‘dummy_sum’ [-Wunused-variable]
+  270 |       uint64_t dummy_sum = 0;
+      |                ^~~~~~~~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:272:16: warning: unused variable ‘stream_idx’ [-Wunused-variable]
+  272 |       uint64_t stream_idx = 0;
+      |                ^~~~~~~~~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:399:16: warning: unused variable ‘idx’ [-Wunused-variable]
+  399 |       uint64_t idx = 0;
+      |                ^~~
+/opt/DRAMHiT/src/tests/bandwidth_test.cpp:81:12: warning: unused variable ‘alloc_size_1gb_pages’ [-Wunused-variable]
+   81 |   uint64_t alloc_size_1gb_pages =
+      |            ^~~~~~~~~~~~~~~~~~~~
+[ 58%] Building CXX object CMakeFiles/dramhit.dir/src/tests/uniform_test.cpp.o
+In file included from /opt/DRAMHiT/include/hashtables/ht_helper.hpp:13,
+                 from /opt/DRAMHiT/include/hashtables/cas_kht.hpp:26,
+                 from /opt/DRAMHiT/include/tests/UniformTest.hpp:7,
+                 from /opt/DRAMHiT/src/tests/uniform_test.cpp:3:
+/opt/DRAMHiT/include/numa.hpp: In member function ‘void kmercounter::NumaPolicyThreads::generate_cpu_list()’:
+/opt/DRAMHiT/include/numa.hpp:413:37: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘uint32_t’ {aka ‘unsigned int’} [-Wformat=]
+  413 |           printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+      |                                   ~~^                    ~~~~~~~~~~~~~~
+      |                                     |                          |
+      |                                     long unsigned int          uint32_t {aka unsigned int}
+      |                                   %u
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In function ‘void kmercounter::do_uniform_batch_insertion(kmercounter::BaseHashTable*, uint64_t, unsigned int)’:
+/opt/DRAMHiT/src/tests/uniform_test.cpp:38:23: warning: comparison of integer expressions of different signedness: ‘int’ and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+   38 |     for (int i = 0; i < batch_len; i++) {
+      |                     ~~^~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp:51:23: warning: comparison of integer expressions of different signedness: ‘int’ and ‘size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+   51 |     for (int i = 0; i < residue_num; i++) {
+      |                     ~~^~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In function ‘uint64_t kmercounter::do_uniform_batch_find(kmercounter::BaseHashTable*, uint64_t, unsigned int)’:
+/opt/DRAMHiT/src/tests/uniform_test.cpp:84:23: warning: comparison of integer expressions of different signedness: ‘int’ and ‘uint32_t’ {aka ‘unsigned int’} [-Wsign-compare]
+   84 |     for (int i = 0; i < batch_len; i++) {
+      |                     ~~^~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp:104:23: warning: comparison of integer expressions of different signedness: ‘int’ and ‘size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  104 |     for (int i = 0; i < residue_num; i++) {
+      |                     ~~^~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In function ‘kmercounter::OpTimings kmercounter::do_uniform_inserts(kmercounter::BaseHashTable*, unsigned int, uint64_t, std::barrier<std::function<void()> >*)’:
+/opt/DRAMHiT/src/tests/uniform_test.cpp:159:21: warning: comparison of integer expressions of different signedness: ‘int’ and ‘uint64_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  159 |   for (int i = 0; i < config.insert_factor; i++)
+      |                   ~~^~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp: In instantiation of ‘kmercounter::OpTimings kmercounter::do_uniform_gets(kmercounter::BaseHashTable*, unsigned int, uint64_t, auto:44) [with auto:44 = std::barrier<std::function<void()> >*; uint64_t = long unsigned int]’:
+/opt/DRAMHiT/src/tests/uniform_test.cpp:216:33:   required from here
+/opt/DRAMHiT/src/tests/uniform_test.cpp:188:21: warning: comparison of integer expressions of different signedness: ‘int’ and ‘uint64_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  188 |   for (int i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
+      |                   ~~^~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/src/tests/uniform_test.cpp:169:12: warning: variable ‘found’ set but not used [-Wunused-but-set-variable]
+  169 |   uint64_t found = 0;
+      |            ^~~~~
+[ 61%] Building CXX object CMakeFiles/dramhit.dir/src/tests/rw_ratio.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:6,
+                 from /opt/DRAMHiT/src/tests/rw_ratio.cpp:1:
+/opt/DRAMHiT/include/numa.hpp: In member function ‘void kmercounter::NumaPolicyThreads::generate_cpu_list()’:
+/opt/DRAMHiT/include/numa.hpp:413:37: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘uint32_t’ {aka ‘unsigned int’} [-Wformat=]
+  413 |           printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+      |                                   ~~^                    ~~~~~~~~~~~~~~
+      |                                     |                          |
+      |                                     long unsigned int          uint32_t {aka unsigned int}
+      |                                   %u
+[ 64%] Building CXX object CMakeFiles/dramhit.dir/src/tests/synth_test.cpp.o
+[ 67%] Building CXX object CMakeFiles/dramhit.dir/src/misc_lib.cpp.o
+In file included from /opt/DRAMHiT/include/misc_lib.h:6,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:2:
+/opt/DRAMHiT/include/numa.hpp: In member function ‘void kmercounter::NumaPolicyThreads::generate_cpu_list()’:
+/opt/DRAMHiT/include/numa.hpp:413:37: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘uint32_t’ {aka ‘unsigned int’} [-Wformat=]
+  413 |           printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+      |                                   ~~^                    ~~~~~~~~~~~~~~
+      |                                     |                          |
+      |                                     long unsigned int          uint32_t {aka unsigned int}
+      |                                   %u
+In file included from /opt/DRAMHiT/include/all_ht_types.hpp:8,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:8:
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp: In member function ‘void* kmercounter::DlhtHashTable<KV, KVQ>::find_noprefetch(const void*, kmercounter::collector_type*)’:
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp:707:3: warning: no return statement in function returning non-void [-Wreturn-type]
+  707 |   }
+      |   ^
+In file included from /opt/DRAMHiT/include/all_ht_types.hpp:13,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:8:
+/opt/DRAMHiT/include/hashtables/growt_kht.hpp: In member function ‘virtual uint64_t kmercounter::GrowtHashTable::read_hashtable_element(const void*)’:
+/opt/DRAMHiT/include/hashtables/growt_kht.hpp:113:63: warning: no return statement in function returning non-void [-Wreturn-type]
+  113 |   uint64_t read_hashtable_element(const void* data) override {}
+      |                                                               ^
+In file included from /opt/DRAMHiT/include/all_ht_types.hpp:7,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:8:
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp: In instantiation of ‘void* kmercounter::CASHashTable<KV, KVQ>::find_noprefetch(const void*, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]’:
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:697:9:   required from here
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:708:25: warning: unused variable ‘item’ [-Wunused-variable]
+  708 |     InsertFindArgument *item = const_cast<InsertFindArgument *>(
+      |                         ^~~~
+In file included from /opt/DRAMHiT/include/all_ht_types.hpp:8,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:8:
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp: In instantiation of ‘void kmercounter::DlhtHashTable<KV, KVQ>::insert_batch(const InsertFindArguments&, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; kmercounter::InsertFindArguments = std::span<kmercounter::InsertFindArgument>; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]’:
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp:459:8:   required from here
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp:571:18: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  571 |                 *reinterpret_cast<uint64_t*>(&expected_value),
+      |                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp:572:18: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  572 |                 *reinterpret_cast<uint64_t*>(&new_header))) {
+      |                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp:600:20: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  600 |                   *reinterpret_cast<uint64_t*>(&expected_value),
+      |                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp:601:20: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  601 |                   *reinterpret_cast<uint64_t*>(&new_header))) {
+      |                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/opt/DRAMHiT/include/hashtables/dlht_kht.hpp:483:16: warning: variable ‘found_val’ set but not used [-Wunused-but-set-variable]
+  483 |       uint64_t found_val;
+      |                ^~~~~~~~~
+In file included from /opt/DRAMHiT/include/all_ht_types.hpp:7,
+                 from /opt/DRAMHiT/src/misc_lib.cpp:8:
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp: In instantiation of ‘uint64_t kmercounter::CASHashTable<KV, KVQ>::__find_simd(KVQ*, kmercounter::ValuePairs&) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; uint64_t = long unsigned int; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>]’:
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:951:12:   required from ‘uint64_t kmercounter::CASHashTable<KV, KVQ>::__find_one(KVQ*, kmercounter::ValuePairs&, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; uint64_t = long unsigned int; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]’
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:493:15:   required from ‘void kmercounter::CASHashTable<KV, KVQ>::pop_find_queue(kmercounter::ValuePairs&, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]’
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:688:11:   required from ‘void kmercounter::CASHashTable<KV, KVQ>::find_batch(const InsertFindArguments&, kmercounter::ValuePairs&, kmercounter::collector_type*) [with KV = kmercounter::Item; KVQ = kmercounter::ItemQueue; kmercounter::InsertFindArguments = std::span<kmercounter::InsertFindArgument>; kmercounter::ValuePairs = std::pair<unsigned int, kmercounter::FindResult*>; kmercounter::collector_type = kmercounter::LatencyCollector<2048>]’
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:567:8:   required from here
+/opt/DRAMHiT/include/hashtables/cas_kht.hpp:848:14: warning: unused variable ‘found’ [-Wunused-variable]
+  848 |     uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
+      |              ^~~~~
+[ 70%] Building CXX object CMakeFiles/dramhit.dir/src/xorwow.cpp.o
+[ 73%] Building CXX object CMakeFiles/dramhit.dir/src/Application.cpp.o
+In file included from /opt/DRAMHiT/include/Application.hpp:8,
+                 from /opt/DRAMHiT/src/Application.cpp:1:
+/opt/DRAMHiT/include/numa.hpp: In member function ‘void kmercounter::NumaPolicyThreads::generate_cpu_list()’:
+/opt/DRAMHiT/include/numa.hpp:413:18: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘uint32_t’ {aka ‘unsigned int’} [-Wformat=]
+  413 |           printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+      |                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~
+      |                                                                |
+      |                                                                uint32_t {aka unsigned int}
+[ 76%] Building CXX object CMakeFiles/dramhit.dir/src/dramhit.cpp.o
+In file included from /opt/DRAMHiT/include/Application.hpp:8,
+                 from /opt/DRAMHiT/src/dramhit.cpp:7:
+/opt/DRAMHiT/include/numa.hpp: In member function ‘void kmercounter::NumaPolicyThreads::generate_cpu_list()’:
+/opt/DRAMHiT/include/numa.hpp:413:37: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘uint32_t’ {aka ‘unsigned int’} [-Wformat=]
+  413 |           printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+      |                                   ~~^                    ~~~~~~~~~~~~~~
+      |                                     |                          |
+      |                                     long unsigned int          uint32_t {aka unsigned int}
+      |                                   %u
+[ 79%] Building CXX object CMakeFiles/dramhit.dir/src/zipf_distribution.cpp.o
+[ 82%] Building CXX object CMakeFiles/dramhit.dir/src/Latency.cpp.o
+[ 85%] Linking CXX executable dramhit
+[100%] Built target dramhit
+Disabling hardware prefetchers (writing 0x2F to MSR 0xC0000108 on all cores)...
+Done. Prefetchers disabled.
+Disabling hardware prefetchers (writing 0x2F to MSR 0xC0000108 on all cores)...
+Done. Prefetchers disabled.
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 10 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 10, table sz: 8 GB, set mops: 1858, get mops: 4687
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 20 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 20, table sz: 8 GB, set mops: 1832, get mops: 4656
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 30 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 30, table sz: 8 GB, set mops: 1808, get mops: 4611
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 40 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 40, table sz: 8 GB, set mops: 1818, get mops: 4561
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 50 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 50, table sz: 8 GB, set mops: 1761, get mops: 4449
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 60 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 60, table sz: 8 GB, set mops: 1735, get mops: 4194
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 70 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 70, table sz: 8 GB, set mops: 1635, get mops: 3987
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 80 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 80, table sz: 8 GB, set mops: 1510, get mops: 3506
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 3 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 90 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 90, table sz: 8 GB, set mops: 1322, get mops: 2972
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 10 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 10, table sz: 8 GB, set mops: 1810, get mops: 2684
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 20 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 20, table sz: 8 GB, set mops: 1779, get mops: 2601
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 30 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 30, table sz: 8 GB, set mops: 1735, get mops: 2483
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 40 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 40, table sz: 8 GB, set mops: 1672, get mops: 2337
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 50 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 50, table sz: 8 GB, set mops: 1596, get mops: 2165
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 60 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 60, table sz: 8 GB, set mops: 1504, get mops: 1991
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 70 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+fill: 70, table sz: 8 GB, set mops: 1387, get mops: 1804
+/opt/DRAMHiT/build/dramhit --find_queue 64 --ht-type 8 --num-threads 64 --numa-split 1 --no-prefetch 0 --insert-factor 1000 --read-factor 1000 --mode 11 --ht-size 536870912 --ht-fill 80 --hw-pref 0 --batch-len 16 --skew 0.01 --seed 1775762440565610239
+Traceback (most recent call last):
+  File "/opt/DRAMHiT/scripts/eurosys_2026/macro_uniform/collect_data_amd.py", line 115, in <module>
+    run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
+  File "/opt/DRAMHiT/scripts/eurosys_2026/macro_uniform/collect_data_amd.py", line 68, in run_ht_dual
+    out, err = run_once("sudo " + cmd_base)
+  File "/opt/DRAMHiT/scripts/eurosys_2026/macro_uniform/collect_data_amd.py", line 24, in run_once
+    proc = subprocess.run(
+  File "/nix/store/zgv6h355ssr2dxydxx4hiagn2sdx9356-python3-3.10.4/lib/python3.10/subprocess.py", line 503, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/nix/store/zgv6h355ssr2dxydxx4hiagn2sdx9356-python3-3.10.4/lib/python3.10/subprocess.py", line 1136, in communicate
+    stdout = self.stdout.read()
+KeyboardInterrupt

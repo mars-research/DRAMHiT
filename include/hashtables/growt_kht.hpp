@@ -17,7 +17,7 @@ namespace kmercounter {
 
 using growht_type =
     growt::table_config<uint64_t, uint64_t, utils_tm::hash_tm::crc_hash,
-                        growt::HTLBPoolAllocator<>, 
+                        growt::HTLBPoolAllocator<>,
                         hmod::sync>::table_type;
 
 class GrowtHashTable : public BaseHashTable {
@@ -34,11 +34,10 @@ class GrowtHashTable : public BaseHashTable {
     {
       const std::lock_guard<std::mutex> lock(ht_init_mutex);
 
-      sz = (uint64_t)(capacity >> 1); 
       if (!table) {
         assert(this->ref_cnt == 0);
-        this->table = new growht_type(sz);
-        std::cout << "table name " << table->name() << "requested " << sz <<" capacity " << table->capacity() << std::endl;
+        this->table = new growht_type(capacity/2); // growt somehow reserves 2X amount of slots. so divide it by 2.
+        std::cout << "table name " << table->name() <<" capacity " << table->capacity()  << std::endl;
       }
       this->ref_cnt++;
     }
@@ -61,7 +60,7 @@ class GrowtHashTable : public BaseHashTable {
     for (auto& data : kp) {
       // std::cout << "growt inserting key " << data.key << std::endl;
       if (!table->insert_or_assign(data.key, data.value).second) {
-        //std::cout << "growt insertion failed" << std::endl;
+        std::cout << "growt insertion failed" << std::endl;
       }
     }
   }
@@ -78,7 +77,7 @@ class GrowtHashTable : public BaseHashTable {
         vp.second[vp.first].id = data.id;
         vp.first++;
       } else {
-        //std::cout << "growt find failed " << data.key << std::endl;
+        std::cout << "growt find failed " << data.key << std::endl;
       }
     }
   }
@@ -115,7 +114,7 @@ class GrowtHashTable : public BaseHashTable {
 
   void prefetch_queue(QueueType qtype) override {}
 
-  size_t get_fill() const override { 
+  size_t get_fill() const override {
     size_t count=0;
     for (auto it = table->cbegin(); it != table->cend(); ++it) {
     ++count;

@@ -37,7 +37,6 @@ counters = [
     "cycles",
     "ls_alloc_mab_count",
     "ls_mab_alloc.all_allocations",
-    "de_dis_dispatch_token_stalls1.load_queue_rsrc_stall", # number of cycles processor stall due to lack of load queue resources, which bottlnecks
 ]
 
 

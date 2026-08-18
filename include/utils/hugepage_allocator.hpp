@@ -50,6 +50,8 @@ struct huge_page_allocator {
 
   T *allocate(uint64_t n) {
     if (n > std::numeric_limits<uint64_t>::max() / sizeof(T)) {
+
+        PLOGE.printf("huge page allocator allocating %lu bytes\n", n);
       throw std::bad_alloc();
     }
 

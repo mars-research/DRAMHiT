@@ -3,17 +3,21 @@ import re
 import subprocess
 import sys
 
-numThreads = 64
-numa_policy = 4
+
+# hashtables
 DRAMHIT25 = 3
 GROWT = 6
 DRAMHIT23 = 8
+DLHT = 10
+FOLKLORE_HT = 11
+
+numThreads = 64
+numa_policy = 1
 MODE = 11
 
 one_gb = 1 << 26
 htsize = one_gb * 8
-repeat = 100
-
+repeat = 1000
 
 def run_once(cmd: str):
     """Run a command and return its stdout as string."""
@@ -24,6 +28,20 @@ def run_once(cmd: str):
 
 
 def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
+
+    if hw_pref == 0:
+        subprocess.run(
+            "/opt/DRAMHiT/scripts/prefetch_control_amd.sh off",
+            shell=True,
+            check=True,
+        )
+    else:
+        subprocess.run(
+            "/opt/DRAMHiT/scripts/prefetch_control_amd.sh on",
+            shell=True,
+            check=True,
+        )
+
     results[name] = []
     for fill in range(10, 100, 10):
         cmd_base = f"""
@@ -79,13 +97,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     json_out_file = sys.argv[1]
-    # rebuild project
-    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
-        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON "
-        "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON"
-        "-DGROWT=ON",
+        "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DCAS_NO_ABSTRACT=OFF "
+        "-DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON -DREAD_BEFORE_CAS=ON "
+        "-DGROWT=ON -DCALC_STATS=OFF",
         shell=True,
         check=True,
     )
@@ -94,21 +110,12 @@ if __name__ == "__main__":
     # store results
     all_results = {}
 
-    subprocess.run(
-        "/opt/DRAMHiT/scripts/prefetch_control_amd.sh off",
-        shell=True,
-        check=True,
-    )
 
     run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
     run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
-
-    subprocess.run(
-        "/opt/DRAMHiT/scripts/prefetch_control_amd.sh on",
-        shell=True,
-        check=True,
-    )
     run_ht_dual("GROWT", GROWT, 1, all_results)
+    run_ht_dual("FOLKLORE", FOLKLORE_HT, 1, all_results)
+    run_ht_dual("DLHT", DLHT, 1, all_results)
 
     # save to JSON
     with open(json_out_file, "w") as f:

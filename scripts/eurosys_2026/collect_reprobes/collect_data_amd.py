@@ -184,7 +184,7 @@ if __name__ == "__main__":
             "insertFactor": 1,
             "readFactor": 500,
             "numThreads": 64,
-            "numa_policy": 4,
+            "numa_policy": 1,
             "size": 536870912,
             "fill_factor": f,
         }
@@ -201,4 +201,4 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    save_json(all_results, "amd.json")
+    save_json(all_results, "amd-r6615.json")
