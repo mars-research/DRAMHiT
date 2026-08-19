@@ -8,6 +8,22 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.lines import Line2D
 
+import matplotlib as mpl
+
+rc_fonts = {
+    "text.usetex": True,  # still valid
+    "font.family": "serif",
+    "font.serif": ["Linux Libertine O"],  # your preferred font
+    "font.weight": "bold",
+}
+mpl.rcParams.update(rc_fonts)
+sns.set_context("paper")
+
+palette = sns.color_palette("rocket", n_colors=4)
+palette = palette[::-1]  # reverse the palette
+sns.set_palette(palette)
+sns.set_theme(style="whitegrid", palette=palette)
+
 
 def plot_json(json_file, output_file):
     # Load JSON data
@@ -19,15 +35,15 @@ def plot_json(json_file, output_file):
     df_single = df[df["run_cfg.numa_policy"] == 4]
     # df_dual = df[df["run_cfg.numa_policy"] == 1]
     df_dual = df[df["run_cfg.numa_policy"] == -999]
-    
+
     # Filter out empty dataframes completely from the tracking list
     all_datasets = [df_single, df_dual]
     active_datasets = [d for d in all_datasets if not d.empty]
-    
+
     if not active_datasets:
         print("[Error] No data found for single or dual socket configurations.")
         sys.exit(1)
-    
+
     for dataset in active_datasets:
         dataset["normalized_ops"] = dataset["uops_dispatched.port_2_3_10"] / dataset["find_ops"]
         dataset["relative_mem_uops"] = (
@@ -45,10 +61,7 @@ def plot_json(json_file, output_file):
     # Dynamically scale grid row size based on active datasets
     num_rows = len(active_datasets)
     num_cols = 3
-    
-    # Adjust overall figure height proportionally
-    fig_height = 4.5 if num_rows == 1 else 9
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, fig_height))
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 5))
 
     # Force axes array to be 2D even if there's only 1 row to keep index looping uniform
     if num_rows == 1:
@@ -56,7 +69,7 @@ def plot_json(json_file, output_file):
 
     for cnt, dataset in enumerate(active_datasets):
         rax = axes[cnt]
-        
+
         # Plot 1: Throughput
         ax = rax[0]
         sns.lineplot(
@@ -66,11 +79,12 @@ def plot_json(json_file, output_file):
             hue="identifier",
             marker="o",
             ax=ax,
+            palette=palette,
             legend=False,
         )
         ax.set_ylim(bottom=0)
         ax.set_title("Throughput")
-        ax.set_xlabel("Fill Factor (%)")
+        ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Find Mops (million/sec)")
 
         # Plot 2: Mem Uops per Find
@@ -82,11 +96,12 @@ def plot_json(json_file, output_file):
             hue="identifier",
             marker="o",
             ax=ax,
+            palette=palette,
             legend=False,
         )
         ax.set_ylim(bottom=0)
         ax.set_title("mem uops/find")
-        ax.set_xlabel("Fill Factor (%)")
+        ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Memory Uops / Find")
 
         # Plot 3: Relative Mem Uops
@@ -98,25 +113,26 @@ def plot_json(json_file, output_file):
             hue="identifier",
             marker="o",
             ax=ax,
+            palette=palette,
             legend=False,
         )
         ax.set_ylim(bottom=0)
         ax.set_title("Relative Mem Uops")
-        ax.set_xlabel("Fill Factor (%)")
+        ax.set_xlabel("Fill Factor")
         ax.set_ylabel("Mem Uops / All Uops")
 
     # Aggregate identifiers safely across whatever active dataframes are present
     combined_df = pd.concat(active_datasets)
     unique_ids = sorted(combined_df["identifier"].unique())
-    palette = sns.color_palette(n_colors=len(unique_ids))
+    #palette = sns.color_palette(n_colors=len(unique_ids))
     custom_lines = [
         Line2D([0], [0], color=palette[i], marker="o", label=uid)
         for i, uid in enumerate(unique_ids)
     ]
-    
+
     # Push layout spacer down depending on single or multi-row layout bounds
     rect_top = 0.85 if num_rows == 1 else 0.92
-    
+
     fig.legend(fontsize=9, handles=custom_lines, loc="upper center", ncol=4, frameon=True, edgecolor="#7f7f7f")
     plt.tight_layout(rect=[0, 0, 1, rect_top])
     plt.savefig(output_file, dpi=300)

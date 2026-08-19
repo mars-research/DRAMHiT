@@ -24,7 +24,7 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     build_cfgs = [
         {
             "PREFETCH": "DOUBLE",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "L1",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "L2",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -172,7 +172,7 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "L3",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -180,15 +180,7 @@ if __name__ == "__main__":
         },
         {
             "PREFETCH": "NTA",
-            "DRAMHiT_VARIANT": "2025",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2500",
-        },
-        {
-            "PREFETCH": "NONE",
-            "DRAMHiT_VARIANT": "2025",
+            "DRAMHiT_VARIANT": "2025_INLINE",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -200,24 +192,26 @@ if __name__ == "__main__":
     run_cfgs = [
         {
             "insertFactor": 1,
-            "readFactor": 100,
+            "readFactor": 200,
             "numThreads": 64,
             "numa_policy": 4,
             "size": 536870912,
             "fill_factor": f,
         }
         for f in range(10, 100, 10)
-    ] + [
-        {
-            "insertFactor": 1,
-            "readFactor": 100,
-            "numThreads": 128,
-            "numa_policy": 1,
-            "size": 536870912,
-            "fill_factor": f,
-        }
-        for f in range(10, 100, 10)
     ]
+
+    #+ [
+    #    {
+   #         "insertFactor": 1,
+   #         "readFactor": 100,
+   #         "numThreads": 128,
+   #         "numa_policy": 1,
+   #         "size": 536870912,
+   #         "fill_factor": f,
+   #     }
+   #     for f in range(10, 100, 10)
+   # ]
 
     all_results = []
 

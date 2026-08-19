@@ -188,14 +188,6 @@ if __name__ == "__main__":
             "UNIFORM_PROBING": "ON",
             "CPUFREQ_MHZ": "2700",
         },
-        {
-            "PREFETCH": "NONE",
-            "DRAMHiT_VARIANT": "2025",
-            "BUCKETIZATION": "ON",
-            "BRANCH": "simd",
-            "UNIFORM_PROBING": "ON",
-            "CPUFREQ_MHZ": "2700",
-        },
     ]
 
     # Run configurations (example: vary fill_factor, others fixed)

@@ -46,6 +46,9 @@ def plot_json(json_file, output_file):
     df_dual = df[df["run_cfg.numa_policy"] == -1]
 
 
+    df_single = df_single[df_single["identifier"] != "NONE"]
+
+
     # Dynamically build datasets list based on what is actually present or wanted
     datasets = []
     modes = []

@@ -25,7 +25,7 @@ def build(defines):
 
 def make_perf_command(counters, dramhit_args):
     counters_str = ",".join(counters)
-    cmd = ["sudo", "/usr/bin/perf", "stat", "-e", counters_str, "--"] + dramhit_args
+    cmd = ["perf", "stat", "-e", counters_str, "--"] + dramhit_args
     return cmd
 
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
             "identifier": "Base",
             "DRAMHiT_VARIANT": "2025",
             "CAS_NO_ABSTRACT": "OFF",
-            "PREFETCH": "DOUBLE",
+            "PREFETCH": "L2",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -158,7 +158,7 @@ if __name__ == "__main__":
             "identifier": "Compiler Inline",
             "DRAMHiT_VARIANT": "2025",
             "CAS_NO_ABSTRACT": "ON",
-            "PREFETCH": "DOUBLE",
+            "PREFETCH": "L2",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -168,7 +168,7 @@ if __name__ == "__main__":
             "identifier": "Manual Inline",
             "DRAMHiT_VARIANT": "2025_INLINE",
             "CAS_NO_ABSTRACT": "OFF",
-            "PREFETCH": "DOUBLE",
+            "PREFETCH": "L2",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",
@@ -178,7 +178,7 @@ if __name__ == "__main__":
             "identifier": "Manual+Compiler Inline",
             "DRAMHiT_VARIANT": "2025_INLINE",
             "CAS_NO_ABSTRACT": "ON",
-            "PREFETCH": "DOUBLE",
+            "PREFETCH": "L2",
             "BUCKETIZATION": "ON",
             "BRANCH": "simd",
             "UNIFORM_PROBING": "ON",

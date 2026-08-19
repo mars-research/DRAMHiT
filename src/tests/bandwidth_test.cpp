@@ -250,7 +250,7 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
     if (config.sequential == SEQUENTIAL_READ) {
       uint64_t dummy_sum = 0;
       uint64_t idx = 0;
-      uint64_t stride = 128;
+      uint64_t stride = 64;
 
       for (uint64_t i = 0; (i + stride) < size; i += stride) {
         uint64_t offset = i + stride;
