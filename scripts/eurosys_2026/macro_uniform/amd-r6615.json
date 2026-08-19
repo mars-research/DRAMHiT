@@ -1,0 +1,170 @@
+{
+  "dramhit_2025": [
+    {
+      "fill": 10,
+      "htsize": 536870912,
+      "set_mops": "1842",
+      "get_mops": "4692"
+    },
+    {
+      "fill": 20,
+      "htsize": 536870912,
+      "set_mops": "1817",
+      "get_mops": "4765"
+    },
+    {
+      "fill": 30,
+      "htsize": 536870912,
+      "set_mops": "1814",
+      "get_mops": "4643"
+    },
+    {
+      "fill": 40,
+      "htsize": 536870912,
+      "set_mops": "1801",
+      "get_mops": "4605"
+    },
+    {
+      "fill": 50,
+      "htsize": 536870912,
+      "set_mops": "1772",
+      "get_mops": "4545"
+    },
+    {
+      "fill": 60,
+      "htsize": 536870912,
+      "set_mops": "1729",
+      "get_mops": "4266"
+    },
+    {
+      "fill": 70,
+      "htsize": 536870912,
+      "set_mops": "1652",
+      "get_mops": "4093"
+    },
+    {
+      "fill": 80,
+      "htsize": 536870912,
+      "set_mops": "1515",
+      "get_mops": "3620"
+    },
+    {
+      "fill": 90,
+      "htsize": 536870912,
+      "set_mops": "1315",
+      "get_mops": "2995"
+    }
+  ],
+  "dramhit_2023": [
+    {
+      "fill": 10,
+      "htsize": 536870912,
+      "set_mops": "1809",
+      "get_mops": "2731"
+    },
+    {
+      "fill": 20,
+      "htsize": 536870912,
+      "set_mops": "1780",
+      "get_mops": "2652"
+    },
+    {
+      "fill": 30,
+      "htsize": 536870912,
+      "set_mops": "1735",
+      "get_mops": "2533"
+    },
+    {
+      "fill": 40,
+      "htsize": 536870912,
+      "set_mops": "1671",
+      "get_mops": "2373"
+    },
+    {
+      "fill": 50,
+      "htsize": 536870912,
+      "set_mops": "1591",
+      "get_mops": "2207"
+    },
+    {
+      "fill": 60,
+      "htsize": 536870912,
+      "set_mops": "1502",
+      "get_mops": "2024"
+    },
+    {
+      "fill": 70,
+      "htsize": 536870912,
+      "set_mops": "1384",
+      "get_mops": "1825"
+    },
+    {
+      "fill": 80,
+      "htsize": 536870912,
+      "set_mops": "1237",
+      "get_mops": "1596"
+    },
+    {
+      "fill": 90,
+      "htsize": 536870912,
+      "set_mops": "922",
+      "get_mops": "1155"
+    }
+  ],
+  "FOLKLORE": [
+    {
+      "fill": 10,
+      "htsize": 536870912,
+      "set_mops": "1457",
+      "get_mops": "1734"
+    },
+    {
+      "fill": 20,
+      "htsize": 536870912,
+      "set_mops": "1397",
+      "get_mops": "1694"
+    },
+    {
+      "fill": 30,
+      "htsize": 536870912,
+      "set_mops": "1352",
+      "get_mops": "1643"
+    },
+    {
+      "fill": 40,
+      "htsize": 536870912,
+      "set_mops": "1289",
+      "get_mops": "1567"
+    },
+    {
+      "fill": 50,
+      "htsize": 536870912,
+      "set_mops": "1204",
+      "get_mops": "1446"
+    },
+    {
+      "fill": 60,
+      "htsize": 536870912,
+      "set_mops": "1066",
+      "get_mops": "1279"
+    },
+    {
+      "fill": 70,
+      "htsize": 536870912,
+      "set_mops": "936",
+      "get_mops": "1075"
+    },
+    {
+      "fill": 80,
+      "htsize": 536870912,
+      "set_mops": "781",
+      "get_mops": "869"
+    },
+    {
+      "fill": 90,
+      "htsize": 536870912,
+      "set_mops": "598",
+      "get_mops": "665"
+    }
+  ]
+}

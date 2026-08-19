@@ -17,7 +17,7 @@ MODE = 11
 
 one_gb = 1 << 26
 htsize = one_gb * 8
-repeat = 1000
+repeat = 100
 
 def run_once(cmd: str):
     """Run a command and return its stdout as string."""
@@ -113,9 +113,9 @@ if __name__ == "__main__":
 
     run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
     run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
-    run_ht_dual("GROWT", GROWT, 1, all_results)
     run_ht_dual("FOLKLORE", FOLKLORE_HT, 1, all_results)
-    run_ht_dual("DLHT", DLHT, 1, all_results)
+    # run_ht_dual("GROWT", GROWT, 1, all_results)
+    # run_ht_dual("DLHT", DLHT, 1, all_results)
 
     # save to JSON
     with open(json_out_file, "w") as f:
