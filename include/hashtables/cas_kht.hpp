@@ -589,7 +589,7 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef DOUBLE_PREFETCH
         // Prefetch next tail bucket
-        uint32_t next_tail = (tail + 7) & FIND_QUEUE_SZ_MASK;
+        uint32_t next_tail = (tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
         const void *next_tail_addr =
             &this->hashtable[this->find_queue[next_tail].idx];
         __builtin_prefetch(next_tail_addr, false, 3);

@@ -41,7 +41,7 @@ def get_subplots(num_row,num_col):
 counters = [
     "ls_dispatch.ld_dispatch",
     "ls_dispatch.store_dispatch",
-    "de_no_dispatch_per_slot.backend_stalls", # number of ops unable to dispatch b/c backend (accumulate per cycle)
+    # "de_no_dispatch_per_slot.backend_stalls", # number of ops unable to dispatch b/c backend (accumulate per cycle)
 ]
 
 def plot_json(json_file, output_file):
@@ -121,7 +121,7 @@ def plot_json(json_file, output_file):
         Line2D([0], [0], color=custom_palette[i], marker="o", label=uid)
         for i, uid in enumerate(unique_ids)
     ]
-    fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=2)
+    fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=4)
 
     plt.tight_layout(rect=[0, 0, 1, 0.90])
     plt.savefig(output_file, dpi=300)

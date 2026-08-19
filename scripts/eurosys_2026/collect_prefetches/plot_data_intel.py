@@ -20,6 +20,7 @@ sns.set_context("paper")
 
 palette = sns.color_palette("rocket", n_colors=5)
 palette = palette[::-1]  # reverse the palette
+sns.set_palette(palette)
 sns.set_theme(style="whitegrid", palette=palette)
 
 # Hard-coded counter names
@@ -76,7 +77,7 @@ def plot_json(json_file, output_file):
     fig, axes = plt.subplots(row, col, figsize=(15, 5.0 if row == 1 else 3.5 * row))
 
     unique_ids = datasets[0]["identifier"].str.split("-").str[0].unique()
-    palette = sns.color_palette(n_colors=len(unique_ids))
+    # palette = sns.color_palette(n_colors=len(unique_ids))
 
     cnt = 0
 

@@ -18,14 +18,14 @@ rc_fonts = {
 mpl.rcParams.update(rc_fonts)
 sns.set_context("paper")
 
-palette = sns.color_palette("rocket", n_colors=5)
-palette = palette[::-1]  # reverse the palette
+palette = sns.color_palette("rocket", n_colors=5)[::-1]
+sns.set_palette(palette)
 sns.set_theme(style="whitegrid", palette=palette)
 
 counters = [
     "ls_alloc_mab_count",
     "ls_mab_alloc.all_allocations",
-    "de_dis_dispatch_token_stalls1.load_queue_rsrc_stall",
+    #"de_dis_dispatch_token_stalls1.load_queue_rsrc_stall",
 ]
 
 def plot_json(json_file, output_file):
@@ -73,7 +73,7 @@ def plot_json(json_file, output_file):
     fig, axes = plt.subplots(row, col, figsize=(15, 5.0 if row == 1 else 3.5 * row))
 
     unique_ids = datasets[0]["identifier"].str.split("-").str[0].unique()
-    palette = sns.color_palette(n_colors=len(unique_ids))
+    # palette = sns.color_palette(n_colors=len(unique_ids))
 
     cnt = 0
 
