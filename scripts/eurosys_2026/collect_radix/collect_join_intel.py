@@ -17,7 +17,7 @@ L2_BYTES = 1 * 1024 * 1024  # 1mb per hyperthread
 # dual socket
 num_threads = 128
 numa = 1
-numa_name = "intel_dual_snoop"
+numa_name = "test"
 
 
 # the goal here is reduce keep radix high enough to make each paritition size fit into l2
@@ -136,9 +136,9 @@ def build_command(defaults_dict, param_name, param_value):
 def run_and_parse(cmd):
     """Runs the benchmark command and extracts throughput_mops."""
     print(f"    Running: {' '.join(cmd)}")
-    result = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
-    )
+    #result = subprocess.run(
+    #    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+    #)
 
     # Regex to find "throughput_mops : <number>" (handles optional spaces)
     match = re.search(r"throughput_mops\s*:\s*([0-9.]+)", result.stdout)
@@ -161,10 +161,11 @@ def run_and_parse(cmd):
 def main():
     print(f"Starting Benchmark. Varying '--{PARAM_NAME}' across: {PARAM_VALUES}\n")
 
+
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
         "-DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON "
-        "-DGROWT=ON",
+        "-DGROWT=ON -DCPUFREQ_MHZ=2500",
         shell=True,
         check=True,
     )

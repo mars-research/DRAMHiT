@@ -1,0 +1,53 @@
+\begin{table*}[t] \centering \small \setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|cc|cc|cc||cc|cc|cc||c|}
+\hline
+
+Configuration
+&
+\multicolumn{6}{c||}{\textbf{Single Socket}}
+& \multicolumn{6}{c||}{\textbf{Dual Socket}}
+& \multicolumn{1}{c|}{\textbf{AMD Single Socket}} \\
+\cline{2-14}
+
+&
+\multicolumn{2}{c|}{Remote} &
+\multicolumn{2}{c|}{Local} &
+\multicolumn{2}{c||}{Mixed} &
+\multicolumn{2}{c|}{Remote} &
+\multicolumn{2}{c|}{Local} &
+\multicolumn{2}{c||}{Mixed} &
+Local \\
+\hline
+
+\textbf{Bandwidth GB/s (CB)}
+&
+snoop & dir &
+snoop & dir &
+snoop & dir &
+snoop & dir &
+snoop & dir &
+snoop & dir &
+\\
+\hline\hline
+
+Theoretical R
+& 332.8 (31) & 332.8 (31) & 332.8 (31) & 332.8 (31) & 332.8 (31) & 332.8 (31) \
+& 665.6 (31) & 665.6 (31) & 665.6 (31) & 665.6 (31) & 665.6 (31) & 665.6 (31) & 460.8 (29) \\
+\hline
+Random Read & 122.58 & 122.94 & 244.94 & 246.28 & 231.37 & 240.7 & 240.26 & 241.95 & 387.03 & 491.65 & 357.01 & 364.21 &  \\
+\hline
+Random 1R1W & 177.98 & 190.26 & 197.98 & 198.28 & 285.98 & 292.85 & 239.07 & 325.93 & 397.2 & 397.9 & 350.88 & 358.09 &  \\
+\hline
+Sequential Read & 122.83 & 123.07 & 251.18 & 251.68 & 229.3 & 240.53 & 246.36 & 246.52 & 386.17 & 503.29 & 343.01 & 366.91 &  \\
+\hline
+Sequential 1R1W & 175.49 & 185.42 & 194.99 & 195.12 & 284.08 & 289.84 & 239.38 & 323.66 & 393.16 & 393.4 & 349.3 & 354.34 &  \\
+\hline
+\end{tabular}%
+}
+
+\caption{Bandwidth (GB/s) across socket configurations and access patterns.}
+\label{tab:bandwidth}
+\end{table*}

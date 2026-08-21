@@ -1,0 +1,38 @@
+[
+    {
+        "radix": 10,
+        "partition_cycles_per_tuple": 41.0,
+        "join_cycles_per_tuple": 101.0,
+        "total_cycles_per_tuple": 142.0
+    },
+    {
+        "radix": 11,
+        "partition_cycles_per_tuple": 46.0,
+        "join_cycles_per_tuple": 54.0,
+        "total_cycles_per_tuple": 101.0
+    },
+    {
+        "radix": 12,
+        "partition_cycles_per_tuple": 44.0,
+        "join_cycles_per_tuple": 46.0,
+        "total_cycles_per_tuple": 90.0
+    },
+    {
+        "radix": 13,
+        "partition_cycles_per_tuple": 49.0,
+        "join_cycles_per_tuple": 51.0,
+        "total_cycles_per_tuple": 101.0
+    },
+    {
+        "radix": 14,
+        "partition_cycles_per_tuple": 117.0,
+        "join_cycles_per_tuple": 56.0,
+        "total_cycles_per_tuple": 174.0
+    },
+    {
+        "radix": 15,
+        "partition_cycles_per_tuple": 218.0,
+        "join_cycles_per_tuple": 80.0,
+        "total_cycles_per_tuple": 298.0
+    }
+]

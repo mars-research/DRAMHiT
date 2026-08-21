@@ -628,6 +628,7 @@ void preallocate_phase(RelationInfo& info, HugepageArena& arena) {
     histogram[bucket_id]++;
   }
 
+  //allocate buckets
   for (size_t i = 0; i < info.partition_num; ++i) {
     // round up to 4
     uint64_t capacity = (histogram[i] + 3) & ~3ULL;
@@ -650,6 +651,7 @@ void partition_phase(RelationInfo& info) {
     }
   }
 
+  // flush the swb buffer.
   for (size_t i = 0; i < info.partition_num; ++i) {
     uint64_t counter = info.swbs[i].counter;
     uint8_t left = counter & 0x3;
@@ -680,6 +682,9 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
   uint64_t max_probe_sz = 0;
   uint64_t max_build_sz = 0;
 
+  uint64_t thread_total_probe_sz = 0;
+  uint64_t thread_total_build_sz = 0;
+
   uint64_t ht_nums =
       (partition_num + config.num_threads - 1) / config.num_threads;
   uint64_t* ht_szs =
@@ -703,10 +708,14 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
     if (max_ht_sz < ht_sz) max_ht_sz = ht_sz;
     if (max_probe_sz < probe_sz) max_probe_sz = probe_sz;
     if (max_build_sz < build_sz) max_build_sz = build_sz;
+    thread_total_build_sz += build_sz;
+    thread_total_probe_sz += probe_sz;
 
     ht_szs[ht_id] = ht_sz;
     ht_id++;
   }
+
+  PLOGI.printf("tid: %lu, insert: %lu, find: %lu", tid, thread_total_build_sz, thread_total_probe_sz);
 
   Element* ht_array =
       (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
@@ -764,6 +773,9 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
       estimate_radix_join_size + // hashtable
       (partition_sz_s + partition_sz_r) * sizeof(Element); // inner buckets
 
+  // In practice, we should not use this dummy allocator
+  // it would be a global allocator using hugepages...
+  // but this is simpler for benchmarking purpose.
   constexpr uint64_t one_gb_sz = 1024ULL * 1024ULL * 1024ULL;
   constexpr uint64_t two_mb_sz = 2 * 1024ULL * 1024ULL;
   uint64_t one_gb_needed = estimate_bytes_needed / one_gb_sz;

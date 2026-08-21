@@ -1,11 +1,12 @@
+import json
 import re
 import subprocess
-
 import matplotlib.pyplot as plt
 
-
+filename = "intel_d760_dir_equal_radix_1gb"
+build_sz = int(1024 * 1024 * 1024 / 16) # 1gb
 def run_dramhit_experiments():
-    # Radix values from 8 to 16 inclusive (script originally had 6 to 16)
+    # Radix values from 10 to 15 inclusive
     radix_values = list(range(10, 16))
 
     # Data arrays for the 3 lines
@@ -14,6 +15,9 @@ def run_dramhit_experiments():
     total_cycles_data = []
     successful_radices = []
 
+    # List to store the data for JSON export
+    experiment_data = []
+
     base_cmd = [
         "/opt/DRAMHiT/build/dramhit",
         "--ht-type",
@@ -21,9 +25,9 @@ def run_dramhit_experiments():
         "--ht-fill",
         "50",
         "--relation_r_size",
-        "1073741824",
+        str(build_sz),
         "--relation_s_size",
-        "1073741824",
+        str(build_sz),
         "--find_queue",
         "32",
         "--num-threads",
@@ -48,7 +52,9 @@ def run_dramhit_experiments():
     for radix in radix_values:
         cmd = base_cmd + ["--radix", str(radix)]
 
+
         try:
+            #print("cmd: " + " ".join(cmd))
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             # Using specific regexes to capture the 3 metrics
@@ -75,6 +81,14 @@ def run_dramhit_experiments():
                 partition_cycles_data.append(partition_cpt)
                 join_cycles_data.append(join_cpt)
                 total_cycles_data.append(total_cpt)
+
+                # Store the data for JSON export
+                experiment_data.append({
+                    "radix": radix,
+                    "partition_cycles_per_tuple": partition_cpt,
+                    "join_cycles_per_tuple": join_cpt,
+                    "total_cycles_per_tuple": total_cpt
+                })
             else:
                 print(f"{radix:<10} | {'Missing metric(s) in output':<58}")
 
@@ -84,8 +98,15 @@ def run_dramhit_experiments():
             print(f"Error: Executable not found at {base_cmd[0]}")
             return
 
-    # --- Plotting the Results ---
+    # --- Saving and Plotting the Results ---
     if successful_radices:
+        # 1. Save to JSON
+        json_filename = filename + ".json"
+        with open(json_filename, "w") as json_file:
+            json.dump(experiment_data, json_file, indent=4)
+        print(f"\nData successfully saved to {json_filename}")
+
+        # 2. Save the Plot
         plt.figure(figsize=(10, 6))
 
         # Plot all 3 lines with distinct markers and colors
@@ -128,12 +149,12 @@ def run_dramhit_experiments():
         plt.tight_layout()
 
         # Save the plot
-        output_filename = "intel_dual_equal_relation_radix.png"
+        output_filename = filename + ".png"
         plt.savefig(output_filename)
-        print(f"\nPlot successfully saved to {output_filename}")
+        print(f"Plot successfully saved to {output_filename}")
 
     else:
-        print("\nNo valid data was captured to generate a plot.")
+        print("\nNo valid data was captured to generate a plot or JSON file.")
 
 
 if __name__ == "__main__":
