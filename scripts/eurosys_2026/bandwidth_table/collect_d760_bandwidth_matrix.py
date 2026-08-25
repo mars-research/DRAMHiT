@@ -1,8 +1,8 @@
 import subprocess
 import json
 import re
-import statistics
 import argparse
+import statistics
 
 def run_experiment(script_path, numa_policy, num_threads, test_pattern):
     """
@@ -22,11 +22,14 @@ def run_experiment(script_path, numa_policy, num_threads, test_pattern):
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
     in_test_window = False
-    hw_time_series = []
     prog_bandwidth = None
 
+    # Dictionary to group perf counts by timestamp
+    # Format: { timestamp_float: {'all': count, 'rd': count, 'wr': count} }
+    perf_samples = {}
+
     # Regex patterns for Intel perf and program log output
-    perf_pattern = re.compile(r'^\s*([\d\.]+)\s+([\d\,]+)\s+unc_m_cas_count\.all')
+    perf_pattern = re.compile(r'^\s*([\d\.]+)\s+([\d\,]+)\s+unc_m_cas_count\.(all|rd|wr)')
     prog_bw_pattern = re.compile(r'bandwidth:\s+([\d\.]+)\s+GB/s')
 
     for line in result.stdout.splitlines():
@@ -42,32 +45,76 @@ def run_experiment(script_path, numa_policy, num_threads, test_pattern):
         if in_test_window:
             match = perf_pattern.search(line)
             if match:
+                ts = float(match.group(1))
                 counts_str = match.group(2).replace(',', '')
                 counts = int(counts_str)
+                evt_type = match.group(3) # 'all', 'rd', or 'wr'
 
-                # Convert CAS count to Bandwidth in GB/s (counts * 64 bytes / 1e9)
-                bw_gbps = (counts * 64) / 1e9
-                hw_time_series.append(bw_gbps)
+                if ts not in perf_samples:
+                    perf_samples[ts] = {}
+                perf_samples[ts][evt_type] = counts
 
         # Parse program self-reported bandwidth
         prog_match = prog_bw_pattern.search(line)
         if prog_match:
             prog_bandwidth = float(prog_match.group(1))
 
-    # Pick the "middle" (stable) hardware bandwidth using the median
-    stable_hw_bandwidth = None
-    if hw_time_series:
-        # Ignore the first and last 1-second sample to strip ramp-up / cool-down noise
-        stable_samples = hw_time_series[1:-1] if len(hw_time_series) > 2 else hw_time_series
-        stable_hw_bandwidth = round(statistics.median(stable_samples), 2)
+    # Time series lists for the different operations
+    hw_bw_all = []
+    hw_bw_rd = []
+    hw_bw_wr = []
+
+    # Sort timestamps to calculate delta times properly
+    sorted_ts = sorted(perf_samples.keys())
+
+    # We start from index 1 because we need a previous timestamp to calculate delta_time
+    for i in range(1, len(sorted_ts)):
+        prev_ts = sorted_ts[i-1]
+        curr_ts = sorted_ts[i]
+        delta_time = curr_ts - prev_ts
+
+        if delta_time > 0:
+            counts = perf_samples[curr_ts]
+
+            # Convert CAS count to Bandwidth in GB/s (counts * 64 bytes / (delta_time * 1e9))
+            bw_all = (counts.get('all', 0) * 64) / (delta_time * 1e9)
+            bw_rd = (counts.get('rd', 0) * 64) / (delta_time * 1e9)
+            bw_wr = (counts.get('wr', 0) * 64) / (delta_time * 1e9)
+
+            hw_bw_all.append(round(bw_all, 2))
+            hw_bw_rd.append(round(bw_rd, 2))
+            hw_bw_wr.append(round(bw_wr, 2))
+
+    # Calculate max bandwidths
+    max_hw_bw_all = max(hw_bw_all) if hw_bw_all else None
+    max_hw_bw_rd = max(hw_bw_rd) if hw_bw_rd else None
+    max_hw_bw_wr = max(hw_bw_wr) if hw_bw_wr else None
+
+    # Calculate average bandwidths
+    avg_hw_bw_all = round(statistics.mean(hw_bw_all), 2) if hw_bw_all else None
+    avg_hw_bw_rd = round(statistics.mean(hw_bw_rd), 2) if hw_bw_rd else None
+    avg_hw_bw_wr = round(statistics.mean(hw_bw_wr), 2) if hw_bw_wr else None
 
     return {
         "numa_policy": numa_policy,
         "test_pattern": test_pattern,
         "threads": num_threads,
-        "hardware_bandwidth_GBps": stable_hw_bandwidth,
+        "hardware_max_bandwidth_GBps": {
+            "all": max_hw_bw_all,
+            "rd": max_hw_bw_rd,
+            "wr": max_hw_bw_wr
+        },
+        "hardware_avg_bandwidth_GBps": {
+            "all": avg_hw_bw_all,
+            "rd": avg_hw_bw_rd,
+            "wr": avg_hw_bw_wr
+        },
         "program_bandwidth_GBps": prog_bandwidth,
-        "raw_hw_samples": [round(x, 2) for x in hw_time_series]
+        "raw_hw_samples": {
+            "all": hw_bw_all,
+            "rd": hw_bw_rd,
+            "wr": hw_bw_wr
+        }
     }
 
 def main():
@@ -101,9 +148,11 @@ def main():
 
             results.append(data)
 
-            hw_bw = data['hardware_bandwidth_GBps']
+            # Updated print logging to show both Max and Avg for 'all'
+            hw_max_all = data['hardware_max_bandwidth_GBps']['all']
+            hw_avg_all = data['hardware_avg_bandwidth_GBps']['all']
             prog_bw = data['program_bandwidth_GBps']
-            print(f"  -> Result: HW BW = {hw_bw} GB/s | Prog BW = {prog_bw} GB/s\n")
+            print(f"  -> Result: HW Max (All) = {hw_max_all} GB/s | HW Avg (All) = {hw_avg_all} GB/s | Prog BW = {prog_bw} GB/s\n")
 
             # Save incrementally after each iteration
             with open(args.out, 'w') as f:

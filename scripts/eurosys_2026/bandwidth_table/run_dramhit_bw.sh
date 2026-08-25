@@ -11,9 +11,10 @@ platform=$3
 test=$4
 
 HOME_DIR=/opt/DRAMHiT
-size=2097152
+size=4194304
+# size=16777216
 BW=15
-readFactor=200
+readFactor=1
 
 if [ "$numa_policy" = "single-local" ]; then
     numa_policy=4
@@ -49,7 +50,8 @@ cmd="--num-threads $numThreads --numa-split $numa_policy --mode $BW --ht-size $s
 echo $HOME_DIR/build/dramhit $cmd
 
 if [ "$platform" = "amd" ]; then
-    perf stat -a -M umc_mem_bandwidth,umc_mem_read_bandwidth,umc_mem_write_bandwidth -I 1000 -- $HOME_DIR/build/dramhit $cmd
+    perf stat -a -M umc_mem_bandwidth,umc_mem_read_bandwidth,umc_mem_write_bandwidth -I 10 -- $HOME_DIR/build/dramhit $cmd
 else
-    perf stat -e unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr -I 1000 -- $HOME_DIR/build/dramhit $cmd
+    perf stat -e unc_m_cas_count.all,unc_m_cas_count.rd,unc_m_cas_count.wr -I 10 -- $HOME_DIR/build/dramhit $cmd > bw.txt
+    perf stat -e unc_upi_txl_flits.all_data,unc_upi_txl_flits.non_data,unc_upi_clockticks -I 10 -- $HOME_DIR/build/dramhit $cmd > upi_out.txt
 fi

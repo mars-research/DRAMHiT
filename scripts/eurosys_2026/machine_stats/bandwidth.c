@@ -9,7 +9,6 @@
 #include <numaif.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <time.h>
 #include <immintrin.h> // Required for _mm_prefetch, AVX-512, and _mm_crc32_u64
 #include <smmintrin.h> // specifically for SSE4.2 CRC32
 #include <x86intrin.h> // Required for __rdtsc()
@@ -21,7 +20,7 @@
 
 #define MAX_PATTERNS 64
 #define MAX_REGIONS 64
-#define NUM_ITERATIONS 100 // Adjust as needed
+#define NUM_ITERATIONS 1 // Adjust as needed
 
 // Topology Limits
 #define MAX_NUMA_NODES 128
@@ -63,19 +62,25 @@ typedef enum {
     INST_PREFETCH_NTA
 } inst_type_t;
 
+typedef enum {
+    MODE_READ,
+    MODE_WRITE
+} rw_mode_t;
+
 typedef struct {
     int cpu_node;
-    unsigned long mem_nodemask; // CHANGED: Now supports bitmasks for multiple nodes
+    unsigned long mem_nodemask;
     int num_threads;
 } pattern_t;
 
 typedef struct {
     int thread_id;
     int cpu_id;
-    unsigned long mem_nodemask; // CHANGED: Reflects mask mapping
+    unsigned long mem_nodemask;
     size_t chunk_size;
     uint64_t *buffer;
     inst_type_t inst_type;
+    rw_mode_t rw_mode;
     uint64_t lookahead;
     uint64_t elapsed_cycles;
 } thread_arg_t;
@@ -99,7 +104,7 @@ size_t parse_size(const char *str) {
     return (size_t)val;
 }
 
-// Worker Thread: Allocation, Binding, Initialization, and Reading
+// Worker Thread: Allocation, Binding, Initialization, and Reading/Writing
 void *mem_worker(void *arg) {
     thread_arg_t *t = (thread_arg_t *)arg;
 
@@ -120,7 +125,6 @@ void *mem_worker(void *arg) {
         pthread_exit(NULL);
     }
 
-    // CHANGED: Bind to the target memory NUMA node(s) handling interleaving if needed
     unsigned long nodemask = t->mem_nodemask;
     int mem_mode = (__builtin_popcountl(nodemask) > 1) ? MPOL_INTERLEAVE : MPOL_BIND;
 
@@ -148,52 +152,108 @@ void *mem_worker(void *arg) {
     // Start cycle counter
     uint64_t start_tsc = __rdtsc();
 
-    // The Read-Only Benchmark Loop
+    // The Benchmark Loop
     for (int iter = 0; iter < NUM_ITERATIONS; iter++) {
         switch (t->inst_type) {
             case INST_LOAD:
-                for (uint64_t i = 0; i < ops; i++) {
-                    GET_IDX(idx, i, state_var);
-                    local_dummy += t->buffer[idx * 8];
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        local_dummy += t->buffer[idx * 8];
+                    }
+                } else {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        t->buffer[idx * 8] = 0xff;
+                    }
                 }
                 break;
+
             case INST_AVX512_LOAD:
-                for (uint64_t i = 0; i < ops; i++) {
-                    GET_IDX(idx, i, state_var);
-                    __m512i vec = _mm512_loadu_si512((const void*)&t->buffer[idx * 8]);
-                    local_dummy += _mm_cvtsi128_si32(_mm512_castsi512_si128(vec));
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        __m512i vec = _mm512_loadu_si512((const void*)&t->buffer[idx * 8]);
+                        local_dummy += _mm_cvtsi128_si32(_mm512_castsi512_si128(vec));
+                    }
+                } else {
+                    __m512i write_vec = _mm512_set1_epi64(0xff);
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        _mm512_storeu_si512((void*)&t->buffer[idx * 8], write_vec);
+                    }
                 }
                 break;
+
             case INST_PREFETCH_T0:
-                for (uint64_t i = 0; i < ops; i++) {
-                    GET_IDX(idx, i, state_var);
-                    GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
-                    _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T0);
-                    local_dummy += t->buffer[idx * 8];
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T0);
+                        local_dummy += t->buffer[idx * 8];
+                    }
+                } else {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T0);
+                        t->buffer[idx * 8] = 0xff;
+                    }
                 }
                 break;
+
             case INST_PREFETCH_T1:
-                for (uint64_t i = 0; i < ops; i++) {
-                    GET_IDX(idx, i, state_var);
-                    GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
-                    _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);
-                    local_dummy += t->buffer[idx * 8];
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);
+                        local_dummy += t->buffer[idx * 8];
+                    }
+                } else {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);
+                        t->buffer[idx * 8] = 0xff;
+                    }
                 }
                 break;
+
             case INST_PREFETCH_T2:
-                for (uint64_t i = 0; i < ops; i++) {
-                    GET_IDX(idx, i, state_var);
-                    GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
-                    _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T2);
-                    local_dummy += t->buffer[idx * 8];
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T2);
+                        local_dummy += t->buffer[idx * 8];
+                    }
+                } else {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T2);
+                        t->buffer[idx * 8] = 0xff;
+                    }
                 }
                 break;
+
             case INST_PREFETCH_NTA:
-                for (uint64_t i = 0; i < ops; i++) {
-                    GET_IDX(idx, i, state_var);
-                    GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
-                    _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_NTA);
-                    local_dummy += t->buffer[idx * 8];
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_NTA);
+                        local_dummy += t->buffer[idx * 8];
+                    }
+                } else {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_NTA);
+                        t->buffer[idx * 8] = 0xff;
+                    }
                 }
                 break;
         }
@@ -205,7 +265,9 @@ void *mem_worker(void *arg) {
     uint64_t end_tsc = __rdtsc();
     t->elapsed_cycles = end_tsc - start_tsc;
 
-    __sync_fetch_and_add(&global_sink, local_dummy);
+    if (t->rw_mode == MODE_READ) {
+        __sync_fetch_and_add(&global_sink, local_dummy);
+    }
 
     // ==========================================
     pthread_barrier_wait(&end_barrier);
@@ -224,6 +286,7 @@ int main(int argc, char *argv[]) {
     size_t raw_per_thread_size = 0;
     char *pattern_str = NULL;
     inst_type_t inst = INST_LOAD;
+    rw_mode_t rw_mode = MODE_READ;
     uint64_t lookahead = 32;
     double cpu_freq_ghz = 0.0;
 
@@ -231,6 +294,11 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[i], "-m") == 0 && i + 1 < argc) raw_per_thread_size = parse_size(argv[++i]);
         else if (strcmp(argv[i], "-pattern") == 0 && i + 1 < argc) pattern_str = argv[++i];
         else if (strcmp(argv[i], "-freq") == 0 && i + 1 < argc) cpu_freq_ghz = strtod(argv[++i], NULL);
+        else if (strcmp(argv[i], "-mode") == 0 && i + 1 < argc) {
+            i++;
+            if (strcmp(argv[i], "w") == 0 || strcmp(argv[i], "W") == 0) rw_mode = MODE_WRITE;
+            else rw_mode = MODE_READ;
+        }
         else if (strcmp(argv[i], "-inst") == 0 && i + 1 < argc) {
             i++;
             if (strcmp(argv[i], "load") == 0) inst = INST_LOAD;
@@ -245,7 +313,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (raw_per_thread_size == 0 || pattern_str == NULL || cpu_freq_ghz <= 0.0) {
-        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta>] [-lookahead <lines>]\n", argv[0]);
+        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta>] [-lookahead <lines>] [-mode <r|w>]\n", argv[0]);
         return -1;
     }
 
@@ -270,13 +338,12 @@ int main(int argc, char *argv[]) {
         numa_bitmask_free(cpus);
     }
 
-    // CHANGED: Advanced Pattern Parsing Block
     pattern_t patterns[MAX_PATTERNS];
     int num_patterns = 0;
     int total_threads = 0;
 
     char *pattern_copy = strdup(pattern_str);
-    char *token = strtok(pattern_copy, " "); // Split by space so we don't break "0,1"
+    char *token = strtok(pattern_copy, " ");
 
     while (token != NULL && num_patterns < MAX_PATTERNS) {
         char *n_ptr = strchr(token, 'n');
@@ -357,6 +424,7 @@ int main(int argc, char *argv[]) {
             thread_args[t_idx].mem_nodemask = patterns[p].mem_nodemask;
             thread_args[t_idx].chunk_size = chunk_per_thread;
             thread_args[t_idx].inst_type = inst;
+            thread_args[t_idx].rw_mode = rw_mode;
             thread_args[t_idx].lookahead = lookahead;
             thread_args[t_idx].elapsed_cycles = 0; // Initialize cycles
 
@@ -376,13 +444,14 @@ int main(int argc, char *argv[]) {
     pthread_barrier_wait(&init_barrier);
     printf("-> [1/2] All threads allocated, bound to correct NUMA masks, and pinned to cores.\n");
 
-    struct timespec start, end;
-    clock_gettime(CLOCK_MONOTONIC, &start);
     printf("Start perf collection\n");
+    // Start timing globally
     pthread_barrier_wait(&start_barrier);
+    uint64_t main_start_tsc = __rdtsc();
 
+    // Wait for all threads to finish
     pthread_barrier_wait(&end_barrier);
-    clock_gettime(CLOCK_MONOTONIC, &end);
+    uint64_t main_end_tsc = __rdtsc();
 
     for (int i = 0; i < total_threads; i++) {
         pthread_join(threads[i], NULL);
@@ -390,13 +459,16 @@ int main(int argc, char *argv[]) {
 
     printf("End perf collection\n");
 
-    double time_taken = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    size_t total_bytes_read = actual_total_allocated * NUM_ITERATIONS;
-    double gb_read = (double)total_bytes_read / (1024.0 * 1024.0 * 1024.0);
-    double bandwidth = gb_read / time_taken;
+    uint64_t elapsed_tsc = main_end_tsc - main_start_tsc;
+    // Calculate execution time based on CPU frequency provided by the user (Hz = GHz * 1e9)
+    double time_taken = (double)elapsed_tsc / (cpu_freq_ghz * 1e9);
+
+    size_t total_bytes_processed = actual_total_allocated * NUM_ITERATIONS;
+    double gb_processed = (double)total_bytes_processed / (1024.0 * 1024.0 * 1024.0);
+    double bandwidth = gb_processed / time_taken;
 
     printf("\n============================================\n");
-    printf("Configuration   : Inst: %d | Lookahead: %lu\n", inst, lookahead);
+    printf("Configuration   : Inst: %d | Lookahead: %lu | Mode: %s\n", inst, lookahead, rw_mode == MODE_READ ? "READ" : "WRITE");
 #if defined(RANDOM)
     printf("Mode            : RANDOM (CRC32 Stateless Hash)\n");
 #elif defined(SEQUENTIAL) || defined(SEQUANTIAL)
@@ -404,27 +476,27 @@ int main(int argc, char *argv[]) {
 #else
     printf("Mode            : CUSTOM ARRAY\n");
 #endif
-    printf("Total Data Read : %.2f GB\n", gb_read);
-    printf("Time Taken      : %.4f seconds\n", time_taken);
+    printf("Total Data Proc : %.2f GB\n", gb_processed);
+    printf("Elapsed Cycles  : %lu\n", elapsed_tsc);
+    printf("Time Taken      : %.4f seconds (based on %.2f GHz)\n", time_taken, cpu_freq_ghz);
     printf("Bandwidth       : %.2f GB/s\n", bandwidth);
-    printf("dummy value     : %lu\n", global_sink);
+    // if (rw_mode == MODE_READ) {
+    //     printf("dummy value     : %lu\n", global_sink);
+    // }
 
-    printf("--------------------------------------------\n");
-    printf("Cycles Per Operation (per thread):\n");
-    uint64_t total_ops_per_thread = (chunk_per_thread / 64) * NUM_ITERATIONS;
-
-    double aggr_cpo = 0;
-    for (int i = 0; i < total_threads; i++) {
-        double cycles_per_op = (double)thread_args[i].elapsed_cycles / total_ops_per_thread;
-        printf("  Thread %2d (CPU %3d) : %7.2f cycles/op\n",
-               thread_args[i].thread_id, thread_args[i].cpu_id, cycles_per_op);
-        aggr_cpo += cycles_per_op;
-    }
-    printf("============================================\n");
-
-    printf("Average cycle per operation: %.2f cycles/op\n", aggr_cpo/total_threads);
-
-    printf("Predicted peak bandwidth: %.2f GB/s\n", (double) cpu_freq_ghz * 64 * total_threads * total_threads / aggr_cpo);
+    // printf("--------------------------------------------\n");
+    // printf("Cycles Per Operation (per thread):\n");
+    // uint64_t total_ops_per_thread = (chunk_per_thread / 64) * NUM_ITERATIONS;
+    // double aggr_cpo = 0;
+    // for (int i = 0; i < total_threads; i++) {
+    //     double cycles_per_op = (double)thread_args[i].elapsed_cycles / total_ops_per_thread;
+    //     printf("  Thread %2d (CPU %3d) : %7.2f cycles/op\n",
+    //            thread_args[i].thread_id, thread_args[i].cpu_id, cycles_per_op);
+    //     aggr_cpo += cycles_per_op;
+    // }
+    // printf("============================================\n");
+    // printf("Average cycle per operation: %.2f cycles/op\n", aggr_cpo/total_threads);
+    // printf("Predicted peak bandwidth: %.2f GB/s\n", (double) cpu_freq_ghz * 64 * total_threads * total_threads / aggr_cpo);
 
     pthread_barrier_destroy(&init_barrier);
     pthread_barrier_destroy(&start_barrier);
