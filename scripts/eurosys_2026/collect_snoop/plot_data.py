@@ -38,11 +38,11 @@ def plot_json(json_file_dir, json_file_snoop, output_file):
         # elif bcfg["DRAMHiT_VARIANT"] == "2025_INLINE":
         #     ret += "inline"
 
-        for k in bcfg.keys():
-            if k == "UNIFORM_PROBING" and bcfg[k] == "ON":
-                ret += "+uniform"
-            elif k == "UNIFORM_PROBING" and bcfg[k] == "OFF":
-                ret += "+linear"
+        # for k in bcfg.keys():
+        #     if k == "UNIFORM_PROBING" and bcfg[k] == "ON":
+        #         ret += "+uniform"
+        #     elif k == "UNIFORM_PROBING" and bcfg[k] == "OFF":
+        #         ret += "+linear"
 
         return ret
 

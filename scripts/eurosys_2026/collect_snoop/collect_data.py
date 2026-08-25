@@ -67,7 +67,7 @@ def run(run_cfg):
     if USE_PERF:
         cmd = make_perf_command(counters, dramhit_args)
     else:
-        cmd = ["sudo"] + dramhit_args
+        cmd = dramhit_args
 
     print("Running:", " ".join(cmd))
 
@@ -138,7 +138,6 @@ def save_json(data, filename):
 
 
 if __name__ == "__main__":
-    subprocess.run("rm -f /opt/DRAMHiT/build/", shell=True)
     build_cfgs = [
         {
             "DRAMHiT_VARIANT": "2025_INLINE",
