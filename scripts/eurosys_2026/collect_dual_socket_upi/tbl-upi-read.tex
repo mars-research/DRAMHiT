@@ -1,0 +1,72 @@
+\begin{table*}[t] \centering \small \setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+
+\begin{tabular}{|l|cc|cc|cc||cc|cc|cc|}
+\hline
+
+& \multicolumn{6}{c||}{\textbf{Single Socket}}
+& \multicolumn{6}{c|}{\textbf{Dual Socket}} \\
+\cline{2-13}
+
+Configuration &
+\multicolumn{2}{c|}{Remote} &
+\multicolumn{2}{c|}{Local} &
+\multicolumn{2}{c||}{Mixed} &
+\multicolumn{2}{c|}{Remote} &
+\multicolumn{2}{c|}{Local} &
+\multicolumn{2}{c|}{Mixed} \\
+\hline
+
+& snoop & dir
+& snoop & dir
+& snoop & dir
+& snoop & dir
+& snoop & dir
+& snoop & dir \\
+\hline\hline
+
+\multicolumn{13}{|l|}{\textbf{Data}} \\
+\hline
+1$\rightarrow$0 & 118 & 95 & 0 & 0 & 114 & 89 & 115 & 76 & 0 & 0 & 87 & 60 \\
+\hline
+0$\rightarrow$1 & 0 & 0 & 0 & 0 & 0 & 0 & 116 & 76 & 0 & 0 & 87 & 60 \\
+\hline
+
+\multicolumn{13}{|l|}{\textbf{Nondata}} \\
+\hline
+1$\rightarrow$0 & 30 & 31 & 57 & 0 & 33 & 31 & 45 & 47 & 81 & 0 & 60 & 45 \\
+\hline
+0$\rightarrow$1 & 74 & 65 & 78 & 0 & 88 & 62 & 45 & 47 & 83 & 0 & 60 & 45 \\
+\hline
+
+\multicolumn{13}{|l|}{\textbf{UPI Total}} \\
+\hline
+1$\rightarrow$0 & 148 & 126 & 57 & 0 & 147 & 120 & 160 & 123 & 81 & 0 & 147 & 105 \\
+\hline
+0$\rightarrow$1 & 74 & 65 & 78 & 0 & 88 & 62 & 161 & 123 & 83 & 0 & 147 & 105 \\
+\hline
+total           & 222 & 191 & 135 & 0 & 235 & 182 & 321 & 246 & 164 & 0 & 294 & 210 \\
+\hline
+
+\multicolumn{13}{|l|}{\textbf{Bandwidth}} \\
+\hline
+numa 0 read     & 0 & 0 & 244 & 242 & 114 & 90 & 120 & 80 & 200 & 244 & 178 & 122 \\
+\hline
+numa 0 write    & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 76 & 0 & 0 & 0 & 60 \\
+\hline
+numa 1 read     & 121 & 95 & 0 & 0 & 117 & 90 & 120 & 80 & 184 & 244 & 178 & 122 \\
+\hline
+numa 1 write    & 0 & 95 & 0 & 0 & 0 & 90 & 0 & 76 & 0 & 0 & 0 & 60 \\
+\hline
+total read      & 121 & 95 & 244 & 242 & 231 & 180 & 240 & 160 & 384 & 488 & 356 & 244 \\
+\hline
+total write     & 0 & 95 & 0 & 1 & 0 & 90 & 0 & 152 & 0 & 0 & 0 & 120 \\
+\hline
+total           & 121 & 190 & 244 & 243 & 231 & 270 & 240 & 312 & 384 & 488 & 356 & 364 \\
+\hline
+
+\end{tabular}
+
+\caption{D760 UPI traffic breakdown under Random Read workload}
+\label{tab:upi-traffic}
+\end{table*}
