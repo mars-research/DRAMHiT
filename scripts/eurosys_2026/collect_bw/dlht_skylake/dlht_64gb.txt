@@ -1,0 +1,525 @@
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  64
+On-line CPU(s) list:                     0-63
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Gold 6142 CPU @ 2.60GHz
+CPU family:                              6
+Model:                                   85
+Thread(s) per core:                      2
+Core(s) per socket:                      16
+Socket(s):                               2
+Stepping:                                4
+CPU(s) scaling MHz:                      70%
+CPU max MHz:                             3700.0000
+CPU min MHz:                             1000.0000
+BogoMIPS:                                5200.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 pti intel_ppin ssbd mba ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts vnmi pku ospke md_clear flush_l1d arch_capabilities ibpb_exit_to_user
+Virtualization:                          VT-x
+L1d cache:                               1 MiB (32 instances)
+L1i cache:                               1 MiB (32 instances)
+L2 cache:                                32 MiB (32 instances)
+L3 cache:                                44 MiB (2 instances)
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62
+NUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63
+Vulnerability Gather data sampling:      Mitigation; Microcode
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             KVM: Mitigation: VMX disabled
+Vulnerability L1tf:                      Mitigation; PTE Inversion; VMX conditional cache flushes, SMT vulnerable
+Vulnerability Mds:                       Mitigation; Clear CPU buffers; SMT vulnerable
+Vulnerability Meltdown:                  Mitigation; PTI
+Vulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT vulnerable
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Mitigation; IBRS
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP conditional; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Mitigation; Clear CPU buffers; SMT vulnerable
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+2026-08-26 17:02:41.920 INFO  [42872] [initializeLogger@17] ------------------------
+2026-08-26 17:02:41.933 INFO  [42872] [initializeLogger@18] Plog library initialized
+2026-08-26 17:02:41.933 INFO  [42872] [initializeLogger@19] ------------------------
+2026-08-26 17:02:41.934 INFO  [42872] [main@27] Starting dramhit
+2026-08-26 17:02:41.935 INFO  [42872] [kmercounter::Application::process@860] Hashtable type : DLHT HT
+2026-08-26 17:02:41.935 INFO  [42872] [kmercounter::Application::process@905] Dropping the page cache
+#           time             counts unit events
+     1.001022725         34,667,505      unc_m_cas_count.all                                                   
+     2.003024332         76,159,965      unc_m_cas_count.all                                                   
+     3.004024759         71,697,696      unc_m_cas_count.all                                                   
+2026-08-26 17:02:44.610 INFO  [42872] [kmercounter::init_uniform_dist@247] /opt/DRAMHiT/cache/uniform_seed1774551337382868027_size1030792151.bin 0
+2026-08-26 17:02:44.610 INFO  [42872] [kmercounter::init_uniform_dist@254] Initializing global uniform distribution with seed 1774551337382868027, size 1030792151
+     4.005020040         32,374,861      unc_m_cas_count.all                                                   
+     5.006021061         24,072,135      unc_m_cas_count.all                                                   
+     6.007016083         23,231,502      unc_m_cas_count.all                                                   
+     7.008031664         24,915,272      unc_m_cas_count.all                                                   
+     8.009013189         24,783,384      unc_m_cas_count.all                                                   
+     9.010015778         23,252,288      unc_m_cas_count.all                                                   
+    10.011010846         20,554,489      unc_m_cas_count.all                                                   
+    11.012010628         20,975,170      unc_m_cas_count.all                                                   
+    12.013012211         20,468,777      unc_m_cas_count.all                                                   
+    13.014012070         20,437,256      unc_m_cas_count.all                                                   
+    14.015009754         20,386,078      unc_m_cas_count.all                                                   
+    15.016010213         20,393,778      unc_m_cas_count.all                                                   
+    16.017009868         20,375,969      unc_m_cas_count.all                                                   
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::init_uniform_dist@267] Uniform dist generated. size 1030792151
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 0 assigned to 0 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 1 assigned to 2 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 2 assigned to 4 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 3 assigned to 6 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 4 assigned to 8 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 5 assigned to 10 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 6 assigned to 12 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 7 assigned to 14 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 8 assigned to 16 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 9 assigned to 18 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 10 assigned to 20 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 11 assigned to 22 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 12 assigned to 24 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 13 assigned to 26 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 14 assigned to 28 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 15 assigned to 30 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 16 assigned to 32 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 17 assigned to 34 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 18 assigned to 36 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 19 assigned to 38 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 20 assigned to 40 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 21 assigned to 42 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 22 assigned to 44 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 23 assigned to 46 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 24 assigned to 48 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 25 assigned to 50 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 26 assigned to 52 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 27 assigned to 54 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 28 assigned to 56 at numa node 0
+2026-08-26 17:02:57.427 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 29 assigned to 58 at numa node 0
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 30 assigned to 60 at numa node 0
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 31 assigned to 62 at numa node 0
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 32 assigned to 1 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 33 assigned to 3 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 34 assigned to 5 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 35 assigned to 7 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 36 assigned to 9 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 37 assigned to 11 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 38 assigned to 13 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 39 assigned to 15 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 40 assigned to 17 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 41 assigned to 19 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 42 assigned to 21 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 43 assigned to 23 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 44 assigned to 25 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 45 assigned to 27 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 46 assigned to 29 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 47 assigned to 31 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 48 assigned to 33 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 49 assigned to 35 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 50 assigned to 37 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 51 assigned to 39 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 52 assigned to 41 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 53 assigned to 43 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 54 assigned to 45 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 55 assigned to 47 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 56 assigned to 49 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 57 assigned to 51 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 58 assigned to 53 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 59 assigned to 55 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 60 assigned to 57 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 61 assigned to 59 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 62 assigned to 61 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@495] shard 63 assigned to 63 at numa node 1
+2026-08-26 17:02:57.428 INFO  [42872] [kmercounter::Application::spawn_shard_threads@520] total kv 1030792151, num_threads 64, op per thread (per run) 16106127
+2026-08-26 17:02:57.428 INFO  [42995] [kmercounter::calloc_ht@213] allocating 64 1gb pages bytes 68719476736
+2026-08-26 17:02:57.429 INFO  [42995] [kmercounter::calloc_ht@226] mmap returns 0x7ef240000000
+2026-08-26 17:02:57.429 INFO  [42995] [kmercounter::distribute_mem_to_nodes@122] addr 0x7ef240000000, alloc_sz 68719476736
+    17.018011343        100,485,732      unc_m_cas_count.all                                                   
+    18.019009556        101,190,966      unc_m_cas_count.all                                                   
+    19.020010868        101,215,441      unc_m_cas_count.all                                                   
+    20.021013063        101,201,951      unc_m_cas_count.all                                                   
+    21.022009982        101,215,406      unc_m_cas_count.all                                                   
+    22.023010162        101,186,936      unc_m_cas_count.all                                                   
+    23.024011730        101,204,096      unc_m_cas_count.all                                                   
+    24.025011753        101,586,969      unc_m_cas_count.all                                                   
+    25.026013097        101,579,225      unc_m_cas_count.all                                                   
+    26.027010259        101,554,268      unc_m_cas_count.all                                                   
+#           time             counts unit events
+    27.028010599        106,773,859      unc_m_cas_count.all                                                   
+    28.029009834        155,128,539      unc_m_cas_count.all                                                   
+    29.030010146        158,052,076      unc_m_cas_count.all                                                   
+    30.031011146        157,744,845      unc_m_cas_count.all                                                   
+    31.032010775        155,368,691      unc_m_cas_count.all                                                   
+    32.033010085        160,501,748      unc_m_cas_count.all                                                   
+    33.034011674        152,600,432      unc_m_cas_count.all                                                   
+    34.035012030        161,789,828      unc_m_cas_count.all                                                   
+    35.036010372        152,774,058      unc_m_cas_count.all                                                   
+    36.037009982        160,347,091      unc_m_cas_count.all                                                   
+    37.038009534        155,494,092      unc_m_cas_count.all                                                   
+    38.039009630        157,603,387      unc_m_cas_count.all                                                   
+    39.040009590        158,268,958      unc_m_cas_count.all                                                   
+    40.041010967        155,036,400      unc_m_cas_count.all                                                   
+    41.042012075        161,039,726      unc_m_cas_count.all                                                   
+    42.043010407        152,192,069      unc_m_cas_count.all                                                   
+    43.044009967        161,831,468      unc_m_cas_count.all                                                   
+    44.045011970        153,295,196      unc_m_cas_count.all                                                   
+    45.046011006        159,919,436      unc_m_cas_count.all                                                   
+    46.047010488        155,907,386      unc_m_cas_count.all                                                   
+    47.048011779        157,154,719      unc_m_cas_count.all                                                   
+2026-08-26 17:03:28.896 INFO  [42995] [kmercounter::calloc_ht@213] allocating 8 1gb pages bytes 8589934592
+2026-08-26 17:03:28.896 INFO  [42995] [kmercounter::calloc_ht@226] mmap returns 0x7ef000000000
+2026-08-26 17:03:28.896 INFO  [42995] [kmercounter::distribute_mem_to_nodes@122] addr 0x7ef000000000, alloc_sz 8589934592
+    48.049010294        127,178,868      unc_m_cas_count.all                                                   
+    49.050012844        103,365,826      unc_m_cas_count.all                                                   
+    50.051012272        141,083,443      unc_m_cas_count.all                                                   
+    51.052010018        153,912,170      unc_m_cas_count.all                                                   
+2026-08-26 17:03:32.812 INFO  [42995] [KVQ>::DlhtHashTable@135] DLHT Hashtable base: 0x7ef240000000 Hashtable size: 4294967296
+2026-08-26 17:03:32.812 INFO  [42995] [KVQ>::DlhtHashTable@137] DLHT Links base: 0x7ef000000000 Links size: 536870912
+2026-08-26 17:03:32.812 INFO  [42995] [KVQ>::DlhtHashTable@160] capacity: 4294967296
+2026-08-26 17:03:32.812 INFO  [42995] [KVQ>::DlhtHashTable@161] sizeof(KV): 16
+2026-08-26 17:03:32.812 INFO  [42995] [KVQ>::DlhtHashTable@162] sizeof(Primary_bucket): 64
+2026-08-26 17:03:32.813 INFO  [42995] [KVQ>::DlhtHashTable@163] total_bytes: 68719476736
+2026-08-26 17:03:32.813 INFO  [42995] [KVQ>::DlhtHashTable@164] remainder: 0
+2026-08-26 17:03:32.813 INFO  [42995] [KVQ>::DlhtHashTable@165] num_buckets: 1073741824
+2026-08-26 17:03:32.813 INFO  [42995] [KVQ>::DlhtHashTable@166] max_link_buckets: 134217728
+2026-08-26 17:03:33.418 INFO  [42872] [kmercounter::ZipfianTest::run@339] zipfian test insert start
+    52.055033614      1,047,206,273      unc_m_cas_count.all                                                   
+#           time             counts unit events
+    53.056028343      1,839,389,926      unc_m_cas_count.all                                                   
+2026-08-26 17:03:35.393 INFO  [42872] [kmercounter::ZipfianTest::run@345] zipfian test insert end
+2026-08-26 17:03:35.393 INFO  [42872] [kmercounter::ZipfianTest::run@393] zipfian test find start
+    54.057043335      1,009,324,530      unc_m_cas_count.all                                                   
+    55.060036040      2,179,263,593      unc_m_cas_count.all                                                   
+    56.063025219      1,979,029,810      unc_m_cas_count.all                                                   
+    57.064027504      1,946,407,444      unc_m_cas_count.all                                                   
+    58.067040256      2,012,213,129      unc_m_cas_count.all                                                   
+    59.068032347      1,968,850,799      unc_m_cas_count.all                                                   
+    60.070025585      1,955,801,498      unc_m_cas_count.all                                                   
+    61.072039066      1,985,475,062      unc_m_cas_count.all                                                   
+2026-08-26 17:03:43.445 INFO  [42872] [kmercounter::ZipfianTest::run@401] zipfian test find end
+    62.073075957      1,022,159,809      unc_m_cas_count.all                                                   
+    63.076018181         12,101,901      unc_m_cas_count.all                                                   
+    64.078012105         10,878,075      unc_m_cas_count.all                                                   
+    65.080010310         10,872,182      unc_m_cas_count.all                                                   
+    66.082013643         10,697,475      unc_m_cas_count.all                                                   
+    67.084011533         10,527,879      unc_m_cas_count.all                                                   
+    68.086013426         13,649,672      unc_m_cas_count.all                                                   
+    69.088010683         14,331,174      unc_m_cas_count.all                                                   
+    70.090010256         14,945,408      unc_m_cas_count.all                                                   
+    71.092010515         11,513,809      unc_m_cas_count.all                                                   
+    72.094015741         11,167,238      unc_m_cas_count.all                                                   
+    73.096016341         10,602,023      unc_m_cas_count.all                                                   
+    74.098009826         10,497,250      unc_m_cas_count.all                                                   
+    75.100010655         10,521,718      unc_m_cas_count.all                                                   
+    76.102010690         10,497,381      unc_m_cas_count.all                                                   
+    77.104012174         10,490,319      unc_m_cas_count.all                                                   
+    78.106011385         10,489,189      unc_m_cas_count.all                                                   
+#           time             counts unit events
+    79.108009109         10,513,444      unc_m_cas_count.all                                                   
+    80.110009528         10,500,677      unc_m_cas_count.all                                                   
+    81.112011094         10,487,354      unc_m_cas_count.all                                                   
+    82.114009806         10,490,617      unc_m_cas_count.all                                                   
+    83.116014779         10,567,708      unc_m_cas_count.all                                                   
+    84.118009449         10,500,449      unc_m_cas_count.all                                                   
+    85.120010671         10,504,014      unc_m_cas_count.all                                                   
+    86.122009919         10,483,606      unc_m_cas_count.all                                                   
+    87.124013136         10,747,136      unc_m_cas_count.all                                                   
+    88.126011531         10,590,657      unc_m_cas_count.all                                                   
+    89.128013164         10,523,442      unc_m_cas_count.all                                                   
+    90.130011292         10,522,258      unc_m_cas_count.all                                                   
+    91.132013382         10,490,133      unc_m_cas_count.all                                                   
+    92.134016705         10,499,265      unc_m_cas_count.all                                                   
+    93.136010653         10,479,904      unc_m_cas_count.all                                                   
+    94.138012177         10,479,477      unc_m_cas_count.all                                                   
+    95.140012430         10,501,094      unc_m_cas_count.all                                                   
+    96.142011427         10,488,148      unc_m_cas_count.all                                                   
+    97.144012503         10,478,809      unc_m_cas_count.all                                                   
+    98.146010041         10,484,903      unc_m_cas_count.all                                                   
+    99.148010782         10,477,131      unc_m_cas_count.all                                                   
+   100.150010461         10,489,805      unc_m_cas_count.all                                                   
+   101.152010621         10,478,201      unc_m_cas_count.all                                                   
+   102.154010138         10,499,110      unc_m_cas_count.all                                                   
+   103.156011238         10,481,215      unc_m_cas_count.all                                                   
+   104.158009983         10,479,448      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   105.160012488         10,478,792      unc_m_cas_count.all                                                   
+   106.162012193         10,477,511      unc_m_cas_count.all                                                   
+   107.164012530         10,601,720      unc_m_cas_count.all                                                   
+   108.166009747         10,481,853      unc_m_cas_count.all                                                   
+   109.168010793         10,478,201      unc_m_cas_count.all                                                   
+   110.170014578         10,490,550      unc_m_cas_count.all                                                   
+   111.172011089         10,478,839      unc_m_cas_count.all                                                   
+   112.174009918         10,480,625      unc_m_cas_count.all                                                   
+   113.176012066         10,481,233      unc_m_cas_count.all                                                   
+   114.178011606         10,481,535      unc_m_cas_count.all                                                   
+   115.180014378         10,479,165      unc_m_cas_count.all                                                   
+   116.182010195         10,489,868      unc_m_cas_count.all                                                   
+   117.184013472         10,486,912      unc_m_cas_count.all                                                   
+   118.186009724         10,475,045      unc_m_cas_count.all                                                   
+   119.188010829         10,480,485      unc_m_cas_count.all                                                   
+   120.190014173         10,480,421      unc_m_cas_count.all                                                   
+   121.192012303         10,481,756      unc_m_cas_count.all                                                   
+   122.194011676         10,480,758      unc_m_cas_count.all                                                   
+   123.196015681         10,491,928      unc_m_cas_count.all                                                   
+   124.198012494         10,476,192      unc_m_cas_count.all                                                   
+   125.200010938         10,485,158      unc_m_cas_count.all                                                   
+   126.202011519         10,474,420      unc_m_cas_count.all                                                   
+   127.204009955         10,478,243      unc_m_cas_count.all                                                   
+   128.206013382         10,474,574      unc_m_cas_count.all                                                   
+   129.208015286         10,486,129      unc_m_cas_count.all                                                   
+   130.210011508         10,477,703      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   131.212011198         10,487,006      unc_m_cas_count.all                                                   
+   132.214010449         10,480,219      unc_m_cas_count.all                                                   
+   133.216011107         11,024,572      unc_m_cas_count.all                                                   
+   134.218009857         11,175,156      unc_m_cas_count.all                                                   
+   135.220014594         11,226,420      unc_m_cas_count.all                                                   
+   136.222010618         11,288,814      unc_m_cas_count.all                                                   
+   137.224010603         11,283,518      unc_m_cas_count.all                                                   
+   138.226011357         11,237,822      unc_m_cas_count.all                                                   
+   139.228013870         11,214,981      unc_m_cas_count.all                                                   
+   140.230010557         11,187,119      unc_m_cas_count.all                                                   
+   141.232011312         11,248,159      unc_m_cas_count.all                                                   
+   142.234013491         11,191,915      unc_m_cas_count.all                                                   
+   143.236012991         11,192,388      unc_m_cas_count.all                                                   
+   144.238011919         11,180,183      unc_m_cas_count.all                                                   
+   145.240010881         11,181,342      unc_m_cas_count.all                                                   
+   146.242011627         11,174,736      unc_m_cas_count.all                                                   
+   147.244012289         11,193,797      unc_m_cas_count.all                                                   
+   148.246012667         11,182,218      unc_m_cas_count.all                                                   
+   149.248012634         11,178,343      unc_m_cas_count.all                                                   
+   150.250010744         11,181,906      unc_m_cas_count.all                                                   
+   151.252010548         11,177,865      unc_m_cas_count.all                                                   
+   152.254009479         11,188,393      unc_m_cas_count.all                                                   
+   153.256012752         11,174,078      unc_m_cas_count.all                                                   
+   154.258012014         11,179,664      unc_m_cas_count.all                                                   
+   155.260010332         11,179,909      unc_m_cas_count.all                                                   
+   156.262011359         11,179,622      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   157.264010034         11,175,493      unc_m_cas_count.all                                                   
+   158.266011619         11,173,022      unc_m_cas_count.all                                                   
+   159.268011450         11,178,542      unc_m_cas_count.all                                                   
+   160.270012705         11,206,257      unc_m_cas_count.all                                                   
+   161.272010285         11,175,790      unc_m_cas_count.all                                                   
+   162.274010426         11,175,598      unc_m_cas_count.all                                                   
+   163.276015472         12,367,255      unc_m_cas_count.all                                                   
+   164.278011149         14,061,542      unc_m_cas_count.all                                                   
+   165.280012448         13,931,690      unc_m_cas_count.all                                                   
+   166.282014577         12,023,825      unc_m_cas_count.all                                                   
+   167.284012757         11,200,691      unc_m_cas_count.all                                                   
+   168.286014076         11,514,278      unc_m_cas_count.all                                                   
+   169.288010290         11,181,797      unc_m_cas_count.all                                                   
+   170.290013252         11,185,366      unc_m_cas_count.all                                                   
+   171.292010791         11,179,172      unc_m_cas_count.all                                                   
+   172.294014752         11,200,001      unc_m_cas_count.all                                                   
+   173.296013127         11,174,595      unc_m_cas_count.all                                                   
+   174.298012209         11,194,991      unc_m_cas_count.all                                                   
+   175.300010428         11,182,301      unc_m_cas_count.all                                                   
+   176.302013992         11,676,002      unc_m_cas_count.all                                                   
+   177.304011470         11,184,338      unc_m_cas_count.all                                                   
+   178.306014643         11,202,608      unc_m_cas_count.all                                                   
+   179.308009995         11,177,946      unc_m_cas_count.all                                                   
+   180.310010101         11,214,780      unc_m_cas_count.all                                                   
+   181.312011338         11,176,312      unc_m_cas_count.all                                                   
+   182.314010551         11,324,962      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   183.316010973         11,209,348      unc_m_cas_count.all                                                   
+   184.318012560         11,240,938      unc_m_cas_count.all                                                   
+   185.320014113         11,203,562      unc_m_cas_count.all                                                   
+   186.322011106         11,200,102      unc_m_cas_count.all                                                   
+   187.324010340         11,173,321      unc_m_cas_count.all                                                   
+   188.326010485         11,218,980      unc_m_cas_count.all                                                   
+   189.328010023         11,181,155      unc_m_cas_count.all                                                   
+   190.330014338         11,194,128      unc_m_cas_count.all                                                   
+   191.332011354         11,184,193      unc_m_cas_count.all                                                   
+   192.334011136         11,179,070      unc_m_cas_count.all                                                   
+   193.336010208         11,187,013      unc_m_cas_count.all                                                   
+   194.338010336         11,177,689      unc_m_cas_count.all                                                   
+   195.340010431         11,222,295      unc_m_cas_count.all                                                   
+   196.342010104         11,183,095      unc_m_cas_count.all                                                   
+   197.344011708         11,186,750      unc_m_cas_count.all                                                   
+   198.346013109         11,191,721      unc_m_cas_count.all                                                   
+   199.348010209         11,177,866      unc_m_cas_count.all                                                   
+   200.350010175         11,174,268      unc_m_cas_count.all                                                   
+   201.352011336         11,173,997      unc_m_cas_count.all                                                   
+   202.354010043         11,175,103      unc_m_cas_count.all                                                   
+   203.356011120         11,187,609      unc_m_cas_count.all                                                   
+   204.358010934         11,198,102      unc_m_cas_count.all                                                   
+   205.360011244         11,178,068      unc_m_cas_count.all                                                   
+   206.362012477         11,192,789      unc_m_cas_count.all                                                   
+   207.364009942         11,212,567      unc_m_cas_count.all                                                   
+   208.366012787         11,177,123      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   209.368014485         11,204,807      unc_m_cas_count.all                                                   
+   210.370011164         11,182,512      unc_m_cas_count.all                                                   
+   211.372012851         11,177,484      unc_m_cas_count.all                                                   
+   212.374010289         11,174,127      unc_m_cas_count.all                                                   
+   213.376013496         11,171,445      unc_m_cas_count.all                                                   
+   214.378011000         11,189,713      unc_m_cas_count.all                                                   
+   215.380013019         11,182,677      unc_m_cas_count.all                                                   
+   216.382010730         11,170,346      unc_m_cas_count.all                                                   
+   217.384009884         10,828,880      unc_m_cas_count.all                                                   
+   218.386012448          9,634,510      unc_m_cas_count.all                                                   
+   219.388009948          9,634,747      unc_m_cas_count.all                                                   
+   220.390011088          9,635,098      unc_m_cas_count.all                                                   
+   221.392013819          9,632,905      unc_m_cas_count.all                                                   
+   222.394014321          9,638,616      unc_m_cas_count.all                                                   
+   223.396012485          9,634,739      unc_m_cas_count.all                                                   
+   224.398014972          9,638,615      unc_m_cas_count.all                                                   
+   225.400012243          9,633,970      unc_m_cas_count.all                                                   
+   226.402010667          9,633,621      unc_m_cas_count.all                                                   
+   227.404010037          9,643,430      unc_m_cas_count.all                                                   
+   228.406010699          9,643,319      unc_m_cas_count.all                                                   
+   229.408011632          9,632,423      unc_m_cas_count.all                                                   
+   230.410012968          9,757,403      unc_m_cas_count.all                                                   
+   231.412012394          9,687,995      unc_m_cas_count.all                                                   
+   232.414011713          9,631,795      unc_m_cas_count.all                                                   
+   233.416011746          9,635,451      unc_m_cas_count.all                                                   
+   234.418012026          9,643,402      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   235.420010666          9,640,676      unc_m_cas_count.all                                                   
+   236.422011068          9,649,745      unc_m_cas_count.all                                                   
+   237.424015028          9,710,439      unc_m_cas_count.all                                                   
+   238.426011132          9,640,001      unc_m_cas_count.all                                                   
+   239.428012821          9,641,648      unc_m_cas_count.all                                                   
+   240.430012939          9,639,691      unc_m_cas_count.all                                                   
+   241.432009876          9,638,490      unc_m_cas_count.all                                                   
+   242.434011139          9,645,106      unc_m_cas_count.all                                                   
+   243.436014196          9,671,059      unc_m_cas_count.all                                                   
+   244.438012152          9,677,158      unc_m_cas_count.all                                                   
+   245.440013961          9,638,982      unc_m_cas_count.all                                                   
+   246.442010823          9,634,990      unc_m_cas_count.all                                                   
+   247.444010049          9,634,896      unc_m_cas_count.all                                                   
+   248.446010968          9,633,711      unc_m_cas_count.all                                                   
+   249.448011780          9,648,400      unc_m_cas_count.all                                                   
+   250.450015427          9,636,500      unc_m_cas_count.all                                                   
+   251.452010532          9,632,380      unc_m_cas_count.all                                                   
+   252.454019526          9,634,074      unc_m_cas_count.all                                                   
+   253.456011984          9,631,549      unc_m_cas_count.all                                                   
+   254.458010645          9,636,287      unc_m_cas_count.all                                                   
+   255.460015925          9,641,373      unc_m_cas_count.all                                                   
+   256.462011245          9,630,155      unc_m_cas_count.all                                                   
+   257.464012423          9,633,781      unc_m_cas_count.all                                                   
+   258.466012032          9,634,089      unc_m_cas_count.all                                                   
+   259.468013696          9,630,514      unc_m_cas_count.all                                                   
+   260.470011684          9,636,744      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   261.472014567          9,655,575      unc_m_cas_count.all                                                   
+   262.474022257         11,761,407      unc_m_cas_count.all                                                   
+   263.476016167         12,483,314      unc_m_cas_count.all                                                   
+   264.478023810         12,245,439      unc_m_cas_count.all                                                   
+   265.480010416          9,707,139      unc_m_cas_count.all                                                   
+   266.482013336          9,642,976      unc_m_cas_count.all                                                   
+   267.484015426         10,036,797      unc_m_cas_count.all                                                   
+   268.486011471          9,670,454      unc_m_cas_count.all                                                   
+   269.488012595          9,679,137      unc_m_cas_count.all                                                   
+   270.490011828         10,151,335      unc_m_cas_count.all                                                   
+   271.492010152          9,640,344      unc_m_cas_count.all                                                   
+   272.494011627          9,648,241      unc_m_cas_count.all                                                   
+   273.496012546          9,681,969      unc_m_cas_count.all                                                   
+   274.498011669          9,116,690      unc_m_cas_count.all                                                   
+   275.500019684          6,460,269      unc_m_cas_count.all                                                   
+   276.502010415          6,475,507      unc_m_cas_count.all                                                   
+   277.504010188          6,373,097      unc_m_cas_count.all                                                   
+   278.506011668          6,362,005      unc_m_cas_count.all                                                   
+   279.508013436          6,380,970      unc_m_cas_count.all                                                   
+   280.510010444          6,365,237      unc_m_cas_count.all                                                   
+   281.512010549          6,353,262      unc_m_cas_count.all                                                   
+   282.514009441          6,363,410      unc_m_cas_count.all                                                   
+   283.516010588          6,351,011      unc_m_cas_count.all                                                   
+   284.518014096          6,360,350      unc_m_cas_count.all                                                   
+   285.520014899          9,489,017      unc_m_cas_count.all                                                   
+   286.522012363          9,083,848      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   287.524014468          7,943,705      unc_m_cas_count.all                                                   
+   288.526013990          6,672,964      unc_m_cas_count.all                                                   
+   289.528011509          6,358,160      unc_m_cas_count.all                                                   
+   290.530014308          6,423,640      unc_m_cas_count.all                                                   
+   291.532013020          6,350,837      unc_m_cas_count.all                                                   
+   292.534025119          8,004,386      unc_m_cas_count.all                                                   
+   293.536016594          9,091,319      unc_m_cas_count.all                                                   
+   294.538023904          9,089,493      unc_m_cas_count.all                                                   
+   295.540013577          6,449,003      unc_m_cas_count.all                                                   
+   296.542012722          6,352,659      unc_m_cas_count.all                                                   
+   297.544015121          6,678,762      unc_m_cas_count.all                                                   
+   298.546012038          6,354,141      unc_m_cas_count.all                                                   
+   299.548011840          6,351,048      unc_m_cas_count.all                                                   
+   300.550012559          6,356,013      unc_m_cas_count.all                                                   
+   301.552012160          7,048,015      unc_m_cas_count.all                                                   
+   302.554011095          6,374,029      unc_m_cas_count.all                                                   
+   303.556013406          6,379,641      unc_m_cas_count.all                                                   
+   304.558013098          6,369,855      unc_m_cas_count.all                                                   
+   305.560013978          6,365,939      unc_m_cas_count.all                                                   
+   306.562012524          6,352,093      unc_m_cas_count.all                                                   
+   307.564010933          6,367,091      unc_m_cas_count.all                                                   
+   308.566012624          6,420,527      unc_m_cas_count.all                                                   
+   309.568012372          6,369,266      unc_m_cas_count.all                                                   
+   310.570013591          6,360,671      unc_m_cas_count.all                                                   
+   311.572015618          8,202,540      unc_m_cas_count.all                                                   
+   312.574015498          9,165,060      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   313.576025452          9,136,270      unc_m_cas_count.all                                                   
+   314.578014124          6,483,061      unc_m_cas_count.all                                                   
+   315.580010642          6,689,212      unc_m_cas_count.all                                                   
+   316.582011883          6,381,328      unc_m_cas_count.all                                                   
+   317.584010686          6,395,167      unc_m_cas_count.all                                                   
+   318.586010721          6,404,276      unc_m_cas_count.all                                                   
+   319.588013582          6,358,022      unc_m_cas_count.all                                                   
+   320.590012513          6,378,381      unc_m_cas_count.all                                                   
+   321.592012729          6,354,165      unc_m_cas_count.all                                                   
+   322.594011696          6,354,002      unc_m_cas_count.all                                                   
+   323.596010454          6,353,753      unc_m_cas_count.all                                                   
+   324.598009928          6,454,251      unc_m_cas_count.all                                                   
+   325.600010423          6,373,682      unc_m_cas_count.all                                                   
+   326.602010187          6,387,938      unc_m_cas_count.all                                                   
+   327.604013891          6,365,022      unc_m_cas_count.all                                                   
+   328.606010832          6,348,056      unc_m_cas_count.all                                                   
+   329.608010152          6,375,796      unc_m_cas_count.all                                                   
+   330.610014213          6,390,063      unc_m_cas_count.all                                                   
+   331.612010129          6,352,542      unc_m_cas_count.all                                                   
+   332.614011348          6,349,066      unc_m_cas_count.all                                                   
+   333.616012473          6,356,102      unc_m_cas_count.all                                                   
+   334.618010584          6,460,843      unc_m_cas_count.all                                                   
+   335.620011025          6,350,542      unc_m_cas_count.all                                                   
+   336.622011315          6,347,602      unc_m_cas_count.all                                                   
+   337.624012091          6,344,137      unc_m_cas_count.all                                                   
+   338.626010143          6,352,880      unc_m_cas_count.all                                                   
+#           time             counts unit events
+   339.628015148          6,354,635      unc_m_cas_count.all                                                   
+   340.630010584          6,351,405      unc_m_cas_count.all                                                   
+   341.632011553          6,348,329      unc_m_cas_count.all                                                   
+   342.634010351          6,438,388      unc_m_cas_count.all                                                   
+   343.636012456          6,355,422      unc_m_cas_count.all                                                   
+   344.638009887          6,345,492      unc_m_cas_count.all                                                   
+   345.640014015          6,358,692      unc_m_cas_count.all                                                   
+   346.642013687          6,344,652      unc_m_cas_count.all                                                   
+   347.644012107          6,355,485      unc_m_cas_count.all                                                   
+   348.646009581          6,349,202      unc_m_cas_count.all                                                   
+   349.648009953          6,593,678      unc_m_cas_count.all                                                   
+   350.650011239          6,353,411      unc_m_cas_count.all                                                   
+   351.652010228          6,344,244      unc_m_cas_count.all                                                   
+   352.654012196          6,359,735      unc_m_cas_count.all                                                   
+   353.656011370          6,346,517      unc_m_cas_count.all                                                   
+   354.658011370          6,347,936      unc_m_cas_count.all                                                   
+   355.660011889          6,417,401      unc_m_cas_count.all                                                   
+   356.662009965          6,353,176      unc_m_cas_count.all                                                   
+   357.664012375          6,358,610      unc_m_cas_count.all                                                   
+   358.666012949          6,374,879      unc_m_cas_count.all                                                   
+   359.668011954          6,349,959      unc_m_cas_count.all                                                   
+   360.670012624          6,349,702      unc_m_cas_count.all                                                   
+   361.672011969          6,341,430      unc_m_cas_count.all                                                   
+2026-08-26 17:06:18.562 INFO  [42872] [kmercounter::ZipfianTest::run@426] get fill 0.240
+2026-08-26 17:08:43.649 INFO  [42872] [kmercounter::free_mem@246] 0x7ef240000000 with sz 68719476736 unmapped
+2026-08-26 17:08:43.649 INFO  [42872] [kmercounter::free_mem@246] 0x7ef000000000 with sz 8589934592 unmapped
+2026-08-26 17:08:43.650 INFO  [42872] [kmercounter::print_stats@304] 
+============================================
+fill : 1030792151, capacity : 4294967296, fill_factor : 0.240000
+global_find_cycle : 20886906142, find_ops : 10307921510, found : 10307921510
+global_insert_cycle : 5120384010, insert_ops : 1030792151
+set_cycles : 317, get_cycles : 129, set_mops : 503, get_mops : 1233
+============================================
+
+   362.301878735          4,463,910      unc_m_cas_count.all                                                   
+/opt/DRAMHiT/scripts/eurosys_2026/collect_bw/build/dramhit --find_queue 64 --ht-fill 24 --ht-type 10 --insert-factor 1 --read-factor 10         --num-threads 64 --numa-split 6 --no-prefetch 0 --mode 11 --ht-size 4294967296         --hw-pref 0 --batch-len 32 --seed 1774551337382868027
