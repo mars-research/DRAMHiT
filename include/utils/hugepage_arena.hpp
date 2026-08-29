@@ -1,6 +1,9 @@
 #pragma once
 #include <sys/mman.h>
+#include <numaif.h>
+#include <cerrno>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <new>
 #include <cstdlib>
@@ -69,6 +72,30 @@ public:
   HugepageArena(const HugepageArena&) = delete;
   HugepageArena& operator=(const HugepageArena&) = delete;
 
+
+  // Bind all memory owned by this arena to the NUMA nodes set in bit_mask.
+  // A single set bit pins to that node (MPOL_BIND). Multiple set bits
+  // interleave pages round-robin across those nodes (MPOL_INTERLEAVE) so a
+  // large region ends up evenly spread rather than piled onto one node.
+  // Interleaving only makes sense if the region has more than one hugepage
+  // to spread around, so each arena picks its policy off its own page count.
+  void mem_bind(uint8_t bit_mask) {
+    unsigned long nodemask = bit_mask;
+    unsigned long maxnode = sizeof(nodemask) * 8;
+    bool multi_node = __builtin_popcount(bit_mask) > 1;
+
+    if (arena_1gb) {
+      uint64_t num_pages = capacity_1gb / SIZE_1GB;
+      int policy = (multi_node && num_pages > 1) ? MPOL_INTERLEAVE : MPOL_BIND;
+      bind_region(arena_1gb, capacity_1gb, policy, nodemask, maxnode);
+    }
+    if (arena_2mb) {
+      uint64_t num_pages = capacity_2mb / SIZE_2MB;
+      int policy = (multi_node && num_pages > 1) ? MPOL_INTERLEAVE : MPOL_BIND;
+      bind_region(arena_2mb, capacity_2mb, policy, nodemask, maxnode);
+    }
+  }
+
   // General purpose aligned allocator
   void* aligned_alloc(uint64_t alloc_bytes, uint64_t alignment) {
     // Check if alignment is a power of 2 (required for bitwise alignment math)
@@ -124,6 +151,17 @@ private:
 
   // Mutex to protect concurrent access to offsets
   mutable std::mutex arena_mutex;
+
+  // Binds [addr, addr + len) to the NUMA nodes in nodemask under policy.
+  void bind_region(void* addr, uint64_t len, int policy, unsigned long nodemask,
+                    unsigned long maxnode) {
+    long ret = mbind(addr, len, policy, &nodemask, maxnode,
+                      MPOL_MF_MOVE | MPOL_MF_STRICT);
+    if (ret < 0) {
+      perror("mbind");
+      PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+    }
+  }
 
   // Internal allocation logic
   void* alloc_internal(uint64_t alloc_bytes, uint64_t alignment) {

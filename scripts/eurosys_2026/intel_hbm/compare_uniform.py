@@ -32,8 +32,8 @@ def run_ht_dual(name: str, ht_type: int, hw_pref: int, results: dict):
         --num-threads {numThreads}
         --numa-split {numa_policy}
         --no-prefetch 0
-        --np_cpu_node 0
-        --np_mem_node 2
+        --np_cpu_node_msk 1
+        --np_mem_node_msk 4
         --insert-factor {repeat}
         --read-factor {repeat}
         --mode {MODE}
@@ -89,13 +89,13 @@ if __name__ == "__main__":
         shell=True,
         check=True,
     )
-    subprocess.run("cmake --build ~/DRAMHiT/build", shell=True, check=True)
+    subprocess.run("cmake --build /opt/DRAMHiT/build", shell=True, check=True)
 
     # store results
     all_results = {}
 
     run_ht_dual("dramhit_2025", DRAMHIT25, 0, all_results)
-    run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
+    # run_ht_dual("dramhit_2023", DRAMHIT23, 0, all_results)
 
     # save to JSON
     with open(json_out_file, "w") as f:

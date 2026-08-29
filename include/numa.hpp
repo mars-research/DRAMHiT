@@ -350,11 +350,11 @@ class NumaPolicyThreads : public Numa {
     this->generate_cpu_list();
   }
 
-  NumaPolicyThreads(int num_threads, uint32_t cpu_node) {
+  NumaPolicyThreads(int num_threads, uint32_t cpu_node_msk) {
     this->config_num_threads = num_threads;
     this->nodes = Numa::get_node_config();
     this->np = THREADS_CUSTOM;
-    this->cpu_node = cpu_node;
+    this->cpu_node_msk = cpu_node_msk;
     this->init_unassigned_cpus_list();
     this->generate_cpu_list();
   }
@@ -392,7 +392,7 @@ class NumaPolicyThreads : public Numa {
 
  private:
   uint32_t config_num_threads;
-  uint32_t cpu_node;
+  uint32_t cpu_node_msk;
   numa_policy_threads np;
   std::vector<numa_node_t> nodes;
   std::vector<uint32_t> assigned_cpu_list;
@@ -404,20 +404,38 @@ class NumaPolicyThreads : public Numa {
 
     if(this->np == THREADS_CUSTOM)
     {
-        if (this->config_num_threads > nodes[this->cpu_node].cpu_list.size()) {
-          std::cout << "too many threads to be scheduled on nodes 0" << std::endl;
+        std::vector<uint32_t> selected_nodes;
+        for (uint32_t n = 0; n < nodes.size(); n++) {
+          if (this->cpu_node_msk & (1u << n)) {
+            selected_nodes.push_back(n);
+          }
+        }
+
+        if (selected_nodes.empty()) {
+          printf("custom cpu node msk 0x%x selects no valid numa nodes\n",
+                 this->cpu_node_msk);
           exit(-1);
         }
 
-        if (this->cpu_node >= nodes.size()) {
-          printf("custom cpu node %lu, list size %lu\n", this->cpu_node, nodes.size());
+        uint32_t total_cpus_avail = 0;
+        for (uint32_t n : selected_nodes) total_cpus_avail += nodes[n].cpu_list.size();
+
+        if (this->config_num_threads > total_cpus_avail) {
+          std::cout << "too many threads to be scheduled on nodes in msk 0x"
+                     << std::hex << this->cpu_node_msk << std::dec << std::endl;
           exit(-1);
         }
 
+        uint32_t node_pos = 0, cpu_idx_ctr = 0;
         for (auto i = 0u; i < this->config_num_threads; i++) {
-          uint32_t cpu_assigned = nodes[this->cpu_node].cpu_list[i];
+          while (cpu_idx_ctr == nodes[selected_nodes[node_pos]].cpu_list.size()) {
+            node_pos += 1;
+            cpu_idx_ctr = 0;
+          }
+          uint32_t cpu_assigned = nodes[selected_nodes[node_pos]].cpu_list[cpu_idx_ctr];
           this->assigned_cpu_list.push_back(cpu_assigned);
           this->unassigned_cpu_list.erase(cpu_assigned);
+          cpu_idx_ctr += 1;
         }
 
         return;

@@ -109,8 +109,8 @@ const Configuration def = {
     .radix = 10,
     .hit_rate = 1.0,
     .zipf_scale_factor = 1,
-    .np_mem_node = 0,
-    .np_cpu_node = 0,
+    .np_mem_node_msk = 0,
+    .np_cpu_node_msk = 0,
 };  // TODO enum
 
 // for synchronization of threads
@@ -755,11 +755,11 @@ void sync_complete(void) {
           po::value<uint64_t>(&config.zipf_scale_factor)->default_value(def.zipf_scale_factor),
           "set key range for zipfian")
 
-          ("np_cpu_node",
-                    po::value<uint32_t>(&config.np_cpu_node)->default_value(def.np_cpu_node),
+          ("np_cpu_node_msk",
+                    po::value<uint32_t>(&config.np_cpu_node_msk)->default_value(def.np_cpu_node_msk),
                     "cpu node")
-          ("np_mem_node",
-                    po::value<uint32_t>(&config.np_mem_node)->default_value(def.np_mem_node),
+          ("np_mem_node_msk",
+                    po::value<uint32_t>(&config.np_mem_node_msk)->default_value(def.np_mem_node_msk),
                     "mem node");
 
       papi_init();
@@ -987,7 +987,7 @@ void sync_complete(void) {
               config.num_threads, (numa_policy_threads)config.numa_split);
           break;
         case THREADS_CUSTOM:
-            this->np = new NumaPolicyThreads(config.num_threads, config.np_cpu_node);
+            this->np = new NumaPolicyThreads(config.num_threads, config.np_cpu_node_msk);
             break;
         default:
           PLOGE.printf("Unknown numa policy. Exiting");

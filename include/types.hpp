@@ -187,8 +187,8 @@ struct Configuration {
   double hit_rate;
   uint64_t zipf_scale_factor;
 
-  uint32_t np_mem_node;
-  uint32_t np_cpu_node;
+  uint32_t np_mem_node_msk;
+  uint32_t np_cpu_node_msk;
 
   void dump_configuration() {
     printf("Run configuration {\n");
