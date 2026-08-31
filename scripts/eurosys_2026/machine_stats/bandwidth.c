@@ -59,7 +59,8 @@ typedef enum {
     INST_PREFETCH_T0,
     INST_PREFETCH_T1,
     INST_PREFETCH_T2,
-    INST_PREFETCH_NTA
+    INST_PREFETCH_NTA,
+    INST_PREFETCH_W
 } inst_type_t;
 
 typedef enum {
@@ -256,6 +257,24 @@ void *mem_worker(void *arg) {
                     }
                 }
                 break;
+
+            case INST_PREFETCH_W:
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        __builtin_prefetch((const void*)&t->buffer[idx_lookahead * 8], 1, 3);
+                        local_dummy += t->buffer[idx * 8];
+                    }
+                } else {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        __builtin_prefetch((const void*)&t->buffer[idx_lookahead * 8], 1, 3);
+                        t->buffer[idx * 8] = 0xff;
+                    }
+                }
+                break;
         }
         // Forces the compiler to forget all cached memory state, preventing loop hoisting!
         __asm__ volatile("" ::: "memory");
@@ -307,13 +326,14 @@ int main(int argc, char *argv[]) {
             else if (strcmp(argv[i], "t1") == 0) inst = INST_PREFETCH_T1;
             else if (strcmp(argv[i], "t2") == 0) inst = INST_PREFETCH_T2;
             else if (strcmp(argv[i], "nta") == 0) inst = INST_PREFETCH_NTA;
+            else if (strcmp(argv[i], "prefetchw") == 0) inst = INST_PREFETCH_W;
             else { fprintf(stderr, "Unknown instruction type: %s\n", argv[i]); return -1; }
         }
         else if (strcmp(argv[i], "-lookahead") == 0 && i + 1 < argc) lookahead = atoi(argv[++i]);
     }
 
     if (raw_per_thread_size == 0 || pattern_str == NULL || cpu_freq_ghz <= 0.0) {
-        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta>] [-lookahead <lines>] [-mode <r|w>]\n", argv[0]);
+        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta|prefetchw>] [-lookahead <lines>] [-mode <r|w>]\n", argv[0]);
         return -1;
     }
 
