@@ -1,0 +1,30 @@
+
+
+Background:
+
+The bin consists of two binary inline vs no_inline.
+They are functionally equivalent, but they produce different perforamnce.
+
+THe relevant functions are find_batch under cas_kht.hpp.
+You may find the source under include.
+
+The exact test code being run is hashtable_test.cpp although this is
+less relevant. This descripes the condition where I got different
+performance output, a large amount of find and insertion occurs via
+find batch interface of cas kht. (This is also refered as dramblast hashtable).
+
+Your goal:
+
+perform binary analysis on the two version of binaries. The only difference
+between those binary are one version is manually (human) inlined, while the
+other is not.
+
+You need to analyze the assembly to make an argument on why and how the speed
+up occured via manual inlined version.
+
+Relevant code is find_batch under cas_kht.hpp
+
+Please document your thought process and show me your work, write in markdown file.
+show any command used or any statiscal argument you used. You may
+also refer to the source code. Note that the binary are produced using O3, so you
+may have hard time to find one to one mapping between source code to output assembly.
