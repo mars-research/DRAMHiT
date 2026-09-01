@@ -3,16 +3,13 @@ import json
 import math
 import re
 import subprocess
-from unittest.loader import defaultTestLoader
-
-import matplotlib.pyplot as plt
 
 L2_BYTES = 1 * 1024 * 1024  # 1mb per hyperthread
 
 # single
 num_threads = 64
 numa = 10
-numa_name = "intel_hbm_single_dlht_patch"
+numa_name = "intel_hbm_single"
 
 # the goal here is reduce keep radix high enough to make each paritition size fit into l2
 # while keep radix low enough parition runtime doesn't blow up because partition must maintin
@@ -88,16 +85,15 @@ HT_TYPES = {
     "folklore": 11,  # FOLKLORE_HT
 }
 
-# Hash join variants to sweep the chosen --param-name over.
-# Manually add/remove entries here to control which (hashtable, hw-prefetcher)
-# combinations get run. Each value overrides HASH_JOIN_DEFAULTS; "prefetcher"
+# Per-hashtable overrides applied on top of HASH_JOIN_DEFAULTS. "prefetcher"
 # is special-cased to select the *hardware* prefetcher state ("on"/"off") via
-# set_prefetcher(), it is not passed to the dramhit binary.
+# set_prefetcher(), it is not passed to the dramhit binary. These are the
+# defaults used unless overridden via --prefetcher/--batch-len on the CLI.
 HASH_JOIN_VARIANTS = {
-    #"cas": {"ht-type": HT_TYPES["cas"], "prefetcher": "off", "batch-len": 16},
-    #"cas23": {"ht-type": HT_TYPES["cas23"], "prefetcher": "off", "batch-len": 16},
+    "cas": {"ht-type": HT_TYPES["cas"], "prefetcher": "off", "batch-len": 16},
+    "cas23": {"ht-type": HT_TYPES["cas23"], "prefetcher": "off", "batch-len": 16},
     "dlht": {"ht-type": HT_TYPES["dlht"], "prefetcher": "on", "batch-len": 32},
-    #"folklore": {"ht-type": HT_TYPES["folklore"], "prefetcher": "on", "batch-len": 16},
+    "folklore": {"ht-type": HT_TYPES["folklore"], "prefetcher": "on", "batch-len": 16},
 }
 
 # Default arguments for Radix Join
@@ -189,10 +185,21 @@ def run_and_parse(cmd):
 # =============================================================================
 
 
-def main(param_name):
+def main(args):
+    param_name = args.param_name
     param_values = PARAM_CONFIGS[param_name]
-    print(f"Starting Benchmark. Varying '--{param_name}' across: {param_values}\n")
 
+    if args.join_type == "hash":
+        variant_cfg = dict(HASH_JOIN_VARIANTS[args.hashtable])
+        if args.prefetcher is not None:
+            variant_cfg["prefetcher"] = args.prefetcher
+        if args.batch_len is not None:
+            variant_cfg["batch-len"] = args.batch_len
+        run_label = f"hash_{args.hashtable}"
+    else:
+        run_label = "radix"
+
+    print(f"Starting Benchmark. Join type: {run_label}. Varying '--{param_name}' across: {param_values}\n")
 
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
@@ -206,79 +213,51 @@ def main(param_name):
     results = {
         "param_name": param_name,
         "param_values": param_values,
-        "hash_join_throughput": {name: [] for name in HASH_JOIN_VARIANTS},
-        "radix_join_throughput": [],
+        "join_type": run_label,
+        "throughput_mops": [],
     }
 
     for val in param_values:
         print(f"=== Testing {param_name} = {val} ===")
 
-        # --- HASH JOIN (one run per variant in HASH_JOIN_VARIANTS) ---
-        for variant_name, variant_cfg in HASH_JOIN_VARIANTS.items():
-            print(f"  -- hash join variant: {variant_name} --")
+        if args.join_type == "hash":
+            print(f"  -- hash join variant: {args.hashtable} --")
             overrides = {k: v for k, v in variant_cfg.items() if k != "prefetcher"}
             set_prefetcher(variant_cfg.get("prefetcher", "off"))
-            cmd_hash = build_command(HASH_JOIN_DEFAULTS, param_name, val, overrides)
-            perf_hash = run_and_parse(cmd_hash)
-            results["hash_join_throughput"][variant_name].append(perf_hash)
+            cmd = build_command(HASH_JOIN_DEFAULTS, param_name, val, overrides)
+        else:
+            print("  -- radix join --")
+            set_prefetcher("on")
+            cmd = build_command(RADIX_JOIN_DEFAULTS, param_name, val)
 
-        # --- RADIX JOIN ---
-        #set_prefetcher("on")
-        #cmd_radix = build_command(RADIX_JOIN_DEFAULTS, param_name, val)
-        #perf_radix = run_and_parse(cmd_radix)
-        #results["radix_join_throughput"].append(perf_radix)
+        perf = run_and_parse(cmd)
+        results["throughput_mops"].append(perf)
 
         print("\n")
 
     # =========================================================================
     # SAVE DATA TO JSON
     # =========================================================================
-    json_filename = f"{numa_name}_{param_name}.json"
+    json_filename = f"{numa_name}_{run_label}_{param_name}.json"
     with open(json_filename, "w") as f:
         json.dump(results, f, indent=4)
     print(f"[*] Data saved to {json_filename}")
 
-    # =========================================================================
-    # PLOT AND SAVE TO PNG
-    # =========================================================================
-    plt.figure(figsize=(10, 6))
-
-    for variant_name, throughput in results["hash_join_throughput"].items():
-        plt.plot(
-            param_values,
-            throughput,
-            label=f"Hash Join ({variant_name})",
-            marker="o",
-            linewidth=2,
-        )
-
-    plt.plot(
-        param_values,
-        results["radix_join_throughput"],
-        label="Radix Join (Prefetch ON)",
-        marker="s",
-        color="black",
-        linewidth=2,
-        linestyle="--",
-    )
-
-    # Styling the plot
-    plt.title(f"Join Performance vs. {param_name.capitalize()}", fontsize=14)
-    plt.xlabel(param_name, fontsize=12)
-    plt.ylabel("Throughput (Mops)", fontsize=12)
-    plt.grid(True, linestyle="--", alpha=0.7)
-    plt.legend(fontsize=9)
-    plt.tight_layout()
-
-    # Save to PNG
-    png_filename = f"{numa_name}_{param_name}.png"
-    plt.savefig(png_filename, dpi=300)
-    print(f"[*] Plot saved to {png_filename}")
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Collect hash/radix join throughput while sweeping a parameter."
+        description="Collect throughput for a single hash-join hashtable or radix join, sweeping a parameter."
+    )
+    parser.add_argument(
+        "--join-type",
+        choices=["hash", "radix"],
+        required=True,
+        help="Which join to run: a single hash-join hashtable, or radix join.",
+    )
+    parser.add_argument(
+        "--hashtable",
+        choices=sorted(HASH_JOIN_VARIANTS.keys()),
+        help="Which hashtable to use for --join-type hash (required in that case).",
     )
     parser.add_argument(
         "--param-name",
@@ -286,9 +265,29 @@ def parse_args():
         default="skew",
         help="Which parameter to sweep on the x-axis (default: skew).",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--prefetcher",
+        choices=["on", "off"],
+        default=None,
+        help="Override the hardware prefetcher state for --join-type hash "
+             "(default: the hashtable's configured value in HASH_JOIN_VARIANTS).",
+    )
+    parser.add_argument(
+        "--batch-len",
+        type=int,
+        default=None,
+        help="Override --batch-len for --join-type hash "
+             "(default: the hashtable's configured value in HASH_JOIN_VARIANTS).",
+    )
+    args = parser.parse_args()
+
+    if args.join_type == "hash" and not args.hashtable:
+        parser.error("--hashtable is required when --join-type hash")
+    if args.join_type == "radix" and (args.hashtable or args.prefetcher or args.batch_len is not None):
+        parser.error("--hashtable/--prefetcher/--batch-len only apply to --join-type hash")
+
+    return args
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    main(args.param_name)
+    main(parse_args())
