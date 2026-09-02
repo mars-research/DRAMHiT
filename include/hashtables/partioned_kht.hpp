@@ -2,8 +2,8 @@
 /// Each partition is a linear probing with SIMD lookup.
 /// Key and values are stored directly in the table.
 
-#ifndef _SKHT_H
-#define _SKHT_H
+#ifndef _PTHT_H
+#define _PTHT_H
 
 #include <fcntl.h>
 #include <immintrin.h>
@@ -42,7 +42,7 @@ namespace { // This prevents definition collision
 // utility constants and lambdas for SIMD operations
 constexpr size_t KV_PER_CACHE_LINE = CACHE_LINE_SIZE / KV_SIZE;
 
-const size_t MAX_PARTITIONS = 256;
+const size_t MAX_PARTITIONS = 128;
 
 #ifdef AVX_SUPPORT
 
@@ -214,7 +214,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         memset(this->hashtable, 0, hashtable_size);
       }
     }
-
+    
     assert(this->id < (int)MAX_PARTITIONS);
 
     // paranoid check. id should be unique

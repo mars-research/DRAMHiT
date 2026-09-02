@@ -91,6 +91,7 @@ typedef enum {
   TBB_HT = 9,
   DLHT_HT = 10,
   FOLKLORE_HT = 11,
+  CASSTHTPP = 12,
 } ht_type_t;
 
 extern const char* run_mode_strings[];
@@ -246,7 +247,7 @@ struct thread_stats {
   uint64_t ht_capacity;
   uint32_t max_count;
   uint64_t found;
-    // uint64_t total_threads; // TODO add this back
+  uint64_t total_threads; // TODO add this back
 #ifdef CALC_STATS
   uint64_t num_reprobes;
   uint64_t num_memcpys;

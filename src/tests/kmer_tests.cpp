@@ -19,6 +19,9 @@
 namespace kmercounter {
 extern ExecPhase cur_phase;
 extern bool g_app_record_start;
+extern uint64_t g_insert_end;
+extern uint64_t g_insert_start;
+
 void KmerTest::count_kmer(Shard* sh,
                               const Configuration& config,
                               BaseHashTable* ht,
@@ -30,7 +33,7 @@ void KmerTest::count_kmer(Shard* sh,
 
   if(sh->shard_idx == 0)
   {
-    cur_phase = ExecPhase::recording;
+    cur_phase = ExecPhase::insertions;
     g_app_record_start = true;
   }
 
@@ -42,16 +45,17 @@ void KmerTest::count_kmer(Shard* sh,
   batch_runner.flush_insert();
   if(sh->shard_idx == 0)
   {
-    cur_phase = ExecPhase::recording;
+    cur_phase = ExecPhase::insertions;
     g_app_record_start = false;
   }
   barrier->arrive_and_wait();
+  sh->stats->insertions.duration = g_insert_end - g_insert_start;
   sh->stats->insertions.op_count = num_kmers;
   get_ht_stats(sh, ht);
 
   if (sh->shard_idx == 0) {
-    PLOGI.printf("get fill %.3f",
-                 (double)ht->get_fill() / ht->get_capacity());
+    PLOGI.printf("fill: %lu\n", ht->get_fill());//"get fill %.3f",
+                 //(double)ht->get_fill() / ht->get_capacity());
   }
 }
 

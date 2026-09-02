@@ -21,7 +21,9 @@
 #include "utils/vtune.hpp"
 #include "xorwow.hpp"
 #include "zipf_distribution.hpp"
-
+#include "input_reader/fastq.hpp"
+#include "queues/bqueue_aligned.hpp"
+#include "queues/lynxq.hpp"
 #define PGROUNDDOWN(x) (x & ~(PAGESIZE - 1))
 
 namespace kmercounter {
@@ -227,8 +229,13 @@ void QueueTest<T>::producer_thread(
   }
 
   auto ht_size = config.ht_size / n_cons;
-  const auto ktable = init_ht(ht_size, sh->shard_idx);
-  this->ht_vec->at(tid) = ktable;
+
+BaseHashTable *ktable = nullptr;
+
+ if (cfg->rw_queues) {   // only needed when producers do local finds
+    const auto ktable = init_ht(ht_size, sh->shard_idx);
+    this->ht_vec->at(tid) = ktable;
+  }
 
   std::bernoulli_distribution coin{config.pread};
   xorwow_urbg urbg{};
@@ -261,6 +268,7 @@ void QueueTest<T>::producer_thread(
     auto item_id = 0u;
     std::array<InsertFindArgument, HT_TESTS_FIND_BATCH_LENGTH> items{};
 
+    // combine with the if/else above?
 #if defined(BQUEUE_KMER_TEST)
     for (; reader->next(&kmer);) {
 #else
@@ -338,9 +346,9 @@ void QueueTest<T>::producer_thread(
         }
       }
 
-      for (auto p = 0u; p < config.pollute_ratio; ++p)
-        prefetch_object<true>(
-            &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
+      // for (auto p = 0u; p < config.pollute_ratio; ++p)
+      //   prefetch_object<true>(
+      //       &toxic_waste_dump[next_pollution++ & (1024 * 1024 - 1)], 64);
 
       transaction_id++;
     }
@@ -370,6 +378,10 @@ void QueueTest<T>::producer_thread(
   } else {
     sh->stats->enqueues.duration = (t_end - t_start);
     sh->stats->enqueues.op_count = transaction_id * config.insert_factor;
+    sh->stats->insertions.op_count = 0;
+    sh->stats->insertions.duration = 0;
+    // sh->stats->finds.duration = (t_end - t_start);
+    // sh->stats->finds.op_count = transaction_id * config.insert_factor;
   }
 
 #ifdef LATENCY_COLLECTION
@@ -550,7 +562,9 @@ void QueueTest<T>::consumer_thread(
         // PLOGV.printf("sizeof items %zu | size of kv.key %zu",
         //           sizeof(_items[data_idx].key), sizeof(kv.key));
         //_items[data_idx].value = k & 0xffffffff;
-#if !defined(BQUEUE_KMER_TEST)
+#if defined(BQUEUE_KMER_TEST)
+        items[data_idx].value = 1;  // increment count by 1 per kmer occurrence
+#else
         items[data_idx].value = kv.value;
 #endif
 
@@ -584,6 +598,9 @@ void QueueTest<T>::consumer_thread(
     }
   }
 
+  if (bq_load == BQUEUE_LOAD::HtInsert && kmer_ht != nullptr) {
+    kmer_ht->flush_insert_queue(collector);
+  }
   auto t_end = RDTSCP();
 
   if (tid == n_prod) vtune::event_end(event);
@@ -619,6 +636,10 @@ void QueueTest<T>::consumer_thread(
     PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
                      outfile.c_str());
     kmer_ht->print_to_file(outfile);
+
+  } else {
+    PLOG_INFO.printf("Shard %u: Shard num unique kmer: %lu", sh->shard_idx,
+                     kmer_ht->get_fill());
   }
 
 #ifdef LATENCY_COLLECTION
@@ -861,6 +882,25 @@ void QueueTest<T>::run_test(Configuration *cfg, Numa *n, bool is_join,
 
   // 1) Insert using bqueues
   this->insert_with_queues(cfg, n, is_join, npq);
+
+
+  // aggregate throughput timing
+  uint64_t sum_op = 0;
+  uint64_t max_duration = 0;
+  uint64_t sum_op_enq = 0;
+  uint64_t max_duration_enq = 0;
+    for (uint32_t i = 0; i < cfg->num_threads; i++) {
+        sum_op += shards[i].stats->insertions.op_count;
+        sum_op_enq += shards[i].stats->enqueues.op_count;
+        max_duration = std::max(max_duration, shards[i].stats->insertions.duration);
+        max_duration_enq = std::max(max_duration_enq, shards[i].stats->enqueues.duration);
+
+  }
+  double mops = (CPUFREQ_MHZ * sum_op) / (double)max_duration;
+
+  PLOGI.printf("Aggregate insert throughput: %.2f\n Mops Aggregate insertions duration: %lu\n Mops Aggregate enqueues duration: %lu",
+      mops, max_duration, max_duration_enq);
+
 
 #ifdef LATENCY_COLLECTION
   collectors.clear();

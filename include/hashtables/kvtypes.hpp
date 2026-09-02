@@ -102,6 +102,11 @@ static_assert(offsetof(struct ItemQueue, value) == sizeof(key_type), "value must
 std::ostream &operator<<(std::ostream &os, const ItemQueue &q);
 
 // FIXME: @David paritioned gets the insert count wrong somehow
+
+// 2026 fixed above bug with
+// items[data_idx].value = 1;  // increment count by 1 per kmer occurrence
+// inside of queue_tests
+
 struct Aggr_KV {
   using queue = ItemQueue;
 
@@ -123,6 +128,38 @@ struct Aggr_KV {
     }
 
     return true;
+  }
+
+    inline uint64_t find_simd(const void *data, uint64_t *retry, ValuePairs &vp) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+    constexpr __mmask8 KEYMSK = 0b01010101;
+
+    uint64_t *bucket = (uint64_t *)this;
+    __m512i key_vector = _mm512_set1_epi64(elem->key);
+    __m512i cacheline =
+        _mm512_load_si512(bucket);  // this is an idx into the hashtable.
+    __mmask8 key_cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
+
+    // | 0 | 0 | 0 | 1 |
+    *retry = 0;
+    if (key_cmp > 0) {
+      __mmask8 idx = _bit_scan_forward(key_cmp);
+      vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].value = bucket[(idx + 1)];
+      vp.first++;
+      return 1;
+    } else {
+      // key not found
+      __m512i zero_vector = _mm512_setzero_si512();
+      __mmask8 ept_cmp =
+          _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
+      if (ept_cmp == 0) {
+        *retry = 1;
+      }
+
+      return 0;
+    }
   }
 
   inline bool insert_cas(queue *elem) {
@@ -856,12 +893,11 @@ struct Value {
 
 } PACKED;
 
-// No more aggr_kv
-//#ifdef NOAGGR
+#ifdef NOAGGR
 using KVType = Item;
-//#else
-//using KVType = Aggr_KV;
-//#endif
+#else
+using KVType = Aggr_KV;
+#endif
 
 
 }  // namespace kmercounter

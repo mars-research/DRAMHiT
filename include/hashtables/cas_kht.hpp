@@ -60,8 +60,8 @@ class CASHashTable : public BaseHashTable {
 
   const static __mmask8 KEYMSK = 0b01010101;
 // #define KEYMSK ((__mmask8)(0b01010101))
-#define PREFETCH_INSERT_NEXT_DISTANCE 8
-#define PREFETCH_FIND_NEXT_DISTANCE 8
+  const static uint64_t PREFETCH_INSERT_NEXT_DISTANCE = 8;
+  const static uint64_t PREFETCH_FIND_NEXT_DISTANCE = 8;
 
   CASHashTable(uint64_t c) : CASHashTable(c, 8, 0) {};
 
@@ -307,7 +307,13 @@ class CASHashTable : public BaseHashTable {
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
               if (key_cmp > 0) {
                 __mmask8 offset = _bit_scan_forward(key_cmp);
-                bucket[(offset + 1)] = q->value;
+                if constexpr (std::is_same_v<KV, Aggr_KV>) {
+                  bucket[(offset + 1)] += 1;
+                } else if constexpr (std::is_same_v<KV, Item>) {
+                  bucket[(offset + 1)] = q->value;
+                } else {
+                  assert(false && "Invalid template type");
+                }
                 break;
               }
 
@@ -324,7 +330,7 @@ class CASHashTable : public BaseHashTable {
             try_insert:
               curr = &this->hashtable[idx];
 #ifdef READ_BEFORE_CAS
-              if (curr->kvpair.key == 0)
+              if (curr->is_empty())
 #endif
                 if (__sync_bool_compare_and_swap((__int128 *)curr, 0,
                                                  *(__int128 *)q)) {
@@ -1016,9 +1022,15 @@ class CASHashTable : public BaseHashTable {
         _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
     if (key_cmp > 0) {
       __mmask8 offset = _bit_scan_forward(key_cmp);
-      bucket[(offset + 1)] = q->value;
-      //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long
-      // int)q->value);
+      if constexpr (std::is_same_v<KV, Aggr_KV>) {
+        bucket[(offset + 1)] += 1;
+      } else if constexpr (std::is_same_v<KV, Item>) {
+        bucket[(offset + 1)] = q->value;
+        //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long
+        // int)q->value);
+      } else {
+        assert(false && "Invalid template type");
+      }
       return 0;
     }
 
@@ -1069,7 +1081,7 @@ class CASHashTable : public BaseHashTable {
     // it will request for exclusive state unneccesarrily.
 
 #ifdef READ_BEFORE_CAS
-    if (curr->kvpair.key == 0)
+    if (curr->is_empty())
 #endif
       if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
         return 0;

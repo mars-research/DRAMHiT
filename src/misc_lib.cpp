@@ -146,7 +146,10 @@ void print_stats(Shard *all_sh, Configuration &config) {
   for (uint32_t k = 0; k < config.num_threads; k++) {
     total_insert_cycles += all_sh[k].stats->insertions.duration;
     total_inserts += all_sh[k].stats->insertions.op_count;
+    //printf("Total insertions for thread %lu: %lu\n", k, all_sh[k].stats->insertions.op_count);
+    //printf("Total insertion time for thread %lu: %lu\n", k, all_sh[k].stats->insertions.duration);
     total_finds += all_sh[k].stats->finds.op_count;
+    // printf("total finds for thread %llu, is, %llu\n", k, total_finds);
     total_find_cycles += all_sh[k].stats->finds.duration;
     total_upsert += all_sh[k].stats->upsertions.op_count;
     total_upsert_cycles += all_sh[k].stats->upsertions.duration;
@@ -209,7 +212,8 @@ void print_stats(Shard *all_sh, Configuration &config) {
   }
 
   if (avg_insert_duration > 0) {
-    insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
+    //insert_mops = ((CPUFREQ_MHZ * total_inserts) / avg_insert_duration);
+    insert_mops = ((CPUFREQ_MHZ * total_inserts) / max_insert_duration);
   }
 
   if (config.mode == HASHJOIN || config.mode == PARTITIONJOINV1 ||
@@ -405,7 +409,6 @@ inline uint64_t get_gigbytes(size_t num_kv) {
 
 BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
   BaseHashTable *kmer_ht = NULL;
-
   // Create hash table
   switch (config.ht_type) {
 #ifdef PART_ID
@@ -428,6 +431,10 @@ BaseHashTable *init_ht(const uint64_t sz, uint8_t id) {
       break;
     case FOLKLORE_HT:
       kmer_ht = new FolkloreHashTable<KVType, ItemQueue>(sz);
+      break;
+    case CASSTHTPP:
+      kmer_ht = new CASHashTableSingleThread<KVType, ItemQueue>(
+          sz, config.find_queue_sz, id);
       break;
 #ifdef GROWT
     case GROWHT:

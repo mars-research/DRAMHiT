@@ -374,9 +374,9 @@ class SectionQueue {
 #ifdef CALC_STATS
     auto cq = &all_cqueues[c][p];
     auto pcq = &all_pc_queues[p][c];
-    printf("[%u][%u] enq spins %" PRIu64 " | numdequeue spins %" PRIu64
-           " | enqLocalPtr %p\n",
-           p, c, pcq->numEnqueueSpins, pcq->numDequeueSpins, cq->enqLocalPtr);
+    // printf("[%u][%u] enq spins %" PRIu64 " | numdequeue spins %" PRIu64
+    //        " | enqLocalPtr %p\n",
+    //        p, c, pcq->numEnqueueSpins, pcq->numDequeueSpins, cq->enqLocalPtr);
 #endif
   }
 
@@ -414,7 +414,7 @@ class SectionQueue {
     auto pcq = &this->all_pc_queues[p][c];
     auto pq = &this->all_pqueues[p][c];
     enqueue(pq, p, c, BQ_MAGIC_KV);
-    pcq->enqSharedPtr = (data_t *)0xdeadbeef;
+    pcq->enqSharedPtr = pq->enqPtr;
   }
 
   void pop_done(uint32_t p, uint32_t c) {

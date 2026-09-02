@@ -82,8 +82,8 @@ const Configuration def = {
     .read_factor = 1,
     .insert_snapshot = 0,
     .read_snapshot = 0,
-    .n_prod = 1,
-    .n_cons = 1,
+    .n_prod = 16,
+    .n_cons = 16,
     .num_nops = 0,
     .skew = 1.0,
     .seed = std::chrono::system_clock::now().time_since_epoch().count(),
@@ -101,7 +101,7 @@ const Configuration def = {
     .delimitor = "|",
     .rw_queues = false,
     .pollute_ratio = 0,
-    .find_queue_sz = 16,
+    .find_queue_sz = 64,
     .perf_cnt_path = "",
     .perf_def_path = "",
     .test = false,
@@ -847,7 +847,6 @@ void sync_complete(void) {
 #ifdef PART_ID
         case PARTITIONED_HT:
           PLOG_INFO.printf("Hashtable type : Paritioned HT");
-          config.ht_size /= config.num_threads;
           break;
         case MULTI_HT:
           PLOG_INFO.printf("Hashtable type : Multi HT");
@@ -867,6 +866,9 @@ void sync_complete(void) {
           break;
         case ARRAY_HT:
           PLOG_INFO.printf("Hashtable type : Array HT");
+          break;
+        case CASSTHTPP:
+          PLOG_INFO.printf("Hashtable type : CAS single thread");
           break;
 #ifdef GROWT
         case GROWHT:
@@ -958,17 +960,20 @@ void sync_complete(void) {
 
     if ((config.mode == BQ_TESTS_YES_BQ) ||
         ((config.mode == FASTQ_WITH_INSERT) &&
-         (config.ht_type == PARTITIONED_HT))) {
+         (config.ht_type == PARTITIONED_HT || config.ht_type == CASSTHTPP))) {
       switch (config.numa_split) {
-        case PROD_CONS_SEPARATE_NODES:
-          this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
-                                           PROD_CONS_SEPARATE_NODES);
-          break;
         case PROD_CONS_SEQUENTIAL:
+          printf("Choosing separate numa nodes case 1\n");
           this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
                                            PROD_CONS_SEQUENTIAL);
           break;
+        case PROD_CONS_SEPARATE_NODES:
+          printf("Choosing separate numa nodes case 2\n");
+          this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
+                                           PROD_CONS_SEPARATE_NODES);
+          break;
         case PROD_CONS_EQUAL_PARTITION:
+          printf("Choosing separate numa nodes case 3\n");
           this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
                                            PROD_CONS_EQUAL_PARTITION);
           break;
@@ -997,8 +1002,12 @@ void sync_complete(void) {
           exit(-1);
       }
     }
-
-    this->spawn_shard_threads();
+    if ((config.mode == FASTQ_WITH_INSERT) &&
+        (config.ht_type == PARTITIONED_HT || config.ht_type == CASSTHTPP))
+      this->test.qt.run_test(&config, this->n, true, this->npq);
+    else {
+      this->spawn_shard_threads();
+    }
 
     return 0;
   }

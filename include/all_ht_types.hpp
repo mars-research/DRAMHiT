@@ -7,7 +7,7 @@
 #include "hashtables/cas_kht.hpp"
 #include "hashtables/dlht_kht.hpp"
 #include "hashtables/folklore_kht.hpp"
-
+#include "hashtables/cas_kht_st.hpp"
 
 #ifdef GROWT
 #include "hashtables/growt_kht.hpp"
