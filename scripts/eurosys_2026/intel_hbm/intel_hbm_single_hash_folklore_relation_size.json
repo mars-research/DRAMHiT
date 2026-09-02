@@ -1,0 +1,17 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        67108864,
+        134217728,
+        268435456,
+        536870912
+    ],
+    "join_type": "hash_folklore",
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/hash_folklore_relation_size",
+    "throughput_mops": [
+        837.0,
+        835.0,
+        839.0,
+        813.0
+    ]
+}

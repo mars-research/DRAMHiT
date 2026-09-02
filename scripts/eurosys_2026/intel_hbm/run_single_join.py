@@ -3,6 +3,10 @@ import json
 import math
 import re
 import subprocess
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+LOG_ROOT = SCRIPT_DIR / "logs"
 
 L2_BYTES = 1 * 1024 * 1024  # 1mb per hyperthread
 
@@ -41,19 +45,28 @@ default_build_sz = one_gb
 PARAM_CONFIGS = {
     "skew": [round(0.1 + i * 0.1, 1) for i in range(12)],
     "relation_size": [
-        #256 * one_mb,
-        #512 * one_mb,
+        # 512 * one_mb,
         1 * one_gb,
         2 * one_gb,
         4 * one_gb,
         8 * one_gb,
-        16 * one_gb,
     ],
 }
 
 # Paths to the executables
 PREFETCH_SCRIPT = "/opt/DRAMHiT/scripts/prefetch_control.sh"
+RESERVE_HUGEPAGES_SCRIPT = "/opt/DRAMHiT/scripts/reserve_hugepages.sh"
 DRAMHIT_EXEC = "/opt/DRAMHiT/build/dramhit"
+
+# numa node 0 (the cpu node, np_cpu_node_msk=1) needs a fixed pool of 2mb
+# hugepages regardless of join type / relation size, to hold everything that
+# isn't the r/s relation data itself.
+NODE0_2MB_RESERVE_MB = 35000
+
+# numa node 2 (the mem node, np_mem_node_msk=4) is where the r/s relations
+# live. Element counts in relation_r_size/relation_s_size are in units of
+# 16-byte tuples.
+TUPLE_BYTES = 16
 
 # Default arguments for Hash Join
 HASH_JOIN_DEFAULTS = {
@@ -124,6 +137,54 @@ def set_prefetcher(state):
     subprocess.run([PREFETCH_SCRIPT, state], check=True)
 
 
+def max_build_probe_bytes(defaults_dict, param_name, param_values):
+    """Max (r_size + s_size), in bytes, across every value in the sweep."""
+    max_bytes = 0
+    for val in param_values:
+        r_size = defaults_dict["relation_r_size"]
+        s_size = defaults_dict["relation_s_size"]
+        if param_name == "relation_size":
+            r_size = val
+            s_size = val
+        max_bytes = max(max_bytes, (r_size + s_size) * TUPLE_BYTES)
+    return max_bytes
+
+
+def reserve_hugepages(join_type, defaults_dict, param_name, param_values, hashtable=None):
+    """Resets hugepages and reserves enough for the whole sweep up-front.
+
+    Node 0 always gets a fixed 2mb-page budget for everything besides the r/s
+    relations. Node 2 holds the r/s relations: radix join needs its working
+    set in 2mb pages, sized to at least 2x build+probe (double buffering
+    during partitioning). Hash join is given the same total budget, for a
+    fair comparison, but as 1gb pages -- hence the reset, since node 2's
+    hugepages have to be re-reserved at a different page size between runs.
+
+    dlht additionally needs secondary-storage overflow space on top of its
+    regular table: about 1/8 of the table's 1gb-page footprint, as extra 1gb
+    pages (e.g. a 16gb table needs 2 extra 1gb pages).
+    """
+    required_bytes = 2 * max_build_probe_bytes(defaults_dict, param_name, param_values)
+
+    print("[*] Resetting hugepages before reservation...")
+    subprocess.run([RESERVE_HUGEPAGES_SCRIPT, "reset"], check=True)
+
+    node0_arg = f"n0_0gb_{NODE0_2MB_RESERVE_MB}mb"
+    if join_type == "hash":
+        required_gb = math.ceil(required_bytes / (1024 ** 3))
+        if hashtable == "dlht":
+            extra_gb = math.ceil(required_gb / 8)
+            print(f"[*] dlht secondary storage: +{extra_gb}gb on top of the {required_gb}gb table")
+            required_gb += extra_gb
+        node2_arg = f"n2_{required_gb}gb_0mb"
+    else:
+        required_mb = math.ceil(required_bytes / (1024 ** 2))
+        node2_arg = f"n2_0gb_{required_mb}mb"
+
+    print(f"[*] Reserving hugepages: {node0_arg} {node2_arg}")
+    subprocess.run([RESERVE_HUGEPAGES_SCRIPT, node0_arg, node2_arg], check=True)
+
+
 def build_command(defaults_dict, param_name, param_value, overrides=None):
     """Builds the command list dynamically based on defaults + varied parameter.
 
@@ -160,12 +221,17 @@ def build_command(defaults_dict, param_name, param_value, overrides=None):
     return cmd
 
 
-def run_and_parse(cmd):
-    """Runs the benchmark command and extracts throughput_mops."""
+def run_and_parse(cmd, log_path):
+    """Runs the benchmark command, saves its full stdout/stderr to log_path,
+    and extracts throughput_mops."""
     print(f"    Running: {' '.join(cmd)}")
     result = subprocess.run(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
     )
+
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text(result.stdout)
+    print(f"    -> log saved to {log_path}")
 
     # Regex to find "throughput_mops : <number>" (handles optional spaces)
     match = re.search(r"throughput_mops\s*:\s*([0-9.]+)", result.stdout)
@@ -174,9 +240,7 @@ def run_and_parse(cmd):
         print(f"    -> throughput_mops: {throughput}")
         return throughput
     else:
-        print("    -> ERROR: Could not find throughput_mops in output!")
-        print("    --- Output Log ---")
-        print(result.stdout)
+        print("    -> ERROR: Could not find throughput_mops in output! See log for details.")
         return 0.0
 
 
@@ -196,10 +260,23 @@ def main(args):
         if args.batch_len is not None:
             variant_cfg["batch-len"] = args.batch_len
         run_label = f"hash_{args.hashtable}"
+        hugepage_defaults = HASH_JOIN_DEFAULTS
     else:
         run_label = "radix"
+        hugepage_defaults = RADIX_JOIN_DEFAULTS
 
     print(f"Starting Benchmark. Join type: {run_label}. Varying '--{param_name}' across: {param_values}\n")
+
+    log_dir = LOG_ROOT / f"{run_label}_{param_name}"
+    print(f"[*] dramhit run logs will be saved under {log_dir}")
+
+    reserve_hugepages(
+        args.join_type,
+        hugepage_defaults,
+        param_name,
+        param_values,
+        hashtable=args.hashtable if args.join_type == "hash" else None,
+    )
 
     subprocess.run(
         "cmake -S /opt/DRAMHiT/ -B /opt/DRAMHiT/build "
@@ -214,6 +291,7 @@ def main(args):
         "param_name": param_name,
         "param_values": param_values,
         "join_type": run_label,
+        "log_dir": str(log_dir),
         "throughput_mops": [],
     }
 
@@ -230,7 +308,8 @@ def main(args):
             set_prefetcher("on")
             cmd = build_command(RADIX_JOIN_DEFAULTS, param_name, val)
 
-        perf = run_and_parse(cmd)
+        log_path = log_dir / f"{param_name}_{val}.log"
+        perf = run_and_parse(cmd, log_path)
         results["throughput_mops"].append(perf)
 
         print("\n")

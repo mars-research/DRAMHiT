@@ -1,0 +1,17 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        67108864,
+        134217728,
+        268435456,
+        536870912
+    ],
+    "join_type": "radix",
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/radix_relation_size",
+    "throughput_mops": [
+        2227.0,
+        2221.0,
+        1966.0,
+        1436.0
+    ]
+}

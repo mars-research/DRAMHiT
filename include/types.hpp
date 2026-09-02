@@ -186,6 +186,7 @@ struct Configuration {
   uint32_t radix;
   double hit_rate;
   uint64_t zipf_scale_factor;
+  uint64_t zipf_key_range;
 
   uint32_t np_mem_node_msk;
   uint32_t np_cpu_node_msk;

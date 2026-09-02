@@ -20,7 +20,7 @@
 
 #define MAX_PATTERNS 64
 #define MAX_REGIONS 64
-#define NUM_ITERATIONS 1 // Adjust as needed
+#define NUM_ITERATIONS 100 // Adjust as needed
 
 // Topology Limits
 #define MAX_NUMA_NODES 128

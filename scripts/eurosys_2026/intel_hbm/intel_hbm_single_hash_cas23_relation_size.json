@@ -1,0 +1,17 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        67108864,
+        134217728,
+        268435456,
+        536870912
+    ],
+    "join_type": "hash_cas23",
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/hash_cas23_relation_size",
+    "throughput_mops": [
+        1958.0,
+        1908.0,
+        1882.0,
+        1860.0
+    ]
+}

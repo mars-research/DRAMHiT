@@ -783,13 +783,15 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
       estimate_bytes_needed < one_gb_sz
           ? estimate_bytes_needed / two_mb_sz + 1
           : (estimate_bytes_needed - one_gb_needed * one_gb_sz) / two_mb_sz;
-  PLOGI.printf("reserving %lu 1gb pages, %lu 2mb pages", one_gb_needed,
+  PLOGI.printf("reserving %lu 1gb pages, %lu 2mb pages for radix", one_gb_needed,
                two_mb_needed);
   HugepageArena arena(one_gb_needed, two_mb_needed);
 
   if(config.numa_split == 10){
       arena.mem_bind(config.np_mem_node_msk);
   }
+
+  arena.memset(0); //set to zero
 
   // they can share swbs.
   CacheLineBuffer* swbs = (CacheLineBuffer*)arena.aligned_alloc(
@@ -921,7 +923,8 @@ void HashjoinTest::join_relations_generated(Shard* sh,
   }
 
   HugepageArena arena(one_gb_needed, two_mb_needed);
-  PLOGI.printf("reserving %lu 1gb pages, %lu 2mb pages", one_gb_needed,
+
+  PLOGI.printf("reserving %lu 1gb pages, %lu 2mb pages for hashjoin workload", one_gb_needed,
                two_mb_needed);
   Element* build_relation =
       (Element*)arena.aligned_alloc(sizeof(Element) * partition_sz_r, 16);

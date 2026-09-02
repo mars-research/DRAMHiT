@@ -41,7 +41,6 @@ public:
         throw std::bad_alloc();
       }
       arena_1gb = static_cast<char*>(ptr);
-      memset(arena_1gb, 0, capacity_1gb);
     }
 
     // Allocate 2MB Arena if requested
@@ -55,7 +54,6 @@ public:
         std::abort();
       }
       arena_2mb = static_cast<char*>(ptr);
-      memset(arena_2mb, 0, capacity_2mb);
     }
   }
 
@@ -72,6 +70,16 @@ public:
   HugepageArena(const HugepageArena&) = delete;
   HugepageArena& operator=(const HugepageArena&) = delete;
 
+  //set all pages allocate to v.
+  void memset(uint8_t v)
+  {
+      if (arena_1gb) {
+        ::memset(arena_1gb, v, capacity_1gb);
+      }
+      if (arena_2mb) {
+        ::memset(arena_2mb, v, capacity_2mb);
+      }
+  }
 
   // Bind all memory owned by this arena to the NUMA nodes set in bit_mask.
   // A single set bit pins to that node (MPOL_BIND). Multiple set bits

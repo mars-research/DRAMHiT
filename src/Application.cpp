@@ -109,6 +109,7 @@ const Configuration def = {
     .radix = 10,
     .hit_rate = 1.0,
     .zipf_scale_factor = 1,
+    .zipf_key_range = 10,
     .np_mem_node_msk = 0,
     .np_cpu_node_msk = 0,
 };  // TODO enum
@@ -754,7 +755,9 @@ void sync_complete(void) {
           "scale_factor",
           po::value<uint64_t>(&config.zipf_scale_factor)->default_value(def.zipf_scale_factor),
           "set key range for zipfian")
-
+          ("key_range",
+                    po::value<uint64_t>(&config.zipf_key_range)->default_value(def.zipf_key_range),
+                    "zipf key range")
           ("np_cpu_node_msk",
                     po::value<uint32_t>(&config.np_cpu_node_msk)->default_value(def.np_cpu_node_msk),
                     "cpu node")
@@ -928,7 +931,7 @@ void sync_complete(void) {
     if (config.mode == ZIPFIAN) {
       // this should be able to generate entire
       // hashtable space amount of unique keys
-      uint64_t key_range = config.ht_size;
+      uint64_t key_range = config.zipf_key_range;
       // with suffiecient insert factor, skewness will
       uint64_t sample_size = config.zipf_scale_factor * key_range;
 
