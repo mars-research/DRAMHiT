@@ -237,7 +237,7 @@ class BQueueAligned {
     }
 
     void push_done(uint32_t p, uint32_t c) {
-      auto pq = &this->all_pqueues[p][c];
+      [[maybe_unused]] auto pq = &this->all_pqueues[p][c];
       auto cq = &this->all_cqueues[c][p];
 
       cq->backtrack_flag = 1;

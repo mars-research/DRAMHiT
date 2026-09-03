@@ -37,6 +37,7 @@
 #ifndef HASHTABLES_DLHT_KHT_HPP
 #define HASHTABLES_DLHT_KHT_HPP
 
+#include <bit>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -480,7 +481,7 @@ class DlhtHashTable : public BaseHashTable {
       // First perform Get algorithm, to see if already inserted
       bool retry;
       bool found;
-      uint64_t found_val;
+      [[maybe_unused]] uint64_t found_val;
 
       do {
         retry = false;
@@ -568,8 +569,8 @@ class DlhtHashTable : public BaseHashTable {
 
         if (!__sync_bool_compare_and_swap(
                 reinterpret_cast<uint64_t*>(header_ptr),
-                *reinterpret_cast<uint64_t*>(&expected_value),
-                *reinterpret_cast<uint64_t*>(&new_header))) {
+                std::bit_cast<uint64_t>(expected_value),
+                std::bit_cast<uint64_t>(new_header))) {
           continue;  // if CAS fails try to find another invalid slot
         }
 
@@ -597,8 +598,8 @@ class DlhtHashTable : public BaseHashTable {
           // switch from TryInsert-> Valid and break out of both loops
           if (__sync_bool_compare_and_swap(
                   reinterpret_cast<uint64_t*>(header_ptr),
-                  *reinterpret_cast<uint64_t*>(&expected_value),
-                  *reinterpret_cast<uint64_t*>(&new_header))) {
+                  std::bit_cast<uint64_t>(expected_value),
+                  std::bit_cast<uint64_t>(new_header))) {
             inserted = true;
             break;
           }
@@ -704,6 +705,7 @@ class DlhtHashTable : public BaseHashTable {
   void* find_noprefetch(const void* data, collector_type* collector) override {
     cout << "Not implemented!!!" << endl;
     assert(false);
+    return nullptr;
   }
 
   void display() const override {

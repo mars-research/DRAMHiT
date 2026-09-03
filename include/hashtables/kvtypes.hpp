@@ -498,7 +498,17 @@ struct Aggr_KV {
 #endif
   };
 #endif
-} PACKED;
+// Deliberately NOT `PACKED`: both members are the same integer type, so there
+// is no padding for `packed` to remove (asserted below), and declaring the
+// struct packed would drop its alignment to 1 -- which makes the
+// `(uint64_t *)this` / bucket-pointer reinterpretations in the SIMD paths look
+// potentially unaligned to the compiler.
+} __attribute__((aligned(alignof(uint64_t))));
+
+static_assert(sizeof(Aggr_KV) == sizeof(key_type) + sizeof(value_type),
+              "Aggr_KV must stay tightly packed");
+static_assert(offsetof(Aggr_KV, count) == sizeof(key_type),
+              "count must directly follow key");
 
 struct KVPair {
   key_type key;

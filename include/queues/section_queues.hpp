@@ -418,7 +418,7 @@ class SectionQueue {
   }
 
   void pop_done(uint32_t p, uint32_t c) {
-    auto  cq = &this->all_cqueues[c][p];
+    [[maybe_unused]] auto cq = &this->all_cqueues[c][p];
     // cq->pop_done = true;
   }
 

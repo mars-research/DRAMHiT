@@ -33,9 +33,9 @@ void do_uniform_batch_insertion(BaseHashTable *ht, uint64_t requests_num, unsign
   size_t offset = id * requests_num;
 
   uint64_t payload;
-  for (unsigned int n = 0; n < batch_num; n++) {
+  for (size_t n = 0; n < batch_num; n++) {
     // on each batch, populate find args
-    for (int i = 0; i < batch_len; i++) {
+    for (uint32_t i = 0; i < batch_len; i++) {
       payload = hash_knuth(idx + offset);
       items[i].key = payload;
       items[i].value = payload;
@@ -48,7 +48,7 @@ void do_uniform_batch_insertion(BaseHashTable *ht, uint64_t requests_num, unsign
 
   // in case batch size is not divisible
   if (residue_num > 0) {
-    for (int i = 0; i < residue_num; i++) {
+    for (size_t i = 0; i < residue_num; i++) {
       payload = hash_knuth(idx + offset);
       items[i].key = payload;
       items[i].value = payload;
@@ -80,8 +80,8 @@ uint64_t do_uniform_batch_find(BaseHashTable *ht, uint64_t requests_num, unsigne
   uint64_t payload;
   uint64_t idx = 0;
   uint64_t offset = id * requests_num; // 1 + 1 * 1000
-  for (unsigned int n = 0; n < batch_num; ++n) {
-    for (int i = 0; i < batch_len; i++) {
+  for (size_t n = 0; n < batch_num; ++n) {
+    for (uint32_t i = 0; i < batch_len; i++) {
       payload = hash_knuth(idx + offset);
       items[i].key = payload;
       items[i].id = idx;
@@ -101,7 +101,7 @@ uint64_t do_uniform_batch_find(BaseHashTable *ht, uint64_t requests_num, unsigne
   }
 
   if (residue_num > 0) {
-    for (int i = 0; i < residue_num; i++) {
+    for (size_t i = 0; i < residue_num; i++) {
         payload = hash_knuth(idx + offset);
         items[i].key = payload;
         items[i].id = idx;
@@ -156,7 +156,7 @@ OpTimings do_uniform_inserts(
 
   uint64_t duration = 0;
   uint64_t ops = 0;
-  for (int i = 0; i < config.insert_factor; i++)
+  for (uint64_t i = 0; i < config.insert_factor; i++)
     duration += g_insert_durations[i];
 
   ops = requests_num * config.insert_factor;
@@ -166,7 +166,7 @@ OpTimings do_uniform_inserts(
 OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
                           uint64_t requests_num,
                           auto sync_barrier) {
-  uint64_t found = 0;
+  [[maybe_unused]] uint64_t found = 0;
 
   for (auto j = 0u; j < config.read_factor; j++) {
     if (id == 0) {
@@ -185,7 +185,7 @@ OpTimings do_uniform_gets(BaseHashTable *hashtable, unsigned int id,
   uint64_t duration = 0;
   uint64_t ops = 0;
 
-  for (int i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
+  for (uint64_t i = 0; i < config.read_factor; i++) duration += g_find_durations[i];
   ops = requests_num * config.read_factor;
 
   return {duration, ops};

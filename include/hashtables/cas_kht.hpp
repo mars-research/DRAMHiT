@@ -711,7 +711,7 @@ class CASHashTable : public BaseHashTable {
     uint64_t hash = this->hash((const char *)data);
     size_t idx = hash;
     // size_t idx = fastrange32(hash, this->capacity);  // modulo
-    InsertFindArgument *item = const_cast<InsertFindArgument *>(
+    [[maybe_unused]] InsertFindArgument *item = const_cast<InsertFindArgument *>(
         reinterpret_cast<const InsertFindArgument *>(data));
     KV *curr;
     bool found = false;
@@ -851,7 +851,7 @@ class CASHashTable : public BaseHashTable {
     size_t idx = q->idx;
 
     KV *curr_cacheline = &this->hashtable[idx];
-    uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
+    [[maybe_unused]] uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
 
     if (retry) {
 #ifdef UNIFORM_HT_SUPPORT
@@ -891,7 +891,8 @@ class CASHashTable : public BaseHashTable {
   uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type *collector) {
     // hashtable idx where the data should be found
     size_t idx = q->idx;
-    uint64_t found = 0;
+    // The hit count is reported through `vp`; this only exists for debugging.
+    [[maybe_unused]] uint64_t found = 0;
 
   try_find:
     KV *curr = &this->hashtable[idx];

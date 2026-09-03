@@ -259,7 +259,7 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   void __insert_noprefetch_simd(const void *data) {
     KVQ *q = const_cast<KVQ *>(reinterpret_cast<const KVQ *>(data));
     uint64_t hash = 0;
-    uint64_t key = 0;
+    [[maybe_unused]] uint64_t key = 0;
 
     hash = this->hash((const char *)&q->key);
     key = q->key;
@@ -671,8 +671,8 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
   exit:
     // return empty_element if nothing is found
     if (!found) {
-      printf("key %" PRIu64 " not found at idx %" PRIu32 " | hash %" PRIu64 "\n", item->key, idx,
-             hash);
+      printf("key %" PRIu64 " not found at idx %zu | hash %" PRIu64 "\n",
+             item->key, idx, hash);
       curr = nullptr;
     }
     return curr;

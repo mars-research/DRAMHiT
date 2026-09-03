@@ -78,7 +78,7 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   // Round up total_bytes to the nearest 2MB (2 * 1024 * 1024 = 2097152 bytes)
   constexpr uint64_t HUGEPAGE_2MB = 2ULL * 1024ULL * 1024ULL;
   constexpr uint64_t HUGEPAGE_1GB = 1024ULL * 1024ULL * 1024ULL;
-  uint64_t alloc_size_1gb_pages =
+  [[maybe_unused]] uint64_t alloc_size_1gb_pages =
       (total_bytes + HUGEPAGE_1GB - 1) & ~(HUGEPAGE_1GB - 1);
   uint64_t alloc_size_2mb_pages =
       (total_bytes + HUGEPAGE_2MB - 1) & ~(HUGEPAGE_2MB - 1);
@@ -243,13 +243,12 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
   __itt_event_start(vtune_event);
 #endif
 
-  for (int repeat_iterations = 0; repeat_iterations < config.read_factor;
+  for (uint64_t repeat_iterations = 0; repeat_iterations < config.read_factor;
        repeat_iterations++) {
     // Sequential Reads
 
     if (config.sequential == SEQUENTIAL_READ) {
       uint64_t dummy_sum = 0;
-      uint64_t idx = 0;
       uint64_t stride = 64;
 
       for (uint64_t i = 0; (i + stride) < size; i += stride) {
@@ -267,9 +266,8 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
 
     } else if (config.sequential == STREAMING_KEYS_RANDOM_READ) {
       uint64_t stride = 64;
-      uint64_t dummy_sum = 0;
+      [[maybe_unused]] uint64_t dummy_sum = 0;
       uint64_t idx = 0;
-      uint64_t stream_idx = 0;
       for (uint64_t i = 0; (i + stride) < size; i += stride) {
         uint64_t offset = i + stride;
         for (uint64_t j = i; j < offset; j++) {
@@ -396,7 +394,6 @@ void BandwidthTest::run(Shard* sh, const Configuration& config,
 
     // 1Read + 1Write sequential
     else if (config.sequential == SEQ_READ_WRITE) {
-      uint64_t idx = 0;
       uint64_t stride = 128;
 
       for (uint64_t i = 0; (i + stride) < size; i += stride) {

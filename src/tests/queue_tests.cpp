@@ -43,8 +43,8 @@ extern uint64_t HT_TESTS_NUM_INSERTS;
 [[maybe_unused]] static uint64_t transactions = 100000000;
 
 // for synchronization of threads
-static uint64_t ready = 0;
-static uint64_t ready_threads = 0;
+[[maybe_unused]] static uint64_t ready = 0;
+[[maybe_unused]] static uint64_t ready_threads = 0;
 
 extern BaseHashTable *init_ht(uint64_t, uint8_t);
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -54,7 +54,7 @@ struct bq_kmer {
 } __attribute__((aligned(64)));
 
 // thread-local since we have multiple consumers
-static __thread int data_idx = 0;
+static __thread uint32_t data_idx = 0;
 auto get_ht_size = [](int ncons) {
   uint64_t ht_size = config.ht_size / ncons;
   if (ht_size & 0x3) {
@@ -128,7 +128,7 @@ void QueueTest<T>::producer_thread(
   uint32_t cons_id = 0;
   uint64_t transaction_id{};
   typename T::prod_queue_t *pqueues[n_cons];
-  typename T::cons_queue_t *cqueues[n_cons];
+  [[maybe_unused]] typename T::cons_queue_t *cqueues[n_cons];
 
   vtune::set_threadname("producer_thread" + std::to_string(tid));
 
@@ -145,7 +145,7 @@ void QueueTest<T>::producer_thread(
 #endif
   }
 
-  struct xorwow_state _xw_state, init_state;
+  [[maybe_unused]] struct xorwow_state _xw_state, init_state;
   auto key_start_orig = key_start;
 
 #if defined(BQ_TESTS_INSERT_ZIPFIAN_LOCAL)
@@ -201,7 +201,7 @@ void QueueTest<T>::producer_thread(
   if (tid == 0) {
     prod_barrier = new std::barrier(config.n_prod, on_completion);
   }
-  std::size_t next_pollution{};
+  [[maybe_unused]] std::size_t next_pollution{};
 
   barrier->arrive_and_wait();
 
@@ -258,7 +258,7 @@ BaseHashTable *ktable = nullptr;
 
   for (auto j = 0u; j < config.insert_factor; j++) {
     key_start = key_start_orig;
-    auto zipf_idx = key_start == 1 ? 0 : key_start;
+    [[maybe_unused]] auto zipf_idx = key_start == 1 ? 0 : key_start;
     std::uint64_t kmer{};
 #if defined(XORWOW)
     _xw_state = init_state;
@@ -326,11 +326,11 @@ BaseHashTable *ktable = nullptr;
 #ifdef LATENCY_COLLECTION
         collector.sync_end(timer);
 #endif
-        auto npq = pqueues[get_next_cons(1)];
+        [[maybe_unused]] auto npq = pqueues[get_next_cons(1)];
 
         this->queues->prefetch(this_prod_id, get_next_cons(1), true);
       } else {
-        auto &item = items[next_item];
+        [[maybe_unused]] auto &item = items[next_item];
         items[next_item].key = k;
         items[next_item].id = item_id++;
         items[next_item].part_id = cons_id + n_prod;
@@ -419,7 +419,7 @@ void QueueTest<T>::consumer_thread(
   BaseHashTable *kmer_ht = NULL;
   uint8_t finished_producers = 0;
   // alignas(64)
-  uint64_t k = 0;
+  [[maybe_unused]] uint64_t k = 0;
 #if defined(BQUEUE_KMER_TEST)
   Key kv{};
 #else
@@ -690,7 +690,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
     PLOGD.printf("Dist to nodes tid %u", tid);
     auto *part_ht =
         reinterpret_cast<PartitionedHashStore<KVType, ItemQueue> *>(ktable);
-    void *ht_mem = part_ht->hashtable[part_ht->id];
+    [[maybe_unused]] void *ht_mem = part_ht->hashtable[part_ht->id];
     // distribute_mem_to_nodes(ht_mem, part_ht->get_ht_size(),
     // (kmercounter::numa_policy_threads) 0);
   }
@@ -720,7 +720,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
                key_start, num_messages);
 
   int partition;
-  int j = 0;
+  uint32_t j = 0;
 
   barrier->arrive_and_wait();
 
@@ -732,7 +732,7 @@ void QueueTest<T>::find_thread(int tid, int n_prod, int n_cons, bool is_join,
   for (auto m = 0u; m < config.insert_factor; m++) {
     key_start =
         std::max(static_cast<uint64_t>(num_messages) * tid, (uint64_t)1);
-    auto zipf_idx = key_start == 1 ? 0 : key_start;
+    [[maybe_unused]] auto zipf_idx = key_start == 1 ? 0 : key_start;
 #if defined(XORWOW)
     _xw_state = init_state;
 #endif
@@ -1031,7 +1031,7 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n, bool is_join,
   this->npq = npq;
   this->cfg = cfg;
 
-  uint32_t num_nodes = static_cast<uint32_t>(this->n->get_num_nodes());
+  [[maybe_unused]] uint32_t num_nodes = static_cast<uint32_t>(this->n->get_num_nodes());
   uint32_t num_cpus = static_cast<uint32_t>(this->n->get_num_total_cpus());
 
   // Calculate total threads (Prod + cons)

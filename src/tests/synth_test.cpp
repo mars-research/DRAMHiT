@@ -154,7 +154,7 @@ OpTimings SynthTest::synth_run_get(BaseHashTable *ktable, uint8_t tid) {
   const auto t_start = RDTSC_START();
 
   for (auto j = 0u; j < config.insert_factor; j++) {
-    uint64_t count =
+    [[maybe_unused]] uint64_t count =
         std::max(HT_TESTS_NUM_INSERTS * tid, static_cast<uint64_t>(1));
     _xw_state = init_state;
     for (auto i = 0u; i < HT_TESTS_NUM_INSERTS; i++) {

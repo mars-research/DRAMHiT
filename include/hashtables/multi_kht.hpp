@@ -82,13 +82,13 @@ class MultiHashTable : public BaseHashTable {
     PLOGV << "Empty item: " << this->empty_item;
     this->insert_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_QUEUE_SIZE * sizeof(KVQ)));
-    for (int i = 0; i < PREFETCH_QUEUE_SIZE; i++) {
+    for (uint32_t i = 0; i < PREFETCH_QUEUE_SIZE; i++) {
       this->insert_queue[i].part_id = 0;
     }
 
     this->find_queue =
         (KVQ *)(aligned_alloc(64, PREFETCH_FIND_QUEUE_SIZE * sizeof(KVQ)));
-    for (int i = 0; i < PREFETCH_FIND_QUEUE_SIZE; i++) {
+    for (uint32_t i = 0; i < PREFETCH_FIND_QUEUE_SIZE; i++) {
       this->find_queue[i].part_id = 0;
     }
 
@@ -399,7 +399,7 @@ class MultiHashTable : public BaseHashTable {
     uint64_t retry;
     size_t idx = q->idx;
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-    size_t offset = q->idx - idx;
+    [[maybe_unused]] size_t offset = q->idx - idx;
 
     KV *curr_cacheline = &this->backup_hashtable[idx];
     uint64_t found = curr_cacheline->find_simd(q, &retry, vp);
@@ -442,7 +442,7 @@ class MultiHashTable : public BaseHashTable {
   inline uint64_t __find_simd_level0(KVQ *q, ValuePairs &vp) {
     size_t idx = q->idx;
     idx = idx - (size_t)(idx & KEYS_IN_CACHELINE_MASK);
-    size_t offset = idx - q->idx;
+    [[maybe_unused]] size_t offset = idx - q->idx;
 
     KV *entry = &this->hashtable[idx];
     uint64_t retry;

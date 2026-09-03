@@ -334,7 +334,7 @@ void lynxQ::dump(void) {
 
 /* Set or Unset redzone REDZONE at ADDR depending on boolean ON_OFF */
 const char *lynxQ::config_red_zone (on_or_off_t cond, void *addr) {
-  assert ((cond == ON) || (cond == OFF) && "Bad COND");
+  assert (((cond == ON) || (cond == OFF)) && "Bad COND");
   int prot = (cond == ON) ? PROT_NONE : (PROT_READ| PROT_WRITE | PROT_EXEC);
   size_t size = _PAGE_SIZE;
 
@@ -561,7 +561,8 @@ static inline void collect_regs (Regs *regs, cs_x86_op *mem_op, csh handle,
     regs->reg_index_value = get_reg_value (context, regs->reg_index);
   if (regs->reg_segment != X86_REG_INVALID)
     regs->reg_segment_value = get_reg_value (context, regs->reg_segment);
-  assert (regs->reg_base != INT_MIN && regs->mem_disp != UINT_MAX && "not initialized");
+  assert (regs->reg_base != static_cast<unsigned int>(INT_MIN) &&
+	  regs->mem_disp != UINT_MAX && "not initialized");
 }
 
 inline char *lynxQ::get_new_redzone_left (char *curr_redzone) {
@@ -971,8 +972,8 @@ std::tuple<uint64_t, uint64_t> get_mem_base(
   uint64_t new_base_value = (uint64_t) base_addr - regs.reg_segment_value -
     regs.mem_disp - regs.reg_index_value * regs.scale;
 
-  uint64_t sum = regs.mem_disp + new_base_value + regs.reg_index_value *
-    regs.scale + regs.reg_segment_value;
+  [[maybe_unused]] uint64_t sum = regs.mem_disp + new_base_value +
+    regs.reg_index_value * regs.scale + regs.reg_segment_value;
   assert (sum == (uint64_t) base_addr);
 
   return std::make_tuple(new_base_value, reg_base_to_update);
@@ -1130,13 +1131,13 @@ static void lynxQ_nomprotect_handler(int signal, siginfo_t *info, void *cxt)
   }
 }
 
-static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
+[[maybe_unused]] static void lynxQ_handler(int signal, siginfo_t *info, void *cxt)
 {
   static __thread Memoize_mem_op_t memo;
   ucontext_t *context = (ucontext_t *)cxt;
 
   /* Find which register is the index register */
-  const uint8_t *ip = get_err_ip(context);
+  [[maybe_unused]] const uint8_t *ip = get_err_ip(context);
 
   /* The address that caused the fault. */
   char *index = (char *)info->si_addr;
@@ -1360,7 +1361,6 @@ class LynxQueue {
 
     inline int enqueue(uint32_t p, uint32_t c, data_t value)  {
       auto pq = &all_pqueues[p][c];
-      auto q = queues[p][c];
 
 #if 0
       if (!((uint64_t)pq->push_index & ((1 << 13) - 1)))
@@ -1375,9 +1375,8 @@ class LynxQueue {
     inline int dequeue(uint32_t p, uint32_t c, data_t *value) {
       int ret = SUCCESS;
       auto cq = &all_cqueues[c][p];
-      auto q = queues[p][c];
 
-      *value = {cq->pop_long(), 0};
+      *value = {static_cast<uint64_t>(cq->pop_long()), 0};
 #if 0
       if (!((uint64_t)cq->pop_index & ((1 << 12) - 1)))
         printf("cq->pop_index 0x%lx | pop_reg 0x%lx | ea 0x%lx | value %" PRIu64 "\n",

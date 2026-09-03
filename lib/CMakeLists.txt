@@ -12,12 +12,12 @@ target_include_directories(cityhash PRIVATE cityhash/ cityhash/src/)
 # Add eth_hashjoin
 set(ETH_HASHJOIN_CONFIG_H ${CMAKE_CURRENT_SOURCE_DIR}/eth_hashjoin/config.h)
 
+# KEY_8B/KEY_LEN are already defined project-wide by the top-level
+# CMakeLists.txt; repeating them here only produces "macro redefined" warnings.
 if (KEY_LEN STREQUAL 8)
   set(ETH_HASHJOIN_CONFIGURE_FLAGS "--enable-key8B")
-  set(ETH_HASHJOIN_CFLAGS "-DKEY_8B -DKEY_LEN=8")
 elseif (KEY_LEN STREQUAL 4)
   set(ETH_HASHJOIN_CONFIGURE_FLAGS "--disable-key8B")
-  set(ETH_HASHJOIN_CFLAGS "-DKEY_LEN=4")
 endif()
 
 add_custom_command(
