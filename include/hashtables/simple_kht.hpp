@@ -374,21 +374,19 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
         return cmp & key_cmp_masks[cidx];
       };
 
-      auto key_copy_mask = [&empty_cmp, &key_copy_masks](__m512i cacheline,
+      auto key_copy_mask = [&empty_cmp](__m512i cacheline,
                                                          uint32_t eq_cmp,
                                                          size_t cidx) {
         uint32_t locations = empty_cmp(cacheline, cidx);
-        __mmask16 copy_mask = 1 << _bit_scan_forward(locations);
-        // if locations == 0, _bit_scan_forward(locations) is undefined
-        // if eq_cmp != 0, key is already present
-        //
-        // if ((locations && !eq_cmp) == 0) copy_mask = 0;
-        asm("andnl %[locations], %[eq_cmp], %%ecx\n\t"
-            "cmovzw %%cx, %[copy_mask]\n\t"
-            : [copy_mask] "+r"(copy_mask)
-            : [locations] "r"(locations), [eq_cmp] "r"(eq_cmp)
-            : "rcx");
-        return static_cast<__mmask8>(copy_mask);
+        // Isolate the lowest empty slot. Yields 0 when there is none, which also
+        // avoids the undefined _bit_scan_forward(0) this replaced.
+        const uint32_t lowest = locations & (-locations);
+        // Suppress the copy when the key is already present, otherwise a second
+        // copy is blended into the empty slot and both get incremented.
+        // NB: a bitwise (locations & ~eq_cmp) does NOT work here -- eq_cmp and
+        // locations are disjoint, so it reduces to locations.
+        const uint32_t keep = -static_cast<uint32_t>(eq_cmp == 0);
+        return static_cast<__mmask8>(lowest & keep);
       };
 
       auto blend = [](__m512i &cacheline, __m512i kv_vector, __mmask8 mask) {
@@ -1132,20 +1130,18 @@ class alignas(64) PartitionedHashStore : public BaseHashTable {
       return cmp & key_cmp_masks[cidx];
     };
 
-    auto key_copy_mask = [&empty_cmp, &key_copy_masks](
+    auto key_copy_mask = [&empty_cmp](
                              __m512i cacheline, uint32_t eq_cmp, size_t cidx) {
       uint32_t locations = empty_cmp(cacheline, cidx);
-      __mmask16 copy_mask = 1 << _bit_scan_forward(locations);
-      // if locations == 0, _bit_scan_forward(locations) is undefined
-      // if eq_cmp != 0, key is already present
-      //
-      // if ((locations && !eq_cmp) == 0) copy_mask = 0;
-      asm("andnl %[locations], %[eq_cmp], %%ecx\n\t"
-          "cmovzw %%cx, %[copy_mask]\n\t"
-          : [copy_mask] "+r"(copy_mask)
-          : [locations] "r"(locations), [eq_cmp] "r"(eq_cmp)
-          : "rcx");
-      return static_cast<__mmask8>(copy_mask);
+      // Isolate the lowest empty slot. Yields 0 when there is none, which also
+      // avoids the undefined _bit_scan_forward(0) this replaced.
+      const uint32_t lowest = locations & (-locations);
+      // Suppress the copy when the key is already present, otherwise a second
+      // copy is blended into the empty slot and both get incremented.
+      // NB: a bitwise (locations & ~eq_cmp) does NOT work here -- eq_cmp and
+      // locations are disjoint, so it reduces to locations.
+      const uint32_t keep = -static_cast<uint32_t>(eq_cmp == 0);
+      return static_cast<__mmask8>(lowest & keep);
     };
 
     auto blend = [](__m512i &cacheline, __m512i kv_vector, __mmask8 mask) {

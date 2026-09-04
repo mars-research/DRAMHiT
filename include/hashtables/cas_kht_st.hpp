@@ -35,6 +35,8 @@ class CASHashTableSingleThread : public BaseHashTable {
   uint32_t INSERT_QUEUE_SZ_MASK;
   uint32_t FIND_QUEUE_SZ_MASK;
   uint64_t HT_BUCKET_MASK;
+  uint32_t id;
+  int fd;
 
   const static __mmask8 KEYMSK = 0b01010101;
   const static uint64_t PREFETCH_INSERT_NEXT_DISTANCE = 8;
@@ -45,6 +47,7 @@ class CASHashTableSingleThread : public BaseHashTable {
       : find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
     this->construc1 = true;
     this->capacity = kmercounter::utils::next_pow2(c);
+    this->id = id;
 
     if (capacity % KV_IN_CACHELINE != 0) {
       PLOGE.printf("Capacity %lu is not a multiple of KV_IN_CACHELINE %d\n",
@@ -60,20 +63,9 @@ class CASHashTableSingleThread : public BaseHashTable {
     }
 
     // Allocate hashtable via mmap with 2MB hugepages
-    size_t ht_size = this->capacity * sizeof(KV);
+
     this->hashtable =
-        (KV *)mmap(nullptr, ht_size, PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
-    if (this->hashtable == MAP_FAILED) {
-      // Fall back to regular mmap if hugepages unavailable
-      PLOGE.printf("mmap hugepages failed, falling back to regular mmap");
-      this->hashtable = (KV *)mmap(nullptr, ht_size, PROT_READ | PROT_WRITE,
-                                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_2MB, -1, 0);
-      if (this->hashtable == MAP_FAILED) {
-        PLOGE.printf("mmap failed!");
-        abort();
-      }
-    }
+        (KV *)calloc_ht<KV>(this->capacity, this->id, &this->fd);
 
     this->empty_item = this->empty_item.get_empty_key();
     this->key_length = empty_item.key_length();
@@ -86,8 +78,6 @@ class CASHashTableSingleThread : public BaseHashTable {
     this->HT_BUCKET_MASK =
         (uint32_t)((this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK));
   }
-
-
 
   CASHashTableSingleThread(uint64_t c, uint32_t queue_sz, KV *hashtable)
       : find_head(0), find_tail(0), ins_head(0), ins_tail(0) {
@@ -118,7 +108,7 @@ class CASHashTableSingleThread : public BaseHashTable {
     this->HT_BUCKET_MASK =
         (uint32_t)((this->capacity - 1) & ~(KEYS_IN_CACHELINE_MASK));
   }
-  
+
   ~CASHashTableSingleThread() {
     free(find_queue);
     free(insert_queue);
@@ -302,6 +292,7 @@ class CASHashTableSingleThread : public BaseHashTable {
               __m512i key_vector = _mm512_set1_epi64(q->key);
               __mmask8 key_cmp =
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
+
               if (key_cmp > 0) {
                 __mmask8 offset = _bit_scan_forward(key_cmp);
                 if constexpr (std::is_same_v<KV, Aggr_KV>) {
@@ -314,10 +305,11 @@ class CASHashTableSingleThread : public BaseHashTable {
                 break;
               }
 
-              // Check for empty slot
               __m512i zero_vector = _mm512_setzero_si512();
               __mmask8 ept_cmp =
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
+
+              // Check for empty slot
               if (ept_cmp != 0) {
                 __mmask8 offset = _bit_scan_forward(ept_cmp);
                 bucket[offset] = q->key;
@@ -329,39 +321,8 @@ class CASHashTableSingleThread : public BaseHashTable {
                   assert(false && "Invalid template type");
                 }
                 break;
-                //idx += (_bit_scan_forward(ept_cmp) >> 1);
-              } else {  // we didn;t find empty key
-                goto retry_add_to_queue;
               }
 
-            try_insert:
-              curr = &this->hashtable[idx];
-#ifdef READ_BEFORE_CAS
-              if (curr->is_empty())
-#endif
-                if (__sync_bool_compare_and_swap((__int128 *)curr, 0,
-                                                 *(__int128 *)q)) {
-                  break;
-                }
-
-              if (curr->compare_key(q)) {
-                curr->update_cas(q);
-                break;
-              }
-
-              /* insert back into queue, and prefetch next bucket.
-              next bucket will be probed in the next run
-              */
-              idx++;
-              idx = idx & (this->capacity - 1);  // modulo
-
-              // |  CACHELINE_SIZE   |
-              // | 0 | 1 | . | . | n | n+1 ....
-              if ((idx & KEYS_IN_CACHELINE_MASK) != 0) {
-                goto try_insert;  // FIXME: @David get rid of the goto for
-                                  // crying out loud
-              }
-            retry_add_to_queue:
 
 #ifdef UNIFORM_HT_SUPPORT
               uint64_t old_hash = q->key_hash;

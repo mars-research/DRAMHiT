@@ -51,6 +51,34 @@ inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
     return;
   }
 
+  // use np_mem_node_msk to decide which one to bind on
+  if(config.mode == FASTQ_WITH_INSERT)
+  {
+
+      return; // local memory first, no hbm ....
+     unsigned long nodemask = config.np_mem_node_msk;
+     unsigned long maxnode = sizeof(nodemask) * 8;
+     // A single set bit pins to that node; multiple set bits interleave
+     // pages round-robin across those nodes so the region ends up evenly
+     // spread instead of piled onto one node under MPOL_BIND.
+     int mem_policy = (__builtin_popcountl(nodemask) > 1) ? MPOL_INTERLEAVE
+                                                           : MPOL_BIND;
+
+     long ret = mbind(addr, alloc_sz, mem_policy, &nodemask, maxnode,
+                      MPOL_MF_MOVE | MPOL_MF_STRICT);
+     if (ret < 0) {
+       perror("mbind");
+       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+     } else {
+       PLOGI.printf(
+           "Successfully %s %lu bytes to node mask 0x%lx",
+           (mem_policy == MPOL_INTERLEAVE) ? "interleaved" : "bound",
+           alloc_sz, nodemask);
+     }
+
+     return;
+  }
+
   if (policy == THREADS_REMOTE_NUMA_NODE) {
     unsigned long nodemask = 1UL << 1;
     unsigned long maxnode = sizeof(nodemask) * 8;

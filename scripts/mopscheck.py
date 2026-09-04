@@ -33,7 +33,7 @@ HUGEPAGE_EXPECTED_FREE = 128
 def ht10_args(k):
     return ["--ht-type", "10", "--numa-split", "3", "--nprod", "64",
             "--ncons", "64", "--k", str(k), "--insert-factor", "1"]
-            
+
 #Dramblast
 def ht3_args(k):
     return ["--batch-len", "16", "--ht-type", "3", "--numa-split", "1",
@@ -42,7 +42,7 @@ def ht3_args(k):
 #dramhit-p
 def ht1_args(k):
     return ["--ht-type", "1", "--numa-split", "3", "--nprod", "64",
-            "--ncons", "64", "--k", str(k), "--insert-factor", "3"]
+            "--ncons", "64", "--k", str(k), "--insert-factor", "1"]
 
 #dramhit
 def ht8_args(k):
@@ -52,8 +52,8 @@ def ht8_args(k):
 RUNS = []
 for k in K_VALUES:
     RUNS.append((f"dramhit-p k={k}", ht1_args(k)))
-    RUNS.append((f"dramhit k={k}", ht8_args(k)))
-    #RUNS.append((f"ht10 k={k}", ht10_args(k)))
+    RUNS.append((f"dramblast-p k={k}", ht10_args(k)))
+    #RUNS.append((f"dramhit k={k}", ht8_args(k)))
     #RUNS.append((f"ht3 k={k}", ht3_args(k)))
 
 MOPS_RE = re.compile(r"set_mops[:\s]+(\d+(?:\.\d+)?)")

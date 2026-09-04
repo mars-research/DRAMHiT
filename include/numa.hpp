@@ -141,14 +141,42 @@ enum numa_policy_queues {
   PROD_CONS_SEQUENTIAL = 1,
   PROD_CONS_SEPARATE_NODES = 2,
   PROD_CONS_EQUAL_PARTITION = 3,
+  // Every node hosts both roles, alternating within that node's cpu list, so a
+  // producer always has consumers on its own node. Bounded by
+  // (nprod + ncons) / num_nodes <= cpus_per_node.
+  PROD_CONS_SAME_NODE = 4,
 };
 
 class NumaPolicyQueues : public Numa {
  public:
-  NumaPolicyQueues(int num_prod, int num_cons, numa_policy_queues npq) {
+  NumaPolicyQueues(int num_prod, int num_cons, numa_policy_queues npq,
+                   uint32_t cpu_node_msk = 0) {
     this->config_num_prod = num_prod;
     this->config_num_cons = num_cons;
+    this->cpu_node_msk = cpu_node_msk;
     this->nodes = Numa::get_node_config();
+    // Two filters, applied once here so that every policy in
+    // generate_cpu_lists() honours them without repeating the logic:
+    //
+    //  1. Memory-only nodes (HBM in flat mode) report an empty cpu_list, and
+    //     the assignment loops index cpu_list unconditionally -- keeping them
+    //     null-derefs on nodes[n].cpu_list[0].
+    //  2. cpu_node_msk (--np_cpu_node_msk) restricts which nodes may host
+    //     producer/consumer threads. Bit i selects kernel node i; 0 means "no
+    //     restriction". numa_node_t::id holds the real kernel node id, so
+    //     dropping entries here does not renumber anything.
+    std::erase_if(this->nodes, [cpu_node_msk](const numa_node_t &n) {
+      if (n.cpu_list.empty()) return true;
+      return cpu_node_msk != 0 && !(cpu_node_msk & (1u << n.id));
+    });
+
+    if (this->nodes.empty()) {
+      PLOGE.printf(
+          "--np_cpu_node_msk 0x%x selects no numa node that has cpus",
+          cpu_node_msk);
+      exit(-1);
+    }
+
     this->npq = npq;
     this->init_unassigned_cpus_list();
     this->generate_cpu_lists();
@@ -157,6 +185,12 @@ class NumaPolicyQueues : public Numa {
 
   friend std::ostream &operator<<(std::ostream &os, const NumaPolicyQueues &n) {
     std::ostringstream os_str;
+    os_str << "cpu_node_msk: 0x" << std::hex << n.cpu_node_msk << std::dec
+           << " -> nodes in use: ";
+    for (const auto &node : n.nodes) {
+      os_str << node.id << ' ';
+    }
+    os_str << "\n";
     os_str << "assigned_cpu_list_producers: ";
     for (auto i : n.assigned_cpu_list_producers) {
       os_str << i << ' ';
@@ -209,6 +243,7 @@ class NumaPolicyQueues : public Numa {
  private:
   uint32_t config_num_prod;
   uint32_t config_num_cons;
+  uint32_t cpu_node_msk;
   numa_policy_queues npq;
   std::vector<numa_node_t> nodes;
   std::vector<uint32_t> assigned_cpu_list_producers;
@@ -216,9 +251,79 @@ class NumaPolicyQueues : public Numa {
   std::set<uint32_t> unassigned_cpu_list;
 
   void generate_cpu_lists() {
-    [[maybe_unused]] uint32_t total_threads =
-        this->config_num_cons + this->config_num_prod;
-    assert(total_threads <= static_cast<uint32_t>(Numa::get_num_total_cpus()));
+    uint32_t total_threads = this->config_num_cons + this->config_num_prod;
+    uint32_t cpus_avail = 0;
+    for (const auto &n : this->nodes) cpus_avail += n.cpu_list.size();
+
+    if (this->nodes.empty()) {
+      PLOGE.printf("no numa node with cpus available");
+      exit(-1);
+    }
+
+    if (total_threads > cpus_avail) {
+      PLOGE.printf(
+          "nprod (%u) + ncons (%u) = %u exceeds the %u cpus on the %zu "
+          "cpu-bearing numa node(s)",
+          this->config_num_prod, this->config_num_cons, total_threads,
+          cpus_avail, this->nodes.size());
+      exit(-1);
+    }
+
+    // Keep both roles on every node, so a producer's consumers are node-local.
+    // Within a node the roles alternate down its cpu list and each node takes
+    // an even share of both, remainder to the lowest nodes. On this 2-node box
+    // (node0 = 0,2,4,..., node1 = 1,3,5,...) with nprod == ncons == 64 that is
+    // producers 0,4,8,... + 1,5,9,... and consumers 2,6,10,... + 3,7,11,...
+    if (this->npq == PROD_CONS_SAME_NODE) {
+      const uint32_t num_nodes = this->nodes.size();
+
+      for (uint32_t n = 0; n < num_nodes; n++) {
+        const auto &cpu_list = this->nodes[n].cpu_list;
+        const uint32_t prod_here =
+            this->config_num_prod / num_nodes +
+            (n < this->config_num_prod % num_nodes ? 1 : 0);
+        const uint32_t cons_here =
+            this->config_num_cons / num_nodes +
+            (n < this->config_num_cons % num_nodes ? 1 : 0);
+
+        if (prod_here + cons_here > cpu_list.size()) {
+          PLOGE.printf(
+              "node %u needs %u prod + %u cons but has only %zu cpus; "
+              "PROD_CONS_SAME_NODE requires (nprod + ncons) / num_nodes <= "
+              "cpus_per_node",
+              this->nodes[n].id, prod_here, cons_here, cpu_list.size());
+          exit(-1);
+        }
+
+        uint32_t assigned_prod = 0, assigned_cons = 0, cpu_idx_ctr = 0;
+        bool want_prod = true;
+        while (assigned_prod < prod_here || assigned_cons < cons_here) {
+          // one role can fill before the other; hand the cpu to whoever is
+          // still short instead of stopping early
+          if (want_prod && assigned_prod == prod_here) {
+            want_prod = false;
+            continue;
+          }
+          if (!want_prod && assigned_cons == cons_here) {
+            want_prod = true;
+            continue;
+          }
+
+          const uint32_t cpu_assigned = cpu_list[cpu_idx_ctr++];
+          if (want_prod) {
+            this->assigned_cpu_list_producers.push_back(cpu_assigned);
+            assigned_prod++;
+          } else {
+            this->assigned_cpu_list_consumers.push_back(cpu_assigned);
+            assigned_cons++;
+          }
+          this->unassigned_cpu_list.erase(cpu_assigned);
+          want_prod = !want_prod;
+        }
+      }
+
+      return;
+    }
 
     if (this->npq == PROD_CONS_EQUAL_PARTITION) {
       uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0;

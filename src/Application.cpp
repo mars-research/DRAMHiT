@@ -760,7 +760,7 @@ void sync_complete(void) {
                     "zipf key range")
           ("np_cpu_node_msk",
                     po::value<uint32_t>(&config.np_cpu_node_msk)->default_value(def.np_cpu_node_msk),
-                    "cpu node")
+                    "bitmask of numa nodes allowed to host threads; bit i = node i, 0 = all")
           ("np_mem_node_msk",
                     po::value<uint32_t>(&config.np_mem_node_msk)->default_value(def.np_mem_node_msk),
                     "mem node");
@@ -965,20 +965,35 @@ void sync_complete(void) {
         case PROD_CONS_SEQUENTIAL:
           printf("Choosing separate numa nodes case 1\n");
           this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
-                                           PROD_CONS_SEQUENTIAL);
+                                           PROD_CONS_SEQUENTIAL,
+                                           config.np_cpu_node_msk);
           break;
         case PROD_CONS_SEPARATE_NODES:
           printf("Choosing separate numa nodes case 2\n");
           this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
-                                           PROD_CONS_SEPARATE_NODES);
+                                           PROD_CONS_SEPARATE_NODES,
+                                           config.np_cpu_node_msk);
           break;
         case PROD_CONS_EQUAL_PARTITION:
           printf("Choosing separate numa nodes case 3\n");
           this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
-                                           PROD_CONS_EQUAL_PARTITION);
+                                           PROD_CONS_EQUAL_PARTITION,
+                                           config.np_cpu_node_msk);
+          break;
+        case PROD_CONS_SAME_NODE:
+          printf("Choosing prod/cons on the same numa node, case 4\n");
+          this->npq = new NumaPolicyQueues(config.n_prod, config.n_cons,
+                                           PROD_CONS_SAME_NODE,
+                                           config.np_cpu_node_msk);
           break;
         default:
-          break;
+          PLOGE.printf(
+              "--numa-split %u is not a queue policy (mode %u + ht-type %u "
+              "uses the prod/cons path). Valid: 1 PROD_CONS_SEQUENTIAL, "
+              "2 PROD_CONS_SEPARATE_NODES, 3 PROD_CONS_EQUAL_PARTITION, "
+              "4 PROD_CONS_SAME_NODE",
+              config.numa_split, config.mode, config.ht_type);
+          exit(-1);
       }
     } else {
       switch (config.numa_split) {

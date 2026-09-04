@@ -174,15 +174,15 @@ class SectionQueue {
         node_map[cpu_node].push_back(cpu);
       }
     }
-    std::ostringstream os;
-    for (auto nodes : node_map) {
-      os << "node " << nodes.first << "\n\t{ ";
-      for (auto cpu : nodes.second) {
-        os << cpu << ", ";
-      }
-      os << " }\n";
-    }
-    PLOGI << os.str();
+    // std::ostringstream os;
+    // for (auto nodes : node_map) {
+    //   os << "node " << nodes.first << "\n\t{ ";
+    //   for (auto cpu : nodes.second) {
+    //     os << cpu << ", ";
+    //   }
+    //   os << " }\n";
+    // }
+    // PLOGI << os.str();
     std::map<uint32_t, char *> node_memmap;
 
     auto mbind_buffer_local = [](void *buf, ssize_t sz, uint32_t node) {

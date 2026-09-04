@@ -633,8 +633,8 @@ void QueueTest<T>::consumer_thread(
   // Write to file
   if (!this->cfg->ht_file.empty()) {
     std::string outfile = this->cfg->ht_file + std::to_string(sh->shard_idx);
-    PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
-                     outfile.c_str());
+    //PLOG_INFO.printf("Shard %u: Printing to file: %s", sh->shard_idx,
+    //                 outfile.c_str());
     kmer_ht->print_to_file(outfile);
 
   } else {
@@ -954,9 +954,26 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n, bool is_join,
   std::barrier barrier(cfg->n_prod + cfg->n_cons, on_completion);
 
   // Spawn threads that will perform find operation
-  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
-    // skip the first CPU, we'll launch it later
-    if (assigned_cpu == 0) continue;
+  // The controller thread runs one of the producers inline, so one cpu from the
+  // producer list must be reserved for it. Prefer cpu 0 to keep the historical
+  // layout, but fall back to the last producer cpu when --np_cpu_node_msk
+  // excludes node 0 -- otherwise we spawn all n_prod threads *and* run the
+  // master, overshooting the barrier and aliasing the first consumer's shard.
+  const auto prod_cpus = this->npq->get_assigned_cpu_list_producers();
+  if (prod_cpus.empty()) {
+    PLOG_ERROR.printf("no cpus assigned to producers");
+    exit(-1);
+  }
+  uint32_t master_cpu = prod_cpus.back();
+  for (uint32_t cpu : prod_cpus) {
+    if (cpu == 0) {
+      master_cpu = 0;
+      break;
+    }
+  }
+
+  for (uint32_t assigned_cpu : prod_cpus) {
+    if (assigned_cpu == master_cpu) continue;
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     auto _thread = std::thread(&QueueTest::find_thread, this, i, cfg->n_prod,
@@ -973,10 +990,9 @@ void QueueTest<T>::run_find_test(Configuration *cfg, Numa *n, bool is_join,
   Shard *main_sh = &this->shards[i];
   main_sh->shard_idx = i;
   CPU_ZERO(&cpuset);
-  uint32_t last_cpu = 0;
-  CPU_SET(last_cpu, &cpuset);
+  CPU_SET(master_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  PLOGV.printf("Thread 'controller': affinity: %u", last_cpu);
+  PLOGV.printf("Thread 'controller': affinity: %u", master_cpu);
 
   // Spawn find threads
   i = cfg->n_prod;
@@ -1064,9 +1080,26 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n, bool is_join,
   std::barrier barrier(cfg->n_prod + cfg->n_cons, on_completion);
 
   // Spawn producer threads
-  for (uint32_t assigned_cpu : this->npq->get_assigned_cpu_list_producers()) {
-    // skip the first CPU, we'll launch producer on this
-    if (assigned_cpu == 0) continue;
+  // The controller thread runs one of the producers inline, so one cpu from the
+  // producer list must be reserved for it. Prefer cpu 0 to keep the historical
+  // layout, but fall back to the last producer cpu when --np_cpu_node_msk
+  // excludes node 0 -- otherwise we spawn all n_prod threads *and* run the
+  // master, overshooting the barrier and aliasing the first consumer's shard.
+  const auto prod_cpus = this->npq->get_assigned_cpu_list_producers();
+  if (prod_cpus.empty()) {
+    PLOG_ERROR.printf("no cpus assigned to producers");
+    exit(-1);
+  }
+  uint32_t master_cpu = prod_cpus.back();
+  for (uint32_t cpu : prod_cpus) {
+    if (cpu == 0) {
+      master_cpu = 0;
+      break;
+    }
+  }
+
+  for (uint32_t assigned_cpu : prod_cpus) {
+    if (assigned_cpu == master_cpu) continue;
     Shard *sh = &this->shards[i];
     sh->shard_idx = i;
     auto _thread =
@@ -1084,10 +1117,9 @@ void QueueTest<T>::insert_with_queues(Configuration *cfg, Numa *n, bool is_join,
   Shard *main_sh = &this->shards[i];
   main_sh->shard_idx = i;
   CPU_ZERO(&cpuset);
-  uint32_t last_cpu = 0;
-  CPU_SET(last_cpu, &cpuset);
+  CPU_SET(master_cpu, &cpuset);
   sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-  PLOG_DEBUG.printf("Thread 'controller': affinity: %u", last_cpu);
+  PLOG_DEBUG.printf("Thread 'controller': affinity: %u", master_cpu);
 
   // Spawn consumer threads
   i = cfg->n_prod;
