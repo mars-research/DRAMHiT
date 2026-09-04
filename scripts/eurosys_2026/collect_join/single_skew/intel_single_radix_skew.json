@@ -1,0 +1,37 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.2
+    ],
+    "join_type": "radix",
+    "numa_config": "single",
+    "numa_split": 4,
+    "num_threads": 64,
+    "cpufreq_mhz": 2500,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/single_skew/logs/radix",
+    "throughput_mops": [
+        2919.0,
+        2901.0,
+        2905.0,
+        2910.0,
+        2875.0,
+        2892.0,
+        2854.0,
+        2767.0,
+        2574.0,
+        2214.0,
+        1815.0,
+        1487.0
+    ]
+}

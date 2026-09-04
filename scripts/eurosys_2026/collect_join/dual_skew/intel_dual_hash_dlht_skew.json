@@ -1,0 +1,37 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.2
+    ],
+    "join_type": "hash_dlht",
+    "numa_config": "dual",
+    "numa_split": 1,
+    "num_threads": 128,
+    "cpufreq_mhz": 2500,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/dual_skew/logs/hash_dlht",
+    "throughput_mops": [
+        2666.0,
+        2697.0,
+        2732.0,
+        2715.0,
+        2699.0,
+        2865.0,
+        2917.0,
+        3066.0,
+        3393.0,
+        3910.0,
+        4707.0,
+        5460.0
+    ]
+}

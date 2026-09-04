@@ -1,0 +1,25 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        16777216,
+        33554432,
+        67108864,
+        134217728,
+        268435456,
+        536870912
+    ],
+    "join_type": "radix",
+    "numa_config": "dual",
+    "numa_split": 1,
+    "num_threads": 128,
+    "cpufreq_mhz": 2500,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/dual_relation_size/logs/radix",
+    "throughput_mops": [
+        2676.0,
+        3160.0,
+        3453.0,
+        3578.0,
+        3415.0,
+        2096.0
+    ]
+}

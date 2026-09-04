@@ -1,0 +1,25 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        16777216,
+        33554432,
+        67108864,
+        134217728,
+        268435456,
+        536870912
+    ],
+    "join_type": "hash_dlht",
+    "numa_config": "dual",
+    "numa_split": 1,
+    "num_threads": 128,
+    "cpufreq_mhz": 2500,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/dual_relation_size/logs/hash_dlht",
+    "throughput_mops": [
+        1092.0,
+        1116.0,
+        1119.0,
+        1117.0,
+        1141.0,
+        1115.0
+    ]
+}

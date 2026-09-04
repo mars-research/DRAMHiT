@@ -1,0 +1,25 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        16777216,
+        33554432,
+        67108864,
+        134217728,
+        268435456,
+        536870912
+    ],
+    "join_type": "hash_cas23",
+    "numa_config": "single",
+    "numa_split": 4,
+    "num_threads": 64,
+    "cpufreq_mhz": 2500,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/single_relation_size/logs/hash_cas23",
+    "throughput_mops": [
+        1636.0,
+        1572.0,
+        1560.0,
+        1550.0,
+        1532.0,
+        1523.0
+    ]
+}
