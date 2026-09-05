@@ -1,0 +1,38 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.2
+    ],
+    "join_type": "hash_folklore",
+    "numa_config": "dual",
+    "snoop_mode": "snoop",
+    "numa_split": 1,
+    "num_threads": 128,
+    "cpufreq_mhz": 2500,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/snoop/dual_skew/logs/hash_folklore",
+    "throughput_mops": [
+        1899.0,
+        1860.0,
+        1947.0,
+        2033.0,
+        2036.0,
+        1855.0,
+        2055.0,
+        2165.0,
+        2670.0,
+        3510.0,
+        4091.0,
+        5546.0
+    ]
+}

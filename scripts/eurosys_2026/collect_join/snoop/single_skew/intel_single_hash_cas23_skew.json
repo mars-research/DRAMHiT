@@ -1,0 +1,38 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.2
+    ],
+    "join_type": "hash_cas23",
+    "numa_config": "single",
+    "snoop_mode": "snoop",
+    "numa_split": 4,
+    "num_threads": 64,
+    "cpufreq_mhz": 2500,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/snoop/single_skew/logs/hash_cas23",
+    "throughput_mops": [
+        2808.0,
+        2863.0,
+        2847.0,
+        2922.0,
+        3015.0,
+        3099.0,
+        3350.0,
+        3684.0,
+        3987.0,
+        4366.0,
+        4599.0,
+        4578.0
+    ]
+}
