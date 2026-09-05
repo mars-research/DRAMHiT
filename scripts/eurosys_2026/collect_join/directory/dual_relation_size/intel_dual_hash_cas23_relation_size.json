@@ -8,18 +8,18 @@
         268435456,
         536870912
     ],
-    "join_type": "hash_cas",
+    "join_type": "hash_cas23",
     "numa_config": "dual",
     "numa_split": 1,
     "num_threads": 128,
     "cpufreq_mhz": 2500,
-    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/dual_relation_size/logs/hash_cas",
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/dual_relation_size/logs/hash_cas23",
     "throughput_mops": [
-        2288.0,
-        2023.0,
-        2130.0,
-        2015.0,
+        1979.0,
+        2176.0,
+        2139.0,
+        2068.0,
         2120.0,
-        2138.0
+        2145.0
     ]
 }

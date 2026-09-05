@@ -1,5 +1,10 @@
 # Join benchmarks — Intel Xeon Gold 6548Y+ (2 sockets, 2.5 GHz)
 
+**All data below was collected with the BIOS in `directory` snoop mode**
+(`directory/`). A `snoop/` tree collected after a BIOS change is a
+separate set of numbers; the dual-socket results in particular should not
+be compared across modes.
+
 64 cores / 128 threads, 2 NUMA nodes, ~128 GB DDR each, 2 MB L2 per core
 (1 MB per hyperthread). Collected with `run_join.py` via `run_all.sh`.
 
@@ -56,29 +61,55 @@ thread's own node, so almost nothing crosses the interconnect. Note this
 makes radix the *only* join whose dual-socket advantage grows with the
 relation — worth keeping in mind for the scalability story.
 
-**4. Hashtable ranking is stable and independent of both axes.**
-cas ≈ cas23 > dlht > folklore on `relation_size`; cas23 pulls ahead of cas
-under skew and on dual socket. folklore is consistently the slowest, ~2×
-below cas. dlht is flat across relation size (993–1035 mops single) but pays
-for its `capacity>>3` link table in memory: 54 GB reserved vs 34 GB for the
-others.
+**4. cas is fastest on one socket; cas23 overtakes it on two.**
+Single socket, cas leads everywhere: 1927–1756 mops on `relation_size`
+(~1.15× cas23, ~2.1× folklore) and ahead of cas23 at 9 of 12 skew points.
+On dual socket they tie on `relation_size` (~2130 vs ~2120) and cas23 leads
+the whole skew sweep (6249 vs 5543 at 1.2). That is finding 3 restated:
+cas23 scales 1.38× across sockets against cas's 1.18×, so the ordering flips
+purely on NUMA scaling, not on single-socket speed. Order is otherwise
+stable: cas/cas23 > dlht > folklore, with folklore ~2× below cas throughout.
+dlht is flat across relation size (993–1035 mops single) but pays for its
+`capacity>>3` link table in memory: 54 GB reserved vs 34 GB for the others.
 
-## Caveat
+Single-socket cas matches `../collect_radix/intel_single_*.json` (same
+ht-type 3) to within 1–2% on `relation_size` and 4% on skew, so these
+numbers reproduce the earlier collection.
 
-`single/skew` for **cas** is visibly noisier than the other three tables
-(2406 at 0.5 and 2733 at 0.8 against a rising trend, where cas23/dlht/folklore
-are smooth). Treat the individual cas dips as run-to-run variance, not
-structure — a repeat run would be worth it before publishing that series.
+## Methodology note: dataset generation contaminates the first run of a set
+
+`init_hashjoin_dist()` writes each generated dataset to `/opt/DRAMHiT/cache/`
+with a plain `ofstream` and no `fsync`, then starts the join immediately. For
+the skew sweep that is an 8 GB file per point (96 GB over the sweep), and the
+kernel flushes those dirty pages *during* the timed region — which costs a
+memory-bound benchmark up to ~20%, unevenly.
+
+`run_all.sh` runs cas first in every set, so cas absorbs this for whichever
+set has to generate. It hit `single/skew` only (the one set with no cached
+datasets), depressing that series by up to 20% at some points while leaving
+others untouched. The first collection recorded 2325 mops at skew 0.1 where a
+cached re-run gives 2959.
+
+`run_join.py` now detects `Generating hashjoin dataset` in a run's log,
+`sync`s, and re-measures that point against the cached file, so the effect
+cannot silently reach the data again. **The published numbers are all
+cache-warm.** To avoid paying for it at all, generate the datasets once before
+a fresh collection.
+
+Residual run-to-run variance is roughly ±5%: repeating single/skew cas at
+skew 1.1 three times gave 3743 / 3724 / 3905 mops.
 
 ## Layout
 
 ```
-single_relation_size/  single_skew/  dual_relation_size/  dual_skew/
-  intel_<config>_<join>_<param>.json   throughput_mops + the run's config
-  intel_<config>_<param>.png           that set's figure
-  logs/<join>/<param>_<value>.log      raw dramhit output (180 files total)
-intel_joins_overview.png               all four sets as a 2x2 grid
+<snoop-mode>/                          e.g. directory/ , snoop/
+  {single,dual}_{relation_size,skew}/
+    intel_<config>_<join>_<param>.json throughput_mops + the run's config
+    intel_<config>_<param>.png         that set's figure
+    logs/<join>/<param>_<value>.log    raw dramhit output (180 files per mode)
+  intel_joins_overview.png             all four sets as a 2x2 grid
 ```
 
-Regenerate figures with `python3 plot_data.py` (all sets + overview) or
-`python3 plot_data.py single_skew` for one.
+Collect: `./run_all.sh directory` (the snoop-mode name is required, so it
+cannot be forgotten after a BIOS change). Plot: `python3 plot_data.py
+directory`, or `python3 plot_data.py directory single_skew` for one set.

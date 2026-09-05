@@ -968,10 +968,14 @@ class CASHashTable : public BaseHashTable {
   }
 
   inline void prefetch_insert(uint64_t idx) {
-#ifdef DOUBLE_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 1);
-#else
+#ifdef CAS_PREFETCHW
+    // prefetchw: the line arrives already exclusive, so the CAS that follows
+    // needs no S->E upgrade. That upgrade is a cross-socket invalidate when
+    // the table is interleaved over both nodes.
     __builtin_prefetch(&this->hashtable[idx], true, 3);
+#else
+    // prefetcht0: read-only, so the CAS pays for the ownership upgrade.
+    __builtin_prefetch(&this->hashtable[idx], false, 3);
 #endif
   }
 

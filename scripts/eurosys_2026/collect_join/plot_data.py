@@ -5,8 +5,8 @@ Style follows ../collect_inline/plot_data_amd.py: configure_style() /
 configure_palette() / get_subplots() are the same helpers, so these figures
 drop into the paper next to the inline ones.
 
-  python3 plot_data.py                 # all four sets + the overview grid
-  python3 plot_data.py single_skew     # just that set
+  python3 plot_data.py directory              # all four sets + overview
+  python3 plot_data.py directory single_skew  # just that set
 """
 
 import json
@@ -77,13 +77,13 @@ def join_label(join):
     return join if join == "radix" else f"hash_{join}"
 
 
-def load_set(numa_config, param_name):
+def load_set(mode_dir, numa_config, param_name):
     """Long-form frame of every join in one set: join / x / mops.
 
     relation_size is stored as a tuple count; plot it in GB so the axis reads
     the way the sweep was specified.
     """
-    set_dir = SCRIPT_DIR / f"{numa_config}_{param_name}"
+    set_dir = mode_dir / f"{numa_config}_{param_name}"
     rows = []
 
     for join in JOIN_ORDER:
@@ -163,12 +163,12 @@ def add_legend(fig, palette, joins):
     fig.legend(fontsize=8, handles=custom_lines, loc="upper center", ncol=len(joins))
 
 
-def plot_one_set(numa_config, param_name):
+def plot_one_set(mode_dir, numa_config, param_name):
     """One figure per data set, written next to that set's json."""
     configure_style()
     palette = configure_palette(len(JOIN_ORDER))
 
-    df = load_set(numa_config, param_name)
+    df = load_set(mode_dir, numa_config, param_name)
     joins = [j for j in JOIN_ORDER if j in set(df["join"])]
 
     fig, axes = get_subplots(1, 1)
@@ -178,7 +178,7 @@ def plot_one_set(numa_config, param_name):
     tidy(ax)
     add_legend(fig, palette, joins)
 
-    out = SCRIPT_DIR / f"{numa_config}_{param_name}" / f"{MACHINE}_{numa_config}_{param_name}.png"
+    out = mode_dir / f"{numa_config}_{param_name}" / f"{MACHINE}_{numa_config}_{param_name}.png"
     # a lone 4x4 panel needs far less headroom under the legend than the grid
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     plt.savefig(out, dpi=300)
@@ -186,7 +186,7 @@ def plot_one_set(numa_config, param_name):
     print(f"[OK] Plot saved to {out}")
 
 
-def plot_overview():
+def plot_overview(mode_dir):
     """All four sets in one 2x2 grid: rows are the sweep, cols the numa config."""
     configure_style()
     palette = configure_palette(len(JOIN_ORDER))
@@ -199,7 +199,7 @@ def plot_overview():
 
     for r, param_name in enumerate(params):
         for c, numa_config in enumerate(configs):
-            df = load_set(numa_config, param_name)
+            df = load_set(mode_dir, numa_config, param_name)
             joins = [j for j in JOIN_ORDER if j in set(df["join"])]
             ax = axes[r][c]
             draw_set(ax, df, param_name, f"{numa_config} socket")
@@ -207,7 +207,7 @@ def plot_overview():
 
     add_legend(fig, palette, joins)
 
-    out = SCRIPT_DIR / f"{MACHINE}_joins_overview.png"
+    out = mode_dir / f"{MACHINE}_joins_overview.png"
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     plt.savefig(out, dpi=300)
     plt.close(fig)
@@ -215,9 +215,20 @@ def plot_overview():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
+    if len(sys.argv) < 2:
+        raise SystemExit(
+            "usage: plot_data.py <snoop-mode> [set ...]\n"
+            "  e.g. plot_data.py directory\n"
+            "       plot_data.py snoop dual_skew"
+        )
+
+    mode_dir = SCRIPT_DIR / sys.argv[1]
+    if not mode_dir.is_dir():
+        raise SystemExit(f"[!] no such snoop-mode directory: {mode_dir}")
+
+    if len(sys.argv) > 2:
         wanted = []
-        for name in sys.argv[1:]:
+        for name in sys.argv[2:]:
             match = [s for s in SETS if f"{s[0]}_{s[1]}" == name]
             if not match:
                 raise SystemExit(
@@ -226,8 +237,8 @@ if __name__ == "__main__":
                 )
             wanted += match
         for numa_config, param_name in wanted:
-            plot_one_set(numa_config, param_name)
+            plot_one_set(mode_dir, numa_config, param_name)
     else:
         for numa_config, param_name in SETS:
-            plot_one_set(numa_config, param_name)
-        plot_overview()
+            plot_one_set(mode_dir, numa_config, param_name)
+        plot_overview(mode_dir)

@@ -32,9 +32,14 @@ import subprocess
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-# One directory per experiment set, i.e. per (numa config, swept param)
-# pair: "single_relation_size", "dual_skew", ... Each holds the per-join
-# json plus a logs/ tree of the raw dramhit output.
+# Results are grouped as <snoop mode>/<numa config>_<swept param>/, e.g.
+# "directory/single_relation_size" or "snoop/dual_skew". The snoop mode is a
+# BIOS setting (this box has been run in both directory and snoop mode), and
+# it changes cross-socket coherence cost enough to matter for the dual
+# configs, so each mode's data is kept in its own tree rather than
+# overwriting the other. Each set directory holds the per-join json plus a
+# logs/ tree of the raw dramhit output.
+DEFAULT_SNOOP_MODE = "directory"
 
 L2_BYTES = 1 * 1024 * 1024  # 2mb per core, 2 hyperthreads per core
 
@@ -517,13 +522,14 @@ def main(args):
 
     print(
         f"Starting Benchmark. Join type: {run_label}. "
+        f"snoop mode: {args.snoop_mode}. "
         f"numa config: {args.numa_config} "
         f"(numa-split {numa_cfg['numa-split']}, {numa_cfg['num-threads']} threads, "
         f"nodes {numa_cfg['nodes']}). "
         f"Varying '--{param_name}' across: {param_values}\n"
     )
 
-    result_dir = SCRIPT_DIR / f"{args.numa_config}_{param_name}"
+    result_dir = SCRIPT_DIR / args.snoop_mode / f"{args.numa_config}_{param_name}"
     log_dir = result_dir / "logs" / run_label
     print(f"[*] dramhit run logs will be saved under {log_dir}")
 
@@ -561,6 +567,7 @@ def main(args):
         "param_values": param_values,
         "join_type": run_label,
         "numa_config": args.numa_config,
+        "snoop_mode": args.snoop_mode,
         "numa_split": numa_cfg["numa-split"],
         "num_threads": numa_cfg["num-threads"],
         "cpufreq_mhz": CPUFREQ_MHZ,
@@ -578,7 +585,22 @@ def main(args):
         set_prefetcher(variant_cfg.get("prefetcher", "off"))
 
         log_path = log_dir / f"{param_name}_{val}.log"
-        perf = run_and_parse(to_command(cfg_args), log_path)
+        cmd = to_command(cfg_args)
+        perf = run_and_parse(cmd, log_path)
+
+        # init_hashjoin_dist() writes the generated dataset to DATASET_CACHE_DIR
+        # with a plain ofstream and no fsync, then the join starts immediately.
+        # For the skew sweep that is an 8gb file per point, and the kernel
+        # flushes those dirty pages *during* the timed region, stealing memory
+        # bandwidth from a memory-bound benchmark -- it cost ~20% on some
+        # points, unevenly. Whichever join runs first in a set absorbs this for
+        # the whole set, so measure that point again once the file is on disk.
+        if "Generating hashjoin dataset" in log_path.read_text():
+            print("    -> dataset was generated during this run; syncing and "
+                  "re-measuring against the cached copy")
+            subprocess.run(["sync"], check=False)
+            perf = run_and_parse(cmd, log_path)
+
         results["throughput_mops"].append(perf)
 
         print("\n")
@@ -616,6 +638,14 @@ def parse_args():
         "--hashtable",
         choices=sorted(HASH_JOIN_VARIANTS.keys()),
         help="Which hashtable to use for --join-type hash (required in that case).",
+    )
+    parser.add_argument(
+        "--snoop-mode",
+        default=DEFAULT_SNOOP_MODE,
+        help="Subdirectory the results are written under, naming the machine's "
+             f"BIOS snoop mode (default: {DEFAULT_SNOOP_MODE}). Change the BIOS "
+             "setting and pass a different name to collect a second tree "
+             "without clobbering the first.",
     )
     parser.add_argument(
         "--param-name",
