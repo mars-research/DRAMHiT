@@ -1,9 +1,14 @@
 # Join benchmarks — Intel Xeon Gold 6548Y+ (2 sockets, 2.5 GHz)
 
-**All data below was collected with the BIOS in `directory` snoop mode**
-(`directory/`). A `snoop/` tree collected after a BIOS change is a
-separate set of numbers; the dual-socket results in particular should not
-be compared across modes.
+Two BIOS snoop modes are collected, in separate trees:
+
+| tree | BIOS mode | sets |
+|---|---|---|
+| `directory/` | directory | relation_size + skew, both numa configs |
+| `snoop/` | snoop | skew only, both numa configs |
+
+Findings 1-4 below are from `directory/`, which is the complete collection.
+The snoop-mode section says which of them reproduce.
 
 64 cores / 128 threads, 2 NUMA nodes, ~128 GB DDR each, 2 MB L2 per core
 (1 MB per hyperthread). Collected with `run_join.py` via `run_all.sh`.
@@ -76,6 +81,42 @@ Single-socket cas matches `../collect_radix/intel_single_*.json` (same
 ht-type 3) to within 1–2% on `relation_size` and 4% on skew, so these
 numbers reproduce the earlier collection.
 
+The dual-socket flip is **not** explained by cross-socket coherence. Two
+candidate mechanisms were tested and both eliminated: forcing the insert
+prefetch to `prefetchw` (`CAS_PREFETCHW=ON`, so the line arrives exclusive
+and the CAS needs no S→E upgrade) moved nothing, and switching the BIOS to
+snoop mode lifted both tables by nearly the same factor (1.13x vs 1.16x)
+leaving cas23 ahead at 11/12 skew points in both modes.
+
+It also disagrees with the uniform microbenchmark (`compare_uniform.py`,
+mode 11, same 8 GB table). At fill 50 on dual socket cas leads cas23 on
+*both* operations — set 1.07x, get 1.18x — where the join at the same fill
+has cas losing the build phase. The join build inserts each key once into a
+cold table in a single pass; the uniform test re-inserts the same keys 100x
+(`--insert-factor 100`) into a warm one. That difference is the open lead.
+
+## Snoop mode vs directory mode (skew sweep)
+
+Ratio of snoop-mode to directory-mode throughput, summed over the sweep:
+
+| | cas | cas23 | dlht | folklore | radix |
+|---|---|---|---|---|---|
+| single | 1.03 | 1.05 | 0.96 | 0.99 | 0.99 |
+| dual | 1.13 | 1.16 | 1.05 | **1.24** | **0.99** |
+
+Snoop mode helps only where memory crosses sockets, and only the hash
+joins. Single socket is flat within noise. Dual gains 5–24% for every hash
+table but leaves radix at 0.99x — which is finding 3's mechanism confirmed
+from the other direction: radix's partitions are thread-local and
+first-touched on the running thread's own node, so it barely touches the
+interconnect and a snoop-filter change has nothing to improve. folklore
+gains most (1.24x), consistent with it having the most coherence stall time
+to recover.
+
+Everything qualitative survives the BIOS change: hash tables rise with
+skew, radix falls monotonically, the crossover stays near skew 0.8–0.9, and
+cas23 still leads cas on dual (mean ratio 0.89 in both modes).
+
 ## Methodology note: dataset generation contaminates the first run of a set
 
 `init_hashjoin_dist()` writes each generated dataset to `/opt/DRAMHiT/cache/`
@@ -99,6 +140,14 @@ a fresh collection.
 Residual run-to-run variance is roughly ±5%: repeating single/skew cas at
 skew 1.1 three times gave 3743 / 3724 / 3905 mops.
 
+**Every point in both trees is a single measurement**, and dual socket is
+the noisier config. Five repeats of dual/relation_size 8gb gave sd ≈ 50 on
+~2100 mops (2.4%) in snoop mode, and directory mode was worse — two
+identical runs gave cas build 1630 and 1767 (8% apart). For contrast the
+uniform microbenchmark, which averages 100 iterations, repeats to ±0.2%.
+Read trends across a sweep, not individual points; a single cas-vs-cas23
+ratio in the dual series is near the noise floor.
+
 ## Layout
 
 ```
@@ -110,6 +159,12 @@ skew 1.1 three times gave 3743 / 3724 / 3905 mops.
   intel_joins_overview.png             all four sets as a 2x2 grid
 ```
 
-Collect: `./run_all.sh directory` (the snoop-mode name is required, so it
-cannot be forgotten after a BIOS change). Plot: `python3 plot_data.py
-directory`, or `python3 plot_data.py directory single_skew` for one set.
+Collect: `./run_all.sh <snoop-mode> [param ...]` — the mode name is
+required, so it cannot be forgotten after a BIOS change. Plot: `python3
+plot_data.py <snoop-mode>`, or name sets to plot only those. A partly
+collected mode plots what it has (`snoop/` has skew only, so its overview
+is a 1x2 grid).
+
+Cross-check against a different workload: `python3 compare_uniform.py` runs
+the `../macro_uniform` test (mode 11) for cas and cas23 on both numa
+configs.

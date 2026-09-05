@@ -101,9 +101,13 @@ def load_set(mode_dir, numa_config, param_name):
             rows.append({"join": join, "x": x, "mops": mops})
 
     if not rows:
-        raise SystemExit(f"[!] no data found under {set_dir}")
+        return None
 
     return pd.DataFrame(rows)
+
+
+def have_set(mode_dir, numa_config, param_name):
+    return load_set(mode_dir, numa_config, param_name) is not None
 
 
 # =============================================================================
@@ -169,6 +173,9 @@ def plot_one_set(mode_dir, numa_config, param_name):
     palette = configure_palette(len(JOIN_ORDER))
 
     df = load_set(mode_dir, numa_config, param_name)
+    if df is None:
+        print(f"[!] no data for {numa_config}_{param_name} under {mode_dir}, skipping")
+        return
     joins = [j for j in JOIN_ORDER if j in set(df["join"])]
 
     fig, axes = get_subplots(1, 1)
@@ -191,10 +198,21 @@ def plot_overview(mode_dir):
     configure_style()
     palette = configure_palette(len(JOIN_ORDER))
 
-    params = ["relation_size", "skew"]
     configs = ["single", "dual"]
+    # a mode may only be partly collected (e.g. skew swept but not
+    # relation_size); lay out just the rows that have data for every config
+    params = [
+        p
+        for p in ("relation_size", "skew")
+        if all(have_set(mode_dir, c, p) for c in configs)
+    ]
+    if not params:
+        print(f"[!] no complete sweep under {mode_dir}, skipping overview")
+        return
 
     fig, axes = get_subplots(len(params), len(configs))
+    if len(params) == 1:
+        axes = [axes]
     joins = []
 
     for r, param_name in enumerate(params):
