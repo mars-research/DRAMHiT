@@ -1,5 +1,12 @@
 
+Dual socket:
+ ./build/bandwidth_rand -m 128mb -pattern "n0a2,3t64 n1a2,3t64" -freq 2.7 -inst t1 -lookahead 64 -mode r
+ Bandwidth       : 207.72 GB/s
 
+Single socket:
+
+ ./build/bandwidth_rand -m 128mb -pattern "n0a2t64" -freq 2.7 -inst t1 -lookahead 64 -mode r
+Bandwidth       : 348.24 GB/s
 
 facts:
 
@@ -7,7 +14,6 @@ facts:
 using different prefetch inst results in different memory bandwidth.
 - t0 350gb/s
 - t1 400gb/s
-
 
 2. prefetchT1 stalls cpu if continously issued at 16.
 
