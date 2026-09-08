@@ -77,6 +77,18 @@ class Numa {
 
   const std::vector<numa_node_t> &get_node_config(void) const { return nodes; }
 
+  /* Nodes that actually have CPUs attached. Memory-only NUMA nodes (e.g. the
+   * HBM nodes of a Xeon Max in flat mode) are configured nodes with an empty
+   * cpu_list; thread placement must skip them, or indexing cpu_list walks off
+   * the end. Memory placement still wants the full list from
+   * get_node_config(). */
+  std::vector<numa_node_t> get_cpu_node_config(void) const {
+    std::vector<numa_node_t> cpu_nodes;
+    for (const auto &n : nodes)
+      if (!n.cpu_list.empty()) cpu_nodes.push_back(n);
+    return cpu_nodes;
+  }
+
  private:
   int numa_present;
   int max_node;
@@ -148,7 +160,7 @@ class NumaPolicyQueues : public Numa {
   NumaPolicyQueues(int num_prod, int num_cons, numa_policy_queues npq) {
     this->config_num_prod = num_prod;
     this->config_num_cons = num_cons;
-    this->nodes = Numa::get_node_config();
+    this->nodes = Numa::get_cpu_node_config();
     this->npq = npq;
     this->init_unassigned_cpus_list();
     this->generate_cpu_lists();
@@ -344,7 +356,7 @@ class NumaPolicyThreads : public Numa {
  public:
   NumaPolicyThreads(int num_threads, numa_policy_threads np) {
     this->config_num_threads = num_threads;
-    this->nodes = Numa::get_node_config();
+    this->nodes = Numa::get_cpu_node_config();
     this->np = np;
     this->init_unassigned_cpus_list();
     this->generate_cpu_list();
@@ -352,7 +364,7 @@ class NumaPolicyThreads : public Numa {
 
   NumaPolicyThreads(int num_threads, uint32_t cpu_node_msk) {
     this->config_num_threads = num_threads;
-    this->nodes = Numa::get_node_config();
+    this->nodes = Numa::get_cpu_node_config();
     this->np = THREADS_CUSTOM;
     this->cpu_node_msk = cpu_node_msk;
     this->init_unassigned_cpus_list();
@@ -374,7 +386,7 @@ class NumaPolicyThreads : public Numa {
     {
         for(size_t j=0; j<nodes[i].cpu_list.size(); j++)
             if(nodes[i].cpu_list[j] == cpu)
-                return i;
+                return static_cast<int>(nodes[i].id);
     }
     return -1;
   }
@@ -402,11 +414,17 @@ class NumaPolicyThreads : public Numa {
     assert(this->config_num_threads <=
            static_cast<uint32_t>(Numa::get_num_total_cpus()));
 
+    if (nodes.empty()) {
+      std::cout << "no numa node has any cpu; cannot place threads"
+                << std::endl;
+      exit(-1);
+    }
+
     if(this->np == THREADS_CUSTOM)
     {
         std::vector<uint32_t> selected_nodes;
         for (uint32_t n = 0; n < nodes.size(); n++) {
-          if (this->cpu_node_msk & (1u << n)) {
+          if (this->cpu_node_msk & (1u << nodes[n].id)) {
             selected_nodes.push_back(n);
           }
         }
@@ -459,12 +477,27 @@ class NumaPolicyThreads : public Numa {
 
     if (this->np == THREADS_SPLIT_SEPARATE_NODES || this->np == THREADS_NO_MEM_DISTRIBUTION || this->np == THREADS_SPLIT_EVEN_NODES
         ||this->np == THREADS_ALL_NODES_LOCAL_ACCESS || this->np == THREADS_ALL_NODES_REMOTE_ACCESS) {
-      int num_nodes = Numa::get_num_nodes();
+      int num_nodes = static_cast<int>(nodes.size());
       uint32_t node_idx_ctr = 0, cpu_idx_ctr = 0, last_cpu_idx = 0;
       uint32_t threads_per_node =
           static_cast<int>(this->config_num_threads / num_nodes);
       uint32_t threads_per_node_spill =
           static_cast<int>(this->config_num_threads % num_nodes);
+
+      /* Splitting evenly needs threads_per_node cpus on every node, plus one
+       * more on the first threads_per_node_spill of them. Nodes can be
+       * asymmetric, so a thread count that fits in the machine's total cpu
+       * count need not fit this split. */
+      for (auto n = 0u; n < nodes.size(); n++) {
+        uint32_t cpus_reqd = threads_per_node + (n < threads_per_node_spill);
+        if (cpus_reqd > nodes[n].cpu_list.size()) {
+          std::cout << "cannot split " << this->config_num_threads
+                    << " threads over " << num_nodes << " numa nodes: node "
+                    << nodes[n].id << " needs " << cpus_reqd << " cpus but has "
+                    << nodes[n].cpu_list.size() << std::endl;
+          exit(-1);
+        }
+      }
 
       for (auto i = 0u; i < threads_per_node * num_nodes; i++) {
         uint32_t cpu_assigned = nodes[node_idx_ctr].cpu_list[cpu_idx_ctr];
