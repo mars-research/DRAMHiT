@@ -62,8 +62,6 @@ class CASHashTableSingleThread : public BaseHashTable {
       abort();
     }
 
-    // Allocate hashtable via mmap with 2MB hugepages
-
     this->hashtable =
         (KV *)calloc_ht<KV>(this->capacity, this->id, &this->fd);
 

@@ -3,6 +3,7 @@
 
 #include <fcntl.h>
 #include <numaif.h>
+#include <sched.h>
 #include <plog/Log.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -42,6 +43,28 @@ constexpr uint64_t cache_block_aligned_addr(uint64_t addr) {
   return addr & ~CACHE_BLOCK_MASK;
 }
 
+// Bind [addr, addr + alloc_sz) to the nodes selected by `nodemask`. A single
+// set bit pins to that node; multiple set bits interleave pages round-robin
+// across those nodes so the region ends up evenly spread instead of piled onto
+// one node under MPOL_BIND.
+inline void mbind_to_nodemask(void *addr, uint64_t alloc_sz,
+                              unsigned long nodemask) {
+  unsigned long maxnode = sizeof(nodemask) * 8;
+  int mem_policy =
+      (__builtin_popcountl(nodemask) > 1) ? MPOL_INTERLEAVE : MPOL_BIND;
+
+  long ret = mbind(addr, alloc_sz, mem_policy, &nodemask, maxnode,
+                   MPOL_MF_MOVE | MPOL_MF_STRICT);
+  if (ret < 0) {
+    perror("mbind");
+    PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
+  } else {
+    PLOGI.printf("Successfully %s %lu bytes to node mask 0x%lx",
+                 (mem_policy == MPOL_INTERLEAVE) ? "interleaved" : "bound",
+                 alloc_sz, nodemask);
+  }
+}
+
 inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
                                     numa_policy_threads policy) {
   // Check if there is only one NUMA node
@@ -51,32 +74,26 @@ inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
     return;
   }
 
-  // use np_mem_node_msk to decide which one to bind on
-  if(config.mode == FASTQ_WITH_INSERT)
-  {
+  if (config.mode == FASTQ_WITH_INSERT &&
+      (config.ht_type == PARTITIONED_HT || config.ht_type == CASSTHTPP)) {
+    // --np_mem_node_msk is the explicit escape hatch (e.g. pushing the tables
+    // onto the HBM nodes of a Xeon Max); 0 means "no override, stay local".
+    if (config.np_mem_node_msk != 0) {
+      mbind_to_nodemask(addr, alloc_sz, config.np_mem_node_msk);
+      return;
+    }
 
-      return; // local memory first, no hbm ....
-     unsigned long nodemask = config.np_mem_node_msk;
-     unsigned long maxnode = sizeof(nodemask) * 8;
-     // A single set bit pins to that node; multiple set bits interleave
-     // pages round-robin across those nodes so the region ends up evenly
-     // spread instead of piled onto one node under MPOL_BIND.
-     int mem_policy = (__builtin_popcountl(nodemask) > 1) ? MPOL_INTERLEAVE
-                                                           : MPOL_BIND;
-
-     long ret = mbind(addr, alloc_sz, mem_policy, &nodemask, maxnode,
-                      MPOL_MF_MOVE | MPOL_MF_STRICT);
-     if (ret < 0) {
-       perror("mbind");
-       PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-     } else {
-       PLOGI.printf(
-           "Successfully %s %lu bytes to node mask 0x%lx",
-           (mem_policy == MPOL_INTERLEAVE) ? "interleaved" : "bound",
-           alloc_sz, nodemask);
-     }
-
-     return;
+    int cpu = sched_getcpu();
+    int node = (cpu < 0) ? -1 : numa_node_of_cpu(cpu);
+    if (node < 0) {
+      PLOGE.printf("cannot resolve local numa node (cpu %d), leaving %lu bytes "
+                   "unbound", cpu, alloc_sz);
+      return;
+    }
+    PLOGI.printf("fastq: binding %lu bytes to local node %d (cpu %d)", alloc_sz,
+                 node, cpu);
+    mbind_to_nodemask(addr, alloc_sz, 1UL << node);
+    return;
   }
 
   if (policy == THREADS_REMOTE_NUMA_NODE) {
@@ -126,29 +143,9 @@ inline void distribute_mem_to_nodes(void *addr, uint64_t alloc_sz,
         PLOGV.printf("Successfully bound %lu bytes to node %d", current_sz, i);
       }
     }
-  } else if(policy == THREADS_CUSTOM)
-  {
-      unsigned long nodemask = config.np_mem_node_msk;
-      unsigned long maxnode = sizeof(nodemask) * 8;
-      // A single set bit pins to that node; multiple set bits interleave
-      // pages round-robin across those nodes so the region ends up evenly
-      // spread instead of piled onto one node under MPOL_BIND.
-      int mem_policy = (__builtin_popcountl(nodemask) > 1) ? MPOL_INTERLEAVE
-                                                            : MPOL_BIND;
-
-      long ret = mbind(addr, alloc_sz, mem_policy, &nodemask, maxnode,
-                       MPOL_MF_MOVE | MPOL_MF_STRICT);
-      if (ret < 0) {
-        perror("mbind");
-        PLOGE.printf("mbind ret %ld | errno %d", ret, errno);
-      } else {
-        PLOGI.printf(
-            "Successfully %s %lu bytes to node mask 0x%lx",
-            (mem_policy == MPOL_INTERLEAVE) ? "interleaved" : "bound",
-            alloc_sz, nodemask);
-      }
-  }
-  else {
+  } else if (policy == THREADS_CUSTOM) {
+    mbind_to_nodemask(addr, alloc_sz, config.np_mem_node_msk);
+  } else {
     long ret = mbind(addr, alloc_sz, MPOL_INTERLEAVE, numa_all_nodes_ptr->maskp,
                      *numa_all_nodes_ptr->maskp, MPOL_MF_MOVE | MPOL_MF_STRICT);
     if (ret < 0) {

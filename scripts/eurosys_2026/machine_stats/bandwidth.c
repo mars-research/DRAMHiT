@@ -20,6 +20,8 @@
 
 #define MAX_PATTERNS 64
 #define MAX_REGIONS 64
+
+// NOTE: to observe write back, in directory mode, we need to set this to be 1.
 #define NUM_ITERATIONS 100 // Adjust as needed
 
 // Topology Limits
