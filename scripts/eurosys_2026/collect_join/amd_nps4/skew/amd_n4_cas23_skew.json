@@ -1,0 +1,483 @@
+{
+  "machine": "amd",
+  "tag": "nps4",
+  "run": "n4_cas23",
+  "param_name": "skew",
+  "param_values": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0,
+    1.1,
+    1.2
+  ],
+  "reps": 5,
+  "cpufreq_mhz": 3250,
+  "threads_by_node": {
+    "0": 16,
+    "1": 16,
+    "2": 16,
+    "3": 16
+  },
+  "args": [
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.1,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.2,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.3,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.4,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.5,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.6,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.7,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.8,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.9,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.0,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.1,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.2,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    }
+  ],
+  "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/skew/logs/n4_cas23",
+  "throughput_mops": [
+    2443.0,
+    2485.0,
+    2511.0,
+    2559.0,
+    2623.0,
+    2754.0,
+    2954.0,
+    3253.0,
+    3849.0,
+    4436.0,
+    4654.0,
+    4493.0
+  ],
+  "throughput_samples": [
+    [
+      2443.0,
+      2575.0,
+      2439.0,
+      2443.0,
+      2432.0
+    ],
+    [
+      2456.0,
+      2485.0,
+      2485.0,
+      2502.0,
+      2429.0
+    ],
+    [
+      2451.0,
+      2521.0,
+      2510.0,
+      2511.0,
+      2517.0
+    ],
+    [
+      2558.0,
+      2560.0,
+      2468.0,
+      2647.0,
+      2559.0
+    ],
+    [
+      2635.0,
+      2623.0,
+      2592.0,
+      2544.0,
+      2627.0
+    ],
+    [
+      2774.0,
+      2586.0,
+      2755.0,
+      2751.0,
+      2754.0
+    ],
+    [
+      2954.0,
+      2958.0,
+      2960.0,
+      2844.0,
+      2914.0
+    ],
+    [
+      3282.0,
+      3077.0,
+      3304.0,
+      3215.0,
+      3253.0
+    ],
+    [
+      3675.0,
+      3925.0,
+      3849.0,
+      3706.0,
+      3868.0
+    ],
+    [
+      4553.0,
+      4506.0,
+      4436.0,
+      4242.0,
+      4237.0
+    ],
+    [
+      4654.0,
+      4126.0,
+      4765.0,
+      4702.0,
+      4209.0
+    ],
+    [
+      3904.0,
+      4818.0,
+      4670.0,
+      4493.0,
+      4062.0
+    ]
+  ],
+  "probe_cyc_per_op_samples": [
+    [
+      82,
+      77,
+      82,
+      82,
+      82
+    ],
+    [
+      81,
+      80,
+      80,
+      79,
+      82
+    ],
+    [
+      81,
+      79,
+      79,
+      79,
+      79
+    ],
+    [
+      77,
+      77,
+      81,
+      75,
+      78
+    ],
+    [
+      75,
+      75,
+      76,
+      78,
+      75
+    ],
+    [
+      71,
+      77,
+      71,
+      71,
+      71
+    ],
+    [
+      66,
+      66,
+      66,
+      69,
+      67
+    ],
+    [
+      58,
+      63,
+      58,
+      60,
+      59
+    ],
+    [
+      51,
+      47,
+      48,
+      51,
+      48
+    ],
+    [
+      40,
+      40,
+      41,
+      43,
+      43
+    ],
+    [
+      39,
+      45,
+      37,
+      38,
+      44
+    ],
+    [
+      48,
+      37,
+      38,
+      40,
+      45
+    ]
+  ],
+  "build_cyc_per_op_samples": [
+    [
+      129,
+      130,
+      130,
+      130,
+      130
+    ],
+    [
+      130,
+      130,
+      130,
+      129,
+      130
+    ],
+    [
+      130,
+      130,
+      130,
+      130,
+      130
+    ],
+    [
+      130,
+      130,
+      130,
+      130,
+      130
+    ],
+    [
+      129,
+      129,
+      129,
+      129,
+      130
+    ],
+    [
+      130,
+      130,
+      129,
+      130,
+      130
+    ],
+    [
+      130,
+      129,
+      129,
+      129,
+      130
+    ],
+    [
+      129,
+      130,
+      131,
+      129,
+      129
+    ],
+    [
+      130,
+      129,
+      129,
+      129,
+      130
+    ],
+    [
+      130,
+      129,
+      130,
+      130,
+      129
+    ],
+    [
+      129,
+      129,
+      130,
+      130,
+      130
+    ],
+    [
+      129,
+      130,
+      129,
+      129,
+      130
+    ]
+  ]
+}

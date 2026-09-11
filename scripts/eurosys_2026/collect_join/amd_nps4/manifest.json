@@ -1,0 +1,74 @@
+{
+  "sets": [
+    {
+      "run": "n4_cas",
+      "param_name": "relation_size",
+      "path": "relation_size/amd_n4_cas_relation_size.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_cas23",
+      "param_name": "relation_size",
+      "path": "relation_size/amd_n4_cas23_relation_size.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_dlht",
+      "param_name": "relation_size",
+      "path": "relation_size/amd_n4_dlht_relation_size.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_folklore",
+      "param_name": "relation_size",
+      "path": "relation_size/amd_n4_folklore_relation_size.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_radix",
+      "param_name": "relation_size",
+      "path": "relation_size/amd_n4_radix_relation_size.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_cas",
+      "param_name": "skew",
+      "path": "skew/amd_n4_cas_skew.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_cas23",
+      "param_name": "skew",
+      "path": "skew/amd_n4_cas23_skew.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_dlht",
+      "param_name": "skew",
+      "path": "skew/amd_n4_dlht_skew.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_folklore",
+      "param_name": "skew",
+      "path": "skew/amd_n4_folklore_skew.json",
+      "machine": "amd",
+      "tag": "nps4"
+    },
+    {
+      "run": "n4_radix",
+      "param_name": "skew",
+      "path": "skew/amd_n4_radix_skew.json",
+      "machine": "amd",
+      "tag": "nps4"
+    }
+  ]
+}

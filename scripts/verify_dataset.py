@@ -32,7 +32,10 @@ def estimate_zipf_skew(data):
 
 
 def check_hashjoin(filepath, filename):
-    pattern = r"hashjoin_r(\d+)_s(\d+)_skew([\d.]+)_hit([\d.]+)_seed(\d+)\.bin"
+    # _kr<width> is optional: it is present only on datasets generated with the
+    # HASHJOIN_TARGET_DENSITY override, and records the zipf keyrange used.
+    pattern = (r"hashjoin_r(\d+)_s(\d+)_skew([\d.]+)_hit([\d.]+)_seed(\d+)"
+               r"(?:_kr(\d+))?\.bin")
     match = re.match(pattern, filename)
 
     if not match:
@@ -44,12 +47,15 @@ def check_hashjoin(filepath, filename):
     expected_skew = float(match.group(3))
     expected_hit_rate = float(match.group(4))
     seed = int(match.group(5))
+    keyrange = int(match.group(6)) if match.group(6) else None
 
     print("Dataset Type: Hashjoin")
     print(f"Expected R Size:   {r_size}")
     print(f"Expected S Size:   {s_size}")
     print(f"Expected Skew:     {expected_skew}")
     print(f"Expected Hit Rate: {expected_hit_rate}")
+    if keyrange is not None:
+        print(f"Tagged keyrange:   {keyrange}")
 
     dtype = np.uint64
     data = np.fromfile(filepath, dtype=dtype)
@@ -80,6 +86,32 @@ def check_hashjoin(filepath, filename):
         print(
             f"WARNING: Hit rate deviates by {hit_diff:.4f} (Threshold: {HIT_RATE_DELTA})"
         )
+
+    # Support check. The fitted exponent below is a property of the
+    # rank-frequency slope, so it is identical whether S draws from all of R or
+    # from a small prefix of it. Only the support size reveals a truncated
+    # keyrange (see target_density in init_hashjoin_dist).
+    unique_s = np.unique(S)
+    support = len(unique_s)
+    print(f"S Support:         {support} distinct keys "
+          f"({100.0 * support / r_size:.1f}% of R)")
+    if keyrange is not None and support > keyrange:
+        print(f"WARNING: support {support} exceeds tagged keyrange {keyrange}.")
+    # Two different causes of a small support, which must not be confused:
+    #  - the keyrange was truncated, so most of R is unreachable by any probe;
+    #  - the keyrange is full but the zipf tail simply never got sampled, which
+    #    is expected at high skew and is not a defect.
+    truncated = support < 0.5 * r_size and (keyrange is None or keyrange < r_size)
+    if truncated:
+        print(f"WARNING: S reaches only {100.0 * support / r_size:.1f}% of R -- the "
+              f"zipf keyrange is truncated (target_density in init_hashjoin_dist), "
+              f"so {100.0 - 100.0 * support / r_size:.1f}% of R can never be probed.")
+    elif support < 0.9 * r_size:
+        print(f"NOTE: support is {100.0 * support / r_size:.1f}% of R; the unsampled "
+              f"remainder is the zipf tail, expected at higher skew.")
+    print(f"Samples per key:   {len(S) / support:.1f}"
+          f"   (target_density aims for >= 100; a low value makes the skew fit "
+          f"below unreliable)")
 
     # Skew check
     actual_skew = estimate_zipf_skew(S)

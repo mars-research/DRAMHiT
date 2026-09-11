@@ -1,0 +1,159 @@
+{
+  "_machine_notes": [
+    "AMD EPYC 9354P -- 1 socket, 32 cores / 64 threads, BIOS in NPS4 so the",
+    "socket presents 4 numa nodes of 16 cpus and ~47 GiB each (~187 GiB total).",
+    "L3 is 8 x 32 MiB (one per CCD); L2 is 1 MiB per core, i.e. 512 KiB per",
+    "hyperthread when both siblings run -- that is what get_optimal_radix()",
+    "sizes partitions against.",
+    "",
+    "Keys beginning with '_' are comments and are ignored by run_join.py."
+  ],
+  "machine": "amd",
+  "tag": "nps4",
+  "data_dir": "amd_nps4",
+  "_data_dir": [
+    "All output for this spec lives under <data_dir>/, relative to run_join.py:",
+    "  <data_dir>/<param>/<machine>_<name>_<param>.json   throughput + resolved config",
+    "  <data_dir>/<param>/logs/<name>/<param>_<value>.log raw dramhit stdout",
+    "  <data_dir>/manifest.json                           index for plot_data.py",
+    "Change 'tag'/'data_dir' together after a BIOS change (e.g. NPS1) so the",
+    "two collections do not clobber each other."
+  ],
+  "cpufreq_mhz": 3250,
+  "l2_bytes_per_core": 1048576,
+  "smt_per_core": 2,
+  "node_mem_headroom_frac": 0.15,
+  "dramhit_exec": "/opt/DRAMHiT/build/dramhit",
+  "dataset_cache_dir": "/opt/DRAMHiT/cache",
+  "scripts": {
+    "prefetch": "/opt/DRAMHiT/scripts/prefetch_control_amd.sh",
+    "reserve_hugepages": "/opt/DRAMHiT/scripts/reserve_hugepages.sh"
+  },
+  "cmake_flags": [
+    "-DDRAMHiT_VARIANT=2025_INLINE",
+    "-DBUCKETIZATION=ON",
+    "-DBRANCH=simd",
+    "-DPREFETCH=DOUBLE",
+    "-DUNIFORM_PROBING=ON",
+    "-DGROWT=ON",
+    "-DCAS_PREFETCHW=ON"
+  ],
+  "_defaults": [
+    "Applied to every run, then overridden by that run's own 'args'.",
+    "relation_r_size / relation_s_size are counts of 16-byte tuples:",
+    "  256 MB = 16777216   512 MB = 33554432    1 GB = 67108864",
+    "    2 GB = 134217728    4 GB = 268435456    8 GB = 536870912",
+    "   15 GB = 1006632960  16 GB = 1073741824",
+    "The skew sweep uses these sizes (r = 1 GB, s = 15 GB); the relation_size",
+    "sweep overwrites both with the swept value (r = s)."
+  ],
+  "defaults": "--relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0",
+  "_params": [
+    "Swept x-axes. A run may override a list under its own 'params' key;",
+    "an empty list there means 'skip this sweep for this run'.",
+    "ht-fill and radix are derived per point, not listed here:",
+    "  mode 13 -> ht-fill = ceil(r*100/(r+s)), capped by the run's max_ht_fill",
+    "  mode 16 -> radix   = get_optimal_radix(r, ht-fill) against L2 above"
+  ],
+  "params": {
+    "skew": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.2
+    ],
+    "relation_size": [
+      67108864,
+      134217728,
+      268435456,
+      536870912,
+      1073741824
+    ]
+  },
+  "_runs": [
+    "Every run is self-describing: its 'args' carry the numa policy, so",
+    "run_join.py derives the hugepage plan from them and nothing else.",
+    "",
+    "  n4  64 threads, all 4 nodes        --numa-split 1  (THREADS_SPLIT_SEPARATE_NODES)",
+    "        threads split evenly over the 4 nodes; global ht MPOL_INTERLEAVE'd",
+    "        over all of them; relation and radix arenas follow first touch, so",
+    "        they land on whichever node their own thread runs on.",
+    "",
+    "WHY NOT --numa-split 10 --np_cpu_node_msk 15: radixjoin2016() calls",
+    "arena.mem_bind(np_mem_node_msk) only when numa_split == 10, which with more",
+    "than one bit set INTERLEAVES the per-thread radix partitions instead of",
+    "leaving them thread-local first-touch. Split 1 keeps radix's partitions",
+    "node-local, which is the property the join is supposed to have. Use split 10",
+    "with masks only for a node *subset* (there is no other way to select one),",
+    "and remember radix is then a different experiment.",
+    "",
+    "Footprint at these sizes is ~40 GiB (16 relations + 16 table + 8",
+    "g_zipf_values), i.e. ~10 GiB of hugepages per node plus the g_zipf_values",
+    "vector. That fits the 4-node config comfortably but not a single 47 GiB",
+    "node -- which is why only n4 is collected here. Run with --dry-run to see",
+    "the exact per-node budget before committing."
+  ],
+  "runs": [
+    {
+      "name": "n4_cas",
+      "prefetcher": "off",
+      "args": "--mode 13 --ht-type 3  --batch-len 16 --numa-split 1 --num-threads 64"
+    },
+    {
+      "name": "n4_cas23",
+      "prefetcher": "off",
+      "args": "--mode 13 --ht-type 8  --batch-len 16 --numa-split 1 --num-threads 64"
+    },
+    {
+      "name": "n4_dlht",
+      "prefetcher": "on",
+      "max_ht_fill": 30,
+      "args": "--mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64",
+      "params": {
+        "relation_size": [
+          67108864,
+          134217728,
+          268435456,
+          536870912
+        ]
+      },
+      "_params": "16 GB omitted: 64 GiB table + 8 GiB links does not fit."
+    },
+    {
+      "name": "n4_folklore",
+      "prefetcher": "on",
+      "args": "--mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64"
+    },
+    {
+      "name": "n4_radix",
+      "prefetcher": "on",
+      "args": "--mode 16 --ht-type 3  --ht-fill 50 --numa-split 1 --num-threads 64"
+    }
+  ],
+  "_cmake_flags": [
+    "CAS_PREFETCHW=ON is deliberate and should stay on. It defaults to OFF in",
+    "CMakeLists.txt, which makes cas's insert prefetch a read-only prefetcht0, so",
+    "every CAS pays an S->E coherence upgrade. Turning it on takes cas's build",
+    "phase from 167 to 124 cyc/op on this box and makes it beat cas23 (130)",
+    "instead of losing to it by 1.28x. cas23 is unaffected -- it always",
+    "prefetches for write. Probe is unchanged either way.",
+    "See cas_vs_cas23_skew_crossover.md section 8a."
+  ],
+  "reps": 5,
+  "_reps": [
+    "Every sweep point is measured 5 times and all samples are kept.",
+    "throughput_mops holds the per-point median; throughput_samples (and the",
+    "probe/build cyc_per_op sample lists) hold the raw runs. plot_data.py draws",
+    "the median with a min/max band. This matters because cas's run-to-run",
+    "spread is ~5 cyc/op on probe (sd 4-6% of mean) while cas23's is ~2, so",
+    "single-run points cannot resolve the ~10% gaps this tree is measuring."
+  ]
+}
