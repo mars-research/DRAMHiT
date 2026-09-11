@@ -1,0 +1,179 @@
+{
+  "machine": "amd",
+  "tag": "nps4",
+  "run": "n4_dlht",
+  "param_name": "relation_size",
+  "param_values": [
+    67108864,
+    134217728,
+    268435456,
+    536870912
+  ],
+  "reps": 5,
+  "cpufreq_mhz": 3250,
+  "threads_by_node": {
+    "0": 16,
+    "1": 16,
+    "2": 16,
+    "3": 16
+  },
+  "args": [
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 67108864,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 10,
+      "batch-len": 32,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 30
+    },
+    {
+      "relation_r_size": 134217728,
+      "relation_s_size": 134217728,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 10,
+      "batch-len": 32,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 30
+    },
+    {
+      "relation_r_size": 268435456,
+      "relation_s_size": 268435456,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 10,
+      "batch-len": 32,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 30
+    },
+    {
+      "relation_r_size": 536870912,
+      "relation_s_size": 536870912,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 10,
+      "batch-len": 32,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 30
+    }
+  ],
+  "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/logs/n4_dlht",
+  "throughput_mops": [
+    934.0,
+    937.0,
+    942.0,
+    943.0
+  ],
+  "throughput_samples": [
+    [
+      935.0,
+      934.0,
+      934.0,
+      932.0,
+      931.0
+    ],
+    [
+      933.0,
+      937.0,
+      932.0,
+      939.0,
+      939.0
+    ],
+    [
+      942.0,
+      942.0,
+      945.0,
+      933.0,
+      940.0
+    ],
+    [
+      944.0,
+      942.0,
+      943.0,
+      941.0,
+      943.0
+    ]
+  ],
+  "probe_cyc_per_op_samples": [
+    [
+      120,
+      120,
+      122,
+      121,
+      120
+    ],
+    [
+      119,
+      119,
+      120,
+      119,
+      119
+    ],
+    [
+      118,
+      118,
+      116,
+      120,
+      118
+    ],
+    [
+      118,
+      118,
+      119,
+      117,
+      117
+    ]
+  ],
+  "build_cyc_per_op_samples": [
+    [
+      323,
+      324,
+      322,
+      324,
+      325
+    ],
+    [
+      326,
+      324,
+      326,
+      323,
+      323
+    ],
+    [
+      322,
+      322,
+      322,
+      325,
+      323
+    ],
+    [
+      322,
+      322,
+      321,
+      324,
+      323
+    ]
+  ]
+}

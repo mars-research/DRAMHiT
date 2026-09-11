@@ -1,0 +1,1826 @@
+==========================================================
+=== n4_cas / relation_size   (22:35:44)   log: ./recollect_logs/n4_cas_relation_size.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_cas / relation_size ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 3
+    sweeping --relation_size across [67108864, 134217728, 268435456, 536870912, 1073741824]
+[*] memory budget:
+      node0: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_9gb_8764mb n1_9gb_8764mb n2_9gb_8764mb n3_9gb_8764mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 9 1GB pages, 4382 2MB pages...
+Node 1: Reserving 9 1GB pages, 4382 2MB pages...
+Node 2: Reserving 9 1GB pages, 4382 2MB pages...
+Node 3: Reserving 9 1GB pages, 4382 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 17528
+1GiB pages: 36
+      node0: got 9/9 1gb pages, 4382/4382 2mb pages
+      node1: got 9/9 1gb pages, 4382/4382 2mb pages
+      node2: got 9/9 1gb pages, 4382/4382 2mb pages
+      node3: got 9/9 1gb pages, 4382/4382 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: OFF
+Disabling hardware prefetchers (writing 0x2F to MSR 0xC0000108 on all cores)...
+Done. Prefetchers disabled.
+--- relation_size = 67108864  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1189.0  (build 196, probe 153 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1196.0  (build 196, probe 151 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1194.0  (build 196, probe 151 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1201.0  (build 195, probe 150 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1181.0  (build 196, probe 155 cyc/op)
+    => median 1194 mops (min 1181, max 1201) over 5 reps
+--- relation_size = 134217728  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2094.0  (build 130, probe 67 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2106.0  (build 129, probe 68 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2113.0  (build 129, probe 67 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2120.0  (build 129, probe 66 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2050.0  (build 128, probe 74 cyc/op)
+    => median 2106 mops (min 2050, max 2120) over 5 reps
+--- relation_size = 268435456  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2180.0  (build 126, probe 63 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2172.0  (build 128, probe 62 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2123.0  (build 126, probe 68 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2226.0  (build 127, probe 59 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 2202.0  (build 126, probe 62 cyc/op)
+    => median 2180 mops (min 2123, max 2226) over 5 reps
+--- relation_size = 536870912  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1817.0  (build 128, probe 100 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1813.0  (build 131, probe 98 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1965.0  (build 128, probe 82 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1888.0  (build 129, probe 90 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1902.0  (build 128, probe 89 cyc/op)
+    => median 1888 mops (min 1813, max 1965) over 5 reps
+--- relation_size = 1073741824  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1911.0  (build 132, probe 85 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1947.0  (build 131, probe 81 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1927.0  (build 131, probe 84 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1930.0  (build 132, probe 82 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1942.0  (build 131, probe 82 cyc/op)
+    => median 1930 mops (min 1911, max 1947) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/amd_n4_cas_relation_size.json
+
+=== SUMMARY ===
+  n4_cas/relation_size -> ok
+==========================================================
+=== n4_cas23 / relation_size   (22:39:58)   log: ./recollect_logs/n4_cas23_relation_size.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_cas23 / relation_size ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 8
+    sweeping --relation_size across [67108864, 134217728, 268435456, 536870912, 1073741824]
+[*] memory budget:
+      node0: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_9gb_8764mb n1_9gb_8764mb n2_9gb_8764mb n3_9gb_8764mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 9 1GB pages, 4382 2MB pages...
+Node 1: Reserving 9 1GB pages, 4382 2MB pages...
+Node 2: Reserving 9 1GB pages, 4382 2MB pages...
+Node 3: Reserving 9 1GB pages, 4382 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 17528
+1GiB pages: 36
+      node0: got 9/9 1gb pages, 4382/4382 2mb pages
+      node1: got 9/9 1gb pages, 4382/4382 2mb pages
+      node2: got 9/9 1gb pages, 4382/4382 2mb pages
+      node3: got 9/9 1gb pages, 4382/4382 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: OFF
+Disabling hardware prefetchers (writing 0x2F to MSR 0xC0000108 on all cores)...
+Done. Prefetchers disabled.
+--- relation_size = 67108864  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1097.0  (build 225, probe 153 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1088.0  (build 226, probe 155 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1108.0  (build 225, probe 149 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1101.0  (build 226, probe 151 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1069.0  (build 226, probe 162 cyc/op)
+    => median 1097 mops (min 1069, max 1108) over 5 reps
+--- relation_size = 134217728  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1632.0  (build 149, probe 105 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1661.0  (build 148, probe 101 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1639.0  (build 148, probe 105 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1637.0  (build 149, probe 104 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1632.0  (build 149, probe 105 cyc/op)
+    => median 1637 mops (min 1632, max 1661) over 5 reps
+--- relation_size = 268435456  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1640.0  (build 148, probe 104 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1646.0  (build 148, probe 103 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1647.0  (build 148, probe 103 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1646.0  (build 148, probe 103 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1645.0  (build 148, probe 104 cyc/op)
+    => median 1646 mops (min 1640, max 1647) over 5 reps
+--- relation_size = 536870912  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1638.0  (build 149, probe 104 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1646.0  (build 149, probe 102 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1651.0  (build 149, probe 102 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1648.0  (build 149, probe 102 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1646.0  (build 149, probe 103 cyc/op)
+    => median 1646 mops (min 1638, max 1651) over 5 reps
+--- relation_size = 1073741824  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1635.0  (build 150, probe 103 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1639.0  (build 150, probe 102 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1627.0  (build 151, probe 103 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1635.0  (build 150, probe 103 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1624.0  (build 150, probe 105 cyc/op)
+    => median 1635 mops (min 1624, max 1639) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/amd_n4_cas23_relation_size.json
+
+=== SUMMARY ===
+  n4_cas23/relation_size -> ok
+==========================================================
+=== n4_dlht / relation_size   (22:44:16)   log: ./recollect_logs/n4_dlht_relation_size.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_dlht / relation_size ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 10
+    sweeping --relation_size across [67108864, 134217728, 268435456, 536870912]
+[*] memory budget:
+      node0: 10 x 1gb + 2232 x 2mb = 14.4 gb hugepages + 8.0 gb ordinary = 22.4 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 10 x 1gb + 2232 x 2mb = 14.4 gb hugepages + 8.0 gb ordinary = 22.4 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 10 x 1gb + 2232 x 2mb = 14.4 gb hugepages + 8.0 gb ordinary = 22.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 10 x 1gb + 2232 x 2mb = 14.4 gb hugepages + 8.0 gb ordinary = 22.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_10gb_4464mb n1_10gb_4464mb n2_10gb_4464mb n3_10gb_4464mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 10 1GB pages, 2232 2MB pages...
+Node 1: Reserving 10 1GB pages, 2232 2MB pages...
+Node 2: Reserving 10 1GB pages, 2232 2MB pages...
+Node 3: Reserving 10 1GB pages, 2232 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 8928
+1GiB pages: 40
+      node0: got 10/10 1gb pages, 2232/2232 2mb pages
+      node1: got 10/10 1gb pages, 2232/2232 2mb pages
+      node2: got 10/10 1gb pages, 2232/2232 2mb pages
+      node3: got 10/10 1gb pages, 2232/2232 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: ON
+Restoring hardware prefetchers (writing 0x00 to MSR 0xC0000108 on all cores)...
+Done. Prefetchers enabled.
+--- relation_size = 67108864  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 935.0  (build 323, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 934.0  (build 324, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 934.0  (build 322, probe 122 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 932.0  (build 324, probe 121 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 931.0  (build 325, probe 120 cyc/op)
+    => median 934 mops (min 931, max 935) over 5 reps
+--- relation_size = 134217728  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 933.0  (build 326, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 937.0  (build 324, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 932.0  (build 326, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 939.0  (build 323, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 939.0  (build 323, probe 119 cyc/op)
+    => median 937 mops (min 932, max 939) over 5 reps
+--- relation_size = 268435456  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 942.0  (build 322, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 942.0  (build 322, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 945.0  (build 322, probe 116 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 933.0  (build 325, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 940.0  (build 323, probe 118 cyc/op)
+    => median 942 mops (min 933, max 945) over 5 reps
+--- relation_size = 536870912  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 944.0  (build 322, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 942.0  (build 322, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 943.0  (build 321, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 941.0  (build 324, probe 117 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 30
+    -> throughput_mops: 943.0  (build 323, probe 117 cyc/op)
+    => median 943 mops (min 941, max 944) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/amd_n4_dlht_relation_size.json
+
+=== SUMMARY ===
+  n4_dlht/relation_size -> ok
+==========================================================
+=== n4_folklore / relation_size   (22:46:37)   log: ./recollect_logs/n4_folklore_relation_size.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_folklore / relation_size ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 11
+    sweeping --relation_size across [67108864, 134217728, 268435456, 536870912, 1073741824]
+[*] memory budget:
+      node0: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 9 x 1gb + 4382 x 2mb = 17.6 gb hugepages + 16.0 gb ordinary = 33.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_9gb_8764mb n1_9gb_8764mb n2_9gb_8764mb n3_9gb_8764mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 9 1GB pages, 4382 2MB pages...
+Node 1: Reserving 9 1GB pages, 4382 2MB pages...
+Node 2: Reserving 9 1GB pages, 4382 2MB pages...
+Node 3: Reserving 9 1GB pages, 4382 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 17528
+1GiB pages: 36
+      node0: got 9/9 1gb pages, 4382/4382 2mb pages
+      node1: got 9/9 1gb pages, 4382/4382 2mb pages
+      node2: got 9/9 1gb pages, 4382/4382 2mb pages
+      node3: got 9/9 1gb pages, 4382/4382 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: ON
+Restoring hardware prefetchers (writing 0x00 to MSR 0xC0000108 on all cores)...
+Done. Prefetchers enabled.
+--- relation_size = 67108864  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 729.0  (build 364, probe 205 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 707.0  (build 368, probe 218 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 709.0  (build 366, probe 219 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 704.0  (build 369, probe 220 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 715.0  (build 367, probe 213 cyc/op)
+    => median 709 mops (min 704, max 729) over 5 reps
+--- relation_size = 134217728  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1010.0  (build 261, probe 149 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1011.0  (build 262, probe 148 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1014.0  (build 261, probe 148 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1003.0  (build 262, probe 151 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1004.0  (build 262, probe 151 cyc/op)
+    => median 1010 mops (min 1003, max 1014) over 5 reps
+--- relation_size = 268435456  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1019.0  (build 261, probe 146 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1020.0  (build 259, probe 148 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1020.0  (build 261, probe 146 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1018.0  (build 259, probe 148 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1020.0  (build 260, probe 147 cyc/op)
+    => median 1020 mops (min 1018, max 1020) over 5 reps
+--- relation_size = 536870912  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1033.0  (build 255, probe 147 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1034.0  (build 253, probe 148 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1034.0  (build 254, probe 147 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1031.0  (build 254, probe 149 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1026.0  (build 254, probe 150 cyc/op)
+    => median 1033 mops (min 1026, max 1034) over 5 reps
+--- relation_size = 1073741824  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1058.0  (build 244, probe 148 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1061.0  (build 244, probe 147 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1055.0  (build 244, probe 149 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1060.0  (build 244, probe 147 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 50
+    -> throughput_mops: 1063.0  (build 244, probe 146 cyc/op)
+    => median 1060 mops (min 1055, max 1063) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/amd_n4_folklore_relation_size.json
+
+=== SUMMARY ===
+  n4_folklore/relation_size -> ok
+==========================================================
+=== n4_radix / relation_size   (22:49:23)   log: ./recollect_logs/n4_radix_relation_size.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+    [!] input size is too big, partition runtime will go up: build_sz 2048 MB, radix 13
+    [!] input size is too big, partition runtime will go up: build_sz 4096 MB, radix 14
+    [!] input size is too big, partition runtime will go up: build_sz 8192 MB, radix 15
+    [!] input size is too big, partition runtime will go up: build_sz 16384 MB, radix 16
+
+=== n4_radix / relation_size ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 16, ht-type 3
+    sweeping --relation_size across [67108864, 134217728, 268435456, 536870912, 1073741824]
+[*] memory budget:
+      node0: 0 x 1gb + 8800 x 2mb = 17.2 gb hugepages + 16.0 gb ordinary = 33.2 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 0 x 1gb + 8800 x 2mb = 17.2 gb hugepages + 16.0 gb ordinary = 33.2 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 0 x 1gb + 8800 x 2mb = 17.2 gb hugepages + 16.0 gb ordinary = 33.2 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 0 x 1gb + 8800 x 2mb = 17.2 gb hugepages + 16.0 gb ordinary = 33.2 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_0gb_17600mb n1_0gb_17600mb n2_0gb_17600mb n3_0gb_17600mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 0 1GB pages, 8800 2MB pages...
+Node 1: Reserving 0 1GB pages, 8800 2MB pages...
+Node 2: Reserving 0 1GB pages, 8800 2MB pages...
+Node 3: Reserving 0 1GB pages, 8800 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 35200
+1GiB pages: 0
+      node0: got 0/0 1gb pages, 8800/8800 2mb pages
+      node1: got 0/0 1gb pages, 8800/8800 2mb pages
+      node2: got 0/0 1gb pages, 8800/8800 2mb pages
+      node3: got 0/0 1gb pages, 8800/8800 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: ON
+Restoring hardware prefetchers (writing 0x00 to MSR 0xC0000108 on all cores)...
+Done. Prefetchers enabled.
+--- relation_size = 67108864  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2563.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2416.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2410.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2417.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 67108864 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2398.0  (build None, probe None cyc/op)
+    => median 2416 mops (min 2398, max 2563) over 5 reps
+--- relation_size = 134217728  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 13
+    -> throughput_mops: 2225.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 13
+    -> throughput_mops: 2244.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 13
+    -> throughput_mops: 2241.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 13
+    -> throughput_mops: 2243.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 134217728 --relation_s_size 134217728 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 13
+    -> throughput_mops: 2219.0  (build None, probe None cyc/op)
+    => median 2241 mops (min 2219, max 2244) over 5 reps
+--- relation_size = 268435456  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 14
+    -> throughput_mops: 2119.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 14
+    -> throughput_mops: 2132.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 14
+    -> throughput_mops: 2153.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 14
+    -> throughput_mops: 2102.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 268435456 --relation_s_size 268435456 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 14
+    -> throughput_mops: 2158.0  (build None, probe None cyc/op)
+    => median 2132 mops (min 2102, max 2158) over 5 reps
+--- relation_size = 536870912  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 15
+    -> throughput_mops: 1613.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 15
+    -> throughput_mops: 1688.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 15
+    -> throughput_mops: 1576.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 15
+    -> throughput_mops: 1573.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 536870912 --relation_s_size 536870912 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 15
+    -> throughput_mops: 1603.0  (build None, probe None cyc/op)
+    => median 1603 mops (min 1573, max 1688) over 5 reps
+--- relation_size = 1073741824  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 16
+    -> ERROR: no throughput_mops in output! See /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/logs/n4_radix/relation_size_1073741824_rep1.log
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 16
+    -> ERROR: no throughput_mops in output! See /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/logs/n4_radix/relation_size_1073741824_rep2.log
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 16
+    -> ERROR: no throughput_mops in output! See /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/logs/n4_radix/relation_size_1073741824_rep3.log
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 16
+    -> ERROR: no throughput_mops in output! See /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/logs/n4_radix/relation_size_1073741824_rep4.log
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 1073741824 --relation_s_size 1073741824 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 16
+    -> ERROR: no throughput_mops in output! See /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/logs/n4_radix/relation_size_1073741824_rep5.log
+    => median 0 mops (min 0, max 0) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/amd_n4_radix_relation_size.json
+
+=== SUMMARY ===
+  n4_radix/relation_size -> ok
+==========================================================
+=== n4_cas / skew   (23:37:30)   log: ./recollect_logs/n4_cas_skew.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_cas / skew ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 3
+    sweeping --skew across [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+[*] memory budget:
+      node0: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_5gb_4464mb n1_5gb_4464mb n2_5gb_4464mb n3_5gb_4464mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 5 1GB pages, 2232 2MB pages...
+Node 1: Reserving 5 1GB pages, 2232 2MB pages...
+Node 2: Reserving 5 1GB pages, 2232 2MB pages...
+Node 3: Reserving 5 1GB pages, 2232 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 8928
+1GiB pages: 20
+      node0: got 5/5 1gb pages, 2232/2232 2mb pages
+      node1: got 5/5 1gb pages, 2232/2232 2mb pages
+      node2: got 5/5 1gb pages, 2232/2232 2mb pages
+      node3: got 5/5 1gb pages, 2232/2232 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: OFF
+Disabling hardware prefetchers (writing 0x2F to MSR 0xC0000108 on all cores)...
+Done. Prefetchers disabled.
+--- skew = 0.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3193.0  (build 123, probe 61 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3399.0  (build 123, probe 57 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3095.0  (build 122, probe 63 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2957.0  (build 122, probe 66 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3398.0  (build 125, probe 56 cyc/op)
+    => median 3193 mops (min 2957, max 3399) over 5 reps
+--- skew = 0.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3499.0  (build 124, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3469.0  (build 122, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3088.0  (build 122, probe 63 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3308.0  (build 124, probe 58 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3551.0  (build 123, probe 54 cyc/op)
+    => median 3469 mops (min 3088, max 3551) over 5 reps
+--- skew = 0.3  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3459.0  (build 123, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3459.0  (build 125, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3470.0  (build 124, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3020.0  (build 123, probe 65 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3571.0  (build 123, probe 53 cyc/op)
+    => median 3459 mops (min 3020, max 3571) over 5 reps
+--- skew = 0.4  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3433.0  (build 125, probe 56 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3402.0  (build 125, probe 56 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3482.0  (build 125, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3549.0  (build 124, probe 54 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3421.0  (build 123, probe 56 cyc/op)
+    => median 3433 mops (min 3402, max 3549) over 5 reps
+--- skew = 0.5  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3449.0  (build 125, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3612.0  (build 123, probe 53 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3592.0  (build 122, probe 53 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3578.0  (build 123, probe 53 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3558.0  (build 125, probe 54 cyc/op)
+    => median 3578 mops (min 3449, max 3612) over 5 reps
+--- skew = 0.6  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3502.0  (build 122, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3805.0  (build 122, probe 50 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3458.0  (build 125, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3695.0  (build 122, probe 51 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3709.0  (build 123, probe 51 cyc/op)
+    => median 3695 mops (min 3458, max 3805) over 5 reps
+--- skew = 0.7  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3764.0  (build 122, probe 50 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3359.0  (build 123, probe 57 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3624.0  (build 122, probe 53 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3699.0  (build 123, probe 51 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3852.0  (build 121, probe 49 cyc/op)
+    => median 3699 mops (min 3359, max 3852) over 5 reps
+--- skew = 0.8  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3890.0  (build 123, probe 48 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3781.0  (build 124, probe 50 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3687.0  (build 125, probe 51 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3426.0  (build 125, probe 56 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3597.0  (build 122, probe 53 cyc/op)
+    => median 3687 mops (min 3426, max 3890) over 5 reps
+--- skew = 0.9  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3169.0  (build 124, probe 61 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3844.0  (build 125, probe 49 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3856.0  (build 123, probe 49 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3270.0  (build 122, probe 59 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3352.0  (build 123, probe 57 cyc/op)
+    => median 3352 mops (min 3169, max 3856) over 5 reps
+--- skew = 1.0  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3385.0  (build 124, probe 57 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3912.0  (build 124, probe 48 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3395.0  (build 124, probe 57 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4073.0  (build 124, probe 46 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4105.0  (build 121, probe 45 cyc/op)
+    => median 3912 mops (min 3385, max 4105) over 5 reps
+--- skew = 1.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3266.0  (build 125, probe 59 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4050.0  (build 122, probe 46 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3701.0  (build 125, probe 51 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3942.0  (build 123, probe 48 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3692.0  (build 123, probe 51 cyc/op)
+    => median 3701 mops (min 3266, max 4050) over 5 reps
+--- skew = 1.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3924.0  (build 122, probe 48 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3784.0  (build 124, probe 50 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3471.0  (build 125, probe 55 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4121.0  (build 123, probe 45 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3966.0  (build 124, probe 47 cyc/op)
+    => median 3924 mops (min 3471, max 4121) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/skew/amd_n4_cas_skew.json
+
+=== SUMMARY ===
+  n4_cas/skew -> ok
+==========================================================
+=== n4_cas23 / skew   (23:49:46)   log: ./recollect_logs/n4_cas23_skew.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_cas23 / skew ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 8
+    sweeping --skew across [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+[*] memory budget:
+      node0: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_5gb_4464mb n1_5gb_4464mb n2_5gb_4464mb n3_5gb_4464mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 5 1GB pages, 2232 2MB pages...
+Node 1: Reserving 5 1GB pages, 2232 2MB pages...
+Node 2: Reserving 5 1GB pages, 2232 2MB pages...
+Node 3: Reserving 5 1GB pages, 2232 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 8928
+1GiB pages: 20
+      node0: got 5/5 1gb pages, 2232/2232 2mb pages
+      node1: got 5/5 1gb pages, 2232/2232 2mb pages
+      node2: got 5/5 1gb pages, 2232/2232 2mb pages
+      node3: got 5/5 1gb pages, 2232/2232 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: OFF
+Disabling hardware prefetchers (writing 0x2F to MSR 0xC0000108 on all cores)...
+Done. Prefetchers disabled.
+--- skew = 0.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2443.0  (build 129, probe 82 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2575.0  (build 130, probe 77 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2439.0  (build 130, probe 82 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2443.0  (build 130, probe 82 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2432.0  (build 130, probe 82 cyc/op)
+    => median 2443 mops (min 2432, max 2575) over 5 reps
+--- skew = 0.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2456.0  (build 130, probe 81 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2485.0  (build 130, probe 80 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2485.0  (build 130, probe 80 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2502.0  (build 129, probe 79 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2429.0  (build 130, probe 82 cyc/op)
+    => median 2485 mops (min 2429, max 2502) over 5 reps
+--- skew = 0.3  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2451.0  (build 130, probe 81 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2521.0  (build 130, probe 79 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2510.0  (build 130, probe 79 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2511.0  (build 130, probe 79 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2517.0  (build 130, probe 79 cyc/op)
+    => median 2511 mops (min 2451, max 2521) over 5 reps
+--- skew = 0.4  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2558.0  (build 130, probe 77 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2560.0  (build 130, probe 77 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2468.0  (build 130, probe 81 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2647.0  (build 130, probe 75 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2559.0  (build 130, probe 78 cyc/op)
+    => median 2559 mops (min 2468, max 2647) over 5 reps
+--- skew = 0.5  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2635.0  (build 129, probe 75 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2623.0  (build 129, probe 75 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2592.0  (build 129, probe 76 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2544.0  (build 129, probe 78 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2627.0  (build 130, probe 75 cyc/op)
+    => median 2623 mops (min 2544, max 2635) over 5 reps
+--- skew = 0.6  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2774.0  (build 130, probe 71 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2586.0  (build 130, probe 77 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2755.0  (build 129, probe 71 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2751.0  (build 130, probe 71 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2754.0  (build 130, probe 71 cyc/op)
+    => median 2754 mops (min 2586, max 2774) over 5 reps
+--- skew = 0.7  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2954.0  (build 130, probe 66 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2958.0  (build 129, probe 66 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2960.0  (build 129, probe 66 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2844.0  (build 129, probe 69 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2914.0  (build 130, probe 67 cyc/op)
+    => median 2954 mops (min 2844, max 2960) over 5 reps
+--- skew = 0.8  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3282.0  (build 129, probe 58 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3077.0  (build 130, probe 63 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3304.0  (build 131, probe 58 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3215.0  (build 129, probe 60 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3253.0  (build 129, probe 59 cyc/op)
+    => median 3253 mops (min 3077, max 3304) over 5 reps
+--- skew = 0.9  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3675.0  (build 130, probe 51 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3925.0  (build 129, probe 47 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3849.0  (build 129, probe 48 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3706.0  (build 129, probe 51 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3868.0  (build 130, probe 48 cyc/op)
+    => median 3849 mops (min 3675, max 3925) over 5 reps
+--- skew = 1.0  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4553.0  (build 130, probe 40 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4506.0  (build 129, probe 40 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4436.0  (build 130, probe 41 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4242.0  (build 130, probe 43 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4237.0  (build 129, probe 43 cyc/op)
+    => median 4436 mops (min 4237, max 4553) over 5 reps
+--- skew = 1.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4654.0  (build 129, probe 39 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4126.0  (build 129, probe 45 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4765.0  (build 130, probe 37 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4702.0  (build 130, probe 38 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4209.0  (build 130, probe 44 cyc/op)
+    => median 4654 mops (min 4126, max 4765) over 5 reps
+--- skew = 1.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3904.0  (build 129, probe 48 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4818.0  (build 130, probe 37 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4670.0  (build 129, probe 38 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4493.0  (build 129, probe 40 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4062.0  (build 130, probe 45 cyc/op)
+    => median 4493 mops (min 3904, max 4818) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/skew/amd_n4_cas23_skew.json
+
+=== SUMMARY ===
+  n4_cas23/skew -> ok
+==========================================================
+=== n4_dlht / skew   (00:02:07)   log: ./recollect_logs/n4_dlht_skew.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_dlht / skew ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 10
+    sweeping --skew across [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+[*] memory budget:
+      node0: 6 x 1gb + 2232 x 2mb = 10.4 gb hugepages + 8.0 gb ordinary = 18.4 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 6 x 1gb + 2232 x 2mb = 10.4 gb hugepages + 8.0 gb ordinary = 18.4 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 6 x 1gb + 2232 x 2mb = 10.4 gb hugepages + 8.0 gb ordinary = 18.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 6 x 1gb + 2232 x 2mb = 10.4 gb hugepages + 8.0 gb ordinary = 18.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_6gb_4464mb n1_6gb_4464mb n2_6gb_4464mb n3_6gb_4464mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 6 1GB pages, 2232 2MB pages...
+Node 1: Reserving 6 1GB pages, 2232 2MB pages...
+Node 2: Reserving 6 1GB pages, 2232 2MB pages...
+Node 3: Reserving 6 1GB pages, 2232 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 8928
+1GiB pages: 24
+      node0: got 6/6 1gb pages, 2232/2232 2mb pages
+      node1: got 6/6 1gb pages, 2232/2232 2mb pages
+      node2: got 6/6 1gb pages, 2232/2232 2mb pages
+      node3: got 6/6 1gb pages, 2232/2232 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: ON
+Restoring hardware prefetchers (writing 0x00 to MSR 0xC0000108 on all cores)...
+Done. Prefetchers enabled.
+--- skew = 0.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1883.0  (build 282, probe 98 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1871.0  (build 280, probe 99 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1877.0  (build 279, probe 99 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1866.0  (build 280, probe 100 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1886.0  (build 279, probe 98 cyc/op)
+    => median 1877 mops (min 1866, max 1886) over 5 reps
+--- skew = 0.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1884.0  (build 282, probe 98 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1856.0  (build 283, probe 100 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1846.0  (build 283, probe 101 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1847.0  (build 279, probe 101 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1853.0  (build 280, probe 101 cyc/op)
+    => median 1853 mops (min 1846, max 1884) over 5 reps
+--- skew = 0.3  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1887.0  (build 280, probe 98 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1875.0  (build 280, probe 99 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1892.0  (build 279, probe 98 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1859.0  (build 283, probe 100 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1863.0  (build 281, probe 100 cyc/op)
+    => median 1875 mops (min 1859, max 1892) over 5 reps
+--- skew = 0.4  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1873.0  (build 281, probe 99 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1901.0  (build 280, probe 97 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1894.0  (build 279, probe 98 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1896.0  (build 280, probe 98 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1899.0  (build 283, probe 97 cyc/op)
+    => median 1896 mops (min 1873, max 1901) over 5 reps
+--- skew = 0.5  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1948.0  (build 281, probe 95 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1911.0  (build 281, probe 97 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1939.0  (build 282, probe 95 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1963.0  (build 279, probe 94 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1958.0  (build 280, probe 94 cyc/op)
+    => median 1948 mops (min 1911, max 1963) over 5 reps
+--- skew = 0.6  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2007.0  (build 283, probe 91 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1973.0  (build 280, probe 93 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2012.0  (build 281, probe 91 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1962.0  (build 281, probe 94 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1997.0  (build 281, probe 92 cyc/op)
+    => median 1997 mops (min 1962, max 2012) over 5 reps
+--- skew = 0.7  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2099.0  (build 280, probe 87 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2064.0  (build 283, probe 88 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2086.0  (build 280, probe 87 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2091.0  (build 281, probe 87 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2095.0  (build 281, probe 87 cyc/op)
+    => median 2091 mops (min 2064, max 2099) over 5 reps
+--- skew = 0.8  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2312.0  (build 280, probe 77 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2274.0  (build 280, probe 78 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2255.0  (build 282, probe 79 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2244.0  (build 279, probe 80 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2235.0  (build 282, probe 80 cyc/op)
+    => median 2255 mops (min 2235, max 2312) over 5 reps
+--- skew = 0.9  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2637.0  (build 282, probe 65 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2584.0  (build 282, probe 66 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2596.0  (build 281, probe 66 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2571.0  (build 280, probe 67 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2611.0  (build 282, probe 66 cyc/op)
+    => median 2596 mops (min 2571, max 2637) over 5 reps
+--- skew = 1.0  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3331.0  (build 283, probe 47 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3296.0  (build 283, probe 48 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3223.0  (build 282, probe 49 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3179.0  (build 283, probe 50 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3241.0  (build 282, probe 49 cyc/op)
+    => median 3241 mops (min 3179, max 3331) over 5 reps
+--- skew = 1.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4217.0  (build 280, probe 33 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4203.0  (build 281, probe 34 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4067.0  (build 283, probe 35 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4108.0  (build 280, probe 35 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4066.0  (build 282, probe 35 cyc/op)
+    => median 4108 mops (min 4066, max 4217) over 5 reps
+--- skew = 1.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4769.0  (build 280, probe 27 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4780.0  (build 280, probe 27 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4809.0  (build 279, probe 27 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4602.0  (build 279, probe 29 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 10 --batch-len 32 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 4820.0  (build 280, probe 27 cyc/op)
+    => median 4780 mops (min 4602, max 4820) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/skew/amd_n4_dlht_skew.json
+
+=== SUMMARY ===
+  n4_dlht/skew -> ok
+==========================================================
+=== n4_folklore / skew   (00:11:51)   log: ./recollect_logs/n4_folklore_skew.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_folklore / skew ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 13, ht-type 11
+    sweeping --skew across [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+[*] memory budget:
+      node0: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 5 x 1gb + 2232 x 2mb = 9.4 gb hugepages + 8.0 gb ordinary = 17.4 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_5gb_4464mb n1_5gb_4464mb n2_5gb_4464mb n3_5gb_4464mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 5 1GB pages, 2232 2MB pages...
+Node 1: Reserving 5 1GB pages, 2232 2MB pages...
+Node 2: Reserving 5 1GB pages, 2232 2MB pages...
+Node 3: Reserving 5 1GB pages, 2232 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 8928
+1GiB pages: 20
+      node0: got 5/5 1gb pages, 2232/2232 2mb pages
+      node1: got 5/5 1gb pages, 2232/2232 2mb pages
+      node2: got 5/5 1gb pages, 2232/2232 2mb pages
+      node3: got 5/5 1gb pages, 2232/2232 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: ON
+Restoring hardware prefetchers (writing 0x00 to MSR 0xC0000108 on all cores)...
+Done. Prefetchers enabled.
+--- skew = 0.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1604.0  (build 236, probe 122 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1636.0  (build 237, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1635.0  (build 237, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1556.0  (build 237, probe 126 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1617.0  (build 236, probe 121 cyc/op)
+    => median 1617 mops (min 1556, max 1636) over 5 reps
+--- skew = 0.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1639.0  (build 236, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1628.0  (build 237, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1613.0  (build 236, probe 121 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1625.0  (build 237, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1622.0  (build 237, probe 120 cyc/op)
+    => median 1625 mops (min 1613, max 1639) over 5 reps
+--- skew = 0.3  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1628.0  (build 236, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1632.0  (build 236, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1628.0  (build 237, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1622.0  (build 237, probe 120 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1633.0  (build 238, probe 119 cyc/op)
+    => median 1628 mops (min 1622, max 1633) over 5 reps
+--- skew = 0.4  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1652.0  (build 236, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1655.0  (build 236, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1636.0  (build 236, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1651.0  (build 237, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1658.0  (build 237, probe 118 cyc/op)
+    => median 1652 mops (min 1636, max 1658) over 5 reps
+--- skew = 0.5  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1657.0  (build 236, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1664.0  (build 236, probe 117 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1653.0  (build 237, probe 118 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1667.0  (build 236, probe 117 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1667.0  (build 237, probe 117 cyc/op)
+    => median 1664 mops (min 1653, max 1667) over 5 reps
+--- skew = 0.6  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1707.0  (build 236, probe 114 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1635.0  (build 236, probe 119 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1686.0  (build 236, probe 115 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1705.0  (build 237, probe 114 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1706.0  (build 236, probe 114 cyc/op)
+    => median 1705 mops (min 1635, max 1707) over 5 reps
+--- skew = 0.7  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1737.0  (build 237, probe 111 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1743.0  (build 236, probe 111 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1761.0  (build 237, probe 110 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1750.0  (build 237, probe 110 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1765.0  (build 237, probe 109 cyc/op)
+    => median 1750 mops (min 1737, max 1765) over 5 reps
+--- skew = 0.8  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1811.0  (build 239, probe 106 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1847.0  (build 236, probe 104 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1885.0  (build 237, probe 101 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1846.0  (build 237, probe 104 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1817.0  (build 237, probe 106 cyc/op)
+    => median 1846 mops (min 1811, max 1885) over 5 reps
+--- skew = 0.9  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2036.0  (build 237, probe 93 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1982.0  (build 237, probe 96 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2024.0  (build 237, probe 93 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 1991.0  (build 237, probe 95 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2039.0  (build 237, probe 92 cyc/op)
+    => median 2024 mops (min 1982, max 2039) over 5 reps
+--- skew = 1.0  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2288.0  (build 237, probe 81 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2344.0  (build 236, probe 78 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2356.0  (build 236, probe 78 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2286.0  (build 236, probe 81 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2382.0  (build 237, probe 77 cyc/op)
+    => median 2344 mops (min 2286, max 2382) over 5 reps
+--- skew = 1.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2849.0  (build 237, probe 62 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2930.0  (build 237, probe 59 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2824.0  (build 237, probe 62 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2817.0  (build 237, probe 62 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 2911.0  (build 237, probe 60 cyc/op)
+    => median 2849 mops (min 2817, max 2930) over 5 reps
+--- skew = 1.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3709.0  (build 236, probe 44 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3581.0  (build 237, probe 46 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3643.0  (build 236, probe 45 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3585.0  (build 235, probe 46 cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 13 --ht-type 11 --batch-len 16 --numa-split 1 --num-threads 64 --ht-fill 7
+    -> throughput_mops: 3322.0  (build 236, probe 51 cyc/op)
+    => median 3585 mops (min 3322, max 3709) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/skew/amd_n4_folklore_skew.json
+
+=== SUMMARY ===
+  n4_folklore/skew -> ok
+==========================================================
+=== n4_radix / skew   (00:19:41)   log: ./recollect_logs/n4_radix_skew.log
+==========================================================
+[*] machine 'amd' tag 'nps4' (5 reps/point) -- 4 numa nodes, 64 cpus, 188 gb
+
+=== n4_radix / skew ===
+    numa-split 1, 64 threads on nodes {0: 16, 1: 16, 2: 16, 3: 16}, mode 16, ht-type 3
+    sweeping --skew across [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+[*] memory budget:
+      node0: 0 x 1gb + 4416 x 2mb = 8.6 gb hugepages + 8.0 gb ordinary = 16.6 gb / 39.8 gb usable of 46.8 gb  [ok]
+      node1: 0 x 1gb + 4416 x 2mb = 8.6 gb hugepages + 8.0 gb ordinary = 16.6 gb / 40.2 gb usable of 47.2 gb  [ok]
+      node2: 0 x 1gb + 4416 x 2mb = 8.6 gb hugepages + 8.0 gb ordinary = 16.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+      node3: 0 x 1gb + 4416 x 2mb = 8.6 gb hugepages + 8.0 gb ordinary = 16.6 gb / 40.1 gb usable of 47.2 gb  [ok]
+[*] Resetting hugepages before reservation...
+Resetting all hugepages to 0 across all nodes...
+Releasing hugepages on node0...
+Releasing hugepages on node1...
+Releasing hugepages on node2...
+Releasing hugepages on node3...
+Compacting memory...
+Reset complete.
+[*] Reserving hugepages: n0_0gb_8832mb n1_0gb_8832mb n2_0gb_8832mb n3_0gb_8832mb
+Compacting memory to help allocate contiguous hugepages...
+Node 0: Reserving 0 1GB pages, 4416 2MB pages...
+Node 1: Reserving 0 1GB pages, 4416 2MB pages...
+Node 2: Reserving 0 1GB pages, 4416 2MB pages...
+Node 3: Reserving 0 1GB pages, 4416 2MB pages...
+Chowning /mnt/huge to jerryidk:redshift-PG0
+---------------------------------
+Reserved memory (System Total):
+2MiB pages: 17664
+1GiB pages: 0
+      node0: got 0/0 1gb pages, 4416/4416 2mb pages
+      node1: got 0/0 1gb pages, 4416/4416 2mb pages
+      node2: got 0/0 1gb pages, 4416/4416 2mb pages
+      node3: got 0/0 1gb pages, 4416/4416 2mb pages
+-- Build type: RelWithDebInfo
+CMake Warning at CMakeLists.txt:254 (message):
+  Hasher type selected was: crc
+
+
+CMake Warning at CMakeLists.txt:268 (message):
+  uniform hashtable
+
+
+CMake Warning at CMakeLists.txt:273 (message):
+  SIMD supported, you may set BRANCH variable to simd
+
+
+CMake Warning at CMakeLists.txt:291 (message):
+  Branch type selected was: simd
+
+
+CMake Warning at CMakeLists.txt:302 (message):
+  Building for experiment: none
+
+
+-- Selected benchmarking backend: NONE
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /opt/DRAMHiT/build
+Consolidate compiler generated dependencies of target eth_hashjoin
+[ 14%] Built target eth_hashjoin
+Consolidate compiler generated dependencies of target dramhit_lib
+[ 29%] Built target dramhit_lib
+Consolidate compiler generated dependencies of target fnv
+[ 35%] Built target fnv
+Consolidate compiler generated dependencies of target xxhash
+[ 41%] Built target xxhash
+Consolidate compiler generated dependencies of target cityhash
+[ 50%] Built target cityhash
+Consolidate compiler generated dependencies of target dramhit
+[100%] Built target dramhit
+[*] Setting prefetcher to: ON
+Restoring hardware prefetchers (writing 0x00 to MSR 0xC0000108 on all cores)...
+Done. Prefetchers enabled.
+--- skew = 0.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3019.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2985.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3021.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2999.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3008.0  (build None, probe None cyc/op)
+    => median 3008 mops (min 2985, max 3021) over 5 reps
+--- skew = 0.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3013.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3001.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3008.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3003.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2998.0  (build None, probe None cyc/op)
+    => median 3003 mops (min 2998, max 3013) over 5 reps
+--- skew = 0.3  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3003.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3015.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3011.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3010.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.3 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3005.0  (build None, probe None cyc/op)
+    => median 3010 mops (min 3003, max 3015) over 5 reps
+--- skew = 0.4  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2995.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2989.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3014.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3008.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.4 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2974.0  (build None, probe None cyc/op)
+    => median 2995 mops (min 2974, max 3014) over 5 reps
+--- skew = 0.5  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2996.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3049.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3008.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3022.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.5 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3007.0  (build None, probe None cyc/op)
+    => median 3008 mops (min 2996, max 3049) over 5 reps
+--- skew = 0.6  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2997.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2999.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3010.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3035.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.6 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2996.0  (build None, probe None cyc/op)
+    => median 2999 mops (min 2996, max 3035) over 5 reps
+--- skew = 0.7  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3024.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3010.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2995.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3009.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.7 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3026.0  (build None, probe None cyc/op)
+    => median 3010 mops (min 2995, max 3026) over 5 reps
+--- skew = 0.8  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2984.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2965.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2993.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 3004.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.8 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2986.0  (build None, probe None cyc/op)
+    => median 2986 mops (min 2965, max 3004) over 5 reps
+--- skew = 0.9  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2859.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2875.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2856.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2870.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.9 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2870.0  (build None, probe None cyc/op)
+    => median 2870 mops (min 2856, max 2875) over 5 reps
+--- skew = 1.0  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2650.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2632.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2647.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2656.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.0 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2662.0  (build None, probe None cyc/op)
+    => median 2650 mops (min 2632, max 2662) over 5 reps
+--- skew = 1.1  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2405.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2409.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2427.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2396.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.1 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2407.0  (build None, probe None cyc/op)
+    => median 2407 mops (min 2396, max 2427) over 5 reps
+--- skew = 1.2  (5 reps) ---
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2180.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2174.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2158.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2177.0  (build None, probe None cyc/op)
+    Running: /opt/DRAMHiT/build/dramhit --relation_r_size 67108864 --relation_s_size 1006632960 --skew 1.2 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0 --mode 16 --ht-type 3 --ht-fill 50 --numa-split 1 --num-threads 64 --radix 12
+    -> throughput_mops: 2154.0  (build None, probe None cyc/op)
+    => median 2174 mops (min 2154, max 2180) over 5 reps
+[*] Data saved to /opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/skew/amd_n4_radix_skew.json
+
+=== SUMMARY ===
+  n4_radix/skew -> ok
+
+=== SUMMARY ===
+  n4_cas/relation_size -> rc=0
+  n4_cas23/relation_size -> rc=0
+  n4_dlht/relation_size -> rc=0
+  n4_folklore/relation_size -> rc=0
+  n4_radix/relation_size -> rc=0
+  n4_cas/skew -> rc=0
+  n4_cas23/skew -> rc=0
+  n4_dlht/skew -> rc=0
+  n4_folklore/skew -> rc=0
+  n4_radix/skew -> rc=0
+
+plot with:  nix develop --command python3 plot_data.py amd_nps4

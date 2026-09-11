@@ -1,0 +1,217 @@
+{
+  "machine": "amd",
+  "tag": "nps4",
+  "run": "n4_cas",
+  "param_name": "relation_size",
+  "param_values": [
+    67108864,
+    134217728,
+    268435456,
+    536870912,
+    1073741824
+  ],
+  "reps": 5,
+  "cpufreq_mhz": 3250,
+  "threads_by_node": {
+    "0": 16,
+    "1": 16,
+    "2": 16,
+    "3": 16
+  },
+  "args": [
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 67108864,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 3,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 50
+    },
+    {
+      "relation_r_size": 134217728,
+      "relation_s_size": 134217728,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 3,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 50
+    },
+    {
+      "relation_r_size": 268435456,
+      "relation_s_size": 268435456,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 3,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 50
+    },
+    {
+      "relation_r_size": 536870912,
+      "relation_s_size": 536870912,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 3,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 50
+    },
+    {
+      "relation_r_size": 1073741824,
+      "relation_s_size": 1073741824,
+      "skew": 0.01,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 3,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 50
+    }
+  ],
+  "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/relation_size/logs/n4_cas",
+  "throughput_mops": [
+    1194.0,
+    2106.0,
+    2180.0,
+    1888.0,
+    1930.0
+  ],
+  "throughput_samples": [
+    [
+      1189.0,
+      1196.0,
+      1194.0,
+      1201.0,
+      1181.0
+    ],
+    [
+      2094.0,
+      2106.0,
+      2113.0,
+      2120.0,
+      2050.0
+    ],
+    [
+      2180.0,
+      2172.0,
+      2123.0,
+      2226.0,
+      2202.0
+    ],
+    [
+      1817.0,
+      1813.0,
+      1965.0,
+      1888.0,
+      1902.0
+    ],
+    [
+      1911.0,
+      1947.0,
+      1927.0,
+      1930.0,
+      1942.0
+    ]
+  ],
+  "probe_cyc_per_op_samples": [
+    [
+      153,
+      151,
+      151,
+      150,
+      155
+    ],
+    [
+      67,
+      68,
+      67,
+      66,
+      74
+    ],
+    [
+      63,
+      62,
+      68,
+      59,
+      62
+    ],
+    [
+      100,
+      98,
+      82,
+      90,
+      89
+    ],
+    [
+      85,
+      81,
+      84,
+      82,
+      82
+    ]
+  ],
+  "build_cyc_per_op_samples": [
+    [
+      196,
+      196,
+      196,
+      195,
+      196
+    ],
+    [
+      130,
+      129,
+      129,
+      129,
+      128
+    ],
+    [
+      126,
+      128,
+      126,
+      127,
+      126
+    ],
+    [
+      128,
+      131,
+      128,
+      129,
+      128
+    ],
+    [
+      132,
+      131,
+      131,
+      132,
+      131
+    ]
+  ]
+}

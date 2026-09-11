@@ -155,7 +155,19 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
   std::ostringstream filename_stream;
   filename_stream << "/opt/DRAMHiT/cache/" << "hashjoin"
                   << "_r" << r_size << "_s" << s_size << "_skew" << skew
-                  << "_hit" << hit_rate << "_seed" << seed << ".bin";
+                  << "_hit" << hit_rate << "_seed" << seed;
+
+  // Only when the density override is active: tag the file with the zipf
+  // keyrange it was generated against, so an experiment cannot load a stock
+  // (truncated) dataset by mistake. Stock runs keep the original names and the
+  // existing cache stays valid.
+  if (const char* env = getenv("HASHJOIN_TARGET_DENSITY")) {
+    uint64_t td = strtoull(env, nullptr, 10);
+    uint64_t kr = r_size;
+    if (td > 0 && (s_size / kr) < td) kr = std::max((uint64_t)1, s_size / td);
+    filename_stream << "_kr" << kr;
+  }
+  filename_stream << ".bin";
 
   std::string filename = filename_stream.str();
 
@@ -212,7 +224,18 @@ void init_hashjoin_dist(double skew, double hit_rate, uint64_t seed,
     // Minimum required ratio of samples to keys.
     // Increase this (e.g., 1000, 10000) for a more accurate skew
     // representation.
-    constexpr uint64_t target_density = 100;
+    //
+    // EXPERIMENT HOOK: HASHJOIN_TARGET_DENSITY in the environment overrides
+    // this, so the effect of the keyrange truncation can be measured without
+    // a rebuild. When it is set, the cache filename gains a _kr<width> suffix
+    // (see below) so a truncated and an untruncated dataset for the same
+    // r/s/skew/seed cannot silently alias each other. Unset -> stock
+    // behaviour and stock filenames.
+    uint64_t target_density = 100;
+    if (const char* env = getenv("HASHJOIN_TARGET_DENSITY")) {
+      target_density = strtoull(env, nullptr, 10);
+      PLOGW.printf("HASHJOIN_TARGET_DENSITY override: %lu", target_density);
+    }
 
     // If the current ratio falls below our target...
     if ((s_size / keyrange_width) < target_density) {

@@ -1,0 +1,483 @@
+{
+  "machine": "amd",
+  "tag": "nps4",
+  "run": "n4_folklore",
+  "param_name": "skew",
+  "param_values": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0,
+    1.1,
+    1.2
+  ],
+  "reps": 5,
+  "cpufreq_mhz": 3250,
+  "threads_by_node": {
+    "0": 16,
+    "1": 16,
+    "2": 16,
+    "3": 16
+  },
+  "args": [
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.1,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.2,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.3,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.4,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.5,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.6,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.7,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.8,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.9,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.0,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.1,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.2,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 11,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 64,
+      "ht-fill": 7
+    }
+  ],
+  "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/amd_nps4/skew/logs/n4_folklore",
+  "throughput_mops": [
+    1617.0,
+    1625.0,
+    1628.0,
+    1652.0,
+    1664.0,
+    1705.0,
+    1750.0,
+    1846.0,
+    2024.0,
+    2344.0,
+    2849.0,
+    3585.0
+  ],
+  "throughput_samples": [
+    [
+      1604.0,
+      1636.0,
+      1635.0,
+      1556.0,
+      1617.0
+    ],
+    [
+      1639.0,
+      1628.0,
+      1613.0,
+      1625.0,
+      1622.0
+    ],
+    [
+      1628.0,
+      1632.0,
+      1628.0,
+      1622.0,
+      1633.0
+    ],
+    [
+      1652.0,
+      1655.0,
+      1636.0,
+      1651.0,
+      1658.0
+    ],
+    [
+      1657.0,
+      1664.0,
+      1653.0,
+      1667.0,
+      1667.0
+    ],
+    [
+      1707.0,
+      1635.0,
+      1686.0,
+      1705.0,
+      1706.0
+    ],
+    [
+      1737.0,
+      1743.0,
+      1761.0,
+      1750.0,
+      1765.0
+    ],
+    [
+      1811.0,
+      1847.0,
+      1885.0,
+      1846.0,
+      1817.0
+    ],
+    [
+      2036.0,
+      1982.0,
+      2024.0,
+      1991.0,
+      2039.0
+    ],
+    [
+      2288.0,
+      2344.0,
+      2356.0,
+      2286.0,
+      2382.0
+    ],
+    [
+      2849.0,
+      2930.0,
+      2824.0,
+      2817.0,
+      2911.0
+    ],
+    [
+      3709.0,
+      3581.0,
+      3643.0,
+      3585.0,
+      3322.0
+    ]
+  ],
+  "probe_cyc_per_op_samples": [
+    [
+      122,
+      119,
+      119,
+      126,
+      121
+    ],
+    [
+      119,
+      120,
+      121,
+      120,
+      120
+    ],
+    [
+      120,
+      120,
+      120,
+      120,
+      119
+    ],
+    [
+      118,
+      118,
+      119,
+      118,
+      118
+    ],
+    [
+      118,
+      117,
+      118,
+      117,
+      117
+    ],
+    [
+      114,
+      119,
+      115,
+      114,
+      114
+    ],
+    [
+      111,
+      111,
+      110,
+      110,
+      109
+    ],
+    [
+      106,
+      104,
+      101,
+      104,
+      106
+    ],
+    [
+      93,
+      96,
+      93,
+      95,
+      92
+    ],
+    [
+      81,
+      78,
+      78,
+      81,
+      77
+    ],
+    [
+      62,
+      59,
+      62,
+      62,
+      60
+    ],
+    [
+      44,
+      46,
+      45,
+      46,
+      51
+    ]
+  ],
+  "build_cyc_per_op_samples": [
+    [
+      236,
+      237,
+      237,
+      237,
+      236
+    ],
+    [
+      236,
+      237,
+      236,
+      237,
+      237
+    ],
+    [
+      236,
+      236,
+      237,
+      237,
+      238
+    ],
+    [
+      236,
+      236,
+      236,
+      237,
+      237
+    ],
+    [
+      236,
+      236,
+      237,
+      236,
+      237
+    ],
+    [
+      236,
+      236,
+      236,
+      237,
+      236
+    ],
+    [
+      237,
+      236,
+      237,
+      237,
+      237
+    ],
+    [
+      239,
+      236,
+      237,
+      237,
+      237
+    ],
+    [
+      237,
+      237,
+      237,
+      237,
+      237
+    ],
+    [
+      237,
+      236,
+      236,
+      236,
+      237
+    ],
+    [
+      237,
+      237,
+      237,
+      237,
+      237
+    ],
+    [
+      236,
+      237,
+      236,
+      235,
+      236
+    ]
+  ]
+}
