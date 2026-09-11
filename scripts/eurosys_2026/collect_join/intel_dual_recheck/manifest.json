@@ -1,0 +1,32 @@
+{
+  "sets": [
+    {
+      "run": "dual_cas",
+      "param_name": "relation_size",
+      "path": "relation_size/intel_dual_cas_relation_size.json",
+      "machine": "intel",
+      "tag": "dual_recheck"
+    },
+    {
+      "run": "dual_cas23",
+      "param_name": "relation_size",
+      "path": "relation_size/intel_dual_cas23_relation_size.json",
+      "machine": "intel",
+      "tag": "dual_recheck"
+    },
+    {
+      "run": "dual_cas",
+      "param_name": "skew",
+      "path": "skew/intel_dual_cas_skew.json",
+      "machine": "intel",
+      "tag": "dual_recheck"
+    },
+    {
+      "run": "dual_cas23",
+      "param_name": "skew",
+      "path": "skew/intel_dual_cas23_skew.json",
+      "machine": "intel",
+      "tag": "dual_recheck"
+    }
+  ]
+}

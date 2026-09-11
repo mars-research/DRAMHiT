@@ -1,0 +1,409 @@
+{
+  "machine": "intel",
+  "tag": "dual_recheck",
+  "run": "dual_cas23",
+  "param_name": "skew",
+  "param_values": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0,
+    1.1,
+    1.2
+  ],
+  "reps": 3,
+  "cpufreq_mhz": 2500,
+  "threads_by_node": {
+    "0": 64,
+    "1": 64
+  },
+  "args": [
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.1,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.2,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.3,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.4,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.5,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.6,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.7,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.8,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 0.9,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.0,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.1,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    },
+    {
+      "relation_r_size": 67108864,
+      "relation_s_size": 1006632960,
+      "skew": 1.2,
+      "associativity": 1.0,
+      "seed": 1774551337382868027,
+      "find_queue": 64,
+      "no-prefetch": 0,
+      "mode": 13,
+      "ht-type": 8,
+      "batch-len": 16,
+      "numa-split": 1,
+      "num-threads": 128,
+      "ht-fill": 7
+    }
+  ],
+  "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/collect_join/intel_dual_recheck/skew/logs/dual_cas23",
+  "throughput_mops": [
+    3557.0,
+    3534.0,
+    3608.0,
+    3685.0,
+    3710.0,
+    4097.0,
+    4403.0,
+    4807.0,
+    5309.0,
+    5759.0,
+    5692.0,
+    6027.0
+  ],
+  "throughput_samples": [
+    [
+      3557.0,
+      3602.0,
+      3525.0
+    ],
+    [
+      3495.0,
+      3534.0,
+      3567.0
+    ],
+    [
+      3727.0,
+      3608.0,
+      3553.0
+    ],
+    [
+      3680.0,
+      3711.0,
+      3685.0
+    ],
+    [
+      3859.0,
+      3705.0,
+      3710.0
+    ],
+    [
+      3882.0,
+      4105.0,
+      4097.0
+    ],
+    [
+      4408.0,
+      4290.0,
+      4403.0
+    ],
+    [
+      4807.0,
+      5294.0,
+      4746.0
+    ],
+    [
+      5408.0,
+      4953.0,
+      5309.0
+    ],
+    [
+      5530.0,
+      5759.0,
+      5885.0
+    ],
+    [
+      5924.0,
+      5692.0,
+      5651.0
+    ],
+    [
+      6027.0,
+      6194.0,
+      5904.0
+    ]
+  ],
+  "probe_cyc_per_op_samples": [
+    [
+      85,
+      84,
+      86
+    ],
+    [
+      86,
+      85,
+      84
+    ],
+    [
+      80,
+      83,
+      85
+    ],
+    [
+      81,
+      81,
+      81
+    ],
+    [
+      77,
+      81,
+      81
+    ],
+    [
+      77,
+      72,
+      72
+    ],
+    [
+      66,
+      68,
+      66
+    ],
+    [
+      59,
+      53,
+      61
+    ],
+    [
+      52,
+      58,
+      53
+    ],
+    [
+      50,
+      48,
+      47
+    ],
+    [
+      46,
+      49,
+      49
+    ],
+    [
+      45,
+      44,
+      47
+    ]
+  ],
+  "build_cyc_per_op_samples": [
+    [
+      161,
+      161,
+      161
+    ],
+    [
+      161,
+      163,
+      163
+    ],
+    [
+      164,
+      164,
+      161
+    ],
+    [
+      163,
+      161,
+      166
+    ],
+    [
+      161,
+      162,
+      162
+    ],
+    [
+      161,
+      162,
+      160
+    ],
+    [
+      164,
+      161,
+      164
+    ],
+    [
+      170,
+      162,
+      161
+    ],
+    [
+      163,
+      163,
+      160
+    ],
+    [
+      161,
+      166,
+      163
+    ],
+    [
+      163,
+      161,
+      161
+    ],
+    [
+      162,
+      164,
+      160
+    ]
+  ]
+}
