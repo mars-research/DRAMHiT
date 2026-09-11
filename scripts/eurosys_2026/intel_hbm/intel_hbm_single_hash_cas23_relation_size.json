@@ -4,7 +4,8 @@
         67108864,
         134217728,
         268435456,
-        536870912
+        536870912,
+        1073741824
     ],
     "join_type": "hash_cas23",
     "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/hash_cas23_relation_size",
@@ -12,6 +13,18 @@
         1958.0,
         1908.0,
         1882.0,
-        1860.0
+        1860.0,
+        1791.0
+    ],
+    "merged_from": [
+        {
+            "file": "intel_hbm_single_hash_cas23_relation_size_new.json",
+            "sizes_gib": [
+                8,
+                16
+            ],
+            "prefetch": "DOUBLE",
+            "cas_prefetch_insertion": "AUTO"
+        }
     ]
 }

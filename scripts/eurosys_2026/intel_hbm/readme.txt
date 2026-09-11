@@ -173,3 +173,38 @@ cas, R = S = 8 gb, single socket (cycles/tuple normalised to R+S):
 The second prefetch (DOUBLE vs L1) is worth -3.5% at skew 0.1 and +4% at skew
 1.0 -- it flips sign, against a ~1% noise floor, so it is close to a wash here.
 Dropping software prefetch altogether is not: 3.3x on build, 1.7-2.5x on probe.
+
+
+Equal-relation-size curves refreshed (R = S, 1/2/4/8/16 gb)
+-----------------------------------------------------------
+./run_relation_size_update.sh   # cas re-collected; 16gb added to the rest
+
+cas was re-collected end to end with CAS_PREFETCH_INSERTION=DOUBLE (measured
+~6% faster on the build phase than a single prefetchw, see above); its stored
+curve predated that. The insert knob only gates cas_kht, so cas23 / folklore /
+radix kept their points and only gained 16gb -- each re-ran 8gb as a check
+first, and merge_relation_size_points.py compares the re-run against the stored
+value before the new point is trusted. dlht stops at 8gb: at 16gb its table
+plus secondary store does not fit node 2's hbm.
+
+              1gb    2gb    4gb    8gb   16gb
+  cas        2842   2732   2594   2553   2479
+  cas23      1958   1908   1882   1860   1791
+  dlht        920    905    882    865      -
+  folklore    837    835    839    813    789
+  radix      2227   2221   1966   1436   1086
+  radix all  3299   3463   3284   2672   1934   (128 threads, thread-local hbm)
+
+8gb re-run vs stored: cas23 +0.6%, radix +0.5%, folklore -3.3%, all-cpu radix
+-13.1% -- that last one was an outlier, two repeats gave 2604 / 2587 against
+the stored 2672, so the stored point was kept.
+
+Repeatability is looser at 16gb than at 8gb: cas 16gb measured 2479 / 2524 /
+2538 / 2654 over four runs (~7% spread), all-cpu radix 16gb 1934 / 1953 / 1955
+(~1%). Treat single 16gb points as +/- 3%.
+
+Hugepage reservation is no longer a flat 2x(R+S): at 16gb that asks for 64gb
+from a 64gb hbm node. It is now computed from what the code actually allocates
+-- next_pow2(R*100/fill)*16 for the hash table, the estimate_bytes_needed
+formula for radix arenas, per-thread page rounding for the relations -- capped
+at 85% of the node and never below the real requirement.

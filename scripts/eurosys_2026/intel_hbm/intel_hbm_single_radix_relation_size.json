@@ -4,7 +4,8 @@
         67108864,
         134217728,
         268435456,
-        536870912
+        536870912,
+        1073741824
     ],
     "join_type": "radix",
     "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/radix_relation_size",
@@ -12,6 +13,18 @@
         2227.0,
         2221.0,
         1966.0,
-        1436.0
+        1436.0,
+        1086.0
+    ],
+    "merged_from": [
+        {
+            "file": "intel_hbm_single_radix_relation_size_new.json",
+            "sizes_gib": [
+                8,
+                16
+            ],
+            "prefetch": "DOUBLE",
+            "cas_prefetch_insertion": "AUTO"
+        }
     ]
 }

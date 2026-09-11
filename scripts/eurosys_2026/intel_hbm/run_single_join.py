@@ -2,6 +2,7 @@ import argparse
 import json
 import math
 import re
+import statistics
 import subprocess
 from pathlib import Path
 
@@ -74,6 +75,7 @@ PARAM_CONFIGS = {
         2 * one_gb,
         4 * one_gb,
         8 * one_gb,
+        16 * one_gb,
     ],
 }
 
@@ -123,6 +125,14 @@ HT_TYPES = {
 # is special-cased to select the *hardware* prefetcher state ("on"/"off") via
 # set_prefetcher(), it is not passed to the dramhit binary. These are the
 # defaults used unless overridden via --prefetcher/--batch-len on the CLI.
+# Largest relation_size a hashtable can be swept to on this machine, in tuples.
+# dlht keeps a secondary overflow store on top of its table, so at 16gb it wants
+# more hbm than node 2 has; the sweep stops at 8gb for it instead of dying in
+# the middle of a run.
+MAX_RELATION_SIZE = {
+    "dlht": 8 * one_gb,
+}
+
 HASH_JOIN_VARIANTS = {
     "cas": {"ht-type": HT_TYPES["cas"], "prefetcher": "off", "batch-len": 16},
     "cas23": {"ht-type": HT_TYPES["cas23"], "prefetcher": "off", "batch-len": 16},
@@ -155,6 +165,72 @@ def set_prefetcher(state):
     subprocess.run([PREFETCH_SCRIPT, state], check=True)
 
 
+def next_pow2(n):
+    """Same rounding the hashtables apply to their capacity."""
+    p = 1
+    while p < n:
+        p <<= 1
+    return p
+
+
+def node_total_bytes(node):
+    """Physical memory on a numa node, from its meminfo."""
+    with open(f"/sys/devices/system/node/node{node}/meminfo") as f:
+        for line in f:
+            if "MemTotal" in line:
+                return int(line.split()[-2]) * 1024
+    raise RuntimeError(f"no MemTotal for node {node}")
+
+
+def hash_table_bytes(r_size, ht_fill):
+    """What the hash join's table itself occupies on the mem node.
+
+    Mirrors hashjoin() in src/tests/hashjoin_test.cpp: the table is sized
+    relation_r_size * 100 / ht_fill slots, rounded up to a power of two by the
+    hashtable constructor, at 16 bytes per slot.
+    """
+    return next_pow2(r_size * 100 // ht_fill) * TUPLE_BYTES
+
+
+def radix_arena_bytes(r_size, s_size, ht_fill, num_threads):
+    """What radix join's per-thread arenas occupy on the mem node, summed.
+
+    Mirrors estimate_bytes_needed in radixjoin2016(), including the per-thread
+    rounding up to whole 2mb pages, which at high radix is not negligible.
+    """
+    partition_num = 1 << get_optimal_radix(r_size, ht_fill)
+    per_thread = (
+        64 * partition_num          # software write buffers
+        + 8 * partition_num * 2     # histograms
+        + 8 * partition_num * 2     # bucket pointers
+        + 2 * 1024 * 1024           # the extra 2mb page it reserves
+        + (r_size * 2 * 100 * TUPLE_BYTES) // (partition_num * ht_fill)  # its table
+        + ((r_size + s_size) // num_threads) * TUPLE_BYTES  # the partitioned copy
+    )
+    two_mb = 2 * 1024 * 1024
+    return ((per_thread + two_mb - 1) // two_mb + 1) * two_mb * num_threads
+
+
+def relation_arena_bytes(r_size, s_size, num_threads, threads_per_cpu_node):
+    """What the r/s relations occupy on one cpu node.
+
+    Mirrors join_relations_generated(): each thread maps its own arena for its
+    slice of R and S, rounded up to whole hugepages, and those allocations carry
+    no numa binding, so they land on the node of the thread that faults them.
+    """
+    per_thread = ((r_size + s_size) // num_threads) * TUPLE_BYTES
+    one_gb = 1024 ** 3
+    two_mb = 2 * 1024 * 1024
+    if per_thread < one_gb and per_thread > 409 * two_mb:
+        per_thread_pages = one_gb          # the code rounds >80% of 1gb up to 1gb
+    elif per_thread < one_gb:
+        per_thread_pages = (per_thread // two_mb + 1) * two_mb
+    else:
+        gb = per_thread // one_gb
+        per_thread_pages = gb * one_gb + ((per_thread - gb * one_gb) // two_mb + 1) * two_mb
+    return per_thread_pages * threads_per_cpu_node
+
+
 def max_build_probe_bytes(defaults_dict, param_name, param_values):
     """Max (r_size + s_size), in bytes, across every value in the sweep."""
     max_bytes = 0
@@ -166,6 +242,15 @@ def max_build_probe_bytes(defaults_dict, param_name, param_values):
             s_size = val
         max_bytes = max(max_bytes, (r_size + s_size) * TUPLE_BYTES)
     return max_bytes
+
+
+def ht_fill_for(defaults_dict, param_name, param_value):
+    """The ht_fill build_command() will end up passing, for sizing purposes."""
+    if defaults_dict["mode"] != 13:
+        return defaults_dict["ht-fill"]
+    r = param_value if param_name == "relation_size" else defaults_dict["relation_r_size"]
+    s = param_value if param_name == "relation_size" else defaults_dict["relation_s_size"]
+    return math.ceil((r * 100) / (r + s))
 
 
 def reserve_hugepages(join_type, defaults_dict, param_name, param_values, scope,
@@ -192,10 +277,53 @@ def reserve_hugepages(join_type, defaults_dict, param_name, param_values, scope,
     required_bytes = 2 * max_build_probe_bytes(defaults_dict, param_name, param_values)
     per_mem_node_bytes = math.ceil(required_bytes / len(mem_nodes))
 
+    # That 2x is deliberate slack, and it is affordable while the working set is
+    # a fraction of the node. At the top of the sweep it is not: 16gb relations
+    # ask for 64gb per hbm node, which is the whole node. So cap the request at
+    # what the node can plausibly hand out, and separately compute what the run
+    # actually allocates so the cap can never drop below it.
+    needed_bytes = max(
+        hash_table_bytes(v if param_name == "relation_size"
+                         else defaults_dict["relation_r_size"], ht_fill_for(defaults_dict, param_name, v))
+        if join_type == "hash" else
+        radix_arena_bytes(v if param_name == "relation_size" else defaults_dict["relation_r_size"],
+                          v if param_name == "relation_size" else defaults_dict["relation_s_size"],
+                          defaults_dict["ht-fill"], scope["num_threads"])
+        for v in param_values
+    )
+    if hashtable == "dlht":
+        needed_bytes += needed_bytes // 8  # secondary overflow store
+
+    cap_bytes = int(0.85 * min(node_total_bytes(n) for n in mem_nodes))
+    if needed_bytes > cap_bytes:
+        raise RuntimeError(
+            f"{join_type} needs {needed_bytes / (1024 ** 3):.1f} gb per mem node "
+            f"but node capacity caps usable hugepages at {cap_bytes / (1024 ** 3):.1f} gb"
+        )
+    per_mem_node_bytes = max(min(per_mem_node_bytes, cap_bytes),
+                             math.ceil(needed_bytes * 1.1))
+    print(f"[*] mem node budget: {per_mem_node_bytes / (1024 ** 3):.1f} gb "
+          f"(run allocates ~{needed_bytes / (1024 ** 3):.1f} gb)")
+
     print("[*] Resetting hugepages before reservation...")
     subprocess.run([RESERVE_HUGEPAGES_SCRIPT, "reset"], check=True)
 
-    args = [f"n{n}_0gb_{CPU_NODE_2MB_RESERVE_MB}mb" for n in scope["cpu_nodes"]]
+    # Same story on the cpu nodes: the fixed budget is ample for small
+    # relations and too tight at 16gb, so take whichever is larger.
+    threads_per_cpu_node = math.ceil(scope["num_threads"] / len(scope["cpu_nodes"]))
+    relations_bytes = max(
+        relation_arena_bytes(
+            v if param_name == "relation_size" else defaults_dict["relation_r_size"],
+            v if param_name == "relation_size" else defaults_dict["relation_s_size"],
+            scope["num_threads"], threads_per_cpu_node)
+        for v in param_values
+    )
+    cpu_node_mb = max(CPU_NODE_2MB_RESERVE_MB,
+                      math.ceil(relations_bytes * 1.15 / (1024 ** 2)))
+    print(f"[*] cpu node budget: {cpu_node_mb / 1024:.1f} gb "
+          f"(relations need ~{relations_bytes / (1024 ** 3):.1f} gb)")
+
+    args = [f"n{n}_0gb_{cpu_node_mb}mb" for n in scope["cpu_nodes"]]
     for n in mem_nodes:
         if join_type == "hash":
             required_gb = math.ceil(per_mem_node_bytes / (1024 ** 3))
@@ -278,6 +406,31 @@ def run_and_parse(cmd, log_path):
         return 0.0
 
 
+def phase_metrics(log_path):
+    """Per-phase cycles/op from one run's log, when the mode reports them.
+
+    Hash join prints build/probe, radix join prints partition/join; either way
+    the two numbers say which half of the join moved, which a single throughput
+    figure cannot.
+    """
+    if not log_path.exists():
+        return {}
+
+    text = log_path.read_text()
+    build = re.search(r"build_phrase_mops\s*:\s*\d+,\s*cycle_per_op\s*:\s*(\d+)", text)
+    probe = re.search(r"probe_phrase_mops\s*:\s*\d+,\s*cycle_per_op\s*:\s*(\d+)", text)
+    if build and probe:
+        return {"build_cyc_per_op": int(build.group(1)),
+                "probe_cyc_per_op": int(probe.group(1))}
+
+    part = re.search(r"partition_cycle_per_tuple:\s*(\d+)", text)
+    join = re.search(r"join_cycle_per_tuple:\s*(\d+)", text)
+    if part and join:
+        return {"partition_cyc_per_tuple": int(part.group(1)),
+                "join_cyc_per_tuple": int(join.group(1))}
+    return {}
+
+
 def check_memory_locality(log_path):
     """Summarises where the radix join's per-thread arenas actually landed.
 
@@ -316,6 +469,30 @@ def main(args):
     param_values = PARAM_CONFIGS[param_name]
     scope = CPU_SCOPES[args.cpu_scope]
     numa_name = scope["name"]
+
+    if param_name == "skew" and args.skews:
+        missing = [k for k in args.skews if k not in param_values]
+        if missing:
+            raise SystemExit(f"skews not in the sweep: {missing}")
+        param_values = list(args.skews)
+        print(f"[*] skews to run: {param_values}")
+
+    if param_name == "relation_size":
+        if args.relation_sizes_gib:
+            wanted = [g * one_gb for g in args.relation_sizes_gib]
+            missing = [g for g, v in zip(args.relation_sizes_gib, wanted)
+                       if v not in param_values]
+            if missing:
+                raise SystemExit(f"relation sizes not in the sweep: {missing} gb")
+            param_values = wanted
+        cap = MAX_RELATION_SIZE.get(args.hashtable)
+        if cap is not None and any(v > cap for v in param_values):
+            dropped = [v * TUPLE_BYTES // (1024 ** 3) for v in param_values if v > cap]
+            print(f"[*] {args.hashtable} capped at {cap * TUPLE_BYTES // (1024 ** 3)}gb, "
+                  f"skipping {dropped} gb")
+            param_values = [v for v in param_values if v <= cap]
+        print(f"[*] relation sizes to run: "
+              f"{[v * TUPLE_BYTES // (1024 ** 3) for v in param_values]} gb")
 
     if args.join_type == "hash":
         variant_cfg = dict(HASH_JOIN_VARIANTS[args.hashtable])
@@ -375,8 +552,14 @@ def main(args):
         "np_mem_local": scope["np_mem_local"],
         "prefetch": args.prefetch,
         "cas_prefetch_insertion": args.cas_prefetch_insertion,
+        "repeats": args.repeats,
         "log_dir": str(log_dir),
+        # throughput_mops is the per-point median so a single-repeat run reads
+        # the same as it always did; the raw samples sit alongside it, in the
+        # same shape collect_join/run_join.py writes them.
         "throughput_mops": [],
+        "throughput_samples": [],
+        "phase_samples": [],
     }
 
     for val in param_values:
@@ -392,17 +575,40 @@ def main(args):
             set_prefetcher("on")
             cmd = build_command(RADIX_JOIN_DEFAULTS, param_name, val, scope)
 
-        log_path = log_dir / f"{param_name}_{val}.log"
-        perf = run_and_parse(cmd, log_path)
-        results["throughput_mops"].append(perf)
-        check_memory_locality(log_path)
+        # Repeats matter here: at some points this workload varies by far more
+        # than the difference a curve is meant to show, so a single sample can
+        # be misread as a real effect. The median is what gets plotted, and the
+        # samples are kept so the spread stays visible.
+        samples = []
+        phases = []
+        for rep in range(1, args.repeats + 1):
+            suffix = "" if args.repeats == 1 else f"_rep{rep}"
+            log_path = log_dir / f"{param_name}_{val}{suffix}.log"
+            perf = run_and_parse(cmd, log_path)
+            check_memory_locality(log_path)
+            if perf > 0:
+                samples.append(perf)
+                phases.append(phase_metrics(log_path))
+
+        if not samples:
+            print("    => all repeats failed, recording 0")
+            results["throughput_mops"].append(0.0)
+        else:
+            median = statistics.median(samples)
+            results["throughput_mops"].append(median)
+            if len(samples) > 1:
+                spread = (max(samples) - min(samples)) / median
+                print(f"    => median {median:.0f} mops over {len(samples)} runs "
+                      f"{[f'{x:.0f}' for x in samples]}, spread {spread:.1%}")
+        results["throughput_samples"].append(samples)
+        results["phase_samples"].append(phases)
 
         print("\n")
 
     # =========================================================================
     # SAVE DATA TO JSON
     # =========================================================================
-    json_filename = f"{numa_name}_{run_label}_{param_name}.json"
+    json_filename = f"{numa_name}_{run_label}_{param_name}{args.out_suffix}.json"
     with open(json_filename, "w") as f:
         json.dump(results, f, indent=4)
     print(f"[*] Data saved to {json_filename}")
@@ -430,6 +636,38 @@ def parse_args():
         help="Build with -DPREFETCH=<choice> (default: DOUBLE). Drives the cas "
              "find path, and the insert path too unless --cas-prefetch-insertion "
              "overrides it.",
+    )
+    parser.add_argument(
+        "--skews",
+        type=float,
+        nargs="+",
+        default=None,
+        help="Run only these skews out of the skew sweep, e.g. --skews 0.1 1.0 "
+             "to spot-check a stored curve. Pair with --out-suffix.",
+    )
+    parser.add_argument(
+        "--relation-sizes-gib",
+        type=int,
+        nargs="+",
+        default=None,
+        help="Run only these relation sizes (in gib) out of the relation_size "
+             "sweep, e.g. --relation-sizes-gib 8 16 to add a point without "
+             "re-collecting the whole curve. Pair with --out-suffix so the "
+             "partial result does not overwrite the full one.",
+    )
+    parser.add_argument(
+        "--repeats",
+        type=int,
+        default=1,
+        help="Run each point this many times and plot the median (default: 1). "
+             "The raw samples are stored in throughput_samples, which the "
+             "plotters draw as a min/max band.",
+    )
+    parser.add_argument(
+        "--out-suffix",
+        default="",
+        help="Suffix for the output json name, e.g. '_new' to keep a partial "
+             "sweep separate from the collected curve.",
     )
     parser.add_argument(
         "--cas-prefetch-insertion",

@@ -4,7 +4,8 @@
         67108864,
         134217728,
         268435456,
-        536870912
+        536870912,
+        1073741824
     ],
     "join_type": "hash_folklore",
     "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/hash_folklore_relation_size",
@@ -12,6 +13,18 @@
         837.0,
         835.0,
         839.0,
-        813.0
+        813.0,
+        789.0
+    ],
+    "merged_from": [
+        {
+            "file": "intel_hbm_single_hash_folklore_relation_size_new.json",
+            "sizes_gib": [
+                8,
+                16
+            ],
+            "prefetch": "DOUBLE",
+            "cas_prefetch_insertion": "AUTO"
+        }
     ]
 }

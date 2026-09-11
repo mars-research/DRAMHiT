@@ -1,0 +1,44 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.2
+    ],
+    "join_type": "hash_cas",
+    "cpu_scope": "single",
+    "num_threads": 64,
+    "cpu_nodes": [
+        0
+    ],
+    "mem_nodes": [
+        2
+    ],
+    "np_mem_local": 0,
+    "prefetch": "DOUBLE",
+    "cas_prefetch_insertion": "DOUBLE",
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/intel_hbm_single_hash_cas_skew",
+    "throughput_mops": [
+        3334.0,
+        3995.0,
+        3433.0,
+        3258.0,
+        3803.0,
+        3774.0,
+        3631.0,
+        4150.0,
+        3585.0,
+        4237.0,
+        4992.0,
+        4502.0
+    ]
+}
