@@ -182,12 +182,12 @@ class CASHashTable : public BaseHashTable {
   // overridden function for insertion
   inline void flush_if_needed(collector_type *collector) {
     size_t curr_queue_sz = get_insert_queue_sz();
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
     uint32_t next_tail;
     const void *next_tail_addr;
 #endif
     while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
       next_tail = (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) &
                   INSERT_QUEUE_SZ_MASK;
       next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
@@ -203,12 +203,12 @@ class CASHashTable : public BaseHashTable {
 
   inline void pop_insert_queue(collector_type *collector) {
     uint64_t retry = 0;
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
     uint32_t next_tail;
     const void *next_tail_addr;
 #endif
     do {
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
       next_tail = (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) &
                   INSERT_QUEUE_SZ_MASK;
       next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
@@ -279,13 +279,13 @@ class CASHashTable : public BaseHashTable {
         {
           uint64_t retry = 0;
           do {
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
             uint32_t next_tail =
                 (tail + PREFETCH_INSERT_NEXT_DISTANCE) & INSERT_QUEUE_SZ_MASK;
             const void *next_tail_addr =
                 &this->hashtable[this->insert_queue[next_tail].idx];
 
-            __builtin_prefetch(next_tail_addr, false, 3);
+            __builtin_prefetch(next_tail_addr, true, 3);
 #endif
             KVQ *q = &this->insert_queue[tail];
 
@@ -967,15 +967,19 @@ class CASHashTable : public BaseHashTable {
     return empty_slot_;
   }
 
+
+  // Insert-path prefetch, selected by -DCAS_PREFETCH_INSERTION (see
+  // CMakeLists.txt). DOUBLE pairs this queue-time prefetch with a second,
+  // dequeue-time prefetchw in flush_if_needed/pop_insert_queue/insert_batch.
   inline void prefetch_insert(uint64_t idx) {
-#ifdef CAS_PREFETCHW
-    // prefetchw: the line arrives already exclusive, so the CAS that follows
-    // needs no S->E upgrade. That upgrade is a cross-socket invalidate when
-    // the table is interleaved over both nodes.
+#if defined(CAS_INSERT_PREFETCH_DOUBLE)
+    __builtin_prefetch(&this->hashtable[idx], false, 2); // L2 prefetch first
+#elif defined(CAS_INSERT_PREFETCH_PREFETCHW)
     __builtin_prefetch(&this->hashtable[idx], true, 3);
+#elif defined(CAS_INSERT_PREFETCH_NONE)
+    (void)idx;
 #else
-    // prefetcht0: read-only, so the CAS pays for the ownership upgrade.
-    __builtin_prefetch(&this->hashtable[idx], false, 3);
+#error "no CAS_PREFETCH_INSERTION choice defined; configure with cmake"
 #endif
   }
 

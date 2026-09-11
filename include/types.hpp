@@ -190,6 +190,11 @@ struct Configuration {
 
   uint32_t np_mem_node_msk;
   uint32_t np_cpu_node_msk;
+  // When set, a thread's radix-join arena is bound to the memory-only (HBM)
+  // node closest to the numa node its cpu lives on, instead of the single
+  // global np_mem_node_msk. Lets a run spanning both sockets keep every
+  // thread's partitions and hashtable in its own socket's HBM.
+  uint32_t np_mem_local;
 
   void dump_configuration() {
     printf("Run configuration {\n");
@@ -209,6 +214,8 @@ struct Configuration {
     printf("  SW prefetch engine %s\n", no_prefetch ? "disabled" : "enabled");
     printf("  Run both %s\n", run_both ? "enabled" : "disabled");
     printf("  batch length %u\n", batch_len);
+    printf("  np_cpu_node_msk 0x%x | np_mem_node_msk 0x%x | np_mem_local %u\n",
+           np_cpu_node_msk, np_mem_node_msk, np_mem_local);
     printf("  relation_r %s\n", relation_r.c_str());
     printf("  relation_s %s\n", relation_r.c_str());
     printf("  relation_r_size %" PRIu64 "\n", relation_r_size);

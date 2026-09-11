@@ -2,8 +2,10 @@
 #define __NUMA_HPP__
 
 #include <numa.h>
+#include <numaif.h>
 
 #include <algorithm>
+#include <climits>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -18,6 +20,46 @@ using namespace std;
 
 namespace kmercounter {
 constexpr long long RESET_MASK(int x) { return ~(1LL << (x)); }
+
+/* The memory-only (cpu-less) numa node closest to `cpu_node`. On a Xeon Max in
+ * flat mode that is the HBM node attached to the same socket -- e.g. node 2 for
+ * the cpus of node 0, node 3 for the cpus of node 1. Returns -1 if the machine
+ * exposes no cpu-less node (or the query fails), so callers can fall back to
+ * an explicit mask. */
+inline int nearest_memory_only_node(int cpu_node) {
+  if (cpu_node < 0 || numa_available() < 0) return -1;
+
+  struct bitmask *cpus = numa_allocate_cpumask();
+  int best_node = -1;
+  int best_dist = INT_MAX;
+
+  for (int n = 0; n <= numa_max_node(); n++) {
+    if (numa_node_to_cpus(n, cpus) != 0) continue;
+    /* a node with cpus of its own is DRAM attached to a socket, not HBM */
+    if (numa_bitmask_weight(cpus) != 0) continue;
+
+    int dist = numa_distance(cpu_node, n);
+    if (dist > 0 && dist < best_dist) {
+      best_dist = dist;
+      best_node = n;
+    }
+  }
+
+  numa_free_cpumask(cpus);
+  return best_node;
+}
+
+/* Numa node that the page backing `addr` actually landed on. Only meaningful
+ * once that page has been faulted in -- an mbind()ed but untouched page has no
+ * node yet. Returns -1 if the query fails. */
+inline int numa_node_of_addr(const void *addr) {
+  int node = -1;
+  if (get_mempolicy(&node, nullptr, 0, const_cast<void *>(addr),
+                    MPOL_F_NODE | MPOL_F_ADDR) != 0) {
+    return -1;
+  }
+  return node;
+}
 
 typedef struct numa_node {
   unsigned int id;

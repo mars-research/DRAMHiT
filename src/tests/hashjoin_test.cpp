@@ -33,6 +33,7 @@
 #include "input_reader/csv.hpp"
 // #include "input_reader/eth_rel_gen.hpp"
 #include "misc_lib.h"
+#include "numa.hpp"
 #include "plog/Log.h"
 // #include "print_stats.h"
 // #include "queues/section_queues.hpp"
@@ -700,7 +701,7 @@ struct GlobalRelationInfo {
 
 GlobalRelationInfo* global_info;
 uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
-                     uint64_t partition_num) {
+                     uint64_t partition_num, int expected_mem_node) {
   uint64_t max_ht_sz = 0;
   uint64_t max_probe_sz = 0;
   uint64_t max_build_sz = 0;
@@ -744,6 +745,26 @@ uint64_t join_phrase(HugepageArena& arena, uint64_t tid,
       (Element*)arena.aligned_alloc(sizeof(Element) * max_ht_sz, 64);
   RadixArrayHashTable ht(ht_array);
   PLOGI.printf("hashtable size %lu kb", max_ht_sz * sizeof(Element) / 1024);
+
+  // The arena was mbind()ed and fully faulted in (arena.memset) before we got
+  // here, so the pages backing the hashtable already have a home node: check
+  // that it is the one we asked for rather than trusting the mbind call.
+  if (expected_mem_node >= 0 && max_ht_sz > 0) {
+    const char* ht_first = (const char*)ht_array;
+    const char* ht_last = ht_first + sizeof(Element) * max_ht_sz - 1;
+    int node_first = numa_node_of_addr(ht_first);
+    int node_last = numa_node_of_addr(ht_last);
+    if (node_first != expected_mem_node || node_last != expected_mem_node) {
+      PLOGE.printf(
+          "tid %lu: hashtable NOT local: %p..%p on numa nodes %d..%d, expected "
+          "node %d",
+          tid, ht_first, ht_last, node_first, node_last, expected_mem_node);
+    } else {
+      PLOGI.printf(
+          "tid %lu: hashtable local: %p..%p (%lu kb) on numa node %d", tid,
+          ht_first, ht_last, max_ht_sz * sizeof(Element) / 1024, node_first);
+    }
+  }
 
   ht_id = 0;
   uint64_t found = 0;
@@ -810,8 +831,36 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
                two_mb_needed);
   HugepageArena arena(one_gb_needed, two_mb_needed);
 
+  // Node this thread's arena -- partition buckets and the join hashtable --
+  // is expected to live on, or -1 when we let the kernel place it.
+  int expected_mem_node = -1;
+
   if(config.numa_split == 10){
-      arena.mem_bind(config.np_mem_node_msk);
+      uint32_t mem_node_msk = config.np_mem_node_msk;
+
+      if (config.np_mem_local) {
+        // Every thread pulls its own hbm node rather than sharing one mask, so
+        // a run spanning both sockets stays local: cpus on node 0 allocate
+        // from node 2, cpus on node 1 from node 3.
+        int local_node = nearest_memory_only_node(sh->numa_node);
+        if (local_node < 0) {
+          PLOGE.printf(
+              "tid %lu cpu %lu node %d: no cpu-less (hbm) node found, falling "
+              "back to np_mem_node_msk 0x%x",
+              tid, (uint64_t)sh->assigned_cpu, sh->numa_node,
+              config.np_mem_node_msk);
+        } else {
+          mem_node_msk = 1u << local_node;
+        }
+      }
+
+      arena.mem_bind(mem_node_msk);
+
+      if (__builtin_popcount(mem_node_msk) == 1) {
+        expected_mem_node = __builtin_ctz(mem_node_msk);
+      }
+      PLOGI.printf("tid %lu cpu %lu cpu-node %d: radix arena bound to node msk 0x%x",
+                   tid, (uint64_t)sh->assigned_cpu, sh->numa_node, mem_node_msk);
   }
 
   arena.memset(0); //set to zero
@@ -890,7 +939,7 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   barrier->arrive_and_wait();
 
   // uint64_t duration = RDTSC_START();
-  uint64_t found = join_phrase(arena, tid, partition_num);
+  uint64_t found = join_phrase(arena, tid, partition_num, expected_mem_node);
   // duration = RDTSCP() - duration;
   // PLOGI.printf("tid %lu took %lu cycles", tid, duration);
 
@@ -956,6 +1005,22 @@ void HashjoinTest::join_relations_generated(Shard* sh,
       (Element*)arena.aligned_alloc(sizeof(Element) * partition_sz_s, 16);
   // hugepage_alloc_inst_element.allocate(partition_sz_s);
   JoinElement* join_relation = nullptr;
+
+  // The relation arena carries no explicit binding: the kernel places its
+  // hugepages on the faulting thread's node. Record where they actually went,
+  // so a run spread over both sockets can be checked for stray remote
+  // relations the same way the join hashtable is. A page only has a node once
+  // it is faulted in, hence the touch -- both slots are overwritten by the
+  // fill loops below anyway.
+  if (partition_sz_r > 0 && partition_sz_s > 0) {
+    build_relation[0].key = 0;
+    probe_relation[0].key = 0;
+    PLOGI.printf(
+        "tid %u cpu %lu cpu-node %d: build relation on numa node %d, probe "
+        "relation on numa node %d",
+        sh->shard_idx, (uint64_t)sh->assigned_cpu, sh->numa_node,
+        numa_node_of_addr(build_relation), numa_node_of_addr(probe_relation));
+  }
 
   if (materialize)
     join_relation = hugepage_alloc_inst_join_element.allocate(partition_sz_s);

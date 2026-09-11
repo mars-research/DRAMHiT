@@ -1,0 +1,28 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        67108864,
+        134217728,
+        268435456,
+        536870912
+    ],
+    "join_type": "radix",
+    "cpu_scope": "all",
+    "num_threads": 128,
+    "cpu_nodes": [
+        0,
+        1
+    ],
+    "mem_nodes": [
+        2,
+        3
+    ],
+    "np_mem_local": 1,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/intel_hbm_allcpu_radix_relation_size",
+    "throughput_mops": [
+        3299.0,
+        3463.0,
+        3284.0,
+        2672.0
+    ]
+}

@@ -112,6 +112,7 @@ const Configuration def = {
     .zipf_key_range = 10,
     .np_mem_node_msk = 0,
     .np_cpu_node_msk = 0,
+    .np_mem_local = 0,
 };  // TODO enum
 
 // for synchronization of threads
@@ -763,7 +764,11 @@ void sync_complete(void) {
                     "cpu node")
           ("np_mem_node_msk",
                     po::value<uint32_t>(&config.np_mem_node_msk)->default_value(def.np_mem_node_msk),
-                    "mem node");
+                    "mem node")
+          ("np_mem_local",
+                    po::value<uint32_t>(&config.np_mem_local)->default_value(def.np_mem_local),
+                    "bind each thread's radix-join arena to the hbm node local "
+                    "to its cpu node instead of np_mem_node_msk");
 
       papi_init();
       po::variables_map vm;

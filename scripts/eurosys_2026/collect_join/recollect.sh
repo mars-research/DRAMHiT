@@ -52,7 +52,7 @@ if [ "$BUILD" -eq 1 ]; then
   cmake -S ../../.. -B ../../../build \
     -DDRAMHiT_VARIANT=2025_INLINE -DBUCKETIZATION=ON -DBRANCH=simd \
     -DPREFETCH=DOUBLE -DUNIFORM_PROBING=ON -DGROWT=ON \
-    -DCAS_PREFETCHW=ON -DCPUFREQ_MHZ=3250 || exit 1
+    -DCPUFREQ_MHZ=3250 || exit 1
   cmake --build ../../../build -j "$(nproc)" || exit 1
 fi
 
