@@ -1,0 +1,90 @@
+{
+  "_machine_notes": [
+    "Intel Xeon Gold 6548Y+ -- 2 sockets, 32 cores / 64 threads each, so 2 numa",
+    "nodes of 64 cpus and ~128 GiB each (~256 GiB total). 2 MiB L2 per core",
+    "(1 MiB per hyperthread), 60 MiB L3 per socket. Locked to 2.5 GHz by",
+    "scripts/setup.sh; prefetchers off.",
+    "",
+    "This spec exists to re-run the cas vs cas23 dual-socket comparison from",
+    "SUMMARY.md finding 4 against the current tree and the best-known cas build",
+    "flags (see cmake_flags). The original directory/ and snoop/ trees were",
+    "collected with the old CLI run_join.py, one run per point, and before",
+    "CAS_PREFETCH_INSERTION existed.",
+    "",
+    "Keys beginning with '_' are comments and are ignored by run_join.py."
+  ],
+  "machine": "intel",
+  "tag": "dual_recheck",
+  "data_dir": "intel_dual_recheck",
+  "cpufreq_mhz": 2500,
+  "l2_bytes_per_core": 2097152,
+  "smt_per_core": 2,
+  "node_mem_headroom_frac": 0.15,
+  "dramhit_exec": "/opt/DRAMHiT/build/dramhit",
+  "dataset_cache_dir": "/opt/DRAMHiT/cache",
+  "scripts": {
+    "prefetch": "/opt/DRAMHiT/scripts/prefetch_control.sh",
+    "reserve_hugepages": "/opt/DRAMHiT/scripts/reserve_hugepages.sh"
+  },
+  "cmake_flags": [
+    "-DDRAMHiT_VARIANT=2025_INLINE",
+    "-DBUCKETIZATION=ON",
+    "-DBRANCH=simd",
+    "-DPREFETCH=DOUBLE",
+    "-DCAS_PREFETCH_INSERTION=DOUBLE",
+    "-DUNIFORM_PROBING=ON",
+    "-DGROWT=ON"
+  ],
+  "_cmake_flags": [
+    "The best-known cas configuration: the 2025_INLINE code path (which hoists",
+    "the queue cursors into registers across a batch), bucketized 8-slot",
+    "cachelines, the AVX-512 simd find, DOUBLE prefetch on the find path",
+    "(prefetcht1 at enqueue + prefetcht0 at dequeue) and DOUBLE on the insert",
+    "path (CAS_PREFETCH_INSERTION, new in f65f6ac: prefetcht1 at enqueue +",
+    "prefetchw at dequeue, so the line arrives exclusive and the CAS pays no",
+    "S->E upgrade). UNIFORM_PROBING/GROWT are carried over from amd-9354p.json",
+    "so the two machines' trees stay comparable; neither touches cas's or",
+    "cas23's inner loop. cas23 (ht-type 8) is unaffected by",
+    "CAS_PREFETCH_INSERTION -- it always prefetches for write."
+  ],
+  "defaults": "--relation_r_size 67108864 --relation_s_size 1006632960 --skew 0.01 --associativity 1.0 --seed 1774551337382868027 --find_queue 64 --no-prefetch 0",
+  "_params": [
+    "Same x-axes as the original intel dual sets in directory/, so the new",
+    "numbers drop straight on top of the old figures.",
+    "relation_size is a count of 16-byte tuples, r = s:",
+    "  256 MB = 16777216   512 MB = 33554432    1 GB = 67108864",
+    "    2 GB = 134217728    4 GB = 268435456    8 GB = 536870912",
+    "The skew sweep keeps r = 1 GB, s = 15 GB."
+  ],
+  "params": {
+    "skew": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
+    "relation_size": [16777216, 33554432, 67108864, 134217728, 268435456, 536870912]
+  },
+  "_runs": [
+    "numa-split 1 (THREADS_SPLIT_SEPARATE_NODES): 128 threads split 64/64 over",
+    "the two sockets, the single global hashtable MPOL_INTERLEAVE'd over both",
+    "nodes, the per-thread relation arenas left to first touch so they land on",
+    "their own thread's node. This is exactly the 'dual' configuration of the",
+    "directory/ and snoop/ trees."
+  ],
+  "runs": [
+    {
+      "name": "dual_cas",
+      "prefetcher": "off",
+      "args": "--mode 13 --ht-type 3 --batch-len 16 --numa-split 1 --num-threads 128"
+    },
+    {
+      "name": "dual_cas23",
+      "prefetcher": "off",
+      "args": "--mode 13 --ht-type 8 --batch-len 16 --numa-split 1 --num-threads 128"
+    }
+  ],
+  "reps": 10,
+  "_reps": [
+    "SUMMARY.md measures dual-socket run-to-run spread at 2.4% (snoop) to 8%",
+    "(directory) on a single point, and cas_vs_cas23_skew_crossover.md section",
+    "13c argues 10 reps are the minimum to resolve a 10% effect, which is the",
+    "order of the margin this tree is measuring. throughput_mops holds the",
+    "per-point median and throughput_samples every raw run, so the spread is auditable."
+  ]
+}
