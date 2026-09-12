@@ -77,6 +77,7 @@ typedef struct {
 typedef struct {
     int thread_id;
     int cpu_id;
+    int cpu_node;
     unsigned long mem_nodemask;
     size_t chunk_size;
     uint64_t *buffer;
@@ -86,6 +87,30 @@ typedef struct {
     uint64_t elapsed_cycles;
 } thread_arg_t;
 
+// ---------------------------------------------------------
+// Shared (overlapping) region
+//
+// The default workload gives every thread a private chunk, so no two threads
+// ever touch the same cache line and the only cross-socket traffic is the one
+// caused by placement. To see what a shared structure does to UPI -- a hash
+// table probed by both packages -- all threads also index one region held in
+// common, at a random line each time, with a configurable fraction of the
+// accesses being stores. Those stores are what pull lines away from the other
+// socket and put invalidate/snoop traffic on the link.
+// ---------------------------------------------------------
+uint64_t *shared_buffer = NULL;
+size_t shared_size = 0;             // 0 disables the whole mode
+uint64_t shared_cacheline_mask = 0; // shared_size/64 - 1, so a power of two
+unsigned long shared_nodemask = 0;
+
+// Per-access decisions are taken from a second hash, so that choosing the
+// region and choosing read-vs-write stay independent of the address. Both are
+// compared against a threshold out of 1024, which gives percentages to within
+// 0.1% without a division in the loop.
+#define DECISION_SCALE 1024
+int share_threshold = DECISION_SCALE; // accesses that land in the shared region
+int write_threshold = 0;              // of those, the ones that are stores
+
 // Global Synchronization Barriers
 pthread_barrier_t init_barrier;
 pthread_barrier_t start_barrier;
@@ -93,6 +118,31 @@ pthread_barrier_t end_barrier;
 
 // Global dummy variable to prevent compiler from optimizing away the reads
 volatile uint64_t global_sink = 0;
+
+// "2" / "2,3" / "0-3" -> a numa node bitmask. Shared by the pattern parser and
+// by -shared-nodes, so both spell placement the same way.
+unsigned long parse_node_mask(const char *spec) {
+    unsigned long mask = 0;
+    char buf[64];
+    strncpy(buf, spec, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+
+    char *saveptr;
+    char *token = strtok_r(buf, ",", &saveptr);
+    while (token) {
+        char *dash = strchr(token, '-');
+        if (dash) {
+            *dash = '\0';
+            int start = atoi(token);
+            int end = atoi(dash + 1);
+            for (int i = start; i <= end; i++) mask |= (1UL << i);
+        } else {
+            mask |= (1UL << atoi(token));
+        }
+        token = strtok_r(NULL, ",", &saveptr);
+    }
+    return mask;
+}
 
 size_t parse_size(const char *str) {
     char *endptr;
@@ -104,6 +154,76 @@ size_t parse_size(const char *str) {
     }
     return (size_t)val;
 }
+
+// Independent per-thread streams.
+//
+// The private path seeds its crc32 with thread_id + constant, which is fine
+// while each thread indexes its own buffer. Pointed at one shared region it is
+// not: crc32 is linear, so crc32(seed, i) = A(seed) XOR B(i) and every thread
+// walks the same B(i) sequence. The threads then march in lockstep over one
+// address stream -- the first to arrive misses, the rest hit the line it just
+// pulled in -- and the measured miss rate collapses to 1/threads. That looks
+// like a shared table but behaves like one stream read many times.
+//
+// splitmix64 over a well-separated per-thread seed gives each thread its own
+// stream instead, so threads land on the same line by chance, at the rate
+// concurrent probes into a shared table actually do.
+static inline uint64_t mix64(uint64_t x) {
+    x += 0x9E3779B97F4A7C15ULL;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EBULL;
+    return x ^ (x >> 31);
+}
+
+// One shared-mode access: pick the region, then the line inside it.
+//   h  - hash that supplies the address
+//   d  - hash that supplies the decisions (region, read vs write)
+// Threads seed h differently, so they roam the same region independently and
+// overlap by chance, the way concurrent probes into a hash table do.
+#define SHARED_PICK(h, d, buf_out, idx_out)                                   \
+    uint64_t *buf_out;                                                        \
+    uint64_t idx_out;                                                         \
+    do {                                                                      \
+        int _use_shared = (int)(((d) >> 10) & (DECISION_SCALE - 1))           \
+                          < share_threshold;                                  \
+        buf_out = _use_shared ? shared_buffer : t->buffer;                    \
+        idx_out = (h) & (_use_shared ? shared_cacheline_mask                   \
+                                     : (NUM_CACHELINES - 1));                 \
+    } while (0)
+
+// Scalar loop body, one per prefetch flavour so the instruction choice stays
+// hoisted out of the loop exactly as it is in the private-chunk path.
+// need_decisions is loop-invariant, so the branch predicts perfectly and -O3
+// can unswitch it: when the region and the read/write choice are both fixed
+// (-share 0 or 100 with -mix 0 or 100) the decision hash is never computed and
+// the loop costs the same as the private-chunk one. d == 0 then selects
+// "private, read" or "shared, write" correctly, because every threshold
+// comparison is against 0.
+#define SHARED_SCALAR_LOOP(PF_STMT)                                           \
+    for (uint64_t i = 0; i < ops; i++) {                                      \
+        uint64_t h = mix64(addr_seed + (uint64_t)i);                          \
+        uint64_t d = need_decisions                                           \
+                   ? mix64(decision_seed + (uint64_t)i) : 0;                  \
+        SHARED_PICK(h, d, buf, idx);                                          \
+        uint64_t h2 = mix64(addr_seed + (uint64_t)(i + PREFETCH_AHEAD));      \
+        uint64_t d2 = need_decisions                                          \
+                    ? mix64(decision_seed + (uint64_t)(i + PREFETCH_AHEAD))   \
+                    : 0;                                                      \
+        SHARED_PICK(h2, d2, buf_ahead, idx_ahead);                            \
+        PF_STMT(&buf_ahead[idx_ahead * 8]);                                   \
+        if ((int)(d & (DECISION_SCALE - 1)) < write_threshold) {              \
+            buf[idx * 8] = 0xff;                                              \
+        } else {                                                              \
+            local_dummy += buf[idx * 8];                                      \
+        }                                                                     \
+    }
+
+#define PF_NONE(addr) do { (void)(addr); } while (0)
+#define PF_T0(addr)   _mm_prefetch((const char *)(addr), _MM_HINT_T0)
+#define PF_T1(addr)   _mm_prefetch((const char *)(addr), _MM_HINT_T1)
+#define PF_T2(addr)   _mm_prefetch((const char *)(addr), _MM_HINT_T2)
+#define PF_NTA(addr)  _mm_prefetch((const char *)(addr), _MM_HINT_NTA)
+#define PF_W(addr)    __builtin_prefetch((const void *)(addr), 1, 3)
 
 // Worker Thread: Allocation, Binding, Initialization, and Reading/Writing
 void *mem_worker(void *arg) {
@@ -149,12 +269,50 @@ void *mem_worker(void *arg) {
 
     uint64_t ops = NUM_CACHELINES;
     uint64_t local_dummy = 0;
+    // Decisions come from a hash seeded differently from the address hash, so
+    // the read/write mix does not correlate with which line is touched.
+    // Seeds far apart in the stream, so two threads never walk the same one.
+    uint64_t addr_seed = mix64((uint64_t)t->thread_id);
+    uint64_t decision_seed = mix64((uint64_t)t->thread_id ^ 0xA5A5A5A5A5A5A5A5ULL);
+    // Only a genuinely mixed setting needs a per-access decision.
+    const int need_decisions = (share_threshold > 0 && share_threshold < DECISION_SCALE)
+                            || (write_threshold > 0 && write_threshold < DECISION_SCALE);
 
     // Start cycle counter
     uint64_t start_tsc = __rdtsc();
 
     // The Benchmark Loop
     for (int iter = 0; iter < NUM_ITERATIONS; iter++) {
+        if (shared_buffer != NULL) {
+            // Shared mode. ops stays tied to -m, exactly as below, so the
+            // bandwidth accounting in main() is unchanged by sharing.
+            switch (t->inst_type) {
+                case INST_LOAD:          SHARED_SCALAR_LOOP(PF_NONE); break;
+                case INST_PREFETCH_T0:   SHARED_SCALAR_LOOP(PF_T0);   break;
+                case INST_PREFETCH_T1:   SHARED_SCALAR_LOOP(PF_T1);   break;
+                case INST_PREFETCH_T2:   SHARED_SCALAR_LOOP(PF_T2);   break;
+                case INST_PREFETCH_NTA:  SHARED_SCALAR_LOOP(PF_NTA);  break;
+                case INST_PREFETCH_W:    SHARED_SCALAR_LOOP(PF_W);    break;
+                case INST_AVX512_LOAD:
+                    for (uint64_t i = 0; i < ops; i++) {
+                        uint64_t h = mix64(addr_seed + (uint64_t)i);
+                        uint64_t d = need_decisions
+                                   ? mix64(decision_seed + (uint64_t)i) : 0;
+                        SHARED_PICK(h, d, buf, idx);
+                        if ((int)(d & (DECISION_SCALE - 1)) < write_threshold) {
+                            __m512i write_vec = _mm512_set1_epi64(0xff);
+                            _mm512_storeu_si512((void *)&buf[idx * 8], write_vec);
+                        } else {
+                            __m512i vec = _mm512_loadu_si512((const void *)&buf[idx * 8]);
+                            local_dummy += _mm_cvtsi128_si32(_mm512_castsi512_si128(vec));
+                        }
+                    }
+                    break;
+            }
+            __asm__ volatile("" ::: "memory");
+            continue;
+        }
+
         switch (t->inst_type) {
             case INST_LOAD:
                 if (t->rw_mode == MODE_READ) {
@@ -297,6 +455,13 @@ void *mem_worker(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
+    // The collectors interleave this program's markers with perf's interval
+    // lines in one file, and parse what falls between them. Block buffering
+    // would flush every marker at exit, leaving nothing in between, so the
+    // markers are line buffered here rather than relying on the caller
+    // wrapping us in stdbuf.
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     if (numa_available() < 0) {
         fprintf(stderr, "Error: NUMA support is not available.\n");
         return -1;
@@ -308,6 +473,8 @@ int main(int argc, char *argv[]) {
     rw_mode_t rw_mode = MODE_READ;
     uint64_t lookahead = 32;
     double cpu_freq_ghz = 0.0;
+    int share_pct = 100;
+    int write_pct = -1; // -1 = follow -mode, which is the pre-existing behaviour
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-m") == 0 && i + 1 < argc) raw_per_thread_size = parse_size(argv[++i]);
@@ -330,10 +497,56 @@ int main(int argc, char *argv[]) {
             else { fprintf(stderr, "Unknown instruction type: %s\n", argv[i]); return -1; }
         }
         else if (strcmp(argv[i], "-lookahead") == 0 && i + 1 < argc) lookahead = atoi(argv[++i]);
+        else if (strcmp(argv[i], "-shared") == 0 && i + 1 < argc) shared_size = parse_size(argv[++i]);
+        else if (strcmp(argv[i], "-shared-nodes") == 0 && i + 1 < argc) shared_nodemask = parse_node_mask(argv[++i]);
+        else if (strcmp(argv[i], "-share") == 0 && i + 1 < argc) share_pct = atoi(argv[++i]);
+        else if (strcmp(argv[i], "-mix") == 0 && i + 1 < argc) {
+            // "-mix w:30" (30% stores) or plain "-mix 30"
+            const char *v = argv[++i];
+            if (v[0] == 'w' && v[1] == ':') v += 2;
+            write_pct = atoi(v);
+        }
+    }
+
+    if (share_pct < 0 || share_pct > 100) {
+        fprintf(stderr, "Error: -share must be 0..100\n");
+        return -1;
+    }
+    if (write_pct > 100) {
+        fprintf(stderr, "Error: -mix must be 0..100\n");
+        return -1;
+    }
+    // Without -mix the store fraction is all-or-nothing, which is what -mode
+    // has always meant.
+    if (write_pct < 0) write_pct = (rw_mode == MODE_WRITE) ? 100 : 0;
+    share_threshold = (int)((long)share_pct * DECISION_SCALE / 100);
+    write_threshold = (int)((long)write_pct * DECISION_SCALE / 100);
+
+#if !defined(RANDOM)
+    if (shared_size > 0) {
+        // The shared path hashes its own indices, so it stays random even in a
+        // binary built for sequential access. Say so rather than let the
+        // summary's "Mode: SEQUENTIAL" line imply otherwise.
+        printf("Note: -shared always indexes randomly, including in this "
+               "non-RANDOM build\n");
+    }
+#endif
+    if (shared_size > 0 && shared_nodemask == 0) {
+        fprintf(stderr, "Error: -shared needs -shared-nodes (e.g. -shared-nodes 2,3)\n");
+        return -1;
+    }
+    if (shared_size == 0 && (share_pct != 100 || write_pct != ((rw_mode == MODE_WRITE) ? 100 : 0))) {
+        fprintf(stderr, "Note: -share/-mix only apply with -shared; ignoring them\n");
     }
 
     if (raw_per_thread_size == 0 || pattern_str == NULL || cpu_freq_ghz <= 0.0) {
-        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta|prefetchw>] [-lookahead <lines>] [-mode <r|w>]\n", argv[0]);
+        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta|prefetchw>] [-lookahead <lines>] [-mode <r|w>]\n"
+                        "       shared (overlapping) mode, for cross-socket coherence traffic:\n"
+                        "         [-shared <size>] [-shared-nodes <2|2,3|0-1>] [-share <0..100>] [-mix w:<0..100>]\n"
+                        "         -shared        one region every thread indexes at random, like a shared table\n"
+                        "         -shared-nodes  where it lives; one node binds, several interleave\n"
+                        "         -share         %% of accesses that go to it, rest to the thread's private chunk\n"
+                        "         -mix           %% of accesses that are stores (this is what drives invalidations)\n", argv[0]);
         return -1;
     }
 
@@ -381,23 +594,7 @@ int main(int argc, char *argv[]) {
             strncpy(mem_str, a_ptr + 1, len);
             mem_str[len] = '\0';
 
-            unsigned long mask = 0;
-            char *saveptr;
-            char *m_token = strtok_r(mem_str, ",", &saveptr);
-            while (m_token) {
-                char *dash = strchr(m_token, '-');
-                if (dash) {
-                    *dash = '\0';
-                    int start = atoi(m_token);
-                    int end = atoi(dash + 1);
-                    for (int i = start; i <= end; i++) mask |= (1UL << i);
-                } else {
-                    mask |= (1UL << atoi(m_token));
-                }
-                m_token = strtok_r(NULL, ",", &saveptr);
-            }
-
-            patterns[num_patterns].mem_nodemask = mask;
+            patterns[num_patterns].mem_nodemask = parse_node_mask(mem_str);
             total_threads += patterns[num_patterns].num_threads;
             num_patterns++;
         }
@@ -428,6 +625,40 @@ int main(int argc, char *argv[]) {
     printf("Requested per-thread size : ~%zu MB\n", raw_per_thread_size / (1024*1024));
     printf("Clamped per-thread size   : %zu MB (Power of 2 & 2MB Aligned)\n\n", chunk_per_thread / (1024*1024));
 
+    if (shared_size > 0) {
+        // Same power-of-two clamp as the private chunks: the index is masked,
+        // not divided.
+        size_t clamped = HUGE_PAGE_SIZE;
+        while ((clamped * 2) <= shared_size) clamped *= 2;
+        shared_size = clamped;
+
+        shared_buffer = mmap(NULL, shared_size, PROT_READ | PROT_WRITE,
+                             MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_HUGE_2MB,
+                             -1, 0);
+        if (shared_buffer == MAP_FAILED) {
+            perror("mmap of shared region failed");
+            fprintf(stderr, "  (needs %zu MB of 2MB hugepages on nodes 0x%lx)\n",
+                    shared_size / (1024*1024), shared_nodemask);
+            exit(EXIT_FAILURE);
+        }
+
+        int mem_mode = (__builtin_popcountl(shared_nodemask) > 1) ? MPOL_INTERLEAVE : MPOL_BIND;
+        if (mbind(shared_buffer, shared_size, mem_mode, &shared_nodemask,
+                  sizeof(shared_nodemask) * 8, MPOL_MF_STRICT | MPOL_MF_MOVE) != 0) {
+            perror("mbind of shared region failed");
+            exit(EXIT_FAILURE);
+        }
+        // Fault it in here, once, so placement follows the policy above rather
+        // than whichever worker happens to touch a page first.
+        memset(shared_buffer, 1, shared_size);
+        shared_cacheline_mask = (shared_size / 64) - 1;
+
+        printf("Shared region             : %zu MB on nodes 0x%lx (%s), %d%% of accesses, %d%% stores\n\n",
+               shared_size / (1024*1024), shared_nodemask,
+               mem_mode == MPOL_INTERLEAVE ? "interleaved" : "bound",
+               share_pct, write_pct);
+    }
+
     for (int p = 0; p < num_patterns; p++) {
         for (int t = 0; t < patterns[p].num_threads; t++) {
             int node = patterns[p].cpu_node;
@@ -441,6 +672,7 @@ int main(int argc, char *argv[]) {
 
             thread_args[t_idx].thread_id = t_idx;
             thread_args[t_idx].cpu_id = assigned_cpu_id;
+            thread_args[t_idx].cpu_node = node;
             thread_args[t_idx].mem_nodemask = patterns[p].mem_nodemask;
             thread_args[t_idx].chunk_size = chunk_per_thread;
             thread_args[t_idx].inst_type = inst;
@@ -496,10 +728,34 @@ int main(int argc, char *argv[]) {
 #else
     printf("Mode            : CUSTOM ARRAY\n");
 #endif
+    if (shared_size > 0) {
+        printf("Shared region   : %zu MB on nodes 0x%lx | share %d%% | stores %d%%\n",
+               shared_size / (1024*1024), shared_nodemask, share_pct, write_pct);
+    }
     printf("Total Data Proc : %.2f GB\n", gb_processed);
     printf("Elapsed Cycles  : %lu\n", elapsed_tsc);
     printf("Time Taken      : %.4f seconds (based on %.2f GHz)\n", time_taken, cpu_freq_ghz);
     printf("Bandwidth       : %.2f GB/s\n", bandwidth);
+
+    // Aggregate bandwidth hides the point of the shared mode: the two packages
+    // pay different prices for the same line. Break the cost out per cpu node.
+    {
+        uint64_t ops_per_thread = (chunk_per_thread / 64) * NUM_ITERATIONS;
+        printf("--------------------------------------------\n");
+        printf("Cycles per access, by cpu node:\n");
+        for (int n = 0; n <= max_node; n++) {
+            double sum_cpo = 0.0;
+            int count = 0;
+            for (int i = 0; i < total_threads; i++) {
+                if (thread_args[i].cpu_node != n) continue;
+                sum_cpo += (double)thread_args[i].elapsed_cycles / ops_per_thread;
+                count++;
+            }
+            if (count == 0) continue;
+            printf("  node %-3d : %7.2f cycles/access  (%d threads)\n",
+                   n, sum_cpo / count, count);
+        }
+    }
     // if (rw_mode == MODE_READ) {
     //     printf("dummy value     : %lu\n", global_sink);
     // }
@@ -517,6 +773,8 @@ int main(int argc, char *argv[]) {
     // printf("============================================\n");
     // printf("Average cycle per operation: %.2f cycles/op\n", aggr_cpo/total_threads);
     // printf("Predicted peak bandwidth: %.2f GB/s\n", (double) cpu_freq_ghz * 64 * total_threads * total_threads / aggr_cpo);
+
+    if (shared_buffer != NULL) munmap(shared_buffer, shared_size);
 
     pthread_barrier_destroy(&init_barrier);
     pthread_barrier_destroy(&start_barrier);

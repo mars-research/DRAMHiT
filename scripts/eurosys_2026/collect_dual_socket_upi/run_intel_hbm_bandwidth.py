@@ -52,6 +52,65 @@ MODES = {"read": "r", "write": "w"}
 
 PER_THREAD_SIZE = "128mb"
 
+# Everything above gives each thread a private chunk, so no line is ever touched
+# by two threads and the only cross-socket traffic comes from placement. The run
+# below instead points every thread on both sockets at one region spread over
+# both HBM nodes, probed at a random line each access -- a hash table shared by
+# the whole machine. That is what puts coherence traffic (invalidate, snoop,
+# writeback) on UPI rather than just remote-read traffic.
+#
+# 16gb matches the aggregate private footprint of the dual_* runs (128 threads x
+# 128mb), so the shared row is comparable to them rather than measuring a
+# different-sized working set.
+SHARED_SIZE = "16g"
+SHARED_PATTERNS = {
+    "dual_shared": {
+        "pattern": "n0a2t64 n1a3t64",
+        "shared": SHARED_SIZE,
+        "shared_nodes": "2,3",
+        "share": 100,
+    },
+    # The 16gb row above is the capacity regime: threads collide by chance, ~74ms
+    # apart, so nothing is resident and it behaves like interleaved private
+    # memory. This one is the contended regime -- 256mb sits at the combined
+    # cache size (75mb L3 + 64mb L2 per socket), and with 128 threads drawing
+    # from only 4M lines every line is touched ~64 times per iteration by both
+    # sockets, so coherence, not capacity, decides the traffic.
+    # 128mb fits inside one socket's cache (64mb L2 + 75mb L3), so reads should
+    # stop touching memory altogether. Writes cannot be cached away the same
+    # way: a line is exclusive in one socket at a time, so it keeps crossing the
+    # link, and in directory mode each transfer can still push a writeback to
+    # the home node.
+    "dual_shared_128m": {
+        "pattern": "n0a2t64 n1a3t64",
+        "shared": "128m",
+        "shared_nodes": "2,3",
+        "share": 100,
+    },
+    "dual_shared_256m": {
+        "pattern": "n0a2t64 n1a3t64",
+        "shared": "256m",
+        "shared_nodes": "2,3",
+        "share": 100,
+    },
+}
+
+
+def run_specs():
+    """Every run in this sweep: (name, pattern, extra bandwidth.c args).
+
+    The private-chunk runs pass nothing extra, so they invoke the binary exactly
+    as they always have.
+    """
+    specs = [(name, pattern, []) for name, pattern in NUMA_PATTERNS.items()]
+    for name, cfg in SHARED_PATTERNS.items():
+        specs.append((name, cfg["pattern"], [
+            "-shared", cfg["shared"],
+            "-shared-nodes", cfg["shared_nodes"],
+            "-share", str(cfg["share"]),
+        ]))
+    return specs
+
 NUM_HBM_CHANNELS = len(glob.glob("/sys/devices/uncore_hbm_*"))
 NUM_UPI_LINKS = len(glob.glob("/sys/devices/uncore_upi_*"))
 
@@ -112,7 +171,20 @@ def check_hugepages():
     per_thread = 128 * 1024 * 1024   # PER_THREAD_SIZE
     # Worst case in this sweep: dual_mixed interleaves 128 threads over both HBM
     # nodes, i.e. half the total footprint lands on each node.
-    needed_per_node = (128 * per_thread // 2) // (2 * 1024 * 1024)
+    private_bytes = 128 * per_thread // 2
+
+    # The shared runs allocate their region on top of the private chunks, which
+    # bandwidth.c still maps for every thread even when -share 100 never touches
+    # them. Interleaving puts half of the region on each node. Getting this wrong
+    # is not a slow run but a hung one, per the note above.
+    shared_bytes = 0
+    for cfg in SHARED_PATTERNS.values():
+        size = cfg["shared"]
+        mult = {"g": 1024 ** 3, "m": 1024 ** 2, "k": 1024}.get(size[-1].lower(), 1)
+        nodes = len([n for n in cfg["shared_nodes"].split(",") if n.strip()])
+        shared_bytes = max(shared_bytes, int(size[:-1]) * mult // max(nodes, 1))
+
+    needed_per_node = (private_bytes + shared_bytes) // (2 * 1024 * 1024)
 
     missing = []
     for node in HBM_NODES:
@@ -239,9 +311,15 @@ def detect_frequencies():
     return hbm_freq_map, upi_freq_map
 
 
-def run_and_collect(pattern_name, pattern_str, mode_name, mode_char, run_type, events):
+def run_and_collect(pattern_name, pattern_str, mode_name, mode_char, run_type,
+                    events, extra_args=()):
+    # No stdbuf here: it works by LD_PRELOADing libstdbuf.so, which must match
+    # the glibc the binary was linked against. Build bandwidth.c in a different
+    # toolchain (a nix shell, say) and the preload fails with a version error,
+    # the workload never starts, and perf happily measures an idle machine --
+    # producing a plausible-looking run with no samples between the markers.
+    # bandwidth.c line-buffers its own stdout instead.
     cmd = [
-        "stdbuf", "-o0", "-e0",
         "perf", "stat", "--per-socket", "-e", events, "-I", "10", "-x", ",",
         "--",
         BIN_PATH,
@@ -251,7 +329,7 @@ def run_and_collect(pattern_name, pattern_str, mode_name, mode_char, run_type, e
         "-inst", "t1",
         "-lookahead", "64",
         "-mode", mode_char
-    ]
+    ] + list(extra_args)
 
     log_filename = os.path.join(OUTPUT_DIR, f"{pattern_name}_{mode_name}_{run_type}.log")
     print(f"Running: {pattern_name} | {mode_name} | {run_type}")
@@ -394,6 +472,21 @@ def main():
     print("Detected {} HBM channels/socket, {} UPI links/socket\n".format(
         NUM_HBM_CHANNELS, NUM_UPI_LINKS))
 
+    # --only <name> re-runs a single row without redoing the whole sweep, which
+    # matters because one row here is four perf runs.
+    only = None
+    if "--only" in sys.argv:
+        idx = sys.argv.index("--only")
+        if idx + 1 >= len(sys.argv):
+            print("ERROR: --only needs a run name")
+            sys.exit(1)
+        only = sys.argv[idx + 1]
+        known = [name for name, _, _ in run_specs()]
+        if only not in known:
+            print("ERROR: unknown run '{}'. Known: {}".format(only, ", ".join(known)))
+            sys.exit(1)
+        print("Running only: {}\n".format(only))
+
     if "--skip-hugepage-check" not in sys.argv:
         check_hugepages()
 
@@ -403,20 +496,23 @@ def main():
     # Step 2: Run benchmarks
     all_results = {}
 
-    for pattern_name, pattern_str in NUMA_PATTERNS.items():
+    for pattern_name, pattern_str, extra_args in run_specs():
+        if only is not None and pattern_name != only:
+            continue
         all_results[pattern_name] = {}
 
         for mode_name, mode_char in MODES.items():
             all_results[pattern_name][mode_name] = {}
-            print(f"=== Configuration: {pattern_name} ({mode_name.upper()}) ===")
+            shared_note = " [shared region]" if extra_args else ""
+            print(f"=== Configuration: {pattern_name} ({mode_name.upper()}){shared_note} ===")
 
             # --- RUN 1: Bandwidth ---
-            bw_log = run_and_collect(pattern_name, pattern_str, mode_name, mode_char, "bw", EVENTS_BW)
+            bw_log = run_and_collect(pattern_name, pattern_str, mode_name, mode_char, "bw", EVENTS_BW, extra_args)
             # Pass the dynamically detected HBM frequency map
             bw_samples = parse_perf_log(bw_log, "unc_hbm_clockticks", NUM_HBM_CHANNELS, hbm_freq_map)
 
             # --- RUN 2: UPI ---
-            upi_log = run_and_collect(pattern_name, pattern_str, mode_name, mode_char, "upi", EVENTS_UPI)
+            upi_log = run_and_collect(pattern_name, pattern_str, mode_name, mode_char, "upi", EVENTS_UPI, extra_args)
             # Pass the dynamically detected UPI frequency map
             upi_samples = parse_perf_log(upi_log, "unc_upi_clockticks", NUM_UPI_LINKS, upi_freq_map)
 
@@ -429,10 +525,23 @@ def main():
 
             all_results[pattern_name][mode_name]["bw"] = bw_stats
             all_results[pattern_name][mode_name]["upi"] = upi_stats
+            all_results[pattern_name][mode_name]["config"] = {
+                "pattern": pattern_str,
+                "per_thread_size": PER_THREAD_SIZE,
+                "shared": SHARED_PATTERNS.get(pattern_name),
+            }
 
             print("-" * 80 + "\n")
 
     # --- Save JSON ---
+    # With --only, merge into whatever is already on disk instead of replacing
+    # it, so re-running one row does not discard the other six.
+    if only is not None and os.path.exists(JSON_OUTPUT_FILE):
+        with open(JSON_OUTPUT_FILE) as json_file:
+            existing = json.load(json_file)
+        existing.update(all_results)
+        all_results = existing
+
     print(f"Saving aggregated statistics to {JSON_OUTPUT_FILE}...")
     with open(JSON_OUTPUT_FILE, "w") as json_file:
         json.dump(all_results, json_file, indent=4)
