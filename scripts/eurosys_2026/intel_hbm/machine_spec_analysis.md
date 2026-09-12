@@ -5,6 +5,20 @@ and `machine_stats/bandwidth.c`) rather than taken from a spec sheet, except
 where marked *nominal*. Collected 2026-09-11, directory snoop mode, turbo off,
 all cores pinned at 2.7 GHz.
 
+## 0. Summary
+
+- Theoretical HBM: **819 GB/s per socket** (32 channels x 32 B x 0.8 GHz), both
+  factors measured on the machine.
+- Achieved, read-only: **~430 GB/s per socket** (52%), **890 GB/s** for the
+  machine with node-local placement.
+- Achieved, mixed read/write: **571 GB/s per socket** (70%).
+- The read ceiling is **not** the HBM: its read queue is 24x shallower than
+  DDR's under the same load, DDR and HBM share one ~430 GB/s ceiling when the
+  cores are split between them, and neither more cores nor deeper prefetch moves
+  it. It is the socket's mesh read-return path, ~215 B per 1.994 GHz mesh cycle.
+- **HBM is also 24% slower than DDR5 in latency** (137.7 vs 111.3 ns), so
+  latency-bound workloads gain nothing from it.
+
 ## 1. The machine
 
 | | |
@@ -72,6 +86,12 @@ channel:
 | 1:1 read/write, MLC | 558 | - | 68% |
 | 3:1 read/write, MLC | 425 | - | 52% |
 
+Access instruction matters as much as thread count (64 threads, lookahead 64,
+run-average GB/s): `t1` 342, `t2` 342, `t0` 298, plain `load` 267, `avx512` 236,
+`nta` 149. Prefetching into L2 (`t1`/`t2`) wins because L2 tracks more
+outstanding misses than the 16 L1 fill buffers; `nta` is worst because it
+bypasses the cache the prefetch was meant to fill.
+
 Latency, from MLC (`--latency_matrix`, ns):
 
 | from \ to | node 0 DDR | node 1 DDR | node 2 HBM | node 3 HBM |
@@ -125,18 +145,55 @@ occupies the scarce resource longer per line delivered.
 > UPI-bound threads keep running for ~8 s after socket 0's finish, leaving node 2
 > nearly idle for most of the run. Only the interval series answers the question.
 
+### The second experiment: give the cores a different memory system
+
+If the ceiling belonged to the HBM subsystem, then sending some of the cores to
+DDR instead should add bandwidth -- DDR has its own controllers, channels and
+DIMMs, sharing nothing with HBM downstream of the mesh. Peak 100 ms interval,
+socket 0:
+
+| config | peak total | breakdown |
+|---|---|---|
+| HBM only, 64 thr | 427 GB/s | HBM 427 |
+| DDR only, 64 thr | 241 GB/s | DDR 241 |
+| **HBM 32 thr + DDR 32 thr** | **428 GB/s** | HBM 217 + DDR 212 |
+
+**Two independent memory systems, one ceiling.** Splitting the cores between
+them yields exactly the total that either reaches alone. Whatever is rationing
+reads sits upstream of both.
+
 ### What this rules in and out
 
 - **Not DRAM bank/row timing.** Random and sequential reads are within 3%
   (394 vs 405 GB/s). If row locality mattered, they would differ a lot.
 - **Not our benchmark.** Intel's own MLC lands in the same place (362-418).
-- **Not core concurrency.** The experiment above: more cores, same ceiling.
-- **Not the pins.** The same channels carry 571 GB/s when the traffic is mixed,
-  so ~30% more data is physically deliverable than a read stream can extract.
-- **Consistent with a read-path resource** between the mesh and the HBM
-  controllers -- outstanding-read trackers at M2M, or read scheduling in the HBM
-  controller. Reads occupy a tracker for the full ~138 ns latency; writes are
-  posted and retire immediately, which is why adding writes adds throughput.
+- **Not the HBM controllers.** Their read queue averages 0.79 entries and drains
+  in 9 ns (section 4b). They are starved, not backed up.
+- **Not the memory subsystem at all.** DDR + HBM together cap where each caps
+  alone, and the same channels carry 571 GB/s once writes are mixed in.
+- **Not core concurrency.** More cores (even a second socket's) do not raise it,
+  and neither does deeper prefetch: a lookahead sweep at 64 threads gives 320 /
+  347 / 343 / 340 / 340 GB/s at 16 / 32 / 64 / 128 / 256. It saturates by 32 and
+  then flattens, so the cores are not short of requests in flight.
+- **Not the CHAs' tracking capacity.** 6.5 outstanding read misses per CHA on
+  average, >=16 for 1% of cycles, never >=24.
+- **What is left: the socket's mesh read-return path.** The mesh runs at
+  **1.994 GHz** (4.318 G CHA clockticks over a 2.166 s run), so 430 GB/s is
+  **~215 bytes per mesh cycle** for the whole socket. Every read has to cross it
+  and nothing else in the path is full.
+
+The cap is strictly per socket, so the machine scales: both sockets reading
+their own local HBM simultaneously reach **890.7 GB/s** (node 2: 443, node 3:
+447). Remote access does not scale, because a remote read consumes the home
+socket's fabric *and* the UPI link.
+
+> Closing the last step would need `uncore_m2m` counters, to see whether the
+> mesh-to-memory bridges are the specific choke point. On this machine that PMU
+> does not respond to the standard `event=0x01` clockticks encoding, and the SPR
+> M2M event codes are not something to guess at: the two encodings used above
+> were each validated against an independently known quantity first (RPQ inserts
+> = CAS/2 exactly; CHA TOR inserts = 13.348 G vs 13.356 G read lines), and any
+> M2M number should clear the same bar before it is believed.
 
 An earlier draft of this analysis concluded "core-limited" from Little's law
 (430 GB/s x 138 ns / 64 B = 927 lines in flight, ~29 per core, near the per-core
@@ -145,16 +202,89 @@ the two-socket experiment shows the cores are *not* the binding constraint,
 because doubling them changes nothing. Little's law tells you the concurrency
 present, not who is rationing it.
 
+## 4b. Queue counters: the HBM controllers are starving, not saturated
+
+The HBM PMU has no `events/` directory, but it accepts the **IMC encodings**, so
+the read/write pending queue counters that exist for regular DRAM are all
+available on `uncore_hbm` -- they just have to be written out by hand:
+
+| what | encoding on `uncore_hbm_N` |
+|---|---|
+| RPQ inserts, pseudo-channel 0 / 1 | `event=0x10,umask=0x01` / `umask=0x02` |
+| RPQ occupancy, pch 0 / 1 | `event=0x80` / `event=0x81` |
+| WPQ inserts, pch 0 | `event=0x20,umask=0x01` |
+| WPQ occupancy, pch 0 / 1 | `event=0x82` / `event=0x83` |
+| CAS read / write | `event=0x05,umask=0xcf` / `umask=0xf0` |
+| clockticks | `event=0x01,umask=0x00` |
+
+Both encodings were validated rather than trusted: **RPQ inserts / CAS.rd =
+0.500 exactly**, which is what it must be -- the queue tracks 64 B line requests
+and CAS counts 32 B column accesses, so 2 CAS per insert. That also confirms the
+32 B/CAS figure used in section 2 independently.
+
+The CHA is reachable the same way. `TOR_INSERTS.IA_MISS_DRD` =
+`event=0x35,umask=0xC816FE01` and `TOR_OCCUPANCY.IA_MISS_DRD` = `event=0x36`
+with the same umask (low byte lands in `config:8-15`, the rest in `config:32+`).
+Validated: TOR inserts 13.348 G vs 13.356 G RPQ inserts for the same run.
+
+Measured on `n0a2t64`, one HBM node (pch0 figures):
+
+| mode | RPQ depth per channel | RPQ residency | WPQ depth per channel |
+|---|---|---|---|
+| read | **0.79** | 9.1 ns | 0.07 |
+| write | 2.74 | 40.6 ns | **35.88** |
+
+| CHA TOR (read misses, socket 0) | value |
+|---|---|
+| average occupancy | 6.47 entries per CHA (259 socket-wide) |
+| residency | 87 CHA clocks ~ 32 ns |
+| cycles with >= 8 outstanding | 41% |
+| cycles with >= 16 outstanding | 1% |
+| cycles with >= 24 outstanding | 0% |
+
+**Neither end is full.** The HBM read queue averages 0.79 of an entry and drains
+in 9 ns; the controllers sit idle waiting for work. The CHAs hold 6.5 read
+misses on average and never exceed ~24, well inside what a TOR can track. The
+read transaction is not waiting at the memory controller and it is not blocked
+for want of a CHA tracker -- it is spending its time in the fabric between them,
+which is where the ~430 GB/s ceiling lives. Closing that last step needs M2M
+(`uncore_m2m`) tracker counters, whose SPR encodings are not something to guess
+at; the two validated ones above were confirmed against independent quantities
+first, and any M2M number should clear the same bar before it is believed.
+
+The same counters on DDR make the contrast unmissable. Identical cores,
+identical benchmark, only the memory target changes:
+
+| target | queue depth per box | residency | achieved | % of its own peak |
+|---|---|---|---|---|
+| HBM node 2 | **0.79** | 9.1 ns | 430 GB/s | 52% of 819 |
+| DDR node 0 | **18.63** | 86 ns | 221 GB/s | 72% of 307 |
+
+DDR's read queue is 24x deeper. DDR is genuinely memory-limited -- requests back
+up at the DRAM because the DRAM is the slow stage. HBM is not: its controllers
+idle because the fabric never delivers enough requests to keep them busy. The
+two numbers are the same system seen from both sides of the same ~430 GB/s
+fabric limit: DDR's own ceiling (307) sits below it, HBM's (819) sits above it.
+
+The write side is the contrast that makes the point: **the write queue holds ~36
+entries per channel**, 45x the read queue. A deep queue lets the controller
+schedule for row hits and bank parallelism; a queue holding less than one
+request cannot be scheduled at all. That, not raw pin bandwidth, is why mixed
+traffic reaches 571 GB/s where reads alone stop at 430.
+
 ## 5. Consequences for DRAMHiT
 
-- **Budget ~430 GB/s per socket for probe-heavy (read) phases**, not the
-  advertised HBM figure. Two sockets with node-local placement: ~860 GB/s.
+- **Budget ~430-450 GB/s per socket for probe-heavy (read) phases**, not the
+  advertised HBM figure. Both sockets on local HBM: 890 GB/s measured.
+- **HBM helps less than its spec suggests, and DDR is closer to its own limit
+  than it looks.** HBM delivers 1.9x DDR's read bandwidth (430 vs 221), not the
+  2.7x the channel counts imply, because the same fabric caps both.
 - **Mixed insert/probe traffic gets more out of the memory system** than either
   alone -- 571 vs 430 GB/s. A phase that interleaves reads and writes uses the
   hardware better than a pure-read phase.
-- **Prefetch depth matters more than usual here.** HBM's 138 ns latency is
-  higher than DDR's; `prefetchT1` outperforming `prefetchT0` (see `readme.txt`)
-  fits, since T1 targets L2, whose queue is deeper than the 16 L1 fill buffers.
+- **Prefetch into L2, and stop tuning depth past ~32 lines.** `prefetchT1`/`T2`
+  beat `T0` by 15% and plain loads by 28%; lookahead saturates at 32. Beyond
+  that the fabric, not the core, is the limit.
 - **Hyperthreading buys little on reads**: 32 threads reach 316 GB/s, 64 reach
   345 (run-average). The second thread shares the same L2 request queue.
 - **Cross-socket access is not a substitute for capacity.** A remote HBM node is
@@ -178,6 +308,20 @@ sudo perf stat -a -e "$HBM" -x, -- ./build/bandwidth_rand -m 128mb \
 # the two-socket experiment: -I 100 is essential, the average lies
 sudo perf stat -a --per-socket -e "$HBM" -I 100 -x, -- ./build/bandwidth_rand \
     -m 128mb -pattern "n0a2t64 n1a2t64" -freq 2.7 -inst t1 -lookahead 64 -mode r
+
+# queue occupancy at the HBM controllers (RPQ/WPQ, IMC encodings work here)
+RPQ=$(for i in $(seq 0 31); do printf "uncore_hbm_%d/event=0x80,umask=0x00,name=rpq_occ/,\
+uncore_hbm_%d/event=0x82,umask=0x00,name=wpq_occ/,\
+uncore_hbm_%d/event=0x10,umask=0x01,name=rpq_ins/,\
+uncore_hbm_%d/event=0x01,umask=0x00,name=clk/," $i $i $i $i; done | sed 's/,$//')
+sudo perf stat -a --per-socket -e "$RPQ" -x, -- ./build/bandwidth_rand -m 128mb \
+    -pattern "n0a2t64" -freq 2.7 -inst t1 -lookahead 64 -mode r
+# depth per channel = sum(occ)/sum(clk);  node total = sum(occ)/(sum(clk)/32)
+
+# CHA outstanding read misses, and the occupancy distribution via thresh=N
+CHA=$(for i in $(seq 0 39); do printf "uncore_cha_%d/event=0x36,umask=0xC816FE01,thresh=8,name=ge8/," $i; done | sed 's/,$//')
+sudo perf stat -a --per-socket -e "$CHA" -x, -- ./build/bandwidth_rand -m 128mb \
+    -pattern "n0a2t64" -freq 2.7 -inst t1 -lookahead 64 -mode r
 
 # vendor cross-checks
 cd /opt/DRAMHiT/tools/mlc
