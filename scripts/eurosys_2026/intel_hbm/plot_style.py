@@ -23,6 +23,18 @@ from matplotlib.lines import Line2D
 # Plot order, which is also the palette order (rocket runs dark -> light).
 JOIN_ORDER = ["cas", "cas23", "dlht", "folklore", "radix"]
 
+# Internal series names (matching data keys / filenames) -> display names
+# shown in legends. Only the legend text changes; lookups stay on the
+# internal names above.
+DISPLAY_NAMES = {
+    "cas": "dramblast",
+    "cas23": "dramhit",
+}
+
+
+def display_name(name):
+    return DISPLAY_NAMES.get(name, name)
+
 TUPLE_BYTES = 16
 
 # Runs that are a variant of one of the joins above rather than a join of their
@@ -73,9 +85,12 @@ def series_style(name, palette):
     variant = VARIANT_STYLE.get(name)
     base = variant["base"] if variant else name
     colour = palette[JOIN_ORDER.index(base) % len(palette)] if base in JOIN_ORDER else None
+    # Both radix curves (single socket and all cpus) are dotted, told apart by
+    # marker; every other join stays solid.
+    default_linestyle = ":" if base == "radix" else "-"
     return {
         "color": colour,
-        "linestyle": variant["linestyle"] if variant else "-",
+        "linestyle": variant["linestyle"] if variant else default_linestyle,
         "marker": variant["marker"] if variant else "o",
     }
 
@@ -107,7 +122,8 @@ def tidy(ax):
 
 def add_legend(fig, palette, names, ncol=None):
     custom_lines = [
-        Line2D([0], [0], label=name, **series_style(name, palette)) for name in names
+        Line2D([0], [0], label=display_name(name), **series_style(name, palette))
+        for name in names
     ]
     fig.legend(fontsize=8, handles=custom_lines, loc="upper center",
                ncol=ncol or len(names))

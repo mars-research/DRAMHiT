@@ -3,6 +3,8 @@ import re
 import subprocess
 import matplotlib.pyplot as plt
 
+from plot_style import configure_palette, configure_style, get_subplots, tidy
+
 filename = "intel_hbm_single_radix_sweep_8gb"
 build_sz = 8 * int(1024 * 1024 * 1024 / 16)  # 8gb
 
@@ -110,43 +112,34 @@ def run_dramhit_experiments():
             json.dump(experiment_data, json_file, indent=4)
         print(f"\nData successfully saved to {json_filename}")
 
-        plt.figure(figsize=(10, 6))
+        configure_style()
+        palette = configure_palette(3)
 
-        plt.plot(
-            successful_radices,
-            partition_cycles_data,
-            marker="o",
-            linestyle="-",
-            color="r",
-            label="Partition Phase",
-        )
-        plt.plot(
-            successful_radices,
-            join_cycles_data,
-            marker="s",
-            linestyle="-",
-            color="g",
-            label="Join Phase",
-        )
-        plt.plot(
-            successful_radices,
-            total_cycles_data,
-            marker="^",
-            linestyle="-",
-            color="b",
-            label="Total Cycles",
-        )
+        fig, axes = get_subplots(1, 1)
+        ax = axes if not hasattr(axes, "ravel") else axes.ravel()[0]
 
-        plt.title("DRAMHiT: Cycle per Tuple vs Radix (8GB relation, R=S)")
-        plt.xlabel("Radix")
-        plt.ylabel("Cycle per Tuple")
-        plt.xticks(successful_radices)
-        plt.legend(loc="upper left")
-        plt.grid(True, linestyle="--", alpha=0.7)
-        plt.tight_layout()
+        ax.plot(successful_radices, partition_cycles_data, marker="o",
+                linestyle="-", color=palette[0], linewidth=1.6,
+                label="partition phase")
+        ax.plot(successful_radices, join_cycles_data, marker="s",
+                linestyle="-", color=palette[1], linewidth=1.6,
+                label="join phase")
+        ax.plot(successful_radices, total_cycles_data, marker="^",
+                linestyle="--", color=palette[2], linewidth=1.6,
+                label="total")
+
+        ax.set_title("Partition/Join Cycle per Tuple vs Selected Radix")
+        ax.set_xlabel("radix")
+        ax.set_ylabel("cycle per tuple")
+        ax.set_xticks(successful_radices)
+        ax.set_ylim(bottom=0)
+        tidy(ax)
+
+        fig.legend(fontsize=8, loc="upper center", ncol=3)
+        plt.tight_layout(rect=[0, 0, 1, 0.90])
 
         output_filename = filename + ".png"
-        plt.savefig(output_filename)
+        plt.savefig(output_filename, dpi=300)
         print(f"Plot successfully saved to {output_filename}")
 
     else:

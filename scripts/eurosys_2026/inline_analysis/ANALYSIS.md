@@ -217,19 +217,57 @@ still round-trips both cursors through memory at least twice per key
 
 ## 4. Why that matters for performance
 
-Each `store` immediately followed by a dependent `load` of the same address
-(e.g. `43c9b2` store-head then `43c9c3` reload-tail right after, at the
-merged block's boundary) is a **store-to-load-forwarding** round trip:
-several cycles of latency even when it hits the store buffer, and it also
-creates a real (not just apparent) dependency between what should be
-independent per-key iterations. With `HT_TESTS_BATCH_LENGTH` typically in
-the 16–256 range (`include/constants.hpp:17,20`), `bin/no_inline` pays this
-penalty at least twice **per key** (`O(batch_len)` total per `find_batch`
-call), while `bin/inline` pays a fixed cost of 4 memory touches **per call,
-regardless of batch size**. The win scales with batch size, and DRAMHiT is
-specifically tuned to run with large batches to amortize prefetch latency,
-so this is exactly the regime the workload in `instruction.txt` ("a large
-amount of find and insertion occurs via find batch") lives in.
+**This is a constant-per-call vs. linear-per-key difference, not a flat
+"2-3x per `find_batch`".** `bin/inline` touches `find_tail`/`find_head` in
+memory **exactly 4 times total, no matter how many keys are in the batch**
+(2 loads before the loop, 2 stores after — section 2). `bin/no_inline`
+touches them **at least 2-3 times per key**, inside the loop body itself,
+not once per call. So the real per-call ratio is roughly
+`(2-3) x batch_len` extra memory ops vs. a flat `4` — e.g. at
+`batch_len = 32` that is ~64-96 memory touches against 4, not "2-3x." The
+gap widens as `batch_len` grows, it doesn't stay fixed.
+
+`batch_len` itself is **not a compile-time constant fixed by a macro** —
+it's `config.batch_len`, a runtime `Configuration` field
+(`include/types.hpp:161`) that defaults to `HT_TESTS_BATCH_LENGTH`
+(`include/constants.hpp:17,20`, 16 or 256 depending on build config) but is
+overridable at runtime via the `--batch-len` command-line flag
+(`src/Application.cpp:692-693`, `po::value<uint32_t>(&config.batch_len)`) —
+`u.sh` invokes the real binary with `--batch-len 16`, for instance. So the
+size of this effect is a property of how the benchmark is *invoked*, not
+something baked into either binary at compile time; the same `bin/no_inline`
+binary would pay proportionally more of this overhead per call if run with
+a larger `--batch-len` and proportionally less with a smaller one, while
+`bin/inline`'s fixed 4-touch cost per call would not change either way.
+
+**The mechanism is not "a register access is slightly faster than an L1
+hit."** That framing understates it — the raw latency difference between a
+register read and an L1 hit is only a few cycles either way. What actually
+costs time is that each `store` immediately followed by a dependent `load`
+of the same address (e.g. `43c9b2` store-head then `43c9c3` reload-tail
+right after, at the merged block's boundary — section 3) is a
+**store-to-load-forwarding** round trip: a genuine data dependency the core
+must resolve before the reloaded value is available, and because it recurs
+on every key, it chains what should be independent per-key work into a
+serialized dependency across loop iterations. A register value has no
+equivalent handoff cost — it's just wired directly into the next
+instruction with no round trip at all. So the cost isn't a flat
+per-access latency tax; it's a per-key serialization penalty that
+compounds with `batch_len`, which is exactly why this specific
+inefficiency is sensitive to how large a batch the caller asks for.
+
+With `batch_len` in the range DRAMHiT is normally run at (16-256, whether
+from the macro default or an explicit `--batch-len`), `bin/no_inline` pays
+this per-key penalty `O(batch_len)` times per `find_batch` call, while
+`bin/inline` pays a fixed cost of 4 memory touches **per call, regardless of
+batch size**. DRAMHiT is specifically tuned to run with large batches to
+amortize prefetch latency, so this is exactly the regime the workload in
+`instruction.txt` ("a large amount of find and insertion occurs via find
+batch") lives in — and it's also why, when asked earlier whether raising
+`batch_len` further would speed up `bin/inline` specifically, the answer was
+no: `bin/inline`'s 4-touch cost is already independent of `batch_len`, so
+there's nothing left there to amortize; it's `bin/no_inline`'s cost that
+scales with it.
 
 This also explains the earlier size numbers: `bin/inline`'s `find_batch` is
 *smaller* (1037 B vs 1209 B) even though it's faster — the extra bytes in
