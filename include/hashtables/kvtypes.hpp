@@ -125,6 +125,38 @@ struct Aggr_KV {
     return true;
   }
 
+  // SIMD find over a whole bucket, mirroring Item::find_simd. `this` is the
+  // first KV of the cacheline; the mask picks out the key lanes (even qwords)
+  // since Aggr_KV is {key, count} and both are 8 bytes.
+  inline uint64_t find_simd(const void *data, uint64_t *retry, ValuePairs &vp) {
+    ItemQueue *elem =
+        const_cast<ItemQueue *>(reinterpret_cast<const ItemQueue *>(data));
+    constexpr __mmask8 KEYMSK = 0b01010101;
+
+    uint64_t *bucket = (uint64_t *)this;
+    __m512i key_vector = _mm512_set1_epi64(elem->key);
+    __m512i cacheline = _mm512_load_si512(bucket);
+    __mmask8 key_cmp = _mm512_cmpeq_epu64_mask(cacheline, key_vector) & KEYMSK;
+
+    *retry = 0;
+    if (key_cmp > 0) {
+      __mmask8 idx = _bit_scan_forward(key_cmp);
+      vp.second[vp.first].id = elem->key_id;
+      vp.second[vp.first].value = bucket[(idx + 1)];
+      vp.first++;
+      return 1;
+    }
+
+    // Key not found here; only keep probing if the bucket is full, because an
+    // empty lane means the key was never inserted at all.
+    __m512i zero_vector = _mm512_setzero_si512();
+    __mmask8 ept_cmp = _mm512_cmpeq_epu64_mask(cacheline, zero_vector) & KEYMSK;
+    if (ept_cmp == 0) {
+      *retry = 1;
+    }
+    return 0;
+  }
+
   inline bool insert_cas(queue *elem) {
     const Aggr_KV empty = this->get_empty_key();
     auto success =
@@ -461,7 +493,17 @@ struct Aggr_KV {
 #endif
   };
 #endif
-} PACKED;
+// Deliberately NOT `PACKED`: both members are the same integer type, so there
+// is no padding for `packed` to remove (asserted below), and declaring the
+// struct packed would drop its alignment to 1 -- which makes the
+// `(uint64_t *)this` bucket reinterpretations in the SIMD paths look
+// potentially unaligned to the compiler.
+} __attribute__((aligned(alignof(uint64_t))));
+
+static_assert(sizeof(Aggr_KV) == sizeof(key_type) + sizeof(value_type),
+              "Aggr_KV must stay tightly packed");
+static_assert(offsetof(Aggr_KV, count) == sizeof(key_type),
+              "count must directly follow key");
 
 struct KVPair {
   key_type key;
@@ -856,12 +898,11 @@ struct Value {
 
 } PACKED;
 
-// No more aggr_kv
-//#ifdef NOAGGR
+#ifdef NOAGGR
 using KVType = Item;
-//#else
-//using KVType = Aggr_KV;
-//#endif
+#else
+using KVType = Aggr_KV;
+#endif
 
 
 }  // namespace kmercounter

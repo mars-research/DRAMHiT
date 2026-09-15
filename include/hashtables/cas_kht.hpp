@@ -15,6 +15,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -307,7 +308,14 @@ class CASHashTable : public BaseHashTable {
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
               if (key_cmp > 0) {
                 __mmask8 offset = _bit_scan_forward(key_cmp);
-                bucket[(offset + 1)] = q->value;
+                if constexpr (std::is_same_v<KV, Aggr_KV>) {
+                  // This table is shared by every thread, so the count bump
+                  // has to be atomic; a plain read-modify-write here loses
+                  // updates whenever two threads hit the same key at once.
+                  __sync_fetch_and_add(&bucket[(offset + 1)], 1);
+                } else {
+                  bucket[(offset + 1)] = q->value;
+                }
                 break;
               }
 
@@ -317,17 +325,22 @@ class CASHashTable : public BaseHashTable {
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
               if (ept_cmp != 0) {
                 idx += (_bit_scan_forward(ept_cmp) >> 1);
-              } else {  // we didn;t find empty key
+              } else {
+                // No empty slot here. Step to the next bucket ourselves, so
+                // that every path reaches retry_add_to_queue with idx already
+                // pointing at the bucket to probe next.
+                idx += KV_IN_CACHELINE;
+                idx = idx & (this->capacity - 1);
                 goto retry_add_to_queue;
               }
 
             try_insert:
               curr = &this->hashtable[idx];
 #ifdef READ_BEFORE_CAS
-              if (curr->kvpair.key == 0)
+              if (curr->is_empty())
 #endif
                 if (__sync_bool_compare_and_swap((__int128 *)curr, 0,
-                                                 *(__int128 *)q)) {
+                                                 empty_slot_payload(q))) {
                   break;
                 }
 
@@ -348,6 +361,12 @@ class CASHashTable : public BaseHashTable {
                 goto try_insert;  // FIXME: @David get rid of the goto for
                                   // crying out loud
               }
+              // Walked off the end of the bucket: idx is already the next
+              // bucket's base, so it must NOT be advanced again below. It used
+              // to be, which sent this path to bucket N+2 while the
+              // bucket-full path above went to N+1 -- two threads inserting
+              // the same key could then probe disjoint buckets, never see each
+              // other, and each insert it, leaving one key in two slots.
             retry_add_to_queue:
 
 #ifdef UNIFORM_HT_SUPPORT
@@ -356,9 +375,6 @@ class CASHashTable : public BaseHashTable {
               idx = hash & (this->capacity - 1);
               idx = idx & ~(size_t)KEYS_IN_CACHELINE_MASK;
               this->insert_queue[head].key_hash = hash;
-#else
-              idx += KV_IN_CACHELINE;
-              idx = idx & (this->capacity - 1);
 #endif
 
               prefetch_insert(idx);
@@ -999,6 +1015,31 @@ class CASHashTable : public BaseHashTable {
 #endif
   }
 
+  // The 128-bit CAS below claims an empty slot by writing the queue entry's
+  // first 16 bytes ({key, value}) straight into the bucket. For the
+  // aggregating table that is wrong: an insert means "one more occurrence of
+  // this key", so the slot must be seeded with a count of 1, not with the
+  // caller-supplied value (kmer counting inserts carry no meaningful value).
+  // Every other Aggr_KV update path -- update_cas, insert_cas, insert, and the
+  // SIMD key-match branch -- already increments by 1 and ignores q->value, so
+  // this was the one place that leaked the caller's value into the count,
+  // costing exactly one observation per distinct key. The Item path is
+  // unchanged: for Item the helper is the same reinterpret it always was.
+  static inline __int128 empty_slot_payload(KVQ *q) {
+    if constexpr (std::is_same_v<KV, Aggr_KV>) {
+      static_assert(sizeof(Aggr_KV) == sizeof(__int128),
+                    "128-bit slot claim assumes a 16-byte Aggr_KV");
+      Aggr_KV kv;
+      kv.key = q->key;
+      kv.count = 1;
+      __int128 payload;
+      memcpy(&payload, &kv, sizeof(payload));
+      return payload;
+    } else {
+      return *(__int128 *)q;
+    }
+  }
+
   uint64_t __insert_branched(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
 
@@ -1024,9 +1065,14 @@ class CASHashTable : public BaseHashTable {
         _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
     if (key_cmp > 0) {
       __mmask8 offset = _bit_scan_forward(key_cmp);
-      bucket[(offset + 1)] = q->value;
-      //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long
-      // int)q->value);
+      if constexpr (std::is_same_v<KV, Aggr_KV>) {
+        // Shared table: the count bump has to be atomic (see above).
+        __sync_fetch_and_add(&bucket[(offset + 1)], 1);
+      } else {
+        bucket[(offset + 1)] = q->value;
+        //_mm_stream_si64((long long int *)&bucket[(offset + 1)], (long long
+        // int)q->value);
+      }
       return 0;
     }
 
@@ -1077,9 +1123,10 @@ class CASHashTable : public BaseHashTable {
     // it will request for exclusive state unneccesarrily.
 
 #ifdef READ_BEFORE_CAS
-    if (curr->kvpair.key == 0)
+    if (curr->is_empty())
 #endif
-      if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
+      if (__sync_bool_compare_and_swap((__int128 *)curr, 0,
+                                       empty_slot_payload(q))) {
         return 0;
       }
 
