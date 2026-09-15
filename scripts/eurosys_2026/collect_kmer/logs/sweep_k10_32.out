@@ -1,0 +1,1423 @@
+==============================================================================
+  k-mer sweep across hashtable implementations
+==============================================================================
+  input      /opt/datasets/ERR4846928.fastq
+  ht-size    2147483648 slots total
+  k          [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]   repeats 5
+  ht-type 3  dramblast    CASHTPP -- one shared CAS table
+              num-threads 128, thread policy 1
+  ht-type 8  dramhit      CAS23HTPP -- one shared 2023 CAS table
+              num-threads 128, thread policy 1
+  ht-type 1  dramhit-p    PARTITIONED_HT -- private table per consumer
+              nprod 64 + ncons 64, queue policy 3
+  ht-type 12 dramblast-p  CASSTHTPP -- private single-thread table per consumer
+              nprod 64 + ncons 64, queue policy 3
+
+------------------------------------------------------------------------------
+  ht-type 3 (dramblast)
+------------------------------------------------------------------------------
+  [pool] --no-reserve: using whatever is currently reserved
+  [run ] ht3 dramblast k=10 rep 1/5
+  [run ] ok   set_mops=1722   -> dramblast_ht3_k10_r1_20260914-184524.log
+  [run ] ht3 dramblast k=10 rep 2/5
+  [run ] ok   set_mops=1798   -> dramblast_ht3_k10_r2_20260914-184524.log
+  [run ] ht3 dramblast k=10 rep 3/5
+  [run ] ok   set_mops=1722   -> dramblast_ht3_k10_r3_20260914-184524.log
+  [run ] ht3 dramblast k=10 rep 4/5
+  [run ] ok   set_mops=1805   -> dramblast_ht3_k10_r4_20260914-184524.log
+  [run ] ht3 dramblast k=10 rep 5/5
+  [run ] ok   set_mops=1721   -> dramblast_ht3_k10_r5_20260914-184524.log
+  [run ] ht3 dramblast k=11 rep 1/5
+  [run ] ok   set_mops=1736   -> dramblast_ht3_k11_r1_20260914-184524.log
+  [run ] ht3 dramblast k=11 rep 2/5
+  [run ] ok   set_mops=1706   -> dramblast_ht3_k11_r2_20260914-184524.log
+  [run ] ht3 dramblast k=11 rep 3/5
+  [run ] ok   set_mops=1736   -> dramblast_ht3_k11_r3_20260914-184524.log
+  [run ] ht3 dramblast k=11 rep 4/5
+  [run ] ok   set_mops=1706   -> dramblast_ht3_k11_r4_20260914-184524.log
+  [run ] ht3 dramblast k=11 rep 5/5
+  [run ] ok   set_mops=1737   -> dramblast_ht3_k11_r5_20260914-184524.log
+  [run ] ht3 dramblast k=12 rep 1/5
+  [run ] ok   set_mops=1647   -> dramblast_ht3_k12_r1_20260914-184524.log
+  [run ] ht3 dramblast k=12 rep 2/5
+  [run ] ok   set_mops=1865   -> dramblast_ht3_k12_r2_20260914-184524.log
+  [run ] ht3 dramblast k=12 rep 3/5
+  [run ] ok   set_mops=1648   -> dramblast_ht3_k12_r3_20260914-184524.log
+  [run ] ht3 dramblast k=12 rep 4/5
+  [run ] ok   set_mops=1864   -> dramblast_ht3_k12_r4_20260914-184524.log
+  [run ] ht3 dramblast k=12 rep 5/5
+  [run ] ok   set_mops=1647   -> dramblast_ht3_k12_r5_20260914-184524.log
+  [run ] ht3 dramblast k=13 rep 1/5
+  [run ] ok   set_mops=1571   -> dramblast_ht3_k13_r1_20260914-184524.log
+  [run ] ht3 dramblast k=13 rep 2/5
+  [run ] ok   set_mops=1802   -> dramblast_ht3_k13_r2_20260914-184524.log
+  [run ] ht3 dramblast k=13 rep 3/5
+  [run ] ok   set_mops=1571   -> dramblast_ht3_k13_r3_20260914-184524.log
+  [run ] ht3 dramblast k=13 rep 4/5
+  [run ] ok   set_mops=1801   -> dramblast_ht3_k13_r4_20260914-184524.log
+  [run ] ht3 dramblast k=13 rep 5/5
+  [run ] ok   set_mops=1570   -> dramblast_ht3_k13_r5_20260914-184524.log
+  [run ] ht3 dramblast k=14 rep 1/5
+  [run ] ok   set_mops=1777   -> dramblast_ht3_k14_r1_20260914-184524.log
+  [run ] ht3 dramblast k=14 rep 2/5
+  [run ] ok   set_mops=1671   -> dramblast_ht3_k14_r2_20260914-184524.log
+  [run ] ht3 dramblast k=14 rep 3/5
+  [run ] ok   set_mops=1777   -> dramblast_ht3_k14_r3_20260914-184524.log
+  [run ] ht3 dramblast k=14 rep 4/5
+  [run ] ok   set_mops=1669   -> dramblast_ht3_k14_r4_20260914-184524.log
+  [run ] ht3 dramblast k=14 rep 5/5
+  [run ] ok   set_mops=1777   -> dramblast_ht3_k14_r5_20260914-184524.log
+  [run ] ht3 dramblast k=15 rep 1/5
+  [run ] ok   set_mops=1808   -> dramblast_ht3_k15_r1_20260914-184524.log
+  [run ] ht3 dramblast k=15 rep 2/5
+  [run ] ok   set_mops=1851   -> dramblast_ht3_k15_r2_20260914-184524.log
+  [run ] ht3 dramblast k=15 rep 3/5
+  [run ] ok   set_mops=1808   -> dramblast_ht3_k15_r3_20260914-184524.log
+  [run ] ht3 dramblast k=15 rep 4/5
+  [run ] ok   set_mops=1851   -> dramblast_ht3_k15_r4_20260914-184524.log
+  [run ] ht3 dramblast k=15 rep 5/5
+  [run ] ok   set_mops=1809   -> dramblast_ht3_k15_r5_20260914-184524.log
+  [run ] ht3 dramblast k=16 rep 1/5
+  [run ] ok   set_mops=1684   -> dramblast_ht3_k16_r1_20260914-184524.log
+  [run ] ht3 dramblast k=16 rep 2/5
+  [run ] ok   set_mops=1836   -> dramblast_ht3_k16_r2_20260914-184524.log
+  [run ] ht3 dramblast k=16 rep 3/5
+  [run ] ok   set_mops=1684   -> dramblast_ht3_k16_r3_20260914-184524.log
+  [run ] ht3 dramblast k=16 rep 4/5
+  [run ] ok   set_mops=1838   -> dramblast_ht3_k16_r4_20260914-184524.log
+  [run ] ht3 dramblast k=16 rep 5/5
+  [run ] ok   set_mops=1685   -> dramblast_ht3_k16_r5_20260914-184524.log
+  [run ] ht3 dramblast k=17 rep 1/5
+  [run ] ok   set_mops=1865   -> dramblast_ht3_k17_r1_20260914-184524.log
+  [run ] ht3 dramblast k=17 rep 2/5
+  [run ] ok   set_mops=1699   -> dramblast_ht3_k17_r2_20260914-184524.log
+  [run ] ht3 dramblast k=17 rep 3/5
+  [run ] ok   set_mops=1865   -> dramblast_ht3_k17_r3_20260914-184524.log
+  [run ] ht3 dramblast k=17 rep 4/5
+  [run ] ok   set_mops=1699   -> dramblast_ht3_k17_r4_20260914-184524.log
+  [run ] ht3 dramblast k=17 rep 5/5
+  [run ] ok   set_mops=1865   -> dramblast_ht3_k17_r5_20260914-184524.log
+  [run ] ht3 dramblast k=18 rep 1/5
+  [run ] ok   set_mops=1580   -> dramblast_ht3_k18_r1_20260914-184524.log
+  [run ] ht3 dramblast k=18 rep 2/5
+  [run ] ok   set_mops=1839   -> dramblast_ht3_k18_r2_20260914-184524.log
+  [run ] ht3 dramblast k=18 rep 3/5
+  [run ] ok   set_mops=1579   -> dramblast_ht3_k18_r3_20260914-184524.log
+  [run ] ht3 dramblast k=18 rep 4/5
+  [run ] ok   set_mops=1840   -> dramblast_ht3_k18_r4_20260914-184524.log
+  [run ] ht3 dramblast k=18 rep 5/5
+  [run ] ok   set_mops=1580   -> dramblast_ht3_k18_r5_20260914-184524.log
+  [run ] ht3 dramblast k=19 rep 1/5
+  [run ] ok   set_mops=1846   -> dramblast_ht3_k19_r1_20260914-184524.log
+  [run ] ht3 dramblast k=19 rep 2/5
+  [run ] ok   set_mops=1686   -> dramblast_ht3_k19_r2_20260914-184524.log
+  [run ] ht3 dramblast k=19 rep 3/5
+  [run ] ok   set_mops=1845   -> dramblast_ht3_k19_r3_20260914-184524.log
+  [run ] ht3 dramblast k=19 rep 4/5
+  [run ] ok   set_mops=1684   -> dramblast_ht3_k19_r4_20260914-184524.log
+  [run ] ht3 dramblast k=19 rep 5/5
+  [run ] ok   set_mops=1845   -> dramblast_ht3_k19_r5_20260914-184524.log
+  [run ] ht3 dramblast k=20 rep 1/5
+  [run ] ok   set_mops=1724   -> dramblast_ht3_k20_r1_20260914-184524.log
+  [run ] ht3 dramblast k=20 rep 2/5
+  [run ] ok   set_mops=1861   -> dramblast_ht3_k20_r2_20260914-184524.log
+  [run ] ht3 dramblast k=20 rep 3/5
+  [run ] ok   set_mops=1724   -> dramblast_ht3_k20_r3_20260914-184524.log
+  [run ] ht3 dramblast k=20 rep 4/5
+  [run ] ok   set_mops=1861   -> dramblast_ht3_k20_r4_20260914-184524.log
+  [run ] ht3 dramblast k=20 rep 5/5
+  [run ] ok   set_mops=1723   -> dramblast_ht3_k20_r5_20260914-184524.log
+  [run ] ht3 dramblast k=21 rep 1/5
+  [run ] ok   set_mops=1852   -> dramblast_ht3_k21_r1_20260914-184524.log
+  [run ] ht3 dramblast k=21 rep 2/5
+  [run ] ok   set_mops=1627   -> dramblast_ht3_k21_r2_20260914-184524.log
+  [run ] ht3 dramblast k=21 rep 3/5
+  [run ] ok   set_mops=1851   -> dramblast_ht3_k21_r3_20260914-184524.log
+  [run ] ht3 dramblast k=21 rep 4/5
+  [run ] ok   set_mops=1628   -> dramblast_ht3_k21_r4_20260914-184524.log
+  [run ] ht3 dramblast k=21 rep 5/5
+  [run ] ok   set_mops=1852   -> dramblast_ht3_k21_r5_20260914-184524.log
+  [run ] ht3 dramblast k=22 rep 1/5
+  [run ] ok   set_mops=1776   -> dramblast_ht3_k22_r1_20260914-184524.log
+  [run ] ht3 dramblast k=22 rep 2/5
+  [run ] ok   set_mops=1915   -> dramblast_ht3_k22_r2_20260914-184524.log
+  [run ] ht3 dramblast k=22 rep 3/5
+  [run ] ok   set_mops=1772   -> dramblast_ht3_k22_r3_20260914-184524.log
+  [run ] ht3 dramblast k=22 rep 4/5
+  [run ] ok   set_mops=1912   -> dramblast_ht3_k22_r4_20260914-184524.log
+  [run ] ht3 dramblast k=22 rep 5/5
+  [run ] ok   set_mops=1773   -> dramblast_ht3_k22_r5_20260914-184524.log
+  [run ] ht3 dramblast k=23 rep 1/5
+  [run ] ok   set_mops=1870   -> dramblast_ht3_k23_r1_20260914-184524.log
+  [run ] ht3 dramblast k=23 rep 2/5
+  [run ] ok   set_mops=1901   -> dramblast_ht3_k23_r2_20260914-184524.log
+  [run ] ht3 dramblast k=23 rep 3/5
+  [run ] ok   set_mops=1871   -> dramblast_ht3_k23_r3_20260914-184524.log
+  [run ] ht3 dramblast k=23 rep 4/5
+  [run ] ok   set_mops=1900   -> dramblast_ht3_k23_r4_20260914-184524.log
+  [run ] ht3 dramblast k=23 rep 5/5
+  [run ] ok   set_mops=1870   -> dramblast_ht3_k23_r5_20260914-184524.log
+  [run ] ht3 dramblast k=24 rep 1/5
+  [run ] ok   set_mops=1903   -> dramblast_ht3_k24_r1_20260914-184524.log
+  [run ] ht3 dramblast k=24 rep 2/5
+  [run ] ok   set_mops=1909   -> dramblast_ht3_k24_r2_20260914-184524.log
+  [run ] ht3 dramblast k=24 rep 3/5
+  [run ] ok   set_mops=1903   -> dramblast_ht3_k24_r3_20260914-184524.log
+  [run ] ht3 dramblast k=24 rep 4/5
+  [run ] ok   set_mops=1910   -> dramblast_ht3_k24_r4_20260914-184524.log
+  [run ] ht3 dramblast k=24 rep 5/5
+  [run ] ok   set_mops=1904   -> dramblast_ht3_k24_r5_20260914-184524.log
+  [run ] ht3 dramblast k=25 rep 1/5
+  [run ] ok   set_mops=1906   -> dramblast_ht3_k25_r1_20260914-184524.log
+  [run ] ht3 dramblast k=25 rep 2/5
+  [run ] ok   set_mops=1890   -> dramblast_ht3_k25_r2_20260914-184524.log
+  [run ] ht3 dramblast k=25 rep 3/5
+  [run ] ok   set_mops=1903   -> dramblast_ht3_k25_r3_20260914-184524.log
+  [run ] ht3 dramblast k=25 rep 4/5
+  [run ] ok   set_mops=1890   -> dramblast_ht3_k25_r4_20260914-184524.log
+  [run ] ht3 dramblast k=25 rep 5/5
+  [run ] ok   set_mops=1905   -> dramblast_ht3_k25_r5_20260914-184524.log
+  [run ] ht3 dramblast k=26 rep 1/5
+  [run ] ok   set_mops=1924   -> dramblast_ht3_k26_r1_20260914-184524.log
+  [run ] ht3 dramblast k=26 rep 2/5
+  [run ] ok   set_mops=1803   -> dramblast_ht3_k26_r2_20260914-184524.log
+  [run ] ht3 dramblast k=26 rep 3/5
+  [run ] ok   set_mops=1925   -> dramblast_ht3_k26_r3_20260914-184524.log
+  [run ] ht3 dramblast k=26 rep 4/5
+  [run ] ok   set_mops=1804   -> dramblast_ht3_k26_r4_20260914-184524.log
+  [run ] ht3 dramblast k=26 rep 5/5
+  [run ] ok   set_mops=1909   -> dramblast_ht3_k26_r5_20260914-184524.log
+  [run ] ht3 dramblast k=27 rep 1/5
+  [run ] ok   set_mops=1784   -> dramblast_ht3_k27_r1_20260914-184524.log
+  [run ] ht3 dramblast k=27 rep 2/5
+  [run ] ok   set_mops=1915   -> dramblast_ht3_k27_r2_20260914-184524.log
+  [run ] ht3 dramblast k=27 rep 3/5
+  [run ] ok   set_mops=1785   -> dramblast_ht3_k27_r3_20260914-184524.log
+  [run ] ht3 dramblast k=27 rep 4/5
+  [run ] ok   set_mops=1917   -> dramblast_ht3_k27_r4_20260914-184524.log
+  [run ] ht3 dramblast k=27 rep 5/5
+  [run ] ok   set_mops=1785   -> dramblast_ht3_k27_r5_20260914-184524.log
+  [run ] ht3 dramblast k=28 rep 1/5
+  [run ] ok   set_mops=1786   -> dramblast_ht3_k28_r1_20260914-184524.log
+  [run ] ht3 dramblast k=28 rep 2/5
+  [run ] ok   set_mops=1922   -> dramblast_ht3_k28_r2_20260914-184524.log
+  [run ] ht3 dramblast k=28 rep 3/5
+  [run ] ok   set_mops=1785   -> dramblast_ht3_k28_r3_20260914-184524.log
+  [run ] ht3 dramblast k=28 rep 4/5
+  [run ] ok   set_mops=1922   -> dramblast_ht3_k28_r4_20260914-184524.log
+  [run ] ht3 dramblast k=28 rep 5/5
+  [run ] ok   set_mops=1785   -> dramblast_ht3_k28_r5_20260914-184524.log
+  [run ] ht3 dramblast k=29 rep 1/5
+  [run ] ok   set_mops=1908   -> dramblast_ht3_k29_r1_20260914-184524.log
+  [run ] ht3 dramblast k=29 rep 2/5
+  [run ] ok   set_mops=1766   -> dramblast_ht3_k29_r2_20260914-184524.log
+  [run ] ht3 dramblast k=29 rep 3/5
+  [run ] ok   set_mops=1908   -> dramblast_ht3_k29_r3_20260914-184524.log
+  [run ] ht3 dramblast k=29 rep 4/5
+  [run ] ok   set_mops=1764   -> dramblast_ht3_k29_r4_20260914-184524.log
+  [run ] ht3 dramblast k=29 rep 5/5
+  [run ] ok   set_mops=1907   -> dramblast_ht3_k29_r5_20260914-184524.log
+  [run ] ht3 dramblast k=30 rep 1/5
+  [run ] ok   set_mops=1909   -> dramblast_ht3_k30_r1_20260914-184524.log
+  [run ] ht3 dramblast k=30 rep 2/5
+  [run ] ok   set_mops=1727   -> dramblast_ht3_k30_r2_20260914-184524.log
+  [run ] ht3 dramblast k=30 rep 3/5
+  [run ] ok   set_mops=1911   -> dramblast_ht3_k30_r3_20260914-184524.log
+  [run ] ht3 dramblast k=30 rep 4/5
+  [run ] ok   set_mops=1728   -> dramblast_ht3_k30_r4_20260914-184524.log
+  [run ] ht3 dramblast k=30 rep 5/5
+  [run ] ok   set_mops=1911   -> dramblast_ht3_k30_r5_20260914-184524.log
+  [run ] ht3 dramblast k=31 rep 1/5
+  [run ] ok   set_mops=1773   -> dramblast_ht3_k31_r1_20260914-184524.log
+  [run ] ht3 dramblast k=31 rep 2/5
+  [run ] ok   set_mops=1935   -> dramblast_ht3_k31_r2_20260914-184524.log
+  [run ] ht3 dramblast k=31 rep 3/5
+  [run ] ok   set_mops=1774   -> dramblast_ht3_k31_r3_20260914-184524.log
+  [run ] ht3 dramblast k=31 rep 4/5
+  [run ] ok   set_mops=1936   -> dramblast_ht3_k31_r4_20260914-184524.log
+  [run ] ht3 dramblast k=31 rep 5/5
+  [run ] ok   set_mops=1774   -> dramblast_ht3_k31_r5_20260914-184524.log
+  [run ] ht3 dramblast k=32 rep 1/5
+  [run ] ok   set_mops=1813   -> dramblast_ht3_k32_r1_20260914-184524.log
+  [run ] ht3 dramblast k=32 rep 2/5
+  [run ] ok   set_mops=1808   -> dramblast_ht3_k32_r2_20260914-184524.log
+  [run ] ht3 dramblast k=32 rep 3/5
+  [run ] ok   set_mops=1813   -> dramblast_ht3_k32_r3_20260914-184524.log
+  [run ] ht3 dramblast k=32 rep 4/5
+  [run ] ok   set_mops=1807   -> dramblast_ht3_k32_r4_20260914-184524.log
+  [run ] ht3 dramblast k=32 rep 5/5
+  [run ] ok   set_mops=1814   -> dramblast_ht3_k32_r5_20260914-184524.log
+
+------------------------------------------------------------------------------
+  ht-type 8 (dramhit)
+------------------------------------------------------------------------------
+  [pool] --no-reserve: using whatever is currently reserved
+  [run ] ht8 dramhit k=10 rep 1/5
+  [run ] ok   set_mops=1364   -> dramhit_ht8_k10_r1_20260914-184524.log
+  [run ] ht8 dramhit k=10 rep 2/5
+  [run ] ok   set_mops=1366   -> dramhit_ht8_k10_r2_20260914-184524.log
+  [run ] ht8 dramhit k=10 rep 3/5
+  [run ] ok   set_mops=1367   -> dramhit_ht8_k10_r3_20260914-184524.log
+  [run ] ht8 dramhit k=10 rep 4/5
+  [run ] ok   set_mops=1368   -> dramhit_ht8_k10_r4_20260914-184524.log
+  [run ] ht8 dramhit k=10 rep 5/5
+  [run ] ok   set_mops=1365   -> dramhit_ht8_k10_r5_20260914-184524.log
+  [run ] ht8 dramhit k=11 rep 1/5
+  [run ] ok   set_mops=1262   -> dramhit_ht8_k11_r1_20260914-184524.log
+  [run ] ht8 dramhit k=11 rep 2/5
+  [run ] ok   set_mops=1301   -> dramhit_ht8_k11_r2_20260914-184524.log
+  [run ] ht8 dramhit k=11 rep 3/5
+  [run ] ok   set_mops=1262   -> dramhit_ht8_k11_r3_20260914-184524.log
+  [run ] ht8 dramhit k=11 rep 4/5
+  [run ] ok   set_mops=1299   -> dramhit_ht8_k11_r4_20260914-184524.log
+  [run ] ht8 dramhit k=11 rep 5/5
+  [run ] ok   set_mops=1261   -> dramhit_ht8_k11_r5_20260914-184524.log
+  [run ] ht8 dramhit k=12 rep 1/5
+  [run ] ok   set_mops=1392   -> dramhit_ht8_k12_r1_20260914-184524.log
+  [run ] ht8 dramhit k=12 rep 2/5
+  [run ] ok   set_mops=1261   -> dramhit_ht8_k12_r2_20260914-184524.log
+  [run ] ht8 dramhit k=12 rep 3/5
+  [run ] ok   set_mops=1391   -> dramhit_ht8_k12_r3_20260914-184524.log
+  [run ] ht8 dramhit k=12 rep 4/5
+  [run ] ok   set_mops=1262   -> dramhit_ht8_k12_r4_20260914-184524.log
+  [run ] ht8 dramhit k=12 rep 5/5
+  [run ] ok   set_mops=1395   -> dramhit_ht8_k12_r5_20260914-184524.log
+  [run ] ht8 dramhit k=13 rep 1/5
+  [run ] ok   set_mops=1375   -> dramhit_ht8_k13_r1_20260914-184524.log
+  [run ] ht8 dramhit k=13 rep 2/5
+  [run ] ok   set_mops=1274   -> dramhit_ht8_k13_r2_20260914-184524.log
+  [run ] ht8 dramhit k=13 rep 3/5
+  [run ] ok   set_mops=1374   -> dramhit_ht8_k13_r3_20260914-184524.log
+  [run ] ht8 dramhit k=13 rep 4/5
+  [run ] ok   set_mops=1275   -> dramhit_ht8_k13_r4_20260914-184524.log
+  [run ] ht8 dramhit k=13 rep 5/5
+  [run ] ok   set_mops=1376   -> dramhit_ht8_k13_r5_20260914-184524.log
+  [run ] ht8 dramhit k=14 rep 1/5
+  [run ] ok   set_mops=1280   -> dramhit_ht8_k14_r1_20260914-184524.log
+  [run ] ht8 dramhit k=14 rep 2/5
+  [run ] ok   set_mops=1388   -> dramhit_ht8_k14_r2_20260914-184524.log
+  [run ] ht8 dramhit k=14 rep 3/5
+  [run ] ok   set_mops=1281   -> dramhit_ht8_k14_r3_20260914-184524.log
+  [run ] ht8 dramhit k=14 rep 4/5
+  [run ] ok   set_mops=1386   -> dramhit_ht8_k14_r4_20260914-184524.log
+  [run ] ht8 dramhit k=14 rep 5/5
+  [run ] ok   set_mops=1281   -> dramhit_ht8_k14_r5_20260914-184524.log
+  [run ] ht8 dramhit k=15 rep 1/5
+  [run ] ok   set_mops=1420   -> dramhit_ht8_k15_r1_20260914-184524.log
+  [run ] ht8 dramhit k=15 rep 2/5
+  [run ] ok   set_mops=1384   -> dramhit_ht8_k15_r2_20260914-184524.log
+  [run ] ht8 dramhit k=15 rep 3/5
+  [run ] ok   set_mops=1419   -> dramhit_ht8_k15_r3_20260914-184524.log
+  [run ] ht8 dramhit k=15 rep 4/5
+  [run ] ok   set_mops=1384   -> dramhit_ht8_k15_r4_20260914-184524.log
+  [run ] ht8 dramhit k=15 rep 5/5
+  [run ] ok   set_mops=1421   -> dramhit_ht8_k15_r5_20260914-184524.log
+  [run ] ht8 dramhit k=16 rep 1/5
+  [run ] ok   set_mops=1388   -> dramhit_ht8_k16_r1_20260914-184524.log
+  [run ] ht8 dramhit k=16 rep 2/5
+  [run ] ok   set_mops=1291   -> dramhit_ht8_k16_r2_20260914-184524.log
+  [run ] ht8 dramhit k=16 rep 3/5
+  [run ] ok   set_mops=1390   -> dramhit_ht8_k16_r3_20260914-184524.log
+  [run ] ht8 dramhit k=16 rep 4/5
+  [run ] ok   set_mops=1289   -> dramhit_ht8_k16_r4_20260914-184524.log
+  [run ] ht8 dramhit k=16 rep 5/5
+  [run ] ok   set_mops=1391   -> dramhit_ht8_k16_r5_20260914-184524.log
+  [run ] ht8 dramhit k=17 rep 1/5
+  [run ] ok   set_mops=1273   -> dramhit_ht8_k17_r1_20260914-184524.log
+  [run ] ht8 dramhit k=17 rep 2/5
+  [run ] ok   set_mops=1399   -> dramhit_ht8_k17_r2_20260914-184524.log
+  [run ] ht8 dramhit k=17 rep 3/5
+  [run ] ok   set_mops=1271   -> dramhit_ht8_k17_r3_20260914-184524.log
+  [run ] ht8 dramhit k=17 rep 4/5
+  [run ] ok   set_mops=1399   -> dramhit_ht8_k17_r4_20260914-184524.log
+  [run ] ht8 dramhit k=17 rep 5/5
+  [run ] ok   set_mops=1272   -> dramhit_ht8_k17_r5_20260914-184524.log
+  [run ] ht8 dramhit k=18 rep 1/5
+  [run ] ok   set_mops=1385   -> dramhit_ht8_k18_r1_20260914-184524.log
+  [run ] ht8 dramhit k=18 rep 2/5
+  [run ] ok   set_mops=1187   -> dramhit_ht8_k18_r2_20260914-184524.log
+  [run ] ht8 dramhit k=18 rep 3/5
+  [run ] ok   set_mops=1388   -> dramhit_ht8_k18_r3_20260914-184524.log
+  [run ] ht8 dramhit k=18 rep 4/5
+  [run ] ok   set_mops=1187   -> dramhit_ht8_k18_r4_20260914-184524.log
+  [run ] ht8 dramhit k=18 rep 5/5
+  [run ] ok   set_mops=1388   -> dramhit_ht8_k18_r5_20260914-184524.log
+  [run ] ht8 dramhit k=19 rep 1/5
+  [run ] ok   set_mops=1275   -> dramhit_ht8_k19_r1_20260914-184524.log
+  [run ] ht8 dramhit k=19 rep 2/5
+  [run ] ok   set_mops=1413   -> dramhit_ht8_k19_r2_20260914-184524.log
+  [run ] ht8 dramhit k=19 rep 3/5
+  [run ] ok   set_mops=1274   -> dramhit_ht8_k19_r3_20260914-184524.log
+  [run ] ht8 dramhit k=19 rep 4/5
+  [run ] ok   set_mops=1412   -> dramhit_ht8_k19_r4_20260914-184524.log
+  [run ] ht8 dramhit k=19 rep 5/5
+  [run ] ok   set_mops=1276   -> dramhit_ht8_k19_r5_20260914-184524.log
+  [run ] ht8 dramhit k=20 rep 1/5
+  [run ] ok   set_mops=1439   -> dramhit_ht8_k20_r1_20260914-184524.log
+  [run ] ht8 dramhit k=20 rep 2/5
+  [run ] ok   set_mops=1315   -> dramhit_ht8_k20_r2_20260914-184524.log
+  [run ] ht8 dramhit k=20 rep 3/5
+  [run ] ok   set_mops=1441   -> dramhit_ht8_k20_r3_20260914-184524.log
+  [run ] ht8 dramhit k=20 rep 4/5
+  [run ] ok   set_mops=1314   -> dramhit_ht8_k20_r4_20260914-184524.log
+  [run ] ht8 dramhit k=20 rep 5/5
+  [run ] ok   set_mops=1439   -> dramhit_ht8_k20_r5_20260914-184524.log
+  [run ] ht8 dramhit k=21 rep 1/5
+  [run ] ok   set_mops=1240   -> dramhit_ht8_k21_r1_20260914-184524.log
+  [run ] ht8 dramhit k=21 rep 2/5
+  [run ] ok   set_mops=1449   -> dramhit_ht8_k21_r2_20260914-184524.log
+  [run ] ht8 dramhit k=21 rep 3/5
+  [run ] ok   set_mops=1242   -> dramhit_ht8_k21_r3_20260914-184524.log
+  [run ] ht8 dramhit k=21 rep 4/5
+  [run ] ok   set_mops=1447   -> dramhit_ht8_k21_r4_20260914-184524.log
+  [run ] ht8 dramhit k=21 rep 5/5
+  [run ] ok   set_mops=1242   -> dramhit_ht8_k21_r5_20260914-184524.log
+  [run ] ht8 dramhit k=22 rep 1/5
+  [run ] ok   set_mops=1453   -> dramhit_ht8_k22_r1_20260914-184524.log
+  [run ] ht8 dramhit k=22 rep 2/5
+  [run ] ok   set_mops=1340   -> dramhit_ht8_k22_r2_20260914-184524.log
+  [run ] ht8 dramhit k=22 rep 3/5
+  [run ] ok   set_mops=1454   -> dramhit_ht8_k22_r3_20260914-184524.log
+  [run ] ht8 dramhit k=22 rep 4/5
+  [run ] ok   set_mops=1341   -> dramhit_ht8_k22_r4_20260914-184524.log
+  [run ] ht8 dramhit k=22 rep 5/5
+  [run ] ok   set_mops=1451   -> dramhit_ht8_k22_r5_20260914-184524.log
+  [run ] ht8 dramhit k=23 rep 1/5
+  [run ] ok   set_mops=1438   -> dramhit_ht8_k23_r1_20260914-184524.log
+  [run ] ht8 dramhit k=23 rep 2/5
+  [run ] ok   set_mops=1430   -> dramhit_ht8_k23_r2_20260914-184524.log
+  [run ] ht8 dramhit k=23 rep 3/5
+  [run ] ok   set_mops=1439   -> dramhit_ht8_k23_r3_20260914-184524.log
+  [run ] ht8 dramhit k=23 rep 4/5
+  [run ] ok   set_mops=1429   -> dramhit_ht8_k23_r4_20260914-184524.log
+  [run ] ht8 dramhit k=23 rep 5/5
+  [run ] ok   set_mops=1437   -> dramhit_ht8_k23_r5_20260914-184524.log
+  [run ] ht8 dramhit k=24 rep 1/5
+  [run ] ok   set_mops=1452   -> dramhit_ht8_k24_r1_20260914-184524.log
+  [run ] ht8 dramhit k=24 rep 2/5
+  [run ] ok   set_mops=1447   -> dramhit_ht8_k24_r2_20260914-184524.log
+  [run ] ht8 dramhit k=24 rep 3/5
+  [run ] ok   set_mops=1452   -> dramhit_ht8_k24_r3_20260914-184524.log
+  [run ] ht8 dramhit k=24 rep 4/5
+  [run ] ok   set_mops=1446   -> dramhit_ht8_k24_r4_20260914-184524.log
+  [run ] ht8 dramhit k=24 rep 5/5
+  [run ] ok   set_mops=1452   -> dramhit_ht8_k24_r5_20260914-184524.log
+  [run ] ht8 dramhit k=25 rep 1/5
+  [run ] ok   set_mops=1477   -> dramhit_ht8_k25_r1_20260914-184524.log
+  [run ] ht8 dramhit k=25 rep 2/5
+  [run ] ok   set_mops=1462   -> dramhit_ht8_k25_r2_20260914-184524.log
+  [run ] ht8 dramhit k=25 rep 3/5
+  [run ] ok   set_mops=1476   -> dramhit_ht8_k25_r3_20260914-184524.log
+  [run ] ht8 dramhit k=25 rep 4/5
+  [run ] ok   set_mops=1463   -> dramhit_ht8_k25_r4_20260914-184524.log
+  [run ] ht8 dramhit k=25 rep 5/5
+  [run ] ok   set_mops=1476   -> dramhit_ht8_k25_r5_20260914-184524.log
+  [run ] ht8 dramhit k=26 rep 1/5
+  [run ] ok   set_mops=1363   -> dramhit_ht8_k26_r1_20260914-184524.log
+  [run ] ht8 dramhit k=26 rep 2/5
+  [run ] ok   set_mops=1497   -> dramhit_ht8_k26_r2_20260914-184524.log
+  [run ] ht8 dramhit k=26 rep 3/5
+  [run ] ok   set_mops=1364   -> dramhit_ht8_k26_r3_20260914-184524.log
+  [run ] ht8 dramhit k=26 rep 4/5
+  [run ] ok   set_mops=1495   -> dramhit_ht8_k26_r4_20260914-184524.log
+  [run ] ht8 dramhit k=26 rep 5/5
+  [run ] ok   set_mops=1364   -> dramhit_ht8_k26_r5_20260914-184524.log
+  [run ] ht8 dramhit k=27 rep 1/5
+  [run ] ok   set_mops=1490   -> dramhit_ht8_k27_r1_20260914-184524.log
+  [run ] ht8 dramhit k=27 rep 2/5
+  [run ] ok   set_mops=1366   -> dramhit_ht8_k27_r2_20260914-184524.log
+  [run ] ht8 dramhit k=27 rep 3/5
+  [run ] ok   set_mops=1491   -> dramhit_ht8_k27_r3_20260914-184524.log
+  [run ] ht8 dramhit k=27 rep 4/5
+  [run ] ok   set_mops=1366   -> dramhit_ht8_k27_r4_20260914-184524.log
+  [run ] ht8 dramhit k=27 rep 5/5
+  [run ] ok   set_mops=1489   -> dramhit_ht8_k27_r5_20260914-184524.log
+  [run ] ht8 dramhit k=28 rep 1/5
+  [run ] ok   set_mops=1472   -> dramhit_ht8_k28_r1_20260914-184524.log
+  [run ] ht8 dramhit k=28 rep 2/5
+  [run ] ok   set_mops=1351   -> dramhit_ht8_k28_r2_20260914-184524.log
+  [run ] ht8 dramhit k=28 rep 3/5
+  [run ] ok   set_mops=1470   -> dramhit_ht8_k28_r3_20260914-184524.log
+  [run ] ht8 dramhit k=28 rep 4/5
+  [run ] ok   set_mops=1349   -> dramhit_ht8_k28_r4_20260914-184524.log
+  [run ] ht8 dramhit k=28 rep 5/5
+  [run ] ok   set_mops=1472   -> dramhit_ht8_k28_r5_20260914-184524.log
+  [run ] ht8 dramhit k=29 rep 1/5
+  [run ] ok   set_mops=1335   -> dramhit_ht8_k29_r1_20260914-184524.log
+  [run ] ht8 dramhit k=29 rep 2/5
+  [run ] ok   set_mops=1462   -> dramhit_ht8_k29_r2_20260914-184524.log
+  [run ] ht8 dramhit k=29 rep 3/5
+  [run ] ok   set_mops=1338   -> dramhit_ht8_k29_r3_20260914-184524.log
+  [run ] ht8 dramhit k=29 rep 4/5
+  [run ] ok   set_mops=1461   -> dramhit_ht8_k29_r4_20260914-184524.log
+  [run ] ht8 dramhit k=29 rep 5/5
+  [run ] ok   set_mops=1334   -> dramhit_ht8_k29_r5_20260914-184524.log
+  [run ] ht8 dramhit k=30 rep 1/5
+  [run ] ok   set_mops=1353   -> dramhit_ht8_k30_r1_20260914-184524.log
+  [run ] ht8 dramhit k=30 rep 2/5
+  [run ] ok   set_mops=1479   -> dramhit_ht8_k30_r2_20260914-184524.log
+  [run ] ht8 dramhit k=30 rep 3/5
+  [run ] ok   set_mops=1354   -> dramhit_ht8_k30_r3_20260914-184524.log
+  [run ] ht8 dramhit k=30 rep 4/5
+  [run ] ok   set_mops=1479   -> dramhit_ht8_k30_r4_20260914-184524.log
+  [run ] ht8 dramhit k=30 rep 5/5
+  [run ] ok   set_mops=1352   -> dramhit_ht8_k30_r5_20260914-184524.log
+  [run ] ht8 dramhit k=31 rep 1/5
+  [run ] ok   set_mops=1514   -> dramhit_ht8_k31_r1_20260914-184524.log
+  [run ] ht8 dramhit k=31 rep 2/5
+  [run ] ok   set_mops=1379   -> dramhit_ht8_k31_r2_20260914-184524.log
+  [run ] ht8 dramhit k=31 rep 3/5
+  [run ] ok   set_mops=1516   -> dramhit_ht8_k31_r3_20260914-184524.log
+  [run ] ht8 dramhit k=31 rep 4/5
+  [run ] ok   set_mops=1379   -> dramhit_ht8_k31_r4_20260914-184524.log
+  [run ] ht8 dramhit k=31 rep 5/5
+  [run ] ok   set_mops=1518   -> dramhit_ht8_k31_r5_20260914-184524.log
+  [run ] ht8 dramhit k=32 rep 1/5
+  [run ] ok   set_mops=1409   -> dramhit_ht8_k32_r1_20260914-184524.log
+  [run ] ht8 dramhit k=32 rep 2/5
+  [run ] ok   set_mops=1418   -> dramhit_ht8_k32_r2_20260914-184524.log
+  [run ] ht8 dramhit k=32 rep 3/5
+  [run ] ok   set_mops=1408   -> dramhit_ht8_k32_r3_20260914-184524.log
+  [run ] ht8 dramhit k=32 rep 4/5
+  [run ] ok   set_mops=1424   -> dramhit_ht8_k32_r4_20260914-184524.log
+  [run ] ht8 dramhit k=32 rep 5/5
+  [run ] ok   set_mops=1411   -> dramhit_ht8_k32_r5_20260914-184524.log
+
+------------------------------------------------------------------------------
+  ht-type 1 (dramhit-p)
+------------------------------------------------------------------------------
+  [pool] --no-reserve: using whatever is currently reserved
+  [run ] ht1 dramhit-p k=10 rep 1/5
+  [run ] ok   set_mops=2789   -> dramhit-p_ht1_k10_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=10 rep 2/5
+  [run ] ok   set_mops=2811   -> dramhit-p_ht1_k10_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=10 rep 3/5
+  [run ] ok   set_mops=2268   -> dramhit-p_ht1_k10_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=10 rep 4/5
+  [run ] ok   set_mops=2803   -> dramhit-p_ht1_k10_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=10 rep 5/5
+  [run ] ok   set_mops=2787   -> dramhit-p_ht1_k10_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=11 rep 1/5
+  [run ] ok   set_mops=2651   -> dramhit-p_ht1_k11_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=11 rep 2/5
+  [run ] ok   set_mops=2672   -> dramhit-p_ht1_k11_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=11 rep 3/5
+  [run ] ok   set_mops=2666   -> dramhit-p_ht1_k11_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=11 rep 4/5
+  [run ] ok   set_mops=2648   -> dramhit-p_ht1_k11_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=11 rep 5/5
+  [run ] ok   set_mops=2700   -> dramhit-p_ht1_k11_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=12 rep 1/5
+  [run ] ok   set_mops=2374   -> dramhit-p_ht1_k12_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=12 rep 2/5
+  [run ] ok   set_mops=2393   -> dramhit-p_ht1_k12_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=12 rep 3/5
+  [run ] ok   set_mops=2396   -> dramhit-p_ht1_k12_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=12 rep 4/5
+  [run ] ok   set_mops=2384   -> dramhit-p_ht1_k12_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=12 rep 5/5
+  [run ] ok   set_mops=2363   -> dramhit-p_ht1_k12_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=13 rep 1/5
+  [run ] ok   set_mops=2158   -> dramhit-p_ht1_k13_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=13 rep 2/5
+  [run ] ok   set_mops=2180   -> dramhit-p_ht1_k13_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=13 rep 3/5
+  [run ] ok   set_mops=2164   -> dramhit-p_ht1_k13_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=13 rep 4/5
+  [run ] ok   set_mops=2173   -> dramhit-p_ht1_k13_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=13 rep 5/5
+  [run ] ok   set_mops=2175   -> dramhit-p_ht1_k13_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=14 rep 1/5
+  [run ] ok   set_mops=2084   -> dramhit-p_ht1_k14_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=14 rep 2/5
+  [run ] ok   set_mops=2097   -> dramhit-p_ht1_k14_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=14 rep 3/5
+  [run ] ok   set_mops=2104   -> dramhit-p_ht1_k14_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=14 rep 4/5
+  [run ] ok   set_mops=2094   -> dramhit-p_ht1_k14_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=14 rep 5/5
+  [run ] ok   set_mops=2094   -> dramhit-p_ht1_k14_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=15 rep 1/5
+  [run ] ok   set_mops=2083   -> dramhit-p_ht1_k15_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=15 rep 2/5
+  [run ] ok   set_mops=2087   -> dramhit-p_ht1_k15_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=15 rep 3/5
+  [run ] ok   set_mops=2074   -> dramhit-p_ht1_k15_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=15 rep 4/5
+  [run ] ok   set_mops=2084   -> dramhit-p_ht1_k15_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=15 rep 5/5
+  [run ] ok   set_mops=2087   -> dramhit-p_ht1_k15_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=16 rep 1/5
+  [run ] ok   set_mops=2022   -> dramhit-p_ht1_k16_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=16 rep 2/5
+  [run ] ok   set_mops=2007   -> dramhit-p_ht1_k16_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=16 rep 3/5
+  [run ] ok   set_mops=2026   -> dramhit-p_ht1_k16_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=16 rep 4/5
+  [run ] ok   set_mops=2026   -> dramhit-p_ht1_k16_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=16 rep 5/5
+  [run ] ok   set_mops=2026   -> dramhit-p_ht1_k16_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=17 rep 1/5
+  [run ] ok   set_mops=1954   -> dramhit-p_ht1_k17_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=17 rep 2/5
+  [run ] ok   set_mops=1957   -> dramhit-p_ht1_k17_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=17 rep 3/5
+  [run ] ok   set_mops=1950   -> dramhit-p_ht1_k17_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=17 rep 4/5
+  [run ] ok   set_mops=1960   -> dramhit-p_ht1_k17_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=17 rep 5/5
+  [run ] ok   set_mops=1952   -> dramhit-p_ht1_k17_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=18 rep 1/5
+  [run ] ok   set_mops=1913   -> dramhit-p_ht1_k18_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=18 rep 2/5
+  [run ] ok   set_mops=1917   -> dramhit-p_ht1_k18_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=18 rep 3/5
+  [run ] ok   set_mops=1915   -> dramhit-p_ht1_k18_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=18 rep 4/5
+  [run ] ok   set_mops=1916   -> dramhit-p_ht1_k18_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=18 rep 5/5
+  [run ] ok   set_mops=1920   -> dramhit-p_ht1_k18_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=19 rep 1/5
+  [run ] ok   set_mops=1916   -> dramhit-p_ht1_k19_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=19 rep 2/5
+  [run ] ok   set_mops=1907   -> dramhit-p_ht1_k19_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=19 rep 3/5
+  [run ] ok   set_mops=1916   -> dramhit-p_ht1_k19_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=19 rep 4/5
+  [run ] ok   set_mops=1925   -> dramhit-p_ht1_k19_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=19 rep 5/5
+  [run ] ok   set_mops=1908   -> dramhit-p_ht1_k19_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=20 rep 1/5
+  [run ] ok   set_mops=1900   -> dramhit-p_ht1_k20_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=20 rep 2/5
+  [run ] ok   set_mops=1911   -> dramhit-p_ht1_k20_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=20 rep 3/5
+  [run ] ok   set_mops=1877   -> dramhit-p_ht1_k20_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=20 rep 4/5
+  [run ] ok   set_mops=1907   -> dramhit-p_ht1_k20_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=20 rep 5/5
+  [run ] ok   set_mops=1897   -> dramhit-p_ht1_k20_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=21 rep 1/5
+  [run ] ok   set_mops=1889   -> dramhit-p_ht1_k21_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=21 rep 2/5
+  [run ] ok   set_mops=1897   -> dramhit-p_ht1_k21_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=21 rep 3/5
+  [run ] ok   set_mops=1893   -> dramhit-p_ht1_k21_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=21 rep 4/5
+  [run ] ok   set_mops=1901   -> dramhit-p_ht1_k21_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=21 rep 5/5
+  [run ] ok   set_mops=1885   -> dramhit-p_ht1_k21_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=22 rep 1/5
+  [run ] ok   set_mops=1877   -> dramhit-p_ht1_k22_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=22 rep 2/5
+  [run ] ok   set_mops=1801   -> dramhit-p_ht1_k22_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=22 rep 3/5
+  [run ] ok   set_mops=1887   -> dramhit-p_ht1_k22_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=22 rep 4/5
+  [run ] ok   set_mops=1882   -> dramhit-p_ht1_k22_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=22 rep 5/5
+  [run ] ok   set_mops=1873   -> dramhit-p_ht1_k22_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=23 rep 1/5
+  [run ] ok   set_mops=1866   -> dramhit-p_ht1_k23_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=23 rep 2/5
+  [run ] ok   set_mops=1866   -> dramhit-p_ht1_k23_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=23 rep 3/5
+  [run ] ok   set_mops=1860   -> dramhit-p_ht1_k23_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=23 rep 4/5
+  [run ] ok   set_mops=1866   -> dramhit-p_ht1_k23_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=23 rep 5/5
+  [run ] ok   set_mops=1865   -> dramhit-p_ht1_k23_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=24 rep 1/5
+  [run ] ok   set_mops=1884   -> dramhit-p_ht1_k24_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=24 rep 2/5
+  [run ] ok   set_mops=1876   -> dramhit-p_ht1_k24_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=24 rep 3/5
+  [run ] ok   set_mops=1875   -> dramhit-p_ht1_k24_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=24 rep 4/5
+  [run ] ok   set_mops=1873   -> dramhit-p_ht1_k24_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=24 rep 5/5
+  [run ] ok   set_mops=1872   -> dramhit-p_ht1_k24_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=25 rep 1/5
+  [run ] ok   set_mops=1876   -> dramhit-p_ht1_k25_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=25 rep 2/5
+  [run ] ok   set_mops=1887   -> dramhit-p_ht1_k25_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=25 rep 3/5
+  [run ] ok   set_mops=1874   -> dramhit-p_ht1_k25_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=25 rep 4/5
+  [run ] ok   set_mops=1870   -> dramhit-p_ht1_k25_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=25 rep 5/5
+  [run ] ok   set_mops=1873   -> dramhit-p_ht1_k25_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=26 rep 1/5
+  [run ] ok   set_mops=1849   -> dramhit-p_ht1_k26_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=26 rep 2/5
+  [run ] ok   set_mops=1858   -> dramhit-p_ht1_k26_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=26 rep 3/5
+  [run ] ok   set_mops=1862   -> dramhit-p_ht1_k26_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=26 rep 4/5
+  [run ] ok   set_mops=1866   -> dramhit-p_ht1_k26_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=26 rep 5/5
+  [run ] ok   set_mops=1859   -> dramhit-p_ht1_k26_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=27 rep 1/5
+  [run ] ok   set_mops=1783   -> dramhit-p_ht1_k27_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=27 rep 2/5
+  [run ] ok   set_mops=1855   -> dramhit-p_ht1_k27_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=27 rep 3/5
+  [run ] ok   set_mops=1850   -> dramhit-p_ht1_k27_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=27 rep 4/5
+  [run ] ok   set_mops=1855   -> dramhit-p_ht1_k27_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=27 rep 5/5
+  [run ] ok   set_mops=1842   -> dramhit-p_ht1_k27_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=28 rep 1/5
+  [run ] ok   set_mops=1834   -> dramhit-p_ht1_k28_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=28 rep 2/5
+  [run ] ok   set_mops=1847   -> dramhit-p_ht1_k28_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=28 rep 3/5
+  [run ] ok   set_mops=1841   -> dramhit-p_ht1_k28_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=28 rep 4/5
+  [run ] ok   set_mops=1844   -> dramhit-p_ht1_k28_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=28 rep 5/5
+  [run ] ok   set_mops=1830   -> dramhit-p_ht1_k28_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=29 rep 1/5
+  [run ] ok   set_mops=1758   -> dramhit-p_ht1_k29_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=29 rep 2/5
+  [run ] ok   set_mops=1732   -> dramhit-p_ht1_k29_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=29 rep 3/5
+  [run ] ok   set_mops=1747   -> dramhit-p_ht1_k29_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=29 rep 4/5
+  [run ] ok   set_mops=1738   -> dramhit-p_ht1_k29_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=29 rep 5/5
+  [run ] ok   set_mops=1757   -> dramhit-p_ht1_k29_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=30 rep 1/5
+  [run ] ok   set_mops=1795   -> dramhit-p_ht1_k30_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=30 rep 2/5
+  [run ] ok   set_mops=1790   -> dramhit-p_ht1_k30_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=30 rep 3/5
+  [run ] ok   set_mops=1784   -> dramhit-p_ht1_k30_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=30 rep 4/5
+  [run ] ok   set_mops=1787   -> dramhit-p_ht1_k30_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=30 rep 5/5
+  [run ] ok   set_mops=1787   -> dramhit-p_ht1_k30_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=31 rep 1/5
+  [run ] ok   set_mops=1824   -> dramhit-p_ht1_k31_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=31 rep 2/5
+  [run ] ok   set_mops=1829   -> dramhit-p_ht1_k31_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=31 rep 3/5
+  [run ] ok   set_mops=1822   -> dramhit-p_ht1_k31_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=31 rep 4/5
+  [run ] ok   set_mops=1824   -> dramhit-p_ht1_k31_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=31 rep 5/5
+  [run ] ok   set_mops=1829   -> dramhit-p_ht1_k31_r5_20260914-184524.log
+  [run ] ht1 dramhit-p k=32 rep 1/5
+  [run ] ok   set_mops=1789   -> dramhit-p_ht1_k32_r1_20260914-184524.log
+  [run ] ht1 dramhit-p k=32 rep 2/5
+  [run ] ok   set_mops=1790   -> dramhit-p_ht1_k32_r2_20260914-184524.log
+  [run ] ht1 dramhit-p k=32 rep 3/5
+  [run ] ok   set_mops=1794   -> dramhit-p_ht1_k32_r3_20260914-184524.log
+  [run ] ht1 dramhit-p k=32 rep 4/5
+  [run ] ok   set_mops=1789   -> dramhit-p_ht1_k32_r4_20260914-184524.log
+  [run ] ht1 dramhit-p k=32 rep 5/5
+  [run ] ok   set_mops=1774   -> dramhit-p_ht1_k32_r5_20260914-184524.log
+
+------------------------------------------------------------------------------
+  ht-type 12 (dramblast-p)
+------------------------------------------------------------------------------
+  [pool] --no-reserve: using whatever is currently reserved
+  [run ] ht12 dramblast-p k=10 rep 1/5
+  [run ] ok   set_mops=3547   -> dramblast-p_ht12_k10_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=10 rep 2/5
+  [run ] ok   set_mops=3549   -> dramblast-p_ht12_k10_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=10 rep 3/5
+  [run ] ok   set_mops=3376   -> dramblast-p_ht12_k10_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=10 rep 4/5
+  [run ] ok   set_mops=3565   -> dramblast-p_ht12_k10_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=10 rep 5/5
+  [run ] ok   set_mops=3315   -> dramblast-p_ht12_k10_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=11 rep 1/5
+  [run ] ok   set_mops=3214   -> dramblast-p_ht12_k11_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=11 rep 2/5
+  [run ] ok   set_mops=3222   -> dramblast-p_ht12_k11_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=11 rep 3/5
+  [run ] ok   set_mops=3221   -> dramblast-p_ht12_k11_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=11 rep 4/5
+  [run ] ok   set_mops=3249   -> dramblast-p_ht12_k11_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=11 rep 5/5
+  [run ] ok   set_mops=3225   -> dramblast-p_ht12_k11_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=12 rep 1/5
+  [run ] ok   set_mops=2711   -> dramblast-p_ht12_k12_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=12 rep 2/5
+  [run ] ok   set_mops=2662   -> dramblast-p_ht12_k12_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=12 rep 3/5
+  [run ] ok   set_mops=2696   -> dramblast-p_ht12_k12_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=12 rep 4/5
+  [run ] ok   set_mops=2719   -> dramblast-p_ht12_k12_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=12 rep 5/5
+  [run ] ok   set_mops=2679   -> dramblast-p_ht12_k12_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=13 rep 1/5
+  [run ] ok   set_mops=2473   -> dramblast-p_ht12_k13_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=13 rep 2/5
+  [run ] ok   set_mops=2504   -> dramblast-p_ht12_k13_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=13 rep 3/5
+  [run ] ok   set_mops=2492   -> dramblast-p_ht12_k13_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=13 rep 4/5
+  [run ] ok   set_mops=2504   -> dramblast-p_ht12_k13_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=13 rep 5/5
+  [run ] ok   set_mops=2516   -> dramblast-p_ht12_k13_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=14 rep 1/5
+  [run ] ok   set_mops=2392   -> dramblast-p_ht12_k14_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=14 rep 2/5
+  [run ] ok   set_mops=2362   -> dramblast-p_ht12_k14_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=14 rep 3/5
+  [run ] ok   set_mops=2390   -> dramblast-p_ht12_k14_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=14 rep 4/5
+  [run ] ok   set_mops=2366   -> dramblast-p_ht12_k14_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=14 rep 5/5
+  [run ] ok   set_mops=2397   -> dramblast-p_ht12_k14_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=15 rep 1/5
+  [run ] ok   set_mops=2340   -> dramblast-p_ht12_k15_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=15 rep 2/5
+  [run ] ok   set_mops=2268   -> dramblast-p_ht12_k15_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=15 rep 3/5
+  [run ] ok   set_mops=2313   -> dramblast-p_ht12_k15_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=15 rep 4/5
+  [run ] ok   set_mops=2338   -> dramblast-p_ht12_k15_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=15 rep 5/5
+  [run ] ok   set_mops=2348   -> dramblast-p_ht12_k15_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=16 rep 1/5
+  [run ] ok   set_mops=2265   -> dramblast-p_ht12_k16_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=16 rep 2/5
+  [run ] ok   set_mops=2287   -> dramblast-p_ht12_k16_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=16 rep 3/5
+  [run ] ok   set_mops=2299   -> dramblast-p_ht12_k16_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=16 rep 4/5
+  [run ] ok   set_mops=2293   -> dramblast-p_ht12_k16_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=16 rep 5/5
+  [run ] ok   set_mops=2267   -> dramblast-p_ht12_k16_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=17 rep 1/5
+  [run ] ok   set_mops=2273   -> dramblast-p_ht12_k17_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=17 rep 2/5
+  [run ] ok   set_mops=2289   -> dramblast-p_ht12_k17_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=17 rep 3/5
+  [run ] ok   set_mops=2268   -> dramblast-p_ht12_k17_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=17 rep 4/5
+  [run ] ok   set_mops=2273   -> dramblast-p_ht12_k17_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=17 rep 5/5
+  [run ] ok   set_mops=2276   -> dramblast-p_ht12_k17_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=18 rep 1/5
+  [run ] ok   set_mops=2275   -> dramblast-p_ht12_k18_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=18 rep 2/5
+  [run ] ok   set_mops=2261   -> dramblast-p_ht12_k18_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=18 rep 3/5
+  [run ] ok   set_mops=2260   -> dramblast-p_ht12_k18_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=18 rep 4/5
+  [run ] ok   set_mops=2269   -> dramblast-p_ht12_k18_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=18 rep 5/5
+  [run ] ok   set_mops=2267   -> dramblast-p_ht12_k18_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=19 rep 1/5
+  [run ] ok   set_mops=2272   -> dramblast-p_ht12_k19_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=19 rep 2/5
+  [run ] ok   set_mops=2262   -> dramblast-p_ht12_k19_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=19 rep 3/5
+  [run ] ok   set_mops=1495   -> dramblast-p_ht12_k19_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=19 rep 4/5
+  [run ] ok   set_mops=2260   -> dramblast-p_ht12_k19_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=19 rep 5/5
+  [run ] ok   set_mops=2247   -> dramblast-p_ht12_k19_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=20 rep 1/5
+  [run ] ok   set_mops=1650   -> dramblast-p_ht12_k20_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=20 rep 2/5
+  [run ] ok   set_mops=1534   -> dramblast-p_ht12_k20_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=20 rep 3/5
+  [run ] ok   set_mops=2257   -> dramblast-p_ht12_k20_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=20 rep 4/5
+  [run ] ok   set_mops=2275   -> dramblast-p_ht12_k20_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=20 rep 5/5
+  [run ] ok   set_mops=2278   -> dramblast-p_ht12_k20_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=21 rep 1/5
+  [run ] ok   set_mops=2263   -> dramblast-p_ht12_k21_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=21 rep 2/5
+  [run ] ok   set_mops=2262   -> dramblast-p_ht12_k21_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=21 rep 3/5
+  [run ] ok   set_mops=2274   -> dramblast-p_ht12_k21_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=21 rep 4/5
+  [run ] ok   set_mops=2229   -> dramblast-p_ht12_k21_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=21 rep 5/5
+  [run ] ok   set_mops=2246   -> dramblast-p_ht12_k21_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=22 rep 1/5
+  [run ] ok   set_mops=2256   -> dramblast-p_ht12_k22_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=22 rep 2/5
+  [run ] ok   set_mops=2237   -> dramblast-p_ht12_k22_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=22 rep 3/5
+  [run ] ok   set_mops=2245   -> dramblast-p_ht12_k22_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=22 rep 4/5
+  [run ] ok   set_mops=2238   -> dramblast-p_ht12_k22_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=22 rep 5/5
+  [run ] ok   set_mops=2233   -> dramblast-p_ht12_k22_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=23 rep 1/5
+  [run ] ok   set_mops=2237   -> dramblast-p_ht12_k23_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=23 rep 2/5
+  [run ] ok   set_mops=2241   -> dramblast-p_ht12_k23_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=23 rep 3/5
+  [run ] ok   set_mops=2246   -> dramblast-p_ht12_k23_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=23 rep 4/5
+  [run ] ok   set_mops=2237   -> dramblast-p_ht12_k23_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=23 rep 5/5
+  [run ] ok   set_mops=2232   -> dramblast-p_ht12_k23_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=24 rep 1/5
+  [run ] ok   set_mops=2235   -> dramblast-p_ht12_k24_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=24 rep 2/5
+  [run ] ok   set_mops=2239   -> dramblast-p_ht12_k24_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=24 rep 3/5
+  [run ] ok   set_mops=2251   -> dramblast-p_ht12_k24_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=24 rep 4/5
+  [run ] ok   set_mops=2168   -> dramblast-p_ht12_k24_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=24 rep 5/5
+  [run ] ok   set_mops=2239   -> dramblast-p_ht12_k24_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=25 rep 1/5
+  [run ] ok   set_mops=2242   -> dramblast-p_ht12_k25_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=25 rep 2/5
+  [run ] ok   set_mops=2203   -> dramblast-p_ht12_k25_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=25 rep 3/5
+  [run ] ok   set_mops=2256   -> dramblast-p_ht12_k25_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=25 rep 4/5
+  [run ] ok   set_mops=2216   -> dramblast-p_ht12_k25_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=25 rep 5/5
+  [run ] ok   set_mops=2209   -> dramblast-p_ht12_k25_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=26 rep 1/5
+  [run ] ok   set_mops=2236   -> dramblast-p_ht12_k26_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=26 rep 2/5
+  [run ] ok   set_mops=2235   -> dramblast-p_ht12_k26_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=26 rep 3/5
+  [run ] ok   set_mops=2235   -> dramblast-p_ht12_k26_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=26 rep 4/5
+  [run ] ok   set_mops=2228   -> dramblast-p_ht12_k26_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=26 rep 5/5
+  [run ] ok   set_mops=2227   -> dramblast-p_ht12_k26_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=27 rep 1/5
+  [run ] ok   set_mops=2196   -> dramblast-p_ht12_k27_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=27 rep 2/5
+  [run ] ok   set_mops=2202   -> dramblast-p_ht12_k27_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=27 rep 3/5
+  [run ] ok   set_mops=2204   -> dramblast-p_ht12_k27_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=27 rep 4/5
+  [run ] ok   set_mops=2214   -> dramblast-p_ht12_k27_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=27 rep 5/5
+  [run ] ok   set_mops=2214   -> dramblast-p_ht12_k27_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=28 rep 1/5
+  [run ] ok   set_mops=2179   -> dramblast-p_ht12_k28_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=28 rep 2/5
+  [run ] ok   set_mops=1532   -> dramblast-p_ht12_k28_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=28 rep 3/5
+  [run ] ok   set_mops=2203   -> dramblast-p_ht12_k28_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=28 rep 4/5
+  [run ] ok   set_mops=2214   -> dramblast-p_ht12_k28_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=28 rep 5/5
+  [run ] ok   set_mops=2186   -> dramblast-p_ht12_k28_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=29 rep 1/5
+  [run ] ok   set_mops=2067   -> dramblast-p_ht12_k29_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=29 rep 2/5
+  [run ] ok   set_mops=2095   -> dramblast-p_ht12_k29_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=29 rep 3/5
+  [run ] ok   set_mops=2094   -> dramblast-p_ht12_k29_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=29 rep 4/5
+  [run ] ok   set_mops=2094   -> dramblast-p_ht12_k29_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=29 rep 5/5
+  [run ] ok   set_mops=2087   -> dramblast-p_ht12_k29_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=30 rep 1/5
+  [run ] ok   set_mops=2144   -> dramblast-p_ht12_k30_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=30 rep 2/5
+  [run ] ok   set_mops=2131   -> dramblast-p_ht12_k30_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=30 rep 3/5
+  [run ] ok   set_mops=2130   -> dramblast-p_ht12_k30_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=30 rep 4/5
+  [run ] ok   set_mops=2068   -> dramblast-p_ht12_k30_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=30 rep 5/5
+  [run ] ok   set_mops=1572   -> dramblast-p_ht12_k30_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=31 rep 1/5
+  [run ] ok   set_mops=2153   -> dramblast-p_ht12_k31_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=31 rep 2/5
+  [run ] ok   set_mops=2184   -> dramblast-p_ht12_k31_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=31 rep 3/5
+  [run ] ok   set_mops=2177   -> dramblast-p_ht12_k31_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=31 rep 4/5
+  [run ] ok   set_mops=2144   -> dramblast-p_ht12_k31_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=31 rep 5/5
+  [run ] ok   set_mops=2162   -> dramblast-p_ht12_k31_r5_20260914-184524.log
+  [run ] ht12 dramblast-p k=32 rep 1/5
+  [run ] ok   set_mops=2141   -> dramblast-p_ht12_k32_r1_20260914-184524.log
+  [run ] ht12 dramblast-p k=32 rep 2/5
+  [run ] ok   set_mops=2142   -> dramblast-p_ht12_k32_r2_20260914-184524.log
+  [run ] ht12 dramblast-p k=32 rep 3/5
+  [run ] ok   set_mops=2148   -> dramblast-p_ht12_k32_r3_20260914-184524.log
+  [run ] ht12 dramblast-p k=32 rep 4/5
+  [run ] ok   set_mops=2130   -> dramblast-p_ht12_k32_r4_20260914-184524.log
+  [run ] ht12 dramblast-p k=32 rep 5/5
+  [run ] ok   set_mops=2076   -> dramblast-p_ht12_k32_r5_20260914-184524.log
+
+==============================================================================
+  summary
+==============================================================================
+   ht label          k rep  set_mops          fill   fill%  status
+    3 dramblast     10   1      1722       1048575     0.0  ok
+    3 dramblast     10   2      1798       1048575     0.0  ok
+    3 dramblast     10   3      1722       1048575     0.0  ok
+    3 dramblast     10   4      1805       1048575     0.0  ok
+    3 dramblast     10   5      1721       1048575     0.0  ok
+    3 dramblast     11   1      1736       4194303     0.2  ok
+    3 dramblast     11   2      1706       4194303     0.2  ok
+    3 dramblast     11   3      1736       4194303     0.2  ok
+    3 dramblast     11   4      1706       4194303     0.2  ok
+    3 dramblast     11   5      1737       4194303     0.2  ok
+    3 dramblast     12   1      1647      16777193     0.8  ok
+    3 dramblast     12   2      1865      16777193     0.8  ok
+    3 dramblast     12   3      1648      16777193     0.8  ok
+    3 dramblast     12   4      1864      16777193     0.8  ok
+    3 dramblast     12   5      1647      16777193     0.8  ok
+    3 dramblast     13   1      1571      66795582     3.1  ok
+    3 dramblast     13   2      1802      66795582     3.1  ok
+    3 dramblast     13   3      1571      66795582     3.1  ok
+    3 dramblast     13   4      1801      66795582     3.1  ok
+    3 dramblast     13   5      1570      66795582     3.1  ok
+    3 dramblast     14   1      1777     231473900    10.8  ok
+    3 dramblast     14   2      1671     231473900    10.8  ok
+    3 dramblast     14   3      1777     231473900    10.8  ok
+    3 dramblast     14   4      1669     231473900    10.8  ok
+    3 dramblast     14   5      1777     231473900    10.8  ok
+    3 dramblast     15   1      1808     515915132    24.0  ok
+    3 dramblast     15   2      1851     515915132    24.0  ok
+    3 dramblast     15   3      1808     515915132    24.0  ok
+    3 dramblast     15   4      1851     515915132    24.0  ok
+    3 dramblast     15   5      1809     515915132    24.0  ok
+    3 dramblast     16   1      1684     766033017    35.7  ok
+    3 dramblast     16   2      1836     766033017    35.7  ok
+    3 dramblast     16   3      1684     766033017    35.7  ok
+    3 dramblast     16   4      1838     766033017    35.7  ok
+    3 dramblast     16   5      1685     766033017    35.7  ok
+    3 dramblast     17   1      1865     921085105    42.9  ok
+    3 dramblast     17   2      1699     921085105    42.9  ok
+    3 dramblast     17   3      1865     921085105    42.9  ok
+    3 dramblast     17   4      1699     921085105    42.9  ok
+    3 dramblast     17   5      1865     921085105    42.9  ok
+    3 dramblast     18   1      1580    1012177031    47.1  ok
+    3 dramblast     18   2      1839    1012177031    47.1  ok
+    3 dramblast     18   3      1579    1012177031    47.1  ok
+    3 dramblast     18   4      1840    1012177031    47.1  ok
+    3 dramblast     18   5      1580    1012177031    47.1  ok
+    3 dramblast     19   1      1846    1072562325    49.9  ok
+    3 dramblast     19   2      1686    1072562325    49.9  ok
+    3 dramblast     19   3      1845    1072562325    49.9  ok
+    3 dramblast     19   4      1684    1072562325    49.9  ok
+    3 dramblast     19   5      1845    1072562325    49.9  ok
+    3 dramblast     20   1      1724    1119887688    52.1  ok
+    3 dramblast     20   2      1861    1119887688    52.1  ok
+    3 dramblast     20   3      1724    1119887688    52.1  ok
+    3 dramblast     20   4      1861    1119887688    52.1  ok
+    3 dramblast     20   5      1723    1119887688    52.1  ok
+    3 dramblast     21   1      1852    1161736784    54.1  ok
+    3 dramblast     21   2      1627    1161736784    54.1  ok
+    3 dramblast     21   3      1851    1161736784    54.1  ok
+    3 dramblast     21   4      1628    1161736784    54.1  ok
+    3 dramblast     21   5      1852    1161736784    54.1  ok
+    3 dramblast     22   1      1776    1201060325    55.9  ok
+    3 dramblast     22   2      1915    1201060325    55.9  ok
+    3 dramblast     22   3      1772    1201060325    55.9  ok
+    3 dramblast     22   4      1912    1201060325    55.9  ok
+    3 dramblast     22   5      1773    1201060325    55.9  ok
+    3 dramblast     23   1      1870    1239041403    57.7  ok
+    3 dramblast     23   2      1901    1239041403    57.7  ok
+    3 dramblast     23   3      1871    1239041403    57.7  ok
+    3 dramblast     23   4      1900    1239041403    57.7  ok
+    3 dramblast     23   5      1870    1239041403    57.7  ok
+    3 dramblast     24   1      1903    1276170020    59.4  ok
+    3 dramblast     24   2      1909    1276170020    59.4  ok
+    3 dramblast     24   3      1903    1276170020    59.4  ok
+    3 dramblast     24   4      1910    1276170020    59.4  ok
+    3 dramblast     24   5      1904    1276170020    59.4  ok
+    3 dramblast     25   1      1906    1312661553    61.1  ok
+    3 dramblast     25   2      1890    1312661553    61.1  ok
+    3 dramblast     25   3      1903    1312661553    61.1  ok
+    3 dramblast     25   4      1890    1312661553    61.1  ok
+    3 dramblast     25   5      1905    1312661553    61.1  ok
+    3 dramblast     26   1      1924    1348653266    62.8  ok
+    3 dramblast     26   2      1803    1348653266    62.8  ok
+    3 dramblast     26   3      1925    1348653266    62.8  ok
+    3 dramblast     26   4      1804    1348653266    62.8  ok
+    3 dramblast     26   5      1909    1348653266    62.8  ok
+    3 dramblast     27   1      1784    1384192355    64.5  ok
+    3 dramblast     27   2      1915    1384192355    64.5  ok
+    3 dramblast     27   3      1785    1384192355    64.5  ok
+    3 dramblast     27   4      1917    1384192355    64.5  ok
+    3 dramblast     27   5      1785    1384192355    64.5  ok
+    3 dramblast     28   1      1786    1419320396    66.1  ok
+    3 dramblast     28   2      1922    1419320396    66.1  ok
+    3 dramblast     28   3      1785    1419320396    66.1  ok
+    3 dramblast     28   4      1922    1419320396    66.1  ok
+    3 dramblast     28   5      1785    1419320396    66.1  ok
+    3 dramblast     29   1      1908    1454075972    67.7  ok
+    3 dramblast     29   2      1766    1454075972    67.7  ok
+    3 dramblast     29   3      1908    1454075972    67.7  ok
+    3 dramblast     29   4      1764    1454075972    67.7  ok
+    3 dramblast     29   5      1907    1454075972    67.7  ok
+    3 dramblast     30   1      1909    1488477239    69.3  ok
+    3 dramblast     30   2      1727    1488477239    69.3  ok
+    3 dramblast     30   3      1911    1488477239    69.3  ok
+    3 dramblast     30   4      1728    1488477239    69.3  ok
+    3 dramblast     30   5      1911    1488477239    69.3  ok
+    3 dramblast     31   1      1773    1522525464    70.9  ok
+    3 dramblast     31   2      1935    1522525464    70.9  ok
+    3 dramblast     31   3      1774    1522525464    70.9  ok
+    3 dramblast     31   4      1936    1522525464    70.9  ok
+    3 dramblast     31   5      1774    1522525464    70.9  ok
+    3 dramblast     32   1      1813    1556257953    72.5  ok
+    3 dramblast     32   2      1808    1556257953    72.5  ok
+    3 dramblast     32   3      1813    1556257953    72.5  ok
+    3 dramblast     32   4      1807    1556257953    72.5  ok
+    3 dramblast     32   5      1814    1556257953    72.5  ok
+    8 dramhit       10   1      1364       1048575     0.0  ok
+    8 dramhit       10   2      1366       1048575     0.0  ok
+    8 dramhit       10   3      1367       1048575     0.0  ok
+    8 dramhit       10   4      1368       1048575     0.0  ok
+    8 dramhit       10   5      1365       1048575     0.0  ok
+    8 dramhit       11   1      1262       4194303     0.2  ok
+    8 dramhit       11   2      1301       4194303     0.2  ok
+    8 dramhit       11   3      1262       4194303     0.2  ok
+    8 dramhit       11   4      1299       4194303     0.2  ok
+    8 dramhit       11   5      1261       4194303     0.2  ok
+    8 dramhit       12   1      1392      16777193     0.8  ok
+    8 dramhit       12   2      1261      16777193     0.8  ok
+    8 dramhit       12   3      1391      16777193     0.8  ok
+    8 dramhit       12   4      1262      16777193     0.8  ok
+    8 dramhit       12   5      1395      16777193     0.8  ok
+    8 dramhit       13   1      1375      66795582     3.1  ok
+    8 dramhit       13   2      1274      66795582     3.1  ok
+    8 dramhit       13   3      1374      66795582     3.1  ok
+    8 dramhit       13   4      1275      66795582     3.1  ok
+    8 dramhit       13   5      1376      66795582     3.1  ok
+    8 dramhit       14   1      1280     231473900    10.8  ok
+    8 dramhit       14   2      1388     231473900    10.8  ok
+    8 dramhit       14   3      1281     231473900    10.8  ok
+    8 dramhit       14   4      1386     231473900    10.8  ok
+    8 dramhit       14   5      1281     231473900    10.8  ok
+    8 dramhit       15   1      1420     515915132    24.0  ok
+    8 dramhit       15   2      1384     515915132    24.0  ok
+    8 dramhit       15   3      1419     515915132    24.0  ok
+    8 dramhit       15   4      1384     515915132    24.0  ok
+    8 dramhit       15   5      1421     515915132    24.0  ok
+    8 dramhit       16   1      1388     766033017    35.7  ok
+    8 dramhit       16   2      1291     766033017    35.7  ok
+    8 dramhit       16   3      1390     766033017    35.7  ok
+    8 dramhit       16   4      1289     766033017    35.7  ok
+    8 dramhit       16   5      1391     766033017    35.7  ok
+    8 dramhit       17   1      1273     921085105    42.9  ok
+    8 dramhit       17   2      1399     921085105    42.9  ok
+    8 dramhit       17   3      1271     921085105    42.9  ok
+    8 dramhit       17   4      1399     921085105    42.9  ok
+    8 dramhit       17   5      1272     921085105    42.9  ok
+    8 dramhit       18   1      1385    1012177031    47.1  ok
+    8 dramhit       18   2      1187    1012177031    47.1  ok
+    8 dramhit       18   3      1388    1012177031    47.1  ok
+    8 dramhit       18   4      1187    1012177031    47.1  ok
+    8 dramhit       18   5      1388    1012177031    47.1  ok
+    8 dramhit       19   1      1275    1072562325    49.9  ok
+    8 dramhit       19   2      1413    1072562325    49.9  ok
+    8 dramhit       19   3      1274    1072562325    49.9  ok
+    8 dramhit       19   4      1412    1072562325    49.9  ok
+    8 dramhit       19   5      1276    1072562325    49.9  ok
+    8 dramhit       20   1      1439    1119887688    52.1  ok
+    8 dramhit       20   2      1315    1119887688    52.1  ok
+    8 dramhit       20   3      1441    1119887688    52.1  ok
+    8 dramhit       20   4      1314    1119887688    52.1  ok
+    8 dramhit       20   5      1439    1119887688    52.1  ok
+    8 dramhit       21   1      1240    1161736784    54.1  ok
+    8 dramhit       21   2      1449    1161736784    54.1  ok
+    8 dramhit       21   3      1242    1161736784    54.1  ok
+    8 dramhit       21   4      1447    1161736784    54.1  ok
+    8 dramhit       21   5      1242    1161736784    54.1  ok
+    8 dramhit       22   1      1453    1201060325    55.9  ok
+    8 dramhit       22   2      1340    1201060325    55.9  ok
+    8 dramhit       22   3      1454    1201060325    55.9  ok
+    8 dramhit       22   4      1341    1201060325    55.9  ok
+    8 dramhit       22   5      1451    1201060325    55.9  ok
+    8 dramhit       23   1      1438    1239041403    57.7  ok
+    8 dramhit       23   2      1430    1239041403    57.7  ok
+    8 dramhit       23   3      1439    1239041403    57.7  ok
+    8 dramhit       23   4      1429    1239041403    57.7  ok
+    8 dramhit       23   5      1437    1239041403    57.7  ok
+    8 dramhit       24   1      1452    1276170020    59.4  ok
+    8 dramhit       24   2      1447    1276170020    59.4  ok
+    8 dramhit       24   3      1452    1276170020    59.4  ok
+    8 dramhit       24   4      1446    1276170020    59.4  ok
+    8 dramhit       24   5      1452    1276170020    59.4  ok
+    8 dramhit       25   1      1477    1312661553    61.1  ok
+    8 dramhit       25   2      1462    1312661553    61.1  ok
+    8 dramhit       25   3      1476    1312661553    61.1  ok
+    8 dramhit       25   4      1463    1312661553    61.1  ok
+    8 dramhit       25   5      1476    1312661553    61.1  ok
+    8 dramhit       26   1      1363    1348653266    62.8  ok
+    8 dramhit       26   2      1497    1348653266    62.8  ok
+    8 dramhit       26   3      1364    1348653266    62.8  ok
+    8 dramhit       26   4      1495    1348653266    62.8  ok
+    8 dramhit       26   5      1364    1348653266    62.8  ok
+    8 dramhit       27   1      1490    1384192355    64.5  ok
+    8 dramhit       27   2      1366    1384192355    64.5  ok
+    8 dramhit       27   3      1491    1384192355    64.5  ok
+    8 dramhit       27   4      1366    1384192355    64.5  ok
+    8 dramhit       27   5      1489    1384192355    64.5  ok
+    8 dramhit       28   1      1472    1419320396    66.1  ok
+    8 dramhit       28   2      1351    1419320396    66.1  ok
+    8 dramhit       28   3      1470    1419320396    66.1  ok
+    8 dramhit       28   4      1349    1419320396    66.1  ok
+    8 dramhit       28   5      1472    1419320396    66.1  ok
+    8 dramhit       29   1      1335    1454075972    67.7  ok
+    8 dramhit       29   2      1462    1454075972    67.7  ok
+    8 dramhit       29   3      1338    1454075972    67.7  ok
+    8 dramhit       29   4      1461    1454075972    67.7  ok
+    8 dramhit       29   5      1334    1454075972    67.7  ok
+    8 dramhit       30   1      1353    1488477239    69.3  ok
+    8 dramhit       30   2      1479    1488477239    69.3  ok
+    8 dramhit       30   3      1354    1488477239    69.3  ok
+    8 dramhit       30   4      1479    1488477239    69.3  ok
+    8 dramhit       30   5      1352    1488477239    69.3  ok
+    8 dramhit       31   1      1514    1522525464    70.9  ok
+    8 dramhit       31   2      1379    1522525464    70.9  ok
+    8 dramhit       31   3      1516    1522525464    70.9  ok
+    8 dramhit       31   4      1379    1522525464    70.9  ok
+    8 dramhit       31   5      1518    1522525464    70.9  ok
+    8 dramhit       32   1      1409    1556257953    72.5  ok
+    8 dramhit       32   2      1418    1556257953    72.5  ok
+    8 dramhit       32   3      1408    1556257953    72.5  ok
+    8 dramhit       32   4      1424    1556257953    72.5  ok
+    8 dramhit       32   5      1411    1556257953    72.5  ok
+    1 dramhit-p     10   1      2789       1048575     0.0  ok
+    1 dramhit-p     10   2      2811       1048575     0.0  ok
+    1 dramhit-p     10   3      2268       1048575     0.0  ok
+    1 dramhit-p     10   4      2803       1048575     0.0  ok
+    1 dramhit-p     10   5      2787       1048575     0.0  ok
+    1 dramhit-p     11   1      2651       4194303     0.2  ok
+    1 dramhit-p     11   2      2672       4194303     0.2  ok
+    1 dramhit-p     11   3      2666       4194303     0.2  ok
+    1 dramhit-p     11   4      2648       4194303     0.2  ok
+    1 dramhit-p     11   5      2700       4194303     0.2  ok
+    1 dramhit-p     12   1      2374      16777193     0.8  ok
+    1 dramhit-p     12   2      2393      16777193     0.8  ok
+    1 dramhit-p     12   3      2396      16777193     0.8  ok
+    1 dramhit-p     12   4      2384      16777193     0.8  ok
+    1 dramhit-p     12   5      2363      16777193     0.8  ok
+    1 dramhit-p     13   1      2158      66795582     3.1  ok
+    1 dramhit-p     13   2      2180      66795582     3.1  ok
+    1 dramhit-p     13   3      2164      66795582     3.1  ok
+    1 dramhit-p     13   4      2173      66795582     3.1  ok
+    1 dramhit-p     13   5      2175      66795582     3.1  ok
+    1 dramhit-p     14   1      2084     231473900    10.8  ok
+    1 dramhit-p     14   2      2097     231473900    10.8  ok
+    1 dramhit-p     14   3      2104     231473900    10.8  ok
+    1 dramhit-p     14   4      2094     231473900    10.8  ok
+    1 dramhit-p     14   5      2094     231473900    10.8  ok
+    1 dramhit-p     15   1      2083     515915132    24.0  ok
+    1 dramhit-p     15   2      2087     515915132    24.0  ok
+    1 dramhit-p     15   3      2074     515915132    24.0  ok
+    1 dramhit-p     15   4      2084     515915132    24.0  ok
+    1 dramhit-p     15   5      2087     515915132    24.0  ok
+    1 dramhit-p     16   1      2022     766033017    35.7  ok
+    1 dramhit-p     16   2      2007     766033017    35.7  ok
+    1 dramhit-p     16   3      2026     766033017    35.7  ok
+    1 dramhit-p     16   4      2026     766033017    35.7  ok
+    1 dramhit-p     16   5      2026     766033017    35.7  ok
+    1 dramhit-p     17   1      1954     921085105    42.9  ok
+    1 dramhit-p     17   2      1957     921085105    42.9  ok
+    1 dramhit-p     17   3      1950     921085105    42.9  ok
+    1 dramhit-p     17   4      1960     921085105    42.9  ok
+    1 dramhit-p     17   5      1952     921085105    42.9  ok
+    1 dramhit-p     18   1      1913    1012177031    47.1  ok
+    1 dramhit-p     18   2      1917    1012177031    47.1  ok
+    1 dramhit-p     18   3      1915    1012177031    47.1  ok
+    1 dramhit-p     18   4      1916    1012177031    47.1  ok
+    1 dramhit-p     18   5      1920    1012177031    47.1  ok
+    1 dramhit-p     19   1      1916    1072562325    49.9  ok
+    1 dramhit-p     19   2      1907    1072562325    49.9  ok
+    1 dramhit-p     19   3      1916    1072562325    49.9  ok
+    1 dramhit-p     19   4      1925    1072562325    49.9  ok
+    1 dramhit-p     19   5      1908    1072562325    49.9  ok
+    1 dramhit-p     20   1      1900    1119887688    52.1  ok
+    1 dramhit-p     20   2      1911    1119887688    52.1  ok
+    1 dramhit-p     20   3      1877    1119887688    52.1  ok
+    1 dramhit-p     20   4      1907    1119887688    52.1  ok
+    1 dramhit-p     20   5      1897    1119887688    52.1  ok
+    1 dramhit-p     21   1      1889    1161736784    54.1  ok
+    1 dramhit-p     21   2      1897    1161736784    54.1  ok
+    1 dramhit-p     21   3      1893    1161736784    54.1  ok
+    1 dramhit-p     21   4      1901    1161736784    54.1  ok
+    1 dramhit-p     21   5      1885    1161736784    54.1  ok
+    1 dramhit-p     22   1      1877    1201060325    55.9  ok
+    1 dramhit-p     22   2      1801    1201060325    55.9  ok
+    1 dramhit-p     22   3      1887    1201060325    55.9  ok
+    1 dramhit-p     22   4      1882    1201060325    55.9  ok
+    1 dramhit-p     22   5      1873    1201060325    55.9  ok
+    1 dramhit-p     23   1      1866    1239041403    57.7  ok
+    1 dramhit-p     23   2      1866    1239041403    57.7  ok
+    1 dramhit-p     23   3      1860    1239041403    57.7  ok
+    1 dramhit-p     23   4      1866    1239041403    57.7  ok
+    1 dramhit-p     23   5      1865    1239041403    57.7  ok
+    1 dramhit-p     24   1      1884    1276170020    59.4  ok
+    1 dramhit-p     24   2      1876    1276170020    59.4  ok
+    1 dramhit-p     24   3      1875    1276170020    59.4  ok
+    1 dramhit-p     24   4      1873    1276170020    59.4  ok
+    1 dramhit-p     24   5      1872    1276170020    59.4  ok
+    1 dramhit-p     25   1      1876    1312661553    61.1  ok
+    1 dramhit-p     25   2      1887    1312661553    61.1  ok
+    1 dramhit-p     25   3      1874    1312661553    61.1  ok
+    1 dramhit-p     25   4      1870    1312661553    61.1  ok
+    1 dramhit-p     25   5      1873    1312661553    61.1  ok
+    1 dramhit-p     26   1      1849    1348653266    62.8  ok
+    1 dramhit-p     26   2      1858    1348653266    62.8  ok
+    1 dramhit-p     26   3      1862    1348653266    62.8  ok
+    1 dramhit-p     26   4      1866    1348653266    62.8  ok
+    1 dramhit-p     26   5      1859    1348653266    62.8  ok
+    1 dramhit-p     27   1      1783    1384192355    64.5  ok
+    1 dramhit-p     27   2      1855    1384192355    64.5  ok
+    1 dramhit-p     27   3      1850    1384192355    64.5  ok
+    1 dramhit-p     27   4      1855    1384192355    64.5  ok
+    1 dramhit-p     27   5      1842    1384192355    64.5  ok
+    1 dramhit-p     28   1      1834    1419320396    66.1  ok
+    1 dramhit-p     28   2      1847    1419320396    66.1  ok
+    1 dramhit-p     28   3      1841    1419320396    66.1  ok
+    1 dramhit-p     28   4      1844    1419320396    66.1  ok
+    1 dramhit-p     28   5      1830    1419320396    66.1  ok
+    1 dramhit-p     29   1      1758    1454075972    67.7  ok
+    1 dramhit-p     29   2      1732    1454075972    67.7  ok
+    1 dramhit-p     29   3      1747    1454075972    67.7  ok
+    1 dramhit-p     29   4      1738    1454075972    67.7  ok
+    1 dramhit-p     29   5      1757    1454075972    67.7  ok
+    1 dramhit-p     30   1      1795    1488477239    69.3  ok
+    1 dramhit-p     30   2      1790    1488477239    69.3  ok
+    1 dramhit-p     30   3      1784    1488477239    69.3  ok
+    1 dramhit-p     30   4      1787    1488477239    69.3  ok
+    1 dramhit-p     30   5      1787    1488477239    69.3  ok
+    1 dramhit-p     31   1      1824    1522525464    70.9  ok
+    1 dramhit-p     31   2      1829    1522525464    70.9  ok
+    1 dramhit-p     31   3      1822    1522525464    70.9  ok
+    1 dramhit-p     31   4      1824    1522525464    70.9  ok
+    1 dramhit-p     31   5      1829    1522525464    70.9  ok
+    1 dramhit-p     32   1      1789    1556257953    72.5  ok
+    1 dramhit-p     32   2      1790    1556257953    72.5  ok
+    1 dramhit-p     32   3      1794    1556257953    72.5  ok
+    1 dramhit-p     32   4      1789    1556257953    72.5  ok
+    1 dramhit-p     32   5      1774    1556257953    72.5  ok
+   12 dramblast-p   10   1      3547       1048575     0.0  ok
+   12 dramblast-p   10   2      3549       1048575     0.0  ok
+   12 dramblast-p   10   3      3376       1048575     0.0  ok
+   12 dramblast-p   10   4      3565       1048575     0.0  ok
+   12 dramblast-p   10   5      3315       1048575     0.0  ok
+   12 dramblast-p   11   1      3214       4194303     0.2  ok
+   12 dramblast-p   11   2      3222       4194303     0.2  ok
+   12 dramblast-p   11   3      3221       4194303     0.2  ok
+   12 dramblast-p   11   4      3249       4194303     0.2  ok
+   12 dramblast-p   11   5      3225       4194303     0.2  ok
+   12 dramblast-p   12   1      2711      16777193     0.8  ok
+   12 dramblast-p   12   2      2662      16777193     0.8  ok
+   12 dramblast-p   12   3      2696      16777193     0.8  ok
+   12 dramblast-p   12   4      2719      16777193     0.8  ok
+   12 dramblast-p   12   5      2679      16777193     0.8  ok
+   12 dramblast-p   13   1      2473      66795582     3.1  ok
+   12 dramblast-p   13   2      2504      66795582     3.1  ok
+   12 dramblast-p   13   3      2492      66795582     3.1  ok
+   12 dramblast-p   13   4      2504      66795582     3.1  ok
+   12 dramblast-p   13   5      2516      66795582     3.1  ok
+   12 dramblast-p   14   1      2392     231473900    10.8  ok
+   12 dramblast-p   14   2      2362     231473900    10.8  ok
+   12 dramblast-p   14   3      2390     231473900    10.8  ok
+   12 dramblast-p   14   4      2366     231473900    10.8  ok
+   12 dramblast-p   14   5      2397     231473900    10.8  ok
+   12 dramblast-p   15   1      2340     515915132    24.0  ok
+   12 dramblast-p   15   2      2268     515915132    24.0  ok
+   12 dramblast-p   15   3      2313     515915132    24.0  ok
+   12 dramblast-p   15   4      2338     515915132    24.0  ok
+   12 dramblast-p   15   5      2348     515915132    24.0  ok
+   12 dramblast-p   16   1      2265     766033017    35.7  ok
+   12 dramblast-p   16   2      2287     766033017    35.7  ok
+   12 dramblast-p   16   3      2299     766033017    35.7  ok
+   12 dramblast-p   16   4      2293     766033017    35.7  ok
+   12 dramblast-p   16   5      2267     766033017    35.7  ok
+   12 dramblast-p   17   1      2273     921085105    42.9  ok
+   12 dramblast-p   17   2      2289     921085105    42.9  ok
+   12 dramblast-p   17   3      2268     921085105    42.9  ok
+   12 dramblast-p   17   4      2273     921085105    42.9  ok
+   12 dramblast-p   17   5      2276     921085105    42.9  ok
+   12 dramblast-p   18   1      2275    1012177031    47.1  ok
+   12 dramblast-p   18   2      2261    1012177031    47.1  ok
+   12 dramblast-p   18   3      2260    1012177031    47.1  ok
+   12 dramblast-p   18   4      2269    1012177031    47.1  ok
+   12 dramblast-p   18   5      2267    1012177031    47.1  ok
+   12 dramblast-p   19   1      2272    1072562325    49.9  ok
+   12 dramblast-p   19   2      2262    1072562325    49.9  ok
+   12 dramblast-p   19   3      1495    1072562325    49.9  ok
+   12 dramblast-p   19   4      2260    1072562325    49.9  ok
+   12 dramblast-p   19   5      2247    1072562325    49.9  ok
+   12 dramblast-p   20   1      1650    1119887688    52.1  ok
+   12 dramblast-p   20   2      1534    1119887688    52.1  ok
+   12 dramblast-p   20   3      2257    1119887688    52.1  ok
+   12 dramblast-p   20   4      2275    1119887688    52.1  ok
+   12 dramblast-p   20   5      2278    1119887688    52.1  ok
+   12 dramblast-p   21   1      2263    1161736784    54.1  ok
+   12 dramblast-p   21   2      2262    1161736784    54.1  ok
+   12 dramblast-p   21   3      2274    1161736784    54.1  ok
+   12 dramblast-p   21   4      2229    1161736784    54.1  ok
+   12 dramblast-p   21   5      2246    1161736784    54.1  ok
+   12 dramblast-p   22   1      2256    1201060325    55.9  ok
+   12 dramblast-p   22   2      2237    1201060325    55.9  ok
+   12 dramblast-p   22   3      2245    1201060325    55.9  ok
+   12 dramblast-p   22   4      2238    1201060325    55.9  ok
+   12 dramblast-p   22   5      2233    1201060325    55.9  ok
+   12 dramblast-p   23   1      2237    1239041403    57.7  ok
+   12 dramblast-p   23   2      2241    1239041403    57.7  ok
+   12 dramblast-p   23   3      2246    1239041403    57.7  ok
+   12 dramblast-p   23   4      2237    1239041403    57.7  ok
+   12 dramblast-p   23   5      2232    1239041403    57.7  ok
+   12 dramblast-p   24   1      2235    1276170020    59.4  ok
+   12 dramblast-p   24   2      2239    1276170020    59.4  ok
+   12 dramblast-p   24   3      2251    1276170020    59.4  ok
+   12 dramblast-p   24   4      2168    1276170020    59.4  ok
+   12 dramblast-p   24   5      2239    1276170020    59.4  ok
+   12 dramblast-p   25   1      2242    1312661553    61.1  ok
+   12 dramblast-p   25   2      2203    1312661553    61.1  ok
+   12 dramblast-p   25   3      2256    1312661553    61.1  ok
+   12 dramblast-p   25   4      2216    1312661553    61.1  ok
+   12 dramblast-p   25   5      2209    1312661553    61.1  ok
+   12 dramblast-p   26   1      2236    1348653266    62.8  ok
+   12 dramblast-p   26   2      2235    1348653266    62.8  ok
+   12 dramblast-p   26   3      2235    1348653266    62.8  ok
+   12 dramblast-p   26   4      2228    1348653266    62.8  ok
+   12 dramblast-p   26   5      2227    1348653266    62.8  ok
+   12 dramblast-p   27   1      2196    1384192355    64.5  ok
+   12 dramblast-p   27   2      2202    1384192355    64.5  ok
+   12 dramblast-p   27   3      2204    1384192355    64.5  ok
+   12 dramblast-p   27   4      2214    1384192355    64.5  ok
+   12 dramblast-p   27   5      2214    1384192355    64.5  ok
+   12 dramblast-p   28   1      2179    1419320396    66.1  ok
+   12 dramblast-p   28   2      1532    1419320396    66.1  ok
+   12 dramblast-p   28   3      2203    1419320396    66.1  ok
+   12 dramblast-p   28   4      2214    1419320396    66.1  ok
+   12 dramblast-p   28   5      2186    1419320396    66.1  ok
+   12 dramblast-p   29   1      2067    1454075972    67.7  ok
+   12 dramblast-p   29   2      2095    1454075972    67.7  ok
+   12 dramblast-p   29   3      2094    1454075972    67.7  ok
+   12 dramblast-p   29   4      2094    1454075972    67.7  ok
+   12 dramblast-p   29   5      2087    1454075972    67.7  ok
+   12 dramblast-p   30   1      2144    1488477239    69.3  ok
+   12 dramblast-p   30   2      2131    1488477239    69.3  ok
+   12 dramblast-p   30   3      2130    1488477239    69.3  ok
+   12 dramblast-p   30   4      2068    1488477239    69.3  ok
+   12 dramblast-p   30   5      1572    1488477239    69.3  ok
+   12 dramblast-p   31   1      2153    1522525464    70.9  ok
+   12 dramblast-p   31   2      2184    1522525464    70.9  ok
+   12 dramblast-p   31   3      2177    1522525464    70.9  ok
+   12 dramblast-p   31   4      2144    1522525464    70.9  ok
+   12 dramblast-p   31   5      2162    1522525464    70.9  ok
+   12 dramblast-p   32   1      2141    1556257953    72.5  ok
+   12 dramblast-p   32   2      2142    1556257953    72.5  ok
+   12 dramblast-p   32   3      2148    1556257953    72.5  ok
+   12 dramblast-p   32   4      2130    1556257953    72.5  ok
+   12 dramblast-p   32   5      2076    1556257953    72.5  ok
+
+  logs     /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs
+  commands /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs/commands.log
+  summary  /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs/summary_20260914-184524.csv

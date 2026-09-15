@@ -270,7 +270,13 @@ class CASHashTableSingleThread : public BaseHashTable {
             const void *next_tail_addr =
                 &this->hashtable[this->insert_queue[next_tail].idx];
 
-            __builtin_prefetch(next_tail_addr, false, 3);
+            // prefetchw: this is the dequeue-time half of the DOUBLE prefetch,
+            // and the line is about to be written (the key/count store below),
+            // so pull it in already exclusive rather than shared and then take
+            // a coherence upgrade on the store. Matches flush_if_needed and
+            // pop_insert_queue above, which were already doing this; only this
+            // inlined insert_batch copy was still asking for it read-only.
+            __builtin_prefetch(next_tail_addr, true, 3);
 #endif
             KVQ *q = &this->insert_queue[tail];
 

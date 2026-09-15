@@ -12,6 +12,7 @@
 #define HASHTABLES_CAS23_KHT_HPP
 
 #include <cassert>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -399,6 +400,32 @@ class CAS23HashTable : public BaseHashTable {
     return empty_slot_;
   }
 
+  // The 128-bit CAS below claims an empty slot by writing the queue entry's
+  // first 16 bytes ({key, value}) straight into the bucket. For the
+  // aggregating table that is wrong: an insert means "one more occurrence of
+  // this key", so the slot must be seeded with a count of 1, not with the
+  // caller-supplied value (kmer counting inserts carry no meaningful value).
+  // Every other Aggr_KV path here already does the right thing -- update_cas
+  // and Aggr_KV::insert_cas both increment and ignore q->value -- so this was
+  // the one place that leaked the caller's value into the count, costing
+  // exactly one observation per distinct key. The Item path is unchanged.
+  //
+  // Ported from the identical fix in cas_kht.hpp (CASHashTable).
+  static inline __int128 empty_slot_payload(KVQ *q) {
+    if constexpr (std::is_same_v<KV, Aggr_KV>) {
+      static_assert(sizeof(Aggr_KV) == sizeof(__int128),
+                    "128-bit slot claim assumes a 16-byte Aggr_KV");
+      Aggr_KV kv;
+      kv.key = q->key;
+      kv.count = 1;
+      __int128 payload;
+      memcpy(&payload, &kv, sizeof(payload));
+      return payload;
+    } else {
+      return *(__int128 *)q;
+    }
+  }
+
   void __insert_branched(KVQ *q, collector_type *collector) {
     // hashtable idx at which data is to be inserted
     size_t idx = q->idx;
@@ -406,7 +433,8 @@ class CAS23HashTable : public BaseHashTable {
     KV *curr = &this->hashtable[idx];
 
     if (curr->is_empty()) {
-      if (__sync_bool_compare_and_swap((__int128 *)curr, 0, *(__int128 *)q)) {
+      if (__sync_bool_compare_and_swap((__int128 *)curr, 0,
+                                       empty_slot_payload(q))) {
         return;
       }
     }

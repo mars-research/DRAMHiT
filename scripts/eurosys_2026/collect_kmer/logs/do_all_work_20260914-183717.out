@@ -1,0 +1,62 @@
+==============================================================================
+  k-mer sweep across hashtable implementations
+==============================================================================
+  input      /opt/datasets/ERR4846928.fastq
+  ht-size    2147483648 slots total
+  k          [30]   repeats 3
+  ht-type 12 dramblast-p  CASSTHTPP -- private single-thread table per consumer
+              nprod 64 + ncons 64, queue policy 1
+
+------------------------------------------------------------------------------
+  ht-type 12 (dramblast-p)
+------------------------------------------------------------------------------
+  [pool] --no-reserve: using whatever is currently reserved
+  [run ] ht12 dramblast-p k=30 rep 1/3
+  [run ] ok   set_mops=1660   -> dramblast-p_ht12_k30_r1_20260914-183717.log
+  [run ] ht12 dramblast-p k=30 rep 2/3
+  [run ] ok   set_mops=1648   -> dramblast-p_ht12_k30_r2_20260914-183717.log
+  [run ] ht12 dramblast-p k=30 rep 3/3
+  [run ] ok   set_mops=1661   -> dramblast-p_ht12_k30_r3_20260914-183717.log
+
+==============================================================================
+  summary
+==============================================================================
+   ht label          k rep  set_mops          fill   fill%  status
+   12 dramblast-p   30   1      1660    1488477239    69.3  ok
+   12 dramblast-p   30   2      1648    1488477239    69.3  ok
+   12 dramblast-p   30   3      1661    1488477239    69.3  ok
+
+  logs     /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs
+  commands /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs/commands.log
+  summary  /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs/summary_20260914-183717.csv
+==============================================================================
+  k-mer sweep across hashtable implementations
+==============================================================================
+  input      /opt/datasets/ERR4846928.fastq
+  ht-size    2147483648 slots total
+  k          [30]   repeats 3
+  ht-type 12 dramblast-p  CASSTHTPP -- private single-thread table per consumer
+              nprod 64 + ncons 64, queue policy 3
+
+------------------------------------------------------------------------------
+  ht-type 12 (dramblast-p)
+------------------------------------------------------------------------------
+  [pool] --no-reserve: using whatever is currently reserved
+  [run ] ht12 dramblast-p k=30 rep 1/3
+  [run ] ok   set_mops=2079   -> dramblast-p_ht12_k30_r1_20260914-183816.log
+  [run ] ht12 dramblast-p k=30 rep 2/3
+  [run ] ok   set_mops=2131   -> dramblast-p_ht12_k30_r2_20260914-183816.log
+  [run ] ht12 dramblast-p k=30 rep 3/3
+  [run ] ok   set_mops=2144   -> dramblast-p_ht12_k30_r3_20260914-183816.log
+
+==============================================================================
+  summary
+==============================================================================
+   ht label          k rep  set_mops          fill   fill%  status
+   12 dramblast-p   30   1      2079    1488477239    69.3  ok
+   12 dramblast-p   30   2      2131    1488477239    69.3  ok
+   12 dramblast-p   30   3      2144    1488477239    69.3  ok
+
+  logs     /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs
+  commands /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs/commands.log
+  summary  /opt/DRAMHiT/scripts/eurosys_2026/collect_kmer/logs/summary_20260914-183816.csv

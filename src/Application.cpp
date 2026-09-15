@@ -18,6 +18,7 @@
 #include "plog/Log.h"
 #include "print_stats.h"
 #include "types.hpp"
+#include "utils/kmer_staging.hpp"
 
 #if defined(WITH_PAPI_LIB) || defined(ENABLE_HIGH_LEVEL_PAPI)
 #include <papi.h>
@@ -1017,8 +1018,25 @@ void sync_complete(void) {
           exit(-1);
       }
     }
-    if ((config.mode == FASTQ_WITH_INSERT) &&
-        (config.ht_type == PARTITIONED_HT || config.ht_type == CASSTHTPP))
+    const bool prod_cons_path =
+        (config.mode == FASTQ_WITH_INSERT) &&
+        (config.ht_type == PARTITIONED_HT || config.ht_type == CASSTHTPP);
+
+    if (config.mode == FASTQ_WITH_INSERT) {
+      // Hoisted out of spawn_shard_threads(), which the prod/cons path never
+      // reaches -- it dispatches to qt.run_test() below instead. in_file_sz was
+      // therefore 0 for ht-type 1 and 12, and anything sizing itself from it
+      // (the staging arena) silently got nothing.
+      config.in_file_sz = get_file_size(config.in_file.c_str());
+      if (config.in_file_sz == 0) {
+        PLOGE.printf("--in-file %s is empty or unreadable",
+                     config.in_file.c_str());
+        exit(-1);
+      }
+      PLOG_INFO.printf("File size: %" PRIu64 " bytes", config.in_file_sz);
+    }
+
+    if (prod_cons_path)
       this->test.qt.run_test(&config, this->n, true, this->npq);
     else {
       this->spawn_shard_threads();

@@ -15,29 +15,18 @@
 #include "input_reader/fastq.hpp"
 #include "input_reader/counter.hpp"
 #include "types.hpp"
+#include <numa.h>
+
 #include "numa.hpp"
 #include "print_stats.h"
 #include "utils/hugepage_arena.hpp"
+#include "utils/kmer_staging.hpp"
 
 namespace kmercounter {
 extern ExecPhase cur_phase;
 extern bool g_app_record_start;
 extern uint64_t g_insert_end;
 extern uint64_t g_insert_start;
-
-constexpr uint64_t SIZE_1GB = 1ULL << 30;
-constexpr uint64_t SIZE_2MB = 2ULL << 20;
-
-/// Bytes to reserve for one shard's kmer array.
-///
-/// A FASTQ record is `@header\n SEQ\n +\n QUAL\n`, so a record of read length L
-/// costs 2L + |header| + 6 bytes and yields L - K + 1 kmers. kmers/bytes is
-/// therefore strictly below 1/2 for any well-formed FASTQ, which makes bytes/2
-/// a real upper bound and not just an estimate -- the arena cannot grow, so it
-/// has to be one.
-static uint64_t shard_kmer_bytes(const Configuration& config) {
-  return (config.in_file_sz / config.num_threads / 2 + 1) * sizeof(uint64_t);
-}
 
 void KmerTest::count_kmer(Shard* sh,
                               const Configuration& config,
@@ -65,14 +54,20 @@ void KmerTest::count_kmer(Shard* sh,
   // request up to a multiple of 1GB once it crosses that threshold, wasting
   // most of a page per shard on a real FASTQ; and being a bump allocator the
   // arena cannot silently realloc a second copy of a huge region.
-  const uint64_t kmer_bytes = shard_kmer_bytes(config);
+  //
+  // The two pools together cover bytes_needed, but the arena serves any single
+  // allocation from one pool or the other and never across both -- so the kmer
+  // array is split into chunks that mirror the pool layout (see
+  // utils/kmer_staging.hpp). Asking for it in one piece fails for any input
+  // where in_file_sz > num_threads * 512MiB, with the pool sitting half unused.
+  const uint64_t kmer_bytes =
+      staging::shard_kmer_bytes(config.in_file_sz, config.num_threads);
   const uint64_t args_bytes = sizeof(InsertFindArgument) * batch_len;
   // + one 2MB page of slack so the two 64B-aligned bumps always fit.
-  const uint64_t bytes_needed = kmer_bytes + args_bytes + SIZE_2MB;
+  const uint64_t bytes_needed = staging::shard_arena_bytes(kmer_bytes, args_bytes);
 
-  const uint64_t one_gb_needed = bytes_needed / SIZE_1GB;
-  const uint64_t two_mb_needed =
-      (bytes_needed - one_gb_needed * SIZE_1GB) / SIZE_2MB + 1;
+  const uint64_t one_gb_needed = staging::one_gb_pages(bytes_needed);
+  const uint64_t two_mb_needed = staging::two_mb_pages(bytes_needed);
 
   if (sh->shard_idx == 0) {
     // The arena throws/aborts if the pool is short, so say up front how much
@@ -88,10 +83,18 @@ void KmerTest::count_kmer(Shard* sh,
     arena.mem_bind(config.np_mem_node_msk);
   }
 
-  uint64_t* kmers = (uint64_t*)arena.aligned_alloc(kmer_bytes, 64);
-  // The array the arena handed back is the bound -- nothing else gets to claim
-  // one, so the fill loop below can never disagree with what was allocated.
-  const uint64_t kmer_capacity = kmer_bytes / sizeof(uint64_t);
+  // Split to match the pool layout: the arena serves an allocation out of the
+  // 1GB pool or the 2MB pool but never across both, so a single kmer_bytes
+  // request fits neither once it exceeds 1GiB. Built before `args` because the
+  // arena is greedy on the 1GB pool -- a small allocation first would push a
+  // whole-1GiB chunk out of it.
+  staging::StagingBuffer kmers(arena, kmer_bytes, batch_len);
+  const uint64_t kmer_capacity = kmers.capacity();
+
+  if (sh->shard_idx == 0) {
+    PLOGI.printf("kmer staging: %lu chunk(s), %lu kmers capacity",
+                 kmers.num_chunks(), kmer_capacity);
+  }
 
   InsertFindArgument* args =
       (InsertFindArgument*)arena.aligned_alloc(args_bytes, 64);
@@ -115,12 +118,19 @@ void KmerTest::count_kmer(Shard* sh,
             config.in_file_sz / config.num_threads);
         exit(-1);
       }
-      kmers[num_kmers++] = kmer;
+      kmers.push(kmer);
+      num_kmers++;
     }
   }  // reader, and the std::string reservoir behind it, freed before the barrier
 
-  const uint64_t batch_num = num_kmers / batch_len;
-  const uint64_t residue_num = num_kmers - batch_num * batch_len;
+  // One line per shard, same reasoning as the prod/cons path: outside the
+  // timed region, and it shows where each shard's pages actually came from.
+  PLOGI.printf(
+      "kmer staging alloc: shard %u cpu %d node %d -> %lu bytes "
+      "(%lu x 1GB + %lu x 2MB), %lu chunk(s), %lu kmers staged",
+      sh->shard_idx, sched_getcpu(), numa_node_of_cpu(sched_getcpu()),
+      bytes_needed, one_gb_needed, two_mb_needed, kmers.num_chunks(),
+      num_kmers);
 
   if(sh->shard_idx == 0)
   {
@@ -130,28 +140,43 @@ void KmerTest::count_kmer(Shard* sh,
 
   barrier->arrive_and_wait();
 
+  // Every chunk but the last holds a whole multiple of batch_len kmers, so a
+  // batch never straddles a chunk boundary and this stays a flat pointer walk.
   if (config.no_prefetch) {
-    for (uint64_t i = 0; i < num_kmers; i++) {
-      // insert_noprefetch reinterprets its argument as {key, value}, so a bare
-      // KeyValuePair is all it needs.
-      KeyValuePair kv(kmers[i], 0);
-      ht->insert_noprefetch(&kv);
+    for (uint64_t c = 0; c < kmers.num_chunks(); c++) {
+      const uint64_t* chunk = kmers.chunks()[c].data;
+      const uint64_t len = kmers.filled_len(c, num_kmers);
+      for (uint64_t i = 0; i < len; i++) {
+        // insert_noprefetch reinterprets its argument as {key, value}, so a
+        // bare KeyValuePair is all it needs.
+        KeyValuePair kv(chunk[i], 0);
+        ht->insert_noprefetch(&kv);
+      }
     }
   } else {
-    uint64_t idx = 0;
-    for (uint64_t n = 0; n < batch_num; n++) {
-      for (uint32_t i = 0; i < batch_len; i++) {
-        args[i].key = kmers[idx++];
-        args[i].value = 0;  // the aggr table derives the count itself
+    for (uint64_t c = 0; c < kmers.num_chunks(); c++) {
+      const uint64_t* chunk = kmers.chunks()[c].data;
+      const uint64_t len = kmers.filled_len(c, num_kmers);
+      const uint64_t chunk_batches = len / batch_len;
+      const uint64_t chunk_residue = len - chunk_batches * batch_len;
+
+      uint64_t idx = 0;
+      for (uint64_t n = 0; n < chunk_batches; n++) {
+        for (uint32_t i = 0; i < batch_len; i++) {
+          args[i].key = chunk[idx++];
+          args[i].value = 0;  // the aggr table derives the count itself
+        }
+        ht->insert_batch(InsertFindArguments(args, batch_len));
       }
-      ht->insert_batch(InsertFindArguments(args, batch_len));
-    }
-    if (residue_num > 0) {
-      for (uint64_t i = 0; i < residue_num; i++) {
-        args[i].key = kmers[idx++];
-        args[i].value = 0;
+      // Only the final chunk can leave a partial batch; the others are sized to
+      // a whole multiple of batch_len.
+      if (chunk_residue > 0) {
+        for (uint64_t i = 0; i < chunk_residue; i++) {
+          args[i].key = chunk[idx++];
+          args[i].value = 0;
+        }
+        ht->insert_batch(InsertFindArguments(args, chunk_residue));
       }
-      ht->insert_batch(InsertFindArguments(args, residue_num));
     }
     ht->flush_insert_queue();
   }
@@ -170,8 +195,14 @@ void KmerTest::count_kmer(Shard* sh,
   get_ht_stats(sh, ht);
 
   if (sh->shard_idx == 0) {
-    PLOGI.printf("fill: %lu\n", ht->get_fill());//"get fill %.3f",
-                 //(double)ht->get_fill() / ht->get_capacity());
+    // One table shared by every thread here, so shard 0's fill is the run-wide
+    // figure -- unlike the prod/cons path, where each consumer reports its own
+    // private table and the totals have to be summed.
+    const size_t fill = ht->get_fill();
+    const size_t cap = ht->get_capacity();
+    PLOGI.printf("Shard %u: ht-fill: %lu, ht-sz: %lu, fill-factor: %.4f",
+                 sh->shard_idx, fill, cap,
+                 cap ? (double)fill / (double)cap : 0.0);
   }
 }
 

@@ -31,7 +31,6 @@ option(CAS_FIND_BANDWIDTH_TEST "read bandwidth test" OFF)
 option(GROWT "growt hashtable" OFF)
 option(CLHT " CLHT hashtable" OFF)
 option(CAS_NO_ABSTRACT "remove abstract so method can be inlined" OFF)
-option(CAS_PREFETCHW "enable prefetch write for insert " OFF)
 option(CAS_FAST_PATH "minimize branch in cas" ON)
 
 
@@ -43,9 +42,6 @@ endif()
 set(CPUFREQ_MHZ "${CPUFREQ_MHZ}" CACHE STRING "Target CPU frequency in MHz" FORCE)
 add_definitions(-DCPUFREQ_MHZ=${CPUFREQ_MHZ})
 
-if(CAS_PREFETCHW)
-    add_definitions(-DCAS_PREFETCHW)
-endif()
 if(CAS_FAST_PATH)
     add_definitions(-DFAST_PATH)
 endif()
@@ -112,6 +108,43 @@ elseif(PREFETCH STREQUAL "NONE")
 else()
     message(FATAL_ERROR "Invalid PREFETCH option: ${PREFETCH}")
 endif()
+
+# PREFETCH above drives both sides of the cas hashtable. CAS_PREFETCH_INSERTION
+# splits the insert side back out so the build phase can be tuned on its own:
+#   DOUBLE     prefetcht1 when the entry is queued, prefetchw when it is
+#              dequeued -- two prefetches per insert.
+#   PREFETCHW  one prefetchw, issued when the entry is queued.
+#   NONE       no software prefetch on the insert path.
+#   AUTO       (default) follow PREFETCH, which is what the knob did before it
+#              existed: DOUBLE -> DOUBLE, NONE -> NONE, anything else ->
+#              PREFETCHW. Keeps every existing -DPREFETCH= command line, and
+#              the numbers collected with one, reproducible.
+set(CAS_PREFETCH_INSERTION "AUTO" CACHE STRING
+    "Choose cas insert-path prefetch: AUTO, DOUBLE, PREFETCHW, NONE")
+set_property(CACHE CAS_PREFETCH_INSERTION PROPERTY STRINGS AUTO DOUBLE PREFETCHW NONE)
+
+set(_cas_insert_prefetch "${CAS_PREFETCH_INSERTION}")
+if(_cas_insert_prefetch STREQUAL "AUTO")
+    if(PREFETCH STREQUAL "DOUBLE")
+        set(_cas_insert_prefetch "DOUBLE")
+    elseif(PREFETCH STREQUAL "NONE")
+        set(_cas_insert_prefetch "NONE")
+    else()
+        set(_cas_insert_prefetch "PREFETCHW")
+    endif()
+endif()
+
+if(_cas_insert_prefetch STREQUAL "DOUBLE")
+    add_definitions(-DCAS_INSERT_PREFETCH_DOUBLE)
+elseif(_cas_insert_prefetch STREQUAL "PREFETCHW")
+    add_definitions(-DCAS_INSERT_PREFETCH_PREFETCHW)
+elseif(_cas_insert_prefetch STREQUAL "NONE")
+    add_definitions(-DCAS_INSERT_PREFETCH_NONE)
+else()
+    message(FATAL_ERROR "Invalid CAS_PREFETCH_INSERTION option: ${CAS_PREFETCH_INSERTION}")
+endif()
+message(STATUS "cas insert-path prefetch: ${_cas_insert_prefetch} "
+               "(CAS_PREFETCH_INSERTION=${CAS_PREFETCH_INSERTION}, PREFETCH=${PREFETCH})")
 
 
 if(BUCKETIZATION)

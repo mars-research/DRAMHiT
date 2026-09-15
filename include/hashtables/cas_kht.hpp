@@ -22,6 +22,7 @@
 #include <type_traits>
 
 #include "constants.hpp"
+#include "hashtables/base_kht.hpp"
 #include "hasher.hpp"
 #include "helper.hpp"
 #include "ht_helper.hpp"
@@ -183,12 +184,12 @@ class CASHashTable : public BaseHashTable {
   // overridden function for insertion
   inline void flush_if_needed(collector_type *collector) {
     size_t curr_queue_sz = get_insert_queue_sz();
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
     uint32_t next_tail;
     const void *next_tail_addr;
 #endif
     while (curr_queue_sz > INS_FLUSH_THRESHOLD) {
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
       next_tail = (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) &
                   INSERT_QUEUE_SZ_MASK;
       next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
@@ -204,12 +205,12 @@ class CASHashTable : public BaseHashTable {
 
   inline void pop_insert_queue(collector_type *collector) {
     uint64_t retry = 0;
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
     uint32_t next_tail;
     const void *next_tail_addr;
 #endif
     do {
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
       next_tail = (this->ins_tail + PREFETCH_INSERT_NEXT_DISTANCE) &
                   INSERT_QUEUE_SZ_MASK;
       next_tail_addr = &this->hashtable[this->insert_queue[next_tail].idx];
@@ -280,13 +281,13 @@ class CASHashTable : public BaseHashTable {
         {
           uint64_t retry = 0;
           do {
-#ifdef DOUBLE_PREFETCH
+#ifdef CAS_INSERT_PREFETCH_DOUBLE
             uint32_t next_tail =
                 (tail + PREFETCH_INSERT_NEXT_DISTANCE) & INSERT_QUEUE_SZ_MASK;
             const void *next_tail_addr =
                 &this->hashtable[this->insert_queue[next_tail].idx];
 
-            __builtin_prefetch(next_tail_addr, false, 3);
+            __builtin_prefetch(next_tail_addr, true, 3);
 #endif
             KVQ *q = &this->insert_queue[tail];
 
@@ -327,7 +328,12 @@ class CASHashTable : public BaseHashTable {
                   _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, zero_vector);
               if (ept_cmp != 0) {
                 idx += (_bit_scan_forward(ept_cmp) >> 1);
-              } else {  // we didn;t find empty key
+              } else {
+                // No empty slot here. Step to the next bucket ourselves, so
+                // that every path reaches retry_add_to_queue with idx already
+                // pointing at the bucket to probe next.
+                idx += KV_IN_CACHELINE;
+                idx = idx & (this->capacity - 1);
                 goto retry_add_to_queue;
               }
 
@@ -358,6 +364,13 @@ class CASHashTable : public BaseHashTable {
                 goto try_insert;  // FIXME: @David get rid of the goto for
                                   // crying out loud
               }
+              // Walked off the end of the bucket: idx is already the next
+              // bucket's base, so it must NOT be advanced again below. It used
+              // to be, which sent this path to bucket N+2 while the
+              // bucket-full path above went to N+1 -- two threads inserting
+              // the same key could then probe disjoint buckets, never see each
+              // other, and each insert it, leaving one key in two slots with
+              // its count split between them.
             retry_add_to_queue:
 
 #ifdef UNIFORM_HT_SUPPORT
@@ -366,9 +379,6 @@ class CASHashTable : public BaseHashTable {
               idx = hash & (this->capacity - 1);
               idx = idx & ~(size_t)KEYS_IN_CACHELINE_MASK;
               this->insert_queue[head].key_hash = hash;
-#else
-              idx += KV_IN_CACHELINE;
-              idx = idx & (this->capacity - 1);
 #endif
 
               prefetch_insert(idx);
@@ -978,11 +988,18 @@ class CASHashTable : public BaseHashTable {
     return empty_slot_;
   }
 
+  // Insert-path prefetch, selected by -DCAS_PREFETCH_INSERTION (see
+  // CMakeLists.txt). DOUBLE pairs this queue-time prefetch with a second,
+  // dequeue-time prefetchw in flush_if_needed/pop_insert_queue/insert_batch.
   inline void prefetch_insert(uint64_t idx) {
-#ifdef DOUBLE_PREFETCH
-    __builtin_prefetch(&this->hashtable[idx], false, 1);
-#else
+#if defined(CAS_INSERT_PREFETCH_DOUBLE)
+    __builtin_prefetch(&this->hashtable[idx], false, 2); // L2 prefetch first
+#elif defined(CAS_INSERT_PREFETCH_PREFETCHW)
     __builtin_prefetch(&this->hashtable[idx], true, 3);
+#elif defined(CAS_INSERT_PREFETCH_NONE)
+    (void)idx;
+#else
+#error "no CAS_PREFETCH_INSERTION choice defined; configure with cmake"
 #endif
   }
 

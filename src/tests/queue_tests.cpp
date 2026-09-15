@@ -19,6 +19,8 @@
 #include "sync.h"
 #include "tests/QueueTest.hpp"
 #include "utils/vtune.hpp"
+#include "utils/hugepage_arena.hpp"
+#include "utils/kmer_staging.hpp"
 #include "xorwow.hpp"
 #include "zipf_distribution.hpp"
 #include "input_reader/fastq.hpp"
@@ -179,8 +181,71 @@ void QueueTest<T>::producer_thread(
 
 #if defined(BQUEUE_KMER_TEST)
 #warning "BQ KMER TEST"
-  auto reader = input_reader::MakeFastqKMerPreloadReader(
-      config.K, config.in_file, sh->shard_idx, n_prod);
+  // Stage this producer's kmers in hugepages BEFORE the shared barrier below,
+  // exactly as the global path does (kmer_tests.cpp). Two reasons it has to be
+  // here and not later:
+  //
+  //  1. Fairness. Reading straight from the reader inside the send loop would
+  //     put 2-bit encoding (DNAKMer::push, one shift+OR per base over ~7e9
+  //     kmers) inside the measured region, while the global path encodes up
+  //     front and times only the insert. The two set_mops would not be
+  //     measuring the same thing.
+  //  2. The shared `barrier` below is the only point that gates producers AND
+  //     consumers -- consumers start their own timer right after it
+  //     (consumer_thread). Staging after it would land inside the consumer
+  //     window even if it were outside the producer's.
+  //
+  // Note the file is split across n_prod, not config.num_threads: only
+  // producers read, and config.num_threads here is n_prod + n_cons.
+  const uint64_t kmer_bytes =
+      staging::shard_kmer_bytes(config.in_file_sz, n_prod);
+  const uint64_t stage_bytes = staging::shard_arena_bytes(kmer_bytes, 0);
+  const uint64_t one_gb_needed = staging::one_gb_pages(stage_bytes);
+  const uint64_t two_mb_needed = staging::two_mb_pages(stage_bytes);
+
+  if (sh->shard_idx == 0) {
+    PLOGI.printf(
+        "kmer staging: %lu bytes/producer (%lu x 1GB + %lu x 2MB hugepages) x "
+        "%u producers; reserve the hugepage pool up front or the mmap will "
+        "abort",
+        stage_bytes, one_gb_needed, two_mb_needed, n_prod);
+  }
+
+  HugepageArena arena(one_gb_needed, two_mb_needed);
+  if (config.numa_split == THREADS_CUSTOM) {
+    arena.mem_bind(config.np_mem_node_msk);
+  }
+
+  // batch_len of 1: this path enqueues one kmer at a time, so there is no
+  // batch that could straddle a chunk boundary.
+  staging::StagingBuffer staged_kmers(arena, kmer_bytes, 1);
+  uint64_t num_staged = 0;
+  {
+    auto reader = input_reader::MakeFastqKMerPreloadReader(
+        config.K, config.in_file, sh->shard_idx, n_prod);
+    for (uint64_t staged; reader->next(&staged);) {
+      if (num_staged == staged_kmers.capacity()) {
+        PLOGE.printf(
+            "producer %u: more than %lu kmers in a %lu byte slice -- input is "
+            "not shaped like FASTQ, so the staging bound does not hold",
+            sh->shard_idx, staged_kmers.capacity(), config.in_file_sz / n_prod);
+        exit(-1);
+      }
+      staged_kmers.push(staged);
+      num_staged++;
+    }
+  }  // reader, and the std::string reservoir behind it, freed here -- before
+     // the barrier, so the strings are not resident during the timed region
+
+  // One line per producer: which cpu/node it landed on and what it actually
+  // took from the pool. Emitted after staging and before the shared barrier,
+  // so it is outside every timed region.
+  PLOGI.printf(
+      "kmer staging alloc: producer %u cpu %d node %d -> %lu bytes "
+      "(%lu x 1GB + %lu x 2MB), %lu chunk(s), %lu kmers staged",
+      sh->shard_idx, sched_getcpu(), numa_node_of_cpu(sched_getcpu()),
+      stage_bytes, one_gb_needed, two_mb_needed, staged_kmers.num_chunks(),
+      num_staged);
 #endif
 
   // PLOGD.printf("sh->shard_idx %d, n_prod %d config.relation_r_size %llu
@@ -270,7 +335,30 @@ BaseHashTable *ktable = nullptr;
 
     // combine with the if/else above?
 #if defined(BQUEUE_KMER_TEST)
-    for (; reader->next(&kmer);) {
+    // Walk the pre-staged chunks. filled_len() is only called when crossing a
+    // chunk boundary (at most num_chunks() times for the whole partition), so
+    // the per-kmer cost is one predictable branch and a load.
+    // Reset per pass, matching the non-kmer loop header below: op_count is
+    // computed as transaction_id * insert_factor, so transaction_id has to be
+    // the per-pass count. Before staging this was moot -- the reader was
+    // exhausted after j == 0 and later passes sent nothing, which made
+    // op_count an overcount by exactly insert_factor. Replay works now, so the
+    // multiplication is finally correct, but only against a per-pass count.
+    transaction_id = 0;
+    uint64_t staged_chunk = 0;
+    uint64_t staged_off = 0;
+    const uint64_t *staged_cur =
+        staged_kmers.num_chunks() ? staged_kmers.chunks()[0].data : nullptr;
+    uint64_t staged_cur_len =
+        staged_kmers.num_chunks() ? staged_kmers.filled_len(0, num_staged) : 0;
+    for (uint64_t staged_sent = 0; staged_sent < num_staged; staged_sent++) {
+      if (staged_off == staged_cur_len) {
+        staged_chunk++;
+        staged_off = 0;
+        staged_cur = staged_kmers.chunks()[staged_chunk].data;
+        staged_cur_len = staged_kmers.filled_len(staged_chunk, num_staged);
+      }
+      kmer = staged_cur[staged_off++];
 #else
     for (transaction_id = 0u; transaction_id < num_messages;) {
 #endif
@@ -638,8 +726,17 @@ void QueueTest<T>::consumer_thread(
     kmer_ht->print_to_file(outfile);
 
   } else {
-    PLOG_INFO.printf("Shard %u: Shard num unique kmer: %lu", sh->shard_idx,
-                     kmer_ht->get_fill());
+    // Each consumer owns a private table of config.ht_size / n_cons slots, so
+    // this is a per-shard fill; the run-wide figure is the sum over consumers
+    // against the sum of their capacities.
+    //
+    // (The previous format string named ht-sz but passed no argument for it,
+    // so that field printed whatever happened to be in the next varargs slot.)
+    const size_t fill = kmer_ht->get_fill();
+    const size_t cap = kmer_ht->get_capacity();
+    PLOG_INFO.printf("Shard %u: ht-fill: %lu, ht-sz: %lu, fill-factor: %.4f",
+                     sh->shard_idx, fill, cap,
+                     cap ? (double)fill / (double)cap : 0.0);
   }
 
 #ifdef LATENCY_COLLECTION
