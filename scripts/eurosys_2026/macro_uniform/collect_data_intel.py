@@ -132,8 +132,12 @@ BUILD_JOBS = 64
 #
 # That state is set by prefetch_control.sh, which wrmsr's 0x1a4 (0x0 = all
 # four prefetchers on, 0xf = all off) on every cpu, once per table, and that
-# script is the only thing that actually changes it. The matching --hw-pref
-# this script also passes is inert: Application.cpp guards it with
+# script is the only thing that actually changes it. It is invoked as
+# `sudo env PATH="$PATH" ...` and verifies the write by reading the MSR back;
+# see set_prefetcher() for why both halves of that are needed.
+#
+# The matching --hw-pref this script also passes is inert: Application.cpp
+# guards it with
 # #ifdef HARDCODE_PREFETCH_H14A, which nothing in the tree defines. The code
 # behind it would write the same 0x1a4 -- unlike on the EPYC, where it is the
 # wrong register entirely -- but it is still dead. It is passed anyway so each
@@ -213,7 +217,12 @@ def build():
 
 
 def set_prefetcher(state):
-    sh(f"{PREFETCH_SCRIPT} {state}")
+    # prefetch_control.sh writes MSR 0x1a4 and needs root. It no longer calls
+    # sudo itself, and sudo's secure_path drops msr-tools from PATH, so PATH
+    # has to be carried across explicitly. The script reads the MSR back and
+    # exits non-zero if the write did not land, and sh() checks that -- so a
+    # run can no longer proceed with the prefetchers in the wrong state.
+    sh(f'sudo env PATH="$PATH" {PREFETCH_SCRIPT} {state}')
 
 
 def dramhit_cmd(table, fill):

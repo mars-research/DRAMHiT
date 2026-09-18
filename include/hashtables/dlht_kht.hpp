@@ -481,11 +481,13 @@ class DlhtHashTable : public BaseHashTable {
       bool retry;
       bool found;
       uint64_t found_val;
+      Slot* found_slot;
 
       do {
         retry = false;
         found = false;
         found_val = 0;
+        found_slot = nullptr;
         // get copy of current value at the bin_hdr
         Bin_hdr header_value = *header_ptr;
         // Extract 32-bit states and version from the 64-bit header
@@ -504,10 +506,7 @@ class DlhtHashTable : public BaseHashTable {
             if (slot && slot->key == kp[i].key) {
               found_val = slot->value;
               found = true;
-              // Slot* slot = get_slot(primary_bucket, slot_index);
-              // slot->key = kp[i].key;
-              // slot->value = kp[i].value;
-
+              found_slot = slot;
               break;
             }
           }
@@ -523,12 +522,14 @@ class DlhtHashTable : public BaseHashTable {
         }
         // else save results,
         else if (found) {
-          // vp.second[vp.first].value = found_val;
-          // vp.second[vp.first].id = kp[i].id;
-          // vp.first++;
-          // DLHT returns value if found, our interface doesn't return on
-          // inserts so do nothing for now
-          // continue;
+          // Inserting a key that is already present is an update: overwrite the
+          // value. This is the same plain store the other tables do on this
+          // path (cas_kht.hpp: `bucket[(offset + 1)] = q->value`); without it
+          // dlht's duplicate-insert path touched no memory at all, which made
+          // its insert throughput incomparable with theirs. Done here rather
+          // than inside the scan because the version re-check just above is
+          // what establishes that found_slot still belongs to this key.
+          found_slot->value = kp[i].value;
         }
         // retry when version don't match
       } while (retry);
@@ -609,6 +610,7 @@ class DlhtHashTable : public BaseHashTable {
             retry = false;
             found = false;
             found_val = 0;
+            found_slot = nullptr;
             // get copy of current value at the bin_hdr
             Bin_hdr header_value = *header_ptr;
             // Extract 32-bit states and version from the 64-bit header
@@ -628,9 +630,7 @@ class DlhtHashTable : public BaseHashTable {
                 if (slot && slot->key == kp[i].key) {
                   found_val = slot->value;
                   found = true;
-                  // Slot* slot = get_slot(primary_bucket, slot_index);
-                  // slot->key = kp[i].key;
-                  // slot->value = kp[i].value;
+                  found_slot = slot;
                   break;
                 }
               }
@@ -646,11 +646,8 @@ class DlhtHashTable : public BaseHashTable {
             }
             // else save results,
             else if (found) {
-              // vp.second[vp.first].value = found_val;
-              // vp.second[vp.first].id = kp[i].id;
-              // vp.first++;
-              // DLHT returns value if found, our interface doesn't return on
-              // inserts so do nothing for now
+              // See the matching branch above: a duplicate insert is an update.
+              found_slot->value = kp[i].value;
               continue;
             }
             // retry when version don't match, ie Get algo again
