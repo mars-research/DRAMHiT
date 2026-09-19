@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+"""Throughput and DRAM bandwidth on one figure, for the uniform sweeps.
+
+Companion to plot_data.py: same data, same style, but each panel carries a
+second y axis with the DRAM bandwidth collect_data_intel.py samples with
+`perf stat -I` while the run is in flight.
+
+    python3 plot_data_bw.py intel/intel-6548y_uniform.json
+    python3 plot_data_bw.py intel/*.json --split
+    python3 plot_data_bw.py intel/... --ceiling 350
+
+Reading it: solid + filled marker is throughput (left axis), dashed + open
+marker is bandwidth (right axis), and a table keeps its colour across both.
+A table that is bandwidth-bound sits on the ceiling line no matter what its
+throughput does; one that falls off the line has stopped being limited by
+memory and is bound by its own per-op work.
+
+Bandwidth is decimal GB/s -- DRAM CAS count x 64 B / 1e9 -- which is the
+convention DDR5 part numbers use. Divide by 1.0737 for GiB/s (a reading of
+380 GB/s is 354 GiB/s).
+"""
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+import pandas as pd
+import seaborn as sns
+from matplotlib.lines import Line2D
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR.parent))
+
+import paper_style as ps  # noqa: E402
+
+PHASES = [
+    ("set", "insertion"),
+    ("get", "lookup"),
+]
+
+# Measured random-access DRAM ceiling on the 2-socket 6548Y+. Drawn as a
+# reference line so it is obvious which tables are saturating it.
+DEFAULT_CEILING_GBPS = 350.0
+
+
+# =============================================================================
+# DATA
+# =============================================================================
+
+
+def load(path):
+    data = json.loads(Path(path).read_text())
+    if "tables" not in data:
+        raise SystemExit(f"[!] {path}: pre-2026 flat json has no bandwidth")
+    if not any(f"{p}_bw_gbps" in e
+               for e in data["tables"].values() for p, _ in PHASES):
+        raise SystemExit(
+            f"[!] {path}: no *_bw_gbps fields -- collected before bandwidth "
+            f"sampling existed. Use plot_data.py, or re-collect.")
+    return data
+
+
+def frame(data, phase):
+    """Long-form frame for one phase: table / x / mops / lo / hi / bw."""
+    rows = []
+    for name in order(data):
+        entry = data["tables"][name]
+        samples = entry.get(f"{phase}_samples") or []
+        bw = entry.get(f"{phase}_bw_gbps") or []
+        for i, (fill, mops) in enumerate(zip(entry["fills"],
+                                             entry[f"{phase}_mops"])):
+            point = samples[i] if i < len(samples) else None
+            rows.append({
+                "table": name,
+                "x": fill,
+                "mops": mops,
+                "lo": min(point) if point else float("nan"),
+                "hi": max(point) if point else float("nan"),
+                "bw": bw[i] if i < len(bw) else float("nan"),
+            })
+    return pd.DataFrame(rows)
+
+
+def order(data):
+    have = [n for n, e in data["tables"].items() if e.get("fills")]
+    listed = [n for n in data.get("plot_order", []) if n in have]
+    return listed + ps.order_series(set(have) - set(listed))
+
+
+# =============================================================================
+# PLOTTING
+# =============================================================================
+
+
+def draw(ax, df, tables, title, palette, xticks, ceiling, limits,
+         styles):
+    """Throughput on ax, bandwidth on a twinned right-hand axis."""
+    bw_ax = ax.twinx()
+
+    for name in tables:
+        sub = df[df["table"] == name].sort_values("x")
+        if sub.empty:
+            continue
+        style = styles[name]
+        ps.draw_band(ax, sub, style)
+        sns.lineplot(data=sub, x="x", y="mops", ax=ax, legend=False, **style)
+
+        bw = sub.dropna(subset=["bw"])
+        if not bw.empty:
+            # Marker fill is what separates the two metrics (filled = left
+            # axis, open = right), because linestyle is already carrying the
+            # series variant: a "hw pref off" run is dashed on both axes, so
+            # dashing the bandwidth line would collide with it.
+            bw_ax.plot(bw["x"], bw["bw"], color=style["color"],
+                       linestyle=":" if style["linestyle"] != "-" else "--",
+                       marker=style["marker"], markersize=4,
+                       markerfacecolor="none", linewidth=1.2, zorder=2)
+
+    if ceiling:
+        bw_ax.axhline(ceiling, color="0.35", linestyle=(0, (1, 2)),
+                      linewidth=1.0, zorder=0)
+        bw_ax.annotate(f"{ceiling:.0f} GB/s", xy=(1.0, ceiling),
+                       xycoords=("axes fraction", "data"),
+                       xytext=(-2, 3), textcoords="offset points",
+                       ha="right", va="bottom", fontsize=7, color="0.35")
+
+    xlabel, ylabel = ps.axis_labels("fill")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.set_xticks(xticks)
+    ax.set_xlim(min(xticks) - 5, max(xticks) + 5)
+    ax.set_ylim(0, limits["mops"])
+    ps.tidy(ax)
+
+    bw_ax.set_ylabel("DRAM bandwidth (GB/s)")
+    bw_ax.set_ylim(0, limits["bw"])
+    # One grid is enough; the twin's would double every dashed line.
+    bw_ax.grid(False)
+
+
+def metric_legend(fig):
+    """Second legend saying which linestyle is which axis."""
+    handles = [
+        Line2D([0], [0], color="0.25", linestyle="none", marker="o",
+               markersize=5, label="filled marker: throughput (left axis)"),
+        Line2D([0], [0], color="0.25", linestyle="none", marker="o",
+               markersize=5, markerfacecolor="none",
+               label="open marker: bandwidth (right axis)"),
+    ]
+    fig.legend(handles=handles, fontsize=7, loc="upper center",
+               bbox_to_anchor=(0.5, 0.90), ncol=2, frameon=False)
+
+
+def title_for(data, label, note=None):
+    gib = data.get("ht_size_gib")
+    threads = data.get("num_threads")
+    bits = [label]
+    if gib:
+        bits.append(f"{gib} GiB table")
+    if threads:
+        bits.append(f"{threads} threads")
+    title = ", ".join(bits)
+    return f"{title}\n{note}" if note else title
+
+
+def axis_limits(data, ceiling):
+    """Axis tops from EVERY series in the json, not just the plotted subset.
+
+    A --only figure is nearly always one half of a comparison, so the two
+    halves have to share a scale or the eye reads the difference off the axes
+    instead of off the data.
+    """
+    mops = bw = 0.0
+    for entry in data["tables"].values():
+        for phase, _ in PHASES:
+            mops = max([mops] + [v for v in entry.get(f"{phase}_mops", [])])
+            bw = max([bw] + [v for v in entry.get(f"{phase}_bw_gbps", [])
+                             if v is not None])
+    return {"mops": mops * 1.08, "bw": max(bw, ceiling or 0) * 1.12}
+
+
+def plot(data, out_stem, split, ceiling, only=None, note=None):
+    ps.configure_style()
+    palette = ps.configure_palette()
+
+    limits = axis_limits(data, ceiling)
+
+    tables = order(data)
+    if only:
+        missing = [n for n in only if n not in data["tables"]]
+        if missing:
+            raise SystemExit(f"[!] not in {out_stem}: {', '.join(missing)}; "
+                             f"have {', '.join(sorted(data['tables']))}")
+        tables = [n for n in tables if n in only]
+    if not tables:
+        print(f"[!] {out_stem}: no table has any points, nothing to plot")
+        return
+
+    styles = ps.styles_for(tables, palette)
+    xticks = sorted({f for n in tables for f in data["tables"][n]["fills"]})
+
+    if split:
+        for phase, label in PHASES:
+            fig, ax = ps.get_subplots(1, 1, plot_w=5)
+            draw(ax, frame(data, phase), tables,
+                 title_for(data, label, note), palette, xticks, ceiling,
+                 limits, styles)
+            ps.add_legend(fig, palette, tables, ncol=min(len(tables), 3),
+                          styles=styles)
+            metric_legend(fig)
+            ps.save(fig, f"{out_stem}_bw_{phase}.png", legend_top=0.84)
+        return
+
+    fig, axes = ps.get_subplots(1, len(PHASES), plot_w=5)
+    for ax, (phase, label) in zip(axes.ravel(), PHASES):
+        draw(ax, frame(data, phase), tables, title_for(data, label, note),
+             palette, xticks, ceiling, limits, styles)
+    ps.add_legend(fig, palette, tables, ncol=min(len(tables), 3),
+                  styles=styles)
+    metric_legend(fig)
+    ps.save(fig, f"{out_stem}_bw.png", legend_top=0.82)
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("jsons", nargs="+")
+    ap.add_argument("--split", action="store_true",
+                    help="one figure per phase instead of a two-panel figure")
+    ap.add_argument("--ceiling", type=float, default=DEFAULT_CEILING_GBPS,
+                    help="reference line, GB/s (0 to omit)")
+    ap.add_argument("--only", nargs="+", metavar="TABLE",
+                    help="plot only these series (axis scales still come "
+                         "from the whole json, so subsets stay comparable)")
+    ap.add_argument("--tag", help="appended to the output filename")
+    ap.add_argument("--note", help="appended to each panel title")
+    args = ap.parse_args()
+
+    for path in args.jsons:
+        path = Path(path)
+        stem = str(path.with_suffix(""))
+        if args.tag:
+            stem = f"{stem}_{args.tag}"
+        plot(load(path), stem, args.split, args.ceiling, args.only, args.note)
+
+
+if __name__ == "__main__":
+    main()

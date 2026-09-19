@@ -62,12 +62,19 @@ ALIASES = {
 DISPLAY_NAMES = {
     "cas": "dramblast",
     "cas23": "dramhit",
+    "folklore_nopref": "folklore (hw pref off)",
+    "dlht_nopref": "dlht (hw pref off)",
 }
 
 # Runs that are a variant of one of the series above rather than a series of
 # their own: same colour as their base, told apart by dash pattern and marker.
 VARIANT_STYLE = {
     "radix (all cpus)": {"base": "radix", "linestyle": ":", "marker": "^"},
+    # The same baseline run with the hardware prefetcher disabled. It is the
+    # same table, so it keeps the same colour; the dash and the square marker
+    # say which prefetcher state produced it.
+    "folklore_nopref": {"base": "folklore", "linestyle": "--", "marker": "s"},
+    "dlht_nopref": {"base": "dlht", "linestyle": "--", "marker": "s"},
 }
 
 TUPLE_BYTES = 16
@@ -162,6 +169,26 @@ def series_style(name, palette):
     }
 
 
+def styles_for(names, palette):
+    """Style per series, for a figure drawing exactly `names`.
+
+    A variant's dash and marker exist to tell it apart from its base. When the
+    base is not on the same figure there is nothing to tell it apart from, so
+    the variant is drawn in the ordinary way (solid, round) and the caption
+    carries the distinction instead. Put both on one figure and the variant
+    goes back to its own dash and marker.
+    """
+    plain = {canonical(n) for n in names if n not in VARIANT_STYLE}
+    out = {}
+    for name in names:
+        style = series_style(name, palette)
+        variant = VARIANT_STYLE.get(name)
+        if variant and canonical(variant["base"]) not in plain:
+            style = {**style, "linestyle": "-", "marker": "o"}
+        out[name] = style
+    return out
+
+
 # =============================================================================
 # DRAWING
 # =============================================================================
@@ -195,10 +222,11 @@ def tidy(ax):
             ax.set_ylim(ymin, ymax + remainder)
 
 
-def add_legend(fig, palette, names, ncol=None):
+def add_legend(fig, palette, names, ncol=None, styles=None):
     """One figure-level legend above the panels, in PALETTE_ORDER."""
+    styles = styles or {n: series_style(n, palette) for n in names}
     custom_lines = [
-        Line2D([0], [0], label=display_name(name), **series_style(name, palette))
+        Line2D([0], [0], label=display_name(name), **styles[name])
         for name in names
     ]
     fig.legend(fontsize=8, handles=custom_lines, loc="upper center",

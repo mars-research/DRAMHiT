@@ -108,12 +108,12 @@ def order(data):
 # =============================================================================
 
 
-def draw(ax, df, tables, title, palette, xticks):
+def draw(ax, df, tables, title, palette, xticks, styles):
     for name in tables:
         sub = df[df["table"] == name].sort_values("x")
         if sub.empty:
             continue
-        style = ps.series_style(name, palette)
+        style = styles[name]
         ps.draw_band(ax, sub, style)
         sns.lineplot(data=sub, x="x", y="mops", ax=ax, legend=False, **style)
 
@@ -147,22 +147,23 @@ def plot(data, out_stem, split):
         print(f"[!] {out_stem}: no table has any points, nothing to plot")
         return
 
+    styles = ps.styles_for(tables, palette)
     xticks = sorted({f for n in tables for f in data["tables"][n]["fills"]})
 
     if split:
         for phase, label in PHASES:
             fig, ax = ps.get_subplots(1, 1)
             draw(ax, frame(data, phase), tables, title_for(data, label),
-                 palette, xticks)
-            ps.add_legend(fig, palette, tables)
+                 palette, xticks, styles)
+            ps.add_legend(fig, palette, tables, styles=styles)
             ps.save(fig, f"{out_stem}_{phase}.png", legend_top=0.94)
         return
 
     fig, axes = ps.get_subplots(1, len(PHASES))
     for ax, (phase, label) in zip(axes.ravel(), PHASES):
         draw(ax, frame(data, phase), tables, title_for(data, label),
-             palette, xticks)
-    ps.add_legend(fig, palette, tables)
+             palette, xticks, styles)
+    ps.add_legend(fig, palette, tables, styles=styles)
     ps.save(fig, f"{out_stem}.png", legend_top=0.9)
 
 

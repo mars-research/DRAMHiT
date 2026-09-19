@@ -185,13 +185,94 @@ TABLES = {
             "link bucket pool exhausted'"
         ),
     },
+    # Same two baselines, hardware prefetcher off. Identical in every other
+    # respect, so the pair isolates what the prefetcher is worth to them.
+    "folklore_nopref": {
+        "display": "folklore (hw pref off)",
+        "ht_type": HT_FOLKLORE,
+        "prefetcher": "off",
+        "batch_len": 16,
+    },
+    "dlht_nopref": {
+        "display": "dlht (hw pref off)",
+        "ht_type": HT_DLHT,
+        "prefetcher": "off",
+        "batch_len": 32,
+        "max_fill": 40,
+        "max_fill_reason": (
+            "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% "
+            "reported fill; the table aborts with 'Resize required: Global "
+            "link bucket pool exhausted'"
+        ),
+    },
 }
 
-PLOT_ORDER = ["cas", "cas23", "folklore", "dlht"]
+# The two baselines are collected twice, once in each hardware-prefetcher
+# state, and both are kept. The collector's original premise was that "on" is
+# the baselines' best case; on this machine that is false, and badly so on the
+# find path -- folklore's lookup throughput is 34% higher with the prefetcher
+# OFF at fill 10, because ~60% of the traffic the prefetcher generates on a
+# random-access probe scan is never used. Rather than silently switch the
+# setting, both are measured and plotted so the gap is visible.
+PLOT_ORDER = ["cas", "cas23", "folklore", "folklore_nopref", "dlht",
+              "dlht_nopref"]
 
 SKIPPED = {
     "growt": "excluded by request; it collapses past ~50% fill (see intel.json)",
 }
+
+# --- bandwidth sampling -------------------------------------------------------
+# Each run is wrapped in `perf stat -I` so the DRAM traffic is a time series
+# rather than one number for the whole process: the run also allocates and
+# zeroes 8 GiB before it starts timing, and that would otherwise be averaged
+# into the result. 100 ms is short enough to resolve the insert and find phases
+# (the shortest, find at high throughput, is still ~1 s = ~10 samples) and long
+# enough that per-interval counter noise stays small.
+#
+# The counters are the memory controllers' CAS counts, i.e. actual DRAM traffic,
+# reported by perf in MiB per interval. Bandwidth is decimal GB/s (bytes / 1e9),
+# the convention DDR5 part numbers use; divide by 1.0737 for GiB/s.
+BW_INTERVAL_MS = 100
+BW_EVENTS = "uncore_imc/cas_count_read/,uncore_imc/cas_count_write/"
+
+# Neither end of a phase runs at its steady rate, and both have to be cut out
+# or the median measures the wrong thing:
+#
+#   warm-up    The find phase starts at ~366 GB/s and steps down to ~345 after
+#              about 1.5 s, at every fill. The insert phase shows no such step
+#              (flat 354-357 from the first interval out to 24 s), so this is
+#              specific to the read-only phase and is NOT machine warm-up --
+#              insert runs at full bandwidth for seconds immediately before it.
+#              The cause is still unidentified. Whatever it is, a phase shorter
+#              than the transient is measured entirely inside it: at fill 10 the
+#              find phase lasts 0.9 s and reads 366, while fill 30 onwards reads
+#              ~346. That produced an 18 GB/s "step" between fill 20 and 30 that
+#              was pure measurement artifact.
+#
+#   wind-down  A phase does not stop all at once. At fill 90 the last ~1.9 s
+#              before "test find end" decays 284 -> 7 GB/s as threads straggle
+#              to the closing barrier. The median is robust enough that this
+#              barely moves it, but it is not steady-state and does not belong.
+#
+# A point whose phase is too short to survive the warm-up cut is still recorded,
+# flagged transient_only, so it is visible rather than silently different.
+BW_WARMUP_S = 1.5
+BW_WINDDOWN_FRAC = 0.9
+BW_MIN_INTERVALS = 3
+
+# perf -I -x, lines look like
+#   0.100062267,16.28,MiB,uncore_imc/cas_count_read/,1610869735,100.00,,
+PERF_RE = re.compile(
+    r"^([\d.]+),([\d.]+),(\w+),uncore_imc/cas_count_(read|write)/,")
+
+# Phase markers printed by shard 0 in src/tests/uniform_test.cpp. They bracket
+# the whole insert_factor / read_factor loop, not one iteration.
+PHASE_MARKS = [
+    ("test insert start", "set"),
+    ("test insert end", None),
+    ("test find start", "get"),
+    ("test find end", None),
+]
 
 SET_RE = re.compile(r"set_mops\s*:\s*([\d.]+)")
 GET_RE = re.compile(r"get_mops\s*:\s*([\d.]+)")
@@ -225,7 +306,7 @@ def set_prefetcher(state):
     sh(f'sudo env PATH="$PATH" {PREFETCH_SCRIPT} {state}')
 
 
-def dramhit_cmd(table, fill):
+def dramhit_cmd(table, fill, with_bw=True):
     args = [
         DRAMHIT,
         "--mode", str(MODE_UNIFORM),
@@ -243,11 +324,100 @@ def dramhit_cmd(table, fill):
         "--skew", "0.01",
         "--seed", str(SEED),
     ]
-    return "sudo " + " ".join(shlex.quote(a) for a in args)
+    inner = " ".join(shlex.quote(a) for a in args)
+    if not with_bw:
+        return "sudo " + inner
+    return (f"sudo perf stat -I {BW_INTERVAL_MS} -x, -a -e {BW_EVENTS} -- "
+            + inner)
 
 
-def run_point(cmd, log_path):
-    """One dramhit run. Returns (set_mops, get_mops) or (None, reason)."""
+def parse_bw(output):
+    """Per-phase DRAM bandwidth from the interleaved perf -I / dramhit log.
+
+    perf writes its interval lines and dramhit writes its phase markers into
+    the same merged stream, so which phase an interval belongs to is decided
+    by the last marker seen before it. Returns {"set": {...}, "get": {...}}
+    with median total/read/write GB/s, or an empty dict for a phase with no
+    usable intervals.
+
+    Each perf line carries MiB accumulated since the previous line, so the
+    rate needs the real timestamp delta -- the interval that closes a phase is
+    short, and assuming 100 ms there would invent a low sample. The first and
+    last interval of each phase are dropped anyway: both straddle a boundary
+    and mix the phase with whatever ran next to it.
+    """
+    phase = None
+    prev_ts = 0.0
+    pending = {}        # ts -> {"read": MiB, "write": MiB, "phase": ...}
+    rows = {"set": [], "get": []}
+    phase_t0 = {}
+
+    for line in output.splitlines():
+        for mark, target in PHASE_MARKS:
+            if mark in line:
+                phase = target
+                break
+
+        m = PERF_RE.match(line)
+        if not m:
+            continue
+        ts, val, unit, kind = (float(m.group(1)), float(m.group(2)),
+                               m.group(3), m.group(4))
+        if unit != "MiB":
+            continue
+        slot = pending.setdefault(ts, {"phase": phase})
+        slot[kind] = val
+        if "read" not in slot or "write" not in slot:
+            continue
+
+        dt = ts - prev_ts
+        prev_ts = ts
+        del pending[ts]
+        ph = slot["phase"]
+        if ph is None or dt <= 0:
+            continue
+        phase_t0.setdefault(ph, ts)
+        to_gbps = (1 << 20) / 1e9 / dt
+        rows[ph].append((ts - phase_t0[ph], slot["read"] * to_gbps,
+                         slot["write"] * to_gbps))
+
+    out = {}
+    for name, samples in rows.items():
+        if not samples:
+            continue
+        span = samples[-1][0]
+        # Both boundary intervals straddle a marker and mix two phases.
+        if len(samples) > 4:
+            samples = samples[1:-1]
+
+        # Leading transient.
+        settled = [s for s in samples if s[0] >= BW_WARMUP_S]
+        transient_only = len(settled) < BW_MIN_INTERVALS
+        if not transient_only:
+            samples = settled
+
+        # Trailing wind-down: threads straggling to the closing barrier.
+        def med(rs):
+            return statistics.median(r + w for _, r, w in rs)
+        while len(samples) > BW_MIN_INTERVALS and \
+                samples[-1][1] + samples[-1][2] < BW_WINDDOWN_FRAC * med(samples):
+            samples.pop()
+        if not samples:
+            continue
+
+        out[name] = {
+            "gbps": round(med(samples), 1),
+            "rd_gbps": round(statistics.median(r for _, r, _ in samples), 1),
+            "wr_gbps": round(statistics.median(w for _, _, w in samples), 1),
+            "intervals": len(samples),
+            "phase_s": round(span, 2),
+            "transient_only": transient_only,
+        }
+    return out
+
+
+def run_point(cmd, log_path, with_bw=True):
+    """One dramhit run. Returns (metrics, None) or (None, reason)."""
     proc = subprocess.run(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
     )
@@ -266,7 +436,16 @@ def run_point(cmd, log_path):
     if found.group(1) != found.group(2):
         return None, f"found {found.group(2)} of {found.group(1)} find_ops"
 
-    return (float(sets[-1]), float(gets[-1])), None
+    metrics = {"set_mops": float(sets[-1]), "get_mops": float(gets[-1])}
+    if with_bw:
+        bw = parse_bw(proc.stdout)
+        # A run that produced mops but no bandwidth is not a failed point --
+        # the throughput is still good -- but it is worth saying out loud,
+        # because it means the perf/marker interleaving stopped working.
+        if not bw:
+            print("      [!] no bandwidth intervals parsed from this run")
+        metrics["bw"] = bw
+    return metrics, None
 
 
 # =============================================================================
@@ -281,6 +460,10 @@ def new_results(reps):
         "param_name": "fill",
         "collected_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "reps": reps,
+        "bw_interval_ms": BW_INTERVAL_MS,
+        "bw_events": BW_EVENTS,
+        "bw_unit": "decimal GB/s (bytes / 1e9); / 1.0737 for GiB/s",
+        "bw_warmup_s": BW_WARMUP_S,
         "ht_size": HT_SIZE,
         "ht_size_gib": HT_SIZE * 16 // (1 << 30),
         "num_threads": NUM_THREADS,
@@ -300,11 +483,8 @@ def save(results, out_path):
     out_path.write_text(json.dumps(results, indent=2))
 
 
-def collect_table(name, table, fills, reps, out_path, results):
-    max_fill = table.get("max_fill", 100)
-    capped = [f for f in fills if f > max_fill]
-    fills = [f for f in fills if f <= max_fill]
-
+def table_entry(name, table, capped):
+    """The empty per-table record both the live and re-derive paths fill in."""
     entry = {
         "display": table["display"],
         "ht_type": table["ht_type"],
@@ -315,53 +495,151 @@ def collect_table(name, table, fills, reps, out_path, results):
         "get_mops": [],
         "set_samples": [],
         "get_samples": [],
+        "set_bw_gbps": [],
+        "get_bw_gbps": [],
+        "set_bw_rd_gbps": [],
+        "get_bw_rd_gbps": [],
+        "set_bw_wr_gbps": [],
+        "get_bw_wr_gbps": [],
+        "set_bw_samples": [],
+        "get_bw_samples": [],
+        "set_bw_intervals": [],
+        "get_bw_intervals": [],
+        "set_bw_transient_only": [],
+        "get_bw_transient_only": [],
         "failures": [],
     }
     if capped:
         entry["not_swept"] = {
             "fills": capped,
-            "reason": table.get("max_fill_reason", f"max_fill={max_fill}"),
+            "reason": table.get("max_fill_reason",
+                                f"max_fill={table.get('max_fill', 100)}"),
         }
+    return entry
+
+
+def record_point(entry, fill, points):
+    """Fold one fill's repeats into the table's arrays.
+
+    `points` is a list of per-run {set_mops, get_mops, bw}. Every array stays
+    index-aligned with `fills`, so a phase whose bandwidth did not parse still
+    takes a slot (None) rather than shifting everything after it.
+    """
+    entry["fills"].append(fill)
+    for phase in ("set", "get"):
+        vals = [p[f"{phase}_mops"] for p in points]
+        entry[f"{phase}_mops"].append(statistics.median(vals))
+        entry[f"{phase}_samples"].append(vals)
+
+        reps_bw = [p["bw"][phase] for p in points
+                   if p.get("bw", {}).get(phase)]
+        for key, field in (("gbps", ""), ("rd_gbps", "_rd"), ("wr_gbps", "_wr")):
+            got = [r[key] for r in reps_bw]
+            entry[f"{phase}_bw{field}_gbps"].append(
+                round(statistics.median(got), 1) if got else None)
+        entry[f"{phase}_bw_samples"].append([r["gbps"] for r in reps_bw])
+        entry[f"{phase}_bw_intervals"].append(
+            min(r["intervals"] for r in reps_bw) if reps_bw else 0)
+        entry[f"{phase}_bw_transient_only"].append(
+            any(r["transient_only"] for r in reps_bw) if reps_bw else None)
+
+
+def collect_table(name, table, fills, reps, out_path, results, with_bw=True):
+    max_fill = table.get("max_fill", 100)
+    capped = [f for f in fills if f > max_fill]
+    fills = [f for f in fills if f <= max_fill]
+
+    entry = table_entry(name, table, capped)
     results["tables"][name] = entry
 
     set_prefetcher(table["prefetcher"])
 
     for fill in fills:
-        cmd = dramhit_cmd(table, fill)
-        sets, gets = [], []
+        cmd = dramhit_cmd(table, fill, with_bw)
+        points = []
         for rep in range(1, reps + 1):
             log = DATA_DIR / "logs" / name / f"fill{fill:02d}_rep{rep}.log"
             t0 = time.monotonic()
-            point, err = run_point(cmd, log)
+            point, err = run_point(cmd, log, with_bw)
             dt = time.monotonic() - t0
             if err:
                 print(f"  [!] {name} fill={fill} rep={rep} FAILED after "
                       f"{dt:.0f}s: {err}")
                 entry["failures"].append({"fill": fill, "rep": rep, "error": err})
                 continue
-            sets.append(point[0])
-            gets.append(point[1])
-            print(f"  {name} fill={fill:2d} rep={rep}/{reps}  "
-                  f"set {point[0]:7.1f}  get {point[1]:7.1f}  ({dt:.0f}s)")
+            points.append(point)
+            line = (f"  {name} fill={fill:2d} rep={rep}/{reps}  "
+                    f"set {point['set_mops']:7.1f}  get {point['get_mops']:7.1f}")
+            for phase in ("set", "get"):
+                got = point.get("bw", {}).get(phase)
+                if got:
+                    line += f"  {phase}_bw {got['gbps']:5.0f}"
+            print(line + f"  ({dt:.0f}s)")
 
-        if not sets:
+        if not points:
             print(f"  [!] {name} fill={fill}: every rep failed, no point recorded")
             save(results, out_path)
             continue
 
-        entry["fills"].append(fill)
-        entry["set_mops"].append(statistics.median(sets))
-        entry["get_mops"].append(statistics.median(gets))
-        entry["set_samples"].append(sets)
-        entry["get_samples"].append(gets)
-        print(f"  => {name} fill={fill:2d} median set "
-              f"{statistics.median(sets):.1f} get {statistics.median(gets):.1f}")
+        record_point(entry, fill, points)
+
+        msg = (f"  => {name} fill={fill:2d} median set "
+               f"{entry['set_mops'][-1]:.1f} get {entry['get_mops'][-1]:.1f}")
+        if entry["set_bw_gbps"][-1] is not None:
+            msg += (f" | bw set {entry['set_bw_gbps'][-1]:.0f}"
+                    f" get {entry['get_bw_gbps'][-1]:.0f} GB/s")
+            if entry["get_bw_transient_only"][-1]:
+                msg += "  [get bw transient only]"
+        print(msg)
         save(results, out_path)
 
 
 # =============================================================================
 # MAIN
 # =============================================================================
+
+
+def rederive(out_path, names, fills, reps):
+    """Recompute bandwidth from saved logs, running nothing.
+
+    Every run's full perf time series is kept in its log, so a change to how
+    the steady state is picked out does not need the matrix re-run. Throughput
+    is re-read from the same logs, so the result is a complete json.
+    """
+    results = new_results(reps)
+    for name in names:
+        table = TABLES[name]
+        max_fill = table.get("max_fill", 100)
+        entry = table_entry(name, table, [f for f in fills if f > max_fill])
+        results["tables"][name] = entry
+        for fill in [f for f in fills if f <= max_fill]:
+            logs = sorted((DATA_DIR / "logs" / name).glob(f"fill{fill:02d}_rep*.log"))
+            points = []
+            for log in logs:
+                text = log.read_text()
+                if "uncore_imc" not in text:
+                    continue          # pre-bandwidth collection, skip
+                sets = SET_RE.findall(text)
+                gets = GET_RE.findall(text)
+                if not sets or not gets:
+                    continue
+                points.append({"set_mops": float(sets[-1]),
+                               "get_mops": float(gets[-1]),
+                               "bw": parse_bw(text)})
+            if not points:
+                print(f"  [--] {name} fill={fill}: no usable logs")
+                continue
+            record_point(entry, fill, points)
+            print(f"  {name} fill={fill:2d} from {len(points)} logs -> "
+                  f"set {entry['set_mops'][-1]:.0f} get {entry['get_mops'][-1]:.0f} | "
+                  f"bw set {entry['set_bw_gbps'][-1]} get {entry['get_bw_gbps'][-1]}"
+                  + ("  [transient only]"
+                     if entry["get_bw_transient_only"][-1] else ""))
+    results["finished_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    results["rederived_from_logs"] = True
+    save(results, out_path)
+    print(f"\n[OK] re-derived results written to {out_path}")
+    return 0
 
 
 def main():
@@ -376,6 +654,10 @@ def main():
     ap.add_argument("--reps", type=int, default=REPS)
     ap.add_argument("--no-build", action="store_true",
                     help="reuse build/ as-is instead of reconfiguring")
+    ap.add_argument("--no-bw", action="store_true",
+                    help="skip the perf bandwidth sampling (mops only)")
+    ap.add_argument("--rederive-bw", action="store_true",
+                    help="recompute from the saved logs; runs no benchmarks")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the build and every command, run nothing")
     args = ap.parse_args()
@@ -383,6 +665,9 @@ def main():
     names = args.table or PLOT_ORDER
     fills = args.fill or FILLS
     out_path = Path(args.out)
+
+    if args.rederive_bw:
+        return rederive(out_path, names, fills, args.reps)
 
     if args.dry_run:
         print("cmake -S {} -B {} {}".format(SOURCE_DIR, BUILD_DIR,
@@ -394,7 +679,7 @@ def main():
             print(f"\n# {name} ({table['display']}), hw prefetcher "
                   f"{table['prefetcher']}, {len(todo)} fills x {args.reps} reps")
             for fill in todo:
-                print(dramhit_cmd(table, fill))
+                print(dramhit_cmd(table, fill, not args.no_bw))
             total += len(todo) * args.reps
         print(f"\n# {total} dramhit runs -> {out_path}")
         return 0
@@ -409,7 +694,8 @@ def main():
 
     for name in names:
         print(f"\n=== {name} ({TABLES[name]['display']}) ===")
-        collect_table(name, TABLES[name], fills, args.reps, out_path, results)
+        collect_table(name, TABLES[name], fills, args.reps, out_path, results,
+                      not args.no_bw)
 
     # Leave the machine in the state scripts/setup.sh leaves it in, rather
     # than whatever the last table wanted. NOTE: that is prefetchers OFF on
