@@ -160,8 +160,10 @@ def plot(agg, out_png, title_note):
                     ha="left", xytext=(5, 0), textcoords="offset points")
 
     ax.set_ylabel("insert throughput  (set_mops)", color=INK_2, fontsize=10)
+    # 26pt clears a one-line note; each extra line of provenance needs its own.
     ax.set_title("DRAMHiT k-mer counting: insert throughput vs k",
-                 color=INK, fontsize=13, pad=26, loc="left")
+                 color=INK, fontsize=13,
+                 pad=26 + 12 * title_note.count("\n"), loc="left")
     ax.annotate(title_note, (0, 1.012), xycoords="axes fraction", color=INK_MUTED,
                 fontsize=8.5, va="bottom", ha="left")
     leg = ax.legend(loc="lower left", frameon=False, fontsize=9, ncol=2,
@@ -239,6 +241,13 @@ def main():
                         "(e.g. 20260914-184524); without it, logs from earlier "
                         "runs with different settings are mixed in")
     p.add_argument("--out", default=str(HERE / "plots" / "kmer_sweep.png"))
+    p.add_argument("--note", default=None,
+                   help="machine and firmware context to print above the "
+                        "plot, e.g. 'Xeon Gold 6548Y+, snoop mode, HW "
+                        "prefetchers off'. Without it the figure only says "
+                        "how many runs it came from, which does not "
+                        "distinguish two sweeps of the same shape taken on "
+                        "different machines or in different firmware modes.")
     args = p.parse_args()
 
     log_dir = Path(args.log_dir)
@@ -262,6 +271,8 @@ def main():
     note = (f"{len(rows)} runs from {Path(src).name}; "
             f"{'x'.join(str(r) for r in sorted(reps))} repeats per point; "
             f"band = min-max over repeats")
+    if args.note:
+        note = f"{args.note}\n{note}"
 
     out_png = Path(args.out)
     if not plot(agg, out_png, note):
