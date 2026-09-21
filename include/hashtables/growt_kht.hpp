@@ -36,6 +36,13 @@ class GrowtHashTable : public BaseHashTable {
 
       if (!table) {
         assert(this->ref_cnt == 0);
+        
+        // Have to statically set alloc size
+        // in growt's allocator: growt/allocator/poolallocator.hpp
+        // by setting 'GROWT_MEMPOOL_SIZE'
+        // also natively doesn't splits memory even among all nodes
+        // can adjust in HugePageAlloc's alloc() of growt/allocator/poolallocator.hpp 
+
         this->table = new growht_type(capacity/2); // growt somehow reserves 2X amount of slots. so divide it by 2.
         std::cout << "table name " << table->name() <<" capacity " << table->capacity()  << std::endl;
       }
@@ -58,9 +65,11 @@ class GrowtHashTable : public BaseHashTable {
                     collector_type* collector = nullptr) override {
     //
     for (auto& data : kp) {
+      auto result = table->insert_or_assign(data.key, data.value);
       // std::cout << "growt inserting key " << data.key << std::endl;
-      if (!table->insert_or_assign(data.key, data.value).second) {
+      if (result.first == table->end()) {
         std::cout << "growt insertion failed" << std::endl;
+        abort();
       }
     }
   }
@@ -78,6 +87,7 @@ class GrowtHashTable : public BaseHashTable {
         vp.first++;
       } else {
         std::cout << "growt find failed " << data.key << std::endl;
+        abort();
       }
     }
   }
