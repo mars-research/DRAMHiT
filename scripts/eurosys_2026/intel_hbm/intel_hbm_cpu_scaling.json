@@ -25,7 +25,9 @@
       "cpu_node": 0,
       "mem_node": 2,
       "mode": "r",
-      "pmu": "hbm"
+      "pmu": "hbm",
+      "inst": "t1",
+      "reps": 3
     },
     "threads": [
       1,
@@ -595,7 +597,9 @@
       "cpu_node": 0,
       "mem_node": 2,
       "mode": "w",
-      "pmu": "hbm"
+      "pmu": "hbm",
+      "inst": "t1",
+      "reps": 3
     },
     "threads": [
       1,
@@ -1165,7 +1169,9 @@
       "cpu_node": 0,
       "mem_node": 0,
       "mode": "r",
-      "pmu": "imc"
+      "pmu": "imc",
+      "inst": "t1",
+      "reps": 3
     },
     "threads": [
       1,
@@ -1726,6 +1732,485 @@
           239,
           239,
           240
+        ]
+      }
+    }
+  },
+  "hbm_read_load": {
+    "config": {
+      "cpu_node": 0,
+      "mem_node": 2,
+      "mode": "r",
+      "pmu": "hbm",
+      "inst": "load",
+      "reps": 3
+    },
+    "threads": [
+      1,
+      2,
+      4,
+      6,
+      8,
+      12,
+      16,
+      20,
+      24,
+      28,
+      32,
+      40,
+      48,
+      56,
+      64
+    ],
+    "points": {
+      "1": {
+        "threads": 1,
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 2.0,
+        "mem_all_gbs": 8.315345113010043,
+        "mem_all_lo": 8.285654070586961,
+        "mem_all_hi": 8.396339671519943,
+        "mem_all_peak_gbs": 8.403687764589867,
+        "mem_rd_gbs": 8.213670148975643,
+        "mem_wr_gbs": 0.10175635761779968,
+        "mem_dclk_ghz": 0.7981689417946504,
+        "far_socket_all_gbs": 0.2027246413811239,
+        "prog_bw_gbs": 7.74,
+        "prog_bw_samples": [
+          7.73,
+          7.74,
+          7.75
+        ],
+        "cycles_per_access": 20.79,
+        "mem_all_samples": [
+          8.396339671519943,
+          8.315345113010043,
+          8.285654070586961
+        ],
+        "intervals_per_run": [
+          1076,
+          1074,
+          1073
+        ]
+      },
+      "8": {
+        "threads": 8,
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 16.0,
+        "mem_all_gbs": 65.5626806444902,
+        "mem_all_lo": 65.55074644172757,
+        "mem_all_hi": 65.57845867059555,
+        "mem_all_peak_gbs": 65.69351709795914,
+        "mem_rd_gbs": 65.4606915680017,
+        "mem_wr_gbs": 0.10168242612968778,
+        "mem_dclk_ghz": 0.7981689441605219,
+        "far_socket_all_gbs": 0.20272371065279374,
+        "prog_bw_gbs": 60.59,
+        "prog_bw_samples": [
+          60.6,
+          60.59,
+          60.57
+        ],
+        "cycles_per_access": 21.11,
+        "mem_all_samples": [
+          65.5626806444902,
+          65.55074644172757,
+          65.57845867059555
+        ],
+        "intervals_per_run": [
+          1098,
+          1098,
+          1098
+        ]
+      },
+      "32": {
+        "threads": 32,
+        "per_thread_mb": 512,
+        "total_footprint_gb": 16.0,
+        "mem_all_gbs": 250.31062808061384,
+        "mem_all_lo": 249.99645637816442,
+        "mem_all_hi": 250.3496217086014,
+        "mem_all_peak_gbs": 254.73286477445944,
+        "mem_rd_gbs": 250.20920154078556,
+        "mem_wr_gbs": 0.1015521061811753,
+        "mem_dclk_ghz": 0.7981689340602062,
+        "far_socket_all_gbs": 0.20271643128831404,
+        "prog_bw_gbs": 231.75,
+        "prog_bw_samples": [
+          231.71,
+          231.75,
+          231.86
+        ],
+        "cycles_per_access": 22.04,
+        "mem_all_samples": [
+          249.99645637816442,
+          250.3496217086014,
+          250.31062808061384
+        ],
+        "intervals_per_run": [
+          275,
+          276,
+          275
+        ]
+      },
+      "64": {
+        "threads": 64,
+        "per_thread_mb": 256,
+        "total_footprint_gb": 16.0,
+        "mem_all_gbs": 319.04614662956675,
+        "mem_all_lo": 318.8982321540613,
+        "mem_all_hi": 319.47084719900045,
+        "mem_all_peak_gbs": 327.0566536121226,
+        "mem_rd_gbs": 318.9447206428913,
+        "mem_wr_gbs": 0.10162595972594252,
+        "mem_dclk_ghz": 0.7981689200731237,
+        "far_socket_all_gbs": 0.20270846490667352,
+        "prog_bw_gbs": 295.69,
+        "prog_bw_samples": [
+          295.5,
+          295.69,
+          295.71
+        ],
+        "cycles_per_access": 34.51,
+        "mem_all_samples": [
+          318.8982321540613,
+          319.47084719900045,
+          319.04614662956675
+        ],
+        "intervals_per_run": [
+          215,
+          215,
+          215
+        ]
+      },
+      "2": {
+        "threads": 2,
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 4.0,
+        "mem_all_gbs": 16.537292980869825,
+        "mem_all_lo": 16.532150554574915,
+        "mem_all_hi": 16.539077439077616,
+        "mem_all_peak_gbs": 16.644565099959316,
+        "mem_rd_gbs": 16.43435236083902,
+        "mem_wr_gbs": 0.10239937485695516,
+        "mem_dclk_ghz": 0.798168945585324,
+        "far_socket_all_gbs": 0.20272373830771256,
+        "prog_bw_gbs": 15.39,
+        "prog_bw_samples": [
+          15.39,
+          15.39,
+          15.4
+        ],
+        "cycles_per_access": 20.88,
+        "mem_all_samples": [
+          16.539077439077616,
+          16.532150554574915,
+          16.537292980869825
+        ],
+        "intervals_per_run": [
+          1081,
+          1080,
+          1080
+        ]
+      },
+      "4": {
+        "threads": 4,
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 8.0,
+        "mem_all_gbs": 32.91391600809611,
+        "mem_all_lo": 32.912691773096114,
+        "mem_all_hi": 32.91496261874764,
+        "mem_all_peak_gbs": 33.046385622944605,
+        "mem_rd_gbs": 32.81147284060759,
+        "mem_wr_gbs": 0.10217289590562274,
+        "mem_dclk_ghz": 0.7981689450151807,
+        "far_socket_all_gbs": 0.20272404131240282,
+        "prog_bw_gbs": 30.57,
+        "prog_bw_samples": [
+          30.57,
+          30.59,
+          30.56
+        ],
+        "cycles_per_access": 21.02,
+        "mem_all_samples": [
+          32.91496261874764,
+          32.91391600809611,
+          32.912691773096114
+        ],
+        "intervals_per_run": [
+          1088,
+          1087,
+          1089
+        ]
+      },
+      "6": {
+        "threads": 6,
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 12.0,
+        "mem_all_gbs": 49.28934172708958,
+        "mem_all_lo": 49.26969910372894,
+        "mem_all_hi": 49.32694298783058,
+        "mem_all_peak_gbs": 49.406001192527796,
+        "mem_rd_gbs": 49.18707363175255,
+        "mem_wr_gbs": 0.10183962220536313,
+        "mem_dclk_ghz": 0.7981689484550815,
+        "far_socket_all_gbs": 0.2027241626357622,
+        "prog_bw_gbs": 45.61,
+        "prog_bw_samples": [
+          45.6,
+          45.65,
+          45.61
+        ],
+        "cycles_per_access": 21.05,
+        "mem_all_samples": [
+          49.28934172708958,
+          49.26969910372894,
+          49.32694298783058
+        ],
+        "intervals_per_run": [
+          1094,
+          1093,
+          1094
+        ]
+      },
+      "12": {
+        "threads": 12,
+        "per_thread_mb": 1024,
+        "total_footprint_gb": 12.0,
+        "mem_all_gbs": 99.11799258343132,
+        "mem_all_lo": 99.01486738776842,
+        "mem_all_hi": 99.12359589056456,
+        "mem_all_peak_gbs": 100.0123067286489,
+        "mem_rd_gbs": 99.01456130949397,
+        "mem_wr_gbs": 0.10244843813463227,
+        "mem_dclk_ghz": 0.7981689482693813,
+        "far_socket_all_gbs": 0.20272117950688665,
+        "prog_bw_gbs": 92.3,
+        "prog_bw_samples": [
+          92.28,
+          92.33,
+          92.3
+        ],
+        "cycles_per_access": 20.81,
+        "mem_all_samples": [
+          99.01486738776842,
+          99.11799258343132,
+          99.12359589056456
+        ],
+        "intervals_per_run": [
+          539,
+          539,
+          539
+        ]
+      },
+      "16": {
+        "threads": 16,
+        "per_thread_mb": 1024,
+        "total_footprint_gb": 16.0,
+        "mem_all_gbs": 130.86591484102723,
+        "mem_all_lo": 130.83576743012563,
+        "mem_all_hi": 130.94422869141096,
+        "mem_all_peak_gbs": 132.40213818066377,
+        "mem_rd_gbs": 130.76310069570286,
+        "mem_wr_gbs": 0.10246845951866576,
+        "mem_dclk_ghz": 0.798168948618347,
+        "far_socket_all_gbs": 0.20272067548758227,
+        "prog_bw_gbs": 121.67,
+        "prog_bw_samples": [
+          121.51,
+          121.68,
+          121.67
+        ],
+        "cycles_per_access": 21.05,
+        "mem_all_samples": [
+          130.83576743012563,
+          130.86591484102723,
+          130.94422869141096
+        ],
+        "intervals_per_run": [
+          547,
+          546,
+          546
+        ]
+      },
+      "20": {
+        "threads": 20,
+        "per_thread_mb": 512,
+        "total_footprint_gb": 10.0,
+        "mem_all_gbs": 161.9678682132405,
+        "mem_all_lo": 161.96197061490594,
+        "mem_all_hi": 162.03072651973065,
+        "mem_all_peak_gbs": 164.23122850303764,
+        "mem_rd_gbs": 161.865521748663,
+        "mem_wr_gbs": 0.10229931641322186,
+        "mem_dclk_ghz": 0.7981689296088195,
+        "far_socket_all_gbs": 0.20271809123081166,
+        "prog_bw_gbs": 150.38,
+        "prog_bw_samples": [
+          150.44,
+          150.13,
+          150.38
+        ],
+        "cycles_per_access": 21.26,
+        "mem_all_samples": [
+          162.03072651973065,
+          161.9678682132405,
+          161.96197061490594
+        ],
+        "intervals_per_run": [
+          275,
+          275,
+          275
+        ]
+      },
+      "24": {
+        "threads": 24,
+        "per_thread_mb": 512,
+        "total_footprint_gb": 12.0,
+        "mem_all_gbs": 191.93572180161252,
+        "mem_all_lo": 191.92237168090475,
+        "mem_all_hi": 192.02013693551189,
+        "mem_all_peak_gbs": 195.57989742500288,
+        "mem_rd_gbs": 191.83292733996436,
+        "mem_wr_gbs": 0.1031288033180125,
+        "mem_dclk_ghz": 0.7981689542807119,
+        "far_socket_all_gbs": 0.20271945815893128,
+        "prog_bw_gbs": 178.03,
+        "prog_bw_samples": [
+          178.12,
+          178.03,
+          178.0
+        ],
+        "cycles_per_access": 21.53,
+        "mem_all_samples": [
+          191.92237168090475,
+          191.93572180161252,
+          192.02013693551189
+        ],
+        "intervals_per_run": [
+          279,
+          279,
+          279
+        ]
+      },
+      "28": {
+        "threads": 28,
+        "per_thread_mb": 512,
+        "total_footprint_gb": 14.0,
+        "mem_all_gbs": 221.81355856132012,
+        "mem_all_lo": 221.75561602336958,
+        "mem_all_hi": 221.87724363765702,
+        "mem_all_peak_gbs": 225.14405303964494,
+        "mem_rd_gbs": 221.70922534792294,
+        "mem_wr_gbs": 0.10471202818440606,
+        "mem_dclk_ghz": 0.7981689371229923,
+        "far_socket_all_gbs": 0.20271870950335374,
+        "prog_bw_gbs": 205.18,
+        "prog_bw_samples": [
+          205.18,
+          205.09,
+          205.3
+        ],
+        "cycles_per_access": 21.79,
+        "mem_all_samples": [
+          221.81355856132012,
+          221.75561602336958,
+          221.87724363765702
+        ],
+        "intervals_per_run": [
+          282,
+          282,
+          282
+        ]
+      },
+      "40": {
+        "threads": 40,
+        "per_thread_mb": 256,
+        "total_footprint_gb": 10.0,
+        "mem_all_gbs": 265.26053842869294,
+        "mem_all_lo": 265.21260669626236,
+        "mem_all_hi": 266.76425393141994,
+        "mem_all_peak_gbs": 272.15729367775043,
+        "mem_rd_gbs": 265.15277883620706,
+        "mem_wr_gbs": 0.1020369085988935,
+        "mem_dclk_ghz": 0.7981689797022248,
+        "far_socket_all_gbs": 0.20271114054267164,
+        "prog_bw_gbs": 194.14,
+        "prog_bw_samples": [
+          194.07,
+          194.14,
+          194.17
+        ],
+        "cycles_per_access": 26.49,
+        "mem_all_samples": [
+          265.21260669626236,
+          265.26053842869294,
+          266.76425393141994
+        ],
+        "intervals_per_run": [
+          205,
+          204,
+          204
+        ]
+      },
+      "48": {
+        "threads": 48,
+        "per_thread_mb": 256,
+        "total_footprint_gb": 12.0,
+        "mem_all_gbs": 283.2241352142115,
+        "mem_all_lo": 283.1708094813278,
+        "mem_all_hi": 283.2311921857856,
+        "mem_all_peak_gbs": 291.8693758790812,
+        "mem_rd_gbs": 283.1217713310438,
+        "mem_wr_gbs": 0.10188960452918092,
+        "mem_dclk_ghz": 0.7981689464424195,
+        "far_socket_all_gbs": 0.20270566072604249,
+        "prog_bw_gbs": 229.09,
+        "prog_bw_samples": [
+          229.08,
+          229.09,
+          229.12
+        ],
+        "cycles_per_access": 29.74,
+        "mem_all_samples": [
+          283.1708094813278,
+          283.2311921857856,
+          283.2241352142115
+        ],
+        "intervals_per_run": [
+          208,
+          208,
+          208
+        ]
+      },
+      "56": {
+        "threads": 56,
+        "per_thread_mb": 256,
+        "total_footprint_gb": 14.0,
+        "mem_all_gbs": 300.92600551767094,
+        "mem_all_lo": 300.8603216995831,
+        "mem_all_hi": 300.9378414013766,
+        "mem_all_peak_gbs": 308.9150089539992,
+        "mem_rd_gbs": 300.82347225783957,
+        "mem_wr_gbs": 0.10174464734756625,
+        "mem_dclk_ghz": 0.7981689448859406,
+        "far_socket_all_gbs": 0.202713262286634,
+        "prog_bw_gbs": 262.95,
+        "prog_bw_samples": [
+          262.86,
+          262.95,
+          262.96
+        ],
+        "cycles_per_access": 32.32,
+        "mem_all_samples": [
+          300.8603216995831,
+          300.9378414013766,
+          300.92600551767094
+        ],
+        "intervals_per_run": [
+          212,
+          211,
+          211
         ]
       }
     }

@@ -34,8 +34,12 @@ it stays in the json and the table but not on a panel that would imply
 otherwise. Real loaded-latency and queue-occupancy evidence for this machine is
 in machine_spec_analysis.md section 4b.
 
-ddr_read is on the same axes as a control: same cores, same mesh, a different
-memory system behind it.
+Two controls share the axes. **ddr_read**: same cores, same mesh, a different
+memory system behind it. **hbm_read_load**: the same HBM read run driven by
+plain loads instead of prefetcht1, drawn in its base curve's colour with a
+dashed line, so the figure shows what the access instruction is worth (+52% at
+1 thread, +30% at 64) and, more to the point, that both instructions produce
+the same saturating shape -- the droop is not an artifact of prefetching.
 """
 
 import json
@@ -53,7 +57,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 JSON_PATH = os.path.join(HERE, "intel_hbm_cpu_scaling.json")
 OUT_PATH = os.path.join(HERE, "intel_hbm_cpu_scaling.png")
 
-SERIES_ORDER = ["hbm_read", "hbm_write", "ddr_read"]
+# The three runs that own a palette slot. Everything else on this figure is a
+# variant of one of them and reuses its colour, per ../PLOTTING.md: spending a
+# slot on a variant makes it look like a fourth competitor.
+BASE_SERIES = ["hbm_read", "hbm_write", "ddr_read"]
+
+# variant -> the base whose colour it borrows. hbm_read_load is the same run as
+# hbm_read with plain loads instead of prefetcht1, so it is the same experiment
+# under a different condition, not a different experiment.
+VARIANTS = {"hbm_read_load": "hbm_read"}
+
+SERIES_ORDER = ["hbm_read", "hbm_read_load", "hbm_write", "ddr_read"]
 
 # The write series is plotted as the traffic the controllers actually see. A
 # store misses, so the line is fetched (RFO) and later written back: the DRAM
@@ -61,12 +75,15 @@ SERIES_ORDER = ["hbm_read", "hbm_write", "ddr_read"]
 # cores are driving read and write traffic at once, and the total goes far
 # above where reads alone stop.
 LABELS = {
-    "hbm_read": "HBM read (n0 $\\rightarrow$ n2)",
+    "hbm_read": "HBM read, prefetchT1",
+    "hbm_read_load": "HBM read, plain load",
     "hbm_write": "HBM write, rd+wr traffic",
     "ddr_read": "DDR read (n0 $\\rightarrow$ n0)",
 }
-MARKERS = {"hbm_read": "o", "hbm_write": "s", "ddr_read": "^"}
-LINESTYLES = {"hbm_read": "-", "hbm_write": "-", "ddr_read": ":"}
+MARKERS = {"hbm_read": "o", "hbm_read_load": "v",
+           "hbm_write": "s", "ddr_read": "^"}
+LINESTYLES = {"hbm_read": "-", "hbm_read_load": "--",
+              "hbm_write": "-", "ddr_read": ":"}
 
 # Where the second thread per core starts, verified rather than assumed.
 # bandwidth.c pins thread t to the t-th cpu of the node in ascending cpu order,
@@ -131,11 +148,14 @@ def main():
     ps.configure_style()
     # Not hashtables, so the palette is built at the size of this figure's own
     # series rather than at len(PALETTE_ORDER).
-    palette = ps.configure_palette(n=len(SERIES_ORDER))
+    # Built at the number of *base* series, so adding a variant does not
+    # recolour the three curves the rest of this directory's figures share.
+    palette = ps.configure_palette(n=len(BASE_SERIES))
     styles = {
-        name: {"color": palette[i], "linestyle": LINESTYLES[name],
+        name: {"color": palette[BASE_SERIES.index(VARIANTS.get(name, name))],
+               "linestyle": LINESTYLES[name],
                "marker": MARKERS[name]}
-        for i, name in enumerate(SERIES_ORDER)
+        for name in SERIES_ORDER
     }
 
     fig, axes = ps.get_subplots(1, 3, plot_w=4.2, plot_h=3.7)
@@ -218,7 +238,10 @@ def main():
     ps.save(fig, OUT_PATH, legend_top=0.88)
 
     cfg = data.get("config", {})
-    print("pmus: {} | {} reps/point".format(cfg.get("pmus"), cfg.get("reps")))
+    print("pmus: {}".format(cfg.get("pmus")))
+    for name in present:
+        c = data[name].get("config", {})
+        print("  {:10} inst={} reps={}".format(name, c.get("inst"), c.get("reps")))
     if slice_gbs:
         for name in present:
             sub = df[df.series == name]

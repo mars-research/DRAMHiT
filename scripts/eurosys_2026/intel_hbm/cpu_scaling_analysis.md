@@ -9,6 +9,9 @@ Data: [`intel_hbm_cpu_scaling.json`](intel_hbm_cpu_scaling.json) ·
 figure: [`intel_hbm_cpu_scaling.png`](intel_hbm_cpu_scaling.png) ·
 collector: `collect_cpu_scaling.py` · plotter: `plot_cpu_scaling.py`
 
+The figure's four curves: HBM read (prefetchT1), the same run with plain
+loads, HBM write, and the DDR read control.
+
 ## 0. Answer
 
 **No. A core buys a fixed slice only for the first ~8 cores, and the marginal
@@ -27,6 +30,14 @@ the HBM channels could carry**.
 The departure from linearity begins around **8-12 threads (~150 GB/s)** — far
 below the ceiling. That is the signature of a shared resource whose service
 time rises with load, not of a hard wall hit at the end.
+
+**And the onset is set by bandwidth, not by core count.** Rerunning the sweep
+with plain loads instead of `prefetcht1` — which pull ~1.5x less per core — the
+per-core slice stays fixed out to *20* threads instead of 8. The two curves lose
+their first 3% at 12 and 24 threads — 2x apart — but at 150 and 196 GB/s, only
+1.3x apart. Neither predictor is exact, but bandwidth is much the better one: a
+core that pulls 1.5x harder reaches the bend with roughly half as many cores.
+See section 3.
 
 ## 1. The measurement
 
@@ -135,6 +146,48 @@ of linear at 32 threads, with every thread on its own core. What SMT does is
 expose how little headroom is left: 32 more threads buy 56 GB/s (+15%), i.e.
 1.75 GB/s each against the first core's 12.96.
 
+**The droop tracks aggregate bandwidth, not core count.** Every point above uses
+`prefetcht1` with lookahead 64, the fastest access on this machine. The whole
+sweep repeated with plain loads (series `hbm_read_load` in the json, drawn
+dashed in the figure) gives the sharpest single piece of evidence here:
+
+| threads | `prefetchT1` GB/s | per thread (% of its 1-thread rate) | plain `load` GB/s | per thread (% of its 1-thread rate) | t1 gain |
+|---|---|---|---|---|---|
+| 1 | 13.0 | 12.96 (100%) | 8.4 | 8.40 (100%) | +54% |
+| 8 | 101.2 | 12.65 (98%) | 65.7 | 8.21 (98%) | +54% |
+| 12 | 150.3 | 12.52 (**97%**) | 100.0 | 8.33 (99%) | +50% |
+| 16 | 197.8 | 12.36 (95%) | 132.4 | 8.28 (98%) | +49% |
+| 20 | 242.4 | 12.12 (93%) | 164.2 | 8.21 (98%) | +48% |
+| 24 | 286.6 | 11.94 (92%) | 195.6 | 8.15 (**97%**) | +47% |
+| 32 | 368.6 | 11.52 (89%) | 254.7 | 7.96 (95%) | +45% |
+| 64 | 424.3 | 6.63 (51%) | 327.1 | 5.11 (61%) | +30% |
+
+Plain loads hold a **genuinely fixed per-core slice out to 20 threads** — 8.40
+down to 8.21 GB/s, under 3% — where prefetcht1 has already given up 7% by 20 and
+is visibly bending by 12. The two curves lose their first 3% at **12 threads /
+150 GB/s** and **24 threads / 196 GB/s** respectively: twice the core count, but
+only a third more bandwidth.
+
+That is the distinction the whole question turns on. A limit that lived in the
+cores, or an allocation policy per core, would bend at a core count. Neither
+predictor is exact here — 2x apart in cores, 1.3x in GB/s — but bandwidth is
+much the better one, and a core that pulls 1.5x harder reaches the bend with
+roughly half as many cores. The per-core slice is fixed right up until the
+shared resource notices, and when that happens depends mostly on how much
+total traffic is flowing through it.
+
+The gap between the two also names the per-core mechanism: plain loads sustain
+~18 outstanding lines (near the 16 L1 fill buffers), prefetching into L2
+sustains ~28 — the mechanism `machine_spec_analysis.md` section 3 gives for the
+same effect at 64 threads, confirmed here at 1 thread where nothing is shared.
+And the advantage decays as the socket fills (+54% at 8 threads, +30% at 64):
+once the fabric is the constraint, feeding it harder per core buys less.
+
+Two practical consequences: the droop is **not** an artifact of prefetching
+(both instructions saturate; load falls to 61% of its own 1-thread rate by 64
+threads, t1 to 51%), and t1 is the right choice for measuring the ceiling —
+plain loads would have put it at 327 GB/s, 23% low.
+
 **The ceiling is not the HBM devices.** 424 GB/s is 52% of the 819 GB/s the
 channels could carry, and the *same cores on the same fabric* push **693 GB/s**
 once writes are in the mix. A limit in the memory could not be 63% higher for
@@ -167,10 +220,52 @@ this sweep cannot substitute for:
   shortage.
 
 What is left there, and what this curve is consistent with, is **the socket's
-mesh read-return path**: ~215 B per 1.994 GHz mesh cycle. This sweep adds the
-part that analysis lacked — it had only 32 vs 64 threads, and so could not show
-that the departure from linearity begins at a *seventh* of the ceiling rather
-than at it.
+mesh read-return path**. This sweep adds the part that analysis lacked — it had
+only 32 vs 64 threads, and so could not show that the departure from linearity
+begins at a *seventh* of the ceiling rather than at it.
+
+### 4a. On the "~215 B per mesh cycle" figure, which does not survive checking
+
+That document states the mesh "runs at **1.994 GHz** (4.318 G CHA clockticks
+over a 2.166 s run), so 430 GB/s is **~215 bytes per mesh cycle**". Two things
+are worth being clear about.
+
+**It is arithmetic, not an independent limit.** 215 B/cycle is the observed
+bandwidth divided by a clock. Nobody derived the mesh's structural width — rings
+x bytes per cycle per link — and showed that 215 saturates it. The claim that
+the mesh is the bottleneck rests on the *elimination* argument above (not the
+DRAM, not the controllers, not the cores, not the CHA trackers), which is
+strong; the bytes-per-cycle figure adds no evidence to it, it just restates the
+ceiling in different units.
+
+**And the clock it divides by is not a constant.** Measuring `uncore_cha`
+clockticks across this sweep (all 40 boxes on socket 0, 100% counter running,
+every box within 0.001 GHz of every other):
+
+| threads | 1 | 8 | 16 | 32 | 64 | idle |
+|---|---|---|---|---|---|---|
+| mesh clock (GHz) | 2.494 | 2.380 | 2.154 | 1.864 | 1.854 | 2.495 |
+| B per mesh cycle | 5.2 | 42.5 | 91.8 | 197.8 | 228.9 | — |
+
+**The mesh clock falls 26% under load** — and it does so while
+`/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00` is pinned at
+`min_freq_khz = max_freq_khz = 2500000`, so the request is being overridden,
+presumably by a package power limit with 32 cores held at 2.7 GHz. The 1.994 GHz
+in the older document is a loaded measurement reported as a machine constant; it
+sits inside the range measured here but is not a property of the machine.
+
+Two consequences. First, bytes-per-mesh-cycle is **still rising at 64 threads**
+(197.8 -> 228.9), so the socket is not sitting against a fixed
+bytes-per-mesh-cycle wall; if 215 were structural we would already be past it.
+Second, and more interesting for this sweep: **some of the per-core droop is the
+fabric getting slower, not just busier.** From 1 to 32 threads the mesh loses 25%
+of its clock while per-thread bandwidth loses 11%. That does not explain the
+saturation on its own — from 32 to 64 the clock is flat (1.864 -> 1.854) while
+per-thread bandwidth still halves — but any account of the ceiling that treats
+the fabric clock as fixed is incomplete.
+
+Pinning the uncore clock is the experiment that would separate the two, and the
+sysfs knob above does not achieve it on this machine.
 
 A caveat worth keeping: `bandwidth.c`'s `cycles per access` is
 `elapsed_cycles / accesses`, i.e. algebraically the reciprocal of that thread's
@@ -210,7 +305,14 @@ cd ../intel_hbm
 
 python3 collect_cpu_scaling.py                      # all 3 series, ~25 min
 python3 collect_cpu_scaling.py --series hbm_read --threads 33 34 36
+python3 collect_cpu_scaling.py --series hbm_read --inst load   # comparison curve
 python3 plot_cpu_scaling.py
+
+# mesh clock vs load (section 4a) -- all 40 CHA boxes, clockticks is event 0x01
+CHA=$(for i in $(seq 0 39); do printf "uncore_cha_%d/event=0x01,umask=0x00,name=clk/," $i; done | sed 's/,$//')
+sudo perf stat --per-socket -e "$CHA" -x, -- ../machine_stats/build/bandwidth_rand \
+    -m 256mb -pattern "n0a2t64" -freq 2.7 -inst t1 -lookahead 64 -mode r
+# per-box GHz = ticks / run_ns; compare against sleep 3 for the idle clock
 ```
 
 `--series` / `--threads` / `--reps` all merge into the existing json, so one

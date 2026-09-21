@@ -155,7 +155,7 @@ def perf_event_string(pmu):
     )
 
 
-def run_one(series_name, cfg, threads, rep, interval_ms):
+def run_one(series_name, cfg, threads, rep, interval_ms, inst=INST):
     cfg_pattern = "n{c}a{m}t{t}".format(c=cfg["cpu_node"], m=cfg["mem_node"], t=threads)
     chunk_mb = per_thread_bytes(threads) // (1024 ** 2)
     cmd = [
@@ -167,7 +167,7 @@ def run_one(series_name, cfg, threads, rep, interval_ms):
         "-m", "{}mb".format(chunk_mb),
         "-pattern", cfg_pattern,
         "-freq", CPU_FREQ_GHZ,
-        "-inst", INST,
+        "-inst", inst,
         "-lookahead", LOOKAHEAD,
         "-mode", cfg["mode"],
     ]
@@ -276,7 +276,7 @@ def parse_log(log_path, bytes_per_cas):
     return summary
 
 
-def collect(series_names, threads_list, reps, interval_ms):
+def collect(series_names, threads_list, reps, interval_ms, inst=INST):
     os.makedirs(LOG_DIR, exist_ok=True)
     results = {}
     if os.path.exists(OUTPUT_JSON):
@@ -303,16 +303,23 @@ def collect(series_names, threads_list, reps, interval_ms):
 
     for name in series_names:
         cfg = SERIES[name]
-        row = results.setdefault(name, {"config": cfg, "threads": [], "points": {}})
-        row["config"] = cfg
+        # A non-default access instruction gets its own series key, so an
+        # instruction comparison lands beside the main sweep rather than
+        # silently overwriting points collected with a different one.
+        key = name if inst == INST else "{}_{}".format(name, inst)
+        row = results.setdefault(key, {"config": cfg, "threads": [], "points": {}})
+        # Per-series, because a later --inst or --threads run with a different
+        # --reps would otherwise silently redefine what the top-level config
+        # says about points collected earlier.
+        row["config"] = dict(cfg, inst=inst, reps=reps)
         bytes_per_cas = MEM_PMUS[cfg["pmu"]]["bytes_per_cas"]
-        print("\n=== {} (cpu node {} -> mem node {}, mode {}, {} PMU) ===".format(
-            name, cfg["cpu_node"], cfg["mem_node"], cfg["mode"], cfg["pmu"]))
+        print("\n=== {} (cpu node {} -> mem node {}, mode {}, {} PMU, inst {}) ===".format(
+            key, cfg["cpu_node"], cfg["mem_node"], cfg["mode"], cfg["pmu"], inst))
 
         for threads in threads_list:
             runs = []
             for rep in range(reps):
-                log_path = run_one(name, cfg, threads, rep, interval_ms)
+                log_path = run_one(key, cfg, threads, rep, interval_ms, inst)
                 runs.append(parse_log(log_path, bytes_per_cas))
 
             s0 = [r["sockets"].get("S0", {}) for r in runs]
@@ -380,6 +387,12 @@ def main():
     ap.add_argument("--threads", nargs="+", type=int, default=DEFAULT_THREADS)
     ap.add_argument("--reps", type=int, default=DEFAULT_REPS)
     ap.add_argument("--interval-ms", type=int, default=20)
+    # Access instruction. t1 is the default because it is the fastest on this
+    # machine (machine_spec_analysis.md section 3: at 64 threads t1/t2 342,
+    # t0 298, plain load 267 GB/s). A non-default one is stored under its own
+    # series key so it sits beside the main sweep instead of overwriting it.
+    ap.add_argument("--inst", default=INST,
+                    choices=["load", "avx512", "t0", "t1", "t2", "nta", "prefetchw"])
     args = ap.parse_args()
 
     if not pmu_boxes("hbm"):
@@ -387,7 +400,7 @@ def main():
     if not os.path.exists(BIN_PATH):
         sys.exit("ERROR: {} missing -- run `make` in machine_stats/".format(BIN_PATH))
 
-    collect(args.series, args.threads, args.reps, args.interval_ms)
+    collect(args.series, args.threads, args.reps, args.interval_ms, args.inst)
 
 
 if __name__ == "__main__":
