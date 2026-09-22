@@ -60,7 +60,13 @@ typedef enum {
     INST_PREFETCH_T1,
     INST_PREFETCH_T2,
     INST_PREFETCH_NTA,
-    INST_PREFETCH_W
+    INST_PREFETCH_W,
+    // Full-cache-line non-temporal store. Every other write path stores 8 B into a
+    // 64 B line, so the line has to be fetched first (RFO) and written back later --
+    // two DRAM transactions per store. A 64 B NT store fills a write-combining buffer
+    // and goes straight to memory with no fetch, so it is the only write path here
+    // that does not pay that. Write mode only; in read mode it is a plain load.
+    INST_NT_STORE
 } inst_type_t;
 
 typedef enum {
@@ -293,6 +299,10 @@ void *mem_worker(void *arg) {
                 case INST_PREFETCH_T2:   SHARED_SCALAR_LOOP(PF_T2);   break;
                 case INST_PREFETCH_NTA:  SHARED_SCALAR_LOOP(PF_NTA);  break;
                 case INST_PREFETCH_W:    SHARED_SCALAR_LOOP(PF_W);    break;
+                // No NT variant of the shared loop: the shared path exists to make
+                // threads collide on the same lines, and an NT store's whole point is
+                // not to take ownership of a line. Behaves as the plain scalar loop.
+                case INST_NT_STORE:      SHARED_SCALAR_LOOP(PF_NONE); break;
                 case INST_AVX512_LOAD:
                     for (uint64_t i = 0; i < ops; i++) {
                         uint64_t h = mix64(addr_seed + (uint64_t)i);
@@ -433,6 +443,24 @@ void *mem_worker(void *arg) {
                     }
                 }
                 break;
+
+            case INST_NT_STORE:
+                if (t->rw_mode == MODE_READ) {
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        local_dummy += t->buffer[idx * 8];
+                    }
+                } else {
+                    // Writes the whole 64 B line, which is what lets the write-combining
+                    // buffer retire it without ever fetching the line.
+                    __m512i nt_vec = _mm512_set1_epi64(0xff);
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        _mm512_stream_si512((void*)&t->buffer[idx * 8], nt_vec);
+                    }
+                    _mm_sfence();
+                }
+                break;
         }
         // Forces the compiler to forget all cached memory state, preventing loop hoisting!
         __asm__ volatile("" ::: "memory");
@@ -494,6 +522,7 @@ int main(int argc, char *argv[]) {
             else if (strcmp(argv[i], "t2") == 0) inst = INST_PREFETCH_T2;
             else if (strcmp(argv[i], "nta") == 0) inst = INST_PREFETCH_NTA;
             else if (strcmp(argv[i], "prefetchw") == 0) inst = INST_PREFETCH_W;
+            else if (strcmp(argv[i], "ntstore") == 0) inst = INST_NT_STORE;
             else { fprintf(stderr, "Unknown instruction type: %s\n", argv[i]); return -1; }
         }
         else if (strcmp(argv[i], "-lookahead") == 0 && i + 1 < argc) lookahead = atoi(argv[++i]);
@@ -540,7 +569,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (raw_per_thread_size == 0 || pattern_str == NULL || cpu_freq_ghz <= 0.0) {
-        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta|prefetchw>] [-lookahead <lines>] [-mode <r|w>]\n"
+        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta|prefetchw|ntstore>] [-lookahead <lines>] [-mode <r|w>]\n"
                         "       shared (overlapping) mode, for cross-socket coherence traffic:\n"
                         "         [-shared <size>] [-shared-nodes <2|2,3|0-1>] [-share <0..100>] [-mix w:<0..100>]\n"
                         "         -shared        one region every thread indexes at random, like a shared table\n"

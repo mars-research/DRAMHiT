@@ -43,6 +43,16 @@ PHASES = [
 # reference line so it is obvious which tables are saturating it.
 DEFAULT_CEILING_GBPS = 350.0
 
+# A read stream and a 1r1w stream do not have the same ceiling, so one line
+# across both panels misreads the insertion panel badly. An insert dirties the
+# line it touches, so the DRAM carries the fetch (RFO) AND the writeback -- a
+# 1:1 read/write mix, which tops out well below a pure read stream because the
+# write path is the narrower one (see
+# ../collect_scalability/local_interleave_analysis.md sections 1 and 5).
+# Measured on the amd-9354p at this workload's own operating point -- 64
+# threads, table interleaved over all 4 NPS4 nodes:
+CEILINGS_AMD_9354P = {"set": 274.0, "get": 353.0}
+
 
 # =============================================================================
 # DATA
@@ -68,6 +78,8 @@ def frame(data, phase):
         entry = data["tables"][name]
         samples = entry.get(f"{phase}_samples") or []
         bw = entry.get(f"{phase}_bw_gbps") or []
+        rd = entry.get(f"{phase}_bw_rd_gbps") or []
+        wr = entry.get(f"{phase}_bw_wr_gbps") or []
         for i, (fill, mops) in enumerate(zip(entry["fills"],
                                              entry[f"{phase}_mops"])):
             point = samples[i] if i < len(samples) else None
@@ -78,6 +90,8 @@ def frame(data, phase):
                 "lo": min(point) if point else float("nan"),
                 "hi": max(point) if point else float("nan"),
                 "bw": bw[i] if i < len(bw) else float("nan"),
+                "bw_rd": rd[i] if i < len(rd) else float("nan"),
+                "bw_wr": wr[i] if i < len(wr) else float("nan"),
             })
     return pd.DataFrame(rows)
 
@@ -94,7 +108,7 @@ def order(data):
 
 
 def draw(ax, df, tables, title, palette, xticks, ceiling, limits,
-         styles):
+         styles, split_rw=False):
     """Throughput on ax, bandwidth on a twinned right-hand axis."""
     bw_ax = ax.twinx()
 
@@ -116,6 +130,18 @@ def draw(ax, df, tables, title, palette, xticks, ceiling, limits,
                        linestyle=":" if style["linestyle"] != "-" else "--",
                        marker=style["marker"], markersize=4,
                        markerfacecolor="none", linewidth=1.2, zorder=2)
+            # The write half of that total, shaded up from zero. On insert it is
+            # ~46% of the bar -- every store fetches its line (RFO) and writes it
+            # back, so half the traffic buys no new data. On find it is ~0.
+            if split_rw:
+                # A thin line, not a fill from zero: four tables shaded from
+                # zero overlap into one block that hides the throughput lines
+                # underneath.
+                w = bw.dropna(subset=["bw_wr"])
+                if not w.empty and w["bw_wr"].max() > 1.0:
+                    bw_ax.plot(w["x"], w["bw_wr"], color=style["color"],
+                               linestyle="-", linewidth=0.9, alpha=0.55,
+                               zorder=1)
 
     if ceiling:
         bw_ax.axhline(ceiling, color="0.35", linestyle=(0, (1, 2)),
@@ -165,7 +191,7 @@ def title_for(data, label, note=None):
     return f"{title}\n{note}" if note else title
 
 
-def axis_limits(data, ceiling):
+def axis_limits(data, ceilings):
     """Axis tops from EVERY series in the json, not just the plotted subset.
 
     A --only figure is nearly always one half of a comparison, so the two
@@ -178,14 +204,15 @@ def axis_limits(data, ceiling):
             mops = max([mops] + [v for v in entry.get(f"{phase}_mops", [])])
             bw = max([bw] + [v for v in entry.get(f"{phase}_bw_gbps", [])
                              if v is not None])
-    return {"mops": mops * 1.08, "bw": max(bw, ceiling or 0) * 1.12}
+    top = max([bw] + [c for c in ceilings.values() if c])
+    return {"mops": mops * 1.08, "bw": top * 1.12}
 
 
-def plot(data, out_stem, split, ceiling, only=None, note=None):
+def plot(data, out_stem, split, ceilings, only=None, note=None, split_rw=False):
     ps.configure_style()
     palette = ps.configure_palette()
 
-    limits = axis_limits(data, ceiling)
+    limits = axis_limits(data, ceilings)
 
     tables = order(data)
     if only:
@@ -205,8 +232,8 @@ def plot(data, out_stem, split, ceiling, only=None, note=None):
         for phase, label in PHASES:
             fig, ax = ps.get_subplots(1, 1, plot_w=5)
             draw(ax, frame(data, phase), tables,
-                 title_for(data, label, note), palette, xticks, ceiling,
-                 limits, styles)
+                 title_for(data, label, note), palette, xticks,
+                 ceilings.get(phase), limits, styles, split_rw)
             ps.add_legend(fig, palette, tables, ncol=min(len(tables), 3),
                           styles=styles)
             metric_legend(fig)
@@ -216,7 +243,7 @@ def plot(data, out_stem, split, ceiling, only=None, note=None):
     fig, axes = ps.get_subplots(1, len(PHASES), plot_w=5)
     for ax, (phase, label) in zip(axes.ravel(), PHASES):
         draw(ax, frame(data, phase), tables, title_for(data, label, note),
-             palette, xticks, ceiling, limits, styles)
+             palette, xticks, ceilings.get(phase), limits, styles, split_rw)
     ps.add_legend(fig, palette, tables, ncol=min(len(tables), 3),
                   styles=styles)
     metric_legend(fig)
@@ -230,11 +257,20 @@ def main():
     ap.add_argument("jsons", nargs="+")
     ap.add_argument("--split", action="store_true",
                     help="one figure per phase instead of a two-panel figure")
-    ap.add_argument("--ceiling", type=float, default=DEFAULT_CEILING_GBPS,
-                    help="reference line, GB/s (0 to omit)")
+    ap.add_argument("--ceiling", type=float, nargs="+",
+                    metavar="GBPS",
+                    help="reference line, GB/s. One value applies to both "
+                         "panels; two are read as <insert> <lookup>, which is "
+                         "what you want on a machine where the 1r1w insert "
+                         "ceiling differs from the read ceiling. Default: the "
+                         "measured amd-9354p pair (274 insert / 353 lookup) "
+                         "for that machine, else 350 on both. 0 to omit.")
     ap.add_argument("--only", nargs="+", metavar="TABLE",
                     help="plot only these series (axis scales still come "
                          "from the whole json, so subsets stay comparable)")
+    ap.add_argument("--split-rw", action="store_true",
+                    help="shade the write half of each bandwidth total "
+                         "(needs a json collected after the rd/wr fix)")
     ap.add_argument("--tag", help="appended to the output filename")
     ap.add_argument("--note", help="appended to each panel title")
     args = ap.parse_args()
@@ -244,7 +280,19 @@ def main():
         stem = str(path.with_suffix(""))
         if args.tag:
             stem = f"{stem}_{args.tag}"
-        plot(load(path), stem, args.split, args.ceiling, args.only, args.note)
+        data = load(path)
+
+        if args.ceiling is None:
+            ceilings = (dict(CEILINGS_AMD_9354P)
+                        if data.get("machine") == "amd-9354p"
+                        else {p: DEFAULT_CEILING_GBPS for p, _ in PHASES})
+        elif len(args.ceiling) == 1:
+            ceilings = {p: args.ceiling[0] for p, _ in PHASES}
+        else:
+            ceilings = dict(zip([p for p, _ in PHASES], args.ceiling))
+
+        plot(data, stem, args.split, ceilings, args.only, args.note,
+             args.split_rw)
 
 
 if __name__ == "__main__":

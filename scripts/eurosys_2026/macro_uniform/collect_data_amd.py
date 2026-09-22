@@ -134,7 +134,15 @@ SKIPPED = {
 
 # --- bandwidth sampling -------------------------------------------------------
 BW_INTERVAL_MS = 100
-BW_METRIC = "umc_mem_bandwidth"
+# Read and write are asked for separately rather than via the combined
+# umc_mem_bandwidth. The combined metric gives a total and nothing else, which is
+# what left set_bw_wr_gbps at a hardcoded 0.0 in every collection before this one --
+# and the insert path is a 1r1w stream at the DRAM (each store fetches its line and
+# writes it back), so the split is the interesting half of the measurement.
+# Their sum reproduces umc_mem_bandwidth.
+BW_METRIC = "umc_mem_read_bandwidth,umc_mem_write_bandwidth"
+BW_METRIC_RD = "umc_mem_read_bandwidth"
+BW_METRIC_WR = "umc_mem_write_bandwidth"
 
 BW_WARMUP_S = 1.5
 BW_WINDDOWN_FRAC = 0.9
@@ -192,10 +200,21 @@ def dramhit_cmd(table, fill, with_bw=True):
             + inner)
 
 def parse_bw(output):
-    """Per-phase DRAM bandwidth from the interleaved perf -I / dramhit log."""
+    """Per-phase DRAM read/write bandwidth from the interleaved perf -I / dramhit log.
+
+    perf -M emits one row per constituent event per interval, carrying the metric in
+    the last two CSV columns:
+
+      ts,count,,umc_cas_cmd.rd,run_ns,pct,12540.2,MB/s  umc_mem_read_bandwidth
+      ts,count,,umc_cas_cmd.wr,run_ns,pct,8550.1,MB/s  umc_mem_write_bandwidth
+
+    so read and write are told apart by the metric name in the unit column, and each
+    lands in its own accumulator instead of being summed into one number.
+    """
     phase = None
     prev_ts = 0.0
-    pending_val = 0.0
+    pending_rd = 0.0
+    pending_wr = 0.0
     rows = {"set": [], "get": []}
     phase_t0 = {}
 
@@ -206,7 +225,7 @@ def parse_bw(output):
                 break
 
         parts = [p.strip() for p in line.split(',')]
-        if len(parts) < 3:
+        if len(parts) < 8:
             continue
         try:
             ts = float(parts[0])
@@ -214,47 +233,33 @@ def parse_bw(output):
             continue
 
         if ts != prev_ts:
-            if prev_ts > 0.0 and pending_val > 0.0 and phase is not None:
+            if prev_ts > 0.0 and (pending_rd + pending_wr) > 0.0 and phase is not None:
                 phase_t0.setdefault(phase, prev_ts)
-                rows[phase].append((prev_ts - phase_t0[phase], pending_val, 0.0))
+                rows[phase].append((prev_ts - phase_t0[phase], pending_rd, pending_wr))
             prev_ts = ts
-            pending_val = 0.0
+            pending_rd = 0.0
+            pending_wr = 0.0
 
-        # Parse metrics that might appear in early cols or late cols (-M output varies)
-        val = None
-        unit = ""
         try:
-            val = float(parts[1])
-            unit = parts[2]
+            val = float(parts[6])
         except ValueError:
-            pass
-        
-        if val is not None and any(x in unit for x in ["MB", "GB", "MiB", "umc"]):
-            if "MB" in unit or "umc" in unit:
-                pending_val += val / 1000.0
-            elif "GB" in unit:
-                pending_val += val
-            elif "MiB" in unit:
-                pending_val += val * (1<<20) / 1e9
+            continue
+        unit = parts[7]
+        if "MB" in unit:
+            val /= 1000.0
+        elif "MiB" in unit:
+            val *= (1 << 20) / 1e9
+        elif "GB" not in unit:
             continue
 
-        if len(parts) >= 8:
-            try:
-                metric_val = float(parts[6])
-                metric_unit = parts[7]
-                if any(x in metric_unit for x in ["MB", "GB", "MiB", "umc"]):
-                    if "MB" in metric_unit or "umc" in metric_unit:
-                        pending_val += metric_val / 1000.0
-                    elif "GB" in metric_unit:
-                        pending_val += metric_val
-                    elif "MiB" in metric_unit:
-                        pending_val += metric_val * (1<<20) / 1e9
-            except ValueError:
-                pass
+        if BW_METRIC_RD in unit:
+            pending_rd += val
+        elif BW_METRIC_WR in unit:
+            pending_wr += val
 
-    if prev_ts > 0.0 and pending_val > 0.0 and phase is not None:
+    if prev_ts > 0.0 and (pending_rd + pending_wr) > 0.0 and phase is not None:
         phase_t0.setdefault(phase, prev_ts)
-        rows[phase].append((prev_ts - phase_t0[phase], pending_val, 0.0))
+        rows[phase].append((prev_ts - phase_t0[phase], pending_rd, pending_wr))
 
     out = {}
     for name, samples in rows.items():
