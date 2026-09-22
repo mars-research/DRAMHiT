@@ -91,6 +91,12 @@ for _base in PALETTE_ORDER:
     DISPLAY_NAMES[f"{_base}_hwpf_on"] = f"{DISPLAY_NAMES.get(_base, _base)} (hw pref on)"
     DISPLAY_NAMES[f"{_base}_hwpf_off"] = f"{DISPLAY_NAMES.get(_base, _base)} (hw pref off)"
 
+# dlht at batch 16 instead of its usual 32, prefetcher off (the HBM uniform
+# collection). Same table, so same colour; dash-dot + triangle set it apart
+# from the batch-32 dlht_hwpf_off it is compared against.
+VARIANT_STYLE["dlht_b16_hwpf_off"] = {"base": "dlht", "linestyle": "-.", "marker": "^"}
+DISPLAY_NAMES["dlht_b16_hwpf_off"] = "dlht batch 16 (hw pref off)"
+
 TUPLE_BYTES = 16
 
 
