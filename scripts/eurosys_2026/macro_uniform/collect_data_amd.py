@@ -359,6 +359,7 @@ def table_entry(name, table, capped):
         "ht_type": table["ht_type"],
         "prefetcher": table["prefetcher"],
         "batch_len": table["batch_len"],
+        "collected_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "fills": [],
         "set_mops": [],
         "get_mops": [],
@@ -539,7 +540,26 @@ def main():
     elif not Path(DRAMHIT).exists():
         raise SystemExit(f"[!] --no-build but {DRAMHIT} does not exist")
 
-    results = new_results(args.reps)
+    # A --table run updates only the tables it was asked for. Rebuilding the json
+    # from scratch here would silently drop the other three, which is a bad way to
+    # find out you wanted --table.
+    results = None
+    if args.table and out_path.exists():
+        backup = out_path.with_suffix(f".json.pre-{'-'.join(names)}.bak")
+        backup.write_text(out_path.read_text())
+        try:
+            results = json.loads(out_path.read_text())
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"[!] {out_path} is not readable json ({exc}); "
+                             f"move it aside or pass --out")
+        results["reps"] = args.reps
+        results.pop("finished_utc", None)
+        keep = [t for t in results.get("tables", {}) if t not in names]
+        print(f"[merge] {out_path} exists: recollecting {', '.join(names)}, "
+              f"keeping {', '.join(keep) if keep else 'nothing'} "
+              f"(backup: {backup.name})")
+    if results is None:
+        results = new_results(args.reps)
     save(results, out_path)
 
     for name in names:

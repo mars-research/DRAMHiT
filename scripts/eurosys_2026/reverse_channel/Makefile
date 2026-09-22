@@ -14,5 +14,11 @@ intel_re: reversed_intel.c
 imc_probe: imc_probe.c
 	gcc -O3 imc_probe.c -lnuma -lpthread -o imc_probe
 
+# Per-controller read / 1r1w probe. reversed_amd.c's predicate plus a repeating
+# access loop, a 1r1w store mode and explicit cpu pinning, so a perf -I median
+# lands on the steady state instead of the 1GB init that precedes it.
+amd_channel_probe: amd_channel_probe.c
+	gcc -O3 -mclflushopt -mavx512f amd_channel_probe.c -lnuma -lpthread -o amd_channel_probe
+
 clean:
-	rm -rf map amd_re intel_re imc_probe
+	rm -rf map amd_re intel_re imc_probe amd_channel_probe
