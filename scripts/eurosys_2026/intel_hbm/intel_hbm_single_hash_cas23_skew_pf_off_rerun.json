@@ -1,0 +1,182 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        0.1,
+        0.2,
+        0.4,
+        1.0,
+        1.1
+    ],
+    "join_type": "hash_cas23",
+    "cpu_scope": "single",
+    "num_threads": 64,
+    "cpu_nodes": [
+        0
+    ],
+    "mem_nodes": [
+        2
+    ],
+    "np_mem_local": 0,
+    "prefetch": "DOUBLE",
+    "prefetch_script": "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh",
+    "hw_prefetcher": "off",
+    "cas_prefetch_insertion": "AUTO",
+    "repeats": 5,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/intel_hbm_single_hash_cas23_skew",
+    "throughput_mops": [
+        2895.0,
+        2883.0,
+        2982.0,
+        3981.0,
+        4055.0
+    ],
+    "throughput_samples": [
+        [
+            2777.0,
+            2961.0,
+            2927.0,
+            2802.0,
+            2895.0
+        ],
+        [
+            2792.0,
+            2989.0,
+            2833.0,
+            2883.0,
+            2887.0
+        ],
+        [
+            3022.0,
+            2903.0,
+            2982.0,
+            2739.0,
+            3035.0
+        ],
+        [
+            4015.0,
+            3966.0,
+            3981.0,
+            3733.0,
+            4138.0
+        ],
+        [
+            4636.0,
+            3959.0,
+            4170.0,
+            4055.0,
+            4021.0
+        ]
+    ],
+    "phase_samples": [
+        [
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 60
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 56
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 57
+            },
+            {
+                "build_cyc_per_op": 80,
+                "probe_cyc_per_op": 60
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 58
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 60
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 56
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 59
+            },
+            {
+                "build_cyc_per_op": 80,
+                "probe_cyc_per_op": 58
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 58
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 55
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 58
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 56
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 61
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 55
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 40
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 41
+            },
+            {
+                "build_cyc_per_op": 80,
+                "probe_cyc_per_op": 40
+            },
+            {
+                "build_cyc_per_op": 85,
+                "probe_cyc_per_op": 43
+            },
+            {
+                "build_cyc_per_op": 86,
+                "probe_cyc_per_op": 38
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 80,
+                "probe_cyc_per_op": 34
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 41
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 38
+            },
+            {
+                "build_cyc_per_op": 81,
+                "probe_cyc_per_op": 40
+            },
+            {
+                "build_cyc_per_op": 80,
+                "probe_cyc_per_op": 40
+            }
+        ]
+    ]
+}

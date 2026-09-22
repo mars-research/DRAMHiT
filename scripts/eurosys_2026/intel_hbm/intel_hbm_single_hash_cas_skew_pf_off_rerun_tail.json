@@ -1,0 +1,89 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        1.1,
+        1.2
+    ],
+    "join_type": "hash_cas",
+    "cpu_scope": "single",
+    "num_threads": 64,
+    "cpu_nodes": [
+        0
+    ],
+    "mem_nodes": [
+        2
+    ],
+    "np_mem_local": 0,
+    "prefetch": "DOUBLE",
+    "prefetch_script": "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh",
+    "hw_prefetcher": "off",
+    "cas_prefetch_insertion": "AUTO",
+    "repeats": 5,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/intel_hbm_single_hash_cas_skew",
+    "throughput_mops": [
+        4361.0,
+        4476.0
+    ],
+    "throughput_samples": [
+        [
+            4361.0,
+            4256.0,
+            4764.0,
+            4776.0,
+            4150.0
+        ],
+        [
+            4442.0,
+            4398.0,
+            4476.0,
+            4509.0,
+            4532.0
+        ]
+    ],
+    "phase_samples": [
+        [
+            {
+                "build_cyc_per_op": 74,
+                "probe_cyc_per_op": 37
+            },
+            {
+                "build_cyc_per_op": 73,
+                "probe_cyc_per_op": 38
+            },
+            {
+                "build_cyc_per_op": 74,
+                "probe_cyc_per_op": 33
+            },
+            {
+                "build_cyc_per_op": 73,
+                "probe_cyc_per_op": 33
+            },
+            {
+                "build_cyc_per_op": 73,
+                "probe_cyc_per_op": 39
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 77,
+                "probe_cyc_per_op": 36
+            },
+            {
+                "build_cyc_per_op": 74,
+                "probe_cyc_per_op": 36
+            },
+            {
+                "build_cyc_per_op": 73,
+                "probe_cyc_per_op": 36
+            },
+            {
+                "build_cyc_per_op": 75,
+                "probe_cyc_per_op": 35
+            },
+            {
+                "build_cyc_per_op": 77,
+                "probe_cyc_per_op": 35
+            }
+        ]
+    ]
+}

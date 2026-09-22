@@ -1,0 +1,58 @@
+{
+    "param_name": "skew",
+    "param_values": [
+        0.4
+    ],
+    "join_type": "hash_folklore",
+    "cpu_scope": "single",
+    "num_threads": 64,
+    "cpu_nodes": [
+        0
+    ],
+    "mem_nodes": [
+        2
+    ],
+    "np_mem_local": 0,
+    "prefetch": "DOUBLE",
+    "prefetch_script": "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh",
+    "hw_prefetcher": "off",
+    "cas_prefetch_insertion": "AUTO",
+    "repeats": 5,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/intel_hbm_single_hash_folklore_skew",
+    "throughput_mops": [
+        1665.0
+    ],
+    "throughput_samples": [
+        [
+            1651.0,
+            1668.0,
+            1663.0,
+            1669.0,
+            1665.0
+        ]
+    ],
+    "phase_samples": [
+        [
+            {
+                "build_cyc_per_op": 166,
+                "probe_cyc_per_op": 100
+            },
+            {
+                "build_cyc_per_op": 166,
+                "probe_cyc_per_op": 99
+            },
+            {
+                "build_cyc_per_op": 166,
+                "probe_cyc_per_op": 99
+            },
+            {
+                "build_cyc_per_op": 166,
+                "probe_cyc_per_op": 99
+            },
+            {
+                "build_cyc_per_op": 166,
+                "probe_cyc_per_op": 99
+            }
+        ]
+    ]
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "variant": "cas",
+    "skew": 0.1,
+    "median": 3401,
+    "samples": [
+      3156,
+      3401,
+      3473,
+      3370,
+      3468
+    ],
+    "spread": 9.3
+  },
+  {
+    "variant": "cas",
+    "skew": 0.3,
+    "median": 3447,
+    "samples": [
+      3499,
+      3192,
+      3351,
+      3447,
+      3729
+    ],
+    "spread": 15.6
+  },
+  {
+    "variant": "cas",
+    "skew": 0.7,
+    "median": 3798,
+    "samples": [
+      3412,
+      3365,
+      3798,
+      3961,
+      3801
+    ],
+    "spread": 15.7
+  },
+  {
+    "variant": "cas",
+    "skew": 0.8,
+    "median": 3782,
+    "samples": [
+      3629,
+      3782,
+      3546,
+      3847,
+      3847
+    ],
+    "spread": 8.0
+  },
+  {
+    "variant": "cas",
+    "skew": 0.9,
+    "median": 4060,
+    "samples": [
+      3813,
+      4187,
+      4060,
+      4076,
+      3932
+    ],
+    "spread": 9.2
+  },
+  {
+    "variant": "cas",
+    "skew": 1.0,
+    "median": 3952,
+    "samples": [
+      3952,
+      4220,
+      5003,
+      3880,
+      3874
+    ],
+    "spread": 28.6
+  }
+]
