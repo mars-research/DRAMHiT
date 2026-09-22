@@ -171,6 +171,14 @@ for _name, _cfg in _BASE_TABLES.items():
 
 PLOT_ORDER = [f"{n}_hwpf_{s}" for n in _BASE_TABLES for s in ("on", "off")]
 
+# dlht is the only table swept at batch 32 above; this is it at the batch the
+# other three use, so the batch length can be ruled in or out as the reason it
+# differs from them. Prefetcher off only, the state every table prefers here.
+TABLES["dlht_b16_hwpf_off"] = dict(
+    _BASE_TABLES["dlht"], batch_len=16, prefetcher="off",
+    display="dlht batch 16 (hw pref off)")
+PLOT_ORDER.append("dlht_b16_hwpf_off")
+
 SKIPPED = {
     "growt": "excluded by request, as in collect_data_intel.py",
 }

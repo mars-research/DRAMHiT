@@ -3,13 +3,18 @@
   "mode": "uniform",
   "memory": "hbm (numa node 2), single socket",
   "param_name": "fill",
-  "collected_utc": "2026-09-21T03:57:11+00:00",
+  "collected_utc": "2026-09-22T20:30:28+00:00",
   "reps": 5,
   "bw_pmu": "uncore_hbm",
   "bw_bytes_per_cas": 32,
   "bw_interval_ms": 50,
   "bw_unit": "decimal GB/s (bytes / 1e9); / 1.0737 for GiB/s",
   "bw_warmup_s": 0.3,
+  "prefetch_script": "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh",
+  "prefetch_masks": {
+    "on": "0x0",
+    "off": "0x2f"
+  },
   "ht_size": 536870912,
   "ht_size_gib": 8,
   "num_threads": 64,
@@ -42,7 +47,8 @@
     "folklore_hwpf_on",
     "folklore_hwpf_off",
     "dlht_hwpf_on",
-    "dlht_hwpf_off"
+    "dlht_hwpf_off",
+    "dlht_b16_hwpf_off"
   ],
   "skipped": {
     "growt": "excluded by request, as in collect_data_intel.py"
@@ -2937,17 +2943,227 @@
         false
       ],
       "failures": []
+    },
+    "dlht_b16_hwpf_off": {
+      "display": "dlht batch 16 (hw pref off)",
+      "ht_type": 10,
+      "prefetcher": "off",
+      "batch_len": 16,
+      "fills": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "set_mops": [
+        2169.0,
+        1942.0,
+        1714.0,
+        1498.0
+      ],
+      "get_mops": [
+        2629.0,
+        2314.0,
+        2041.0,
+        1767.0
+      ],
+      "set_samples": [
+        [
+          2165.0,
+          2171.0,
+          2169.0,
+          2169.0,
+          2166.0
+        ],
+        [
+          1939.0,
+          1942.0,
+          1939.0,
+          1945.0,
+          1942.0
+        ],
+        [
+          1708.0,
+          1714.0,
+          1726.0,
+          1714.0,
+          1713.0
+        ],
+        [
+          1483.0,
+          1498.0,
+          1520.0,
+          1519.0,
+          1488.0
+        ]
+      ],
+      "get_samples": [
+        [
+          2609.0,
+          2631.0,
+          2629.0,
+          2628.0,
+          2629.0
+        ],
+        [
+          2312.0,
+          2314.0,
+          2315.0,
+          2319.0,
+          2312.0
+        ],
+        [
+          2035.0,
+          2041.0,
+          2048.0,
+          2045.0,
+          2035.0
+        ],
+        [
+          1754.0,
+          1767.0,
+          1796.0,
+          1788.0,
+          1754.0
+        ]
+      ],
+      "set_bw_gbps": [
+        278.3,
+        250.1,
+        226.3,
+        209.3
+      ],
+      "get_bw_gbps": [
+        165.7,
+        149.1,
+        134.9,
+        124.1
+      ],
+      "set_bw_rd_gbps": [
+        139.2,
+        125.7,
+        114.9,
+        107.9
+      ],
+      "get_bw_rd_gbps": [
+        165.4,
+        148.9,
+        134.7,
+        123.9
+      ],
+      "set_bw_wr_gbps": [
+        139.1,
+        124.4,
+        111.4,
+        101.4
+      ],
+      "get_bw_wr_gbps": [
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "set_bw_samples": [
+        [
+          278.3,
+          278.9,
+          278.3,
+          278.1,
+          278.5
+        ],
+        [
+          249.0,
+          250.3,
+          250.1,
+          249.5,
+          250.3
+        ],
+        [
+          225.9,
+          226.6,
+          227.0,
+          226.3,
+          226.0
+        ],
+        [
+          208.8,
+          209.3,
+          209.2,
+          209.6,
+          209.8
+        ]
+      ],
+      "get_bw_samples": [
+        [
+          165.7,
+          165.3,
+          165.5,
+          166.2,
+          166.1
+        ],
+        [
+          148.3,
+          149.0,
+          149.3,
+          149.2,
+          149.1
+        ],
+        [
+          134.8,
+          134.9,
+          134.9,
+          134.8,
+          134.9
+        ],
+        [
+          124.1,
+          124.1,
+          124.0,
+          124.6,
+          124.0
+        ]
+      ],
+      "set_bw_intervals": [
+        40,
+        98,
+        170,
+        253
+      ],
+      "get_bw_intervals": [
+        32,
+        82,
+        143,
+        214
+      ],
+      "set_bw_transient_only": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "get_bw_transient_only": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "failures": [],
+      "not_swept": {
+        "fills": [
+          50,
+          60,
+          70,
+          80,
+          90
+        ],
+        "reason": "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% reported fill; the table aborts with 'Resize required: Global link bucket pool exhausted'"
+      }
     }
   },
-  "resumed_utc": "2026-09-21T16:35:56+00:00",
+  "resumed_utc": "2026-09-22T20:30:28+00:00",
   "superseded": {
     "file": "intel-max9462-hbm_uniform_msr0xf.json",
     "what": "the _hwpf_off series in that file were collected with MSR 0x1a4 = 0xf, which on this part leaves one prefetcher enabled; they were re-collected at 0x2f. The _hwpf_on series (0x0) are unaffected and were carried over unchanged."
   },
-  "finished_utc": "2026-09-21T18:35:02+00:00",
-  "prefetch_script": "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh",
-  "prefetch_masks": {
-    "on": "0x0",
-    "off": "0x2f"
-  }
+  "finished_utc": "2026-09-22T20:43:23+00:00"
 }
