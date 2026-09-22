@@ -499,6 +499,9 @@ void hashjoin(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::insertions;
     g_app_record_start = true;
+    // Same reason as the radix path's markers: a sampler watching the memory
+    // controllers needs a line in the log to tell the phases apart.
+    PLOGI.printf("Build phase start");
   }
   barrier->arrive_and_wait();
 
@@ -507,6 +510,7 @@ void hashjoin(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::insertions;
     g_app_record_start = false;
+    PLOGI.printf("Build phase end");
   }
   barrier->arrive_and_wait();
 
@@ -517,6 +521,7 @@ void hashjoin(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::finds;
     g_app_record_start = true;
+    PLOGI.printf("Probe phase start");
   }
   barrier->arrive_and_wait();
 
@@ -525,6 +530,7 @@ void hashjoin(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
   if (sh->shard_idx == 0) {
     cur_phase = ExecPhase::finds;
     g_app_record_start = false;
+    PLOGI.printf("Probe phase end");
   }
   barrier->arrive_and_wait();
 
@@ -935,6 +941,11 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
 #endif
     cur_phase = ExecPhase::finds;
     g_app_record_start = true;
+    // Mirrors the partition phase's markers. Anything sampling the machine
+    // while the join runs (perf stat -I over the memory controllers, say)
+    // needs a line in the log to tell the two phases apart; without this the
+    // join phase was the one half of the run that could not be windowed.
+    PLOGI.printf("Join phase start");
   }
   barrier->arrive_and_wait();
 
@@ -949,6 +960,7 @@ void radixjoin2016(Shard* sh, Element* build, Element* probe, JoinElement* mvec,
 #endif
     cur_phase = ExecPhase::finds;
     g_app_record_start = false;
+    PLOGI.printf("Join phase end");
   }
   barrier->arrive_and_wait();
 

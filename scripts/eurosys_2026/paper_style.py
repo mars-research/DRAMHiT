@@ -24,6 +24,7 @@ other figure's series.
 """
 
 import shutil
+from collections import Counter
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -76,6 +77,19 @@ VARIANT_STYLE = {
     "folklore_nopref": {"base": "folklore", "linestyle": "--", "marker": "s"},
     "dlht_nopref": {"base": "dlht", "linestyle": "--", "marker": "s"},
 }
+
+# A collection that measures every table in both hardware-prefetcher states
+# (macro_uniform/collect_data_intel_hbm.py) names its series <table>_hwpf_on /
+# <table>_hwpf_off. Both are the same table, so both keep that table's colour
+# and the dash tells the states apart -- solid for on, dashed for off, which is
+# the same spelling _nopref already uses.
+for _base in PALETTE_ORDER:
+    VARIANT_STYLE[f"{_base}_hwpf_on"] = {
+        "base": _base, "linestyle": ":" if _base == "radix" else "-", "marker": "o"}
+    VARIANT_STYLE[f"{_base}_hwpf_off"] = {
+        "base": _base, "linestyle": "--", "marker": "s"}
+    DISPLAY_NAMES[f"{_base}_hwpf_on"] = f"{DISPLAY_NAMES.get(_base, _base)} (hw pref on)"
+    DISPLAY_NAMES[f"{_base}_hwpf_off"] = f"{DISPLAY_NAMES.get(_base, _base)} (hw pref off)"
 
 TUPLE_BYTES = 16
 
@@ -172,18 +186,23 @@ def series_style(name, palette):
 def styles_for(names, palette):
     """Style per series, for a figure drawing exactly `names`.
 
-    A variant's dash and marker exist to tell it apart from its base. When the
-    base is not on the same figure there is nothing to tell it apart from, so
-    the variant is drawn in the ordinary way (solid, round) and the caption
-    carries the distinction instead. Put both on one figure and the variant
-    goes back to its own dash and marker.
+    A variant's dash and marker exist to tell it apart from the other series
+    drawn in the same colour. When it is the only one on the figure with that
+    colour there is nothing to tell it apart from, so it is drawn in the
+    ordinary way (solid, round) and the caption carries the distinction
+    instead. That is decided by how many drawn series share its colour, not by
+    whether the base itself is drawn: a figure of nothing but variants (every
+    table in both prefetcher states, say) still needs them distinguishable.
     """
-    plain = {canonical(n) for n in names if n not in VARIANT_STYLE}
+    def base_of(name):
+        variant = VARIANT_STYLE.get(name)
+        return canonical(variant["base"] if variant else name)
+
+    drawn = Counter(base_of(n) for n in names)
     out = {}
     for name in names:
         style = series_style(name, palette)
-        variant = VARIANT_STYLE.get(name)
-        if variant and canonical(variant["base"]) not in plain:
+        if name in VARIANT_STYLE and drawn[base_of(name)] < 2:
             style = {**style, "linestyle": "-", "marker": "o"}
         out[name] = style
     return out

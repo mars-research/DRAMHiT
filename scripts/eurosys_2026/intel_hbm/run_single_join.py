@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import math
 import re
 import statistics
@@ -80,7 +81,12 @@ PARAM_CONFIGS = {
 }
 
 # Paths to the executables
-PREFETCH_SCRIPT = "/opt/DRAMHiT/scripts/prefetch_control.sh"
+# prefetch_control_hbm.sh, not prefetch_control.sh: on this part the latter's
+# 0xf leaves a prefetcher enabled (bit 5 of MSR 0x1a4). It costs a sequential
+# access pattern ~2 extra cache lines per operation while still reporting "all
+# prefetchers off" -- and radix join's partition pass is exactly that pattern.
+# See that script's header for the measurement.
+PREFETCH_SCRIPT = "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh"
 RESERVE_HUGEPAGES_SCRIPT = "/opt/DRAMHiT/scripts/reserve_hugepages.sh"
 DRAMHIT_EXEC = "/opt/DRAMHiT/build/dramhit"
 
@@ -88,6 +94,12 @@ DRAMHIT_EXEC = "/opt/DRAMHiT/build/dramhit"
 # relation size, to hold the r/s relation data its own threads generate (those
 # allocations are unbound, so they land on the faulting thread's node).
 CPU_NODE_2MB_RESERVE_MB = 35000
+
+# 2mb pages on the mem (hbm) node, for dlht's secondary store when it is small
+# enough that calloc_ht maps it with 2mb pages. Nothing else on the mem node
+# wants them: the hash table itself is 1gb pages and radix asks for 2mb ones
+# through its own branch below.
+MEM_NODE_2MB_RESERVE_MB = 2048
 
 # The mem (hbm) nodes hold the join working set: partition buckets and the
 # per-thread hashtable. Element counts in relation_r_size/relation_s_size are
@@ -160,9 +172,150 @@ RADIX_JOIN_DEFAULTS = {
 
 
 def set_prefetcher(state):
-    """Turns the hardware prefetcher 'on' or 'off'."""
+    """Turns the hardware prefetcher 'on' or 'off'.
+
+    The msr write needs root and prefetch_control.sh deliberately does not
+    sudo itself, so re-invoke it under sudo when we are not root -- carrying
+    PATH across, since sudo's secure_path drops msr-tools.
+    """
     print(f"[*] Setting prefetcher to: {state.upper()}")
-    subprocess.run([PREFETCH_SCRIPT, state], check=True)
+    cmd = [PREFETCH_SCRIPT, state]
+    if os.geteuid() != 0:
+        cmd = ["sudo", "env", f"PATH={os.environ['PATH']}"] + cmd
+    subprocess.run(cmd, check=True)
+
+
+# HBM bandwidth per phase, counted at the controllers. Same recipe as
+# macro_uniform/collect_data_intel_hbm.py: the 32 uncore_hbm boxes take raw CAS
+# encodings (they publish no event list), a HBM CAS moves 32 B, and each perf
+# row carries its own run_ns, so a rate is bytes * boxes * count / run_ns.
+# Radix join's two phases are bracketed in the log by "Partition phase
+# start/end" and "Join phase start/end".
+# Both memories are counted, because a join run uses both: the partition
+# buckets and the join hashtable are bound to the hbm node, but the r/s
+# relations the partition pass READS are unbound and land in the cpu node's
+# ddr. Counting only hbm would show the partition phase as almost pure writes
+# and hide half its traffic. uncore_imc takes the same raw encodings as the hbm
+# boxes; what differs is the CAS width, 64 B against 32 B.
+BW_PMUS = {"hbm": {"prefix": "uncore_hbm", "bytes_per_cas": 32},
+           "ddr": {"prefix": "uncore_imc", "bytes_per_cas": 64}}
+BW_EVENT_ENCODINGS = {"rd": "event=0x05,umask=0xcf", "wr": "event=0x05,umask=0xf0"}
+BW_INTERVAL_MS = 10
+# radix join's two phases and hash join's two. One list covers both: a run
+# only ever prints one pair of pairs, so the phases that do not appear simply
+# collect no intervals.
+BW_PHASE_MARKS = [
+    ("Partition phase start", "partition"),
+    ("Partition phase end", None),
+    ("Join phase start", "join"),
+    ("Join phase end", None),
+    ("Build phase start", "build"),
+    ("Build phase end", None),
+    ("Probe phase start", "probe"),
+    ("Probe phase end", None),
+]
+BW_PHASES = ["partition", "join", "build", "probe"]
+
+
+def bw_pmu_boxes(prefix):
+    """Box indices of one uncore pmu, matched to the END of the name.
+
+    A prefix match alone also catches uncore_imc_free_running_*, which shares
+    the prefix and ends in a digit; every event on the overlapping boxes would
+    then be requested twice and the reported bandwidth would be inflated
+    without anything looking wrong.
+    """
+    pattern = re.compile(re.escape(prefix) + r"_(\d+)$")
+    return sorted(int(m.group(1))
+                  for m in (pattern.match(q.name)
+                            for q in Path("/sys/devices").glob(f"{prefix}_*"))
+                  if m)
+
+
+def bw_perf_prefix():
+    events = ",".join(
+        f"{cfg['prefix']}_{i}/{enc},name={mem}_{n}/"
+        for mem, cfg in BW_PMUS.items()
+        for i in bw_pmu_boxes(cfg["prefix"])
+        for n, enc in BW_EVENT_ENCODINGS.items())
+    return ["sudo", "perf", "stat", "--per-socket", "-e", events,
+            "-I", str(BW_INTERVAL_MS), "-x", ",", "--"]
+
+
+def parse_bandwidth(text):
+    """Per-phase memory bandwidth from one run's interleaved perf/dramhit output.
+
+    Returns {"partition": {"hbm": {...}, "ddr": {...}}, "join": {...}} in GB/s,
+    or {} when the run was not sampled. The first and last interval of a phase
+    straddle a marker and mix it with whatever ran next to it, so both go.
+    """
+    phase = None
+    acc = {}
+    ts_phase = {}
+    wanted = {f"{mem}_{n}" for mem in BW_PMUS for n in BW_EVENT_ENCODINGS}
+    for line in text.splitlines():
+        for mark, target in BW_PHASE_MARKS:
+            if mark in line:
+                phase = target
+                break
+        parts = line.strip().split(",")
+        if len(parts) < 7 or not parts[0][:1].isdigit():
+            continue
+        if not parts[1].strip().startswith("S") or phase is None:
+            continue
+        try:
+            ts, count, event, run_ns = (float(parts[0]), float(parts[3]),
+                                        parts[5].strip(), float(parts[6]))
+        except (ValueError, IndexError):
+            continue
+        if event not in wanted:
+            continue
+        ts_phase.setdefault(ts, phase)
+        slot = acc.setdefault(ts, {}).setdefault(event, [0.0, 0.0, 0])
+        slot[0] += count
+        slot[1] += run_ns
+        slot[2] += 1
+
+    rows = {name: [] for name in BW_PHASES}
+    for ts in sorted(acc):
+        events = acc[ts]
+        if not wanted <= set(events):
+            continue
+        rates = {}
+        for mem, cfg in BW_PMUS.items():
+            for n in BW_EVENT_ENCODINGS:
+                count, run_ns, boxes = events[f"{mem}_{n}"]
+                if run_ns <= 0:
+                    rates = None
+                    break
+                # count * boxes * B / run_ns is bytes per ns, i.e. GB/s, once
+                # run_ns is turned back into the per-box mean.
+                rates[f"{mem}_{n}"] = cfg["bytes_per_cas"] * boxes * count / run_ns
+            if rates is None:
+                break
+        if rates:
+            rows[ts_phase[ts]].append(rates)
+
+    out = {}
+    for name, samples in rows.items():
+        if len(samples) > 2:
+            samples = samples[1:-1]
+        if not samples:
+            continue
+        per_mem = {}
+        for mem in BW_PMUS:
+            rd = [s[f"{mem}_rd"] for s in samples]
+            wr = [s[f"{mem}_wr"] for s in samples]
+            per_mem[mem] = {
+                "gbps": round(statistics.median(r + w for r, w in zip(rd, wr)), 1),
+                "rd_gbps": round(statistics.median(rd), 1),
+                "wr_gbps": round(statistics.median(wr), 1),
+            }
+        per_mem["intervals"] = len(samples)
+        per_mem["total_gbps"] = round(
+            sum(per_mem[m]["gbps"] for m in BW_PMUS), 1)
+        out[name] = per_mem
+    return out
 
 
 def next_pow2(n):
@@ -327,11 +480,20 @@ def reserve_hugepages(join_type, defaults_dict, param_name, param_values, scope,
     for n in mem_nodes:
         if join_type == "hash":
             required_gb = math.ceil(per_mem_node_bytes / (1024 ** 3))
+            mem_node_2mb = 0
             if hashtable == "dlht":
                 extra_gb = math.ceil(required_gb / 8)
                 print(f"[*] dlht secondary storage: +{extra_gb}gb on top of the {required_gb}gb table")
                 required_gb += extra_gb
-            args.append(f"n{n}_{required_gb}gb_0mb")
+                # The secondary store is a separate allocation, and calloc_ht
+                # picks its page size by size alone: over 1gb it takes 1gb
+                # pages, at or under it takes 2mb ones. At the small end of
+                # this sweep the store IS under 1gb (512mb at r=1gb), so the
+                # mem node needs a 2mb pool as well or the mmap succeeds, the
+                # mbind succeeds, and the run then dies faulting it in -- with
+                # no error beyond a truncated log.
+                mem_node_2mb = MEM_NODE_2MB_RESERVE_MB
+            args.append(f"n{n}_{required_gb}gb_{mem_node_2mb}mb")
         else:
             required_mb = math.ceil(per_mem_node_bytes / (1024 ** 2))
             args.append(f"n{n}_0gb_{required_mb}mb")
@@ -383,10 +545,13 @@ def build_command(defaults_dict, param_name, param_value, scope, overrides=None)
     return cmd
 
 
-def run_and_parse(cmd, log_path):
+def run_and_parse(cmd, log_path, with_bw=False):
     """Runs the benchmark command, saves its full stdout/stderr to log_path,
     and extracts throughput_mops."""
-    print(f"    Running: {' '.join(cmd)}")
+    if with_bw:
+        cmd = bw_perf_prefix() + cmd
+    print(f"    Running: {' '.join(cmd[:3])} ... {' '.join(cmd[-6:])}"
+          if with_bw else f"    Running: {' '.join(cmd)}")
     result = subprocess.run(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
     )
@@ -551,6 +716,9 @@ def main(args):
         "mem_nodes": scope["mem_nodes"],
         "np_mem_local": scope["np_mem_local"],
         "prefetch": args.prefetch,
+        "prefetch_script": PREFETCH_SCRIPT,
+        "hw_prefetcher": (variant_cfg.get("prefetcher", "off")
+                          if args.join_type == "hash" else (args.prefetcher or "on")),
         "cas_prefetch_insertion": args.cas_prefetch_insertion,
         "repeats": args.repeats,
         "log_dir": str(log_dir),
@@ -572,7 +740,7 @@ def main(args):
             cmd = build_command(HASH_JOIN_DEFAULTS, param_name, val, scope, overrides)
         else:
             print("  -- radix join --")
-            set_prefetcher("on")
+            set_prefetcher(args.prefetcher or "on")
             cmd = build_command(RADIX_JOIN_DEFAULTS, param_name, val, scope)
 
         # Repeats matter here: at some points this workload varies by far more
@@ -584,11 +752,24 @@ def main(args):
         for rep in range(1, args.repeats + 1):
             suffix = "" if args.repeats == 1 else f"_rep{rep}"
             log_path = log_dir / f"{param_name}_{val}{suffix}.log"
-            perf = run_and_parse(cmd, log_path)
+            perf = run_and_parse(cmd, log_path, args.bandwidth)
             check_memory_locality(log_path)
             if perf > 0:
                 samples.append(perf)
-                phases.append(phase_metrics(log_path))
+                metrics = phase_metrics(log_path)
+                if args.bandwidth:
+                    bw = parse_bandwidth(log_path.read_text())
+                    if bw:
+                        metrics["bw"] = bw
+                        print("    -> bw: " + " | ".join(
+                            f"{k} hbm {v['hbm']['gbps']:.0f}"
+                            f" (r{v['hbm']['rd_gbps']:.0f}/w{v['hbm']['wr_gbps']:.0f})"
+                            f" ddr {v['ddr']['gbps']:.0f}"
+                            f" (r{v['ddr']['rd_gbps']:.0f}/w{v['ddr']['wr_gbps']:.0f})"
+                            for k, v in bw.items()))
+                    else:
+                        print("    -> [!] no bandwidth intervals parsed")
+                phases.append(metrics)
 
         if not samples:
             print("    => all repeats failed, recording 0")
@@ -694,11 +875,20 @@ def parse_args():
         help="Which parameter to sweep on the x-axis (default: skew).",
     )
     parser.add_argument(
+        "--bandwidth",
+        action="store_true",
+        help="Sample hbm bandwidth at the controllers while each run is in "
+             "flight (perf stat -I over the 32 uncore_hbm boxes) and record "
+             "it per phase, the way macro_uniform's collector does. Needs the "
+             "phase markers dramhit logs around partition and join.",
+    )
+    parser.add_argument(
         "--prefetcher",
         choices=["on", "off"],
         default=None,
-        help="Override the hardware prefetcher state for --join-type hash "
-             "(default: the hashtable's configured value in HASH_JOIN_VARIANTS).",
+        help="Override the hardware prefetcher state (default: the "
+             "hashtable's configured value in HASH_JOIN_VARIANTS for "
+             "--join-type hash, 'on' for --join-type radix).",
     )
     parser.add_argument(
         "--batch-len",
@@ -711,8 +901,8 @@ def parse_args():
 
     if args.join_type == "hash" and not args.hashtable:
         parser.error("--hashtable is required when --join-type hash")
-    if args.join_type == "radix" and (args.hashtable or args.prefetcher or args.batch_len is not None):
-        parser.error("--hashtable/--prefetcher/--batch-len only apply to --join-type hash")
+    if args.join_type == "radix" and (args.hashtable or args.batch_len is not None):
+        parser.error("--hashtable/--batch-len only apply to --join-type hash")
     if args.join_type == "hash" and args.cpu_scope != "single":
         # Hash join shares one table across all threads, so "every thread in
         # its own hbm node" has no meaning for it; it would need its own

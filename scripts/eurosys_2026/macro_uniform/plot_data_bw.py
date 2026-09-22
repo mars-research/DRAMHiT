@@ -43,6 +43,14 @@ PHASES = [
 # reference line so it is obvious which tables are saturating it.
 DEFAULT_CEILING_GBPS = 350.0
 
+# The two phases do not share a ceiling. Lookup is read-only; insertion takes
+# every line exclusive and writes it back, so its traffic is 1 read + 1 write
+# per line and the machine sustains far more of it. On the HBM box, measured
+# with machine_stats/bandwidth.c on the same cpu/memory pairing
+# (measure_hbm_ceiling.py): 408 GB/s read, 606 GB/s for the write mix. Passing
+# one --ceiling still applies it to both panels, which is what the DDR figures
+# have always done.
+
 
 # =============================================================================
 # DATA
@@ -140,7 +148,20 @@ def draw(ax, df, tables, title, palette, xticks, ceiling, limits,
     bw_ax.grid(False)
 
 
-def metric_legend(fig):
+def legend_geometry(n_tables, ncol):
+    """Where the metric legend sits, and how much figure the panels get.
+
+    Both have to move down as the series legend grows: at two rows these are
+    the 0.90 / 0.82 the figure has always used, and each further row pushes
+    them down by its own height. A figure with every table in both prefetcher
+    states is three rows, and without this the two legends overlap.
+    """
+    rows = -(-n_tables // ncol)
+    extra = max(0, rows - 2)
+    return 0.90 - 0.03 * extra, 0.82 - 0.05 * extra
+
+
+def metric_legend(fig, y=0.90):
     """Second legend saying which linestyle is which axis."""
     handles = [
         Line2D([0], [0], color="0.25", linestyle="none", marker="o",
@@ -150,7 +171,7 @@ def metric_legend(fig):
                label="open marker: bandwidth (right axis)"),
     ]
     fig.legend(handles=handles, fontsize=7, loc="upper center",
-               bbox_to_anchor=(0.5, 0.90), ncol=2, frameon=False)
+               bbox_to_anchor=(0.5, y), ncol=2, frameon=False)
 
 
 def title_for(data, label, note=None):
@@ -163,6 +184,11 @@ def title_for(data, label, note=None):
         bits.append(f"{threads} threads")
     title = ", ".join(bits)
     return f"{title}\n{note}" if note else title
+
+
+def phase_ceiling(phase, args_ceiling, per_phase):
+    """The reference line for one panel: its own value if given, else --ceiling."""
+    return per_phase.get(phase, args_ceiling)
 
 
 def axis_limits(data, ceiling):
@@ -181,11 +207,12 @@ def axis_limits(data, ceiling):
     return {"mops": mops * 1.08, "bw": max(bw, ceiling or 0) * 1.12}
 
 
-def plot(data, out_stem, split, ceiling, only=None, note=None):
+def plot(data, out_stem, split, ceiling, only=None, note=None, per_phase=None):
     ps.configure_style()
     palette = ps.configure_palette()
 
-    limits = axis_limits(data, ceiling)
+    per_phase = per_phase or {}
+    limits = axis_limits(data, max([ceiling or 0] + list(per_phase.values())))
 
     tables = order(data)
     if only:
@@ -205,22 +232,26 @@ def plot(data, out_stem, split, ceiling, only=None, note=None):
         for phase, label in PHASES:
             fig, ax = ps.get_subplots(1, 1, plot_w=5)
             draw(ax, frame(data, phase), tables,
-                 title_for(data, label, note), palette, xticks, ceiling,
-                 limits, styles)
-            ps.add_legend(fig, palette, tables, ncol=min(len(tables), 3),
-                          styles=styles)
-            metric_legend(fig)
-            ps.save(fig, f"{out_stem}_bw_{phase}.png", legend_top=0.84)
+                 title_for(data, label, note), palette, xticks,
+                 phase_ceiling(phase, ceiling, per_phase), limits, styles)
+            ncol = min(len(tables), 3)
+            metric_y, legend_top = legend_geometry(len(tables), ncol)
+            ps.add_legend(fig, palette, tables, ncol=ncol, styles=styles)
+            metric_legend(fig, metric_y)
+            ps.save(fig, f"{out_stem}_bw_{phase}.png",
+                    legend_top=legend_top + 0.02)
         return
 
     fig, axes = ps.get_subplots(1, len(PHASES), plot_w=5)
     for ax, (phase, label) in zip(axes.ravel(), PHASES):
         draw(ax, frame(data, phase), tables, title_for(data, label, note),
-             palette, xticks, ceiling, limits, styles)
-    ps.add_legend(fig, palette, tables, ncol=min(len(tables), 3),
-                  styles=styles)
-    metric_legend(fig)
-    ps.save(fig, f"{out_stem}_bw.png", legend_top=0.82)
+             palette, xticks, phase_ceiling(phase, ceiling, per_phase),
+             limits, styles)
+    ncol = min(len(tables), 3)
+    metric_y, legend_top = legend_geometry(len(tables), ncol)
+    ps.add_legend(fig, palette, tables, ncol=ncol, styles=styles)
+    metric_legend(fig, metric_y)
+    ps.save(fig, f"{out_stem}_bw.png", legend_top=legend_top)
 
 
 def main():
@@ -231,7 +262,12 @@ def main():
     ap.add_argument("--split", action="store_true",
                     help="one figure per phase instead of a two-panel figure")
     ap.add_argument("--ceiling", type=float, default=DEFAULT_CEILING_GBPS,
-                    help="reference line, GB/s (0 to omit)")
+                    help="reference line, GB/s, for both panels (0 to omit)")
+    ap.add_argument("--ceiling-set", type=float,
+                    help="reference line for the insertion panel only; it is a "
+                         "read+write mix and does not share the read ceiling")
+    ap.add_argument("--ceiling-get", type=float,
+                    help="reference line for the lookup panel only")
     ap.add_argument("--only", nargs="+", metavar="TABLE",
                     help="plot only these series (axis scales still come "
                          "from the whole json, so subsets stay comparable)")
@@ -244,7 +280,10 @@ def main():
         stem = str(path.with_suffix(""))
         if args.tag:
             stem = f"{stem}_{args.tag}"
-        plot(load(path), stem, args.split, args.ceiling, args.only, args.note)
+        per_phase = {p: v for p, v in (("set", args.ceiling_set),
+                                       ("get", args.ceiling_get)) if v}
+        plot(load(path), stem, args.split, args.ceiling, args.only, args.note,
+             per_phase)
 
 
 if __name__ == "__main__":

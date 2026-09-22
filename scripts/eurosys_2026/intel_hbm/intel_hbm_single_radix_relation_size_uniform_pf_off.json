@@ -1,0 +1,582 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        67108864,
+        134217728,
+        268435456,
+        536870912,
+        1073741824
+    ],
+    "join_type": "radix",
+    "cpu_scope": "single",
+    "num_threads": 64,
+    "cpu_nodes": [
+        0
+    ],
+    "mem_nodes": [
+        2
+    ],
+    "np_mem_local": 0,
+    "prefetch": "DOUBLE",
+    "prefetch_script": "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh",
+    "hw_prefetcher": "off",
+    "cas_prefetch_insertion": "AUTO",
+    "repeats": 3,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/intel_hbm_single_radix_relation_size",
+    "throughput_mops": [
+        1313.0,
+        1330.0,
+        1279.0,
+        1048.0,
+        872.0
+    ],
+    "throughput_samples": [
+        [
+            1313.0,
+            1317.0,
+            1309.0
+        ],
+        [
+            1335.0,
+            1323.0,
+            1330.0
+        ],
+        [
+            1284.0,
+            1279.0,
+            1273.0
+        ],
+        [
+            1029.0,
+            1054.0,
+            1048.0
+        ],
+        [
+            866.0,
+            872.0,
+            872.0
+        ]
+    ],
+    "phase_samples": [
+        [
+            {
+                "partition_cyc_per_tuple": 70,
+                "join_cyc_per_tuple": 60,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 47.2,
+                            "rd_gbps": 1.6,
+                            "wr_gbps": 45.6
+                        },
+                        "ddr": {
+                            "gbps": 76.0,
+                            "rd_gbps": 74.9,
+                            "wr_gbps": 0.8
+                        },
+                        "intervals": 3,
+                        "total_gbps": 123.2
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 82.1,
+                            "rd_gbps": 57.3,
+                            "wr_gbps": 24.8
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 1,
+                        "total_gbps": 82.5
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 70,
+                "join_cyc_per_tuple": 60,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 34.4,
+                            "rd_gbps": 1.6,
+                            "wr_gbps": 32.8
+                        },
+                        "ddr": {
+                            "gbps": 85.0,
+                            "rd_gbps": 84.4,
+                            "wr_gbps": 0.9
+                        },
+                        "intervals": 3,
+                        "total_gbps": 119.4
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 83.7,
+                            "rd_gbps": 57.7,
+                            "wr_gbps": 25.9
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 1,
+                        "total_gbps": 84.1
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 70,
+                "join_cyc_per_tuple": 60,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 35.4,
+                            "rd_gbps": 1.2,
+                            "wr_gbps": 33.8
+                        },
+                        "ddr": {
+                            "gbps": 84.5,
+                            "rd_gbps": 83.3,
+                            "wr_gbps": 1.2
+                        },
+                        "intervals": 3,
+                        "total_gbps": 119.9
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 82.8,
+                            "rd_gbps": 57.8,
+                            "wr_gbps": 25.0
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 1,
+                        "total_gbps": 83.2
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "partition_cyc_per_tuple": 71,
+                "join_cyc_per_tuple": 58,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 47.2,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 44.0
+                        },
+                        "ddr": {
+                            "gbps": 72.3,
+                            "rd_gbps": 72.0,
+                            "wr_gbps": 0.4
+                        },
+                        "intervals": 7,
+                        "total_gbps": 119.5
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 82.7,
+                            "rd_gbps": 57.4,
+                            "wr_gbps": 25.4
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 5,
+                        "total_gbps": 83.1
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 71,
+                "join_cyc_per_tuple": 59,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 47.5,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 44.3
+                        },
+                        "ddr": {
+                            "gbps": 72.1,
+                            "rd_gbps": 71.8,
+                            "wr_gbps": 0.4
+                        },
+                        "intervals": 7,
+                        "total_gbps": 119.6
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 83.9,
+                            "rd_gbps": 57.8,
+                            "wr_gbps": 26.5
+                        },
+                        "ddr": {
+                            "gbps": 0.5,
+                            "rd_gbps": 0.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 5,
+                        "total_gbps": 84.4
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 71,
+                "join_cyc_per_tuple": 58,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 48.6,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 45.7
+                        },
+                        "ddr": {
+                            "gbps": 71.1,
+                            "rd_gbps": 70.8,
+                            "wr_gbps": 0.5
+                        },
+                        "intervals": 7,
+                        "total_gbps": 119.7
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 82.6,
+                            "rd_gbps": 57.8,
+                            "wr_gbps": 24.8
+                        },
+                        "ddr": {
+                            "gbps": 0.5,
+                            "rd_gbps": 0.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 5,
+                        "total_gbps": 83.1
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "partition_cyc_per_tuple": 76,
+                "join_cyc_per_tuple": 58,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 53.8,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 53.6
+                        },
+                        "ddr": {
+                            "gbps": 54.5,
+                            "rd_gbps": 54.4,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 16,
+                        "total_gbps": 108.3
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 83.1,
+                            "rd_gbps": 57.3,
+                            "wr_gbps": 25.6
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 12,
+                        "total_gbps": 83.5
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 76,
+                "join_cyc_per_tuple": 58,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 53.8,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 53.5
+                        },
+                        "ddr": {
+                            "gbps": 54.4,
+                            "rd_gbps": 54.3,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 17,
+                        "total_gbps": 108.2
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 82.9,
+                            "rd_gbps": 57.3,
+                            "wr_gbps": 25.7
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 12,
+                        "total_gbps": 83.3
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 76,
+                "join_cyc_per_tuple": 58,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 53.7,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 53.5
+                        },
+                        "ddr": {
+                            "gbps": 54.4,
+                            "rd_gbps": 54.2,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 17,
+                        "total_gbps": 108.1
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 83.5,
+                            "rd_gbps": 57.6,
+                            "wr_gbps": 26.0
+                        },
+                        "ddr": {
+                            "gbps": 0.5,
+                            "rd_gbps": 0.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 12,
+                        "total_gbps": 84.0
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "partition_cyc_per_tuple": 108,
+                "join_cyc_per_tuple": 58,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 129.2,
+                            "rd_gbps": 47.1,
+                            "wr_gbps": 82.1
+                        },
+                        "ddr": {
+                            "gbps": 37.2,
+                            "rd_gbps": 36.8,
+                            "wr_gbps": 0.4
+                        },
+                        "intervals": 40,
+                        "total_gbps": 166.4
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 82.1,
+                            "rd_gbps": 57.1,
+                            "wr_gbps": 25.2
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 26,
+                        "total_gbps": 82.5
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 104,
+                "join_cyc_per_tuple": 59,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 124.2,
+                            "rd_gbps": 44.2,
+                            "wr_gbps": 80.0
+                        },
+                        "ddr": {
+                            "gbps": 37.5,
+                            "rd_gbps": 37.1,
+                            "wr_gbps": 0.4
+                        },
+                        "intervals": 47,
+                        "total_gbps": 161.7
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 81.3,
+                            "rd_gbps": 56.3,
+                            "wr_gbps": 24.9
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 26,
+                        "total_gbps": 81.7
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 104,
+                "join_cyc_per_tuple": 60,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 124.9,
+                            "rd_gbps": 45.6,
+                            "wr_gbps": 79.6
+                        },
+                        "ddr": {
+                            "gbps": 37.4,
+                            "rd_gbps": 37.0,
+                            "wr_gbps": 0.4
+                        },
+                        "intervals": 49,
+                        "total_gbps": 162.3
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 81.5,
+                            "rd_gbps": 56.4,
+                            "wr_gbps": 25.0
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 25,
+                        "total_gbps": 81.9
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "partition_cyc_per_tuple": 140,
+                "join_cyc_per_tuple": 59,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 249.4,
+                            "rd_gbps": 116.5,
+                            "wr_gbps": 132.9
+                        },
+                        "ddr": {
+                            "gbps": 26.1,
+                            "rd_gbps": 25.7,
+                            "wr_gbps": 0.3
+                        },
+                        "intervals": 131,
+                        "total_gbps": 275.5
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 80.7,
+                            "rd_gbps": 55.9,
+                            "wr_gbps": 24.6
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 54,
+                        "total_gbps": 81.1
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 138,
+                "join_cyc_per_tuple": 59,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 252.2,
+                            "rd_gbps": 118.0,
+                            "wr_gbps": 134.5
+                        },
+                        "ddr": {
+                            "gbps": 26.1,
+                            "rd_gbps": 25.8,
+                            "wr_gbps": 0.4
+                        },
+                        "intervals": 131,
+                        "total_gbps": 278.3
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 80.4,
+                            "rd_gbps": 55.9,
+                            "wr_gbps": 24.5
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 54,
+                        "total_gbps": 80.8
+                    }
+                }
+            },
+            {
+                "partition_cyc_per_tuple": 138,
+                "join_cyc_per_tuple": 59,
+                "bw": {
+                    "partition": {
+                        "hbm": {
+                            "gbps": 253.5,
+                            "rd_gbps": 118.5,
+                            "wr_gbps": 135.0
+                        },
+                        "ddr": {
+                            "gbps": 26.1,
+                            "rd_gbps": 25.8,
+                            "wr_gbps": 0.4
+                        },
+                        "intervals": 131,
+                        "total_gbps": 279.6
+                    },
+                    "join": {
+                        "hbm": {
+                            "gbps": 82.2,
+                            "rd_gbps": 56.4,
+                            "wr_gbps": 25.9
+                        },
+                        "ddr": {
+                            "gbps": 0.4,
+                            "rd_gbps": 0.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 55,
+                        "total_gbps": 82.6
+                    }
+                }
+            }
+        ]
+    ]
+}

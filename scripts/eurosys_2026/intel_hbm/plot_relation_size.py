@@ -22,12 +22,28 @@ OUT_PATH = SCRIPT_DIR / "intel_hbm_single_relation_size.png"
 
 # (json file, series name). The series name picks the colour: the first five
 # are the joins themselves, the last is radix again on the whole machine.
+# (json file, series name). The series name picks the colour: the first five
+# are the joins themselves, the last is radix again on the whole machine.
+#
+# Each join is drawn in the hardware-prefetcher state it actually wants, which
+# is not the same state for all of them and is the point of the figure:
+#
+#   hashtables  prefetcher OFF. Measured on this machine, dlht and folklore
+#               gain 16-26% from it and cas/cas23 are within a few percent
+#               either way; all four are collected at MSR 0x1a4 = 0x2f, which
+#               is every prefetcher this part lets us disable (0xf, what
+#               prefetch_control.sh writes, leaves bit 5 running).
+#   radix       prefetcher ON. It is the one join that loses without it --
+#               22-41% on this sweep -- because it issues no software
+#               prefetches and its partition pass streams.
+#
+# See readme.txt for both measurements.
 CONFIGS = [
-    ("intel_hbm_single_hash_cas_relation_size.json", "cas"),
-    ("intel_hbm_single_hash_cas23_relation_size.json", "cas23"),
-    ("intel_hbm_single_hash_dlht_relation_size.json", "dlht"),
-    ("intel_hbm_single_hash_folklore_relation_size.json", "folklore"),
-    ("intel_hbm_single_radix_relation_size.json", "radix"),
+    ("intel_hbm_single_hash_cas_relation_size_pf_off.json", "cas"),
+    ("intel_hbm_single_hash_cas23_relation_size_pf_off.json", "cas23"),
+    ("intel_hbm_single_hash_dlht_relation_size_pf_off.json", "dlht"),
+    ("intel_hbm_single_hash_folklore_relation_size_pf_off.json", "folklore"),
+    ("intel_hbm_single_radix_relation_size_uniform_pf_on.json", "radix"),
     # 128 threads over both sockets, each thread's partitions and hashtable in
     # its own socket's hbm node (node 0 cpus -> node 2, node 1 cpus -> node 3).
     ("intel_hbm_allcpu_radix_relation_size.json", "radix (all cpus)"),
@@ -85,7 +101,8 @@ def main():
     ax.set_ylabel(ylabel)
     # Most series are one socket; the dotted one is the whole machine, so the
     # title says so rather than labelling the figure "single socket" outright.
-    ax.set_title("single socket, dotted = all cpus")
+    ax.set_title("single socket, dotted = all cpus\n"
+                 "hashtables: hw prefetcher off; radix: hw prefetcher on")
 
     # the sweep doubles each step, so a log2 axis spaces the points evenly
     xs = sorted(set(df["x"]))

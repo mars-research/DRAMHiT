@@ -1,0 +1,582 @@
+{
+    "param_name": "relation_size",
+    "param_values": [
+        67108864,
+        134217728,
+        268435456,
+        536870912,
+        1073741824
+    ],
+    "join_type": "hash_folklore",
+    "cpu_scope": "single",
+    "num_threads": 64,
+    "cpu_nodes": [
+        0
+    ],
+    "mem_nodes": [
+        2
+    ],
+    "np_mem_local": 0,
+    "prefetch": "DOUBLE",
+    "prefetch_script": "/opt/DRAMHiT/scripts/prefetch_control_hbm.sh",
+    "hw_prefetcher": "off",
+    "cas_prefetch_insertion": "AUTO",
+    "repeats": 3,
+    "log_dir": "/opt/DRAMHiT/scripts/eurosys_2026/intel_hbm/logs/intel_hbm_single_hash_folklore_relation_size",
+    "throughput_mops": [
+        1004.0,
+        993.0,
+        975.0,
+        962.0,
+        952.0
+    ],
+    "throughput_samples": [
+        [
+            1005.0,
+            1004.0,
+            1002.0
+        ],
+        [
+            994.0,
+            993.0,
+            988.0
+        ],
+        [
+            974.0,
+            977.0,
+            975.0
+        ],
+        [
+            956.0,
+            966.0,
+            962.0
+        ],
+        [
+            952.0,
+            946.0,
+            956.0
+        ]
+    ],
+    "phase_samples": [
+        [
+            {
+                "build_cyc_per_op": 202,
+                "probe_cyc_per_op": 140,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 117.8,
+                            "rd_gbps": 64.1,
+                            "wr_gbps": 55.6
+                        },
+                        "ddr": {
+                            "gbps": 15.7,
+                            "rd_gbps": 14.7,
+                            "wr_gbps": 1.0
+                        },
+                        "intervals": 5,
+                        "total_gbps": 133.5
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.5,
+                            "rd_gbps": 95.7,
+                            "wr_gbps": 0.8
+                        },
+                        "ddr": {
+                            "gbps": 20.4,
+                            "rd_gbps": 20.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 2,
+                        "total_gbps": 116.9
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 204,
+                "probe_cyc_per_op": 139,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 119.0,
+                            "rd_gbps": 64.5,
+                            "wr_gbps": 56.5
+                        },
+                        "ddr": {
+                            "gbps": 16.1,
+                            "rd_gbps": 15.0,
+                            "wr_gbps": 1.1
+                        },
+                        "intervals": 5,
+                        "total_gbps": 135.1
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.5,
+                            "rd_gbps": 95.7,
+                            "wr_gbps": 0.9
+                        },
+                        "ddr": {
+                            "gbps": 20.4,
+                            "rd_gbps": 20.2,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 2,
+                        "total_gbps": 116.9
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 204,
+                "probe_cyc_per_op": 140,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 117.9,
+                            "rd_gbps": 63.6,
+                            "wr_gbps": 55.6
+                        },
+                        "ddr": {
+                            "gbps": 15.7,
+                            "rd_gbps": 14.7,
+                            "wr_gbps": 1.0
+                        },
+                        "intervals": 4,
+                        "total_gbps": 133.6
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.9,
+                            "rd_gbps": 95.8,
+                            "wr_gbps": 1.2
+                        },
+                        "ddr": {
+                            "gbps": 20.5,
+                            "rd_gbps": 20.3,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 2,
+                        "total_gbps": 117.4
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 206,
+                "probe_cyc_per_op": 140,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 120.9,
+                            "rd_gbps": 65.6,
+                            "wr_gbps": 55.8
+                        },
+                        "ddr": {
+                            "gbps": 14.8,
+                            "rd_gbps": 14.4,
+                            "wr_gbps": 0.6
+                        },
+                        "intervals": 11,
+                        "total_gbps": 135.7
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 98.3,
+                            "rd_gbps": 97.6,
+                            "wr_gbps": 0.4
+                        },
+                        "ddr": {
+                            "gbps": 20.0,
+                            "rd_gbps": 19.9,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 7,
+                        "total_gbps": 118.3
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 205,
+                "probe_cyc_per_op": 142,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 119.7,
+                            "rd_gbps": 65.1,
+                            "wr_gbps": 56.7
+                        },
+                        "ddr": {
+                            "gbps": 15.1,
+                            "rd_gbps": 14.6,
+                            "wr_gbps": 0.6
+                        },
+                        "intervals": 11,
+                        "total_gbps": 134.8
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 98.8,
+                            "rd_gbps": 98.0,
+                            "wr_gbps": 0.5
+                        },
+                        "ddr": {
+                            "gbps": 20.1,
+                            "rd_gbps": 20.0,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 8,
+                        "total_gbps": 118.9
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 206,
+                "probe_cyc_per_op": 142,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 119.5,
+                            "rd_gbps": 65.1,
+                            "wr_gbps": 56.6
+                        },
+                        "ddr": {
+                            "gbps": 15.1,
+                            "rd_gbps": 14.6,
+                            "wr_gbps": 0.5
+                        },
+                        "intervals": 11,
+                        "total_gbps": 134.6
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 98.8,
+                            "rd_gbps": 98.0,
+                            "wr_gbps": 0.5
+                        },
+                        "ddr": {
+                            "gbps": 20.0,
+                            "rd_gbps": 19.9,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 7,
+                        "total_gbps": 118.8
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 208,
+                "probe_cyc_per_op": 146,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 120.9,
+                            "rd_gbps": 65.8,
+                            "wr_gbps": 55.6
+                        },
+                        "ddr": {
+                            "gbps": 14.3,
+                            "rd_gbps": 14.1,
+                            "wr_gbps": 0.3
+                        },
+                        "intervals": 24,
+                        "total_gbps": 135.2
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 98.9,
+                            "rd_gbps": 98.4,
+                            "wr_gbps": 0.3
+                        },
+                        "ddr": {
+                            "gbps": 19.8,
+                            "rd_gbps": 19.6,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 17,
+                        "total_gbps": 118.7
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 208,
+                "probe_cyc_per_op": 144,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 121.1,
+                            "rd_gbps": 65.5,
+                            "wr_gbps": 56.2
+                        },
+                        "ddr": {
+                            "gbps": 14.6,
+                            "rd_gbps": 14.3,
+                            "wr_gbps": 0.3
+                        },
+                        "intervals": 23,
+                        "total_gbps": 135.7
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 98.7,
+                            "rd_gbps": 98.2,
+                            "wr_gbps": 0.3
+                        },
+                        "ddr": {
+                            "gbps": 19.7,
+                            "rd_gbps": 19.6,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 16,
+                        "total_gbps": 118.4
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 208,
+                "probe_cyc_per_op": 145,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 120.9,
+                            "rd_gbps": 65.8,
+                            "wr_gbps": 56.1
+                        },
+                        "ddr": {
+                            "gbps": 14.5,
+                            "rd_gbps": 14.3,
+                            "wr_gbps": 0.3
+                        },
+                        "intervals": 23,
+                        "total_gbps": 135.4
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 98.3,
+                            "rd_gbps": 98.0,
+                            "wr_gbps": 0.3
+                        },
+                        "ddr": {
+                            "gbps": 19.7,
+                            "rd_gbps": 19.6,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 15,
+                        "total_gbps": 118.0
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 212,
+                "probe_cyc_per_op": 149,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 121.0,
+                            "rd_gbps": 65.7,
+                            "wr_gbps": 55.0
+                        },
+                        "ddr": {
+                            "gbps": 14.0,
+                            "rd_gbps": 13.9,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 49,
+                        "total_gbps": 135.0
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 95.9,
+                            "rd_gbps": 95.7,
+                            "wr_gbps": 0.2
+                        },
+                        "ddr": {
+                            "gbps": 19.1,
+                            "rd_gbps": 18.9,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 33,
+                        "total_gbps": 115.0
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 209,
+                "probe_cyc_per_op": 148,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 121.6,
+                            "rd_gbps": 66.1,
+                            "wr_gbps": 55.6
+                        },
+                        "ddr": {
+                            "gbps": 14.2,
+                            "rd_gbps": 14.0,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 48,
+                        "total_gbps": 135.8
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.6,
+                            "rd_gbps": 96.3,
+                            "wr_gbps": 0.2
+                        },
+                        "ddr": {
+                            "gbps": 19.1,
+                            "rd_gbps": 19.0,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 34,
+                        "total_gbps": 115.7
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 210,
+                "probe_cyc_per_op": 148,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 121.2,
+                            "rd_gbps": 66.0,
+                            "wr_gbps": 55.2
+                        },
+                        "ddr": {
+                            "gbps": 14.1,
+                            "rd_gbps": 13.9,
+                            "wr_gbps": 0.2
+                        },
+                        "intervals": 48,
+                        "total_gbps": 135.3
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.4,
+                            "rd_gbps": 96.1,
+                            "wr_gbps": 0.2
+                        },
+                        "ddr": {
+                            "gbps": 19.1,
+                            "rd_gbps": 19.0,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 34,
+                        "total_gbps": 115.5
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "build_cyc_per_op": 213,
+                "probe_cyc_per_op": 149,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 120.3,
+                            "rd_gbps": 65.5,
+                            "wr_gbps": 55.1
+                        },
+                        "ddr": {
+                            "gbps": 14.0,
+                            "rd_gbps": 13.8,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 104,
+                        "total_gbps": 134.3
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.9,
+                            "rd_gbps": 96.6,
+                            "wr_gbps": 0.2
+                        },
+                        "ddr": {
+                            "gbps": 19.0,
+                            "rd_gbps": 18.9,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 75,
+                        "total_gbps": 115.9
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 212,
+                "probe_cyc_per_op": 152,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 119.9,
+                            "rd_gbps": 65.5,
+                            "wr_gbps": 54.2
+                        },
+                        "ddr": {
+                            "gbps": 13.8,
+                            "rd_gbps": 13.6,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 100,
+                        "total_gbps": 133.7
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.5,
+                            "rd_gbps": 96.3,
+                            "wr_gbps": 0.2
+                        },
+                        "ddr": {
+                            "gbps": 19.0,
+                            "rd_gbps": 18.9,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 71,
+                        "total_gbps": 115.5
+                    }
+                }
+            },
+            {
+                "build_cyc_per_op": 212,
+                "probe_cyc_per_op": 149,
+                "bw": {
+                    "build": {
+                        "hbm": {
+                            "gbps": 120.8,
+                            "rd_gbps": 65.8,
+                            "wr_gbps": 55.1
+                        },
+                        "ddr": {
+                            "gbps": 14.0,
+                            "rd_gbps": 13.9,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 106,
+                        "total_gbps": 134.8
+                    },
+                    "probe": {
+                        "hbm": {
+                            "gbps": 96.8,
+                            "rd_gbps": 96.5,
+                            "wr_gbps": 0.2
+                        },
+                        "ddr": {
+                            "gbps": 19.0,
+                            "rd_gbps": 18.9,
+                            "wr_gbps": 0.1
+                        },
+                        "intervals": 75,
+                        "total_gbps": 115.8
+                    }
+                }
+            }
+        ]
+    ]
+}

@@ -86,7 +86,8 @@ def main():
     xlabel, ylabel = axis_labels("skew")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    ax.set_title("single socket, dotted = all cpus")
+    ax.set_title("single socket, dotted = all cpus\n"
+                 "hashtables: hw prefetcher off; radix: hw prefetcher on")
     ax.set_ylim(bottom=0)
     tidy(ax)
 

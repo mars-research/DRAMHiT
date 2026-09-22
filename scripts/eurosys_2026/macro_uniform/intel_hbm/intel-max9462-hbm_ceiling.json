@@ -1,0 +1,66 @@
+{
+  "binary": "/opt/DRAMHiT/scripts/eurosys_2026/machine_stats/build/bandwidth_rand",
+  "pattern": "n0a2t64",
+  "per_thread": "256mb",
+  "bytes_per_cas": 32,
+  "phases": {
+    "lookup": {
+      "0x2f": {
+        "r_t1": {
+          "mode": "r",
+          "inst": "t1",
+          "rd_gbps": 405.6,
+          "wr_gbps": 0.2,
+          "total_gbps": 405.8,
+          "peak_total_gbps": 424.4,
+          "samples_total_gbps": [
+            406.6,
+            405.4,
+            405.8
+          ],
+          "prog_reported_gbps": 374.26
+        }
+      },
+      "ceiling_gbps": {
+        "0x2f": 405.8
+      }
+    },
+    "insertion": {
+      "0x2f": {
+        "w_t1": {
+          "mode": "w",
+          "inst": "t1",
+          "rd_gbps": 312.4,
+          "wr_gbps": 312.4,
+          "total_gbps": 624.9,
+          "peak_total_gbps": 677.0,
+          "samples_total_gbps": [
+            636.3,
+            624.9,
+            622.5
+          ],
+          "prog_reported_gbps": 293.89
+        },
+        "w_prefetchw": {
+          "mode": "w",
+          "inst": "prefetchw",
+          "rd_gbps": 188.4,
+          "wr_gbps": 188.4,
+          "total_gbps": 376.9,
+          "peak_total_gbps": 384.7,
+          "samples_total_gbps": [
+            377.1,
+            376.8,
+            376.9
+          ],
+          "prog_reported_gbps": 173.8
+        }
+      },
+      "ceiling_gbps": {
+        "0x2f": 624.9
+      }
+    }
+  },
+  "lookahead": "64",
+  "reps": 3
+}
