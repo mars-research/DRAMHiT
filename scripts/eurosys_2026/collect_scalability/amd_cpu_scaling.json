@@ -1,0 +1,652 @@
+{
+  "config": {
+    "binary": "/opt/DRAMHiT/scripts/eurosys_2026/machine_stats/build/bandwidth_rand",
+    "total_footprint_target_gb": 16.0,
+    "node_total_footprint_target_gb": 6.0,
+    "max_per_thread_gb": 2.0,
+    "inst": "t1",
+    "lookahead": "64",
+    "cpu_freq_ghz": "3.25",
+    "bytes_per_cas": 64,
+    "node_umc_boxes": {
+      "0": [
+        0,
+        1,
+        2
+      ],
+      "1": [
+        3,
+        4,
+        5
+      ],
+      "2": [
+        6,
+        7,
+        8
+      ],
+      "3": [
+        9,
+        10,
+        11
+      ]
+    },
+    "reps": 3,
+    "interval_ms": 20,
+    "note": "node_local: node 0 only, 1-16 threads (8 physical + 8 SMT). system_local: thread i pinned to node i%4, memory local to that node."
+  },
+  "node_local": {
+    "nodes": [
+      0
+    ],
+    "threads": [
+      1,
+      2,
+      4,
+      6,
+      8,
+      12,
+      16
+    ],
+    "points": {
+      "1": {
+        "threads": 1,
+        "node_threads": {
+          "0": 1
+        },
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 2.0,
+        "umc_all_gbs": 25.049574104292546,
+        "umc_rd_gbs": 25.04527296810425,
+        "umc_wr_gbs": 0.004410106516281284,
+        "umc_dclk_ghz_median_per_node": 7.200020045713151,
+        "per_node_all_gbs": {
+          "0": 25.049574104292546
+        },
+        "prog_bw_gbs": 23.28,
+        "prog_bw_samples": [
+          23.28,
+          23.29,
+          23.27
+        ],
+        "prog_time_freq_corrected_s": 8.590105829846154
+      },
+      "2": {
+        "threads": 2,
+        "node_threads": {
+          "0": 2
+        },
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 4.0,
+        "umc_all_gbs": 45.05580924270487,
+        "umc_rd_gbs": 45.046108282746786,
+        "umc_wr_gbs": 0.009620315245814911,
+        "umc_dclk_ghz_median_per_node": 7.200019681446123,
+        "per_node_all_gbs": {
+          "0": 45.05580924270487
+        },
+        "prog_bw_gbs": 41.65,
+        "prog_bw_samples": [
+          41.64,
+          41.65,
+          41.71
+        ],
+        "prog_time_freq_corrected_s": 9.60464858
+      },
+      "4": {
+        "threads": 4,
+        "node_threads": {
+          "0": 4
+        },
+        "per_thread_mb": 1024,
+        "total_footprint_gb": 4.0,
+        "umc_all_gbs": 49.555232222597425,
+        "umc_rd_gbs": 49.54668143752911,
+        "umc_wr_gbs": 0.009425346439587048,
+        "umc_dclk_ghz_median_per_node": 7.200021308842952,
+        "per_node_all_gbs": {
+          "0": 49.555232222597425
+        },
+        "prog_bw_gbs": 45.79,
+        "prog_bw_samples": [
+          45.86,
+          45.77,
+          45.79
+        ],
+        "prog_time_freq_corrected_s": 8.735016050153845
+      },
+      "6": {
+        "threads": 6,
+        "node_threads": {
+          "0": 6
+        },
+        "per_thread_mb": 1024,
+        "total_footprint_gb": 6.0,
+        "umc_all_gbs": 78.23148218014407,
+        "umc_rd_gbs": 78.19952935283231,
+        "umc_wr_gbs": 0.03312570926850134,
+        "umc_dclk_ghz_median_per_node": 7.200019036724758,
+        "per_node_all_gbs": {
+          "0": 78.23148218014407
+        },
+        "prog_bw_gbs": 66.18,
+        "prog_bw_samples": [
+          66.41,
+          65.24,
+          66.18
+        ],
+        "prog_time_freq_corrected_s": 9.06570688
+      },
+      "8": {
+        "threads": 8,
+        "node_threads": {
+          "0": 8
+        },
+        "per_thread_mb": 512,
+        "total_footprint_gb": 4.0,
+        "umc_all_gbs": 83.33140975709088,
+        "umc_rd_gbs": 83.30125637518631,
+        "umc_wr_gbs": 0.028370820355024362,
+        "umc_dclk_ghz_median_per_node": 7.200019322677151,
+        "per_node_all_gbs": {
+          "0": 83.33140975709088
+        },
+        "prog_bw_gbs": 76.22,
+        "prog_bw_samples": [
+          76.59,
+          75.82,
+          76.22
+        ],
+        "prog_time_freq_corrected_s": 5.247942489846154
+      },
+      "12": {
+        "threads": 12,
+        "node_threads": {
+          "0": 12
+        },
+        "per_thread_mb": 512,
+        "total_footprint_gb": 6.0,
+        "umc_all_gbs": 78.01748936077972,
+        "umc_rd_gbs": 77.98064279651845,
+        "umc_wr_gbs": 0.03670356353981802,
+        "umc_dclk_ghz_median_per_node": 7.20002146398984,
+        "per_node_all_gbs": {
+          "0": 78.01748936077972
+        },
+        "prog_bw_gbs": 62.5,
+        "prog_bw_samples": [
+          62.5,
+          62.61,
+          62.02
+        ],
+        "prog_time_freq_corrected_s": 9.59994452
+      },
+      "16": {
+        "threads": 16,
+        "node_threads": {
+          "0": 16
+        },
+        "per_thread_mb": 256,
+        "total_footprint_gb": 4.0,
+        "umc_all_gbs": 91.10827216279347,
+        "umc_rd_gbs": 91.05668521054521,
+        "umc_wr_gbs": 0.04721153830104892,
+        "umc_dclk_ghz_median_per_node": 7.200023130256551,
+        "per_node_all_gbs": {
+          "0": 91.10827216279347
+        },
+        "prog_bw_gbs": 84.18,
+        "prog_bw_samples": [
+          84.18,
+          84.13,
+          84.19
+        ],
+        "prog_time_freq_corrected_s": 4.75166692
+      }
+    },
+    "config": {
+      "inst": "t1",
+      "reps": 3
+    }
+  },
+  "system_local": {
+    "nodes": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "threads": [
+      1,
+      2,
+      4,
+      6,
+      8,
+      12,
+      16,
+      20,
+      24,
+      28,
+      32,
+      40,
+      48,
+      56,
+      64
+    ],
+    "points": {
+      "1": {
+        "threads": 1,
+        "node_threads": {
+          "0": 1
+        },
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 2.0,
+        "umc_all_gbs": 25.057580946965487,
+        "umc_rd_gbs": 25.053450269444422,
+        "umc_wr_gbs": 0.0040918334011508985,
+        "umc_dclk_ghz_median_per_node": 7.200019862875356,
+        "per_node_all_gbs": {
+          "0": 25.057580946965487
+        },
+        "prog_bw_gbs": 23.3,
+        "prog_bw_samples": [
+          23.29,
+          23.3,
+          23.3
+        ],
+        "prog_time_freq_corrected_s": 8.584547109846154
+      },
+      "2": {
+        "threads": 2,
+        "node_threads": {
+          "0": 1,
+          "1": 1
+        },
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 4.0,
+        "umc_all_gbs": 50.22637931894221,
+        "umc_rd_gbs": 50.21949126198783,
+        "umc_wr_gbs": 0.006231286744221352,
+        "umc_dclk_ghz_median_per_node": 7.20001990891746,
+        "per_node_all_gbs": {
+          "0": 24.74467606592994,
+          "1": 25.481703253012267
+        },
+        "prog_bw_gbs": 46.0,
+        "prog_bw_samples": [
+          46.02,
+          45.98,
+          46.0
+        ],
+        "prog_time_freq_corrected_s": 8.69478878
+      },
+      "4": {
+        "threads": 4,
+        "node_threads": {
+          "0": 1,
+          "1": 1,
+          "2": 1,
+          "3": 1
+        },
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 8.0,
+        "umc_all_gbs": 100.52596390911572,
+        "umc_rd_gbs": 100.50549110840453,
+        "umc_wr_gbs": 0.02664747373879486,
+        "umc_dclk_ghz_median_per_node": 7.200019711772065,
+        "per_node_all_gbs": {
+          "0": 24.119740780654983,
+          "1": 25.483462297043722,
+          "2": 25.36173826684285,
+          "3": 25.56664116658326
+        },
+        "prog_bw_gbs": 89.59,
+        "prog_bw_samples": [
+          89.69,
+          89.59,
+          89.58
+        ],
+        "prog_time_freq_corrected_s": 8.930036969846153
+      },
+      "6": {
+        "threads": 6,
+        "node_threads": {
+          "0": 2,
+          "1": 2,
+          "2": 1,
+          "3": 1
+        },
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 12.0,
+        "umc_all_gbs": 140.96000158555722,
+        "umc_rd_gbs": 140.9344798864993,
+        "umc_wr_gbs": 0.0216959821127779,
+        "umc_dclk_ghz_median_per_node": 7.200019963247083,
+        "per_node_all_gbs": {
+          "0": 44.428368393695116,
+          "1": 45.6415055571884,
+          "2": 25.362787923116954,
+          "3": 25.544696722958378
+        },
+        "prog_bw_gbs": 120.92,
+        "prog_bw_samples": [
+          120.99,
+          120.92,
+          120.91
+        ],
+        "prog_time_freq_corrected_s": 9.92374176
+      },
+      "8": {
+        "threads": 8,
+        "node_threads": {
+          "0": 2,
+          "1": 2,
+          "2": 2,
+          "3": 2
+        },
+        "per_thread_mb": 2048,
+        "total_footprint_gb": 16.0,
+        "umc_all_gbs": 180.8353788604444,
+        "umc_rd_gbs": 180.81112001812153,
+        "umc_wr_gbs": 0.02268576703402165,
+        "umc_dclk_ghz_median_per_node": 7.200019794256406,
+        "per_node_all_gbs": {
+          "0": 44.3843652249573,
+          "1": 45.59654796374492,
+          "2": 45.465969434806645,
+          "3": 45.414108822595736
+        },
+        "prog_bw_gbs": 161.19,
+        "prog_bw_samples": [
+          161.24,
+          161.19,
+          160.84
+        ],
+        "prog_time_freq_corrected_s": 9.92607758
+      },
+      "12": {
+        "threads": 12,
+        "node_threads": {
+          "0": 3,
+          "1": 3,
+          "2": 3,
+          "3": 3
+        },
+        "per_thread_mb": 1024,
+        "total_footprint_gb": 12.0,
+        "umc_all_gbs": 199.49216945309342,
+        "umc_rd_gbs": 199.46523647275257,
+        "umc_wr_gbs": 0.024288549111957877,
+        "umc_dclk_ghz_median_per_node": 7.200020027246945,
+        "per_node_all_gbs": {
+          "0": 49.197037106915566,
+          "1": 51.01113127580701,
+          "2": 49.75693862113458,
+          "3": 49.533614387135714
+        },
+        "prog_bw_gbs": 178.89,
+        "prog_bw_samples": [
+          179.12,
+          178.89,
+          178.7
+        ],
+        "prog_time_freq_corrected_s": 6.70787234
+      },
+      "16": {
+        "threads": 16,
+        "node_threads": {
+          "0": 4,
+          "1": 4,
+          "2": 4,
+          "3": 4
+        },
+        "per_thread_mb": 1024,
+        "total_footprint_gb": 16.0,
+        "umc_all_gbs": 199.77447933315977,
+        "umc_rd_gbs": 199.74376676088653,
+        "umc_wr_gbs": 0.027957971389983894,
+        "umc_dclk_ghz_median_per_node": 7.200019378240311,
+        "per_node_all_gbs": {
+          "0": 49.59271113406638,
+          "1": 51.058363759070765,
+          "2": 49.59365616953416,
+          "3": 49.53072586560309
+        },
+        "prog_bw_gbs": 181.05,
+        "prog_bw_samples": [
+          181.05,
+          180.99,
+          181.06
+        ],
+        "prog_time_freq_corrected_s": 8.83723778
+      },
+      "20": {
+        "threads": 20,
+        "node_threads": {
+          "0": 5,
+          "1": 5,
+          "2": 5,
+          "3": 5
+        },
+        "per_thread_mb": 512,
+        "total_footprint_gb": 10.0,
+        "umc_all_gbs": 266.3148906762773,
+        "umc_rd_gbs": 266.2772196734507,
+        "umc_wr_gbs": 0.038805127167178294,
+        "umc_dclk_ghz_median_per_node": 7.200020341105697,
+        "per_node_all_gbs": {
+          "0": 66.8334792426773,
+          "1": 67.38358607465972,
+          "2": 65.35200748529796,
+          "3": 66.75698376612407
+        },
+        "prog_bw_gbs": 222.8,
+        "prog_bw_samples": [
+          222.29,
+          223.36,
+          222.8
+        ],
+        "prog_time_freq_corrected_s": 4.488260850153846
+      },
+      "24": {
+        "threads": 24,
+        "node_threads": {
+          "0": 6,
+          "1": 6,
+          "2": 6,
+          "3": 6
+        },
+        "per_thread_mb": 512,
+        "total_footprint_gb": 12.0,
+        "umc_all_gbs": 300.5611262836205,
+        "umc_rd_gbs": 300.478823303562,
+        "umc_wr_gbs": 0.06063272396738406,
+        "umc_dclk_ghz_median_per_node": 7.200019921107868,
+        "per_node_all_gbs": {
+          "0": 76.02436017875415,
+          "1": 75.76988224736796,
+          "2": 74.79392899730009,
+          "3": 74.10130456234407
+        },
+        "prog_bw_gbs": 250.84,
+        "prog_bw_samples": [
+          248.19,
+          252.76,
+          250.84
+        ],
+        "prog_time_freq_corrected_s": 4.783987309846154
+      },
+      "28": {
+        "threads": 28,
+        "node_threads": {
+          "0": 7,
+          "1": 7,
+          "2": 7,
+          "3": 7
+        },
+        "per_thread_mb": 512,
+        "total_footprint_gb": 14.0,
+        "umc_all_gbs": 316.3168520404377,
+        "umc_rd_gbs": 316.2290503786646,
+        "umc_wr_gbs": 0.08312358295350114,
+        "umc_dclk_ghz_median_per_node": 7.200018904136288,
+        "per_node_all_gbs": {
+          "0": 79.61652135660069,
+          "1": 78.40038549818036,
+          "2": 79.5854458997905,
+          "3": 79.6108933477851
+        },
+        "prog_bw_gbs": 272.46,
+        "prog_bw_samples": [
+          272.92,
+          272.46,
+          271.19
+        ],
+        "prog_time_freq_corrected_s": 5.13834716
+      },
+      "32": {
+        "threads": 32,
+        "node_threads": {
+          "0": 8,
+          "1": 8,
+          "2": 8,
+          "3": 8
+        },
+        "per_thread_mb": 512,
+        "total_footprint_gb": 16.0,
+        "umc_all_gbs": 326.3458014593803,
+        "umc_rd_gbs": 326.24191541450773,
+        "umc_wr_gbs": 0.1004488633210952,
+        "umc_dclk_ghz_median_per_node": 7.200019439169461,
+        "per_node_all_gbs": {
+          "0": 83.19401352052496,
+          "1": 81.11948637426643,
+          "2": 83.23887970375597,
+          "3": 80.85597921368948
+        },
+        "prog_bw_gbs": 294.15,
+        "prog_bw_samples": [
+          292.89,
+          296.46,
+          294.15
+        ],
+        "prog_time_freq_corrected_s": 5.439322429846154
+      },
+      "40": {
+        "threads": 40,
+        "node_threads": {
+          "0": 10,
+          "1": 10,
+          "2": 10,
+          "3": 10
+        },
+        "per_thread_mb": 256,
+        "total_footprint_gb": 10.0,
+        "umc_all_gbs": 366.66002854273563,
+        "umc_rd_gbs": 366.5329157226697,
+        "umc_wr_gbs": 0.11060692766627553,
+        "umc_dclk_ghz_median_per_node": 7.200018773748397,
+        "per_node_all_gbs": {
+          "0": 91.42155207417096,
+          "1": 91.80005984849029,
+          "2": 91.67178221616982,
+          "3": 91.744684571791
+        },
+        "prog_bw_gbs": 285.54,
+        "prog_bw_samples": [
+          285.54,
+          285.54,
+          285.39
+        ],
+        "prog_time_freq_corrected_s": 3.50215956
+      },
+      "48": {
+        "threads": 48,
+        "node_threads": {
+          "0": 12,
+          "1": 12,
+          "2": 12,
+          "3": 12
+        },
+        "per_thread_mb": 256,
+        "total_footprint_gb": 12.0,
+        "umc_all_gbs": 360.80463315617527,
+        "umc_rd_gbs": 360.6528227291643,
+        "umc_wr_gbs": 0.1222188354715526,
+        "umc_dclk_ghz_median_per_node": 7.200019342829906,
+        "per_node_all_gbs": {
+          "0": 90.9517128345614,
+          "1": 90.52893004249444,
+          "2": 89.13353649691075,
+          "3": 89.79397726946556
+        },
+        "prog_bw_gbs": 264.15,
+        "prog_bw_samples": [
+          263.61,
+          264.15,
+          264.51
+        ],
+        "prog_time_freq_corrected_s": 4.54291182
+      },
+      "56": {
+        "threads": 56,
+        "node_threads": {
+          "0": 14,
+          "1": 14,
+          "2": 14,
+          "3": 14
+        },
+        "per_thread_mb": 256,
+        "total_footprint_gb": 14.0,
+        "umc_all_gbs": 363.8987515730809,
+        "umc_rd_gbs": 363.6826261564074,
+        "umc_wr_gbs": 0.14907545087067886,
+        "umc_dclk_ghz_median_per_node": 7.200019134955619,
+        "per_node_all_gbs": {
+          "0": 91.13546452007526,
+          "1": 91.00768710407175,
+          "2": 91.17363064582854,
+          "3": 90.97210257778914
+        },
+        "prog_bw_gbs": 301.61,
+        "prog_bw_samples": [
+          301.61,
+          301.65,
+          300.92
+        ],
+        "prog_time_freq_corrected_s": 4.64179694
+      },
+      "64": {
+        "threads": 64,
+        "node_threads": {
+          "0": 16,
+          "1": 16,
+          "2": 16,
+          "3": 16
+        },
+        "per_thread_mb": 256,
+        "total_footprint_gb": 16.0,
+        "umc_all_gbs": 363.35416837492215,
+        "umc_rd_gbs": 363.1427488465525,
+        "umc_wr_gbs": 0.20647823278530308,
+        "umc_dclk_ghz_median_per_node": 7.200020225105542,
+        "per_node_all_gbs": {
+          "0": 91.0296121211929,
+          "1": 90.6424381539639,
+          "2": 91.05896406267647,
+          "3": 90.74531847077984
+        },
+        "prog_bw_gbs": 334.39,
+        "prog_bw_samples": [
+          333.36,
+          334.46,
+          334.39
+        ],
+        "prog_time_freq_corrected_s": 4.784865490153846
+      }
+    },
+    "config": {
+      "inst": "t1",
+      "reps": 3
+    }
+  }
+}
