@@ -121,6 +121,20 @@ CMAKE_FLAGS = [
     "-DCAS_NO_ABSTRACT=OFF",
     "-DGROWT=OFF",
     "-DCALC_STATS=OFF",
+    # Pinned OFF rather than left to the CMakeLists default. cmake caches every
+    # option, so `cmake -S . -B build` on a directory somebody else configured
+    # keeps THEIR value for anything this list does not mention. That is not
+    # hypothetical: a build left AGGR / BQ_KMER_TEST / PART_ID ON, and AGGR is
+    # not cosmetic -- cas_kht.hpp's duplicate-insert path branches on
+    # `std::is_same_v<KV, Aggr_KV>` and does an atomic counter increment in
+    # place of the value store, which changes what "insert" means. Anything
+    # that alters the measured path belongs here explicitly.
+    "-DAGGR=OFF",
+    "-DBQ_KMER_TEST=OFF",
+    "-DBQUEUE=OFF",
+    "-DPART_ID=OFF",
+    "-DCLHT=OFF",
+    "-DLATENCY_COLLECTION=OFF",
 ]
 
 BUILD_JOBS = 64
@@ -205,6 +219,22 @@ TABLES = {
             "link bucket pool exhausted'"
         ),
     },
+    # dlht at the batch length every other table uses. dlht is the only table
+    # the collector runs at 32, so its numbers carry a second difference on
+    # top of the table itself; this row isolates that by holding batch_len at
+    # 16 with the prefetcher off, which is dlht's better state (see PLOT_ORDER).
+    "dlht_batch16": {
+        "display": "dlht (batch 16, hw pref off)",
+        "ht_type": HT_DLHT,
+        "prefetcher": "off",
+        "batch_len": 16,
+        "max_fill": 40,
+        "max_fill_reason": (
+            "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% "
+            "reported fill; the table aborts with 'Resize required: Global "
+            "link bucket pool exhausted'"
+        ),
+    },
 }
 
 # The two baselines are collected twice, once in each hardware-prefetcher
@@ -215,7 +245,7 @@ TABLES = {
 # random-access probe scan is never used. Rather than silently switch the
 # setting, both are measured and plotted so the gap is visible.
 PLOT_ORDER = ["cas", "cas23", "folklore", "folklore_nopref", "dlht",
-              "dlht_nopref"]
+              "dlht_nopref", "dlht_batch16"]
 
 SKIPPED = {
     "growt": "excluded by request; it collapses past ~50% fill (see intel.json)",

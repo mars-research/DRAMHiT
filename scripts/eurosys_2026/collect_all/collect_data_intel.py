@@ -271,5 +271,9 @@ if __name__ == "__main__":
             all_results.append(obj)
 
     # Save all results into a single JSON file
-    out_file = sys.argv[1]
+    if len(sys.argv) > 1:
+        out_file = sys.argv[1]
+    else:
+        out_file = "output.json"
+        
     save_json(all_results, out_file)

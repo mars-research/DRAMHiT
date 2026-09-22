@@ -22,15 +22,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 4513747398.0,
+    "global_find_cycle": 4521595406.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9843769000.0,
+    "global_insert_cycle": 9094638196.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 117.0,
+    "set_cycles": 108.0,
     "get_cycles": 53.0,
-    "set_mops": 1363.0,
-    "get_mops": 2973.0
+    "set_mops": 1475.0,
+    "get_mops": 2968.0
   },
   {
     "build_cfg": {
@@ -55,15 +55,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 9310937434.0,
+    "global_find_cycle": 9326815954.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 20013918330.0,
+    "global_insert_cycle": 18498394778.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 119.0,
+    "set_cycles": 110.0,
     "get_cycles": 55.0,
-    "set_mops": 1341.0,
-    "get_mops": 2883.0
+    "set_mops": 1451.0,
+    "get_mops": 2878.0
   },
   {
     "build_cfg": {
@@ -88,15 +88,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 14490207678.0,
+    "global_find_cycle": 14577858700.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 30419519812.0,
+    "global_insert_cycle": 28125576902.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 120.0,
+    "set_cycles": 111.0,
     "get_cycles": 57.0,
-    "set_mops": 1323.0,
-    "get_mops": 2778.0
+    "set_mops": 1431.0,
+    "get_mops": 2762.0
   },
   {
     "build_cfg": {
@@ -121,15 +121,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 22053460324.0,
+    "global_find_cycle": 20725624768.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 41856066884.0,
+    "global_insert_cycle": 38049551318.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 124.0,
-    "get_cycles": 65.0,
-    "set_mops": 1282.0,
-    "get_mops": 2434.0
+    "set_cycles": 113.0,
+    "get_cycles": 61.0,
+    "set_mops": 1410.0,
+    "get_mops": 2590.0
   },
   {
     "build_cfg": {
@@ -154,15 +154,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 28079600170.0,
+    "global_find_cycle": 28070628056.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 52687141140.0,
+    "global_insert_cycle": 48817545268.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 125.0,
+    "set_cycles": 116.0,
     "get_cycles": 66.0,
-    "set_mops": 1273.0,
-    "get_mops": 2389.0
+    "set_mops": 1374.0,
+    "get_mops": 2390.0
   },
   {
     "build_cfg": {
@@ -187,15 +187,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 37091931998.0,
+    "global_find_cycle": 36763706336.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 65337650828.0,
+    "global_insert_cycle": 61160258812.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 129.0,
+    "set_cycles": 121.0,
     "get_cycles": 73.0,
-    "set_mops": 1232.0,
-    "get_mops": 2171.0
+    "set_mops": 1316.0,
+    "get_mops": 2190.0
   },
   {
     "build_cfg": {
@@ -220,15 +220,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 47742436864.0,
+    "global_find_cycle": 46951105382.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 80336391874.0,
+    "global_insert_cycle": 75078349242.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 136.0,
-    "get_cycles": 81.0,
-    "set_mops": 1169.0,
-    "get_mops": 1967.0
+    "set_cycles": 127.0,
+    "get_cycles": 79.0,
+    "set_mops": 1251.0,
+    "get_mops": 2001.0
   },
   {
     "build_cfg": {
@@ -253,15 +253,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 63055937394.0,
+    "global_find_cycle": 61231239094.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 100089927096.0,
+    "global_insert_cycle": 93815819502.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 149.0,
-    "get_cycles": 93.0,
-    "set_mops": 1072.0,
-    "get_mops": 1702.0
+    "set_cycles": 139.0,
+    "get_cycles": 91.0,
+    "set_mops": 1144.0,
+    "get_mops": 1753.0
   },
   {
     "build_cfg": {
@@ -286,15 +286,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 98831975800.0,
+    "global_find_cycle": 93003280772.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 144055007940.0,
+    "global_insert_cycle": 129561178394.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 190.0,
-    "get_cycles": 130.0,
-    "set_mops": 838.0,
-    "get_mops": 1222.0
+    "set_cycles": 171.0,
+    "get_cycles": 123.0,
+    "set_mops": 932.0,
+    "get_mops": 1298.0
   },
   {
     "build_cfg": {
@@ -319,15 +319,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 3027176768.0,
+    "global_find_cycle": 2798024170.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5138450226.0,
+    "global_insert_cycle": 5093622546.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 122.0,
-    "get_cycles": 72.0,
-    "set_mops": 2612.0,
-    "get_mops": 4433.0
+    "set_cycles": 121.0,
+    "get_cycles": 66.0,
+    "set_mops": 2635.0,
+    "get_mops": 4796.0
   },
   {
     "build_cfg": {
@@ -352,15 +352,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 5809115226.0,
+    "global_find_cycle": 5962773416.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 10601456312.0,
+    "global_insert_cycle": 10516953066.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 126.0,
-    "get_cycles": 69.0,
-    "set_mops": 2532.0,
-    "get_mops": 4620.0
+    "set_cycles": 125.0,
+    "get_cycles": 71.0,
+    "set_mops": 2552.0,
+    "get_mops": 4501.0
   },
   {
     "build_cfg": {
@@ -385,15 +385,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 9623070544.0,
+    "global_find_cycle": 10824924768.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 16042777336.0,
+    "global_insert_cycle": 15916923878.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 127.0,
-    "get_cycles": 76.0,
-    "set_mops": 2509.0,
-    "get_mops": 4184.0
+    "set_cycles": 126.0,
+    "get_cycles": 86.0,
+    "set_mops": 2529.0,
+    "get_mops": 3719.0
   },
   {
     "build_cfg": {
@@ -418,15 +418,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 12945424070.0,
+    "global_find_cycle": 12875325682.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 21793320150.0,
+    "global_insert_cycle": 21651491586.0,
     "insert_ops": 21474836400.0,
     "set_cycles": 129.0,
-    "get_cycles": 77.0,
-    "set_mops": 2463.0,
-    "get_mops": 4147.0
+    "get_cycles": 76.0,
+    "set_mops": 2479.0,
+    "get_mops": 4169.0
   },
   {
     "build_cfg": {
@@ -451,15 +451,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 17123945318.0,
+    "global_find_cycle": 17460969998.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 27940777378.0,
+    "global_insert_cycle": 28191580020.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 133.0,
-    "get_cycles": 81.0,
-    "set_mops": 2401.0,
-    "get_mops": 3919.0
+    "set_cycles": 134.0,
+    "get_cycles": 83.0,
+    "set_mops": 2380.0,
+    "get_mops": 3843.0
   },
   {
     "build_cfg": {
@@ -484,15 +484,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 22310372660.0,
+    "global_find_cycle": 23319511214.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 34791829676.0,
+    "global_insert_cycle": 36439444022.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 138.0,
-    "get_cycles": 88.0,
-    "set_mops": 2314.0,
-    "get_mops": 3609.0
+    "set_cycles": 144.0,
+    "get_cycles": 92.0,
+    "set_mops": 2209.0,
+    "get_mops": 3453.0
   },
   {
     "build_cfg": {
@@ -517,15 +517,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 31248319178.0,
+    "global_find_cycle": 29874258930.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 43107750492.0,
+    "global_insert_cycle": 44364781974.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 146.0,
-    "get_cycles": 106.0,
-    "set_mops": 2179.0,
-    "get_mops": 3006.0
+    "set_cycles": 151.0,
+    "get_cycles": 101.0,
+    "set_mops": 2117.0,
+    "get_mops": 3144.0
   },
   {
     "build_cfg": {
@@ -550,15 +550,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 39172661204.0,
+    "global_find_cycle": 41509214378.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 55469344102.0,
+    "global_insert_cycle": 57350005932.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 165.0,
-    "get_cycles": 116.0,
-    "set_mops": 1935.0,
-    "get_mops": 2741.0
+    "set_cycles": 170.0,
+    "get_cycles": 123.0,
+    "set_mops": 1872.0,
+    "get_mops": 2586.0
   },
   {
     "build_cfg": {
@@ -583,15 +583,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 59215293842.0,
+    "global_find_cycle": 69110356176.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 78037619010.0,
+    "global_insert_cycle": 88711639460.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 206.0,
-    "get_cycles": 156.0,
-    "set_mops": 1547.0,
-    "get_mops": 2039.0
+    "set_cycles": 235.0,
+    "get_cycles": 183.0,
+    "set_mops": 1361.0,
+    "get_mops": 1747.0
   },
   {
     "build_cfg": {
@@ -616,15 +616,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 4057373146.0,
+    "global_find_cycle": 4138940768.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9843488194.0,
+    "global_insert_cycle": 9106225396.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 117.0,
-    "get_cycles": 48.0,
-    "set_mops": 1363.0,
-    "get_mops": 3307.0
+    "set_cycles": 108.0,
+    "get_cycles": 49.0,
+    "set_mops": 1473.0,
+    "get_mops": 3242.0
   },
   {
     "build_cfg": {
@@ -649,15 +649,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 8660918030.0,
+    "global_find_cycle": 8806029432.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 20010572216.0,
+    "global_insert_cycle": 18488466300.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 119.0,
-    "get_cycles": 51.0,
-    "set_mops": 1341.0,
-    "get_mops": 3099.0
+    "set_cycles": 110.0,
+    "get_cycles": 52.0,
+    "set_mops": 1451.0,
+    "get_mops": 3048.0
   },
   {
     "build_cfg": {
@@ -682,15 +682,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 13897388658.0,
+    "global_find_cycle": 14140389108.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 30426787742.0,
+    "global_insert_cycle": 28067835458.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 120.0,
-    "get_cycles": 55.0,
-    "set_mops": 1323.0,
-    "get_mops": 2897.0
+    "set_cycles": 111.0,
+    "get_cycles": 56.0,
+    "set_mops": 1434.0,
+    "get_mops": 2847.0
   },
   {
     "build_cfg": {
@@ -715,15 +715,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 20326499744.0,
+    "global_find_cycle": 20441308288.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 41183524798.0,
+    "global_insert_cycle": 38083439226.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 122.0,
+    "set_cycles": 113.0,
     "get_cycles": 60.0,
-    "set_mops": 1303.0,
-    "get_mops": 2641.0
+    "set_mops": 1409.0,
+    "get_mops": 2626.0
   },
   {
     "build_cfg": {
@@ -748,15 +748,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 28574342648.0,
+    "global_find_cycle": 28406804698.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 52648848804.0,
+    "global_insert_cycle": 48822373482.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 125.0,
-    "get_cycles": 68.0,
-    "set_mops": 1274.0,
-    "get_mops": 2348.0
+    "set_cycles": 116.0,
+    "get_cycles": 67.0,
+    "set_mops": 1374.0,
+    "get_mops": 2362.0
   },
   {
     "build_cfg": {
@@ -781,15 +781,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 39166467338.0,
+    "global_find_cycle": 38580997172.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 65318235642.0,
+    "global_insert_cycle": 60901547222.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 129.0,
-    "get_cycles": 77.0,
-    "set_mops": 1232.0,
-    "get_mops": 2056.0
+    "set_cycles": 121.0,
+    "get_cycles": 76.0,
+    "set_mops": 1322.0,
+    "get_mops": 2087.0
   },
   {
     "build_cfg": {
@@ -814,15 +814,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 51802355990.0,
+    "global_find_cycle": 50179995628.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 79977342278.0,
+    "global_insert_cycle": 75010463234.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 136.0,
-    "get_cycles": 88.0,
-    "set_mops": 1174.0,
-    "get_mops": 1813.0
+    "set_cycles": 127.0,
+    "get_cycles": 85.0,
+    "set_mops": 1252.0,
+    "get_mops": 1872.0
   },
   {
     "build_cfg": {
@@ -847,15 +847,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 68255451136.0,
+    "global_find_cycle": 65939591082.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 100226241436.0,
+    "global_insert_cycle": 94168404006.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 149.0,
-    "get_cycles": 101.0,
-    "set_mops": 1071.0,
-    "get_mops": 1573.0
+    "set_cycles": 140.0,
+    "get_cycles": 98.0,
+    "set_mops": 1140.0,
+    "get_mops": 1628.0
   },
   {
     "build_cfg": {
@@ -880,15 +880,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 102341594206.0,
+    "global_find_cycle": 97232862434.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 141358482810.0,
+    "global_insert_cycle": 129749582056.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 187.0,
-    "get_cycles": 135.0,
-    "set_mops": 854.0,
-    "get_mops": 1180.0
+    "set_cycles": 171.0,
+    "get_cycles": 128.0,
+    "set_mops": 930.0,
+    "get_mops": 1242.0
   },
   {
     "build_cfg": {
@@ -913,15 +913,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 2704733498.0,
+    "global_find_cycle": 2835404952.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5144867800.0,
+    "global_insert_cycle": 5076752574.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 122.0,
-    "get_cycles": 64.0,
-    "set_mops": 2608.0,
-    "get_mops": 4962.0
+    "set_cycles": 121.0,
+    "get_cycles": 67.0,
+    "set_mops": 2643.0,
+    "get_mops": 4733.0
   },
   {
     "build_cfg": {
@@ -946,15 +946,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 6161679406.0,
+    "global_find_cycle": 5788225156.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 10563236572.0,
+    "global_insert_cycle": 10525347968.0,
     "insert_ops": 10737418200.0,
     "set_cycles": 125.0,
-    "get_cycles": 73.0,
-    "set_mops": 2541.0,
-    "get_mops": 4356.0
+    "get_cycles": 69.0,
+    "set_mops": 2550.0,
+    "get_mops": 4637.0
   },
   {
     "build_cfg": {
@@ -979,15 +979,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 9367928872.0,
+    "global_find_cycle": 9767524406.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 16056829702.0,
+    "global_insert_cycle": 15924290434.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 127.0,
-    "get_cycles": 74.0,
-    "set_mops": 2507.0,
-    "get_mops": 4298.0
+    "set_cycles": 126.0,
+    "get_cycles": 77.0,
+    "set_mops": 2528.0,
+    "get_mops": 4122.0
   },
   {
     "build_cfg": {
@@ -1012,15 +1012,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 15464578626.0,
+    "global_find_cycle": 13897940854.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 21787693410.0,
+    "global_insert_cycle": 21960979088.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 129.0,
-    "get_cycles": 92.0,
-    "set_mops": 2464.0,
-    "get_mops": 3471.0
+    "set_cycles": 130.0,
+    "get_cycles": 82.0,
+    "set_mops": 2444.0,
+    "get_mops": 3862.0
   },
   {
     "build_cfg": {
@@ -1045,15 +1045,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 19795109152.0,
+    "global_find_cycle": 18528599984.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 27932391292.0,
+    "global_insert_cycle": 28506232100.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 133.0,
-    "get_cycles": 94.0,
-    "set_mops": 2402.0,
-    "get_mops": 3390.0
+    "set_cycles": 135.0,
+    "get_cycles": 88.0,
+    "set_mops": 2354.0,
+    "get_mops": 3621.0
   },
   {
     "build_cfg": {
@@ -1078,15 +1078,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 24039429302.0,
+    "global_find_cycle": 26580448916.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 34837208288.0,
+    "global_insert_cycle": 35098349166.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 138.0,
-    "get_cycles": 95.0,
-    "set_mops": 2311.0,
-    "get_mops": 3349.0
+    "set_cycles": 139.0,
+    "get_cycles": 105.0,
+    "set_mops": 2294.0,
+    "get_mops": 3029.0
   },
   {
     "build_cfg": {
@@ -1111,15 +1111,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 32199194202.0,
+    "global_find_cycle": 34747506936.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 43319993656.0,
+    "global_insert_cycle": 44596719326.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 147.0,
-    "get_cycles": 109.0,
-    "set_mops": 2168.0,
-    "get_mops": 2917.0
+    "set_cycles": 151.0,
+    "get_cycles": 118.0,
+    "set_mops": 2106.0,
+    "get_mops": 2703.0
   },
   {
     "build_cfg": {
@@ -1144,15 +1144,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 43054402978.0,
+    "global_find_cycle": 46210469416.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 55038209166.0,
+    "global_insert_cycle": 56247719942.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 164.0,
-    "get_cycles": 128.0,
-    "set_mops": 1950.0,
-    "get_mops": 2493.0
+    "set_cycles": 167.0,
+    "get_cycles": 137.0,
+    "set_mops": 1908.0,
+    "get_mops": 2323.0
   },
   {
     "build_cfg": {
@@ -1177,15 +1177,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 71609283972.0,
+    "global_find_cycle": 70901965684.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 85627195188.0,
+    "global_insert_cycle": 81967254468.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 226.0,
-    "get_cycles": 189.0,
-    "set_mops": 1410.0,
-    "get_mops": 1686.0
+    "set_cycles": 217.0,
+    "get_cycles": 187.0,
+    "set_mops": 1473.0,
+    "get_mops": 1703.0
   },
   {
     "build_cfg": {
@@ -1210,15 +1210,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 4046760938.0,
+    "global_find_cycle": 4103092044.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9084382450.0,
+    "global_insert_cycle": 9096658562.0,
     "insert_ops": 5368709100.0,
     "set_cycles": 108.0,
     "get_cycles": 48.0,
-    "set_mops": 1477.0,
-    "get_mops": 3316.0
+    "set_mops": 1475.0,
+    "get_mops": 3271.0
   },
   {
     "build_cfg": {
@@ -1243,15 +1243,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 8563325200.0,
+    "global_find_cycle": 8612516888.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 18473017040.0,
+    "global_insert_cycle": 18485580518.0,
     "insert_ops": 10737418200.0,
     "set_cycles": 110.0,
     "get_cycles": 51.0,
-    "set_mops": 1453.0,
-    "get_mops": 3134.0
+    "set_mops": 1452.0,
+    "get_mops": 3116.0
   },
   {
     "build_cfg": {
@@ -1276,15 +1276,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 13406886606.0,
+    "global_find_cycle": 13554002048.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 28066883870.0,
+    "global_insert_cycle": 28081932946.0,
     "insert_ops": 16106127300.0,
     "set_cycles": 111.0,
     "get_cycles": 53.0,
-    "set_mops": 1434.0,
-    "get_mops": 3003.0
+    "set_mops": 1433.0,
+    "get_mops": 2970.0
   },
   {
     "build_cfg": {
@@ -1309,15 +1309,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 19191093212.0,
+    "global_find_cycle": 19244499860.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 38016365538.0,
+    "global_insert_cycle": 38052659896.0,
     "insert_ops": 21474836400.0,
     "set_cycles": 113.0,
     "get_cycles": 57.0,
-    "set_mops": 1412.0,
-    "get_mops": 2797.0
+    "set_mops": 1410.0,
+    "get_mops": 2789.0
   },
   {
     "build_cfg": {
@@ -1342,547 +1342,547 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 26344359696.0,
+    "global_find_cycle": 26256639914.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 48778782356.0,
+    "global_insert_cycle": 48804364968.0,
     "insert_ops": 26843545600.0,
     "set_cycles": 116.0,
     "get_cycles": 62.0,
     "set_mops": 1375.0,
-    "get_mops": 2547.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 60
-    },
-    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 322122547.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.6,
-    "global_find_cycle": 35008693530.0,
-    "find_ops": 32212254700.0,
-    "found": 32212254700.0,
-    "global_insert_cycle": 60909533858.0,
-    "insert_ops": 32212254700.0,
-    "set_cycles": 121.0,
-    "get_cycles": 69.0,
-    "set_mops": 1322.0,
-    "get_mops": 2300.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 70
-    },
-    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 375809638.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.7,
-    "global_find_cycle": 45483370822.0,
-    "find_ops": 37580963800.0,
-    "found": 37580963800.0,
-    "global_insert_cycle": 75022867776.0,
-    "insert_ops": 37580963800.0,
-    "set_cycles": 127.0,
-    "get_cycles": 77.0,
-    "set_mops": 1252.0,
-    "get_mops": 2065.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 80
-    },
-    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 429496729.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.8,
-    "global_find_cycle": 60458826648.0,
-    "find_ops": 42949672900.0,
-    "found": 42949672900.0,
-    "global_insert_cycle": 94371623962.0,
-    "insert_ops": 42949672900.0,
-    "set_cycles": 140.0,
-    "get_cycles": 90.0,
-    "set_mops": 1137.0,
-    "get_mops": 1775.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 90
-    },
-    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 483183820.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.9,
-    "global_find_cycle": 94415494590.0,
-    "find_ops": 48318382000.0,
-    "found": 48318382000.0,
-    "global_insert_cycle": 134015275582.0,
-    "insert_ops": 48318382000.0,
-    "set_cycles": 177.0,
-    "get_cycles": 125.0,
-    "set_mops": 901.0,
-    "get_mops": 1279.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 10
-    },
-    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 53687091.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.1,
-    "global_find_cycle": 2704175278.0,
-    "find_ops": 5368709100.0,
-    "found": 5368709100.0,
-    "global_insert_cycle": 5093384200.0,
-    "insert_ops": 5368709100.0,
-    "set_cycles": 121.0,
-    "get_cycles": 64.0,
-    "set_mops": 2635.0,
-    "get_mops": 4963.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 20
-    },
-    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 107374182.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.2,
-    "global_find_cycle": 6036536838.0,
-    "find_ops": 10737418200.0,
-    "found": 10737418200.0,
-    "global_insert_cycle": 10452795754.0,
-    "insert_ops": 10737418200.0,
-    "set_cycles": 124.0,
-    "get_cycles": 71.0,
-    "set_mops": 2568.0,
-    "get_mops": 4446.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 30
-    },
-    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 161061273.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.3,
-    "global_find_cycle": 8951298618.0,
-    "find_ops": 16106127300.0,
-    "found": 16106127300.0,
-    "global_insert_cycle": 15924556116.0,
-    "insert_ops": 16106127300.0,
-    "set_cycles": 126.0,
-    "get_cycles": 71.0,
-    "set_mops": 2528.0,
-    "get_mops": 4498.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 40
-    },
-    "run_cfg_str": "fill_factor=40-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 214748364.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.4,
-    "global_find_cycle": 14751985682.0,
-    "find_ops": 21474836400.0,
-    "found": 21474836400.0,
-    "global_insert_cycle": 21653785828.0,
-    "insert_ops": 21474836400.0,
-    "set_cycles": 129.0,
-    "get_cycles": 87.0,
-    "set_mops": 2479.0,
-    "get_mops": 3639.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 50
-    },
-    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 268435456.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.5,
-    "global_find_cycle": 19169517942.0,
-    "find_ops": 26843545600.0,
-    "found": 26843545600.0,
-    "global_insert_cycle": 27979510712.0,
-    "insert_ops": 26843545600.0,
-    "set_cycles": 133.0,
-    "get_cycles": 91.0,
-    "set_mops": 2398.0,
-    "get_mops": 3500.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 60
-    },
-    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 322122547.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.6,
-    "global_find_cycle": 25558867476.0,
-    "find_ops": 32212254700.0,
-    "found": 32212254700.0,
-    "global_insert_cycle": 34897379466.0,
-    "insert_ops": 32212254700.0,
-    "set_cycles": 138.0,
-    "get_cycles": 101.0,
-    "set_mops": 2307.0,
-    "get_mops": 3150.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 70
-    },
-    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 375809638.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.7,
-    "global_find_cycle": 32413899312.0,
-    "find_ops": 37580963800.0,
-    "found": 37580963800.0,
-    "global_insert_cycle": 43436319520.0,
-    "insert_ops": 37580963800.0,
-    "set_cycles": 147.0,
-    "get_cycles": 110.0,
-    "set_mops": 2162.0,
-    "get_mops": 2898.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 80
-    },
-    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 429496729.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.8,
-    "global_find_cycle": 40429589586.0,
-    "find_ops": 42949672900.0,
-    "found": 42949672900.0,
-    "global_insert_cycle": 55290030748.0,
-    "insert_ops": 42949672900.0,
-    "set_cycles": 164.0,
-    "get_cycles": 120.0,
-    "set_mops": 1942.0,
-    "get_mops": 2655.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 90
-    },
-    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025",
-    "fill": 483183820.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.9,
-    "global_find_cycle": 66540835354.0,
-    "find_ops": 48318382000.0,
-    "found": 48318382000.0,
-    "global_insert_cycle": 82687000770.0,
-    "insert_ops": 48318382000.0,
-    "set_cycles": 219.0,
-    "get_cycles": 176.0,
-    "set_mops": 1460.0,
-    "get_mops": 1815.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "L1",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 10
-    },
-    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025+bucket",
-    "fill": 53687091.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.1,
-    "global_find_cycle": 4561195064.0,
-    "find_ops": 5368709100.0,
-    "found": 5368709100.0,
-    "global_insert_cycle": 9791342528.0,
-    "insert_ops": 5368709100.0,
-    "set_cycles": 116.0,
-    "get_cycles": 54.0,
-    "set_mops": 1370.0,
-    "get_mops": 2942.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "L1",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 20
-    },
-    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025+bucket",
-    "fill": 107374182.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.2,
-    "global_find_cycle": 9857620834.0,
-    "find_ops": 10737418200.0,
-    "found": 10737418200.0,
-    "global_insert_cycle": 19827604658.0,
-    "insert_ops": 10737418200.0,
-    "set_cycles": 118.0,
-    "get_cycles": 58.0,
-    "set_mops": 1353.0,
-    "get_mops": 2723.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "OFF",
-      "PREFETCH": "L1",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 30
-    },
-    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025+bucket",
-    "fill": 161061273.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.3,
-    "global_find_cycle": 15759054264.0,
-    "find_ops": 16106127300.0,
-    "found": 16106127300.0,
-    "global_insert_cycle": 29904490406.0,
-    "insert_ops": 16106127300.0,
-    "set_cycles": 118.0,
-    "get_cycles": 62.0,
-    "set_mops": 1346.0,
     "get_mops": 2555.0
   },
   {
     "build_cfg": {
       "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 322122547.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.6,
+    "global_find_cycle": 34596463334.0,
+    "find_ops": 32212254700.0,
+    "found": 32212254700.0,
+    "global_insert_cycle": 60878143010.0,
+    "insert_ops": 32212254700.0,
+    "set_cycles": 120.0,
+    "get_cycles": 68.0,
+    "set_mops": 1322.0,
+    "get_mops": 2327.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 375809638.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.7,
+    "global_find_cycle": 44465375824.0,
+    "find_ops": 37580963800.0,
+    "found": 37580963800.0,
+    "global_insert_cycle": 75173280292.0,
+    "insert_ops": 37580963800.0,
+    "set_cycles": 128.0,
+    "get_cycles": 75.0,
+    "set_mops": 1249.0,
+    "get_mops": 2112.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 429496729.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.8,
+    "global_find_cycle": 57789360736.0,
+    "find_ops": 42949672900.0,
+    "found": 42949672900.0,
+    "global_insert_cycle": 93674433504.0,
+    "insert_ops": 42949672900.0,
+    "set_cycles": 139.0,
+    "get_cycles": 86.0,
+    "set_mops": 1146.0,
+    "get_mops": 1858.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 483183820.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.9,
+    "global_find_cycle": 86695628206.0,
+    "find_ops": 48318382000.0,
+    "found": 48318382000.0,
+    "global_insert_cycle": 129706702174.0,
+    "insert_ops": 48318382000.0,
+    "set_cycles": 171.0,
+    "get_cycles": 114.0,
+    "set_mops": 931.0,
+    "get_mops": 1393.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 53687091.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.1,
+    "global_find_cycle": 2685155350.0,
+    "find_ops": 5368709100.0,
+    "found": 5368709100.0,
+    "global_insert_cycle": 5084228954.0,
+    "insert_ops": 5368709100.0,
+    "set_cycles": 121.0,
+    "get_cycles": 64.0,
+    "set_mops": 2639.0,
+    "get_mops": 4998.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 107374182.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.2,
+    "global_find_cycle": 5743387602.0,
+    "find_ops": 10737418200.0,
+    "found": 10737418200.0,
+    "global_insert_cycle": 10493544550.0,
+    "insert_ops": 10737418200.0,
+    "set_cycles": 125.0,
+    "get_cycles": 68.0,
+    "set_mops": 2558.0,
+    "get_mops": 4673.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 161061273.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.3,
+    "global_find_cycle": 9275772940.0,
+    "find_ops": 16106127300.0,
+    "found": 16106127300.0,
+    "global_insert_cycle": 15942963832.0,
+    "insert_ops": 16106127300.0,
+    "set_cycles": 126.0,
+    "get_cycles": 73.0,
+    "set_mops": 2525.0,
+    "get_mops": 4340.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 214748364.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.4,
+    "global_find_cycle": 12906503588.0,
+    "find_ops": 21474836400.0,
+    "found": 21474836400.0,
+    "global_insert_cycle": 21625550658.0,
+    "insert_ops": 21474836400.0,
+    "set_cycles": 128.0,
+    "get_cycles": 76.0,
+    "set_mops": 2482.0,
+    "get_mops": 4159.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 268435456.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.5,
+    "global_find_cycle": 18982435532.0,
+    "find_ops": 26843545600.0,
+    "found": 26843545600.0,
+    "global_insert_cycle": 27931988968.0,
+    "insert_ops": 26843545600.0,
+    "set_cycles": 133.0,
+    "get_cycles": 90.0,
+    "set_mops": 2402.0,
+    "get_mops": 3535.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 322122547.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.6,
+    "global_find_cycle": 23729523162.0,
+    "find_ops": 32212254700.0,
+    "found": 32212254700.0,
+    "global_insert_cycle": 35486108514.0,
+    "insert_ops": 32212254700.0,
+    "set_cycles": 141.0,
+    "get_cycles": 94.0,
+    "set_mops": 2269.0,
+    "get_mops": 3393.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 375809638.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.7,
+    "global_find_cycle": 30881505008.0,
+    "find_ops": 37580963800.0,
+    "found": 37580963800.0,
+    "global_insert_cycle": 44680380392.0,
+    "insert_ops": 37580963800.0,
+    "set_cycles": 152.0,
+    "get_cycles": 105.0,
+    "set_mops": 2102.0,
+    "get_mops": 3042.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 429496729.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.8,
+    "global_find_cycle": 41664583686.0,
+    "find_ops": 42949672900.0,
+    "found": 42949672900.0,
+    "global_insert_cycle": 57712686250.0,
+    "insert_ops": 42949672900.0,
+    "set_cycles": 171.0,
+    "get_cycles": 124.0,
+    "set_mops": 1860.0,
+    "get_mops": 2577.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025",
+    "fill": 483183820.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.9,
+    "global_find_cycle": 68223953052.0,
+    "find_ops": 48318382000.0,
+    "found": 48318382000.0,
+    "global_insert_cycle": 87342978498.0,
+    "insert_ops": 48318382000.0,
+    "set_cycles": 231.0,
+    "get_cycles": 180.0,
+    "set_mops": 1383.0,
+    "get_mops": 1770.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025+bucket",
+    "fill": 53687091.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.1,
+    "global_find_cycle": 4582363292.0,
+    "find_ops": 5368709100.0,
+    "found": 5368709100.0,
+    "global_insert_cycle": 9038925418.0,
+    "insert_ops": 5368709100.0,
+    "set_cycles": 107.0,
+    "get_cycles": 54.0,
+    "set_mops": 1484.0,
+    "get_mops": 2929.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025+bucket",
+    "fill": 107374182.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.2,
+    "global_find_cycle": 9903712310.0,
+    "find_ops": 10737418200.0,
+    "found": 10737418200.0,
+    "global_insert_cycle": 18256430954.0,
+    "insert_ops": 10737418200.0,
+    "set_cycles": 108.0,
+    "get_cycles": 59.0,
+    "set_mops": 1470.0,
+    "get_mops": 2710.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "OFF",
+      "PREFETCH": "L1",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=OFF",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025+bucket",
+    "fill": 161061273.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.3,
+    "global_find_cycle": 15751251776.0,
+    "find_ops": 16106127300.0,
+    "found": 16106127300.0,
+    "global_insert_cycle": 27599032666.0,
+    "insert_ops": 16106127300.0,
+    "set_cycles": 109.0,
+    "get_cycles": 62.0,
+    "set_mops": 1458.0,
+    "get_mops": 2556.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
       "BUCKETIZATION": "ON",
       "BRANCH": "branched",
       "UNIFORM_PROBING": "OFF",
@@ -1903,15 +1903,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 22530768354.0,
+    "global_find_cycle": 22204222836.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 40240396646.0,
+    "global_insert_cycle": 37107956636.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 119.0,
-    "get_cycles": 67.0,
-    "set_mops": 1334.0,
-    "get_mops": 2382.0
+    "set_cycles": 110.0,
+    "get_cycles": 66.0,
+    "set_mops": 1446.0,
+    "get_mops": 2417.0
   },
   {
     "build_cfg": {
@@ -1936,15 +1936,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 29872923826.0,
+    "global_find_cycle": 29436402330.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 51178044092.0,
+    "global_insert_cycle": 47461901662.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 122.0,
-    "get_cycles": 71.0,
-    "set_mops": 1311.0,
-    "get_mops": 2246.0
+    "set_cycles": 113.0,
+    "get_cycles": 70.0,
+    "set_mops": 1413.0,
+    "get_mops": 2279.0
   },
   {
     "build_cfg": {
@@ -1969,15 +1969,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 38539745488.0,
+    "global_find_cycle": 37608053434.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 63486943890.0,
+    "global_insert_cycle": 59582881784.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 126.0,
-    "get_cycles": 76.0,
-    "set_mops": 1268.0,
-    "get_mops": 2089.0
+    "set_cycles": 118.0,
+    "get_cycles": 74.0,
+    "set_mops": 1351.0,
+    "get_mops": 2141.0
   },
   {
     "build_cfg": {
@@ -2002,15 +2002,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 48769723444.0,
+    "global_find_cycle": 47004830748.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 77648982704.0,
+    "global_insert_cycle": 73608386482.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 132.0,
-    "get_cycles": 83.0,
-    "set_mops": 1209.0,
-    "get_mops": 1926.0
+    "set_cycles": 125.0,
+    "get_cycles": 80.0,
+    "set_mops": 1276.0,
+    "get_mops": 1998.0
   },
   {
     "build_cfg": {
@@ -2035,15 +2035,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 62654425424.0,
+    "global_find_cycle": 60846882172.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 96709609878.0,
+    "global_insert_cycle": 92522849544.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 144.0,
-    "get_cycles": 93.0,
-    "set_mops": 1110.0,
-    "get_mops": 1713.0
+    "set_cycles": 137.0,
+    "get_cycles": 90.0,
+    "set_mops": 1160.0,
+    "get_mops": 1764.0
   },
   {
     "build_cfg": {
@@ -2068,15 +2068,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 96784937698.0,
+    "global_find_cycle": 92633034622.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 138312894892.0,
+    "global_insert_cycle": 129178333092.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 183.0,
-    "get_cycles": 128.0,
-    "set_mops": 873.0,
-    "get_mops": 1248.0
+    "set_cycles": 171.0,
+    "get_cycles": 122.0,
+    "set_mops": 935.0,
+    "get_mops": 1304.0
   },
   {
     "build_cfg": {
@@ -2101,15 +2101,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 2872406444.0,
+    "global_find_cycle": 3191932658.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5125279492.0,
+    "global_insert_cycle": 5042836254.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 122.0,
-    "get_cycles": 68.0,
-    "set_mops": 2618.0,
-    "get_mops": 4672.0
+    "set_cycles": 120.0,
+    "get_cycles": 76.0,
+    "set_mops": 2661.0,
+    "get_mops": 4204.0
   },
   {
     "build_cfg": {
@@ -2134,15 +2134,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 5888164694.0,
+    "global_find_cycle": 5960055782.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 10398685318.0,
+    "global_insert_cycle": 10595068666.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 123.0,
-    "get_cycles": 70.0,
-    "set_mops": 2581.0,
-    "get_mops": 4558.0
+    "set_cycles": 126.0,
+    "get_cycles": 71.0,
+    "set_mops": 2533.0,
+    "get_mops": 4503.0
   },
   {
     "build_cfg": {
@@ -2167,15 +2167,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 9424419746.0,
+    "global_find_cycle": 9534038904.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 15736619386.0,
+    "global_insert_cycle": 15796527464.0,
     "insert_ops": 16106127300.0,
     "set_cycles": 125.0,
-    "get_cycles": 74.0,
-    "set_mops": 2558.0,
-    "get_mops": 4272.0
+    "get_cycles": 75.0,
+    "set_mops": 2548.0,
+    "get_mops": 4223.0
   },
   {
     "build_cfg": {
@@ -2200,15 +2200,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 13185854860.0,
+    "global_find_cycle": 14270487744.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 21195760846.0,
+    "global_insert_cycle": 21027836098.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 126.0,
-    "get_cycles": 78.0,
-    "set_mops": 2532.0,
-    "get_mops": 4071.0
+    "set_cycles": 125.0,
+    "get_cycles": 85.0,
+    "set_mops": 2553.0,
+    "get_mops": 3762.0
   },
   {
     "build_cfg": {
@@ -2233,15 +2233,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 18761976598.0,
+    "global_find_cycle": 18508310130.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 26993462912.0,
+    "global_insert_cycle": 27325761660.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 128.0,
-    "get_cycles": 89.0,
-    "set_mops": 2486.0,
-    "get_mops": 3576.0
+    "set_cycles": 130.0,
+    "get_cycles": 88.0,
+    "set_mops": 2455.0,
+    "get_mops": 3625.0
   },
   {
     "build_cfg": {
@@ -2266,15 +2266,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 22408196568.0,
+    "global_find_cycle": 22690462294.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 33554927144.0,
+    "global_insert_cycle": 33999516428.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 133.0,
-    "get_cycles": 89.0,
-    "set_mops": 2399.0,
-    "get_mops": 3593.0
+    "set_cycles": 135.0,
+    "get_cycles": 90.0,
+    "set_mops": 2368.0,
+    "get_mops": 3549.0
   },
   {
     "build_cfg": {
@@ -2299,15 +2299,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 28732256852.0,
+    "global_find_cycle": 29514732658.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 41933188420.0,
+    "global_insert_cycle": 43624060990.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 142.0,
-    "get_cycles": 97.0,
-    "set_mops": 2240.0,
-    "get_mops": 3269.0
+    "set_cycles": 148.0,
+    "get_cycles": 100.0,
+    "set_mops": 2153.0,
+    "get_mops": 3183.0
   },
   {
     "build_cfg": {
@@ -2332,15 +2332,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 38622797818.0,
+    "global_find_cycle": 39871280408.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 53851079954.0,
+    "global_insert_cycle": 55792659778.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 160.0,
-    "get_cycles": 115.0,
-    "set_mops": 1993.0,
-    "get_mops": 2780.0
+    "set_cycles": 166.0,
+    "get_cycles": 118.0,
+    "set_mops": 1924.0,
+    "get_mops": 2693.0
   },
   {
     "build_cfg": {
@@ -2365,15 +2365,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 61526997296.0,
+    "global_find_cycle": 68933696032.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 79726767880.0,
+    "global_insert_cycle": 87887687422.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 211.0,
-    "get_cycles": 162.0,
-    "set_mops": 1515.0,
-    "get_mops": 1963.0
+    "set_cycles": 232.0,
+    "get_cycles": 182.0,
+    "set_mops": 1374.0,
+    "get_mops": 1752.0
   },
   {
     "build_cfg": {
@@ -2398,15 +2398,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 4617081972.0,
+    "global_find_cycle": 4599431572.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9784239250.0,
+    "global_insert_cycle": 9031319084.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 116.0,
-    "get_cycles": 55.0,
-    "set_mops": 1371.0,
-    "get_mops": 2906.0
+    "set_cycles": 107.0,
+    "get_cycles": 54.0,
+    "set_mops": 1486.0,
+    "get_mops": 2918.0
   },
   {
     "build_cfg": {
@@ -2431,14 +2431,14 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 9285187554.0,
+    "global_find_cycle": 9285186014.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 19739245820.0,
+    "global_insert_cycle": 18223698786.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 117.0,
+    "set_cycles": 108.0,
     "get_cycles": 55.0,
-    "set_mops": 1359.0,
+    "set_mops": 1473.0,
     "get_mops": 2891.0
   },
   {
@@ -2464,15 +2464,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 13996233164.0,
+    "global_find_cycle": 14106940386.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 29770492258.0,
+    "global_insert_cycle": 27487977618.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 118.0,
-    "get_cycles": 55.0,
-    "set_mops": 1352.0,
-    "get_mops": 2876.0
+    "set_cycles": 109.0,
+    "get_cycles": 56.0,
+    "set_mops": 1464.0,
+    "get_mops": 2854.0
   },
   {
     "build_cfg": {
@@ -2497,15 +2497,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 18999495470.0,
+    "global_find_cycle": 19128786708.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 39982203556.0,
+    "global_insert_cycle": 36914383236.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 119.0,
-    "get_cycles": 56.0,
-    "set_mops": 1342.0,
-    "get_mops": 2825.0
+    "set_cycles": 110.0,
+    "get_cycles": 57.0,
+    "set_mops": 1454.0,
+    "get_mops": 2806.0
   },
   {
     "build_cfg": {
@@ -2530,15 +2530,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 24398452834.0,
+    "global_find_cycle": 24749170588.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 50632989730.0,
+    "global_insert_cycle": 46717031698.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 120.0,
-    "get_cycles": 58.0,
-    "set_mops": 1325.0,
-    "get_mops": 2750.0
+    "set_cycles": 111.0,
+    "get_cycles": 59.0,
+    "set_mops": 1436.0,
+    "get_mops": 2711.0
   },
   {
     "build_cfg": {
@@ -2563,15 +2563,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 30737409658.0,
+    "global_find_cycle": 31001538166.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 62131326764.0,
+    "global_insert_cycle": 57312625238.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 123.0,
+    "set_cycles": 113.0,
     "get_cycles": 61.0,
-    "set_mops": 1296.0,
-    "get_mops": 2619.0
+    "set_mops": 1405.0,
+    "get_mops": 2597.0
   },
   {
     "build_cfg": {
@@ -2596,15 +2596,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 39168685952.0,
+    "global_find_cycle": 39301585922.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 75649495586.0,
+    "global_insert_cycle": 70372091404.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 128.0,
+    "set_cycles": 119.0,
     "get_cycles": 66.0,
-    "set_mops": 1241.0,
-    "get_mops": 2398.0
+    "set_mops": 1335.0,
+    "get_mops": 2390.0
   },
   {
     "build_cfg": {
@@ -2629,15 +2629,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 52867352406.0,
+    "global_find_cycle": 53268923422.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 94377213752.0,
+    "global_insert_cycle": 89720877908.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 140.0,
-    "get_cycles": 78.0,
-    "set_mops": 1137.0,
-    "get_mops": 2031.0
+    "set_cycles": 133.0,
+    "get_cycles": 79.0,
+    "set_mops": 1196.0,
+    "get_mops": 2015.0
   },
   {
     "build_cfg": {
@@ -2662,15 +2662,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 82576997146.0,
+    "global_find_cycle": 82777707998.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 133655498604.0,
+    "global_insert_cycle": 126683182936.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 177.0,
+    "set_cycles": 167.0,
     "get_cycles": 109.0,
-    "set_mops": 903.0,
-    "get_mops": 1462.0
+    "set_mops": 953.0,
+    "get_mops": 1459.0
   },
   {
     "build_cfg": {
@@ -2695,15 +2695,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 2829750994.0,
+    "global_find_cycle": 2819979828.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5101743708.0,
+    "global_insert_cycle": 5046705700.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 121.0,
+    "set_cycles": 120.0,
     "get_cycles": 67.0,
-    "set_mops": 2630.0,
-    "get_mops": 4743.0
+    "set_mops": 2659.0,
+    "get_mops": 4759.0
   },
   {
     "build_cfg": {
@@ -2728,15 +2728,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 6013683984.0,
+    "global_find_cycle": 5753791034.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 10364281914.0,
+    "global_insert_cycle": 10244853742.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 123.0,
-    "get_cycles": 71.0,
-    "set_mops": 2590.0,
-    "get_mops": 4463.0
+    "set_cycles": 122.0,
+    "get_cycles": 68.0,
+    "set_mops": 2620.0,
+    "get_mops": 4665.0
   },
   {
     "build_cfg": {
@@ -2761,15 +2761,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 9112209360.0,
+    "global_find_cycle": 8683288062.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 15672693962.0,
+    "global_insert_cycle": 15532312904.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 124.0,
-    "get_cycles": 72.0,
-    "set_mops": 2569.0,
-    "get_mops": 4418.0
+    "set_cycles": 123.0,
+    "get_cycles": 69.0,
+    "set_mops": 2592.0,
+    "get_mops": 4637.0
   },
   {
     "build_cfg": {
@@ -2794,15 +2794,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 12700586228.0,
+    "global_find_cycle": 11883171098.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 21095516820.0,
+    "global_insert_cycle": 20908459750.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 125.0,
-    "get_cycles": 75.0,
-    "set_mops": 2544.0,
-    "get_mops": 4227.0
+    "set_cycles": 124.0,
+    "get_cycles": 70.0,
+    "set_mops": 2567.0,
+    "get_mops": 4517.0
   },
   {
     "build_cfg": {
@@ -2827,15 +2827,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 16628046064.0,
+    "global_find_cycle": 15425364784.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 26967292778.0,
+    "global_insert_cycle": 26519354358.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 128.0,
-    "get_cycles": 79.0,
-    "set_mops": 2488.0,
-    "get_mops": 4035.0
+    "set_cycles": 126.0,
+    "get_cycles": 73.0,
+    "set_mops": 2530.0,
+    "get_mops": 4350.0
   },
   {
     "build_cfg": {
@@ -2860,15 +2860,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 20415467600.0,
+    "global_find_cycle": 19733504546.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 32925707344.0,
+    "global_insert_cycle": 33037374784.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 130.0,
-    "get_cycles": 81.0,
-    "set_mops": 2445.0,
-    "get_mops": 3944.0
+    "set_cycles": 131.0,
+    "get_cycles": 78.0,
+    "set_mops": 2437.0,
+    "get_mops": 4080.0
   },
   {
     "build_cfg": {
@@ -2893,15 +2893,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 26821379610.0,
+    "global_find_cycle": 25484078404.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 40434040524.0,
+    "global_insert_cycle": 41021801412.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 137.0,
-    "get_cycles": 91.0,
-    "set_mops": 2323.0,
-    "get_mops": 3502.0
+    "set_cycles": 139.0,
+    "get_cycles": 86.0,
+    "set_mops": 2290.0,
+    "get_mops": 3686.0
   },
   {
     "build_cfg": {
@@ -2926,15 +2926,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 34498487628.0,
+    "global_find_cycle": 38779921298.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 51221620402.0,
+    "global_insert_cycle": 53195600956.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 152.0,
-    "get_cycles": 102.0,
-    "set_mops": 2096.0,
-    "get_mops": 3112.0
+    "set_cycles": 158.0,
+    "get_cycles": 115.0,
+    "set_mops": 2018.0,
+    "get_mops": 2768.0
   },
   {
     "build_cfg": {
@@ -2959,15 +2959,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 56842420778.0,
+    "global_find_cycle": 64853077480.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 77558868272.0,
+    "global_insert_cycle": 82944367472.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 205.0,
-    "get_cycles": 150.0,
-    "set_mops": 1557.0,
-    "get_mops": 2125.0
+    "set_cycles": 219.0,
+    "get_cycles": 171.0,
+    "set_mops": 1456.0,
+    "get_mops": 1862.0
   },
   {
     "build_cfg": {
@@ -2992,15 +2992,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 4548744960.0,
+    "global_find_cycle": 4564151570.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9856440002.0,
+    "global_insert_cycle": 9109850824.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 117.0,
+    "set_cycles": 108.0,
     "get_cycles": 54.0,
-    "set_mops": 1361.0,
-    "get_mops": 2950.0
+    "set_mops": 1473.0,
+    "get_mops": 2940.0
   },
   {
     "build_cfg": {
@@ -3025,15 +3025,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 9407739332.0,
+    "global_find_cycle": 9454010722.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 20053542102.0,
+    "global_insert_cycle": 18516508142.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 119.0,
+    "set_cycles": 110.0,
     "get_cycles": 56.0,
-    "set_mops": 1338.0,
-    "get_mops": 2853.0
+    "set_mops": 1449.0,
+    "get_mops": 2839.0
   },
   {
     "build_cfg": {
@@ -3058,15 +3058,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 14619153582.0,
+    "global_find_cycle": 14822244192.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 30533246058.0,
+    "global_insert_cycle": 28163401562.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 121.0,
+    "set_cycles": 111.0,
     "get_cycles": 58.0,
-    "set_mops": 1318.0,
-    "get_mops": 2754.0
+    "set_mops": 1429.0,
+    "get_mops": 2716.0
   },
   {
     "build_cfg": {
@@ -3091,15 +3091,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 20773754450.0,
+    "global_find_cycle": 21221106444.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 41429172204.0,
+    "global_insert_cycle": 38224440518.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 123.0,
-    "get_cycles": 61.0,
-    "set_mops": 1295.0,
-    "get_mops": 2584.0
+    "set_cycles": 113.0,
+    "get_cycles": 63.0,
+    "set_mops": 1404.0,
+    "get_mops": 2529.0
   },
   {
     "build_cfg": {
@@ -3124,15 +3124,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 28294245594.0,
+    "global_find_cycle": 28665786022.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 53105441830.0,
+    "global_insert_cycle": 48955276350.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 126.0,
-    "get_cycles": 67.0,
-    "set_mops": 1263.0,
-    "get_mops": 2371.0
+    "set_cycles": 116.0,
+    "get_cycles": 68.0,
+    "set_mops": 1370.0,
+    "get_mops": 2341.0
   },
   {
     "build_cfg": {
@@ -3157,15 +3157,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 37389077366.0,
+    "global_find_cycle": 37678135264.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 65995765986.0,
+    "global_insert_cycle": 61306076438.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 131.0,
+    "set_cycles": 121.0,
     "get_cycles": 74.0,
-    "set_mops": 1220.0,
-    "get_mops": 2153.0
+    "set_mops": 1313.0,
+    "get_mops": 2137.0
   },
   {
     "build_cfg": {
@@ -3190,15 +3190,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 48481016888.0,
+    "global_find_cycle": 48771824770.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 80815722602.0,
+    "global_insert_cycle": 74929564624.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 137.0,
-    "get_cycles": 82.0,
-    "set_mops": 1162.0,
-    "get_mops": 1937.0
+    "set_cycles": 127.0,
+    "get_cycles": 83.0,
+    "set_mops": 1253.0,
+    "get_mops": 1926.0
   },
   {
     "build_cfg": {
@@ -3223,15 +3223,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 63178010300.0,
+    "global_find_cycle": 63498740588.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 99488581516.0,
+    "global_insert_cycle": 92440395622.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 148.0,
+    "set_cycles": 137.0,
     "get_cycles": 94.0,
-    "set_mops": 1079.0,
-    "get_mops": 1699.0
+    "set_mops": 1161.0,
+    "get_mops": 1690.0
   },
   {
     "build_cfg": {
@@ -3256,15 +3256,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 88308369064.0,
+    "global_find_cycle": 87881488996.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 128832143598.0,
+    "global_insert_cycle": 119657091242.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 170.0,
+    "set_cycles": 158.0,
     "get_cycles": 116.0,
-    "set_mops": 937.0,
-    "get_mops": 1367.0
+    "set_mops": 1009.0,
+    "get_mops": 1374.0
   },
   {
     "build_cfg": {
@@ -3289,80 +3289,14 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 3110411054.0,
+    "global_find_cycle": 3030022758.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5168882686.0,
+    "global_insert_cycle": 5295373790.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 123.0,
-    "get_cycles": 74.0,
-    "set_mops": 2596.0,
-    "get_mops": 4315.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "L1",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 20
-    },
-    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025+uniform",
-    "fill": 107374182.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.2,
-    "global_find_cycle": 6059328514.0,
-    "find_ops": 10737418200.0,
-    "found": 10737418200.0,
-    "global_insert_cycle": 10537392680.0,
-    "insert_ops": 10737418200.0,
-    "set_cycles": 125.0,
+    "set_cycles": 126.0,
     "get_cycles": 72.0,
-    "set_mops": 2547.0,
-    "get_mops": 4430.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "L1",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 30
-    },
-    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025+uniform",
-    "fill": 161061273.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.3,
-    "global_find_cycle": 9089412628.0,
-    "find_ops": 16106127300.0,
-    "found": 16106127300.0,
-    "global_insert_cycle": 16249603948.0,
-    "insert_ops": 16106127300.0,
-    "set_cycles": 129.0,
-    "get_cycles": 72.0,
-    "set_mops": 2477.0,
+    "set_mops": 2534.0,
     "get_mops": 4429.0
   },
   {
@@ -3381,6 +3315,72 @@
       "numThreads": 128,
       "numa_policy": 1,
       "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025+uniform",
+    "fill": 107374182.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.2,
+    "global_find_cycle": 6083465812.0,
+    "find_ops": 10737418200.0,
+    "found": 10737418200.0,
+    "global_insert_cycle": 10534963796.0,
+    "insert_ops": 10737418200.0,
+    "set_cycles": 125.0,
+    "get_cycles": 72.0,
+    "set_mops": 2548.0,
+    "get_mops": 4412.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L1",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025+uniform",
+    "fill": 161061273.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.3,
+    "global_find_cycle": 9484134538.0,
+    "find_ops": 16106127300.0,
+    "found": 16106127300.0,
+    "global_insert_cycle": 15918281184.0,
+    "insert_ops": 16106127300.0,
+    "set_cycles": 126.0,
+    "get_cycles": 75.0,
+    "set_mops": 2529.0,
+    "get_mops": 4245.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "L1",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=L1-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
       "fill_factor": 40
     },
     "run_cfg_str": "fill_factor=40-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
@@ -3388,15 +3388,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 12855416210.0,
+    "global_find_cycle": 13301987262.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 21958651742.0,
+    "global_insert_cycle": 22128512122.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 130.0,
-    "get_cycles": 76.0,
-    "set_mops": 2444.0,
-    "get_mops": 4176.0
+    "set_cycles": 131.0,
+    "get_cycles": 79.0,
+    "set_mops": 2426.0,
+    "get_mops": 4036.0
   },
   {
     "build_cfg": {
@@ -3421,15 +3421,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 18894077716.0,
+    "global_find_cycle": 19396432240.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 28313829458.0,
+    "global_insert_cycle": 29890789904.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 135.0,
-    "get_cycles": 90.0,
-    "set_mops": 2370.0,
-    "get_mops": 3551.0
+    "set_cycles": 142.0,
+    "get_cycles": 92.0,
+    "set_mops": 2245.0,
+    "get_mops": 3459.0
   },
   {
     "build_cfg": {
@@ -3454,15 +3454,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 24921153330.0,
+    "global_find_cycle": 24433565286.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 35387794588.0,
+    "global_insert_cycle": 37894633140.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 140.0,
-    "get_cycles": 99.0,
-    "set_mops": 2275.0,
-    "get_mops": 3231.0
+    "set_cycles": 150.0,
+    "get_cycles": 97.0,
+    "set_mops": 2125.0,
+    "get_mops": 3295.0
   },
   {
     "build_cfg": {
@@ -3487,15 +3487,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 29614642684.0,
+    "global_find_cycle": 33243957268.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 43739797372.0,
+    "global_insert_cycle": 48165995930.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 148.0,
-    "get_cycles": 100.0,
-    "set_mops": 2147.0,
-    "get_mops": 3172.0
+    "set_cycles": 164.0,
+    "get_cycles": 113.0,
+    "set_mops": 1950.0,
+    "get_mops": 2826.0
   },
   {
     "build_cfg": {
@@ -3520,15 +3520,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 39308159250.0,
+    "global_find_cycle": 43133126508.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 54802130270.0,
+    "global_insert_cycle": 57626456102.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 163.0,
-    "get_cycles": 117.0,
-    "set_mops": 1959.0,
-    "get_mops": 2731.0
+    "set_cycles": 171.0,
+    "get_cycles": 128.0,
+    "set_mops": 1863.0,
+    "get_mops": 2489.0
   },
   {
     "build_cfg": {
@@ -3553,15 +3553,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 57556230480.0,
+    "global_find_cycle": 65034495188.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 73641490050.0,
+    "global_insert_cycle": 83114579694.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 195.0,
-    "get_cycles": 152.0,
-    "set_mops": 1640.0,
-    "get_mops": 2098.0
+    "set_cycles": 220.0,
+    "get_cycles": 172.0,
+    "set_mops": 1453.0,
+    "get_mops": 1857.0
   },
   {
     "build_cfg": {
@@ -3586,15 +3586,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 4051990938.0,
+    "global_find_cycle": 4125254444.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9021834936.0,
+    "global_insert_cycle": 9073744342.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 107.0,
-    "get_cycles": 48.0,
-    "set_mops": 1487.0,
-    "get_mops": 3312.0
+    "set_cycles": 108.0,
+    "get_cycles": 49.0,
+    "set_mops": 1479.0,
+    "get_mops": 3253.0
   },
   {
     "build_cfg": {
@@ -3619,15 +3619,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 8252605822.0,
+    "global_find_cycle": 8463934688.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 18215004350.0,
+    "global_insert_cycle": 18229439684.0,
     "insert_ops": 10737418200.0,
     "set_cycles": 108.0,
-    "get_cycles": 49.0,
-    "set_mops": 1473.0,
-    "get_mops": 3252.0
+    "get_cycles": 50.0,
+    "set_mops": 1472.0,
+    "get_mops": 3171.0
   },
   {
     "build_cfg": {
@@ -3652,15 +3652,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 12533316260.0,
+    "global_find_cycle": 12790171830.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 27453364720.0,
+    "global_insert_cycle": 27475814226.0,
     "insert_ops": 16106127300.0,
     "set_cycles": 109.0,
-    "get_cycles": 49.0,
-    "set_mops": 1466.0,
-    "get_mops": 3212.0
+    "get_cycles": 50.0,
+    "set_mops": 1465.0,
+    "get_mops": 3148.0
   },
   {
     "build_cfg": {
@@ -3685,47 +3685,14 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 17126195484.0,
+    "global_find_cycle": 17497134152.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 36854568100.0,
+    "global_insert_cycle": 36893972546.0,
     "insert_ops": 21474836400.0,
     "set_cycles": 109.0,
-    "get_cycles": 51.0,
-    "set_mops": 1456.0,
-    "get_mops": 3134.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 50
-    },
-    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025+bucket+simd+uniform",
-    "fill": 268435456.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.5,
-    "global_find_cycle": 21866897448.0,
-    "find_ops": 26843545600.0,
-    "found": 26843545600.0,
-    "global_insert_cycle": 46561359872.0,
-    "insert_ops": 26843545600.0,
-    "set_cycles": 111.0,
     "get_cycles": 52.0,
-    "set_mops": 1441.0,
+    "set_mops": 1455.0,
     "get_mops": 3068.0
   },
   {
@@ -3744,6 +3711,39 @@
       "numThreads": 64,
       "numa_policy": 4,
       "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025+bucket+simd+uniform",
+    "fill": 268435456.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.5,
+    "global_find_cycle": 22485061592.0,
+    "find_ops": 26843545600.0,
+    "found": 26843545600.0,
+    "global_insert_cycle": 46576975648.0,
+    "insert_ops": 26843545600.0,
+    "set_cycles": 111.0,
+    "get_cycles": 53.0,
+    "set_mops": 1440.0,
+    "get_mops": 2984.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
       "fill_factor": 60
     },
     "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
@@ -3751,15 +3751,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 27381619664.0,
+    "global_find_cycle": 28113321666.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 56837723870.0,
+    "global_insert_cycle": 56834623118.0,
     "insert_ops": 32212254700.0,
     "set_cycles": 112.0,
-    "get_cycles": 54.0,
+    "get_cycles": 55.0,
     "set_mops": 1416.0,
-    "get_mops": 2941.0
+    "get_mops": 2864.0
   },
   {
     "build_cfg": {
@@ -3784,15 +3784,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 34093482540.0,
+    "global_find_cycle": 34791177480.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 68165617694.0,
+    "global_insert_cycle": 68207259684.0,
     "insert_ops": 37580963800.0,
     "set_cycles": 116.0,
-    "get_cycles": 58.0,
-    "set_mops": 1378.0,
-    "get_mops": 2755.0
+    "get_cycles": 59.0,
+    "set_mops": 1377.0,
+    "get_mops": 2700.0
   },
   {
     "build_cfg": {
@@ -3817,15 +3817,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 43668264604.0,
+    "global_find_cycle": 44329766598.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 82148274082.0,
+    "global_insert_cycle": 82295686058.0,
     "insert_ops": 42949672900.0,
     "set_cycles": 122.0,
-    "get_cycles": 65.0,
-    "set_mops": 1307.0,
-    "get_mops": 2458.0
+    "get_cycles": 66.0,
+    "set_mops": 1304.0,
+    "get_mops": 2422.0
   },
   {
     "build_cfg": {
@@ -3850,15 +3850,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 59157471864.0,
+    "global_find_cycle": 58980658198.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 103120875870.0,
+    "global_insert_cycle": 101809210472.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 136.0,
+    "set_cycles": 134.0,
     "get_cycles": 78.0,
-    "set_mops": 1171.0,
-    "get_mops": 2041.0
+    "set_mops": 1186.0,
+    "get_mops": 2048.0
   },
   {
     "build_cfg": {
@@ -3883,15 +3883,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 2662967892.0,
+    "global_find_cycle": 2803338928.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5033193512.0,
+    "global_insert_cycle": 5428353632.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 120.0,
-    "get_cycles": 63.0,
-    "set_mops": 2666.0,
-    "get_mops": 5040.0
+    "set_cycles": 129.0,
+    "get_cycles": 66.0,
+    "set_mops": 2472.0,
+    "get_mops": 4787.0
   },
   {
     "build_cfg": {
@@ -3916,15 +3916,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 5499309226.0,
+    "global_find_cycle": 6060950862.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 10249425490.0,
+    "global_insert_cycle": 10258265198.0,
     "insert_ops": 10737418200.0,
     "set_cycles": 122.0,
-    "get_cycles": 65.0,
-    "set_mops": 2619.0,
-    "get_mops": 4881.0
+    "get_cycles": 72.0,
+    "set_mops": 2616.0,
+    "get_mops": 4428.0
   },
   {
     "build_cfg": {
@@ -3949,15 +3949,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 8645440972.0,
+    "global_find_cycle": 9508230572.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 15592628776.0,
+    "global_insert_cycle": 15577894462.0,
     "insert_ops": 16106127300.0,
     "set_cycles": 123.0,
-    "get_cycles": 68.0,
-    "set_mops": 2582.0,
-    "get_mops": 4657.0
+    "get_cycles": 75.0,
+    "set_mops": 2584.0,
+    "get_mops": 4234.0
   },
   {
     "build_cfg": {
@@ -3982,15 +3982,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 11696685038.0,
+    "global_find_cycle": 12148559044.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 20870586240.0,
+    "global_insert_cycle": 20895415546.0,
     "insert_ops": 21474836400.0,
     "set_cycles": 124.0,
-    "get_cycles": 69.0,
-    "set_mops": 2572.0,
-    "get_mops": 4589.0
+    "get_cycles": 72.0,
+    "set_mops": 2569.0,
+    "get_mops": 4419.0
   },
   {
     "build_cfg": {
@@ -4015,15 +4015,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 15134093992.0,
+    "global_find_cycle": 15758566714.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 26445122034.0,
+    "global_insert_cycle": 26546068216.0,
     "insert_ops": 26843545600.0,
     "set_cycles": 126.0,
-    "get_cycles": 72.0,
-    "set_mops": 2537.0,
-    "get_mops": 4434.0
+    "get_cycles": 75.0,
+    "set_mops": 2528.0,
+    "get_mops": 4258.0
   },
   {
     "build_cfg": {
@@ -4048,15 +4048,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 19182286740.0,
+    "global_find_cycle": 19424753362.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 32310801626.0,
+    "global_insert_cycle": 32692022416.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 128.0,
-    "get_cycles": 76.0,
-    "set_mops": 2492.0,
-    "get_mops": 4198.0
+    "set_cycles": 129.0,
+    "get_cycles": 77.0,
+    "set_mops": 2463.0,
+    "get_mops": 4145.0
   },
   {
     "build_cfg": {
@@ -4081,15 +4081,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 23613849460.0,
+    "global_find_cycle": 26330227960.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 39239027748.0,
+    "global_insert_cycle": 39091467328.0,
     "insert_ops": 37580963800.0,
     "set_cycles": 133.0,
-    "get_cycles": 80.0,
-    "set_mops": 2394.0,
-    "get_mops": 3978.0
+    "get_cycles": 89.0,
+    "set_mops": 2403.0,
+    "get_mops": 3568.0
   },
   {
     "build_cfg": {
@@ -4114,15 +4114,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 30689089504.0,
+    "global_find_cycle": 35575268502.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 47859191038.0,
+    "global_insert_cycle": 53217697722.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 142.0,
-    "get_cycles": 91.0,
-    "set_mops": 2243.0,
-    "get_mops": 3498.0
+    "set_cycles": 158.0,
+    "get_cycles": 106.0,
+    "set_mops": 2017.0,
+    "get_mops": 3018.0
   },
   {
     "build_cfg": {
@@ -4147,15 +4147,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 41965569520.0,
+    "global_find_cycle": 41502048446.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 60931744728.0,
+    "global_insert_cycle": 59202435614.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 161.0,
-    "get_cycles": 111.0,
-    "set_mops": 1982.0,
-    "get_mops": 2878.0
+    "set_cycles": 156.0,
+    "get_cycles": 109.0,
+    "set_mops": 2040.0,
+    "get_mops": 2910.0
   },
   {
     "build_cfg": {
@@ -4180,15 +4180,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 3959142454.0,
+    "global_find_cycle": 3994469540.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9019151106.0,
+    "global_insert_cycle": 9029135734.0,
     "insert_ops": 5368709100.0,
     "set_cycles": 107.0,
     "get_cycles": 47.0,
-    "set_mops": 1488.0,
-    "get_mops": 3390.0
+    "set_mops": 1486.0,
+    "get_mops": 3360.0
   },
   {
     "build_cfg": {
@@ -4213,15 +4213,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 8010176504.0,
+    "global_find_cycle": 8184603048.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 18207515678.0,
+    "global_insert_cycle": 18222046620.0,
     "insert_ops": 10737418200.0,
     "set_cycles": 108.0,
-    "get_cycles": 47.0,
-    "set_mops": 1474.0,
-    "get_mops": 3351.0
+    "get_cycles": 48.0,
+    "set_mops": 1473.0,
+    "get_mops": 3279.0
   },
   {
     "build_cfg": {
@@ -4246,15 +4246,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 12162799224.0,
+    "global_find_cycle": 12370596028.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 27447341696.0,
+    "global_insert_cycle": 27469406614.0,
     "insert_ops": 16106127300.0,
     "set_cycles": 109.0,
-    "get_cycles": 48.0,
-    "set_mops": 1467.0,
-    "get_mops": 3310.0
+    "get_cycles": 49.0,
+    "set_mops": 1465.0,
+    "get_mops": 3254.0
   },
   {
     "build_cfg": {
@@ -4279,513 +4279,513 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 16485474962.0,
+    "global_find_cycle": 16810629328.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 36858579378.0,
+    "global_insert_cycle": 36872599240.0,
     "insert_ops": 21474836400.0,
     "set_cycles": 109.0,
-    "get_cycles": 49.0,
+    "get_cycles": 50.0,
     "set_mops": 1456.0,
+    "get_mops": 3193.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 268435456.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.5,
+    "global_find_cycle": 21518736022.0,
+    "find_ops": 26843545600.0,
+    "found": 26843545600.0,
+    "global_insert_cycle": 46579635604.0,
+    "insert_ops": 26843545600.0,
+    "set_cycles": 111.0,
+    "get_cycles": 51.0,
+    "set_mops": 1440.0,
+    "get_mops": 3118.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 322122547.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.6,
+    "global_find_cycle": 26954787618.0,
+    "find_ops": 32212254700.0,
+    "found": 32212254700.0,
+    "global_insert_cycle": 56846397170.0,
+    "insert_ops": 32212254700.0,
+    "set_cycles": 112.0,
+    "get_cycles": 53.0,
+    "set_mops": 1416.0,
+    "get_mops": 2987.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 375809638.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.7,
+    "global_find_cycle": 33421612370.0,
+    "find_ops": 37580963800.0,
+    "found": 37580963800.0,
+    "global_insert_cycle": 68285351340.0,
+    "insert_ops": 37580963800.0,
+    "set_cycles": 116.0,
+    "get_cycles": 56.0,
+    "set_mops": 1375.0,
+    "get_mops": 2811.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 429496729.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.8,
+    "global_find_cycle": 42545707258.0,
+    "find_ops": 42949672900.0,
+    "found": 42949672900.0,
+    "global_insert_cycle": 82742712566.0,
+    "insert_ops": 42949672900.0,
+    "set_cycles": 123.0,
+    "get_cycles": 63.0,
+    "set_mops": 1297.0,
+    "get_mops": 2523.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 483183820.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.9,
+    "global_find_cycle": 57220679706.0,
+    "find_ops": 48318382000.0,
+    "found": 48318382000.0,
+    "global_insert_cycle": 102142941856.0,
+    "insert_ops": 48318382000.0,
+    "set_cycles": 135.0,
+    "get_cycles": 75.0,
+    "set_mops": 1182.0,
+    "get_mops": 2111.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 53687091.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.1,
+    "global_find_cycle": 2732930584.0,
+    "find_ops": 5368709100.0,
+    "found": 5368709100.0,
+    "global_insert_cycle": 5104535852.0,
+    "insert_ops": 5368709100.0,
+    "set_cycles": 121.0,
+    "get_cycles": 65.0,
+    "set_mops": 2629.0,
+    "get_mops": 4911.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 20
+    },
+    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 107374182.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.2,
+    "global_find_cycle": 5770666908.0,
+    "find_ops": 10737418200.0,
+    "found": 10737418200.0,
+    "global_insert_cycle": 10372466092.0,
+    "insert_ops": 10737418200.0,
+    "set_cycles": 123.0,
+    "get_cycles": 68.0,
+    "set_mops": 2587.0,
+    "get_mops": 4651.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 30
+    },
+    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 161061273.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.3,
+    "global_find_cycle": 8511240188.0,
+    "find_ops": 16106127300.0,
+    "found": 16106127300.0,
+    "global_insert_cycle": 15499133534.0,
+    "insert_ops": 16106127300.0,
+    "set_cycles": 123.0,
+    "get_cycles": 67.0,
+    "set_mops": 2597.0,
+    "get_mops": 4730.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 40
+    },
+    "run_cfg_str": "fill_factor=40-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 214748364.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.4,
+    "global_find_cycle": 11535143384.0,
+    "find_ops": 21474836400.0,
+    "found": 21474836400.0,
+    "global_insert_cycle": 20831158654.0,
+    "insert_ops": 21474836400.0,
+    "set_cycles": 124.0,
+    "get_cycles": 68.0,
+    "set_mops": 2577.0,
+    "get_mops": 4654.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 50
+    },
+    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 268435456.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.5,
+    "global_find_cycle": 14845378128.0,
+    "find_ops": 26843545600.0,
+    "found": 26843545600.0,
+    "global_insert_cycle": 26506514272.0,
+    "insert_ops": 26843545600.0,
+    "set_cycles": 126.0,
+    "get_cycles": 70.0,
+    "set_mops": 2531.0,
+    "get_mops": 4520.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 60
+    },
+    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 322122547.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.6,
+    "global_find_cycle": 18759191354.0,
+    "find_ops": 32212254700.0,
+    "found": 32212254700.0,
+    "global_insert_cycle": 32442496542.0,
+    "insert_ops": 32212254700.0,
+    "set_cycles": 128.0,
+    "get_cycles": 74.0,
+    "set_mops": 2482.0,
+    "get_mops": 4292.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 70
+    },
+    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 375809638.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.7,
+    "global_find_cycle": 25181920090.0,
+    "find_ops": 37580963800.0,
+    "found": 37580963800.0,
+    "global_insert_cycle": 39064310876.0,
+    "insert_ops": 37580963800.0,
+    "set_cycles": 133.0,
+    "get_cycles": 85.0,
+    "set_mops": 2405.0,
+    "get_mops": 3730.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 80
+    },
+    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 429496729.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.8,
+    "global_find_cycle": 33051215030.0,
+    "find_ops": 42949672900.0,
+    "found": 42949672900.0,
+    "global_insert_cycle": 51245897086.0,
+    "insert_ops": 42949672900.0,
+    "set_cycles": 152.0,
+    "get_cycles": 98.0,
+    "set_mops": 2095.0,
+    "get_mops": 3248.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025_INLINE",
+      "BUCKETIZATION": "ON",
+      "BRANCH": "simd",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 128,
+      "numa_policy": 1,
+      "size": 536870912,
+      "fill_factor": 90
+    },
+    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
+    "identifier": "2025_INLINE+bucket+simd+uniform",
+    "fill": 483183820.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.9,
+    "global_find_cycle": 43070909352.0,
+    "find_ops": 48318382000.0,
+    "found": 48318382000.0,
+    "global_insert_cycle": 60945548242.0,
+    "insert_ops": 48318382000.0,
+    "set_cycles": 161.0,
+    "get_cycles": 114.0,
+    "set_mops": 1982.0,
+    "get_mops": 2804.0
+  },
+  {
+    "build_cfg": {
+      "DRAMHiT_VARIANT": "2025",
+      "BUCKETIZATION": "OFF",
+      "BRANCH": "branched",
+      "UNIFORM_PROBING": "ON",
+      "PREFETCH": "DOUBLE",
+      "CPUFREQ_MHZ": "2500"
+    },
+    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
+    "run_cfg": {
+      "insertFactor": 100,
+      "readFactor": 100,
+      "numThreads": 64,
+      "numa_policy": 4,
+      "size": 536870912,
+      "fill_factor": 10
+    },
+    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
+    "identifier": "2025+uniform",
+    "fill": 53687091.0,
+    "capacity": 536870912.0,
+    "fill_factor": 0.1,
+    "global_find_cycle": 4121817618.0,
+    "find_ops": 5368709100.0,
+    "found": 5368709100.0,
+    "global_insert_cycle": 9119751580.0,
+    "insert_ops": 5368709100.0,
+    "set_cycles": 108.0,
+    "get_cycles": 49.0,
+    "set_mops": 1471.0,
     "get_mops": 3256.0
   },
   {
     "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 50
-    },
-    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 268435456.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.5,
-    "global_find_cycle": 21167278600.0,
-    "find_ops": 26843545600.0,
-    "found": 26843545600.0,
-    "global_insert_cycle": 46542678176.0,
-    "insert_ops": 26843545600.0,
-    "set_cycles": 110.0,
-    "get_cycles": 50.0,
-    "set_mops": 1441.0,
-    "get_mops": 3170.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 60
-    },
-    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 322122547.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.6,
-    "global_find_cycle": 26401497496.0,
-    "find_ops": 32212254700.0,
-    "found": 32212254700.0,
-    "global_insert_cycle": 56834909452.0,
-    "insert_ops": 32212254700.0,
-    "set_cycles": 112.0,
-    "get_cycles": 52.0,
-    "set_mops": 1416.0,
-    "get_mops": 3050.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 70
-    },
-    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 375809638.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.7,
-    "global_find_cycle": 33036749898.0,
-    "find_ops": 37580963800.0,
-    "found": 37580963800.0,
-    "global_insert_cycle": 68137223414.0,
-    "insert_ops": 37580963800.0,
-    "set_cycles": 116.0,
-    "get_cycles": 56.0,
-    "set_mops": 1378.0,
-    "get_mops": 2843.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 80
-    },
-    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 429496729.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.8,
-    "global_find_cycle": 42148584826.0,
-    "find_ops": 42949672900.0,
-    "found": 42949672900.0,
-    "global_insert_cycle": 81942116922.0,
-    "insert_ops": 42949672900.0,
-    "set_cycles": 122.0,
-    "get_cycles": 62.0,
-    "set_mops": 1310.0,
-    "get_mops": 2547.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 90
-    },
-    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 483183820.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.9,
-    "global_find_cycle": 56593102790.0,
-    "find_ops": 48318382000.0,
-    "found": 48318382000.0,
-    "global_insert_cycle": 101273861154.0,
-    "insert_ops": 48318382000.0,
-    "set_cycles": 134.0,
-    "get_cycles": 74.0,
-    "set_mops": 1192.0,
-    "get_mops": 2134.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 10
-    },
-    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 53687091.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.1,
-    "global_find_cycle": 2656359626.0,
-    "find_ops": 5368709100.0,
-    "found": 5368709100.0,
-    "global_insert_cycle": 5035648506.0,
-    "insert_ops": 5368709100.0,
-    "set_cycles": 120.0,
-    "get_cycles": 63.0,
-    "set_mops": 2665.0,
-    "get_mops": 5052.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 20
-    },
-    "run_cfg_str": "fill_factor=20-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 107374182.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.2,
-    "global_find_cycle": 5431584028.0,
-    "find_ops": 10737418200.0,
-    "found": 10737418200.0,
-    "global_insert_cycle": 10268556088.0,
-    "insert_ops": 10737418200.0,
-    "set_cycles": 122.0,
-    "get_cycles": 64.0,
-    "set_mops": 2614.0,
-    "get_mops": 4942.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 30
-    },
-    "run_cfg_str": "fill_factor=30-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 161061273.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.3,
-    "global_find_cycle": 8267673226.0,
-    "find_ops": 16106127300.0,
-    "found": 16106127300.0,
-    "global_insert_cycle": 15532158170.0,
-    "insert_ops": 16106127300.0,
-    "set_cycles": 123.0,
-    "get_cycles": 65.0,
-    "set_mops": 2592.0,
-    "get_mops": 4870.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 40
-    },
-    "run_cfg_str": "fill_factor=40-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 214748364.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.4,
-    "global_find_cycle": 11405203282.0,
-    "find_ops": 21474836400.0,
-    "found": 21474836400.0,
-    "global_insert_cycle": 20876845554.0,
-    "insert_ops": 21474836400.0,
-    "set_cycles": 124.0,
-    "get_cycles": 67.0,
-    "set_mops": 2571.0,
-    "get_mops": 4707.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 50
-    },
-    "run_cfg_str": "fill_factor=50-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 268435456.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.5,
-    "global_find_cycle": 14792761256.0,
-    "find_ops": 26843545600.0,
-    "found": 26843545600.0,
-    "global_insert_cycle": 26413623084.0,
-    "insert_ops": 26843545600.0,
-    "set_cycles": 125.0,
-    "get_cycles": 70.0,
-    "set_mops": 2540.0,
-    "get_mops": 4536.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 60
-    },
-    "run_cfg_str": "fill_factor=60-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 322122547.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.6,
-    "global_find_cycle": 19341688210.0,
-    "find_ops": 32212254700.0,
-    "found": 32212254700.0,
-    "global_insert_cycle": 32594154412.0,
-    "insert_ops": 32212254700.0,
-    "set_cycles": 129.0,
-    "get_cycles": 76.0,
-    "set_mops": 2470.0,
-    "get_mops": 4163.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 70
-    },
-    "run_cfg_str": "fill_factor=70-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 375809638.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.7,
-    "global_find_cycle": 23520684352.0,
-    "find_ops": 37580963800.0,
-    "found": 37580963800.0,
-    "global_insert_cycle": 38891216540.0,
-    "insert_ops": 37580963800.0,
-    "set_cycles": 132.0,
-    "get_cycles": 80.0,
-    "set_mops": 2415.0,
-    "get_mops": 3994.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 80
-    },
-    "run_cfg_str": "fill_factor=80-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 429496729.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.8,
-    "global_find_cycle": 30070785960.0,
-    "find_ops": 42949672900.0,
-    "found": 42949672900.0,
-    "global_insert_cycle": 47814007714.0,
-    "insert_ops": 42949672900.0,
-    "set_cycles": 142.0,
-    "get_cycles": 89.0,
-    "set_mops": 2245.0,
-    "get_mops": 3570.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025_INLINE",
-      "BUCKETIZATION": "ON",
-      "BRANCH": "simd",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=simd-BUCKETIZATION=ON-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025_INLINE-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 128,
-      "numa_policy": 1,
-      "size": 536870912,
-      "fill_factor": 90
-    },
-    "run_cfg_str": "fill_factor=90-insertFactor=100-numThreads=128-numa_policy=1-readFactor=100-size=536870912",
-    "identifier": "2025_INLINE+bucket+simd+uniform",
-    "fill": 483183820.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.9,
-    "global_find_cycle": 40763690814.0,
-    "find_ops": 48318382000.0,
-    "found": 48318382000.0,
-    "global_insert_cycle": 59788932770.0,
-    "insert_ops": 48318382000.0,
-    "set_cycles": 158.0,
-    "get_cycles": 107.0,
-    "set_mops": 2020.0,
-    "get_mops": 2963.0
-  },
-  {
-    "build_cfg": {
-      "DRAMHiT_VARIANT": "2025",
-      "BUCKETIZATION": "OFF",
-      "BRANCH": "branched",
-      "UNIFORM_PROBING": "ON",
-      "PREFETCH": "DOUBLE",
-      "CPUFREQ_MHZ": "2500"
-    },
-    "build_cfg_str": "BRANCH=branched-BUCKETIZATION=OFF-CPUFREQ_MHZ=2500-DRAMHiT_VARIANT=2025-PREFETCH=DOUBLE-UNIFORM_PROBING=ON",
-    "run_cfg": {
-      "insertFactor": 100,
-      "readFactor": 100,
-      "numThreads": 64,
-      "numa_policy": 4,
-      "size": 536870912,
-      "fill_factor": 10
-    },
-    "run_cfg_str": "fill_factor=10-insertFactor=100-numThreads=64-numa_policy=4-readFactor=100-size=536870912",
-    "identifier": "2025+uniform",
-    "fill": 53687091.0,
-    "capacity": 536870912.0,
-    "fill_factor": 0.1,
-    "global_find_cycle": 4125139408.0,
-    "find_ops": 5368709100.0,
-    "found": 5368709100.0,
-    "global_insert_cycle": 9089351584.0,
-    "insert_ops": 5368709100.0,
-    "set_cycles": 108.0,
-    "get_cycles": 49.0,
-    "set_mops": 1476.0,
-    "get_mops": 3253.0
-  },
-  {
-    "build_cfg": {
       "DRAMHiT_VARIANT": "2025",
       "BUCKETIZATION": "OFF",
       "BRANCH": "branched",
@@ -4807,15 +4807,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 8686289854.0,
+    "global_find_cycle": 8676083468.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 18503631680.0,
+    "global_insert_cycle": 18523536178.0,
     "insert_ops": 10737418200.0,
     "set_cycles": 110.0,
     "get_cycles": 51.0,
-    "set_mops": 1450.0,
-    "get_mops": 3090.0
+    "set_mops": 1449.0,
+    "get_mops": 3093.0
   },
   {
     "build_cfg": {
@@ -4840,15 +4840,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 13634305016.0,
+    "global_find_cycle": 13745018878.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 28153125440.0,
+    "global_insert_cycle": 28174730134.0,
     "insert_ops": 16106127300.0,
     "set_cycles": 111.0,
     "get_cycles": 54.0,
-    "set_mops": 1430.0,
-    "get_mops": 2953.0
+    "set_mops": 1429.0,
+    "get_mops": 2929.0
   },
   {
     "build_cfg": {
@@ -4873,15 +4873,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 19341430348.0,
+    "global_find_cycle": 19476500270.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 38190175202.0,
+    "global_insert_cycle": 38212174880.0,
     "insert_ops": 21474836400.0,
     "set_cycles": 113.0,
-    "get_cycles": 57.0,
-    "set_mops": 1405.0,
-    "get_mops": 2775.0
+    "get_cycles": 58.0,
+    "set_mops": 1404.0,
+    "get_mops": 2756.0
   },
   {
     "build_cfg": {
@@ -4906,15 +4906,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 26477026490.0,
+    "global_find_cycle": 26499704042.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 48912916834.0,
+    "global_insert_cycle": 48979271752.0,
     "insert_ops": 26843545600.0,
     "set_cycles": 116.0,
     "get_cycles": 63.0,
-    "set_mops": 1372.0,
-    "get_mops": 2534.0
+    "set_mops": 1370.0,
+    "get_mops": 2532.0
   },
   {
     "build_cfg": {
@@ -4939,15 +4939,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 35522751002.0,
+    "global_find_cycle": 35142503582.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 60736199986.0,
+    "global_insert_cycle": 61072812014.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 120.0,
-    "get_cycles": 70.0,
-    "set_mops": 1325.0,
-    "get_mops": 2267.0
+    "set_cycles": 121.0,
+    "get_cycles": 69.0,
+    "set_mops": 1318.0,
+    "get_mops": 2291.0
   },
   {
     "build_cfg": {
@@ -4972,15 +4972,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 46266679828.0,
+    "global_find_cycle": 45661093280.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 74370751272.0,
+    "global_insert_cycle": 74919498020.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 126.0,
-    "get_cycles": 78.0,
-    "set_mops": 1263.0,
-    "get_mops": 2030.0
+    "set_cycles": 127.0,
+    "get_cycles": 77.0,
+    "set_mops": 1254.0,
+    "get_mops": 2057.0
   },
   {
     "build_cfg": {
@@ -5005,15 +5005,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 60642963728.0,
+    "global_find_cycle": 60456375844.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 91413432368.0,
+    "global_insert_cycle": 92512379480.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 136.0,
+    "set_cycles": 137.0,
     "get_cycles": 90.0,
-    "set_mops": 1174.0,
-    "get_mops": 1770.0
+    "set_mops": 1160.0,
+    "get_mops": 1776.0
   },
   {
     "build_cfg": {
@@ -5038,15 +5038,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 84308916238.0,
+    "global_find_cycle": 84533860454.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 117099925894.0,
+    "global_insert_cycle": 122023783252.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 155.0,
+    "set_cycles": 161.0,
     "get_cycles": 111.0,
-    "set_mops": 1031.0,
-    "get_mops": 1432.0
+    "set_mops": 989.0,
+    "get_mops": 1428.0
   },
   {
     "build_cfg": {
@@ -5071,15 +5071,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 2824061574.0,
+    "global_find_cycle": 2825312342.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5109729116.0,
+    "global_insert_cycle": 5197463942.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 121.0,
+    "set_cycles": 123.0,
     "get_cycles": 67.0,
-    "set_mops": 2626.0,
-    "get_mops": 4752.0
+    "set_mops": 2582.0,
+    "get_mops": 4750.0
   },
   {
     "build_cfg": {
@@ -5104,15 +5104,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 5730445942.0,
+    "global_find_cycle": 5947850238.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 10420665034.0,
+    "global_insert_cycle": 10435621548.0,
     "insert_ops": 10737418200.0,
     "set_cycles": 124.0,
-    "get_cycles": 68.0,
-    "set_mops": 2575.0,
-    "get_mops": 4684.0
+    "get_cycles": 70.0,
+    "set_mops": 2572.0,
+    "get_mops": 4513.0
   },
   {
     "build_cfg": {
@@ -5137,15 +5137,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 9934991896.0,
+    "global_find_cycle": 9543617320.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 15986223398.0,
+    "global_insert_cycle": 16082013388.0,
     "insert_ops": 16106127300.0,
     "set_cycles": 127.0,
-    "get_cycles": 78.0,
-    "set_mops": 2518.0,
-    "get_mops": 4052.0
+    "get_cycles": 75.0,
+    "set_mops": 2503.0,
+    "get_mops": 4219.0
   },
   {
     "build_cfg": {
@@ -5170,15 +5170,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 12915260218.0,
+    "global_find_cycle": 13422476980.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 21760524762.0,
+    "global_insert_cycle": 22399200938.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 129.0,
-    "get_cycles": 76.0,
-    "set_mops": 2467.0,
-    "get_mops": 4156.0
+    "set_cycles": 133.0,
+    "get_cycles": 80.0,
+    "set_mops": 2396.0,
+    "get_mops": 3999.0
   },
   {
     "build_cfg": {
@@ -5203,15 +5203,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 17623426494.0,
+    "global_find_cycle": 18884469506.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 27941727138.0,
+    "global_insert_cycle": 29616931826.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 133.0,
-    "get_cycles": 84.0,
-    "set_mops": 2401.0,
-    "get_mops": 3807.0
+    "set_cycles": 141.0,
+    "get_cycles": 90.0,
+    "set_mops": 2265.0,
+    "get_mops": 3553.0
   },
   {
     "build_cfg": {
@@ -5236,15 +5236,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 22808694270.0,
+    "global_find_cycle": 25475210816.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 34861558584.0,
+    "global_insert_cycle": 37752744672.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 138.0,
-    "get_cycles": 90.0,
-    "set_mops": 2310.0,
-    "get_mops": 3530.0
+    "set_cycles": 150.0,
+    "get_cycles": 101.0,
+    "set_mops": 2133.0,
+    "get_mops": 3161.0
   },
   {
     "build_cfg": {
@@ -5269,15 +5269,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 31096137672.0,
+    "global_find_cycle": 32161866732.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 43041543864.0,
+    "global_insert_cycle": 47433623350.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 146.0,
-    "get_cycles": 105.0,
-    "set_mops": 2182.0,
-    "get_mops": 3021.0
+    "set_cycles": 161.0,
+    "get_cycles": 109.0,
+    "set_mops": 1980.0,
+    "get_mops": 2921.0
   },
   {
     "build_cfg": {
@@ -5302,15 +5302,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 39179881820.0,
+    "global_find_cycle": 41796661394.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 53701111038.0,
+    "global_insert_cycle": 57128246574.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 160.0,
-    "get_cycles": 116.0,
-    "set_mops": 1999.0,
-    "get_mops": 2740.0
+    "set_cycles": 170.0,
+    "get_cycles": 124.0,
+    "set_mops": 1879.0,
+    "get_mops": 2568.0
   },
   {
     "build_cfg": {
@@ -5335,15 +5335,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 57176702570.0,
+    "global_find_cycle": 55659191570.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 72425747924.0,
+    "global_insert_cycle": 71040021876.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 191.0,
-    "get_cycles": 151.0,
-    "set_mops": 1667.0,
-    "get_mops": 2112.0
+    "set_cycles": 188.0,
+    "get_cycles": 147.0,
+    "set_mops": 1700.0,
+    "get_mops": 2170.0
   },
   {
     "build_cfg": {
@@ -5368,15 +5368,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 4663016396.0,
+    "global_find_cycle": 4614190174.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 9785037968.0,
+    "global_insert_cycle": 9036627092.0,
     "insert_ops": 5368709100.0,
-    "set_cycles": 116.0,
+    "set_cycles": 107.0,
     "get_cycles": 55.0,
-    "set_mops": 1371.0,
-    "get_mops": 2878.0
+    "set_mops": 1485.0,
+    "get_mops": 2908.0
   },
   {
     "build_cfg": {
@@ -5401,15 +5401,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 9346187326.0,
+    "global_find_cycle": 9381554964.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 19735180052.0,
+    "global_insert_cycle": 18235341996.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 117.0,
+    "set_cycles": 108.0,
     "get_cycles": 55.0,
-    "set_mops": 1360.0,
-    "get_mops": 2872.0
+    "set_mops": 1472.0,
+    "get_mops": 2861.0
   },
   {
     "build_cfg": {
@@ -5434,15 +5434,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 14155966416.0,
+    "global_find_cycle": 14247303110.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 29754128378.0,
+    "global_insert_cycle": 27497374428.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 118.0,
+    "set_cycles": 109.0,
     "get_cycles": 56.0,
-    "set_mops": 1353.0,
-    "get_mops": 2844.0
+    "set_mops": 1464.0,
+    "get_mops": 2826.0
   },
   {
     "build_cfg": {
@@ -5467,15 +5467,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 19158801726.0,
+    "global_find_cycle": 19425388898.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 39952257456.0,
+    "global_insert_cycle": 36908179782.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 119.0,
+    "set_cycles": 109.0,
     "get_cycles": 57.0,
-    "set_mops": 1343.0,
-    "get_mops": 2802.0
+    "set_mops": 1454.0,
+    "get_mops": 2763.0
   },
   {
     "build_cfg": {
@@ -5500,15 +5500,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 24564289616.0,
+    "global_find_cycle": 24733831996.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 50497501562.0,
+    "global_insert_cycle": 46594336172.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 120.0,
+    "set_cycles": 111.0,
     "get_cycles": 58.0,
-    "set_mops": 1328.0,
-    "get_mops": 2731.0
+    "set_mops": 1440.0,
+    "get_mops": 2713.0
   },
   {
     "build_cfg": {
@@ -5533,15 +5533,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 30600212108.0,
+    "global_find_cycle": 30732430186.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 61669558106.0,
+    "global_insert_cycle": 57009663718.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 122.0,
-    "get_cycles": 60.0,
-    "set_mops": 1305.0,
-    "get_mops": 2631.0
+    "set_cycles": 113.0,
+    "get_cycles": 61.0,
+    "set_mops": 1412.0,
+    "get_mops": 2620.0
   },
   {
     "build_cfg": {
@@ -5566,15 +5566,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 37632462828.0,
+    "global_find_cycle": 37958502554.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 73911154938.0,
+    "global_insert_cycle": 68278802784.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 125.0,
+    "set_cycles": 116.0,
     "get_cycles": 64.0,
-    "set_mops": 1271.0,
-    "get_mops": 2496.0
+    "set_mops": 1376.0,
+    "get_mops": 2475.0
   },
   {
     "build_cfg": {
@@ -5599,15 +5599,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 47607843638.0,
+    "global_find_cycle": 47696907528.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 88420169276.0,
+    "global_insert_cycle": 82571709046.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 131.0,
-    "get_cycles": 70.0,
-    "set_mops": 1214.0,
-    "get_mops": 2255.0
+    "set_cycles": 123.0,
+    "get_cycles": 71.0,
+    "set_mops": 1300.0,
+    "get_mops": 2251.0
   },
   {
     "build_cfg": {
@@ -5632,15 +5632,15 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 63095193222.0,
+    "global_find_cycle": 62532609014.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 108919396440.0,
+    "global_insert_cycle": 101724419652.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 144.0,
-    "get_cycles": 83.0,
-    "set_mops": 1109.0,
-    "get_mops": 1914.0
+    "set_cycles": 134.0,
+    "get_cycles": 82.0,
+    "set_mops": 1187.0,
+    "get_mops": 1931.0
   },
   {
     "build_cfg": {
@@ -5665,15 +5665,15 @@
     "fill": 53687091.0,
     "capacity": 536870912.0,
     "fill_factor": 0.1,
-    "global_find_cycle": 2856167752.0,
+    "global_find_cycle": 2951692052.0,
     "find_ops": 5368709100.0,
     "found": 5368709100.0,
-    "global_insert_cycle": 5098944024.0,
+    "global_insert_cycle": 5088171396.0,
     "insert_ops": 5368709100.0,
     "set_cycles": 121.0,
-    "get_cycles": 68.0,
-    "set_mops": 2632.0,
-    "get_mops": 4699.0
+    "get_cycles": 70.0,
+    "set_mops": 2637.0,
+    "get_mops": 4547.0
   },
   {
     "build_cfg": {
@@ -5698,15 +5698,15 @@
     "fill": 107374182.0,
     "capacity": 536870912.0,
     "fill_factor": 0.2,
-    "global_find_cycle": 5796686156.0,
+    "global_find_cycle": 6006520850.0,
     "find_ops": 10737418200.0,
     "found": 10737418200.0,
-    "global_insert_cycle": 10405232198.0,
+    "global_insert_cycle": 10289406204.0,
     "insert_ops": 10737418200.0,
-    "set_cycles": 124.0,
-    "get_cycles": 69.0,
-    "set_mops": 2579.0,
-    "get_mops": 4630.0
+    "set_cycles": 122.0,
+    "get_cycles": 71.0,
+    "set_mops": 2608.0,
+    "get_mops": 4469.0
   },
   {
     "build_cfg": {
@@ -5731,15 +5731,15 @@
     "fill": 161061273.0,
     "capacity": 536870912.0,
     "fill_factor": 0.3,
-    "global_find_cycle": 10266126600.0,
+    "global_find_cycle": 9220558022.0,
     "find_ops": 16106127300.0,
     "found": 16106127300.0,
-    "global_insert_cycle": 15749296294.0,
+    "global_insert_cycle": 15615559686.0,
     "insert_ops": 16106127300.0,
-    "set_cycles": 125.0,
-    "get_cycles": 81.0,
-    "set_mops": 2556.0,
-    "get_mops": 3922.0
+    "set_cycles": 124.0,
+    "get_cycles": 73.0,
+    "set_mops": 2578.0,
+    "get_mops": 4366.0
   },
   {
     "build_cfg": {
@@ -5764,15 +5764,15 @@
     "fill": 214748364.0,
     "capacity": 536870912.0,
     "fill_factor": 0.4,
-    "global_find_cycle": 12615197024.0,
+    "global_find_cycle": 13869560496.0,
     "find_ops": 21474836400.0,
     "found": 21474836400.0,
-    "global_insert_cycle": 21088482558.0,
+    "global_insert_cycle": 20862789978.0,
     "insert_ops": 21474836400.0,
-    "set_cycles": 125.0,
-    "get_cycles": 75.0,
-    "set_mops": 2545.0,
-    "get_mops": 4255.0
+    "set_cycles": 124.0,
+    "get_cycles": 82.0,
+    "set_mops": 2573.0,
+    "get_mops": 3870.0
   },
   {
     "build_cfg": {
@@ -5797,15 +5797,15 @@
     "fill": 268435456.0,
     "capacity": 536870912.0,
     "fill_factor": 0.5,
-    "global_find_cycle": 16488888688.0,
+    "global_find_cycle": 16234701122.0,
     "find_ops": 26843545600.0,
     "found": 26843545600.0,
-    "global_insert_cycle": 26762908218.0,
+    "global_insert_cycle": 26423037004.0,
     "insert_ops": 26843545600.0,
-    "set_cycles": 127.0,
-    "get_cycles": 78.0,
-    "set_mops": 2507.0,
-    "get_mops": 4069.0
+    "set_cycles": 125.0,
+    "get_cycles": 77.0,
+    "set_mops": 2539.0,
+    "get_mops": 4133.0
   },
   {
     "build_cfg": {
@@ -5830,15 +5830,15 @@
     "fill": 322122547.0,
     "capacity": 536870912.0,
     "fill_factor": 0.6,
-    "global_find_cycle": 21607551656.0,
+    "global_find_cycle": 19599350102.0,
     "find_ops": 32212254700.0,
     "found": 32212254700.0,
-    "global_insert_cycle": 32644803734.0,
+    "global_insert_cycle": 32396822644.0,
     "insert_ops": 32212254700.0,
-    "set_cycles": 129.0,
-    "get_cycles": 85.0,
-    "set_mops": 2466.0,
-    "get_mops": 3726.0
+    "set_cycles": 128.0,
+    "get_cycles": 77.0,
+    "set_mops": 2485.0,
+    "get_mops": 4108.0
   },
   {
     "build_cfg": {
@@ -5863,15 +5863,15 @@
     "fill": 375809638.0,
     "capacity": 536870912.0,
     "fill_factor": 0.7,
-    "global_find_cycle": 23611791508.0,
+    "global_find_cycle": 24083509034.0,
     "find_ops": 37580963800.0,
     "found": 37580963800.0,
-    "global_insert_cycle": 39425287548.0,
+    "global_insert_cycle": 38947130858.0,
     "insert_ops": 37580963800.0,
-    "set_cycles": 134.0,
-    "get_cycles": 80.0,
-    "set_mops": 2383.0,
-    "get_mops": 3979.0
+    "set_cycles": 132.0,
+    "get_cycles": 82.0,
+    "set_mops": 2412.0,
+    "get_mops": 3901.0
   },
   {
     "build_cfg": {
@@ -5896,15 +5896,15 @@
     "fill": 429496729.0,
     "capacity": 536870912.0,
     "fill_factor": 0.8,
-    "global_find_cycle": 33370595686.0,
+    "global_find_cycle": 34211373986.0,
     "find_ops": 42949672900.0,
     "found": 42949672900.0,
-    "global_insert_cycle": 47675845806.0,
+    "global_insert_cycle": 51814569702.0,
     "insert_ops": 42949672900.0,
-    "set_cycles": 142.0,
-    "get_cycles": 99.0,
-    "set_mops": 2252.0,
-    "get_mops": 3217.0
+    "set_cycles": 154.0,
+    "get_cycles": 101.0,
+    "set_mops": 2072.0,
+    "get_mops": 3138.0
   },
   {
     "build_cfg": {
@@ -5929,14 +5929,14 @@
     "fill": 483183820.0,
     "capacity": 536870912.0,
     "fill_factor": 0.9,
-    "global_find_cycle": 42049295180.0,
+    "global_find_cycle": 43075543802.0,
     "find_ops": 48318382000.0,
     "found": 48318382000.0,
-    "global_insert_cycle": 59382676422.0,
+    "global_insert_cycle": 61868894868.0,
     "insert_ops": 48318382000.0,
-    "set_cycles": 157.0,
-    "get_cycles": 111.0,
-    "set_mops": 2034.0,
-    "get_mops": 2872.0
+    "set_cycles": 163.0,
+    "get_cycles": 114.0,
+    "set_mops": 1952.0,
+    "get_mops": 2804.0
   }
 ]

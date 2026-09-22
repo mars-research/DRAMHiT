@@ -208,20 +208,29 @@ def title_for(data, label, note=None):
 
 
 def axis_limits(data, ceilings):
-    """Axis tops from EVERY series in the json, not just the plotted subset.
+    """Axis tops per phase, from EVERY series in the json.
 
-    A --only figure is nearly always one half of a comparison, so the two
-    halves have to share a scale or the eye reads the difference off the axes
-    instead of off the data.
+    Two things are being balanced here. A --only figure is nearly always one
+    half of a comparison, so both halves have to share a scale or the eye
+    reads the difference off the axes instead of off the data -- hence "every
+    series", not just the plotted subset.
+
+    But the scale is per *phase*. Lookup reaches ~5000 Mops and insertion
+    ~4000, so one top shared across both squeezes every insertion line into
+    the bottom 40% of its panel and the curves that panel exists to show stop
+    being legible. Sharing per phase keeps the two figures comparable without
+    that cost.
     """
-    mops = bw = 0.0
-    for entry in data["tables"].values():
-        for phase, _ in PHASES:
+    limits = {}
+    for phase, _ in PHASES:
+        mops = bw = 0.0
+        for entry in data["tables"].values():
             mops = max([mops] + [v for v in entry.get(f"{phase}_mops", [])])
             bw = max([bw] + [v for v in entry.get(f"{phase}_bw_gbps", [])
                              if v is not None])
-    top = max([bw] + [c for c in ceilings.values() if c])
-    return {"mops": mops * 1.08, "bw": top * 1.12}
+        top = max([bw] + [c for c in [ceilings.get(phase)] if c])
+        limits[phase] = {"mops": mops * 1.08, "bw": top * 1.12}
+    return limits
 
 
 def plot(data, out_stem, split, ceilings, only=None, note=None, split_rw=False):
@@ -249,7 +258,7 @@ def plot(data, out_stem, split, ceilings, only=None, note=None, split_rw=False):
             fig, ax = ps.get_subplots(1, 1, plot_w=5)
             draw(ax, frame(data, phase), tables,
                  title_for(data, label, note), palette, xticks,
-                 ceilings.get(phase), limits, styles, split_rw)
+                 ceilings.get(phase), limits[phase], styles, split_rw)
             ncol = min(len(tables), 3)
             metric_y, legend_top = legend_geometry(len(tables), ncol)
             ps.add_legend(fig, palette, tables, ncol=ncol, styles=styles)
@@ -261,7 +270,8 @@ def plot(data, out_stem, split, ceilings, only=None, note=None, split_rw=False):
     fig, axes = ps.get_subplots(1, len(PHASES), plot_w=5)
     for ax, (phase, label) in zip(axes.ravel(), PHASES):
         draw(ax, frame(data, phase), tables, title_for(data, label, note),
-             palette, xticks, ceilings.get(phase), limits, styles, split_rw)
+             palette, xticks, ceilings.get(phase), limits[phase], styles,
+             split_rw)
     ncol = min(len(tables), 3)
     metric_y, legend_top = legend_geometry(len(tables), ncol)
     ps.add_legend(fig, palette, tables, ncol=ncol, styles=styles)

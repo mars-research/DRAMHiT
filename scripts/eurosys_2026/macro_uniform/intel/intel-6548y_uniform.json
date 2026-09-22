@@ -2,7 +2,7 @@
   "machine": "intel-6548y",
   "mode": "uniform",
   "param_name": "fill",
-  "collected_utc": "2026-09-19T02:18:11+00:00",
+  "collected_utc": "2026-09-22T22:24:34+00:00",
   "reps": 5,
   "bw_interval_ms": 100,
   "bw_events": "uncore_imc/cas_count_read/,uncore_imc/cas_count_write/",
@@ -27,7 +27,13 @@
     "-DREAD_BEFORE_CAS=ON",
     "-DCAS_NO_ABSTRACT=OFF",
     "-DGROWT=OFF",
-    "-DCALC_STATS=OFF"
+    "-DCALC_STATS=OFF",
+    "-DAGGR=OFF",
+    "-DBQ_KMER_TEST=OFF",
+    "-DBQUEUE=OFF",
+    "-DPART_ID=OFF",
+    "-DCLHT=OFF",
+    "-DLATENCY_COLLECTION=OFF"
   ],
   "plot_order": [
     "cas",
@@ -35,7 +41,8 @@
     "folklore",
     "folklore_nopref",
     "dlht",
-    "dlht_nopref"
+    "dlht_nopref",
+    "dlht_batch16"
   ],
   "skipped": {
     "growt": "excluded by request; it collapses past ~50% fill (see intel.json)"
@@ -2110,8 +2117,223 @@
         ],
         "reason": "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% reported fill; the table aborts with 'Resize required: Global link bucket pool exhausted'"
       }
+    },
+    "dlht_batch16": {
+      "display": "dlht (batch 16, hw pref off)",
+      "ht_type": 10,
+      "prefetcher": "off",
+      "batch_len": 16,
+      "fills": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "set_mops": [
+        2455.0,
+        2359.0,
+        2201.0,
+        2013.0
+      ],
+      "get_mops": [
+        4308.0,
+        3946.0,
+        3504.0,
+        3081.0
+      ],
+      "set_samples": [
+        [
+          2438.0,
+          2440.0,
+          2465.0,
+          2465.0,
+          2455.0
+        ],
+        [
+          2359.0,
+          2362.0,
+          2353.0,
+          2359.0,
+          2359.0
+        ],
+        [
+          2200.0,
+          2207.0,
+          2184.0,
+          2201.0,
+          2201.0
+        ],
+        [
+          2013.0,
+          1985.0,
+          2024.0,
+          2001.0,
+          2016.0
+        ]
+      ],
+      "get_samples": [
+        [
+          4394.0,
+          4342.0,
+          4308.0,
+          4222.0,
+          4178.0
+        ],
+        [
+          3940.0,
+          3752.0,
+          3967.0,
+          3946.0,
+          3967.0
+        ],
+        [
+          3504.0,
+          3538.0,
+          3446.0,
+          3425.0,
+          3504.0
+        ],
+        [
+          3081.0,
+          3041.0,
+          3118.0,
+          3053.0,
+          3089.0
+        ]
+      ],
+      "set_bw_gbps": [
+        325.2,
+        320.3,
+        312.0,
+        301.9
+      ],
+      "get_bw_gbps": [
+        316.3,
+        294.8,
+        270.8,
+        250.5
+      ],
+      "set_bw_rd_gbps": [
+        173.5,
+        171.7,
+        168.7,
+        165.3
+      ],
+      "get_bw_rd_gbps": [
+        316.1,
+        294.7,
+        270.7,
+        250.4
+      ],
+      "set_bw_wr_gbps": [
+        151.6,
+        148.6,
+        143.2,
+        136.6
+      ],
+      "get_bw_wr_gbps": [
+        0.2,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "set_bw_samples": [
+        [
+          325.2,
+          325.1,
+          325.2,
+          325.2,
+          325.1
+        ],
+        [
+          320.3,
+          320.2,
+          320.3,
+          320.3,
+          320.4
+        ],
+        [
+          312.0,
+          311.9,
+          311.9,
+          312.0,
+          312.0
+        ],
+        [
+          301.9,
+          301.8,
+          301.9,
+          302.0,
+          302.0
+        ]
+      ],
+      "get_bw_samples": [
+        [
+          316.3,
+          316.2,
+          316.3,
+          316.3,
+          315.9
+        ],
+        [
+          294.8,
+          294.4,
+          295.0,
+          294.8,
+          294.7
+        ],
+        [
+          270.9,
+          270.5,
+          270.8,
+          270.9,
+          270.8
+        ],
+        [
+          250.5,
+          250.7,
+          250.5,
+          250.7,
+          250.5
+        ]
+      ],
+      "set_bw_intervals": [
+        5,
+        29,
+        56,
+        86
+      ],
+      "get_bw_intervals": [
+        10,
+        11,
+        29,
+        50
+      ],
+      "set_bw_transient_only": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "get_bw_transient_only": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "failures": [],
+      "not_swept": {
+        "fills": [
+          50,
+          60,
+          70,
+          80,
+          90
+        ],
+        "reason": "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% reported fill; the table aborts with 'Resize required: Global link bucket pool exhausted'"
+      }
     }
   },
-  "finished_utc": "2026-09-19T02:18:11+00:00",
+  "finished_utc": "2026-09-22T22:24:35+00:00",
   "rederived_from_logs": true
 }
