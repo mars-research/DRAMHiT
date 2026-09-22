@@ -124,9 +124,34 @@ TABLES = {
             "link bucket pool exhausted'"
         ),
     },
+    # Same table, same prefetcher setting, only --batch-len differs. dlht is the
+    # one table here whose batch length IS its prefetch depth:
+    # DlhtHashTable::find_batch fires one __builtin_prefetch per key for the whole
+    # batch as a burst and then drains the batch with nothing further in flight,
+    # where cas/cas23 issue one prefetch per result consumed out of a persistent
+    # queue. At 64 threads on 32 SMT cores a 32-deep burst is 64 outstanding
+    # requests per core, past what Zen4 will accept: 39% of the prefetches are
+    # discarded for want of a Miss Address Buffer entry and come back as exposed
+    # demand misses (profile_dlht_prefetch_amd.py). sweep_dlht_batch_amd.py puts
+    # the knee at 16. Kept as a separate key so the published dlht series is not
+    # silently replaced by a differently-configured one.
+    # See amd_vs_intel_lookup.md section 7.
+    "dlht_batch16": {
+        "display": "dlht (batch 16)",
+        "ht_type": HT_DLHT,
+        "prefetcher": "off",
+        "batch_len": 16,
+        "max_fill": 40,
+        "max_fill_reason": (
+            "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% "
+            "reported fill; the table aborts with 'Resize required: Global "
+            "link bucket pool exhausted'. Unchanged by batch length -- it is an "
+            "insert-capacity limit, not a batching one."
+        ),
+    },
 }
 
-PLOT_ORDER = ["cas", "cas23", "folklore", "dlht"]
+PLOT_ORDER = ["cas", "cas23", "folklore", "dlht", "dlht_batch16"]
 
 SKIPPED = {
     "growt": "excluded by request; it collapses past ~50% fill (see intel.json)",
@@ -553,6 +578,8 @@ def main():
             raise SystemExit(f"[!] {out_path} is not readable json ({exc}); "
                              f"move it aside or pass --out")
         results["reps"] = args.reps
+        results["plot_order"] = PLOT_ORDER
+        results["skipped"] = SKIPPED
         results.pop("finished_utc", None)
         keep = [t for t in results.get("tables", {}) if t not in names]
         print(f"[merge] {out_path} exists: recollecting {', '.join(names)}, "

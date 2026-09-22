@@ -65,6 +65,7 @@ DISPLAY_NAMES = {
     "cas23": "dramhit",
     "folklore_nopref": "folklore (hw pref off)",
     "dlht_nopref": "dlht (hw pref off)",
+    "dlht_batch16": "dlht (batch 16)",
 }
 
 # Runs that are a variant of one of the series above rather than a series of
@@ -76,6 +77,12 @@ VARIANT_STYLE = {
     # say which prefetcher state produced it.
     "folklore_nopref": {"base": "folklore", "linestyle": "--", "marker": "s"},
     "dlht_nopref": {"base": "dlht", "linestyle": "--", "marker": "s"},
+    # Same table and same prefetcher state as dlht, only --batch-len differs.
+    # dlht is the one table whose batch length is also its prefetch depth, so
+    # the two are worth drawing together rather than as one replacing the
+    # other. Dash-dot and a triangle so it stays distinct from dlht_nopref,
+    # which already owns dashed-square on this colour.
+    "dlht_batch16": {"base": "dlht", "linestyle": "-.", "marker": "^"},
 }
 
 # A collection that measures every table in both hardware-prefetcher states

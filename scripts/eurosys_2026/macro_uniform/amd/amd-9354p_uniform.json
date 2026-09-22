@@ -33,7 +33,8 @@
     "cas",
     "cas23",
     "folklore",
-    "dlht"
+    "dlht",
+    "dlht_batch16"
   ],
   "skipped": {
     "growt": "excluded by request; it collapses past ~50% fill (see intel.json)"
@@ -1483,7 +1484,223 @@
         ],
         "reason": "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% reported fill; the table aborts with 'Resize required: Global link bucket pool exhausted'"
       }
+    },
+    "dlht_batch16": {
+      "display": "dlht (batch 16)",
+      "ht_type": 10,
+      "prefetcher": "off",
+      "batch_len": 16,
+      "collected_utc": "2026-09-22T18:21:12+00:00",
+      "fills": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "set_mops": [
+        1564.0,
+        1497.0,
+        1417.0,
+        1329.0
+      ],
+      "get_mops": [
+        2324.0,
+        2149.0,
+        1970.0,
+        1795.0
+      ],
+      "set_samples": [
+        [
+          1548.0,
+          1567.0,
+          1564.0,
+          1564.0,
+          1567.0
+        ],
+        [
+          1493.0,
+          1498.0,
+          1497.0,
+          1499.0,
+          1495.0
+        ],
+        [
+          1419.0,
+          1411.0,
+          1421.0,
+          1398.0,
+          1417.0
+        ],
+        [
+          1330.0,
+          1329.0,
+          1324.0,
+          1316.0,
+          1329.0
+        ]
+      ],
+      "get_samples": [
+        [
+          2324.0,
+          2316.0,
+          2319.0,
+          2325.0,
+          2338.0
+        ],
+        [
+          2132.0,
+          2150.0,
+          2152.0,
+          2149.0,
+          2146.0
+        ],
+        [
+          1975.0,
+          1970.0,
+          1976.0,
+          1949.0,
+          1968.0
+        ],
+        [
+          1794.0,
+          1790.0,
+          1795.0,
+          1796.0,
+          1798.0
+        ]
+      ],
+      "set_bw_gbps": [
+        212.8,
+        207.2,
+        201.5,
+        192.8
+      ],
+      "get_bw_gbps": [
+        171.1,
+        162.4,
+        152.1,
+        142.2
+      ],
+      "set_bw_rd_gbps": [
+        114.2,
+        111.7,
+        109.4,
+        105.9
+      ],
+      "get_bw_rd_gbps": [
+        171.0,
+        162.3,
+        152.0,
+        142.2
+      ],
+      "set_bw_wr_gbps": [
+        98.6,
+        95.5,
+        92.1,
+        87.0
+      ],
+      "get_bw_wr_gbps": [
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "set_bw_samples": [
+        [
+          211.9,
+          213.1,
+          211.1,
+          212.8,
+          214.1
+        ],
+        [
+          207.2,
+          207.1,
+          209.8,
+          207.2,
+          210.7
+        ],
+        [
+          201.5,
+          202.5,
+          201.4,
+          199.0,
+          202.6
+        ],
+        [
+          190.7,
+          190.9,
+          193.1,
+          192.8,
+          193.0
+        ]
+      ],
+      "get_bw_samples": [
+        [
+          171.5,
+          170.4,
+          170.7,
+          171.1,
+          173.3
+        ],
+        [
+          162.4,
+          162.4,
+          162.4,
+          162.5,
+          162.4
+        ],
+        [
+          152.2,
+          151.9,
+          152.2,
+          152.0,
+          152.1
+        ],
+        [
+          142.2,
+          142.2,
+          144.3,
+          142.3,
+          142.2
+        ]
+      ],
+      "set_bw_intervals": [
+        17,
+        54,
+        95,
+        142
+      ],
+      "get_bw_intervals": [
+        6,
+        33,
+        64,
+        101
+      ],
+      "set_bw_transient_only": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "get_bw_transient_only": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "failures": [],
+      "not_swept": {
+        "fills": [
+          50,
+          60,
+          70,
+          80,
+          90
+        ],
+        "reason": "DLHT's link-bucket pool (capacity/8) is exhausted past ~45% reported fill; the table aborts with 'Resize required: Global link bucket pool exhausted'. Unchanged by batch length -- it is an insert-capacity limit, not a batching one."
+      }
     }
   },
-  "finished_utc": "2026-09-22T00:08:15+00:00"
+  "finished_utc": "2026-09-22T18:32:51+00:00"
 }

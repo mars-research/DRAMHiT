@@ -284,6 +284,31 @@ to `collect_data_amd.py` ([`amd/dlht_batch_sweep.json`](amd/dlht_batch_sweep.jso
 
 (run-to-run spread under 1%; dramhit at batch 16 is 2749.)
 
+This is not just a sweep result. The batch-16 configuration is now collected as a full
+series next to the published one, 5 reps per point with bandwidth sampling, prefetcher
+off, under the key **`dlht_batch16`** in
+[`amd/amd-9354p_uniform.json`](amd/amd-9354p_uniform.json) -- added alongside `dlht`
+rather than replacing it, the same way `intel-6548y_uniform.json` carries
+`dlht_nopref` next to `dlht`:
+
+| fill | get b32 | get b16 | delta | set b32 | set b16 | delta | lookup GB/s |
+|---|---|---|---|---|---|---|---|
+| 10 | 2057 | 2324 | **+13.0%** | 1428 | 1564 | +9.5% | 152 -> 171 |
+| 20 | 1881 | 2149 | **+14.2%** | 1363 | 1497 | +9.8% | 142 -> 162 |
+| 30 | 1722 | 1970 | **+14.4%** | 1288 | 1417 | +10.0% | 134 -> 152 |
+| 40 | 1569 | 1795 | **+14.4%** | 1211 | 1329 | +9.7% | 125 -> 142 |
+
+Every rep passed the collector's `found == find_ops` check (`failures: []` for all four
+fills), so this is +13 to +14% on lookup and ~+10% on insert, and the gain is stable
+across the whole fill range rather than an artefact of the fill-10 point. Lookup
+bandwidth rises with it -- 152 -> 171 GB/s at fill 10 -- which is the signature the
+drop-rate table predicts: the prefetches that used to be discarded are now reaching DRAM
+instead of arriving later as exposed demand misses.
+
+The fill range is unchanged at 10-40. dlht still aborts with "Resize required: Global
+link bucket pool exhausted" at fill 50, verified at batch 16 -- it is an insert-capacity
+limit (the link pool is `capacity/8`), independent of batch length.
+
 Two corrections to this document's earlier claims:
 
 - **"dlht needs 32; 16 is not an option for it" is wrong.** dlht returns
