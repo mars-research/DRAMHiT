@@ -1,411 +1,437 @@
 #!/usr/bin/env python3
-'''
-Core-count sweep against local DDR5 on the AMD box: this is collect_cpu_scaling_intel_hbm.py
-carried over to hardware with no HBM tier and no second socket, so it answers the same
-question -- does each added core buy a fixed slice of bandwidth, or does something shared
-saturate first -- against the only memory tier this machine has.
+"""Core-count sweep on the AMD EPYC 9354P: how does DRAM bandwidth scale from 1 to
+64 threads, and what does the prefetch instruction change?
 
-Machine: 1x AMD EPYC 9354P (Zen4, Genoa), 32 cores / 64 threads, booted NPS4 -- the BIOS
-splits the single socket into 4 NUMA nodes, each with its own slice of cores and its own
-3 DDR5 channels:
-    node 0: cpus 0-7,32-39    node 1: cpus 8-15,40-47
-    node 2: cpus 16-23,48-55  node 3: cpus 24-31,56-63
-(0-31 are physical cores, 32-63 are their SMT siblings -- cpu N and N+32 share a core.)
-There is no cross-socket fabric to hold constant here the way the Intel sweep holds UPI
-constant; the analogous "shared thing" on this chip is the single Infinity Fabric linking
-all 4 memory controllers, which every node's traffic crosses regardless of core placement.
+Same experiment and same json shape as collect_cpu_scaling_intel.py and
+collect_cpu_scaling_intel_hbm.py, so the three plot side by side. What differs is
+how a thread count turns into a placement, and that difference is the point.
 
-Two series, both bandwidth.c (random access, prefetcht1, lookahead 64), CPUs and memory
-both bound to the same node(s) so nothing crosses to a remote controller:
+--- this machine is one package, not four ------------------------------------
+The BIOS is in NPS4, so the OS sees 4 NUMA nodes:
 
-  node_local   -- cpu node 0 -> mem node 0 only. Threads 1..16 sweep just that node's 8
-                  physical cores then their 8 SMT siblings, isolating one node's ceiling.
-  system_local -- all 4 nodes at once, thread i pinned to node i%4 (so node0/1/2/3 each
-                  gain a thread in turn, physical cores before any node's SMT siblings),
-                  memory local to whichever node the thread landed on. This is the
-                  machine-wide analogue of Intel's single-HBM-node sweep: every controller
-                  is loaded from its own local cores the whole way, so a bend in this curve
-                  is either a per-controller ceiling (node_local bends at the same thread
-                  count) or something above the controllers -- the fabric -- that all 4 of
-                  them share.
+    node 0: cpus 0-7,32-39     node 1: cpus 8-15,40-47
+    node 2: cpus 16-23,48-55   node 3: cpus 24-31,56-63
 
-Program-reported GB/s (bandwidth.c's own byte-count / wall-clock) is the headline number.
-It is cross-checked at the DRAM controllers themselves, because a number the program
-computes from its own timer can't tell a real ceiling from the timer being wrong -- and
-that almost happened here: bandwidth.c's "-freq" is not measured, it's what you tell it to
-divide elapsed cycles by, and the value the Intel sweep uses (2.7) is that machine's
-number, not this one's. This chip's actual base clock is 3.25 GHz (matches
-collect_bw/collect_threads.sh's `-DCPUFREQ_MHZ=3250` for this same box), confirmed here by
-comparing the program's own elapsed-cycle count against wall-clock time recovered
-independently from perf's -I timestamps on a calibration run -- the two agreed to within
-0.4% at 3.25 GHz and were 17% apart at 2.7.
+but it is a single socket -- one package, one Infinity Fabric, 12 DDR5 channels.
+The nodes are a partition of that one memory system (3 channels each), not separate
+memory systems. So this sweep treats it as one package:
 
-The DRAM-side PMU is amd_umc_<N> (12 instances, 3 per NUMA node -- confirmed empirically,
-not from docs: pin 8 threads to node 0 only and watch which amd_umc_* boxes move. Boxes
-0,1,2 moved; 3-11 stayed flat. Repeating per node gives node -> boxes {3n, 3n+1, 3n+2}.
-That mapping cannot come from sysfs on this kernel: every amd_umc_*/cpumask reads "0" --
-perf just needs one CPU to open the fd on, and picks CPU 0 for all of them regardless of
-which node's controller the box actually is -- so both --per-socket (one socket, useless)
-and --per-node (would bucket every uncore box under node 0) are dead ends here, unlike the
-Intel sweep where uncore cpumask is meaningful. Node identity is instead threaded through
-perf's `name=` field per box and summed back up in this script.
+  * **memory is interleaved across all 4 nodes** on every run (`a0-3`), so all 12
+    channels serve every point and the sweep measures the package's bandwidth rather
+    than one quarter of it;
+  * **threads ramp package-wide**: fill node 0's 8 physical cores, then node 1's,
+    then node 2's, then node 3's -- 32 threads is one per physical core on the whole
+    package -- and then the SMT siblings in the same node order, 33-40 on node 0 and
+    so on to 64.
 
-Each amd_umc_<N> is read as two named events, umc_cas_cmd.rd and .wr (raw CAS command
-counts, no scale/unit exposed by this kernel's sysfs the way uncore_imc's is on the Intel
-box) plus umc_mem_clk. CAS width: DDR5 on this UMC is 2x32B sub-channels bursting together,
-64B/CAS -- checked the same way as the frequency, by summing (rd+wr)*64B over the interior
-perf intervals of a calibration run and comparing to the program's own freq-corrected
-GB/s: they agreed to within 8%, the rest attributable to non-demand DRAM traffic (partial
-lines, refresh, the prefetcher) that a CPU-side byte count never sees -- the same order of
-mismatch the Intel sweep documents between its own prog/PMU numbers.
+        threads  1..8   9..16  17..24  25..32 | 33..40  41..48  49..56  57..64
+        node        0       1       2       3 |     0       1       2       3
+        which    physical cores               | SMT siblings
 
-Needs sudo (uncore PMUs) and 2 MB hugepages on every node under test:
-scripts/enable_hugepages.sh reserves them; bandwidth.c's mbind() + MAP_HUGETLB fails
-without them and the workers hang on their barrier instead of exiting.
-'''
+    bandwidth.c pins thread N to the Nth cpu of its node in ascending order, and each
+    node lists its 8 physical cores before their 8 siblings, so asking a node for t<=8
+    gets physical cores and t=16 gets the node's full 16.
+
+That ramp is why the interesting x positions here are 8/16/24/32 (a node's cores
+joining) and 32 (SMT starting), not the single SMT boundary the Intel sweeps have.
+Each node is 2 CCDs of 4 cores, so 4 and 8 threads into a node are also the points
+where that node's second CCD lights up -- see local_interleave_analysis.md section 1.
+
+Two workloads, because the prefetch hint that helps one is meaningless for the other:
+
+  rand read   a dependent-free stream of random 64 B loads. The software prefetch is
+              the only thing generating memory-level parallelism.
+
+  1r1w        an 8 B store into a random 64 B line. At DRAM that is TWO transactions:
+              the line is fetched (RFO) before it can be modified and written back.
+              ntstore is the control -- a full-line non-temporal store never fetches,
+              so it is 0r1w and moves about half the DRAM traffic per store.
+
+    python3 collect_cpu_scaling_amd.py --dry-run
+    python3 collect_cpu_scaling_amd.py
+    python3 collect_cpu_scaling_amd.py --series read_t1 --threads 1 8 16 32 64
+
+Needs sudo (uncore PMUs) and 2 MB hugepages on all four nodes
+(scripts/enable_hugepages.sh): bandwidth.c mmaps with MAP_HUGETLB and the workers hang
+on their barrier rather than exiting if that fails.
+"""
+
 import argparse
 import json
-import os
 import re
+import shlex
 import statistics
 import subprocess
 import sys
+import time
 from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-BIN_PATH = os.path.normpath(os.path.join(HERE, "..", "machine_stats", "build", "bandwidth_rand"))
+SCRIPT_DIR = Path(__file__).resolve().parent
+BIN = (SCRIPT_DIR.parent / "machine_stats" / "build" / "bandwidth_rand").resolve()
 
-OUTPUT_JSON = os.path.join(HERE, "amd_cpu_scaling.json")
-LOG_DIR = os.path.join(HERE, "logs", "cpu_scaling")
+MACHINE = "amd-9354p"
+OUT_JSON = SCRIPT_DIR / f"{MACHINE}_cpu_scaling.json"
+LOG_DIR = SCRIPT_DIR / "logs" / "cpu_scaling_amd"
 
-# See per_thread_bytes(): why a fixed per-thread size is wrong for a core sweep, and why
-# 16gb/2gb/256mb are the right total/cap/floor -- copied verbatim from the Intel sweep,
-# the reasoning is footprint-vs-cache and has nothing to do with which vendor's cache it is.
+# --- machine -----------------------------------------------------------------
+NUM_NODES = 4
+PHYS_CORES_PER_NODE = 8
+CPUS_PER_NODE = 16          # 8 physical + 8 SMT siblings
+SMT_BOUNDARY = 32           # threads 1..32 are one per physical core, package-wide
+NODE_BOUNDARIES = [8, 16, 24, 32]   # where each node's cores join the ramp
+MEM_SPEC = "0-3"            # MPOL_INTERLEAVE over all 4 nodes: one package
+CPU_FREQ_GHZ = "3.25"       # this part's base clock; bandwidth.c turns rdtsc into
+                            # seconds with it (see cpu_scaling_analysis_amd.md)
+LOOKAHEAD = "64"
+
+THREADS = [1, 2, 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64]
+REPS = 3
+
+# Footprint. A per-thread size held constant across a core sweep is not a constant
+# experiment -- at 1 thread a small chunk sits inside the 256 MiB L3 and never reaches
+# DRAM. Aim at a fixed total instead, split across the threads. 16 GiB against a
+# 256 MiB L3 is a 1.6% cache-to-footprint ratio at every point, and the four nodes hold
+# 4092 2 MB pages each (~8 GiB), so an interleaved 16 GiB needs 4 GiB per node.
 TOTAL_FOOTPRINT_BYTES = 16 * 1024 ** 3
 MAX_PER_THREAD_BYTES = 2 * 1024 ** 3
 MIN_PER_THREAD_BYTES = 256 * 1024 ** 2
 
-# node_local is confined to one node's ~8GB of reserved 2MB hugepages (enable_hugepages.sh
-# reserves per-node, not machine-wide), so it gets its own, smaller target.
-NODE_TOTAL_FOOTPRINT_BYTES = 6 * 1024 ** 3
-
-CPU_FREQ_GHZ = "3.25"  # this machine's actual base clock -- see module docstring
-LOOKAHEAD = "64"
-INST = "t1"
-
-NUM_NODES = 4
-CPUS_PER_NODE = 16  # 8 physical + 8 SMT siblings, this machine's NPS4 layout
-
-# node -> its 3 amd_umc_<N> boxes, confirmed empirically (see module docstring); this is
-# NOT derivable from /sys/devices/amd_umc_*/cpumask, which reads 0 for every box.
-NODE_UMC_BOXES = {n: [3 * n, 3 * n + 1, 3 * n + 2] for n in range(NUM_NODES)}
-BYTES_PER_CAS = 64  # DDR5, 2x32B sub-channels bursting together -- see module docstring
-
-EVENT_ENCODINGS = {
-    "rd": "umc_cas_cmd.rd",
-    "wr": "umc_cas_cmd.wr",
-    "clk": "umc_mem_clk",
+# --- what to sweep -----------------------------------------------------------
+SERIES = {
+    "read_load":       {"mode": "r", "inst": "load",
+                        "label": "rand read, no sw prefetch"},
+    "read_t0":         {"mode": "r", "inst": "t0",
+                        "label": "rand read, prefetcht0"},
+    "read_t1":         {"mode": "r", "inst": "t1",
+                        "label": "rand read, prefetcht1"},
+    "write_load":      {"mode": "w", "inst": "load",
+                        "label": "1r1w, no sw prefetch"},
+    "write_prefetchw": {"mode": "w", "inst": "prefetchw",
+                        "label": "1r1w, prefetchw"},
+    "write_ntstore":   {"mode": "w", "inst": "ntstore",
+                        "label": "0r1w, nt store (control)"},
+    "write_t0":        {"mode": "w", "inst": "t0",
+                        "label": "1r1w, prefetcht0"},
+    "write_t1":        {"mode": "w", "inst": "t1",
+                        "label": "1r1w, prefetcht1"},
+    "write_t2":        {"mode": "w", "inst": "t2",
+                        "label": "1r1w, prefetcht2"},
 }
 
-# node_local: just node 0, 1..16 threads (8 physical then their SMT siblings).
-# system_local: all 4 nodes at once, up to 16 threads/node -- the extra points below
-# 16*4=64 are round-robinned across nodes (see thread_layout()), same as the Intel default.
-NODE_LOCAL_THREADS = [1, 2, 4, 6, 8, 12, 16]
-SYSTEM_LOCAL_THREADS = [1, 2, 4, 6, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64]
+PLOT_ORDER = ["read_load", "read_t0", "read_t1",
+              "write_load", "write_prefetchw", "write_t0", "write_t1",
+              "write_t2", "write_ntstore"]
+
+# --- DRAM counters -----------------------------------------------------------
+# AMD has no uncore_imc. The equivalent is amd_umc_<0..11>, one per DDR5 channel,
+# 3 per NUMA node, and unlike Intel's PMU it publishes no scale/unit -- the counters
+# are raw CAS commands at 64 B each. Memory is interleaved over all four nodes here,
+# so all 12 boxes are counted on every run. 2 events per box against 4 counters per
+# box, so nothing multiplexes; the parser asserts that.
+BW_INTERVAL_MS = 100
+UMC_BOXES = list(range(12))
+BYTES_PER_CAS = 64
+BW_EVENTS = ",".join(
+    f"amd_umc_{b}/umc_cas_cmd.{k},name={k}_b{b}/"
+    for b in UMC_BOXES for k in ("rd", "wr")
+)
+PERF_RE = re.compile(r"^([\d.]+),([\d.]+),,(rd|wr)_b(\d+),([\d.]+),([\d.]+)")
+
+# bandwidth.c brackets its measured loop with these, so allocation and first-touch
+# traffic stays out of the window.
+MARK_START = "Start perf collection"
+MARK_END = "End perf collection"
 
 PROG_BW_RE = re.compile(r"Bandwidth\s*:\s*([\d.]+)\s*GB/s")
-PROG_CPA_RE = re.compile(r"node\s+(\d+)\s*:\s*([\d.]+)\s*cycles/access")
-PROG_CYCLES_RE = re.compile(r"Elapsed Cycles\s*:\s*(\d+)")
+PROG_TIME_RE = re.compile(r"Time Taken\s*:\s*([\d.]+)\s*seconds")
 
 
-def per_thread_bytes(threads, total_footprint_bytes):
-    """Per-thread chunk for this point, as a power of two (bandwidth.c rounds down to one
-    anyway, so choose it here and report the real footprint)."""
-    target = min(MAX_PER_THREAD_BYTES, total_footprint_bytes // threads)
+# =============================================================================
+# PLACEMENT
+# =============================================================================
+
+
+def thread_layout(total):
+    """total threads -> {node: threads on it}, for this machine's package-wide ramp.
+
+    Thread i goes to node (i // 8) % 4: the first 32 walk the four nodes' physical
+    cores 8 at a time, the next 32 walk their SMT siblings in the same order.
+    """
+    counts = defaultdict(int)
+    for i in range(total):
+        counts[(i // PHYS_CORES_PER_NODE) % NUM_NODES] += 1
+    return dict(sorted(counts.items()))
+
+
+def pattern_for(total):
+    """bandwidth.c -pattern. Groups are separated by SPACES -- its parser is
+    strtok(s, " ") -- and a comma only ever lists memory nodes inside one group,
+    which is exactly what the a0-3 interleave uses."""
+    return " ".join(
+        f"n{node}a{MEM_SPEC}t{count}" for node, count in thread_layout(total).items()
+    )
+
+
+def per_thread_bytes(threads):
+    """Per-thread chunk, as a power of two (bandwidth.c rounds down anyway)."""
+    target = min(MAX_PER_THREAD_BYTES, TOTAL_FOOTPRINT_BYTES // threads)
     size = MIN_PER_THREAD_BYTES
     while size * 2 <= target:
         size *= 2
     return size
 
 
-def thread_layout(total_threads, nodes):
-    """Thread i -> nodes[i % len(nodes)] -- round-robin so every active node gains a
-    thread in turn (physical cores before any node's SMT siblings, since bandwidth.c
-    assigns each node's cpus in ascending id order and this machine lists physical cores
-    before their SMT siblings). Returns {node: thread_count} for nodes that got >=1."""
-    counts = defaultdict(int)
-    for i in range(total_threads):
-        counts[nodes[i % len(nodes)]] += 1
-    return dict(counts)
-
-
-def perf_event_string(nodes):
-    """One amd_umc_<N>/.../,name=mem_<kind>_n<node>_b<box>/ term per (node, box, kind),
-    restricted to the boxes of the given nodes -- so a node_local run doesn't pay for (or
-    get confused by) counters on nodes it never touches."""
-    terms = []
-    for node in nodes:
-        for box in NODE_UMC_BOXES[node]:
-            for kind, enc in EVENT_ENCODINGS.items():
-                terms.append("amd_umc_{b}/{enc},name=mem_{k}_n{n}_b{b}/".format(
-                    b=box, enc=enc, k=kind, n=node))
-    return ",".join(terms)
-
-
-def run_one(series_name, node_threads, rep, interval_ms, inst=INST):
-    """node_threads: {node: thread_count}. Builds bandwidth.c's -pattern from it directly:
-    'n{node}a{node}t{count}' per active node, SPACE-joined -- bandwidth.c's parser splits
-    pattern groups on strtok(str, " "), not commas (commas are only used inside a group,
-    e.g. 'a0,1' to interleave one group's memory across two nodes)."""
-    pattern = " ".join(
-        "n{n}a{n}t{c}".format(n=n, c=c) for n, c in sorted(node_threads.items()) if c > 0
-    )
-    total_threads = sum(node_threads.values())
-    chunk_mb = per_thread_bytes(total_threads, footprint_for(node_threads)) // (1024 ** 2)
-
-    cmd = [
-        "sudo", "perf", "stat", "-a",
-        "-e", perf_event_string(sorted(n for n, c in node_threads.items() if c > 0)),
-        "-I", str(interval_ms), "-x", ",",
-        "--",
-        BIN_PATH,
-        "-m", "{}mb".format(chunk_mb),
-        "-pattern", pattern,
+def cmd_for(cfg, threads):
+    chunk_mb = per_thread_bytes(threads) // (1024 ** 2)
+    args = [
+        str(BIN),
+        "-m", f"{chunk_mb}mb",
+        "-pattern", pattern_for(threads),
         "-freq", CPU_FREQ_GHZ,
-        "-inst", inst,
+        "-inst", cfg["inst"],
         "-lookahead", LOOKAHEAD,
-        "-mode", "r",
+        "-mode", cfg["mode"],
     ]
-
-    log_path = os.path.join(LOG_DIR, "{}_t{}_r{}.log".format(series_name, total_threads, rep))
-    with open(log_path, "w") as log:
-        subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, text=True).check_returncode()
-    return log_path
+    inner = " ".join(shlex.quote(a) for a in args)
+    return (f"sudo perf stat -I {BW_INTERVAL_MS} -x, -a -e {BW_EVENTS} -- " + inner)
 
 
-def footprint_for(node_threads):
-    return NODE_TOTAL_FOOTPRINT_BYTES if len(node_threads) == 1 else TOTAL_FOOTPRINT_BYTES
+# =============================================================================
+# RUN
+# =============================================================================
 
 
-def parse_log(log_path):
-    '''Per-interval memory rates from one run's merged perf+program output, summed per
-    NUMA node (from the name= tag, not a socket column -- see module docstring for why).
+def parse_dram(output):
+    """Median DRAM read/write GB/s over the intervals inside the markers.
 
-    Only the rows between the program's own markers count: outside them the threads are
-    still allocating and first-touching their chunks, which is real memory traffic that
-    has nothing to do with the measured loop.
-    '''
-    in_window = False
-    # ts -> node -> event kind -> [summed count, summed run_ns, box count]
-    acc = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0])))
-    prog = {"cpa_by_node": {}}
+    Each box reports its own count and its own run_ns, and the 12 run_ns values are
+    summed along with the counts, so the rate is
+        bytes_per_cas * boxes * sum(count) / sum(run_ns)
+    -- the boxes factor cancels the one hidden in the summed denominator and leaves a
+    package total. Deriving it from each row's own run_ns rather than from wall time
+    matters because perf's -I is best-effort.
+    """
+    inside = False
+    acc = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0]))
+    window = {}
+    pcts = []
+    for line in output.splitlines():
+        if MARK_START in line:
+            inside = True
+        elif MARK_END in line:
+            inside = False
+        m = PERF_RE.match(line)
+        if not m:
+            continue
+        ts, count, kind, run_ns, pct = (float(m.group(1)), float(m.group(2)),
+                                        m.group(3), float(m.group(5)),
+                                        float(m.group(6)))
+        window.setdefault(ts, inside)
+        pcts.append(pct)
+        slot = acc[ts][kind]
+        slot[0] += count
+        slot[1] += run_ns
+        slot[2] += 1
 
-    node_re = re.compile(r"^mem_(rd|wr|clk)_n(\d+)_b\d+$")
+    rows = []
+    for ts in sorted(acc):
+        if not window.get(ts):
+            continue
+        ev = acc[ts]
+        if "rd" not in ev or "wr" not in ev or ev["rd"][1] <= 0 or ev["wr"][1] <= 0:
+            continue
+        rows.append((BYTES_PER_CAS * ev["rd"][2] * ev["rd"][0] / ev["rd"][1],
+                     BYTES_PER_CAS * ev["wr"][2] * ev["wr"][0] / ev["wr"][1]))
 
-    with open(log_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-
-            if "Start perf collection" in line:
-                in_window = True
-                continue
-            if "End perf collection" in line:
-                in_window = False
-                continue
-
-            m = PROG_BW_RE.search(line)
-            if m:
-                prog["prog_bw_gbs"] = float(m.group(1))
-            m = PROG_CYCLES_RE.search(line)
-            if m:
-                prog["elapsed_cycles"] = int(m.group(1))
-            for mm in PROG_CPA_RE.finditer(line):
-                prog["cpa_by_node"][mm.group(1)] = float(mm.group(2))
-
-            if not in_window:
-                continue
-
-            parts = line.split(",")
-            if len(parts) < 5 or not parts[0][:1].isdigit():
-                continue
-            if "<not counted>" in parts[1] or "<not supported>" in parts[1]:
-                continue
-            m = node_re.match(parts[3].strip())
-            if not m:
-                continue
-            try:
-                ts = float(parts[0])
-                count = float(parts[1])
-                run_ns = float(parts[4])
-            except ValueError:
-                continue
-
-            kind, node = m.group(1), int(m.group(2))
-            slot = acc[ts][node][kind]
-            slot[0] += count
-            slot[1] += run_ns
-            slot[2] += 1
-
-    if "elapsed_cycles" in prog:
-        prog["prog_time_freq_corrected_s"] = prog["elapsed_cycles"] / (float(CPU_FREQ_GHZ) * 1e9)
-
-    per_node = defaultdict(lambda: defaultdict(list))
-    timestamps = sorted(acc.keys())
-    # The first and last interval inside the markers are partial -- the loop starts and
-    # ends somewhere inside them -- so they understate the rate.
-    window = timestamps[1:-1] if len(timestamps) > 2 else timestamps
-    for ts in window:
-        for node, events in acc[ts].items():
-            if not {"rd", "wr", "clk"} <= set(events):
-                continue
-            rd_count, rd_ns, rd_boxes = events["rd"]
-            wr_count, wr_ns, wr_boxes = events["wr"]
-            clk_count, clk_ns, clk_boxes = events["clk"]
-            if rd_ns <= 0 or wr_ns <= 0:
-                continue
-            # run_ns here is SUMMED across this node's boxes (one term per box added
-            # above), so dividing by it alone gives a per-box rate; multiplying by the
-            # box count restores the node total -- same correction the Intel sweep's
-            # uncore_hbm accounting applies for the same reason (rates[key] = bytes *
-            # boxes * count / run_ns).
-            rd_gbs = BYTES_PER_CAS * rd_boxes * rd_count / rd_ns
-            wr_gbs = BYTES_PER_CAS * wr_boxes * wr_count / wr_ns
-            per_node[node]["rd"].append(rd_gbs)
-            per_node[node]["wr"].append(wr_gbs)
-            per_node[node]["all"].append(rd_gbs + wr_gbs)
-            if clk_ns > 0:
-                per_node[node]["dclk_ghz"].append(clk_boxes * clk_count / clk_ns)
-
-    summary = {"prog": prog, "nodes": {}, "intervals": len(window)}
-    for node, series in per_node.items():
-        summary["nodes"][node] = {
-            k: {"median": statistics.median(v), "max": max(v), "min": min(v), "n": len(v)}
-            for k, v in series.items() if v
-        }
-    return summary
+    # Both boundary intervals straddle a marker.
+    if len(rows) > 4:
+        rows = rows[1:-1]
+    if not rows:
+        return None
+    out = {
+        "dram_rd_gbps": round(statistics.median(r for r, _ in rows), 1),
+        "dram_wr_gbps": round(statistics.median(w for _, w in rows), 1),
+        "dram_gbps": round(statistics.median(r + w for r, w in rows), 1),
+        "intervals": len(rows),
+    }
+    if pcts and min(pcts) < 99.5:
+        out["min_pct_enabled"] = min(pcts)
+    return out
 
 
-def collect(series_name, threads_list, nodes, reps, interval_ms, inst=INST):
-    os.makedirs(LOG_DIR, exist_ok=True)
-    results = {}
-    if os.path.exists(OUTPUT_JSON):
-        with open(OUTPUT_JSON) as f:
-            results = json.load(f)
+def run_one(name, cfg, threads, rep):
+    cmd = cmd_for(cfg, threads)
+    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT, text=True)
+    log = LOG_DIR / name / f"t{threads:02d}_rep{rep}.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(f"$ {cmd}\n\n{proc.stdout}")
 
-    results.setdefault("config", {})
-    results["config"].update({
-        "binary": BIN_PATH,
-        "total_footprint_target_gb": TOTAL_FOOTPRINT_BYTES / 1024 ** 3,
-        "node_total_footprint_target_gb": NODE_TOTAL_FOOTPRINT_BYTES / 1024 ** 3,
-        "max_per_thread_gb": MAX_PER_THREAD_BYTES / 1024 ** 3,
-        "inst": inst,
-        "lookahead": LOOKAHEAD,
-        "cpu_freq_ghz": CPU_FREQ_GHZ,
-        "bytes_per_cas": BYTES_PER_CAS,
-        "node_umc_boxes": NODE_UMC_BOXES,
+    prog = PROG_BW_RE.search(proc.stdout)
+    if not prog:
+        tail = "\n".join(proc.stdout.strip().splitlines()[-5:])
+        return None, f"rc={proc.returncode}, no Bandwidth line; tail: {tail}"
+    point = {"prog_gbps": float(prog.group(1))}
+    t = PROG_TIME_RE.search(proc.stdout)
+    if t:
+        point["seconds"] = float(t.group(1))
+    dram = parse_dram(proc.stdout)
+    if dram:
+        if "min_pct_enabled" in dram:
+            print(f"      [!] counters multiplexed at {dram['min_pct_enabled']:.0f}%")
+        point.update(dram)
+    else:
+        print("      [!] no DRAM intervals parsed")
+    return point, None
+
+
+# =============================================================================
+# COLLECTION
+# =============================================================================
+
+
+def new_results(reps, threads):
+    return {
+        "machine": MACHINE,
+        "experiment": "cpu scaling, one package, memory interleaved over all 4 nodes",
+        "collected_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "binary": str(BIN),
+        "mem_spec": MEM_SPEC,
+        "num_nodes": NUM_NODES,
+        "phys_cores_per_node": PHYS_CORES_PER_NODE,
+        "smt_boundary": SMT_BOUNDARY,
+        "node_boundaries": NODE_BOUNDARIES,
+        "ramp_note": (
+            "thread i -> node (i//8)%4: threads 1-32 fill the four nodes' physical "
+            "cores 8 at a time, 33-64 add their SMT siblings in the same node order"
+        ),
+        "cpu_freq_ghz": float(CPU_FREQ_GHZ),
+        "lookahead": int(LOOKAHEAD),
         "reps": reps,
-        "interval_ms": interval_ms,
-        "note": "node_local: node 0 only, 1-16 threads (8 physical + 8 SMT). "
-                "system_local: thread i pinned to node i%4, memory local to that node.",
-    })
+        "threads": threads,
+        "total_footprint_bytes": TOTAL_FOOTPRINT_BYTES,
+        "bw_interval_ms": BW_INTERVAL_MS,
+        "bw_unit": "decimal GB/s (bytes / 1e9)",
+        "dram_counter": "amd_umc_0..11 umc_cas_cmd.rd/.wr x 64 B",
+        "prog_bw_note": (
+            "prog_gbps is what bandwidth.c computes from the bytes it asked for. In "
+            "write mode DRAM moves about twice that (RFO + writeback); dram_gbps is "
+            "the measured controller traffic."
+        ),
+        "plot_order": PLOT_ORDER,
+        "series": {},
+    }
 
-    key = series_name if inst == INST else "{}_{}".format(series_name, inst)
-    row = results.setdefault(key, {"nodes": nodes, "threads": [], "points": {}})
-    row["nodes"] = nodes
-    row["config"] = {"inst": inst, "reps": reps}
-    print("\n=== {} (nodes {}, inst {}) ===".format(key, nodes, inst))
 
-    for total_threads in threads_list:
-        node_threads = thread_layout(total_threads, nodes)
-        runs = []
-        for rep in range(reps):
-            log_path = run_one(key, node_threads, rep, interval_ms, inst)
-            runs.append(parse_log(log_path))
+def save(results, out_path):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(results, indent=2))
 
-        active_nodes = sorted(node_threads.keys())
 
-        def med(samples, field, subfield="median"):
-            vals = [s["nodes"][n][field][subfield] for s in samples
-                     for n in active_nodes if n in s["nodes"] and field in s["nodes"][n]]
-            return statistics.median(vals) if vals else None
+def collect_series(name, cfg, threads, reps, results, out_path):
+    entry = {
+        "label": cfg["label"],
+        "mode": cfg["mode"],
+        "inst": cfg["inst"],
+        "threads": [],
+        "node_threads": [],
+        "prog_gbps": [],
+        "dram_gbps": [],
+        "dram_rd_gbps": [],
+        "dram_wr_gbps": [],
+        "footprint_mb": [],
+        "prog_samples": [],
+        "dram_samples": [],
+        "failures": [],
+    }
+    results["series"][name] = entry
 
-        def node_total(samples, field, subfield="median"):
-            # sum across active nodes per run, then median across reps
-            totals = []
-            for s in samples:
-                vals = [s["nodes"][n][field][subfield] for n in active_nodes
-                         if n in s["nodes"] and field in s["nodes"][n]]
-                if len(vals) == len(active_nodes):
-                    totals.append(sum(vals))
-            return statistics.median(totals) if totals else None
+    for t in threads:
+        points = []
+        for rep in range(1, reps + 1):
+            t0 = time.monotonic()
+            point, err = run_one(name, cfg, t, rep)
+            dt = time.monotonic() - t0
+            if err:
+                print(f"  [!] {name} t={t} rep={rep} FAILED after {dt:.0f}s: {err}")
+                entry["failures"].append({"threads": t, "rep": rep, "error": err})
+                continue
+            points.append(point)
+            print(f"  {name} t={t:2d} rep={rep}/{reps}  prog "
+                  f"{point['prog_gbps']:7.1f}  dram "
+                  f"{point.get('dram_gbps', float('nan')):7.1f} GB/s  ({dt:.0f}s)")
+        if not points:
+            print(f"  [!] {name} t={t}: every rep failed")
+            save(results, out_path)
+            continue
 
-        prog_bw = [r["prog"].get("prog_bw_gbs") for r in runs]
-        prog_bw = [v for v in prog_bw if v is not None]
-        prog_time = [r["prog"].get("prog_time_freq_corrected_s") for r in runs]
-        prog_time = [v for v in prog_time if v is not None]
-
-        footprint_bytes = footprint_for(node_threads)
-        per_thread_b = per_thread_bytes(total_threads, footprint_bytes)
-
-        point = {
-            "threads": total_threads,
-            "node_threads": node_threads,
-            "per_thread_mb": per_thread_b // (1024 ** 2),
-            "total_footprint_gb": total_threads * per_thread_b / 1024 ** 3,
-            "umc_all_gbs": node_total(runs, "all"),
-            "umc_rd_gbs": node_total(runs, "rd"),
-            "umc_wr_gbs": node_total(runs, "wr"),
-            "umc_dclk_ghz_median_per_node": med(runs, "dclk_ghz"),
-            "per_node_all_gbs": {
-                n: statistics.median([r["nodes"][n]["all"]["median"] for r in runs
-                                       if n in r["nodes"] and "all" in r["nodes"][n]])
-                for n in active_nodes
-                if any(n in r["nodes"] and "all" in r["nodes"][n] for r in runs)
-            },
-            "prog_bw_gbs": statistics.median(prog_bw) if prog_bw else None,
-            "prog_bw_samples": prog_bw,
-            "prog_time_freq_corrected_s": statistics.median(prog_time) if prog_time else None,
-        }
-        row["points"][str(total_threads)] = point
-        if total_threads not in row["threads"]:
-            row["threads"].append(total_threads)
-        row["threads"].sort()
-
-        per_core = (point["umc_all_gbs"] / total_threads) if point["umc_all_gbs"] else 0.0
-        print("  t={:<3} (nodes {}, {:>4} mb/thr) umc {:>7.1f} GB/s ({:>5.2f} GB/s/thread) | "
-              "prog {:>7.1f} GB/s".format(
-                  total_threads, node_threads, point["per_thread_mb"],
-                  point["umc_all_gbs"] or 0.0, per_core, point["prog_bw_gbs"] or 0.0))
-
-        with open(OUTPUT_JSON, "w") as f:
-            json.dump(results, f, indent=2)
-
-    print("\nSaved {}".format(OUTPUT_JSON))
+        entry["threads"].append(t)
+        entry["node_threads"].append(thread_layout(t))
+        entry["footprint_mb"].append(per_thread_bytes(t) * t // (1024 ** 2))
+        prog = [p["prog_gbps"] for p in points]
+        entry["prog_gbps"].append(round(statistics.median(prog), 1))
+        entry["prog_samples"].append(prog)
+        for key in ("dram_gbps", "dram_rd_gbps", "dram_wr_gbps"):
+            vals = [p[key] for p in points if key in p]
+            entry[key].append(round(statistics.median(vals), 1) if vals else None)
+        entry["dram_samples"].append(
+            [p["dram_gbps"] for p in points if "dram_gbps" in p])
+        print(f"  => {name} t={t:2d}  prog {entry['prog_gbps'][-1]:.1f}  "
+              f"dram {entry['dram_gbps'][-1]} GB/s")
+        save(results, out_path)
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--series", nargs="+", default=["node_local", "system_local"],
-                    choices=["node_local", "system_local"])
-    ap.add_argument("--reps", type=int, default=3)
-    ap.add_argument("--interval-ms", type=int, default=20)
-    ap.add_argument("--inst", default=INST,
-                    choices=["load", "avx512", "t0", "t1", "t2", "nta", "prefetchw"])
+    ap = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out", default=str(OUT_JSON))
+    ap.add_argument("--series", action="append", choices=list(SERIES))
+    ap.add_argument("--threads", nargs="+", type=int)
+    ap.add_argument("--reps", type=int, default=REPS)
+    ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    if not os.path.exists(BIN_PATH):
-        sys.exit("ERROR: {} missing -- run `make build/bandwidth_rand` in machine_stats/".format(BIN_PATH))
+    names = args.series or PLOT_ORDER
+    threads = args.threads or THREADS
+    out_path = Path(args.out)
 
-    for name in args.series:
-        if name == "node_local":
-            collect("node_local", NODE_LOCAL_THREADS, [0], args.reps, args.interval_ms, args.inst)
-        else:
-            collect("system_local", SYSTEM_LOCAL_THREADS, [0, 1, 2, 3], args.reps,
-                    args.interval_ms, args.inst)
+    if not BIN.exists():
+        raise SystemExit(f"[!] {BIN} does not exist; build it with\n"
+                         f"    make -C {BIN.parent.parent} all")
+
+    if args.dry_run:
+        total = 0
+        for name in names:
+            print(f"\n# {name}: {SERIES[name]['label']}")
+            for t in threads:
+                print(cmd_for(SERIES[name], t))
+            total += len(threads) * args.reps
+        print(f"\n# {total} runs -> {out_path}")
+        return 0
+
+    # Re-running a subset must not discard the rest.
+    if args.series and out_path.exists():
+        results = json.loads(out_path.read_text())
+        results["amended_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        results["plot_order"] = PLOT_ORDER
+        for name in names:
+            if name in results.get("series", {}):
+                print(f"[i] replacing existing series {name}")
+    else:
+        results = new_results(args.reps, threads)
+    save(results, out_path)
+    for name in names:
+        print(f"\n=== {name}: {SERIES[name]['label']} ===")
+        collect_series(name, SERIES[name], threads, args.reps, results, out_path)
+
+    results["finished_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    save(results, out_path)
+    print(f"\n[OK] results written to {out_path}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

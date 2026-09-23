@@ -2,7 +2,7 @@
 '''
 Two bandwidth sweeps on the AMD EPYC 9354P (NPS4, 4 NUMA nodes x 3 DDR5 channels),
 read and write each. Both reuse the PMU plumbing calibrated in
-collect_cpu_scaling_amd.py (see its docstring for the node -> amd_umc box mapping, the
+collect_cpu_scaling_amd_nodelocal.py (see its docstring for the node -> amd_umc box mapping, the
 3.25 GHz clock, the 64 B/CAS width, and why perf's own aggregation flags cannot do the
 per-node split here).
 
@@ -42,7 +42,7 @@ import statistics
 import sys
 from collections import defaultdict
 
-from collect_cpu_scaling_amd import (
+from collect_cpu_scaling_amd_nodelocal import (
     BIN_PATH,
     BYTES_PER_CAS,
     CPU_FREQ_GHZ,
