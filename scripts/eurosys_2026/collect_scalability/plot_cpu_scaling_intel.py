@@ -33,7 +33,8 @@ import paper_style as ps  # noqa: E402
 
 PANELS = [
     ("rand read", ["read_load", "read_t0", "read_t1"]),
-    ("1r1w store", ["write_load", "write_prefetchw", "write_ntstore"]),
+    ("1r1w store", ["write_load", "write_prefetchw", "write_t0", "write_t1",
+                    "write_t2", "write_ntstore"]),
 ]
 
 # Within a panel the series differ only by prefetch hint, so they are told
@@ -44,7 +45,10 @@ STYLES = {
     "read_t1":         {"marker": "^", "linestyle": "-"},
     "write_load":      {"marker": "o", "linestyle": "-"},
     "write_prefetchw": {"marker": "s", "linestyle": "-"},
-    "write_ntstore":   {"marker": "^", "linestyle": "--"},
+    "write_t0":        {"marker": "P", "linestyle": "-"},
+    "write_t1":        {"marker": "^", "linestyle": "-"},
+    "write_t2":        {"marker": "D", "linestyle": "--"},
+    "write_ntstore":   {"marker": "v", "linestyle": "--"},
 }
 
 
@@ -85,7 +89,7 @@ def draw(ax, data, names, title, palette, metric, ymax):
 
 def plot(data, out_path, metric):
     ps.configure_style()
-    palette = ps.configure_palette(3)
+    palette = ps.configure_palette(max(len(n) for _, n in PANELS))
 
     key = "prog_gbps" if metric == "prog" else "dram_gbps"
     top = max([v for e in data["series"].values() for v in e[key]

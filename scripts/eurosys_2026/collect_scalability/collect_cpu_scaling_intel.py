@@ -98,10 +98,20 @@ SERIES = {
                         "label": "1r1w, prefetchw"},
     "write_ntstore":   {"mode": "w", "inst": "ntstore",
                         "label": "0r1w, nt store (control)"},
+    # As on the HBM box: the RFO half of a store is a read, so the L2-prefetch
+    # hints that carry the read sweep can carry it too -- prefetchw alone does
+    # not show what 1r1w can reach.
+    "write_t0":        {"mode": "w", "inst": "t0",
+                        "label": "1r1w, prefetcht0"},
+    "write_t1":        {"mode": "w", "inst": "t1",
+                        "label": "1r1w, prefetcht1"},
+    "write_t2":        {"mode": "w", "inst": "t2",
+                        "label": "1r1w, prefetcht2"},
 }
 
 PLOT_ORDER = ["read_load", "read_t0", "read_t1",
-              "write_load", "write_prefetchw", "write_ntstore"]
+              "write_load", "write_prefetchw", "write_t0", "write_t1",
+              "write_t2", "write_ntstore"]
 
 # --- DRAM counters -----------------------------------------------------------
 # Same PMU macro_uniform uses. -a covers both sockets; node 1 is idle for the
@@ -337,7 +347,22 @@ def main():
         print(f"\n# {total} runs -> {out_path}")
         return 0
 
-    results = new_results(args.reps, threads)
+    # Re-running a subset must not discard the rest. Without this, one
+    # `--series write_t1` overwrites a whole sweep with a single series.
+    if args.series and out_path.exists():
+        results = json.loads(out_path.read_text())
+        results["amended_utc"] = datetime.now(timezone.utc).isoformat(
+            timespec="seconds")
+        results["plot_order"] = PLOT_ORDER
+        existing = [t for t in results.get("threads", []) if t not in threads]
+        if existing:
+            print(f"[i] merging into {out_path.name}; note the existing sweep "
+                  f"also covers threads {existing}")
+        for name in names:
+            if name in results.get("series", {}):
+                print(f"[i] replacing existing series {name}")
+    else:
+        results = new_results(args.reps, threads)
     save(results, out_path)
     for name in names:
         print(f"\n=== {name}: {SERIES[name]['label']} ===")
