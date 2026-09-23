@@ -12,7 +12,7 @@ node 2: cpus 16-23,48-55   node 3: cpus 24-31,56-63
 ```
 (0-31 physical, 32-63 their SMT siblings; cpu *N* and *N+32* share a core.)
 
-This is the same question `intel_hbm/collect_cpu_scaling.py` asks — does each added
+This is the same question `collect_cpu_scaling_intel_hbm.py` asks — does each added
 core buy a fixed slice of bandwidth, or does something shared saturate first — carried
 over to hardware with no HBM tier and no second socket to hold a control against. The
 analogous "shared thing" here is the single Infinity Fabric all 4 memory controllers

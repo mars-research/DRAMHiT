@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-Core-count sweep against local DDR5 on the AMD box: this is intel_hbm/collect_cpu_scaling.py
+Core-count sweep against local DDR5 on the AMD box: this is collect_cpu_scaling_intel_hbm.py
 carried over to hardware with no HBM tier and no second socket, so it answers the same
 question -- does each added core buy a fixed slice of bandwidth, or does something shared
 saturate first -- against the only memory tier this machine has.

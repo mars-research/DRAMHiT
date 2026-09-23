@@ -2,7 +2,7 @@
 """Core-count sweep on one socket of the Xeon Gold 6548Y+: how does DRAM
 bandwidth scale with threads, and what does the prefetch instruction change?
 
-Modelled on ../intel_hbm/collect_cpu_scaling.py, cut down to the case that
+Modelled on collect_cpu_scaling_intel_hbm.py, cut down to the case that
 matters here: one socket, its own memory, no UPI and no HBM. Every run is
 `machine_stats/bandwidth.c` built for random access, with cpus pinned to node 0
 and memory bound to node 0 -- pattern "n0a0tN". The only thing changing across

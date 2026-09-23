@@ -2,7 +2,7 @@
 """Measured HBM ceilings for the uniform panels, counted at the controllers.
 
 The reference lines on the uniform figures used to be one number: 405 GB/s,
-the random-access READ ceiling from ../intel_hbm/intel_hbm_cpu_scaling.json.
+the random-access READ ceiling from ../collect_scalability/intel-max9462_hbm_vs_ddr.json.
 The lookup panel is read-only, so that is the right line for it -- but the
 insertion panel is a read-for-ownership plus a writeback per line, and a
 read-only ceiling says nothing about what the machine can sustain for that.
