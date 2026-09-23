@@ -29,6 +29,8 @@
   "bw_interval_ms": 100,
   "bw_unit": "decimal GB/s (bytes / 1e9)",
   "prog_bw_note": "prog_gbps is what bandwidth.c computes from the bytes it asked for. In write mode DRAM moves about twice that (RFO + writeback); dram_gbps is the measured controller traffic.",
+  "peak_note": "dram_gbps is the median interval, dram_peak_gbps the largest. Use the peak from 33 to 63 threads: the placement there is unbalanced (some cores run two threads, some one), and with fixed work per thread the stragglers leave the machine idle and drag the median down. At the balanced points the two agree within a few percent.",
+  "peak_backfill_note": "dram_peak_gbps backfilled from logs/cpu_scaling/*/*.log with this collector's parse_dram; re-parsed medians matched dram_samples exactly",
   "plot_order": [
     "read_load",
     "read_t0",
@@ -95,6 +97,22 @@
         226.3,
         231.8,
         236.2
+      ],
+      "dram_peak_gbps": [
+        11.8,
+        20.3,
+        40.9,
+        76.7,
+        107.2,
+        136.0,
+        159.2,
+        180.1,
+        198.8,
+        214.3,
+        222.1,
+        228.0,
+        234.4,
+        238.8
       ],
       "dram_rd_gbps": [
         9.6,
@@ -342,6 +360,22 @@
         243.8,
         245.2
       ],
+      "dram_peak_gbps": [
+        13.1,
+        24.1,
+        48.0,
+        93.2,
+        134.0,
+        170.5,
+        201.1,
+        225.3,
+        237.5,
+        244.7,
+        245.8,
+        246.4,
+        247.8,
+        247.3
+      ],
       "dram_rd_gbps": [
         11.4,
         23.6,
@@ -587,6 +621,22 @@
         243.9,
         244.4,
         244.7
+      ],
+      "dram_peak_gbps": [
+        15.0,
+        27.4,
+        54.6,
+        107.0,
+        151.3,
+        189.4,
+        216.9,
+        234.0,
+        242.2,
+        244.4,
+        245.7,
+        246.3,
+        246.9,
+        247.3
       ],
       "dram_rd_gbps": [
         13.2,
@@ -834,6 +884,22 @@
         159.5,
         161.2
       ],
+      "dram_peak_gbps": [
+        15.4,
+        22.0,
+        42.6,
+        77.0,
+        100.3,
+        117.5,
+        130.2,
+        141.5,
+        149.1,
+        155.3,
+        158.6,
+        159.1,
+        162.1,
+        163.1
+      ],
       "dram_rd_gbps": [
         5.5,
         10.8,
@@ -1079,6 +1145,22 @@
         184.0,
         184.0,
         185.6
+      ],
+      "dram_peak_gbps": [
+        16.2,
+        29.8,
+        58.0,
+        101.6,
+        131.8,
+        150.7,
+        163.7,
+        174.6,
+        182.1,
+        188.5,
+        188.0,
+        187.1,
+        189.0,
+        187.5
       ],
       "dram_rd_gbps": [
         7.4,
@@ -1326,6 +1408,22 @@
         195.7,
         195.4
       ],
+      "dram_peak_gbps": [
+        26.7,
+        51.8,
+        104.2,
+        196.2,
+        197.8,
+        197.6,
+        196.3,
+        196.7,
+        195.7,
+        197.0,
+        198.3,
+        199.8,
+        197.7,
+        197.5
+      ],
       "dram_rd_gbps": [
         0.1,
         0.1,
@@ -1571,6 +1669,22 @@
         193.0,
         194.2,
         195.3
+      ],
+      "dram_peak_gbps": [
+        23.7,
+        45.4,
+        85.3,
+        136.2,
+        161.6,
+        176.7,
+        186.9,
+        191.0,
+        191.3,
+        194.4,
+        195.4,
+        196.9,
+        198.2,
+        199.4
       ],
       "dram_rd_gbps": [
         11.2,
@@ -1818,6 +1932,22 @@
         198.7,
         198.8
       ],
+      "dram_peak_gbps": [
+        27.1,
+        54.0,
+        99.6,
+        148.9,
+        170.8,
+        184.7,
+        193.9,
+        198.6,
+        199.2,
+        200.9,
+        202.6,
+        203.1,
+        202.8,
+        202.9
+      ],
       "dram_rd_gbps": [
         13.3,
         26.5,
@@ -2063,6 +2193,22 @@
         198.4,
         198.8,
         198.7
+      ],
+      "dram_peak_gbps": [
+        27.0,
+        54.0,
+        99.3,
+        148.8,
+        170.5,
+        184.6,
+        193.5,
+        197.2,
+        199.2,
+        201.8,
+        202.9,
+        203.0,
+        203.1,
+        202.8
       ],
       "dram_rd_gbps": [
         13.3,
@@ -2310,6 +2456,22 @@
         243.9,
         244.7
       ],
+      "dram_peak_gbps": [
+        14.3,
+        27.2,
+        54.8,
+        106.6,
+        151.2,
+        189.0,
+        216.0,
+        233.8,
+        240.9,
+        244.9,
+        244.8,
+        246.5,
+        246.9,
+        248.2
+      ],
       "dram_rd_gbps": [
         13.2,
         26.8,
@@ -2556,6 +2718,22 @@
         207.9,
         212.0
       ],
+      "dram_peak_gbps": [
+        11.5,
+        21.8,
+        42.7,
+        82.2,
+        118.3,
+        149.5,
+        177.7,
+        200.7,
+        217.5,
+        229.2,
+        224.3,
+        220.1,
+        217.1,
+        214.1
+      ],
       "dram_rd_gbps": [
         10.9,
         21.3,
@@ -2801,6 +2979,22 @@
         198.0,
         199.9,
         202.1
+      ],
+      "dram_peak_gbps": [
+        7.9,
+        15.5,
+        31.0,
+        61.2,
+        88.8,
+        116.6,
+        140.5,
+        163.6,
+        184.9,
+        204.0,
+        203.4,
+        204.5,
+        203.8,
+        204.1
       ],
       "dram_rd_gbps": [
         7.5,
