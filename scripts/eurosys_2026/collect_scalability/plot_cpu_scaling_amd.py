@@ -39,7 +39,8 @@ sys.path.insert(0, str(SCRIPT_DIR.parent))
 import paper_style as ps  # noqa: E402
 
 PANELS = [
-    ("rand read", ["read_load", "read_t0", "read_t1"]),
+    ("rand read", ["read_load", "read_t0", "read_nta", "read_prefetchw",
+                   "read_t1", "read_t2"]),
     ("1r1w store", ["write_load", "write_prefetchw", "write_t0", "write_t1",
                     "write_t2", "write_ntstore"]),
 ]
@@ -50,6 +51,13 @@ STYLES = {
     "read_load":       {"marker": "o", "linestyle": "-"},
     "read_t0":         {"marker": "s", "linestyle": "-"},
     "read_t1":         {"marker": "^", "linestyle": "-"},
+    # The L1-targeting hints (t0, nta, prefetchw) land on top of each other and below
+    # the no-prefetch baseline; the L2-targeting ones (t1, t2) land on top of each
+    # other well above it. Dashes separate the two groups so the overlap reads as a
+    # result rather than as a missing line.
+    "read_t2":         {"marker": "D", "linestyle": "--"},
+    "read_nta":        {"marker": "X", "linestyle": "--"},
+    "read_prefetchw":  {"marker": "P", "linestyle": ":"},
     "write_load":      {"marker": "o", "linestyle": "-"},
     "write_prefetchw": {"marker": "s", "linestyle": "-"},
     "write_t0":        {"marker": "P", "linestyle": "-"},
