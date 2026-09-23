@@ -7,7 +7,7 @@
 
 Left panel is the random-read workload, right is the 1r1w store workload, so the
 instructions being compared sit next to their own baseline rather than across an
-eleven-line jumble. Both panels carry the prefetch hints: the RFO half of a store
+twelve-line jumble. Both panels carry the prefetch hints: the RFO half of a store
 is a read, so the same L2 concurrency that drives the read curve drives stores
 too -- prefetcht1/t2 are worth ~1.7x a plain store here, where prefetchw is
 worth ~3%. The dashed grey line is what a fixed per-core slice would
@@ -42,7 +42,8 @@ sys.path.insert(0, str(SCRIPT_DIR.parent))
 import paper_style as ps  # noqa: E402
 
 PANELS = [
-    ("rand read", ["read_load", "read_t0", "read_t1", "read_t2", "read_nta"]),
+    ("rand read", ["read_load", "read_t0", "read_t1", "read_t2", "read_nta",
+                   "read_prefetchw"]),
     ("1r1w store", ["write_load", "write_prefetchw", "write_t0", "write_t1",
                     "write_t2", "write_ntstore"]),
 ]
@@ -55,6 +56,7 @@ STYLES = {
     "read_t1":         {"marker": "^", "linestyle": "-"},
     "read_t2":         {"marker": "D", "linestyle": "--"},
     "read_nta":        {"marker": "v", "linestyle": ":"},
+    "read_prefetchw":  {"marker": "X", "linestyle": "-."},
     "write_load":      {"marker": "o", "linestyle": "-"},
     "write_prefetchw": {"marker": "s", "linestyle": "-"},
     "write_t0":        {"marker": "P", "linestyle": "-"},

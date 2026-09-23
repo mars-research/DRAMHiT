@@ -32,7 +32,8 @@ sys.path.insert(0, str(SCRIPT_DIR.parent))
 import paper_style as ps  # noqa: E402
 
 PANELS = [
-    ("rand read", ["read_load", "read_t0", "read_t1"]),
+    ("rand read", ["read_load", "read_t0", "read_nta", "read_prefetchw",
+                   "read_t1", "read_t2"]),
     ("1r1w store", ["write_load", "write_prefetchw", "write_t0", "write_t1",
                     "write_t2", "write_ntstore"]),
 ]
@@ -43,6 +44,9 @@ STYLES = {
     "read_load":       {"marker": "o", "linestyle": "-"},
     "read_t0":         {"marker": "s", "linestyle": "-"},
     "read_t1":         {"marker": "^", "linestyle": "-"},
+    "read_t2":         {"marker": "D", "linestyle": "--"},
+    "read_nta":        {"marker": "X", "linestyle": "--"},
+    "read_prefetchw":  {"marker": "P", "linestyle": ":"},
     "write_load":      {"marker": "o", "linestyle": "-"},
     "write_prefetchw": {"marker": "s", "linestyle": "-"},
     "write_t0":        {"marker": "P", "linestyle": "-"},

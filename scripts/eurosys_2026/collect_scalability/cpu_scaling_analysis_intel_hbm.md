@@ -18,14 +18,15 @@ figures: [`intel-max9462_hbm_cpu_scaling.png`](intel-max9462_hbm_cpu_scaling.png
 collector: [`collect_cpu_scaling_intel_hbm.py`](collect_cpu_scaling_intel_hbm.py) ·
 plotter: [`plot_cpu_scaling_intel_hbm.py`](plot_cpu_scaling_intel_hbm.py)
 
-Eleven series, 12 thread counts, 3 reps, every run measured at the 32
+Twelve series, 12 thread counts, 3 reps, every run measured at the 32
 `uncore_hbm_*` boxes. `read_load`/`t0`/`t1` and `write_load`/`prefetchw`/`ntstore`
-are exactly the 6548Y set, so the two machines' jsons line up series for series;
-the rest are added because on this part they carry the finding.
+are exactly the 6548Y set, and the full twelve now match
+[`collect_cpu_scaling_amd.py`](collect_cpu_scaling_amd.py) series for series, so
+all three machines' jsons line up.
 
 | | instructions |
 |---|---|
-| **rand read** | `load` (no sw prefetch), `prefetcht0`, `prefetcht1`, `prefetcht2`, `prefetchnta` |
+| **rand read** | `load` (no sw prefetch), `prefetcht0`, `prefetcht1`, `prefetcht2`, `prefetchnta`, `prefetchw` |
 | **1r1w store** | `load`, `prefetchw`, `prefetcht0`, `prefetcht1`, `prefetcht2`, `ntstore` (full-line non-temporal = 0r1w control) |
 
 ## 0. Answers
@@ -35,6 +36,7 @@ the rest are added because on this part they carry the finding.
 | Does a core buy a fixed slice? | **No.** At 64 threads the socket delivers **51%** of what its 1-thread slice extrapolates to (424 vs 832 GB/s with `prefetcht1`). |
 | Where is the read ceiling? | **424-427 GB/s** — 52% of the 819 GB/s the HBM channels could carry. §2 |
 | Does the access instruction matter? | Enormously, and it is the *only* source of MLP here: `t1`/`t2` **+30%** over plain loads at 64 threads, +51% at 1 thread. `t0` sits between. §2 |
+| Is `prefetchw` worth it on a *read* stream? | **No — it is the worst hint of the six**, 0.65x plain loads. Asking for a line in Modified state costs even when nothing is written. AMD agrees in sign (0.94x). §3 |
 | Is `prefetchnta` ever worth it? | **No, it is actively harmful** — the only series that *falls* past 32 threads, and it moves **1.46x** the HBM traffic the program consumes. §3 |
 | Does `prefetchw` help stores? | **Essentially not: +2.8%.** Same answer the EPYC gives. §4 |
 | What does help stores? | **`prefetcht1`/`t2`: 1.85x** the HBM traffic of a plain store (691 vs 375 GB/s). The RFO half of a store is a read, so stores want the same L2 prefetch reads do — not `prefetchw`. §4 |
@@ -85,14 +87,15 @@ the per-core droop below is **not** hyperthreading.
 
 Peak HBM GB/s:
 
-| threads | `load` | `t0` | `t1` | `t2` | `nta` |
-|---|---|---|---|---|---|
-| 1 | 8.6 | 11.2 | 13.0 | 13.0 | 9.5 |
-| 8 | 65.8 | 87.0 | 101.4 | 100.4 | 72.0 |
-| 16 | 132.5 | 175.2 | 197.2 | 197.5 | 137.8 |
-| 32 | 255.3 | 326.5 | 370.6 | 369.3 | 255.6 |
-| 64 | **327.3** | **362.1** | **424.3** | **427.2** | **240.8** |
-| % of a fixed slice at 64 | 59.5% | 50.5% | 51.0% | 51.3% | 39.6% |
+| threads | `load` | `t0` | `t1` | `t2` | `nta` | `prefetchw` |
+|---|---|---|---|---|---|---|
+| 1 | 8.6 | 11.2 | 13.0 | 13.0 | 9.5 | 7.2 |
+| 8 | 65.8 | 87.0 | 101.4 | 100.4 | 72.0 | 55.3 |
+| 16 | 132.5 | 175.2 | 197.2 | 197.5 | 137.8 | 109.3 |
+| 32 | 255.3 | 326.5 | 370.6 | 369.3 | 255.6 | 212.1 |
+| 64 | **327.3** | **362.1** | **424.3** | **427.2** | **240.8** | **213.4** |
+| vs `load` at 64 | 1.00x | 1.11x | 1.30x | 1.31x | 0.74x | **0.65x** |
+| % of a fixed slice at 64 | 59.5% | 50.5% | 51.0% | 51.3% | 39.6% | 46.3% |
 
 `t1` and `t2` are indistinguishable (424.3 vs 427.2, 0.7% apart) and both beat
 `t0` by 17% and plain loads by 30%. That ordering is the L2 story: prefetching
@@ -122,23 +125,57 @@ is in the earlier sweep preserved as
 carries the DDR control this HBM-only collector drops (DDR saturates flat at
 ~232 GB/s).
 
-## 3. `prefetchnta` is a trap on this part
+## 3. The two ways a read hint can lose, and they are not the same
 
-It is the only series that **goes down**: 255.6 GB/s at 32 threads, 240.8 at 64.
-The counters say why — traffic amplification, HBM bytes per byte the program
-actually consumed, at 32 threads:
+`nta` and `prefetchw` are both net losses against issuing no prefetch at all —
+0.74x and 0.65x — but the counters show they fail for different reasons.
 
-| | `load` | `t0` | `t1` | `t2` | `nta` |
-|---|---|---|---|---|---|
-| HBM bytes / program bytes | 1.10x | 1.13x | 1.14x | 1.17x | **1.46x** |
+**`prefetchnta` wastes traffic.** It is the only series that *goes down* with
+threads (255.6 GB/s at 32, 240.8 at 64), and its amplification — HBM bytes per
+byte the program consumed — is far off everything else:
+
+| | `load` | `t0` | `t1` | `t2` | `prefetchw` | `nta` |
+|---|---|---|---|---|---|---|
+| amplification @32 | 1.10x | 1.13x | 1.14x | 1.17x | 1.12x | **1.46x** |
+| amplification @64 | 1.11x | 1.13x | 1.16x | 1.16x | 1.12x | **1.61x** |
 
 NTA places the line so it is evicted quickly rather than retained, so a
 meaningful fraction of what it prefetches is gone before the demand load arrives
 and has to be fetched twice. Adding threads makes it worse, because the other
 threads' NTA traffic evicts it sooner — hence the only downward-sloping curve on
-the figure. The prior all-instruction comparison at 64 threads in
-`machine_spec_analysis.md` (nta 149 GB/s of *program* bandwidth, worst of six)
-recorded the symptom; the 1.46x is the mechanism.
+the figure, and the only amplification that *grows* with thread count. The prior
+comparison in `machine_spec_analysis.md` (nta worst of six, in program
+bandwidth) recorded the symptom; the 1.46 -> 1.61x is the mechanism.
+
+**`prefetchw` wastes none — it is simply slower.** Its amplification is 1.12x,
+right alongside plain loads, so every byte it fetches is a byte the program uses.
+The whole of its 35% deficit is in the *rate*: 7.2 GB/s per core against 8.6
+unprefetched. Asking for a line in Modified state when the stream never writes
+buys an ownership transaction and no concurrency, so it costs latency in the
+request path rather than bandwidth on the bus.
+
+### The same question on the EPYC
+
+[`amd-9354p_cpu_scaling.json`](amd-9354p_cpu_scaling.json) runs the identical six
+read series on an EPYC 9354P against DDR5 (max GB/s, relative to its own `load`):
+
+| | `load` | `t0` | `t1` | `t2` | `nta` | `prefetchw` |
+|---|---|---|---|---|---|---|
+| Xeon Max 9462 (HBM) | 1.00x | **1.11x** | 1.30x | 1.31x | 0.74x | 0.65x |
+| EPYC 9354P (DDR5) | 1.00x | **0.94x** | 1.38x | 1.38x | 0.95x | 0.94x |
+
+Three things carry across both vendors: **`t1`/`t2` are the only hints that ever
+help** (+30% / +38%), they are **indistinguishable from each other** on both, and
+**`prefetchw` on a read stream is a loss** on both.
+
+Where they differ is instructive. On the EPYC, `t0`, `nta` and `prefetchw` land
+on 0.94, 0.95 and 0.94 — within noise of each other and all slightly *below*
+baseline, i.e. that part collapses every non-L2 hint into the same
+slightly-harmful behaviour. The Xeon separates them: `t0` genuinely helps
+(1.11x), while `nta` and `prefetchw` hurt by distinct amounts through the two
+distinct mechanisms above. The Xeon also punishes the wrong hint far harder
+(0.65x against 0.94x), so on this machine the instruction choice is worth 2x
+between best and worst, against 1.5x on the EPYC.
 
 ## 4. Stores: the RFO is a read, so stores want a read prefetch
 
@@ -222,8 +259,11 @@ socket's **mesh read-return path**.
   past ~32. 16 -> 32 threads gains 87%; 32 -> 64 gains 14%.
 - **Always prefetch into L2.** `t1`/`t2` are worth 30% over plain loads at full
   occupancy and 51% at low thread counts. `t0` leaves 17% on the table.
-- **Never `prefetchnta`** for data that will be read: it costs 1.46x the memory
-  traffic and gets *worse* with more cores.
+- **Never `prefetchnta`** for data that will be read: it costs 1.46-1.61x the
+  memory traffic and gets *worse* with more cores.
+- **Never `prefetchw` for a read-only stream** either — worst of the six here at
+  0.65x plain loads. It wastes no traffic (1.12x, normal), it is just slower:
+  an ownership transaction bought for nothing. The EPYC agrees in sign.
 - **Prefetch into L2 for insert phases too, not just probes.** `prefetcht1`
   ahead of a store is worth **1.78x** the bytes stored over an unprefetched
   store loop — the RFO is a read and wants the same treatment. `prefetchw` is

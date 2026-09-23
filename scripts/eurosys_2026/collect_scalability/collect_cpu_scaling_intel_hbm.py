@@ -117,6 +117,13 @@ SERIES = {
                         "label": "rand read, prefetcht2"},
     "read_nta":        {"mode": "r", "inst": "nta",
                         "label": "rand read, prefetchnta"},
+    # prefetchw on a read stream asks for the line in Modified state for data
+    # that is only ever read. It completes the AMD collector's read set, and it
+    # is the one hint whose cost should be visible in the *coherence* state
+    # rather than in bandwidth: there is nothing to write back, so any loss is
+    # the fetch-for-ownership itself.
+    "read_prefetchw":  {"mode": "r", "inst": "prefetchw",
+                        "label": "rand read, prefetchw"},
     "write_load":      {"mode": "w", "inst": "load",
                         "label": "1r1w, no sw prefetch"},
     "write_prefetchw": {"mode": "w", "inst": "prefetchw",
@@ -138,6 +145,7 @@ SERIES = {
 }
 
 PLOT_ORDER = ["read_load", "read_t0", "read_t1", "read_t2", "read_nta",
+              "read_prefetchw",
               "write_load", "write_prefetchw", "write_t0", "write_t1",
               "write_t2", "write_ntstore"]
 

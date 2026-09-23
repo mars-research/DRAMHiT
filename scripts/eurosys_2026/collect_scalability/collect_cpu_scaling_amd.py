@@ -106,6 +106,16 @@ SERIES = {
                         "label": "rand read, prefetcht0"},
     "read_t1":         {"mode": "r", "inst": "t1",
                         "label": "rand read, prefetcht1"},
+    # The rest of the prefetch hints on the read side. t0/nta target L1, t1/t2 target
+    # L2, prefetchw asks for the line in Modified state. Measured here because t0 reads
+    # SLOWER than no prefetch at all on this part and the lookahead sweep shows it is
+    # flat from lookahead 1 to 256 -- see cpu_scaling_analysis_amd_package.md.
+    "read_t2":         {"mode": "r", "inst": "t2",
+                        "label": "rand read, prefetcht2"},
+    "read_nta":        {"mode": "r", "inst": "nta",
+                        "label": "rand read, prefetchnta"},
+    "read_prefetchw":  {"mode": "r", "inst": "prefetchw",
+                        "label": "rand read, prefetchw"},
     "write_load":      {"mode": "w", "inst": "load",
                         "label": "1r1w, no sw prefetch"},
     "write_prefetchw": {"mode": "w", "inst": "prefetchw",
@@ -120,7 +130,8 @@ SERIES = {
                         "label": "1r1w, prefetcht2"},
 }
 
-PLOT_ORDER = ["read_load", "read_t0", "read_t1",
+PLOT_ORDER = ["read_load", "read_t0", "read_t1", "read_t2", "read_nta",
+              "read_prefetchw",
               "write_load", "write_prefetchw", "write_t0", "write_t1",
               "write_t2", "write_ntstore"]
 
@@ -254,6 +265,9 @@ def parse_dram(output):
         "dram_rd_gbps": round(statistics.median(r for r, _ in rows), 1),
         "dram_wr_gbps": round(statistics.median(w for _, w in rows), 1),
         "dram_gbps": round(statistics.median(r + w for r, w in rows), 1),
+        # Largest interval: immune to the idle tail an unbalanced placement leaves
+        # (see PEAK_VS_MEDIAN.md).
+        "dram_peak_gbps": round(max(r + w for r, w in rows), 1),
         "intervals": len(rows),
     }
     if pcts and min(pcts) < 99.5:
@@ -339,6 +353,7 @@ def collect_series(name, cfg, threads, reps, results, out_path):
         "node_threads": [],
         "prog_gbps": [],
         "dram_gbps": [],
+        "dram_peak_gbps": [],
         "dram_rd_gbps": [],
         "dram_wr_gbps": [],
         "footprint_mb": [],
@@ -373,7 +388,7 @@ def collect_series(name, cfg, threads, reps, results, out_path):
         prog = [p["prog_gbps"] for p in points]
         entry["prog_gbps"].append(round(statistics.median(prog), 1))
         entry["prog_samples"].append(prog)
-        for key in ("dram_gbps", "dram_rd_gbps", "dram_wr_gbps"):
+        for key in ("dram_gbps", "dram_peak_gbps", "dram_rd_gbps", "dram_wr_gbps"):
             vals = [p[key] for p in points if key in p]
             entry[key].append(round(statistics.median(vals), 1) if vals else None)
         entry["dram_samples"].append(
