@@ -92,6 +92,14 @@ SERIES = {
                         "label": "rand read, prefetcht0"},
     "read_t1":         {"mode": "r", "inst": "t1",
                         "label": "rand read, prefetcht1"},
+    # The rest of the read-side hints, to match the AMD sweep: t0/nta target L1,
+    # t1/t2 target L2, prefetchw asks for the line in Modified state.
+    "read_t2":         {"mode": "r", "inst": "t2",
+                        "label": "rand read, prefetcht2"},
+    "read_nta":        {"mode": "r", "inst": "nta",
+                        "label": "rand read, prefetchnta"},
+    "read_prefetchw":  {"mode": "r", "inst": "prefetchw",
+                        "label": "rand read, prefetchw"},
     "write_load":      {"mode": "w", "inst": "load",
                         "label": "1r1w, no sw prefetch"},
     "write_prefetchw": {"mode": "w", "inst": "prefetchw",
@@ -109,7 +117,8 @@ SERIES = {
                         "label": "1r1w, prefetcht2"},
 }
 
-PLOT_ORDER = ["read_load", "read_t0", "read_t1",
+PLOT_ORDER = ["read_load", "read_t0", "read_t1", "read_t2", "read_nta",
+              "read_prefetchw",
               "write_load", "write_prefetchw", "write_t0", "write_t1",
               "write_t2", "write_ntstore"]
 
