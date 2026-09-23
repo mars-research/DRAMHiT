@@ -185,7 +185,7 @@ SKIPPED = {
 
 # --- bandwidth sampling -------------------------------------------------------
 # HBM is not counted at uncore_imc. The recipe here is the one
-# ../intel_hbm/collect_cpu_scaling.py established on this machine:
+# ../collect_scalability/collect_cpu_scaling_intel_hbm.py established on this machine:
 #   - the HBM boxes carry no event list (perf enumerates them off the uncore
 #     discovery table), so CAS is raw event 0x05, umask 0xcf (rd) / 0xf0 (wr);
 #   - there are 32 uncore_hbm_* boxes per socket and perf does NOT merge them,
