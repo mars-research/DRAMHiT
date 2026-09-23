@@ -20,8 +20,8 @@ sit behind.
 
 Data: [`amd_cpu_scaling.json`](amd_cpu_scaling.json) ·
 figure: [`amd_cpu_scaling.png`](amd_cpu_scaling.png) ·
-collector: [`collect_cpu_scaling_amd.py`](collect_cpu_scaling_amd.py) · plotter:
-[`plot_cpu_scaling_amd.py`](plot_cpu_scaling_amd.py)
+collector: [`collect_cpu_scaling_amd_nodelocal.py`](collect_cpu_scaling_amd_nodelocal.py) · plotter:
+[`plot_cpu_scaling_amd_nodelocal.py`](plot_cpu_scaling_amd_nodelocal.py)
 
 Two series, both `machine_stats/bandwidth.c` (random access, `prefetcht1`, lookahead
 64, private per-thread buffers, no sharing):
