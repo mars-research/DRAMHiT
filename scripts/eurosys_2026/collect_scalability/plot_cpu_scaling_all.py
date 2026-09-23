@@ -6,6 +6,7 @@ three lines on each.
     python3 plot_cpu_scaling_all.py a.json b.json c.json
     python3 plot_cpu_scaling_all.py --free-y             # per-panel y scaling
     python3 plot_cpu_scaling_all.py --metric prog
+    python3 plot_cpu_scaling_all.py --metric peak       # straggler-robust
     python3 plot_cpu_scaling_all.py --set reads          # every read instruction
 
 `--set reads` instead draws random read under every access instruction (no sw
@@ -18,6 +19,16 @@ The default set's three lines, same colour/style in every panel:
     0r1w nt store              dotted -- a full-line non-temporal store never fetches
                                the line it overwrites, so it is the write path with
                                the RFO half removed.
+
+`--metric peak` draws the largest interval of a run instead of the median. It exists
+because from 33 to 63 threads the thread placement is unbalanced -- at 40, eight cores
+run two threads and 24 run one -- and bandwidth.c gives every thread the same fixed
+work, so the paired threads straggle and leave the machine idle for the tail of the
+run. The median counts that idle time and the peak does not: on the Max 9462,
+prefetchnta's median at 40 threads is 63.5 GB/s against a 254.9 peak, a 75% hole that
+is entirely an artifact of the benchmark's fixed work. Only collectors that record
+`dram_peak_gbps` can honour it; the others fall back to their median and the run says
+so, because a figure whose panels mix the two is comparing different things.
 
 **Bandwidth here is what the memory controllers actually moved**, not what the program
 asked for. The two agree for reads and differ by about 2x for 1r1w, because an 8 B store
@@ -80,8 +91,24 @@ MACHINE_TITLE = {
 }
 
 
+METRIC_KEY = {"dram": "dram_gbps", "peak": "dram_peak_gbps", "prog": "prog_gbps"}
+
+
+def metric_key(data, metric):
+    """The json key this dataset can actually serve for `metric`.
+
+    Only the collectors that record a peak can serve --metric peak; the rest
+    fall back to their median rather than dropping the panel.
+    """
+    key = METRIC_KEY[metric]
+    if key == "dram_peak_gbps" and not any(
+            e.get("dram_peak_gbps") for e in data.get("series", {}).values()):
+        return "dram_gbps", True
+    return key, False
+
+
 def draw(ax, data, series, colors, metric, ylim):
-    key = "prog_gbps" if metric == "prog" else "dram_gbps"
+    key, _ = metric_key(data, metric)
 
     smt = data.get("smt_boundary")
     top = ylim[1] if ylim else series_peak(data, series, key, default=1)
@@ -114,7 +141,9 @@ def draw(ax, data, series, colors, metric, ylim):
 
     machine = data.get("machine", "?")
     peak = series_peak(data, series, key)
-    ax.set_title(f"{MACHINE_TITLE.get(machine, machine)}\npeak {peak:.0f} GB/s",
+    _, fell_back = metric_key(data, metric)
+    note = "  (median: no peak recorded)" if fell_back else ""
+    ax.set_title(f"{MACHINE_TITLE.get(machine, machine)}\npeak {peak:.0f} GB/s{note}",
                  fontsize=9)
     ax.set_xlabel("threads")
     ax.set_xlim(0, max(data["threads"]) + 2)
@@ -136,10 +165,10 @@ def plot(datasets, series, out_path, metric, free_y):
     ps.configure_style()
     colors = ps.configure_palette(len(series))
 
-    key = "prog_gbps" if metric == "prog" else "dram_gbps"
     ylim = None
     if not free_y:
-        top = max(series_peak(d, series, key, default=1) for d in datasets)
+        top = max(series_peak(d, series, metric_key(d, metric)[0], default=1)
+                  for d in datasets)
         ylim = (0, top * 1.12)
 
     fig, axes = plt.subplots(1, len(datasets), figsize=(4.6 * len(datasets), 4.8),
@@ -148,8 +177,10 @@ def plot(datasets, series, out_path, metric, free_y):
     for ax, data in zip(axes, datasets):
         draw(ax, data, series, colors, metric, ylim)
 
-    axes[0].set_ylabel("DRAM bandwidth at the controllers (GB/s)" if metric != "prog"
-                       else "bandwidth reported by bandwidth.c (GB/s)")
+    ylabel = {"prog": "bandwidth reported by bandwidth.c (GB/s)",
+              "peak": "DRAM bandwidth at the controllers, peak interval (GB/s)",
+              "dram": "DRAM bandwidth at the controllers (GB/s)"}[metric]
+    axes[0].set_ylabel(ylabel)
 
     handles = [Line2D([], [], color=colors[i], linestyle=style, marker=marker,
                       markersize=4, linewidth=1.6, label=label)
@@ -169,7 +200,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("jsons", nargs="*", default=None,
                     help="one per architecture; defaults to the three in this directory")
-    ap.add_argument("--metric", choices=["dram", "prog"], default="dram")
+    ap.add_argument("--metric", choices=["dram", "peak", "prog"], default="dram",
+                    help="dram: median interval; peak: largest interval, which "
+                         "the fixed-work straggler artifact does not reach; "
+                         "prog: bandwidth.c's own number")
     ap.add_argument("--set", choices=list(SERIES_SETS), default="mix",
                     help="mix: read/1r1w with prefetcht1 + 0r1w nt store; "
                          "reads: random read under every access instruction")
@@ -187,8 +221,11 @@ def main():
     for p, d in zip(paths, datasets):
         if "series" not in d:
             raise SystemExit(f"[!] {p}: no 'series' key; not a cpu_scaling json")
+        if metric_key(d, args.metric)[1]:
+            print(f"[i] {d.get('machine', p.name)}: no dram_peak_gbps recorded, "
+                  f"falling back to the median for this panel")
 
-    suffix = "" if args.metric == "dram" else "_prog"
+    suffix = {"dram": "", "peak": "_peak", "prog": "_prog"}[args.metric]
     free = "_freey" if args.free_y else ""
     which = "" if args.set == "mix" else f"_{args.set}"
     out = args.out or str(SCRIPT_DIR / f"cpu_scaling_all{which}{suffix}{free}.png")
