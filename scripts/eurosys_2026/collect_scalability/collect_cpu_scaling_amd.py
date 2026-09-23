@@ -265,6 +265,9 @@ def parse_dram(output):
         "dram_rd_gbps": round(statistics.median(r for r, _ in rows), 1),
         "dram_wr_gbps": round(statistics.median(w for _, w in rows), 1),
         "dram_gbps": round(statistics.median(r + w for r, w in rows), 1),
+        # Largest interval: immune to the idle tail an unbalanced placement leaves
+        # (see PEAK_VS_MEDIAN.md).
+        "dram_peak_gbps": round(max(r + w for r, w in rows), 1),
         "intervals": len(rows),
     }
     if pcts and min(pcts) < 99.5:
@@ -350,6 +353,7 @@ def collect_series(name, cfg, threads, reps, results, out_path):
         "node_threads": [],
         "prog_gbps": [],
         "dram_gbps": [],
+        "dram_peak_gbps": [],
         "dram_rd_gbps": [],
         "dram_wr_gbps": [],
         "footprint_mb": [],
@@ -384,7 +388,7 @@ def collect_series(name, cfg, threads, reps, results, out_path):
         prog = [p["prog_gbps"] for p in points]
         entry["prog_gbps"].append(round(statistics.median(prog), 1))
         entry["prog_samples"].append(prog)
-        for key in ("dram_gbps", "dram_rd_gbps", "dram_wr_gbps"):
+        for key in ("dram_gbps", "dram_peak_gbps", "dram_rd_gbps", "dram_wr_gbps"):
             vals = [p[key] for p in points if key in p]
             entry[key].append(round(statistics.median(vals), 1) if vals else None)
         entry["dram_samples"].append(
