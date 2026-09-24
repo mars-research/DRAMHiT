@@ -5,7 +5,13 @@ machine, after a single reprobe-factor panel.
 Style comes from ../paper_style.py so these panels sit next to the rest of the
 paper. See ../PLOTTING.md.
 
-    python plot_merge.py intel-paper.json intel-hbm.json amd-r6615.json test.pdf
+    python plot_merge.py intel-ddr.json intel-hbm.json amd-r6615.json reprobes.pdf
+
+Two json layouts are read. The repeated collections collect_data.py now
+writes (a dict with "variants", every point measured several times) are drawn
+as the median with a min/max band, as in ../macro_uniform/plot_data_bw.py.
+The older flat lists (intel-paper.json, intel-hbm.json, amd-r6615.json: one
+run per point) go through the legacy path and draw no band.
 
 The series here are probing variants of one table, not hashtables, so they
 have no slot in ps.PALETTE_ORDER. Per PLOTTING.md they get their own palette,
@@ -62,11 +68,13 @@ TUPLE_BYTES = ps.TUPLE_BYTES
 # =============================================================================
 
 
+MHZ_LABEL = {"2500": "Intel DDR", "2700": "Intel HBM", "3250": "AMD DDR"}
+
+
 def machine_label(path, df):
     """Panel name from the CPU frequency the collector pinned."""
     mhz = str(df["build_cfg.CPUFREQ_MHZ"].iloc[0]) if not df.empty else ""
-    return {"2500": "Intel DDR", "2700": "Intel HBM", "3250": "AMD DDR"}.get(
-        mhz, Path(path).stem)
+    return MHZ_LABEL.get(mhz, Path(path).stem)
 
 
 def variant_name(bcfg):
@@ -82,13 +90,50 @@ def variant_name(bcfg):
 
 
 def load(path):
-    """Long-form frame for one machine: variant / x / mops / lo / hi / reprobe.
+    """Long-form frame for one machine: variant / x / mops / lo / hi / reprobe."""
+    data = json.loads(Path(path).read_text())
+    if isinstance(data, dict) and "variants" in data:
+        return load_repeated(path, data)
+    return load_flat(path, data)
+
+
+def load_repeated(path, data):
+    """A collect_data.py json: per-point median plus every sample.
+
+    `mops` is the stored median and lo/hi the min and max of get_samples, so
+    ps.draw_band() shades the run-to-run spread.
+    """
+    rows = []
+    for name, entry in data["variants"].items():
+        if name in DROP_VARIANTS:
+            continue
+        samples = entry.get("get_samples") or []
+        for i, (fill, mops) in enumerate(zip(entry["fills"], entry["get_mops"])):
+            point = samples[i] if i < len(samples) else None
+            rows.append({
+                "variant": name,
+                "x": fill,
+                "mops": mops,
+                "lo": min(point) if point else float("nan"),
+                "hi": max(point) if point else float("nan"),
+                "reprobe": entry["reprobe_factor"][i],
+            })
+    points = pd.DataFrame(rows, columns=["variant", "x", "mops", "lo", "hi", "reprobe"])
+    meta = {
+        "label": MHZ_LABEL.get(str(data.get("cpufreq_mhz")), Path(path).stem),
+        "num_threads": data.get("num_threads"),
+        "ht_size_gib": data.get("ht_size_gib"),
+    }
+    return points, meta
+
+
+def load_flat(path, data):
+    """Pre-repeat flat list of runs: variant / x / mops / lo / hi / reprobe.
 
     `mops` is the per-point median and lo/hi the min and max over repeats.
     These collections ran each point once, so lo == hi and ps.draw_band()
-    draws nothing; it will once the collector repeats its points.
+    draws nothing.
     """
-    data = json.loads(Path(path).read_text())
     df = pd.json_normalize(data, sep=".")
     label = machine_label(path, df)
 
