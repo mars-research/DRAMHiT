@@ -124,7 +124,7 @@ void* loader_thread_func(void* arg) {
 
 int main(int argc, char *argv[]) {
     if (argc != 7 && argc != 8) {
-        fprintf(stderr, "Usage: %s <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0|1> <lookahead> <prefetch_type> [loader_write: 0|1 (default 1)]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0=idle|1=mem node|2=all nodes> <lookahead> <prefetch_type> [loader_write: 0|1 (default 1)]\n", argv[0]);
         fprintf(stderr, "Prefetch types:\n");
         fprintf(stderr, "  0 = None\n");
         fprintf(stderr, "  1 = _MM_HINT_T0  (All cache levels)\n");
@@ -185,7 +185,28 @@ int main(int argc, char *argv[]) {
     pthread_t *loader_threads = NULL;
     int num_loaders = 0;
 
-    if (loaded) {
+    if (loaded == 2) {
+        // Load every node: each CPU (except the latency core) hammers its own
+        // node's local memory, so all memory controllers are busy at once
+        int ncpus = numa_num_configured_cpus();
+        loader_threads = malloc(ncpus * sizeof(pthread_t));
+
+        for (int i = 0; i < ncpus; i++) {
+            int node = numa_node_of_cpu(i);
+            if (node < 0 || get_physical_core_id(i) == main_core)
+                continue;
+
+            LoaderArgs *args = malloc(sizeof(LoaderArgs));
+            args->cpu_id = i;
+            args->mem_node = node;
+            pthread_create(&loader_threads[num_loaders], NULL, loader_thread_func, args);
+
+            num_loaders++;
+        }
+
+        printf("[*] Spawned %d %s loader threads on all nodes, each targeting its local memory\n",
+               num_loaders, loader_write ? "load+store" : "load-only");
+    } else if (loaded) {
         struct bitmask *mem_node_cpus = numa_allocate_cpumask();
         numa_node_to_cpus(mem_node, mem_node_cpus);
 

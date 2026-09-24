@@ -5,13 +5,14 @@ MLC=${MLC:-$(ls /opt/nix/store/*/tools/mlc/mlc | head -1)}
 ITERS=${ITERS:-5}
 OUT=amd_results
 mkdir -p $OUT
-for loaded in 0 1; do
+# loaded: 0 = idle, 1 = loaders on mem node only, 2 = all nodes loaded (local traffic)
+for loaded in ${LOADED:-0 1 2}; do
   for mem in 0 1 2 3; do
     for cpu in 0 1 2 3; do
       f=$OUT/latency_mem${mem}_cpu${cpu}_loaded${loaded}.txt
       echo "== mem=$mem cpu=$cpu loaded=$loaded"
       ./latency $mem $cpu $ITERS $loaded 0 0 > $f 2>&1
-      grep "Sample Mean" $f
+      grep -E "Sample Mean|Loader traffic" $f
     done
   done
 done

@@ -24,7 +24,7 @@ def mlc_matrix(name):
 
 
 idle = {(c, m): latency_c(m, c, 0) for c in NODES for m in NODES}
-load = {(c, m): latency_c(m, c, 1) for c in NODES for m in NODES}
+load = {(c, m): latency_c(m, c, 2) for c in NODES for m in NODES}
 mlc = mlc_matrix("mlc_latency_matrix_rand.txt")
 
 
@@ -59,7 +59,7 @@ Memory node & """ + hdr_nodes + r""" \\
 
 \end{tabular}
 
-\caption{AMD EPYC 9354P (1 socket, NPS4) pointer-chase latency per cacheline. Idle/Loaded: \texttt{latency.c} (1\,GB random permutation, TSC cycles converted to ns at """ + f"{TSC_GHZ}" + r"""\,GHz); Loaded: one loader thread per hyperthread on the memory node (14 when local, since the latency core is excluded; 16 when remote). MLC: \texttt{mlc --latency\_matrix -r}.}
+\caption{AMD EPYC 9354P (1 socket, NPS4) pointer-chase latency per cacheline. Idle/Loaded: \texttt{latency.c} (1\,GB random permutation, TSC cycles converted to ns at """ + f"{TSC_GHZ}" + r"""\,GHz); Loaded: all nodes loaded, one load+store loader per hyperthread (62 total, latency core excluded) accessing its own node's local memory, $\approx$122\,GB/s of lines accessed. MLC: \texttt{mlc --latency\_matrix -r}.}
 \label{tab:amd-latency}
 \end{table*}
 """
