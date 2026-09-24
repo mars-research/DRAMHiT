@@ -165,6 +165,11 @@ total insert bandwidth only falls from 250 to 229 GB/s across the whole fill ran
 
 ## 6. What the remaining ~8% is
 
+*(Followed up in [`amd_dramblast_insert_analysis.md`](amd_dramblast_insert_analysis.md):
+the core is store-queue-bound, 58–77% of cycles, not memory-bound. That note also shows
+the bandwidth numbers here were ~2.5% high from perf's nominal-interval normalisation —
+the 243.8 vs 249.3 in §2 — and the insertion plot ceiling is now the 290 GB/s 1r1w peak.)*
+
 Not established here. What is ruled out: it is not the CAS pass (§4), not a read/write
 mix different from the microbenchmark's (§2, 46.4% vs 50.0%), and not the memory system
 being saturated — at 52.9% bus occupancy the DRAM still has headroom, and the

@@ -52,9 +52,13 @@ DEFAULT_CEILING_GBPS = 350.0
 # same split shows up on the HBM box, measured with machine_stats/bandwidth.c
 # on the same cpu/memory pairing (measure_hbm_ceiling.py): 408 GB/s read,
 # 606 GB/s for the write mix.
-# Measured on the amd-9354p at this workload's own operating point -- 64
-# threads, table interleaved over all 4 NPS4 nodes:
-CEILINGS_AMD_9354P = {"set": 274.0, "get": 353.0}
+# amd-9354p insert ceiling: the 1r1w PEAK, ~290 GB/s -- dram_peak_gbps of the
+# 1r1w series in ../collect_scalability/amd-9354p_cpu_scaling.json (287-297
+# depending on prefetch flavour; 289.6 re-measured at 32 threads). At this
+# workload's own 64 threads the sustained median is lower, 264-273; see
+# amd_dramblast_insert_analysis.md sections 1 and 8. Lookup: the read ceiling
+# at 64 threads, table interleaved over all 4 NPS4 nodes.
+CEILINGS_AMD_9354P = {"set": 290.0, "get": 353.0}
 
 
 # =============================================================================
@@ -292,7 +296,7 @@ def main():
                          "panels; two are read as <insert> <lookup>, which is "
                          "what you want on a machine where the 1r1w insert "
                          "ceiling differs from the read ceiling. Default: the "
-                         "measured amd-9354p pair (274 insert / 353 lookup) "
+                         "measured amd-9354p pair (290 insert / 353 lookup) "
                          "for that machine, else 350 on both. 0 to omit.")
     ap.add_argument("--only", nargs="+", metavar="TABLE",
                     help="plot only these series (axis scales still come "
