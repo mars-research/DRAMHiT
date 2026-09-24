@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""Lookup throughput vs fill factor for each software-prefetch flavour, one
+panel per machine.
+
+Style comes from ../paper_style.py so these panels sit next to the rest of the
+paper. See ../PLOTTING.md.
+
+    python plot_merge.py intel.json ../intel_hbm/prefetches_hbm.json amd-r6615.json test.pdf
+
+The series here are prefetch instructions, not hashtables, so they have no
+slot in ps.PALETTE_ORDER. Per PLOTTING.md they get their own palette, built
+once at the size of PREFETCH_ORDER so a flavour keeps the same colour in
+every panel and every figure drawn from this script.
+"""
 
 import json
 import sys
@@ -7,162 +20,136 @@ from pathlib import Path
 import pandas as pd
 import seaborn as sns
 
-# Inject parent directory to import the shared style guide
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import paper_style as ps
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # eurosys_2026/
+import paper_style as ps  # noqa: E402
 
-def load_and_prep(json_file):
-    """Loads JSON, auto-detects architecture, dynamically finds NUMA policy, and prepares performance data."""
-    with open(json_file, "r") as f:
-        data = json.load(f)
+# Palette order for the prefetch flavours: nearest cache level first, the
+# DOUBLE scheme the paper uses last (darkest). Append new flavours; reordering
+# recolours every existing figure.
+PREFETCH_ORDER = ["L1", "L2", "L3", "NTA", "DOUBLE"]
 
-    df = pd.json_normalize(data, sep=".")
+# The single-socket run on each machine, so every panel compares 64 threads on
+# one node. intel.json also carries a dual-socket (policy 1, 128 thread) sweep
+# with the same number of points; picking by mode() would tie and draw that.
+NUMA_POLICY = {"Intel DDR": 4, "Intel HBM": 10, "AMD DDR": 1}
 
-    # Drop NONE identifiers first so we only look at actual workload runs
-    if "identifier" in df.columns:
-        df = df[df["identifier"] != "NONE"]
-        df["prefetch_id"] = df["identifier"].str.split("-").str[0]
-    else:
-        df["prefetch_id"] = "Unknown"
-
-    # Dynamically pick the NUMA policy that actually has data
-    if "run_cfg.numa_policy" in df.columns and not df.empty:
-        best_policy = df["run_cfg.numa_policy"].mode()[0]
-        df = df[df["run_cfg.numa_policy"] == best_policy]
-
-    if "run_cfg.fill_factor" in df.columns:
-        df["run_cfg.fill_factor"] = pd.to_numeric(df["run_cfg.fill_factor"])
-
-    # Auto-detect Architecture for naming purposes
-    has_intel = any(col in df.columns for col in ["cycle_activity.stalls_total", "l1d_pend_miss.fb_full"])
-    has_amd = any(col in df.columns for col in ["ls_alloc_mab_count", "ls_mab_alloc.all_allocations"])
-
-    if has_intel:
-        arch = "intel"
-    elif has_amd:
-        arch = "amd"
-    else:
-        arch = "unknown"
-
-    return df, arch
+TUPLE_BYTES = ps.TUPLE_BYTES
 
 
-def plot_combined(json_files, output_file):
-    # 1. Setup paper style
+# =============================================================================
+# DATA
+# =============================================================================
+
+
+def machine_label(path, df):
+    """Panel name from the perf counters the collector recorded."""
+    if "cycle_activity.stalls_total" in df.columns:
+        return "Intel HBM" if "hbm" in str(path).lower() else "Intel DDR"
+    if "ls_mab_alloc.all_allocations" in df.columns:
+        return "AMD DDR"
+    return Path(path).stem
+
+
+def load(path):
+    """Long-form frame for one machine: prefetch / x / mops / lo / hi.
+
+    `mops` is the per-point median and lo/hi the min and max over repeats.
+    These collections ran each point once, so lo == hi and ps.draw_band()
+    draws nothing; it will once the collector repeats its points.
+    """
+    df = pd.json_normalize(json.loads(Path(path).read_text()), sep=".")
+    label = machine_label(path, df)
+
+    policy = NUMA_POLICY.get(label)
+    if policy is not None and "run_cfg.numa_policy" in df.columns:
+        df = df[df["run_cfg.numa_policy"] == policy]
+
+    # NONE is a no-prefetch baseline only the HBM collection has.
+    df = df[df["identifier"] != "NONE"].copy()
+    df["prefetch"] = df["identifier"].str.split("-").str[0]
+    df["x"] = pd.to_numeric(df["run_cfg.fill_factor"])
+
+    points = (
+        df.groupby(["prefetch", "x"])["get_mops"]
+        .agg(mops="median", lo="min", hi="max")
+        .reset_index()
+    )
+    meta = {
+        "label": label,
+        "num_threads": int(df["run_cfg.numThreads"].iloc[0]) if not df.empty else None,
+        "ht_size_gib": (int(df["run_cfg.size"].iloc[0]) * TUPLE_BYTES >> 30)
+        if not df.empty else None,
+    }
+    return points, meta
+
+
+def title_for(meta):
+    bits = [meta["label"]]
+    if meta["ht_size_gib"]:
+        bits.append(f"{meta['ht_size_gib']} GiB table")
+    if meta["num_threads"]:
+        bits.append(f"{meta['num_threads']} threads")
+    return ", ".join(bits)
+
+
+def order(names):
+    """Prefetch flavours in PREFETCH_ORDER; anything unknown goes last."""
+    known = [n for n in PREFETCH_ORDER if n in names]
+    return known + sorted(set(names) - set(PREFETCH_ORDER))
+
+
+# =============================================================================
+# PLOTTING
+# =============================================================================
+
+
+def plot(json_files, output_file):
     ps.configure_style()
-    
-    datasets = []
 
-    # Load all files and assign names automatically based on filename/arch
-    for f in json_files:
-        df, arch = load_and_prep(f)
-        if arch == "intel":
-            if "hbm" in f.lower():
-                label = "Intel HBM"
-            else:
-                label = "Intel"
-        elif arch == "amd":
-            label = "AMD"
-        else:
-            label = "Unknown Architecture"
-        
-        datasets.append((label, df, arch))
+    machines = [load(f) for f in json_files]
+    for points, meta in machines:
+        if points.empty:
+            print(f"[!] {meta['label']}: no points after filtering, panel left empty")
 
-    # Consolidate unique IDs across ALL files for a unified legend
-    unique_ids = []
-    for _, df_set, _ in datasets:
-        if "prefetch_id" in df_set.columns:
-            for uid in df_set["prefetch_id"].unique():
-                if uid not in unique_ids:
-                    unique_ids.append(uid)
+    names = order({n for points, _ in machines for n in points["prefetch"]})
+    extra = [n for n in names if n not in PREFETCH_ORDER]
+    palette = ps.configure_palette(n=len(PREFETCH_ORDER) + len(extra))
+    styles = {
+        name: {"color": palette[(PREFETCH_ORDER + extra).index(name)],
+               "linestyle": "-", "marker": "o"}
+        for name in names
+    }
 
-    # 2. Fix Palette Assignment for Unmapped Sweeps
-    # Check if ANY of our dataset series are known hashtables in the paper
-    known_series = [uid for uid in unique_ids if ps.canonical(uid) in ps.PALETTE_ORDER]
-    
-    if not known_series:
-        # Per PLOTTING.md: If these are not hashtables (e.g. prefetch distances), 
-        # build the palette dynamically based on the length of unique_ids.
-        palette = ps.configure_palette(n=max(1, len(unique_ids)))
-        styles = {uid: {"color": palette[i % len(palette)], "linestyle": "-", "marker": "o"} 
-                  for i, uid in enumerate(unique_ids)}
-    else:
-        # Stick to the strict paper rules for known hashtables
-        palette = ps.configure_palette()
-        styles = ps.styles_for(unique_ids, palette)
-        
-        # Failsafe: if a rogue unknown series slipped in, manually lock its color 
-        # so Seaborn doesn't cycle and ruin the other colors.
-        fallback_color_idx = 0
-        for uid in unique_ids:
-            if styles[uid].get("color") is None:
-                styles[uid]["color"] = palette[fallback_color_idx % len(palette)]
-                fallback_color_idx += 1
+    xticks = sorted({x for points, _ in machines for x in points["x"]})
+    top = max((points["hi"].max() for points, _ in machines if not points.empty),
+              default=1)
+    xlabel, ylabel = ps.axis_labels("fill")
 
-    # 3. Get panels (1 row, N columns)
-    col = len(datasets)
-    fig, axes = ps.get_subplots(1, col)
-    # Ensure axes is iterable even if col=1
-    axes_flat = [axes] if col == 1 else axes.ravel()
+    fig, axes = ps.get_subplots(1, len(machines))
+    axes = [axes] if len(machines) == 1 else list(axes.ravel())
 
-    # Get standard labels defined by the paper
-    x_label, y_label = ps.axis_labels("fill")
-    
-    # Calculate global max throughput to emulate sharey=True across all machines
-    global_max_mops = max([df_set["get_mops"].max() for _, df_set, _ in datasets if not df_set.empty])
+    for i, (ax, (points, meta)) in enumerate(zip(axes, machines)):
+        for name in order(set(points["prefetch"])):
+            sub = points[points["prefetch"] == name].sort_values("x")
+            ps.draw_band(ax, sub, styles[name])
+            sns.lineplot(data=sub, x="x", y="mops", ax=ax, legend=False,
+                         **styles[name])
 
-    # 4. Plotting loop
-    for c, (machine_name, df_set, arch) in enumerate(datasets):
-        if df_set.empty:
-            print(f"[Warning] No valid data found to plot for {machine_name}")
-            continue
-
-        ax = axes_flat[c]
-        
-        # Iterate safely (using paper_style's order)
-        for name in ps.order_series(df_set["prefetch_id"].unique()):
-            sub = df_set[df_set["prefetch_id"] == name].sort_values("run_cfg.fill_factor")
-            style = styles[name]
-            
-            # Draw line with explicit color lock applied above
-            sns.lineplot(
-                data=sub, 
-                x="run_cfg.fill_factor", 
-                y="get_mops",
-                ax=ax, 
-                legend=False, 
-                **style
-            )
-        
-        # Apply strict Y-axis baseline and emulate sharey=True
-        ax.set_ylim(0, global_max_mops)
-        
-        # Apply dashed grid and tick snapping
+        ax.set_title(title_for(meta))
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel if i == 0 else "")
+        ax.set_xticks(xticks)
+        ax.set_xlim(min(xticks) - 5, max(xticks) + 5)
+        # Same y range on every panel so machines compare by eye.
+        ax.set_ylim(0, top)
         ps.tidy(ax)
-        
-        ax.set_title(machine_name, fontweight='bold')
-        ax.set_xlabel(x_label)
-        
-        # Only label the Y-axis on the leftmost plot
-        if c == 0:
-            ax.set_ylabel(y_label)
-        else:
-            ax.set_ylabel("")
 
-    # 5. Legend and Output
-    ps.add_legend(fig, palette, ps.order_series(unique_ids), styles=styles)
-    ps.save(fig, output_file, legend_top=0.88)
+    ps.add_legend(fig, palette, names, styles=styles)
+    ps.save(fig, output_file, legend_top=0.94)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python plot_merge.py <file1.json> [file2.json ...] <output.pdf>")
         sys.exit(1)
-
-    # Everything up to the last argument is considered an input JSON
-    input_files = sys.argv[1:-1]
-    
-    # The final argument is always the output image/pdf
-    output_file = sys.argv[-1]
-
-    plot_combined(input_files, output_file)
+    plot(sys.argv[1:-1], sys.argv[-1])
