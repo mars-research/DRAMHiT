@@ -27,10 +27,10 @@ import paper_style as ps  # noqa: E402
 # (darkest). Append new variants; reordering recolours every existing figure.
 INLINE_ORDER = ["Base", "Compiler Inline", "Manual Inline", "Manual+Compiler Inline"]
 
-# The single-socket run on each machine, so every panel compares 64 threads on
-# one node. intel-paper.json also carries a dual-socket (policy 1, 128 thread)
-# sweep with the same number of points.
-NUMA_POLICY = {"Intel DDR": 4, "Intel HBM": 10, "AMD DDR": 1}
+# Which run to plot on each machine. Intel DDR uses the dual-socket (policy 1,
+# 128 thread) sweep; intel-paper.json also carries a single-socket (policy 4,
+# 64 thread) sweep with the same points. HBM and AMD are 64 threads.
+NUMA_POLICY = {"Intel DDR": 1, "Intel HBM": 10, "AMD DDR": 1}
 
 TUPLE_BYTES = ps.TUPLE_BYTES
 
