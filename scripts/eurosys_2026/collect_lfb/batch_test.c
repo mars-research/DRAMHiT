@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <x86intrin.h>
 #include <immintrin.h>
+#include <numaif.h> // Added for NUMA mbind
 
 // Runtime Instruction Modes
 typedef enum {
@@ -17,7 +18,8 @@ typedef enum {
     MODE_PREFETCH_L1,
     MODE_PREFETCH_L2,
     MODE_PREFETCH_L3,
-    MODE_PREFETCH_NTA
+    MODE_PREFETCH_NTA,
+    MODE_PREFETCHW
 } inst_mode_t;
 
 const char* get_mode_str(inst_mode_t mode) {
@@ -27,6 +29,7 @@ const char* get_mode_str(inst_mode_t mode) {
         case MODE_PREFETCH_L2: return "PREFETCH_T1";
         case MODE_PREFETCH_L3: return "PREFETCH_T2";
         case MODE_PREFETCH_NTA: return "PREFETCH_NTA";
+        case MODE_PREFETCHW: return "PREFETCHW";
         case MODE_REGULAR_LOAD:
         default: return "REGULAR_LOAD";
     }
@@ -89,7 +92,8 @@ static inline uint64_t RDTSCP(void) {
     return ((uint64_t)cycles_high << 32) | cycles_low;
 }
 
-cacheline_t* alloc_mem(size_t len) {
+// Updated alloc_mem to take a requested numa node
+cacheline_t* alloc_mem(size_t len, int numa_node) {
     size_t aligned_len = ALIGN_TO_HUGE_PAGE(len);
     void* ptr = mmap(NULL, aligned_len, PROT_READ | PROT_WRITE,
                      MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
@@ -101,6 +105,18 @@ cacheline_t* alloc_mem(size_t len) {
             exit(1);
         }
     }
+
+    // Apply NUMA memory binding policy before faulting the pages in
+    if (numa_node >= 0) {
+        unsigned long nodemask = 1UL << numa_node;
+        // maxnode is bits in the mask (64 bits for unsigned long)
+        if (mbind(ptr, aligned_len, MPOL_BIND, &nodemask, sizeof(nodemask) * 8, MPOL_MF_STRICT | MPOL_MF_MOVE) != 0) {
+            perror("Warning: mbind failed to bind memory to specified NUMA node");
+        } else {
+            printf("Memory successfully bound to NUMA node %d\n", numa_node);
+        }
+    }
+
     return (cacheline_t*)ptr;
 }
 
@@ -141,28 +157,35 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint64_t seed, uint
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_T0);
             }
-	    do_bind_read = 1;
+            do_bind_read = 1;
             break;
         case MODE_PREFETCH_L2:
             for (uint64_t i = 0; i < batch_sz; i++) {
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_T1);
             }
-	    do_bind_read = 1;
+            do_bind_read = 1;
             break;
         case MODE_PREFETCH_L3:
             for (uint64_t i = 0; i < batch_sz; i++) {
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_T2);
             }
-	    do_bind_read = 1 ;
+            do_bind_read = 1 ;
             break;
         case MODE_PREFETCH_NTA:
             for (uint64_t i = 0; i < batch_sz; i++) {
                 idx = HASH_CRC32(seed, i) & mask;
                 _mm_prefetch((const char*)&mem[idx], _MM_HINT_NTA);
             }
-	    do_bind_read = 1;
+            do_bind_read = 1;
+            break;
+        case MODE_PREFETCHW:
+            for (uint64_t i = 0; i < batch_sz; i++) {
+                idx = HASH_CRC32(seed, i) & mask;
+                asm volatile("prefetchw %0" :: "m"(mem[idx]));
+            }
+            do_bind_read = 1;
             break;
         case MODE_REGULAR_LOAD:
         default:
@@ -177,10 +200,10 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint64_t seed, uint
     asm volatile("" ::: "memory");
 
     if(do_bind_read){
-    for (uint64_t i = 0; i < batch_sz; i++) {
-        idx = HASH_CRC32(seed, i) & mask;
-        DUMMY += (uint8_t)(mem[idx].data[0]);
-    }
+        for (uint64_t i = 0; i < batch_sz; i++) {
+            idx = HASH_CRC32(seed, i) & mask;
+            DUMMY += (uint8_t)(mem[idx].data[0]);
+        }
     }
 
     return (end_cycles - start_cycles);
@@ -189,17 +212,19 @@ uint64_t lfb_experiment(cacheline_t* mem, uint64_t batch_sz, uint64_t seed, uint
 void print_help(const char* prog_name) {
     printf("Usage: %s [OPTIONS]\n\n", prog_name);
     printf("Options:\n");
-    printf("  -h          Print this help message\n");
-    printf("  -m MODE     Select instruction mode (default: 0)\n");
+    printf("  -h         Print this help message\n");
+    printf("  -m MODE    Select instruction mode (default: 0)\n");
     printf("                 0: REGULAR_LOAD\n");
     printf("                 1: AVX512_LOAD\n");
     printf("                 2: PREFETCH_T0 (L1)\n");
     printf("                 3: PREFETCH_T1 (L2)\n");
     printf("                 4: PREFETCH_T2\n");
     printf("                 5: PREFETCH_NTA\n");
-    printf("  -b MIN-MAX  Set batch size range (e.g., 5-40, default: 5-40)\n");
-    printf("  -i ITER     Number of iterations (default: 1000)\n");
-    printf("  -o FILE     Output CSV file path (default: data.csv)\n");
+    printf("                 6: PREFETCHW (prefetch with intent to write)\n");
+    printf("  -b MIN-MAX Set batch size range (e.g., 5-40, default: 5-40)\n");
+    printf("  -i ITER    Number of iterations (default: 1000)\n");
+    printf("  -o FILE    Output CSV file path (default: data.csv)\n");
+    printf("  -n NODE    NUMA node ID to bind the data array to (default: OS placement)\n");
 }
 
 int main(int argc, char** argv) {
@@ -208,16 +233,18 @@ int main(int argc, char** argv) {
     uint32_t max_batch = 40;
     char* file_path = "data.csv";
     inst_mode_t mode = MODE_REGULAR_LOAD;
+    int numa_node = -1; // -1 means no specific NUMA binding
     int opt;
 
-    while ((opt = getopt(argc, argv, "hm:b:i:o:")) != -1) {
+    // Added 'n:' to getopt argument string
+    while ((opt = getopt(argc, argv, "hm:b:i:o:n:")) != -1) {
         switch (opt) {
             case 'h':
                 print_help(argv[0]);
                 return 0;
             case 'm':
                 mode = (inst_mode_t)atoi(optarg);
-                if (mode < 0 || mode > 5) {
+                if (mode < 0 || mode > MODE_PREFETCHW) {
                     fprintf(stderr, "Error: Invalid mode selected.\n");
                     return 1;
                 }
@@ -233,6 +260,9 @@ int main(int argc, char** argv) {
             case 'o':
                 file_path = optarg;
                 break;
+            case 'n':
+                numa_node = atoi(optarg);
+                break;
             default:
                 print_help(argv[0]);
                 return 1;
@@ -246,9 +276,10 @@ int main(int argc, char** argv) {
     uint64_t mem_len = 16896; // size of l1 + l2 cache.
     uint64_t mask = mem_len - 1;
 
-    cacheline_t* mem = alloc_mem(mem_len * CACHELINE_SIZE);
+    // Pass numa_node to alloc_mem
+    cacheline_t* mem = alloc_mem(mem_len * CACHELINE_SIZE, numa_node);
     for (uint64_t i = 0; i < mem_len; i++) {
-        mem[i].data[0] = 'p';
+        mem[i].data[0] = 'p'; // First write triggers the fault; NUMA policy is enforced here
     }
 
     stats_t* batch_stats = calloc(max_batch + 1, sizeof(stats_t));
