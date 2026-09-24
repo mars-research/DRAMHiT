@@ -9,6 +9,38 @@ filename = "intel_hbm_single_radix_sweep_8gb"
 build_sz = 8 * int(1024 * 1024 * 1024 / 16)  # 8gb
 
 
+def plot(experiment_data):
+    """Cycles per tuple for each phase vs radix bits. The axes say what is
+    plotted; the setup (8 GB relations, HBM machine) is in the LaTeX caption."""
+    radices = [e["radix"] for e in experiment_data]
+    configure_style()
+    palette = configure_palette(3)
+
+    fig, axes = get_subplots(1, 1)
+    ax = axes if not hasattr(axes, "ravel") else axes.ravel()[0]
+
+    for key, marker, ls, colour, label in [
+        ("partition_cycles_per_tuple", "o", "-", palette[0], "partition phase"),
+        ("join_cycles_per_tuple", "s", "-", palette[1], "join phase"),
+        ("total_cycles_per_tuple", "^", "--", palette[2], "total"),
+    ]:
+        ax.plot(radices, [e[key] for e in experiment_data], marker=marker,
+                linestyle=ls, color=colour, linewidth=1.6, label=label)
+
+    ax.set_xlabel("radix")
+    ax.set_ylabel("cycle per tuple")
+    ax.set_xticks(radices)
+    ax.set_ylim(bottom=0)
+    tidy(ax)
+
+    fig.legend(fontsize=8, loc="upper center", ncol=3)
+    plt.tight_layout(rect=[0, 0, 1, 0.93])
+
+    output_filename = filename + ".png"
+    plt.savefig(output_filename, dpi=300)
+    print(f"Plot successfully saved to {output_filename}")
+
+
 def run_dramhit_experiments():
     # Radix values swept around the optimal-radix pick (14) for 8gb relation size.
     radix_values = list(range(10, 16))
@@ -112,39 +144,18 @@ def run_dramhit_experiments():
             json.dump(experiment_data, json_file, indent=4)
         print(f"\nData successfully saved to {json_filename}")
 
-        configure_style()
-        palette = configure_palette(3)
-
-        fig, axes = get_subplots(1, 1)
-        ax = axes if not hasattr(axes, "ravel") else axes.ravel()[0]
-
-        ax.plot(successful_radices, partition_cycles_data, marker="o",
-                linestyle="-", color=palette[0], linewidth=1.6,
-                label="partition phase")
-        ax.plot(successful_radices, join_cycles_data, marker="s",
-                linestyle="-", color=palette[1], linewidth=1.6,
-                label="join phase")
-        ax.plot(successful_radices, total_cycles_data, marker="^",
-                linestyle="--", color=palette[2], linewidth=1.6,
-                label="total")
-
-        ax.set_title("Partition/Join Cycle per Tuple vs Selected Radix")
-        ax.set_xlabel("radix")
-        ax.set_ylabel("cycle per tuple")
-        ax.set_xticks(successful_radices)
-        ax.set_ylim(bottom=0)
-        tidy(ax)
-
-        fig.legend(fontsize=8, loc="upper center", ncol=3)
-        plt.tight_layout(rect=[0, 0, 1, 0.90])
-
-        output_filename = filename + ".png"
-        plt.savefig(output_filename, dpi=300)
-        print(f"Plot successfully saved to {output_filename}")
+        plot(experiment_data)
 
     else:
         print("\nNo valid data was captured to generate a plot or JSON file.")
 
 
 if __name__ == "__main__":
-    run_dramhit_experiments()
+    import sys
+
+    # --plot-only redraws the png from the saved json without re-running.
+    if "--plot-only" in sys.argv:
+        with open(filename + ".json") as f:
+            plot(json.load(f))
+    else:
+        run_dramhit_experiments()

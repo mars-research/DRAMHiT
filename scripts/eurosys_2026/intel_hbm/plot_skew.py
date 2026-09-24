@@ -86,13 +86,11 @@ def main():
     xlabel, ylabel = axis_labels("skew")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    ax.set_title("single socket, dotted = all cpus\n"
-                 "hashtables: hw prefetcher off; radix: hw prefetcher on")
     ax.set_ylim(bottom=0)
     tidy(ax)
 
     add_legend(fig, palette, names, ncol=3)
-    plt.tight_layout(rect=[0, 0, 1, 0.90])
+    plt.tight_layout(rect=[0, 0, 1, 0.88])
     plt.savefig(OUT_PATH, dpi=300)
     plt.close(fig)
     print(f"[OK] Plot saved to {OUT_PATH}")

@@ -99,10 +99,6 @@ def main():
     xlabel, ylabel = axis_labels("relation_size")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    # Most series are one socket; the dotted one is the whole machine, so the
-    # title says so rather than labelling the figure "single socket" outright.
-    ax.set_title("single socket, dotted = all cpus\n"
-                 "hashtables: hw prefetcher off; radix: hw prefetcher on")
 
     # the sweep doubles each step, so a log2 axis spaces the points evenly
     xs = sorted(set(df["x"]))
@@ -114,7 +110,7 @@ def main():
     tidy(ax)
 
     add_legend(fig, palette, names, ncol=3)
-    plt.tight_layout(rect=[0, 0, 1, 0.90])
+    plt.tight_layout(rect=[0, 0, 1, 0.88])
     plt.savefig(OUT_PATH, dpi=300)
     plt.close(fig)
     print(f"[OK] Plot saved to {OUT_PATH}")

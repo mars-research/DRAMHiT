@@ -104,6 +104,17 @@ for _base in PALETTE_ORDER:
 VARIANT_STYLE["dlht_b16_hwpf_off"] = {"base": "dlht", "linestyle": "-.", "marker": "^"}
 DISPLAY_NAMES["dlht_b16_hwpf_off"] = "dlht batch 16 (hw pref off)"
 
+# The partitioned tables of the k-mer runs (collect_kmer/, ht-type 1 and 12):
+# one private table per consumer, but the same probing code as the shared
+# table they are built from, so they keep its colour. Dash-dot + diamond,
+# because dashed-square already means "hw pref off" on every colour.
+VARIANT_STYLE["cas_part"] = {"base": "cas", "linestyle": "-.", "marker": "D"}
+VARIANT_STYLE["cas23_part"] = {"base": "cas23", "linestyle": "-.", "marker": "D"}
+DISPLAY_NAMES["cas_part"] = "dramblast-p"
+DISPLAY_NAMES["cas23_part"] = "dramhit-p"
+ALIASES["dramblast-p"] = "cas_part"
+ALIASES["dramhit-p"] = "cas23_part"
+
 TUPLE_BYTES = 16
 
 

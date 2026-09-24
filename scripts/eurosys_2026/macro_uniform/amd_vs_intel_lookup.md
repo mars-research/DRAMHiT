@@ -42,9 +42,7 @@ The AMD collection runs all four tables with the hardware prefetcher **off**. In
 `intel-6548y_uniform.json`, `cas` and `cas23` are off but **`folklore` and `dlht` are
 prefetcher-ON**; their off-variants live under the separate keys `folklore_nopref` and
 `dlht_nopref`. Comparing the default keys across machines compares different
-configurations, and on this workload that is not a small difference:
-
-| 6548Y, fill 10 | prefetcher ON | prefetcher OFF |
+configurations, and on this workload that is not a small difference: | 6548Y, fill 10 | prefetcher ON | prefetcher OFF |
 |---|---|---|
 | folklore get_mops | 1800 | **2661** (+48%) |
 | folklore lookup bw | 336 GB/s | **200 GB/s** |

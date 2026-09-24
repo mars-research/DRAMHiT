@@ -161,7 +161,7 @@ def series_peak(data, series, key, default=0):
                 if v is not None] or [default])
 
 
-def plot(datasets, series, out_path, metric, free_y):
+def plot(datasets, series, out_path, metric, free_y, ymax=None):
     ps.configure_style()
     colors = ps.configure_palette(len(series))
 
@@ -170,6 +170,8 @@ def plot(datasets, series, out_path, metric, free_y):
         top = max(series_peak(d, series, metric_key(d, metric)[0], default=1)
                   for d in datasets)
         ylim = (0, top * 1.12)
+    if ymax is not None:
+        ylim = (0, ymax)
 
     fig, axes = plt.subplots(1, len(datasets), figsize=(4.6 * len(datasets), 4.8),
                              sharey=not free_y)
@@ -178,7 +180,7 @@ def plot(datasets, series, out_path, metric, free_y):
         draw(ax, data, series, colors, metric, ylim)
 
     ylabel = {"prog": "bandwidth reported by bandwidth.c (GB/s)",
-              "peak": "DRAM bandwidth at the controllers, peak interval (GB/s)",
+              "peak": "DRAM bandwidth (GB/s)",
               "dram": "DRAM bandwidth at the controllers (GB/s)"}[metric]
     axes[0].set_ylabel(ylabel)
 
@@ -209,6 +211,8 @@ def main():
                          "reads: random read under every access instruction")
     ap.add_argument("--free-y", action="store_true",
                     help="scale each panel to its own data instead of sharing y")
+    ap.add_argument("--ymax", type=float, default=None,
+                    help="fix every panel's y axis to [0, YMAX] GB/s")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
@@ -229,7 +233,7 @@ def main():
     free = "_freey" if args.free_y else ""
     which = "" if args.set == "mix" else f"_{args.set}"
     out = args.out or str(SCRIPT_DIR / f"cpu_scaling_all{which}{suffix}{free}.png")
-    plot(datasets, SERIES_SETS[args.set], out, args.metric, args.free_y)
+    plot(datasets, SERIES_SETS[args.set], out, args.metric, args.free_y, args.ymax)
 
 
 if __name__ == "__main__":
