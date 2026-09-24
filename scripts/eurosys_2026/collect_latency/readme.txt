@@ -13,7 +13,7 @@ enable constant frequency and turbo.
 ../../const_freq.sh
 
 
-Usage: ./latency <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0|1>
+Usage: ./latency <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0=idle|1=mem node|2=all nodes>
 
 To calulated loaded latency on numa node 0.
 
@@ -54,7 +54,13 @@ local:            ~339 cycles per cacheline (~104 ns)
 remote, near node: ~367-371 cycles per cacheline (~113 ns)  (0<->1, 2<->3)
 remote, far node:  ~377-381 cycles per cacheline (~117 ns)
 
-loaded (loaders on memory node):
+loaded=2 (all nodes loaded, 62 loaders each hitting its own local memory, ~122 GB/s):
+local:             ~621-630 cycles per cacheline (~191-194 ns)
+remote, near node: ~683-684 cycles per cacheline (~210 ns)
+remote, far node:  ~698-701 cycles per cacheline (~215 ns)
+
+loaded=1 (loaders only on memory node; NOT a fair local vs remote comparison,
+remote requests appear to be served ahead of local ones under saturation):
 local:  ~635 cycles per cacheline (~195 ns)
 remote: ~572-589 cycles per cacheline (~176-181 ns)
 
