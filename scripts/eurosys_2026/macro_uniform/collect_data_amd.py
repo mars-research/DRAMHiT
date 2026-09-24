@@ -224,6 +224,10 @@ def dramhit_cmd(table, fill, with_bw=True):
     return (f"sudo perf stat -I {BW_INTERVAL_MS} -x, -a -M {BW_METRIC} -- "
             + inner)
 
+def interval_scale(start, end):
+    """nominal / actual length of the perf interval ending at `end`."""
+    return (BW_INTERVAL_MS / 1000.0) / (end - start) if end > start else 1.0
+
 def parse_bw(output):
     """Per-phase DRAM read/write bandwidth from the interleaved perf -I / dramhit log.
 
@@ -235,9 +239,15 @@ def parse_bw(output):
 
     so read and write are told apart by the metric name in the unit column, and each
     lands in its own accumulator instead of being summed into one number.
+
+    The metric column is count * 64 B over the NOMINAL -I interval, but perf's
+    intervals actually run 101-105 ms, which left every value ~2.5% high. Each
+    interval is rescaled by nominal / actual, the actual length being the gap
+    between consecutive perf timestamps.
     """
     phase = None
     prev_ts = 0.0
+    interval_start = 0.0
     pending_rd = 0.0
     pending_wr = 0.0
     rows = {"set": [], "get": []}
@@ -260,7 +270,10 @@ def parse_bw(output):
         if ts != prev_ts:
             if prev_ts > 0.0 and (pending_rd + pending_wr) > 0.0 and phase is not None:
                 phase_t0.setdefault(phase, prev_ts)
-                rows[phase].append((prev_ts - phase_t0[phase], pending_rd, pending_wr))
+                k = interval_scale(interval_start, prev_ts)
+                rows[phase].append((prev_ts - phase_t0[phase],
+                                    pending_rd * k, pending_wr * k))
+            interval_start = prev_ts
             prev_ts = ts
             pending_rd = 0.0
             pending_wr = 0.0
@@ -284,7 +297,8 @@ def parse_bw(output):
 
     if prev_ts > 0.0 and (pending_rd + pending_wr) > 0.0 and phase is not None:
         phase_t0.setdefault(phase, prev_ts)
-        rows[phase].append((prev_ts - phase_t0[phase], pending_rd, pending_wr))
+        k = interval_scale(interval_start, prev_ts)
+        rows[phase].append((prev_ts - phase_t0[phase], pending_rd * k, pending_wr * k))
 
     out = {}
     for name, samples in rows.items():
