@@ -36,6 +36,8 @@ typedef struct {
 
 volatile uint64_t global_counter = 0;
 atomic_bool keep_running = true;
+int loader_write = 1; // 1 = loaders do load+store, 0 = loads only
+atomic_uint_fast64_t loader_accesses = 0; // cachelines touched by all loaders
 
 // Loader thread arguments
 typedef struct {
@@ -102,20 +104,27 @@ void* loader_thread_func(void* arg) {
     uint64_t mask = num_elements - 1;
     uint64_t idx = 0;
     uint64_t dummy_counter = 0;
+    uint64_t n = 0;
 
     while (atomic_load(&keep_running)) {
         idx = (idx * 1103515245ULL + 12345ULL) & mask;
         dummy_counter += ptr[idx];
-        ptr[idx] = dummy_counter + 1;
+        if (loader_write)
+            ptr[idx] = dummy_counter + 1;
+        if (++n == (1 << 20)) {
+            atomic_fetch_add_explicit(&loader_accesses, n, memory_order_relaxed);
+            n = 0;
+        }
     }
+    asm volatile("" : : "r"(dummy_counter) : "memory");
 
     munmap(ptr, SIZE_128MB);
     return NULL;
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 7) {
-        fprintf(stderr, "Usage: %s <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0|1> <lookahead> <prefetch_type>\n", argv[0]);
+    if (argc != 7 && argc != 8) {
+        fprintf(stderr, "Usage: %s <mem_numa_node> <cpu_numa_node> <iterations> <loaded: 0|1> <lookahead> <prefetch_type> [loader_write: 0|1 (default 1)]\n", argv[0]);
         fprintf(stderr, "Prefetch types:\n");
         fprintf(stderr, "  0 = None\n");
         fprintf(stderr, "  1 = _MM_HINT_T0  (All cache levels)\n");
@@ -131,6 +140,7 @@ int main(int argc, char *argv[]) {
     int loaded = atoi(argv[4]);
     uint64_t lookahead = (uint64_t)atoi(argv[5]);
     int prefetch_type = atoi(argv[6]);
+    if (argc == 8) loader_write = atoi(argv[7]);
 
     if (iterations == 0) {
         fprintf(stderr, "Iterations must be > 0\n");
@@ -179,6 +189,21 @@ int main(int argc, char *argv[]) {
         struct bitmask *mem_node_cpus = numa_allocate_cpumask();
         numa_node_to_cpus(mem_node, mem_node_cpus);
 
+        // CPU-less memory nodes (e.g. HBM in flat mode): run loaders on the
+        // nearest node that has CPUs
+        int loader_node = mem_node;
+        if (numa_bitmask_weight(mem_node_cpus) == 0) {
+            int best = -1;
+            for (int n = 0; n <= numa_max_node(); n++) {
+                numa_node_to_cpus(n, mem_node_cpus);
+                if (numa_bitmask_weight(mem_node_cpus) == 0) continue;
+                if (best < 0 || numa_distance(mem_node, n) < numa_distance(mem_node, best))
+                    best = n;
+            }
+            loader_node = best;
+            numa_node_to_cpus(loader_node, mem_node_cpus);
+        }
+
         loader_threads = malloc(mem_node_cpus->size * sizeof(pthread_t));
 
         for (int i = 0; i < mem_node_cpus->size; i++) {
@@ -198,7 +223,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        printf("[*] Spawned %d loader threads on NUMA node %d\n", num_loaders, mem_node);
+        printf("[*] Spawned %d %s loader threads on CPU node %d targeting memory node %d\n",
+               num_loaders, loader_write ? "load+store" : "load-only", loader_node, mem_node);
         numa_free_cpumask(mem_node_cpus);
     }
 
@@ -268,6 +294,10 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    uint64_t run_start_loads = atomic_load(&loader_accesses);
+    struct timespec run_start_ts, run_end_ts;
+    clock_gettime(CLOCK_MONOTONIC, &run_start_ts);
+
     for (uint64_t it = 0; it < iterations; it++) {
         uint64_t start_tsc = rdtsc();
 
@@ -315,6 +345,9 @@ int main(int argc, char *argv[]) {
         printf("sample %lu, curr %lu, sum %lu\n",it, curr, sum);
     }
 
+    clock_gettime(CLOCK_MONOTONIC, &run_end_ts);
+    uint64_t run_loads = atomic_load(&loader_accesses) - run_start_loads;
+
     // Stop the loaders
     atomic_store(&keep_running, false);
 
@@ -350,6 +383,15 @@ int main(int argc, char *argv[]) {
     printf("Sample Min        : %12lu cycles (%.2f cycles/cacheline)\n", min_cycles, min_cpa);
     printf("Sample Max        : %12lu cycles (%.2f cycles/cacheline)\n", max_cycles, max_cpa);
     printf("Sample Mean / Avg : %12.2f cycles (%.2f cycles/cacheline)\n", mean_cycles, mean_cpa);
+
+    if (loaded) {
+        double secs = (run_end_ts.tv_sec - run_start_ts.tv_sec) +
+                      (run_end_ts.tv_nsec - run_start_ts.tv_nsec) / 1e9;
+        // counts accessed lines; with load+store each line is also written back
+        printf("Loader traffic    : %.1f GB/s of cachelines accessed (%s)\n",
+               run_loads * (double)CACHELINE_SIZE / secs / 1e9,
+               loader_write ? "plus equal writeback" : "reads only");
+    }
 
     // This print statement is crucial: it forces the compiler to evaluate 'curr'
     // and thus prevents it from optimizing out the pointer-chasing loop entirely.

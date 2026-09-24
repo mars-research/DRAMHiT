@@ -26,7 +26,7 @@ MODES = {
 def compile_c_program():
     """Compiles the C benchmark program."""
     print(f"Compiling {C_FILE}...")
-    compile_cmd = ["gcc", C_FILE, "-O3", "-mcrc32", "-o", "batch_test"]
+    compile_cmd = ["gcc", C_FILE, "-O3", "-mcrc32", "-lnuma", "-o", "batch_test"]
     try:
         subprocess.run(compile_cmd, check=True)
         print("Compilation successful.\n")

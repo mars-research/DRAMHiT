@@ -1,0 +1,28 @@
+[*] Pinned latency thread to CPU 0 (Physical Core ID: 0x0)
+[*] Allocated 1GB hugepage memory on NUMA node 1
+[*] Initializing 16777216 cachelines with a random permutation...
+[*] Initialization complete. Starting memory traversal.
+[*] Lookahead: 0 cachelines | Prefetch Type: 0
+
+sample 0, curr 0, sum 140737479966720
+sample 1, curr 0, sum 281474959933440
+sample 2, curr 0, sum 422212439900160
+sample 3, curr 0, sum 562949919866880
+sample 4, curr 0, sum 703687399833600
+--- Sample Points ---
+Sample   0 : Total Cycles =  10704593968 | Cycles / Cacheline = 638.04
+Sample   1 : Total Cycles =   9825358986 | Cycles / Cacheline = 585.64
+Sample   2 : Total Cycles =   9799714906 | Cycles / Cacheline = 584.11
+Sample   3 : Total Cycles =   9770034804 | Cycles / Cacheline = 582.34
+Sample   4 : Total Cycles =   9750340984 | Cycles / Cacheline = 581.17
+
+--- Final Statistics ---
+Total Iterations  : 5
+Accesses per Iter : 16777216
+Total Accesses    : 83886080
+
+Sample Min        :   9750340984 cycles (581.17 cycles/cacheline)
+Sample Max        :  10704593968 cycles (638.04 cycles/cacheline)
+Sample Mean / Avg : 9970008729.60 cycles (594.26 cycles/cacheline)
+
+[Anti-Optimization] Final curr value: 0
