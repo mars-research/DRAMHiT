@@ -28,10 +28,11 @@ import paper_style as ps  # noqa: E402
 # recolours every existing figure.
 PREFETCH_ORDER = ["L1", "L2", "L3", "NTA", "DOUBLE"]
 
-# The single-socket run on each machine, so every panel compares 64 threads on
-# one node. intel.json also carries a dual-socket (policy 1, 128 thread) sweep
-# with the same number of points; picking by mode() would tie and draw that.
-NUMA_POLICY = {"Intel DDR": 4, "Intel HBM": 10, "AMD DDR": 1}
+# Which sweep to draw on each machine. intel.json carries both a single-socket
+# (policy 4, 64 thread) and a dual-socket (policy 1, 128 thread) sweep with the
+# same number of points, so it has to be picked explicitly; Intel DDR uses the
+# 128-thread dual-socket sweep. HBM and AMD are single-socket, 64 threads.
+NUMA_POLICY = {"Intel DDR": 1, "Intel HBM": 10, "AMD DDR": 1}
 
 TUPLE_BYTES = ps.TUPLE_BYTES
 

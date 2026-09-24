@@ -17,11 +17,12 @@ Run: `python plot_merge.py intel-paper.json ../intel_hbm/inline-hbm.json amd-r66
   (band is a no-op: one run per point), y from 0 shared across panels, full x sweep.
 - Machine detected from counters: `uops_dispatched.*` -> Intel (HBM if path has
   "hbm"), `ls_dispatch.*` -> AMD.
-- NUMA policy pinned per machine: Intel DDR 4, Intel HBM 10, AMD 1, so all
-  panels are 64 threads / one node. intel-paper.json also has a policy-1
-  (128-thread, dual socket) sweep, which is dropped.
+- NUMA policy pinned per machine. Originally Intel DDR 4, Intel HBM 10, AMD 1,
+  so all panels were 64 threads / one node.
+- [x] Replot: Intel DDR switched to policy 1 (128 threads, dual socket) from
+  intel-paper.json; HBM and AMD panels unchanged (64 threads). test.pdf regenerated.
 
-## Overview: lookup throughput at 70% fill (Mops, 64 threads, 8 GiB table)
+## Overview (original plot): lookup throughput at 70% fill (Mops, all machines 64 threads, 8 GiB table)
 
 | machine   | Base | Compiler | Manual | Manual+Compiler | M+C vs Base |
 | --------- | ---- | -------- | ------ | --------------- | ----------- |
@@ -32,3 +33,14 @@ Run: `python plot_merge.py intel-paper.json ../intel_hbm/inline-hbm.json amd-r66
 Compiler-only inlining is flat or slightly worse on DDR machines (-0.1% Intel,
 -3.3% AMD); manual inlining is where the gain comes from. One run per point, so
 no variance figures.
+
+## Overview (current plot): lookup throughput at 70% fill (Mops, Intel DDR 128 threads, HBM/AMD 64 threads, 8 GiB table)
+
+| machine                | Base | Compiler | Manual | Manual+Compiler | M+C vs Base |
+| ---------------------- | ---- | -------- | ------ | --------------- | ----------- |
+| Intel DDR (128 thr)    | 4017 | 3953     | 4114   | 4130            | +2.8%       |
+| Intel HBM (64 thr)     | 2690 | 2849     | 3134   | 3279            | +21.9%      |
+| AMD DDR (64 thr)       | 3725 | 3603     | 3821   | 3974            | +6.7%       |
+
+At 128 threads Intel DDR gains shrink to +2.8% (compiler-only -1.6%); HBM and
+AMD rows are identical to the table above.
