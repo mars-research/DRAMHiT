@@ -1,0 +1,27 @@
+\begin{table*}[t] \centering \small \setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+
+\begin{tabular}{|l|cccc|cccc||cccc|}
+\hline
+
+& \multicolumn{4}{c|}{\textbf{Idle (ns)}}
+& \multicolumn{4}{c||}{\textbf{Loaded (ns)}}
+& \multicolumn{4}{c|}{\textbf{MLC Idle (ns)}} \\
+\cline{2-13}
+
+Memory node & 0 & 1 & 2 & 3 & 0 & 1 & 2 & 3 & 0 & 1 & 2 & 3 \\
+\hline\hline
+CPU node 0 & 104.8 & 112.9 & 117.0 & 116.2 & 195.8 & 176.3 & 180.8 & 180.3 & 105.0 & 113.1 & 117.7 & 117.4 \\
+\hline
+CPU node 1 & 114.1 & 104.3 & 116.2 & 116.0 & 176.8 & 195.2 & 180.7 & 180.2 & 114.0 & 105.1 & 118.4 & 117.7 \\
+\hline
+CPU node 2 & 117.3 & 116.3 & 104.5 & 112.9 & 181.3 & 180.6 & 195.4 & 175.9 & 117.7 & 117.3 & 105.1 & 113.1 \\
+\hline
+CPU node 3 & 117.4 & 116.3 & 113.6 & 104.2 & 181.3 & 180.6 & 176.5 & 195.4 & 117.7 & 117.3 & 114.0 & 104.8 \\
+\hline
+
+\end{tabular}
+
+\caption{AMD EPYC 9354P (1 socket, NPS4) pointer-chase latency per cacheline. Idle/Loaded: \texttt{latency.c} (1\,GB random permutation, TSC cycles converted to ns at 3.25\,GHz); Loaded: one loader thread per hyperthread on the memory node (14 when local, since the latency core is excluded; 16 when remote). MLC: \texttt{mlc --latency\_matrix -r}.}
+\label{tab:amd-latency}
+\end{table*}
