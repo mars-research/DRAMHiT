@@ -173,7 +173,13 @@ def cmd_for(cfg, threads):
 
 
 def parse_dram(output):
-    """Median DRAM read/write GB/s over the intervals inside the markers."""
+    """Median and peak DRAM read/write GB/s over the intervals inside the markers.
+
+    The peak is there for 33..63 threads, where the placement is unbalanced:
+    with fixed work per thread the SMT-paired threads straggle, the socket sits
+    nearly idle for the tail of the run, and the median counts that idle time.
+    See PEAK_VS_MEDIAN.md.
+    """
     inside = False
     prev_ts = 0.0
     pending = {}
@@ -207,10 +213,12 @@ def parse_dram(output):
         rows = rows[1:-1]
     if not rows:
         return None
+    totals = [r + w for r, w in rows]
     return {
         "dram_rd_gbps": round(statistics.median(r for r, _ in rows), 1),
         "dram_wr_gbps": round(statistics.median(w for _, w in rows), 1),
-        "dram_gbps": round(statistics.median(r + w for r, w in rows), 1),
+        "dram_gbps": round(statistics.median(totals), 1),
+        "dram_peak_gbps": round(max(totals), 1),
         "intervals": len(rows),
     }
 
@@ -265,6 +273,13 @@ def new_results(reps, threads):
             "for. In write mode DRAM moves about twice that (RFO + writeback); "
             "dram_gbps is the measured controller traffic."
         ),
+        "peak_note": (
+            "dram_gbps is the median interval, dram_peak_gbps the largest. Use "
+            "the peak from 33 to 63 threads: the placement there is unbalanced "
+            "(some cores run two threads, some one), and with fixed work per "
+            "thread the stragglers leave the machine idle and drag the median "
+            "down. At the balanced points the two agree within a few percent."
+        ),
         "plot_order": PLOT_ORDER,
         "series": {},
     }
@@ -283,6 +298,7 @@ def collect_series(name, cfg, threads, reps, results, out_path):
         "threads": [],
         "prog_gbps": [],
         "dram_gbps": [],
+        "dram_peak_gbps": [],
         "dram_rd_gbps": [],
         "dram_wr_gbps": [],
         "footprint_mb": [],
@@ -317,13 +333,14 @@ def collect_series(name, cfg, threads, reps, results, out_path):
         prog = [p["prog_gbps"] for p in points]
         entry["prog_gbps"].append(round(statistics.median(prog), 1))
         entry["prog_samples"].append(prog)
-        for key in ("dram_gbps", "dram_rd_gbps", "dram_wr_gbps"):
+        for key in ("dram_gbps", "dram_peak_gbps", "dram_rd_gbps", "dram_wr_gbps"):
             vals = [p[key] for p in points if key in p]
             entry[key].append(round(statistics.median(vals), 1) if vals else None)
         entry["dram_samples"].append(
             [p["dram_gbps"] for p in points if "dram_gbps" in p])
         print(f"  => {name} t={t:2d}  prog {entry['prog_gbps'][-1]:.1f}  "
-              f"dram {entry['dram_gbps'][-1]} GB/s")
+              f"dram {entry['dram_gbps'][-1]} GB/s "
+              f"(peak {entry['dram_peak_gbps'][-1]})")
         save(results, out_path)
 
 
