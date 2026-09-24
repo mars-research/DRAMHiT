@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Lookup throughput vs fill factor for each software-prefetch flavour, one
-panel per machine.
+"""Lookup throughput vs fill factor for each inlining variant, one panel per
+machine.
 
 Style comes from ../paper_style.py so these panels sit next to the rest of the
 paper. See ../PLOTTING.md.
 
-    python plot_merge.py intel.json ../intel_hbm/prefetches_hbm.json amd-r6615.json test.pdf
+    python plot_merge.py intel-paper.json ../intel_hbm/inline-hbm.json amd-r6615.json test.pdf
 
-The series here are prefetch instructions, not hashtables, so they have no
-slot in ps.PALETTE_ORDER. Per PLOTTING.md they get their own palette, built
-once at the size of PREFETCH_ORDER so a flavour keeps the same colour in
+The series here are build variants of one hashtable, not hashtables, so they
+have no slot in ps.PALETTE_ORDER. Per PLOTTING.md they get their own palette,
+built once at the size of INLINE_ORDER so a variant keeps the same colour in
 every panel and every figure drawn from this script.
 """
 
@@ -23,14 +23,13 @@ import seaborn as sns
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # eurosys_2026/
 import paper_style as ps  # noqa: E402
 
-# Palette order for the prefetch flavours: nearest cache level first, the
-# DOUBLE scheme the paper uses last (darkest). Append new flavours; reordering
-# recolours every existing figure.
-PREFETCH_ORDER = ["L1", "L2", "L3", "NTA", "DOUBLE"]
+# Palette order for the inlining variants: no inlining first, both kinds last
+# (darkest). Append new variants; reordering recolours every existing figure.
+INLINE_ORDER = ["Base", "Compiler Inline", "Manual Inline", "Manual+Compiler Inline"]
 
 # The single-socket run on each machine, so every panel compares 64 threads on
-# one node. intel.json also carries a dual-socket (policy 1, 128 thread) sweep
-# with the same number of points; picking by mode() would tie and draw that.
+# one node. intel-paper.json also carries a dual-socket (policy 1, 128 thread)
+# sweep with the same number of points.
 NUMA_POLICY = {"Intel DDR": 4, "Intel HBM": 10, "AMD DDR": 1}
 
 TUPLE_BYTES = ps.TUPLE_BYTES
@@ -43,15 +42,15 @@ TUPLE_BYTES = ps.TUPLE_BYTES
 
 def machine_label(path, df):
     """Panel name from the perf counters the collector recorded."""
-    if "cycle_activity.stalls_total" in df.columns:
+    if "uops_dispatched.port_2_3_10" in df.columns:
         return "Intel HBM" if "hbm" in str(path).lower() else "Intel DDR"
-    if "ls_mab_alloc.all_allocations" in df.columns:
+    if "ls_dispatch.ld_dispatch" in df.columns:
         return "AMD DDR"
     return Path(path).stem
 
 
 def load(path):
-    """Long-form frame for one machine: prefetch / x / mops / lo / hi.
+    """Long-form frame for one machine: variant / x / mops / lo / hi.
 
     `mops` is the per-point median and lo/hi the min and max over repeats.
     These collections ran each point once, so lo == hi and ps.draw_band()
@@ -64,13 +63,12 @@ def load(path):
     if policy is not None and "run_cfg.numa_policy" in df.columns:
         df = df[df["run_cfg.numa_policy"] == policy]
 
-    # NONE is a no-prefetch baseline only the HBM collection has.
-    df = df[df["identifier"] != "NONE"].copy()
-    df["prefetch"] = df["identifier"].str.split("-").str[0]
+    df = df.copy()
+    df["variant"] = df["identifier"]
     df["x"] = pd.to_numeric(df["run_cfg.fill_factor"])
 
     points = (
-        df.groupby(["prefetch", "x"])["get_mops"]
+        df.groupby(["variant", "x"])["get_mops"]
         .agg(mops="median", lo="min", hi="max")
         .reset_index()
     )
@@ -93,9 +91,9 @@ def title_for(meta):
 
 
 def order(names):
-    """Prefetch flavours in PREFETCH_ORDER; anything unknown goes last."""
-    known = [n for n in PREFETCH_ORDER if n in names]
-    return known + sorted(set(names) - set(PREFETCH_ORDER))
+    """Inlining variants in INLINE_ORDER; anything unknown goes last."""
+    known = [n for n in INLINE_ORDER if n in names]
+    return known + sorted(set(names) - set(INLINE_ORDER))
 
 
 # =============================================================================
@@ -111,11 +109,11 @@ def plot(json_files, output_file):
         if points.empty:
             print(f"[!] {meta['label']}: no points after filtering, panel left empty")
 
-    names = order({n for points, _ in machines for n in points["prefetch"]})
-    extra = [n for n in names if n not in PREFETCH_ORDER]
-    palette = ps.configure_palette(n=len(PREFETCH_ORDER) + len(extra))
+    names = order({n for points, _ in machines for n in points["variant"]})
+    extra = [n for n in names if n not in INLINE_ORDER]
+    palette = ps.configure_palette(n=len(INLINE_ORDER) + len(extra))
     styles = {
-        name: {"color": palette[(PREFETCH_ORDER + extra).index(name)],
+        name: {"color": palette[(INLINE_ORDER + extra).index(name)],
                "linestyle": "-", "marker": "o"}
         for name in names
     }
@@ -129,8 +127,8 @@ def plot(json_files, output_file):
     axes = [axes] if len(machines) == 1 else list(axes.ravel())
 
     for i, (ax, (points, meta)) in enumerate(zip(axes, machines)):
-        for name in order(set(points["prefetch"])):
-            sub = points[points["prefetch"] == name].sort_values("x")
+        for name in order(set(points["variant"])):
+            sub = points[points["variant"] == name].sort_values("x")
             ps.draw_band(ax, sub, styles[name])
             sns.lineplot(data=sub, x="x", y="mops", ax=ax, legend=False,
                          **styles[name])

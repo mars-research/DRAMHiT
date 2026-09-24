@@ -7,11 +7,14 @@ all cores pinned at 2.7 GHz.
 
 ## 0. Summary
 
-- Theoretical HBM: **819 GB/s per socket** (32 channels x 32 B x 0.8 GHz), both
-  factors measured on the machine.
-- Achieved, read-only: **~430 GB/s per socket** (52%), **890 GB/s** for the
+- The HBM is **HBM2e**: 4 Samsung stacks x 16 GB per socket at 3200 MT/s
+  (`dmidecode -t 17`), 8 channels per stack = the 32 `uncore_hbm` boxes.
+- Theoretical HBM: **1638 GB/s per socket** (4 stacks x 1024 bit x 3.2 GT/s,
+  equivalently 32 channels x 2 pseudo-channels x 32 B x 0.8 GHz). An earlier
+  draft said 819 GB/s by counting one pseudo-channel per box; see section 2.
+- Achieved, read-only: **~430 GB/s per socket** (26%), **890 GB/s** for the
   machine with node-local placement.
-- Achieved, mixed read/write: **571 GB/s per socket** (70%).
+- Achieved, mixed read/write: **571 GB/s per socket** (35%).
 - The read ceiling is **not** the HBM: its read queue is 24x shallower than
   DDR's under the same load, DDR and HBM share one ~430 GB/s ceiling when the
   cores are split between them, and neither more cores nor deeper prefetch moves
@@ -25,7 +28,7 @@ all cores pinned at 2.7 GHz.
 |---|---|
 | CPU | 2 x Intel Xeon CPU Max 9462, 32 cores / 64 threads each |
 | DDR5 | 128 GB per socket, 16 GB DIMMs at 4800 MT/s configured (5600 rated) |
-| HBM | 64 GB per socket = NUMA nodes 2 (socket 0) and 3 (socket 1) |
+| HBM | HBM2e, 64 GB per socket (4 x 16 GB Samsung stacks, 3200 MT/s) = NUMA nodes 2 (socket 0) and 3 (socket 1) |
 | L2 | 2 MB per core, 64 MB per socket |
 | L3 | 75 MB per socket (150 MB total) |
 | mode | flat (HBM as its own NUMA nodes), not cache mode |
@@ -51,6 +54,55 @@ CHA / M2M / MDF / HBM must be programmed with raw `event=`/`umask=` encodings,
 which is why `collect_dual_socket_upi/run_intel_hbm_bandwidth.py` hardcodes the
 HBM ones.
 
+### How the HBM is organised
+
+`sudo dmidecode -t 17` lists the stacks directly, as `CPU0_HBMIO0-3` and
+`CPU1_HBMIO0-3`: `Type: HBM2`, `Speed: 3200 MT/s`, 16 GB each, manufacturer
+`0xCE` (Samsung). SMBIOS has no separate HBM2e type code, and the speed settles
+the generation: plain HBM2 stops at 2.4 GT/s and HBM3 starts at 4.8 GT/s, so
+3.2 GT/s is HBM2e (Samsung Flashbolt, 8 dies x 2 GB per stack).
+
+```
+        one socket (Sapphire Rapids package, 4 compute tiles)
+ ┌─────────────────────────────────────────────────┐
+ │  [HBM stack 0]            [HBM stack 1]         │
+ │       ║ EMIB                   ║ EMIB           │
+ │  ┌─────────────┐          ┌─────────────┐       │
+ │  │ compute tile│── mesh ──│ compute tile│       │
+ │  │ 8 hbm boxes │          │ 8 hbm boxes │       │
+ │  │ DDR5 IMC    │          │ DDR5 IMC    │       │
+ │  └─────────────┘          └─────────────┘       │
+ │        │ mesh                    │ mesh         │
+ │  ┌─────────────┐          ┌─────────────┐       │
+ │  │ compute tile│── mesh ──│ compute tile│       │
+ │  │ 8 hbm boxes │          │ 8 hbm boxes │       │
+ │  │ DDR5 IMC    │          │ DDR5 IMC    │       │
+ │  └─────────────┘          └─────────────┘       │
+ │       ║ EMIB                   ║ EMIB           │
+ │  [HBM stack 2]            [HBM stack 3]         │
+ └─────────────────────────────────────────────────┘
+```
+
+Each stack is an independent device: a tower of DRAM dies on a base logic
+die, attached to one tile over an EMIB bridge, with its own 8 channels and
+controllers. The node's addresses are interleaved across all 4 stacks, so
+one HBM NUMA node spans every stack on its socket.
+
+Up to HBM2e, a stack's 1024-bit interface splits into 8 channels of 128 bits,
+each of which runs as 2 pseudo-channels of 64 bits:
+
+| level | width | math | bandwidth |
+|---|---|---|---|
+| pseudo-channel | 64 bit | 8 B x 3.2 GT/s | 25.6 GB/s |
+| channel (= 1 `uncore_hbm` box) | 128 bit, 2 pseudo-channels | 16 B x 3.2 GT/s | **51.2 GB/s** |
+| stack | 1024 bit, 8 channels | 8 x 51.2 | **409.6 GB/s** |
+| socket | 4 stacks | 4 x 409.6 | **1638 GB/s** |
+
+That each box is a full channel, not a pseudo-channel, is visible in the PMU:
+every `uncore_hbm` box has separate RPQ/WPQ events for pseudo-channel 0 and 1
+(section 4b). HBM3 would instead show 16 x 64-bit channels per stack, 64 boxes
+per socket.
+
 ## 2. Theoretical HBM bandwidth, derived from the machine
 
 Two quantities measured rather than assumed:
@@ -61,30 +113,39 @@ Two quantities measured rather than assumed:
   and an idle 5 s sample gives 0.800 GHz. The controller does not clock up
   under load.
 
-A 128-bit channel at DDR moves 32 B per clock, so at 1 CAS per clock per
-channel:
+Both fit the 3.2 GT/s that `dmidecode` reports. At 3.2 GT/s the HBM clock is
+1.6 GHz (data on both edges). A 64-bit pseudo-channel doing a 4-beat burst
+moves 8 B x 4 = **32 B** in 2 HBM clocks, i.e. one CAS per 0.8 GHz tick per
+pseudo-channel. The 0.8 GHz counter is therefore most likely the controller
+running at half the 1.6 GHz HBM clock (inferred, not documented for this part).
+With 2 pseudo-channels per box, a box can issue up to **2 CAS per tick**:
 
 ```
-32 channels x 32 B x 0.8 GHz = 819 GB/s per socket   (1.64 TB/s per machine)
+32 channels x 2 pseudo-channels x 32 B x 0.8 GHz = 1638 GB/s per socket
+                                                   (3.28 TB/s per machine)
 ```
 
-> **Caveat.** Whether that 0.8 GHz counter is the full DRAM clock or a half-rate
-> domain is not resolvable from this machine: HBM2e is *nominally* 3.2 GT/s,
-> which would make the raw stack ceiling 1638 GB/s per socket and halve every
-> utilisation percentage below. `dmidecode` enumerates only the DDR5 DIMMs, so
-> it cannot settle it; Intel's spec sheet for the 9462 would. Every *relative*
-> conclusion here is unaffected.
+which is exactly the JEDEC figure, 4 stacks x 1024 bit x 3.2 GT/s / 8.
+
+> **Correction.** An earlier draft assumed 1 CAS per tick per box and quoted
+> 819 GB/s per socket, and a caveat claimed `dmidecode` lists only DDR5 and so
+> could not settle the clock. Both were wrong: `dmidecode -t 17` lists the HBM
+> stacks at 3200 MT/s, and each box covers two pseudo-channels. The
+> utilisation percentages below are now against 1638 GB/s, half what they were.
+> The *relative* conclusions (sections 4, 4b) do not change.
 
 ## 3. What the machine actually delivers (one HBM node)
 
-| workload | GB/s | CAS/clk/channel | % of 819 |
+CAS/clk/channel has a ceiling of 2.0 (two pseudo-channels per box).
+
+| workload | GB/s | CAS/clk/channel | % of 1638 |
 |---|---|---|---|
-| read only, `bandwidth_rand` 64 thr | 387 (peak interval 432) | 0.473 | 47% |
-| read only, MLC | 362 - 418 | - | 44 - 51% |
-| sequential read, `bandwidth_seq` | 405 | - | 49% |
-| **read-modify-write** (`-mode w`, RFO makes it ~1:1) | **571** (rd 284 + wr 287) | **0.697** | **70%** |
-| 1:1 read/write, MLC | 558 | - | 68% |
-| 3:1 read/write, MLC | 425 | - | 52% |
+| read only, `bandwidth_rand` 64 thr | 387 (peak interval 432) | 0.473 | 24% |
+| read only, MLC | 362 - 418 | - | 22 - 26% |
+| sequential read, `bandwidth_seq` | 405 | - | 25% |
+| **read-modify-write** (`-mode w`, RFO makes it ~1:1) | **571** (rd 284 + wr 287) | **0.697** | **35%** |
+| 1:1 read/write, MLC | 558 | - | 34% |
+| 3:1 read/write, MLC | 425 | - | 26% |
 
 Access instruction matters as much as thread count (64 threads, lookahead 64,
 run-average GB/s): `t1` 342, `t2` 342, `t0` 298, plain `load` 267, `avx512` 236,
@@ -104,8 +165,8 @@ channel count, not latency.
 
 ## 4. Where the read ceiling comes from
 
-A read-only workload tops out near **430 GB/s per HBM node**, about half the
-819 GB/s the channels could carry. Writes are not subject to the same ceiling:
+A read-only workload tops out near **430 GB/s per HBM node**, about a quarter
+of the 1638 GB/s the channels could carry. Writes are not subject to the same ceiling:
 mixing them in reaches 571 GB/s total on the same hardware.
 
 ### The decisive experiment
@@ -257,14 +318,14 @@ identical benchmark, only the memory target changes:
 
 | target | queue depth per box | residency | achieved | % of its own peak |
 |---|---|---|---|---|
-| HBM node 2 | **0.79** | 9.1 ns | 430 GB/s | 52% of 819 |
+| HBM node 2 | **0.79** | 9.1 ns | 430 GB/s | 26% of 1638 |
 | DDR node 0 | **18.63** | 86 ns | 221 GB/s | 72% of 307 |
 
 DDR's read queue is 24x deeper. DDR is genuinely memory-limited -- requests back
 up at the DRAM because the DRAM is the slow stage. HBM is not: its controllers
 idle because the fabric never delivers enough requests to keep them busy. The
 two numbers are the same system seen from both sides of the same ~430 GB/s
-fabric limit: DDR's own ceiling (307) sits below it, HBM's (819) sits above it.
+fabric limit: DDR's own ceiling (307) sits below it, HBM's (1638) sits nearly 4x above it.
 
 The write side is the contrast that makes the point: **the write queue holds ~36
 entries per channel**, 45x the read queue. A deep queue lets the controller
@@ -278,7 +339,7 @@ traffic reaches 571 GB/s where reads alone stop at 430.
   advertised HBM figure. Both sockets on local HBM: 890 GB/s measured.
 - **HBM helps less than its spec suggests, and DDR is closer to its own limit
   than it looks.** HBM delivers 1.9x DDR's read bandwidth (430 vs 221), not the
-  2.7x the channel counts imply, because the same fabric caps both.
+  5.3x the raw peaks imply (1638 vs 307), because the same fabric caps both.
 - **Mixed insert/probe traffic gets more out of the memory system** than either
   alone -- 571 vs 430 GB/s. A phase that interleaves reads and writes uses the
   hardware better than a pure-read phase.
