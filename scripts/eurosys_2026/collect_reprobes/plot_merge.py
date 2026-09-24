@@ -33,11 +33,14 @@ import paper_style as ps  # noqa: E402
 # recolours every existing figure.
 PROBE_ORDER = [
     "linear",
-    "linear+uniform",
     "linear+bucket",
     "linear+bucket+simd",
     "linear+bucket+simd+uniform",
 ]
+
+# Variants dropped at load time. linear+uniform only exists in intel-paper.json
+# (the current collectors don't run it), so it can't be compared across machines.
+DROP_VARIANTS = {"linear+uniform"}
 
 # linear+bucket and linear+bucket+simd probe exactly the same slots, so their
 # reprobe curves coincide. The simd one is dashed and drawn on top so both
@@ -95,6 +98,7 @@ def load(path):
 
     df["variant"] = [variant_name(r["build_cfg"]) for r in data
                      if policy is None or r["run_cfg"]["numa_policy"] == policy]
+    df = df[~df["variant"].isin(DROP_VARIANTS)]
     df["x"] = pd.to_numeric(df["run_cfg.fill_factor"])
 
     points = (

@@ -14,10 +14,11 @@ Run: `python plot_merge.py intel-paper.json intel-hbm.json amd-r6615.json test.p
   shared y range from 0, full x sweep).
 - Series are probing variants, named as in plot_data.py's LEGEND_REMAP, with
   their own palette at the size of a fixed
-  `PROBE_ORDER = [linear, linear+uniform, linear+bucket, linear+bucket+simd,
+  `PROBE_ORDER = [linear, linear+bucket, linear+bucket+simd,
   linear+bucket+simd+uniform]` (PLOTTING.md §1).
-- `linear+uniform` exists only in intel-paper.json, so only the Intel DDR panel
-  has it (it's on the reprobe panel too).
+- `linear+uniform` exists only in intel-paper.json (both policies; the current
+  collectors don't run it), so it is dropped at load via `DROP_VARIANTS` and
+  isn't plotted or in the legend. Its numbers are still in the table below.
 - Reprobe factor is **identical on all three machines** (fixed seed, same
   layout), so it's drawn once, taking each variant from the first file that has it.
   The y axis starts at 1 (1 = hit on first probe).
