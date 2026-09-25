@@ -986,9 +986,11 @@ class CASHashTable : public BaseHashTable {
 
   // Insert-path prefetch, selected by -DCAS_PREFETCH_INSERTION (see
   // CMakeLists.txt). DOUBLE pairs this queue-time prefetch with a second,
-  // dequeue-time prefetchw in flush_if_needed/pop_insert_queue/insert_batch.
+  // dequeue-time prefetchw in flush_if_needed/pop_insert_queue/insert_batch;
+  // PREFETCHT1_ONLY is the same queue-time prefetch without that second one.
+  // (locality 2 is prefetcht1.)
   inline void prefetch_insert(uint64_t idx) {
-#if defined(CAS_INSERT_PREFETCH_DOUBLE)
+#if defined(CAS_INSERT_PREFETCH_DOUBLE) || defined(CAS_INSERT_PREFETCHT1_ONLY)
     __builtin_prefetch(&this->hashtable[idx], false, 2); // L2 prefetch first
 #elif defined(CAS_INSERT_PREFETCH_PREFETCHW)
     __builtin_prefetch(&this->hashtable[idx], true, 3);
