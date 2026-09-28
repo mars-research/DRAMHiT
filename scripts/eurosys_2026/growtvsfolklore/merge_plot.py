@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
+"""growt vs folklore vs dramblast: throughput and DRAM bandwidth over fill.
+
+Style comes from ../paper_style.py; see ../PLOTTING.md.
+
+    python3 merge_plot.py folklore.txt growt.txt dramblast.txt
+
+Each input is a collect.sh log (perf stat interval output + dramhit stdout).
+Throughput is on the left axis (solid), memory bandwidth on a twin right axis
+(dashed, hollow diamond) in the same colour as its table.
+
+Each point is a single run, so there are no repeats and no min/max band.
+"""
 import re
 import sys
 import os
 import statistics
-import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from pathlib import Path
 
@@ -16,8 +27,22 @@ BASELINES = [
     # ("r", 0),
     # ("rw", 0),
     # ("stream+rw", 0),
-    # ("1.5r_1w", 0), 
+    # ("1.5r_1w", 0),
 ]
+
+# growt is not one of the five tables in ps.PALETTE_ORDER, and appending it
+# there would change the palette size and recolour every other figure. It gets
+# one fixed neutral colour here instead, so it never borrows a hashtable's.
+OUTSIDE_PALETTE = {"growt": "0.45"}
+
+# Baselines are reference levels, not tables: dotted, in neutral greys.
+BASELINE_COLORS = ["0.2", "0.4", "0.6", "0.8"]
+
+# The bandwidth curve of a table: same colour, told apart from its throughput
+# curve by dash + hollow diamond. "D" is not used by any ps.VARIANT_STYLE entry,
+# so it cannot be read as a variant (dashed-square is *_nopref / *_hwpf_off).
+BW_STYLE = {"linestyle": "--", "marker": "D", "markerfacecolor": "none"}
+
 
 def parse_bw_data(file_path):
     """Parses median memory bandwidth from umc_mem_bandwidth / unc_m_cas_count"""
@@ -93,120 +118,85 @@ def parse_mops_data(file_path):
     return insert_mops, find_mops
 
 
-def plot_combined(all_results):
+def parse_fills(file_path):
+    """Fill factor of each run, from the command line collect.sh echoes after it."""
+    fill_pattern = re.compile(r"--ht-fill\s+(\d+)")
+    fills = []
+    with open(file_path, 'r') as f:
+        for line in f:
+            m = fill_pattern.search(line)
+            if m:
+                fills.append(int(m.group(1)))
+    return fills
+
+
+def styles_for(names, palette):
+    styles = ps.styles_for(names, palette)
+    for name in names:
+        if styles[name]["color"] is None:
+            styles[name]["color"] = OUTSIDE_PALETTE.get(name, "0.45")
+    return styles
+
+
+def draw_phase(ax, results, names, styles, phase, title, fills):
+    ax_bw = ax.twinx()
+    for name in names:
+        r = results[name]
+        mops, bw = r[f"{phase}_mops"], r[f"{phase}_bw"]
+        n = min(len(r["fills"]), len(mops), len(bw))
+        x = r["fills"][:n]
+        ax.plot(x, mops[:n], zorder=3, **styles[name])
+        ax_bw.plot(x, bw[:n], zorder=3, **{**styles[name], **BW_STYLE})
+
+    for (_, val), colour in zip(BASELINES, BASELINE_COLORS):
+        ax_bw.axhline(val, linestyle=':', color=colour, zorder=1)
+
+    xlabel, ylabel = ps.axis_labels("fill")
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax_bw.set_ylabel("bandwidth (GB/s)")
+    ax.set_xticks(fills)
+    ax.set_xlim(min(fills) - 5, max(fills) + 5)
+
+    ax.set_ylim(bottom=0)
+    ax_bw.set_ylim(bottom=0)
+    ps.tidy(ax)
+    # One grid per panel: the twin axis' ticks don't land on the left axis'
+    # gridlines, so a second whitegrid would just be noise.
+    ax_bw.grid(False)
+
+
+def plot_combined(results, out_path="combined_perf.pdf"):
     ps.configure_style()
     palette = ps.configure_palette()
 
-    # Creates 1x2 panels with standard 4x4-inch sizing (8x4 total)
+    names = ps.order_series(list(results))
+    styles = styles_for(names, palette)
+    fills = sorted({f for r in results.values() for f in r["fills"]})
+
     fig, axes = ps.get_subplots(1, 2)
+    draw_phase(axes[0], results, names, styles, "ins", "insertion", fills)
+    draw_phase(axes[1], results, names, styles, "fnd", "lookup", fills)
 
-    ax_ins_mops = axes[0]
-    ax_ins_bw = ax_ins_mops.twinx()
-
-    ax_fnd_mops = axes[1]
-    ax_fnd_bw = ax_fnd_mops.twinx()
-
-    fill_factors = list(range(10, 100, 10))
-
-    # Sort dictionary to adhere to Canonical ordering and color assignments
-    all_results_dict = {res[0]: res for res in all_results}
-    ordered_labels = ps.order_series(list(all_results_dict.keys()))
-    ordered_results = [all_results_dict[lbl] for lbl in ordered_labels]
-
-    # Track styles so plot and legend are perfectly synced
-    final_styles = {}
-    fallback_colors = ['gray', 'brown', 'teal', 'navy']
-    unknown_idx = 0
-
-    for label, ffs, ins_bw, fnd_bw, ins_mops, fnd_mops in ordered_results:
-        # Retrieve strict canonical style mapping for the hashtable
-        style = ps.series_style(label, palette)
-        
-        # Handle custom series cleanly if they aren't matched in PALETTE_ORDER
-        plot_kwargs = {k: v for k, v in style.items() if v is not None}
-        if 'color' not in plot_kwargs:
-            plot_kwargs['color'] = fallback_colors[unknown_idx % len(fallback_colors)]
-            unknown_idx += 1
-            
-        final_styles[label] = plot_kwargs
-
-        # Build style overrides for the secondary Bandwidth axis
-        bw_kwargs = plot_kwargs.copy()
-        bw_kwargs['linestyle'] = '--'
-        bw_kwargs['marker'] = '^'
-        bw_kwargs['alpha'] = 0.8
-
-        # ----------------- INSERT SUBPLOT -----------------
-        n_ins = min(len(ffs), len(ins_mops), len(ins_bw))
-        x_ins = ffs[:n_ins]
-
-        ax_ins_mops.plot(x_ins, ins_mops[:n_ins], linewidth=2, zorder=3, **plot_kwargs)
-        ax_ins_bw.plot(x_ins, ins_bw[:n_ins], linewidth=2, zorder=3, **bw_kwargs)
-
-        # ----------------- FIND SUBPLOT -----------------
-        n_fnd = min(len(ffs), len(fnd_mops), len(fnd_bw))
-        x_fnd = ffs[:n_fnd]
-
-        ax_fnd_mops.plot(x_fnd, fnd_mops[:n_fnd], linewidth=2, zorder=3, **plot_kwargs)
-        ax_fnd_bw.plot(x_fnd, fnd_bw[:n_fnd], linewidth=2, zorder=3, **bw_kwargs)
-
-    # Add Baselines (on Bandwidth axes)
-    for i, (name, val) in enumerate(BASELINES):
-        b_color = palette[i % len(palette)]
-        ax_ins_bw.axhline(val, linestyle=':', linewidth=2, color=b_color, zorder=1)
-        ax_fnd_bw.axhline(val, linestyle=':', linewidth=2, color=b_color, zorder=1)
-
-    # ----------------- FORMATTING -----------------
-    xlabel, ylabel_mops = ps.axis_labels("fill")
-
-    ax_ins_mops.set_title("Insert Performance")
-    ax_ins_mops.set_xlabel(xlabel)
-    ax_ins_mops.set_ylabel(ylabel_mops)
-    ax_ins_bw.set_ylabel("Bandwidth (GB/s)")
-    ax_ins_mops.set_xticks(fill_factors)
-
-    ax_fnd_mops.set_title("Find Performance")
-    ax_fnd_mops.set_xlabel(xlabel)
-    ax_fnd_mops.set_ylabel(ylabel_mops)
-    ax_fnd_bw.set_ylabel("Bandwidth (GB/s)")
-    ax_fnd_mops.set_xticks(fill_factors)
-
-    # Apply 0-bottom rule before tidying
-    ax_ins_mops.set_ylim(bottom=0)
-    ax_fnd_mops.set_ylim(bottom=0)
-    ax_ins_bw.set_ylim(bottom=0)
-    ax_fnd_bw.set_ylim(bottom=0)
-
-    ps.tidy(ax_ins_mops)
-    ps.tidy(ax_fnd_mops)
-
-    # ----------------- LEGEND SORTING -----------------
-    # Generate canonical legend entries pulling from our synced dictionary
-    custom_lines = [
-        mlines.Line2D([0], [0], label=ps.display_name(name), **final_styles[name])
-        for name in ordered_labels
+    # ps.add_legend() with two extra keys explaining the twin axes, so the
+    # legend matches the other figures' (same kwargs, same name translation).
+    handles = [
+        mlines.Line2D([0], [0], label=ps.display_name(name), **styles[name])
+        for name in names
     ]
+    handles += [
+        mlines.Line2D([], [], color=c, linestyle=':', label=name)
+        for (name, _), c in zip(BASELINES, BASELINE_COLORS)
+    ]
+    handles += [
+        mlines.Line2D([], [], color='black', linestyle='-', marker='o',
+                      label='throughput (Mops)'),
+        mlines.Line2D([], [], color='black', **BW_STYLE, label='bandwidth (GB/s)'),
+    ]
+    fig.legend(fontsize=8, handles=handles, loc="upper center", ncol=len(handles))
 
-    # Append baseline handles
-    for i, (name, val) in enumerate(BASELINES):
-        custom_lines.append(mlines.Line2D([], [], color=palette[i % len(palette)], linestyle=':', label=name))
-
-    # Append dummy handles to explain twin axis lines
-    custom_lines.extend([
-        mlines.Line2D([], [], color='black', linestyle='-', marker='o', label='Throughput (MOPS)'),
-        mlines.Line2D([], [], color='black', linestyle='--', marker='^', label='Bandwidth (GB/s)')
-    ])
-
-    fig.legend(
-        handles=custom_lines,
-        loc="upper center",
-        ncol=len(custom_lines),
-        fontsize=8,
-        frameon=False
-    )
-
-    # Save via helper
-    ps.save(fig, "combined_perf.pdf", legend_top=0.90)
+    ps.save(fig, out_path, legend_top=0.9)
 
 
 if __name__ == "__main__":
@@ -214,21 +204,25 @@ if __name__ == "__main__":
         print(f"Usage: python {sys.argv[0]} <file1.txt> [file2.txt ...]")
         sys.exit(1)
 
-    all_results = []
+    results = {}
 
     for file_path in sys.argv[1:]:
         ins_bw, fnd_bw = parse_bw_data(file_path)
         ins_mops, fnd_mops = parse_mops_data(file_path)
+        fills = parse_fills(file_path)
         label = os.path.splitext(os.path.basename(file_path))[0]
 
         print(f"\nResults for {label}")
+        print(f"Fill factors (%):    {fills}")
         print(f"Inserts BW (GB/s):   {[round(v, 2) for v in ins_bw]}")
         print(f"Finds BW (GB/s):     {[round(v, 2) for v in fnd_bw]}")
         print(f"Inserts MOPS:        {[round(v, 2) for v in ins_mops]}")
         print(f"Finds MOPS:          {[round(v, 2) for v in fnd_mops]}")
 
-        # Adding placeholder range since parsing extracts lists of data directly without tracking the X-axis key 
-        fill_factors = list(range(10, 100, 10))
-        all_results.append((label, fill_factors, ins_bw, fnd_bw, ins_mops, fnd_mops))
+        results[label] = {
+            "fills": fills,
+            "ins_bw": ins_bw, "fnd_bw": fnd_bw,
+            "ins_mops": ins_mops, "fnd_mops": fnd_mops,
+        }
 
-    plot_combined(all_results)
+    plot_combined(results)

@@ -113,14 +113,17 @@ endif()
 #   DOUBLE     prefetcht1 when the entry is queued, prefetchw when it is
 #              dequeued -- two prefetches per insert.
 #   PREFETCHW  one prefetchw, issued when the entry is queued.
+#   PREFETCHT1_ONLY
+#              DOUBLE without the dequeue-time prefetchw: one prefetcht1 when
+#              the entry is queued, and nothing else.
 #   NONE       no software prefetch on the insert path.
 #   AUTO       (default) follow PREFETCH, which is what the knob did before it
 #              existed: DOUBLE -> DOUBLE, NONE -> NONE, anything else ->
 #              PREFETCHW. Keeps every existing -DPREFETCH= command line, and
 #              the numbers collected with one, reproducible.
 set(CAS_PREFETCH_INSERTION "AUTO" CACHE STRING
-    "Choose cas insert-path prefetch: AUTO, DOUBLE, PREFETCHW, NONE")
-set_property(CACHE CAS_PREFETCH_INSERTION PROPERTY STRINGS AUTO DOUBLE PREFETCHW NONE)
+    "Choose cas insert-path prefetch: AUTO, DOUBLE, PREFETCHW, PREFETCHT1_ONLY, NONE")
+set_property(CACHE CAS_PREFETCH_INSERTION PROPERTY STRINGS AUTO DOUBLE PREFETCHW PREFETCHT1_ONLY NONE)
 
 set(_cas_insert_prefetch "${CAS_PREFETCH_INSERTION}")
 if(_cas_insert_prefetch STREQUAL "AUTO")
@@ -137,6 +140,8 @@ if(_cas_insert_prefetch STREQUAL "DOUBLE")
     add_definitions(-DCAS_INSERT_PREFETCH_DOUBLE)
 elseif(_cas_insert_prefetch STREQUAL "PREFETCHW")
     add_definitions(-DCAS_INSERT_PREFETCH_PREFETCHW)
+elseif(_cas_insert_prefetch STREQUAL "PREFETCHT1_ONLY")
+    add_definitions(-DCAS_INSERT_PREFETCHT1_ONLY)
 elseif(_cas_insert_prefetch STREQUAL "NONE")
     add_definitions(-DCAS_INSERT_PREFETCH_NONE)
 else()

@@ -18,8 +18,9 @@ Collected 2026-09-24. Supersedes the open end of
 | Is it waiting on DRAM loads? | No — its loads almost never miss (0.02 demand fills per prefetch fill); only 16–30% of pipeline slots wait on memory, against 85–89% for the microbenchmark. §5 |
 | Then what is the core doing? | **Stalled with a full store queue: 58% of cycles at 32 threads, 77% at 64**, against 6–11% for the microbenchmark. It keeps only 2.7 (32 thr) / 4.0 (64 thr) L1 misses in flight per core to the microbenchmark's ~19–20. §5 |
 | Does a deeper insert queue help? | No. 32 → 256 entries: ±1%. §6 |
-| Does prefetching for write earlier help? | No. Moving `prefetchw` to 16/32 inserts ahead: 0 to +1.7%. Using `prefetchw` at enqueue instead of `prefetcht2` **removes** the store-queue stall (→ 1–11%) but throughput moves −10% to +3%: the stall moves to the L1 miss buffers, 10–14% of prefetches are dropped, and demand misses reappear. §6 |
-| What is still open? | *Why* the bucket store blocks the store queue. The likely chain is in §7; it is inference, not a measurement. |
+| Does prefetching for write earlier help? | No. Moving `prefetchw` to 16/32 inserts ahead: 0 to +1.7%. Using `prefetchw` at enqueue instead of `prefetcht1` **removes** the store-queue stall (→ 1–11%) but throughput moves −10% to +3%: the stall moves to the L1 miss buffers, 10–14% of prefetches are dropped, and demand misses reappear. §6 |
+| Is the double prefetch needed? | No. **`PREFETCHT1_ONLY`** (the enqueue `prefetcht1` without the dequeue `prefetchw`) matches it within 0.6% everywhere, with the same store-queue stall. The `prefetchw` is dead weight. Every scheme that prefetches at enqueue ends at 235–245 GB/s at 64 threads; no prefetch collapses to ~1100 Mops. §6 |
+| Why does the store queue fill? | **Lines shared between CCXs.** ~7–8% of bucket stores hit a line another CCX's cache also holds, so the store needs an ownership upgrade at commit, and in-order commit stalls every store behind it. Same table and 4 threads: packed on one CCX → 0 upgrades, store queue full 0.2%, 578 Mops; spread over four CCXs → 0.065 upgrades/insert, full 46%, **369 Mops (−36%)**. The microbenchmark never shares a line, which is why it never pays this. §9 |
 
 ## 1. The microbenchmark, and which of its numbers to compare against
 
@@ -140,10 +141,11 @@ run; each counter set below is sized to that so nothing multiplexes. The `amd_l3
 | `ex_ret_instr` | core | retired instructions | IPC; instructions per insert |
 | `ls_alloc_mab_count` | core | Miss Address Buffer occupancy summed per cycle | **L1D misses in flight** = count / cycles (per thread; ×2 per core under SMT) |
 | `ls_dmnd_fills_from_sys.all` | core | L1D fills caused by demand loads/stores, from L2 or beyond | exposed misses |
+| `ls_dispatch.store_dispatch` | core | store ops dispatched to the load-store unit (`event=0x29,umask=0x2`) | stores per insert = count / (set_mops × window length) |
 | `ls_pref_instr_disp.all` | core | software prefetch instructions dispatched | prefetches issued |
 | `ls_sw_pf_dc_fills.all` | core | L1D fills caused by software prefetches, any source | prefetches that landed in L1 |
 | `ls_sw_pf_dc_fills.local_l2` | core | … of which the line came from the local L2 | share of `prefetchw` fills that found the line already in L2 |
-| `ls_inef_sw_pref.all` | core | software prefetches that were redundant (already in L1, or matched an in-flight MAB) | issued − redundant − filled = did not fill L1 (for a `prefetcht1/t2` that is the expected outcome — it targets L2; for `prefetchw` it is a real drop) |
+| `ls_inef_sw_pref.all` | core | software prefetches that were redundant (already in L1, or matched an in-flight MAB) | issued − redundant − filled = did not fill L1 (for a `prefetcht1` that is the expected outcome — it targets L2; for `prefetchw` it is a real drop) |
 | `l3_xi_sampled_latency.all`, `l3_xi_sampled_latency_requests.all` | amd_l3 | sampled L3-miss latency and sample count | latency in core clocks = 10 × latency / requests (perf's `l3_read_miss_latency` metric) |
 | `de_no_dispatch_per_slot.no_ops_from_frontend` | core | dispatch slots empty for lack of frontend ops | top-down frontend-bound = / (6 × cycles) |
 | `de_no_dispatch_per_slot.backend_stalls` | core | dispatch slots lost to backend stalls | top-down backend-bound |
@@ -222,7 +224,7 @@ Reading it:
 ## 6. Knobs tried
 
 **Insert queue depth** (`--find_queue`, which sizes `CASHashTable::insert_queue`; the
-enqueue-time `prefetcht2` therefore runs that many inserts ahead). fill 10, one run each:
+enqueue-time `prefetcht1` therefore runs that many inserts ahead). fill 10, one run each:
 
 | queue | 32 thr Mops | 32 thr GB/s | 64 thr Mops | 64 thr GB/s | `prefetchw` fills from L2 |
 |---|---|---|---|---|---|
@@ -239,7 +241,7 @@ prefetch has landed for 89% of inserts by the time the dequeue-time `prefetchw` 
 **Prefetch scheme** (builds from `dramblast_insert_amd/build_variants.sh`; all other
 flags identical; 2 reps each, interleaved):
 
-- `base` — the collection build: `prefetcht2` at enqueue + `prefetchw` 8 inserts ahead at dequeue.
+- `base` — the collection build: `prefetcht1` at enqueue (`__builtin_prefetch(p, 0, 2)`; locality 2 is T1) + `prefetchw` 8 inserts ahead at dequeue.
 - `dist16`, `dist32` — the same, `PREFETCH_INSERT_NEXT_DISTANCE` 8 → 16 / 32.
 - `pw_enq` — `-DCAS_PREFETCH_INSERTION=PREFETCHW`: a single `prefetchw` at enqueue (64 inserts ahead), no second prefetch.
 
@@ -266,7 +268,7 @@ Prefetch fate for `base` vs `pw_enq`, fill 10:
 
 | | issued | redundant | filled L1 | did not fill L1 | demand fills per prefetch fill |
 |---|---|---|---|---|---|
-| base 32 thr | 10.60 G | 4.7% | 51.8% | 43.6% (the `prefetcht2`s — they target L2) | 0.02 |
+| base 32 thr | 10.60 G | 4.7% | 51.8% | 43.6% (the `prefetcht1`s — they target L2) | 0.02 |
 | pw_enq 32 thr | 6.03 G | 9.0% | 81.0% | **10.0% dropped** | 0.22 |
 | base 64 thr | 10.84 G | 2.7% | 52.5% | 44.8% | 0.05 |
 | pw_enq 64 thr | 5.89 G | 7.8% | 78.2% | **13.9% dropped** | 0.48 |
@@ -277,6 +279,64 @@ Buffer entry while in flight (7–11 per thread, up from 2–3); when the buffer
 Zen4 discards the prefetch, 10–14% are lost, and the stores behind them become demand
 misses. The limit moved from the store queue to the L1 miss buffers and landed in
 roughly the same place — ~244 GB/s at 64 threads.
+
+**Single-prefetch schemes.** Does the insert path need two prefetches at all? Five
+builds, same flags otherwise, fill 10 and 70 × 32 and 64 threads, 2 reps each,
+interleaved (`dramblast_insert_amd/variants2.py`, `results/variants2.json`). The
+instruction mix of each build's `insert_batch` was checked with `objdump`:
+
+- `base` — the collection build, `DOUBLE`: `prefetcht1` at enqueue + `prefetchw` 8 ahead at dequeue.
+- `t1only` — **`-DCAS_PREFETCH_INSERTION=PREFETCHT1_ONLY`** (new build option, defines
+  `CAS_INSERT_PREFETCHT1_ONLY`): the enqueue `prefetcht1` alone.
+- `pw_enq` — `PREFETCHW`: `prefetchw` at enqueue alone.
+- `t0only` — `prefetcht0` at enqueue alone (patched source copy; `build_variants.sh`).
+- `none` — `NONE`: no insert-path prefetch.
+
+Two more counters join the set: `ls_dmnd_fills_from_sys.all` (demand fills into L1 from
+L2 or beyond) and `ls_dispatch.store_dispatch` (stores dispatched). Per-insert values
+divide window totals by `set_mops × window length`.
+
+| fill | thr | scheme | Mops | vs base | DRAM GB/s | rd / wr | SQ full | L1 misses in flight / thr | demand fills / insert | stores / insert |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 10 | 32 | base | 1768 | — | 233.5 | 125.1 / 108.4 | 0.58 | 2.68 | 0.03 | 8.0 |
+| 10 | 32 | **t1only** | 1778 | +0.6% | 234.2 | 125.5 / 108.7 | 0.57 | 2.68 | 1.03 | 8.2 |
+| 10 | 32 | pw_enq | 1591 | −10.0% | 211.3 | 113.3 / 98.0 | 0.01 | 10.75 | 0.22 | 8.6 |
+| 10 | 32 | t0only | 1571 | −11.1% | 208.7 | 111.9 / 96.8 | 0.35 | 11.22 | 0.16 | 8.4 |
+| 10 | 32 | none | 932 | −47.3% | 126.1 | 67.6 / 58.4 | 0.05 | 5.17 | 1.05 | 9.3 |
+| 10 | 64 | base | 1856 | — | 244.3 | 130.9 / 113.4 | 0.78 | 2.00 | 0.05 | 7.8 |
+| 10 | 64 | **t1only** | 1860 | +0.2% | 244.3 | 130.9 / 113.4 | 0.77 | 2.01 | 1.05 | 7.9 |
+| 10 | 64 | pw_enq | 1827 | −1.6% | 244.9 | 131.4 / 113.5 | 0.11 | 7.04 | 0.45 | 8.5 |
+| 10 | 64 | t0only | 1762 | −5.1% | 234.6 | 125.8 / 108.8 | 0.30 | 7.01 | 0.45 | 8.3 |
+| 10 | 64 | none | 1098 | −40.8% | 146.7 | 78.7 / 68.0 | 0.09 | 3.14 | 1.06 | 8.1 |
+| 70 | 32 | base | 1503 | — | 220.7 | 126.2 / 94.6 | 0.53 | 2.61 | 0.05 | 10.7 |
+| 70 | 32 | **t1only** | 1500 | −0.2% | 220.2 | 125.7 / 94.5 | 0.51 | 2.45 | 1.17 | 11.7 |
+| 70 | 32 | pw_enq | 1456 | −3.2% | 212.6 | 121.0 / 91.5 | 0.01 | 11.23 | 0.21 | 11.9 |
+| 70 | 32 | t0only | 1406 | −6.4% | 205.8 | 117.3 / 88.5 | 0.37 | 11.59 | 0.15 | 11.6 |
+| 70 | 32 | none | 727* | −51.6% | 106.1 | 60.3 / 45.8 | 0.05 | 4.98 | 1.24 | 13.3 |
+| 70 | 64 | base | 1606 | — | 236.0 | 134.9 / 101.2 | 0.72 | 2.00 | 0.08 | 9.7 |
+| 70 | 64 | **t1only** | 1606 | 0.0% | 235.9 | 134.7 / 101.2 | 0.72 | 1.93 | 1.21 | 10.3 |
+| 70 | 64 | pw_enq | 1661 | +3.4% | 242.5 | 137.9 / 104.6 | 0.10 | 7.18 | 0.50 | 10.8 |
+| 70 | 64 | t0only | 1592 | −0.9% | 232.5 | 132.3 / 100.2 | 0.31 | 7.18 | 0.50 | 10.4 |
+| 70 | 64 | none | 940 | −41.5% | 136.2 | 77.1 / 59.1 | 0.09 | 3.20 | 1.21 | 10.2 |
+
+\* One rep overlapped a compile on the machine (704 vs 750 Mops); every other pair agrees within 1.2%.
+
+What it shows:
+
+- **The dequeue `prefetchw` does nothing.** Without it each insert takes one demand fill
+  (1.03–1.21 per insert, served from L2 because the `prefetcht1` has landed) and throughput,
+  bandwidth and the store-queue stall are unchanged. So the `prefetchw` neither causes nor
+  relieves the stall — which rules out the "late `prefetchw` blocks the store queue"
+  explanation an earlier draft of §7 gave.
+- **The store-queue stall goes away only when the line is in L1 well ahead** — `prefetchw`
+  or `prefetcht0` 64 inserts early (SQ full 0.01–0.37). Then the L1 miss buffers fill
+  instead (7–12 in flight per thread), and at 32 threads those schemes are 3–11% slower.
+- **At 64 threads the prefetching schemes converge**: 232–245 GB/s whatever the
+  instruction. Prefetching at enqueue is essential (none is ~40–50% slower); which
+  prefetch it is, and whether there is a second one, barely matters.
+- **Stores per insert, measured**: 7.8–8.6 at fill 10, 9.7–11.9 at fill 70 (a longer probe
+  re-enqueues, which writes the queue entry again). The 64-entry store queue holds about
+  6–8 inserts' worth.
 
 **Threads.** fill 70, 5 reps each, interleaved: 32 threads 1495 Mops / 221.2 GB/s,
 64 threads 1617 / 237.5 (−7.5% insert, −21% lookup at 32). The SMT sibling adds
@@ -295,21 +355,16 @@ Established by the counters above:
    hard (lower loaded latency).
 4. Neither prefetch distance nor queue depth moves it; replacing the store-queue stall
    with `prefetchw`-at-enqueue just moves the limit to the miss buffers.
+5. The second (dequeue-time) prefetch is unnecessary: `PREFETCHT1_ONLY` equals `DOUBLE`.
+   Whether that `prefetchw` fires, and how early, has no effect on the store-queue stall.
+6. Each insert dispatches ~8 stores at fill 10 and ~10–12 at fill 70
+   (`ls_dispatch.store_dispatch`), so the 64-entry store queue covers only 6–8 inserts.
 
-Inferred, not measured: **why the store queue fills.** Stores commit in order. Each insert
-issues roughly 8–10 stores — the driver writes `items[i]` (key, value, id), the enqueue
-writes the `insert_queue` entry (key, key_id, value, idx), and the upsert writes the bucket
-— so the 64-entry store queue holds only ~6 inserts' worth. For the ~11% of inserts
-whose line was *not* in L2 when the dequeue-time `prefetchw` fired (§6: 89% were), that
-`prefetchw` and the following bucket store go out to DRAM, and every store behind the
-bucket store waits for it. While dispatch is blocked the core issues no new enqueue-time
-prefetches, which caps requests in flight — and on this machine 1r1w bandwidth is set by
-how many requests are outstanding, because a store occupies its DRAM bank ~2.65× as long as
-a read ([`../collect_scalability/local_interleave_analysis.md`](../collect_scalability/local_interleave_analysis.md) §5).
-
-The untested lever that follows: **fewer stores per insert**. Key and value are the same
-word in this workload and the driver copies each key twice (workload → `items[]` →
-`insert_queue`); cutting those copies would let more inserts fit in the store queue.
+**Why the store queue fills** is answered in §9: roughly 7% of bucket stores land on a
+line that another CCX also holds, need an ownership upgrade at commit, and — stores
+committing in order — hold up everything behind them. (An earlier draft of this section
+blamed late `prefetchw`s, then an L2 round trip or dirty evictions; §6 and §9 rule those
+out.)
 
 ## 8. Plot ceiling
 
@@ -318,6 +373,139 @@ is now the **1r1w peak, 290 GB/s** (§1), replacing the 64-thread sustained 274.
 line is unchanged at 353. Read the insertion panel with §1 in mind: 290 is what the memory
 system delivers at its best configuration (32 threads, or the best 100 ms interval at 64);
 a 64-thread workload has been shown to sustain ~264–273.
+
+## 9. Why the store queue fills: ownership upgrades on lines shared across CCXs
+
+### 9.1 Where the time goes, precisely
+
+IBS in cycle mode (`perf record -e cycles:pp`, Zen4's precise sampling; `-c 200003`,
+cpus 0–7, 32 threads, fill 10, `--insert-factor 300`) puts 69% of insert-phase samples in
+`insert_batch` and 27% in the driver loop. Within them no single instruction dominates:
+the samples spread over the enqueue block (`prefetcht1` then the four `insert_queue[head]`
+field stores, 3–8% each) and the driver's `items[i]` stores (5–7% each). In cycle mode IBS
+tags the next op to *dispatch*, so under a full store queue the sample lands on whichever
+store is waiting for a slot — the spread is the signature of a store-queue stall, not a
+pointer to its cause.
+
+IBS memory sampling (`perf mem record`, i.e. `ibs_op//`, same run) gives each sampled op's
+data source:
+
+| instruction | samples | result |
+|---|---|---|
+| bucket SIMD load (`vmovdqa64`) | 857 | 99.1% L1 hit, 0.9% L2 |
+| **bucket upsert store** (`mov %rbx,(%rax,%r15,8)`) | 3786 | 45.2% L1 hit, 3.8% L2 hit, **50.4% no valid cache status** |
+| `insert_queue[head]` stores (4) | 3125–16670 each | 99.5–99.8% L1 hit |
+| driver `items[i]` stores (5) | 347–4506 each | 98.6–100% L1 hit |
+
+Only the bucket store behaves differently.
+
+### 9.2 Two hypotheses, and the tests
+
+- **H1 (ownership).** The bucket line is present but not writable when the store commits;
+  the store must get ownership then, and in-order commit blocks the queue behind it.
+- **H2 (volume).** The ~8 bookkeeping stores per insert fill the 64-entry store queue on
+  their own; the bucket store is not special.
+
+Counters added for this (`sq_hypotheses.py`; two 5-event passes per case, fill 10):
+`l2_request_g1.change_to_x` (L1→L2 requests to make a line writable),
+`l2_cache_req_stat.ls_rd_blk_x` (L1→L2 store / state-change requests that hit),
+`l2_cache_req_stat.ls_rd_blk_l_hit_s` / `ls_rd_blk_l_hit_x` (L1→L2 reads that hit a
+non-modifiable / modifiable line), `l2_cache_req_stat.ls_rd_blk_c` (L1→L2 requests that
+miss), `ls_st_commit_cancel2.st_commit_cancel_wcb_full` (store commits cancelled for a full
+write-combining buffer), plus the §3 stall set. A new diagnostic build, `nostore`
+(`build_variants.sh`), skips the upsert's bucket store when the value is already there —
+which after the first pass it always is (value == key) — and changes nothing else.
+
+| case | Mops | SQ full | stores / op | ownership upgrades / op | L2 read hits on a modifiable line / op | on a non-modifiable line / op |
+|---|---|---|---|---|---|---|
+| base, 32 thr | 1770 | **0.58** | 7.9 | **0.080** | (served by the `prefetchw`: 1.08 store/state-change hits) | 0.002 |
+| `t1only`, 32 thr | 1777 | **0.57** | 8.2 | **0.080** | 0.937 | 0.081 |
+| `pw_enq`, 32 thr | 1588 | 0.01 | 8.6 | 0.002 | 0.047 | 0.001 |
+| `t0only`, 32 thr | 1575 | 0.37 | 8.4 | 0.087 | 0.051 | 0.005 |
+| **`nostore`**, 32 thr | **3880** | **0.00** | 6.8 | 0.001 | 0.012 | 0.006 |
+| base, 64 thr | 1860 | 0.77 | 7.8 | 0.079 | (served by the `prefetchw`: 1.08 store/state-change hits) | 0.003 |
+| **`nostore`**, 64 thr | **4728** | 0.27 | 7.1 | 0.000 | 0.031 | 0.008 |
+| base, **1 thread**, 512 KB table | 205 | **0.00** | 8.1 | 0.000 | 0.151 | 0.003 |
+| base, **1 thread**, 8 GiB table | 149 | **0.00** | 7.8 | 0.000 | 0.023 | 0.004 |
+| base, 32 thr, **find** phase | 3879 get | **0.05** | **8.1** | 0.000 | — | — |
+
+Write-combining-buffer commit cancels are 0.000–0.001 per op everywhere.
+
+**H2 is refuted three ways.** The find phase dispatches the same 8.1 stores (and 69
+instructions) per op with the store queue full 5% of the time; one thread dispatches the
+same ~8 stores per insert with it full 0%; and `nostore`, which removes only the bucket
+store, takes it to 0%. The bookkeeping stores are not the problem.
+
+**H1 as first stated is refuted too**: most bucket lines *are* writable when reached —
+under `t1only` 0.94 per insert hit a modifiable line in L2, only 0.08 a non-modifiable
+one. **What survives is a narrower H1**: about 8% of inserts need an ownership upgrade
+(`change_to_x` 0.080), and that fraction tracks the stall across builds — present
+wherever the store queue fills (base, `t1only`, `t0only`), ~0 where it does not
+(`pw_enq`, `nostore`, one thread). One thread never needs an upgrade at all, in cache or
+on DRAM: an upgrade needs another holder of the line.
+
+### 9.3 The holder is another CCX
+
+Same binary, same table (interleaved over all four nodes either way — both placements
+take the default branch of `distribute_mem_to_nodes`), same 4 threads; only placement
+changes (`ccx_sharing.py`, 2 reps each, agreeing within 0.5%):
+
+| 4 threads | Mops | DRAM GB/s | SQ full | ownership upgrades / insert | cycles / insert / thread |
+|---|---|---|---|---|---|
+| packed on **one CCX** (`--numa-split 2`, cpus 0–3) | **578** | 78.9 | **0.002** | **0.000** | 23.4 |
+| spread over **four CCXs** (`--numa-split 1`, cpus 0/8/16/24) | **369** | 50.0 | **0.46** | **0.065** | 36.2 |
+
+Spreading gives each thread its own L3 and its own fabric link — if anything it should
+help. Instead it costs 36%, all of it arriving with the upgrades and the store-queue
+stall. Four threads sharing one L3 never need an upgrade, because the L3 serves them all
+and no other cache holds the lines. The packed run's 23.4 cycles/insert is the same as a
+single thread alone on DRAM (§4).
+
+The extra ~12.8 cycles per insert over 6.5% of inserts is ~200 cycles (~60 ns) per
+upgrade — a plausible coherence round trip at this light load. The same arithmetic on the
+32-thread base run (0.58 × 56.5 cycles over 8% of inserts) gives ~400 cycles, and at 64
+threads ~1000, in step with the loaded latency rising (§5).
+
+### 9.4 The mechanism, and how it fits everything earlier
+
+Keys are disjoint per thread, but lines are not: a 64 B bucket holds four slots, and at
+fill 10 a third of lines also hold another thread's key (more at fill 70). When one CCX
+has recently upserted a line and still caches it, another CCX's read-intent prefetch
+(`prefetcht1`) gets the line without write permission. The line is in L1 by the time
+the bucket store commits — so the load hits — but the store needs an ownership upgrade
+(`change_to_x`) through the IO die, and because stores commit in order, all ~6–8
+inserts' worth of stores behind it wait too. Once the 64 entries are used, dispatch stops.
+
+- **`prefetchw` at enqueue** requests ownership 64 inserts early, so the upgrade happens
+  off the critical path (0.002 upgrades/insert, queue full 1–11%) — and the limit moves to
+  the L1 miss buffers instead (§6).
+- **The dequeue-time `prefetchw`** does not fix it (base and `t1only` both 0.080
+  upgrades/insert; distance 16/32 no better). Whether that `prefetchw` fails to upgrade a
+  non-writable line or does so too late is not resolved here.
+- **`prefetcht0` at enqueue** is read intent, so it keeps the upgrades (0.087) and a
+  partial stall.
+- **Coherence share vs cost.** Only 2.4–3.3% of lines are *fetched* from another CCX's
+  cache (`coherence.py`, measured on `pw_enq`, where fills come straight from the origin),
+  and that fetch latency is hidden by the prefetch — which is why an earlier look at those
+  numbers dismissed coherence. The cost is not the fetch; it is the upgrade, taken at store
+  commit, on the in-order critical path.
+- **Why the microbenchmark reaches ~290.** Every `bandwidth_rand` thread writes only its
+  own buffer, so no line is ever held by two CCXs and no store ever needs an upgrade.
+
+### 9.5 What follows
+
+- **The ceiling gap is a coherence cost, not a memory one.** dramblast's insert path
+  pays for sharing lines between CCXs even though no two threads insert the same key.
+- **Levers**, none tried here beyond `pw_enq`:
+  - get ownership early without flooding the L1 miss buffers (a write-intent prefetch far
+    ahead, but fewer outstanding at once);
+  - fewer lines shared across CCXs (e.g. partitioning keys by CCX so each line has one
+    owner);
+  - skip redundant stores. `nostore` shows the scale: 2.2× the inserts at 32 threads and
+    read-bound (352 GB/s) at 64. But it only works because this benchmark's upserts rewrite
+    the identical value; a real update, or kmer counting's increment, cannot skip the store.
+- **Not yet shown:** the ~8% upgrade rate against a model of sharing and residence time,
+  and whether the dequeue `prefetchw` drops or delays the upgrade.
 
 ## Reproduce
 
@@ -330,8 +518,12 @@ takes an output directory for its logs; run from that directory.
 | `topdown.py <out>` | §5 top-down rows (two 5-event passes per case) → `results/topdown.json` |
 | `stalls.py <out>` | §5 store-queue / load-queue / ROB-full fractions |
 | `qsweep.py <out>` | §6 queue-depth table |
-| `build_variants.sh` | builds `build_pw/`, `build_d16/`, `build_d32/` beside the scripts (leaves `/opt/DRAMHiT/build` alone) |
+| `build_variants.sh` | builds `build_pw/`, `build_t1only/`, `build_none/` (from the repo's own `CAS_PREFETCH_INSERTION` options) and `build_d16/`, `build_d32/`, `build_t0only/` (patched source copies) beside the scripts; leaves `/opt/DRAMHiT/build` alone |
 | `variants.py <out>` | §6 prefetch-scheme table → `results/variants.json` (needs `build_variants.sh` first) |
+| `coherence.py <out>` | §9.4 fill sources (local L2 / own CCX / other CCX / DRAM) for base and `pw_enq` → `results/coherence.json` |
+| `sq_hypotheses.py <out>` | §9.2 table: store-queue stall, stores/op, ownership upgrades and L2 hit states for base, `t1only`, `pw_enq`, `t0only`, `nostore`, one thread, and the find phase → `results/sq_hypotheses.json` |
+| `ccx_sharing.py <out>` | §9.3: 4 threads packed on one CCX vs spread over four → `results/ccx_sharing.json` |
+| `variants2.py <out>` | §6 single-prefetch table (base, `PREFETCHT1_ONLY`, `PREFETCHW`, t0-only, none) → `results/variants2.json` |
 | `pfdrop.py <out>` | §6 prefetch-fate table |
 | `t32.py <out>` | §6 threads comparison (uses `collect_data_amd.py`'s command builder and parser) → `results/t32_vs_t64_fill70.json` |
 

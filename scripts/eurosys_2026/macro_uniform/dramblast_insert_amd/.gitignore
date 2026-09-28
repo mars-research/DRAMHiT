@@ -1,3 +1,7 @@
 build_*/
-src_d*/
+src_*/
 logs/
+logs_*.out
+build.log
+dramhit.log
+__pycache__/
