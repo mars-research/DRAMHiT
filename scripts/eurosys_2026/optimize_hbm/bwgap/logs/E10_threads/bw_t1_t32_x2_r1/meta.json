@@ -1,0 +1,9 @@
+{
+ "label": "bw_t1_t32_x2",
+ "kind": "totals",
+ "cmd": "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/bwgap/bin/bandwidth_rand_it200 -m 256mb -pattern n0a2t32 -freq 2.7 -inst t1 -pad 0 -near 8 -lookahead 64 -mode r",
+ "iters": 200,
+ "margin_before_c": 12,
+ "wall_s": 5.3,
+ "started": "2026-10-02T15:13:27"
+}

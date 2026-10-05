@@ -1,0 +1,85 @@
+Requested per-thread size : ~256 MB
+Clamped per-thread size   : 256 MB (Power of 2 & 2MB Aligned)
+
+Spawning Thread 0 -> Pinned to CPU 0 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 1 -> Pinned to CPU 2 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 2 -> Pinned to CPU 4 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 3 -> Pinned to CPU 6 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 4 -> Pinned to CPU 8 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 5 -> Pinned to CPU 10 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 6 -> Pinned to CPU 12 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 7 -> Pinned to CPU 14 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 8 -> Pinned to CPU 16 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 9 -> Pinned to CPU 18 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 10 -> Pinned to CPU 20 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 11 -> Pinned to CPU 22 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 12 -> Pinned to CPU 24 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 13 -> Pinned to CPU 26 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 14 -> Pinned to CPU 28 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 15 -> Pinned to CPU 30 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 16 -> Pinned to CPU 32 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 17 -> Pinned to CPU 34 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 18 -> Pinned to CPU 36 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 19 -> Pinned to CPU 38 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 20 -> Pinned to CPU 40 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 21 -> Pinned to CPU 42 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 22 -> Pinned to CPU 44 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 23 -> Pinned to CPU 46 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 24 -> Pinned to CPU 48 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 25 -> Pinned to CPU 50 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 26 -> Pinned to CPU 52 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 27 -> Pinned to CPU 54 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 28 -> Pinned to CPU 56 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 29 -> Pinned to CPU 58 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 30 -> Pinned to CPU 60 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 31 -> Pinned to CPU 62 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 32 -> Pinned to CPU 64 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 33 -> Pinned to CPU 66 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 34 -> Pinned to CPU 68 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 35 -> Pinned to CPU 70 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 36 -> Pinned to CPU 72 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 37 -> Pinned to CPU 74 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 38 -> Pinned to CPU 76 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 39 -> Pinned to CPU 78 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 40 -> Pinned to CPU 80 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 41 -> Pinned to CPU 82 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 42 -> Pinned to CPU 84 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 43 -> Pinned to CPU 86 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 44 -> Pinned to CPU 88 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 45 -> Pinned to CPU 90 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 46 -> Pinned to CPU 92 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 47 -> Pinned to CPU 94 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 48 -> Pinned to CPU 96 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 49 -> Pinned to CPU 98 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 50 -> Pinned to CPU 100 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 51 -> Pinned to CPU 102 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 52 -> Pinned to CPU 104 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 53 -> Pinned to CPU 106 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 54 -> Pinned to CPU 108 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 55 -> Pinned to CPU 110 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 56 -> Pinned to CPU 112 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 57 -> Pinned to CPU 114 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 58 -> Pinned to CPU 116 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 59 -> Pinned to CPU 118 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 60 -> Pinned to CPU 120 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 61 -> Pinned to CPU 122 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 62 -> Pinned to CPU 124 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 63 -> Pinned to CPU 126 (Node 0), Target Memory Node Mask 0x4
+
+Setup: Spawning 64 threads.
+Total memory allocated across all threads: 16384 MB.
+
+-> [1/2] All threads allocated, bound to correct NUMA masks, and pinned to cores.
+Start perf collection
+End perf collection
+
+============================================
+Configuration   : Inst: 12 | Lookahead: 64 | Mode: READ
+Mode            : RANDOM (CRC32 Stateless Hash)
+Total Data Proc : 1600.00 GB
+Elapsed Cycles  : 12362153960
+Time Taken      : 4.5786 seconds (based on 2.70 GHz)
+Bandwidth       : 349.45 GB/s
+--------------------------------------------
+Cycles per access, by cpu node:
+  node 0   :   28.91 cycles/access  (64 threads)

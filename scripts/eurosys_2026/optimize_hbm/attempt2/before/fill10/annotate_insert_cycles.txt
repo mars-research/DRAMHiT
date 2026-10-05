@@ -1,0 +1,465 @@
+ Percent |	Source code & Disassembly of dramhit for cycles/period=10000019/pp (18650 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000043cd40 <insert_batch>:
+    0.00 :   43cd40: push   %rbp
+    0.00 :   43cd41: mov    %rsp,%rbp
+    0.00 :   43cd44: push   %r15
+    0.26 :   43cd46: push   %r14
+    0.00 :   43cd48: push   %r13
+    0.00 :   43cd4a: push   %r12
+    0.00 :   43cd4c: push   %rbx
+    0.19 :   43cd4d: and    $0xffffffffffffffc0,%rsp
+    0.00 :   43cd51: vmovq  0xb8(%rdi),%xmm0
+    0.00 :   43cd59: mov    0x8(%rsi),%rdx
+    0.00 :   43cd5d: mov    (%rsi),%r10
+    0.25 :   43cd60: mov    0x74(%rdi),%eax
+    0.00 :   43cd63: mov    0x70(%rdi),%r11d
+    0.01 :   43cd67: vpextrd $0x1,%xmm0,%r9d
+    0.23 :   43cd6d: vmovd  %xmm0,%esi
+    0.00 :   43cd71: lea    (%rdx,%rdx,2),%rcx
+    0.00 :   43cd75: sub    %r9d,%esi
+    0.00 :   43cd78: lea    (%r10,%rcx,8),%rbx
+    0.24 :   43cd7c: and    %eax,%esi
+    0.00 :   43cd7e: dec    %r11d
+    0.00 :   43cd81: mov    %rbx,-0x8(%rsp)
+    0.00 :   43cd86: cmp    %r11d,%esi
+    0.00 :   43cd89: jb     43cf80 <insert_batch+0x240>
+    0.21 :   43cd8f: cmp    %rbx,%r10
+    0.00 :   43cd92: je     43cf63 <insert_batch+0x223>
+    0.00 :   43cd98: mov    0x53099(%rip),%rdx        # 48fe38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.00 :   43cd9f: mov    0xa8(%rdi),%r14
+    0.00 :   43cda6: mov    $0x55,%r8d
+    0.19 :   43cdac: vmovd  %xmm0,%r13d
+    0.00 :   43cdb1: vpxor  %xmm13,%xmm13,%xmm13
+    0.00 :   43cdb6: kmovb  %r8d,%k3
+    0.00 :   43cdbb: nopl   0x0(%rax,%rax,1)
+    0.17 :   43cdc0: mov    %r9d,%r8d
+    0.00 :   43cdc3: shl    $0x5,%r8
+    0.00 :   43cdc7: add    %r14,%r8
+    3.72 :   43cdca: lea    0x8(%r9),%r15d
+    0.24 :   43cdce: inc    %r9d
+    0.00 :   43cdd1: and    %eax,%r15d
+    0.00 :   43cdd4: and    %eax,%r9d
+    3.44 :   43cdd7: mov    0x10(%r8),%eax
+    0.20 :   43cddb: mov    (%r8),%rcx
+    0.00 :   43cdde: mov    %rax,%rsi
+    0.00 :   43cde1: shl    $0x4,%rsi
+    3.54 :   43cde5: add    %rdx,%rsi
+    1.27 :   43cde8: vmovdqa64 (%rsi),%zmm14
+    0.00 :   43cdee: shl    $0x5,%r15
+    0.01 :   43cdf2: vpbroadcastq %rcx,%zmm15
+    3.52 :   43cdf8: vpcmpequq %zmm15,%zmm14,%k4{%k3}
+    0.38 :   43cdff: mov    0x10(%r14,%r15,1),%ebx
+    0.00 :   43ce04: shl    $0x4,%rbx
+   29.57 :   43ce08: prefetchw (%rdx,%rbx,1)
+    3.32 :   43ce0c: kortestb %k4,%k4
+    0.11 :   43ce10: mov    %rcx,%rbx
+    3.25 :   43ce13: jne    43d430 <insert_batch+0x6f0>
+    0.01 :   43ce19: vpcmpequq %zmm13,%zmm14,%k5{%k3}
+    0.04 :   43ce20: kortestb %k5,%k5
+    0.03 :   43ce24: jne    43d2d0 <insert_batch+0x590>
+    0.00 :   43ce2a: mov    0x88(%rdi),%rax
+    0.00 :   43ce31: mov    0x60(%rdi),%r15
+    0.00 :   43ce35: mov    0x18(%r8),%rsi
+    0.01 :   43ce39: dec    %rax
+    0.00 :   43ce3c: cmp    $0x4,%r15
+    0.00 :   43ce40: je     43d340 <insert_batch+0x600>
+    0.00 :   43ce46: mov    $0xffffffff,%ecx
+    0.01 :   43ce4b: cmp    $0x8,%r15
+    0.00 :   43ce4f: crc32  %rsi,%rcx
+    0.00 :   43ce55: cmove  %rcx,%r11
+    0.00 :   43ce59: and    %r11,%rax
+    0.00 :   43ce5c: and    $0xfffffffffffffffc,%rax
+    0.00 :   43ce60: mov    %r13d,%r15d
+    0.00 :   43ce63: mov    %rax,%rsi
+    0.00 :   43ce66: shl    $0x5,%r15
+    0.01 :   43ce6a: add    %r14,%r15
+    0.00 :   43ce6d: shl    $0x4,%rsi
+    0.00 :   43ce71: prefetcht1 (%rdx,%rsi,1)
+    0.00 :   43ce75: mov    %rbx,(%r15)
+    0.00 :   43ce78: mov    0x14(%r8),%ebx
+    0.00 :   43ce7c: vmovd  %eax,%xmm5
+    0.01 :   43ce80: vpinsrd $0x1,%ebx,%xmm5,%xmm0
+    0.01 :   43ce86: mov    0x8(%r8),%r8
+    0.00 :   43ce8a: vmovq  %xmm0,0x10(%r15)
+    0.00 :   43ce90: mov    0x74(%rdi),%eax
+    0.00 :   43ce93: inc    %r13d
+    0.00 :   43ce96: mov    %r11,0x18(%r15)
+    0.00 :   43ce9a: mov    %r8,0x8(%r15)
+    0.00 :   43ce9e: and    %eax,%r13d
+    0.00 :   43cea1: jmp    43cdc0 <insert_batch+0x80>
+    0.00 :   43cea6: cs nopw 0x0(%rax,%rax,1)
+    0.00 :   43ceb0: mov    (%r8),%rbx
+    0.00 :   43ceb3: mov    0x8(%r8),%rcx
+    0.00 :   43ceb7: xor    %eax,%eax
+    0.06 :   43ceb9: xor    %edx,%edx
+    1.08 :   43cebb: lock cmpxchg16b (%r14)
+    0.04 :   43cec0: jne    43d4c4 <insert_batch+0x784>
+    0.00 :   43cec6: mov    0x52f6b(%rip),%rdx        # 48fe38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.00 :   43cecd: mov    0xa8(%rdi),%r14
+    0.01 :   43ced4: mov    0x60(%rdi),%rsi
+    0.05 :   43ced8: cmp    $0x4,%rsi
+    0.00 :   43cedc: je     43d3e8 <insert_batch+0x6a8>
+    0.00 :   43cee2: cmp    $0x8,%rsi
+    0.00 :   43cee6: jne    43cef4 <insert_batch+0x1b4>
+    4.17 :   43cee8: mov    $0xffffffff,%r12d
+    0.40 :   43ceee: crc32q (%r10),%r12
+    0.03 :   43cef4: mov    0x88(%rdi),%rbx
+    0.00 :   43cefb: mov    %r13d,%ecx
+    3.52 :   43cefe: dec    %rbx
+    0.01 :   43cf01: and    %r12,%rbx
+    0.03 :   43cf04: and    $0xfffffffffffffffc,%rbx
+    0.01 :   43cf08: mov    (%r10),%rax
+    3.75 :   43cf0b: mov    %rbx,%r8
+    0.00 :   43cf0e: shl    $0x5,%rcx
+    0.02 :   43cf12: add    %r14,%rcx
+    0.00 :   43cf15: shl    $0x4,%r8
+    3.66 :   43cf19: vmovd  %ebx,%xmm3
+    0.16 :   43cf1d: vpinsrd $0x1,0x10(%r10),%xmm3,%xmm1
+    4.76 :   43cf24: prefetcht1 (%rdx,%r8,1)
+    3.91 :   43cf29: mov    %rax,(%rcx)
+    0.00 :   43cf2c: vmovq  %xmm1,0x10(%rcx)
+    0.05 :   43cf31: mov    0x74(%rdi),%eax
+    0.28 :   43cf34: mov    0x8(%r10),%r15
+    3.59 :   43cf38: inc    %r13d
+    0.11 :   43cf3b: add    $0x18,%r10
+    0.06 :   43cf3f: mov    %r15,0x8(%rcx)
+    0.18 :   43cf43: mov    %r12,0x18(%rcx)
+    3.32 :   43cf47: and    %eax,%r13d
+    0.00 :   43cf4a: cmp    %r10,-0x8(%rsp)
+    3.28 :   43cf4f: jne    43cdc0 <insert_batch+0x80>
+    0.01 :   43cf55: vmovd  %r13d,%xmm4
+    0.20 :   43cf5a: vpinsrd $0x1,%r9d,%xmm4,%xmm0
+    0.01 :   43cf60: vzeroupper
+    0.02 :   43cf63: vmovq  %xmm0,0xb8(%rdi)
+    0.22 :   43cf6b: lea    -0x28(%rbp),%rsp
+    0.01 :   43cf6f: pop    %rbx
+    0.01 :   43cf70: pop    %r12
+    0.01 :   43cf72: pop    %r13
+    0.20 :   43cf74: pop    %r14
+    0.00 :   43cf76: pop    %r15
+    0.00 :   43cf78: pop    %rbp
+    0.22 :   43cf79: ret
+    0.00 :   43cf7a: nopw   0x0(%rax,%rax,1)
+    0.00 :   43cf80: cmp    -0x8(%rsp),%r10
+    0.00 :   43cf85: je     43cf6b <insert_batch+0x22b>
+    0.00 :   43cf87: mov    0x88(%rdi),%rax
+    0.00 :   43cf8e: mov    0x60(%rdi),%rbx
+    0.00 :   43cf92: mov    0x52e9f(%rip),%rdx        # 48fe38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.00 :   43cf99: mov    0xa8(%rdi),%r11
+    0.00 :   43cfa0: mov    $0x55,%r13d
+    0.00 :   43cfa6: lea    -0x1(%rax),%r12
+    0.00 :   43cfaa: mov    $0xffffffff,%r15d
+    0.00 :   43cfb0: vpxor  %xmm2,%xmm2,%xmm2
+    0.00 :   43cfb4: kmovb  %r13d,%k1
+    0.00 :   43cfb9: cmp    $0x4,%rbx
+    0.00 :   43cfbd: je     43d2b8 <insert_batch+0x578>
+    0.00 :   43cfc3: nopl   0x0(%rax,%rax,1)
+    0.00 :   43cfc8: mov    (%r10),%r9
+    0.00 :   43cfcb: cmp    $0x8,%rbx
+    0.00 :   43cfcf: jne    43cfda <insert_batch+0x29a>
+    0.00 :   43cfd1: mov    %r15,%r8
+    0.00 :   43cfd4: crc32  %r9,%r8
+    0.00 :   43cfda: mov    %r12,%rsi
+    0.01 :   43cfdd: mov    0xb8(%rdi),%r13d
+    0.00 :   43cfe4: and    %r8,%rsi
+    0.00 :   43cfe7: and    $0xfffffffffffffffc,%rsi
+    0.00 :   43cfeb: mov    %r13,%rax
+    0.00 :   43cfee: mov    %rsi,%rcx
+    0.00 :   43cff1: shl    $0x5,%r13
+    0.00 :   43cff5: add    %r11,%r13
+    0.00 :   43cff8: shl    $0x4,%rcx
+    0.00 :   43cffc: prefetcht1 (%rdx,%rcx,1)
+    0.00 :   43d000: mov    %r9,0x0(%r13)
+    0.00 :   43d004: vmovd  %esi,%xmm5
+    0.00 :   43d008: vpinsrd $0x1,0x10(%r10),%xmm5,%xmm0
+    0.00 :   43d00f: mov    0x8(%r10),%r9
+    0.00 :   43d013: vmovq  %xmm0,0x10(%r13)
+    0.00 :   43d019: mov    %r9,0x8(%r13)
+    0.00 :   43d01d: mov    %r8,0x18(%r13)
+    0.00 :   43d021: mov    0x74(%rdi),%r13d
+    0.00 :   43d025: lea    0x1(%rax),%ecx
+    0.00 :   43d028: and    %r13d,%ecx
+    0.00 :   43d02b: add    $0x18,%r10
+    0.00 :   43d02f: mov    %ecx,0xb8(%rdi)
+    0.00 :   43d035: cmp    -0x8(%rsp),%r10
+    0.00 :   43d03a: je     43d418 <insert_batch+0x6d8>
+    0.00 :   43d040: mov    0xbc(%rdi),%eax
+    0.00 :   43d046: mov    0x70(%rdi),%esi
+    0.00 :   43d049: sub    %eax,%ecx
+    0.00 :   43d04b: and    %r13d,%ecx
+    0.00 :   43d04e: dec    %esi
+    0.00 :   43d050: cmp    %esi,%ecx
+    0.00 :   43d052: jb     43cfb9 <insert_batch+0x279>
+    0.00 :   43d058: lea    0x8(%rax),%r9d
+    0.00 :   43d05c: and    %r13d,%r9d
+    0.00 :   43d05f: mov    %eax,%esi
+    0.00 :   43d061: shl    $0x5,%r9
+    0.00 :   43d065: shl    $0x5,%rsi
+    0.00 :   43d069: mov    0x10(%r11,%r9,1),%ecx
+    0.00 :   43d06e: add    %r11,%rsi
+    0.00 :   43d071: mov    (%rsi),%r9
+    0.00 :   43d074: shl    $0x4,%rcx
+    0.00 :   43d078: prefetchw (%rdx,%rcx,1)
+    0.00 :   43d07c: cmp    %r9,0x90(%rdi)
+    0.00 :   43d083: je     43d291 <insert_batch+0x551>
+    0.00 :   43d089: nopl   0x0(%rax)
+    0.00 :   43d090: mov    0x10(%rsi),%r12d
+    0.00 :   43d094: vpbroadcastq %r9,%zmm1
+    0.00 :   43d09a: mov    %r12,%rbx
+    0.00 :   43d09d: shl    $0x4,%rbx
+    0.00 :   43d0a1: add    %rdx,%rbx
+    0.00 :   43d0a4: vmovdqa64 (%rbx),%zmm3
+    0.00 :   43d0aa: vpcmpequq %zmm1,%zmm3,%k0{%k1}
+    0.00 :   43d0b1: kortestb %k0,%k0
+    0.00 :   43d0b5: jne    43d3a8 <insert_batch+0x668>
+    0.00 :   43d0bb: vpcmpequq %zmm2,%zmm3,%k2{%k1}
+    0.00 :   43d0c2: kortestb %k2,%k2
+    0.00 :   43d0c6: je     43d1c0 <insert_batch+0x480>
+    0.00 :   43d0cc: xor    %eax,%eax
+    0.00 :   43d0ce: kmovb  %k2,%r11d
+    0.00 :   43d0d2: tzcnt  %r11d,%eax
+    0.00 :   43d0d7: sar    %eax
+    0.00 :   43d0d9: movslq %eax,%r13
+    0.00 :   43d0dc: add    %r12,%r13
+    0.00 :   43d0df: mov    %r13,%r9
+    0.00 :   43d0e2: shl    $0x4,%r9
+    0.00 :   43d0e6: add    %rdx,%r9
+    0.00 :   43d0e9: mov    (%r9),%r12
+    0.00 :   43d0ec: test   %r12,%r12
+    0.00 :   43d0ef: je     43d358 <insert_batch+0x618>
+    0.00 :   43d0f5: mov    (%rsi),%rcx
+    0.00 :   43d0f8: cmp    %r12,%rcx
+    0.00 :   43d0fb: je     43d468 <insert_batch+0x728>
+    0.00 :   43d101: mov    0x88(%rdi),%rax
+    0.00 :   43d108: inc    %r13
+    0.00 :   43d10b: dec    %rax
+    0.00 :   43d10e: and    %rax,%r13
+    0.00 :   43d111: test   $0x3,%r13b
+    0.00 :   43d115: jne    43d0df <insert_batch+0x39f>
+    0.00 :   43d117: mov    0x60(%rdi),%r13
+    0.00 :   43d11b: mov    0x18(%rsi),%r11
+    0.00 :   43d11f: cmp    $0x4,%r13
+    0.00 :   43d123: je     43d49c <insert_batch+0x75c>
+    0.00 :   43d129: mov    -0x10(%rsp),%r9
+    0.00 :   43d12e: mov    %r15,%rbx
+    0.00 :   43d131: cmp    $0x8,%r13
+    0.00 :   43d135: crc32  %r11,%rbx
+    0.00 :   43d13b: cmove  %rbx,%r9
+    0.00 :   43d13f: mov    %r9,-0x10(%rsp)
+    0.00 :   43d144: mov    %r9,%r12
+    0.00 :   43d147: mov    0xb8(%rdi),%r9d
+    0.00 :   43d14e: mov    0xa8(%rdi),%r11
+    0.00 :   43d155: mov    %r9,%rbx
+    0.00 :   43d158: shl    $0x5,%r9
+    0.00 :   43d15c: add    %r11,%r9
+    0.00 :   43d15f: and    %r12,%rax
+    0.00 :   43d162: mov    %r12,0x18(%r9)
+    0.00 :   43d166: and    $0xfffffffffffffffc,%rax
+    0.00 :   43d16a: mov    0x14(%rsi),%r12d
+    0.00 :   43d16e: mov    %rax,%r13
+    0.00 :   43d171: vmovd  %eax,%xmm11
+    0.00 :   43d175: shl    $0x4,%r13
+    0.00 :   43d179: vmovq  %rcx,%xmm9
+    0.00 :   43d17e: vpinsrd $0x1,%r12d,%xmm11,%xmm12
+    0.00 :   43d184: prefetcht1 (%rdx,%r13,1)
+    0.00 :   43d189: vpinsrq $0x1,0x8(%rsi),%xmm9,%xmm10
+    0.00 :   43d190: vmovq  %xmm12,0x10(%r9)
+    0.00 :   43d196: mov    0xbc(%rdi),%eax
+    0.00 :   43d19c: mov    0x74(%rdi),%r13d
+    0.00 :   43d1a0: inc    %ebx
+    0.00 :   43d1a2: inc    %eax
+    0.00 :   43d1a4: and    %r13d,%ebx
+    0.00 :   43d1a7: and    %r13d,%eax
+    0.00 :   43d1aa: vmovdqu %xmm10,(%r9)
+    0.00 :   43d1af: mov    %ebx,0xb8(%rdi)
+    0.00 :   43d1b5: mov    %eax,0xbc(%rdi)
+    0.00 :   43d1bb: jmp    43d251 <insert_batch+0x511>
+    0.00 :   43d1c0: mov    0x60(%rdi),%rcx
+    0.00 :   43d1c4: mov    0x18(%rsi),%rbx
+    0.00 :   43d1c8: cmp    $0x4,%rcx
+    0.00 :   43d1cc: je     43d400 <insert_batch+0x6c0>
+    0.00 :   43d1d2: mov    %r15,%r12
+    0.00 :   43d1d5: cmp    $0x8,%rcx
+    0.00 :   43d1d9: crc32  %rbx,%r12
+    0.00 :   43d1df: cmove  %r12,%r14
+    0.00 :   43d1e3: mov    0x88(%rdi),%rbx
+    0.00 :   43d1ea: vmovq  %r9,%xmm6
+    0.00 :   43d1ef: lea    -0x1(%rbx),%rcx
+    0.00 :   43d1f3: and    %r14,%rcx
+    0.00 :   43d1f6: and    $0xfffffffffffffffc,%rcx
+    0.00 :   43d1fa: vmovq  %rcx,%xmm4
+    0.00 :   43d1ff: vmovq  %xmm4,%r12
+    0.00 :   43d204: mov    0xb8(%rdi),%ecx
+    0.00 :   43d20a: shl    $0x4,%r12
+    0.00 :   43d20e: prefetcht1 (%rdx,%r12,1)
+    0.00 :   43d213: mov    %rcx,%rbx
+    0.00 :   43d216: mov    0x14(%rsi),%r12d
+    0.00 :   43d21a: vpinsrq $0x1,0x8(%rsi),%xmm6,%xmm7
+    0.00 :   43d221: shl    $0x5,%rcx
+    0.00 :   43d225: inc    %ebx
+    0.00 :   43d227: inc    %eax
+    0.00 :   43d229: add    %r11,%rcx
+    0.00 :   43d22c: vpinsrd $0x1,%r12d,%xmm4,%xmm8
+    0.00 :   43d232: and    %r13d,%ebx
+    0.00 :   43d235: and    %r13d,%eax
+    0.00 :   43d238: mov    %r14,0x18(%rcx)
+    0.00 :   43d23c: vmovdqu %xmm7,(%rcx)
+    0.00 :   43d240: vmovq  %xmm8,0x10(%rcx)
+    0.00 :   43d245: mov    %ebx,0xb8(%rdi)
+    0.00 :   43d24b: mov    %eax,0xbc(%rdi)
+    0.00 :   43d251: lea    0x8(%rax),%esi
+    0.00 :   43d254: and    %r13d,%esi
+    0.00 :   43d257: shl    $0x5,%rsi
+    0.00 :   43d25b: mov    0x10(%r11,%rsi,1),%ecx
+    0.00 :   43d260: mov    %eax,%esi
+    0.00 :   43d262: shl    $0x5,%rsi
+    0.00 :   43d266: add    %r11,%rsi
+    0.00 :   43d269: mov    (%rsi),%r9
+    0.00 :   43d26c: shl    $0x4,%rcx
+    0.00 :   43d270: prefetchw (%rdx,%rcx,1)
+    0.00 :   43d274: cmp    0x90(%rdi),%r9
+    0.00 :   43d27b: jne    43d090 <insert_batch+0x350>
+    0.00 :   43d281: mov    0x88(%rdi),%r12
+    0.00 :   43d288: mov    0x60(%rdi),%rbx
+    0.00 :   43d28c: lea    -0x1(%r12),%r12
+    0.00 :   43d291: mov    0x8(%rsi),%rcx
+    0.00 :   43d295: inc    %eax
+    0.00 :   43d297: and    %r13d,%eax
+    0.00 :   43d29a: mov    %rcx,0x52b87(%rip)        # 48fe28 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::empty_slot_>
+    0.00 :   43d2a1: movb   $0x1,0x52b78(%rip)        # 48fe20 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::empty_slot_exists_>
+    0.00 :   43d2a8: mov    %eax,0xbc(%rdi)
+    0.00 :   43d2ae: cmp    $0x4,%rbx
+    0.00 :   43d2b2: jne    43cfc8 <insert_batch+0x288>
+    0.00 :   43d2b8: mov    $0xffffffff,%r8d
+    0.00 :   43d2be: crc32l (%r10),%r8d
+    0.00 :   43d2c4: mov    (%r10),%r9
+    0.00 :   43d2c7: mov    %r8d,%r8d
+    0.00 :   43d2ca: jmp    43cfda <insert_batch+0x29a>
+    0.00 :   43d2cf: nop
+    0.00 :   43d2d0: xor    %r15d,%r15d
+    0.00 :   43d2d3: kmovb  %k5,%r14d
+    0.00 :   43d2d7: tzcnt  %r14d,%r15d
+    0.02 :   43d2dc: sar    %r15d
+    0.00 :   43d2df: movslq %r15d,%rsi
+    0.00 :   43d2e2: add    %rax,%rsi
+    0.00 :   43d2e5: mov    %rsi,%r14
+    0.05 :   43d2e8: shl    $0x4,%r14
+    0.00 :   43d2ec: add    %rdx,%r14
+    0.00 :   43d2ef: mov    (%r14),%rax
+    0.00 :   43d2f2: test   %rax,%rax
+    0.06 :   43d2f5: je     43ceb0 <insert_batch+0x170>
+    0.00 :   43d2fb: cmp    %rcx,%rax
+    0.00 :   43d2fe: je     43d450 <insert_batch+0x710>
+    0.00 :   43d304: mov    0x88(%rdi),%rax
+    0.00 :   43d30b: inc    %rsi
+    0.00 :   43d30e: dec    %rax
+    0.00 :   43d311: and    %rax,%rsi
+    0.00 :   43d314: test   $0x3,%sil
+    0.00 :   43d318: jne    43d2e5 <insert_batch+0x5a5>
+    0.00 :   43d31a: mov    0x60(%rdi),%r15
+    0.00 :   43d31e: mov    0xa8(%rdi),%r14
+    0.00 :   43d325: mov    (%r8),%rbx
+    0.00 :   43d328: mov    0x18(%r8),%rsi
+    0.00 :   43d32c: cmp    $0x4,%r15
+    0.00 :   43d330: jne    43ce46 <insert_batch+0x106>
+    0.00 :   43d336: cs nopw 0x0(%rax,%rax,1)
+    0.00 :   43d340: mov    $0xffffffff,%r11d
+    0.00 :   43d346: crc32  %esi,%r11d
+    0.00 :   43d34c: mov    %r11d,%r11d
+    0.00 :   43d34f: jmp    43ce59 <insert_batch+0x119>
+    0.00 :   43d354: nopl   0x0(%rax)
+    0.00 :   43d358: mov    (%rsi),%rbx
+    0.00 :   43d35b: mov    0x8(%rsi),%rcx
+    0.00 :   43d35f: xor    %eax,%eax
+    0.00 :   43d361: xor    %edx,%edx
+    0.00 :   43d363: lock cmpxchg16b (%r9)
+    0.00 :   43d368: jne    43d4b5 <insert_batch+0x775>
+    0.00 :   43d36e: mov    0xbc(%rdi),%edx
+    0.00 :   43d374: mov    0x88(%rdi),%rax
+    0.00 :   43d37b: inc    %edx
+    0.00 :   43d37d: and    0x74(%rdi),%edx
+    0.00 :   43d380: mov    %edx,0xbc(%rdi)
+    0.00 :   43d386: mov    0x60(%rdi),%rbx
+    0.00 :   43d38a: mov    0x52aa7(%rip),%rdx        # 48fe38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.00 :   43d391: mov    0xa8(%rdi),%r11
+    0.00 :   43d398: lea    -0x1(%rax),%r12
+    0.00 :   43d39c: jmp    43cfb9 <insert_batch+0x279>
+    0.00 :   43d3a1: nopl   0x0(%rax)
+    0.00 :   43d3a8: xor    %r9d,%r9d
+    0.00 :   43d3ab: kmovb  %k0,%ecx
+    0.00 :   43d3af: tzcnt  %ecx,%r9d
+    0.00 :   43d3b4: mov    0x8(%rsi),%rsi
+    0.00 :   43d3b8: inc    %r9d
+    0.00 :   43d3bb: movslq %r9d,%r12
+    0.00 :   43d3be: mov    %rsi,(%rbx,%r12,8)
+    0.00 :   43d3c2: inc    %eax
+    0.00 :   43d3c4: and    %r13d,%eax
+    0.00 :   43d3c7: mov    0x88(%rdi),%r13
+    0.00 :   43d3ce: mov    %eax,0xbc(%rdi)
+    0.00 :   43d3d4: mov    0x60(%rdi),%rbx
+    0.00 :   43d3d8: lea    -0x1(%r13),%r12
+    0.00 :   43d3dc: jmp    43cfb9 <insert_batch+0x279>
+    0.00 :   43d3e1: nopl   0x0(%rax)
+    0.00 :   43d3e8: mov    $0xffffffff,%r12d
+    0.00 :   43d3ee: crc32l (%r10),%r12d
+    0.00 :   43d3f4: mov    %r12d,%r12d
+    0.00 :   43d3f7: jmp    43cef4 <insert_batch+0x1b4>
+    0.00 :   43d3fc: nopl   0x0(%rax)
+    0.00 :   43d400: mov    $0xffffffff,%r14d
+    0.00 :   43d406: crc32  %ebx,%r14d
+    0.00 :   43d40c: mov    %r14d,%r14d
+    0.00 :   43d40f: jmp    43d1e3 <insert_batch+0x4a3>
+    0.00 :   43d414: nopl   0x0(%rax)
+    0.00 :   43d418: vzeroupper
+    0.00 :   43d41b: lea    -0x28(%rbp),%rsp
+    0.00 :   43d41f: pop    %rbx
+    0.00 :   43d420: pop    %r12
+    0.00 :   43d422: pop    %r13
+    0.00 :   43d424: pop    %r14
+    0.00 :   43d426: pop    %r15
+    0.00 :   43d428: pop    %rbp
+    0.00 :   43d429: ret
+    0.00 :   43d42a: nopw   0x0(%rax,%rax,1)
+    0.00 :   43d430: xor    %eax,%eax
+    0.00 :   43d432: kmovb  %k4,%ecx
+    0.09 :   43d436: tzcnt  %ecx,%eax
+    3.42 :   43d43a: mov    0x8(%r8),%r15
+    0.08 :   43d43e: inc    %eax
+    0.05 :   43d440: cltq
+    0.73 :   43d442: mov    %r15,(%rsi,%rax,8)
+    3.68 :   43d446: jmp    43ced4 <insert_batch+0x194>
+    0.00 :   43d44b: nopl   0x0(%rax,%rax,1)
+    0.00 :   43d450: mov    0x8(%r8),%rax
+    0.00 :   43d454: mov    %rax,0x8(%r14)
+    0.00 :   43d458: mov    0xa8(%rdi),%r14
+    0.00 :   43d45f: jmp    43ced4 <insert_batch+0x194>
+    0.00 :   43d464: nopl   0x0(%rax)
+    0.00 :   43d468: mov    0xbc(%rdi),%ebx
+    0.00 :   43d46e: mov    0x8(%rsi),%r11
+    0.00 :   43d472: mov    0x88(%rdi),%r13
+    0.00 :   43d479: inc    %ebx
+    0.00 :   43d47b: and    0x74(%rdi),%ebx
+    0.00 :   43d47e: mov    %r11,0x8(%r9)
+    0.00 :   43d482: lea    -0x1(%r13),%r12
+    0.00 :   43d486: mov    %ebx,0xbc(%rdi)
+    0.00 :   43d48c: mov    0xa8(%rdi),%r11
+    0.00 :   43d493: mov    0x60(%rdi),%rbx
+    0.00 :   43d497: jmp    43cfb9 <insert_batch+0x279>
+    0.00 :   43d49c: mov    $0xffffffff,%r13d
+    0.00 :   43d4a2: crc32  %r11d,%r13d
+    0.00 :   43d4a8: mov    %r13d,%r12d
+    0.00 :   43d4ab: mov    %r12,-0x10(%rsp)
+    0.00 :   43d4b0: jmp    43d147 <insert_batch+0x407>
+    0.00 :   43d4b5: mov    (%r9),%r12
+    0.00 :   43d4b8: mov    0x52979(%rip),%rdx        # 48fe38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.00 :   43d4bf: jmp    43d0f5 <insert_batch+0x3b5>
+    0.00 :   43d4c4: mov    (%r14),%rax
+    0.00 :   43d4c7: mov    (%r8),%rcx
+    0.00 :   43d4ca: mov    0x52967(%rip),%rdx        # 48fe38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.00 :   43d4d1: jmp    43d2fb <insert_batch+0x5bb>

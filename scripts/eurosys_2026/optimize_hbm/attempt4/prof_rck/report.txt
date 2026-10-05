@@ -1,0 +1,17 @@
+# periods: cycles 10000019, instructions 10000019, br_misp_retired.all_branches 100003
+global_find_cycle : 3384088004, find_ops : 5368709100, found : 5368709100
+set_cycles : 51, get_cycles : 40, set_mops : 3354, get_mops : 4283
+# Samples: 38K of event 'cycles/period=10000019/pp'
+# Event count (approx.): 388310737789
+    47.61%         18489  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::insert_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, kmercounter::LatencyCollector<2048ul>*)
+    36.34%         14113  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)
+    12.37%          4803  [.] kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]
+     1.26%           488  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::get_fill() const
+# Samples: 70K of event 'instructions/period=10000019/'
+# Event count (approx.): 703511336669
+    50.23%         35335  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::insert_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, kmercounter::LatencyCollector<2048ul>*)
+    35.84%         25216  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)
+    13.15%          9252  [.] kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]
+# Samples: 1  of event 'br_misp_retired.all_branches/period=100003/pp'
+# Event count (approx.): 400009
+   100.00%             1  [.] std::mersenne_twister_engine<unsigned long, 64ul, 312ul, 156ul, 31ul, 13043109905998158313ul, 29ul, 6148914691236517205ul, 17ul, 8202884508482404352ul, 37ul, 18444473444759240704ul, 43ul, 6364136223846793005ul>::operator()()

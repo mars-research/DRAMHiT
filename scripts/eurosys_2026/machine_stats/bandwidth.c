@@ -20,7 +20,9 @@
 
 #define MAX_PATTERNS 64
 #define MAX_REGIONS 64
-#define NUM_ITERATIONS 100 // Adjust as needed
+#ifndef NUM_ITERATIONS
+#define NUM_ITERATIONS 100 // Adjust as needed; -DNUM_ITERATIONS=n for cache-resident buffers
+#endif
 
 // Topology Limits
 #define MAX_NUMA_NODES 128
@@ -36,6 +38,9 @@
     #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
         uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)((i) + PREFETCH_AHEAD)) & (NUM_CACHELINES - 1); \
         (void)idx_var
+    #define GET_NEAR_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = _mm_crc32_u64(state_var, (uint64_t)((i) + NEAR_AHEAD)) & (NUM_CACHELINES - 1); \
+        (void)idx_var
 #elif defined(SEQUENTIAL) || defined(SEQUANTIAL)
     #define GET_IDX(idx_var, i, state_var) \
         uint64_t idx_var = (i) & (NUM_CACHELINES - 1); \
@@ -43,12 +48,18 @@
     #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
         uint64_t idx_var = ((i) + PREFETCH_AHEAD) & (NUM_CACHELINES - 1); \
         (void)idx_var
+    #define GET_NEAR_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = ((i) + NEAR_AHEAD) & (NUM_CACHELINES - 1); \
+        (void)idx_var
 #else
     #define GET_IDX(idx_var, i, state_var) \
         uint64_t idx_var = workload[i]; \
         (void)idx_var
     #define GET_LOOKAHEAD_IDX(idx_var, i, state_var) \
         uint64_t idx_var = workload[(i) + PREFETCH_AHEAD]; \
+        (void)idx_var
+    #define GET_NEAR_IDX(idx_var, i, state_var) \
+        uint64_t idx_var = workload[(i) + NEAR_AHEAD]; \
         (void)idx_var
 #endif
 // ---------------------------------------------------------
@@ -61,6 +72,31 @@ typedef enum {
     INST_PREFETCH_T2,
     INST_PREFETCH_NTA,
     INST_PREFETCH_W,
+    // prefetcht1 PREFETCH_AHEAD lines ahead, then a 512-bit load and a 512-bit
+    // compare of the current line -- the per-line work of the hashtable's SIMD
+    // bucket probe (light AVX-512 integer ops only). Write mode: prefetcht1 + zmm store.
+    INST_PREFETCH_T1_AVX512,
+    // As INST_PREFETCH_T1_AVX512, plus three dependent 512-bit 64-bit multiplies
+    // (vpmullq) per line, a heavy AVX-512 op, to see the heavy-license clock.
+    INST_PREFETCH_T1_AVX512_HEAVY,
+    // Calibration modes (read only). t1pad: the t1 loop plus -pad N independent ALU
+    // instructions per line. double: the hashtable find's two-prefetch pattern, a prefetcht2
+    // PREFETCH_AHEAD lines ahead (the enqueue-time prefetch, HBM -> L2) and a prefetcht0
+    // -near lines ahead (the dequeue-time prefetch, L2 -> L1), then the demand load; also
+    // takes -pad N. Together they show how bandwidth and cycles per line depend on the
+    // instruction count per line, and what the second prefetch costs on its own.
+    INST_PREFETCH_T1_PAD,
+    INST_PREFETCH_DOUBLE,
+    // t1dpad: the t1 loop, then -pad N *serially dependent* single-cycle ALU instructions that
+    // consume the loaded value (a chain through one register, started by the load). The
+    // counterpart of t1pad, whose N instructions are independent of the load: same
+    // instruction count, different dependence on the memory data.
+    INST_PREFETCH_T1_DPAD,
+    // mimic -stage S: the double loop (+ -pad) built up toward the dramblast find loop, cumulative:
+    // 1 64 B vector load of the line; 2 + key broadcast/compare/kortest/branch on the loaded line;
+    // 3 + kshift/compress/store of the match into a result ring; 4 + 3 stores of a queue entry;
+    // 5 + the key (8 B, prefetched 16 ahead) comes from a 6.7 MB DDR array instead of an L1-resident one.
+    INST_MIMIC,
     // Full-cache-line non-temporal store. Every other write path stores 8 B into a
     // 64 B line, so the line has to be fetched first (RFO) and written back later --
     // two DRAM transactions per store. A 64 B NT store fills a write-combining buffer
@@ -90,6 +126,10 @@ typedef struct {
     inst_type_t inst_type;
     rw_mode_t rw_mode;
     uint64_t lookahead;
+    uint64_t near_dist;
+    int pad;
+    int stage;
+    uint64_t *mk;            // mimic: per-thread key array
     uint64_t elapsed_cycles;
 } thread_arg_t;
 
@@ -231,6 +271,96 @@ static inline uint64_t mix64(uint64_t x) {
 #define PF_NTA(addr)  _mm_prefetch((const char *)(addr), _MM_HINT_NTA)
 #define PF_W(addr)    __builtin_prefetch((const void *)(addr), 1, 3)
 
+// ---- calibration loops: -pad N adds N independent single-cycle ALU instructions per line ----
+#define PAD8() __asm__ volatile("add $1,%0\n\tadd $1,%1\n\tadd $1,%2\n\tadd $1,%3\n\t" \
+                                "add $1,%4\n\tadd $1,%5\n\tadd $1,%6\n\tadd $1,%7"        \
+                                : "+r"(p0), "+r"(p1), "+r"(p2), "+r"(p3), "+r"(p4), "+r"(p5), \
+                                  "+r"(p6), "+r"(p7))
+#define T1PAD_LOOP(PADCODE)                                                        \
+    for (uint64_t i = 0; i < ops; i++) {                                           \
+        GET_IDX(idx, i, state_var);                                                \
+        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);                            \
+        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);     \
+        local_dummy += t->buffer[idx * 8];                                         \
+        PADCODE                                                                    \
+    }
+#define DOUBLE_LOOP(PADCODE)                                                       \
+    for (uint64_t i = 0; i < ops; i++) {                                           \
+        GET_IDX(idx, i, state_var);                                                \
+        GET_LOOKAHEAD_IDX(idx_far, i, state_var);                                  \
+        GET_NEAR_IDX(idx_near, i, state_var);                                      \
+        _mm_prefetch((const char*)&t->buffer[idx_far * 8], _MM_HINT_T2);           \
+        _mm_prefetch((const char*)&t->buffer[idx_near * 8], _MM_HINT_T0);          \
+        local_dummy += t->buffer[idx * 8];                                         \
+        PADCODE                                                                    \
+    }
+#define MIMIC_LOOP(S, PADCODE)                                                     \
+    for (uint64_t i = 0; i < ops; i++) {                                           \
+        GET_IDX(idx, i, state_var);                                                \
+        GET_LOOKAHEAD_IDX(idx_far, i, state_var);                                  \
+        GET_NEAR_IDX(idx_near, i, state_var);                                      \
+        _mm_prefetch((const char*)&t->buffer[idx_far * 8], _MM_HINT_T2);           \
+        _mm_prefetch((const char*)&t->buffer[idx_near * 8], _MM_HINT_T0);          \
+        __m512i v = _mm512_load_si512((const void*)&t->buffer[idx * 8]);           \
+        macc = _mm512_xor_si512(macc, v);                                          \
+        if (S >= 2) {                                                              \
+            const uint64_t *kp = &kbase[ki];                                   \
+            if ((ki & 7) == 0) _mm_prefetch((const char*)&kbase[ki + 16], _MM_HINT_T0); \
+            if (++ki == kn) ki = 0;                                                \
+            __m512i bk = _mm512_set1_epi64((long long)kp[0]);                      \
+            __mmask8 m = _mm512_mask_cmpeq_epu64_mask(0x55, v, bk);                \
+            if (__builtin_expect(m == 0, 0)) { local_dummy += 1; }                 \
+            if (S >= 3) {                                                          \
+                __m512i r = _mm512_maskz_compress_epi64((__mmask8)(m << 1), v);    \
+                _mm_storel_epi64((__m128i*)&res[ro * 2 + 1], _mm512_castsi512_si128(r)); \
+                *(uint32_t*)&res[ro * 2] = (uint32_t)idx_far;                      \
+                ro = (ro + 1) & 63;                                                \
+                if (S >= 4) {                                                      \
+                    uint64_t *q = &ring[(i & 63) * 4];                             \
+                    q[0] = kp[0]; q[1] = idx_far;                                  \
+                    _mm_storel_epi64((__m128i*)&q[2], _mm_cvtsi64_si128((long long)idx_near)); \
+                    *(uint32_t*)&q[3] = (uint32_t)i;                               \
+                }                                                                  \
+            }                                                                      \
+        }                                                                          \
+        PADCODE                                                                    \
+    }
+#define MIMIC_S1(P) MIMIC_LOOP(1, P)
+#define MIMIC_S2(P) MIMIC_LOOP(2, P)
+#define MIMIC_S3(P) MIMIC_LOOP(3, P)
+#define MIMIC_S4(P) MIMIC_LOOP(4, P)
+#define DPAD8() __asm__ volatile("add $1,%0\n\tadd $1,%0\n\tadd $1,%0\n\tadd $1,%0\n\t" \
+                                 "add $1,%0\n\tadd $1,%0\n\tadd $1,%0\n\tadd $1,%0" : "+r"(dx))
+#define T1DPAD_LOOP(PADCODE)                                                       \
+    for (uint64_t i = 0; i < ops; i++) {                                           \
+        GET_IDX(idx, i, state_var);                                                \
+        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);                            \
+        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);     \
+        uint64_t dx = t->buffer[idx * 8];                                          \
+        PADCODE                                                                    \
+        local_dummy += dx;                                                         \
+    }
+#define DPAD_DISPATCH(LOOP)                                                        \
+    switch (t->pad) {                                                              \
+        case 0:  LOOP()                              break;                        \
+        case 8:  LOOP(DPAD8();)                      break;                        \
+        case 16: LOOP(DPAD8(); DPAD8();)             break;                        \
+        case 24: LOOP(DPAD8(); DPAD8(); DPAD8();)    break;                        \
+        case 32: LOOP(DPAD8(); DPAD8(); DPAD8(); DPAD8();) break;                  \
+        case 48: LOOP(DPAD8(); DPAD8(); DPAD8(); DPAD8(); DPAD8(); DPAD8();) break; \
+        default: fprintf(stderr, "-pad must be 0, 8, 16, 24, 32 or 48\n"); exit(1); \
+    }
+#define PAD_DISPATCH(LOOP)                                                         \
+    switch (t->pad) {                                                              \
+        case 0:  LOOP()                              break;                        \
+        case 8:  LOOP(PAD8();)                       break;                        \
+        case 16: LOOP(PAD8(); PAD8();)               break;                        \
+        case 24: LOOP(PAD8(); PAD8(); PAD8();)       break;                        \
+        case 32: LOOP(PAD8(); PAD8(); PAD8(); PAD8();) break;                      \
+        case 48: LOOP(PAD8(); PAD8(); PAD8(); PAD8(); PAD8(); PAD8();) break;      \
+        default: fprintf(stderr, "-pad must be 0, 8, 16, 24, 32 or 48\n"); exit(1); \
+    }
+
 // Worker Thread: Allocation, Binding, Initialization, and Reading/Writing
 void *mem_worker(void *arg) {
     thread_arg_t *t = (thread_arg_t *)arg;
@@ -261,6 +391,12 @@ void *mem_worker(void *arg) {
     }
 
     memset(t->buffer, 1, t->chunk_size);
+    if (t->inst_type == INST_MIMIC) {   // key array, allocated and touched before the timed region
+        uint64_t kn = t->stage >= 5 ? 838860 : 64;   // stage 5: dramblast's ~0.84 M 8 B keys per thread (the harness key partition), in DDR
+        int knode = getenv("MIMIC_KEY_NODE") ? atoi(getenv("MIMIC_KEY_NODE")) : 0;   // stage 5 key node (default DDR node 0; 2 = HBM)
+        t->mk = t->stage >= 5 ? numa_alloc_onnode((kn + 32) * 8, knode) : aligned_alloc(64, (kn + 32) * 8);
+        memset(t->mk, 1, (kn + 32) * 8);
+    }
 
     // ==========================================
     pthread_barrier_wait(&init_barrier);
@@ -270,6 +406,7 @@ void *mem_worker(void *arg) {
     // Variables required by the macros
     uint64_t NUM_CACHELINES = t->chunk_size / 64;
     uint64_t PREFETCH_AHEAD = t->lookahead;
+    uint64_t NEAR_AHEAD = t->near_dist;
     uint64_t state_var = t->thread_id + 0xDEADBEEF; // Constant seed for stateless hash
     uint64_t *workload = NULL; // Included just to satisfy the fallback macro compile branch if used
 
@@ -303,6 +440,8 @@ void *mem_worker(void *arg) {
                 // threads collide on the same lines, and an NT store's whole point is
                 // not to take ownership of a line. Behaves as the plain scalar loop.
                 case INST_NT_STORE:      SHARED_SCALAR_LOOP(PF_NONE); break;
+                case INST_PREFETCH_T1_AVX512:        // no prefetched shared variant
+                case INST_PREFETCH_T1_AVX512_HEAVY:
                 case INST_AVX512_LOAD:
                     for (uint64_t i = 0; i < ops; i++) {
                         uint64_t h = mix64(addr_seed + (uint64_t)i);
@@ -353,6 +492,76 @@ void *mem_worker(void *arg) {
                     }
                 }
                 break;
+
+            case INST_PREFETCH_T1_AVX512:
+            case INST_PREFETCH_T1_AVX512_HEAVY: {
+                const int heavy = (t->inst_type == INST_PREFETCH_T1_AVX512_HEAVY);
+                if (t->rw_mode == MODE_READ) {
+                    const __m512i key = _mm512_set1_epi64((long long)0x9e3779b97f4a7c15ULL);
+                    const __m512i mulk = _mm512_set1_epi64(0x100000001b3LL);
+                    __m512i acc = _mm512_setzero_si512();
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);
+                        __m512i vec = _mm512_loadu_si512((const void*)&t->buffer[idx * 8]);
+                        __mmask8 m = _mm512_mask_cmpeq_epu64_mask(0x55, vec, key);
+                        local_dummy += _mm_popcnt_u32(m);
+                        if (heavy) {
+                            __m512i v = _mm512_mullo_epi64(vec, mulk);
+                            v = _mm512_mullo_epi64(v, vec);   // operands depend on vec so
+                            v = _mm512_mullo_epi64(v, vec);   // gcc cannot fold to one multiply
+                            acc = _mm512_xor_si512(acc, v);
+                        }
+                    }
+                    local_dummy += _mm_cvtsi128_si64(_mm512_castsi512_si128(acc));
+                } else {
+                    __m512i write_vec = _mm512_set1_epi64(0xff);
+                    for (uint64_t i = 0; i < ops; i++) {
+                        GET_IDX(idx, i, state_var);
+                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
+                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);
+                        _mm512_storeu_si512((void*)&t->buffer[idx * 8], write_vec);
+                    }
+                }
+                break;
+            }
+
+            case INST_PREFETCH_T1_DPAD: {
+                if (t->rw_mode != MODE_READ) { fprintf(stderr, "t1dpad is read-mode only\n"); exit(1); }
+                DPAD_DISPATCH(T1DPAD_LOOP)
+                break;
+            }
+
+            case INST_MIMIC: {
+                uint64_t p0 = 1, p1 = 2, p2 = 3, p3 = 4, p4 = 5, p5 = 6, p6 = 7, p7 = 8;
+                if (t->rw_mode != MODE_READ) { fprintf(stderr, "mimic is read-mode only\n"); exit(1); }
+                __m512i macc = _mm512_setzero_si512();
+                uint64_t *res = aligned_alloc(64, 64 * 16), *ring = aligned_alloc(64, 64 * 32);
+                uint64_t ro = 0, ki = 0;
+                uint64_t kn = t->stage >= 5 ? 838860 : 64;
+                uint64_t *kbase = t->mk;
+                memset(res, 0, 64 * 16); memset(ring, 0, 64 * 32);
+                switch (t->stage) {
+                    case 1: PAD_DISPATCH(MIMIC_S1) break;
+                    case 2: PAD_DISPATCH(MIMIC_S2) break;
+                    case 3: PAD_DISPATCH(MIMIC_S3) break;
+                    case 4: case 5: PAD_DISPATCH(MIMIC_S4) break;
+                    default: fprintf(stderr, "-stage must be 1..5\n"); exit(1);
+                }
+                local_dummy += p0 ^ p1 ^ p2 ^ p3 ^ p4 ^ p5 ^ p6 ^ p7 ^ (uint64_t)_mm512_reduce_add_epi64(macc) ^ res[1] ^ ring[2];
+                break;
+            }
+
+            case INST_PREFETCH_T1_PAD:
+            case INST_PREFETCH_DOUBLE: {
+                uint64_t p0 = 1, p1 = 2, p2 = 3, p3 = 4, p4 = 5, p5 = 6, p6 = 7, p7 = 8;
+                if (t->rw_mode != MODE_READ) { fprintf(stderr, "t1pad/double are read-mode only\n"); exit(1); }
+                if (t->inst_type == INST_PREFETCH_DOUBLE) { PAD_DISPATCH(DOUBLE_LOOP) }
+                else { PAD_DISPATCH(T1PAD_LOOP) }
+                local_dummy += p0 ^ p1 ^ p2 ^ p3 ^ p4 ^ p5 ^ p6 ^ p7;
+                break;
+            }
 
             case INST_PREFETCH_T0:
                 if (t->rw_mode == MODE_READ) {
@@ -500,6 +709,9 @@ int main(int argc, char *argv[]) {
     inst_type_t inst = INST_LOAD;
     rw_mode_t rw_mode = MODE_READ;
     uint64_t lookahead = 32;
+    uint64_t near_dist = 8;   // -near: the double mode's prefetcht0 distance
+    int pad = 0;              // -pad: extra ALU instructions per line (t1pad, double)
+    int stage = 1;            // -stage: mimic build-up stage 1..5
     double cpu_freq_ghz = 0.0;
     int share_pct = 100;
     int write_pct = -1; // -1 = follow -mode, which is the pre-existing behaviour
@@ -519,6 +731,12 @@ int main(int argc, char *argv[]) {
             else if (strcmp(argv[i], "avx512") == 0) inst = INST_AVX512_LOAD;
             else if (strcmp(argv[i], "t0") == 0) inst = INST_PREFETCH_T0;
             else if (strcmp(argv[i], "t1") == 0) inst = INST_PREFETCH_T1;
+            else if (strcmp(argv[i], "t1avx512") == 0) inst = INST_PREFETCH_T1_AVX512;
+            else if (strcmp(argv[i], "t1pad") == 0) inst = INST_PREFETCH_T1_PAD;
+            else if (strcmp(argv[i], "t1dpad") == 0) inst = INST_PREFETCH_T1_DPAD;
+            else if (strcmp(argv[i], "double") == 0) inst = INST_PREFETCH_DOUBLE;
+            else if (strcmp(argv[i], "mimic") == 0) inst = INST_MIMIC;
+            else if (strcmp(argv[i], "t1avx512heavy") == 0) inst = INST_PREFETCH_T1_AVX512_HEAVY;
             else if (strcmp(argv[i], "t2") == 0) inst = INST_PREFETCH_T2;
             else if (strcmp(argv[i], "nta") == 0) inst = INST_PREFETCH_NTA;
             else if (strcmp(argv[i], "prefetchw") == 0) inst = INST_PREFETCH_W;
@@ -526,6 +744,9 @@ int main(int argc, char *argv[]) {
             else { fprintf(stderr, "Unknown instruction type: %s\n", argv[i]); return -1; }
         }
         else if (strcmp(argv[i], "-lookahead") == 0 && i + 1 < argc) lookahead = atoi(argv[++i]);
+        else if (strcmp(argv[i], "-near") == 0 && i + 1 < argc) near_dist = atoi(argv[++i]);
+        else if (strcmp(argv[i], "-pad") == 0 && i + 1 < argc) pad = atoi(argv[++i]);
+        else if (strcmp(argv[i], "-stage") == 0 && i + 1 < argc) stage = atoi(argv[++i]);
         else if (strcmp(argv[i], "-shared") == 0 && i + 1 < argc) shared_size = parse_size(argv[++i]);
         else if (strcmp(argv[i], "-shared-nodes") == 0 && i + 1 < argc) shared_nodemask = parse_node_mask(argv[++i]);
         else if (strcmp(argv[i], "-share") == 0 && i + 1 < argc) share_pct = atoi(argv[++i]);
@@ -569,7 +790,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (raw_per_thread_size == 0 || pattern_str == NULL || cpu_freq_ghz <= 0.0) {
-        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta|prefetchw|ntstore>] [-lookahead <lines>] [-mode <r|w>]\n"
+        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t1avx512|t1avx512heavy|t1pad|t1dpad|double|t2|nta|prefetchw|ntstore>] [-pad N] [-near D] [-lookahead <lines>] [-mode <r|w>]\n"
                         "       shared (overlapping) mode, for cross-socket coherence traffic:\n"
                         "         [-shared <size>] [-shared-nodes <2|2,3|0-1>] [-share <0..100>] [-mix w:<0..100>]\n"
                         "         -shared        one region every thread indexes at random, like a shared table\n"
@@ -707,6 +928,9 @@ int main(int argc, char *argv[]) {
             thread_args[t_idx].inst_type = inst;
             thread_args[t_idx].rw_mode = rw_mode;
             thread_args[t_idx].lookahead = lookahead;
+            thread_args[t_idx].near_dist = near_dist;
+            thread_args[t_idx].pad = pad;
+            thread_args[t_idx].stage = stage;
             thread_args[t_idx].elapsed_cycles = 0; // Initialize cycles
 
             actual_total_allocated += chunk_per_thread;

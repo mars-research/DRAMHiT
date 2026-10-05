@@ -1,0 +1,18 @@
+# periods: cycles 10000019, instructions 10000019, br_misp_retired.all_branches 100003
+global_find_cycle : 3517492354, find_ops : 5368709100, found : 5368709100
+set_cycles : 50, get_cycles : 41, set_mops : 3430, get_mops : 4120
+# Samples: 38K of event 'cycles/period=10000019/pp'
+# Event count (approx.): 389830740677
+    46.72%         18214  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::insert_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, kmercounter::LatencyCollector<2048ul>*)
+    37.42%         14588  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)
+    12.22%          4762  [.] kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]
+     1.26%           491  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::get_fill() const
+# Samples: 71K of event 'instructions/period=10000019/'
+# Event count (approx.): 714131356847
+    49.33%         35231  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::insert_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, kmercounter::LatencyCollector<2048ul>*)
+    37.01%         26429  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)
+    12.91%          9220  [.] kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]
+# Samples: 3  of event 'br_misp_retired.all_branches/period=100003/pp'
+# Event count (approx.): 1200027
+    66.67%             2  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)
+    33.33%             1  [k] 0xffffffff84211b10

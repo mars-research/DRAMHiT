@@ -1,0 +1,1945 @@
+
+../attempt4/rck/dramhit:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000046a3c0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]>:
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:290
+  46a3c0:	push   %r15
+  46a3c2:	push   %r14
+  46a3c4:	push   %r13
+  46a3c6:	push   %r12
+  46a3c8:	push   %rbp
+  46a3c9:	mov    %rsi,%rbp
+  46a3cc:	push   %rbx
+  46a3cd:	sub    $0x2a8,%rsp
+  46a3d4:	mov    %rdx,0x58(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:296
+  46a3d9:	mov    0x25818(%rip),%rdx        # 48fbf8 <kmercounter::g_zipf_values>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:297
+  46a3e0:	mov    0x258c6(%rip),%esi        # 48fcac <kmercounter::config+0xac>
+std::vector<unsigned long, std::allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a3e6:	mov    0x8(%rdx),%rax
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:297
+  46a3ea:	movzbl (%rdi),%ebx
+std::vector<unsigned long, std::allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a3ed:	sub    (%rdx),%rax
+  46a3f0:	sar    $0x3,%rax
+  46a3f4:	xor    %edx,%edx
+  46a3f6:	div    %rsi
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:290
+  46a3f9:	mov    %rdi,0x40(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:297
+  46a3fe:	mov    %rsi,%rcx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:302
+  46a401:	movzbl %bl,%edi
+  46a404:	dec    %ecx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:303
+  46a406:	add    %rax,%rdx
+  46a409:	cmp    %ecx,%edi
+  46a40b:	cmovne %rax,%rdx
+  46a40f:	mov    %rax,%r15
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_S_check_init_len(unsigned long, huge_page_allocator<unsigned long> const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1769
+  46a412:	mov    %rdx,%r8
+  46a415:	shr    $0x3c,%r8
+  46a419:	jne    46b751 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1391>
+  46a41f:	mov    %rdx,%r12
+huge_page_allocator<unsigned long>::allocate(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:58
+  46a422:	lea    0x0(,%rdx,8),%r13
+std::_Vector_base<unsigned long, huge_page_allocator<unsigned long> >::_M_allocate(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:346
+  46a42a:	test   %rdx,%rdx
+  46a42d:	je     46a725 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x365>
+huge_page_allocator<unsigned long>::round_to_huge_page_size(unsigned long, bool):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:32
+  46a433:	lea    -0x1(%r13),%r9
+huge_page_allocator<unsigned long>::get_rounded_alloc_size(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:42
+  46a437:	cmp    $0x3e800000,%r13
+  46a43e:	jbe    46b355 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf95>
+huge_page_allocator<unsigned long>::round_to_huge_page_size(unsigned long, bool):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:32
+  46a444:	movl   $0x1,(%rsp)
+  46a44b:	and    $0xffffffffc0000000,%r9
+  46a452:	lea    0x40000000(%r9),%r14
+huge_page_allocator<unsigned long>::allocate(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:65
+  46a459:	mov    $0x78040022,%ecx
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:69
+  46a45e:	xor    %r9d,%r9d
+  46a461:	mov    $0xffffffff,%r8d
+  46a467:	mov    $0x3,%edx
+  46a46c:	mov    %r14,%rsi
+  46a46f:	xor    %edi,%edi
+  46a471:	call   409b30 <mmap@plt>
+  46a476:	mov    %rax,0x10(%rsp)
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:71
+  46a47b:	cmp    $0xffffffffffffffff,%rax
+  46a47f:	je     46b670 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x12b0>
+decltype (::new ((void*)(0)) unsigned long()) std::construct_at<unsigned long>(unsigned long*):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:71
+  46a485:	xor    %esi,%esi
+std::_Vector_base<unsigned long, huge_page_allocator<unsigned long> >::_M_create_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:363
+  46a487:	lea    (%rax,%r13,1),%r10
+decltype (::new ((void*)(0)) unsigned long()) std::construct_at<unsigned long>(unsigned long*):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:363
+  46a48b:	mov    %r13,%rdx
+  46a48e:	mov    %rax,%rdi
+std::_Vector_base<unsigned long, huge_page_allocator<unsigned long> >::_M_create_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:363
+  46a491:	mov    %r10,0x60(%rsp)
+decltype (::new ((void*)(0)) unsigned long()) std::construct_at<unsigned long>(unsigned long*):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:363
+  46a496:	call   4093a0 <memset@plt>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a49b:	mov    0x25756(%rip),%r11        # 48fbf8 <kmercounter::g_zipf_values>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:297
+  46a4a2:	movzbl %bl,%esi
+  46a4a5:	imul   %r15,%rsi
+std::vector<unsigned long, std::allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a4a9:	mov    (%r11),%rdx
+  46a4ac:	mov    0x8(%r11),%r15
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a4b0:	mov    %r13,%r8
+std::vector<unsigned long, std::allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a4b3:	sub    %rdx,%r15
+  46a4b6:	sar    $0x3,%r15
+  46a4ba:	mov    %r15,%rbx
+  46a4bd:	sub    %rsi,%rbx
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a4c0:	sar    $0x3,%r8
+  46a4c4:	xor    %eax,%eax
+  46a4c6:	and    $0x7,%ebx
+  46a4c9:	mov    0x10(%rsp),%r9
+  46a4ce:	je     46a610 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x250>
+std::vector<unsigned long, std::allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a4d4:	cmp    %rsi,%r15
+  46a4d7:	jbe    46b72c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x136c>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a4dd:	mov    (%rdx,%rsi,8),%rcx
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a4e1:	test   %r8,%r8
+  46a4e4:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a4ea:	mov    0x10(%rsp),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a4ef:	mov    $0x1,%eax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a4f4:	mov    %rcx,(%rdi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a4f7:	inc    %rsi
+  46a4fa:	cmp    $0x1,%r12
+  46a4fe:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+  46a504:	cmp    $0x1,%rbx
+  46a508:	je     46a60d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x24d>
+  46a50e:	cmp    $0x2,%rbx
+  46a512:	je     46a5e8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x228>
+  46a518:	cmp    $0x3,%rbx
+  46a51c:	je     46a5c3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x203>
+  46a522:	cmp    $0x4,%rbx
+  46a526:	je     46a59e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1de>
+  46a528:	cmp    $0x5,%rbx
+  46a52c:	je     46a579 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1b9>
+  46a52e:	cmp    $0x6,%rbx
+  46a532:	je     46a554 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x194>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a534:	mov    (%rdx,%rsi,8),%r14
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a538:	cmp    %rax,%r8
+  46a53b:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a541:	mov    %r14,(%rdi,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a545:	inc    %rax
+  46a548:	inc    %rsi
+  46a54b:	cmp    %rax,%r12
+  46a54e:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a554:	mov    (%rdx,%rsi,8),%r10
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a558:	cmp    %rax,%r8
+  46a55b:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a561:	mov    0x10(%rsp),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a566:	inc    %rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a569:	mov    %r10,(%rdi,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a56d:	inc    %rax
+  46a570:	cmp    %rax,%r12
+  46a573:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a579:	mov    (%rdx,%rsi,8),%r11
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a57d:	cmp    %rax,%r8
+  46a580:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a586:	mov    0x10(%rsp),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a58b:	inc    %rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a58e:	mov    %r11,(%rbx,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a592:	inc    %rax
+  46a595:	cmp    %rax,%r12
+  46a598:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a59e:	mov    (%rdx,%rsi,8),%r9
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a5a2:	cmp    %rax,%r8
+  46a5a5:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5ab:	mov    0x10(%rsp),%rcx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a5b0:	inc    %rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5b3:	mov    %r9,(%rcx,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a5b7:	inc    %rax
+  46a5ba:	cmp    %rax,%r12
+  46a5bd:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5c3:	mov    (%rdx,%rsi,8),%r14
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a5c7:	cmp    %rax,%r8
+  46a5ca:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5d0:	mov    0x10(%rsp),%r10
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a5d5:	inc    %rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5d8:	mov    %r14,(%r10,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a5dc:	inc    %rax
+  46a5df:	cmp    %rax,%r12
+  46a5e2:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5e8:	mov    (%rdx,%rsi,8),%r11
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a5ec:	cmp    %rax,%r8
+  46a5ef:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5f5:	mov    0x10(%rsp),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a5fa:	inc    %rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a5fd:	mov    %r11,(%rdi,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a601:	inc    %rax
+  46a604:	cmp    %rax,%r12
+  46a607:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+  46a60d:	mov    %rdi,%r9
+std::vector<unsigned long, std::allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a610:	cmp    %rsi,%r15
+  46a613:	jbe    46b72c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x136c>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a619:	mov    (%rdx,%rsi,8),%rbx
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a61d:	cmp    %rax,%r8
+  46a620:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a626:	lea    0x1(%rax),%r14
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a62a:	mov    %rbx,(%r9,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a62e:	lea    0x1(%rsi),%r10
+  46a632:	cmp    %r14,%r12
+  46a635:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a63b:	mov    (%rdx,%r10,8),%rcx
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a63f:	cmp    %r14,%r8
+  46a642:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a648:	lea    0x2(%rax),%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a64c:	mov    %rcx,(%r9,%r14,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a650:	lea    0x2(%rsi),%rdi
+  46a654:	cmp    %r11,%r12
+  46a657:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a65d:	mov    (%rdx,%rdi,8),%rbx
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a661:	cmp    %r11,%r8
+  46a664:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a66a:	lea    0x3(%rax),%rcx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a66e:	mov    %rbx,(%r9,%r11,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a672:	lea    0x3(%rsi),%r11
+  46a676:	cmp    %rcx,%r12
+  46a679:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a67f:	mov    (%rdx,%r11,8),%rdi
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a683:	cmp    %rcx,%r8
+  46a686:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a68c:	add    $0x4,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a690:	mov    %rdi,(%r9,%rcx,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a694:	add    $0x4,%rsi
+  46a698:	cmp    %rax,%r12
+  46a69b:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a69d:	mov    (%rdx,%rsi,8),%rsi
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a6a1:	cmp    %rax,%r8
+  46a6a4:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a6aa:	mov    %rsi,(%r9,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a6ae:	lea    0x4(%r14),%rax
+  46a6b2:	lea    0x4(%r10),%rbx
+  46a6b6:	cmp    %rax,%r12
+  46a6b9:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a6bb:	mov    (%rdx,%rbx,8),%rcx
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a6bf:	cmp    %rax,%r8
+  46a6c2:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a6c8:	lea    0x5(%r14),%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a6cc:	mov    %rcx,(%r9,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a6d0:	lea    0x5(%r10),%rdi
+  46a6d4:	cmp    %r11,%r12
+  46a6d7:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a6d9:	mov    (%rdx,%rdi,8),%rsi
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a6dd:	cmp    %r11,%r8
+  46a6e0:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a6e6:	lea    0x6(%r14),%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a6ea:	mov    %rsi,(%r9,%r11,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a6ee:	lea    0x6(%r10),%rbx
+  46a6f2:	cmp    %rax,%r12
+  46a6f5:	je     46a719 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x359>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a6f7:	mov    (%rdx,%rbx,8),%rcx
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1072
+  46a6fb:	cmp    %rax,%r8
+  46a6fe:	je     46b73d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x137d>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:311
+  46a704:	mov    %rcx,(%r9,%rax,8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:310
+  46a708:	lea    0x7(%r14),%rax
+  46a70c:	lea    0x7(%r10),%rsi
+  46a710:	cmp    %rax,%r12
+  46a713:	jne    46a610 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x250>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:314
+  46a719:	mov    0x40(%rsp),%r13
+  46a71e:	movzbl 0x0(%r13),%ebx
+  46a723:	jmp    46a737 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x377>
+std::_Vector_base<unsigned long, huge_page_allocator<unsigned long> >::_M_create_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:363
+  46a725:	movq   $0x0,0x60(%rsp)
+std::_Vector_base<unsigned long, huge_page_allocator<unsigned long> >::_M_allocate(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:346
+  46a72e:	movq   $0x0,0x10(%rsp)
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:314
+  46a737:	test   %bl,%bl
+  46a739:	jne    46a745 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x385>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:315
+  46a73b:	movl   $0x4,0x248db(%rip)        # 48f020 <kmercounter::cur_phase>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:317
+  46a745:	mov    0x58(%rsp),%rdi
+  46a74a:	call   432f70 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:338
+  46a74f:	mov    0x40(%rsp),%r12
+  46a754:	movzbl (%r12),%r9d
+  46a759:	test   %r9b,%r9b
+  46a75c:	jne    46a948 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x588>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46a762:	mov    0x24b57(%rip),%r15        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:339
+  46a769:	test   %r15,%r15
+  46a76c:	je     46a779 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x3b9>
+  46a76e:	cmpl   $0x3,0x8(%r15)
+  46a773:	jg     46a8dd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x51d>
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:228
+  46a779:	cmpq   $0x0,0x25547(%rip)        # 48fcc8 <kmercounter::config+0xc8>
+  46a781:	jne    46b318 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf58>
+  46a787:	movq   $0x1,0x30(%rsp)
+  46a790:	mov    $0x1,%r12d
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:345
+  46a796:	test   %r15,%r15
+  46a799:	je     46a7a6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x3e6>
+  46a79b:	cmpl   $0x3,0x8(%r15)
+  46a7a0:	jg     46b4a0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10e0>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:360
+  46a7a6:	mov    0x40(%rsp),%rdx
+  46a7ab:	vmovq  %r12,%xmm2
+  46a7b0:	vpinsrq $0x1,0x30(%rsp),%xmm2,%xmm3
+  46a7b8:	mov    0x40(%rdx),%r11
+  46a7bc:	vmovdqu %xmm3,(%r11)
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46a7c1:	mov    %r15,%r8
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:393
+  46a7c4:	test   %r15,%r15
+  46a7c7:	je     46b3d2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1012>
+  46a7cd:	cmpl   $0x3,0x8(%r15)
+  46a7d2:	jg     46b405 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1045>
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:258
+  46a7d8:	mov    0x254f1(%rip),%r9        # 48fcd0 <kmercounter::config+0xd0>
+  46a7df:	mov    %r9,0x48(%rsp)
+  46a7e4:	test   %r9,%r9
+  46a7e7:	jne    46b3e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1027>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:259
+  46a7ed:	movq   $0x1,0x50(%rsp)
+  46a7f6:	mov    $0x1,%ebx
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:401
+  46a7fb:	cmpl   $0x3,0x8(%r8)
+  46a800:	jg     46b5d8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1218>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46a806:	mov    0x40(%rsp),%rdi
+  46a80b:	mov    0x40(%rdi),%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:415
+  46a80f:	mov    0x48(%rsp),%r10
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46a814:	vmovq  %rbx,%xmm6
+  46a819:	vpinsrq $0x1,0x50(%rsp),%xmm6,%xmm7
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:415
+  46a821:	mov    %r10,0x68(%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46a825:	vmovdqu %xmm7,0x20(%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:419
+  46a82b:	movl   $0x3,0x247eb(%rip)        # 48f020 <kmercounter::cur_phase>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:421
+  46a835:	mov    0x58(%rsp),%rdi
+  46a83a:	call   432f70 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:423
+  46a83f:	mov    0x40(%rsp),%r14
+  46a844:	cmpb   $0x0,(%r14)
+  46a848:	jne    46a887 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x4c7>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:424
+  46a84a:	mov    0x0(%rbp),%r13
+  46a84e:	mov    %rbp,%rdi
+  46a851:	mov    0x40(%r14),%rbx
+  46a855:	call   *0x40(%r13)
+  46a859:	mov    %rax,0x50(%rbx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:425
+  46a85d:	mov    0x0(%rbp),%r15
+  46a861:	mov    %rbp,%rdi
+  46a864:	mov    0x40(%r14),%r12
+  46a868:	call   *0x48(%r15)
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46a86c:	mov    0x24a4d(%rip),%rcx        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:425
+  46a873:	mov    %rax,0x58(%r12)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:426
+  46a878:	test   %rcx,%rcx
+  46a87b:	je     46a887 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x4c7>
+  46a87d:	cmpl   $0x3,0x8(%rcx)
+  46a881:	jg     46b537 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1177>
+std::_Vector_base<unsigned long, huge_page_allocator<unsigned long> >::_M_deallocate(unsigned long*, unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:353
+  46a887:	mov    0x10(%rsp),%r9
+  46a88c:	test   %r9,%r9
+  46a88f:	je     46b374 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfb4>
+huge_page_allocator<unsigned long>::deallocate(unsigned long*, unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:80
+  46a895:	mov    0x60(%rsp),%r11
+  46a89a:	sub    %r9,%r11
+  46a89d:	js     40e642 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]>
+huge_page_allocator<unsigned long>::round_to_huge_page_size(unsigned long, bool):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:32
+  46a8a3:	lea    -0x1(%r11),%rdx
+huge_page_allocator<unsigned long>::get_rounded_alloc_size(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:42
+  46a8a7:	cmp    $0x3e800000,%r11
+  46a8ae:	jle    46b386 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfc6>
+huge_page_allocator<unsigned long>::round_to_huge_page_size(unsigned long, bool):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:32
+  46a8b4:	and    $0xffffffffc0000000,%rdx
+  46a8bb:	lea    0x40000000(%rdx),%rsi
+huge_page_allocator<unsigned long>::deallocate(unsigned long*, unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:88
+  46a8c2:	mov    0x10(%rsp),%rdi
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:439
+  46a8c7:	add    $0x2a8,%rsp
+  46a8ce:	pop    %rbx
+  46a8cf:	pop    %rbp
+  46a8d0:	pop    %r12
+  46a8d2:	pop    %r13
+  46a8d4:	pop    %r14
+  46a8d6:	pop    %r15
+huge_page_allocator<unsigned long>::deallocate(unsigned long*, unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:88
+  46a8d8:	jmp    4093c0 <munmap@plt>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:339
+  46a8dd:	lea    0xa0(%rsp),%r14
+  46a8e5:	mov    $0x153,%edx
+  46a8ea:	lea    0x125df(%rip),%rsi        # 47ced0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1cd0>
+  46a8f1:	mov    %r14,%rdi
+  46a8f4:	call   469f80 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+  46a8f9:	lea    0x124f9(%rip),%rsi        # 47cdf9 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1bf9>
+  46a900:	mov    %r14,%rdi
+  46a903:	xor    %eax,%eax
+  46a905:	call   431e90 <plog::Record::printf(char const*, ...)>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46a90a:	mov    0x249af(%rip),%r12        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:339
+  46a911:	mov    %rax,%r13
+__gnu_cxx::__normal_iterator<plog::IAppender**, std::vector<plog::IAppender*, std::allocator<plog::IAppender*> > >::__normal_iterator(plog::IAppender** const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_iterator.h:1011
+  46a914:	mov    0x10(%r12),%rbx
+plog::Logger<0>::operator+=(plog::Record const&):
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46a919:	cmp    0x18(%r12),%rbx
+  46a91e:	je     46a937 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x577>
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:58
+  46a920:	mov    (%rbx),%rdi
+  46a923:	mov    %r13,%rsi
+  46a926:	mov    (%rdi),%rdx
+  46a929:	call   *0x10(%rdx)
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46a92c:	add    $0x8,%rbx
+  46a930:	cmp    %rbx,0x18(%r12)
+  46a935:	jne    46a920 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x560>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:339
+  46a937:	mov    %r14,%rdi
+  46a93a:	call   431640 <plog::Record::~Record() [clone .lto_priv.0]>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:342
+  46a93f:	mov    0x40(%rsp),%r8
+  46a944:	movzbl (%r8),%r9d
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:228
+  46a948:	cmpq   $0x0,0x25378(%rip)        # 48fcc8 <kmercounter::config+0xc8>
+  46a950:	je     46b2f4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf34>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:342
+  46a956:	mov    %r9d,0x38(%rsp)
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:231
+  46a95b:	test   %r9d,%r9d
+  46a95e:	je     46b318 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf58>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:235
+  46a964:	mov    0x58(%rsp),%rdi
+  46a969:	call   432f70 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:237
+  46a96e:	mov    0x25353(%rip),%r14        # 48fcc8 <kmercounter::config+0xc8>
+  46a975:	mov    %r14,0x30(%rsp)
+  46a97a:	test   %r14,%r14
+  46a97d:	je     46ad78 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9b8>
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a983:	mov    0x60(%rsp),%r12
+  46a988:	lea    0x80(%rsp),%r11
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:237
+  46a990:	movl   $0x0,0x20(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:230
+  46a998:	movq   $0x0,0x30(%rsp)
+  46a9a1:	mov    %r11,0x18(%rsp)
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46a9a6:	sub    0x10(%rsp),%r12
+  46a9ab:	sar    $0x3,%r12
+  46a9af:	nop
+kmercounter::do_batch_insertion(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:74
+  46a9b0:	mov    0x2535d(%rip),%r13d        # 48fd14 <kmercounter::config+0x114>
+  46a9b7:	mov    %r12,%rax
+  46a9ba:	xor    %edx,%edx
+  46a9bc:	div    %r13
+  46a9bf:	mov    %r13d,(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:78
+  46a9c3:	lea    0x0(%r13,%r13,2),%rsi
+  46a9c8:	shl    $0x3,%rsi
+  46a9cc:	mov    $0x40,%edi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:81
+  46a9d1:	xor    %ebx,%ebx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:82
+  46a9d3:	xor    %r15d,%r15d
+  46a9d6:	mov    %rdx,0x28(%rsp)
+  46a9db:	mov    %rax,0x8(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:78
+  46a9e0:	call   409510 <aligned_alloc@plt>
+  46a9e5:	mov    %rax,%r14
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:82
+  46a9e8:	cmp    %r13,%r12
+  46a9eb:	jb     46ab9d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x7dd>
+  46a9f1:	nopl   0x0(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46a9f8:	mov    (%rsp),%esi
+  46a9fb:	test   %esi,%esi
+  46a9fd:	je     46ab6d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x7ad>
+  46aa03:	mov    0x10(%rsp),%rcx
+  46aa08:	lea    0x10(%rbx),%r9
+  46aa0c:	mov    %r13,%r10
+  46aa0f:	mov    %r14,%rax
+  46aa12:	lea    (%rcx,%r9,8),%r11
+  46aa16:	lea    0x0(%r13,%rbx,1),%r8
+  46aa1b:	and    $0x3,%r10d
+  46aa1f:	je     46aab7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6f7>
+  46aa25:	cmp    $0x1,%r10
+  46aa29:	je     46aa84 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6c4>
+  46aa2b:	cmp    $0x2,%r10
+  46aa2f:	je     46aa59 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x699>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:84
+  46aa31:	test   $0x7,%bl
+  46aa34:	jne    46aa3f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x67f>
+  46aa36:	cmp    %r12,%r9
+  46aa39:	jae    46aa3f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x67f>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:85
+  46aa3b:	prefetcht0 (%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aa3f:	vpbroadcastq -0x80(%r11),%xmm0
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46aa45:	lea    0x18(%r14),%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:91
+  46aa49:	mov    %ebx,0x10(%r14)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aa4d:	vmovdqu %xmm0,(%r14)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:92
+  46aa52:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46aa55:	add    $0x8,%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:84
+  46aa59:	test   $0x7,%bl
+  46aa5c:	jne    46aa6b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6ab>
+  46aa5e:	lea    0x10(%rbx),%rdi
+  46aa62:	cmp    %r12,%rdi
+  46aa65:	jae    46aa6b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6ab>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:85
+  46aa67:	prefetcht0 (%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aa6b:	vpbroadcastq -0x80(%r11),%xmm1
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46aa71:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:91
+  46aa75:	mov    %ebx,-0x8(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aa78:	vmovdqu %xmm1,-0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:92
+  46aa7d:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46aa80:	add    $0x8,%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:84
+  46aa84:	test   $0x7,%bl
+  46aa87:	jne    46aa96 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6d6>
+  46aa89:	lea    0x10(%rbx),%rdx
+  46aa8d:	cmp    %r12,%rdx
+  46aa90:	jae    46aa96 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6d6>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:85
+  46aa92:	prefetcht0 (%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aa96:	vpbroadcastq -0x80(%r11),%xmm2
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:91
+  46aa9c:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:92
+  46aa9f:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aaa2:	vmovdqu %xmm2,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46aaa6:	add    $0x8,%r11
+  46aaaa:	add    $0x18,%rax
+  46aaae:	cmp    %rbx,%r8
+  46aab1:	je     46ab6d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x7ad>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:84
+  46aab7:	test   $0x7,%bl
+  46aaba:	jne    46aac9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x709>
+  46aabc:	lea    0x10(%rbx),%rsi
+  46aac0:	cmp    %r12,%rsi
+  46aac3:	jae    46aac9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x709>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:85
+  46aac5:	prefetcht0 (%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aac9:	vpbroadcastq -0x80(%r11),%xmm3
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:92
+  46aacf:	lea    0x1(%rbx),%rcx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:91
+  46aad3:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aad6:	vmovdqu %xmm3,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46aada:	add    $0x8,%r11
+  46aade:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:84
+  46aae2:	test   $0x7,%cl
+  46aae5:	jne    46aaf4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x734>
+  46aae7:	add    $0x11,%rbx
+  46aaeb:	cmp    %r12,%rbx
+  46aaee:	jae    46aaf4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x734>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:85
+  46aaf0:	prefetcht0 (%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46aaf4:	vpbroadcastq -0x80(%r11),%xmm4
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:92
+  46aafa:	lea    0x1(%rcx),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:91
+  46aafe:	mov    %ecx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46ab01:	vmovdqu %xmm4,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46ab05:	lea    0x18(%rax),%r9
+  46ab09:	lea    0x8(%r11),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:84
+  46ab0d:	test   $0x7,%bl
+  46ab10:	jne    46ab1e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x75e>
+  46ab12:	lea    0x11(%rcx),%r10
+  46ab16:	cmp    %r12,%r10
+  46ab19:	jae    46ab1e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x75e>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:85
+  46ab1b:	prefetcht0 (%rdi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46ab1e:	vpbroadcastq -0x80(%rdi),%xmm5
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:92
+  46ab24:	lea    0x2(%rcx),%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46ab28:	vmovdqu %xmm5,0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46ab2d:	lea    0x30(%rax),%rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:91
+  46ab31:	mov    %ebx,0x10(%r9)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46ab35:	lea    0x10(%r11),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:84
+  46ab39:	test   $0x7,%dl
+  46ab3c:	jne    46ab4a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x78a>
+  46ab3e:	lea    0x12(%rcx),%r9
+  46ab42:	cmp    %r12,%r9
+  46ab45:	jae    46ab4a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x78a>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:85
+  46ab47:	prefetcht0 (%rbx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46ab4a:	vpbroadcastq -0x80(%rbx),%xmm6
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:92
+  46ab50:	lea    0x3(%rcx),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:90
+  46ab54:	vmovdqu %xmm6,0x30(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46ab59:	add    $0x18,%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:91
+  46ab5d:	mov    %edx,0x10(%rsi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:83
+  46ab60:	add    $0x48,%rax
+  46ab64:	cmp    %rbx,%r8
+  46ab67:	jne    46aab7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6f7>
+std::span<kmercounter::InsertFindArgument, 18446744073709551615ul>::span<kmercounter::InsertFindArgument*>(kmercounter::InsertFindArgument*, unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:157
+  46ab6d:	mov    %r14,0x80(%rsp)
+std::__detail::__extent_storage<18446744073709551615ul>::__extent_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:91
+  46ab75:	mov    %r13,0x88(%rsp)
+kmercounter::do_batch_insertion(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:100
+  46ab7d:	mov    0x0(%rbp),%r11
+  46ab81:	mov    0x18(%rsp),%rsi
+  46ab86:	xor    %edx,%edx
+  46ab88:	mov    %rbp,%rdi
+  46ab8b:	call   *0x8(%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:82
+  46ab8f:	inc    %r15
+  46ab92:	cmp    %r15,0x8(%rsp)
+  46ab97:	ja     46a9f8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x638>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:105
+  46ab9d:	mov    0x28(%rsp),%rdi
+  46aba2:	test   %rdi,%rdi
+  46aba5:	je     46ad2f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x96f>
+  46abab:	mov    0x10(%rsp),%r8
+  46abb0:	lea    0x10(%rbx),%r10
+  46abb4:	mov    %r14,%rax
+  46abb7:	lea    (%r8,%r10,8),%rdx
+  46abbb:	lea    (%rbx,%rdi,1),%r13
+  46abbf:	and    $0x3,%edi
+  46abc2:	je     46ac57 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x897>
+  46abc8:	cmp    $0x1,%rdi
+  46abcc:	je     46ac25 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x865>
+  46abce:	cmp    $0x2,%rdi
+  46abd2:	je     46abfb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x83b>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:107
+  46abd4:	test   $0x7,%bl
+  46abd7:	jne    46abe1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x821>
+  46abd9:	cmp    %r10,%r12
+  46abdc:	jbe    46abe1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x821>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:108
+  46abde:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46abe1:	vpbroadcastq -0x80(%rdx),%xmm7
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46abe7:	lea    0x18(%r14),%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:112
+  46abeb:	mov    %ebx,0x10(%r14)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46abef:	vmovdqu %xmm7,(%r14)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:113
+  46abf4:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46abf7:	add    $0x8,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:107
+  46abfb:	test   $0x7,%bl
+  46abfe:	jne    46ac0c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x84c>
+  46ac00:	lea    0x10(%rbx),%rcx
+  46ac04:	cmp    %rcx,%r12
+  46ac07:	jbe    46ac0c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x84c>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:108
+  46ac09:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46ac0c:	vpbroadcastq -0x80(%rdx),%xmm8
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46ac12:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:112
+  46ac16:	mov    %ebx,-0x8(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46ac19:	vmovdqu %xmm8,-0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:113
+  46ac1e:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46ac21:	add    $0x8,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:107
+  46ac25:	test   $0x7,%bl
+  46ac28:	jne    46ac36 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x876>
+  46ac2a:	lea    0x10(%rbx),%rsi
+  46ac2e:	cmp    %rsi,%r12
+  46ac31:	jbe    46ac36 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x876>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:108
+  46ac33:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46ac36:	vpbroadcastq -0x80(%rdx),%xmm9
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:112
+  46ac3c:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:113
+  46ac3f:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46ac42:	vmovdqu %xmm9,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46ac46:	add    $0x8,%rdx
+  46ac4a:	add    $0x18,%rax
+  46ac4e:	cmp    %rbx,%r13
+  46ac51:	je     46ad0e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x94e>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:107
+  46ac57:	test   $0x7,%bl
+  46ac5a:	jne    46ac68 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8a8>
+  46ac5c:	lea    0x10(%rbx),%r9
+  46ac60:	cmp    %r9,%r12
+  46ac63:	jbe    46ac68 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8a8>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:108
+  46ac65:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46ac68:	vpbroadcastq -0x80(%rdx),%xmm10
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:113
+  46ac6e:	lea    0x1(%rbx),%r15
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:112
+  46ac72:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46ac75:	vmovdqu %xmm10,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46ac79:	add    $0x8,%rdx
+  46ac7d:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:107
+  46ac81:	test   $0x7,%r15b
+  46ac85:	jne    46ac93 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8d3>
+  46ac87:	add    $0x11,%rbx
+  46ac8b:	cmp    %rbx,%r12
+  46ac8e:	jbe    46ac93 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8d3>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:108
+  46ac90:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46ac93:	vpbroadcastq -0x80(%rdx),%xmm11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:113
+  46ac99:	lea    0x1(%r15),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:112
+  46ac9d:	mov    %r15d,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46aca1:	vmovdqu %xmm11,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46aca5:	lea    0x18(%rax),%r11
+  46aca9:	lea    0x8(%rdx),%r8
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:107
+  46acad:	test   $0x7,%bl
+  46acb0:	jne    46acbf <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8ff>
+  46acb2:	lea    0x11(%r15),%r10
+  46acb6:	cmp    %r10,%r12
+  46acb9:	jbe    46acbf <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8ff>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:108
+  46acbb:	prefetcht0 (%r8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46acbf:	vpbroadcastq -0x80(%r8),%xmm12
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:113
+  46acc5:	lea    0x2(%r15),%rcx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46acc9:	vmovdqu %xmm12,0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46acce:	lea    0x30(%rax),%rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:112
+  46acd2:	mov    %ebx,0x10(%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46acd6:	lea    0x10(%rdx),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:107
+  46acda:	test   $0x7,%cl
+  46acdd:	jne    46aceb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x92b>
+  46acdf:	lea    0x12(%r15),%r9
+  46ace3:	cmp    %r9,%r12
+  46ace6:	jbe    46aceb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x92b>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:108
+  46ace8:	prefetcht0 (%rdi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46aceb:	vpbroadcastq -0x80(%rdi),%xmm13
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:113
+  46acf1:	lea    0x3(%r15),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:111
+  46acf5:	vmovdqu %xmm13,0x30(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46acfa:	add    $0x18,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:112
+  46acfe:	mov    %ecx,0x10(%rsi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:106
+  46ad01:	add    $0x48,%rax
+  46ad05:	cmp    %rbx,%r13
+  46ad08:	jne    46ac57 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x897>
+std::__detail::__extent_storage<18446744073709551615ul>::__extent_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:91
+  46ad0e:	mov    0x28(%rsp),%rdx
+std::span<kmercounter::InsertFindArgument, 18446744073709551615ul>::span<kmercounter::InsertFindArgument*>(kmercounter::InsertFindArgument*, unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:157
+  46ad13:	mov    %r14,0x70(%rsp)
+std::__detail::__extent_storage<18446744073709551615ul>::__extent_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:91
+  46ad18:	mov    %rdx,0x78(%rsp)
+kmercounter::do_batch_insertion(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:119
+  46ad1d:	mov    0x0(%rbp),%r13
+  46ad21:	lea    0x70(%rsp),%rsi
+  46ad26:	xor    %edx,%edx
+  46ad28:	mov    %rbp,%rdi
+  46ad2b:	call   *0x8(%r13)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:122
+  46ad2f:	mov    0x0(%rbp),%rax
+  46ad33:	xor    %esi,%esi
+  46ad35:	mov    %rbp,%rdi
+  46ad38:	call   *0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:123
+  46ad3b:	mov    %r14,%rdi
+  46ad3e:	call   409790 <free@plt>
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:237
+  46ad43:	incl   0x20(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:238
+  46ad47:	add    %rbx,0x30(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:237
+  46ad4c:	mov    0x20(%rsp),%r15d
+  46ad51:	cmp    0x24f70(%rip),%r15        # 48fcc8 <kmercounter::config+0xc8>
+  46ad58:	jb     46a9b0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x5f0>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:241
+  46ad5e:	mov    0x38(%rsp),%ebx
+  46ad62:	test   %ebx,%ebx
+  46ad64:	jne    46ad78 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9b8>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:242
+  46ad66:	movb   $0x1,0x25163(%rip)        # 48fed0 <kmercounter::zipfian_inserts>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:243
+  46ad6d:	movq   $0x0,0x25168(%rip)        # 48fee0 <kmercounter::zipfian_iter>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:245
+  46ad78:	mov    0x58(%rsp),%rdi
+  46ad7d:	call   432f70 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:344
+  46ad82:	mov    0x40(%rsp),%r8
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:250
+  46ad87:	mov    0x2512a(%rip),%r11        # 48feb8 <kmercounter::g_insert_durations>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:344
+  46ad8e:	movzbl (%r8),%r9d
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:250
+  46ad92:	mov    (%r11),%r12
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:344
+  46ad95:	test   %r9b,%r9b
+  46ad98:	je     46b30c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf4c>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:360
+  46ad9e:	mov    0x40(%rsp),%r10
+  46ada3:	vmovq  %r12,%xmm14
+  46ada8:	mov    0x40(%r10),%rcx
+  46adac:	vpinsrq $0x1,0x30(%rsp),%xmm14,%xmm15
+  46adb4:	vmovdqu %xmm15,(%rcx)
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:258
+  46adb8:	mov    0x24f11(%rip),%rdi        # 48fcd0 <kmercounter::config+0xd0>
+  46adbf:	mov    %rdi,0x48(%rsp)
+  46adc4:	test   %rdi,%rdi
+  46adc7:	je     46b399 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfd9>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:397
+  46adcd:	mov    %r9d,0x6c(%rsp)
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:269
+  46add2:	mov    0x58(%rsp),%rdi
+  46add7:	call   432f70 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:271
+  46addc:	mov    0x24eed(%rip),%rdi        # 48fcd0 <kmercounter::config+0xd0>
+  46ade3:	mov    %rdi,0x50(%rsp)
+  46ade8:	test   %rdi,%rdi
+  46adeb:	je     46b71e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x135e>
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46adf1:	mov    0x60(%rsp),%r15
+  46adf6:	lea    0xa0(%rsp),%rbx
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:264
+  46adfe:	movq   $0x0,0x48(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:271
+  46ae07:	movl   $0x0,0x30(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:262
+  46ae0f:	movq   $0x0,0x50(%rsp)
+  46ae18:	mov    %rbx,0x28(%rsp)
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::size() const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:919
+  46ae1d:	sub    0x10(%rsp),%r15
+  46ae22:	sar    $0x3,%r15
+  46ae26:	cs nopw 0x0(%rax,%rax,1)
+kmercounter::do_batch_find(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:140
+  46ae30:	mov    0x24edd(%rip),%r13d        # 48fd14 <kmercounter::config+0x114>
+  46ae37:	mov    %r15,%rax
+  46ae3a:	xor    %edx,%edx
+  46ae3c:	div    %r13
+  46ae3f:	mov    %r13d,0x18(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:150
+  46ae44:	lea    0x0(%r13,%r13,2),%rsi
+  46ae49:	mov    $0x40,%edi
+  46ae4e:	shl    $0x3,%rsi
+  46ae52:	mov    %rdx,0x38(%rsp)
+  46ae57:	mov    %rax,0x20(%rsp)
+  46ae5c:	call   409510 <aligned_alloc@plt>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:156
+  46ae61:	mov    %r13,%rdi
+  46ae64:	shl    $0x4,%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:150
+  46ae68:	mov    %rax,0x8(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:156
+  46ae6d:	call   409040 <operator new[](unsigned long)@plt>
+std::pair<unsigned int, kmercounter::FindResult*>::pair<int, kmercounter::FindResult*, true>(std::pair<int, kmercounter::FindResult*>&&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_pair.h:372
+  46ae72:	movl   $0x0,0x80(%rsp)
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_pair.h:373
+  46ae7d:	mov    %rax,0x88(%rsp)
+kmercounter::do_batch_find(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:143
+  46ae85:	xor    %ebx,%ebx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:142
+  46ae87:	xor    %r12d,%r12d
+  46ae8a:	lea    0x80(%rsp),%r14
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:161
+  46ae92:	cmp    %r13,%r15
+  46ae95:	jb     46b080 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xcc0>
+  46ae9b:	movq   $0x0,(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:142
+  46aea3:	xor    %r12d,%r12d
+  46aea6:	lea    0x80(%rsp),%r14
+  46aeae:	xchg   %ax,%ax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46aeb0:	mov    0x18(%rsp),%r11d
+  46aeb5:	test   %r11d,%r11d
+  46aeb8:	je     46b02a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc6a>
+  46aebe:	mov    0x10(%rsp),%r8
+  46aec3:	lea    0x10(%rbx),%r10
+  46aec7:	mov    %r13,%rcx
+  46aeca:	mov    0x8(%rsp),%rax
+  46aecf:	lea    (%r8,%r10,8),%rdx
+  46aed3:	lea    0x0(%r13,%rbx,1),%r11
+  46aed8:	and    $0x3,%ecx
+  46aedb:	je     46af73 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbb3>
+  46aee1:	cmp    $0x1,%rcx
+  46aee5:	je     46af41 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb81>
+  46aee7:	cmp    $0x2,%rcx
+  46aeeb:	je     46af17 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb57>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:163
+  46aeed:	test   $0x7,%bl
+  46aef0:	jne    46aefa <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb3a>
+  46aef2:	cmp    %r10,%r15
+  46aef5:	jbe    46aefa <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb3a>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:164
+  46aef7:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46aefa:	vpbroadcastq -0x80(%rdx),%xmm4
+  46af00:	mov    0x8(%rsp),%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46af05:	add    $0x8,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:170
+  46af09:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46af0c:	vmovdqu %xmm4,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:171
+  46af10:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46af13:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:163
+  46af17:	test   $0x7,%bl
+  46af1a:	jne    46af28 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb68>
+  46af1c:	lea    0x10(%rbx),%r9
+  46af20:	cmp    %r9,%r15
+  46af23:	jbe    46af28 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb68>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:164
+  46af25:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46af28:	vpbroadcastq -0x80(%rdx),%xmm5
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46af2e:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:170
+  46af32:	mov    %ebx,-0x8(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46af35:	vmovdqu %xmm5,-0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:171
+  46af3a:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46af3d:	add    $0x8,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:163
+  46af41:	test   $0x7,%bl
+  46af44:	jne    46af52 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb92>
+  46af46:	lea    0x10(%rbx),%rsi
+  46af4a:	cmp    %rsi,%r15
+  46af4d:	jbe    46af52 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb92>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:164
+  46af4f:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46af52:	vpbroadcastq -0x80(%rdx),%xmm6
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:170
+  46af58:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:171
+  46af5b:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46af5e:	vmovdqu %xmm6,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46af62:	add    $0x8,%rdx
+  46af66:	add    $0x18,%rax
+  46af6a:	cmp    %r11,%rbx
+  46af6d:	je     46b02a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc6a>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:163
+  46af73:	test   $0x7,%bl
+  46af76:	jne    46af84 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbc4>
+  46af78:	lea    0x10(%rbx),%rdi
+  46af7c:	cmp    %rdi,%r15
+  46af7f:	jbe    46af84 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbc4>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:164
+  46af81:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46af84:	vpbroadcastq -0x80(%rdx),%xmm7
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:171
+  46af8a:	lea    0x1(%rbx),%r8
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:170
+  46af8e:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46af91:	vmovdqu %xmm7,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46af95:	add    $0x8,%rdx
+  46af99:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:163
+  46af9d:	test   $0x7,%r8b
+  46afa1:	jne    46afaf <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbef>
+  46afa3:	add    $0x11,%rbx
+  46afa7:	cmp    %rbx,%r15
+  46afaa:	jbe    46afaf <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbef>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:164
+  46afac:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46afaf:	vpbroadcastq -0x80(%rdx),%xmm8
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:171
+  46afb5:	lea    0x1(%r8),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:170
+  46afb9:	mov    %r8d,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46afbd:	vmovdqu %xmm8,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46afc1:	lea    0x18(%rax),%rcx
+  46afc5:	lea    0x8(%rdx),%r9
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:163
+  46afc9:	test   $0x7,%bl
+  46afcc:	jne    46afdb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc1b>
+  46afce:	lea    0x11(%r8),%r10
+  46afd2:	cmp    %r10,%r15
+  46afd5:	jbe    46afdb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc1b>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:164
+  46afd7:	prefetcht0 (%r9)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46afdb:	vpbroadcastq -0x80(%r9),%xmm9
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:171
+  46afe1:	lea    0x2(%r8),%rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46afe5:	vmovdqu %xmm9,0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46afea:	lea    0x10(%rdx),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:170
+  46afee:	mov    %ebx,0x10(%rcx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46aff1:	lea    0x30(%rax),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:163
+  46aff5:	test   $0x7,%sil
+  46aff9:	jne    46b007 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc47>
+  46affb:	lea    0x12(%r8),%rcx
+  46afff:	cmp    %rcx,%r15
+  46b002:	jbe    46b007 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc47>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:164
+  46b004:	prefetcht0 (%rdi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46b007:	vpbroadcastq -0x80(%rdi),%xmm10
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46b00d:	add    $0x48,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:169
+  46b011:	vmovdqu %xmm10,-0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:170
+  46b016:	mov    %esi,0x10(%rbx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:171
+  46b019:	lea    0x3(%r8),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:162
+  46b01d:	add    $0x18,%rdx
+  46b021:	cmp    %r11,%rbx
+  46b024:	jne    46af73 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbb3>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:180
+  46b02a:	mov    0x0(%rbp),%rdx
+std::span<kmercounter::InsertFindArgument, 18446744073709551615ul>::span<kmercounter::InsertFindArgument*>(kmercounter::InsertFindArgument*, unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:157
+  46b02e:	mov    0x8(%rsp),%rax
+kmercounter::do_batch_find(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:180
+  46b033:	mov    0x20(%rdx),%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:174
+  46b037:	movl   $0x0,0x80(%rsp)
+std::span<kmercounter::InsertFindArgument, 18446744073709551615ul>::span<kmercounter::InsertFindArgument*>(kmercounter::InsertFindArgument*, unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:157
+  46b042:	mov    %rax,0xa0(%rsp)
+std::__detail::__extent_storage<18446744073709551615ul>::__extent_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:91
+  46b04a:	mov    %r13,0xa8(%rsp)
+kmercounter::do_batch_find(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:180
+  46b052:	mov    0x28(%rsp),%rsi
+  46b057:	xor    %ecx,%ecx
+  46b059:	mov    %r14,%rdx
+  46b05c:	mov    %rbp,%rdi
+  46b05f:	call   *%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:161
+  46b062:	incq   (%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:183
+  46b066:	mov    0x80(%rsp),%r8d
+  46b06e:	add    %r8,%r12
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:161
+  46b071:	mov    (%rsp),%r9
+  46b075:	cmp    %r9,0x20(%rsp)
+  46b07a:	ja     46aeb0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaf0>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:187
+  46b080:	mov    0x38(%rsp),%r13
+  46b085:	test   %r13,%r13
+  46b088:	je     46b24b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe8b>
+  46b08e:	mov    0x10(%rsp),%rsi
+  46b093:	lea    0x10(%rbx),%r10
+  46b097:	mov    0x8(%rsp),%rax
+  46b09c:	lea    (%rsi,%r10,8),%rdx
+  46b0a0:	lea    0x0(%r13,%rbx,1),%r11
+  46b0a5:	and    $0x3,%r13d
+  46b0a9:	je     46b141 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd81>
+  46b0af:	cmp    $0x1,%r13
+  46b0b3:	je     46b10f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd4f>
+  46b0b5:	cmp    $0x2,%r13
+  46b0b9:	je     46b0e5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd25>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:189
+  46b0bb:	test   $0x7,%bl
+  46b0be:	jne    46b0c8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd08>
+  46b0c0:	cmp    %r10,%r15
+  46b0c3:	jbe    46b0c8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd08>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:190
+  46b0c5:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b0c8:	vpbroadcastq -0x80(%rdx),%xmm11
+  46b0ce:	mov    0x8(%rsp),%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b0d3:	add    $0x8,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:194
+  46b0d7:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b0da:	vmovdqu %xmm11,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:195
+  46b0de:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b0e1:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:189
+  46b0e5:	test   $0x7,%bl
+  46b0e8:	jne    46b0f6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd36>
+  46b0ea:	lea    0x10(%rbx),%rcx
+  46b0ee:	cmp    %rcx,%r15
+  46b0f1:	jbe    46b0f6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd36>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:190
+  46b0f3:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b0f6:	vpbroadcastq -0x80(%rdx),%xmm12
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b0fc:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:194
+  46b100:	mov    %ebx,-0x8(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b103:	vmovdqu %xmm12,-0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:195
+  46b108:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b10b:	add    $0x8,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:189
+  46b10f:	test   $0x7,%bl
+  46b112:	jne    46b120 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd60>
+  46b114:	lea    0x10(%rbx),%r8
+  46b118:	cmp    %r8,%r15
+  46b11b:	jbe    46b120 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd60>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:190
+  46b11d:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b120:	vpbroadcastq -0x80(%rdx),%xmm13
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:194
+  46b126:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:195
+  46b129:	inc    %rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b12c:	vmovdqu %xmm13,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b130:	add    $0x8,%rdx
+  46b134:	add    $0x18,%rax
+  46b138:	cmp    %r11,%rbx
+  46b13b:	je     46b1f8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe38>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:189
+  46b141:	test   $0x7,%bl
+  46b144:	jne    46b152 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd92>
+  46b146:	lea    0x10(%rbx),%r9
+  46b14a:	cmp    %r9,%r15
+  46b14d:	jbe    46b152 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd92>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:190
+  46b14f:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b152:	vpbroadcastq -0x80(%rdx),%xmm14
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:195
+  46b158:	lea    0x1(%rbx),%r13
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:194
+  46b15c:	mov    %ebx,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b15f:	vmovdqu %xmm14,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b163:	add    $0x8,%rdx
+  46b167:	add    $0x18,%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:189
+  46b16b:	test   $0x7,%r13b
+  46b16f:	jne    46b17d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdbd>
+  46b171:	add    $0x11,%rbx
+  46b175:	cmp    %rbx,%r15
+  46b178:	jbe    46b17d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdbd>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:190
+  46b17a:	prefetcht0 (%rdx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b17d:	vpbroadcastq -0x80(%rdx),%xmm15
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:195
+  46b183:	lea    0x1(%r13),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:194
+  46b187:	mov    %r13d,0x10(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b18b:	vmovdqu %xmm15,(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b18f:	lea    0x18(%rax),%rsi
+  46b193:	lea    0x8(%rdx),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:189
+  46b197:	test   $0x7,%bl
+  46b19a:	jne    46b1a8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xde8>
+  46b19c:	lea    0x11(%r13),%r10
+  46b1a0:	cmp    %r10,%r15
+  46b1a3:	jbe    46b1a8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xde8>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:190
+  46b1a5:	prefetcht0 (%rdi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b1a8:	vpbroadcastq -0x80(%rdi),%xmm0
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:195
+  46b1ae:	lea    0x2(%r13),%rcx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b1b2:	vmovdqu %xmm0,0x18(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b1b7:	lea    0x30(%rax),%r8
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:194
+  46b1bb:	mov    %ebx,0x10(%rsi)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b1be:	lea    0x10(%rdx),%r9
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:189
+  46b1c2:	test   $0x7,%cl
+  46b1c5:	jne    46b1d4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe14>
+  46b1c7:	lea    0x12(%r13),%rbx
+  46b1cb:	cmp    %rbx,%r15
+  46b1ce:	jbe    46b1d4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe14>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:190
+  46b1d0:	prefetcht0 (%r9)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b1d4:	vpbroadcastq -0x80(%r9),%xmm1
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:195
+  46b1da:	lea    0x3(%r13),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:193
+  46b1de:	vmovdqu %xmm1,0x30(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b1e3:	add    $0x18,%rdx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:194
+  46b1e7:	mov    %ecx,0x10(%r8)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:188
+  46b1eb:	add    $0x48,%rax
+  46b1ef:	cmp    %r11,%rbx
+  46b1f2:	jne    46b141 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd81>
+std::span<kmercounter::InsertFindArgument, 18446744073709551615ul>::span<kmercounter::InsertFindArgument*>(kmercounter::InsertFindArgument*, unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:157
+  46b1f8:	mov    0x8(%rsp),%rdx
+std::__detail::__extent_storage<18446744073709551615ul>::__extent_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:91
+  46b1fd:	mov    0x38(%rsp),%rax
+std::span<kmercounter::InsertFindArgument, 18446744073709551615ul>::span<kmercounter::InsertFindArgument*>(kmercounter::InsertFindArgument*, unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:157
+  46b202:	mov    %rdx,0x90(%rsp)
+kmercounter::do_batch_find(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:198
+  46b20a:	movl   $0x0,0x80(%rsp)
+std::__detail::__extent_storage<18446744073709551615ul>::__extent_storage(unsigned long):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/span:91
+  46b215:	mov    %rax,0x98(%rsp)
+kmercounter::do_batch_find(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:203
+  46b21d:	mov    0x0(%rbp),%r11
+  46b221:	lea    0x90(%rsp),%rsi
+  46b229:	xor    %ecx,%ecx
+  46b22b:	mov    %r14,%rdx
+  46b22e:	mov    %rbp,%rdi
+  46b231:	call   *0x20(%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:206
+  46b235:	mov    0x80(%rsp),%r13d
+  46b23d:	add    %r13,%r12
+  46b240:	jmp    46b24b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe8b>
+  46b242:	nopw   0x0(%rax,%rax,1)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:215
+  46b248:	add    %rsi,%r12
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:210
+  46b24b:	movl   $0x0,0x80(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:211
+  46b256:	mov    0x0(%rbp),%rax
+  46b25a:	xor    %edx,%edx
+  46b25c:	mov    %r14,%rsi
+  46b25f:	mov    %rbp,%rdi
+  46b262:	call   *0x30(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:212
+  46b265:	mov    0x80(%rsp),%esi
+  46b26c:	test   %esi,%esi
+  46b26e:	jne    46b248 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe88>
+  46b270:	test   %rax,%rax
+  46b273:	jne    46b248 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe88>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:218
+  46b275:	mov    0x8(%rsp),%rdi
+  46b27a:	call   409790 <free@plt>
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:271
+  46b27f:	incl   0x30(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:272
+  46b283:	add    %rbx,0x50(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:273
+  46b288:	add    %r12,0x48(%rsp)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:271
+  46b28d:	mov    0x30(%rsp),%edi
+  46b291:	cmp    0x24a38(%rip),%rdi        # 48fcd0 <kmercounter::config+0xd0>
+  46b298:	jb     46ae30 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa70>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:276
+  46b29e:	mov    0x6c(%rsp),%r10d
+  46b2a3:	test   %r10d,%r10d
+  46b2a6:	jne    46b2ba <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xefa>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:277
+  46b2a8:	movb   $0x1,0x24c49(%rip)        # 48fef8 <kmercounter::zipfian_finds>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:278
+  46b2af:	movq   $0x0,0x24c26(%rip)        # 48fee0 <kmercounter::zipfian_iter>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:280
+  46b2ba:	mov    0x58(%rsp),%rdi
+  46b2bf:	call   432f70 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:285
+  46b2c4:	mov    0x24c0d(%rip),%rcx        # 48fed8 <kmercounter::g_find_durations>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:400
+  46b2cb:	mov    0x40(%rsp),%r8
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:285
+  46b2d0:	mov    (%rcx),%rbx
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:400
+  46b2d3:	movzbl (%r8),%ecx
+  46b2d7:	test   %cl,%cl
+  46b2d9:	jne    46b3c7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1007>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46b2df:	mov    0x23fda(%rip),%r8        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:401
+  46b2e6:	test   %r8,%r8
+  46b2e9:	jne    46a7fb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x43b>
+  46b2ef:	jmp    46a806 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x446>
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:228
+  46b2f4:	movq   $0x1,0x30(%rsp)
+  46b2fd:	mov    $0x1,%r12d
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:344
+  46b303:	test   %r9b,%r9b
+  46b306:	jne    46ad9e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9de>
+  46b30c:	mov    0x23fad(%rip),%r15        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+  46b313:	jmp    46a796 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x3d6>
+kmercounter::do_zipfian_inserts(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:235
+  46b318:	mov    0x58(%rsp),%rdi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:232
+  46b31d:	movl   $0x0,0x23cf9(%rip)        # 48f020 <kmercounter::cur_phase>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:233
+  46b327:	movb   $0x0,0x24ba2(%rip)        # 48fed0 <kmercounter::zipfian_inserts>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:235
+  46b32e:	call   432f70 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:237
+  46b333:	mov    0x2498e(%rip),%r10        # 48fcc8 <kmercounter::config+0xc8>
+  46b33a:	movl   $0x0,0x38(%rsp)
+  46b342:	mov    %r10,0x30(%rsp)
+  46b347:	test   %r10,%r10
+  46b34a:	jne    46a983 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x5c3>
+  46b350:	jmp    46ad66 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9a6>
+huge_page_allocator<unsigned long>::round_to_huge_page_size(unsigned long, bool):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:34
+  46b355:	and    $0xffffffffffe00000,%r9
+  46b35c:	movl   $0x0,(%rsp)
+  46b363:	lea    0x200000(%r9),%r14
+huge_page_allocator<unsigned long>::allocate(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:65
+  46b36a:	mov    $0x54040022,%ecx
+  46b36f:	jmp    46a45e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9e>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:439
+  46b374:	add    $0x2a8,%rsp
+  46b37b:	pop    %rbx
+  46b37c:	pop    %rbp
+  46b37d:	pop    %r12
+  46b37f:	pop    %r13
+  46b381:	pop    %r14
+  46b383:	pop    %r15
+  46b385:	ret    
+huge_page_allocator<unsigned long>::round_to_huge_page_size(unsigned long, bool):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:34
+  46b386:	and    $0xffffffffffe00000,%rdx
+  46b38d:	lea    0x200000(%rdx),%rsi
+  46b394:	jmp    46a8c2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x502>
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:259
+  46b399:	movq   $0x1,0x50(%rsp)
+  46b3a2:	mov    $0x1,%ebx
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46b3a7:	vmovq  %rbx,%xmm2
+  46b3ac:	vpinsrq $0x1,0x50(%rsp),%xmm2,%xmm3
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:415
+  46b3b4:	mov    0x48(%rsp),%rbx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46b3b9:	vmovdqu %xmm3,0x20(%rcx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:415
+  46b3be:	mov    %rbx,0x68(%rcx)
+  46b3c2:	jmp    46a835 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x475>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46b3c7:	mov    0x40(%rsp),%r9
+  46b3cc:	mov    0x40(%r9),%rcx
+  46b3d0:	jmp    46b3a7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfe7>
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:258
+  46b3d2:	mov    0x248f7(%rip),%rsi        # 48fcd0 <kmercounter::config+0xd0>
+  46b3d9:	mov    %rsi,0x48(%rsp)
+  46b3de:	test   %rsi,%rsi
+  46b3e1:	je     46b6f8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1338>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:266
+  46b3e7:	movl   $0x1,0x23c2f(%rip)        # 48f020 <kmercounter::cur_phase>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:267
+  46b3f1:	movb   $0x0,0x24b00(%rip)        # 48fef8 <kmercounter::zipfian_finds>
+  46b3f8:	movl   $0x0,0x6c(%rsp)
+  46b400:	jmp    46add2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa12>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:393
+  46b405:	lea    0xa0(%rsp),%r14
+  46b40d:	mov    $0x189,%edx
+  46b412:	lea    0x11ab7(%rip),%rsi        # 47ced0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1cd0>
+  46b419:	mov    %r14,%rdi
+  46b41c:	call   469f80 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+  46b421:	lea    0x11a03(%rip),%rsi        # 47ce2b <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c2b>
+  46b428:	mov    %r14,%rdi
+  46b42b:	xor    %eax,%eax
+  46b42d:	call   431e90 <plog::Record::printf(char const*, ...)>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46b432:	mov    0x23e87(%rip),%r12        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:393
+  46b439:	mov    %rax,%r15
+__gnu_cxx::__normal_iterator<plog::IAppender**, std::vector<plog::IAppender*, std::allocator<plog::IAppender*> > >::__normal_iterator(plog::IAppender** const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_iterator.h:1011
+  46b43c:	mov    0x10(%r12),%r13
+plog::Logger<0>::operator+=(plog::Record const&):
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b441:	cmp    0x18(%r12),%r13
+  46b446:	je     46b460 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10a0>
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:58
+  46b448:	mov    0x0(%r13),%rdi
+  46b44c:	mov    %r15,%rsi
+  46b44f:	mov    (%rdi),%rax
+  46b452:	call   *0x10(%rax)
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b455:	add    $0x8,%r13
+  46b459:	cmp    %r13,0x18(%r12)
+  46b45e:	jne    46b448 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1088>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:393
+  46b460:	mov    %r14,%rdi
+  46b463:	call   431640 <plog::Record::~Record() [clone .lto_priv.0]>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:397
+  46b468:	mov    0x40(%rsp),%r10
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:258
+  46b46d:	mov    0x2485c(%rip),%r14        # 48fcd0 <kmercounter::config+0xd0>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:397
+  46b474:	movzbl (%r10),%ecx
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:258
+  46b478:	mov    %r14,0x48(%rsp)
+  46b47d:	test   %r14,%r14
+  46b480:	je     46b70b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x134b>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:397
+  46b486:	mov    %ecx,0x6c(%rsp)
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:265
+  46b48a:	test   %ecx,%ecx
+  46b48c:	je     46b3e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1027>
+  46b492:	jmp    46add2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa12>
+  46b497:	nopw   0x0(%rax,%rax,1)
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:345
+  46b4a0:	lea    0xa0(%rsp),%r15
+  46b4a8:	mov    $0x159,%edx
+  46b4ad:	lea    0x11a1c(%rip),%rsi        # 47ced0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1cd0>
+  46b4b4:	mov    %r15,%rdi
+  46b4b7:	call   469f80 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+  46b4bc:	lea    0x11950(%rip),%rsi        # 47ce13 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c13>
+  46b4c3:	mov    %r15,%rdi
+  46b4c6:	xor    %eax,%eax
+  46b4c8:	call   431e90 <plog::Record::printf(char const*, ...)>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46b4cd:	mov    0x23dec(%rip),%r13        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:345
+  46b4d4:	mov    %rax,%r14
+__gnu_cxx::__normal_iterator<plog::IAppender**, std::vector<plog::IAppender*, std::allocator<plog::IAppender*> > >::__normal_iterator(plog::IAppender** const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_iterator.h:1011
+  46b4d7:	mov    0x10(%r13),%rbx
+plog::Logger<0>::operator+=(plog::Record const&):
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b4db:	cmp    0x18(%r13),%rbx
+  46b4df:	je     46b4f8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1138>
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:58
+  46b4e1:	mov    (%rbx),%rdi
+  46b4e4:	mov    %r14,%rsi
+  46b4e7:	mov    (%rdi),%r9
+  46b4ea:	call   *0x10(%r9)
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b4ee:	add    $0x8,%rbx
+  46b4f2:	cmp    %rbx,0x18(%r13)
+  46b4f6:	jne    46b4e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1121>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:345
+  46b4f8:	mov    %r15,%rdi
+  46b4fb:	call   431640 <plog::Record::~Record() [clone .lto_priv.0]>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:392
+  46b500:	mov    0x40(%rsp),%rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:360
+  46b505:	vmovq  %r12,%xmm0
+  46b50a:	mov    0x40(%rsi),%r11
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:392
+  46b50e:	movzbl (%rsi),%r9d
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:360
+  46b512:	vpinsrq $0x1,0x30(%rsp),%xmm0,%xmm1
+  46b51a:	mov    %r11,%rcx
+  46b51d:	vmovdqu %xmm1,(%r11)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:392
+  46b522:	test   %r9b,%r9b
+  46b525:	jne    46adb8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9f8>
+  46b52b:	mov    0x23d8e(%rip),%r15        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+  46b532:	jmp    46a7c1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x401>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:426
+  46b537:	lea    0xa0(%rsp),%r12
+  46b53f:	mov    $0x1aa,%edx
+  46b544:	lea    0x11985(%rip),%rsi        # 47ced0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1cd0>
+  46b54b:	mov    %r12,%rdi
+  46b54e:	call   469f80 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:427
+  46b553:	mov    0x0(%rbp),%rax
+  46b557:	mov    %rbp,%rdi
+  46b55a:	call   *0x40(%rax)
+  46b55d:	vxorpd %xmm8,%xmm8,%xmm8
+  46b562:	vcvtusi2sd %rax,%xmm8,%xmm9
+  46b568:	mov    0x0(%rbp),%rbx
+  46b56c:	mov    %rbp,%rdi
+  46b56f:	vmovq  %xmm9,%r14
+  46b574:	call   *0x48(%rbx)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:426
+  46b577:	vxorpd %xmm10,%xmm10,%xmm10
+  46b57c:	vcvtusi2sd %rax,%xmm10,%xmm11
+  46b582:	vmovq  %r14,%xmm12
+  46b587:	lea    0xff23(%rip),%rsi        # 47b4b1 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2b1>
+  46b58e:	mov    %r12,%rdi
+  46b591:	vdivsd %xmm11,%xmm12,%xmm0
+  46b596:	mov    $0x1,%eax
+  46b59b:	call   431e90 <plog::Record::printf(char const*, ...)>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46b5a0:	mov    0x23d19(%rip),%rbp        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:426
+  46b5a7:	mov    %rax,%r13
+__gnu_cxx::__normal_iterator<plog::IAppender**, std::vector<plog::IAppender*, std::allocator<plog::IAppender*> > >::__normal_iterator(plog::IAppender** const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_iterator.h:1011
+  46b5aa:	mov    0x10(%rbp),%r15
+plog::Logger<0>::operator+=(plog::Record const&):
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b5ae:	cmp    0x18(%rbp),%r15
+  46b5b2:	je     46b5cb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x120b>
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:58
+  46b5b4:	mov    (%r15),%rdi
+  46b5b7:	mov    %r13,%rsi
+  46b5ba:	mov    (%rdi),%r8
+  46b5bd:	call   *0x10(%r8)
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b5c1:	add    $0x8,%r15
+  46b5c5:	cmp    %r15,0x18(%rbp)
+  46b5c9:	jne    46b5b4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11f4>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:426
+  46b5cb:	mov    %r12,%rdi
+  46b5ce:	call   431640 <plog::Record::~Record() [clone .lto_priv.0]>
+  46b5d3:	jmp    46a887 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x4c7>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:401
+  46b5d8:	lea    0xa0(%rsp),%r15
+  46b5e0:	mov    $0x191,%edx
+  46b5e5:	lea    0x118e4(%rip),%rsi        # 47ced0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1cd0>
+  46b5ec:	mov    %r15,%rdi
+  46b5ef:	call   469f80 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+  46b5f4:	lea    0x11848(%rip),%rsi        # 47ce43 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c43>
+  46b5fb:	mov    %r15,%rdi
+  46b5fe:	xor    %eax,%eax
+  46b600:	call   431e90 <plog::Record::printf(char const*, ...)>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46b605:	mov    0x23cb4(%rip),%r13        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:401
+  46b60c:	mov    %rax,%r14
+__gnu_cxx::__normal_iterator<plog::IAppender**, std::vector<plog::IAppender*, std::allocator<plog::IAppender*> > >::__normal_iterator(plog::IAppender** const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_iterator.h:1011
+  46b60f:	mov    0x10(%r13),%r12
+plog::Logger<0>::operator+=(plog::Record const&):
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b613:	cmp    0x18(%r13),%r12
+  46b617:	je     46b631 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1271>
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:58
+  46b619:	mov    (%r12),%rdi
+  46b61d:	mov    %r14,%rsi
+  46b620:	mov    (%rdi),%r11
+  46b623:	call   *0x10(%r11)
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b627:	add    $0x8,%r12
+  46b62b:	cmp    %r12,0x18(%r13)
+  46b62f:	jne    46b619 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1259>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:401
+  46b631:	mov    %r15,%rdi
+  46b634:	call   431640 <plog::Record::~Record() [clone .lto_priv.0]>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46b639:	mov    0x40(%rsp),%r15
+  46b63e:	vmovq  %rbx,%xmm4
+  46b643:	mov    0x40(%r15),%rax
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:418
+  46b647:	movzbl (%r15),%edx
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46b64b:	vpinsrq $0x1,0x50(%rsp),%xmm4,%xmm5
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:415
+  46b653:	mov    0x48(%rsp),%rsi
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:414
+  46b658:	vmovdqu %xmm5,0x20(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:415
+  46b65d:	mov    %rsi,0x68(%rax)
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:418
+  46b661:	test   %dl,%dl
+  46b663:	je     46a82b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x46b>
+  46b669:	jmp    46a835 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x475>
+  46b66e:	xchg   %ax,%ax
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46b670:	mov    0x23c49(%rip),%r10        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+huge_page_allocator<unsigned long>::allocate(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:72
+  46b677:	test   %r10,%r10
+  46b67a:	je     46b6f0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1330>
+  46b67c:	cmpl   $0x1,0x8(%r10)
+  46b681:	jle    46b6f0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1330>
+  46b683:	lea    0xa0(%rsp),%rbp
+  46b68b:	mov    $0x48,%edx
+  46b690:	lea    0x117c9(%rip),%rsi        # 47ce60 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c60>
+  46b697:	mov    %rbp,%rdi
+  46b69a:	call   46a1a0 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.1]>
+  46b69f:	mov    (%rsp),%r8d
+  46b6a3:	mov    %r13,%rcx
+  46b6a6:	mov    %r14,%rdx
+  46b6a9:	lea    0x10338(%rip),%rsi        # 47b9e8 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x7e8>
+  46b6b0:	mov    %rbp,%rdi
+  46b6b3:	xor    %eax,%eax
+  46b6b5:	call   431e90 <plog::Record::printf(char const*, ...)>
+plog::util::Singleton<plog::Logger<0> >::getInstance():
+/opt/DRAMHiT/lib/plog/include/plog/Util.h:541
+  46b6ba:	mov    0x23bff(%rip),%r12        # 48f2c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+huge_page_allocator<unsigned long>::allocate(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:72
+  46b6c1:	mov    %rax,%r14
+__gnu_cxx::__normal_iterator<plog::IAppender**, std::vector<plog::IAppender*, std::allocator<plog::IAppender*> > >::__normal_iterator(plog::IAppender** const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_iterator.h:1011
+  46b6c4:	mov    0x10(%r12),%r13
+plog::Logger<0>::operator+=(plog::Record const&):
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b6c9:	cmp    0x18(%r12),%r13
+  46b6ce:	je     46b6e8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1328>
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:58
+  46b6d0:	mov    0x0(%r13),%rdi
+  46b6d4:	mov    %r14,%rsi
+  46b6d7:	mov    (%rdi),%rcx
+  46b6da:	call   *0x10(%rcx)
+/opt/DRAMHiT/lib/plog/include/plog/Logger.h:56
+  46b6dd:	add    $0x8,%r13
+  46b6e1:	cmp    %r13,0x18(%r12)
+  46b6e6:	jne    46b6d0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1310>
+huge_page_allocator<unsigned long>::allocate(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:72
+  46b6e8:	mov    %rbp,%rdi
+  46b6eb:	call   431640 <plog::Record::~Record() [clone .lto_priv.0]>
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:73
+  46b6f0:	call   4093b0 <abort@plt>
+  46b6f5:	nopl   (%rax)
+kmercounter::OpTimings kmercounter::do_zipfian_gets<std::barrier<std::function<void ()> >*>(kmercounter::BaseHashTable*, unsigned int, std::barrier<std::function<void ()> >*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*):
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:259
+  46b6f8:	movq   $0x1,0x50(%rsp)
+  46b701:	mov    $0x1,%ebx
+  46b706:	jmp    46a80f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x44f>
+  46b70b:	movq   $0x1,0x50(%rsp)
+  46b714:	mov    $0x1,%ebx
+  46b719:	jmp    46b2d7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf17>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:264
+  46b71e:	movq   $0x0,0x48(%rsp)
+  46b727:	jmp    46b29e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xede>
+std::vector<unsigned long, std::allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1073
+  46b72c:	mov    %r15,%rdx
+  46b72f:	lea    0xd4c2(%rip),%rdi        # 478bf8 <typeinfo name for plog::Record+0x788>
+  46b736:	xor    %eax,%eax
+  46b738:	call   409980 <std::__throw_out_of_range_fmt(char const*, ...)@plt>
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_M_range_check(unsigned long) const:
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1073
+  46b73d:	mov    %r8,%rdx
+  46b740:	mov    %r8,%rsi
+  46b743:	lea    0xd4ae(%rip),%rdi        # 478bf8 <typeinfo name for plog::Record+0x788>
+  46b74a:	xor    %eax,%eax
+  46b74c:	call   409980 <std::__throw_out_of_range_fmt(char const*, ...)@plt>
+std::vector<unsigned long, huge_page_allocator<unsigned long> >::_S_check_init_len(unsigned long, huge_page_allocator<unsigned long> const&):
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:1770
+  46b751:	lea    0xfad8(%rip),%rdi        # 47b230 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x30>
+  46b758:	call   409370 <std::__throw_length_error(char const*)@plt>
+std::_Vector_base<unsigned long, huge_page_allocator<unsigned long> >::~_Vector_base():
+/nix/store/bqfdbk52z5ym3sfhaf4yvi7l1fq27bky-gcc-11.3.0/include/c++/11.3.0/bits/stl_vector.h:336
+  46b75d:	mov    %rax,%rbx
+  46b760:	vzeroupper 
+  46b763:	jmp    40e652 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x10>
+kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]:
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:401
+  46b768:	mov    %rax,%rbx
+  46b76b:	jmp    40e647 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x5>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:393
+  46b770:	mov    %rax,%rbx
+  46b773:	jmp    40e66e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x2c>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:426
+  46b778:	mov    %rax,%rbx
+  46b77b:	jmp    40e6a8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x66>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:345
+  46b780:	mov    %rax,%rbx
+  46b783:	jmp    40e647 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x5>
+/opt/DRAMHiT/src/tests/zipfian_test.cpp:339
+  46b788:	mov    %rax,%rbx
+  46b78b:	jmp    40e66e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x2c>
+huge_page_allocator<unsigned long>::allocate(unsigned long):
+/opt/DRAMHiT/include/utils/hugepage_allocator.hpp:72
+  46b790:	mov    %rax,%r15
+  46b793:	jmp    40e6c5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x83>
+  46b798:	mov    %rax,%rbx
+  46b79b:	vzeroupper 
+  46b79e:	jmp    40e664 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x22>

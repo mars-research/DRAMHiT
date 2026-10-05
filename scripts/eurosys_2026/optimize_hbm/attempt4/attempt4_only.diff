@@ -1,0 +1,26 @@
+651a652,658
+> #ifdef CAS_FIND_KSHIFT
+>           // One mask-register shift. Written as integer arithmetic (key_cmp << 1)
+>           // gcc moves the mask to a GPR, shifts, and moves it back: 3 instructions.
+>           const __mmask8 value_lanes = _kshiftli_mask8(key_cmp, 1);
+> #else
+>           const __mmask8 value_lanes = (__mmask8)(key_cmp << 1);
+> #endif
+653c660
+<               _mm512_maskz_compress_epi64((__mmask8)(key_cmp << 1), cacheline)));
+---
+>               _mm512_maskz_compress_epi64(value_lanes, cacheline)));
+716a724,734
+> #ifdef CAS_FIND_SCALAR_PACK
+>         {
+>           // idx and key_id are adjacent 32-bit fields. Left alone, gcc packs them
+>           // through an xmm register (vmovd + vpinsrd + vmovq, all port 5). Passing
+>           // both through an empty asm leaves two scalar stores.
+>           uint32_t pack_idx = new_idx, pack_id = key_data->id;
+>           __asm__("" : "+r"(pack_idx), "+r"(pack_id));
+>           FQ(head).idx = pack_idx;
+>           FQ(head).key_id = pack_id;
+>         }
+> #else
+718a737
+> #endif

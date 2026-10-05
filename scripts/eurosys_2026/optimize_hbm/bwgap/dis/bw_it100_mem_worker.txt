@@ -1,0 +1,2813 @@
+
+bin/bandwidth_rand_it100:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000403650 <mem_worker>:
+mem_worker():
+  403650:	push   %rbp
+  403651:	vpxor  %xmm0,%xmm0,%xmm0
+  403655:	mov    %rsp,%rbp
+  403658:	push   %r15
+  40365a:	mov    %rdi,%r15
+  40365d:	push   %r14
+  40365f:	push   %r13
+  403661:	push   %r12
+  403663:	push   %rbx
+  403664:	and    $0xffffffffffffffc0,%rsp
+  403668:	sub    $0x100,%rsp
+  40366f:	mov    %fs:0x28,%rax
+  403678:	mov    %rax,0xf8(%rsp)
+  403680:	xor    %eax,%eax
+  403682:	movslq 0x4(%rdi),%rax
+  403686:	lea    0x70(%rsp),%r12
+  40368b:	vmovdqa %xmm0,0x70(%rsp)
+  403691:	vmovdqa %xmm0,0x80(%rsp)
+  40369a:	vmovdqa %xmm0,0x90(%rsp)
+  4036a3:	vmovdqa %xmm0,0xa0(%rsp)
+  4036ac:	vmovdqa %xmm0,0xb0(%rsp)
+  4036b5:	vmovdqa %xmm0,0xc0(%rsp)
+  4036be:	vmovdqa %xmm0,0xd0(%rsp)
+  4036c7:	vmovdqa %xmm0,0xe0(%rsp)
+  4036d0:	cmp    $0x3ff,%rax
+  4036d6:	ja     4036ed <mem_worker+0x9d>
+  4036d8:	mov    %rax,%rdx
+  4036db:	mov    $0x1,%ecx
+  4036e0:	shr    $0x6,%rax
+  4036e4:	shlx   %rdx,%rcx,%rdx
+  4036e9:	or     %rdx,(%r12,%rax,8)
+  4036ed:	call   4021d0 <pthread_self@plt>
+  4036f2:	mov    %rax,%rdi
+  4036f5:	mov    %r12,%rdx
+  4036f8:	mov    $0x80,%esi
+  4036fd:	call   402070 <pthread_setaffinity_np@plt>
+  403702:	test   %eax,%eax
+  403704:	je     403720 <mem_worker+0xd0>
+  403706:	lea    0x38f7(%rip),%rdi        # 407004 <_IO_stdin_used+0x4>
+  40370d:	call   4021e0 <perror@plt>
+  403712:	xor    %edi,%edi
+  403714:	call   402160 <pthread_exit@plt>
+  403719:	nopl   0x0(%rax)
+  403720:	mov    0x18(%r15),%rsi
+  403724:	xor    %edi,%edi
+  403726:	xor    %r9d,%r9d
+  403729:	mov    $0xffffffff,%r8d
+  40372f:	mov    $0x54040022,%ecx
+  403734:	mov    $0x3,%edx
+  403739:	call   4020d0 <mmap@plt>
+  40373e:	mov    %rax,0x20(%r15)
+  403742:	mov    %rax,%rdi
+  403745:	cmp    $0xffffffffffffffff,%rax
+  403749:	je     40543f <mem_worker+0x1def>
+  40374f:	mov    0x10(%r15),%rax
+  403753:	xor    %edx,%edx
+  403755:	mov    %rax,0x68(%rsp)
+  40375a:	popcnt %rax,%rax
+  40375f:	cmp    $0x1,%eax
+  403762:	setg   %dl
+  403765:	mov    0x18(%r15),%rsi
+  403769:	add    $0x2,%edx
+  40376c:	lea    0x68(%rsp),%rcx
+  403771:	mov    $0x3,%r9d
+  403777:	mov    $0x40,%r8d
+  40377d:	call   4020b0 <mbind@plt>
+  403782:	test   %rax,%rax
+  403785:	je     4037a0 <mem_worker+0x150>
+  403787:	lea    0x38a0(%rip),%rdi        # 40702e <_IO_stdin_used+0x2e>
+  40378e:	call   4021e0 <perror@plt>
+  403793:	xor    %edi,%edi
+  403795:	call   402160 <pthread_exit@plt>
+  40379a:	nopw   0x0(%rax,%rax,1)
+  4037a0:	mov    0x18(%r15),%rdx
+  4037a4:	mov    0x20(%r15),%rdi
+  4037a8:	mov    $0x1,%esi
+  4037ad:	call   402110 <memset@plt>
+  4037b2:	mov    $0x40a080,%rdi
+  4037b9:	call   402090 <pthread_barrier_wait@plt>
+  4037be:	mov    $0x40a0a0,%rdi
+  4037c5:	call   402090 <pthread_barrier_wait@plt>
+  4037ca:	mov    $0x6,%eax
+  4037cf:	shrx   %rax,0x18(%r15),%rax
+  4037d5:	mov    %rax,0x50(%rsp)
+  4037da:	mov    0x38(%r15),%rax
+  4037de:	movabs $0x9e3779b97f4a7c15,%rdi
+  4037e8:	mov    %rax,0x8(%rsp)
+  4037ed:	movslq (%r15),%rax
+  4037f0:	movabs $0xbf58476d1ce4e5b9,%rsi
+  4037fa:	lea    (%rax,%rdi,1),%rdx
+  4037fe:	mov    %rdx,%rcx
+  403801:	shr    $0x1e,%rcx
+  403805:	xor    %rdx,%rcx
+  403808:	imul   %rsi,%rcx
+  40380c:	lea    -0x21524111(%rax),%ebx
+  403812:	mov    %rbx,0x18(%rsp)
+  403817:	mov    %rcx,%rdx
+  40381a:	shr    $0x1b,%rdx
+  40381e:	xor    %rcx,%rdx
+  403821:	movabs $0x94d049bb133111eb,%rcx
+  40382b:	imul   %rcx,%rdx
+  40382f:	movl   $0x1,0x48(%rsp)
+  403837:	mov    0x30(%r15),%r11
+  40383b:	mov    %rdx,%r8
+  40383e:	shr    $0x1f,%r8
+  403842:	xor    %rdx,%r8
+  403845:	movabs $0xa5a5a5a5a5a5a5a5,%rdx
+  40384f:	xor    %rdx,%rax
+  403852:	add    %rdi,%rax
+  403855:	mov    %rax,%rdx
+  403858:	shr    $0x1e,%rdx
+  40385c:	xor    %rax,%rdx
+  40385f:	imul   %rsi,%rdx
+  403863:	mov    %r8,0x20(%rsp)
+  403868:	mov    %rdx,%rax
+  40386b:	shr    $0x1b,%rax
+  40386f:	xor    %rdx,%rax
+  403872:	imul   %rcx,%rax
+  403876:	mov    %rax,%rdx
+  403879:	shr    $0x1f,%rdx
+  40387d:	xor    %rax,%rdx
+  403880:	mov    $0x40a010,%rax
+  403887:	mov    %rdx,0x10(%rsp)
+  40388c:	mov    (%rax),%eax
+  40388e:	mov    %eax,0x58(%rsp)
+  403892:	dec    %eax
+  403894:	cmp    $0x3fe,%eax
+  403899:	ja     405420 <mem_worker+0x1dd0>
+  40389f:	rdtsc  
+  4038a1:	vpbroadcastq 0x4335(%rip),%zmm0        # 407be0 <_IO_stdin_used+0xbe0>
+  4038ab:	vpbroadcastq 0x4333(%rip),%zmm4        # 407be8 <_IO_stdin_used+0xbe8>
+  4038b5:	vpbroadcastq 0x4331(%rip),%zmm5        # 407bf0 <_IO_stdin_used+0xbf0>
+  4038bf:	xor    %r14d,%r14d
+  4038c2:	shl    $0x20,%rdx
+  4038c6:	or     %rdx,%rax
+  4038c9:	mov    %rax,(%rsp)
+  4038cd:	movl   $0x64,0x4c(%rsp)
+  4038d5:	mov    %r15,0x58(%rsp)
+  4038da:	mov    %r11,%r15
+  4038dd:	nopl   (%rax)
+  4038e0:	mov    $0x40a050,%rax
+  4038e7:	mov    0x58(%rsp),%rbx
+  4038ec:	mov    (%rax),%rax
+  4038ef:	mov    0x28(%rbx),%edx
+  4038f2:	test   %rax,%rax
+  4038f5:	je     404548 <mem_worker+0xef8>
+  4038fb:	cmp    $0xc,%edx
+  4038fe:	ja     4039f0 <mem_worker+0x3a0>
+  403904:	lea    0x40e1(%rip),%rcx        # 4079ec <_IO_stdin_used+0x9ec>
+  40390b:	movslq (%rcx,%rdx,4),%rdx
+  40390f:	add    %rcx,%rdx
+  403912:	jmp    *%rdx
+  403914:	nopl   0x0(%rax)
+  403918:	cmpq   $0x0,0x50(%rsp)
+  40391e:	je     4039f0 <mem_worker+0x3a0>
+  403924:	mov    0x20(%rsp),%rax
+  403929:	mov    0x48(%rsp),%edx
+  40392d:	movabs $0x9e3779b97f4a7c15,%r11
+  403937:	lea    (%rax,%r11,1),%r8
+  40393b:	test   %edx,%edx
+  40393d:	jne    404d78 <mem_worker+0x1728>
+  403943:	mov    0x50(%rsp),%rax
+  403948:	mov    $0x40a030,%rdx
+  40394f:	xor    %ecx,%ecx
+  403951:	movabs $0xbf58476d1ce4e5b9,%r10
+  40395b:	movabs $0x94d049bb133111eb,%r9
+  403965:	lea    -0x1(%rax),%r11
+  403969:	nopl   0x0(%rax)
+  403970:	lea    (%rcx,%r8,1),%rax
+  403974:	mov    %rax,%rsi
+  403977:	shr    $0x1e,%rsi
+  40397b:	xor    %rax,%rsi
+  40397e:	imul   %r10,%rsi
+  403982:	mov    %rsi,%rax
+  403985:	shr    $0x1b,%rax
+  403989:	xor    %rsi,%rax
+  40398c:	imul   %r9,%rax
+  403990:	mov    %rax,%rdi
+  403993:	shr    $0x1f,%rdi
+  403997:	xor    %rax,%rdi
+  40399a:	mov    $0x40a010,%rax
+  4039a1:	mov    (%rax),%eax
+  4039a3:	test   %eax,%eax
+  4039a5:	jle    404c28 <mem_worker+0x15d8>
+  4039ab:	mov    $0x40a050,%rax
+  4039b2:	mov    (%rax),%rsi
+  4039b5:	mov    $0x40a040,%rax
+  4039bc:	mov    (%rax),%rax
+  4039bf:	and    %rdi,%rax
+  4039c2:	shl    $0x6,%rax
+  4039c6:	add    %rax,%rsi
+  4039c9:	mov    (%rdx),%eax
+  4039cb:	test   %eax,%eax
+  4039cd:	jg     404c08 <mem_worker+0x15b8>
+  4039d3:	vmovdqu64 (%rsi),%zmm1
+  4039d9:	inc    %rcx
+  4039dc:	vmovd  %xmm1,%eax
+  4039e0:	cltq   
+  4039e2:	add    %rax,%r14
+  4039e5:	cmp    %rcx,0x50(%rsp)
+  4039ea:	jne    402270 <mem_worker.cold>
+  4039f0:	decl   0x4c(%rsp)
+  4039f4:	jne    4038e0 <mem_worker+0x290>
+  4039fa:	mov    0x58(%rsp),%r15
+  4039ff:	rdtsc  
+  403a01:	shl    $0x20,%rdx
+  403a05:	or     %rdx,%rax
+  403a08:	sub    (%rsp),%rax
+  403a0c:	mov    %rax,0x48(%r15)
+  403a10:	mov    0x2c(%r15),%eax
+  403a14:	test   %eax,%eax
+  403a16:	je     40645d <mem_worker+0x2e0d>
+  403a1c:	mov    $0x40a060,%rdi
+  403a23:	vzeroupper 
+  403a26:	call   402090 <pthread_barrier_wait@plt>
+  403a2b:	mov    0x20(%r15),%rdi
+  403a2f:	mov    0x18(%r15),%rsi
+  403a33:	call   402190 <munmap@plt>
+  403a38:	xor    %edi,%edi
+  403a3a:	call   402160 <pthread_exit@plt>
+  403a3f:	nop
+  403a40:	mov    0x50(%rsp),%rbx
+  403a45:	test   %rbx,%rbx
+  403a48:	je     4039f0 <mem_worker+0x3a0>
+  403a4a:	mov    $0x40a010,%rdi
+  403a51:	mov    $0x40a030,%rdx
+  403a58:	mov    0x20(%rsp),%rsi
+  403a5d:	mov    0x48(%rsp),%r11d
+  403a62:	movabs $0x9e3779b97f4a7c15,%r8
+  403a6c:	mov    (%rdi),%r9d
+  403a6f:	mov    (%rdx),%r10d
+  403a72:	lea    (%rsi,%r8,1),%rcx
+  403a76:	mov    %rbx,%rdi
+  403a79:	test   %r11d,%r11d
+  403a7c:	jne    404ea0 <mem_worker+0x1850>
+  403a82:	add    %rbx,%r8
+  403a85:	add    %rsi,%r8
+  403a88:	movabs $0xbf58476d1ce4e5b9,%rbx
+  403a92:	mov    0x58(%rsp),%rsi
+  403a97:	movabs $0x94d049bb133111eb,%r11
+  403aa1:	lea    -0x1(%rdi),%r12
+  403aa5:	jmp    403adb <mem_worker+0x48b>
+  403aa7:	nopw   0x0(%rax,%rax,1)
+  403ab0:	mov    $0x40a040,%rdx
+  403ab7:	mov    %rax,%rdi
+  403aba:	mov    (%rdx),%rdx
+  403abd:	and    %r13,%rdx
+  403ac0:	shl    $0x6,%rdx
+  403ac4:	add    %rdx,%rdi
+  403ac7:	test   %r10d,%r10d
+  403aca:	jg     403b1c <mem_worker+0x4cc>
+  403acc:	add    (%rdi),%r14
+  403acf:	inc    %rcx
+  403ad2:	cmp    %rcx,%r8
+  403ad5:	je     4039f0 <mem_worker+0x3a0>
+  403adb:	mov    %rcx,%rdi
+  403ade:	shr    $0x1e,%rdi
+  403ae2:	xor    %rcx,%rdi
+  403ae5:	imul   %rbx,%rdi
+  403ae9:	mov    %rdi,%rdx
+  403aec:	shr    $0x1b,%rdx
+  403af0:	xor    %rdi,%rdx
+  403af3:	imul   %r11,%rdx
+  403af7:	mov    %rdx,%r13
+  403afa:	shr    $0x1f,%r13
+  403afe:	xor    %rdx,%r13
+  403b01:	test   %r9d,%r9d
+  403b04:	jg     403ab0 <mem_worker+0x460>
+  403b06:	mov    %r12,%rdx
+  403b09:	mov    0x20(%rsi),%rdi
+  403b0d:	and    %r13,%rdx
+  403b10:	shl    $0x6,%rdx
+  403b14:	add    %rdx,%rdi
+  403b17:	test   %r10d,%r10d
+  403b1a:	jle    403acc <mem_worker+0x47c>
+  403b1c:	movq   $0xff,(%rdi)
+  403b23:	jmp    403acf <mem_worker+0x47f>
+  403b25:	nopl   (%rax)
+  403b28:	cmpq   $0x0,0x50(%rsp)
+  403b2e:	je     4039f0 <mem_worker+0x3a0>
+  403b34:	mov    $0x40a010,%rbx
+  403b3b:	mov    $0x40a030,%rdx
+  403b42:	mov    (%rbx),%r9d
+  403b45:	mov    0x48(%rsp),%esi
+  403b49:	mov    0x20(%rsp),%rbx
+  403b4e:	movabs $0x9e3779b97f4a7c15,%r8
+  403b58:	mov    (%rdx),%r10d
+  403b5b:	lea    (%rbx,%r8,1),%rcx
+  403b5f:	test   %esi,%esi
+  403b61:	jne    404fa8 <mem_worker+0x1958>
+  403b67:	mov    0x50(%rsp),%rdi
+  403b6c:	mov    0x58(%rsp),%rsi
+  403b71:	add    %rdi,%r8
+  403b74:	add    %rbx,%r8
+  403b77:	movabs $0x94d049bb133111eb,%r11
+  403b81:	movabs $0xbf58476d1ce4e5b9,%rbx
+  403b8b:	lea    -0x1(%rdi),%r12
+  403b8f:	jmp    403bc3 <mem_worker+0x573>
+  403b91:	nopl   0x0(%rax)
+  403b98:	mov    $0x40a040,%rdx
+  403b9f:	mov    %rax,%rdi
+  403ba2:	mov    (%rdx),%rdx
+  403ba5:	and    %r13,%rdx
+  403ba8:	shl    $0x6,%rdx
+  403bac:	add    %rdx,%rdi
+  403baf:	test   %r10d,%r10d
+  403bb2:	jg     403c04 <mem_worker+0x5b4>
+  403bb4:	add    (%rdi),%r14
+  403bb7:	inc    %rcx
+  403bba:	cmp    %rcx,%r8
+  403bbd:	je     4039f0 <mem_worker+0x3a0>
+  403bc3:	mov    %rcx,%rdi
+  403bc6:	shr    $0x1e,%rdi
+  403bca:	xor    %rcx,%rdi
+  403bcd:	imul   %rbx,%rdi
+  403bd1:	mov    %rdi,%rdx
+  403bd4:	shr    $0x1b,%rdx
+  403bd8:	xor    %rdi,%rdx
+  403bdb:	imul   %r11,%rdx
+  403bdf:	mov    %rdx,%r13
+  403be2:	shr    $0x1f,%r13
+  403be6:	xor    %rdx,%r13
+  403be9:	test   %r9d,%r9d
+  403bec:	jg     403b98 <mem_worker+0x548>
+  403bee:	mov    %r12,%rdx
+  403bf1:	mov    0x20(%rsi),%rdi
+  403bf5:	and    %r13,%rdx
+  403bf8:	shl    $0x6,%rdx
+  403bfc:	add    %rdx,%rdi
+  403bff:	test   %r10d,%r10d
+  403c02:	jle    403bb4 <mem_worker+0x564>
+  403c04:	movq   $0xff,(%rdi)
+  403c0b:	jmp    403bb7 <mem_worker+0x567>
+  403c0d:	nopl   (%rax)
+  403c10:	cmpq   $0x0,0x50(%rsp)
+  403c16:	je     4039f0 <mem_worker+0x3a0>
+  403c1c:	mov    $0x40a010,%rbx
+  403c23:	mov    $0x40a030,%rdx
+  403c2a:	mov    (%rbx),%r12d
+  403c2d:	mov    (%rdx),%ebx
+  403c2f:	movabs $0x9e3779b97f4a7c15,%rdx
+  403c39:	mov    %ebx,0x40(%rsp)
+  403c3d:	mov    0x20(%rsp),%rbx
+  403c42:	mov    0x50(%rsp),%rsi
+  403c47:	lea    (%rbx,%rdx,1),%rdi
+  403c4b:	mov    0x10(%rsp),%rbx
+  403c50:	mov    %rax,0x28(%rsp)
+  403c55:	lea    (%rbx,%rdx,1),%r8
+  403c59:	add    %rsi,%rdx
+  403c5c:	add    %rbx,%rdx
+  403c5f:	dec    %rsi
+  403c62:	mov    %rdx,0x38(%rsp)
+  403c67:	mov    %rsi,0x30(%rsp)
+  403c6c:	mov    0x48(%rsp),%r10d
+  403c71:	movabs $0xbf58476d1ce4e5b9,%rbx
+  403c7b:	movabs $0x94d049bb133111eb,%r11
+  403c85:	jmp    403d92 <mem_worker+0x742>
+  403c8a:	nopw   0x0(%rax,%rax,1)
+  403c90:	mov    %r8,%rcx
+  403c93:	shr    $0x1e,%rcx
+  403c97:	xor    %r8,%rcx
+  403c9a:	imul   %rbx,%rcx
+  403c9e:	mov    %rcx,%rax
+  403ca1:	shr    $0x1b,%rax
+  403ca5:	xor    %rcx,%rax
+  403ca8:	imul   %r11,%rax
+  403cac:	mov    %rax,%rsi
+  403caf:	shr    $0x1f,%rsi
+  403cb3:	xor    %rax,%rsi
+  403cb6:	mov    %rsi,%rax
+  403cb9:	shr    $0xa,%rax
+  403cbd:	and    $0x3ff,%eax
+  403cc2:	and    $0x3ff,%esi
+  403cc8:	cmp    %eax,%r12d
+  403ccb:	jg     403dce <mem_worker+0x77e>
+  403cd1:	mov    0x58(%rsp),%rax
+  403cd6:	mov    0x20(%rax),%r13
+  403cda:	mov    0x30(%rsp),%rax
+  403cdf:	and    %rdx,%rax
+  403ce2:	lea    (%r15,%rdi,1),%rdx
+  403ce6:	mov    %rdx,%rcx
+  403ce9:	shr    $0x1e,%rcx
+  403ced:	xor    %rdx,%rcx
+  403cf0:	imul   %rbx,%rcx
+  403cf4:	mov    %rcx,%rdx
+  403cf7:	shr    $0x1b,%rdx
+  403cfb:	xor    %rcx,%rdx
+  403cfe:	imul   %r11,%rdx
+  403d02:	xor    %ecx,%ecx
+  403d04:	mov    %rdx,%r9
+  403d07:	shr    $0x1f,%r9
+  403d0b:	xor    %rdx,%r9
+  403d0e:	test   %r10d,%r10d
+  403d11:	je     403d47 <mem_worker+0x6f7>
+  403d13:	lea    (%r15,%r8,1),%rdx
+  403d17:	mov    %rdx,%rcx
+  403d1a:	shr    $0x1e,%rcx
+  403d1e:	xor    %rdx,%rcx
+  403d21:	imul   %rbx,%rcx
+  403d25:	mov    %rcx,%rdx
+  403d28:	shr    $0x1b,%rdx
+  403d2c:	xor    %rcx,%rdx
+  403d2f:	imul   %r11,%rdx
+  403d33:	mov    %rdx,%rcx
+  403d36:	shr    $0x1f,%rcx
+  403d3a:	xor    %rdx,%rcx
+  403d3d:	shr    $0xa,%rcx
+  403d41:	and    $0x3ff,%ecx
+  403d47:	cmp    %ecx,%r12d
+  403d4a:	jg     404b60 <mem_worker+0x1510>
+  403d50:	mov    0x58(%rsp),%rcx
+  403d55:	mov    0x30(%rsp),%rdx
+  403d5a:	mov    0x20(%rcx),%rcx
+  403d5e:	and    %r9,%rdx
+  403d61:	shl    $0x6,%rdx
+  403d65:	shl    $0x6,%rax
+  403d69:	prefetchw (%rcx,%rdx,1)
+  403d6d:	add    %r13,%rax
+  403d70:	cmp    %esi,0x40(%rsp)
+  403d74:	jle    404b58 <mem_worker+0x1508>
+  403d7a:	movq   $0xff,(%rax)
+  403d81:	inc    %r8
+  403d84:	inc    %rdi
+  403d87:	cmp    %r8,0x38(%rsp)
+  403d8c:	je     4039f0 <mem_worker+0x3a0>
+  403d92:	mov    %rdi,%rdx
+  403d95:	shr    $0x1e,%rdx
+  403d99:	xor    %rdi,%rdx
+  403d9c:	imul   %rbx,%rdx
+  403da0:	mov    %rdx,%rax
+  403da3:	shr    $0x1b,%rax
+  403da7:	xor    %rdx,%rax
+  403daa:	imul   %r11,%rax
+  403dae:	mov    %rax,%rdx
+  403db1:	shr    $0x1f,%rdx
+  403db5:	xor    %rax,%rdx
+  403db8:	test   %r10d,%r10d
+  403dbb:	jne    403c90 <mem_worker+0x640>
+  403dc1:	xor    %eax,%eax
+  403dc3:	xor    %esi,%esi
+  403dc5:	cmp    %eax,%r12d
+  403dc8:	jle    403cd1 <mem_worker+0x681>
+  403dce:	mov    $0x40a040,%rax
+  403dd5:	mov    0x28(%rsp),%r13
+  403dda:	mov    (%rax),%rax
+  403ddd:	jmp    403cdf <mem_worker+0x68f>
+  403de2:	nopw   0x0(%rax,%rax,1)
+  403de8:	cmpq   $0x0,0x50(%rsp)
+  403dee:	je     4039f0 <mem_worker+0x3a0>
+  403df4:	mov    $0x40a010,%rbx
+  403dfb:	mov    $0x40a030,%rdx
+  403e02:	mov    (%rbx),%r12d
+  403e05:	mov    (%rdx),%ebx
+  403e07:	movabs $0x9e3779b97f4a7c15,%rdx
+  403e11:	mov    %ebx,0x40(%rsp)
+  403e15:	mov    0x20(%rsp),%rbx
+  403e1a:	mov    0x50(%rsp),%rsi
+  403e1f:	lea    (%rbx,%rdx,1),%rdi
+  403e23:	mov    0x10(%rsp),%rbx
+  403e28:	mov    %rax,0x28(%rsp)
+  403e2d:	lea    (%rbx,%rdx,1),%r8
+  403e31:	add    %rsi,%rdx
+  403e34:	add    %rbx,%rdx
+  403e37:	dec    %rsi
+  403e3a:	mov    %rdx,0x38(%rsp)
+  403e3f:	mov    %rsi,0x30(%rsp)
+  403e44:	mov    0x48(%rsp),%r10d
+  403e49:	movabs $0xbf58476d1ce4e5b9,%rbx
+  403e53:	movabs $0x94d049bb133111eb,%r11
+  403e5d:	jmp    403f6a <mem_worker+0x91a>
+  403e62:	nopw   0x0(%rax,%rax,1)
+  403e68:	mov    %r8,%rcx
+  403e6b:	shr    $0x1e,%rcx
+  403e6f:	xor    %r8,%rcx
+  403e72:	imul   %rbx,%rcx
+  403e76:	mov    %rcx,%rax
+  403e79:	shr    $0x1b,%rax
+  403e7d:	xor    %rcx,%rax
+  403e80:	imul   %r11,%rax
+  403e84:	mov    %rax,%rsi
+  403e87:	shr    $0x1f,%rsi
+  403e8b:	xor    %rax,%rsi
+  403e8e:	mov    %rsi,%rax
+  403e91:	shr    $0xa,%rax
+  403e95:	and    $0x3ff,%eax
+  403e9a:	and    $0x3ff,%esi
+  403ea0:	cmp    %eax,%r12d
+  403ea3:	jg     403fa6 <mem_worker+0x956>
+  403ea9:	mov    0x58(%rsp),%rax
+  403eae:	mov    0x20(%rax),%r13
+  403eb2:	mov    0x30(%rsp),%rax
+  403eb7:	and    %rdx,%rax
+  403eba:	lea    (%r15,%rdi,1),%rdx
+  403ebe:	mov    %rdx,%rcx
+  403ec1:	shr    $0x1e,%rcx
+  403ec5:	xor    %rdx,%rcx
+  403ec8:	imul   %rbx,%rcx
+  403ecc:	mov    %rcx,%rdx
+  403ecf:	shr    $0x1b,%rdx
+  403ed3:	xor    %rcx,%rdx
+  403ed6:	imul   %r11,%rdx
+  403eda:	xor    %ecx,%ecx
+  403edc:	mov    %rdx,%r9
+  403edf:	shr    $0x1f,%r9
+  403ee3:	xor    %rdx,%r9
+  403ee6:	test   %r10d,%r10d
+  403ee9:	je     403f1f <mem_worker+0x8cf>
+  403eeb:	lea    (%r15,%r8,1),%rdx
+  403eef:	mov    %rdx,%rcx
+  403ef2:	shr    $0x1e,%rcx
+  403ef6:	xor    %rdx,%rcx
+  403ef9:	imul   %rbx,%rcx
+  403efd:	mov    %rcx,%rdx
+  403f00:	shr    $0x1b,%rdx
+  403f04:	xor    %rcx,%rdx
+  403f07:	imul   %r11,%rdx
+  403f0b:	mov    %rdx,%rcx
+  403f0e:	shr    $0x1f,%rcx
+  403f12:	xor    %rdx,%rcx
+  403f15:	shr    $0xa,%rcx
+  403f19:	and    $0x3ff,%ecx
+  403f1f:	cmp    %ecx,%r12d
+  403f22:	jg     404bc0 <mem_worker+0x1570>
+  403f28:	mov    0x58(%rsp),%rcx
+  403f2d:	mov    0x30(%rsp),%rdx
+  403f32:	mov    0x20(%rcx),%rcx
+  403f36:	and    %r9,%rdx
+  403f39:	shl    $0x6,%rdx
+  403f3d:	shl    $0x6,%rax
+  403f41:	add    %r13,%rax
+  403f44:	prefetchnta (%rcx,%rdx,1)
+  403f48:	cmp    %esi,0x40(%rsp)
+  403f4c:	jle    404bd8 <mem_worker+0x1588>
+  403f52:	movq   $0xff,(%rax)
+  403f59:	inc    %r8
+  403f5c:	inc    %rdi
+  403f5f:	cmp    0x38(%rsp),%r8
+  403f64:	je     4039f0 <mem_worker+0x3a0>
+  403f6a:	mov    %rdi,%rdx
+  403f6d:	shr    $0x1e,%rdx
+  403f71:	xor    %rdi,%rdx
+  403f74:	imul   %rbx,%rdx
+  403f78:	mov    %rdx,%rax
+  403f7b:	shr    $0x1b,%rax
+  403f7f:	xor    %rdx,%rax
+  403f82:	imul   %r11,%rax
+  403f86:	mov    %rax,%rdx
+  403f89:	shr    $0x1f,%rdx
+  403f8d:	xor    %rax,%rdx
+  403f90:	test   %r10d,%r10d
+  403f93:	jne    403e68 <mem_worker+0x818>
+  403f99:	xor    %eax,%eax
+  403f9b:	xor    %esi,%esi
+  403f9d:	cmp    %eax,%r12d
+  403fa0:	jle    403ea9 <mem_worker+0x859>
+  403fa6:	mov    $0x40a040,%rax
+  403fad:	mov    0x28(%rsp),%r13
+  403fb2:	mov    (%rax),%rax
+  403fb5:	jmp    403eb7 <mem_worker+0x867>
+  403fba:	nopw   0x0(%rax,%rax,1)
+  403fc0:	cmpq   $0x0,0x50(%rsp)
+  403fc6:	je     4039f0 <mem_worker+0x3a0>
+  403fcc:	mov    $0x40a010,%rbx
+  403fd3:	mov    $0x40a030,%rdx
+  403fda:	mov    (%rbx),%r12d
+  403fdd:	mov    (%rdx),%ebx
+  403fdf:	movabs $0x9e3779b97f4a7c15,%rdx
+  403fe9:	mov    %ebx,0x40(%rsp)
+  403fed:	mov    0x20(%rsp),%rbx
+  403ff2:	mov    0x50(%rsp),%rsi
+  403ff7:	lea    (%rbx,%rdx,1),%rdi
+  403ffb:	mov    0x10(%rsp),%rbx
+  404000:	mov    %rax,0x28(%rsp)
+  404005:	lea    (%rbx,%rdx,1),%r8
+  404009:	add    %rsi,%rdx
+  40400c:	add    %rbx,%rdx
+  40400f:	dec    %rsi
+  404012:	mov    %rdx,0x38(%rsp)
+  404017:	mov    %rsi,0x30(%rsp)
+  40401c:	mov    0x48(%rsp),%r10d
+  404021:	movabs $0xbf58476d1ce4e5b9,%rbx
+  40402b:	movabs $0x94d049bb133111eb,%r11
+  404035:	jmp    404142 <mem_worker+0xaf2>
+  40403a:	nopw   0x0(%rax,%rax,1)
+  404040:	mov    %r8,%rcx
+  404043:	shr    $0x1e,%rcx
+  404047:	xor    %r8,%rcx
+  40404a:	imul   %rbx,%rcx
+  40404e:	mov    %rcx,%rax
+  404051:	shr    $0x1b,%rax
+  404055:	xor    %rcx,%rax
+  404058:	imul   %r11,%rax
+  40405c:	mov    %rax,%rsi
+  40405f:	shr    $0x1f,%rsi
+  404063:	xor    %rax,%rsi
+  404066:	mov    %rsi,%rax
+  404069:	shr    $0xa,%rax
+  40406d:	and    $0x3ff,%eax
+  404072:	and    $0x3ff,%esi
+  404078:	cmp    %eax,%r12d
+  40407b:	jg     40417e <mem_worker+0xb2e>
+  404081:	mov    0x58(%rsp),%rax
+  404086:	mov    0x20(%rax),%r13
+  40408a:	mov    0x30(%rsp),%rax
+  40408f:	and    %rdx,%rax
+  404092:	lea    (%r15,%rdi,1),%rdx
+  404096:	mov    %rdx,%rcx
+  404099:	shr    $0x1e,%rcx
+  40409d:	xor    %rdx,%rcx
+  4040a0:	imul   %rbx,%rcx
+  4040a4:	mov    %rcx,%rdx
+  4040a7:	shr    $0x1b,%rdx
+  4040ab:	xor    %rcx,%rdx
+  4040ae:	imul   %r11,%rdx
+  4040b2:	xor    %ecx,%ecx
+  4040b4:	mov    %rdx,%r9
+  4040b7:	shr    $0x1f,%r9
+  4040bb:	xor    %rdx,%r9
+  4040be:	test   %r10d,%r10d
+  4040c1:	je     4040f7 <mem_worker+0xaa7>
+  4040c3:	lea    (%r15,%r8,1),%rdx
+  4040c7:	mov    %rdx,%rcx
+  4040ca:	shr    $0x1e,%rcx
+  4040ce:	xor    %rdx,%rcx
+  4040d1:	imul   %rbx,%rcx
+  4040d5:	mov    %rcx,%rdx
+  4040d8:	shr    $0x1b,%rdx
+  4040dc:	xor    %rcx,%rdx
+  4040df:	imul   %r11,%rdx
+  4040e3:	mov    %rdx,%rcx
+  4040e6:	shr    $0x1f,%rcx
+  4040ea:	xor    %rdx,%rcx
+  4040ed:	shr    $0xa,%rcx
+  4040f1:	and    $0x3ff,%ecx
+  4040f7:	cmp    %ecx,%r12d
+  4040fa:	jg     404bf0 <mem_worker+0x15a0>
+  404100:	mov    0x58(%rsp),%rcx
+  404105:	mov    0x30(%rsp),%rdx
+  40410a:	mov    0x20(%rcx),%rcx
+  40410e:	and    %r9,%rdx
+  404111:	shl    $0x6,%rdx
+  404115:	shl    $0x6,%rax
+  404119:	add    %r13,%rax
+  40411c:	prefetcht2 (%rcx,%rdx,1)
+  404120:	cmp    %esi,0x40(%rsp)
+  404124:	jle    404be0 <mem_worker+0x1590>
+  40412a:	movq   $0xff,(%rax)
+  404131:	inc    %r8
+  404134:	inc    %rdi
+  404137:	cmp    %r8,0x38(%rsp)
+  40413c:	je     4039f0 <mem_worker+0x3a0>
+  404142:	mov    %rdi,%rdx
+  404145:	shr    $0x1e,%rdx
+  404149:	xor    %rdi,%rdx
+  40414c:	imul   %rbx,%rdx
+  404150:	mov    %rdx,%rax
+  404153:	shr    $0x1b,%rax
+  404157:	xor    %rdx,%rax
+  40415a:	imul   %r11,%rax
+  40415e:	mov    %rax,%rdx
+  404161:	shr    $0x1f,%rdx
+  404165:	xor    %rax,%rdx
+  404168:	test   %r10d,%r10d
+  40416b:	jne    404040 <mem_worker+0x9f0>
+  404171:	xor    %eax,%eax
+  404173:	xor    %esi,%esi
+  404175:	cmp    %eax,%r12d
+  404178:	jle    404081 <mem_worker+0xa31>
+  40417e:	mov    $0x40a040,%rax
+  404185:	mov    0x28(%rsp),%r13
+  40418a:	mov    (%rax),%rax
+  40418d:	jmp    40408f <mem_worker+0xa3f>
+  404192:	nopw   0x0(%rax,%rax,1)
+  404198:	cmpq   $0x0,0x50(%rsp)
+  40419e:	je     4039f0 <mem_worker+0x3a0>
+  4041a4:	mov    $0x40a010,%rbx
+  4041ab:	mov    $0x40a030,%rdx
+  4041b2:	mov    (%rbx),%r12d
+  4041b5:	mov    (%rdx),%ebx
+  4041b7:	movabs $0x9e3779b97f4a7c15,%rdx
+  4041c1:	mov    %ebx,0x40(%rsp)
+  4041c5:	mov    0x20(%rsp),%rbx
+  4041ca:	mov    0x50(%rsp),%rsi
+  4041cf:	lea    (%rbx,%rdx,1),%rdi
+  4041d3:	mov    0x10(%rsp),%rbx
+  4041d8:	mov    %rax,0x28(%rsp)
+  4041dd:	lea    (%rbx,%rdx,1),%r8
+  4041e1:	add    %rsi,%rdx
+  4041e4:	add    %rbx,%rdx
+  4041e7:	dec    %rsi
+  4041ea:	mov    %rdx,0x38(%rsp)
+  4041ef:	mov    %rsi,0x30(%rsp)
+  4041f4:	mov    0x48(%rsp),%r10d
+  4041f9:	movabs $0xbf58476d1ce4e5b9,%rbx
+  404203:	movabs $0x94d049bb133111eb,%r11
+  40420d:	jmp    40431a <mem_worker+0xcca>
+  404212:	nopw   0x0(%rax,%rax,1)
+  404218:	mov    %r8,%rcx
+  40421b:	shr    $0x1e,%rcx
+  40421f:	xor    %r8,%rcx
+  404222:	imul   %rbx,%rcx
+  404226:	mov    %rcx,%rax
+  404229:	shr    $0x1b,%rax
+  40422d:	xor    %rcx,%rax
+  404230:	imul   %r11,%rax
+  404234:	mov    %rax,%rsi
+  404237:	shr    $0x1f,%rsi
+  40423b:	xor    %rax,%rsi
+  40423e:	mov    %rsi,%rax
+  404241:	shr    $0xa,%rax
+  404245:	and    $0x3ff,%eax
+  40424a:	and    $0x3ff,%esi
+  404250:	cmp    %eax,%r12d
+  404253:	jg     404356 <mem_worker+0xd06>
+  404259:	mov    0x58(%rsp),%rax
+  40425e:	mov    0x20(%rax),%r13
+  404262:	mov    0x30(%rsp),%rax
+  404267:	and    %rdx,%rax
+  40426a:	lea    (%r15,%rdi,1),%rdx
+  40426e:	mov    %rdx,%rcx
+  404271:	shr    $0x1e,%rcx
+  404275:	xor    %rdx,%rcx
+  404278:	imul   %rbx,%rcx
+  40427c:	mov    %rcx,%rdx
+  40427f:	shr    $0x1b,%rdx
+  404283:	xor    %rcx,%rdx
+  404286:	imul   %r11,%rdx
+  40428a:	xor    %ecx,%ecx
+  40428c:	mov    %rdx,%r9
+  40428f:	shr    $0x1f,%r9
+  404293:	xor    %rdx,%r9
+  404296:	test   %r10d,%r10d
+  404299:	je     4042cf <mem_worker+0xc7f>
+  40429b:	lea    (%r15,%r8,1),%rdx
+  40429f:	mov    %rdx,%rcx
+  4042a2:	shr    $0x1e,%rcx
+  4042a6:	xor    %rdx,%rcx
+  4042a9:	imul   %rbx,%rcx
+  4042ad:	mov    %rcx,%rdx
+  4042b0:	shr    $0x1b,%rdx
+  4042b4:	xor    %rcx,%rdx
+  4042b7:	imul   %r11,%rdx
+  4042bb:	mov    %rdx,%rcx
+  4042be:	shr    $0x1f,%rcx
+  4042c2:	xor    %rdx,%rcx
+  4042c5:	shr    $0xa,%rcx
+  4042c9:	and    $0x3ff,%ecx
+  4042cf:	cmp    %ecx,%r12d
+  4042d2:	jg     404ba8 <mem_worker+0x1558>
+  4042d8:	mov    0x58(%rsp),%rcx
+  4042dd:	mov    0x30(%rsp),%rdx
+  4042e2:	mov    0x20(%rcx),%rcx
+  4042e6:	and    %r9,%rdx
+  4042e9:	shl    $0x6,%rdx
+  4042ed:	shl    $0x6,%rax
+  4042f1:	add    %r13,%rax
+  4042f4:	prefetcht1 (%rcx,%rdx,1)
+  4042f8:	cmp    %esi,0x40(%rsp)
+  4042fc:	jle    404b78 <mem_worker+0x1528>
+  404302:	movq   $0xff,(%rax)
+  404309:	inc    %r8
+  40430c:	inc    %rdi
+  40430f:	cmp    %r8,0x38(%rsp)
+  404314:	je     4039f0 <mem_worker+0x3a0>
+  40431a:	mov    %rdi,%rdx
+  40431d:	shr    $0x1e,%rdx
+  404321:	xor    %rdi,%rdx
+  404324:	imul   %rbx,%rdx
+  404328:	mov    %rdx,%rax
+  40432b:	shr    $0x1b,%rax
+  40432f:	xor    %rdx,%rax
+  404332:	imul   %r11,%rax
+  404336:	mov    %rax,%rdx
+  404339:	shr    $0x1f,%rdx
+  40433d:	xor    %rax,%rdx
+  404340:	test   %r10d,%r10d
+  404343:	jne    404218 <mem_worker+0xbc8>
+  404349:	xor    %eax,%eax
+  40434b:	xor    %esi,%esi
+  40434d:	cmp    %eax,%r12d
+  404350:	jle    404259 <mem_worker+0xc09>
+  404356:	mov    $0x40a040,%rax
+  40435d:	mov    0x28(%rsp),%r13
+  404362:	mov    (%rax),%rax
+  404365:	jmp    404267 <mem_worker+0xc17>
+  40436a:	nopw   0x0(%rax,%rax,1)
+  404370:	cmpq   $0x0,0x50(%rsp)
+  404376:	je     4039f0 <mem_worker+0x3a0>
+  40437c:	mov    $0x40a010,%rbx
+  404383:	mov    $0x40a030,%rdx
+  40438a:	mov    (%rbx),%r12d
+  40438d:	mov    (%rdx),%ebx
+  40438f:	movabs $0x9e3779b97f4a7c15,%rdx
+  404399:	mov    %ebx,0x40(%rsp)
+  40439d:	mov    0x20(%rsp),%rbx
+  4043a2:	mov    0x50(%rsp),%rsi
+  4043a7:	lea    (%rbx,%rdx,1),%rdi
+  4043ab:	mov    0x10(%rsp),%rbx
+  4043b0:	mov    %rax,0x28(%rsp)
+  4043b5:	lea    (%rbx,%rdx,1),%r8
+  4043b9:	add    %rsi,%rdx
+  4043bc:	add    %rbx,%rdx
+  4043bf:	dec    %rsi
+  4043c2:	mov    %rdx,0x38(%rsp)
+  4043c7:	mov    %rsi,0x30(%rsp)
+  4043cc:	mov    0x48(%rsp),%r10d
+  4043d1:	movabs $0xbf58476d1ce4e5b9,%rbx
+  4043db:	movabs $0x94d049bb133111eb,%r11
+  4043e5:	jmp    4044f2 <mem_worker+0xea2>
+  4043ea:	nopw   0x0(%rax,%rax,1)
+  4043f0:	mov    %r8,%rcx
+  4043f3:	shr    $0x1e,%rcx
+  4043f7:	xor    %r8,%rcx
+  4043fa:	imul   %rbx,%rcx
+  4043fe:	mov    %rcx,%rax
+  404401:	shr    $0x1b,%rax
+  404405:	xor    %rcx,%rax
+  404408:	imul   %r11,%rax
+  40440c:	mov    %rax,%rsi
+  40440f:	shr    $0x1f,%rsi
+  404413:	xor    %rax,%rsi
+  404416:	mov    %rsi,%rax
+  404419:	shr    $0xa,%rax
+  40441d:	and    $0x3ff,%eax
+  404422:	and    $0x3ff,%esi
+  404428:	cmp    %eax,%r12d
+  40442b:	jg     40452e <mem_worker+0xede>
+  404431:	mov    0x58(%rsp),%rax
+  404436:	mov    0x20(%rax),%r13
+  40443a:	mov    0x30(%rsp),%rax
+  40443f:	and    %rdx,%rax
+  404442:	lea    (%r15,%rdi,1),%rdx
+  404446:	mov    %rdx,%rcx
+  404449:	shr    $0x1e,%rcx
+  40444d:	xor    %rdx,%rcx
+  404450:	imul   %rbx,%rcx
+  404454:	mov    %rcx,%rdx
+  404457:	shr    $0x1b,%rdx
+  40445b:	xor    %rcx,%rdx
+  40445e:	imul   %r11,%rdx
+  404462:	xor    %ecx,%ecx
+  404464:	mov    %rdx,%r9
+  404467:	shr    $0x1f,%r9
+  40446b:	xor    %rdx,%r9
+  40446e:	test   %r10d,%r10d
+  404471:	je     4044a7 <mem_worker+0xe57>
+  404473:	lea    (%r15,%r8,1),%rdx
+  404477:	mov    %rdx,%rcx
+  40447a:	shr    $0x1e,%rcx
+  40447e:	xor    %rdx,%rcx
+  404481:	imul   %rbx,%rcx
+  404485:	mov    %rcx,%rdx
+  404488:	shr    $0x1b,%rdx
+  40448c:	xor    %rcx,%rdx
+  40448f:	imul   %r11,%rdx
+  404493:	mov    %rdx,%rcx
+  404496:	shr    $0x1f,%rcx
+  40449a:	xor    %rdx,%rcx
+  40449d:	shr    $0xa,%rcx
+  4044a1:	and    $0x3ff,%ecx
+  4044a7:	cmp    %ecx,%r12d
+  4044aa:	jg     404b90 <mem_worker+0x1540>
+  4044b0:	mov    0x58(%rsp),%rcx
+  4044b5:	mov    0x30(%rsp),%rdx
+  4044ba:	mov    0x20(%rcx),%rcx
+  4044be:	and    %r9,%rdx
+  4044c1:	shl    $0x6,%rdx
+  4044c5:	shl    $0x6,%rax
+  4044c9:	add    %r13,%rax
+  4044cc:	prefetcht0 (%rcx,%rdx,1)
+  4044d0:	cmp    %esi,0x40(%rsp)
+  4044d4:	jle    404b80 <mem_worker+0x1530>
+  4044da:	movq   $0xff,(%rax)
+  4044e1:	inc    %r8
+  4044e4:	inc    %rdi
+  4044e7:	cmp    0x38(%rsp),%r8
+  4044ec:	je     4039f0 <mem_worker+0x3a0>
+  4044f2:	mov    %rdi,%rdx
+  4044f5:	shr    $0x1e,%rdx
+  4044f9:	xor    %rdi,%rdx
+  4044fc:	imul   %rbx,%rdx
+  404500:	mov    %rdx,%rax
+  404503:	shr    $0x1b,%rax
+  404507:	xor    %rdx,%rax
+  40450a:	imul   %r11,%rax
+  40450e:	mov    %rax,%rdx
+  404511:	shr    $0x1f,%rdx
+  404515:	xor    %rax,%rdx
+  404518:	test   %r10d,%r10d
+  40451b:	jne    4043f0 <mem_worker+0xda0>
+  404521:	xor    %eax,%eax
+  404523:	xor    %esi,%esi
+  404525:	cmp    %eax,%r12d
+  404528:	jle    404431 <mem_worker+0xde1>
+  40452e:	mov    $0x40a040,%rax
+  404535:	mov    0x28(%rsp),%r13
+  40453a:	mov    (%rax),%rax
+  40453d:	jmp    40443f <mem_worker+0xdef>
+  404542:	nopw   0x0(%rax,%rax,1)
+  404548:	cmp    $0xc,%edx
+  40454b:	ja     4039f0 <mem_worker+0x3a0>
+  404551:	lea    0x34c8(%rip),%rcx        # 407a20 <_IO_stdin_used+0xa20>
+  404558:	mov    %edx,%eax
+  40455a:	movslq (%rcx,%rax,4),%rax
+  40455e:	add    %rcx,%rax
+  404561:	jmp    *%rax
+  404563:	nopl   0x0(%rax,%rax,1)
+  404568:	mov    0x58(%rsp),%rax
+  40456d:	mov    0x2c(%rax),%r10d
+  404571:	test   %r10d,%r10d
+  404574:	jne    4064a3 <mem_worker+0x2e53>
+  40457a:	mov    0x40(%rax),%eax
+  40457d:	cmp    $0xa,%edx
+  404580:	je     405458 <mem_worker+0x1e08>
+  404586:	cmp    $0x20,%eax
+  404589:	jg     4049cf <mem_worker+0x137f>
+  40458f:	test   %eax,%eax
+  404591:	js     4053f0 <mem_worker+0x1da0>
+  404597:	cmp    $0x20,%eax
+  40459a:	ja     4053f0 <mem_worker+0x1da0>
+  4045a0:	lea    0x34ad(%rip),%rdx        # 407a54 <_IO_stdin_used+0xa54>
+  4045a7:	movslq (%rdx,%rax,4),%rax
+  4045ab:	add    %rdx,%rax
+  4045ae:	jmp    *%rax
+  4045b0:	mov    0x58(%rsp),%rax
+  4045b5:	mov    0x2c(%rax),%ebx
+  4045b8:	test   %ebx,%ebx
+  4045ba:	jne    405380 <mem_worker+0x1d30>
+  4045c0:	mov    0x50(%rsp),%r9
+  4045c5:	test   %r9,%r9
+  4045c8:	je     40646d <mem_worker+0x2e1d>
+  4045ce:	mov    0x20(%rax),%rsi
+  4045d2:	lea    -0x1(%r9),%rdi
+  4045d6:	xor    %ecx,%ecx
+  4045d8:	cmp    $0x8,%edx
+  4045db:	je     4056b1 <mem_worker+0x2061>
+  4045e1:	mov    0x18(%rsp),%r8
+  4045e6:	mov    $0x55,%eax
+  4045eb:	kmovb  %eax,%k1
+  4045ef:	nop
+  4045f0:	mov    %r8,%rax
+  4045f3:	crc32  %rcx,%rax
+  4045f9:	and    %rdi,%rax
+  4045fc:	shl    $0x6,%rax
+  404600:	vmovdqu64 (%rsi,%rax,1),%zmm1
+  404607:	lea    (%r15,%rcx,1),%r10
+  40460b:	mov    %r8,%rdx
+  40460e:	vpcmpequq %zmm4,%zmm1,%k0{%k1}
+  404615:	crc32  %r10,%rdx
+  40461b:	and    %rdi,%rdx
+  40461e:	shl    $0x6,%rdx
+  404622:	inc    %rcx
+  404625:	kmovb  %k0,%eax
+  404629:	prefetcht1 (%rsi,%rdx,1)
+  40462d:	popcnt %eax,%eax
+  404631:	add    %rax,%r14
+  404634:	cmp    %rcx,%r9
+  404637:	jne    4045f0 <mem_worker+0xfa0>
+  404639:	vpxor  %xmm2,%xmm2,%xmm2
+  40463d:	vmovq  %xmm2,%rax
+  404642:	add    %rax,%r14
+  404645:	jmp    4039f0 <mem_worker+0x3a0>
+  40464a:	nopw   0x0(%rax,%rax,1)
+  404650:	mov    0x58(%rsp),%rax
+  404655:	mov    0x2c(%rax),%ecx
+  404658:	test   %ecx,%ecx
+  40465a:	jne    405320 <mem_worker+0x1cd0>
+  404660:	mov    0x50(%rsp),%r10
+  404665:	test   %r10,%r10
+  404668:	je     4039f0 <mem_worker+0x3a0>
+  40466e:	mov    0x20(%rax),%rdi
+  404672:	mov    0x18(%rsp),%r8
+  404677:	lea    -0x1(%r10),%rsi
+  40467b:	xor    %ecx,%ecx
+  40467d:	nopl   (%rax)
+  404680:	lea    (%r15,%rcx,1),%r9
+  404684:	mov    %r8,%rax
+  404687:	mov    %r8,%rdx
+  40468a:	crc32  %rcx,%rax
+  404690:	crc32  %r9,%rdx
+  404696:	and    %rsi,%rdx
+  404699:	and    %rsi,%rax
+  40469c:	shl    $0x6,%rdx
+  4046a0:	shl    $0x6,%rax
+  4046a4:	inc    %rcx
+  4046a7:	prefetchw (%rdi,%rdx,1)
+  4046ab:	add    (%rdi,%rax,1),%r14
+  4046af:	cmp    %rcx,%r10
+  4046b2:	jne    404680 <mem_worker+0x1030>
+  4046b4:	jmp    4039f0 <mem_worker+0x3a0>
+  4046b9:	nopl   0x0(%rax)
+  4046c0:	mov    0x58(%rsp),%rax
+  4046c5:	mov    0x2c(%rax),%esi
+  4046c8:	test   %esi,%esi
+  4046ca:	jne    4052c0 <mem_worker+0x1c70>
+  4046d0:	mov    0x50(%rsp),%r10
+  4046d5:	test   %r10,%r10
+  4046d8:	je     4039f0 <mem_worker+0x3a0>
+  4046de:	mov    0x20(%rax),%rdi
+  4046e2:	mov    0x18(%rsp),%r8
+  4046e7:	lea    -0x1(%r10),%rsi
+  4046eb:	xor    %ecx,%ecx
+  4046ed:	nopl   (%rax)
+  4046f0:	lea    (%r15,%rcx,1),%r9
+  4046f4:	mov    %r8,%rax
+  4046f7:	mov    %r8,%rdx
+  4046fa:	crc32  %rcx,%rax
+  404700:	crc32  %r9,%rdx
+  404706:	and    %rsi,%rdx
+  404709:	and    %rsi,%rax
+  40470c:	shl    $0x6,%rdx
+  404710:	shl    $0x6,%rax
+  404714:	inc    %rcx
+  404717:	add    (%rdi,%rax,1),%r14
+  40471b:	prefetchnta (%rdi,%rdx,1)
+  40471f:	cmp    %rcx,%r10
+  404722:	jne    4046f0 <mem_worker+0x10a0>
+  404724:	jmp    4039f0 <mem_worker+0x3a0>
+  404729:	nopl   0x0(%rax)
+  404730:	mov    0x58(%rsp),%rax
+  404735:	mov    0x2c(%rax),%edi
+  404738:	test   %edi,%edi
+  40473a:	jne    405260 <mem_worker+0x1c10>
+  404740:	mov    0x50(%rsp),%r10
+  404745:	test   %r10,%r10
+  404748:	je     4039f0 <mem_worker+0x3a0>
+  40474e:	mov    0x20(%rax),%rdi
+  404752:	mov    0x18(%rsp),%r8
+  404757:	lea    -0x1(%r10),%rsi
+  40475b:	xor    %ecx,%ecx
+  40475d:	nopl   (%rax)
+  404760:	lea    (%r15,%rcx,1),%r9
+  404764:	mov    %r8,%rax
+  404767:	mov    %r8,%rdx
+  40476a:	crc32  %rcx,%rax
+  404770:	crc32  %r9,%rdx
+  404776:	and    %rsi,%rdx
+  404779:	and    %rsi,%rax
+  40477c:	shl    $0x6,%rdx
+  404780:	shl    $0x6,%rax
+  404784:	inc    %rcx
+  404787:	add    (%rdi,%rax,1),%r14
+  40478b:	prefetcht2 (%rdi,%rdx,1)
+  40478f:	cmp    %rcx,%r10
+  404792:	jne    404760 <mem_worker+0x1110>
+  404794:	jmp    4039f0 <mem_worker+0x3a0>
+  404799:	nopl   0x0(%rax)
+  4047a0:	mov    0x58(%rsp),%rax
+  4047a5:	mov    0x2c(%rax),%r8d
+  4047a9:	test   %r8d,%r8d
+  4047ac:	jne    405200 <mem_worker+0x1bb0>
+  4047b2:	mov    0x50(%rsp),%r10
+  4047b7:	test   %r10,%r10
+  4047ba:	je     4039f0 <mem_worker+0x3a0>
+  4047c0:	mov    0x20(%rax),%rdi
+  4047c4:	mov    0x18(%rsp),%r8
+  4047c9:	lea    -0x1(%r10),%rsi
+  4047cd:	xor    %ecx,%ecx
+  4047cf:	nop
+  4047d0:	lea    (%r15,%rcx,1),%r9
+  4047d4:	mov    %r8,%rax
+  4047d7:	mov    %r8,%rdx
+  4047da:	crc32  %rcx,%rax
+  4047e0:	crc32  %r9,%rdx
+  4047e6:	and    %rsi,%rdx
+  4047e9:	and    %rsi,%rax
+  4047ec:	shl    $0x6,%rdx
+  4047f0:	shl    $0x6,%rax
+  4047f4:	inc    %rcx
+  4047f7:	add    (%rdi,%rax,1),%r14
+  4047fb:	prefetcht1 (%rdi,%rdx,1)
+  4047ff:	cmp    %rcx,%r10
+  404802:	jne    4047d0 <mem_worker+0x1180>
+  404804:	jmp    4039f0 <mem_worker+0x3a0>
+  404809:	nopl   0x0(%rax)
+  404810:	mov    0x58(%rsp),%rax
+  404815:	mov    0x2c(%rax),%r9d
+  404819:	test   %r9d,%r9d
+  40481c:	jne    4051a0 <mem_worker+0x1b50>
+  404822:	mov    0x50(%rsp),%r10
+  404827:	test   %r10,%r10
+  40482a:	je     4039f0 <mem_worker+0x3a0>
+  404830:	mov    0x20(%rax),%rdi
+  404834:	mov    0x18(%rsp),%r8
+  404839:	lea    -0x1(%r10),%rsi
+  40483d:	xor    %ecx,%ecx
+  40483f:	nop
+  404840:	lea    (%r15,%rcx,1),%r9
+  404844:	mov    %r8,%rax
+  404847:	mov    %r8,%rdx
+  40484a:	crc32  %rcx,%rax
+  404850:	crc32  %r9,%rdx
+  404856:	and    %rsi,%rdx
+  404859:	and    %rsi,%rax
+  40485c:	shl    $0x6,%rdx
+  404860:	shl    $0x6,%rax
+  404864:	inc    %rcx
+  404867:	add    (%rdi,%rax,1),%r14
+  40486b:	prefetcht0 (%rdi,%rdx,1)
+  40486f:	cmp    %rcx,%r10
+  404872:	jne    404840 <mem_worker+0x11f0>
+  404874:	jmp    4039f0 <mem_worker+0x3a0>
+  404879:	nopl   0x0(%rax)
+  404880:	mov    0x58(%rsp),%rax
+  404885:	mov    0x2c(%rax),%r12d
+  404889:	test   %r12d,%r12d
+  40488c:	jne    405148 <mem_worker+0x1af8>
+  404892:	mov    0x50(%rsp),%rdi
+  404897:	test   %rdi,%rdi
+  40489a:	je     4039f0 <mem_worker+0x3a0>
+  4048a0:	mov    0x20(%rax),%rsi
+  4048a4:	mov    0x18(%rsp),%r8
+  4048a9:	lea    -0x1(%rdi),%rcx
+  4048ad:	xor    %edx,%edx
+  4048af:	nop
+  4048b0:	mov    %r8,%rax
+  4048b3:	crc32  %rdx,%rax
+  4048b9:	and    %rcx,%rax
+  4048bc:	shl    $0x6,%rax
+  4048c0:	vmovdqu64 (%rsi,%rax,1),%zmm1
+  4048c7:	inc    %rdx
+  4048ca:	vmovd  %xmm1,%eax
+  4048ce:	cltq   
+  4048d0:	add    %rax,%r14
+  4048d3:	cmp    %rdx,%rdi
+  4048d6:	jne    4048b0 <mem_worker+0x1260>
+  4048d8:	jmp    4039f0 <mem_worker+0x3a0>
+  4048dd:	nopl   (%rax)
+  4048e0:	mov    0x58(%rsp),%rax
+  4048e5:	mov    0x2c(%rax),%r13d
+  4048e9:	test   %r13d,%r13d
+  4048ec:	jne    405100 <mem_worker+0x1ab0>
+  4048f2:	mov    0x50(%rsp),%rdi
+  4048f7:	test   %rdi,%rdi
+  4048fa:	je     4039f0 <mem_worker+0x3a0>
+  404900:	mov    0x20(%rax),%rsi
+  404904:	mov    0x18(%rsp),%r8
+  404909:	lea    -0x1(%rdi),%rcx
+  40490d:	xor    %edx,%edx
+  40490f:	nop
+  404910:	mov    %r8,%rax
+  404913:	crc32  %rdx,%rax
+  404919:	and    %rcx,%rax
+  40491c:	shl    $0x6,%rax
+  404920:	inc    %rdx
+  404923:	add    (%rsi,%rax,1),%r14
+  404927:	cmp    %rdx,%rdi
+  40492a:	jne    404910 <mem_worker+0x12c0>
+  40492c:	jmp    4039f0 <mem_worker+0x3a0>
+  404931:	nopl   0x0(%rax)
+  404938:	mov    0x58(%rsp),%rax
+  40493d:	mov    0x2c(%rax),%edx
+  404940:	test   %edx,%edx
+  404942:	jne    4050b0 <mem_worker+0x1a60>
+  404948:	mov    0x50(%rsp),%rdi
+  40494d:	test   %rdi,%rdi
+  404950:	je     4039f0 <mem_worker+0x3a0>
+  404956:	mov    0x20(%rax),%rsi
+  40495a:	mov    0x18(%rsp),%r8
+  40495f:	lea    -0x1(%rdi),%rcx
+  404963:	xor    %edx,%edx
+  404965:	nopl   (%rax)
+  404968:	mov    %r8,%rax
+  40496b:	crc32  %rdx,%rax
+  404971:	and    %rcx,%rax
+  404974:	shl    $0x6,%rax
+  404978:	inc    %rdx
+  40497b:	add    (%rsi,%rax,1),%r14
+  40497f:	cmp    %rdx,%rdi
+  404982:	jne    404968 <mem_worker+0x1318>
+  404984:	jmp    4039f0 <mem_worker+0x3a0>
+  404989:	nopl   0x0(%rax)
+  404990:	mov    0x58(%rsp),%rax
+  404995:	mov    0x2c(%rax),%r11d
+  404999:	test   %r11d,%r11d
+  40499c:	jne    406476 <mem_worker+0x2e26>
+  4049a2:	mov    0x40(%rax),%eax
+  4049a5:	cmp    $0x20,%eax
+  4049a8:	jg     404c39 <mem_worker+0x15e9>
+  4049ae:	test   %eax,%eax
+  4049b0:	js     4053f0 <mem_worker+0x1da0>
+  4049b6:	cmp    $0x20,%eax
+  4049b9:	ja     4053f0 <mem_worker+0x1da0>
+  4049bf:	lea    0x3112(%rip),%rdx        # 407ad8 <_IO_stdin_used+0xad8>
+  4049c6:	movslq (%rdx,%rax,4),%rax
+  4049ca:	add    %rdx,%rax
+  4049cd:	jmp    *%rax
+  4049cf:	cmp    $0x30,%eax
+  4049d2:	jne    4053f0 <mem_worker+0x1da0>
+  4049d8:	cmpq   $0x0,0x50(%rsp)
+  4049de:	je     4056a4 <mem_worker+0x2054>
+  4049e4:	mov    0x58(%rsp),%rax
+  4049e9:	mov    %r15,0x40(%rsp)
+  4049ee:	mov    0x20(%rax),%rax
+  4049f2:	xor    %r13d,%r13d
+  4049f5:	mov    %rax,0x38(%rsp)
+  4049fa:	mov    0x50(%rsp),%rax
+  4049ff:	mov    $0x8,%r12d
+  404a05:	lea    -0x1(%rax),%rcx
+  404a09:	mov    $0x7,%ebx
+  404a0e:	mov    $0x6,%r11d
+  404a14:	mov    $0x5,%r8d
+  404a1a:	mov    $0x4,%r9d
+  404a20:	mov    $0x3,%r10d
+  404a26:	mov    $0x2,%edx
+  404a2b:	mov    $0x1,%eax
+  404a30:	mov    0x18(%rsp),%rdi
+  404a35:	mov    0x40(%rsp),%r15
+  404a3a:	mov    %rdi,%rsi
+  404a3d:	add    %r13,%r15
+  404a40:	crc32  %r13,%rsi
+  404a46:	crc32  %r15,%rdi
+  404a4c:	and    %rcx,%rdi
+  404a4f:	mov    0x38(%rsp),%r15
+  404a54:	and    %rcx,%rsi
+  404a57:	shl    $0x6,%rdi
+  404a5b:	shl    $0x6,%rsi
+  404a5f:	add    (%r15,%rsi,1),%r14
+  404a63:	prefetcht1 (%r15,%rdi,1)
+  404a68:	add    $0x1,%rax
+  404a6c:	add    $0x1,%rdx
+  404a70:	add    $0x1,%r10
+  404a74:	add    $0x1,%r9
+  404a78:	add    $0x1,%r8
+  404a7c:	add    $0x1,%r11
+  404a80:	add    $0x1,%rbx
+  404a84:	add    $0x1,%r12
+  404a88:	add    $0x1,%rax
+  404a8c:	add    $0x1,%rdx
+  404a90:	add    $0x1,%r10
+  404a94:	add    $0x1,%r9
+  404a98:	add    $0x1,%r8
+  404a9c:	add    $0x1,%r11
+  404aa0:	add    $0x1,%rbx
+  404aa4:	add    $0x1,%r12
+  404aa8:	add    $0x1,%rax
+  404aac:	add    $0x1,%rdx
+  404ab0:	add    $0x1,%r10
+  404ab4:	add    $0x1,%r9
+  404ab8:	add    $0x1,%r8
+  404abc:	add    $0x1,%r11
+  404ac0:	add    $0x1,%rbx
+  404ac4:	add    $0x1,%r12
+  404ac8:	add    $0x1,%rax
+  404acc:	add    $0x1,%rdx
+  404ad0:	add    $0x1,%r10
+  404ad4:	add    $0x1,%r9
+  404ad8:	add    $0x1,%r8
+  404adc:	add    $0x1,%r11
+  404ae0:	add    $0x1,%rbx
+  404ae4:	add    $0x1,%r12
+  404ae8:	add    $0x1,%rax
+  404aec:	add    $0x1,%rdx
+  404af0:	add    $0x1,%r10
+  404af4:	add    $0x1,%r9
+  404af8:	add    $0x1,%r8
+  404afc:	add    $0x1,%r11
+  404b00:	add    $0x1,%rbx
+  404b04:	add    $0x1,%r12
+  404b08:	add    $0x1,%rax
+  404b0c:	add    $0x1,%rdx
+  404b10:	add    $0x1,%r10
+  404b14:	add    $0x1,%r9
+  404b18:	add    $0x1,%r8
+  404b1c:	add    $0x1,%r11
+  404b20:	add    $0x1,%rbx
+  404b24:	add    $0x1,%r12
+  404b28:	inc    %r13
+  404b2b:	cmp    %r13,0x50(%rsp)
+  404b30:	jne    404a30 <mem_worker+0x13e0>
+  404b36:	xor    %rdx,%rax
+  404b39:	xor    %r10,%rax
+  404b3c:	xor    %r9,%rax
+  404b3f:	xor    %r8,%rax
+  404b42:	xor    %r11,%rax
+  404b45:	xor    %rbx,%rax
+  404b48:	mov    0x40(%rsp),%r15
+  404b4d:	xor    %r12,%rax
+  404b50:	jmp    4056a9 <mem_worker+0x2059>
+  404b55:	nopl   (%rax)
+  404b58:	add    (%rax),%r14
+  404b5b:	jmp    403d81 <mem_worker+0x731>
+  404b60:	mov    $0x40a040,%rdx
+  404b67:	mov    0x28(%rsp),%rcx
+  404b6c:	mov    (%rdx),%rdx
+  404b6f:	jmp    403d5e <mem_worker+0x70e>
+  404b74:	nopl   0x0(%rax)
+  404b78:	add    (%rax),%r14
+  404b7b:	jmp    404309 <mem_worker+0xcb9>
+  404b80:	add    (%rax),%r14
+  404b83:	jmp    4044e1 <mem_worker+0xe91>
+  404b88:	nopl   0x0(%rax,%rax,1)
+  404b90:	mov    $0x40a040,%rdx
+  404b97:	mov    0x28(%rsp),%rcx
+  404b9c:	mov    (%rdx),%rdx
+  404b9f:	jmp    4044be <mem_worker+0xe6e>
+  404ba4:	nopl   0x0(%rax)
+  404ba8:	mov    $0x40a040,%rdx
+  404baf:	mov    0x28(%rsp),%rcx
+  404bb4:	mov    (%rdx),%rdx
+  404bb7:	jmp    4042e6 <mem_worker+0xc96>
+  404bbc:	nopl   0x0(%rax)
+  404bc0:	mov    $0x40a040,%rdx
+  404bc7:	mov    0x28(%rsp),%rcx
+  404bcc:	mov    (%rdx),%rdx
+  404bcf:	jmp    403f36 <mem_worker+0x8e6>
+  404bd4:	nopl   0x0(%rax)
+  404bd8:	add    (%rax),%r14
+  404bdb:	jmp    403f59 <mem_worker+0x909>
+  404be0:	add    (%rax),%r14
+  404be3:	jmp    404131 <mem_worker+0xae1>
+  404be8:	nopl   0x0(%rax,%rax,1)
+  404bf0:	mov    $0x40a040,%rdx
+  404bf7:	mov    0x28(%rsp),%rcx
+  404bfc:	mov    (%rdx),%rdx
+  404bff:	jmp    40410e <mem_worker+0xabe>
+  404c04:	nopl   0x0(%rax)
+  404c08:	inc    %rcx
+  404c0b:	vmovdqu64 %zmm0,(%rsi)
+  404c11:	cmp    %rcx,0x50(%rsp)
+  404c16:	jne    403970 <mem_worker+0x320>
+  404c1c:	jmp    4039f0 <mem_worker+0x3a0>
+  404c21:	nopl   0x0(%rax)
+  404c28:	mov    0x58(%rsp),%rax
+  404c2d:	mov    0x20(%rax),%rsi
+  404c31:	mov    %r11,%rax
+  404c34:	jmp    4039bf <mem_worker+0x36f>
+  404c39:	cmp    $0x30,%eax
+  404c3c:	jne    4053f0 <mem_worker+0x1da0>
+  404c42:	cmpq   $0x0,0x50(%rsp)
+  404c48:	je     4039f0 <mem_worker+0x3a0>
+  404c4e:	mov    0x58(%rsp),%rax
+  404c53:	mov    0x50(%rsp),%r8
+  404c58:	mov    0x20(%rax),%rdi
+  404c5c:	mov    0x18(%rsp),%rdx
+  404c61:	lea    -0x1(%r8),%rsi
+  404c65:	xor    %ecx,%ecx
+  404c67:	nopw   0x0(%rax,%rax,1)
+  404c70:	mov    %rdx,%rax
+  404c73:	lea    (%r15,%rcx,1),%r10
+  404c77:	mov    %rdx,%r9
+  404c7a:	crc32  %rcx,%rax
+  404c80:	crc32  %r10,%r9
+  404c86:	and    %rsi,%r9
+  404c89:	and    %rsi,%rax
+  404c8c:	shl    $0x6,%r9
+  404c90:	shl    $0x6,%rax
+  404c94:	mov    (%rdi,%rax,1),%rax
+  404c98:	prefetcht1 (%rdi,%r9,1)
+  404c9d:	add    $0x1,%rax
+  404ca1:	add    $0x1,%rax
+  404ca5:	add    $0x1,%rax
+  404ca9:	add    $0x1,%rax
+  404cad:	add    $0x1,%rax
+  404cb1:	add    $0x1,%rax
+  404cb5:	add    $0x1,%rax
+  404cb9:	add    $0x1,%rax
+  404cbd:	add    $0x1,%rax
+  404cc1:	add    $0x1,%rax
+  404cc5:	add    $0x1,%rax
+  404cc9:	add    $0x1,%rax
+  404ccd:	add    $0x1,%rax
+  404cd1:	add    $0x1,%rax
+  404cd5:	add    $0x1,%rax
+  404cd9:	add    $0x1,%rax
+  404cdd:	add    $0x1,%rax
+  404ce1:	add    $0x1,%rax
+  404ce5:	add    $0x1,%rax
+  404ce9:	add    $0x1,%rax
+  404ced:	add    $0x1,%rax
+  404cf1:	add    $0x1,%rax
+  404cf5:	add    $0x1,%rax
+  404cf9:	add    $0x1,%rax
+  404cfd:	add    $0x1,%rax
+  404d01:	add    $0x1,%rax
+  404d05:	add    $0x1,%rax
+  404d09:	add    $0x1,%rax
+  404d0d:	add    $0x1,%rax
+  404d11:	add    $0x1,%rax
+  404d15:	add    $0x1,%rax
+  404d19:	add    $0x1,%rax
+  404d1d:	add    $0x1,%rax
+  404d21:	add    $0x1,%rax
+  404d25:	add    $0x1,%rax
+  404d29:	add    $0x1,%rax
+  404d2d:	add    $0x1,%rax
+  404d31:	add    $0x1,%rax
+  404d35:	add    $0x1,%rax
+  404d39:	add    $0x1,%rax
+  404d3d:	add    $0x1,%rax
+  404d41:	add    $0x1,%rax
+  404d45:	add    $0x1,%rax
+  404d49:	add    $0x1,%rax
+  404d4d:	add    $0x1,%rax
+  404d51:	add    $0x1,%rax
+  404d55:	add    $0x1,%rax
+  404d59:	add    $0x1,%rax
+  404d5d:	inc    %rcx
+  404d60:	add    %rax,%r14
+  404d63:	cmp    %rcx,%r8
+  404d66:	jne    404c70 <mem_worker+0x1620>
+  404d6c:	jmp    4039f0 <mem_worker+0x3a0>
+  404d71:	nopl   0x0(%rax)
+  404d78:	mov    0x50(%rsp),%rsi
+  404d7d:	mov    %rbx,%r10
+  404d80:	mov    0x10(%rsp),%rbx
+  404d85:	mov    %rax,%rdi
+  404d88:	sub    %rbx,%rdi
+  404d8b:	lea    (%rbx,%r11,1),%rax
+  404d8f:	add    %rsi,%r11
+  404d92:	add    %rbx,%r11
+  404d95:	mov    $0x40a030,%rdx
+  404d9c:	mov    %rdi,%rbx
+  404d9f:	movabs $0xbf58476d1ce4e5b9,%r9
+  404da9:	movabs $0x94d049bb133111eb,%r8
+  404db3:	lea    -0x1(%rsi),%r12
+  404db7:	jmp    404dec <mem_worker+0x179c>
+  404db9:	nopl   0x0(%rax)
+  404dc0:	mov    %r12,%rcx
+  404dc3:	mov    0x20(%r10),%r13
+  404dc7:	and    %rsi,%rcx
+  404dca:	shl    $0x6,%rcx
+  404dce:	add    %rcx,%r13
+  404dd1:	cmp    %edi,(%rdx)
+  404dd3:	jle    404e85 <mem_worker+0x1835>
+  404dd9:	vmovdqu64 %zmm0,0x0(%r13)
+  404de0:	inc    %rax
+  404de3:	cmp    %rax,%r11
+  404de6:	je     4039f0 <mem_worker+0x3a0>
+  404dec:	lea    (%rbx,%rax,1),%rcx
+  404df0:	mov    %rcx,%rsi
+  404df3:	shr    $0x1e,%rsi
+  404df7:	xor    %rcx,%rsi
+  404dfa:	imul   %r9,%rsi
+  404dfe:	mov    $0x40a010,%r13
+  404e05:	mov    %rsi,%rcx
+  404e08:	shr    $0x1b,%rcx
+  404e0c:	xor    %rsi,%rcx
+  404e0f:	imul   %r8,%rcx
+  404e13:	mov    %rcx,%rsi
+  404e16:	shr    $0x1f,%rsi
+  404e1a:	xor    %rcx,%rsi
+  404e1d:	mov    %rax,%rcx
+  404e20:	shr    $0x1e,%rcx
+  404e24:	xor    %rax,%rcx
+  404e27:	imul   %r9,%rcx
+  404e2b:	mov    %rcx,%rdi
+  404e2e:	shr    $0x1b,%rdi
+  404e32:	xor    %rcx,%rdi
+  404e35:	imul   %r8,%rdi
+  404e39:	mov    %rdi,%rcx
+  404e3c:	shr    $0x1f,%rcx
+  404e40:	xor    %rdi,%rcx
+  404e43:	mov    %ecx,%edi
+  404e45:	shr    $0xa,%rcx
+  404e49:	and    $0x3ff,%ecx
+  404e4f:	and    $0x3ff,%edi
+  404e55:	cmp    %ecx,0x0(%r13)
+  404e59:	jle    404dc0 <mem_worker+0x1770>
+  404e5f:	mov    $0x40a050,%rcx
+  404e66:	mov    (%rcx),%r13
+  404e69:	mov    $0x40a040,%rcx
+  404e70:	mov    (%rcx),%rcx
+  404e73:	and    %rsi,%rcx
+  404e76:	shl    $0x6,%rcx
+  404e7a:	add    %rcx,%r13
+  404e7d:	cmp    %edi,(%rdx)
+  404e7f:	jg     404dd9 <mem_worker+0x1789>
+  404e85:	vmovdqu64 0x0(%r13),%zmm1
+  404e8c:	vmovd  %xmm1,%ecx
+  404e90:	movslq %ecx,%rcx
+  404e93:	add    %rcx,%r14
+  404e96:	jmp    404de0 <mem_worker+0x1790>
+  404e9b:	nopl   0x0(%rax,%rax,1)
+  404ea0:	mov    0x10(%rsp),%rbx
+  404ea5:	mov    %rsi,%r13
+  404ea8:	lea    (%rbx,%r8,1),%rdx
+  404eac:	add    %rdi,%r8
+  404eaf:	dec    %rdi
+  404eb2:	add    %rbx,%r8
+  404eb5:	sub    %rbx,%r13
+  404eb8:	mov    %rdi,0x40(%rsp)
+  404ebd:	movabs $0xbf58476d1ce4e5b9,%rbx
+  404ec7:	movabs $0x94d049bb133111eb,%r11
+  404ed1:	jmp    404f0c <mem_worker+0x18bc>
+  404ed3:	nopl   0x0(%rax,%rax,1)
+  404ed8:	mov    0x58(%rsp),%rsi
+  404edd:	mov    0x40(%rsp),%rcx
+  404ee2:	mov    0x20(%rsi),%rsi
+  404ee6:	and    %rdi,%rcx
+  404ee9:	shl    $0x6,%rcx
+  404eed:	add    %rcx,%rsi
+  404ef0:	cmp    %r12d,%r10d
+  404ef3:	jle    404f9a <mem_worker+0x194a>
+  404ef9:	movq   $0xff,(%rsi)
+  404f00:	inc    %rdx
+  404f03:	cmp    %rdx,%r8
+  404f06:	je     4039f0 <mem_worker+0x3a0>
+  404f0c:	lea    0x0(%r13,%rdx,1),%rcx
+  404f11:	mov    %rcx,%rsi
+  404f14:	shr    $0x1e,%rsi
+  404f18:	xor    %rcx,%rsi
+  404f1b:	imul   %rbx,%rsi
+  404f1f:	mov    %rsi,%rcx
+  404f22:	shr    $0x1b,%rcx
+  404f26:	xor    %rsi,%rcx
+  404f29:	mov    %rdx,%rsi
+  404f2c:	imul   %r11,%rcx
+  404f30:	shr    $0x1e,%rsi
+  404f34:	xor    %rdx,%rsi
+  404f37:	imul   %rbx,%rsi
+  404f3b:	mov    %rcx,%rdi
+  404f3e:	shr    $0x1f,%rdi
+  404f42:	xor    %rcx,%rdi
+  404f45:	mov    %rsi,%rcx
+  404f48:	shr    $0x1b,%rcx
+  404f4c:	xor    %rsi,%rcx
+  404f4f:	imul   %r11,%rcx
+  404f53:	mov    %rcx,%rsi
+  404f56:	shr    $0x1f,%rsi
+  404f5a:	xor    %rsi,%rcx
+  404f5d:	mov    %ecx,%r12d
+  404f60:	shr    $0xa,%rcx
+  404f64:	and    $0x3ff,%ecx
+  404f6a:	and    $0x3ff,%r12d
+  404f71:	cmp    %ecx,%r9d
+  404f74:	jle    404ed8 <mem_worker+0x1888>
+  404f7a:	mov    $0x40a040,%rcx
+  404f81:	mov    %rax,%rsi
+  404f84:	mov    (%rcx),%rcx
+  404f87:	and    %rdi,%rcx
+  404f8a:	shl    $0x6,%rcx
+  404f8e:	add    %rcx,%rsi
+  404f91:	cmp    %r12d,%r10d
+  404f94:	jg     404ef9 <mem_worker+0x18a9>
+  404f9a:	add    (%rsi),%r14
+  404f9d:	jmp    404f00 <mem_worker+0x18b0>
+  404fa2:	nopw   0x0(%rax,%rax,1)
+  404fa8:	mov    0x50(%rsp),%rdi
+  404fad:	mov    %rbx,%r13
+  404fb0:	mov    0x10(%rsp),%rbx
+  404fb5:	movabs $0x94d049bb133111eb,%r11
+  404fbf:	lea    (%rbx,%r8,1),%rdx
+  404fc3:	add    %rdi,%r8
+  404fc6:	dec    %rdi
+  404fc9:	add    %rbx,%r8
+  404fcc:	sub    %rbx,%r13
+  404fcf:	mov    %rdi,0x40(%rsp)
+  404fd4:	movabs $0xbf58476d1ce4e5b9,%rbx
+  404fde:	jmp    405014 <mem_worker+0x19c4>
+  404fe0:	mov    0x58(%rsp),%rsi
+  404fe5:	mov    0x40(%rsp),%rcx
+  404fea:	mov    0x20(%rsi),%rsi
+  404fee:	and    %rdi,%rcx
+  404ff1:	shl    $0x6,%rcx
+  404ff5:	add    %rcx,%rsi
+  404ff8:	cmp    %r12d,%r10d
+  404ffb:	jle    4050a2 <mem_worker+0x1a52>
+  405001:	movq   $0xff,(%rsi)
+  405008:	inc    %rdx
+  40500b:	cmp    %rdx,%r8
+  40500e:	je     4039f0 <mem_worker+0x3a0>
+  405014:	lea    0x0(%r13,%rdx,1),%rcx
+  405019:	mov    %rcx,%rsi
+  40501c:	shr    $0x1e,%rsi
+  405020:	xor    %rcx,%rsi
+  405023:	imul   %rbx,%rsi
+  405027:	mov    %rsi,%rcx
+  40502a:	shr    $0x1b,%rcx
+  40502e:	xor    %rsi,%rcx
+  405031:	mov    %rdx,%rsi
+  405034:	imul   %r11,%rcx
+  405038:	shr    $0x1e,%rsi
+  40503c:	xor    %rdx,%rsi
+  40503f:	imul   %rbx,%rsi
+  405043:	mov    %rcx,%rdi
+  405046:	shr    $0x1f,%rdi
+  40504a:	xor    %rcx,%rdi
+  40504d:	mov    %rsi,%rcx
+  405050:	shr    $0x1b,%rcx
+  405054:	xor    %rsi,%rcx
+  405057:	imul   %r11,%rcx
+  40505b:	mov    %rcx,%rsi
+  40505e:	shr    $0x1f,%rsi
+  405062:	xor    %rsi,%rcx
+  405065:	mov    %ecx,%r12d
+  405068:	shr    $0xa,%rcx
+  40506c:	and    $0x3ff,%ecx
+  405072:	and    $0x3ff,%r12d
+  405079:	cmp    %ecx,%r9d
+  40507c:	jle    404fe0 <mem_worker+0x1990>
+  405082:	mov    $0x40a040,%rcx
+  405089:	mov    %rax,%rsi
+  40508c:	mov    (%rcx),%rcx
+  40508f:	and    %rdi,%rcx
+  405092:	shl    $0x6,%rcx
+  405096:	add    %rcx,%rsi
+  405099:	cmp    %r12d,%r10d
+  40509c:	jg     405001 <mem_worker+0x19b1>
+  4050a2:	add    (%rsi),%r14
+  4050a5:	jmp    405008 <mem_worker+0x19b8>
+  4050aa:	nopw   0x0(%rax,%rax,1)
+  4050b0:	mov    0x50(%rsp),%rax
+  4050b5:	xor    %edx,%edx
+  4050b7:	lea    -0x1(%rax),%rcx
+  4050bb:	test   %rax,%rax
+  4050be:	je     4050f2 <mem_worker+0x1aa2>
+  4050c0:	mov    0x18(%rsp),%rdi
+  4050c5:	mov    0x58(%rsp),%r8
+  4050ca:	mov    %rax,%rsi
+  4050cd:	nopl   (%rax)
+  4050d0:	mov    %rdi,%rax
+  4050d3:	crc32  %rdx,%rax
+  4050d9:	and    %rcx,%rax
+  4050dc:	shl    $0x6,%rax
+  4050e0:	add    0x20(%r8),%rax
+  4050e4:	inc    %rdx
+  4050e7:	vmovntdq %zmm0,(%rax)
+  4050ed:	cmp    %rdx,%rsi
+  4050f0:	jne    4050d0 <mem_worker+0x1a80>
+  4050f2:	sfence 
+  4050f5:	jmp    4039f0 <mem_worker+0x3a0>
+  4050fa:	nopw   0x0(%rax,%rax,1)
+  405100:	cmpq   $0x0,0x50(%rsp)
+  405106:	je     4039f0 <mem_worker+0x3a0>
+  40510c:	mov    0x50(%rsp),%rdi
+  405111:	mov    0x20(%rax),%rsi
+  405115:	mov    0x18(%rsp),%r8
+  40511a:	lea    -0x1(%rdi),%rcx
+  40511e:	xor    %edx,%edx
+  405120:	mov    %r8,%rax
+  405123:	crc32  %rdx,%rax
+  405129:	and    %rcx,%rax
+  40512c:	shl    $0x6,%rax
+  405130:	inc    %rdx
+  405133:	movq   $0xff,(%rsi,%rax,1)
+  40513b:	cmp    %rdx,%rdi
+  40513e:	jne    405120 <mem_worker+0x1ad0>
+  405140:	jmp    4039f0 <mem_worker+0x3a0>
+  405145:	nopl   (%rax)
+  405148:	mov    0x50(%rsp),%rax
+  40514d:	xor    %edx,%edx
+  40514f:	lea    -0x1(%rax),%rcx
+  405153:	test   %rax,%rax
+  405156:	je     4039f0 <mem_worker+0x3a0>
+  40515c:	mov    0x18(%rsp),%rdi
+  405161:	mov    0x58(%rsp),%r8
+  405166:	mov    %rax,%rsi
+  405169:	nopl   0x0(%rax)
+  405170:	mov    %rdi,%rax
+  405173:	crc32  %rdx,%rax
+  405179:	and    %rcx,%rax
+  40517c:	shl    $0x6,%rax
+  405180:	add    0x20(%r8),%rax
+  405184:	inc    %rdx
+  405187:	vmovdqu64 %zmm0,(%rax)
+  40518d:	cmp    %rdx,%rsi
+  405190:	jne    405170 <mem_worker+0x1b20>
+  405192:	jmp    4039f0 <mem_worker+0x3a0>
+  405197:	nopw   0x0(%rax,%rax,1)
+  4051a0:	cmpq   $0x0,0x50(%rsp)
+  4051a6:	je     4039f0 <mem_worker+0x3a0>
+  4051ac:	mov    0x50(%rsp),%r10
+  4051b1:	mov    0x20(%rax),%rdi
+  4051b5:	mov    0x18(%rsp),%r8
+  4051ba:	lea    -0x1(%r10),%rsi
+  4051be:	xor    %ecx,%ecx
+  4051c0:	lea    (%r15,%rcx,1),%r9
+  4051c4:	mov    %r8,%rax
+  4051c7:	mov    %r8,%rdx
+  4051ca:	crc32  %rcx,%rax
+  4051d0:	crc32  %r9,%rdx
+  4051d6:	and    %rsi,%rdx
+  4051d9:	and    %rsi,%rax
+  4051dc:	shl    $0x6,%rdx
+  4051e0:	shl    $0x6,%rax
+  4051e4:	inc    %rcx
+  4051e7:	prefetcht0 (%rdi,%rdx,1)
+  4051eb:	movq   $0xff,(%rdi,%rax,1)
+  4051f3:	cmp    %rcx,%r10
+  4051f6:	jne    4051c0 <mem_worker+0x1b70>
+  4051f8:	jmp    4039f0 <mem_worker+0x3a0>
+  4051fd:	nopl   (%rax)
+  405200:	cmpq   $0x0,0x50(%rsp)
+  405206:	je     4039f0 <mem_worker+0x3a0>
+  40520c:	mov    0x50(%rsp),%r10
+  405211:	mov    0x20(%rax),%rdi
+  405215:	mov    0x18(%rsp),%r8
+  40521a:	lea    -0x1(%r10),%rsi
+  40521e:	xor    %ecx,%ecx
+  405220:	lea    (%r15,%rcx,1),%r9
+  405224:	mov    %r8,%rax
+  405227:	mov    %r8,%rdx
+  40522a:	crc32  %rcx,%rax
+  405230:	crc32  %r9,%rdx
+  405236:	and    %rsi,%rdx
+  405239:	and    %rsi,%rax
+  40523c:	shl    $0x6,%rdx
+  405240:	shl    $0x6,%rax
+  405244:	inc    %rcx
+  405247:	prefetcht1 (%rdi,%rdx,1)
+  40524b:	movq   $0xff,(%rdi,%rax,1)
+  405253:	cmp    %rcx,%r10
+  405256:	jne    405220 <mem_worker+0x1bd0>
+  405258:	jmp    4039f0 <mem_worker+0x3a0>
+  40525d:	nopl   (%rax)
+  405260:	cmpq   $0x0,0x50(%rsp)
+  405266:	je     4039f0 <mem_worker+0x3a0>
+  40526c:	mov    0x50(%rsp),%r10
+  405271:	mov    0x20(%rax),%rdi
+  405275:	mov    0x18(%rsp),%r8
+  40527a:	lea    -0x1(%r10),%rsi
+  40527e:	xor    %ecx,%ecx
+  405280:	lea    (%r15,%rcx,1),%r9
+  405284:	mov    %r8,%rax
+  405287:	mov    %r8,%rdx
+  40528a:	crc32  %rcx,%rax
+  405290:	crc32  %r9,%rdx
+  405296:	and    %rsi,%rdx
+  405299:	and    %rsi,%rax
+  40529c:	shl    $0x6,%rdx
+  4052a0:	shl    $0x6,%rax
+  4052a4:	inc    %rcx
+  4052a7:	prefetcht2 (%rdi,%rdx,1)
+  4052ab:	movq   $0xff,(%rdi,%rax,1)
+  4052b3:	cmp    %rcx,%r10
+  4052b6:	jne    405280 <mem_worker+0x1c30>
+  4052b8:	jmp    4039f0 <mem_worker+0x3a0>
+  4052bd:	nopl   (%rax)
+  4052c0:	cmpq   $0x0,0x50(%rsp)
+  4052c6:	je     4039f0 <mem_worker+0x3a0>
+  4052cc:	mov    0x50(%rsp),%r10
+  4052d1:	mov    0x20(%rax),%rdi
+  4052d5:	mov    0x18(%rsp),%r8
+  4052da:	lea    -0x1(%r10),%rsi
+  4052de:	xor    %ecx,%ecx
+  4052e0:	lea    (%r15,%rcx,1),%r9
+  4052e4:	mov    %r8,%rax
+  4052e7:	mov    %r8,%rdx
+  4052ea:	crc32  %rcx,%rax
+  4052f0:	crc32  %r9,%rdx
+  4052f6:	and    %rsi,%rdx
+  4052f9:	and    %rsi,%rax
+  4052fc:	shl    $0x6,%rdx
+  405300:	shl    $0x6,%rax
+  405304:	inc    %rcx
+  405307:	prefetchnta (%rdi,%rdx,1)
+  40530b:	movq   $0xff,(%rdi,%rax,1)
+  405313:	cmp    %rcx,%r10
+  405316:	jne    4052e0 <mem_worker+0x1c90>
+  405318:	jmp    4039f0 <mem_worker+0x3a0>
+  40531d:	nopl   (%rax)
+  405320:	cmpq   $0x0,0x50(%rsp)
+  405326:	je     4039f0 <mem_worker+0x3a0>
+  40532c:	mov    0x50(%rsp),%r10
+  405331:	mov    0x20(%rax),%rdi
+  405335:	mov    0x18(%rsp),%r8
+  40533a:	lea    -0x1(%r10),%rsi
+  40533e:	xor    %ecx,%ecx
+  405340:	lea    (%r15,%rcx,1),%r9
+  405344:	mov    %r8,%rax
+  405347:	mov    %r8,%rdx
+  40534a:	crc32  %rcx,%rax
+  405350:	crc32  %r9,%rdx
+  405356:	and    %rsi,%rdx
+  405359:	and    %rsi,%rax
+  40535c:	shl    $0x6,%rdx
+  405360:	shl    $0x6,%rax
+  405364:	inc    %rcx
+  405367:	prefetchw (%rdi,%rdx,1)
+  40536b:	movq   $0xff,(%rdi,%rax,1)
+  405373:	cmp    %rcx,%r10
+  405376:	jne    405340 <mem_worker+0x1cf0>
+  405378:	jmp    4039f0 <mem_worker+0x3a0>
+  40537d:	nopl   (%rax)
+  405380:	mov    0x50(%rsp),%rax
+  405385:	xor    %ecx,%ecx
+  405387:	lea    -0x1(%rax),%rdi
+  40538b:	test   %rax,%rax
+  40538e:	je     4039f0 <mem_worker+0x3a0>
+  405394:	mov    0x18(%rsp),%r8
+  405399:	mov    0x58(%rsp),%r10
+  40539e:	mov    %rax,%r9
+  4053a1:	nopl   0x0(%rax)
+  4053a8:	lea    (%r15,%rcx,1),%rsi
+  4053ac:	mov    %r8,%rax
+  4053af:	mov    %r8,%rdx
+  4053b2:	crc32  %rcx,%rax
+  4053b8:	crc32  %rsi,%rdx
+  4053be:	and    %rdi,%rdx
+  4053c1:	mov    0x20(%r10),%rsi
+  4053c5:	and    %rdi,%rax
+  4053c8:	shl    $0x6,%rdx
+  4053cc:	shl    $0x6,%rax
+  4053d0:	inc    %rcx
+  4053d3:	prefetcht1 (%rsi,%rdx,1)
+  4053d7:	vmovdqu64 %zmm0,(%rsi,%rax,1)
+  4053de:	cmp    %rcx,%r9
+  4053e1:	jne    4053a8 <mem_worker+0x1d58>
+  4053e3:	jmp    4039f0 <mem_worker+0x3a0>
+  4053e8:	nopl   0x0(%rax,%rax,1)
+  4053f0:	mov    0x4c01(%rip),%rax        # 409ff8 <stderr@GLIBC_2.2.5>
+  4053f7:	mov    $0x24,%edx
+  4053fc:	mov    (%rax),%rcx
+  4053ff:	mov    $0x1,%esi
+  405404:	lea    0x1e3d(%rip),%rdi        # 407248 <_IO_stdin_used+0x248>
+  40540b:	vzeroupper 
+  40540e:	call   402210 <fwrite@plt>
+  405413:	mov    $0x1,%edi
+  405418:	call   402200 <exit@plt>
+  40541d:	nopl   (%rax)
+  405420:	mov    $0x40a030,%rax
+  405427:	mov    (%rax),%eax
+  405429:	dec    %eax
+  40542b:	cmp    $0x3fe,%eax
+  405430:	setbe  %al
+  405433:	movzbl %al,%eax
+  405436:	mov    %eax,0x48(%rsp)
+  40543a:	jmp    40389f <mem_worker+0x24f>
+  40543f:	lea    0x1bdc(%rip),%rdi        # 407022 <_IO_stdin_used+0x22>
+  405446:	call   4021e0 <perror@plt>
+  40544b:	xor    %edi,%edi
+  40544d:	call   402160 <pthread_exit@plt>
+  405452:	nopw   0x0(%rax,%rax,1)
+  405458:	cmp    $0x20,%eax
+  40545b:	jg     405476 <mem_worker+0x1e26>
+  40545d:	test   %eax,%eax
+  40545f:	js     4053f0 <mem_worker+0x1da0>
+  405461:	cmp    $0x20,%eax
+  405464:	ja     4053f0 <mem_worker+0x1da0>
+  405466:	lea    0x26ef(%rip),%rdx        # 407b5c <_IO_stdin_used+0xb5c>
+  40546d:	movslq (%rdx,%rax,4),%rax
+  405471:	add    %rdx,%rax
+  405474:	jmp    *%rax
+  405476:	cmp    $0x30,%eax
+  405479:	jne    4053f0 <mem_worker+0x1da0>
+  40547f:	cmpq   $0x0,0x50(%rsp)
+  405485:	je     4056a4 <mem_worker+0x2054>
+  40548b:	mov    0x58(%rsp),%rax
+  405490:	movq   $0x5,0x40(%rsp)
+  405499:	mov    0x20(%rax),%r12
+  40549d:	mov    0x50(%rsp),%rax
+  4054a2:	mov    %r14,0x30(%rsp)
+  4054a7:	mov    $0x3,%r8d
+  4054ad:	mov    $0x2,%r9d
+  4054b3:	mov    %r15,0x28(%rsp)
+  4054b8:	lea    -0x1(%rax),%rbx
+  4054bc:	mov    $0x8,%r13d
+  4054c2:	mov    $0x6,%eax
+  4054c7:	mov    $0x1,%r10d
+  4054cd:	mov    0x18(%rsp),%r15
+  4054d2:	mov    %r9,%rcx
+  4054d5:	mov    %r8,%rsi
+  4054d8:	mov    %rax,%r9
+  4054db:	xor    %r11d,%r11d
+  4054de:	mov    $0x4,%edi
+  4054e3:	mov    %r10,%rdx
+  4054e6:	mov    $0x7,%r8d
+  4054ec:	mov    %r13,%rax
+  4054ef:	nop
+  4054f0:	mov    0x28(%rsp),%r14
+  4054f5:	mov    %r15,%r10
+  4054f8:	lea    (%r14,%r11,1),%r13
+  4054fc:	mov    %r15,%r14
+  4054ff:	crc32  %r13,%r14
+  405505:	mov    0x8(%rsp),%r13
+  40550a:	crc32  %r11,%r10
+  405510:	add    %r11,%r13
+  405513:	mov    %r13,0x38(%rsp)
+  405518:	and    %rbx,%r10
+  40551b:	mov    %r15,%r13
+  40551e:	crc32q 0x38(%rsp),%r13
+  405526:	shl    $0x6,%r10
+  40552a:	mov    (%r12,%r10,1),%r10
+  40552e:	and    %rbx,%r14
+  405531:	and    %rbx,%r13
+  405534:	shl    $0x6,%r14
+  405538:	shl    $0x6,%r13
+  40553c:	prefetcht2 (%r12,%r14,1)
+  405541:	prefetcht0 (%r12,%r13,1)
+  405546:	add    %r10,0x30(%rsp)
+  40554b:	mov    0x40(%rsp),%r10
+  405550:	add    $0x1,%rdx
+  405554:	add    $0x1,%rcx
+  405558:	add    $0x1,%rsi
+  40555c:	add    $0x1,%rdi
+  405560:	add    $0x1,%r10
+  405564:	add    $0x1,%r9
+  405568:	add    $0x1,%r8
+  40556c:	add    $0x1,%rax
+  405570:	add    $0x1,%rdx
+  405574:	add    $0x1,%rcx
+  405578:	add    $0x1,%rsi
+  40557c:	add    $0x1,%rdi
+  405580:	add    $0x1,%r10
+  405584:	add    $0x1,%r9
+  405588:	add    $0x1,%r8
+  40558c:	add    $0x1,%rax
+  405590:	add    $0x1,%rdx
+  405594:	add    $0x1,%rcx
+  405598:	add    $0x1,%rsi
+  40559c:	add    $0x1,%rdi
+  4055a0:	add    $0x1,%r10
+  4055a4:	add    $0x1,%r9
+  4055a8:	add    $0x1,%r8
+  4055ac:	add    $0x1,%rax
+  4055b0:	add    $0x1,%rdx
+  4055b4:	add    $0x1,%rcx
+  4055b8:	add    $0x1,%rsi
+  4055bc:	add    $0x1,%rdi
+  4055c0:	add    $0x1,%r10
+  4055c4:	add    $0x1,%r9
+  4055c8:	add    $0x1,%r8
+  4055cc:	add    $0x1,%rax
+  4055d0:	add    $0x1,%rdx
+  4055d4:	add    $0x1,%rcx
+  4055d8:	add    $0x1,%rsi
+  4055dc:	add    $0x1,%rdi
+  4055e0:	add    $0x1,%r10
+  4055e4:	add    $0x1,%r9
+  4055e8:	add    $0x1,%r8
+  4055ec:	add    $0x1,%rax
+  4055f0:	add    $0x1,%rdx
+  4055f4:	add    $0x1,%rcx
+  4055f8:	add    $0x1,%rsi
+  4055fc:	add    $0x1,%rdi
+  405600:	add    $0x1,%r10
+  405604:	add    $0x1,%r9
+  405608:	add    $0x1,%r8
+  40560c:	add    $0x1,%rax
+  405610:	inc    %r11
+  405613:	mov    %r10,0x40(%rsp)
+  405618:	cmp    %r11,0x50(%rsp)
+  40561d:	jne    4054f0 <mem_worker+0x1ea0>
+  405623:	mov    %rdx,%r10
+  405626:	xor    %rcx,%r10
+  405629:	mov    %rax,%r13
+  40562c:	xor    %rsi,%r10
+  40562f:	mov    0x40(%rsp),%rax
+  405634:	xor    %rdi,%r10
+  405637:	xor    %r10,%rax
+  40563a:	xor    %r9,%rax
+  40563d:	xor    %r8,%rax
+  405640:	mov    0x30(%rsp),%r14
+  405645:	mov    0x28(%rsp),%r15
+  40564a:	xor    %r13,%rax
+  40564d:	jmp    4056a9 <mem_worker+0x2059>
+  40564f:	mov    0x50(%rsp),%r10
+  405654:	test   %r10,%r10
+  405657:	je     4056a4 <mem_worker+0x2054>
+  405659:	mov    0x58(%rsp),%rax
+  40565e:	mov    0x18(%rsp),%r8
+  405663:	mov    0x20(%rax),%rdi
+  405667:	lea    -0x1(%r10),%rsi
+  40566b:	xor    %ecx,%ecx
+  40566d:	nopl   (%rax)
+  405670:	lea    (%r15,%rcx,1),%r9
+  405674:	mov    %r8,%rax
+  405677:	mov    %r8,%rdx
+  40567a:	crc32  %rcx,%rax
+  405680:	crc32  %r9,%rdx
+  405686:	and    %rsi,%rdx
+  405689:	and    %rsi,%rax
+  40568c:	shl    $0x6,%rdx
+  405690:	shl    $0x6,%rax
+  405694:	inc    %rcx
+  405697:	add    (%rdi,%rax,1),%r14
+  40569b:	prefetcht1 (%rdi,%rdx,1)
+  40569f:	cmp    %rcx,%r10
+  4056a2:	jne    405670 <mem_worker+0x2020>
+  4056a4:	mov    $0x8,%eax
+  4056a9:	add    %rax,%r14
+  4056ac:	jmp    4039f0 <mem_worker+0x3a0>
+  4056b1:	mov    0x18(%rsp),%r8
+  4056b6:	mov    $0x55,%eax
+  4056bb:	vpxor  %xmm2,%xmm2,%xmm2
+  4056bf:	kmovb  %eax,%k1
+  4056c3:	nopl   0x0(%rax,%rax,1)
+  4056c8:	mov    %r8,%rax
+  4056cb:	crc32  %rcx,%rax
+  4056d1:	and    %rdi,%rax
+  4056d4:	shl    $0x6,%rax
+  4056d8:	vmovdqu64 (%rsi,%rax,1),%zmm1
+  4056df:	lea    (%r15,%rcx,1),%r10
+  4056e3:	vpmullq %zmm1,%zmm1,%zmm3
+  4056e9:	vpcmpequq %zmm4,%zmm1,%k2{%k1}
+  4056f0:	vpmullq %zmm5,%zmm1,%zmm1
+  4056f6:	mov    %r8,%rdx
+  4056f9:	crc32  %r10,%rdx
+  4056ff:	and    %rdi,%rdx
+  405702:	shl    $0x6,%rdx
+  405706:	vpmullq %zmm1,%zmm3,%zmm1
+  40570c:	inc    %rcx
+  40570f:	kmovb  %k2,%eax
+  405713:	prefetcht1 (%rsi,%rdx,1)
+  405717:	popcnt %eax,%eax
+  40571b:	vpxord %zmm2,%zmm1,%zmm2
+  405721:	add    %rax,%r14
+  405724:	cmp    %rcx,%r9
+  405727:	jne    4056c8 <mem_worker+0x2078>
+  405729:	jmp    40463d <mem_worker+0xfed>
+  40572e:	cmpq   $0x0,0x50(%rsp)
+  405734:	je     4039f0 <mem_worker+0x3a0>
+  40573a:	mov    0x58(%rsp),%rax
+  40573f:	mov    0x50(%rsp),%r8
+  405744:	mov    0x20(%rax),%rdi
+  405748:	mov    0x18(%rsp),%rdx
+  40574d:	lea    -0x1(%r8),%rsi
+  405751:	xor    %ecx,%ecx
+  405753:	nopl   0x0(%rax,%rax,1)
+  405758:	mov    %rdx,%rax
+  40575b:	lea    (%r15,%rcx,1),%r10
+  40575f:	mov    %rdx,%r9
+  405762:	crc32  %rcx,%rax
+  405768:	crc32  %r10,%r9
+  40576e:	and    %rsi,%r9
+  405771:	and    %rsi,%rax
+  405774:	shl    $0x6,%r9
+  405778:	shl    $0x6,%rax
+  40577c:	mov    (%rdi,%rax,1),%rax
+  405780:	prefetcht1 (%rdi,%r9,1)
+  405785:	add    $0x1,%rax
+  405789:	add    $0x1,%rax
+  40578d:	add    $0x1,%rax
+  405791:	add    $0x1,%rax
+  405795:	add    $0x1,%rax
+  405799:	add    $0x1,%rax
+  40579d:	add    $0x1,%rax
+  4057a1:	add    $0x1,%rax
+  4057a5:	add    $0x1,%rax
+  4057a9:	add    $0x1,%rax
+  4057ad:	add    $0x1,%rax
+  4057b1:	add    $0x1,%rax
+  4057b5:	add    $0x1,%rax
+  4057b9:	add    $0x1,%rax
+  4057bd:	add    $0x1,%rax
+  4057c1:	add    $0x1,%rax
+  4057c5:	add    $0x1,%rax
+  4057c9:	add    $0x1,%rax
+  4057cd:	add    $0x1,%rax
+  4057d1:	add    $0x1,%rax
+  4057d5:	add    $0x1,%rax
+  4057d9:	add    $0x1,%rax
+  4057dd:	add    $0x1,%rax
+  4057e1:	add    $0x1,%rax
+  4057e5:	add    $0x1,%rax
+  4057e9:	add    $0x1,%rax
+  4057ed:	add    $0x1,%rax
+  4057f1:	add    $0x1,%rax
+  4057f5:	add    $0x1,%rax
+  4057f9:	add    $0x1,%rax
+  4057fd:	add    $0x1,%rax
+  405801:	add    $0x1,%rax
+  405805:	inc    %rcx
+  405808:	add    %rax,%r14
+  40580b:	cmp    %rcx,%r8
+  40580e:	jne    405758 <mem_worker+0x2108>
+  405814:	jmp    4039f0 <mem_worker+0x3a0>
+  405819:	cmpq   $0x0,0x50(%rsp)
+  40581f:	je     4039f0 <mem_worker+0x3a0>
+  405825:	mov    0x58(%rsp),%rax
+  40582a:	mov    0x50(%rsp),%r9
+  40582f:	mov    0x20(%rax),%rdi
+  405833:	mov    0x18(%rsp),%r8
+  405838:	lea    -0x1(%r9),%rsi
+  40583c:	xor    %ecx,%ecx
+  40583e:	xchg   %ax,%ax
+  405840:	mov    %r8,%rax
+  405843:	lea    (%r15,%rcx,1),%r10
+  405847:	mov    %r8,%rdx
+  40584a:	crc32  %rcx,%rax
+  405850:	crc32  %r10,%rdx
+  405856:	and    %rsi,%rdx
+  405859:	and    %rsi,%rax
+  40585c:	shl    $0x6,%rdx
+  405860:	shl    $0x6,%rax
+  405864:	mov    (%rdi,%rax,1),%rax
+  405868:	prefetcht1 (%rdi,%rdx,1)
+  40586c:	add    $0x1,%rax
+  405870:	add    $0x1,%rax
+  405874:	add    $0x1,%rax
+  405878:	add    $0x1,%rax
+  40587c:	add    $0x1,%rax
+  405880:	add    $0x1,%rax
+  405884:	add    $0x1,%rax
+  405888:	add    $0x1,%rax
+  40588c:	add    $0x1,%rax
+  405890:	add    $0x1,%rax
+  405894:	add    $0x1,%rax
+  405898:	add    $0x1,%rax
+  40589c:	add    $0x1,%rax
+  4058a0:	add    $0x1,%rax
+  4058a4:	add    $0x1,%rax
+  4058a8:	add    $0x1,%rax
+  4058ac:	inc    %rcx
+  4058af:	add    %rax,%r14
+  4058b2:	cmp    %rcx,%r9
+  4058b5:	jne    405840 <mem_worker+0x21f0>
+  4058b7:	jmp    4039f0 <mem_worker+0x3a0>
+  4058bc:	cmpq   $0x0,0x50(%rsp)
+  4058c2:	je     4039f0 <mem_worker+0x3a0>
+  4058c8:	mov    0x58(%rsp),%rax
+  4058cd:	mov    0x50(%rsp),%r8
+  4058d2:	mov    0x20(%rax),%rdi
+  4058d6:	mov    0x18(%rsp),%rdx
+  4058db:	lea    -0x1(%r8),%rsi
+  4058df:	xor    %ecx,%ecx
+  4058e1:	nopl   0x0(%rax)
+  4058e8:	mov    %rdx,%rax
+  4058eb:	lea    (%r15,%rcx,1),%r10
+  4058ef:	mov    %rdx,%r9
+  4058f2:	crc32  %rcx,%rax
+  4058f8:	crc32  %r10,%r9
+  4058fe:	and    %rsi,%r9
+  405901:	and    %rsi,%rax
+  405904:	shl    $0x6,%r9
+  405908:	shl    $0x6,%rax
+  40590c:	mov    (%rdi,%rax,1),%rax
+  405910:	prefetcht1 (%rdi,%r9,1)
+  405915:	add    $0x1,%rax
+  405919:	add    $0x1,%rax
+  40591d:	add    $0x1,%rax
+  405921:	add    $0x1,%rax
+  405925:	add    $0x1,%rax
+  405929:	add    $0x1,%rax
+  40592d:	add    $0x1,%rax
+  405931:	add    $0x1,%rax
+  405935:	add    $0x1,%rax
+  405939:	add    $0x1,%rax
+  40593d:	add    $0x1,%rax
+  405941:	add    $0x1,%rax
+  405945:	add    $0x1,%rax
+  405949:	add    $0x1,%rax
+  40594d:	add    $0x1,%rax
+  405951:	add    $0x1,%rax
+  405955:	add    $0x1,%rax
+  405959:	add    $0x1,%rax
+  40595d:	add    $0x1,%rax
+  405961:	add    $0x1,%rax
+  405965:	add    $0x1,%rax
+  405969:	add    $0x1,%rax
+  40596d:	add    $0x1,%rax
+  405971:	add    $0x1,%rax
+  405975:	inc    %rcx
+  405978:	add    %rax,%r14
+  40597b:	cmp    %rcx,%r8
+  40597e:	jne    4058e8 <mem_worker+0x2298>
+  405984:	jmp    4039f0 <mem_worker+0x3a0>
+  405989:	mov    0x50(%rsp),%r10
+  40598e:	test   %r10,%r10
+  405991:	je     4039f0 <mem_worker+0x3a0>
+  405997:	mov    0x58(%rsp),%rax
+  40599c:	mov    0x18(%rsp),%r8
+  4059a1:	mov    0x20(%rax),%rdi
+  4059a5:	lea    -0x1(%r10),%rsi
+  4059a9:	xor    %ecx,%ecx
+  4059ab:	nopl   0x0(%rax,%rax,1)
+  4059b0:	lea    (%r15,%rcx,1),%r9
+  4059b4:	mov    %r8,%rax
+  4059b7:	mov    %r8,%rdx
+  4059ba:	crc32  %rcx,%rax
+  4059c0:	crc32  %r9,%rdx
+  4059c6:	and    %rsi,%rdx
+  4059c9:	and    %rsi,%rax
+  4059cc:	shl    $0x6,%rdx
+  4059d0:	shl    $0x6,%rax
+  4059d4:	inc    %rcx
+  4059d7:	add    (%rdi,%rax,1),%r14
+  4059db:	prefetcht1 (%rdi,%rdx,1)
+  4059df:	cmp    %rcx,%r10
+  4059e2:	jne    4059b0 <mem_worker+0x2360>
+  4059e4:	jmp    4039f0 <mem_worker+0x3a0>
+  4059e9:	cmpq   $0x0,0x50(%rsp)
+  4059ef:	je     4039f0 <mem_worker+0x3a0>
+  4059f5:	mov    0x58(%rsp),%rax
+  4059fa:	mov    0x50(%rsp),%r9
+  4059ff:	mov    0x20(%rax),%rdi
+  405a03:	mov    0x18(%rsp),%r8
+  405a08:	lea    -0x1(%r9),%rsi
+  405a0c:	xor    %ecx,%ecx
+  405a0e:	xchg   %ax,%ax
+  405a10:	mov    %r8,%rax
+  405a13:	lea    (%r15,%rcx,1),%r10
+  405a17:	mov    %r8,%rdx
+  405a1a:	crc32  %rcx,%rax
+  405a20:	crc32  %r10,%rdx
+  405a26:	and    %rsi,%rdx
+  405a29:	and    %rsi,%rax
+  405a2c:	shl    $0x6,%rdx
+  405a30:	shl    $0x6,%rax
+  405a34:	mov    (%rdi,%rax,1),%rax
+  405a38:	prefetcht1 (%rdi,%rdx,1)
+  405a3c:	add    $0x1,%rax
+  405a40:	add    $0x1,%rax
+  405a44:	add    $0x1,%rax
+  405a48:	add    $0x1,%rax
+  405a4c:	add    $0x1,%rax
+  405a50:	add    $0x1,%rax
+  405a54:	add    $0x1,%rax
+  405a58:	add    $0x1,%rax
+  405a5c:	inc    %rcx
+  405a5f:	add    %rax,%r14
+  405a62:	cmp    %rcx,%r9
+  405a65:	jne    405a10 <mem_worker+0x23c0>
+  405a67:	jmp    4039f0 <mem_worker+0x3a0>
+  405a6c:	cmpq   $0x0,0x50(%rsp)
+  405a72:	je     4056a4 <mem_worker+0x2054>
+  405a78:	mov    0x58(%rsp),%rax
+  405a7d:	mov    %r15,0x40(%rsp)
+  405a82:	mov    0x20(%rax),%rax
+  405a86:	xor    %r13d,%r13d
+  405a89:	mov    %rax,0x38(%rsp)
+  405a8e:	mov    0x50(%rsp),%rax
+  405a93:	mov    $0x8,%r12d
+  405a99:	lea    -0x1(%rax),%rcx
+  405a9d:	mov    $0x7,%ebx
+  405aa2:	mov    $0x6,%r11d
+  405aa8:	mov    $0x5,%r8d
+  405aae:	mov    $0x4,%r9d
+  405ab4:	mov    $0x3,%r10d
+  405aba:	mov    $0x2,%edx
+  405abf:	mov    $0x1,%eax
+  405ac4:	nopl   0x0(%rax)
+  405ac8:	mov    0x18(%rsp),%rdi
+  405acd:	mov    0x40(%rsp),%r15
+  405ad2:	mov    %rdi,%rsi
+  405ad5:	add    %r13,%r15
+  405ad8:	crc32  %r13,%rsi
+  405ade:	crc32  %r15,%rdi
+  405ae4:	and    %rcx,%rdi
+  405ae7:	mov    0x38(%rsp),%r15
+  405aec:	and    %rcx,%rsi
+  405aef:	shl    $0x6,%rdi
+  405af3:	shl    $0x6,%rsi
+  405af7:	add    (%r15,%rsi,1),%r14
+  405afb:	prefetcht1 (%r15,%rdi,1)
+  405b00:	add    $0x1,%rax
+  405b04:	add    $0x1,%rdx
+  405b08:	add    $0x1,%r10
+  405b0c:	add    $0x1,%r9
+  405b10:	add    $0x1,%r8
+  405b14:	add    $0x1,%r11
+  405b18:	add    $0x1,%rbx
+  405b1c:	add    $0x1,%r12
+  405b20:	add    $0x1,%rax
+  405b24:	add    $0x1,%rdx
+  405b28:	add    $0x1,%r10
+  405b2c:	add    $0x1,%r9
+  405b30:	add    $0x1,%r8
+  405b34:	add    $0x1,%r11
+  405b38:	add    $0x1,%rbx
+  405b3c:	add    $0x1,%r12
+  405b40:	add    $0x1,%rax
+  405b44:	add    $0x1,%rdx
+  405b48:	add    $0x1,%r10
+  405b4c:	add    $0x1,%r9
+  405b50:	add    $0x1,%r8
+  405b54:	add    $0x1,%r11
+  405b58:	add    $0x1,%rbx
+  405b5c:	add    $0x1,%r12
+  405b60:	add    $0x1,%rax
+  405b64:	add    $0x1,%rdx
+  405b68:	add    $0x1,%r10
+  405b6c:	add    $0x1,%r9
+  405b70:	add    $0x1,%r8
+  405b74:	add    $0x1,%r11
+  405b78:	add    $0x1,%rbx
+  405b7c:	add    $0x1,%r12
+  405b80:	inc    %r13
+  405b83:	cmp    %r13,0x50(%rsp)
+  405b88:	jne    405ac8 <mem_worker+0x2478>
+  405b8e:	jmp    404b36 <mem_worker+0x14e6>
+  405b93:	cmpq   $0x0,0x50(%rsp)
+  405b99:	je     4056a4 <mem_worker+0x2054>
+  405b9f:	mov    0x58(%rsp),%rax
+  405ba4:	mov    %r15,0x40(%rsp)
+  405ba9:	mov    0x20(%rax),%rax
+  405bad:	xor    %r13d,%r13d
+  405bb0:	mov    %rax,0x38(%rsp)
+  405bb5:	mov    0x50(%rsp),%rax
+  405bba:	mov    $0x8,%r12d
+  405bc0:	lea    -0x1(%rax),%rcx
+  405bc4:	mov    $0x7,%ebx
+  405bc9:	mov    $0x6,%r11d
+  405bcf:	mov    $0x5,%r8d
+  405bd5:	mov    $0x4,%r9d
+  405bdb:	mov    $0x3,%r10d
+  405be1:	mov    $0x2,%edx
+  405be6:	mov    $0x1,%eax
+  405beb:	nopl   0x0(%rax,%rax,1)
+  405bf0:	mov    0x18(%rsp),%rdi
+  405bf5:	mov    0x40(%rsp),%r15
+  405bfa:	mov    %rdi,%rsi
+  405bfd:	add    %r13,%r15
+  405c00:	crc32  %r13,%rsi
+  405c06:	crc32  %r15,%rdi
+  405c0c:	and    %rcx,%rdi
+  405c0f:	mov    0x38(%rsp),%r15
+  405c14:	and    %rcx,%rsi
+  405c17:	shl    $0x6,%rdi
+  405c1b:	shl    $0x6,%rsi
+  405c1f:	add    (%r15,%rsi,1),%r14
+  405c23:	prefetcht1 (%r15,%rdi,1)
+  405c28:	add    $0x1,%rax
+  405c2c:	add    $0x1,%rdx
+  405c30:	add    $0x1,%r10
+  405c34:	add    $0x1,%r9
+  405c38:	add    $0x1,%r8
+  405c3c:	add    $0x1,%r11
+  405c40:	add    $0x1,%rbx
+  405c44:	add    $0x1,%r12
+  405c48:	add    $0x1,%rax
+  405c4c:	add    $0x1,%rdx
+  405c50:	add    $0x1,%r10
+  405c54:	add    $0x1,%r9
+  405c58:	add    $0x1,%r8
+  405c5c:	add    $0x1,%r11
+  405c60:	add    $0x1,%rbx
+  405c64:	add    $0x1,%r12
+  405c68:	add    $0x1,%rax
+  405c6c:	add    $0x1,%rdx
+  405c70:	add    $0x1,%r10
+  405c74:	add    $0x1,%r9
+  405c78:	add    $0x1,%r8
+  405c7c:	add    $0x1,%r11
+  405c80:	add    $0x1,%rbx
+  405c84:	add    $0x1,%r12
+  405c88:	inc    %r13
+  405c8b:	cmp    %r13,0x50(%rsp)
+  405c90:	jne    405bf0 <mem_worker+0x25a0>
+  405c96:	jmp    404b36 <mem_worker+0x14e6>
+  405c9b:	cmpq   $0x0,0x50(%rsp)
+  405ca1:	je     4056a4 <mem_worker+0x2054>
+  405ca7:	mov    0x58(%rsp),%rax
+  405cac:	mov    %r15,0x40(%rsp)
+  405cb1:	mov    0x20(%rax),%rax
+  405cb5:	xor    %r13d,%r13d
+  405cb8:	mov    %rax,0x38(%rsp)
+  405cbd:	mov    0x50(%rsp),%rax
+  405cc2:	mov    $0x8,%r12d
+  405cc8:	lea    -0x1(%rax),%rcx
+  405ccc:	mov    $0x7,%ebx
+  405cd1:	mov    $0x6,%r11d
+  405cd7:	mov    $0x5,%r8d
+  405cdd:	mov    $0x4,%r9d
+  405ce3:	mov    $0x3,%r10d
+  405ce9:	mov    $0x2,%edx
+  405cee:	mov    $0x1,%eax
+  405cf3:	nopl   0x0(%rax,%rax,1)
+  405cf8:	mov    0x18(%rsp),%rdi
+  405cfd:	mov    0x40(%rsp),%r15
+  405d02:	mov    %rdi,%rsi
+  405d05:	add    %r13,%r15
+  405d08:	crc32  %r13,%rsi
+  405d0e:	crc32  %r15,%rdi
+  405d14:	and    %rcx,%rdi
+  405d17:	mov    0x38(%rsp),%r15
+  405d1c:	and    %rcx,%rsi
+  405d1f:	shl    $0x6,%rdi
+  405d23:	shl    $0x6,%rsi
+  405d27:	add    (%r15,%rsi,1),%r14
+  405d2b:	prefetcht1 (%r15,%rdi,1)
+  405d30:	add    $0x1,%rax
+  405d34:	add    $0x1,%rdx
+  405d38:	add    $0x1,%r10
+  405d3c:	add    $0x1,%r9
+  405d40:	add    $0x1,%r8
+  405d44:	add    $0x1,%r11
+  405d48:	add    $0x1,%rbx
+  405d4c:	add    $0x1,%r12
+  405d50:	add    $0x1,%rax
+  405d54:	add    $0x1,%rdx
+  405d58:	add    $0x1,%r10
+  405d5c:	add    $0x1,%r9
+  405d60:	add    $0x1,%r8
+  405d64:	add    $0x1,%r11
+  405d68:	add    $0x1,%rbx
+  405d6c:	add    $0x1,%r12
+  405d70:	inc    %r13
+  405d73:	cmp    %r13,0x50(%rsp)
+  405d78:	jne    405cf8 <mem_worker+0x26a8>
+  405d7e:	jmp    404b36 <mem_worker+0x14e6>
+  405d83:	cmpq   $0x0,0x50(%rsp)
+  405d89:	je     4056a4 <mem_worker+0x2054>
+  405d8f:	mov    0x58(%rsp),%rax
+  405d94:	mov    %r15,0x40(%rsp)
+  405d99:	mov    0x20(%rax),%rax
+  405d9d:	xor    %r11d,%r11d
+  405da0:	mov    %rax,0x38(%rsp)
+  405da5:	mov    0x50(%rsp),%rax
+  405daa:	mov    $0x8,%r13d
+  405db0:	lea    -0x1(%rax),%rcx
+  405db4:	mov    $0x7,%r12d
+  405dba:	mov    $0x6,%ebx
+  405dbf:	mov    $0x5,%r8d
+  405dc5:	mov    $0x4,%r9d
+  405dcb:	mov    $0x3,%r10d
+  405dd1:	mov    $0x2,%edx
+  405dd6:	mov    $0x1,%eax
+  405ddb:	nopl   0x0(%rax,%rax,1)
+  405de0:	mov    0x18(%rsp),%rdi
+  405de5:	mov    0x40(%rsp),%r15
+  405dea:	mov    %rdi,%rsi
+  405ded:	add    %r11,%r15
+  405df0:	crc32  %r11,%rsi
+  405df6:	crc32  %r15,%rdi
+  405dfc:	and    %rcx,%rdi
+  405dff:	mov    0x38(%rsp),%r15
+  405e04:	and    %rcx,%rsi
+  405e07:	shl    $0x6,%rdi
+  405e0b:	shl    $0x6,%rsi
+  405e0f:	add    (%r15,%rsi,1),%r14
+  405e13:	prefetcht1 (%r15,%rdi,1)
+  405e18:	add    $0x1,%rax
+  405e1c:	add    $0x1,%rdx
+  405e20:	add    $0x1,%r10
+  405e24:	add    $0x1,%r9
+  405e28:	add    $0x1,%r8
+  405e2c:	add    $0x1,%rbx
+  405e30:	add    $0x1,%r12
+  405e34:	add    $0x1,%r13
+  405e38:	inc    %r11
+  405e3b:	cmp    %r11,0x50(%rsp)
+  405e40:	jne    405de0 <mem_worker+0x2790>
+  405e42:	xor    %rdx,%rax
+  405e45:	xor    %r10,%rax
+  405e48:	xor    %r9,%rax
+  405e4b:	xor    %r8,%rax
+  405e4e:	xor    %rbx,%rax
+  405e51:	xor    %r12,%rax
+  405e54:	mov    0x40(%rsp),%r15
+  405e59:	xor    %r13,%rax
+  405e5c:	jmp    4056a9 <mem_worker+0x2059>
+  405e61:	cmpq   $0x0,0x50(%rsp)
+  405e67:	je     4056a4 <mem_worker+0x2054>
+  405e6d:	mov    0x58(%rsp),%rax
+  405e72:	mov    $0x5,%r13d
+  405e78:	mov    $0x4,%edi
+  405e7d:	mov    0x20(%rax),%rbx
+  405e81:	movq   $0x7,0x38(%rsp)
+  405e8a:	mov    0x50(%rsp),%rax
+  405e8f:	movq   $0x6,0x40(%rsp)
+  405e98:	mov    $0x3,%r8d
+  405e9e:	mov    $0x2,%r9d
+  405ea4:	mov    $0x1,%r10d
+  405eaa:	mov    %rdi,%rsi
+  405ead:	mov    %r13,%rdi
+  405eb0:	mov    0x18(%rsp),%r13
+  405eb5:	mov    %r15,0x28(%rsp)
+  405eba:	lea    -0x1(%rax),%r12
+  405ebe:	mov    %r8,%rcx
+  405ec1:	xor    %r11d,%r11d
+  405ec4:	mov    %r14,%r15
+  405ec7:	mov    %r10,%rax
+  405eca:	mov    %r9,%rdx
+  405ecd:	mov    $0x8,%r8d
+  405ed3:	nopl   0x0(%rax,%rax,1)
+  405ed8:	mov    0x28(%rsp),%r14
+  405edd:	mov    %r13,%r9
+  405ee0:	lea    (%r14,%r11,1),%r10
+  405ee4:	mov    %r13,%r14
+  405ee7:	crc32  %r10,%r14
+  405eed:	mov    0x8(%rsp),%r10
+  405ef2:	crc32  %r11,%r9
+  405ef8:	add    %r11,%r10
+  405efb:	mov    %r10,0x30(%rsp)
+  405f00:	mov    %r13,%r10
+  405f03:	and    %r12,%r14
+  405f06:	crc32q 0x30(%rsp),%r10
+  405f0e:	and    %r12,%r10
+  405f11:	and    %r12,%r9
+  405f14:	shl    $0x6,%r10
+  405f18:	shl    $0x6,%r9
+  405f1c:	shl    $0x6,%r14
+  405f20:	add    (%rbx,%r9,1),%r15
+  405f24:	prefetcht0 (%rbx,%r10,1)
+  405f29:	mov    0x38(%rsp),%r9
+  405f2e:	mov    0x40(%rsp),%r10
+  405f33:	prefetcht2 (%rbx,%r14,1)
+  405f38:	add    $0x1,%rax
+  405f3c:	add    $0x1,%rdx
+  405f40:	add    $0x1,%rcx
+  405f44:	add    $0x1,%rsi
+  405f48:	add    $0x1,%rdi
+  405f4c:	add    $0x1,%r10
+  405f50:	add    $0x1,%r9
+  405f54:	add    $0x1,%r8
+  405f58:	add    $0x1,%rax
+  405f5c:	add    $0x1,%rdx
+  405f60:	add    $0x1,%rcx
+  405f64:	add    $0x1,%rsi
+  405f68:	add    $0x1,%rdi
+  405f6c:	add    $0x1,%r10
+  405f70:	add    $0x1,%r9
+  405f74:	add    $0x1,%r8
+  405f78:	add    $0x1,%rax
+  405f7c:	add    $0x1,%rdx
+  405f80:	add    $0x1,%rcx
+  405f84:	add    $0x1,%rsi
+  405f88:	add    $0x1,%rdi
+  405f8c:	add    $0x1,%r10
+  405f90:	add    $0x1,%r9
+  405f94:	add    $0x1,%r8
+  405f98:	inc    %r11
+  405f9b:	mov    %r10,0x40(%rsp)
+  405fa0:	mov    %r9,0x38(%rsp)
+  405fa5:	cmp    %r11,0x50(%rsp)
+  405faa:	jne    405ed8 <mem_worker+0x2888>
+  405fb0:	mov    %rax,%r10
+  405fb3:	xor    %rdx,%r10
+  405fb6:	xor    %rcx,%r10
+  405fb9:	xor    %rsi,%r10
+  405fbc:	mov    %r10,%rax
+  405fbf:	xor    %rdi,%rax
+  405fc2:	xor    0x40(%rsp),%rax
+  405fc7:	xor    0x38(%rsp),%rax
+  405fcc:	mov    %r15,%r14
+  405fcf:	xor    %r8,%rax
+  405fd2:	mov    0x28(%rsp),%r15
+  405fd7:	jmp    4056a9 <mem_worker+0x2059>
+  405fdc:	cmpq   $0x0,0x50(%rsp)
+  405fe2:	je     4056a4 <mem_worker+0x2054>
+  405fe8:	mov    0x58(%rsp),%rax
+  405fed:	mov    $0x5,%r13d
+  405ff3:	mov    $0x4,%edi
+  405ff8:	mov    0x20(%rax),%rbx
+  405ffc:	movq   $0x8,0x30(%rsp)
+  406005:	mov    0x50(%rsp),%rax
+  40600a:	movq   $0x7,0x38(%rsp)
+  406013:	movq   $0x6,0x40(%rsp)
+  40601c:	mov    %r15,0x28(%rsp)
+  406021:	mov    $0x3,%r8d
+  406027:	mov    $0x2,%r9d
+  40602d:	mov    $0x1,%r10d
+  406033:	mov    %rdi,%rsi
+  406036:	mov    %r13,%rdi
+  406039:	mov    0x18(%rsp),%r13
+  40603e:	lea    -0x1(%rax),%r12
+  406042:	xor    %r11d,%r11d
+  406045:	mov    %r10,%rax
+  406048:	mov    %r9,%rdx
+  40604b:	mov    %r8,%rcx
+  40604e:	xchg   %ax,%ax
+  406050:	mov    0x28(%rsp),%r15
+  406055:	mov    %r13,%r10
+  406058:	lea    (%r15,%r11,1),%r9
+  40605c:	mov    0x8(%rsp),%r15
+  406061:	mov    %r13,%r8
+  406064:	crc32  %r9,%r10
+  40606a:	add    %r11,%r15
+  40606d:	mov    %r13,%r9
+  406070:	crc32  %r11,%r8
+  406076:	crc32  %r15,%r9
+  40607c:	and    %r12,%r10
+  40607f:	and    %r12,%r9
+  406082:	and    %r12,%r8
+  406085:	shl    $0x6,%r10
+  406089:	shl    $0x6,%r9
+  40608d:	shl    $0x6,%r8
+  406091:	add    (%rbx,%r8,1),%r14
+  406095:	prefetcht2 (%rbx,%r10,1)
+  40609a:	prefetcht0 (%rbx,%r9,1)
+  40609f:	mov    0x40(%rsp),%r10
+  4060a4:	mov    0x38(%rsp),%r9
+  4060a9:	mov    0x30(%rsp),%r8
+  4060ae:	add    $0x1,%rax
+  4060b2:	add    $0x1,%rdx
+  4060b6:	add    $0x1,%rcx
+  4060ba:	add    $0x1,%rsi
+  4060be:	add    $0x1,%rdi
+  4060c2:	add    $0x1,%r10
+  4060c6:	add    $0x1,%r9
+  4060ca:	add    $0x1,%r8
+  4060ce:	add    $0x1,%rax
+  4060d2:	add    $0x1,%rdx
+  4060d6:	add    $0x1,%rcx
+  4060da:	add    $0x1,%rsi
+  4060de:	add    $0x1,%rdi
+  4060e2:	add    $0x1,%r10
+  4060e6:	add    $0x1,%r9
+  4060ea:	add    $0x1,%r8
+  4060ee:	inc    %r11
+  4060f1:	mov    %r10,0x40(%rsp)
+  4060f6:	mov    %r9,0x38(%rsp)
+  4060fb:	mov    %r8,0x30(%rsp)
+  406100:	cmp    %r11,0x50(%rsp)
+  406105:	jne    406050 <mem_worker+0x2a00>
+  40610b:	mov    %rax,%r10
+  40610e:	xor    %rdx,%r10
+  406111:	xor    %rcx,%r10
+  406114:	xor    %rsi,%r10
+  406117:	mov    %r10,%rax
+  40611a:	xor    %rdi,%rax
+  40611d:	xor    0x40(%rsp),%rax
+  406122:	xor    0x38(%rsp),%rax
+  406127:	mov    0x28(%rsp),%r15
+  40612c:	xor    0x30(%rsp),%rax
+  406131:	jmp    4056a9 <mem_worker+0x2059>
+  406136:	cmpq   $0x0,0x50(%rsp)
+  40613c:	je     4056a4 <mem_worker+0x2054>
+  406142:	mov    0x58(%rsp),%rax
+  406147:	mov    $0x5,%r13d
+  40614d:	mov    0x20(%rax),%rbx
+  406151:	movq   $0x8,0x30(%rsp)
+  40615a:	mov    0x50(%rsp),%rax
+  40615f:	movq   $0x7,0x38(%rsp)
+  406168:	movq   $0x6,0x40(%rsp)
+  406171:	mov    %r15,0x28(%rsp)
+  406176:	mov    $0x4,%edi
+  40617b:	mov    $0x3,%r8d
+  406181:	mov    %r13,%rcx
+  406184:	mov    %r14,%r13
+  406187:	mov    0x18(%rsp),%r14
+  40618c:	lea    -0x1(%rax),%r12
+  406190:	xor    %r11d,%r11d
+  406193:	mov    $0x2,%r9d
+  406199:	mov    $0x1,%r10d
+  40619f:	mov    %r8,%rax
+  4061a2:	mov    %rdi,%rdx
+  4061a5:	nopl   (%rax)
+  4061a8:	mov    0x28(%rsp),%rdi
+  4061ad:	mov    %r14,%r8
+  4061b0:	add    %r11,%rdi
+  4061b3:	crc32  %rdi,%r8
+  4061b9:	mov    0x8(%rsp),%rdi
+  4061be:	mov    %r14,%rsi
+  4061c1:	lea    (%rdi,%r11,1),%r15
+  4061c5:	mov    %r14,%rdi
+  4061c8:	crc32  %r11,%rsi
+  4061ce:	crc32  %r15,%rdi
+  4061d4:	and    %r12,%r8
+  4061d7:	and    %r12,%rdi
+  4061da:	and    %r12,%rsi
+  4061dd:	shl    $0x6,%r8
+  4061e1:	shl    $0x6,%rdi
+  4061e5:	shl    $0x6,%rsi
+  4061e9:	add    (%rbx,%rsi,1),%r13
+  4061ed:	prefetcht2 (%rbx,%r8,1)
+  4061f2:	prefetcht0 (%rbx,%rdi,1)
+  4061f6:	mov    0x40(%rsp),%r8
+  4061fb:	mov    0x38(%rsp),%rdi
+  406200:	mov    0x30(%rsp),%rsi
+  406205:	add    $0x1,%r10
+  406209:	add    $0x1,%r9
+  40620d:	add    $0x1,%rax
+  406211:	add    $0x1,%rdx
+  406215:	add    $0x1,%rcx
+  406219:	add    $0x1,%r8
+  40621d:	add    $0x1,%rdi
+  406221:	add    $0x1,%rsi
+  406225:	inc    %r11
+  406228:	mov    %r8,0x40(%rsp)
+  40622d:	mov    %rdi,0x38(%rsp)
+  406232:	mov    %rsi,0x30(%rsp)
+  406237:	cmp    %r11,0x50(%rsp)
+  40623c:	jne    4061a8 <mem_worker+0x2b58>
+  406242:	xor    %r9,%r10
+  406245:	xor    %rax,%r10
+  406248:	xor    %rdx,%r10
+  40624b:	mov    %r10,%rax
+  40624e:	xor    %rcx,%rax
+  406251:	xor    0x40(%rsp),%rax
+  406256:	xor    0x38(%rsp),%rax
+  40625b:	mov    0x28(%rsp),%r15
+  406260:	mov    %r13,%r14
+  406263:	xor    %rsi,%rax
+  406266:	jmp    4056a9 <mem_worker+0x2059>
+  40626b:	mov    0x50(%rsp),%r9
+  406270:	test   %r9,%r9
+  406273:	je     4056a4 <mem_worker+0x2054>
+  406279:	mov    0x58(%rsp),%rax
+  40627e:	mov    0x8(%rsp),%r10
+  406283:	mov    0x18(%rsp),%rsi
+  406288:	mov    0x20(%rax),%r8
+  40628c:	lea    -0x1(%r9),%rdi
+  406290:	xor    %eax,%eax
+  406292:	nopw   0x0(%rax,%rax,1)
+  406298:	lea    (%r15,%rax,1),%rcx
+  40629c:	mov    %rsi,%r11
+  40629f:	crc32  %rcx,%r11
+  4062a5:	lea    (%r10,%rax,1),%rbx
+  4062a9:	mov    %rsi,%rdx
+  4062ac:	mov    %rsi,%rcx
+  4062af:	crc32  %rax,%rdx
+  4062b5:	crc32  %rbx,%rcx
+  4062bb:	and    %rdi,%r11
+  4062be:	and    %rdi,%rcx
+  4062c1:	and    %rdi,%rdx
+  4062c4:	shl    $0x6,%r11
+  4062c8:	shl    $0x6,%rcx
+  4062cc:	shl    $0x6,%rdx
+  4062d0:	inc    %rax
+  4062d3:	add    (%r8,%rdx,1),%r14
+  4062d7:	prefetcht2 (%r8,%r11,1)
+  4062dc:	prefetcht0 (%r8,%rcx,1)
+  4062e1:	cmp    %rax,%r9
+  4062e4:	jne    406298 <mem_worker+0x2c48>
+  4062e6:	jmp    4056a4 <mem_worker+0x2054>
+  4062eb:	cmpq   $0x0,0x50(%rsp)
+  4062f1:	je     4056a4 <mem_worker+0x2054>
+  4062f7:	mov    0x58(%rsp),%rax
+  4062fc:	mov    $0x5,%r13d
+  406302:	mov    $0x4,%edi
+  406307:	mov    0x20(%rax),%rbx
+  40630b:	movq   $0x7,0x38(%rsp)
+  406314:	mov    0x50(%rsp),%rax
+  406319:	movq   $0x6,0x40(%rsp)
+  406322:	mov    $0x3,%r8d
+  406328:	mov    $0x2,%r9d
+  40632e:	mov    $0x1,%r10d
+  406334:	mov    %rdi,%rsi
+  406337:	mov    %r13,%rdi
+  40633a:	mov    0x18(%rsp),%r13
+  40633f:	mov    %r15,0x28(%rsp)
+  406344:	lea    -0x1(%rax),%r12
+  406348:	mov    %r8,%rcx
+  40634b:	xor    %r11d,%r11d
+  40634e:	mov    %r14,%r15
+  406351:	mov    %r10,%rax
+  406354:	mov    %r9,%rdx
+  406357:	mov    $0x8,%r8d
+  40635d:	nopl   (%rax)
+  406360:	mov    0x28(%rsp),%r14
+  406365:	mov    %r13,%r9
+  406368:	lea    (%r14,%r11,1),%r10
+  40636c:	mov    %r13,%r14
+  40636f:	crc32  %r10,%r14
+  406375:	mov    0x8(%rsp),%r10
+  40637a:	crc32  %r11,%r9
+  406380:	add    %r11,%r10
+  406383:	mov    %r10,0x30(%rsp)
+  406388:	mov    %r13,%r10
+  40638b:	and    %r12,%r14
+  40638e:	crc32q 0x30(%rsp),%r10
+  406396:	and    %r12,%r10
+  406399:	and    %r12,%r9
+  40639c:	shl    $0x6,%r10
+  4063a0:	shl    $0x6,%r9
+  4063a4:	shl    $0x6,%r14
+  4063a8:	add    (%rbx,%r9,1),%r15
+  4063ac:	prefetcht0 (%rbx,%r10,1)
+  4063b1:	mov    0x38(%rsp),%r9
+  4063b6:	mov    0x40(%rsp),%r10
+  4063bb:	prefetcht2 (%rbx,%r14,1)
+  4063c0:	add    $0x1,%rax
+  4063c4:	add    $0x1,%rdx
+  4063c8:	add    $0x1,%rcx
+  4063cc:	add    $0x1,%rsi
+  4063d0:	add    $0x1,%rdi
+  4063d4:	add    $0x1,%r10
+  4063d8:	add    $0x1,%r9
+  4063dc:	add    $0x1,%r8
+  4063e0:	add    $0x1,%rax
+  4063e4:	add    $0x1,%rdx
+  4063e8:	add    $0x1,%rcx
+  4063ec:	add    $0x1,%rsi
+  4063f0:	add    $0x1,%rdi
+  4063f4:	add    $0x1,%r10
+  4063f8:	add    $0x1,%r9
+  4063fc:	add    $0x1,%r8
+  406400:	add    $0x1,%rax
+  406404:	add    $0x1,%rdx
+  406408:	add    $0x1,%rcx
+  40640c:	add    $0x1,%rsi
+  406410:	add    $0x1,%rdi
+  406414:	add    $0x1,%r10
+  406418:	add    $0x1,%r9
+  40641c:	add    $0x1,%r8
+  406420:	add    $0x1,%rax
+  406424:	add    $0x1,%rdx
+  406428:	add    $0x1,%rcx
+  40642c:	add    $0x1,%rsi
+  406430:	add    $0x1,%rdi
+  406434:	add    $0x1,%r10
+  406438:	add    $0x1,%r9
+  40643c:	add    $0x1,%r8
+  406440:	inc    %r11
+  406443:	mov    %r10,0x40(%rsp)
+  406448:	mov    %r9,0x38(%rsp)
+  40644d:	cmp    %r11,0x50(%rsp)
+  406452:	jne    406360 <mem_worker+0x2d10>
+  406458:	jmp    405fb0 <mem_worker+0x2960>
+  40645d:	mov    $0x40a028,%rax
+  406464:	lock add %r14,(%rax)
+  406468:	jmp    403a1c <mem_worker+0x3cc>
+  40646d:	vpxor  %xmm2,%xmm2,%xmm2
+  406471:	jmp    40463d <mem_worker+0xfed>
+  406476:	mov    0x3b7b(%rip),%rax        # 409ff8 <stderr@GLIBC_2.2.5>
+  40647d:	mov    $0x19,%edx
+  406482:	mov    (%rax),%rcx
+  406485:	mov    $0x1,%esi
+  40648a:	lea    0xbaa(%rip),%rdi        # 40703b <_IO_stdin_used+0x3b>
+  406491:	vzeroupper 
+  406494:	call   402210 <fwrite@plt>
+  406499:	mov    $0x1,%edi
+  40649e:	call   402200 <exit@plt>
+  4064a3:	mov    0x3b4e(%rip),%rax        # 409ff8 <stderr@GLIBC_2.2.5>
+  4064aa:	mov    $0x20,%edx
+  4064af:	mov    (%rax),%rcx
+  4064b2:	mov    $0x1,%esi
+  4064b7:	lea    0xdb2(%rip),%rdi        # 407270 <_IO_stdin_used+0x270>
+  4064be:	vzeroupper 
+  4064c1:	call   402210 <fwrite@plt>
+  4064c6:	mov    $0x1,%edi
+  4064cb:	call   402200 <exit@plt>

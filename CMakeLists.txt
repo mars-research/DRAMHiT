@@ -32,6 +32,10 @@ option(GROWT "growt hashtable" OFF)
 option(CLHT " CLHT hashtable" OFF)
 option(CAS_NO_ABSTRACT "remove abstract so method can be inlined" OFF)
 option(CAS_FAST_PATH "minimize branch in cas" ON)
+option(CAS_FIND_RING_OFFSETS "find_batch fast path: byte-offset find-queue ring (2025_INLINE)" OFF)
+option(CAS_FIND_COMPRESS_VALUE "find_batch fast path: hit value via vpcompressq (2025_INLINE)" OFF)
+option(CAS_FIND_KSHIFT "find_batch fast path: mask shift in the mask register (needs CAS_FIND_COMPRESS_VALUE)" OFF)
+option(CAS_FIND_SCALAR_PACK "find_batch fast path: scalar stores for the idx/key_id pair of a new queue entry" OFF)
 
 
 # Check if the user forgot to define CPUFREQ_MHZ or left it blank
@@ -44,6 +48,22 @@ add_definitions(-DCPUFREQ_MHZ=${CPUFREQ_MHZ})
 
 if(CAS_FAST_PATH)
     add_definitions(-DFAST_PATH)
+endif()
+
+if(CAS_FIND_RING_OFFSETS)
+    add_definitions(-DCAS_FIND_RING_OFFSETS)
+endif()
+
+if(CAS_FIND_COMPRESS_VALUE)
+    add_definitions(-DCAS_FIND_COMPRESS_VALUE)
+endif()
+
+if(CAS_FIND_KSHIFT)
+    add_definitions(-DCAS_FIND_KSHIFT)
+endif()
+
+if(CAS_FIND_SCALAR_PACK)
+    add_definitions(-DCAS_FIND_SCALAR_PACK)
 endif()
 
 if(CAS_NO_ABSTRACT)

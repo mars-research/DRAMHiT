@@ -1,0 +1,638 @@
+{
+ "bw_double24": {
+  "all": [
+   {
+    "intervals_total": 14,
+    "intervals_used": 12,
+    "window_s_from_rows": 5.01,
+    "core_ghz": 1.7960274830786473,
+    "ipc": 2.188700242069655,
+    "mesh_ghz": 1.9641584109851653,
+    "hbm_gbps": 314.96864649554345,
+    "hbm_rd_gbps": 314.86727004765993,
+    "power_w": 349.34583390990053,
+    "xq_full_pct": 3.673299181470842,
+    "fb_full_pct": 58.29504114890962,
+    "l2miss_out_per_thread": 25.382226545156172,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      2117,
+      "End perf collection",
+      5.215
+     ]
+    ],
+    "printed_gibps": 292.28,
+    "lines_per_s": 4903644692.48,
+    "program_window_s": 5.4742,
+    "cycles_per_line": 23.440882471217556
+   },
+   {
+    "intervals_total": 14,
+    "intervals_used": 12,
+    "window_s_from_rows": 4.87,
+    "core_ghz": 1.7960305433462953,
+    "ipc": 2.262658700231646,
+    "mesh_ghz": 2.031404824688636,
+    "hbm_gbps": 325.5153265273516,
+    "hbm_rd_gbps": 325.4138827547028,
+    "power_w": 349.4894877487085,
+    "xq_full_pct": 1.1802520336415006,
+    "fb_full_pct": 55.98948514957897,
+    "l2miss_out_per_thread": 25.001749763498665,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      2117,
+      "End perf collection",
+      5.074
+     ]
+    ],
+    "printed_gibps": 302.02,
+    "lines_per_s": 5067054776.32,
+    "program_window_s": 5.2976,
+    "cycles_per_line": 22.684963918555383
+   },
+   {
+    "intervals_total": 14,
+    "intervals_used": 12,
+    "window_s_from_rows": 5.03,
+    "core_ghz": 1.7960286952279818,
+    "ipc": 2.269966727739015,
+    "mesh_ghz": 2.0642485657690104,
+    "hbm_gbps": 326.24998194917924,
+    "hbm_rd_gbps": 326.14858293158886,
+    "power_w": 348.6980938284218,
+    "xq_full_pct": 0.9704988435692955,
+    "fb_full_pct": 55.76877436571866,
+    "l2miss_out_per_thread": 25.093970006371293,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      2117,
+      "End perf collection",
+      5.235
+     ]
+    ],
+    "printed_gibps": 303.22,
+    "lines_per_s": 5087187435.52,
+    "program_window_s": 5.2766,
+    "cycles_per_line": 22.5951644108905
+   }
+  ],
+  "late": [
+   {
+    "intervals_total": 14,
+    "intervals_used": 9,
+    "window_s_from_rows": 5.01,
+    "core_ghz": 1.7960271806295696,
+    "ipc": 2.190279894299274,
+    "mesh_ghz": 1.9669487746669196,
+    "hbm_gbps": 315.0165655311544,
+    "hbm_rd_gbps": 314.9151954651667,
+    "power_w": 349.82079309124543,
+    "xq_full_pct": 3.506343999041781,
+    "fb_full_pct": 58.26262018457689,
+    "l2miss_out_per_thread": 26.920925446064725,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      2117,
+      "End perf collection",
+      5.215
+     ]
+    ],
+    "printed_gibps": 292.28,
+    "lines_per_s": 4903644692.48,
+    "program_window_s": 5.4742,
+    "cycles_per_line": 23.440878523798403
+   },
+   {
+    "intervals_total": 14,
+    "intervals_used": 9,
+    "window_s_from_rows": 4.87,
+    "core_ghz": 1.796030629846195,
+    "ipc": 2.263572722419901,
+    "mesh_ghz": 2.033885383757212,
+    "hbm_gbps": 325.58465754825454,
+    "hbm_rd_gbps": 325.4832548077786,
+    "power_w": 350.4768524880228,
+    "xq_full_pct": 1.110839596028829,
+    "fb_full_pct": 55.972183452315875,
+    "l2miss_out_per_thread": 26.63495252951889,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      2117,
+      "End perf collection",
+      5.074
+     ]
+    ],
+    "printed_gibps": 302.02,
+    "lines_per_s": 5067054776.32,
+    "program_window_s": 5.2976,
+    "cycles_per_line": 22.684965011102005
+   },
+   {
+    "intervals_total": 14,
+    "intervals_used": 9,
+    "window_s_from_rows": 5.03,
+    "core_ghz": 1.7960282032118464,
+    "ipc": 2.2698329334929763,
+    "mesh_ghz": 2.0642527600890404,
+    "hbm_gbps": 326.27094664993564,
+    "hbm_rd_gbps": 326.16953872722064,
+    "power_w": 348.94472579587483,
+    "xq_full_pct": 0.9416922037362472,
+    "fb_full_pct": 55.776416521114456,
+    "l2miss_out_per_thread": 26.960725259871815,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      2117,
+      "End perf collection",
+      5.235
+     ]
+    ],
+    "printed_gibps": 303.22,
+    "lines_per_s": 5087187435.52,
+    "program_window_s": 5.2766,
+    "cycles_per_line": 22.59515822101976
+   }
+  ]
+ },
+ "bw_t1": {
+  "all": [
+   {
+    "intervals_total": 12,
+    "intervals_used": 10,
+    "window_s_from_rows": 4.26,
+    "core_ghz": 1.7960288591716138,
+    "ipc": 0.7054247306277135,
+    "mesh_ghz": 2.0032265284989808,
+    "hbm_gbps": 367.8605584987372,
+    "hbm_rd_gbps": 367.75767490836614,
+    "power_w": 350.83155140089445,
+    "xq_full_pct": 54.631221657794384,
+    "fb_full_pct": 65.18874837793184,
+    "l2miss_out_per_thread": 25.461063688102954,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      1825,
+      "End perf collection",
+      4.455
+     ]
+    ],
+    "printed_gibps": 339.39,
+    "lines_per_s": 5694019338.24,
+    "program_window_s": 4.7143,
+    "cycles_per_line": 20.1871191787193
+   },
+   {
+    "intervals_total": 12,
+    "intervals_used": 10,
+    "window_s_from_rows": 4.28,
+    "core_ghz": 1.7960293506229577,
+    "ipc": 0.7152975012330256,
+    "mesh_ghz": 2.0635427361427583,
+    "hbm_gbps": 372.1537672202211,
+    "hbm_rd_gbps": 372.05240363981096,
+    "power_w": 349.81586853829975,
+    "xq_full_pct": 53.25949593748397,
+    "fb_full_pct": 65.12030303476809,
+    "l2miss_out_per_thread": 24.667537999751065,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      1825,
+      "End perf collection",
+      4.476
+     ]
+    ],
+    "printed_gibps": 345.21,
+    "lines_per_s": 5791662735.36,
+    "program_window_s": 4.6349,
+    "cycles_per_line": 19.84678384984109
+   },
+   {
+    "intervals_total": 12,
+    "intervals_used": 10,
+    "window_s_from_rows": 4.28,
+    "core_ghz": 1.796029597102184,
+    "ipc": 0.7567319123064101,
+    "mesh_ghz": 2.0795531697993397,
+    "hbm_gbps": 393.5834929381175,
+    "hbm_rd_gbps": 393.482119190547,
+    "power_w": 351.1184221952128,
+    "xq_full_pct": 50.195488495566835,
+    "fb_full_pct": 65.41717763790199,
+    "l2miss_out_per_thread": 24.63474289895993,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      1825,
+      "End perf collection",
+      4.478
+     ]
+    ],
+    "printed_gibps": 364.24,
+    "lines_per_s": 6110933155.84,
+    "program_window_s": 4.3928,
+    "cycles_per_line": 18.80987588690773
+   }
+  ],
+  "late": [
+   {
+    "intervals_total": 12,
+    "intervals_used": 7,
+    "window_s_from_rows": 4.26,
+    "core_ghz": 1.7960284152382866,
+    "ipc": 0.7035840458210276,
+    "mesh_ghz": 1.9893044251143304,
+    "hbm_gbps": 367.3931359007488,
+    "hbm_rd_gbps": 367.29170120854627,
+    "power_w": 348.2753713614114,
+    "xq_full_pct": 54.996176863154226,
+    "fb_full_pct": 65.21733245194106,
+    "l2miss_out_per_thread": 26.338191839487884,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      1825,
+      "End perf collection",
+      4.455
+     ]
+    ],
+    "printed_gibps": 339.39,
+    "lines_per_s": 5694019338.24,
+    "program_window_s": 4.7143,
+    "cycles_per_line": 20.18711418896931
+   },
+   {
+    "intervals_total": 12,
+    "intervals_used": 7,
+    "window_s_from_rows": 4.28,
+    "core_ghz": 1.796029306138859,
+    "ipc": 0.7115377171943887,
+    "mesh_ghz": 2.0550564550228616,
+    "hbm_gbps": 372.1380916922943,
+    "hbm_rd_gbps": 372.03672030766006,
+    "power_w": 349.1512546956543,
+    "xq_full_pct": 53.84079364536635,
+    "fb_full_pct": 65.1517478870474,
+    "l2miss_out_per_thread": 25.799837622039867,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      1825,
+      "End perf collection",
+      4.476
+     ]
+    ],
+    "printed_gibps": 345.21,
+    "lines_per_s": 5791662735.36,
+    "program_window_s": 4.6349,
+    "cycles_per_line": 19.846783358275463
+   },
+   {
+    "intervals_total": 12,
+    "intervals_used": 7,
+    "window_s_from_rows": 4.28,
+    "core_ghz": 1.7960294440646636,
+    "ipc": 0.7533241216720667,
+    "mesh_ghz": 2.0727628536356675,
+    "hbm_gbps": 393.4875552820682,
+    "hbm_rd_gbps": 393.3859358164237,
+    "power_w": 347.98307815476045,
+    "xq_full_pct": 50.9756763701279,
+    "fb_full_pct": 65.46726788109916,
+    "l2miss_out_per_thread": 25.805516267029493,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      72,
+      "Start perf collection",
+      0.0
+     ],
+     [
+      1825,
+      "End perf collection",
+      4.478
+     ]
+    ],
+    "printed_gibps": 364.24,
+    "lines_per_s": 6110933155.84,
+    "program_window_s": 4.3928,
+    "cycles_per_line": 18.809874284140843
+   }
+  ]
+ },
+ "dramhit_rck_f10": {
+  "all": [
+   {
+    "intervals_total": 16,
+    "intervals_used": 14,
+    "window_s_from_rows": 5.19,
+    "core_ghz": 1.7960277002653309,
+    "ipc": 1.9545234474329232,
+    "mesh_ghz": 1.8313014491061788,
+    "hbm_gbps": 248.11242736989539,
+    "hbm_rd_gbps": 248.01106362651458,
+    "power_w": 349.0778674414179,
+    "xq_full_pct": 4.744697493140266,
+    "fb_full_pct": 50.35657380089151,
+    "l2miss_out_per_thread": 26.18522927008446,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      1540,
+      "zipfian test insert start",
+      2.057
+     ],
+     [
+      2271,
+      "zipfian test insert end",
+      3.748
+     ],
+     [
+      2272,
+      "zipfian test find start",
+      3.748
+     ],
+     [
+      4609,
+      "zipfian test find end",
+      9.305
+     ]
+    ],
+    "get_mops": 3905,
+    "lines_per_s": 3905000000.0,
+    "program_window_s": 5.499317900128041,
+    "cycles_per_line": 29.43553721305536
+   },
+   {
+    "intervals_total": 15,
+    "intervals_used": 13,
+    "window_s_from_rows": 4.9,
+    "core_ghz": 1.7959490747723514,
+    "ipc": 1.9868266172611495,
+    "mesh_ghz": 1.8857138465811514,
+    "hbm_gbps": 252.14047515790367,
+    "hbm_rd_gbps": 252.02355966586822,
+    "power_w": 348.4448945096829,
+    "xq_full_pct": 4.114977266992162,
+    "fb_full_pct": 50.27110706202633,
+    "l2miss_out_per_thread": 26.887844386566467,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      1540,
+      "zipfian test insert start",
+      2.064
+     ],
+     [
+      2271,
+      "zipfian test insert end",
+      3.73
+     ],
+     [
+      2272,
+      "zipfian test find start",
+      3.73
+     ],
+     [
+      4463,
+      "zipfian test find end",
+      8.882
+     ]
+    ],
+    "get_mops": 3984,
+    "lines_per_s": 3984000000.0,
+    "program_window_s": 5.390270180722892,
+    "cycles_per_line": 28.8505875465438
+   },
+   {
+    "intervals_total": 15,
+    "intervals_used": 13,
+    "window_s_from_rows": 5.1,
+    "core_ghz": 1.7960281855568179,
+    "ipc": 1.9846056738788012,
+    "mesh_ghz": 1.9149054249879136,
+    "hbm_gbps": 251.9499036539806,
+    "hbm_rd_gbps": 251.84854499581184,
+    "power_w": 347.4493682251017,
+    "xq_full_pct": 3.726459377661017,
+    "fb_full_pct": 49.657627597233706,
+    "l2miss_out_per_thread": 26.81425297393083,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      1540,
+      "zipfian test insert start",
+      2.059
+     ],
+     [
+      2271,
+      "zipfian test insert end",
+      3.773
+     ],
+     [
+      2272,
+      "zipfian test find start",
+      3.773
+     ],
+     [
+      4463,
+      "zipfian test find end",
+      9.089
+     ]
+    ],
+    "get_mops": 3990,
+    "lines_per_s": 3990000000.0,
+    "program_window_s": 5.382164511278195,
+    "cycles_per_line": 28.80847214928229
+   }
+  ],
+  "late": [
+   {
+    "intervals_total": 16,
+    "intervals_used": 14,
+    "window_s_from_rows": 5.19,
+    "core_ghz": 1.7960277002653309,
+    "ipc": 1.9545234474329232,
+    "mesh_ghz": 1.8313014491061788,
+    "hbm_gbps": 248.11242736989539,
+    "hbm_rd_gbps": 248.01106362651458,
+    "power_w": 349.0778674414179,
+    "xq_full_pct": 4.744697493140266,
+    "fb_full_pct": 50.35657380089151,
+    "l2miss_out_per_thread": 26.18522927008446,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      1540,
+      "zipfian test insert start",
+      2.057
+     ],
+     [
+      2271,
+      "zipfian test insert end",
+      3.748
+     ],
+     [
+      2272,
+      "zipfian test find start",
+      3.748
+     ],
+     [
+      4609,
+      "zipfian test find end",
+      9.305
+     ]
+    ],
+    "get_mops": 3905,
+    "lines_per_s": 3905000000.0,
+    "program_window_s": 5.499317900128041,
+    "cycles_per_line": 29.43553721305536
+   },
+   {
+    "intervals_total": 15,
+    "intervals_used": 13,
+    "window_s_from_rows": 4.9,
+    "core_ghz": 1.7959490747723514,
+    "ipc": 1.9868266172611495,
+    "mesh_ghz": 1.8857138465811514,
+    "hbm_gbps": 252.14047515790367,
+    "hbm_rd_gbps": 252.02355966586822,
+    "power_w": 348.4448945096829,
+    "xq_full_pct": 4.114977266992162,
+    "fb_full_pct": 50.27110706202633,
+    "l2miss_out_per_thread": 26.887844386566467,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      1540,
+      "zipfian test insert start",
+      2.064
+     ],
+     [
+      2271,
+      "zipfian test insert end",
+      3.73
+     ],
+     [
+      2272,
+      "zipfian test find start",
+      3.73
+     ],
+     [
+      4463,
+      "zipfian test find end",
+      8.882
+     ]
+    ],
+    "get_mops": 3984,
+    "lines_per_s": 3984000000.0,
+    "program_window_s": 5.390270180722892,
+    "cycles_per_line": 28.8505875465438
+   },
+   {
+    "intervals_total": 15,
+    "intervals_used": 13,
+    "window_s_from_rows": 5.1,
+    "core_ghz": 1.7960281855568179,
+    "ipc": 1.9846056738788012,
+    "mesh_ghz": 1.9149054249879136,
+    "hbm_gbps": 251.9499036539806,
+    "hbm_rd_gbps": 251.84854499581184,
+    "power_w": 347.4493682251017,
+    "xq_full_pct": 3.726459377661017,
+    "fb_full_pct": 49.657627597233706,
+    "l2miss_out_per_thread": 26.81425297393083,
+    "min_running_pct": 100.0,
+    "markers": [
+     [
+      1540,
+      "zipfian test insert start",
+      2.059
+     ],
+     [
+      2271,
+      "zipfian test insert end",
+      3.773
+     ],
+     [
+      2272,
+      "zipfian test find start",
+      3.773
+     ],
+     [
+      4463,
+      "zipfian test find end",
+      9.089
+     ]
+    ],
+    "get_mops": 3990,
+    "lines_per_s": 3990000000.0,
+    "program_window_s": 5.382164511278195,
+    "cycles_per_line": 28.80847214928229
+   }
+  ]
+ }
+}

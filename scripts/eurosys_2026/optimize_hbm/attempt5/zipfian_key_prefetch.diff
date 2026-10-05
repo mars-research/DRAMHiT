@@ -1,0 +1,66 @@
+diff --git a/src/tests/zipfian_test.cpp b/src/tests/zipfian_test.cpp
+index d1eb5c7..d70da47 100644
+--- a/src/tests/zipfian_test.cpp
++++ b/src/tests/zipfian_test.cpp
+@@ -58,6 +58,17 @@ extern bool zipfian_inserts;
+ 
+ extern std::vector<key_type> *g_zipf_values;
+ using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
++// How far ahead of the key being read the harness prefetches the (per-thread, replayed) key
++// array, and with which hint (GCC locality: 3 = prefetcht0, 2 = t1, 1 = t2, 0 = nta). The
++// defaults are the original hard-coded 16 keys and t0; changing them only changes the
++// benchmark's own key stream, not the hashtable.
++#ifndef HARNESS_KEY_PF_DIST
++#define HARNESS_KEY_PF_DIST 16
++#endif
++#ifndef HARNESS_KEY_PF_HINT
++#define HARNESS_KEY_PF_HINT 3
++#endif
++
+ using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
+ 
+ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
+@@ -81,8 +92,8 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
+   uint64_t idx = 0;
+   for (uint64_t n = 0; n < batch_num; ++n) {
+     for (uint32_t i = 0; i < batch_len; i++) {
+-      if (!(idx & 7) && idx + 16 < request_num) {
+-        __builtin_prefetch(&workload[idx + 16], false, 3);
++      if (!(idx & 7) && idx + HARNESS_KEY_PF_DIST < request_num) {
++        __builtin_prefetch(&workload[idx + HARNESS_KEY_PF_DIST], false, HARNESS_KEY_PF_HINT);
+       }
+ 
+       value = workload[idx];
+@@ -104,8 +115,8 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
+   uint64_t residue_num = request_num - batch_len * batch_num;
+   if (residue_num > 0) {
+     for (uint64_t i = 0; i < residue_num; i++) {
+-      if (!(idx & 7) && (idx + 16 < request_num)) {
+-        __builtin_prefetch(&workload[idx + 16], false, 3);
++      if (!(idx & 7) && (idx + HARNESS_KEY_PF_DIST < request_num)) {
++        __builtin_prefetch(&workload[idx + HARNESS_KEY_PF_DIST], false, HARNESS_KEY_PF_HINT);
+       }
+       value = workload[idx];
+       items[i].key = items[i].value = value;
+@@ -160,8 +171,8 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+   key_type value;
+   for (uint64_t n = 0; n < batch_num; ++n) {
+     for (uint32_t i = 0; i < batch_len; i++) {
+-      if (!(idx & 7) && idx + 16 < request_num) {
+-        __builtin_prefetch(&workload[idx + 16], false, 3);
++      if (!(idx & 7) && idx + HARNESS_KEY_PF_DIST < request_num) {
++        __builtin_prefetch(&workload[idx + HARNESS_KEY_PF_DIST], false, HARNESS_KEY_PF_HINT);
+       }
+ 
+       value = workload[idx];
+@@ -186,8 +197,8 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+   uint64_t residue_num = request_num - batch_len * batch_num;
+   if (residue_num > 0) {
+     for (uint64_t i = 0; i < residue_num; i++) {
+-      if (!(idx & 7) && (idx + 16 < request_num)) {
+-        __builtin_prefetch(&workload[idx + 16], false, 3);
++      if (!(idx & 7) && (idx + HARNESS_KEY_PF_DIST < request_num)) {
++        __builtin_prefetch(&workload[idx + HARNESS_KEY_PF_DIST], false, HARNESS_KEY_PF_HINT);
+       }
+       value = workload[idx];
+       items[i].key = items[i].value = value;

@@ -1,0 +1,6 @@
+== dramhit_keyshbm_f10 (pid 241786) bytes per node, by mapping kind
+  anon4k   {0: '7.5 MiB', 1: '1024.1 MiB'}
+  file     {0: '3.8 MiB', 1: '4.0 MiB'}
+  heap     {0: '1.7 MiB', 1: '0.0 MiB'}
+  hugetlb  {2: '8704.0 MiB'}
+  stack    {0: '0.0 MiB', 1: '0.1 MiB'}

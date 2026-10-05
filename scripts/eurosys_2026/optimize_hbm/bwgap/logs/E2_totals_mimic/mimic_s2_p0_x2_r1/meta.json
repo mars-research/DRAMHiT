@@ -1,0 +1,9 @@
+{
+ "label": "mimic_s2_p0_x2",
+ "kind": "totals",
+ "cmd": "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/bwgap/bin/bandwidth_rand_mimic_it200 -m 256mb -pattern n0a2t64 -freq 2.7 -inst mimic -pad 0 -near 8 -lookahead 64 -stage 2 -mode r",
+ "iters": 200,
+ "margin_before_c": 13,
+ "wall_s": 10.0,
+ "started": "2026-10-02T11:42:55"
+}

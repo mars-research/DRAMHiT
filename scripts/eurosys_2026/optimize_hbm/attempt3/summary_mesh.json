@@ -1,0 +1,438 @@
+{
+ "get": {
+  "10": {
+   "base": {
+    "bw_gbps": 243.5,
+    "pkg_w": 345.1,
+    "core_ghz": 2.286,
+    "mesh_ghz": 1.675,
+    "nj_per_op": 87.57,
+    "mops": 3941.0,
+    "reps": 3,
+    "mops_samples": [
+     3857.0,
+     3953.0,
+     3941.0
+    ]
+   },
+   "ring": {
+    "bw_gbps": 257.0,
+    "pkg_w": 349.7,
+    "core_ghz": 2.209,
+    "mesh_ghz": 1.668,
+    "nj_per_op": 84.49,
+    "mops": 4134.0,
+    "reps": 3,
+    "mops_samples": [
+     4134.0,
+     4139.0,
+     4076.0
+    ]
+   },
+   "cmp": {
+    "bw_gbps": 250.3,
+    "pkg_w": 355.7,
+    "core_ghz": 2.197,
+    "mesh_ghz": 1.678,
+    "nj_per_op": 88.13,
+    "mops": 4036.0,
+    "reps": 3,
+    "mops_samples": [
+     4036.0,
+     4033.0,
+     4043.0
+    ]
+   },
+   "rc": {
+    "bw_gbps": 250.6,
+    "pkg_w": 350.1,
+    "core_ghz": 2.173,
+    "mesh_ghz": 1.659,
+    "nj_per_op": 83.46,
+    "mops": 4201.0,
+    "reps": 3,
+    "mops_samples": [
+     4201.0,
+     4171.0,
+     4213.0
+    ]
+   },
+   "l1": {
+    "bw_gbps": 203.0,
+    "pkg_w": 344.9,
+    "core_ghz": 2.584,
+    "mesh_ghz": 1.823,
+    "nj_per_op": 106.62,
+    "mops": 3249.0,
+    "reps": 3,
+    "mops_samples": [
+     3249.0,
+     3235.0,
+     3252.0
+    ]
+   }
+  },
+  "50": {
+   "base": {
+    "bw_gbps": 242.7,
+    "pkg_w": 349.2,
+    "core_ghz": 2.195,
+    "mesh_ghz": 1.686,
+    "nj_per_op": 95.59,
+    "mops": 3653.0,
+    "reps": 3,
+    "mops_samples": [
+     3655.0,
+     3631.0,
+     3653.0
+    ]
+   },
+   "ring": {
+    "bw_gbps": 255.7,
+    "pkg_w": 349.1,
+    "core_ghz": 2.157,
+    "mesh_ghz": 1.657,
+    "nj_per_op": 90.77,
+    "mops": 3847.0,
+    "reps": 3,
+    "mops_samples": [
+     3825.0,
+     3847.0,
+     3848.0
+    ]
+   },
+   "cmp": {
+    "bw_gbps": 250.0,
+    "pkg_w": 349.1,
+    "core_ghz": 2.156,
+    "mesh_ghz": 1.659,
+    "nj_per_op": 93.32,
+    "mops": 3733.0,
+    "reps": 3,
+    "mops_samples": [
+     3730.0,
+     3753.0,
+     3733.0
+    ]
+   },
+   "rc": {
+    "bw_gbps": 260.8,
+    "pkg_w": 348.4,
+    "core_ghz": 2.123,
+    "mesh_ghz": 1.633,
+    "nj_per_op": 90.24,
+    "mops": 3861.0,
+    "reps": 3,
+    "mops_samples": [
+     3669.0,
+     3919.0,
+     3861.0
+    ]
+   },
+   "l1": {
+    "bw_gbps": 205.6,
+    "pkg_w": 349.0,
+    "core_ghz": 2.513,
+    "mesh_ghz": 1.815,
+    "nj_per_op": 113.36,
+    "mops": 3076.0,
+    "reps": 3,
+    "mops_samples": [
+     3083.0,
+     3058.0,
+     3076.0
+    ]
+   }
+  },
+  "90": {
+   "base": {
+    "bw_gbps": 242.1,
+    "pkg_w": 348.9,
+    "core_ghz": 2.149,
+    "mesh_ghz": 1.652,
+    "nj_per_op": 143.7,
+    "mops": 2428.0,
+    "reps": 3,
+    "mops_samples": [
+     2462.0,
+     2420.0,
+     2428.0
+    ]
+   },
+   "ring": {
+    "bw_gbps": 252.4,
+    "pkg_w": 349.0,
+    "core_ghz": 2.109,
+    "mesh_ghz": 1.613,
+    "nj_per_op": 138.03,
+    "mops": 2524.0,
+    "reps": 3,
+    "mops_samples": [
+     2520.0,
+     2554.0,
+     2524.0
+    ]
+   },
+   "cmp": {
+    "bw_gbps": 246.7,
+    "pkg_w": 348.8,
+    "core_ghz": 2.122,
+    "mesh_ghz": 1.626,
+    "nj_per_op": 140.53,
+    "mops": 2482.0,
+    "reps": 3,
+    "mops_samples": [
+     2494.0,
+     2464.0,
+     2482.0
+    ]
+   },
+   "rc": {
+    "bw_gbps": 255.1,
+    "pkg_w": 348.9,
+    "core_ghz": 2.082,
+    "mesh_ghz": 1.596,
+    "nj_per_op": 133.4,
+    "mops": 2614.0,
+    "reps": 3,
+    "mops_samples": [
+     2617.0,
+     2614.0,
+     2598.0
+    ]
+   },
+   "l1": {
+    "bw_gbps": 216.8,
+    "pkg_w": 348.9,
+    "core_ghz": 2.358,
+    "mesh_ghz": 1.761,
+    "nj_per_op": 160.83,
+    "mops": 2170.0,
+    "reps": 3,
+    "mops_samples": [
+     2173.0,
+     2123.0,
+     2170.0
+    ]
+   }
+  }
+ },
+ "set": {
+  "10": {
+   "base": {
+    "bw_gbps": 452.4,
+    "pkg_w": 366.1,
+    "core_ghz": 2.071,
+    "mesh_ghz": 1.648,
+    "nj_per_op": 108.57,
+    "mops": 3403.0,
+    "reps": 3,
+    "mops_samples": [
+     3292.0,
+     3421.0,
+     3403.0
+    ]
+   },
+   "ring": {
+    "bw_gbps": 453.3,
+    "pkg_w": 374.6,
+    "core_ghz": 2.045,
+    "mesh_ghz": 1.693,
+    "nj_per_op": 108.42,
+    "mops": 3428.0,
+    "reps": 3,
+    "mops_samples": [
+     3521.0,
+     3421.0,
+     3428.0
+    ]
+   },
+   "cmp": {
+    "bw_gbps": 452.0,
+    "pkg_w": 371.1,
+    "core_ghz": 1.925,
+    "mesh_ghz": 1.677,
+    "nj_per_op": 108.45,
+    "mops": 3405.0,
+    "reps": 3,
+    "mops_samples": [
+     3345.0,
+     3422.0,
+     3405.0
+    ]
+   },
+   "rc": {
+    "bw_gbps": 453.7,
+    "pkg_w": 373.7,
+    "core_ghz": 1.969,
+    "mesh_ghz": 1.681,
+    "nj_per_op": 108.35,
+    "mops": 3434.0,
+    "reps": 3,
+    "mops_samples": [
+     3449.0,
+     3434.0,
+     3421.0
+    ]
+   },
+   "l1": {
+    "bw_gbps": 454.6,
+    "pkg_w": 365.5,
+    "core_ghz": 2.015,
+    "mesh_ghz": 1.651,
+    "nj_per_op": 106.63,
+    "mops": 3451.0,
+    "reps": 3,
+    "mops_samples": [
+     3403.0,
+     3451.0,
+     3454.0
+    ]
+   }
+  },
+  "50": {
+   "base": {
+    "bw_gbps": 408.0,
+    "pkg_w": 349.6,
+    "core_ghz": 1.933,
+    "mesh_ghz": 1.538,
+    "nj_per_op": 112.48,
+    "mops": 3108.0,
+    "reps": 3,
+    "mops_samples": [
+     3020.0,
+     3108.0,
+     3112.0
+    ]
+   },
+   "ring": {
+    "bw_gbps": 410.3,
+    "pkg_w": 349.5,
+    "core_ghz": 1.945,
+    "mesh_ghz": 1.547,
+    "nj_per_op": 111.91,
+    "mops": 3123.0,
+    "reps": 3,
+    "mops_samples": [
+     3148.0,
+     3123.0,
+     3117.0
+    ]
+   },
+   "cmp": {
+    "bw_gbps": 408.5,
+    "pkg_w": 349.6,
+    "core_ghz": 1.933,
+    "mesh_ghz": 1.537,
+    "nj_per_op": 112.63,
+    "mops": 3104.0,
+    "reps": 3,
+    "mops_samples": [
+     3097.0,
+     3106.0,
+     3104.0
+    ]
+   },
+   "rc": {
+    "bw_gbps": 408.9,
+    "pkg_w": 349.3,
+    "core_ghz": 1.937,
+    "mesh_ghz": 1.539,
+    "nj_per_op": 112.44,
+    "mops": 3112.0,
+    "reps": 3,
+    "mops_samples": [
+     3112.0,
+     3105.0,
+     3117.0
+    ]
+   },
+   "l1": {
+    "bw_gbps": 410.3,
+    "pkg_w": 349.3,
+    "core_ghz": 1.946,
+    "mesh_ghz": 1.549,
+    "nj_per_op": 111.95,
+    "mops": 3121.0,
+    "reps": 3,
+    "mops_samples": [
+     3131.0,
+     3115.0,
+     3121.0
+    ]
+   }
+  },
+  "90": {
+   "base": {
+    "bw_gbps": 341.0,
+    "pkg_w": 348.8,
+    "core_ghz": 1.995,
+    "mesh_ghz": 1.592,
+    "nj_per_op": 167.85,
+    "mops": 2078.0,
+    "reps": 3,
+    "mops_samples": [
+     2108.0,
+     2076.0,
+     2078.0
+    ]
+   },
+   "ring": {
+    "bw_gbps": 341.3,
+    "pkg_w": 348.8,
+    "core_ghz": 1.991,
+    "mesh_ghz": 1.59,
+    "nj_per_op": 167.34,
+    "mops": 2082.0,
+    "reps": 3,
+    "mops_samples": [
+     2081.0,
+     2092.0,
+     2082.0
+    ]
+   },
+   "cmp": {
+    "bw_gbps": 341.4,
+    "pkg_w": 348.9,
+    "core_ghz": 2.0,
+    "mesh_ghz": 1.596,
+    "nj_per_op": 167.18,
+    "mops": 2081.0,
+    "reps": 3,
+    "mops_samples": [
+     2099.0,
+     2077.0,
+     2081.0
+    ]
+   },
+   "rc": {
+    "bw_gbps": 341.8,
+    "pkg_w": 349.1,
+    "core_ghz": 1.995,
+    "mesh_ghz": 1.596,
+    "nj_per_op": 167.64,
+    "mops": 2083.0,
+    "reps": 3,
+    "mops_samples": [
+     2083.0,
+     2096.0,
+     2081.0
+    ]
+   },
+   "l1": {
+    "bw_gbps": 343.0,
+    "pkg_w": 348.3,
+    "core_ghz": 2.017,
+    "mesh_ghz": 1.596,
+    "nj_per_op": 167.1,
+    "mops": 2088.0,
+    "reps": 3,
+    "mops_samples": [
+     2088.0,
+     2050.0,
+     2091.0
+    ]
+   }
+  }
+ }
+}

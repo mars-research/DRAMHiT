@@ -1,0 +1,9 @@
+{
+ "label": "dramhit_rck_f10_x1",
+ "kind": "totals",
+ "cmd": "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/attempt4/rck/dramhit --mode 11 --ht-type 3 --ht-size 536870912 --ht-fill 10 --num-threads 64 --numa-split 10 --np_cpu_node_msk 1 --np_mem_node_msk 4 --np_mem_local 0 --batch-len 16 --find_queue 64 --no-prefetch 0 --hw-pref 0 --insert-factor 100 --read-factor 100 --skew 0.01 --seed 1775762440565610239",
+ "iters": null,
+ "margin_before_c": 18,
+ "wall_s": 6.8,
+ "started": "2026-10-02T14:06:42"
+}

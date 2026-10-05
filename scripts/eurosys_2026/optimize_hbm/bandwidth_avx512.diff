@@ -1,0 +1,84 @@
+--- /tmp/nix-shell.qnpHWl/claude-20023/-opt-DRAMHiT-scripts-eurosys-2026-optimize-hbm/f47c130d-9750-44aa-90f1-238296009240/scratchpad/bandwidth.c.orig	2026-09-29 14:26:53.993812968 -0600
++++ bandwidth.c	2026-09-29 14:27:07.223663607 -0600
+@@ -61,6 +61,13 @@
+     INST_PREFETCH_T2,
+     INST_PREFETCH_NTA,
+     INST_PREFETCH_W,
++    // prefetcht1 PREFETCH_AHEAD lines ahead, then a 512-bit load and a 512-bit
++    // compare of the current line -- the per-line work of the hashtable's SIMD
++    // bucket probe (light AVX-512 integer ops only). Write mode: prefetcht1 + zmm store.
++    INST_PREFETCH_T1_AVX512,
++    // As INST_PREFETCH_T1_AVX512, plus three dependent 512-bit 64-bit multiplies
++    // (vpmullq) per line, a heavy AVX-512 op, to see the heavy-license clock.
++    INST_PREFETCH_T1_AVX512_HEAVY,
+     // Full-cache-line non-temporal store. Every other write path stores 8 B into a
+     // 64 B line, so the line has to be fetched first (RFO) and written back later --
+     // two DRAM transactions per store. A 64 B NT store fills a write-combining buffer
+@@ -303,6 +310,8 @@
+                 // threads collide on the same lines, and an NT store's whole point is
+                 // not to take ownership of a line. Behaves as the plain scalar loop.
+                 case INST_NT_STORE:      SHARED_SCALAR_LOOP(PF_NONE); break;
++                case INST_PREFETCH_T1_AVX512:        // no prefetched shared variant
++                case INST_PREFETCH_T1_AVX512_HEAVY:
+                 case INST_AVX512_LOAD:
+                     for (uint64_t i = 0; i < ops; i++) {
+                         uint64_t h = mix64(addr_seed + (uint64_t)i);
+@@ -354,6 +363,40 @@
+                 }
+                 break;
+ 
++            case INST_PREFETCH_T1_AVX512:
++            case INST_PREFETCH_T1_AVX512_HEAVY: {
++                const int heavy = (t->inst_type == INST_PREFETCH_T1_AVX512_HEAVY);
++                if (t->rw_mode == MODE_READ) {
++                    const __m512i key = _mm512_set1_epi64((long long)0x9e3779b97f4a7c15ULL);
++                    const __m512i mulk = _mm512_set1_epi64(0x100000001b3LL);
++                    __m512i acc = _mm512_setzero_si512();
++                    for (uint64_t i = 0; i < ops; i++) {
++                        GET_IDX(idx, i, state_var);
++                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
++                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);
++                        __m512i vec = _mm512_loadu_si512((const void*)&t->buffer[idx * 8]);
++                        __mmask8 m = _mm512_mask_cmpeq_epu64_mask(0x55, vec, key);
++                        local_dummy += _mm_popcnt_u32(m);
++                        if (heavy) {
++                            __m512i v = _mm512_mullo_epi64(vec, mulk);
++                            v = _mm512_mullo_epi64(v, vec);   // operands depend on vec so
++                            v = _mm512_mullo_epi64(v, vec);   // gcc cannot fold to one multiply
++                            acc = _mm512_xor_si512(acc, v);
++                        }
++                    }
++                    local_dummy += _mm_cvtsi128_si64(_mm512_castsi512_si128(acc));
++                } else {
++                    __m512i write_vec = _mm512_set1_epi64(0xff);
++                    for (uint64_t i = 0; i < ops; i++) {
++                        GET_IDX(idx, i, state_var);
++                        GET_LOOKAHEAD_IDX(idx_lookahead, i, state_var);
++                        _mm_prefetch((const char*)&t->buffer[idx_lookahead * 8], _MM_HINT_T1);
++                        _mm512_storeu_si512((void*)&t->buffer[idx * 8], write_vec);
++                    }
++                }
++                break;
++            }
++
+             case INST_PREFETCH_T0:
+                 if (t->rw_mode == MODE_READ) {
+                     for (uint64_t i = 0; i < ops; i++) {
+@@ -519,6 +562,8 @@
+             else if (strcmp(argv[i], "avx512") == 0) inst = INST_AVX512_LOAD;
+             else if (strcmp(argv[i], "t0") == 0) inst = INST_PREFETCH_T0;
+             else if (strcmp(argv[i], "t1") == 0) inst = INST_PREFETCH_T1;
++            else if (strcmp(argv[i], "t1avx512") == 0) inst = INST_PREFETCH_T1_AVX512;
++            else if (strcmp(argv[i], "t1avx512heavy") == 0) inst = INST_PREFETCH_T1_AVX512_HEAVY;
+             else if (strcmp(argv[i], "t2") == 0) inst = INST_PREFETCH_T2;
+             else if (strcmp(argv[i], "nta") == 0) inst = INST_PREFETCH_NTA;
+             else if (strcmp(argv[i], "prefetchw") == 0) inst = INST_PREFETCH_W;
+@@ -569,7 +614,7 @@
+     }
+ 
+     if (raw_per_thread_size == 0 || pattern_str == NULL || cpu_freq_ghz <= 0.0) {
+-        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t2|nta|prefetchw|ntstore>] [-lookahead <lines>] [-mode <r|w>]\n"
++        fprintf(stderr, "Usage: %s -m <per_thread_size> -pattern \"n0a0,1t16...\" -freq <GHz> [-inst <load|avx512|t0|t1|t1avx512|t1avx512heavy|t2|nta|prefetchw|ntstore>] [-lookahead <lines>] [-mode <r|w>]\n"
+                         "       shared (overlapping) mode, for cross-socket coherence traffic:\n"
+                         "         [-shared <size>] [-shared-nodes <2|2,3|0-1>] [-share <0..100>] [-mix w:<0..100>]\n"
+                         "         -shared        one region every thread indexes at random, like a shared table\n"

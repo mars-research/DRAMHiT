@@ -1,0 +1,2 @@
+bc1f859f35745461b2192a200bd513cb  ../attempt6/ddrhbm/dramhit
+b91b7be1b7cd5b4a2d8b69a6f1afd47e  bin/bandwidth_rand_it100

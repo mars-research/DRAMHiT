@@ -1,0 +1,158 @@
+2026-10-02 12:37:32.552 INFO  [198560] [initializeLogger@17] ------------------------
+2026-10-02 12:37:32.552 INFO  [198560] [initializeLogger@18] Plog library initialized
+2026-10-02 12:37:32.552 INFO  [198560] [initializeLogger@19] ------------------------
+2026-10-02 12:37:32.552 INFO  [198560] [main@27] Starting dramhit
+2026-10-02 12:37:32.552 INFO  [198560] [kmercounter::Application::process@862] Hashtable type : Cas HT
+2026-10-02 12:37:32.552 INFO  [198560] [kmercounter::Application::process@913] Dropping the page cache
+2026-10-02 12:37:32.720 INFO  [198560] [kmercounter::init_uniform_dist@249] /opt/DRAMHiT/cache/uniform_seed1775762440565610239_size53687091.bin 0
+2026-10-02 12:37:32.720 INFO  [198560] [kmercounter::init_uniform_dist@256] Initializing global uniform distribution with seed 1775762440565610239, size 53687091
+2026-10-02 12:37:33.133 INFO  [198560] [kmercounter::init_uniform_dist@269] Uniform dist generated. size 53687091
+2026-10-02 12:37:33.133 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 0 assigned to 0 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 1 assigned to 2 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 2 assigned to 4 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 3 assigned to 6 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 4 assigned to 8 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 5 assigned to 10 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 6 assigned to 12 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 7 assigned to 14 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 8 assigned to 16 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 9 assigned to 18 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 10 assigned to 20 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 11 assigned to 22 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 12 assigned to 24 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 13 assigned to 26 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 14 assigned to 28 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 15 assigned to 30 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 16 assigned to 32 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 17 assigned to 34 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 18 assigned to 36 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 19 assigned to 38 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 20 assigned to 40 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 21 assigned to 42 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 22 assigned to 44 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 23 assigned to 46 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 24 assigned to 48 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 25 assigned to 50 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 26 assigned to 52 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 27 assigned to 54 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 28 assigned to 56 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 29 assigned to 58 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 30 assigned to 60 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 31 assigned to 62 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 32 assigned to 64 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 33 assigned to 66 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 34 assigned to 68 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 35 assigned to 70 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 36 assigned to 72 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 37 assigned to 74 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 38 assigned to 76 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 39 assigned to 78 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 40 assigned to 80 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 41 assigned to 82 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 42 assigned to 84 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 43 assigned to 86 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 44 assigned to 88 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 45 assigned to 90 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 46 assigned to 92 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 47 assigned to 94 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 48 assigned to 96 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 49 assigned to 98 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 50 assigned to 100 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 51 assigned to 102 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 52 assigned to 104 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 53 assigned to 106 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 54 assigned to 108 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 55 assigned to 110 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 56 assigned to 112 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 57 assigned to 114 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 58 assigned to 116 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 59 assigned to 118 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 60 assigned to 120 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 61 assigned to 122 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 62 assigned to 124 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@497] shard 63 assigned to 126 at numa node 0
+2026-10-02 12:37:33.134 INFO  [198560] [kmercounter::Application::spawn_shard_threads@522] total kv 53687091, num_threads 64, op per thread (per run) 838860
+2026-10-02 12:37:33.134 INFO  [198596] [kmercounter::calloc_ht@223] allocating 8 1gb pages bytes 8589934592
+2026-10-02 12:37:33.134 INFO  [198596] [kmercounter::calloc_ht@236] mmap returns 0x7fbe40000000
+2026-10-02 12:37:33.135 INFO  [198596] [kmercounter::distribute_mem_to_nodes@117] Successfully bound 8589934592 bytes to node mask 0x4
+2026-10-02 12:37:33.135 INFO  [198596] [kmercounter::distribute_mem_to_nodes@132] addr 0x7fbe40000000, alloc_sz 8589934592
+2026-10-02 12:37:34.177 INFO  [198596] [KVQ>::CASHashTable@92] Hashtable base: 0x7fbe40000000 Hashtable size: 536870912, 8 GB
+2026-10-02 12:37:34.178 INFO  [198596] [KVQ>::CASHashTable@96] queue sz: 64, queue item sz: 32
+2026-10-02 12:37:34.179 INFO  [198608] [kmercounter::ZipfianTest::run@336] shard 13: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198653] [kmercounter::ZipfianTest::run@336] shard 58: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198632] [kmercounter::ZipfianTest::run@336] shard 37: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198617] [kmercounter::ZipfianTest::run@336] shard 22: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198649] [kmercounter::ZipfianTest::run@336] shard 54: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198596] [kmercounter::ZipfianTest::run@336] shard 1: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198641] [kmercounter::ZipfianTest::run@336] shard 46: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198603] [kmercounter::ZipfianTest::run@336] shard 8: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198622] [kmercounter::ZipfianTest::run@336] shard 27: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198624] [kmercounter::ZipfianTest::run@336] shard 29: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198618] [kmercounter::ZipfianTest::run@336] shard 23: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198625] [kmercounter::ZipfianTest::run@336] shard 30: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198623] [kmercounter::ZipfianTest::run@336] shard 28: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198642] [kmercounter::ZipfianTest::run@336] shard 47: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198658] [kmercounter::ZipfianTest::run@336] shard 63: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198597] [kmercounter::ZipfianTest::run@336] shard 2: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.179 INFO  [198631] [kmercounter::ZipfianTest::run@336] shard 36: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198613] [kmercounter::ZipfianTest::run@336] shard 18: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198615] [kmercounter::ZipfianTest::run@336] shard 20: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198639] [kmercounter::ZipfianTest::run@336] shard 44: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198620] [kmercounter::ZipfianTest::run@336] shard 25: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198560] [kmercounter::ZipfianTest::run@336] shard 0: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198621] [kmercounter::ZipfianTest::run@336] shard 26: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198633] [kmercounter::ZipfianTest::run@336] shard 38: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198634] [kmercounter::ZipfianTest::run@336] shard 39: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198611] [kmercounter::ZipfianTest::run@336] shard 16: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198619] [kmercounter::ZipfianTest::run@336] shard 24: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198609] [kmercounter::ZipfianTest::run@336] shard 14: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198612] [kmercounter::ZipfianTest::run@336] shard 17: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198601] [kmercounter::ZipfianTest::run@336] shard 6: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198614] [kmercounter::ZipfianTest::run@336] shard 19: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198616] [kmercounter::ZipfianTest::run@336] shard 21: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198635] [kmercounter::ZipfianTest::run@336] shard 40: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198643] [kmercounter::ZipfianTest::run@336] shard 48: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198628] [kmercounter::ZipfianTest::run@336] shard 33: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198640] [kmercounter::ZipfianTest::run@336] shard 45: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198627] [kmercounter::ZipfianTest::run@336] shard 32: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198648] [kmercounter::ZipfianTest::run@336] shard 53: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198652] [kmercounter::ZipfianTest::run@336] shard 57: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198655] [kmercounter::ZipfianTest::run@336] shard 60: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.180 INFO  [198626] [kmercounter::ZipfianTest::run@336] shard 31: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198654] [kmercounter::ZipfianTest::run@336] shard 59: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198651] [kmercounter::ZipfianTest::run@336] shard 56: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198598] [kmercounter::ZipfianTest::run@336] shard 3: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198629] [kmercounter::ZipfianTest::run@336] shard 34: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198656] [kmercounter::ZipfianTest::run@336] shard 61: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198630] [kmercounter::ZipfianTest::run@336] shard 35: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198657] [kmercounter::ZipfianTest::run@336] shard 62: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198599] [kmercounter::ZipfianTest::run@336] shard 4: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198604] [kmercounter::ZipfianTest::run@336] shard 9: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198606] [kmercounter::ZipfianTest::run@336] shard 11: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198602] [kmercounter::ZipfianTest::run@336] shard 7: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198605] [kmercounter::ZipfianTest::run@336] shard 10: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198636] [kmercounter::ZipfianTest::run@336] shard 41: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198600] [kmercounter::ZipfianTest::run@336] shard 5: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198638] [kmercounter::ZipfianTest::run@336] shard 43: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198607] [kmercounter::ZipfianTest::run@336] shard 12: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198637] [kmercounter::ZipfianTest::run@336] shard 42: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198610] [kmercounter::ZipfianTest::run@336] shard 15: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198644] [kmercounter::ZipfianTest::run@336] shard 49: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198647] [kmercounter::ZipfianTest::run@336] shard 52: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198645] [kmercounter::ZipfianTest::run@336] shard 50: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.181 INFO  [198646] [kmercounter::ZipfianTest::run@336] shard 51: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.182 INFO  [198650] [kmercounter::ZipfianTest::run@336] shard 55: local key partition (8388608 B) bound to node msk 0x4
+2026-10-02 12:37:34.199 INFO  [198560] [kmercounter::ZipfianTest::run@372] zipfian test insert start
+2026-10-02 12:37:35.760 INFO  [198560] [kmercounter::ZipfianTest::run@378] zipfian test insert end
+2026-10-02 12:37:35.760 INFO  [198560] [kmercounter::ZipfianTest::run@426] zipfian test find start
+2026-10-02 12:37:38.285 INFO  [198560] [kmercounter::ZipfianTest::run@434] zipfian test find end
+2026-10-02 12:37:39.199 INFO  [198560] [kmercounter::ZipfianTest::run@459] get fill 0.100
+2026-10-02 12:37:40.114 INFO  [198560] [kmercounter::free_mem@256] 0x7fbe40000000 with sz 8589934592 unmapped
+2026-10-02 12:37:40.115 INFO  [198560] [kmercounter::print_stats@304] 
+============================================
+fill : 53687091, capacity : 536870912, fill_factor : 0.100000
+global_find_cycle : 6816037546, find_ops : 10737418200, found : 10737418200
+global_insert_cycle : 4213878618, insert_ops : 5368709100
+set_cycles : 50, get_cycles : 40, set_mops : 3439, get_mops : 4253
+============================================
+

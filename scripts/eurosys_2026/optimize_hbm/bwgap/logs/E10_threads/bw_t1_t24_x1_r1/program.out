@@ -1,0 +1,45 @@
+Requested per-thread size : ~256 MB
+Clamped per-thread size   : 256 MB (Power of 2 & 2MB Aligned)
+
+Spawning Thread 0 -> Pinned to CPU 0 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 1 -> Pinned to CPU 2 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 2 -> Pinned to CPU 4 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 3 -> Pinned to CPU 6 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 4 -> Pinned to CPU 8 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 5 -> Pinned to CPU 10 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 6 -> Pinned to CPU 12 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 7 -> Pinned to CPU 14 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 8 -> Pinned to CPU 16 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 9 -> Pinned to CPU 18 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 10 -> Pinned to CPU 20 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 11 -> Pinned to CPU 22 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 12 -> Pinned to CPU 24 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 13 -> Pinned to CPU 26 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 14 -> Pinned to CPU 28 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 15 -> Pinned to CPU 30 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 16 -> Pinned to CPU 32 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 17 -> Pinned to CPU 34 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 18 -> Pinned to CPU 36 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 19 -> Pinned to CPU 38 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 20 -> Pinned to CPU 40 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 21 -> Pinned to CPU 42 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 22 -> Pinned to CPU 44 (Node 0), Target Memory Node Mask 0x4
+Spawning Thread 23 -> Pinned to CPU 46 (Node 0), Target Memory Node Mask 0x4
+
+Setup: Spawning 24 threads.
+Total memory allocated across all threads: 6144 MB.
+
+-> [1/2] All threads allocated, bound to correct NUMA masks, and pinned to cores.
+Start perf collection
+End perf collection
+
+============================================
+Configuration   : Inst: 3 | Lookahead: 64 | Mode: READ
+Mode            : RANDOM (CRC32 Stateless Hash)
+Total Data Proc : 600.00 GB
+Elapsed Cycles  : 6686448250
+Time Taken      : 2.4765 seconds (based on 2.70 GHz)
+Bandwidth       : 242.28 GB/s
+--------------------------------------------
+Cycles per access, by cpu node:
+  node 0   :   15.72 cycles/access  (24 threads)

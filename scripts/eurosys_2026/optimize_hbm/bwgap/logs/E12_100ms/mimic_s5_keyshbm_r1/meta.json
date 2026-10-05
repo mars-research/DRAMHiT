@@ -1,0 +1,8 @@
+{
+ "label": "mimic_s5_keyshbm",
+ "kind": "stream",
+ "cmd": "env MIMIC_KEY_NODE=2 /opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/bwgap/bin/bandwidth_rand_mimic_it100 -m 256mb -pattern n0a2t64 -freq 2.7 -inst mimic -pad 0 -near 8 -lookahead 64 -stage 5 -mode r",
+ "margin_before_c": 14,
+ "wall_s": 6.5,
+ "started": "2026-10-02T17:02:01"
+}

@@ -1,0 +1,6 @@
+== mimic_s5_keynode2 (pid 246736) bytes per node, by mapping kind
+  anon4k   {0: '16.9 MiB', 1: '0.0 MiB', 2: '409.8 MiB'}
+  file     {0: '0.1 MiB', 1: '1.6 MiB'}
+  heap     {0: '2.0 MiB', 1: '0.0 MiB'}
+  hugetlb  {2: '16384.0 MiB'}
+  stack    {0: '0.0 MiB', 1: '0.1 MiB'}

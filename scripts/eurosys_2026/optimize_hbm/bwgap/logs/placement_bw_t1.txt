@@ -1,0 +1,6 @@
+== bw_t1 (pid 241907) bytes per node, by mapping kind
+  anon4k   {0: '0.2 MiB', 1: '0.3 MiB'}
+  file     {0: '0.1 MiB', 1: '1.6 MiB'}
+  heap     {1: '0.0 MiB'}
+  hugetlb  {2: '16384.0 MiB'}
+  stack    {0: '0.0 MiB', 1: '0.1 MiB'}

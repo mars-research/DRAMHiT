@@ -1,0 +1,8 @@
+{
+ "label": "bw_t1_c2200",
+ "kind": "stream",
+ "cmd": "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/bwgap/bin/bandwidth_rand_it100 -m 256mb -pattern n0a2t64 -freq 2.7 -inst t1 -pad 0 -near 8 -lookahead 64 -mode r",
+ "margin_before_c": 12,
+ "wall_s": 4.9,
+ "started": "2026-10-02T16:52:13"
+}

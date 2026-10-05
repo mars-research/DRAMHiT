@@ -588,8 +588,22 @@ class CASHashTable : public BaseHashTable {
     // fast path
     if (fast_path) [[likely]] {
       __m512i zero_vector = _mm512_setzero_si512();
+#ifdef CAS_FIND_RING_OFFSETS
+      // Inside this loop tail/head are byte offsets into find_queue, so a slot
+      // is base + offset with no index scaling; converted back on exit.
+      static_assert((sizeof(KVQ) & (sizeof(KVQ) - 1)) == 0,
+                    "find queue entry size must be a power of two");
+      char *const fq_base = reinterpret_cast<char *>(this->find_queue);
+      // 64-bit so an offset can be used directly as an addressing-mode index.
+      const uint64_t fq_mask = (uint64_t)this->find_queue_sz * sizeof(KVQ) - 1;
+      uint64_t tail = (uint64_t)this->find_tail * sizeof(KVQ);
+      uint64_t head = (uint64_t)this->find_head * sizeof(KVQ);
+#define FQ(off) (*reinterpret_cast<KVQ *>(fq_base + (off)))
+#else
       uint32_t tail = this->find_tail;
       uint32_t head = this->find_head;
+#define FQ(i) (this->find_queue[i])
+#endif
       uint32_t not_found = 0;
       FindResult *vp_result = vp.second;
       uint64_t key;
@@ -605,12 +619,17 @@ class CASHashTable : public BaseHashTable {
 
 #ifdef DOUBLE_PREFETCH
         // Prefetch next tail bucket
+#ifdef CAS_FIND_RING_OFFSETS
+        uint64_t next_tail =
+            (tail + PREFETCH_FIND_NEXT_DISTANCE * sizeof(KVQ)) & fq_mask;
+#else
         uint32_t next_tail = (tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
+#endif
         const void *next_tail_addr =
-            &this->hashtable[this->find_queue[next_tail].idx];
+            &this->hashtable[FQ(next_tail).idx];
         __builtin_prefetch(next_tail_addr, false, 3);
 #endif
-        q = &this->find_queue[tail];
+        q = &FQ(tail);
         uint32_t idx = q->idx;
         key = q->key;
 
@@ -620,11 +639,29 @@ class CASHashTable : public BaseHashTable {
 
         key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
         // update tails before we enter branching.
+#ifdef CAS_FIND_RING_OFFSETS
+        tail = (tail + sizeof(KVQ)) & fq_mask;
+#else
         tail = (tail + 1) & FIND_QUEUE_SZ_MASK;
+#endif
 
         if (key_cmp > 0) {
+#ifdef CAS_FIND_COMPRESS_VALUE
+          // The value sits in the lane after its key; take it from the line
+          // already in cacheline rather than locating and reloading it.
+#ifdef CAS_FIND_KSHIFT
+          // One mask-register shift. Written as integer arithmetic (key_cmp << 1)
+          // gcc moves the mask to a GPR, shifts, and moves it back: 3 instructions.
+          const __mmask8 value_lanes = _kshiftli_mask8(key_cmp, 1);
+#else
+          const __mmask8 value_lanes = (__mmask8)(key_cmp << 1);
+#endif
+          vp_result->value = _mm_cvtsi128_si64(_mm512_castsi512_si128(
+              _mm512_maskz_compress_epi64(value_lanes, cacheline)));
+#else
           __mmask8 offset = _bit_scan_forward(key_cmp);
           vp_result->value = bucket[(offset + 1)];
+#endif
           vp_result->id = q->key_id;
           vp_result++;
         } else {
@@ -649,16 +686,20 @@ class CASHashTable : public BaseHashTable {
             prefetch_read(idx);
 
 #ifdef UNIFORM_HT_SUPPORT
-            this->find_queue[head].key_hash = hash;
+            FQ(head).key_hash = hash;
 #endif
-            this->find_queue[head].key = key;
-            this->find_queue[head].key_id = q->key_id;
-            this->find_queue[head].idx = idx;
+            FQ(head).key = key;
+            FQ(head).key_id = q->key_id;
+            FQ(head).idx = idx;
 #ifdef LATENCY_COLLECTION
-            this->find_queue[head].timer_id = q->timer_id;
+            FQ(head).timer_id = q->timer_id;
 #endif
+#ifdef CAS_FIND_RING_OFFSETS
+            head = (head + sizeof(KVQ)) & fq_mask;
+#else
             head += 1;
             head &= FIND_QUEUE_SZ_MASK;
+#endif
             goto retry;
           } else {
             not_found++;
@@ -679,23 +720,45 @@ class CASHashTable : public BaseHashTable {
         uint32_t new_idx = hash & HT_BUCKET_MASK;
 
         prefetch_read(new_idx);
-        this->find_queue[head].key = key_data->key;
-        this->find_queue[head].idx = new_idx;
-        this->find_queue[head].key_id = key_data->id;
+        FQ(head).key = key_data->key;
+#ifdef CAS_FIND_SCALAR_PACK
+        {
+          // idx and key_id are adjacent 32-bit fields. Left alone, gcc packs them
+          // through an xmm register (vmovd + vpinsrd + vmovq, all port 5). Passing
+          // both through an empty asm leaves two scalar stores.
+          uint32_t pack_idx = new_idx, pack_id = key_data->id;
+          __asm__("" : "+r"(pack_idx), "+r"(pack_id));
+          FQ(head).idx = pack_idx;
+          FQ(head).key_id = pack_id;
+        }
+#else
+        FQ(head).idx = new_idx;
+        FQ(head).key_id = key_data->id;
+#endif
 
 #ifdef UNIFORM_HT_SUPPORT
-        this->find_queue[head].key_hash = hash;
+        FQ(head).key_hash = hash;
 #endif
 
 #ifdef LATENCY_COLLECTION
-        this->find_queue[head].timer_id = timer;
+        FQ(head).timer_id = timer;
 #endif
+#ifdef CAS_FIND_RING_OFFSETS
+        head = (head + sizeof(KVQ)) & fq_mask;
+#else
         head += 1;
         head &= FIND_QUEUE_SZ_MASK;
+#endif
       }  // end for loop
 
+#ifdef CAS_FIND_RING_OFFSETS
+      this->find_tail = tail / sizeof(KVQ);
+      this->find_head = head / sizeof(KVQ);
+#else
       this->find_tail = tail;
       this->find_head = head;
+#endif
+#undef FQ
       vp.first += (kp.size() - not_found);
     }  // end of fast path
     else [[unlikely]] {  // slow paths

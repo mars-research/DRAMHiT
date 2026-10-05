@@ -17,6 +17,8 @@
 #include "print_stats.h"
 #include "sync.h"
 #include "utils/hugepage_allocator.hpp"
+#include "numa.hpp"
+#include <numaif.h>
 #include "utils/vtune.hpp"
 
 #ifdef ENABLE_HIGH_LEVEL_PAPI
@@ -302,10 +304,41 @@ void ZipfianTest::run(Shard *shard, BaseHashTable *hashtable,
   if (shard->shard_idx == config.num_threads - 1)
     partition_size += data_sz % config.num_threads;
 
-  HashTableTestVec zipf_set_local(
-      partition_size,              // initial size
-      hugepage_alloc_inst_ht_test  // allocator instance
-  );
+  // Allocate the hugepage-backed local key partition without touching it, so
+  // that under the custom numa policy (numa_split 10) it can be bound to the
+  // memory node(s) the hashtable uses (HBM) before its pages are faulted in:
+  // the keys the find loop streams then come from HBM, not from the DDR of
+  // the cpu's own node. resize() below value-initialises and thus places them.
+  HashTableTestVec zipf_set_local(hugepage_alloc_inst_ht_test);
+  zipf_set_local.reserve(partition_size);
+
+  if (config.numa_split == 10 && !getenv("NO_KEY_BIND")) {
+    uint32_t mem_node_msk = config.np_mem_node_msk;
+    if (config.np_mem_local) {
+      // same rule as the hashtable arena: each thread uses the HBM node
+      // closest to its own cpu node
+      int local_node = nearest_memory_only_node(shard->numa_node);
+      if (local_node >= 0) mem_node_msk = 1u << local_node;
+    }
+    if (mem_node_msk != 0) {
+      unsigned long nodemask = mem_node_msk;
+      uint64_t bind_sz =
+          hugepage_alloc_inst_ht_test
+              .get_rounded_alloc_size(partition_size * sizeof(key_type))
+              .second;
+      int policy = (__builtin_popcount(mem_node_msk) > 1) ? MPOL_INTERLEAVE
+                                                           : MPOL_BIND;
+      if (mbind(zipf_set_local.data(), bind_sz, policy, &nodemask,
+                sizeof(nodemask) * 8, MPOL_MF_STRICT | MPOL_MF_MOVE) != 0) {
+        PLOGE.printf("shard %u: mbind of local key partition to node msk 0x%x failed",
+                     (unsigned)shard->shard_idx, mem_node_msk);
+      } else {
+        PLOGI.printf("shard %u: local key partition (%lu B) bound to node msk 0x%x",
+                     (unsigned)shard->shard_idx, bind_sz, mem_node_msk);
+      }
+    }
+  }
+  zipf_set_local.resize(partition_size);
 
   for (uint64_t i = 0; i < partition_size; i++) {
       zipf_set_local.at(i) = g_zipf_values->at(i + starting_offset);

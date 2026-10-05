@@ -1,0 +1,27 @@
+== base
+set_cycles : 52, get_cycles : 44, set_mops : 3289, get_mops : 3897
+cycles 413442693068
+l1d_pend_miss.fb_full 223929479240
+l1d_pend_miss.fb_full_periods 8852673713
+l1d_pend_miss.pending 89876427171
+l1d_pend_miss.pending_cycles 20163244252
+l2_rqsts.swpf_hit 5367959192
+l2_rqsts.swpf_miss 5704908072
+== l1
+set_cycles : 52, get_cycles : 53, set_mops : 3312, get_mops : 3201
+cycles 480581932032
+l1d_pend_miss.fb_full 317238165898
+l1d_pend_miss.fb_full_periods 8844716639
+l1d_pend_miss.pending 89455139979
+l1d_pend_miss.pending_cycles 18734928484
+l2_rqsts.swpf_hit 139897331
+l2_rqsts.swpf_miss 4635546260
+== l2
+set_cycles : 51, get_cycles : 47, set_mops : 3332, get_mops : 3669
+cycles 427718545032
+l1d_pend_miss.fb_full 220530760192
+l1d_pend_miss.fb_full_periods 8413849570
+l1d_pend_miss.pending 134263295677
+l1d_pend_miss.pending_cycles 61036234354
+l2_rqsts.swpf_hit 15430723
+l2_rqsts.swpf_miss 5977437183
