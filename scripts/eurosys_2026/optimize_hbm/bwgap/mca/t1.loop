@@ -1,0 +1,14 @@
+4047d0	  0.2%	lea    (%r15,%rcx,1),%r9
+4047d4	  0.7%	mov    %r8,%rax
+4047d7	  0.3%	mov    %r8,%rdx
+4047da	  0.1%	crc32  %rcx,%rax
+4047e0	  0.6%	crc32  %r9,%rdx
+4047e6	  0.2%	and    %rsi,%rdx
+4047e9	  1.7%	and    %rsi,%rax
+4047ec	  0.4%	shl    $0x6,%rdx
+4047f0	  0.2%	shl    $0x6,%rax
+4047f4	  0.8%	inc    %rcx
+4047f7	  0.3%	add    (%rdi,%rax,1),%r14
+4047fb	 92.8%	prefetcht1 (%rdi,%rdx,1)
+4047ff	  1.6%	cmp    %rcx,%r10
+404802	  0.0%	jne    4047d0 <mem_worker+0x1180>

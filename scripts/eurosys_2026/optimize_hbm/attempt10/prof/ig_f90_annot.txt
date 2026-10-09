@@ -1,0 +1,596 @@
+ Percent |	Source code & Disassembly of dramhit for cycles:u (248133 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000043dba0 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)>:
+    0.07 :   43dba0: push   %rbp
+    0.01 :   43dba1: mov    %rsp,%rbp
+    0.00 :   43dba4: push   %r15
+    0.00 :   43dba6: push   %r14
+    0.00 :   43dba8: push   %r13
+    0.00 :   43dbaa: mov    %rdx,%r13
+    0.00 :   43dbad: push   %r12
+    0.01 :   43dbaf: push   %rbx
+    0.04 :   43dbb0: mov    %rdi,%rbx
+    0.00 :   43dbb3: and    $0xffffffffffffffc0,%rsp
+    0.00 :   43dbb7: sub    $0x8,%rsp
+    0.00 :   43dbbb: mov    %rdi,-0x30(%rsp)
+    0.01 :   43dbc0: mov    %rsi,-0x40(%rsp)
+    0.00 :   43dbc5: mov    %rsi,%rdi
+    0.00 :   43dbc8: mov    %rdx,-0x38(%rsp)
+    0.01 :   43dbcd: mov    0xb0(%rbx),%ecx
+    0.04 :   43dbd3: mov    0xb4(%rbx),%eax
+    0.00 :   43dbd9: mov    0x8(%rsi),%rsi
+    0.01 :   43dbdd: mov    0x78(%rbx),%r8d
+    0.01 :   43dbe1: mov    0x6c(%rbx),%r9d
+    0.02 :   43dbe5: mov    (%rdi),%rdi
+    0.01 :   43dbe8: mov    %ecx,%edx
+    0.00 :   43dbea: lea    (%rsi,%rsi,2),%r10
+    0.00 :   43dbee: sub    %eax,%edx
+    0.04 :   43dbf0: lea    (%rdi,%r10,8),%r15
+    0.00 :   43dbf4: and    %r8d,%edx
+    0.00 :   43dbf7: lea    -0x1(%r9),%r11d
+    0.00 :   43dbfb: mov    %r15,-0x8(%rsp)
+    0.01 :   43dc00: cmp    %r11d,%edx
+    0.00 :   43dc03: jb     43e2c4 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x724>
+    0.00 :   43dc09: mov    %r9d,%r8d
+    0.00 :   43dc0c: shl    $0x4,%r8
+    0.00 :   43dc10: mov    0x8(%r13),%r9
+    0.04 :   43dc14: shl    $0x4,%rcx
+    0.00 :   43dc18: lea    -0x40(%r8),%r10
+    0.00 :   43dc1c: mov    %rcx,%r14
+    0.00 :   43dc1f: mov    %r9,(%rsp)
+    0.01 :   43dc23: mov    %r10,-0x10(%rsp)
+    0.01 :   43dc28: movl   $0x0,-0x28(%rsp)
+    0.00 :   43dc30: mov    0xa0(%rbx),%r12
+    0.00 :   43dc37: mov    0x80(%rbx),%edx
+    0.03 :   43dc3d: mov    0x541f4(%rip),%rcx        # 491e38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.01 :   43dc44: lea    -0x1(%r8),%r11
+    0.00 :   43dc48: shl    $0x4,%rax
+    0.00 :   43dc4c: cmp    %r15,%rdi
+    0.00 :   43dc4f: je     43df17 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x377>
+    0.01 :   43dc55: vmovdqa32 0x3dd21(%rip),%zmm12        # 47b980 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x20>
+    0.02 :   43dc5f: vmovdqa64 0x3dd57(%rip),%zmm11        # 47b9c0 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x60>
+    0.01 :   43dc69: vmovdqa64 0x3dd8d(%rip),%zmm10        # 47ba00 <std::_Sp_make_shared_tag::_S_ti()::__tag+0xa0>
+    0.01 :   43dc73: vmovdqa32 0x3ddc3(%rip),%zmm9        # 47ba40 <std::_Sp_make_shared_tag::_S_ti()::__tag+0xe0>
+    0.04 :   43dc7d: vpxor  %xmm14,%xmm14,%xmm14
+    0.00 :   43dc82: mov    $0xffffffff,%r15d
+    0.00 :   43dc88: nopl   0x0(%rax,%rax,1)
+    0.09 :   43dc90: mov    -0x8(%rsp),%rbx
+    0.25 :   43dc95: lea    0x80(%rax),%rsi
+    0.08 :   43dc9c: mov    %rsi,%r13
+    0.13 :   43dc9f: sub    %rdi,%rbx
+    0.34 :   43dca2: and    %r11,%r13
+    0.14 :   43dca5: cmp    $0x48,%rbx
+    0.00 :   43dca9: jle    43e1a2 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x602>
+    0.07 :   43dcaf: cmp    %rax,%r14
+    0.07 :   43dcb2: mov    %rax,%r8
+    0.06 :   43dcb5: cmovae %r14,%r8
+    0.28 :   43dcb9: cmp    %r13,%r8
+    0.09 :   43dcbc: cmovb  %r13,%r8
+    0.17 :   43dcc0: cmp    -0x10(%rsp),%r8
+    0.00 :   43dcc5: ja     43e1a2 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x602>
+    0.36 :   43dccb: mov    $0x55,%r9d
+    0.14 :   43dcd1: mov    $0xa,%r10d
+    0.06 :   43dcd7: mov    $0x4444,%esi
+    0.08 :   43dcdc: kmovb  %r9d,%k1
+    0.53 :   43dce1: kmovb  %r10d,%k7
+    0.30 :   43dce6: kmovw  %esi,%k5
+    0.15 :   43dcea: mov    %edx,%r8d
+    0.14 :   43dced: and    0x18(%r12,%r13,1),%r8d
+    0.57 :   43dcf2: shl    $0x4,%r8
+    0.14 :   43dcf6: prefetcht0 (%rcx,%r8,1)
+   11.78 :   43dcfb: mov    %edx,%r8d
+    0.04 :   43dcfe: and    0x38(%r12,%r13,1),%r8d
+    0.32 :   43dd03: mov    %edx,%ebx
+    0.11 :   43dd05: mov    %edx,%r9d
+    0.06 :   43dd08: lea    (%r12,%rax,1),%rsi
+    0.08 :   43dd0c: and    0x8(%r12,%r13,1),%ebx
+    0.16 :   43dd11: and    0x28(%r12,%r13,1),%r9d
+    0.06 :   43dd16: mov    %edx,%r10d
+    0.41 :   43dd19: mov    %r8,%r13
+    0.03 :   43dd1c: shl    $0x4,%rbx
+    0.05 :   43dd20: shl    $0x4,%r13
+    0.11 :   43dd24: and    0x8(%rsi),%r10d
+    0.08 :   43dd28: shl    $0x4,%r9
+    0.06 :   43dd2c: shl    $0x4,%r10
+    0.16 :   43dd30: prefetcht0 (%rcx,%rbx,1)
+    9.47 :   43dd34: prefetcht0 (%rcx,%r13,1)
+    7.52 :   43dd39: mov    %edx,%ebx
+    0.02 :   43dd3b: mov    %r15,%r13
+    0.01 :   43dd3e: vmovdqa64 (%rcx,%r10,1),%zmm15
+    0.55 :   43dd45: crc32q (%rdi),%r13
+    0.06 :   43dd4b: and    0x18(%rsi),%ebx
+    0.03 :   43dd4e: mov    %edx,%r8d
+    0.08 :   43dd51: mov    %edx,%r10d
+    0.25 :   43dd54: prefetcht0 (%rcx,%r9,1)
+    5.81 :   43dd59: mov    %edx,%r9d
+    0.02 :   43dd5c: shl    $0x4,%rbx
+    0.02 :   43dd60: and    %r13d,%r10d
+    0.06 :   43dd63: and    0x28(%rsi),%r9d
+    0.03 :   43dd67: and    0x38(%rsi),%r8d
+    0.02 :   43dd6b: vmovdqa64 (%rcx,%rbx,1),%zmm4
+    0.52 :   43dd72: shl    $0x4,%r9
+    0.17 :   43dd76: shl    $0x4,%r8
+    0.58 :   43dd7a: shl    $0x4,%r10
+    0.01 :   43dd7e: vpbroadcastq (%rsi),%zmm13
+    0.02 :   43dd84: vpbroadcastq 0x10(%rsi),%zmm2
+    0.05 :   43dd8b: vmovdqa64 (%rcx,%r9,1),%zmm5
+    0.54 :   43dd92: vmovdqa64 (%rcx,%r8,1),%zmm7
+    0.50 :   43dd99: vpbroadcastq 0x20(%rsi),%zmm0
+    0.08 :   43dda0: vpbroadcastq 0x30(%rsi),%zmm1
+    0.15 :   43dda7: prefetcht2 (%rcx,%r10,1)
+    1.06 :   43ddac: mov    %r15,%r10
+    0.01 :   43ddaf: vpcmpequq %zmm13,%zmm15,%k3{%k1}
+    0.04 :   43ddb6: vpcmpequq %zmm2,%zmm4,%k0{%k1}
+    0.06 :   43ddbd: crc32q 0x18(%rdi),%r10
+    0.06 :   43ddc4: mov    %edx,%ebx
+    0.03 :   43ddc6: mov    %r15,%r8
+    0.06 :   43ddc9: vpcmpequq %zmm0,%zmm5,%k2{%k1}
+    0.38 :   43ddd0: and    %r10d,%ebx
+    0.77 :   43ddd3: crc32q 0x30(%rdi),%r8
+    0.10 :   43ddda: vpcmpequq %zmm1,%zmm7,%k4{%k1}
+    0.09 :   43dde1: mov    %edx,%r9d
+    0.03 :   43dde4: shl    $0x4,%rbx
+    0.02 :   43dde8: and    %r8d,%r9d
+    0.03 :   43ddeb: shl    $0x4,%r9
+    0.06 :   43ddef: kshiftlb $0x1,%k3,%k6
+    0.22 :   43ddf5: vpermd (%rsi),%zmm12,%zmm6
+    0.93 :   43ddfb: vpcompressq %zmm15,%zmm8{%k6}{z}
+    0.29 :   43de01: prefetcht2 (%rcx,%rbx,1)
+    0.60 :   43de05: kshiftlb $0x1,%k0,%k6
+    0.03 :   43de0b: mov    %r15,%rbx
+    0.02 :   43de0e: vpcompressq %zmm4,%zmm13{%k6}{z}
+    0.45 :   43de14: vpermt2q %zmm13,%zmm11,%zmm8
+    0.82 :   43de1a: crc32q 0x48(%rdi),%rbx
+    0.11 :   43de21: kshiftlb $0x1,%k2,%k6
+    0.03 :   43de27: prefetcht2 (%rcx,%r9,1)
+    0.66 :   43de2c: vpcompressq %zmm5,%zmm2{%k6}{z}
+    0.21 :   43de32: mov    %edx,%r9d
+    0.06 :   43de35: kshiftlb $0x1,%k4,%k6
+    0.15 :   43de3b: vpcompressq %zmm7,%zmm3{%k6}{z}
+    0.81 :   43de41: vpermt2q %zmm3,%zmm10,%zmm2
+    0.37 :   43de47: vmovdqa64 %zmm8,%zmm6{%k7}
+    0.12 :   43de4d: and    %ebx,%r9d
+    0.01 :   43de50: vmovd  %r8d,%xmm0
+    0.06 :   43de55: vmovd  %r13d,%xmm13
+    0.07 :   43de5a: vmovdqu32 (%rdi),%zmm1
+    0.23 :   43de60: shl    $0x4,%r9
+    0.60 :   43de64: vpinsrd $0x1,%ebx,%xmm0,%xmm8
+    0.36 :   43de6a: kortestb %k3,%k3
+    0.08 :   43de6e: kmovb  0x3dc2a(%rip),%k6        # 47baa0 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x140>
+    0.15 :   43de76: setne  %r13b
+    0.13 :   43de7a: vmovdqa64 %zmm2,%zmm6{%k6}
+    1.04 :   43de80: kortestb %k0,%k0
+    0.01 :   43de84: vpinsrd $0x1,%r10d,%xmm13,%xmm2
+    0.30 :   43de8a: setne  %r10b
+    0.00 :   43de8e: vpermt2d 0x20(%rdi),%zmm9,%zmm1
+    0.19 :   43de98: vpunpcklqdq %xmm8,%xmm2,%xmm3
+    0.43 :   43de9d: and    %r10d,%r13d
+    0.11 :   43dea0: kortestb %k2,%k2
+    0.54 :   43dea4: setne  %r8b
+    0.01 :   43dea8: vpexpandd %zmm3,%zmm1{%k5}
+    0.74 :   43deae: prefetcht2 (%rcx,%r9,1)
+    0.58 :   43deb3: test   %r8b,%r13b
+    0.00 :   43deb6: je     43df50 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x3b0>
+    0.02 :   43debc: kortestb %k4,%k4
+    0.16 :   43dec0: je     43df50 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x3b0>
+    0.12 :   43dec6: mov    (%rsp),%rsi
+    0.20 :   43deca: add    $0x40,%rax
+    0.00 :   43dece: vmovdqu64 %zmm6,(%rsi)
+    0.40 :   43ded4: add    $0x40,%rsi
+    0.09 :   43ded8: mov    %rsi,(%rsp)
+    0.01 :   43dedc: vmovdqu64 %zmm1,(%r12,%r14,1)
+    0.16 :   43dee3: add    $0x40,%r14
+    0.04 :   43dee7: and    %r11,%rax
+    0.10 :   43deea: and    %r11,%r14
+    0.16 :   43deed: mov    $0x48,%ebx
+    0.10 :   43def2: add    %rbx,%rdi
+    0.10 :   43def5: add    $0x18,%rdi
+    0.07 :   43def9: cmp    -0x8(%rsp),%rdi
+    0.00 :   43defe: jne    43dc90 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0xf0>
+    0.02 :   43df04: mov    -0x40(%rsp),%rcx
+    0.08 :   43df09: mov    -0x28(%rsp),%edx
+    0.01 :   43df0d: mov    0x8(%rcx),%rsi
+    0.06 :   43df11: sub    %rdx,%rsi
+    0.02 :   43df14: vzeroupper
+    0.01 :   43df17: vmovq  %r14,%xmm14
+    0.02 :   43df1c: vpinsrq $0x1,%rax,%xmm14,%xmm9
+    0.02 :   43df22: mov    -0x30(%rsp),%rax
+    0.00 :   43df27: mov    -0x38(%rsp),%rdi
+    0.01 :   43df2c: vpsrlq $0x4,%xmm9,%xmm10
+    0.03 :   43df32: vpmovqd %xmm10,0xb0(%rax)
+    0.06 :   43df39: add    %esi,(%rdi)
+    0.04 :   43df3b: lea    -0x28(%rbp),%rsp
+    0.00 :   43df3f: pop    %rbx
+    0.02 :   43df40: pop    %r12
+    0.01 :   43df42: pop    %r13
+    0.01 :   43df44: pop    %r14
+    0.00 :   43df46: pop    %r15
+    0.01 :   43df48: pop    %rbp
+    0.00 :   43df49: ret
+    0.00 :   43df4a: nopw   0x0(%rax,%rax,1)
+    0.10 :   43df50: kmovb  %k0,%r13d
+    0.20 :   43df54: kmovb  %k2,%ebx
+    0.07 :   43df58: shl    $0x8,%r13d
+    0.27 :   43df5c: shl    $0x10,%ebx
+    0.01 :   43df5f: or     %ebx,%r13d
+    0.05 :   43df62: kmovb  %k3,%r9d
+    0.18 :   43df66: kmovd  %k4,%r10d
+    0.02 :   43df6a: or     %r9d,%r13d
+    0.06 :   43df6d: shl    $0x18,%r10d
+    0.02 :   43df71: or     %r10d,%r13d
+    0.13 :   43df74: mov    %r13d,%r8d
+    0.27 :   43df77: shr    $0x4,%r8d
+    0.06 :   43df7b: or     %r8d,%r13d
+    0.04 :   43df7e: mov    %r13d,%ebx
+    0.14 :   43df81: vpcmpequq %zmm14,%zmm5,%k0{%k1}
+    0.24 :   43df88: vpcmpequq %zmm14,%zmm4,%k2{%k1}
+    0.08 :   43df8f: vpcmpequq %zmm14,%zmm15,%k4{%k1}
+    0.07 :   43df96: shr    $0x2,%ebx
+    0.10 :   43df99: or     %ebx,%r13d
+    0.32 :   43df9c: mov    $0x1010101,%r9d
+    0.00 :   43dfa2: vpcmpequq %zmm14,%zmm7,%k3{%k1}
+    0.11 :   43dfa9: pext   %r9d,%r13d,%r8d
+    0.18 :   43dfae: kmovb  %k0,%r10d
+    0.03 :   43dfb2: kmovb  %k2,%r9d
+    0.05 :   43dfb6: shl    $0x10,%r10d
+    0.09 :   43dfba: shl    $0x8,%r9d
+    0.13 :   43dfbe: or     %r10d,%r9d
+    0.36 :   43dfc1: kmovb  %k4,%r13d
+    0.01 :   43dfc5: movzbl %r13b,%r10d
+    0.05 :   43dfc9: or     %r10d,%r9d
+    0.25 :   43dfcc: kmovb  %k3,%ebx
+    0.03 :   43dfd0: shl    $0x18,%ebx
+    0.05 :   43dfd3: or     %ebx,%r9d
+    0.14 :   43dfd6: mov    %r9d,%r13d
+    0.06 :   43dfd9: shr    $0x4,%r13d
+    0.38 :   43dfdd: or     %r13d,%r9d
+    0.14 :   43dfe0: mov    %r9d,%r10d
+    0.00 :   43dfe3: shr    $0x2,%r10d
+    0.22 :   43dfe7: or     %r10d,%r9d
+    0.19 :   43dfea: mov    $0x1010101,%ebx
+    0.02 :   43dfef: pext   %ebx,%r9d,%r9d
+    0.56 :   43dff4: or     %r8d,%r9d
+    0.37 :   43dff7: not    %r9d
+    0.47 :   43dffa: mov    %r9d,-0x20(%rsp)
+    0.80 :   43dfff: xor    %ebx,%ebx
+    0.00 :   43e001: and    $0xf,%r9d
+    0.03 :   43e005: mov    $0x4,%r10d
+    0.01 :   43e00b: popcnt %r9d,%ebx
+    0.55 :   43e010: sub    %ebx,%r10d
+    0.21 :   43e013: mov    %r10d,-0x18(%rsp)
+    0.29 :   43e018: xor    %r13d,%r13d
+    0.24 :   43e01b: mov    $0x55,%r10d
+    0.07 :   43e021: popcnt %r8d,%r13d
+    0.00 :   43e026: pdep   %r10d,%r8d,%r8d
+    0.02 :   43e02b: lea    (%r8,%r8,2),%r8d
+    0.01 :   43e02f: mov    (%rsp),%r10
+    0.08 :   43e033: kmovb  %r8d,%k6
+    0.06 :   43e038: movslq %r13d,%r8
+    0.17 :   43e03b: shl    $0x4,%r8
+    0.22 :   43e03f: vpcompressq %zmm6,(%r10){%k6}
+    0.36 :   43e045: add    %r8,%r10
+    0.01 :   43e048: mov    %r10,(%rsp)
+    0.08 :   43e04c: mov    -0x18(%rsp),%r10d
+    0.04 :   43e051: mov    %r15,%r8
+    0.13 :   43e054: sub    %r13d,%r10d
+    0.19 :   43e057: mov    0x8(%rsi),%r13d
+    0.06 :   43e05b: add    %r10d,-0x28(%rsp)
+    0.12 :   43e060: crc32  %r13,%r8
+    0.01 :   43e066: vmovq  %r8,%xmm15
+    0.09 :   43e06b: mov    %rsi,%r10
+    0.04 :   43e06e: testb  $0x1,-0x20(%rsp)
+    0.15 :   43e073: je     43e082 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x4e2>
+    0.24 :   43e075: mov    %r8d,%r10d
+    0.08 :   43e078: and    %edx,%r10d
+    0.27 :   43e07b: shl    $0x4,%r10
+    0.06 :   43e07f: add    %rcx,%r10
+    0.35 :   43e082: mov    0x18(%rsi),%r8d
+    0.82 :   43e086: mov    %r15,%r13
+    0.02 :   43e089: prefetcht2 (%r10)
+    1.25 :   43e08d: crc32  %r8,%r13
+    0.28 :   43e093: lea    0x10(%rsi),%r10
+    0.03 :   43e097: testb  $0x2,-0x20(%rsp)
+    0.05 :   43e09c: je     43e0ab <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x50b>
+    0.24 :   43e09e: mov    %edx,%r10d
+    0.08 :   43e0a1: and    %r13d,%r10d
+    0.23 :   43e0a4: shl    $0x4,%r10
+    0.07 :   43e0a8: add    %rcx,%r10
+    0.44 :   43e0ab: mov    0x28(%rsi),%r8d
+    0.86 :   43e0af: prefetcht2 (%r10)
+    1.60 :   43e0b3: mov    %r15,%r10
+    0.01 :   43e0b6: crc32  %r8,%r10
+    0.23 :   43e0bc: vmovq  %r10,%xmm4
+    0.31 :   43e0c1: lea    0x20(%rsi),%r8
+    0.01 :   43e0c5: testb  $0x4,-0x20(%rsp)
+    0.05 :   43e0ca: je     43e0d9 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x539>
+    0.25 :   43e0cc: mov    %r10d,%r8d
+    0.08 :   43e0cf: and    %edx,%r8d
+    0.27 :   43e0d2: shl    $0x4,%r8
+    0.04 :   43e0d6: add    %rcx,%r8
+    0.36 :   43e0d9: prefetcht2 (%r8)
+    2.49 :   43e0dd: mov    0x38(%rsi),%r8d
+    0.03 :   43e0e1: mov    %r15,%r10
+    0.01 :   43e0e4: crc32  %r8,%r10
+    0.17 :   43e0ea: mov    %r9d,%r8d
+    0.07 :   43e0ed: shr    $0x3,%r8d
+    0.03 :   43e0f1: lea    0x30(%rsi),%r8
+    0.00 :   43e0f5: je     43e104 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x564>
+    0.25 :   43e0f7: mov    %edx,%r8d
+    0.16 :   43e0fa: and    %r10d,%r8d
+    0.29 :   43e0fd: shl    $0x4,%r8
+    0.05 :   43e101: add    %rcx,%r8
+    0.39 :   43e104: vmovdqu32 (%rsi),%zmm8
+    1.38 :   43e10a: vpinsrd $0x1,%r10d,%xmm4,%xmm5
+    0.41 :   43e110: vpinsrd $0x1,%r13d,%xmm15,%xmm7
+    0.26 :   43e116: mov    $0x55,%esi
+    0.01 :   43e11b: vpunpcklqdq %xmm5,%xmm7,%xmm6
+    0.29 :   43e11f: pdep   %esi,%r9d,%r9d
+    0.12 :   43e124: vpexpandd %zmm6,%zmm8{%k5}
+    0.84 :   43e12a: lea    (%r9,%r9,2),%r13d
+    0.01 :   43e12e: prefetcht2 (%r8)
+    1.42 :   43e132: mov    $0xff,%r10d
+    0.07 :   43e138: lea    (%rbx,%rbx,1),%r8d
+    0.01 :   43e13c: kmovb  %r13d,%k3
+    0.10 :   43e141: vpcompressq %zmm8,%zmm0{%k3}{z}
+    0.96 :   43e147: shlx   %r8d,%r10d,%esi
+    0.02 :   43e14c: mov    -0x18(%rsp),%r9d
+    0.01 :   43e151: kmovb  %esi,%k2
+    0.13 :   43e155: vpexpandq %zmm1,%zmm0{%k2}
+    0.83 :   43e15b: vmovdqu64 %zmm0,(%r12,%r14,1)
+    0.42 :   43e162: add    $0x40,%rax
+    0.06 :   43e166: add    $0x40,%r14
+    0.03 :   43e16a: and    %r11,%rax
+    0.01 :   43e16d: and    %r11,%r14
+    0.00 :   43e170: test   %r9d,%r9d
+    0.00 :   43e173: jne    43e593 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x9f3>
+    0.01 :   43e179: lea    0x80(%rax),%rsi
+    0.01 :   43e180: mov    %rsi,%r13
+    0.00 :   43e183: and    %r11,%r13
+    0.01 :   43e186: mov    %r14,%r8
+    0.01 :   43e189: cmp    %r14,%rax
+    0.01 :   43e18c: cmovae %rax,%r8
+    0.00 :   43e190: cmp    %r13,%r8
+    0.00 :   43e193: cmovb  %r13,%r8
+    0.02 :   43e197: cmp    %r8,-0x10(%rsp)
+    0.00 :   43e19c: jae    43dcea <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x14a>
+    0.15 :   43e1a2: mov    $0x55,%r10d
+    0.27 :   43e1a8: mov    0x53c89(%rip),%r9        # 491e38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.13 :   43e1af: kmovb  %r10d,%k1
+    0.15 :   43e1b4: jmp    43e204 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x664>
+    0.00 :   43e1b6: cs nopw 0x0(%rax,%rax,1)
+    0.17 :   43e1c0: vpcmpequq %zmm14,%zmm13,%k5{%k1}
+    0.36 :   43e1c7: kortestb %k5,%k5
+    0.02 :   43e1cb: jne    43e2be <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x71e>
+    0.05 :   43e1d1: mov    %r15,%r13
+    0.00 :   43e1d4: crc32  %rsi,%r13
+    0.01 :   43e1da: mov    %edx,%esi
+    0.00 :   43e1dc: and    %r13d,%esi
+    0.01 :   43e1df: shl    $0x4,%rsi
+    0.01 :   43e1e3: vmovd  %r13d,%xmm2
+    0.03 :   43e1e8: prefetcht2 (%r9,%rsi,1)
+    0.40 :   43e1ed: vpinsrd $0x1,0xc(%r8),%xmm2,%xmm3
+    0.05 :   43e1f4: mov    %rbx,(%r10)
+    0.00 :   43e1f7: vmovq  %xmm3,0x8(%r10)
+    0.01 :   43e1fd: lea    0x80(%rax),%rsi
+    0.12 :   43e204: and    %r11,%rsi
+    0.02 :   43e207: mov    %edx,%r13d
+    0.05 :   43e20a: and    0x8(%r12,%rsi,1),%r13d
+    0.19 :   43e20f: mov    %r13,%rsi
+    0.05 :   43e212: shl    $0x4,%rsi
+    0.04 :   43e216: lea    (%r12,%rax,1),%r8
+    0.01 :   43e21a: prefetcht0 (%r9,%rsi,1)
+    2.66 :   43e21f: mov    0x8(%r8),%esi
+    0.04 :   43e223: mov    %edx,%ebx
+    0.01 :   43e225: and    %esi,%ebx
+    0.02 :   43e227: shl    $0x4,%rbx
+    0.03 :   43e22b: vmovdqa64 (%r9,%rbx,1),%zmm13
+    0.29 :   43e232: mov    (%r8),%rbx
+    0.01 :   43e235: add    $0x10,%rax
+    0.01 :   43e239: vpbroadcastq %rbx,%zmm1
+    0.13 :   43e23f: vpcmpequq %zmm1,%zmm13,%k7{%k1}
+    0.29 :   43e246: lea    (%r12,%r14,1),%r10
+    0.01 :   43e24a: add    $0x10,%r14
+    0.02 :   43e24e: and    %r11,%rax
+    0.01 :   43e251: and    %r11,%r14
+    0.02 :   43e254: kortestb %k7,%k7
+    0.20 :   43e258: je     43e1c0 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x620>
+    0.18 :   43e25e: mov    (%rsp),%rbx
+    0.27 :   43e262: mov    0xc(%r8),%r8d
+    0.02 :   43e266: kshiftlb $0x1,%k7,%k4
+    0.06 :   43e26c: vpcompressq %zmm13,%zmm0{%k4}{z}
+    0.42 :   43e272: mov    %r8d,(%rbx)
+    0.02 :   43e275: vmovq  %xmm0,0x8(%rbx)
+    0.07 :   43e27a: add    $0x10,%rbx
+    0.00 :   43e27e: mov    %rbx,(%rsp)
+    0.03 :   43e282: mov    (%rdi),%r8
+    0.02 :   43e285: mov    %r15,%rbx
+    0.00 :   43e288: crc32  %r8,%rbx
+    0.01 :   43e28e: mov    -0x30(%rsp),%r13
+    0.02 :   43e293: mov    %ebx,%esi
+    0.01 :   43e295: vmovd  %ebx,%xmm4
+    0.07 :   43e299: and    0x80(%r13),%esi
+    0.03 :   43e2a0: vpinsrd $0x1,0x10(%rdi),%xmm4,%xmm5
+    0.11 :   43e2a7: shl    $0x4,%rsi
+    0.01 :   43e2ab: prefetcht2 (%r9,%rsi,1)
+    0.48 :   43e2b0: mov    %r8,(%r10)
+    0.02 :   43e2b3: vmovq  %xmm5,0x8(%r10)
+    0.01 :   43e2b9: jmp    43def5 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x355>
+    0.00 :   43e2be: incl   -0x28(%rsp)
+    0.00 :   43e2c2: jmp    43e282 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x6e2>
+    0.00 :   43e2c4: cmp    -0x8(%rsp),%rdi
+    0.00 :   43e2c9: je     43df3b <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x39b>
+    0.00 :   43e2cf: mov    0x60(%rbx),%r12
+    0.00 :   43e2d3: mov    0xa0(%rbx),%r10
+    0.00 :   43e2da: mov    %rbx,%r9
+    0.00 :   43e2dd: mov    0x88(%rbx),%rbx
+    0.00 :   43e2e4: mov    %r12,(%rsp)
+    0.00 :   43e2e8: mov    %rbx,-0x18(%rsp)
+    0.00 :   43e2ed: movzbl 0x53b2c(%rip),%esi        # 491e20 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::empty_slot_exists_>
+    0.00 :   43e2f4: mov    %r13,%r14
+    0.00 :   43e2f7: mov    -0x18(%rsp),%r12
+    0.00 :   43e2fc: mov    $0x55,%r13d
+    0.00 :   43e302: dec    %r12
+    0.00 :   43e305: mov    %r12,-0x18(%rsp)
+    0.00 :   43e30a: mov    0x53b27(%rip),%r11        # 491e38 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::hashtable>
+    0.00 :   43e311: mov    0x53b10(%rip),%r15        # 491e28 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::empty_slot_>
+    0.00 :   43e318: mov    %ecx,%edx
+    0.00 :   43e31a: vpxor  %xmm2,%xmm2,%xmm2
+    0.00 :   43e31e: kmovb  %r13d,%k1
+    0.00 :   43e323: kmovb  %esi,%k2
+    0.00 :   43e327: jmp    43e391 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x7f1>
+    0.00 :   43e329: cmpq   $0x8,(%rsp)
+    0.00 :   43e32e: je     43e539 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x999>
+    0.00 :   43e334: vmovd  -0x10(%rsp),%xmm5
+    0.00 :   43e33a: mov    -0x18(%rsp),%r13
+    0.00 :   43e33f: mov    %ecx,%edx
+    0.00 :   43e341: and    -0x10(%rsp),%r13
+    0.00 :   43e346: vpinsrd $0x1,0x10(%rdi),%xmm5,%xmm8
+    0.00 :   43e34d: mov    (%rdi),%rbx
+    0.00 :   43e350: and    $0xfffffffffffffffc,%r13
+    0.00 :   43e354: shl    $0x4,%rdx
+    0.00 :   43e358: add    %r10,%rdx
+    0.00 :   43e35b: shl    $0x4,%r13
+    0.00 :   43e35f: prefetcht2 (%r11,%r13,1)
+    0.00 :   43e364: mov    %rbx,(%rdx)
+    0.00 :   43e367: vmovq  %xmm8,0x8(%rdx)
+    0.00 :   43e36c: lea    0x1(%rcx),%edx
+    0.00 :   43e36f: and    %r8d,%edx
+    0.00 :   43e372: add    $0x18,%rdi
+    0.00 :   43e376: mov    %edx,0xb0(%r9)
+    0.00 :   43e37d: cmp    %rdi,-0x8(%rsp)
+    0.00 :   43e382: je     43e570 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x9d0>
+    0.00 :   43e388: mov    0xb4(%r9),%eax
+    0.00 :   43e38f: mov    %edx,%ecx
+    0.00 :   43e391: sub    %eax,%edx
+    0.00 :   43e393: and    %r8d,%edx
+    0.00 :   43e396: cmp    %edx,%r8d
+    0.00 :   43e399: jbe    43e3c2 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x822>
+    0.00 :   43e39b: cmpq   $0x4,(%rsp)
+    0.00 :   43e3a0: jne    43e329 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x789>
+    0.00 :   43e3a2: mov    $0xffffffff,%r12d
+    0.00 :   43e3a8: crc32l (%rdi),%r12d
+    0.00 :   43e3ae: vmovd  %r12d,%xmm6
+    0.00 :   43e3b3: vmovdqa %xmm6,%xmm5
+    0.00 :   43e3b7: vmovq  %xmm6,-0x10(%rsp)
+    0.00 :   43e3bd: jmp    43e33a <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x79a>
+    0.00 :   43e3c2: mov    0x80(%r9),%r12
+    0.00 :   43e3c9: mov    %r12,-0x28(%rsp)
+    0.00 :   43e3ce: xchg   %ax,%ax
+    0.00 :   43e3d0: lea    0x8(%rax),%edx
+    0.00 :   43e3d3: and    %r8d,%edx
+    0.00 :   43e3d6: shl    $0x4,%rdx
+    0.00 :   43e3da: mov    %r12d,%esi
+    0.00 :   43e3dd: and    0x8(%r10,%rdx,1),%esi
+    0.00 :   43e3e2: mov    %eax,%edx
+    0.00 :   43e3e4: mov    %rsi,%rbx
+    0.00 :   43e3e7: shl    $0x4,%rdx
+    0.00 :   43e3eb: shl    $0x4,%rbx
+    0.00 :   43e3ef: add    %r10,%rdx
+    0.00 :   43e3f2: prefetcht0 (%r11,%rbx,1)
+    0.00 :   43e3f7: mov    (%rdx),%rbx
+    0.00 :   43e3fa: cmp    0x90(%r9),%rbx
+    0.00 :   43e401: jne    43e440 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x8a0>
+    0.00 :   43e403: kortestb %k2,%k2
+    0.00 :   43e407: je     43e428 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x888>
+    0.00 :   43e409: mov    (%r14),%r13d
+    0.00 :   43e40c: mov    0xc(%rdx),%edx
+    0.00 :   43e40f: mov    %r13,%rbx
+    0.00 :   43e412: shl    $0x4,%r13
+    0.00 :   43e416: add    0x8(%r14),%r13
+    0.00 :   43e41a: lea    0x1(%rbx),%esi
+    0.00 :   43e41d: mov    %edx,0x0(%r13)
+    0.00 :   43e421: mov    %r15,0x8(%r13)
+    0.00 :   43e425: mov    %esi,(%r14)
+    0.00 :   43e428: inc    %eax
+    0.00 :   43e42a: and    %r8d,%eax
+    0.00 :   43e42d: mov    %eax,0xb4(%r9)
+    0.00 :   43e434: test   %r15,%r15
+    0.00 :   43e437: jne    43e3d0 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x830>
+    0.00 :   43e439: jmp    43e39b <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x7fb>
+    0.00 :   43e43e: xchg   %ax,%ax
+    0.00 :   43e440: mov    0x8(%rdx),%r13d
+    0.00 :   43e444: mov    %r12d,%esi
+    0.00 :   43e447: and    %r13d,%esi
+    0.00 :   43e44a: shl    $0x4,%rsi
+    0.00 :   43e44e: add    %r11,%rsi
+    0.00 :   43e451: vmovdqa64 (%rsi),%zmm0
+    0.00 :   43e457: vpbroadcastq %rbx,%zmm1
+    0.00 :   43e45d: vpcmpequq %zmm1,%zmm0,%k0{%k1}
+    0.00 :   43e464: kortestb %k0,%k0
+    0.00 :   43e468: jne    43e4e2 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x942>
+    0.00 :   43e46a: vpcmpequq %zmm2,%zmm0,%k3{%k1}
+    0.00 :   43e471: kortestb %k3,%k3
+    0.00 :   43e475: jne    43e528 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x988>
+    0.00 :   43e47b: cmpq   $0x4,(%rsp)
+    0.00 :   43e480: mov    %r13d,%esi
+    0.00 :   43e483: je     43e552 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x9b2>
+    0.00 :   43e489: cmpq   $0x8,(%rsp)
+    0.00 :   43e48e: je     43e578 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x9d8>
+    0.00 :   43e494: vmovd  -0x20(%rsp),%xmm3
+    0.00 :   43e49a: mov    -0x28(%rsp),%r13
+    0.00 :   43e49f: vpinsrd $0x1,0xc(%rdx),%xmm3,%xmm4
+    0.00 :   43e4a6: mov    %ecx,%edx
+    0.00 :   43e4a8: and    -0x20(%rsp),%r13
+    0.00 :   43e4ad: shl    $0x4,%rdx
+    0.00 :   43e4b1: inc    %ecx
+    0.00 :   43e4b3: inc    %eax
+    0.00 :   43e4b5: add    %r10,%rdx
+    0.00 :   43e4b8: shl    $0x4,%r13
+    0.00 :   43e4bc: and    %r8d,%ecx
+    0.00 :   43e4bf: and    %r8d,%eax
+    0.00 :   43e4c2: prefetcht2 (%r11,%r13,1)
+    0.00 :   43e4c7: mov    %rbx,(%rdx)
+    0.00 :   43e4ca: vmovq  %xmm4,0x8(%rdx)
+    0.00 :   43e4cf: mov    %ecx,0xb0(%r9)
+    0.00 :   43e4d6: mov    %eax,0xb4(%r9)
+    0.00 :   43e4dd: jmp    43e3d0 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x830>
+    0.00 :   43e4e2: mov    (%r14),%ebx
+    0.00 :   43e4e5: mov    0xc(%rdx),%r13d
+    0.00 :   43e4e9: mov    %rbx,%r12
+    0.00 :   43e4ec: shl    $0x4,%rbx
+    0.00 :   43e4f0: add    0x8(%r14),%rbx
+    0.00 :   43e4f4: mov    %r13d,(%rbx)
+    0.00 :   43e4f7: xor    %r13d,%r13d
+    0.00 :   43e4fa: kmovb  %k0,%edx
+    0.00 :   43e4fe: tzcnt  %edx,%r13d
+    0.00 :   43e503: inc    %r13d
+    0.00 :   43e506: movslq %r13d,%rdx
+    0.00 :   43e509: mov    (%rsi,%rdx,8),%rsi
+    0.00 :   43e50d: inc    %eax
+    0.00 :   43e50f: inc    %r12d
+    0.00 :   43e512: and    %r8d,%eax
+    0.00 :   43e515: mov    %rsi,0x8(%rbx)
+    0.00 :   43e519: mov    %r12d,(%r14)
+    0.00 :   43e51c: mov    %eax,0xb4(%r9)
+    0.00 :   43e523: jmp    43e39b <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x7fb>
+    0.00 :   43e528: inc    %eax
+    0.00 :   43e52a: and    %r8d,%eax
+    0.00 :   43e52d: mov    %eax,0xb4(%r9)
+    0.00 :   43e534: jmp    43e39b <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x7fb>
+    0.00 :   43e539: mov    $0xffffffff,%eax
+    0.00 :   43e53e: crc32q (%rdi),%rax
+    0.00 :   43e544: mov    %rax,-0x10(%rsp)
+    0.00 :   43e549: vmovd  %eax,%xmm5
+    0.00 :   43e54d: jmp    43e33a <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x79a>
+    0.00 :   43e552: mov    $0xffffffff,%esi
+    0.00 :   43e557: crc32  %r13d,%esi
+    0.00 :   43e55d: vmovd  %esi,%xmm7
+    0.00 :   43e561: vmovdqa %xmm7,%xmm3
+    0.00 :   43e565: vmovq  %xmm7,-0x20(%rsp)
+    0.00 :   43e56b: jmp    43e49a <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x8fa>
+    0.00 :   43e570: vzeroupper
+    0.00 :   43e573: jmp    43df3b <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x39b>
+    0.00 :   43e578: mov    $0xffffffff,%r13d
+    0.00 :   43e57e: crc32  %rsi,%r13
+    0.00 :   43e584: mov    %r13,-0x20(%rsp)
+    0.00 :   43e589: vmovd  %r13d,%xmm3
+    0.00 :   43e58e: jmp    43e49a <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x8fa>
+    0.22 :   43e593: mov    $0x3,%r13d
+    0.04 :   43e599: sub    %ebx,%r13d
+    0.05 :   43e59c: imul   $0x18,%r13,%rbx
+    0.12 :   43e5a0: jmp    43def2 <kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::InsertFindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*)+0x352>

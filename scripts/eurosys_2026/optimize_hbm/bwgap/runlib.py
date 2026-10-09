@@ -10,6 +10,7 @@ Definitions used throughout
   GB       decimal (1e9 B) everywhere, EXCEPT in bandwidth_rand's own printed "GB/s", which is
            GiB/s (bytes / 2^30). Convert with GIB = 2**30 / 1e9 = 1.0737 before comparing.
 """
+import contextlib
 import json
 import os
 import re
@@ -91,6 +92,25 @@ def hbm_events():
 STREAM_CORE = ["cycles", "instructions", "ref-cycles", "l1d_pend_miss.fb_full",
                "offcore_requests_outstanding.data_rd", "offcore_requests.data_rd", "xq.full_cycles"]
 CHA_CLK = "uncore_cha_0/event=0x01,name=clk_cha/"
+# alternative sets for the 4 programmable core counters (replace the last 4 of STREAM_CORE)
+CORE_SETS = {
+    # L1 fill buffers: occupancy (sum over cycles of outstanding L1 misses), cycles with any, cycles a request
+    # waited for a free FB, cycles an L1 miss waited because the L2 had no room (its miss queue full)
+    "fb": ["l1d_pend_miss.pending", "l1d_pend_miss.pending_cycles", "l1d_pend_miss.fb_full", "l1d_pend_miss.l2_stalls"],
+    # software prefetches executed, and loads that found their line still in flight (late prefetch)
+    "swpf": ["sw_prefetch_access.t1_t2", "sw_prefetch_access.t0", "load_hit_prefetch.swpf", "mem_load_retired.fb_hit"],
+    # back-end stalls: store buffer full, scoreboard, any stall, stalls with an L1 miss outstanding
+    "stall": ["resource_stalls.sb", "resource_stalls.scoreboard", "cycle_activity.stalls_total", "cycle_activity.stalls_l1d_miss"],
+    # L2 side: sw prefetches that miss / hit L2, L2 fills, L1 fills
+    # execution ports: uops dispatched per port (max 1 per port per core cycle), shared by both hyperthreads
+    "ports_a": ["uops_dispatched.port_0", "uops_dispatched.port_1", "uops_dispatched.port_5_11", "uops_dispatched.port_6"],
+    "ports_b": ["uops_dispatched.port_2_3_10", "uops_dispatched.port_4_9", "uops_dispatched.port_7_8", "int_misc.mba_stalls"],
+    # issue width: uops issued (rename, 6 per core cycle shared by both threads) and top-down slot accounting
+    "td": ["uops_issued.any", "topdown.backend_bound_slots", "topdown.memory_bound_slots", "topdown.bad_spec_slots"],
+    # store forwarding: loads blocked by an earlier store they could not forward from, etc.
+    "fwd": ["ld_blocks.store_forward", "ld_blocks.no_sr", "resource_stalls.sb", "cycle_activity.stalls_total"],
+    "l2": ["l2_rqsts.swpf_miss", "l2_rqsts.swpf_hit", "l2_lines_in.all", "l1d.replacement"],
+}
 ENERGY = "power/energy-pkg/"
 
 
@@ -100,20 +120,76 @@ def save_meta(logdir, **kw):
     (logdir / "meta.json").write_text(json.dumps(kw, indent=1, default=str))
 
 
-def run_stream(cmd, logdir, label, interval_ms=200):
+# extra uncore CHA event sets for run_stream (<= 3 each: the CHA has 4 counters and clk_cha takes one)
+CHA_SETS = {
+    # TOR = the CHA's request tracker: occupancy / inserts = time an L2 miss spends in the uncore
+    "lat": ["unc_cha_tor_occupancy.ia_miss", "unc_cha_tor_inserts.ia_miss", "unc_cha_tor_inserts.ia_miss_drd"],
+    # what kinds of requests the cores send (software prefetches, RFOs)
+    "mix": ["unc_cha_tor_inserts.ia_miss_drd_pref", "unc_cha_tor_inserts.ia_miss_llcprefdata", "unc_cha_tor_inserts.ia_miss_rfo"],
+    # coherence / write traffic: all requests from cores, L2 writebacks of modified lines, snoops
+    "coh": ["unc_cha_tor_inserts.ia", "unc_cha_tor_inserts.ia_wbmtoi", "unc_cha_snoops_sent.all"],
+}
+
+
+def hbm_rpq_events():
+    """Read pending queue of each HBM controller, pseudo-channel 0 (IMC encodings: RPQ_INSERTS.PCH0
+    event 0x10 umask 0x01, RPQ_OCCUPANCY_PCH0 event 0x80). occupancy / inserts = time a read waits in the
+    controller, in controller clocks. 2 more counters per box on top of the 2 CAS events."""
+    boxes = sorted(int(p.name.rsplit("_", 1)[1]) for p in Path("/sys/devices").glob("uncore_hbm_*"))
+    return [f"uncore_hbm_{i}/event=0x10,umask=0x01,name=rpq_ins/,uncore_hbm_{i}/event=0x80,name=rpq_occ/" for i in boxes]
+
+
+# die-to-die fabric (MDF, the EMIB bridges between the 4 tiles): 4 counters per box, so two sets
+CHA_SETS["mdf_ins"] = ["unc_mdf_crs_txr_inserts.ad_bnc", "unc_mdf_crs_txr_inserts.ad_crd",
+                       "unc_mdf_crs_txr_inserts.bl_bnc", "unc_mdf_crs_txr_inserts.bl_crd"]
+CHA_SETS["mdf_cong"] = ["unc_mdf_crs_txr_v_bounces.ad", "unc_mdf_crs_txr_v_bounces.bl",
+                        "unc_mdf_fast_asserted.ad_bnc", "unc_mdf_fast_asserted.bl_crd"]
+# CHA ingress: requests from cores arriving, and how many get rejected (= retried later)
+CHA_SETS["chaq"] = ["unc_cha_rxc_inserts.irq", "unc_cha_rxc_inserts.irq_rej", "unc_cha_tor_inserts.ia_miss"]
+CHA_SETS["hbmq"] = None    # filled lazily (needs sysfs): see run_stream
+
+
+def run_stream(cmd, logdir, label, interval_ms=200, cha_set=None, core_set=None, cpus=None):
     """perf stat -a --per-socket -I 200 -x, ... -- cmd ; everything (perf rows AND the
     program's own output) goes, interleaved in arrival order, into combined.log."""
     m = cooldown()
-    events = ",".join(STREAM_CORE + [ENERGY, hbm_events(), CHA_CLK])
-    full = f"sudo perf stat -a --per-socket -I {interval_ms} -x, -e {events} -- {cmd}"
+    extra = (hbm_rpq_events() if cha_set == "hbmq" else CHA_SETS[cha_set]) if cha_set else []
+    core = STREAM_CORE[:3] + CORE_SETS[core_set] if core_set else STREAM_CORE
+    if cpus == "user":
+        core = [e + ":u" for e in core]
+    events = ",".join(core + [ENERGY, hbm_events(), CHA_CLK] + extra)
+    # cpus="user": core events in user mode only. For runs that leave cpus idle: all idle states are disabled
+    # on this machine, so idle cpus spin in the kernel poll loop and would otherwise add their cycles.
+    scope = "-a"
+    full = f"sudo perf stat {scope} --per-socket -I {interval_ms} -x, -e {events} -- {cmd}"
     logdir.mkdir(parents=True, exist_ok=True)
     (logdir / "cmd.txt").write_text(full + "\n")
     t0 = time.time()
     out = subprocess.run(full, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).stdout
     (logdir / "combined.log").write_text(out)
-    save_meta(logdir, label=label, kind="stream", cmd=cmd, margin_before_c=m,
+    save_meta(logdir, label=label, kind="stream", cmd=cmd, margin_before_c=m, cha_set=cha_set, core_set=core_set, cpus=cpus,
               wall_s=round(time.time() - t0, 1), started=time.strftime("%Y-%m-%dT%H:%M:%S"))
     return out
+
+
+UNCORE_FREQ = Path("/sys/devices/system/cpu/intel_uncore_frequency/package_00_die_00")
+
+
+@contextlib.contextmanager
+def mesh_pinned(mhz):
+    """Pin socket 0's uncore (mesh) clock: min_freq_khz = max_freq_khz = mhz. The previous values
+    are restored on exit, also on error. The power limit can still pull the mesh below the pin."""
+    def rd(f): return (UNCORE_FREQ / f).read_text().strip()
+    def wr(f, v): subprocess.run(f"echo {v} | sudo tee {UNCORE_FREQ / f} > /dev/null", shell=True, check=True)
+    old = (rd("min_freq_khz"), rd("max_freq_khz"))
+    try:
+        # lower min first, then max (min <= max must hold at every step)
+        wr("min_freq_khz", mhz * 1000); wr("max_freq_khz", mhz * 1000)
+        print(f"[mesh] socket 0 uncore pinned to {mhz} MHz (was min/max {old})", flush=True)
+        yield
+    finally:
+        wr("max_freq_khz", old[1]); wr("min_freq_khz", old[0])
+        print(f"[mesh] restored min/max {(rd('min_freq_khz'), rd('max_freq_khz'))}", flush=True)
 
 
 def run_totals(cmd, logdir, label, iters=None):

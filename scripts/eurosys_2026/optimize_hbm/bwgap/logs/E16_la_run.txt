@@ -1,0 +1,17 @@
+[E16_lookahead] rep 1/2  bw_t1_la4
+[E16_lookahead] rep 1/2  bw_t1_la8
+[E16_lookahead] rep 1/2  bw_t1_la12
+[E16_lookahead] rep 1/2  bw_t1_la16
+[E16_lookahead] rep 1/2  bw_t1_la24
+[E16_lookahead] rep 1/2  bw_t1_la32
+[E16_lookahead] rep 1/2  bw_t1_la48
+[E16_lookahead] rep 1/2  bw_t1
+[E16_lookahead] rep 2/2  bw_t1_la4
+[E16_lookahead] rep 2/2  bw_t1_la8
+[E16_lookahead] rep 2/2  bw_t1_la12
+[E16_lookahead] rep 2/2  bw_t1_la16
+[E16_lookahead] rep 2/2  bw_t1_la24
+[E16_lookahead] rep 2/2  bw_t1_la32
+[E16_lookahead] rep 2/2  bw_t1_la48
+[E16_lookahead] rep 2/2  bw_t1
+[OK]

@@ -1,0 +1,5 @@
+[E24_quick3] rep 1/1  a11_deepvec_f10
+[E24_quick3] rep 1/1  a11_ig_f10
+[E24_quick3] rep 1/1  a11_deepvec_f90
+[E24_quick3] rep 1/1  a11_ig_f90
+[OK]

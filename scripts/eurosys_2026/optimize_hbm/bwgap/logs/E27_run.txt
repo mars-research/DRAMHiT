@@ -1,0 +1,27 @@
+[E27_td] rep 1/2  a12_deepvec_q64_b64_f10
+[E27_td] rep 1/2  a12_q16_q128_b64_f10
+[E27_td] rep 1/2  a12_deepvec_q256_b64_f90
+[E27_td] rep 1/2  a12_q16_q128_b64_f90
+[E27_td] rep 2/2  a12_deepvec_q64_b64_f10
+[E27_td] rep 2/2  a12_q16_q128_b64_f10
+[E27_td] rep 2/2  a12_deepvec_q256_b64_f90
+[E27_td] rep 2/2  a12_q16_q128_b64_f90
+[OK]
+[E27_stall] rep 1/2  a12_deepvec_q64_b64_f10
+[E27_stall] rep 1/2  a12_q16_q128_b64_f10
+[E27_stall] rep 1/2  a12_deepvec_q256_b64_f90
+[E27_stall] rep 1/2  a12_q16_q128_b64_f90
+[E27_stall] rep 2/2  a12_deepvec_q64_b64_f10
+[E27_stall] rep 2/2  a12_q16_q128_b64_f10
+[E27_stall] rep 2/2  a12_deepvec_q256_b64_f90
+[E27_stall] rep 2/2  a12_q16_q128_b64_f90
+[OK]
+[E27_fb] rep 1/2  a12_deepvec_q64_b64_f10
+[E27_fb] rep 1/2  a12_q16_q128_b64_f10
+[E27_fb] rep 1/2  a12_deepvec_q256_b64_f90
+[E27_fb] rep 1/2  a12_q16_q128_b64_f90
+[E27_fb] rep 2/2  a12_deepvec_q64_b64_f10
+[E27_fb] rep 2/2  a12_q16_q128_b64_f10
+[E27_fb] rep 2/2  a12_deepvec_q256_b64_f90
+[E27_fb] rep 2/2  a12_q16_q128_b64_f90
+[OK]

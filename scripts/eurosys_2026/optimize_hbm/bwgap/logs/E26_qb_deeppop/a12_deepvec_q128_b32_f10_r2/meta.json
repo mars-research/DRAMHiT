@@ -1,0 +1,11 @@
+{
+ "label": "a12_deepvec_q128_b32_f10",
+ "kind": "stream",
+ "cmd": "env KEY_PF_DIST=64 KEY_PF_HINT=t2 /opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/attempt10/deepvec/dramhit --mode 11 --ht-type 3 --ht-size 536870912 --ht-fill 10 --num-threads 64 --numa-split 10 --np_cpu_node_msk 1 --np_mem_node_msk 4 --np_mem_local 0 --batch-len 32 --find_queue 128 --no-prefetch 0 --hw-pref 0 --insert-factor 100 --read-factor 400 --skew 0.01 --seed 1775762440565610239",
+ "margin_before_c": 17,
+ "cha_set": null,
+ "core_set": null,
+ "cpus": null,
+ "wall_s": 10.8,
+ "started": "2026-10-08T15:16:08"
+}

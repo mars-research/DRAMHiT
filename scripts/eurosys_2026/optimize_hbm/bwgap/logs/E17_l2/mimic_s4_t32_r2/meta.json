@@ -1,0 +1,11 @@
+{
+ "label": "mimic_s4_t32",
+ "kind": "stream",
+ "cmd": "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/bwgap/bin/bandwidth_rand_mimic_it100 -m 256mb -pattern n0a2t32 -freq 2.7 -inst mimic -pad 0 -near 8 -lookahead 64 -stage 4 -mode r",
+ "margin_before_c": 17,
+ "cha_set": null,
+ "core_set": "l2",
+ "cpus": "user",
+ "wall_s": 3.6,
+ "started": "2026-10-06T12:50:42"
+}

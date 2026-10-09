@@ -1,0 +1,4 @@
+8b38638efd29dcfeafc799d6167bf615  attempt7/base/dramhit
+d8d876d6eca331c61895ea37dd6db087  attempt7/emb/dramhit
+ba105beed345aa6c9789cf6def7330e8  attempt7/vec4/dramhit
+eea62b12a61b9e8ff414cd17882915a0  attempt7/vec4s/dramhit

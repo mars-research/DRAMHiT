@@ -1,0 +1,7 @@
+[E15_t16] rep 1/2  bw_t1_t16
+[E15_t16] rep 1/2  mimic_s2_t16
+[E15_t16] rep 1/2  mimic_s4_t16
+[E15_t16] rep 2/2  bw_t1_t16
+[E15_t16] rep 2/2  mimic_s2_t16
+[E15_t16] rep 2/2  mimic_s4_t16
+[OK]

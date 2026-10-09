@@ -1,0 +1,60 @@
+[E17_fb] rep 1/2  bw_t1_t32
+[E17_fb] rep 1/2  mimic_s4_t32
+[E17_fb] rep 2/2  bw_t1_t32
+[E17_fb] rep 2/2  mimic_s4_t32
+[OK]
+[E17_swpf] rep 1/2  bw_t1_t32
+[E17_swpf] rep 1/2  mimic_s4_t32
+[E17_swpf] rep 2/2  bw_t1_t32
+[E17_swpf] rep 2/2  mimic_s4_t32
+[OK]
+[E17_stall] rep 1/2  bw_t1_t32
+[E17_stall] rep 1/2  mimic_s4_t32
+[E17_stall] rep 2/2  bw_t1_t32
+[E17_stall] rep 2/2  mimic_s4_t32
+[OK]
+[E17_l2] rep 1/2  bw_t1_t32
+[E17_l2] rep 1/2  mimic_s4_t32
+[E17_l2] rep 2/2  bw_t1_t32
+[E17_l2] rep 2/2  mimic_s4_t32
+[OK]
+[E17_fb] rep 1/2  bw_t1_t32
+[E17_fb] rep 1/2  mimic_s4_t32
+[E17_fb] rep 2/2  bw_t1_t32
+[E17_fb] rep 2/2  mimic_s4_t32
+[OK]
+[E17_swpf] rep 1/2  bw_t1_t32
+[E17_swpf] rep 1/2  mimic_s4_t32
+[E17_swpf] rep 2/2  bw_t1_t32
+[E17_swpf] rep 2/2  mimic_s4_t32
+[OK]
+[E17_stall] rep 1/2  bw_t1_t32
+[E17_stall] rep 1/2  mimic_s4_t32
+[E17_stall] rep 2/2  bw_t1_t32
+[E17_stall] rep 2/2  mimic_s4_t32
+[OK]
+[E17_l2] rep 1/2  bw_t1_t32
+[E17_l2] rep 1/2  mimic_s4_t32
+[E17_l2] rep 2/2  bw_t1_t32
+[E17_l2] rep 2/2  mimic_s4_t32
+[OK]
+[E17_fb] rep 1/2  bw_t1_t32
+[E17_fb] rep 1/2  mimic_s4_t32
+[E17_fb] rep 2/2  bw_t1_t32
+[E17_fb] rep 2/2  mimic_s4_t32
+[OK]
+[E17_swpf] rep 1/2  bw_t1_t32
+[E17_swpf] rep 1/2  mimic_s4_t32
+[E17_swpf] rep 2/2  bw_t1_t32
+[E17_swpf] rep 2/2  mimic_s4_t32
+[OK]
+[E17_stall] rep 1/2  bw_t1_t32
+[E17_stall] rep 1/2  mimic_s4_t32
+[E17_stall] rep 2/2  bw_t1_t32
+[E17_stall] rep 2/2  mimic_s4_t32
+[OK]
+[E17_l2] rep 1/2  bw_t1_t32
+[E17_l2] rep 1/2  mimic_s4_t32
+[E17_l2] rep 2/2  bw_t1_t32
+[E17_l2] rep 2/2  mimic_s4_t32
+[OK]

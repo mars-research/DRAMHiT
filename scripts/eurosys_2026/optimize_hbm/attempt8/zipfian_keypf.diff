@@ -1,0 +1,87 @@
+diff --git a/src/tests/zipfian_test.cpp b/src/tests/zipfian_test.cpp
+index 1c65f39..adbc9fa 100644
+--- a/src/tests/zipfian_test.cpp
++++ b/src/tests/zipfian_test.cpp
+@@ -32,7 +32,9 @@
+ #ifdef WITH_PCM
+ #include "PCMCounter.hpp"
+ #endif
++#include <atomic>
+ #include <random>
++#include <string>
+ namespace kmercounter {
+ 
+ extern void get_ht_stats(Shard *, BaseHashTable *);
+@@ -132,6 +134,38 @@ struct ht_do_batch_find_ret {
+   uint32_t found;
+ };
+ 
++// Key-stream prefetch of the find loop, configurable from the environment (research knobs; with none
++// set the behaviour is the original one: in the per-key loop, every 8 keys, 16 keys ahead, prefetcht0).
++//   KEY_PF_DIST  keys ahead (0 = no key prefetch)
++//   KEY_PF_HINT  t0 | t1 | t2 | nta
++//   KEY_PF_MODE  inline: in the per-key loop, one prefetch per 8-key line
++//                batch:  at the start of each batch, every key line of the batch KEY_PF_DIST keys ahead
++struct KeyPrefetchConfig {
++  uint64_t dist = 16;
++  int hint = 3;  // __builtin_prefetch locality: 3 = t0, 2 = t1, 1 = t2, 0 = nta
++  bool batch = false;
++};
++
++static KeyPrefetchConfig key_prefetch_config() {
++  KeyPrefetchConfig c;
++  if (const char *d = getenv("KEY_PF_DIST")) c.dist = strtoull(d, nullptr, 10);
++  if (const char *h = getenv("KEY_PF_HINT")) {
++    std::string hs(h);
++    c.hint = hs == "t1" ? 2 : hs == "t2" ? 1 : hs == "nta" ? 0 : 3;
++  }
++  if (const char *m = getenv("KEY_PF_MODE")) c.batch = std::string(m) == "batch";
++  return c;
++}
++
++static inline void key_prefetch(const void *p, int hint) {
++  switch (hint) {
++    case 3: __builtin_prefetch(p, false, 3); break;
++    case 2: __builtin_prefetch(p, false, 2); break;
++    case 1: __builtin_prefetch(p, false, 1); break;
++    default: __builtin_prefetch(p, false, 0); break;
++  }
++}
++
+ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+                        uint64_t *found_res) {
+ #if defined(CAS_NO_ABSTRACT)
+@@ -160,10 +194,20 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+ 
+   ValuePairs vp = std::make_pair(0, results);
+   key_type value;
++  const KeyPrefetchConfig kpf = key_prefetch_config();
++  static std::atomic<bool> kpf_logged{false};
++  if (!kpf_logged.exchange(true))
++    PLOGI.printf("find key prefetch: %s, %lu keys ahead, hint %d", kpf.batch ? "batch" : "inline",
++                 kpf.dist, kpf.hint);
+   for (uint64_t n = 0; n < batch_num; ++n) {
++    if (kpf.batch && kpf.dist) {
++      const uint64_t a = idx + kpf.dist;  // first key of the batch kpf.dist keys ahead
++      for (uint64_t j = a & ~7ull; j < a + batch_len && j < request_num; j += 8)
++        key_prefetch(&workload[j], kpf.hint);
++    }
+     for (uint32_t i = 0; i < batch_len; i++) {
+-      if (!(idx & 7) && idx + 16 < request_num) {
+-        __builtin_prefetch(&workload[idx + 16], false, 3);
++      if (!kpf.batch && kpf.dist && !(idx & 7) && idx + kpf.dist < request_num) {
++        key_prefetch(&workload[idx + kpf.dist], kpf.hint);
+       }
+ 
+       value = workload[idx];
+@@ -188,8 +232,8 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+   uint64_t residue_num = request_num - batch_len * batch_num;
+   if (residue_num > 0) {
+     for (uint64_t i = 0; i < residue_num; i++) {
+-      if (!(idx & 7) && (idx + 16 < request_num)) {
+-        __builtin_prefetch(&workload[idx + 16], false, 3);
++      if (!kpf.batch && kpf.dist && !(idx & 7) && (idx + kpf.dist < request_num)) {
++        key_prefetch(&workload[idx + kpf.dist], kpf.hint);
+       }
+       value = workload[idx];
+       items[i].key = items[i].value = value;

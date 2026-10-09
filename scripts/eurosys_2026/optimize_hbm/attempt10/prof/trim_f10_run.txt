@@ -1,0 +1,2142 @@
+ Percent |	Source code & Disassembly of dramhit for cycles:u (91159 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000046b150 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]>:
+    0.00 :   46b150: push   %r15
+    0.00 :   46b152: push   %r14
+    0.00 :   46b154: mov    %rsi,%r14
+    0.00 :   46b157: push   %r13
+    0.00 :   46b159: push   %r12
+    0.00 :   46b15b: push   %rbp
+    0.00 :   46b15c: push   %rbx
+    0.00 :   46b15d: sub    $0x2c8,%rsp
+    0.00 :   46b164: mov    %rdx,0x70(%rsp)
+    0.00 :   46b169: mov    0x26a88(%rip),%rdx        # 491bf8 <kmercounter::g_zipf_values>
+    0.00 :   46b170: movzbl (%rdi),%ebp
+    0.00 :   46b173: mov    0x8(%rdx),%rax
+    0.00 :   46b177: mov    %rdi,0x58(%rsp)
+    0.00 :   46b17c: sub    (%rdx),%rax
+    0.00 :   46b17f: mov    0x26b27(%rip),%edi        # 491cac <kmercounter::config+0xac>
+    0.00 :   46b185: sar    $0x3,%rax
+    0.00 :   46b189: xor    %edx,%edx
+    0.00 :   46b18b: div    %rdi
+    0.00 :   46b18e: mov    %rdi,%rcx
+    0.00 :   46b191: mov    %rbp,%rsi
+    0.00 :   46b194: dec    %ecx
+    0.00 :   46b196: imul   %rax,%rbp
+    0.00 :   46b19a: add    %rax,%rdx
+    0.00 :   46b19d: cmp    %ecx,%esi
+    0.00 :   46b19f: cmove  %rdx,%rax
+    0.00 :   46b1a3: mov    %rax,%rbx
+    0.00 :   46b1a6: shr    $0x3c,%rax
+    0.00 :   46b1aa: jne    46d620 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x24d0>
+    0.00 :   46b1b0: test   %rbx,%rbx
+    0.00 :   46b1b3: jne    46b92d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x7dd>
+    0.00 :   46b1b9: cmpl   $0xa,0x26af4(%rip)        # 491cb4 <kmercounter::config+0xb4>
+    0.00 :   46b1c0: je     46d5f2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x24a2>
+    0.00 :   46b1c6: movq   $0x0,0x78(%rsp)
+    0.00 :   46b1cf: movq   $0x0,0x38(%rsp)
+    0.00 :   46b1d8: movq   $0x0,0x80(%rsp)
+    0.00 :   46b1e4: xor    %r15d,%r15d
+    0.00 :   46b1e7: mov    0x58(%rsp),%rbx
+    0.00 :   46b1ec: cmpb   $0x0,(%rbx)
+    0.00 :   46b1ef: jne    46b1fb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xab>
+    0.00 :   46b1f1: movl   $0x4,0x25e25(%rip)        # 491020 <kmercounter::cur_phase>
+    0.00 :   46b1fb: mov    0x70(%rsp),%rdi
+    0.00 :   46b200: call   432f90 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+    0.00 :   46b205: mov    0x58(%rsp),%rsi
+    0.00 :   46b20a: movzbl (%rsi),%eax
+    0.00 :   46b20d: test   %al,%al
+    0.00 :   46b20f: jne    46c4c6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1376>
+    0.00 :   46b215: mov    0x260a4(%rip),%r10        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46b21c: test   %r10,%r10
+    0.00 :   46b21f: je     46b22c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdc>
+    0.00 :   46b221: cmpl   $0x3,0x8(%r10)
+    0.00 :   46b226: jg     46c45c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x130c>
+    0.00 :   46b22c: cmpq   $0x0,0x26a94(%rip)        # 491cc8 <kmercounter::config+0xc8>
+    0.00 :   46b234: jne    46cb0f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x19bf>
+    0.00 :   46b23a: movq   $0x1,(%rsp)
+    0.00 :   46b242: movq   $0x1,0x30(%rsp)
+    0.00 :   46b24b: test   %r10,%r10
+    0.00 :   46b24e: je     46b25b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10b>
+    0.00 :   46b250: cmpl   $0x3,0x8(%r10)
+    0.00 :   46b255: jg     46d000 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1eb0>
+    0.00 :   46b25b: vmovq  (%rsp),%xmm2
+    0.00 :   46b260: mov    0x58(%rsp),%rax
+    0.00 :   46b265: vpinsrq $0x1,0x30(%rsp),%xmm2,%xmm3
+    0.00 :   46b26d: mov    0x40(%rax),%r11
+    0.00 :   46b271: vmovdqu %xmm3,(%r11)
+    0.00 :   46b276: mov    %r10,%r8
+    0.00 :   46b279: test   %r10,%r10
+    0.00 :   46b27c: je     46cfd8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1e88>
+    0.00 :   46b282: cmpl   $0x3,0x8(%r10)
+    0.00 :   46b287: jg     46d095 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1f45>
+    0.00 :   46b28d: mov    0x26a3c(%rip),%r13        # 491cd0 <kmercounter::config+0xd0>
+    0.00 :   46b294: mov    %r13,0x68(%rsp)
+    0.00 :   46b299: test   %r13,%r13
+    0.00 :   46b29c: je     46cba4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1a54>
+    0.00 :   46b2a2: movl   $0x1,0x25d74(%rip)        # 491020 <kmercounter::cur_phase>
+    0.00 :   46b2ac: movb   $0x0,0x26c45(%rip)        # 491ef8 <kmercounter::zipfian_finds>
+    0.00 :   46b2b3: movl   $0x0,0x8c(%rsp)
+    0.00 :   46b2be: mov    0x70(%rsp),%rdi
+    0.00 :   46b2c3: call   432f90 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+    0.00 :   46b2c8: mov    0x26a01(%rip),%rdx        # 491cd0 <kmercounter::config+0xd0>
+    0.00 :   46b2cf: mov    %rdx,0x60(%rsp)
+    0.00 :   46b2d4: test   %rdx,%rdx
+    0.00 :   46b2d7: je     46d278 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2128>
+    0.00 :   46b2dd: mov    0x38(%rsp),%rax
+    0.00 :   46b2e2: movq   $0x0,0x68(%rsp)
+    0.00 :   46b2eb: sub    %r15,%rax
+    0.00 :   46b2ee: sar    $0x3,%rax
+    0.00 :   46b2f2: mov    %rax,0x40(%rsp)
+    0.00 :   46b2f7: movl   $0x0,0x4c(%rsp)
+    0.00 :   46b2ff: movq   $0x0,0x60(%rsp)
+    0.00 :   46b308: nopl   0x0(%rax,%rax,1)
+    0.00 :   46b310: mov    0x269fd(%rip),%r13d        # 491d14 <kmercounter::config+0x114>
+    0.00 :   46b317: mov    0x40(%rsp),%rax
+    0.00 :   46b31c: xor    %edx,%edx
+    0.00 :   46b31e: div    %r13
+    0.00 :   46b321: mov    %r13d,0x28(%rsp)
+    0.00 :   46b326: lea    0x0(%r13,%r13,2),%rsi
+    0.00 :   46b32b: mov    $0x40,%edi
+    0.00 :   46b330: shl    $0x3,%rsi
+    0.00 :   46b334: mov    %rdx,0x50(%rsp)
+    0.00 :   46b339: mov    %rax,0x18(%rsp)
+    0.00 :   46b33e: call   409510 <aligned_alloc@plt>
+    0.00 :   46b343: mov    %r13,%rdi
+    0.00 :   46b346: shl    $0x4,%rdi
+    0.00 :   46b34a: mov    %rax,0x8(%rsp)
+    0.00 :   46b34f: call   409040 <operator new[](unsigned long)@plt>
+    0.00 :   46b354: lea    0x14eca(%rip),%rdi        # 480225 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f85>
+    0.00 :   46b35b: movl   $0x0,0xa0(%rsp)
+    0.00 :   46b366: mov    %rax,0xa8(%rsp)
+    0.00 :   46b36e: call   4097c0 <getenv@plt>
+    0.00 :   46b373: mov    %rax,%rdi
+    0.00 :   46b376: movq   $0x10,0x38(%rsp)
+    0.00 :   46b37f: test   %rax,%rax
+    0.00 :   46b382: je     46b395 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x245>
+    0.00 :   46b384: mov    $0xa,%edx
+    0.00 :   46b389: xor    %esi,%esi
+    0.00 :   46b38b: call   409860 <strtoull@plt>
+    0.00 :   46b390: mov    %rax,0x38(%rsp)
+    0.00 :   46b395: lea    0x14e95(%rip),%rdi        # 480231 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f91>
+    0.00 :   46b39c: call   4097c0 <getenv@plt>
+    0.00 :   46b3a1: mov    %rax,%rbp
+    0.00 :   46b3a4: test   %rax,%rax
+    0.00 :   46b3a7: je     46c01a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xeca>
+    0.00 :   46b3ad: mov    %rax,%rdi
+    0.00 :   46b3b0: lea    0xd0(%rsp),%rbx
+    0.00 :   46b3b8: mov    %rbx,0xc0(%rsp)
+    0.00 :   46b3c0: lea    0xc0(%rsp),%r12
+    0.00 :   46b3c8: call   4092f0 <strlen@plt>
+    0.00 :   46b3cd: lea    0x0(%rbp,%rax,1),%rdx
+    0.00 :   46b3d2: mov    %rbp,%rsi
+    0.00 :   46b3d5: mov    %r12,%rdi
+    0.00 :   46b3d8: call   46b090 <void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag) [clone .constprop.0]>
+    0.00 :   46b3dd: mov    0xc8(%rsp),%rbp
+    0.00 :   46b3e5: mov    0xc0(%rsp),%r12
+    0.00 :   46b3ed: cmp    $0x2,%rbp
+    0.00 :   46b3f1: ja     46c087 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf37>
+    0.00 :   46b3f7: movl   $0x3,0x10(%rsp)
+    0.00 :   46b3ff: test   %rbp,%rbp
+    0.00 :   46b402: jne    46c9ab <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x185b>
+    0.00 :   46b408: cmp    %rbx,%r12
+    0.00 :   46b40b: je     46b421 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2d1>
+    0.00 :   46b40d: mov    0xd0(%rsp),%rax
+    0.00 :   46b415: mov    %r12,%rdi
+    0.00 :   46b418: lea    0x1(%rax),%rsi
+    0.00 :   46b41c: call   4096a0 <operator delete(void*, unsigned long)@plt>
+    0.00 :   46b421: lea    0x14e1c(%rip),%rdi        # 480244 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2fa4>
+    0.00 :   46b428: call   4097c0 <getenv@plt>
+    0.00 :   46b42d: mov    %rax,%rbp
+    0.00 :   46b430: test   %rax,%rax
+    0.00 :   46b433: je     46c00d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xebd>
+    0.00 :   46b439: mov    %rax,%rdi
+    0.00 :   46b43c: lea    0xd0(%rsp),%rbx
+    0.00 :   46b444: mov    %rbx,0xc0(%rsp)
+    0.00 :   46b44c: lea    0xc0(%rsp),%r12
+    0.00 :   46b454: call   4092f0 <strlen@plt>
+    0.00 :   46b459: lea    0x0(%rbp,%rax,1),%rdx
+    0.00 :   46b45e: mov    %rbp,%rsi
+    0.00 :   46b461: mov    %r12,%rdi
+    0.00 :   46b464: call   46b090 <void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char const*>(char const*, char const*, std::forward_iterator_tag) [clone .constprop.0]>
+    0.00 :   46b469: mov    0xc8(%rsp),%r12
+    0.00 :   46b471: mov    0xc0(%rsp),%rbp
+    0.00 :   46b479: cmp    $0x5,%r12
+    0.00 :   46b47d: ja     46c06d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf1d>
+    0.00 :   46b483: mov    $0xfffffffffffffffb,%rdx
+    0.00 :   46b48a: test   %r12,%r12
+    0.00 :   46b48d: jne    46c987 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1837>
+    0.00 :   46b493: test   %edx,%edx
+    0.00 :   46b495: sete   0x8b(%rsp)
+    0.00 :   46b49d: cmp    %rbx,%rbp
+    0.00 :   46b4a0: je     46b4b6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x366>
+    0.00 :   46b4a2: mov    0xd0(%rsp),%rcx
+    0.00 :   46b4aa: mov    %rbp,%rdi
+    0.00 :   46b4ad: lea    0x1(%rcx),%rsi
+    0.00 :   46b4b1: call   4096a0 <operator delete(void*, unsigned long)@plt>
+    0.00 :   46b4b6: mov    $0x1,%esi
+    0.00 :   46b4bb: xchg   %sil,0x26c46(%rip)        # 492108 <kmercounter::do_batch_find(kmercounter::BaseHashTable*, std::vector<unsigned long, huge_page_allocator<unsigned long> >&, unsigned long*)::kpf_logged>
+    0.00 :   46b4c2: test   %sil,%sil
+    0.00 :   46b4c5: jne    46b4dd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x38d>
+    0.00 :   46b4c7: mov    0x25df2(%rip),%rdi        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46b4ce: test   %rdi,%rdi
+    0.00 :   46b4d1: je     46b4dd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x38d>
+    0.00 :   46b4d3: cmpl   $0x3,0x8(%rdi)
+    0.00 :   46b4d7: jg     46c3b1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1261>
+    0.00 :   46b4dd: cmp    %r13,0x40(%rsp)
+    0.00 :   46b4e2: jb     46c44b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x12fb>
+    0.00 :   46b4e8: movzbl 0x8b(%rsp),%edx
+    0.00 :   46b4f0: cmpq   $0x0,0x38(%rsp)
+    0.00 :   46b4f6: setne  %r11b
+    0.00 :   46b4fa: mov    %edx,%eax
+    0.00 :   46b4fc: xor    $0x1,%edx
+    0.00 :   46b4ff: mov    %edx,%ecx
+    0.00 :   46b501: and    %r11d,%eax
+    0.00 :   46b504: and    %r11d,%ecx
+    0.00 :   46b507: lea    0xc0(%rsp),%r8
+    0.00 :   46b50f: mov    %al,0x24(%rsp)
+    0.00 :   46b513: mov    %cl,0x48(%rsp)
+    0.00 :   46b517: movq   $0x0,(%rsp)
+    0.00 :   46b51f: mov    %r8,0x30(%rsp)
+    0.00 :   46b524: xor    %ebp,%ebp
+    0.00 :   46b526: xor    %ebx,%ebx
+    0.00 :   46b528: lea    0xa0(%rsp),%r12
+    0.01 :   46b530: cmpb   $0x0,0x24(%rsp)
+    0.04 :   46b535: jne    46bde0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc90>
+    0.06 :   46b53b: mov    0x28(%rsp),%esi
+    0.03 :   46b53f: test   %esi,%esi
+    0.00 :   46b541: je     46b6e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x597>
+    0.04 :   46b547: cmpb   $0x0,0x48(%rsp)
+    0.08 :   46b54c: jne    46bb38 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9e8>
+    0.00 :   46b552: mov    %r13,%rdx
+    0.00 :   46b555: mov    0x8(%rsp),%rax
+    0.00 :   46b55a: lea    0x0(%r13,%rbx,1),%rcx
+    0.00 :   46b55f: and    $0x7,%edx
+    0.00 :   46b562: je     46b62f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x4df>
+    0.00 :   46b568: cmp    $0x1,%rdx
+    0.00 :   46b56c: je     46b612 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x4c2>
+    0.00 :   46b572: cmp    $0x2,%rdx
+    0.00 :   46b576: je     46b5fd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x4ad>
+    0.00 :   46b57c: cmp    $0x3,%rdx
+    0.00 :   46b580: je     46b5e8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x498>
+    0.00 :   46b582: cmp    $0x4,%rdx
+    0.00 :   46b586: je     46b5d3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x483>
+    0.00 :   46b588: cmp    $0x5,%rdx
+    0.00 :   46b58c: je     46b5be <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x46e>
+    0.00 :   46b58e: cmp    $0x6,%rdx
+    0.00 :   46b592: je     46b5a9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x459>
+    0.00 :   46b594: vpbroadcastq (%r15,%rbx,8),%xmm11
+    0.00 :   46b59a: add    $0x18,%rax
+    0.00 :   46b59e: mov    %ebx,-0x8(%rax)
+    0.00 :   46b5a1: vmovdqu %xmm11,-0x18(%rax)
+    0.00 :   46b5a6: inc    %rbx
+    0.00 :   46b5a9: vpbroadcastq (%r15,%rbx,8),%xmm12
+    0.00 :   46b5af: add    $0x18,%rax
+    0.00 :   46b5b3: mov    %ebx,-0x8(%rax)
+    0.00 :   46b5b6: vmovdqu %xmm12,-0x18(%rax)
+    0.00 :   46b5bb: inc    %rbx
+    0.00 :   46b5be: vpbroadcastq (%r15,%rbx,8),%xmm13
+    0.00 :   46b5c4: add    $0x18,%rax
+    0.00 :   46b5c8: mov    %ebx,-0x8(%rax)
+    0.00 :   46b5cb: vmovdqu %xmm13,-0x18(%rax)
+    0.00 :   46b5d0: inc    %rbx
+    0.00 :   46b5d3: vpbroadcastq (%r15,%rbx,8),%xmm14
+    0.00 :   46b5d9: add    $0x18,%rax
+    0.00 :   46b5dd: mov    %ebx,-0x8(%rax)
+    0.00 :   46b5e0: vmovdqu %xmm14,-0x18(%rax)
+    0.00 :   46b5e5: inc    %rbx
+    0.00 :   46b5e8: vpbroadcastq (%r15,%rbx,8),%xmm15
+    0.00 :   46b5ee: add    $0x18,%rax
+    0.00 :   46b5f2: mov    %ebx,-0x8(%rax)
+    0.00 :   46b5f5: vmovdqu %xmm15,-0x18(%rax)
+    0.00 :   46b5fa: inc    %rbx
+    0.00 :   46b5fd: vpbroadcastq (%r15,%rbx,8),%xmm0
+    0.00 :   46b603: add    $0x18,%rax
+    0.00 :   46b607: mov    %ebx,-0x8(%rax)
+    0.00 :   46b60a: vmovdqu %xmm0,-0x18(%rax)
+    0.00 :   46b60f: inc    %rbx
+    0.00 :   46b612: vpbroadcastq (%r15,%rbx,8),%xmm1
+    0.00 :   46b618: mov    %ebx,0x10(%rax)
+    0.00 :   46b61b: inc    %rbx
+    0.00 :   46b61e: vmovdqu %xmm1,(%rax)
+    0.00 :   46b622: add    $0x18,%rax
+    0.00 :   46b626: cmp    %rbx,%rcx
+    0.00 :   46b629: je     46b6e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x597>
+    0.00 :   46b62f: vpbroadcastq (%r15,%rbx,8),%xmm2
+    0.00 :   46b635: lea    0x1(%rbx),%r9
+    0.00 :   46b639: vmovdqu %xmm2,(%rax)
+    0.00 :   46b63d: vpbroadcastq 0x8(%r15,%rbx,8),%xmm3
+    0.00 :   46b644: mov    %ebx,0x10(%rax)
+    0.00 :   46b647: vmovdqu %xmm3,0x18(%rax)
+    0.00 :   46b64c: vpbroadcastq 0x10(%r15,%rbx,8),%xmm4
+    0.00 :   46b653: lea    0x2(%rbx),%rsi
+    0.00 :   46b657: vmovdqu %xmm4,0x30(%rax)
+    0.00 :   46b65c: vpbroadcastq 0x18(%r15,%rbx,8),%xmm5
+    0.00 :   46b663: lea    0x3(%rbx),%r8
+    0.00 :   46b667: vmovdqu %xmm5,0x48(%rax)
+    0.00 :   46b66c: vpbroadcastq 0x20(%r15,%rbx,8),%xmm6
+    0.00 :   46b673: lea    0x4(%rbx),%rdi
+    0.00 :   46b677: vmovdqu %xmm6,0x60(%rax)
+    0.00 :   46b67c: vpbroadcastq 0x28(%r15,%rbx,8),%xmm7
+    0.00 :   46b683: lea    0x5(%rbx),%r10
+    0.00 :   46b687: vmovdqu %xmm7,0x78(%rax)
+    0.00 :   46b68c: vpbroadcastq 0x30(%r15,%rbx,8),%xmm8
+    0.00 :   46b693: lea    0x6(%rbx),%r11
+    0.00 :   46b697: vmovdqu %xmm8,0x90(%rax)
+    0.00 :   46b69f: vpbroadcastq 0x38(%r15,%rbx,8),%xmm9
+    0.00 :   46b6a6: lea    0x7(%rbx),%rdx
+    0.00 :   46b6aa: add    $0x8,%rbx
+    0.00 :   46b6ae: mov    %r9d,0x28(%rax)
+    0.00 :   46b6b2: mov    %esi,0x40(%rax)
+    0.00 :   46b6b5: mov    %r8d,0x58(%rax)
+    0.00 :   46b6b9: mov    %edi,0x70(%rax)
+    0.00 :   46b6bc: mov    %r10d,0x88(%rax)
+    0.00 :   46b6c3: mov    %r11d,0xa0(%rax)
+    0.00 :   46b6ca: mov    %edx,0xb8(%rax)
+    0.00 :   46b6d0: vmovdqu %xmm9,0xa8(%rax)
+    0.00 :   46b6d8: add    $0xc0,%rax
+    0.00 :   46b6de: cmp    %rbx,%rcx
+    0.00 :   46b6e1: jne    46b62f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x4df>
+    0.02 :   46b6e7: mov    0x8(%rsp),%rcx
+    0.07 :   46b6ec: mov    (%r14),%rax
+    0.11 :   46b6ef: movl   $0x0,0xa0(%rsp)
+    0.04 :   46b6fa: mov    0x20(%rax),%r9
+    0.09 :   46b6fe: mov    %rcx,0xc0(%rsp)
+    0.03 :   46b706: mov    %r13,0xc8(%rsp)
+    0.07 :   46b70e: mov    0x30(%rsp),%rsi
+    0.04 :   46b713: xor    %ecx,%ecx
+    0.02 :   46b715: mov    %r12,%rdx
+    0.05 :   46b718: mov    %r14,%rdi
+    0.04 :   46b71b: call   *%r9
+    0.07 :   46b71e: incq   (%rsp)
+    0.20 :   46b722: mov    0xa0(%rsp),%esi
+    0.03 :   46b729: add    %rsi,%rbp
+    0.03 :   46b72c: mov    (%rsp),%r8
+    0.05 :   46b730: cmp    %r8,0x18(%rsp)
+    0.00 :   46b735: ja     46b530 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x3e0>
+    0.00 :   46b73b: cmpq   $0x0,0x50(%rsp)
+    0.00 :   46b741: je     46b9b3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x863>
+    0.00 :   46b747: cmpq   $0x0,0x38(%rsp)
+    0.00 :   46b74d: mov    0x8(%rsp),%rax
+    0.00 :   46b752: je     46b762 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x612>
+    0.00 :   46b754: cmpb   $0x0,0x8b(%rsp)
+    0.00 :   46b75c: je     46c18b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x103b>
+    0.00 :   46b762: mov    0x50(%rsp),%rdx
+    0.00 :   46b767: lea    (%rdx,%rbx,1),%r13
+    0.00 :   46b76b: and    $0x7,%edx
+    0.00 :   46b76e: je     46b826 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6d6>
+    0.00 :   46b774: cmp    $0x1,%rdx
+    0.00 :   46b778: je     46b809 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6b9>
+    0.00 :   46b77e: cmp    $0x2,%rdx
+    0.00 :   46b782: je     46b7f4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6a4>
+    0.00 :   46b784: cmp    $0x3,%rdx
+    0.00 :   46b788: je     46b7df <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x68f>
+    0.00 :   46b78a: cmp    $0x4,%rdx
+    0.00 :   46b78e: je     46b7ca <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x67a>
+    0.00 :   46b790: cmp    $0x5,%rdx
+    0.00 :   46b794: je     46b7b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x665>
+    0.00 :   46b796: cmp    $0x6,%rdx
+    0.00 :   46b79a: jne    46cb8a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1a3a>
+    0.00 :   46b7a0: vpbroadcastq (%r15,%rbx,8),%xmm2
+    0.00 :   46b7a6: add    $0x18,%rax
+    0.00 :   46b7aa: mov    %ebx,-0x8(%rax)
+    0.00 :   46b7ad: vmovdqu %xmm2,-0x18(%rax)
+    0.00 :   46b7b2: inc    %rbx
+    0.00 :   46b7b5: vpbroadcastq (%r15,%rbx,8),%xmm3
+    0.00 :   46b7bb: add    $0x18,%rax
+    0.00 :   46b7bf: mov    %ebx,-0x8(%rax)
+    0.00 :   46b7c2: vmovdqu %xmm3,-0x18(%rax)
+    0.00 :   46b7c7: inc    %rbx
+    0.00 :   46b7ca: vpbroadcastq (%r15,%rbx,8),%xmm4
+    0.00 :   46b7d0: add    $0x18,%rax
+    0.00 :   46b7d4: mov    %ebx,-0x8(%rax)
+    0.00 :   46b7d7: vmovdqu %xmm4,-0x18(%rax)
+    0.00 :   46b7dc: inc    %rbx
+    0.00 :   46b7df: vpbroadcastq (%r15,%rbx,8),%xmm5
+    0.00 :   46b7e5: add    $0x18,%rax
+    0.00 :   46b7e9: mov    %ebx,-0x8(%rax)
+    0.00 :   46b7ec: vmovdqu %xmm5,-0x18(%rax)
+    0.00 :   46b7f1: inc    %rbx
+    0.00 :   46b7f4: vpbroadcastq (%r15,%rbx,8),%xmm6
+    0.00 :   46b7fa: add    $0x18,%rax
+    0.00 :   46b7fe: mov    %ebx,-0x8(%rax)
+    0.00 :   46b801: vmovdqu %xmm6,-0x18(%rax)
+    0.00 :   46b806: inc    %rbx
+    0.00 :   46b809: vpbroadcastq (%r15,%rbx,8),%xmm7
+    0.00 :   46b80f: mov    %ebx,0x10(%rax)
+    0.00 :   46b812: inc    %rbx
+    0.00 :   46b815: vmovdqu %xmm7,(%rax)
+    0.00 :   46b819: add    $0x18,%rax
+    0.00 :   46b81d: cmp    %r13,%rbx
+    0.00 :   46b820: je     46b8dd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x78d>
+    0.00 :   46b826: vpbroadcastq (%r15,%rbx,8),%xmm8
+    0.00 :   46b82c: lea    0x1(%rbx),%rdi
+    0.00 :   46b830: vmovdqu %xmm8,(%rax)
+    0.00 :   46b834: vpbroadcastq 0x8(%r15,%rbx,8),%xmm9
+    0.00 :   46b83b: mov    %ebx,0x10(%rax)
+    0.00 :   46b83e: vmovdqu %xmm9,0x18(%rax)
+    0.00 :   46b843: vpbroadcastq 0x10(%r15,%rbx,8),%xmm10
+    0.00 :   46b84a: lea    0x2(%rbx),%rcx
+    0.00 :   46b84e: vmovdqu %xmm10,0x30(%rax)
+    0.00 :   46b853: vpbroadcastq 0x18(%r15,%rbx,8),%xmm11
+    0.00 :   46b85a: lea    0x3(%rbx),%r9
+    0.00 :   46b85e: vmovdqu %xmm11,0x48(%rax)
+    0.00 :   46b863: vpbroadcastq 0x20(%r15,%rbx,8),%xmm12
+    0.00 :   46b86a: lea    0x4(%rbx),%rsi
+    0.00 :   46b86e: vmovdqu %xmm12,0x60(%rax)
+    0.00 :   46b873: vpbroadcastq 0x28(%r15,%rbx,8),%xmm13
+    0.00 :   46b87a: lea    0x5(%rbx),%r11
+    0.00 :   46b87e: vmovdqu %xmm13,0x78(%rax)
+    0.00 :   46b883: vpbroadcastq 0x30(%r15,%rbx,8),%xmm14
+    0.00 :   46b88a: lea    0x6(%rbx),%r10
+    0.00 :   46b88e: vmovdqu %xmm14,0x90(%rax)
+    0.00 :   46b896: vpbroadcastq 0x38(%r15,%rbx,8),%xmm15
+    0.00 :   46b89d: lea    0x7(%rbx),%rdx
+    0.00 :   46b8a1: add    $0x8,%rbx
+    0.00 :   46b8a5: mov    %edi,0x28(%rax)
+    0.00 :   46b8a8: mov    %ecx,0x40(%rax)
+    0.00 :   46b8ab: mov    %r9d,0x58(%rax)
+    0.00 :   46b8af: mov    %esi,0x70(%rax)
+    0.00 :   46b8b2: mov    %r11d,0x88(%rax)
+    0.00 :   46b8b9: mov    %r10d,0xa0(%rax)
+    0.00 :   46b8c0: mov    %edx,0xb8(%rax)
+    0.00 :   46b8c6: vmovdqu %xmm15,0xa8(%rax)
+    0.00 :   46b8ce: add    $0xc0,%rax
+    0.00 :   46b8d4: cmp    %r13,%rbx
+    0.00 :   46b8d7: jne    46b826 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x6d6>
+    0.00 :   46b8dd: mov    0x50(%rsp),%rdi
+    0.00 :   46b8e2: mov    (%r14),%rax
+    0.00 :   46b8e5: mov    0x8(%rsp),%r8
+    0.00 :   46b8ea: mov    0x20(%rax),%rbx
+    0.00 :   46b8ee: movl   $0x0,0xa0(%rsp)
+    0.00 :   46b8f9: mov    %rdi,0xb8(%rsp)
+    0.00 :   46b901: mov    %r8,0xb0(%rsp)
+    0.00 :   46b909: lea    0xb0(%rsp),%rsi
+    0.00 :   46b911: xor    %ecx,%ecx
+    0.00 :   46b913: mov    %r12,%rdx
+    0.00 :   46b916: mov    %r14,%rdi
+    0.00 :   46b919: call   *%rbx
+    0.00 :   46b91b: mov    0xa0(%rsp),%ecx
+    0.00 :   46b922: mov    %r13,%rbx
+    0.00 :   46b925: add    %rcx,%rbp
+    0.00 :   46b928: jmp    46b9b3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x863>
+    0.00 :   46b92d: mov    %rbx,%rdi
+    0.00 :   46b930: call   46a060 <huge_page_allocator<unsigned long>::allocate(unsigned long) [clone .constprop.0]>
+    0.00 :   46b935: lea    0x0(,%rbx,8),%r8
+    0.00 :   46b93d: lea    (%rax,%r8,1),%r9
+    0.00 :   46b941: cmpl   $0xa,0x2636c(%rip)        # 491cb4 <kmercounter::config+0xb4>
+    0.00 :   46b948: mov    %r9,0x80(%rsp)
+    0.00 :   46b950: mov    %rax,%r15
+    0.00 :   46b953: jne    46cc60 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1b10>
+    0.00 :   46b959: lea    0x1486f(%rip),%rdi        # 4801cf <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f2f>
+    0.00 :   46b960: mov    %r8,0x78(%rsp)
+    0.00 :   46b965: call   4097c0 <getenv@plt>
+    0.00 :   46b96a: test   %rax,%rax
+    0.00 :   46b96d: jne    46cc60 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1b10>
+    0.00 :   46b973: mov    0x2649e(%rip),%r10d        # 491e18 <kmercounter::config+0x218>
+    0.00 :   46b97a: mov    0x2648f(%rip),%r12d        # 491e10 <kmercounter::config+0x210>
+    0.00 :   46b981: test   %r10d,%r10d
+    0.00 :   46b984: jne    46d286 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2136>
+    0.00 :   46b98a: test   %r12d,%r12d
+    0.00 :   46b98d: jne    46d340 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x21f0>
+    0.00 :   46b993: test   %rbx,%rbx
+    0.00 :   46b996: jne    46cc60 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1b10>
+    0.00 :   46b99c: mov    %r15,0x38(%rsp)
+    0.00 :   46b9a1: jmp    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46b9a6: cs nopw 0x0(%rax,%rax,1)
+    0.00 :   46b9b0: add    %r9,%rbp
+    0.00 :   46b9b3: movl   $0x0,0xa0(%rsp)
+    0.00 :   46b9be: mov    (%r14),%r13
+    0.00 :   46b9c1: xor    %edx,%edx
+    0.00 :   46b9c3: mov    %r12,%rsi
+    0.00 :   46b9c6: mov    %r14,%rdi
+    0.00 :   46b9c9: call   *0x30(%r13)
+    0.00 :   46b9cd: mov    0xa0(%rsp),%r9d
+    0.00 :   46b9d5: test   %r9d,%r9d
+    0.00 :   46b9d8: jne    46b9b0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x860>
+    0.00 :   46b9da: test   %rax,%rax
+    0.00 :   46b9dd: jne    46b9b0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x860>
+    0.00 :   46b9df: mov    0x8(%rsp),%rdi
+    0.00 :   46b9e4: call   409790 <free@plt>
+    0.00 :   46b9e9: incl   0x4c(%rsp)
+    0.00 :   46b9ed: add    %rbp,0x68(%rsp)
+    0.00 :   46b9f2: add    %rbx,0x60(%rsp)
+    0.00 :   46b9f7: mov    0x4c(%rsp),%ebp
+    0.00 :   46b9fb: cmp    0x262ce(%rip),%rbp        # 491cd0 <kmercounter::config+0xd0>
+    0.00 :   46ba02: jb     46b310 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1c0>
+    0.00 :   46ba08: mov    0x8c(%rsp),%r12d
+    0.00 :   46ba10: test   %r12d,%r12d
+    0.00 :   46ba13: jne    46ba27 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8d7>
+    0.00 :   46ba15: movb   $0x1,0x264dc(%rip)        # 491ef8 <kmercounter::zipfian_finds>
+    0.00 :   46ba1c: movq   $0x0,0x264b9(%rip)        # 491ee0 <kmercounter::zipfian_iter>
+    0.00 :   46ba27: mov    0x70(%rsp),%rdi
+    0.00 :   46ba2c: call   432f90 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+    0.00 :   46ba31: mov    0x264a0(%rip),%rsi        # 491ed8 <kmercounter::g_find_durations>
+    0.00 :   46ba38: mov    0x58(%rsp),%r11
+    0.00 :   46ba3d: mov    (%rsi),%rbx
+    0.00 :   46ba40: movzbl (%r11),%esi
+    0.00 :   46ba44: test   %sil,%sil
+    0.00 :   46ba47: jne    46cab3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1963>
+    0.00 :   46ba4d: mov    0x2586c(%rip),%r8        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46ba54: test   %r8,%r8
+    0.00 :   46ba57: je     46ba64 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x914>
+    0.00 :   46ba59: cmpl   $0x3,0x8(%r8)
+    0.00 :   46ba5e: jg     46cbbd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1a6d>
+    0.00 :   46ba64: mov    0x58(%rsp),%rdi
+    0.00 :   46ba69: mov    0x40(%rdi),%r11
+    0.00 :   46ba6d: mov    0x68(%rsp),%r12
+    0.00 :   46ba72: vmovq  %rbx,%xmm4
+    0.00 :   46ba77: vpinsrq $0x1,0x60(%rsp),%xmm4,%xmm5
+    0.00 :   46ba7f: mov    %r12,0x68(%r11)
+    0.00 :   46ba83: vmovdqu %xmm5,0x20(%r11)
+    0.00 :   46ba89: movl   $0x3,0x2558d(%rip)        # 491020 <kmercounter::cur_phase>
+    0.00 :   46ba93: mov    0x70(%rsp),%rdi
+    0.00 :   46ba98: call   432f90 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+    0.00 :   46ba9d: mov    0x58(%rsp),%r13
+    0.00 :   46baa2: cmpb   $0x0,0x0(%r13)
+    0.00 :   46baa7: jne    46bae3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x993>
+    0.00 :   46baa9: mov    (%r14),%rax
+    0.00 :   46baac: mov    %r14,%rdi
+    0.00 :   46baaf: mov    0x40(%r13),%rbp
+    0.00 :   46bab3: call   *0x40(%rax)
+    0.00 :   46bab6: mov    %rax,0x50(%rbp)
+    0.00 :   46baba: mov    (%r14),%r12
+    0.00 :   46babd: mov    %r14,%rdi
+    0.00 :   46bac0: mov    0x40(%r13),%rbx
+    0.00 :   46bac4: call   *0x48(%r12)
+    0.00 :   46bac9: mov    0x257f0(%rip),%rsi        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46bad0: mov    %rax,0x58(%rbx)
+    0.00 :   46bad4: test   %rsi,%rsi
+    0.00 :   46bad7: je     46bae3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x993>
+    0.00 :   46bad9: cmpl   $0x3,0x8(%rsi)
+    0.00 :   46badd: jg     46d124 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1fd4>
+    0.00 :   46bae3: test   %r15,%r15
+    0.00 :   46bae6: je     46c39f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x124f>
+    0.00 :   46baec: cmpq   $0x0,0x78(%rsp)
+    0.00 :   46baf2: js     40e579 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x25>
+    0.00 :   46baf8: mov    0x78(%rsp),%r10
+    0.00 :   46bafd: lea    -0x1(%r10),%rdx
+    0.00 :   46bb01: cmp    $0x3e800000,%r10
+    0.00 :   46bb08: jle    46ca20 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x18d0>
+    0.00 :   46bb0e: and    $0xffffffffc0000000,%rdx
+    0.00 :   46bb15: lea    0x40000000(%rdx),%rsi
+    0.00 :   46bb1c: add    $0x2c8,%rsp
+    0.00 :   46bb23: pop    %rbx
+    0.00 :   46bb24: pop    %rbp
+    0.00 :   46bb25: pop    %r12
+    0.00 :   46bb27: pop    %r13
+    0.00 :   46bb29: pop    %r14
+    0.00 :   46bb2b: mov    %r15,%rdi
+    0.00 :   46bb2e: pop    %r15
+    0.00 :   46bb30: jmp    4093c0 <munmap@plt>
+    0.00 :   46bb35: nopl   (%rax)
+    0.03 :   46bb38: mov    0x38(%rsp),%rdi
+    0.06 :   46bb3d: mov    %r13,%r10
+    0.00 :   46bb40: lea    (%rdi,%rbx,1),%r9
+    0.02 :   46bb44: mov    0x8(%rsp),%rax
+    0.05 :   46bb49: lea    (%r15,%r9,8),%r11
+    0.02 :   46bb4d: lea    0x0(%r13,%rbx,1),%rdx
+    0.03 :   46bb52: and    $0x3,%r10d
+    0.00 :   46bb56: je     46bc69 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb19>
+    0.00 :   46bb5c: cmp    $0x1,%r10
+    0.00 :   46bb60: je     46bc0c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xabc>
+    0.00 :   46bb66: cmp    $0x2,%r10
+    0.00 :   46bb6a: je     46bbba <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa6a>
+    0.00 :   46bb6c: test   $0x7,%bl
+    0.00 :   46bb6f: jne    46bb9d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa4d>
+    0.00 :   46bb71: cmp    %r9,0x40(%rsp)
+    0.00 :   46bb76: jbe    46bb9d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa4d>
+    0.00 :   46bb78: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46bb7d: je     46d56a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x241a>
+    0.00 :   46bb83: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bb88: je     46d561 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2411>
+    0.00 :   46bb8e: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46bb93: je     46d558 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2408>
+    0.00 :   46bb99: prefetchnta (%r11)
+    0.00 :   46bb9d: vpbroadcastq (%r15,%rbx,8),%xmm4
+    0.00 :   46bba3: mov    0x8(%rsp),%rax
+    0.00 :   46bba8: add    $0x8,%r11
+    0.00 :   46bbac: mov    %ebx,0x10(%rax)
+    0.00 :   46bbaf: vmovdqu %xmm4,(%rax)
+    0.00 :   46bbb3: inc    %rbx
+    0.00 :   46bbb6: add    $0x18,%rax
+    0.00 :   46bbba: test   $0x7,%bl
+    0.00 :   46bbbd: jne    46bbf3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaa3>
+    0.00 :   46bbbf: mov    0x38(%rsp),%rcx
+    0.00 :   46bbc4: add    %rbx,%rcx
+    0.00 :   46bbc7: cmp    %rcx,0x40(%rsp)
+    0.00 :   46bbcc: jbe    46bbf3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaa3>
+    0.00 :   46bbce: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46bbd3: je     46cf62 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1e12>
+    0.00 :   46bbd9: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bbde: je     46cf59 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1e09>
+    0.00 :   46bbe4: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46bbe9: je     46cf50 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1e00>
+    0.00 :   46bbef: prefetchnta (%r11)
+    0.00 :   46bbf3: vpbroadcastq (%r15,%rbx,8),%xmm5
+    0.00 :   46bbf9: add    $0x18,%rax
+    0.00 :   46bbfd: mov    %ebx,-0x8(%rax)
+    0.00 :   46bc00: vmovdqu %xmm5,-0x18(%rax)
+    0.00 :   46bc05: inc    %rbx
+    0.00 :   46bc08: add    $0x8,%r11
+    0.00 :   46bc0c: test   $0x7,%bl
+    0.00 :   46bc0f: jne    46bc48 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaf8>
+    0.00 :   46bc11: mov    0x38(%rsp),%r8
+    0.00 :   46bc16: add    %rbx,%r8
+    0.00 :   46bc19: cmp    %r8,0x40(%rsp)
+    0.00 :   46bc1e: jbe    46bc48 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaf8>
+    0.00 :   46bc20: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46bc25: je     46d1d5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2085>
+    0.00 :   46bc2b: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bc30: je     46d1cc <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x207c>
+    0.00 :   46bc36: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46bc3b: je     46d1c3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2073>
+    0.00 :   46bc41: prefetchnta (%r11)
+    0.00 :   46bc45: nopl   (%rax)
+    0.00 :   46bc48: vpbroadcastq (%r15,%rbx,8),%xmm6
+    0.00 :   46bc4e: mov    %ebx,0x10(%rax)
+    0.00 :   46bc51: inc    %rbx
+    0.00 :   46bc54: vmovdqu %xmm6,(%rax)
+    0.00 :   46bc58: add    $0x8,%r11
+    0.00 :   46bc5c: add    $0x18,%rax
+    0.00 :   46bc60: cmp    %rdx,%rbx
+    0.00 :   46bc63: je     46b6e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x597>
+    0.84 :   46bc69: test   $0x7,%bl
+    0.00 :   46bc6c: jne    46bca8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb58>
+    0.13 :   46bc6e: mov    0x38(%rsp),%rsi
+    0.50 :   46bc73: lea    (%rsi,%rbx,1),%rdi
+    0.32 :   46bc77: cmp    %rdi,0x40(%rsp)
+    0.00 :   46bc7c: jbe    46bca8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb58>
+    0.45 :   46bc7e: mov    0x10(%rsp),%r9d
+    0.19 :   46bc83: cmp    $0x2,%r9d
+    0.00 :   46bc87: je     46ca90 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1940>
+    0.20 :   46bc8d: cmp    $0x3,%r9d
+    0.00 :   46bc91: je     46ca87 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1937>
+    0.48 :   46bc97: cmp    $0x1,%r9d
+    0.00 :   46bc9b: je     46ca7e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x192e>
+    0.00 :   46bca1: prefetchnta (%r11)
+    0.00 :   46bca5: nopl   (%rax)
+    0.67 :   46bca8: vpbroadcastq (%r15,%rbx,8),%xmm7
+   23.33 :   46bcae: lea    0x1(%rbx),%rcx
+    0.39 :   46bcb2: mov    %ebx,0x10(%rax)
+    0.58 :   46bcb5: vmovdqu %xmm7,(%rax)
+    1.69 :   46bcb9: add    $0x8,%r11
+    0.39 :   46bcbd: add    $0x18,%rax
+    0.59 :   46bcc1: test   $0x7,%cl
+    0.00 :   46bcc4: jne    46bd00 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbb0>
+    0.00 :   46bcc6: mov    0x38(%rsp),%rbx
+    0.00 :   46bccb: add    %rcx,%rbx
+    0.00 :   46bcce: cmp    %rbx,0x40(%rsp)
+    0.00 :   46bcd3: jbe    46bd00 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbb0>
+    0.00 :   46bcd5: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46bcda: je     46ca4c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x18fc>
+    0.00 :   46bce0: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bce5: je     46ca43 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x18f3>
+    0.00 :   46bceb: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46bcf0: je     46ca55 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1905>
+    0.00 :   46bcf6: prefetchnta (%r11)
+    0.00 :   46bcfa: nopw   0x0(%rax,%rax,1)
+    0.50 :   46bd00: vpbroadcastq (%r15,%rcx,8),%xmm8
+    1.61 :   46bd06: lea    0x1(%rcx),%rsi
+    0.27 :   46bd0a: mov    %ecx,0x10(%rax)
+    0.30 :   46bd0d: vmovdqu %xmm8,(%rax)
+    2.08 :   46bd11: lea    0x18(%rax),%r8
+    0.54 :   46bd15: lea    0x8(%r11),%rdi
+    0.44 :   46bd19: test   $0x7,%sil
+    0.00 :   46bd1d: jne    46bd58 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc08>
+    0.00 :   46bd1f: mov    0x38(%rsp),%r10
+    0.00 :   46bd24: lea    (%r10,%rsi,1),%r9
+    0.00 :   46bd28: cmp    %r9,0x40(%rsp)
+    0.00 :   46bd2d: jbe    46bd58 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc08>
+    0.00 :   46bd2f: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46bd34: je     46ca6e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x191e>
+    0.00 :   46bd3a: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bd3f: je     46ca66 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1916>
+    0.00 :   46bd45: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46bd4a: je     46ca5e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x190e>
+    0.00 :   46bd50: prefetchnta (%rdi)
+    0.00 :   46bd53: nopl   0x0(%rax,%rax,1)
+    0.62 :   46bd58: vpbroadcastq (%r15,%rsi,8),%xmm9
+    0.91 :   46bd5e: lea    0x10(%r11),%rdi
+    0.50 :   46bd62: vmovdqu %xmm9,0x18(%rax)
+    0.66 :   46bd67: mov    %esi,0x10(%r8)
+    0.31 :   46bd6b: lea    0x2(%rcx),%rsi
+    0.95 :   46bd6f: lea    0x30(%rax),%r8
+    0.52 :   46bd73: test   $0x7,%sil
+    0.00 :   46bd77: jne    46bdb0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc60>
+    0.00 :   46bd79: mov    0x38(%rsp),%rbx
+    0.00 :   46bd7e: lea    (%rbx,%rsi,1),%r10
+    0.00 :   46bd82: cmp    %r10,0x40(%rsp)
+    0.00 :   46bd87: jbe    46bdb0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc60>
+    0.00 :   46bd89: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46bd8e: je     46ca3b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x18eb>
+    0.00 :   46bd94: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bd99: je     46ca33 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x18e3>
+    0.00 :   46bd9f: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46bda4: je     46ca76 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1926>
+    0.00 :   46bdaa: prefetchnta (%rdi)
+    0.00 :   46bdad: nopl   (%rax)
+    1.13 :   46bdb0: vpbroadcastq (%r15,%rsi,8),%xmm10
+    2.55 :   46bdb6: lea    0x3(%rcx),%rbx
+    2.04 :   46bdba: vmovdqu %xmm10,0x30(%rax)
+    1.61 :   46bdbf: add    $0x18,%r11
+    3.81 :   46bdc3: mov    %esi,0x10(%r8)
+    2.12 :   46bdc7: add    $0x48,%rax
+    1.23 :   46bdcb: cmp    %rdx,%rbx
+    0.00 :   46bdce: jne    46bc69 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb19>
+    0.04 :   46bdd4: jmp    46b6e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x597>
+    0.00 :   46bdd9: nopl   0x0(%rax)
+    0.00 :   46bde0: mov    0x38(%rsp),%r11
+    0.00 :   46bde5: mov    0x40(%rsp),%rax
+    0.00 :   46bdea: lea    (%r11,%rbx,1),%rcx
+    0.00 :   46bdee: mov    %rcx,%rdx
+    0.00 :   46bdf1: add    %r13,%rcx
+    0.00 :   46bdf4: and    $0xfffffffffffffff8,%rdx
+    0.00 :   46bdf8: cmp    %rax,%rcx
+    0.00 :   46bdfb: cmova  %rax,%rcx
+    0.00 :   46bdff: cmp    %rcx,%rdx
+    0.00 :   46be02: jae    46bffa <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xeaa>
+    0.00 :   46be08: mov    %rdx,%rsi
+    0.00 :   46be0b: not    %rsi
+    0.00 :   46be0e: add    %rcx,%rsi
+    0.00 :   46be11: shr    $0x3,%rsi
+    0.00 :   46be15: and    $0x3,%esi
+    0.00 :   46be18: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46be1d: lea    (%r15,%rdx,8),%r9
+    0.00 :   46be21: je     46c116 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfc6>
+    0.00 :   46be27: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46be2c: je     46c104 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfb4>
+    0.00 :   46be32: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46be37: je     46c10d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfbd>
+    0.00 :   46be3d: prefetchnta (%r9)
+    0.00 :   46be41: add    $0x8,%rdx
+    0.00 :   46be45: add    $0x40,%r9
+    0.00 :   46be49: cmp    %rcx,%rdx
+    0.00 :   46be4c: jae    46bffa <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xeaa>
+    0.00 :   46be52: test   %rsi,%rsi
+    0.00 :   46be55: je     46bef7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xda7>
+    0.00 :   46be5b: cmp    $0x1,%rsi
+    0.00 :   46be5f: je     46bec1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd71>
+    0.00 :   46be61: cmp    $0x2,%rsi
+    0.00 :   46be65: je     46be94 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd44>
+    0.00 :   46be67: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46be6c: je     46cb78 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1a28>
+    0.00 :   46be72: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46be77: je     46cb6f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1a1f>
+    0.00 :   46be7d: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46be82: je     46cb81 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1a31>
+    0.00 :   46be88: prefetchnta (%r9)
+    0.00 :   46be8c: add    $0x8,%rdx
+    0.00 :   46be90: add    $0x40,%r9
+    0.00 :   46be94: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46be99: je     46c97e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x182e>
+    0.00 :   46be9f: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bea4: je     46c975 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1825>
+    0.00 :   46beaa: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46beaf: je     46c96c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x181c>
+    0.00 :   46beb5: prefetchnta (%r9)
+    0.00 :   46beb9: add    $0x8,%rdx
+    0.00 :   46bebd: add    $0x40,%r9
+    0.00 :   46bec1: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46bec6: je     46c131 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfe1>
+    0.00 :   46becc: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46bed1: je     46c128 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfd8>
+    0.00 :   46bed7: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46bedc: je     46c11f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfcf>
+    0.00 :   46bee2: prefetchnta (%r9)
+    0.00 :   46bee6: add    $0x8,%rdx
+    0.00 :   46beea: add    $0x40,%r9
+    0.00 :   46beee: cmp    %rcx,%rdx
+    0.00 :   46bef1: jae    46bffa <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xeaa>
+    0.00 :   46bef7: mov    0x10(%rsp),%r8d
+    0.00 :   46befc: jmp    46bf9a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe4a>
+    0.00 :   46bf01: nopl   0x0(%rax)
+    0.00 :   46bf08: cmp    $0x1,%r8d
+    0.00 :   46bf0c: je     46c049 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xef9>
+    0.00 :   46bf12: prefetchnta (%r9)
+    0.00 :   46bf16: add    $0x8,%rdx
+    0.00 :   46bf1a: add    $0x40,%r9
+    0.00 :   46bf1e: cmp    $0x2,%r8d
+    0.00 :   46bf22: je     46bfc4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe74>
+    0.00 :   46bf28: cmp    $0x3,%r8d
+    0.00 :   46bf2c: je     46c040 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xef0>
+    0.00 :   46bf32: cmp    $0x1,%r8d
+    0.00 :   46bf36: je     46c037 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xee7>
+    0.00 :   46bf3c: prefetchnta (%r9)
+    0.00 :   46bf40: lea    0x40(%r9),%rdi
+    0.00 :   46bf44: cmp    $0x2,%r8d
+    0.00 :   46bf48: je     46bfd6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe86>
+    0.00 :   46bf4e: cmp    $0x3,%r8d
+    0.00 :   46bf52: je     46c02f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xedf>
+    0.00 :   46bf58: cmp    $0x1,%r8d
+    0.00 :   46bf5c: je     46c027 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xed7>
+    0.00 :   46bf62: prefetchnta (%rdi)
+    0.00 :   46bf65: lea    0x80(%r9),%r10
+    0.00 :   46bf6c: cmp    $0x2,%r8d
+    0.00 :   46bf70: je     46bfe6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe96>
+    0.00 :   46bf72: cmp    $0x3,%r8d
+    0.00 :   46bf76: je     46c064 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf14>
+    0.00 :   46bf7c: cmp    $0x1,%r8d
+    0.00 :   46bf80: je     46c05b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf0b>
+    0.00 :   46bf86: prefetchnta (%r10)
+    0.00 :   46bf8a: add    $0x18,%rdx
+    0.00 :   46bf8e: add    $0xc0,%r9
+    0.00 :   46bf95: cmp    %rcx,%rdx
+    0.00 :   46bf98: jae    46bffa <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xeaa>
+    0.00 :   46bf9a: cmp    $0x2,%r8d
+    0.00 :   46bf9e: je     46c052 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf02>
+    0.00 :   46bfa4: cmp    $0x3,%r8d
+    0.00 :   46bfa8: jne    46bf08 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdb8>
+    0.00 :   46bfae: prefetcht0 (%r9)
+    0.00 :   46bfb2: add    $0x8,%rdx
+    0.00 :   46bfb6: add    $0x40,%r9
+    0.00 :   46bfba: cmp    $0x2,%r8d
+    0.00 :   46bfbe: jne    46bf28 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdd8>
+    0.00 :   46bfc4: lea    0x40(%r9),%rdi
+    0.00 :   46bfc8: prefetcht1 (%r9)
+    0.00 :   46bfcc: cmp    $0x2,%r8d
+    0.00 :   46bfd0: jne    46bf4e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdfe>
+    0.00 :   46bfd6: lea    0x80(%r9),%r10
+    0.00 :   46bfdd: prefetcht1 (%rdi)
+    0.00 :   46bfe0: cmp    $0x2,%r8d
+    0.00 :   46bfe4: jne    46bf72 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe22>
+    0.00 :   46bfe6: add    $0x18,%rdx
+    0.00 :   46bfea: add    $0xc0,%r9
+    0.00 :   46bff1: prefetcht1 (%r10)
+    0.00 :   46bff5: cmp    %rcx,%rdx
+    0.00 :   46bff8: jb     46bf9a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe4a>
+    0.00 :   46bffa: mov    0x28(%rsp),%r11d
+    0.00 :   46bfff: test   %r11d,%r11d
+    0.00 :   46c002: jne    46b552 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x402>
+    0.00 :   46c008: jmp    46b6e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x597>
+    0.00 :   46c00d: movb   $0x0,0x8b(%rsp)
+    0.00 :   46c015: jmp    46b4b6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x366>
+    0.00 :   46c01a: movl   $0x3,0x10(%rsp)
+    0.00 :   46c022: jmp    46b421 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2d1>
+    0.00 :   46c027: prefetcht2 (%rdi)
+    0.00 :   46c02a: jmp    46bf65 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe15>
+    0.00 :   46c02f: prefetcht0 (%rdi)
+    0.00 :   46c032: jmp    46bf65 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe15>
+    0.00 :   46c037: prefetcht2 (%r9)
+    0.00 :   46c03b: jmp    46bf40 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdf0>
+    0.00 :   46c040: prefetcht0 (%r9)
+    0.00 :   46c044: jmp    46bf40 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdf0>
+    0.00 :   46c049: prefetcht2 (%r9)
+    0.00 :   46c04d: jmp    46bf16 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdc6>
+    0.00 :   46c052: prefetcht1 (%r9)
+    0.00 :   46c056: jmp    46bf16 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xdc6>
+    0.00 :   46c05b: prefetcht2 (%r10)
+    0.00 :   46c05f: jmp    46bf8a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe3a>
+    0.00 :   46c064: prefetcht0 (%r10)
+    0.00 :   46c068: jmp    46bf8a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xe3a>
+    0.00 :   46c06d: cmpl   $0x63746162,0x0(%rbp)
+    0.00 :   46c074: je     46c9e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1891>
+    0.00 :   46c07a: movb   $0x0,0x8b(%rsp)
+    0.00 :   46c082: jmp    46b49d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x34d>
+    0.00 :   46c087: cmpw   $0x3174,(%r12)
+    0.00 :   46c08e: jne    46c13a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfea>
+    0.00 :   46c094: lea    -0x2(%rbp),%rsi
+    0.00 :   46c098: mov    $0x80000000,%edi
+    0.00 :   46c09d: cmp    %rdi,%rsi
+    0.00 :   46c0a0: jge    46c0b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf65>
+    0.00 :   46c0a2: cmp    $0xffffffff80000000,%rsi
+    0.00 :   46c0a9: jl     46c0b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf65>
+    0.00 :   46c0ab: mov    $0x2,%edx
+    0.00 :   46c0b0: jmp    46c9cc <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x187c>
+    0.00 :   46c0b5: cmp    $0x3,%rbp
+    0.00 :   46c0b9: ja     46ca99 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1949>
+    0.00 :   46c0bf: movl   $0x3,0x10(%rsp)
+    0.00 :   46c0c7: test   %rbp,%rbp
+    0.00 :   46c0ca: je     46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46c0d0: mov    %rbp,%rdx
+    0.00 :   46c0d3: lea    0x14166(%rip),%rsi        # 480240 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2fa0>
+    0.00 :   46c0da: mov    %r12,%rdi
+    0.00 :   46c0dd: call   409310 <memcmp@plt>
+    0.00 :   46c0e2: test   %eax,%eax
+    0.00 :   46c0e4: jne    46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46c0ea: sub    $0x3,%rbp
+    0.00 :   46c0ee: test   %ebp,%ebp
+    0.00 :   46c0f0: mov    $0x3,%r11d
+    0.00 :   46c0f6: cmove  %ebp,%r11d
+    0.00 :   46c0fa: mov    %r11d,0x10(%rsp)
+    0.00 :   46c0ff: jmp    46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46c104: prefetcht0 (%r9)
+    0.00 :   46c108: jmp    46be41 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xcf1>
+    0.00 :   46c10d: prefetcht2 (%r9)
+    0.00 :   46c111: jmp    46be41 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xcf1>
+    0.00 :   46c116: prefetcht1 (%r9)
+    0.00 :   46c11a: jmp    46be41 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xcf1>
+    0.00 :   46c11f: prefetcht2 (%r9)
+    0.00 :   46c123: jmp    46bee6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd96>
+    0.00 :   46c128: prefetcht0 (%r9)
+    0.00 :   46c12c: jmp    46bee6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd96>
+    0.00 :   46c131: prefetcht1 (%r9)
+    0.00 :   46c135: jmp    46bee6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd96>
+    0.00 :   46c13a: mov    $0x2,%edx
+    0.00 :   46c13f: lea    0x140f7(%rip),%rsi        # 48023d <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f9d>
+    0.00 :   46c146: mov    %r12,%rdi
+    0.00 :   46c149: call   409310 <memcmp@plt>
+    0.00 :   46c14e: test   %eax,%eax
+    0.00 :   46c150: jne    46c0b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf65>
+    0.00 :   46c156: lea    -0x2(%rbp),%rcx
+    0.00 :   46c15a: mov    $0x80000000,%r9d
+    0.00 :   46c160: cmp    %r9,%rcx
+    0.00 :   46c163: jge    46c0b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf65>
+    0.00 :   46c169: cmp    $0xffffffff80000000,%rcx
+    0.00 :   46c170: jl     46c0b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf65>
+    0.00 :   46c176: test   %ecx,%ecx
+    0.00 :   46c178: jne    46c0b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf65>
+    0.00 :   46c17e: movl   $0x1,0x10(%rsp)
+    0.00 :   46c186: jmp    46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46c18b: mov    0x38(%rsp),%r13
+    0.00 :   46c190: mov    0x50(%rsp),%rsi
+    0.00 :   46c195: lea    0x0(%r13,%rbx,1),%r10
+    0.00 :   46c19a: lea    (%r15,%r10,8),%rdx
+    0.00 :   46c19e: lea    (%rsi,%rbx,1),%r13
+    0.00 :   46c1a2: and    $0x3,%esi
+    0.00 :   46c1a5: je     46c2b4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1164>
+    0.00 :   46c1ab: cmp    $0x1,%rsi
+    0.00 :   46c1af: je     46c25a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x110a>
+    0.00 :   46c1b5: cmp    $0x2,%rsi
+    0.00 :   46c1b9: je     46c208 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10b8>
+    0.00 :   46c1bb: test   $0x7,%bl
+    0.00 :   46c1be: jne    46c1eb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x109b>
+    0.00 :   46c1c0: cmp    %r10,0x40(%rsp)
+    0.00 :   46c1c5: jbe    46c1eb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x109b>
+    0.00 :   46c1c7: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46c1cc: je     46d5d9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2489>
+    0.00 :   46c1d2: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46c1d7: je     46d5d1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2481>
+    0.00 :   46c1dd: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46c1e2: je     46d5c9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2479>
+    0.00 :   46c1e8: prefetchnta (%rdx)
+    0.00 :   46c1eb: vpbroadcastq (%r15,%rbx,8),%xmm10
+    0.00 :   46c1f1: mov    0x8(%rsp),%rax
+    0.00 :   46c1f6: add    $0x8,%rdx
+    0.00 :   46c1fa: mov    %ebx,0x10(%rax)
+    0.00 :   46c1fd: vmovdqu %xmm10,(%rax)
+    0.00 :   46c201: inc    %rbx
+    0.00 :   46c204: add    $0x18,%rax
+    0.00 :   46c208: test   $0x7,%bl
+    0.00 :   46c20b: jne    46c241 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10f1>
+    0.00 :   46c20d: mov    0x38(%rsp),%r11
+    0.00 :   46c212: lea    (%r11,%rbx,1),%r9
+    0.00 :   46c216: cmp    %r9,0x40(%rsp)
+    0.00 :   46c21b: jbe    46c241 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10f1>
+    0.00 :   46c21d: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46c222: je     46d595 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2445>
+    0.00 :   46c228: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46c22d: je     46d58d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x243d>
+    0.00 :   46c233: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46c238: je     46d573 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2423>
+    0.00 :   46c23e: prefetchnta (%rdx)
+    0.00 :   46c241: vpbroadcastq (%r15,%rbx,8),%xmm11
+    0.00 :   46c247: add    $0x18,%rax
+    0.00 :   46c24b: mov    %ebx,-0x8(%rax)
+    0.00 :   46c24e: vmovdqu %xmm11,-0x18(%rax)
+    0.00 :   46c253: inc    %rbx
+    0.00 :   46c256: add    $0x8,%rdx
+    0.00 :   46c25a: test   $0x7,%bl
+    0.00 :   46c25d: jne    46c293 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1143>
+    0.00 :   46c25f: mov    0x38(%rsp),%rcx
+    0.00 :   46c264: lea    (%rcx,%rbx,1),%r8
+    0.00 :   46c268: cmp    %r8,0x40(%rsp)
+    0.00 :   46c26d: jbe    46c293 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1143>
+    0.00 :   46c26f: cmpl   $0x2,0x10(%rsp)
+    0.00 :   46c274: je     46d5b9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2469>
+    0.00 :   46c27a: cmpl   $0x3,0x10(%rsp)
+    0.00 :   46c27f: je     46d5b1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2461>
+    0.00 :   46c285: cmpl   $0x1,0x10(%rsp)
+    0.00 :   46c28a: je     46d5c1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2471>
+    0.00 :   46c290: prefetchnta (%rdx)
+    0.00 :   46c293: vpbroadcastq (%r15,%rbx,8),%xmm12
+    0.00 :   46c299: mov    %ebx,0x10(%rax)
+    0.00 :   46c29c: inc    %rbx
+    0.00 :   46c29f: vmovdqu %xmm12,(%rax)
+    0.00 :   46c2a3: add    $0x8,%rdx
+    0.00 :   46c2a7: add    $0x18,%rax
+    0.00 :   46c2ab: cmp    %r13,%rbx
+    0.00 :   46c2ae: je     46b8dd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x78d>
+    0.00 :   46c2b4: mov    0x38(%rsp),%r8
+    0.00 :   46c2b9: mov    0x10(%rsp),%edi
+    0.00 :   46c2bd: mov    0x40(%rsp),%r9
+    0.00 :   46c2c2: mov    %rbx,%rcx
+    0.00 :   46c2c5: test   $0x7,%cl
+    0.00 :   46c2c8: jne    46c2d7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1187>
+    0.00 :   46c2ca: lea    (%r8,%rcx,1),%rbx
+    0.00 :   46c2ce: cmp    %rbx,%r9
+    0.00 :   46c2d1: ja     46cfb2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1e62>
+    0.00 :   46c2d7: vpbroadcastq (%r15,%rcx,8),%xmm13
+    0.00 :   46c2dd: mov    %ecx,0x10(%rax)
+    0.00 :   46c2e0: inc    %rcx
+    0.00 :   46c2e3: vmovdqu %xmm13,(%rax)
+    0.00 :   46c2e7: add    $0x8,%rdx
+    0.00 :   46c2eb: add    $0x18,%rax
+    0.00 :   46c2ef: test   $0x7,%cl
+    0.00 :   46c2f2: jne    46c301 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11b1>
+    0.00 :   46c2f4: lea    (%r8,%rcx,1),%r10
+    0.00 :   46c2f8: cmp    %r10,%r9
+    0.00 :   46c2fb: ja     46cf8f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1e3f>
+    0.00 :   46c301: vpbroadcastq (%r15,%rcx,8),%xmm14
+    0.00 :   46c307: lea    0x1(%rcx),%rsi
+    0.00 :   46c30b: mov    %ecx,0x10(%rax)
+    0.00 :   46c30e: vmovdqu %xmm14,(%rax)
+    0.00 :   46c312: lea    0x18(%rax),%r11
+    0.00 :   46c316: lea    0x8(%rdx),%r10
+    0.00 :   46c31a: test   $0x7,%sil
+    0.00 :   46c31e: jne    46c32d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11dd>
+    0.00 :   46c320: lea    (%r8,%rsi,1),%rbx
+    0.00 :   46c324: cmp    %rbx,%r9
+    0.00 :   46c327: ja     46cf6b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1e1b>
+    0.00 :   46c32d: vpbroadcastq (%r15,%rsi,8),%xmm15
+    0.00 :   46c333: lea    0x10(%rdx),%r10
+    0.00 :   46c337: vmovdqu %xmm15,0x18(%rax)
+    0.00 :   46c33c: mov    %esi,0x10(%r11)
+    0.00 :   46c340: lea    0x2(%rcx),%rsi
+    0.00 :   46c344: lea    0x30(%rax),%r11
+    0.00 :   46c348: test   $0x7,%sil
+    0.00 :   46c34c: jne    46c376 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1226>
+    0.00 :   46c34e: lea    (%r8,%rsi,1),%rbx
+    0.00 :   46c352: cmp    %rbx,%r9
+    0.00 :   46c355: jbe    46c376 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1226>
+    0.00 :   46c357: cmp    $0x2,%edi
+    0.00 :   46c35a: je     46d584 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2434>
+    0.00 :   46c360: cmp    $0x3,%edi
+    0.00 :   46c363: je     46d48f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x233f>
+    0.00 :   46c369: cmp    $0x1,%edi
+    0.00 :   46c36c: je     46d486 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2336>
+    0.00 :   46c372: prefetchnta (%r10)
+    0.00 :   46c376: vpbroadcastq (%r15,%rsi,8),%xmm0
+    0.00 :   46c37c: add    $0x3,%rcx
+    0.00 :   46c380: vmovdqu %xmm0,0x30(%rax)
+    0.00 :   46c385: add    $0x18,%rdx
+    0.00 :   46c389: mov    %esi,0x10(%r11)
+    0.00 :   46c38d: add    $0x48,%rax
+    0.00 :   46c391: cmp    %r13,%rcx
+    0.00 :   46c394: jne    46c2c5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1175>
+    0.00 :   46c39a: jmp    46b8dd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x78d>
+    0.00 :   46c39f: add    $0x2c8,%rsp
+    0.00 :   46c3a6: pop    %rbx
+    0.00 :   46c3a7: pop    %rbp
+    0.00 :   46c3a8: pop    %r12
+    0.00 :   46c3aa: pop    %r13
+    0.00 :   46c3ac: pop    %r14
+    0.00 :   46c3ae: pop    %r15
+    0.00 :   46c3b0: ret
+    0.00 :   46c3b1: lea    0xc0(%rsp),%r12
+    0.00 :   46c3b9: mov    $0xc8,%edx
+    0.00 :   46c3be: lea    0x12c2b(%rip),%rsi        # 47eff0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1d50>
+    0.00 :   46c3c5: mov    %r12,%rdi
+    0.00 :   46c3c8: mov    %r12,(%rsp)
+    0.00 :   46c3cc: call   46a810 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+    0.00 :   46c3d1: cmpb   $0x0,0x8b(%rsp)
+    0.00 :   46c3d9: lea    0x13dd8(%rip),%rdx        # 4801b8 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f18>
+    0.00 :   46c3e0: lea    0x13dcb(%rip),%r9        # 4801b2 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f12>
+    0.00 :   46c3e7: cmovne %r9,%rdx
+    0.00 :   46c3eb: mov    0x10(%rsp),%r8d
+    0.00 :   46c3f0: mov    0x38(%rsp),%rcx
+    0.00 :   46c3f5: lea    0x12c64(%rip),%rsi        # 47f060 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1dc0>
+    0.00 :   46c3fc: mov    %r12,%rdi
+    0.00 :   46c3ff: xor    %eax,%eax
+    0.00 :   46c401: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46c406: mov    0x24eb3(%rip),%rbp        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46c40d: mov    %rax,%r12
+    0.00 :   46c410: mov    0x10(%rbp),%rbx
+    0.00 :   46c414: cmp    0x18(%rbp),%rbx
+    0.00 :   46c418: je     46c437 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x12e7>
+    0.00 :   46c41a: nopw   0x0(%rax,%rax,1)
+    0.00 :   46c420: mov    (%rbx),%rdi
+    0.00 :   46c423: mov    %r12,%rsi
+    0.00 :   46c426: mov    (%rdi),%r10
+    0.00 :   46c429: call   *0x10(%r10)
+    0.00 :   46c42d: add    $0x8,%rbx
+    0.00 :   46c431: cmp    %rbx,0x18(%rbp)
+    0.00 :   46c435: jne    46c420 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x12d0>
+    0.00 :   46c437: mov    (%rsp),%rdi
+    0.00 :   46c43b: call   431660 <plog::Record::~Record() [clone .lto_priv.0]>
+    0.00 :   46c440: cmp    %r13,0x40(%rsp)
+    0.00 :   46c445: jae    46b4e8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x398>
+    0.00 :   46c44b: xor    %ebp,%ebp
+    0.00 :   46c44d: xor    %ebx,%ebx
+    0.00 :   46c44f: lea    0xa0(%rsp),%r12
+    0.00 :   46c457: jmp    46b73b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x5eb>
+    0.00 :   46c45c: lea    0xc0(%rsp),%r13
+    0.00 :   46c464: mov    $0x1a0,%edx
+    0.00 :   46c469: lea    0x12a80(%rip),%rsi        # 47eef0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c50>
+    0.00 :   46c470: mov    %r13,%rdi
+    0.00 :   46c473: call   46a810 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+    0.00 :   46c478: lea    0x13d5c(%rip),%rsi        # 4801db <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f3b>
+    0.00 :   46c47f: mov    %r13,%rdi
+    0.00 :   46c482: xor    %eax,%eax
+    0.00 :   46c484: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46c489: mov    0x24e30(%rip),%rbp        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46c490: mov    %rax,%r12
+    0.00 :   46c493: mov    0x10(%rbp),%rbx
+    0.00 :   46c497: cmp    0x18(%rbp),%rbx
+    0.00 :   46c49b: je     46c4b4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1364>
+    0.00 :   46c49d: mov    (%rbx),%rdi
+    0.00 :   46c4a0: mov    %r12,%rsi
+    0.00 :   46c4a3: mov    (%rdi),%r11
+    0.00 :   46c4a6: call   *0x10(%r11)
+    0.00 :   46c4aa: add    $0x8,%rbx
+    0.00 :   46c4ae: cmp    %rbx,0x18(%rbp)
+    0.00 :   46c4b2: jne    46c49d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x134d>
+    0.00 :   46c4b4: mov    %r13,%rdi
+    0.00 :   46c4b7: call   431660 <plog::Record::~Record() [clone .lto_priv.0]>
+    0.00 :   46c4bc: mov    0x58(%rsp),%r13
+    0.00 :   46c4c1: movzbl 0x0(%r13),%eax
+    0.00 :   46c4c6: cmpq   $0x0,0x257fa(%rip)        # 491cc8 <kmercounter::config+0xc8>
+    0.00 :   46c4ce: je     46caf9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x19a9>
+    0.00 :   46c4d4: mov    %eax,0x48(%rsp)
+    0.00 :   46c4d8: test   %eax,%eax
+    0.00 :   46c4da: je     46cb0f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x19bf>
+    0.00 :   46c4e0: mov    0x70(%rsp),%rdi
+    0.00 :   46c4e5: call   432f90 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+    0.00 :   46c4ea: mov    0x257d7(%rip),%rcx        # 491cc8 <kmercounter::config+0xc8>
+    0.00 :   46c4f1: mov    %rcx,0x30(%rsp)
+    0.00 :   46c4f6: test   %rcx,%rcx
+    0.00 :   46c4f9: je     46c907 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x17b7>
+    0.00 :   46c4ff: mov    0x38(%rsp),%rbp
+    0.00 :   46c504: lea    0xa0(%rsp),%r8
+    0.00 :   46c50c: movl   $0x0,0x24(%rsp)
+    0.00 :   46c514: movq   $0x0,0x30(%rsp)
+    0.00 :   46c51d: mov    %r8,0x18(%rsp)
+    0.00 :   46c522: sub    %r15,%rbp
+    0.00 :   46c525: sar    $0x3,%rbp
+    0.00 :   46c529: nopl   0x0(%rax)
+    0.00 :   46c530: mov    0x257dd(%rip),%r12d        # 491d14 <kmercounter::config+0x114>
+    0.00 :   46c537: mov    %rbp,%rax
+    0.00 :   46c53a: xor    %edx,%edx
+    0.00 :   46c53c: div    %r12
+    0.00 :   46c53f: mov    %r12d,0x8(%rsp)
+    0.00 :   46c544: lea    (%r12,%r12,2),%rsi
+    0.00 :   46c548: shl    $0x3,%rsi
+    0.00 :   46c54c: mov    $0x40,%edi
+    0.00 :   46c551: xor    %ebx,%ebx
+    0.00 :   46c553: xor    %r13d,%r13d
+    0.00 :   46c556: mov    %rdx,0x28(%rsp)
+    0.00 :   46c55b: mov    %rax,0x10(%rsp)
+    0.00 :   46c560: call   409510 <aligned_alloc@plt>
+    0.00 :   46c565: mov    %rax,(%rsp)
+    0.00 :   46c569: cmp    %r12,%rbp
+    0.00 :   46c56c: jb     46c71d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x15cd>
+    0.00 :   46c572: nopw   0x0(%rax,%rax,1)
+    0.04 :   46c578: mov    0x8(%rsp),%esi
+    0.01 :   46c57c: test   %esi,%esi
+    0.00 :   46c57e: je     46c6ea <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x159a>
+    0.01 :   46c584: lea    0x10(%rbx),%r10
+    0.00 :   46c588: mov    %r12,%rcx
+    0.00 :   46c58b: mov    (%rsp),%rax
+    0.01 :   46c58f: lea    (%r15,%r10,8),%r11
+    0.02 :   46c593: lea    (%r12,%rbx,1),%r8
+    0.00 :   46c597: and    $0x3,%ecx
+    0.00 :   46c59a: je     46c634 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x14e4>
+    0.00 :   46c5a0: cmp    $0x1,%rcx
+    0.00 :   46c5a4: je     46c601 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x14b1>
+    0.00 :   46c5a6: cmp    $0x2,%rcx
+    0.00 :   46c5aa: je     46c5d6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1486>
+    0.00 :   46c5ac: test   $0x7,%bl
+    0.00 :   46c5af: jne    46c5ba <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x146a>
+    0.00 :   46c5b1: cmp    %r10,%rbp
+    0.00 :   46c5b4: jbe    46c5ba <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x146a>
+    0.00 :   46c5b6: prefetcht0 (%r11)
+    0.00 :   46c5ba: vpbroadcastq -0x80(%r11),%xmm0
+    0.00 :   46c5c0: mov    (%rsp),%rax
+    0.00 :   46c5c4: add    $0x8,%r11
+    0.00 :   46c5c8: mov    %ebx,0x10(%rax)
+    0.00 :   46c5cb: vmovdqu %xmm0,(%rax)
+    0.00 :   46c5cf: inc    %rbx
+    0.00 :   46c5d2: add    $0x18,%rax
+    0.00 :   46c5d6: test   $0x7,%bl
+    0.00 :   46c5d9: jne    46c5e8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1498>
+    0.00 :   46c5db: lea    0x10(%rbx),%rdi
+    0.00 :   46c5df: cmp    %rdi,%rbp
+    0.00 :   46c5e2: jbe    46c5e8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1498>
+    0.00 :   46c5e4: prefetcht0 (%r11)
+    0.00 :   46c5e8: vpbroadcastq -0x80(%r11),%xmm1
+    0.00 :   46c5ee: add    $0x18,%rax
+    0.00 :   46c5f2: mov    %ebx,-0x8(%rax)
+    0.00 :   46c5f5: vmovdqu %xmm1,-0x18(%rax)
+    0.00 :   46c5fa: inc    %rbx
+    0.00 :   46c5fd: add    $0x8,%r11
+    0.00 :   46c601: test   $0x7,%bl
+    0.00 :   46c604: jne    46c613 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x14c3>
+    0.00 :   46c606: lea    0x10(%rbx),%r9
+    0.00 :   46c60a: cmp    %r9,%rbp
+    0.00 :   46c60d: jbe    46c613 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x14c3>
+    0.00 :   46c60f: prefetcht0 (%r11)
+    0.00 :   46c613: vpbroadcastq -0x80(%r11),%xmm2
+    0.00 :   46c619: mov    %ebx,0x10(%rax)
+    0.00 :   46c61c: inc    %rbx
+    0.00 :   46c61f: vmovdqu %xmm2,(%rax)
+    0.00 :   46c623: add    $0x8,%r11
+    0.00 :   46c627: add    $0x18,%rax
+    0.00 :   46c62b: cmp    %r8,%rbx
+    0.00 :   46c62e: je     46c6ea <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x159a>
+    0.13 :   46c634: test   $0x7,%bl
+    0.00 :   46c637: jne    46c646 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x14f6>
+    0.06 :   46c639: lea    0x10(%rbx),%rdx
+    0.11 :   46c63d: cmp    %rdx,%rbp
+    0.06 :   46c640: jbe    46c646 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x14f6>
+    0.08 :   46c642: prefetcht0 (%r11)
+    2.71 :   46c646: vpbroadcastq -0x80(%r11),%xmm3
+   28.03 :   46c64c: lea    0x1(%rbx),%rcx
+    0.14 :   46c650: mov    %ebx,0x10(%rax)
+    0.17 :   46c653: vmovdqu %xmm3,(%rax)
+    0.44 :   46c657: add    $0x8,%r11
+    0.13 :   46c65b: add    $0x18,%rax
+    0.10 :   46c65f: test   $0x7,%cl
+    0.00 :   46c662: jne    46c671 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1521>
+    0.00 :   46c664: add    $0x11,%rbx
+    0.00 :   46c668: cmp    %rbx,%rbp
+    0.00 :   46c66b: jbe    46c671 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1521>
+    0.00 :   46c66d: prefetcht0 (%r11)
+    0.10 :   46c671: vpbroadcastq -0x80(%r11),%xmm4
+    0.12 :   46c677: lea    0x1(%rcx),%rbx
+    0.05 :   46c67b: mov    %ecx,0x10(%rax)
+    0.16 :   46c67e: vmovdqu %xmm4,(%rax)
+    0.67 :   46c682: lea    0x18(%rax),%rsi
+    0.10 :   46c686: lea    0x8(%r11),%rdi
+    0.13 :   46c68a: test   $0x7,%bl
+    0.00 :   46c68d: jne    46c69b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x154b>
+    0.00 :   46c68f: lea    0x11(%rcx),%r10
+    0.00 :   46c693: cmp    %r10,%rbp
+    0.00 :   46c696: jbe    46c69b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x154b>
+    0.00 :   46c698: prefetcht0 (%rdi)
+    0.08 :   46c69b: vpbroadcastq -0x80(%rdi),%xmm5
+    0.10 :   46c6a1: lea    0x2(%rcx),%rdx
+    0.09 :   46c6a5: vmovdqu %xmm5,0x18(%rax)
+    0.09 :   46c6aa: lea    0x30(%rax),%r9
+    0.11 :   46c6ae: mov    %ebx,0x10(%rsi)
+    0.27 :   46c6b1: lea    0x10(%r11),%rbx
+    0.08 :   46c6b5: test   $0x7,%dl
+    0.00 :   46c6b8: jne    46c6c6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1576>
+    0.00 :   46c6ba: lea    0x12(%rcx),%rsi
+    0.00 :   46c6be: cmp    %rsi,%rbp
+    0.00 :   46c6c1: jbe    46c6c6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1576>
+    0.00 :   46c6c3: prefetcht0 (%rbx)
+    0.10 :   46c6c6: vpbroadcastq -0x80(%rbx),%xmm6
+    0.08 :   46c6cc: lea    0x3(%rcx),%rbx
+    0.06 :   46c6d0: vmovdqu %xmm6,0x30(%rax)
+    0.10 :   46c6d5: add    $0x18,%r11
+    0.05 :   46c6d9: mov    %edx,0x10(%r9)
+    0.11 :   46c6dd: add    $0x48,%rax
+    0.41 :   46c6e1: cmp    %r8,%rbx
+    0.00 :   46c6e4: jne    46c634 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x14e4>
+    0.00 :   46c6ea: mov    (%rsp),%r11
+    0.01 :   46c6ee: mov    %r12,0xa8(%rsp)
+    0.05 :   46c6f6: mov    %r11,0xa0(%rsp)
+    0.08 :   46c6fe: mov    (%r14),%r8
+    0.03 :   46c701: mov    0x18(%rsp),%rsi
+    0.00 :   46c706: xor    %edx,%edx
+    0.01 :   46c708: mov    %r14,%rdi
+    0.02 :   46c70b: call   *0x8(%r8)
+    0.02 :   46c70f: inc    %r13
+    0.00 :   46c712: cmp    %r13,0x10(%rsp)
+    0.00 :   46c717: ja     46c578 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1428>
+    0.00 :   46c71d: mov    0x28(%rsp),%rcx
+    0.00 :   46c722: test   %rcx,%rcx
+    0.00 :   46c725: je     46c8bc <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x176c>
+    0.00 :   46c72b: lea    0x10(%rbx),%rdi
+    0.00 :   46c72f: mov    (%rsp),%rax
+    0.00 :   46c733: lea    (%r15,%rdi,8),%rdx
+    0.00 :   46c737: lea    (%rcx,%rbx,1),%r12
+    0.00 :   46c73b: and    $0x3,%ecx
+    0.00 :   46c73e: je     46c7d6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1686>
+    0.00 :   46c744: cmp    $0x1,%rcx
+    0.00 :   46c748: je     46c7a4 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1654>
+    0.00 :   46c74a: cmp    $0x2,%rcx
+    0.00 :   46c74e: je     46c77a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x162a>
+    0.00 :   46c750: test   $0x7,%bl
+    0.00 :   46c753: jne    46c75e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x160e>
+    0.00 :   46c755: cmp    %rdi,%rbp
+    0.00 :   46c758: ja     46cc58 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1b08>
+    0.00 :   46c75e: vpbroadcastq -0x80(%rdx),%xmm7
+    0.00 :   46c764: mov    (%rsp),%rax
+    0.00 :   46c768: add    $0x8,%rdx
+    0.00 :   46c76c: mov    %ebx,0x10(%rax)
+    0.00 :   46c76f: vmovdqu %xmm7,(%rax)
+    0.00 :   46c773: inc    %rbx
+    0.00 :   46c776: add    $0x18,%rax
+    0.00 :   46c77a: test   $0x7,%bl
+    0.00 :   46c77d: jne    46c78b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x163b>
+    0.00 :   46c77f: lea    0x10(%rbx),%r9
+    0.00 :   46c783: cmp    %r9,%rbp
+    0.00 :   46c786: jbe    46c78b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x163b>
+    0.00 :   46c788: prefetcht0 (%rdx)
+    0.00 :   46c78b: vpbroadcastq -0x80(%rdx),%xmm8
+    0.00 :   46c791: add    $0x18,%rax
+    0.00 :   46c795: mov    %ebx,-0x8(%rax)
+    0.00 :   46c798: vmovdqu %xmm8,-0x18(%rax)
+    0.00 :   46c79d: inc    %rbx
+    0.00 :   46c7a0: add    $0x8,%rdx
+    0.00 :   46c7a4: test   $0x7,%bl
+    0.00 :   46c7a7: jne    46c7b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1665>
+    0.00 :   46c7a9: lea    0x10(%rbx),%rsi
+    0.00 :   46c7ad: cmp    %rsi,%rbp
+    0.00 :   46c7b0: jbe    46c7b5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1665>
+    0.00 :   46c7b2: prefetcht0 (%rdx)
+    0.00 :   46c7b5: vpbroadcastq -0x80(%rdx),%xmm9
+    0.00 :   46c7bb: mov    %ebx,0x10(%rax)
+    0.00 :   46c7be: inc    %rbx
+    0.00 :   46c7c1: vmovdqu %xmm9,(%rax)
+    0.00 :   46c7c5: add    $0x8,%rdx
+    0.00 :   46c7c9: add    $0x18,%rax
+    0.00 :   46c7cd: cmp    %r12,%rbx
+    0.00 :   46c7d0: je     46c890 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1740>
+    0.00 :   46c7d6: test   $0x7,%bl
+    0.00 :   46c7d9: jne    46c7e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1697>
+    0.00 :   46c7db: lea    0x10(%rbx),%r13
+    0.00 :   46c7df: cmp    %r13,%rbp
+    0.00 :   46c7e2: jbe    46c7e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1697>
+    0.00 :   46c7e4: prefetcht0 (%rdx)
+    0.00 :   46c7e7: vpbroadcastq -0x80(%rdx),%xmm10
+    0.00 :   46c7ed: lea    0x1(%rbx),%r11
+    0.00 :   46c7f1: mov    %ebx,0x10(%rax)
+    0.00 :   46c7f4: vmovdqu %xmm10,(%rax)
+    0.00 :   46c7f8: add    $0x8,%rdx
+    0.00 :   46c7fc: add    $0x18,%rax
+    0.00 :   46c800: test   $0x7,%r11b
+    0.00 :   46c804: jne    46c812 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x16c2>
+    0.00 :   46c806: add    $0x11,%rbx
+    0.00 :   46c80a: cmp    %rbx,%rbp
+    0.00 :   46c80d: jbe    46c812 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x16c2>
+    0.00 :   46c80f: prefetcht0 (%rdx)
+    0.00 :   46c812: vpbroadcastq -0x80(%rdx),%xmm11
+    0.00 :   46c818: lea    0x1(%r11),%rbx
+    0.00 :   46c81c: mov    %r11d,0x10(%rax)
+    0.00 :   46c820: vmovdqu %xmm11,(%rax)
+    0.00 :   46c824: lea    0x18(%rax),%r8
+    0.00 :   46c828: lea    0x8(%rdx),%rcx
+    0.00 :   46c82c: test   $0x7,%bl
+    0.00 :   46c82f: jne    46c83d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x16ed>
+    0.00 :   46c831: lea    0x11(%r11),%rdi
+    0.00 :   46c835: cmp    %rdi,%rbp
+    0.00 :   46c838: jbe    46c83d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x16ed>
+    0.00 :   46c83a: prefetcht0 (%rcx)
+    0.00 :   46c83d: vpbroadcastq -0x80(%rcx),%xmm12
+    0.00 :   46c843: lea    0x2(%r11),%rsi
+    0.00 :   46c847: vmovdqu %xmm12,0x18(%rax)
+    0.00 :   46c84c: lea    0x30(%rax),%r9
+    0.00 :   46c850: mov    %ebx,0x10(%r8)
+    0.00 :   46c854: lea    0x10(%rdx),%r13
+    0.00 :   46c858: test   $0x7,%sil
+    0.00 :   46c85c: jne    46c86c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x171c>
+    0.00 :   46c85e: lea    0x12(%r11),%r10
+    0.00 :   46c862: cmp    %r10,%rbp
+    0.00 :   46c865: jbe    46c86c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x171c>
+    0.00 :   46c867: prefetcht0 0x0(%r13)
+    0.00 :   46c86c: vpbroadcastq -0x80(%r13),%xmm13
+    0.00 :   46c872: lea    0x3(%r11),%rbx
+    0.00 :   46c876: vmovdqu %xmm13,0x30(%rax)
+    0.00 :   46c87b: add    $0x18,%rdx
+    0.00 :   46c87f: mov    %esi,0x10(%r9)
+    0.00 :   46c883: add    $0x48,%rax
+    0.00 :   46c887: cmp    %r12,%rbx
+    0.00 :   46c88a: jne    46c7d6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1686>
+    0.00 :   46c890: mov    (%rsp),%rdx
+    0.00 :   46c894: mov    0x28(%rsp),%r12
+    0.00 :   46c899: mov    %rdx,0x90(%rsp)
+    0.00 :   46c8a1: mov    %r12,0x98(%rsp)
+    0.00 :   46c8a9: mov    (%r14),%rax
+    0.00 :   46c8ac: lea    0x90(%rsp),%rsi
+    0.00 :   46c8b4: xor    %edx,%edx
+    0.00 :   46c8b6: mov    %r14,%rdi
+    0.00 :   46c8b9: call   *0x8(%rax)
+    0.00 :   46c8bc: mov    (%r14),%r11
+    0.00 :   46c8bf: xor    %esi,%esi
+    0.00 :   46c8c1: mov    %r14,%rdi
+    0.00 :   46c8c4: call   *0x18(%r11)
+    0.00 :   46c8c8: mov    (%rsp),%rdi
+    0.00 :   46c8cc: call   409790 <free@plt>
+    0.00 :   46c8d1: incl   0x24(%rsp)
+    0.00 :   46c8d5: add    %rbx,0x30(%rsp)
+    0.00 :   46c8da: mov    0x24(%rsp),%ebx
+    0.00 :   46c8de: cmp    0x253e3(%rip),%rbx        # 491cc8 <kmercounter::config+0xc8>
+    0.00 :   46c8e5: jb     46c530 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x13e0>
+    0.00 :   46c8eb: mov    0x48(%rsp),%r8d
+    0.00 :   46c8f0: test   %r8d,%r8d
+    0.00 :   46c8f3: jne    46c907 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x17b7>
+    0.00 :   46c8f5: movb   $0x1,0x255d4(%rip)        # 491ed0 <kmercounter::zipfian_inserts>
+    0.00 :   46c8fc: movq   $0x0,0x255d9(%rip)        # 491ee0 <kmercounter::zipfian_iter>
+    0.00 :   46c907: mov    0x70(%rsp),%rdi
+    0.00 :   46c90c: call   432f90 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+    0.00 :   46c911: mov    0x255a0(%rip),%rcx        # 491eb8 <kmercounter::g_insert_durations>
+    0.00 :   46c918: mov    0x58(%rsp),%rsi
+    0.00 :   46c91d: mov    (%rcx),%rdi
+    0.00 :   46c920: movzbl (%rsi),%eax
+    0.00 :   46c923: mov    %rdi,(%rsp)
+    0.00 :   46c927: test   %al,%al
+    0.00 :   46c929: je     46caed <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x199d>
+    0.00 :   46c92f: mov    0x58(%rsp),%r9
+    0.00 :   46c934: vmovq  (%rsp),%xmm14
+    0.00 :   46c939: mov    0x40(%r9),%r13
+    0.00 :   46c93d: vpinsrq $0x1,0x30(%rsp),%xmm14,%xmm15
+    0.00 :   46c945: vmovdqu %xmm15,0x0(%r13)
+    0.00 :   46c94b: mov    0x2537e(%rip),%r12        # 491cd0 <kmercounter::config+0xd0>
+    0.00 :   46c952: mov    %r12,0x68(%rsp)
+    0.00 :   46c957: test   %r12,%r12
+    0.00 :   46c95a: je     46cadd <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x198d>
+    0.00 :   46c960: mov    %eax,0x8c(%rsp)
+    0.00 :   46c967: jmp    46b2be <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x16e>
+    0.00 :   46c96c: prefetcht2 (%r9)
+    0.00 :   46c970: jmp    46beb9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd69>
+    0.00 :   46c975: prefetcht0 (%r9)
+    0.00 :   46c979: jmp    46beb9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd69>
+    0.00 :   46c97e: prefetcht1 (%r9)
+    0.00 :   46c982: jmp    46beb9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd69>
+    0.00 :   46c987: mov    %r12,%rdx
+    0.00 :   46c98a: lea    0x13821(%rip),%rsi        # 4801b2 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f12>
+    0.00 :   46c991: mov    %rbp,%rdi
+    0.00 :   46c994: call   409310 <memcmp@plt>
+    0.00 :   46c999: test   %eax,%eax
+    0.00 :   46c99b: jne    46c07a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf2a>
+    0.00 :   46c9a1: lea    -0x5(%r12),%rdx
+    0.00 :   46c9a6: jmp    46b493 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x343>
+    0.00 :   46c9ab: mov    %rbp,%rdx
+    0.00 :   46c9ae: lea    0x138b1(%rip),%rsi        # 480266 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2fc6>
+    0.00 :   46c9b5: mov    %r12,%rdi
+    0.00 :   46c9b8: call   409310 <memcmp@plt>
+    0.00 :   46c9bd: test   %eax,%eax
+    0.00 :   46c9bf: jne    46cb4c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x19fc>
+    0.00 :   46c9c5: lea    -0x2(%rbp),%rsi
+    0.00 :   46c9c9: mov    %rbp,%rdx
+    0.00 :   46c9cc: test   %esi,%esi
+    0.00 :   46c9ce: jne    46c13f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfef>
+    0.00 :   46c9d4: movl   $0x2,0x10(%rsp)
+    0.00 :   46c9dc: jmp    46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46c9e1: cmpb   $0x68,0x4(%rbp)
+    0.00 :   46c9e5: jne    46c07a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf2a>
+    0.00 :   46c9eb: lea    -0x5(%r12),%rdx
+    0.00 :   46c9f0: mov    $0x80000000,%r8d
+    0.00 :   46c9f6: movb   $0x0,0x8b(%rsp)
+    0.00 :   46c9fe: cmp    %r8,%rdx
+    0.00 :   46ca01: jge    46b49d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x34d>
+    0.00 :   46ca07: cmp    $0xffffffff80000000,%rdx
+    0.00 :   46ca0e: jl     46b49d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x34d>
+    0.00 :   46ca14: jmp    46b493 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x343>
+    0.00 :   46ca19: nopl   0x0(%rax)
+    0.00 :   46ca20: and    $0xffffffffffe00000,%rdx
+    0.00 :   46ca27: lea    0x200000(%rdx),%rsi
+    0.00 :   46ca2e: jmp    46bb1c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x9cc>
+    0.00 :   46ca33: prefetcht0 (%rdi)
+    0.00 :   46ca36: jmp    46bdb0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc60>
+    0.00 :   46ca3b: prefetcht1 (%rdi)
+    0.00 :   46ca3e: jmp    46bdb0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc60>
+    0.00 :   46ca43: prefetcht0 (%r11)
+    0.00 :   46ca47: jmp    46bd00 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbb0>
+    0.00 :   46ca4c: prefetcht1 (%r11)
+    0.00 :   46ca50: jmp    46bd00 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbb0>
+    0.00 :   46ca55: prefetcht2 (%r11)
+    0.00 :   46ca59: jmp    46bd00 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xbb0>
+    0.00 :   46ca5e: prefetcht2 (%rdi)
+    0.00 :   46ca61: jmp    46bd58 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc08>
+    0.00 :   46ca66: prefetcht0 (%rdi)
+    0.00 :   46ca69: jmp    46bd58 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc08>
+    0.00 :   46ca6e: prefetcht1 (%rdi)
+    0.00 :   46ca71: jmp    46bd58 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc08>
+    0.00 :   46ca76: prefetcht2 (%rdi)
+    0.00 :   46ca79: jmp    46bdb0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xc60>
+    0.30 :   46ca7e: prefetcht2 (%r11)
+    6.80 :   46ca82: jmp    46bca8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb58>
+    0.00 :   46ca87: prefetcht0 (%r11)
+    0.00 :   46ca8b: jmp    46bca8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb58>
+    0.00 :   46ca90: prefetcht1 (%r11)
+    0.00 :   46ca94: jmp    46bca8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xb58>
+    0.00 :   46ca99: cmpw   $0x746e,(%r12)
+    0.00 :   46caa0: je     46cf10 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1dc0>
+    0.00 :   46caa6: movl   $0x3,0x10(%rsp)
+    0.00 :   46caae: jmp    46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46cab3: mov    0x58(%rsp),%r10
+    0.00 :   46cab8: mov    0x40(%r10),%r13
+    0.00 :   46cabc: vmovq  %rbx,%xmm0
+    0.00 :   46cac1: vpinsrq $0x1,0x60(%rsp),%xmm0,%xmm1
+    0.00 :   46cac9: mov    0x68(%rsp),%rdx
+    0.00 :   46cace: vmovdqu %xmm1,0x20(%r13)
+    0.00 :   46cad4: mov    %rdx,0x68(%r13)
+    0.00 :   46cad8: jmp    46ba93 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x943>
+    0.00 :   46cadd: movq   $0x1,0x60(%rsp)
+    0.00 :   46cae6: mov    $0x1,%ebx
+    0.00 :   46caeb: jmp    46cabc <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x196c>
+    0.00 :   46caed: mov    0x247cc(%rip),%r10        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46caf4: jmp    46b24b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xfb>
+    0.00 :   46caf9: movq   $0x1,0x30(%rsp)
+    0.00 :   46cb02: movq   $0x1,(%rsp)
+    0.00 :   46cb0a: jmp    46c927 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x17d7>
+    0.00 :   46cb0f: mov    0x70(%rsp),%rdi
+    0.00 :   46cb14: movl   $0x0,0x24502(%rip)        # 491020 <kmercounter::cur_phase>
+    0.00 :   46cb1e: movb   $0x0,0x253ab(%rip)        # 491ed0 <kmercounter::zipfian_inserts>
+    0.00 :   46cb25: call   432f90 <std::barrier<std::function<void ()> >::arrive_and_wait()>
+    0.00 :   46cb2a: mov    0x25197(%rip),%rdi        # 491cc8 <kmercounter::config+0xc8>
+    0.00 :   46cb31: movl   $0x0,0x48(%rsp)
+    0.00 :   46cb39: mov    %rdi,0x30(%rsp)
+    0.00 :   46cb3e: test   %rdi,%rdi
+    0.00 :   46cb41: jne    46c4ff <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x13af>
+    0.00 :   46cb47: jmp    46c8f5 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x17a5>
+    0.00 :   46cb4c: mov    %rbp,%rdx
+    0.00 :   46cb4f: lea    0x136e7(%rip),%rsi        # 48023d <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f9d>
+    0.00 :   46cb56: mov    %r12,%rdi
+    0.00 :   46cb59: call   409310 <memcmp@plt>
+    0.00 :   46cb5e: lea    -0x2(%rbp),%rcx
+    0.00 :   46cb62: test   %eax,%eax
+    0.00 :   46cb64: je     46c176 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1026>
+    0.00 :   46cb6a: jmp    46c0bf <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf6f>
+    0.00 :   46cb6f: prefetcht0 (%r9)
+    0.00 :   46cb73: jmp    46be8c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd3c>
+    0.00 :   46cb78: prefetcht1 (%r9)
+    0.00 :   46cb7c: jmp    46be8c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd3c>
+    0.00 :   46cb81: prefetcht2 (%r9)
+    0.00 :   46cb85: jmp    46be8c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xd3c>
+    0.00 :   46cb8a: vpbroadcastq (%r15,%rbx,8),%xmm1
+    0.00 :   46cb90: add    $0x18,%rax
+    0.00 :   46cb94: mov    %ebx,-0x8(%rax)
+    0.00 :   46cb97: vmovdqu %xmm1,-0x18(%rax)
+    0.00 :   46cb9c: inc    %rbx
+    0.00 :   46cb9f: jmp    46b7a0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x650>
+    0.00 :   46cba4: cmpl   $0x3,0x8(%r8)
+    0.00 :   46cba9: movq   $0x1,0x60(%rsp)
+    0.00 :   46cbb2: mov    $0x1,%ebx
+    0.00 :   46cbb7: jle    46ba64 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x914>
+    0.00 :   46cbbd: lea    0xc0(%rsp),%r12
+    0.00 :   46cbc5: mov    $0x1de,%edx
+    0.00 :   46cbca: lea    0x1231f(%rip),%rsi        # 47eef0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c50>
+    0.00 :   46cbd1: mov    %r12,%rdi
+    0.00 :   46cbd4: call   46a810 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+    0.00 :   46cbd9: lea    0x13670(%rip),%rsi        # 480250 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2fb0>
+    0.00 :   46cbe0: mov    %r12,%rdi
+    0.00 :   46cbe3: xor    %eax,%eax
+    0.00 :   46cbe5: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46cbea: mov    0x246cf(%rip),%r13        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46cbf1: mov    %rax,(%rsp)
+    0.00 :   46cbf5: mov    0x10(%r13),%rbp
+    0.00 :   46cbf9: cmp    0x18(%r13),%rbp
+    0.00 :   46cbfd: je     46cc17 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1ac7>
+    0.00 :   46cbff: mov    0x0(%rbp),%rdi
+    0.00 :   46cc03: mov    (%rsp),%rsi
+    0.00 :   46cc07: mov    (%rdi),%rax
+    0.00 :   46cc0a: call   *0x10(%rax)
+    0.00 :   46cc0d: add    $0x8,%rbp
+    0.00 :   46cc11: cmp    %rbp,0x18(%r13)
+    0.00 :   46cc15: jne    46cbff <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1aaf>
+    0.00 :   46cc17: mov    %r12,%rdi
+    0.00 :   46cc1a: call   431660 <plog::Record::~Record() [clone .lto_priv.0]>
+    0.00 :   46cc1f: mov    0x58(%rsp),%r8
+    0.00 :   46cc24: vmovq  %rbx,%xmm2
+    0.00 :   46cc29: mov    0x40(%r8),%rcx
+    0.00 :   46cc2d: movzbl (%r8),%r9d
+    0.00 :   46cc31: vpinsrq $0x1,0x60(%rsp),%xmm2,%xmm3
+    0.00 :   46cc39: mov    0x68(%rsp),%rbx
+    0.00 :   46cc3e: vmovdqu %xmm3,0x20(%rcx)
+    0.00 :   46cc43: mov    %rbx,0x68(%rcx)
+    0.00 :   46cc47: test   %r9b,%r9b
+    0.00 :   46cc4a: je     46ba89 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x939>
+    0.00 :   46cc50: jmp    46ba93 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x943>
+    0.00 :   46cc55: nopl   (%rax)
+    0.00 :   46cc58: prefetcht0 (%rdx)
+    0.00 :   46cc5b: jmp    46c75e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x160e>
+    0.00 :   46cc60: mov    0x80(%rsp),%r13
+    0.00 :   46cc68: sub    %r15,%r13
+    0.00 :   46cc6b: mov    %r13,0x78(%rsp)
+    0.00 :   46cc70: sar    $0x3,%r13
+    0.00 :   46cc74: cmp    %r13,%rbx
+    0.00 :   46cc77: ja     46d1de <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x208e>
+    0.00 :   46cc7d: lea    0x0(,%rbx,8),%r12
+    0.00 :   46cc85: mov    %r12,%rdx
+    0.00 :   46cc88: xor    %esi,%esi
+    0.00 :   46cc8a: mov    %r15,%rdi
+    0.00 :   46cc8d: call   4093a0 <memset@plt>
+    0.00 :   46cc92: lea    (%r15,%r12,1),%rax
+    0.00 :   46cc96: mov    %rax,0x38(%rsp)
+    0.00 :   46cc9b: mov    0x24f56(%rip),%r8        # 491bf8 <kmercounter::g_zipf_values>
+    0.00 :   46cca2: mov    0x38(%rsp),%r10
+    0.00 :   46cca7: mov    (%r8),%r11
+    0.00 :   46ccaa: mov    0x8(%r8),%r13
+    0.00 :   46ccae: sub    %r15,%r10
+    0.00 :   46ccb1: sub    %r11,%r13
+    0.00 :   46ccb4: sar    $0x3,%r13
+    0.00 :   46ccb8: mov    %r13,%r9
+    0.00 :   46ccbb: sub    %rbp,%r9
+    0.00 :   46ccbe: sar    $0x3,%r10
+    0.00 :   46ccc2: xor    %esi,%esi
+    0.00 :   46ccc4: and    $0x7,%r9d
+    0.00 :   46ccc8: je     46cdf0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1ca0>
+    0.00 :   46ccce: cmp    %rbp,%r13
+    0.00 :   46ccd1: jbe    46d59d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x244d>
+    0.00 :   46ccd7: mov    (%r11,%rbp,8),%rdx
+    0.00 :   46ccdb: cmp    %r10,%rsi
+    0.00 :   46ccde: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cce4: mov    %rdx,(%r15)
+    0.00 :   46cce7: mov    $0x1,%esi
+    0.00 :   46ccec: inc    %rbp
+    0.00 :   46ccef: cmp    $0x1,%rbx
+    0.00 :   46ccf3: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46ccf9: cmp    $0x1,%r9
+    0.00 :   46ccfd: je     46cdf0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1ca0>
+    0.00 :   46cd03: cmp    $0x2,%r9
+    0.00 :   46cd07: je     46cdc9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1c79>
+    0.00 :   46cd0d: cmp    $0x3,%r9
+    0.00 :   46cd11: je     46cda9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1c59>
+    0.00 :   46cd17: cmp    $0x4,%r9
+    0.00 :   46cd1b: je     46cd89 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1c39>
+    0.00 :   46cd1d: cmp    $0x5,%r9
+    0.00 :   46cd21: je     46cd69 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1c19>
+    0.00 :   46cd23: cmp    $0x6,%r9
+    0.00 :   46cd27: je     46cd49 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1bf9>
+    0.00 :   46cd29: mov    (%r11,%rbp,8),%rdi
+    0.00 :   46cd2d: cmp    %r10,%rsi
+    0.00 :   46cd30: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cd36: mov    %rdi,(%r15,%rsi,8)
+    0.00 :   46cd3a: inc    %rsi
+    0.00 :   46cd3d: inc    %rbp
+    0.00 :   46cd40: cmp    %rsi,%rbx
+    0.00 :   46cd43: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cd49: mov    (%r11,%rbp,8),%rcx
+    0.00 :   46cd4d: cmp    %r10,%rsi
+    0.00 :   46cd50: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cd56: mov    %rcx,(%r15,%rsi,8)
+    0.00 :   46cd5a: inc    %rsi
+    0.00 :   46cd5d: inc    %rbp
+    0.00 :   46cd60: cmp    %rsi,%rbx
+    0.00 :   46cd63: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cd69: mov    (%r11,%rbp,8),%r12
+    0.00 :   46cd6d: cmp    %r10,%rsi
+    0.00 :   46cd70: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cd76: mov    %r12,(%r15,%rsi,8)
+    0.00 :   46cd7a: inc    %rsi
+    0.00 :   46cd7d: inc    %rbp
+    0.00 :   46cd80: cmp    %rsi,%rbx
+    0.00 :   46cd83: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cd89: mov    (%r11,%rbp,8),%rax
+    0.00 :   46cd8d: cmp    %r10,%rsi
+    0.00 :   46cd90: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cd96: mov    %rax,(%r15,%rsi,8)
+    0.00 :   46cd9a: inc    %rsi
+    0.00 :   46cd9d: inc    %rbp
+    0.00 :   46cda0: cmp    %rsi,%rbx
+    0.00 :   46cda3: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cda9: mov    (%r11,%rbp,8),%r8
+    0.00 :   46cdad: cmp    %r10,%rsi
+    0.00 :   46cdb0: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cdb6: mov    %r8,(%r15,%rsi,8)
+    0.00 :   46cdba: inc    %rsi
+    0.00 :   46cdbd: inc    %rbp
+    0.00 :   46cdc0: cmp    %rsi,%rbx
+    0.00 :   46cdc3: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cdc9: mov    (%r11,%rbp,8),%r9
+    0.00 :   46cdcd: cmp    %r10,%rsi
+    0.00 :   46cdd0: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cdd6: mov    %r9,(%r15,%rsi,8)
+    0.00 :   46cdda: inc    %rsi
+    0.00 :   46cddd: inc    %rbp
+    0.00 :   46cde0: cmp    %rsi,%rbx
+    0.00 :   46cde3: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cde9: nopl   0x0(%rax)
+    0.00 :   46cdf0: cmp    %rbp,%r13
+    0.00 :   46cdf3: jbe    46d59d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x244d>
+    0.00 :   46cdf9: mov    (%r11,%rbp,8),%rdx
+    0.00 :   46cdfd: cmp    %r10,%rsi
+    0.00 :   46ce00: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46ce06: lea    0x1(%rsi),%rcx
+    0.00 :   46ce0a: mov    %rdx,(%r15,%rsi,8)
+    0.00 :   46ce0e: lea    0x1(%rbp),%rdi
+    0.00 :   46ce12: mov    %rcx,%rsi
+    0.00 :   46ce15: cmp    %rcx,%rbx
+    0.00 :   46ce18: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46ce1e: mov    (%r11,%rdi,8),%r12
+    0.00 :   46ce22: cmp    %r10,%rcx
+    0.00 :   46ce25: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46ce2b: inc    %rsi
+    0.00 :   46ce2e: mov    %r12,(%r15,%rcx,8)
+    0.00 :   46ce32: lea    0x2(%rbp),%rax
+    0.00 :   46ce36: cmp    %rsi,%rbx
+    0.00 :   46ce39: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46ce3f: mov    (%r11,%rax,8),%r8
+    0.00 :   46ce43: cmp    %r10,%rsi
+    0.00 :   46ce46: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46ce4c: mov    %r8,(%r15,%rsi,8)
+    0.00 :   46ce50: lea    0x2(%rcx),%rsi
+    0.00 :   46ce54: lea    0x3(%rbp),%r9
+    0.00 :   46ce58: cmp    %rsi,%rbx
+    0.00 :   46ce5b: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46ce61: mov    (%r11,%r9,8),%rdx
+    0.40 :   46ce65: cmp    %r10,%rsi
+    0.00 :   46ce68: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46ce6e: mov    %rdx,(%r15,%rsi,8)
+    0.00 :   46ce72: lea    0x3(%rcx),%rsi
+    0.00 :   46ce76: add    $0x4,%rbp
+    0.00 :   46ce7a: cmp    %rsi,%rbx
+    0.00 :   46ce7d: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46ce83: mov    (%r11,%rbp,8),%rbp
+    0.00 :   46ce87: cmp    %r10,%rsi
+    0.00 :   46ce8a: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46ce90: mov    %rbp,(%r15,%rsi,8)
+    0.00 :   46ce94: lea    0x4(%rcx),%rsi
+    0.00 :   46ce98: lea    0x4(%rdi),%r12
+    0.00 :   46ce9c: cmp    %rsi,%rbx
+    0.00 :   46ce9f: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cea5: mov    (%r11,%r12,8),%rax
+    0.00 :   46cea9: cmp    %r10,%rsi
+    0.00 :   46ceac: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46ceb2: mov    %rax,(%r15,%rsi,8)
+    0.00 :   46ceb6: lea    0x5(%rcx),%rsi
+    0.00 :   46ceba: lea    0x5(%rdi),%r8
+    0.00 :   46cebe: cmp    %rsi,%rbx
+    0.00 :   46cec1: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cec7: mov    (%r11,%r8,8),%r9
+    0.00 :   46cecb: cmp    %r10,%rsi
+    0.00 :   46cece: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46ced4: mov    %r9,(%r15,%rsi,8)
+    0.00 :   46ced8: lea    0x6(%rcx),%rsi
+    0.00 :   46cedc: lea    0x6(%rdi),%rdx
+    0.00 :   46cee0: cmp    %rsi,%rbx
+    0.00 :   46cee3: jbe    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cee9: mov    (%r11,%rdx,8),%rbp
+    0.01 :   46ceed: cmp    %r10,%rsi
+    0.00 :   46cef0: je     46d5e1 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2491>
+    0.00 :   46cef6: mov    %rbp,(%r15,%rsi,8)
+    0.00 :   46cefa: lea    0x7(%rcx),%rsi
+    0.00 :   46cefe: lea    0x7(%rdi),%rbp
+    0.00 :   46cf02: cmp    %rsi,%rbx
+    0.00 :   46cf05: ja     46cdf0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1ca0>
+    0.00 :   46cf0b: jmp    46b1e7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x97>
+    0.00 :   46cf10: cmpb   $0x61,0x2(%r12)
+    0.00 :   46cf16: jne    46caa6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1956>
+    0.00 :   46cf1c: sub    $0x3,%rbp
+    0.00 :   46cf20: mov    $0x80000000,%r10d
+    0.00 :   46cf26: movl   $0x3,0x10(%rsp)
+    0.00 :   46cf2e: cmp    %r10,%rbp
+    0.00 :   46cf31: jge    46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46cf37: cmp    $0xffffffff80000000,%rbp
+    0.00 :   46cf3e: jl     46b408 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2b8>
+    0.00 :   46cf44: jmp    46c0ee <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xf9e>
+    0.00 :   46cf49: nopl   0x0(%rax)
+    0.00 :   46cf50: prefetcht2 (%r11)
+    0.00 :   46cf54: jmp    46bbf3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaa3>
+    0.00 :   46cf59: prefetcht0 (%r11)
+    0.00 :   46cf5d: jmp    46bbf3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaa3>
+    0.00 :   46cf62: prefetcht1 (%r11)
+    0.00 :   46cf66: jmp    46bbf3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaa3>
+    0.00 :   46cf6b: cmp    $0x2,%edi
+    0.00 :   46cf6e: je     46d57b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x242b>
+    0.00 :   46cf74: cmp    $0x3,%edi
+    0.00 :   46cf77: je     46d47d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x232d>
+    0.00 :   46cf7d: cmp    $0x1,%edi
+    0.00 :   46cf80: je     46d474 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2324>
+    0.00 :   46cf86: prefetchnta (%r10)
+    0.00 :   46cf8a: jmp    46c32d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11dd>
+    0.00 :   46cf8f: cmp    $0x2,%edi
+    0.00 :   46cf92: je     46d638 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x24e8>
+    0.00 :   46cf98: cmp    $0x3,%edi
+    0.00 :   46cf9b: je     46d46c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x231c>
+    0.00 :   46cfa1: cmp    $0x1,%edi
+    0.00 :   46cfa4: je     46d4a0 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2350>
+    0.00 :   46cfaa: prefetchnta (%rdx)
+    0.00 :   46cfad: jmp    46c301 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11b1>
+    0.00 :   46cfb2: cmp    $0x2,%edi
+    0.00 :   46cfb5: je     46d630 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x24e0>
+    0.00 :   46cfbb: cmp    $0x3,%edi
+    0.00 :   46cfbe: je     46d464 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2314>
+    0.00 :   46cfc4: cmp    $0x1,%edi
+    0.00 :   46cfc7: je     46d498 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2348>
+    0.00 :   46cfcd: prefetchnta (%rdx)
+    0.00 :   46cfd0: jmp    46c2d7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1187>
+    0.00 :   46cfd5: nopl   (%rax)
+    0.00 :   46cfd8: mov    0x24cf1(%rip),%r10        # 491cd0 <kmercounter::config+0xd0>
+    0.00 :   46cfdf: mov    %r10,0x68(%rsp)
+    0.00 :   46cfe4: test   %r10,%r10
+    0.00 :   46cfe7: jne    46b2a2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x152>
+    0.00 :   46cfed: movq   $0x1,0x60(%rsp)
+    0.00 :   46cff6: mov    $0x1,%ebx
+    0.00 :   46cffb: jmp    46ba6d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x91d>
+    0.00 :   46d000: lea    0xc0(%rsp),%r12
+    0.00 :   46d008: mov    $0x1a6,%edx
+    0.00 :   46d00d: lea    0x11edc(%rip),%rsi        # 47eef0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c50>
+    0.00 :   46d014: mov    %r12,%rdi
+    0.00 :   46d017: call   46a810 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+    0.00 :   46d01c: lea    0x131d2(%rip),%rsi        # 4801f5 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f55>
+    0.00 :   46d023: mov    %r12,%rdi
+    0.00 :   46d026: xor    %eax,%eax
+    0.00 :   46d028: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46d02d: mov    0x2428c(%rip),%rbp        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46d034: mov    %rax,%r13
+    0.00 :   46d037: mov    0x10(%rbp),%rbx
+    0.00 :   46d03b: cmp    0x18(%rbp),%rbx
+    0.00 :   46d03f: je     46d058 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1f08>
+    0.00 :   46d041: mov    (%rbx),%rdi
+    0.00 :   46d044: mov    %r13,%rsi
+    0.00 :   46d047: mov    (%rdi),%r10
+    0.00 :   46d04a: call   *0x10(%r10)
+    0.00 :   46d04e: add    $0x8,%rbx
+    0.00 :   46d052: cmp    %rbx,0x18(%rbp)
+    0.00 :   46d056: jne    46d041 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1ef1>
+    0.00 :   46d058: mov    %r12,%rdi
+    0.00 :   46d05b: call   431660 <plog::Record::~Record() [clone .lto_priv.0]>
+    0.00 :   46d060: mov    0x58(%rsp),%rdx
+    0.00 :   46d065: vmovq  (%rsp),%xmm0
+    0.00 :   46d06a: mov    0x40(%rdx),%r11
+    0.00 :   46d06e: movzbl (%rdx),%eax
+    0.00 :   46d071: vpinsrq $0x1,0x30(%rsp),%xmm0,%xmm1
+    0.00 :   46d079: mov    %r11,%r13
+    0.00 :   46d07c: vmovdqu %xmm1,(%r11)
+    0.00 :   46d081: test   %al,%al
+    0.00 :   46d083: jne    46c94b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x17fb>
+    0.00 :   46d089: mov    0x24230(%rip),%r10        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46d090: jmp    46b276 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x126>
+    0.00 :   46d095: lea    0xc0(%rsp),%r13
+    0.00 :   46d09d: mov    $0x1d6,%edx
+    0.00 :   46d0a2: lea    0x11e47(%rip),%rsi        # 47eef0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c50>
+    0.00 :   46d0a9: mov    %r13,%rdi
+    0.00 :   46d0ac: call   46a810 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+    0.00 :   46d0b1: lea    0x13155(%rip),%rsi        # 48020d <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f6d>
+    0.00 :   46d0b8: mov    %r13,%rdi
+    0.00 :   46d0bb: xor    %eax,%eax
+    0.00 :   46d0bd: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46d0c2: mov    0x241f7(%rip),%rbp        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46d0c9: mov    %rax,%r12
+    0.00 :   46d0cc: mov    0x10(%rbp),%rbx
+    0.00 :   46d0d0: cmp    0x18(%rbp),%rbx
+    0.00 :   46d0d4: je     46d0ec <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1f9c>
+    0.00 :   46d0d6: mov    (%rbx),%rdi
+    0.00 :   46d0d9: mov    %r12,%rsi
+    0.00 :   46d0dc: mov    (%rdi),%rcx
+    0.00 :   46d0df: call   *0x10(%rcx)
+    0.00 :   46d0e2: add    $0x8,%rbx
+    0.00 :   46d0e6: cmp    %rbx,0x18(%rbp)
+    0.00 :   46d0ea: jne    46d0d6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1f86>
+    0.00 :   46d0ec: mov    %r13,%rdi
+    0.00 :   46d0ef: call   431660 <plog::Record::~Record() [clone .lto_priv.0]>
+    0.00 :   46d0f4: mov    0x58(%rsp),%rdi
+    0.00 :   46d0f9: mov    0x24bd0(%rip),%r9        # 491cd0 <kmercounter::config+0xd0>
+    0.00 :   46d100: movzbl (%rdi),%esi
+    0.00 :   46d103: mov    %r9,0x68(%rsp)
+    0.00 :   46d108: test   %r9,%r9
+    0.00 :   46d10b: jne    46d25e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x210e>
+    0.00 :   46d111: movq   $0x1,0x60(%rsp)
+    0.00 :   46d11a: mov    $0x1,%ebx
+    0.00 :   46d11f: jmp    46ba44 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8f4>
+    0.00 :   46d124: lea    0xc0(%rsp),%r12
+    0.00 :   46d12c: mov    $0x1f7,%edx
+    0.00 :   46d131: lea    0x11db8(%rip),%rsi        # 47eef0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c50>
+    0.00 :   46d138: mov    %r12,%rdi
+    0.00 :   46d13b: call   46a810 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+    0.00 :   46d140: mov    (%r14),%r13
+    0.00 :   46d143: mov    %r14,%rdi
+    0.00 :   46d146: call   *0x40(%r13)
+    0.00 :   46d14a: vxorpd %xmm6,%xmm6,%xmm6
+    0.00 :   46d14e: vcvtusi2sd %rax,%xmm6,%xmm7
+    0.00 :   46d154: mov    (%r14),%rax
+    0.00 :   46d157: mov    %r14,%rdi
+    0.00 :   46d15a: vmovq  %xmm7,%rbp
+    0.00 :   46d15f: call   *0x48(%rax)
+    0.00 :   46d162: vxorpd %xmm8,%xmm8,%xmm8
+    0.00 :   46d167: vcvtusi2sd %rax,%xmm8,%xmm9
+    0.00 :   46d16d: vmovq  %rbp,%xmm10
+    0.00 :   46d172: lea    0x103d8(%rip),%rsi        # 47d551 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2b1>
+    0.00 :   46d179: mov    %r12,%rdi
+    0.00 :   46d17c: vdivsd %xmm9,%xmm10,%xmm0
+    0.00 :   46d181: mov    $0x1,%eax
+    0.00 :   46d186: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46d18b: mov    0x2412e(%rip),%r13        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46d192: mov    %rax,%r14
+    0.00 :   46d195: mov    0x10(%r13),%rbx
+    0.00 :   46d199: cmp    0x18(%r13),%rbx
+    0.00 :   46d19d: je     46d1b6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2066>
+    0.00 :   46d19f: mov    (%rbx),%rdi
+    0.00 :   46d1a2: mov    %r14,%rsi
+    0.00 :   46d1a5: mov    (%rdi),%r11
+    0.00 :   46d1a8: call   *0x10(%r11)
+    0.00 :   46d1ac: add    $0x8,%rbx
+    0.00 :   46d1b0: cmp    %rbx,0x18(%r13)
+    0.00 :   46d1b4: jne    46d19f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x204f>
+    0.00 :   46d1b6: mov    %r12,%rdi
+    0.00 :   46d1b9: call   431660 <plog::Record::~Record() [clone .lto_priv.0]>
+    0.00 :   46d1be: jmp    46bae3 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x993>
+    0.00 :   46d1c3: prefetcht2 (%r11)
+    0.00 :   46d1c7: jmp    46bc48 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaf8>
+    0.00 :   46d1cc: prefetcht0 (%r11)
+    0.00 :   46d1d0: jmp    46bc48 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaf8>
+    0.00 :   46d1d5: prefetcht1 (%r11)
+    0.00 :   46d1d9: jmp    46bc48 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xaf8>
+    0.00 :   46d1de: test   %rbx,%rbx
+    0.00 :   46d1e1: jne    46d4a8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2358>
+    0.00 :   46d1e7: xor    %r12d,%r12d
+    0.00 :   46d1ea: xor    %r13d,%r13d
+    0.00 :   46d1ed: lea    0x0(,%rbx,8),%rdx
+    0.00 :   46d1f5: xor    %esi,%esi
+    0.00 :   46d1f7: mov    %r13,%rdi
+    0.00 :   46d1fa: mov    %rdx,(%rsp)
+    0.00 :   46d1fe: call   4093a0 <memset@plt>
+    0.00 :   46d203: test   %r15,%r15
+    0.00 :   46d206: je     46d234 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x20e4>
+    0.00 :   46d208: mov    0x78(%rsp),%rsi
+    0.00 :   46d20d: lea    -0x1(%rsi),%rdi
+    0.00 :   46d211: cmp    $0x3e800000,%rsi
+    0.00 :   46d218: jle    46d640 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x24f0>
+    0.00 :   46d21e: and    $0xffffffffc0000000,%rdi
+    0.00 :   46d225: lea    0x40000000(%rdi),%rsi
+    0.00 :   46d22c: mov    %r15,%rdi
+    0.00 :   46d22f: call   4093c0 <munmap@plt>
+    0.00 :   46d234: mov    (%rsp),%r15
+    0.00 :   46d238: shl    $0x3,%r12
+    0.00 :   46d23c: add    %r13,%r15
+    0.00 :   46d23f: lea    0x0(%r13,%r12,1),%rcx
+    0.00 :   46d244: mov    %r15,0x38(%rsp)
+    0.00 :   46d249: mov    %rcx,0x80(%rsp)
+    0.00 :   46d251: mov    %r12,0x78(%rsp)
+    0.00 :   46d256: mov    %r13,%r15
+    0.00 :   46d259: jmp    46cc9b <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1b4b>
+    0.00 :   46d25e: mov    %esi,0x8c(%rsp)
+    0.00 :   46d265: test   %esi,%esi
+    0.00 :   46d267: je     46b2a2 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x152>
+    0.00 :   46d26d: jmp    46b2be <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x16e>
+    0.00 :   46d272: nopw   0x0(%rax,%rax,1)
+    0.00 :   46d278: movq   $0x0,0x68(%rsp)
+    0.00 :   46d281: jmp    46ba08 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x8b8>
+    0.00 :   46d286: mov    0x58(%rsp),%r11
+    0.00 :   46d28b: mov    0x4(%r11),%r13d
+    0.00 :   46d28f: mov    %r13d,0x18(%rsp)
+    0.00 :   46d294: test   %r13d,%r13d
+    0.00 :   46d297: js     46b98a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x83a>
+    0.00 :   46d29d: call   4091a0 <numa_available@plt>
+    0.00 :   46d2a2: test   %eax,%eax
+    0.00 :   46d2a4: js     46b98a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x83a>
+    0.00 :   46d2aa: call   4092d0 <numa_allocate_cpumask@plt>
+    0.00 :   46d2af: mov    %rax,(%rsp)
+    0.00 :   46d2b3: movl   $0x7fffffff,0x10(%rsp)
+    0.00 :   46d2bb: movl   $0xffffffff,0x8(%rsp)
+    0.00 :   46d2c3: xor    %r13d,%r13d
+    0.00 :   46d2c6: jmp    46d316 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x21c6>
+    0.00 :   46d2c8: mov    (%rsp),%rsi
+    0.00 :   46d2cc: mov    %r13d,%edi
+    0.00 :   46d2cf: call   4096e0 <numa_node_to_cpus@plt>
+    0.00 :   46d2d4: test   %eax,%eax
+    0.00 :   46d2d6: jne    46d313 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x21c3>
+    0.00 :   46d2d8: mov    (%rsp),%rdi
+    0.00 :   46d2dc: call   4090c0 <numa_bitmask_weight@plt>
+    0.00 :   46d2e1: test   %eax,%eax
+    0.00 :   46d2e3: jne    46d313 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x21c3>
+    0.00 :   46d2e5: mov    0x18(%rsp),%edi
+    0.00 :   46d2e9: mov    %r13d,%esi
+    0.00 :   46d2ec: call   409200 <numa_distance@plt>
+    0.00 :   46d2f1: test   %eax,%eax
+    0.00 :   46d2f3: jle    46d313 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x21c3>
+    0.00 :   46d2f5: mov    0x10(%rsp),%edi
+    0.00 :   46d2f9: cmp    %edi,%eax
+    0.00 :   46d2fb: setl   %cl
+    0.00 :   46d2fe: test   %cl,%cl
+    0.00 :   46d300: cmove  %edi,%eax
+    0.00 :   46d303: mov    %eax,0x10(%rsp)
+    0.00 :   46d307: mov    0x8(%rsp),%eax
+    0.00 :   46d30b: cmovne %r13d,%eax
+    0.00 :   46d30f: mov    %eax,0x8(%rsp)
+    0.00 :   46d313: inc    %r13d
+    0.00 :   46d316: call   4095f0 <numa_max_node@plt>
+    0.00 :   46d31b: cmp    %eax,%r13d
+    0.00 :   46d31e: jle    46d2c8 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2178>
+    0.00 :   46d320: mov    (%rsp),%rdi
+    0.00 :   46d324: call   4096f0 <numa_bitmask_free@plt>
+    0.00 :   46d329: mov    0x8(%rsp),%esi
+    0.00 :   46d32d: test   %esi,%esi
+    0.00 :   46d32f: js     46b98a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x83a>
+    0.00 :   46d335: mov    $0x1,%r12d
+    0.00 :   46d33b: shlx   %esi,%r12d,%r12d
+    0.00 :   46d340: mov    %r12d,%edx
+    0.00 :   46d343: lea    0x0(,%rbx,8),%r8
+    0.00 :   46d34b: mov    %rdx,0xb0(%rsp)
+    0.00 :   46d353: lea    -0x1(%r8),%r9
+    0.00 :   46d357: cmp    $0x3e800000,%r8
+    0.00 :   46d35e: ja     46d44a <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x22fa>
+    0.00 :   46d364: and    $0xffffffffffe00000,%r9
+    0.00 :   46d36b: add    $0x200000,%r9
+    0.00 :   46d372: mov    %r9,(%rsp)
+    0.00 :   46d376: mov    %r9,%rsi
+    0.00 :   46d379: xor    %r10d,%r10d
+    0.00 :   46d37c: xor    %edx,%edx
+    0.00 :   46d37e: popcnt %r12d,%r10d
+    0.00 :   46d383: cmp    $0x1,%r10d
+    0.00 :   46d387: setne  %dl
+    0.00 :   46d38a: add    $0x2,%edx
+    0.00 :   46d38d: lea    0xb0(%rsp),%rcx
+    0.00 :   46d395: mov    $0x3,%r9d
+    0.00 :   46d39b: mov    $0x40,%r8d
+    0.00 :   46d3a1: mov    %r15,%rdi
+    0.00 :   46d3a4: call   4092a0 <mbind@plt>
+    0.00 :   46d3a9: mov    0x23f10(%rip),%rsi        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46d3b0: test   %rax,%rax
+    0.00 :   46d3b3: je     46d4c9 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2379>
+    0.00 :   46d3b9: test   %rsi,%rsi
+    0.00 :   46d3bc: je     46b993 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x843>
+    0.00 :   46d3c2: cmpl   $0x1,0x8(%rsi)
+    0.00 :   46d3c6: jle    46b993 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x843>
+    0.00 :   46d3cc: lea    0xc0(%rsp),%r13
+    0.00 :   46d3d4: mov    $0x179,%edx
+    0.00 :   46d3d9: lea    0x11b10(%rip),%rsi        # 47eef0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c50>
+    0.00 :   46d3e0: mov    %r13,%rdi
+    0.00 :   46d3e3: call   469e40 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.1]>
+    0.00 :   46d3e8: mov    0x58(%rsp),%r8
+    0.00 :   46d3ed: mov    %r12d,%ecx
+    0.00 :   46d3f0: movzbl (%r8),%edx
+    0.00 :   46d3f4: lea    0x11b75(%rip),%rsi        # 47ef70 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1cd0>
+    0.00 :   46d3fb: mov    %r13,%rdi
+    0.00 :   46d3fe: xor    %eax,%eax
+    0.00 :   46d400: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46d405: mov    0x23eb4(%rip),%r9        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46d40c: mov    %rax,(%rsp)
+    0.00 :   46d410: mov    0x10(%r9),%r12
+    0.00 :   46d414: mov    %r9,0x8(%rsp)
+    0.00 :   46d419: cmp    0x18(%r9),%r12
+    0.00 :   46d41d: je     46d43d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x22ed>
+    0.00 :   46d41f: mov    (%r12),%rdi
+    0.00 :   46d423: mov    (%rsp),%rsi
+    0.00 :   46d427: mov    (%rdi),%r10
+    0.00 :   46d42a: call   *0x10(%r10)
+    0.00 :   46d42e: mov    0x8(%rsp),%r11
+    0.00 :   46d433: add    $0x8,%r12
+    0.00 :   46d437: cmp    %r12,0x18(%r11)
+    0.00 :   46d43b: jne    46d41f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x22cf>
+    0.00 :   46d43d: mov    %r13,%rdi
+    0.00 :   46d440: call   431660 <plog::Record::~Record() [clone .lto_priv.0]>
+    0.00 :   46d445: jmp    46b993 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x843>
+    0.00 :   46d44a: and    $0xffffffffc0000000,%r9
+    0.00 :   46d451: add    $0x40000000,%r9
+    0.00 :   46d458: mov    %r9,(%rsp)
+    0.00 :   46d45c: mov    %r9,%rsi
+    0.00 :   46d45f: jmp    46d379 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x2229>
+    0.00 :   46d464: prefetcht0 (%rdx)
+    0.00 :   46d467: jmp    46c2d7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1187>
+    0.00 :   46d46c: prefetcht0 (%rdx)
+    0.00 :   46d46f: jmp    46c301 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11b1>
+    0.00 :   46d474: prefetcht2 (%r10)
+    0.00 :   46d478: jmp    46c32d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11dd>
+    0.00 :   46d47d: prefetcht0 (%r10)
+    0.00 :   46d481: jmp    46c32d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11dd>
+    0.00 :   46d486: prefetcht2 (%r10)
+    0.00 :   46d48a: jmp    46c376 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1226>
+    0.00 :   46d48f: prefetcht0 (%r10)
+    0.00 :   46d493: jmp    46c376 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1226>
+    0.00 :   46d498: prefetcht2 (%rdx)
+    0.00 :   46d49b: jmp    46c2d7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1187>
+    0.00 :   46d4a0: prefetcht2 (%rdx)
+    0.00 :   46d4a3: jmp    46c301 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11b1>
+    0.00 :   46d4a8: movabs $0xfffffffffffffff,%r12
+    0.00 :   46d4b2: cmp    %r12,%rbx
+    0.00 :   46d4b5: cmovbe %rbx,%r12
+    0.00 :   46d4b9: mov    %r12,%rdi
+    0.00 :   46d4bc: call   46a060 <huge_page_allocator<unsigned long>::allocate(unsigned long) [clone .constprop.0]>
+    0.00 :   46d4c1: mov    %rax,%r13
+    0.00 :   46d4c4: jmp    46d1ed <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x209d>
+    0.00 :   46d4c9: test   %rsi,%rsi
+    0.00 :   46d4cc: je     46b993 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x843>
+    0.00 :   46d4d2: cmpl   $0x3,0x8(%rsi)
+    0.00 :   46d4d6: jle    46b993 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x843>
+    0.00 :   46d4dc: lea    0xc0(%rsp),%r13
+    0.00 :   46d4e4: mov    $0x17c,%edx
+    0.00 :   46d4e9: lea    0x11a00(%rip),%rsi        # 47eef0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1c50>
+    0.00 :   46d4f0: mov    %r13,%rdi
+    0.00 :   46d4f3: call   46a810 <plog::Record::Record(plog::Severity, char const*, unsigned long, char const*, void const*, int) [clone .constprop.0]>
+    0.00 :   46d4f8: mov    0x58(%rsp),%rdi
+    0.00 :   46d4fd: mov    (%rsp),%rcx
+    0.00 :   46d501: movzbl (%rdi),%edx
+    0.00 :   46d504: mov    %r12d,%r8d
+    0.00 :   46d507: lea    0x11aa2(%rip),%rsi        # 47efb0 <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x1d10>
+    0.00 :   46d50e: mov    %r13,%rdi
+    0.00 :   46d511: xor    %eax,%eax
+    0.00 :   46d513: call   431eb0 <plog::Record::printf(char const*, ...)>
+    0.00 :   46d518: mov    0x23da1(%rip),%rcx        # 4912c0 <plog::util::Singleton<plog::Logger<0> >::m_instance>
+    0.00 :   46d51f: mov    %rax,(%rsp)
+    0.00 :   46d523: mov    0x10(%rcx),%r12
+    0.00 :   46d527: mov    %rcx,0x8(%rsp)
+    0.00 :   46d52c: cmp    0x18(%rcx),%r12
+    0.00 :   46d530: je     46d43d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x22ed>
+    0.00 :   46d536: mov    (%r12),%rdi
+    0.00 :   46d53a: mov    (%rsp),%rsi
+    0.00 :   46d53e: mov    (%rdi),%rax
+    0.00 :   46d541: call   *0x10(%rax)
+    0.00 :   46d544: mov    0x8(%rsp),%rdx
+    0.00 :   46d549: add    $0x8,%r12
+    0.00 :   46d54d: cmp    %r12,0x18(%rdx)
+    0.00 :   46d551: jne    46d536 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x23e6>
+    0.00 :   46d553: jmp    46d43d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x22ed>
+    0.00 :   46d558: prefetcht2 (%r11)
+    0.00 :   46d55c: jmp    46bb9d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa4d>
+    0.00 :   46d561: prefetcht0 (%r11)
+    0.00 :   46d565: jmp    46bb9d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa4d>
+    0.00 :   46d56a: prefetcht1 (%r11)
+    0.00 :   46d56e: jmp    46bb9d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0xa4d>
+    0.00 :   46d573: prefetcht2 (%rdx)
+    0.00 :   46d576: jmp    46c241 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10f1>
+    0.00 :   46d57b: prefetcht1 (%r10)
+    0.00 :   46d57f: jmp    46c32d <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11dd>
+    0.00 :   46d584: prefetcht1 (%r10)
+    0.00 :   46d588: jmp    46c376 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1226>
+    0.00 :   46d58d: prefetcht0 (%rdx)
+    0.00 :   46d590: jmp    46c241 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10f1>
+    0.00 :   46d595: prefetcht1 (%rdx)
+    0.00 :   46d598: jmp    46c241 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x10f1>
+    0.00 :   46d59d: mov    %r13,%rdx
+    0.00 :   46d5a0: mov    %rbp,%rsi
+    0.00 :   46d5a3: lea    0xd64e(%rip),%rdi        # 47abf8 <typeinfo name for plog::Record+0x788>
+    0.00 :   46d5aa: xor    %eax,%eax
+    0.00 :   46d5ac: call   409980 <std::__throw_out_of_range_fmt(char const*, ...)@plt>
+    0.00 :   46d5b1: prefetcht0 (%rdx)
+    0.00 :   46d5b4: jmp    46c293 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1143>
+    0.00 :   46d5b9: prefetcht1 (%rdx)
+    0.00 :   46d5bc: jmp    46c293 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1143>
+    0.00 :   46d5c1: prefetcht2 (%rdx)
+    0.00 :   46d5c4: jmp    46c293 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1143>
+    0.00 :   46d5c9: prefetcht2 (%rdx)
+    0.00 :   46d5cc: jmp    46c1eb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x109b>
+    0.00 :   46d5d1: prefetcht0 (%rdx)
+    0.00 :   46d5d4: jmp    46c1eb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x109b>
+    0.00 :   46d5d9: prefetcht1 (%rdx)
+    0.00 :   46d5dc: jmp    46c1eb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x109b>
+    0.00 :   46d5e1: mov    %rsi,%rdx
+    0.00 :   46d5e4: lea    0xd60d(%rip),%rdi        # 47abf8 <typeinfo name for plog::Record+0x788>
+    0.00 :   46d5eb: xor    %eax,%eax
+    0.00 :   46d5ed: call   409980 <std::__throw_out_of_range_fmt(char const*, ...)@plt>
+    0.00 :   46d5f2: lea    0x12bd6(%rip),%rdi        # 4801cf <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f2f>
+    0.00 :   46d5f9: call   4097c0 <getenv@plt>
+    0.00 :   46d5fe: mov    %rax,0x80(%rsp)
+    0.00 :   46d606: test   %rax,%rax
+    0.00 :   46d609: jne    46b1c6 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x76>
+    0.00 :   46d60f: movq   $0x0,0x78(%rsp)
+    0.00 :   46d618: xor    %r15d,%r15d
+    0.00 :   46d61b: jmp    46b973 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x823>
+    0.00 :   46d620: lea    0x12b98(%rip),%rdi        # 4801bf <typeinfo name for boost::wrapexcept<boost::bad_function_call>+0x2f1f>
+    0.00 :   46d627: call   409370 <std::__throw_length_error(char const*)@plt>
+    0.00 :   46d62c: nopl   0x0(%rax)
+    0.00 :   46d630: prefetcht1 (%rdx)
+    0.00 :   46d633: jmp    46c2d7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x1187>
+    0.00 :   46d638: prefetcht1 (%rdx)
+    0.00 :   46d63b: jmp    46c301 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x11b1>
+    0.00 :   46d640: and    $0xffffffffffe00000,%rdi
+    0.00 :   46d647: lea    0x200000(%rdi),%rsi
+    0.00 :   46d64e: jmp    46d22c <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]+0x20dc>
+    0.00 :   46d653: mov    %rax,%rbp
+    0.00 :   46d656: jmp    40e554 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]>
+    0.00 :   46d65b: mov    %rax,%rbp
+    0.00 :   46d65e: jmp    40e554 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]>
+    0.00 :   46d663: mov    %rax,%rbp
+    0.00 :   46d666: jmp    40e57e <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x2a>
+    0.00 :   46d66b: mov    %rax,%rbp
+    0.00 :   46d66e: jmp    40e5b7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x63>
+    0.00 :   46d673: mov    %rax,%rbp
+    0.00 :   46d676: jmp    40e554 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]>
+    0.00 :   46d67b: mov    %rax,%rbp
+    0.00 :   46d67e: jmp    40e5cb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x77>
+    0.00 :   46d683: mov    %rax,%rbp
+    0.00 :   46d686: jmp    40e5cb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x77>
+    0.00 :   46d68b: mov    %rax,%rbp
+    0.00 :   46d68e: jmp    40e554 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]>
+    0.00 :   46d693: mov    %rax,%rbp
+    0.00 :   46d696: jmp    40e5cb <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x77>
+    0.00 :   46d69b: mov    %rax,%rbp
+    0.00 :   46d69e: vzeroupper
+    0.00 :   46d6a1: jmp    40e55f <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0xb>
+    0.00 :   46d6a6: mov    %rax,%rbp
+    0.00 :   46d6a9: jmp    40e5b7 <kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0] [clone .cold]+0x63>

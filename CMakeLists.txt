@@ -36,6 +36,8 @@ option(CAS_FIND_RING_OFFSETS "find_batch fast path: byte-offset find-queue ring 
 option(CAS_FIND_COMPRESS_VALUE "find_batch fast path: hit value via vpcompressq (2025_INLINE)" OFF)
 option(CAS_FIND_KSHIFT "find_batch fast path: mask shift in the mask register (needs CAS_FIND_COMPRESS_VALUE)" OFF)
 option(CAS_FIND_SCALAR_PACK "find_batch fast path: scalar stores for the idx/key_id pair of a new queue entry" OFF)
+option(DEEP_VECTORIZATION "find_batch fast path: complete 4 finds (deep pop, results assembled into one 64 B store) and push 4 arguments as one 64 B block per step while >= 4 arguments remain (needs the 16 B find queue, RING_OFFSETS, COMPRESS_VALUE, KSHIFT)" OFF)
+option(CAS_FIND_EMBCAST "find_batch fast path: compare against the queue entry's key via a {1to8} memory broadcast" OFF)
 
 
 # Check if the user forgot to define CPUFREQ_MHZ or left it blank
@@ -64,6 +66,27 @@ endif()
 
 if(CAS_FIND_SCALAR_PACK)
     add_definitions(-DCAS_FIND_SCALAR_PACK)
+endif()
+
+if(DEEP_VECTORIZATION)
+    add_definitions(-DDEEP_VECTORIZATION)
+endif()
+
+# 16 B find {key, id} and insert {key, value} arguments between the zipfian harness and
+# the CAS table (ht-type 3 only), instead of the shared 24 B InsertFindArgument
+option(SPLIT_ARGS "zipfian harness + CAS table: 16 B find / insert arguments" OFF)
+if(SPLIT_ARGS)
+    add_definitions(-DSPLIT_ARGS)
+endif()
+
+# find: L1 prefetch distance in queue slots (default 8, as before)
+set(FIND_PF_DIST "" CACHE STRING "find_batch: prefetch the bucket this many queue slots ahead (empty = 8)")
+if(NOT FIND_PF_DIST STREQUAL "")
+    add_definitions(-DFIND_PF_DIST=${FIND_PF_DIST})
+endif()
+
+if(CAS_FIND_EMBCAST)
+    add_definitions(-DCAS_FIND_EMBCAST)
 endif()
 
 if(CAS_NO_ABSTRACT)

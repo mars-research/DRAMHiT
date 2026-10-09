@@ -1,0 +1,5 @@
+b9bb42098b5fd2686e4a9d3d2a7d542e  attempt9/base/dramhit
+58a30850efe86e2a5c14417fef0c7b8c  attempt9/q16/dramhit
+48d194f592ae397fe992ef044301d69c  attempt9/q16v/dramhit
+5e29991baa1c7086dfae2cdeb5efeafa  attempt9/q16x/dramhit
+41f4c7fa55dbaab92f2e0e50d8dab12b  attempt9/v4/dramhit

@@ -1,0 +1,33 @@
+[E16_mdf_ins] rep 1/2  bw_t1
+[E16_mdf_ins] rep 1/2  mimic_s1
+[E16_mdf_ins] rep 1/2  mimic_s2
+[E16_mdf_ins] rep 1/2  mimic_s4
+[E16_mdf_ins] rep 1/2  a7_base_f10
+[E16_mdf_ins] rep 2/2  bw_t1
+[E16_mdf_ins] rep 2/2  mimic_s1
+[E16_mdf_ins] rep 2/2  mimic_s2
+[E16_mdf_ins] rep 2/2  mimic_s4
+[E16_mdf_ins] rep 2/2  a7_base_f10
+[OK]
+[E16_mdf_cong] rep 1/2  bw_t1
+[E16_mdf_cong] rep 1/2  mimic_s1
+[E16_mdf_cong] rep 1/2  mimic_s2
+[E16_mdf_cong] rep 1/2  mimic_s4
+[E16_mdf_cong] rep 1/2  a7_base_f10
+[E16_mdf_cong] rep 2/2  bw_t1
+[E16_mdf_cong] rep 2/2  mimic_s1
+[E16_mdf_cong] rep 2/2  mimic_s2
+[E16_mdf_cong] rep 2/2  mimic_s4
+[E16_mdf_cong] rep 2/2  a7_base_f10
+[OK]
+[E16_chaq] rep 1/2  bw_t1
+[E16_chaq] rep 1/2  mimic_s1
+[E16_chaq] rep 1/2  mimic_s2
+[E16_chaq] rep 1/2  mimic_s4
+[E16_chaq] rep 1/2  a7_base_f10
+[E16_chaq] rep 2/2  bw_t1
+[E16_chaq] rep 2/2  mimic_s1
+[E16_chaq] rep 2/2  mimic_s2
+[E16_chaq] rep 2/2  mimic_s4
+[E16_chaq] rep 2/2  a7_base_f10
+[OK]

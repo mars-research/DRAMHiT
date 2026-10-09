@@ -1,0 +1,7 @@
+[E30_diag] rep 1/2  a14_dc24_f10
+[E30_diag] rep 1/2  a14_dm24_f10
+[E30_diag] rep 1/2  a14_dm24s_f10
+[E30_diag] rep 2/2  a14_dc24_f10
+[E30_diag] rep 2/2  a14_dm24_f10
+[E30_diag] rep 2/2  a14_dm24s_f10
+[OK]

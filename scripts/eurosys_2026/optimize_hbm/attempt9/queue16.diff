@@ -1,0 +1,560 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3a22d3b..9784de1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -36,6 +36,11 @@ option(CAS_FIND_RING_OFFSETS "find_batch fast path: byte-offset find-queue ring
+ option(CAS_FIND_COMPRESS_VALUE "find_batch fast path: hit value via vpcompressq (2025_INLINE)" OFF)
+ option(CAS_FIND_KSHIFT "find_batch fast path: mask shift in the mask register (needs CAS_FIND_COMPRESS_VALUE)" OFF)
+ option(CAS_FIND_SCALAR_PACK "find_batch fast path: scalar stores for the idx/key_id pair of a new queue entry" OFF)
++option(CAS_FIND_EMBCAST "find_batch fast path: compare against the queue entry's key via a {1to8} memory broadcast" OFF)
++option(CAS_FIND_VEC4 "find_batch fast path: 4 finds per iteration when the ring does not wrap (needs RING_OFFSETS, COMPRESS_VALUE, KSHIFT)" OFF)
++option(CAS_FIND_VEC4_SCALAR_RES "with CAS_FIND_VEC4: write the 4 results with scalar stores instead of one 64 B vector store" OFF)
++option(CAS_FIND_QUEUE16 "find queue: 16 B entries {key, 32-bit hash, key_id} (needs UNIFORM or linear probing, CAS_SIMD)" OFF)
++option(CAS_FIND_QUEUE16_XMM "with CAS_FIND_QUEUE16: write an entry with one 16 B store instead of two 8 B" OFF)
+ 
+ 
+ # Check if the user forgot to define CPUFREQ_MHZ or left it blank
+@@ -66,6 +71,26 @@ if(CAS_FIND_SCALAR_PACK)
+     add_definitions(-DCAS_FIND_SCALAR_PACK)
+ endif()
+ 
++if(CAS_FIND_EMBCAST)
++    add_definitions(-DCAS_FIND_EMBCAST)
++endif()
++
++if(CAS_FIND_VEC4)
++    add_definitions(-DCAS_FIND_VEC4)
++endif()
++
++if(CAS_FIND_VEC4_SCALAR_RES)
++    add_definitions(-DCAS_FIND_VEC4_SCALAR_RES)
++endif()
++
++if(CAS_FIND_QUEUE16)
++    add_definitions(-DCAS_FIND_QUEUE16)
++endif()
++
++if(CAS_FIND_QUEUE16_XMM)
++    add_definitions(-DCAS_FIND_QUEUE16_XMM)
++endif()
++
+ if(CAS_NO_ABSTRACT)
+         add_definitions(-DCAS_NO_ABSTRACT)
+ endif()
+diff --git a/include/hashtables/cas_kht.hpp b/include/hashtables/cas_kht.hpp
+index 4b06259..a8015f2 100644
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -59,6 +59,27 @@ class CASHashTable : public BaseHashTable {
+   uint32_t FIND_QUEUE_SZ_MASK;
+   uint64_t HT_BUCKET_MASK;
+ 
++#ifdef CAS_FIND_QUEUE16
++#if defined(LATENCY_COLLECTION) || !defined(CAS_SIMD)
++#error "CAS_FIND_QUEUE16 needs CAS_SIMD and does not support LATENCY_COLLECTION"
++#endif
++  // 16 B find-queue entry: {key, hash, key_id}. With uniform probing `hash` is the
++  // full 32-bit crc32 value (crc32 results are 32 bits, so the 8 B key_hash held
++  // nothing more); the bucket index is hash & HT_BUCKET_MASK, and the unmasked
++  // value seeds the next probe on a reprobe. With linear probing it holds the
++  // bucket index itself. Four entries fill one cache line.
++  struct FindQ16 {
++    key_type key;
++    uint32_t hash;
++    uint32_t key_id;
++  };
++  static_assert(sizeof(FindQ16) == 16 && offsetof(FindQ16, key_id) == 12,
++                "16 B find-queue entry");
++  using FQE = FindQ16;
++#else
++  using FQE = KVQ;
++#endif
++
+   const static __mmask8 KEYMSK = 0b01010101;
+ // #define KEYMSK ((__mmask8)(0b01010101))
+ #define PREFETCH_INSERT_NEXT_DISTANCE 8
+@@ -93,8 +114,8 @@ class CASHashTable : public BaseHashTable {
+             "Hashtable base: %p Hashtable size: %lu, %lu GB", this->hashtable,
+             this->capacity,
+             (this->capacity * sizeof(KV)) / (1024ULL * 1024ULL * 1024ULL));
+-        PLOGI.printf("queue sz: %lu, queue item sz: %d", find_queue_sz,
+-                     sizeof(KVQ));
++        PLOGI.printf("queue sz: %lu, queue item sz: %d, find queue item sz: %d",
++                     find_queue_sz, sizeof(KVQ), sizeof(FQE));
+       }
+       this->ref_cnt++;
+     }
+@@ -108,7 +129,7 @@ class CASHashTable : public BaseHashTable {
+     PLOGV << "Empty item: " << this->empty_item;
+     this->insert_queue =
+         (KVQ *)(aligned_alloc(64, insert_queue_sz * sizeof(KVQ)));
+-    this->find_queue = (KVQ *)(aligned_alloc(64, find_queue_sz * sizeof(KVQ)));
++    this->find_queue = (FQE *)(aligned_alloc(64, find_queue_sz * sizeof(FQE)));
+     this->FIND_QUEUE_SZ_MASK = this->find_queue_sz - 1;
+     this->INSERT_QUEUE_SZ_MASK = this->insert_queue_sz - 1;
+ 
+@@ -481,7 +502,7 @@ class CASHashTable : public BaseHashTable {
+ #ifdef DOUBLE_PREFETCH
+       next_tail =
+           (this->find_tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
+-      next_tail_addr = &this->hashtable[this->find_queue[next_tail].idx];
++      next_tail_addr = &this->hashtable[fq_idx(&this->find_queue[next_tail])];
+       __builtin_prefetch(next_tail_addr, false, 3);
+ #endif
+ 
+@@ -503,7 +524,7 @@ class CASHashTable : public BaseHashTable {
+ #ifdef DOUBLE_PREFETCH
+       next_tail =
+           (this->find_tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
+-      next_tail_addr = &this->hashtable[this->find_queue[next_tail].idx];
++      next_tail_addr = &this->hashtable[fq_idx(&this->find_queue[next_tail])];
+       __builtin_prefetch(next_tail_addr, false, 3);
+ #endif
+       retry = __find_one(&this->find_queue[this->find_tail], vp, collector);
+@@ -582,6 +603,13 @@ class CASHashTable : public BaseHashTable {
+ #else
+   void find_batch(const InsertFindArguments &kp, ValuePairs &vp,
+                   collector_type *collector) {
++#endif
++#if defined(CAS_FIND_VEC4) && !(defined(CAS_FIND_RING_OFFSETS) && defined(CAS_FIND_COMPRESS_VALUE) && \
++                                defined(CAS_FIND_KSHIFT) && defined(DOUBLE_PREFETCH))
++#error "CAS_FIND_VEC4 needs CAS_FIND_RING_OFFSETS, CAS_FIND_COMPRESS_VALUE, CAS_FIND_KSHIFT and PREFETCH=DOUBLE"
++#endif
++#if defined(CAS_FIND_VEC4) && defined(LATENCY_COLLECTION)
++#error "CAS_FIND_VEC4 does not support LATENCY_COLLECTION"
+ #endif
+     bool fast_path = ((this->find_head - this->find_tail) &
+                       FIND_QUEUE_SZ_MASK) >= (find_queue_sz - 1);
+@@ -591,14 +619,14 @@ class CASHashTable : public BaseHashTable {
+ #ifdef CAS_FIND_RING_OFFSETS
+       // Inside this loop tail/head are byte offsets into find_queue, so a slot
+       // is base + offset with no index scaling; converted back on exit.
+-      static_assert((sizeof(KVQ) & (sizeof(KVQ) - 1)) == 0,
++      static_assert((sizeof(FQE) & (sizeof(FQE) - 1)) == 0,
+                     "find queue entry size must be a power of two");
+       char *const fq_base = reinterpret_cast<char *>(this->find_queue);
+       // 64-bit so an offset can be used directly as an addressing-mode index.
+-      const uint64_t fq_mask = (uint64_t)this->find_queue_sz * sizeof(KVQ) - 1;
+-      uint64_t tail = (uint64_t)this->find_tail * sizeof(KVQ);
+-      uint64_t head = (uint64_t)this->find_head * sizeof(KVQ);
+-#define FQ(off) (*reinterpret_cast<KVQ *>(fq_base + (off)))
++      const uint64_t fq_mask = (uint64_t)this->find_queue_sz * sizeof(FQE) - 1;
++      uint64_t tail = (uint64_t)this->find_tail * sizeof(FQE);
++      uint64_t head = (uint64_t)this->find_head * sizeof(FQE);
++#define FQ(off) (*reinterpret_cast<FQE *>(fq_base + (off)))
+ #else
+       uint32_t tail = this->find_tail;
+       uint32_t head = this->find_head;
+@@ -611,36 +639,166 @@ class CASHashTable : public BaseHashTable {
+       __m512i key_vector;
+       __m512i cacheline;
+       __mmask8 key_cmp;
+-      KVQ *q;
++      FQE *q;
+       uint64_t hash;
+-      // c++ iterator is faster than a regular integer loop.
+-      for (auto &data : kp) {
++      const uint32_t bmask = (uint32_t)HT_BUCKET_MASK;  // kept in a register
++#ifdef CAS_FIND_VEC4
++      static_assert(sizeof(FindResult) == 16 && offsetof(FindResult, value) == 8,
++                    "VEC4 writes 4 results as 64 B");
++      constexpr uint64_t E = sizeof(FQE);
++      // a group needs its 4 popped, 4 pushed and 4 prefetched slots contiguous
++      const uint64_t group_lim = fq_mask + 1 - 4 * E;
++#ifdef CAS_FIND_QUEUE16
++      // 4 entries = one 64 B block {key lo, key hi, hash, key_id} x 4.
++      // pop: key_id (dword 4j+3) -> result dword 4j
++      const __m512i id_perm = _mm512_set_epi32(0, 0, 0, 15, 0, 0, 0, 11, 0, 0, 0, 7, 0, 0, 0, 3);
++      // push: from 4 consecutive InsertFindArguments (24 B: key = dwords 6j,6j+1,
++      // id = dword 6j+4), loaded as dwords 0..15 (a) and 8..23 (b), build
++      // {key lo, key hi, -, id} per entry; the hashes go in dwords 4j+2 after.
++      const __m512i push_perm =
++          _mm512_set_epi32(30, 0, 27, 26, 24, 0, 13, 12, 10, 0, 7, 6, 4, 0, 1, 0);
++#else
++      static_assert(sizeof(FQE) == 32 && offsetof(FQE, key_id) == 20,
++                    "VEC4 assumes the 32 B queue entry");
++#endif
++#ifndef CAS_FIND_VEC4_SCALAR_RES
++#ifndef CAS_FIND_QUEUE16
++      // key_id of entries 0..3 (dword 5 of each 32 B entry in e01:e23) -> dword 4j
++      const __m512i id_perm =
++          _mm512_set_epi32(0, 0, 0, 29, 0, 0, 0, 21, 0, 0, 0, 13, 0, 0, 0, 5);
++#endif
++      // lane 0 of (v0, v1) -> qwords 1, 3; lane 0 of (v2, v3) -> qwords 5, 7
++      const __m512i v01_perm = _mm512_set_epi64(0, 0, 0, 0, 8, 0, 0, 0);
++      const __m512i v23_perm = _mm512_set_epi64(8, 0, 0, 0, 0, 0, 0, 0);
++#endif
++#endif
++      // pointer loop (same code as the span iterator); VEC4 needs to step by 4
++      InsertFindArgument *const in_end = kp.data() + kp.size();
++      for (InsertFindArgument *dp = kp.data(); dp != in_end; ++dp) {
++        auto &data = *dp;
++#ifdef CAS_FIND_VEC4
++        if (in_end - dp >= 4) {
++          const uint64_t pf = (tail + PREFETCH_FIND_NEXT_DISTANCE * E) & fq_mask;
++          if (tail <= group_lim && head <= group_lim && pf <= group_lim) {
++            FQE *const q0 = &FQ(tail);
++            FQE *const p0 = &FQ(pf);
++            __m512i b[4];
++            __mmask8 m[4];
++#pragma GCC unroll 4
++            for (int j = 0; j < 4; j++)
++              __builtin_prefetch(&this->hashtable[fq_idx(&p0[j], bmask)], false, 3);
++#pragma GCC unroll 4
++            for (int j = 0; j < 4; j++) {
++              b[j] = _mm512_load_si512(&this->hashtable[fq_idx(&q0[j], bmask)]);
++#ifdef CAS_FIND_EMBCAST
++              m[j] = cmp_key_bcast(b[j], &q0[j].key);
++#else
++              m[j] = _mm512_mask_cmpeq_epu64_mask(KEYMSK, b[j],
++                                                  _mm512_set1_epi64(q0[j].key));
++#endif
++            }
++            // any miss (reprobe / not found): the scalar body below redoes this item
++            if (m[0] && m[1] && m[2] && m[3]) [[likely]] {
++#ifdef CAS_FIND_VEC4_SCALAR_RES
++#pragma GCC unroll 4
++              for (int j = 0; j < 4; j++) {
++                vp_result[j].value = _mm_cvtsi128_si64(_mm512_castsi512_si128(
++                    _mm512_maskz_compress_epi64(_kshiftli_mask8(m[j], 1), b[j])));
++                vp_result[j].id = q0[j].key_id;
++              }
++#else
++              // 4 x FindResult{id, value} = one 64 B store
++#ifdef CAS_FIND_QUEUE16
++              __m512i r = _mm512_permutexvar_epi32(id_perm, _mm512_loadu_si512(q0));
++#else
++              __m512i r = _mm512_permutex2var_epi32(_mm512_loadu_si512(&q0[0]), id_perm,
++                                                    _mm512_loadu_si512(&q0[2]));
++#endif
++              __m512i v[4];
++#pragma GCC unroll 4
++              for (int j = 0; j < 4; j++)
++                v[j] = _mm512_maskz_compress_epi64(_kshiftli_mask8(m[j], 1), b[j]);
++              r = _mm512_mask_mov_epi64(r, 0x0A, _mm512_permutex2var_epi64(v[0], v01_perm, v[1]));
++              r = _mm512_mask_mov_epi64(r, 0xA0, _mm512_permutex2var_epi64(v[2], v23_perm, v[3]));
++              _mm512_storeu_si512(vp_result, r);
++#endif
++              vp_result += 4;
++              // the queue is full (head == tail - 1), so the 4 pushes land in the slot
++              // before tail and in the 3 just popped; all reads of q0[] are done above
++              FQE *const h0 = &FQ(head);
++#ifdef CAS_FIND_QUEUE16
++              {
++                // one 64 B store for the 4 new entries
++                static_assert(sizeof(InsertFindArgument) == 24, "push_perm assumes 24 B arguments");
++                uint32_t hh[4];
++#pragma GCC unroll 4
++                for (int j = 0; j < 4; j++) {
++                  hh[j] = (uint32_t)_mm_crc32_u64(0xffffffff, dp[j].key);
++                  prefetch_read(hh[j] & bmask);
++#ifndef UNIFORM_HT_SUPPORT
++                  hh[j] &= bmask;  // linear probing keeps the index itself
++#endif
++                }
++                __m512i blk = _mm512_permutex2var_epi32(
++                    _mm512_loadu_si512(dp), push_perm,
++                    _mm512_loadu_si512(reinterpret_cast<const char *>(dp) + 32));
++                blk = _mm512_mask_expand_epi32(
++                    blk, 0x4444, _mm512_castsi128_si512(_mm_set_epi32(hh[3], hh[2], hh[1], hh[0])));
++                _mm512_storeu_si512(h0, blk);
++              }
++#else
++#pragma GCC unroll 4
++              for (int j = 0; j < 4; j++) {
++                const uint64_t k = dp[j].key;
++                const uint64_t hh = _mm_crc32_u64(0xffffffff, k);
++                const uint32_t ni = hh & HT_BUCKET_MASK;
++                prefetch_read(ni);
++                h0[j].key = k;
++                h0[j].idx = ni;
++                h0[j].key_id = dp[j].id;
++#ifdef UNIFORM_HT_SUPPORT
++                h0[j].key_hash = hh;
++#endif
++              }
++#endif
++              tail = (tail + 4 * E) & fq_mask;
++              head = (head + 4 * E) & fq_mask;
++              dp += 3;  // + the loop's ++dp
++              continue;
++            }
++          }
++        }
++#endif
+       retry:
+ 
+ #ifdef DOUBLE_PREFETCH
+         // Prefetch next tail bucket
+ #ifdef CAS_FIND_RING_OFFSETS
+         uint64_t next_tail =
+-            (tail + PREFETCH_FIND_NEXT_DISTANCE * sizeof(KVQ)) & fq_mask;
++            (tail + PREFETCH_FIND_NEXT_DISTANCE * sizeof(FQE)) & fq_mask;
+ #else
+         uint32_t next_tail = (tail + PREFETCH_FIND_NEXT_DISTANCE) & FIND_QUEUE_SZ_MASK;
+ #endif
+         const void *next_tail_addr =
+-            &this->hashtable[FQ(next_tail).idx];
++            &this->hashtable[fq_idx(&FQ(next_tail), bmask)];
+         __builtin_prefetch(next_tail_addr, false, 3);
+ #endif
+         q = &FQ(tail);
+-        uint32_t idx = q->idx;
+-        key = q->key;
+-
++        uint32_t idx = fq_idx(q, bmask);
+         bucket = (uint64_t *)&this->hashtable[idx];
+-        key_vector = _mm512_set1_epi64(key);
+         cacheline = _mm512_load_si512(bucket);
+-
++#ifdef CAS_FIND_EMBCAST
++        // compare straight against the entry ({1to8} memory broadcast); the
++        // key is reloaded from q only on the retry path
++        key_cmp = cmp_key_bcast(cacheline, &q->key);
++#else
++        key = q->key;
++        key_vector = _mm512_set1_epi64(key);
+         key_cmp = _mm512_mask_cmpeq_epu64_mask(KEYMSK, cacheline, key_vector);
++#endif
+         // update tails before we enter branching.
+ #ifdef CAS_FIND_RING_OFFSETS
+-        tail = (tail + sizeof(KVQ)) & fq_mask;
++        tail = (tail + sizeof(FQE)) & fq_mask;
+ #else
+         tail = (tail + 1) & FIND_QUEUE_SZ_MASK;
+ #endif
+@@ -674,6 +832,18 @@ class CASHashTable : public BaseHashTable {
+             this->num_reprobes++;
+ #endif
+ 
++#ifdef CAS_FIND_QUEUE16
++#ifdef UNIFORM_HT_SUPPORT
++            hash = _mm_crc32_u64(0xffffffff, (uint64_t)q->hash);
++            idx = hash & bmask;
++#else
++            idx += CACHELINE_SIZE / sizeof(KV);
++            idx = idx & HT_BUCKET_MASK;
++            hash = idx;
++#endif
++            prefetch_read(idx);
++            fq_put(&FQ(head), q->key, (uint32_t)hash, q->key_id);
++#else
+ #ifdef UNIFORM_HT_SUPPORT
+             hash = _mm_crc32_u64(
+                 0xffffffff,
+@@ -688,14 +858,19 @@ class CASHashTable : public BaseHashTable {
+ #ifdef UNIFORM_HT_SUPPORT
+             FQ(head).key_hash = hash;
+ #endif
++#ifdef CAS_FIND_EMBCAST
++            FQ(head).key = q->key;
++#else
+             FQ(head).key = key;
++#endif
+             FQ(head).key_id = q->key_id;
+             FQ(head).idx = idx;
+ #ifdef LATENCY_COLLECTION
+             FQ(head).timer_id = q->timer_id;
+ #endif
++#endif
+ #ifdef CAS_FIND_RING_OFFSETS
+-            head = (head + sizeof(KVQ)) & fq_mask;
++            head = (head + sizeof(FQE)) & fq_mask;
+ #else
+             head += 1;
+             head &= FIND_QUEUE_SZ_MASK;
+@@ -720,6 +895,13 @@ class CASHashTable : public BaseHashTable {
+         uint32_t new_idx = hash & HT_BUCKET_MASK;
+ 
+         prefetch_read(new_idx);
++#ifdef CAS_FIND_QUEUE16
++#ifdef UNIFORM_HT_SUPPORT
++        fq_put(&FQ(head), key_data->key, (uint32_t)hash, key_data->id);
++#else
++        fq_put(&FQ(head), key_data->key, new_idx, key_data->id);
++#endif
++#else
+         FQ(head).key = key_data->key;
+ #ifdef CAS_FIND_SCALAR_PACK
+         {
+@@ -743,8 +925,9 @@ class CASHashTable : public BaseHashTable {
+ #ifdef LATENCY_COLLECTION
+         FQ(head).timer_id = timer;
+ #endif
++#endif  // CAS_FIND_QUEUE16
+ #ifdef CAS_FIND_RING_OFFSETS
+-        head = (head + sizeof(KVQ)) & fq_mask;
++        head = (head + sizeof(FQE)) & fq_mask;
+ #else
+         head += 1;
+         head &= FIND_QUEUE_SZ_MASK;
+@@ -752,8 +935,8 @@ class CASHashTable : public BaseHashTable {
+       }  // end for loop
+ 
+ #ifdef CAS_FIND_RING_OFFSETS
+-      this->find_tail = tail / sizeof(KVQ);
+-      this->find_head = head / sizeof(KVQ);
++      this->find_tail = tail / sizeof(FQE);
++      this->find_head = head / sizeof(FQE);
+ #else
+       this->find_tail = tail;
+       this->find_head = head;
+@@ -888,8 +1071,36 @@ class CASHashTable : public BaseHashTable {
+   uint64_t capacity;
+ 
+   KV empty_item;
+-  KVQ *find_queue;
++  FQE *find_queue;
+   KVQ *insert_queue;
++
++  // bucket index of a find-queue entry
++  inline uint32_t fq_idx(const FQE *e) const { return fq_idx(e, (uint32_t)HT_BUCKET_MASK); }
++  // same with the mask passed in: the find fast path keeps it in a register (the
++  // entry stores could otherwise alias HT_BUCKET_MASK and force a reload each find)
++  static inline uint32_t fq_idx(const FQE *e, uint32_t bmask) {
++#ifdef CAS_FIND_QUEUE16
++    return e->hash & bmask;
++#else
++    (void)bmask;
++    return e->idx;
++#endif
++  }
++
++#ifdef CAS_FIND_QUEUE16
++  // Write a 16 B entry. h = the crc hash (uniform probing) or the bucket index
++  // (linear probing). Two 8 B stores, or one 16 B store with CAS_FIND_QUEUE16_XMM.
++  static inline void fq_put(FQE *e, uint64_t key, uint32_t h, uint32_t id) {
++#ifdef CAS_FIND_QUEUE16_XMM
++    const uint64_t hi = (uint64_t)h | ((uint64_t)id << 32);
++    _mm_storeu_si128(reinterpret_cast<__m128i *>(e), _mm_set_epi64x((long long)hi, (long long)key));
++#else
++    e->key = key;
++    e->hash = h;
++    e->key_id = id;
++#endif
++  }
++#endif
+   uint32_t find_head;
+   uint32_t find_tail;
+   uint32_t ins_head;
+@@ -919,8 +1130,43 @@ class CASHashTable : public BaseHashTable {
+ 
+ #if defined(AVX_SUPPORT) && defined(BUCKETIZATION)
+ 
+-  uint64_t __find_simd(KVQ *q, ValuePairs &vp) {
++  uint64_t __find_simd(FQE *q, ValuePairs &vp) {
+     uint64_t retry;
++#ifdef CAS_FIND_QUEUE16
++    // Item::find_simd reads an ItemQueue; the 16 B entry is compared here instead.
++    size_t idx = fq_idx(q);
++    {
++      uint64_t *bucket = (uint64_t *)&this->hashtable[idx];
++      const __m512i line = _mm512_load_si512(bucket);
++      const __mmask8 key_cmp =
++          _mm512_mask_cmpeq_epu64_mask(KEYMSK, line, _mm512_set1_epi64(q->key));
++      if (key_cmp) {
++        vp.second[vp.first].id = q->key_id;
++        vp.second[vp.first].value = bucket[_bit_scan_forward(key_cmp) + 1];
++        vp.first++;
++        return 0;
++      }
++      retry = _mm512_mask_cmpeq_epu64_mask(KEYMSK, line, _mm512_setzero_si512()) == 0;
++    }
++    if (retry) {
++#ifdef UNIFORM_HT_SUPPORT
++      uint64_t old_hash = q->hash;
++      uint64_t hash = this->hash(&old_hash);
++      idx = hash & HT_BUCKET_MASK;
++#else
++      idx = (idx + CACHELINE_SIZE / sizeof(KV)) & HT_BUCKET_MASK;
++      uint64_t hash = idx;
++#endif
++      prefetch_read(idx);
++      fq_put(&this->find_queue[this->find_head], q->key, (uint32_t)hash, q->key_id);
++      this->find_head++;
++      this->find_head &= FIND_QUEUE_SZ_MASK;
++#ifdef CALC_STATS
++      this->num_reprobes++;
++#endif
++    }
++    return retry;
++#else
+     size_t idx = q->idx;
+ 
+     KV *curr_cacheline = &this->hashtable[idx];
+@@ -957,10 +1203,12 @@ class CASHashTable : public BaseHashTable {
+     }
+ 
+     return retry;
++#endif  // CAS_FIND_QUEUE16
+   }
+ 
+ #endif
+ 
++#ifndef CAS_FIND_QUEUE16
+   uint64_t __find_branched(KVQ *q, ValuePairs &vp, collector_type *collector) {
+     // hashtable idx where the data should be found
+     size_t idx = q->idx;
+@@ -1020,8 +1268,9 @@ class CASHashTable : public BaseHashTable {
+ 
+     return retry;
+   }
++#endif
+ 
+-  uint64_t __find_one(KVQ *q, ValuePairs &vp, collector_type *collector) {
++  uint64_t __find_one(FQE *q, ValuePairs &vp, collector_type *collector) {
+     if (q->key == this->empty_item.get_key()) {
+       return __find_empty(q, vp);
+     }
+@@ -1037,7 +1286,7 @@ class CASHashTable : public BaseHashTable {
+   }  // end __find_one()
+ 
+   /// Update or increment the empty key.
+-  uint64_t __find_empty(KVQ *q, ValuePairs &vp) {
++  uint64_t __find_empty(FQE *q, ValuePairs &vp) {
+     if (empty_slot_exists_) {
+       vp.second[vp.first].id = q->key_id;
+       vp.second[vp.first].value = empty_slot_;
+@@ -1064,6 +1313,20 @@ class CASHashTable : public BaseHashTable {
+ #endif
+   }
+ 
++#ifdef CAS_FIND_EMBCAST
++  // vpcmpequq against the key as a {1to8} memory-broadcast operand. gcc does not
++  // fold _mm512_set1_epi64(*key) into the compare by itself: it keeps the key in
++  // a GPR + vpbroadcastq, or emits a separate broadcast load.
++  static inline __mmask8 cmp_key_bcast(__m512i line, const uint64_t *key) {
++    __mmask8 k;
++    const __mmask8 km = KEYMSK;
++    __asm__("vpcmpequq %2%{1to8%}, %1, %0%{%3%}"
++            : "=k"(k)
++            : "v"(line), "m"(*key), "Yk"(km));
++    return k;
++  }
++#endif
++
+   inline void prefetch_read(uint64_t idx) {
+ #ifdef DOUBLE_PREFETCH
+     __builtin_prefetch(&this->hashtable[idx], false, 1);
+@@ -1281,6 +1544,13 @@ class CASHashTable : public BaseHashTable {
+ 
+     prefetch_read(idx);
+ 
++#ifdef CAS_FIND_QUEUE16
++#ifdef UNIFORM_HT_SUPPORT
++    fq_put(&this->find_queue[this->find_head], key_data->key, (uint32_t)hash, key_data->id);
++#else
++    fq_put(&this->find_queue[this->find_head], key_data->key, (uint32_t)idx, key_data->id);
++#endif
++#else
+     this->find_queue[this->find_head].idx = idx;
+     this->find_queue[this->find_head].key = key_data->key;
+     this->find_queue[this->find_head].key_id = key_data->id;
+@@ -1291,6 +1561,7 @@ class CASHashTable : public BaseHashTable {
+ 
+ #ifdef LATENCY_COLLECTION
+     this->find_queue[this->find_head].timer_id = timer;
++#endif
+ #endif
+ 
+     this->find_head++;

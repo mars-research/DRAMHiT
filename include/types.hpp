@@ -315,6 +315,24 @@ std::ostream& operator<<(std::ostream& os, const InsertFindArgument& q);
 /// A span of `InsertFindArgument`s.
 using InsertFindArguments = std::span<InsertFindArgument>;
 
+/// 16 B find argument: only what a find needs (the key, and the id returned in
+/// `FindResult::id`). Laid out like the CAS table's 16 B find-queue entry
+/// {key, hash, key_id}: the 4 bytes after the key are unused here and become the
+/// hash slot, so 4 arguments are pushed onto the find queue as one 64 B block.
+struct FindArgument {
+  kmercounter::key_type key;
+  uint32_t reserved;
+  uint32_t id;
+};
+using FindArguments = std::span<FindArgument>;
+
+/// 16 B insert argument: only what an insert needs (the key and its value).
+struct InsertArgument {
+  kmercounter::key_type key;
+  kmercounter::value_type value;
+};
+using InsertArguments = std::span<InsertArgument>;
+
 /// The result of a find operation on a hashtable.
 struct FindResult {
   /// The id of the find operation.

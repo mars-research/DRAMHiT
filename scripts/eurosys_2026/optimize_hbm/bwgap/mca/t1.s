@@ -1,0 +1,13 @@
+lea    (%r15,%rcx,1),%r9
+mov    %r8,%rax
+mov    %r8,%rdx
+crc32  %rcx,%rax
+crc32  %r9,%rdx
+and    %rsi,%rdx
+and    %rsi,%rax
+shl    $0x6,%rdx
+shl    $0x6,%rax
+inc    %rcx
+add    (%rdi,%rax,1),%r14
+prefetcht1 (%rdi,%rdx,1)
+cmp    %rcx,%r10

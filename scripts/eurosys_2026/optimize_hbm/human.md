@@ -1,4 +1,12 @@
 
+
+
+
+
+- deep vectorizartion 
+- cpu emulation
+- hyperthreading investigation on dramhit. 
+
 ## Debugging
 
 - under report-unocre and report-throttling, it claims the power limit throttle cpu freq not the temperature.

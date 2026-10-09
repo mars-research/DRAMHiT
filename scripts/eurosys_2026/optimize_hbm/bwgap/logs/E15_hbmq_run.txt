@@ -1,0 +1,9 @@
+[E15_hbmq] rep 1/2  bw_t1
+[E15_hbmq] rep 1/2  mimic_s2
+[E15_hbmq] rep 1/2  mimic_s4
+[E15_hbmq] rep 1/2  a7_base_f10
+[E15_hbmq] rep 2/2  bw_t1
+[E15_hbmq] rep 2/2  mimic_s2
+[E15_hbmq] rep 2/2  mimic_s4
+[E15_hbmq] rep 2/2  a7_base_f10
+[OK]

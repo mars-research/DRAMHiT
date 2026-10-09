@@ -84,7 +84,17 @@ def threads():
     return w
 
 
-SETS = {"threads": threads, "energy": energy, "capsweep": capsweep, "dpad": dpad, "core": core, "ladder": ladder, "mimic": mimic, "keybind": keybind}
+def vec():
+    # attempt7: deep-vectorization variants of the find fast path (keys-in-HBM harness)
+    w = {}
+    for v in ("base", "emb", "vec4s", "vec4"):
+        b = str(r.OPT / "attempt7" / v / "dramhit")
+        w[f"a7_{v}_f10"] = ((lambda b=b: r.dramhit_cmd(fill=10, read_factor=100, binary=b)),
+                            (lambda b=b: r.dramhit_cmd(fill=10, read_factor=200, binary=b)), None, None)
+    return w
+
+
+SETS = {"vec": vec, "threads": threads, "energy": energy, "capsweep": capsweep, "dpad": dpad, "core": core, "ladder": ladder, "mimic": mimic, "keybind": keybind}
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)

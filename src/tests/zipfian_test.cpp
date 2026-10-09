@@ -32,7 +32,9 @@
 #ifdef WITH_PCM
 #include "PCMCounter.hpp"
 #endif
+#include <atomic>
 #include <random>
+#include <string>
 namespace kmercounter {
 
 extern void get_ht_stats(Shard *, BaseHashTable *);
@@ -63,9 +65,17 @@ using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
 using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
 
 uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
-#if defined(CAS_NO_ABSTRACT)
+#if defined(CAS_NO_ABSTRACT) || defined(SPLIT_ARGS)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
+#endif
+#ifdef SPLIT_ARGS
+  // 16 B arguments: inserts carry {key, value}, finds {key, id} (CAS table only)
+  using InsArg = InsertArgument;
+  using FindArg = FindArgument;
+#else
+  using InsArg = InsertFindArgument;
+  using FindArg = InsertFindArgument;
 #endif
 #ifdef LATENCY_COLLECTION
   const auto collector = &collectors.at(id);
@@ -77,8 +87,7 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
   uint64_t batch_num = request_num / batch_len;
   collector_type *const collector{};
 #endif
-  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
-      64, sizeof(InsertFindArgument) * config.batch_len);
+  InsArg *items = (InsArg *)aligned_alloc(64, sizeof(InsArg) * config.batch_len);
   key_type value;
   uint64_t idx = 0;
   for (uint64_t n = 0; n < batch_num; ++n) {
@@ -90,15 +99,19 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
       value = workload[idx];
 
       items[i].key = items[i].value = value;
+#ifndef SPLIT_ARGS
       items[i].id = idx;
+#endif
       idx++;
     }
 
+#ifdef SPLIT_ARGS
+    cas_ht->insert_batch(InsertArguments(items, batch_len), collector);
+#elif defined(CAS_NO_ABSTRACT)
     InsertFindArguments keypairs(items, batch_len);
-
-#if defined(CAS_NO_ABSTRACT)
     cas_ht->insert_batch_inline(keypairs, collector);
 #else
+    InsertFindArguments keypairs(items, batch_len);
     ht->insert_batch(keypairs, collector);
 #endif
   }
@@ -111,13 +124,18 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
       }
       value = workload[idx];
       items[i].key = items[i].value = value;
+#ifndef SPLIT_ARGS
       items[i].id = idx;
+#endif
       idx++;
     }
+#ifdef SPLIT_ARGS
+    cas_ht->insert_batch(InsertArguments(items, residue_num), collector);
+#elif defined(CAS_NO_ABSTRACT)
     InsertFindArguments keypairs(items, residue_num);
-#if defined(CAS_NO_ABSTRACT)
     cas_ht->insert_batch_inline(keypairs, collector);
 #else
+    InsertFindArguments keypairs(items, residue_num);
     ht->insert_batch(keypairs, collector);
 #endif
   }
@@ -132,11 +150,51 @@ struct ht_do_batch_find_ret {
   uint32_t found;
 };
 
+// Key-stream prefetch of the find loop, configurable from the environment (research knobs; with none
+// set the behaviour is the original one: in the per-key loop, every 8 keys, 16 keys ahead, prefetcht0).
+//   KEY_PF_DIST  keys ahead (0 = no key prefetch)
+//   KEY_PF_HINT  t0 | t1 | t2 | nta
+//   KEY_PF_MODE  inline: in the per-key loop, one prefetch per 8-key line
+//                batch:  at the start of each batch, every key line of the batch KEY_PF_DIST keys ahead
+struct KeyPrefetchConfig {
+  uint64_t dist = 16;
+  int hint = 3;  // __builtin_prefetch locality: 3 = t0, 2 = t1, 1 = t2, 0 = nta
+  bool batch = false;
+};
+
+static KeyPrefetchConfig key_prefetch_config() {
+  KeyPrefetchConfig c;
+  if (const char *d = getenv("KEY_PF_DIST")) c.dist = strtoull(d, nullptr, 10);
+  if (const char *h = getenv("KEY_PF_HINT")) {
+    std::string hs(h);
+    c.hint = hs == "t1" ? 2 : hs == "t2" ? 1 : hs == "nta" ? 0 : 3;
+  }
+  if (const char *m = getenv("KEY_PF_MODE")) c.batch = std::string(m) == "batch";
+  return c;
+}
+
+static inline void key_prefetch(const void *p, int hint) {
+  switch (hint) {
+    case 3: __builtin_prefetch(p, false, 3); break;
+    case 2: __builtin_prefetch(p, false, 2); break;
+    case 1: __builtin_prefetch(p, false, 1); break;
+    default: __builtin_prefetch(p, false, 0); break;
+  }
+}
+
 uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
                        uint64_t *found_res) {
-#if defined(CAS_NO_ABSTRACT)
+#if defined(CAS_NO_ABSTRACT) || defined(SPLIT_ARGS)
   CASHashTable<KVType, ItemQueue> *cas_ht =
       static_cast<CASHashTable<KVType, ItemQueue> *>(ht);
+#endif
+#ifdef SPLIT_ARGS
+  // 16 B arguments: inserts carry {key, value}, finds {key, id} (CAS table only)
+  using InsArg = InsertArgument;
+  using FindArg = FindArgument;
+#else
+  using InsArg = InsertFindArgument;
+  using FindArg = InsertFindArgument;
 #endif
   uint64_t request_num = workload.size();
   uint32_t batch_len = config.batch_len;
@@ -149,8 +207,7 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
 #else
   collector_type *const collector{};
 #endif
-  InsertFindArgument *items = (InsertFindArgument *)aligned_alloc(
-      64, sizeof(InsertFindArgument) * batch_len);
+  FindArg *items = (FindArg *)aligned_alloc(64, sizeof(FindArg) * batch_len);
 
 #ifdef BUDDY_QUEUE
   FindResult *results = new FindResult[(batch_len * 2)];
@@ -160,22 +217,38 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
 
   ValuePairs vp = std::make_pair(0, results);
   key_type value;
+  const KeyPrefetchConfig kpf = key_prefetch_config();
+  static std::atomic<bool> kpf_logged{false};
+  if (!kpf_logged.exchange(true))
+    PLOGI.printf("find key prefetch: %s, %lu keys ahead, hint %d", kpf.batch ? "batch" : "inline",
+                 kpf.dist, kpf.hint);
   for (uint64_t n = 0; n < batch_num; ++n) {
+    if (kpf.batch && kpf.dist) {
+      const uint64_t a = idx + kpf.dist;  // first key of the batch kpf.dist keys ahead
+      for (uint64_t j = a & ~7ull; j < a + batch_len && j < request_num; j += 8)
+        key_prefetch(&workload[j], kpf.hint);
+    }
     for (uint32_t i = 0; i < batch_len; i++) {
-      if (!(idx & 7) && idx + 16 < request_num) {
-        __builtin_prefetch(&workload[idx + 16], false, 3);
+      if (!kpf.batch && kpf.dist && !(idx & 7) && idx + kpf.dist < request_num) {
+        key_prefetch(&workload[idx + kpf.dist], kpf.hint);
       }
 
       value = workload[idx];
 
+#ifdef SPLIT_ARGS
+      items[i].key = value;
+#else
       items[i].key = items[i].value = value;
+#endif
       items[i].id = idx;
       idx++;
     }
 
     vp.first = 0;
 
-#if defined(CAS_NO_ABSTRACT)
+#ifdef SPLIT_ARGS
+    cas_ht->find_batch(FindArguments(items, batch_len), vp, collector);
+#elif defined(CAS_NO_ABSTRACT)
     cas_ht->find_batch_inline(InsertFindArguments(items, batch_len), vp,
                               collector);
 #else
@@ -188,17 +261,23 @@ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
   uint64_t residue_num = request_num - batch_len * batch_num;
   if (residue_num > 0) {
     for (uint64_t i = 0; i < residue_num; i++) {
-      if (!(idx & 7) && (idx + 16 < request_num)) {
-        __builtin_prefetch(&workload[idx + 16], false, 3);
+      if (!kpf.batch && kpf.dist && !(idx & 7) && (idx + kpf.dist < request_num)) {
+        key_prefetch(&workload[idx + kpf.dist], kpf.hint);
       }
       value = workload[idx];
+#ifdef SPLIT_ARGS
+      items[i].key = value;
+#else
       items[i].key = items[i].value = value;
+#endif
       items[i].id = idx;
       idx++;
     }
 
     vp.first = 0;
-#if defined(CAS_NO_ABSTRACT)
+#ifdef SPLIT_ARGS
+    cas_ht->find_batch(FindArguments(items, residue_num), vp, collector);
+#elif defined(CAS_NO_ABSTRACT)
     cas_ht->find_batch_inline(InsertFindArguments(items, residue_num), vp,
                               collector);
 #else

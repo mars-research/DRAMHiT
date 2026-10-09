@@ -1,0 +1,44 @@
+[E15_cha_lat] rep 1/2  bw_t1
+[E15_cha_lat] rep 1/2  mimic_s2
+[E15_cha_lat] rep 1/2  mimic_s4
+[E15_cha_lat] rep 1/2  a7_base_f10
+[E15_cha_lat] rep 2/2  bw_t1
+[E15_cha_lat] rep 2/2  mimic_s2
+[E15_cha_lat] rep 2/2  mimic_s4
+[E15_cha_lat] rep 2/2  a7_base_f10
+[OK]
+[E15_cha_mix] rep 1/2  bw_t1
+[E15_cha_mix] rep 1/2  mimic_s2
+[E15_cha_mix] rep 1/2  mimic_s4
+[E15_cha_mix] rep 1/2  a7_base_f10
+[E15_cha_mix] rep 2/2  bw_t1
+[E15_cha_mix] rep 2/2  mimic_s2
+[E15_cha_mix] rep 2/2  mimic_s4
+[E15_cha_mix] rep 2/2  a7_base_f10
+[OK]
+[E15_cha_coh] rep 1/2  bw_t1
+[E15_cha_coh] rep 1/2  mimic_s2
+[E15_cha_coh] rep 1/2  mimic_s4
+[E15_cha_coh] rep 1/2  a7_base_f10
+[E15_cha_coh] rep 2/2  bw_t1
+[E15_cha_coh] rep 2/2  mimic_s2
+[E15_cha_coh] rep 2/2  mimic_s4
+[E15_cha_coh] rep 2/2  a7_base_f10
+[OK]
+[mesh] socket 0 uncore pinned to 1600 MHz (was min/max ('2500000', '2500000'))
+[E15_mesh1600] rep 1/3  bw_t1
+[E15_mesh1600] rep 1/3  mimic_s2
+[E15_mesh1600] rep 1/3  mimic_s4
+[E15_mesh1600] rep 1/3  a7_base_f10
+[E15_mesh1600] rep 2/3  bw_t1
+[E15_mesh1600] rep 2/3  mimic_s2
+[E15_mesh1600] rep 2/3  mimic_s4
+[E15_mesh1600] rep 2/3  a7_base_f10
+[E15_mesh1600] rep 3/3  bw_t1
+[E15_mesh1600] rep 3/3  mimic_s2
+[E15_mesh1600] rep 3/3  mimic_s4
+[E15_mesh1600] rep 3/3  a7_base_f10
+[mesh] restored min/max ('2500000', '2500000')
+[OK]
+2500000
+2500000

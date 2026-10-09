@@ -1,0 +1,36 @@
+[E18_ports_a] rep 1/2  bw_t1
+[E18_ports_a] rep 1/2  mimic_s1
+[E18_ports_a] rep 1/2  mimic_s2
+[E18_ports_a] rep 1/2  mimic_s3
+[E18_ports_a] rep 1/2  mimic_s4
+[E18_ports_a] rep 1/2  a7_base_f10
+[E18_ports_a] rep 2/2  bw_t1
+[E18_ports_a] rep 2/2  mimic_s1
+[E18_ports_a] rep 2/2  mimic_s2
+[E18_ports_a] rep 2/2  mimic_s3
+[E18_ports_a] rep 2/2  mimic_s4
+[E18_ports_a] rep 2/2  a7_base_f10
+[OK]
+[E18_ports_a] rep 1/2  bw_t1_t32
+[E18_ports_a] rep 1/2  mimic_s4_t32
+[E18_ports_a] rep 2/2  bw_t1_t32
+[E18_ports_a] rep 2/2  mimic_s4_t32
+[OK]
+[E18_ports_b] rep 1/2  bw_t1
+[E18_ports_b] rep 1/2  mimic_s1
+[E18_ports_b] rep 1/2  mimic_s2
+[E18_ports_b] rep 1/2  mimic_s3
+[E18_ports_b] rep 1/2  mimic_s4
+[E18_ports_b] rep 1/2  a7_base_f10
+[E18_ports_b] rep 2/2  bw_t1
+[E18_ports_b] rep 2/2  mimic_s1
+[E18_ports_b] rep 2/2  mimic_s2
+[E18_ports_b] rep 2/2  mimic_s3
+[E18_ports_b] rep 2/2  mimic_s4
+[E18_ports_b] rep 2/2  a7_base_f10
+[OK]
+[E18_ports_b] rep 1/2  bw_t1_t32
+[E18_ports_b] rep 1/2  mimic_s4_t32
+[E18_ports_b] rep 2/2  bw_t1_t32
+[E18_ports_b] rep 2/2  mimic_s4_t32
+[OK]

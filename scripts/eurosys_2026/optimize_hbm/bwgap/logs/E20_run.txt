@@ -1,0 +1,27 @@
+[E20_q16] rep 1/3  a9_base
+[E20_q16] rep 1/3  a9_q16
+[E20_q16] rep 1/3  a9_q16x
+[E20_q16] rep 1/3  a9_q16v
+[E20_q16] rep 1/3  a9_v4
+[E20_q16] rep 2/3  a9_base
+[E20_q16] rep 2/3  a9_q16
+[E20_q16] rep 2/3  a9_q16x
+[E20_q16] rep 2/3  a9_q16v
+[E20_q16] rep 2/3  a9_v4
+[E20_q16] rep 3/3  a9_base
+[E20_q16] rep 3/3  a9_q16
+[E20_q16] rep 3/3  a9_q16x
+[E20_q16] rep 3/3  a9_q16v
+[E20_q16] rep 3/3  a9_v4
+[OK]
+[E20_q16_stall] rep 1/2  a9_base
+[E20_q16_stall] rep 1/2  a9_q16
+[E20_q16_stall] rep 1/2  a9_q16x
+[E20_q16_stall] rep 1/2  a9_q16v
+[E20_q16_stall] rep 1/2  a9_v4
+[E20_q16_stall] rep 2/2  a9_base
+[E20_q16_stall] rep 2/2  a9_q16
+[E20_q16_stall] rep 2/2  a9_q16x
+[E20_q16_stall] rep 2/2  a9_q16v
+[E20_q16_stall] rep 2/2  a9_v4
+[OK]

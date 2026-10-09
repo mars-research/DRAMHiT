@@ -1,0 +1,9 @@
+{
+ "label": "a7_base_f10",
+ "kind": "stream",
+ "cmd": "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/attempt7/base/dramhit --mode 11 --ht-type 3 --ht-size 536870912 --ht-fill 10 --num-threads 64 --numa-split 10 --np_cpu_node_msk 1 --np_mem_node_msk 4 --np_mem_local 0 --batch-len 16 --find_queue 64 --no-prefetch 0 --hw-pref 0 --insert-factor 100 --read-factor 400 --skew 0.01 --seed 1775762440565610239",
+ "margin_before_c": 18,
+ "cha_set": "chaq",
+ "wall_s": 11.0,
+ "started": "2026-10-06T12:20:58"
+}
