@@ -1,0 +1,8 @@
+r1 f10 dvs find_ops : 21474836400, found : 21474836400 get_mops : 4697 set_mops : 3333
+r1 f10 s_p6 find_ops : 21474836400, found : 21474836400 get_mops : 4683 set_mops : 3319
+r1 f90 dvs find_ops : 21260088080, found : 21260088080 get_mops : 2690 set_mops : 2083
+r1 f90 s_p6 find_ops : 21260088080, found : 21260088080 get_mops : 2764 set_mops : 2088
+r2 f10 dvs find_ops : 21474836400, found : 21474836400 get_mops : 4688 set_mops : 3325
+r2 f10 s_p6 find_ops : 21474836400, found : 21474836400 get_mops : 4706 set_mops : 3336
+r2 f90 dvs find_ops : 21260088080, found : 21260088080 get_mops : 2736 set_mops : 2120
+r2 f90 s_p6 find_ops : 21260088080, found : 21260088080 get_mops : 2741 set_mops : 2080

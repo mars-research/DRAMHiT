@@ -1,0 +1,1 @@
+python3 run_stream.py --reps 3 --workloads a17_dvs_f10 a17_dvs_trim_f10 a17_dvs_f20 a17_dvs_trim_f20 a17_dvs_f30 a17_dvs_trim_f30 a17_dvs_f40 a17_dvs_trim_f40 a17_dvs_f50 a17_dvs_trim_f50 a17_dvs_f60 a17_dvs_trim_f60 a17_dvs_f70 a17_dvs_trim_f70 a17_dvs_f80 a17_dvs_trim_f80 a17_dvs_f90 a17_dvs_trim_f90  --out E35_trim

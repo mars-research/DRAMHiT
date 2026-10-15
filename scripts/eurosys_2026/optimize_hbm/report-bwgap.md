@@ -228,21 +228,42 @@ python3 analyze_100ms.py            # -> tables/E12_summary.md (+ time series), 
 - Whether that 1 GiB is touched during find: DDR memory-controller counters (`uncore_imc/cas_count_read|write/`, both sockets, `logs/ddr_check_*.txt`, `tables/ddr_traffic_dramhit_find.md`) show ≤ 0.1 GB/s of DDR traffic through the whole dramblast run (background level), vs ~290 GB/s on HBM; bw_t1 max 0.16 GB/s. So during the measured window both programs read/write only HBM.
 
 ### 12.3 Results (`tables/E12_summary.md`; steady state = ≥ 1.0 s into the window, boundary intervals dropped; median over all steady intervals [median of per-rep medians; min–max of per-rep medians], 5 reps)
-| metric | bw_t1 | **bw_t1, core held at 2.2 GHz** | **dramblast best (deep vectorization, queue 128 / batch 64, key prefetch 64 t2)** | dramblast, keys in HBM | dramblast, keys in DDR (ref.) |
-|---|---|---|---|---|---|
-| HBM GB/s (controllers) | 397.0 [397.6; 393.8–399.8] | **373.7** [373.1; 372.8–374.3] | **328.7** [327.4; 326.5–330.7] | **293.7** [293.8; 292.8–295.4] | 263.9 |
-| core GHz | 2.536 [2.535; 2.530–2.564] | 2.195 [2.195; 2.194–2.195] | 2.115 [2.116; 2.106–2.131] | 2.203 [2.205; 2.188–2.209] | 2.173 |
-| mesh GHz | 1.841 | 1.890 | 1.632 | 1.681 | 1.665 |
-| IPC | 0.54 | 0.59 | 1.57 | 1.68 | 1.73 |
-| instr rate per thread (G/s) | 1.36 | 1.28 | 3.32 | 3.70 | 3.74 |
-| package W | 347.5 | 348.9 | 350.0 | 348.2 | 348.5 |
-| xq full % / fb_full % | 67.4 / 67.5 | 63.0 / 66.3 | 41.2 / 60.4 | 13.8 / 53.8 | 14.1 / 54.3 |
-| program lines (finds) per s (G) | 6.134 | 5.776 | 4.601 | 4.153 | 4.190 |
-| window from program (s) | 4.38 | 4.65 | 4.67 | 5.17 | 5.13 |
-| energy per program line (nJ) | 56.6 | 60.4 | 76.1 | 83.8 | 82.9 |
-| energy per HBM line (nJ) | 56.4 | 59.8 | 68.2 | 75.6 | 84.5 |
-| HBM lines per program line | 1.013 | 1.012 | 1.123 | 1.106 | 0.982 |
-| cycles per HBM line (64 × core GHz ÷ HBM lines/s) | 26.1 | 24.1 | 26.4 | 30.6 | 33.7 |
+| metric | bw_t1 | **bw_t1, core held at 2.2 GHz** | **dramblast best now (E35 trims + p3, `attempt11/dvs_p3`)** | **dramblast best (deep vectorization, queue 128 / batch 64, key prefetch 64 t2)** | dramblast, keys in HBM | dramblast, keys in DDR (ref.) |
+|---|---|---|---|---|---|---|
+| HBM GB/s (controllers) | 397.0 [397.6; 393.8–399.8] | **373.7** [373.1; 372.8–374.3] | **339.3** [340.2; 306.5–343.6] | **328.7** [327.4; 326.5–330.7] | **293.7** [293.8; 292.8–295.4] | 263.9 |
+| core GHz | 2.536 [2.535; 2.530–2.564] | 2.195 [2.195; 2.194–2.195] | 2.099 [2.092; 2.064–2.129] | 2.115 [2.116; 2.106–2.131] | 2.203 [2.205; 2.188–2.209] | 2.173 |
+| mesh GHz | 1.841 | 1.890 | 1.620 | 1.632 | 1.681 | 1.665 |
+| IPC | 0.54 | 0.59 | 1.64 | 1.57 | 1.68 | 1.73 |
+| instr rate per thread (G/s) | 1.36 | 1.28 | 3.44 | 3.32 | 3.70 | 3.74 |
+| package W | 347.5 | 348.9 | 349.2 | 350.0 | 348.2 | 348.5 |
+| xq full % / fb_full % | 67.4 / 67.5 | 63.0 / 66.3 | 54.2 / 66.9 | 41.2 / 60.4 | 13.8 / 53.8 | 14.1 / 54.3 |
+| program lines (finds) per s (G) | 6.134 | 5.776 | 4.789 | 4.601 | 4.153 | 4.190 |
+| window from program (s) | 4.38 | 4.65 | 4.48 | 4.67 | 5.17 | 5.13 |
+| energy per program line (nJ) | 56.6 | 60.4 | 72.5 | 76.1 | 83.8 | 82.9 |
+| energy per HBM line (nJ) | 56.4 | 59.8 | 66.0 | 68.2 | 75.6 | 84.5 |
+| HBM lines per program line | 1.013 | 1.012 | 1.100 | 1.123 | 1.106 | 0.982 |
+| cycles per HBM line (64 × core GHz ÷ HBM lines/s) | 26.1 | 24.1 | **25.3** | 26.4 | 30.6 | 33.7 |
+
+The **dramblast best now** column (E39, `logs/E39_100ms`) is the current source: E35's trims (p1, p2, p4, p6) plus p3 (§35 / `attempt11/trims/applied.diff`).
+- Build `attempt11/dvs_p3` (`attempt11/build_deepvec.sh`: deep vectorization, crc32, L1 find prefetch distance 24, 16 B split arguments). Same settings as the old best column: `--find_queue 128 --batch-len 64`, `KEY_PF_DIST=64 KEY_PF_HINT=t2`, keys in HBM, fill 10, `--read-factor 400`.
+- Same protocol as §12.1: 100 ms intervals, 5 reps, `runlib.cooldown`. It ran interleaved with fresh `bw_t1` and `dramhit_keyshbm_f10` runs: `python3 run_stream.py --reps 5 --interval-ms 100 --read-factor 400 --workloads bw_t1 a19_dvs_p3_f10 dramhit_keyshbm_f10 --out E39_100ms`; column via `col_e12.py E39_100ms a19_dvs_p3_f10`.
+- All finds found. State: prefetchers off (0x2f), cpufreq 2.7 GHz, after a reboot (the hugepage pool was re-reserved).
+- The fresh reference runs reproduce the older columns: `bw_t1` 392.9 GB/s (397.0 above), `dramblast, keys in HBM` 294.5 GB/s (293.7 above), cycles per HBM line 26.2 / 30.8 (26.1 / 30.6 above).
+- Rep 1 of every workload is low (`bw_t1` 371.9, new best 306.5, old dramblast 284.5 GB/s, each with a lower clock), the same first-rep effect as §12.5. The bracketed median of per-rep medians is robust to it.
+
+**Prediction check (clock × cycles per HBM line, §12.6 method; `attempt11/e39_decomp.txt`).** Per-rep ratios against the same-round `bw_t1` rep, reps 2–5:
+
+| step | HBM GB/s ratio | clock ratio | active-cpu ratio | cycles-per-line effect (1 / ratio) | model | residual |
+|---|---|---|---|---|---|---|
+| bw_t1 → dramblast, keys in HBM (E39 rerun) | 0.743 | 0.873 | 0.996 | 0.852 | 0.740 | +0.4 % |
+| bw_t1 → **dramblast best now** | **0.855** | **0.822** | 0.997 | **1.039** | 0.851 | +0.8 % |
+| dramblast, keys in HBM → best now | 1.154 | 0.944 | 0.999 | 1.217 | 1.149 | +0.1 % |
+
+- **The remaining gap to bw_t1 is entirely clock.** Cycles per HBM line are now 25.3 vs bw_t1's 26.2 (measured, reps 2–5: 25.33 vs 26.18). That is 3.9 % *fewer* cycles per line than bw_t1, so the cycles factor works in dramblast's favour.
+- **The whole 14.5 % bandwidth gap comes from the core clock**, 2.10 vs 2.56 GHz (ratio 0.822), and slightly more than all of it, since cycles offset ~4 %. In log terms: clock 125 %, cycles −24 %, active cpus 2 %.
+- **Against the original dramblast** (the 46 % / 54 % split of §12.6), the cycles-per-line gap has gone from −15 % to +4 %. The clock gap has widened from 0.873 to 0.822: the new code runs at a lower clock (2.10 vs 2.23 GHz) at the same ~349 W limit.
+- **The model still closes** with ≤ 1 % residual and 63.8 active cpus.
+- **North star at fill 10:** 328 GB/s is exceeded (339–344 GB/s in reps 2–5). Further gains at this fill have to come from the clock, i.e. power per unit of work, not from cycles per line.
 
 The **dramblast best** column is the best configuration found later (§17–§20, scalar hash reads; §21 showed the SIMD-load variant is slower). Settings:
 - Build `attempt10/deepvec/dramhit`: 16 B find-queue entries plus `-DDEEP_VECTORIZATION=ON`.
@@ -961,3 +982,104 @@ Best settings from E26: deep pop/push at queue 64 / batch 64 (fill 10) and 256 /
 **Reading:**
 - No measurable effect; all changes are within rep spread.
 - A smaller insert-queue footprint would need a dedicated entry type. Key + value + 32-bit hash is 20 B, so it does not fit 16 B the way the find entry does.
+
+## 34. E34 — why HBM bandwidth drops at high fill (attempt 11; `attempt11/`, `bwgap/analyze_e34.py`, `tables/E34.md`)
+
+**Build** (`attempt11/build_deepvec.sh` → `attempt11/dvs`): the E33 configuration (deep pop/push, crc32, L1 prefetch distance 24, 16 B split arguments), built from a fresh build dir and verified at four levels. Any failure aborts the build:
+- every `-D` value is present in `CMakeCache.txt`;
+- the deep-path `-D` flags are on the compile command of `zipfian_test.cpp`;
+- the preprocessor, run with that exact command (`-dM -E`), sees 17 required macros, including the derived `CAS_FIND_QUEUE16`, `CRC_HASH` and `UNIFORM_HT_SUPPORT`, and none of `CAS_FIND_EMBCAST`, `LATENCY_COLLECTION`, `CALC_STATS`, `CAS_FIND_BANDWIDTH_TEST`, `CAS_FIND_SCALAR_PACK`;
+- the binary has `find_batch(span<FindArgument>)` with ≥ 4 `crc32`, ≥ 4 `kortest`, 64 B zmm memory ops, and 4× `lea r,[r+0x180]` (24 × 16 B next-slot prefetch).
+- `find_batch` is instruction-for-instruction identical to `attempt10/dc24s`.
+
+**Machine state:** the machine had been rebooted. Before measuring, I re-reserved the pool and turned the HW prefetchers off (`runlib.reserve_pool()`; MSR 0x1a4 was 0x20, now 0x2f on all 128 cpus). `attempt11/env_now.txt` otherwise matches `logs/env_end.txt`.
+
+### 34.1 Static: the `find_batch` asm (`attempt11/dvs/find_batch.s`, `mca_hit_step.s`)
+- **Per 4-find all-hit step:** 149 instructions. That is 4 × ~18 for pop and probe (6 of those for the next-slot `prefetcht0` address), 4 × ~8 to build the result lane, and 54 for the result store, deep push and loop.
+- **A reprobe** costs an 18-instruction stub (empty check, `crc32` of the stored hash, `prefetcht2`, 2-store push-back), then another pop.
+- **llvm-mca** (icelake-server model, the closest to SPR in LLVM 14): 173 uops per step. The most loaded port is p5, with ~35 uops per step, i.e. ~9 per find:
+  - `vpcompressq` 8, `vshufi32x4` 4, `kshiftlb` 4, `vpcmpequq` 4, `vpunpcklqdq` 3, `vmovdqa64` 2.5, `vpinsrd` 4, `vpexpandd` 2.
+  - About 22 of the 35 come from building the result vector.
+- **Asm-level waste** (register allocation, not design):
+  - 7 stack accesses per step:
+    - `vp_result` is loaded and stored through `[rsp]`;
+    - `bmask` is reloaded from `[rsp-0x18]`, also once per reprobe;
+    - the wrap and end bounds are compared through `[rsp-0x28]` / `[rsp-0x30]`;
+    - **3 keys are spilled** (`[rsp-0x38..0x48]`) only so the rare ring-wrap push path can reuse them.
+  - The loop-invariant `mov r9d,0x4444; kmovw k6` is rebuilt every step, because k6 is reused as a compare destination.
+  - 2 GPR copies per completion after `andn` (`mov r9d,r15d; mov r15d,r11d`), and a `vmovdqa64` copy per hit.
+  - The reprobe push-back is `mov`, `vmovd`, `vpinsrd` (2 uops) and 2 stores; it could be one 16 B load, `vpinsrd` and one 16 B store.
+  - Together that is ~20 uops per 4 finds (~5 per find, ~10 % of `find_batch`'s uops), plus ~3 uops and 1 store per reprobe.
+  - None of it changes the high-fill behaviour below; it is a uniform ~10 % uop trim.
+
+### 34.2 Dynamic: counters (fills 10/50/70/90, one counter set per run, 2 reps; `logs/E34_fill/<set>`)
+
+| fill | finds/s (M) | HBM GB/s | HBM lines / find | thread-cycles / HBM line | retired uops / find | issued uops / find | bad-spec % slots | mispredicts / find | p5 / core cycle | memory-bound % slots |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 10 | 4582–4668 | 322–328 | 1.10 | 26.2 | 51.9 | 54.5 | 0.2 | 0.005 | 0.92 | 3.5 |
+| 50 | 4143–4275 | 310–320 | 1.17 | 27.0 | 54.1 | 61.4 | 3.7 | 0.070 | 0.91 | 2.9 |
+| 70 | 3696–3729 | 302–304 | 1.27 | 27.9 | 57.4 | 74.3 | 8.8 | 0.180 | 0.89 | 2.2 |
+| 90 | 2687–2742 | 293–297 | 1.69 | 28.7 | 70.2 | 103.8 | 13.9 | 0.387 | 0.87 | 1.7 |
+
+(The finds/s and GB/s ranges span the per-set medians. Core clock is 2.04–2.08 GHz and the mesh 1.60–1.61 GHz at every fill.)
+
+**Profile** (`perf record -e cycles:upp`, `attempt11/prof/dvs_f{10,90}_regions.txt`; find_batch samples):
+
+| fill | pop, hit path | result store + push | miss / reprobe code | the 4 `prefetcht0` slots after the compares |
+|---|---|---|---|---|
+| 10 | 73.8 % | 24.0 % | 0.0 % | 38.2 % |
+| 90 | 67.4 % | 17.3 % | 13.9 % | 31.9 % |
+
+### 34.3 Reading
+- **The bandwidth drop is a per-line core-cost increase, not lost memory parallelism.**
+  - Thread-cycles per HBM line rise 26.2 → 28.7 (+9.5 %) from fill 10 to 90 at the same core clock, and bandwidth falls 322 → 296 GB/s (−8 %).
+  - The core rarely waits on memory: memory-bound slots are 1.7–3.5 % and stalls with an L1 miss 2–4 % at every fill.
+  - The bucket prefetch is issued a full queue (128 finds, ~1.8 µs) ahead, far more than the 340–375 ns L2-miss latency.
+  - L2-miss reads in flight per thread are flat (28.0 → 27.5). By Little's law that is latency × the rate the core sets, not a cap. The rise in measured latency (342 → 374 ns) follows from it rather than causing it.
+- **What makes a reprobe line more expensive is branch misprediction.**
+  - The extra lines at fill 90 cost (48.5 − 28.8) / (1.69 − 1.10) ≈ 33 thread-cycles each, against 26 for an average line at fill 10.
+  - Retired uops per line actually fall (47 → 42). But issued uops per find nearly double (54 → 104), and bad speculation goes from 0.2 % to 13.9 % of slots.
+  - Mispredicts per find (0.39 at fill 90) match the reprobe rate. The hit/miss `kortestb; je` after each bucket compare is effectively random once ~1/3 of probes miss.
+  - Each mispredict throws away ~87 issued uops (34 wasted uops per find / 0.39). The front end has run ahead along the hit path, which is p5-heavy (`vpcompressq`, `vshufi32x4`), on a core whose p5 is already at 0.87–0.92 per cycle.
+  - So 13.9 % of slots are lost against a 9.5 % rise in cycles per line: bad speculation alone is enough to explain the drop.
+- **p5 is the ceiling at every fill.** At fill 10, where 328 GB/s is reached, p5 runs at 0.92 per core cycle. Trimming p5 uops (result assembly, the copies in §34.1) is what would raise the low-fill ceiling. It does not address the high-fill drop.
+
+**Next steps:**
+- **Remove the data-dependent branch from the deep pop** (for the high-fill drop):
+  - Pop exactly 4 entries per step, with no retry loop. Each entry is a hit, an empty or a reprobe.
+  - Push the reprobes back unconditionally, with head advanced by a mask popcount.
+  - Write the results with the compress store, and refill with one 64 B block of the next arguments, advancing `dp` by the number of completions.
+  - This needs 4 slack slots in the ring, because the block store may overrun the free region by the number of reprobes.
+- **Smaller:** the asm trims in §34.1. They are worth ~5 uops per find, mostly p5 and stores.
+
+## 35. E35 — asm trims applied (p1, p2, p4, p6; `attempt11/trims/applied.diff`, `bwgap/analyze_e35.py`, `tables/E35.md`)
+
+**Code** (`include/hashtables/cas_kht.hpp`, deep path only). Four of the six §34.1 trims; p3 (hash dword stores) and p5 (scalar result stores) are left out on purpose:
+- **p1:** the ring-wrap push writes the block vector with two masked stores (the second at `fq_base - room`), instead of 4 `fq_put`s. The 3 per-step key spills are gone.
+- **p2:** `hoff(h)` = `andn` + `shl 4` in one asm, giving the bucket byte offset. Every prefetch index uses it, so `bmask` is no longer live and is no longer reloaded from the stack (once per step and once per reprobe).
+- **p4:** the pop's bucket address and next-slot prefetch use `boff(e) = hoff(e->hash)`. The 2 `mov r32,r32` copies per completion are gone. The old `bidx` and the unused local `ht` are removed.
+- **p6:** the reprobe push-back is one 16 B load, `vpinsrd` and one 16 B store (was 2 × 8 B stores).
+
+**Build:** `attempt11/dvs_trim` (`build_deepvec.sh`, all checks pass). Hot all-hit step: 149 → 131 instructions, 8 → 4 stack accesses (the `vp_result` load/store and two fused compares remain).
+
+**Run:** baseline `attempt11/dvs` vs `dvs_trim`, fills 10–90, queue 128 / batch 64, key prefetch 64 t2, 3 interleaved reps. All runs `found == find_ops`.
+
+| fill | finds/s (M) base → trim | Δ | HBM GB/s base → trim | Δ GB/s | instr/find | thread-cycles / HBM line |
+|---|---|---|---|---|---|---|
+| 10 | 4661 → 4694 | +0.7 % | 326.1 → 333.4 | +7.2 | 51.3 → 47.0 | 26.1 → 25.4 |
+| 20 | 4557 → 4664 | +2.3 % | 327.5 → 336.0 | +8.4 | 51.8 → 47.4 | 25.8 → 25.2 |
+| 30 | 4559 → 4654 | +2.1 % | 326.5 → 335.9 | +9.4 | 52.2 → 47.0 | 25.9 → 25.2 |
+| 40 | 4483 → 4526 | +1.0 % | 326.6 → 331.6 | +5.0 | 52.2 → 48.1 | 26.2 → 25.3 |
+| 50 | 4262 → 4294 | +0.8 % | 320.0 → 326.1 | +6.1 | 53.4 → 48.1 | 26.4 → 25.7 |
+| 60 | 4031 → 4119 | +2.2 % | 313.4 → 319.7 | +6.4 | 54.7 → 49.7 | 26.9 → 26.1 |
+| 70 | 3706 → 3789 | +2.2 % | 304.4 → 310.2 | +5.8 | 57.0 → 51.5 | 28.0 → 26.8 |
+| 80 | 3209 → 3299 | +2.8 % | 289.6 → 298.6 | +9.1 | 60.6 → 54.7 | 28.8 → 27.7 |
+| 90 | 2712 → 2768 | +2.1 % | 294.2 → 303.7 | +9.5 | 68.6 → 61.4 | 28.7 → 27.4 |
+
+**Reading:**
+- **Faster at every fill:** +0.7 to +2.8 % finds/s and +5 to +9.5 GB/s, with 4–7 fewer instructions per find.
+- **Rep spread:** the trim's rep range is above the baseline's at fills 20, 30, 40, 60, 70, 80 and 90. Fills 10 and 50 overlap; one baseline rep was low there.
+- **The gain is real reads:** HBM lines per find are unchanged within 1 % (1.70 vs 1.71 at fill 90). Core clock is equal or slightly lower with the trims (2.03 vs 2.06 GHz at fill 90).
+- **North star:** 328 GB/s is now exceeded at fills 10–40 (332–336 GB/s). Fill 90 is at 304 GB/s, −7 %, against −10 % before.
+- **Not comparable to the earlier p1–p6 smoke check** (`attempt11/smoke_p6.txt`: 2 short reps, finds/s only, no change seen). That check measured a different set: it included p3 and p5. I have not separately measured whether p3/p5 cancel the gain or whether the smoke check was too noisy.
+- **The high-fill shape is unchanged:** cycles per line still rise 25.4 → 27.4 from fill 10 to 90. The branch-free deep pop (§34.3) is still the fix for that.

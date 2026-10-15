@@ -1,0 +1,6 @@
+bw_t1: bw 399.1 ghz 2.556 active 64.0 cyc/line 26.18  (reps 2-5)
+a19_dvs_p3_f10: bw 341.3 ghz 2.102 active 63.8 cyc/line 25.33  (reps 2-5)
+dramhit_keyshbm_f10: bw 296.2 ghz 2.233 active 63.8 cyc/line 30.78  (reps 2-5)
+bw_t1 -> a19_dvs_p3_f10: bw 0.855 = clock 0.822 x active 0.997 x 1/cyc 1.039 (model 0.851); residual +0.8% (-0.2..+2.0); log share clock/cycles/active 125/-24/2 %
+bw_t1 -> dramhit_keyshbm_f10: bw 0.743 = clock 0.873 x active 0.996 x 1/cyc 0.852 (model 0.740); residual +0.4% (+0.1..+0.8); log share clock/cycles/active 46/54/1 %
+dramhit_keyshbm_f10 -> a19_dvs_p3_f10: bw 1.154 = clock 0.944 x active 0.999 x 1/cyc 1.217 (model 1.149); residual +0.1% (-0.3..+1.8); log share clock/cycles/active -41/137/-1 %

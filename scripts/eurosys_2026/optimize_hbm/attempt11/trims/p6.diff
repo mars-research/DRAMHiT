@@ -1,0 +1,14 @@
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -809,7 +809,10 @@
+             const uint32_t nh = ((e->hash & bmask) + CACHELINE_SIZE / sizeof(KV)) & bmask;
+ #endif
+             __builtin_prefetch(htb + hoff(nh), false, 1);  // = prefetch_read, local base
+-            fq_put(&FQ(head), e->key, nh, e->key_id);
++            // the entry with its hash replaced: one 16 B load, vpinsrd, one 16 B store (was 2 x 8 B stores
++            // of a GPR key and a vmovd/vpinsrd-built {hash, key_id})
++            _mm_storeu_si128(reinterpret_cast<__m128i *>(&FQ(head)),
++                             _mm_insert_epi32(_mm_loadu_si128(reinterpret_cast<const __m128i *>(e)), (int)nh, 2));
+             head = (head + E) & fq_mask;
+ #ifdef CALC_STATS
+             this->num_reprobes++;

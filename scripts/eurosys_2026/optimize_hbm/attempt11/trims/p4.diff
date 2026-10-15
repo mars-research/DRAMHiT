@@ -1,0 +1,37 @@
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -734,11 +734,6 @@
+       // bucket index = hash & bmask, written as andn(~bmask, hash): BMI1 andn has 3
+       // operands, so the mask register is not copied before every AND
+       const uint32_t nbmask = ~bmask;
+-      const auto bidx = [nbmask](const FQE *x) -> uint32_t {
+-        uint32_t r;  // asm: gcc folds __andn_u32(~bmask, h) back into a 2-operand AND
+-        __asm__("andnl %2, %1, %0" : "=r"(r) : "r"(nbmask), "rm"(x->hash));
+-        return r;
+-      };
+       // byte offset of a hash's bucket: andn(~bmask) then << 4 (sizeof(KV)) in one asm, so bmask is never
+       // needed (only nbmask is live) and the 32-bit index is not copied to another register before the shift
+       static_assert(sizeof(KV) == 16, "bucket byte offset = index << 4");
+@@ -748,6 +743,8 @@
+         return r;
+       };
+       const char *const htb = reinterpret_cast<const char *>(this->hashtable);  // static member: one register
++      // the entry's bucket as a byte offset (hash read straight from the entry by andn)
++      const auto boff = [&hoff](const FQE *x) -> uint64_t { return hoff(x->hash); };
+       // the key broadcast straight from memory (vpbroadcastq m64, one load uop): through
+       // _mm512_set1_epi64 gcc loads the key into a GPR first, as the reprobe path reuses it
+       const auto bcast_key = [](const FQE *x) -> __m512i {
+@@ -789,10 +786,11 @@
+ #pragma GCC unroll 4
+         for (uint32_t k = 0; k < 4; k++) {
+           for (;;) {  // until this entry completes (hit or not found)
+-            __builtin_prefetch(&ht[bidx(&FQ((tail + PREFETCH_FIND_NEXT_DISTANCE * E) & fq_mask))], false, 3);
++            __builtin_prefetch(htb + boff(&FQ((tail + PREFETCH_FIND_NEXT_DISTANCE * E) & fq_mask)), false, 3);
+             FQE *const e = &FQ(tail);
+             tail = (tail + E) & fq_mask;
+-            const __m512i line = _mm512_load_si512(&ht[bidx(e)]);
++            const char *const bkt = htb + boff(e);
++            const __m512i line = _mm512_load_si512(bkt);
+             const __mmask8 hit = _mm512_mask_cmpeq_epu64_mask(KEYMSK, line, bcast_key(e));
+             if (hit) [[likely]] {
+               // {key_id, value} -> lane k: the value is the lane after the key

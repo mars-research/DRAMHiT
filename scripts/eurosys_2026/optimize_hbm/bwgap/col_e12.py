@@ -10,8 +10,12 @@ reps = []
 for d in sorted(base.glob(f"{n}_r*")):
     meta, prog, iv, is_bw = intervals(d)
     steady = [x for x in iv if x["t_rel"] >= 1.0]
-    lines_s = prog["get_mops"] * 1e6
-    reps.append(dict(steady=steady, lines_s=lines_s, window=prog["find_ops"] / lines_s))
+    if is_bw:  # bandwidth_rand: printed GiB/s and run time, as in analyze_100ms.py
+        lines_s, window = prog["bw_printed_gibps"] * 2 ** 30 / 64, prog["time_s"]
+    else:
+        lines_s = prog["get_mops"] * 1e6
+        window = prog["find_ops"] / lines_s
+    reps.append(dict(steady=steady, lines_s=lines_s, window=window))
 def stat(k, p):
     per = [M([x[k] for x in rep["steady"]]) for rep in reps]
     allv = M([x[k] for rep in reps for x in rep["steady"]])

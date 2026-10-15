@@ -1,0 +1,43 @@
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -779,8 +779,6 @@
+       Arg *const in_end = dp + (kp.size() & ~(size_t)3);
+       for (; dp != in_end; dp += 4) {
+         // ---- deep pop: 4 completed finds ----
+-        __m512i res = _mm512_setzero_si512();
+-        uint32_t found = 0;  // bit k: completion k was a hit (has a result in lane k)
+ #pragma GCC unroll 4
+         for (uint32_t k = 0; k < 4; k++) {
+           for (;;) {  // until this entry completes (hit or not found)
+@@ -791,12 +789,11 @@
+             const __m512i line = _mm512_load_si512(bkt);
+             const __mmask8 hit = _mm512_mask_cmpeq_epu64_mask(KEYMSK, line, bcast_key(e));
+             if (hit) [[likely]] {
+-              // {key_id, value} -> lane k: the value is the lane after the key
+-              const __m128i r = _mm_unpacklo_epi64(
+-                  _mm_cvtsi32_si128((int)e->key_id),
+-                  _mm512_castsi512_si128(_mm512_maskz_compress_epi64(_kshiftli_mask8(hit, 1), line)));
+-              res = _mm512_mask_broadcast_i32x4(res, (__mmask16)(0xFu << (4 * k)), r);
+-              found |= 1u << k;
++              // the value is the qword after the key: kmov + tzcnt + a load of the line just compared
++              // (L1 hit) -- p0/p1/load ports, where the compress/shuffle into a result vector took ~6 p5 uops
++              vp_result->id = e->key_id;
++              vp_result->value = reinterpret_cast<const uint64_t *>(bkt + 8)[_tzcnt_u32((uint32_t)hit)];
++              vp_result++;
+               break;
+             }
+             if (_mm512_mask_cmpeq_epu64_mask(KEYMSK, line, zero_vector)) {  // empty slot: not found
+@@ -820,13 +817,6 @@
+ #endif
+           }
+         }
+-        if (found == 0xF) [[likely]] {
+-          _mm512_storeu_si512(vp_result, res);  // one 64 B store of 4 results
+-          vp_result += 4;
+-        } else {  // write only the lanes that have a result (2 qwords each)
+-          _mm512_mask_compressstoreu_epi64(vp_result, (__mmask8)(_pdep_u32(found, 0x55) * 3), res);
+-          vp_result += _mm_popcnt_u32(found);
+-        }
+ 
+         // ---- deep push: the next 4 arguments ----
+         uint32_t hh[4];

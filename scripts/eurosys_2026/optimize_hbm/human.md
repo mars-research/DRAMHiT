@@ -1,18 +1,19 @@
 
+# TODO
 
+Verify for current configruation. 
 
+bandwidth = freq drop * cycle per line drop. 
 
+Hyperthreading, XQ counter, etc ...
 
-- deep vectorizartion 
-- cpu emulation
-- hyperthreading investigation on dramhit. 
+# findings
 
-## Debugging
+- misprediction might be the causes an decrease 2 cycle per line see 34.2 under bwgap report.
+-> branchless code, not going to work, it is only going to slow us down more.
 
-- under report-unocre and report-throttling, it claims the power limit throttle cpu freq not the temperature.
-Then why throttle at all, what is the reason behind this freq throttle. Why package power limit set so low if 
-it does not even affect temperature of the chip. 
-
+- max optimized base on ratio calculation, and prompt is to find hot path 
+and minimize accessing stack for hot variable 
 
 
 # mathematical relationship

@@ -1,0 +1,16 @@
+[E39_100ms] rep 1/5  bw_t1
+[E39_100ms] rep 1/5  a19_dvs_p3_f10
+[E39_100ms] rep 1/5  dramhit_keyshbm_f10
+[E39_100ms] rep 2/5  bw_t1
+[E39_100ms] rep 2/5  a19_dvs_p3_f10
+[E39_100ms] rep 2/5  dramhit_keyshbm_f10
+[E39_100ms] rep 3/5  bw_t1
+[E39_100ms] rep 3/5  a19_dvs_p3_f10
+[E39_100ms] rep 3/5  dramhit_keyshbm_f10
+[E39_100ms] rep 4/5  bw_t1
+[E39_100ms] rep 4/5  a19_dvs_p3_f10
+[E39_100ms] rep 4/5  dramhit_keyshbm_f10
+[E39_100ms] rep 5/5  bw_t1
+[E39_100ms] rep 5/5  a19_dvs_p3_f10
+[E39_100ms] rep 5/5  dramhit_keyshbm_f10
+[OK]

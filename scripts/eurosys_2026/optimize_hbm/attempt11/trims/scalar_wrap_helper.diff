@@ -1,0 +1,68 @@
+--- simd-wrap
++++ scalar-wrap-helper
+@@ -772,7 +772,6 @@
+       // 16 B FindArguments already have the block layout.
+       const __m512i push_perm =
+           _mm512_set_epi32(30, 0, 27, 26, 24, 0, 13, 12, 10, 0, 7, 6, 4, 0, 1, 0);
+-      constexpr __mmask16 HASH_LANES = 0x4444;  // dword 4j+2 = hash of entry j
+       Arg *dp = kp.data();
+       // batch_len is a multiple of 4 (checked in the constructor); only a caller's short
+       // final batch can leave 1-3 arguments, handled after the loop
+@@ -838,30 +837,22 @@
+           hh[j] &= bmask;  // linear probing keeps the bucket index itself
+ #endif
+         }
+-        __m512i blk;
+-        if constexpr (sizeof(Arg) == 16)  // 4 x {key, -, id}: already the block layout
+-          blk = _mm512_loadu_si512(dp);
+-        else
+-          blk = _mm512_permutex2var_epi32(
+-              _mm512_loadu_si512(dp), push_perm,
+-              _mm512_loadu_si512(reinterpret_cast<const char *>(dp) + 32));
+         if (head + 4 * E <= fq_mask + 1) [[likely]] {
++          __m512i blk;
++          if constexpr (sizeof(Arg) == 16)  // 4 x {key, -, id}: already the block layout
++            blk = _mm512_loadu_si512(dp);
++          else
++            blk = _mm512_permutex2var_epi32(
++                _mm512_loadu_si512(dp), push_perm,
++                _mm512_loadu_si512(reinterpret_cast<const char *>(dp) + 32));
+           // the block as loaded, then the 4 hashes as dword stores into it: 4 store uops instead of
+           // building the hash vector (vmovd, 2x vpinsrd, vpunpcklqdq, kmovw, vpexpandd: ~9 p5 uops).
+           // The entries are read again only ~a queue length later, so nothing forwards from these stores.
+           _mm512_storeu_si512(&FQ(head), blk);
+ #pragma GCC unroll 4
+           for (int j = 0; j < 4; j++) FQ(head + j * E).hash = hh[j];
+-        } else {  // the block would wrap the ring: the n entries that fit go at head, the rest at the ring start.
+-          blk = _mm512_mask_expand_epi32(
+-              blk, HASH_LANES, _mm512_castsi128_si512(_mm_set_epi32(hh[3], hh[2], hh[1], hh[0])));
+-          // Both are stores of blk itself, so the keys/ids need not stay live in GPRs for this rare path.
+-          // The second store's address lies before fq_base by the n entries; those lanes are masked off
+-          // (AVX-512 masked stores do not fault on masked lanes).
+-          const uint64_t room = fq_mask + 1 - head;  // 16, 32 or 48 bytes
+-          const __mmask16 lo = (__mmask16)((1u << (room / 4)) - 1);
+-          _mm512_mask_storeu_epi32(&FQ(head), lo, blk);
+-          _mm512_mask_storeu_epi32(fq_base - room, (__mmask16)~lo, blk);
++        } else {  // the block would wrap the ring (rare): 4 entry stores, out of line
++          deep_push_wrap(fq_base, fq_mask, head, dp, hh[0], hh[1], hh[2], hh[3]);
+         }
+         head = (head + 4 * E) & fq_mask;
+       }
+@@ -1231,6 +1222,17 @@
+ #ifdef CAS_FIND_QUEUE16
+   // Write a 16 B entry. h = the crc hash (uniform probing) or the bucket index
+   // (linear probing).
++  // DEEP_VECTORIZATION push when the 4-entry block would wrap the ring: 4 scalar entry stores. Out of
++  // line (and cold) so that the keys/ids it reads are not kept live in registers through find_batch's
++  // hot loop -- inlined, gcc shares them with the crc32 loads and spills them on every step.
++  template <typename Arg>
++  static __attribute__((noinline, cold)) void deep_push_wrap(char *fq_base, uint64_t fq_mask, uint64_t head,
++                                                             const Arg *dp, uint32_t h0, uint32_t h1,
++                                                             uint32_t h2, uint32_t h3) {
++    const uint32_t hh[4] = {h0, h1, h2, h3};
++    for (int j = 0; j < 4; j++)
++      fq_put(reinterpret_cast<FQE *>(fq_base + ((head + j * sizeof(FQE)) & fq_mask)), dp[j].key, hh[j], dp[j].id);
++  }
+   static inline void fq_put(FQE *e, uint64_t key, uint32_t h, uint32_t id) {
+     e->key = key;
+     e->hash = h;

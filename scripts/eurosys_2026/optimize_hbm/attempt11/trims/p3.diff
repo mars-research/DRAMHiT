@@ -1,0 +1,21 @@
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -846,11 +846,16 @@
+           blk = _mm512_permutex2var_epi32(
+               _mm512_loadu_si512(dp), push_perm,
+               _mm512_loadu_si512(reinterpret_cast<const char *>(dp) + 32));
+-        blk = _mm512_mask_expand_epi32(
+-            blk, HASH_LANES, _mm512_castsi128_si512(_mm_set_epi32(hh[3], hh[2], hh[1], hh[0])));
+         if (head + 4 * E <= fq_mask + 1) [[likely]] {
++          // the block as loaded, then the 4 hashes as dword stores into it: 4 store uops instead of
++          // building the hash vector (vmovd, 2x vpinsrd, vpunpcklqdq, kmovw, vpexpandd: ~9 p5 uops).
++          // The entries are read again only ~a queue length later, so nothing forwards from these stores.
+           _mm512_storeu_si512(&FQ(head), blk);
++#pragma GCC unroll 4
++          for (int j = 0; j < 4; j++) FQ(head + j * E).hash = hh[j];
+         } else {  // the block would wrap the ring: the n entries that fit go at head, the rest at the ring start.
++          blk = _mm512_mask_expand_epi32(
++              blk, HASH_LANES, _mm512_castsi128_si512(_mm_set_epi32(hh[3], hh[2], hh[1], hh[0])));
+           // Both are stores of blk itself, so the keys/ids need not stay live in GPRs for this rare path.
+           // The second store's address lies before fq_base by the n entries; those lanes are masked off
+           // (AVX-512 masked stores do not fault on masked lanes).

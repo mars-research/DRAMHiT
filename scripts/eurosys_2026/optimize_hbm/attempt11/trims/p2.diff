@@ -1,0 +1,36 @@
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -739,6 +739,15 @@
+         __asm__("andnl %2, %1, %0" : "=r"(r) : "r"(nbmask), "rm"(x->hash));
+         return r;
+       };
++      // byte offset of a hash's bucket: andn(~bmask) then << 4 (sizeof(KV)) in one asm, so bmask is never
++      // needed (only nbmask is live) and the 32-bit index is not copied to another register before the shift
++      static_assert(sizeof(KV) == 16, "bucket byte offset = index << 4");
++      const auto hoff = [nbmask](uint32_t h) -> uint64_t {
++        uint64_t r;
++        __asm__("andnl %2, %1, %k0\n\tshlq $4, %0" : "=&r"(r) : "r"(nbmask), "rm"(h));
++        return r;
++      };
++      const char *const htb = reinterpret_cast<const char *>(this->hashtable);  // static member: one register
+       // the key broadcast straight from memory (vpbroadcastq m64, one load uop): through
+       // _mm512_set1_epi64 gcc loads the key into a GPR first, as the reprobe path reuses it
+       const auto bcast_key = [](const FQE *x) -> __m512i {
+@@ -804,7 +813,7 @@
+ #else
+             const uint32_t nh = ((e->hash & bmask) + CACHELINE_SIZE / sizeof(KV)) & bmask;
+ #endif
+-            __builtin_prefetch(&ht[nh & bmask], false, 1);  // = prefetch_read, local base
++            __builtin_prefetch(htb + hoff(nh), false, 1);  // = prefetch_read, local base
+             fq_put(&FQ(head), e->key, nh, e->key_id);
+             head = (head + E) & fq_mask;
+ #ifdef CALC_STATS
+@@ -825,7 +834,7 @@
+ #pragma GCC unroll 4
+         for (int j = 0; j < 4; j++) {
+           hh[j] = (uint32_t)_mm_crc32_u64(0xffffffff, dp[j].key);
+-          __builtin_prefetch(&ht[hh[j] & bmask], false, 1);  // = prefetch_read, local base
++          __builtin_prefetch(htb + hoff(hh[j]), false, 1);  // = prefetch_read, local base
+ #ifndef UNIFORM_HT_SUPPORT
+           hh[j] &= bmask;  // linear probing keeps the bucket index itself
+ #endif

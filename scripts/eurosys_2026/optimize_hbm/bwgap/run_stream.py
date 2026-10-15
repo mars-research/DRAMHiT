@@ -71,6 +71,27 @@ WORKLOADS = {
         fill=f, read_factor=(4000 + f // 2) // f, find_queue=128, batch_len=64,
         binary=str(r.OPT / "attempt10" / v / "dramhit")))
        for v in ("dc24", "qc", "dc24s", "qcs", "dc24s_kid") for f in range(10, 100, 10)},
+    # attempt11: the deep build from attempt11/build_deepvec.sh (= dc24s, flags verified), fill sweep for the
+    # high-fill bandwidth drop, queue 128 / batch 64
+    **{f"a16_dvs_f{f}": (lambda f=f: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=f, read_factor=(4000 + f // 2) // f, find_queue=128, batch_len=64,
+        binary=str(r.OPT / "attempt11" / "dvs" / "dramhit")))
+       for f in range(10, 100, 10)},
+    # E35: asm trims p1/p2/p4/p6 (attempt11/trims/applied.diff) vs the E34 deep build, fill 10..90
+    **{f"a17_{v}_f{f}": (lambda v=v, f=f: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=f, read_factor=(4000 + f // 2) // f, find_queue=128, batch_len=64,
+        binary=str(r.OPT / "attempt11" / v / "dramhit")))
+       for v in ("dvs", "dvs_trim") for f in range(10, 100, 10)},
+    # E36: p3 / p5 / p3+p5 on top of the E35 build (attempt11/dvs_trim = baseline), fill 10..90
+    **{f"a18_{v}_f{f}": (lambda v=v, f=f: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=f, read_factor=(4000 + f // 2) // f, find_queue=128, batch_len=64,
+        binary=str(r.OPT / "attempt11" / v / "dramhit")))
+       for v in ("dvs_trim", "t_p3", "t_p5", "t_p3p5") for f in range(10, 100, 10)},
+    # E37: deep-push ring-wrap path: masked SIMD stores (dvs_p3) vs scalar stores in a cold out-of-line helper (dvs_p3s)
+    **{f"a19_{v}_f{f}": (lambda v=v, f=f: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=f, read_factor=(4000 + f // 2) // f, find_queue=128, batch_len=64,
+        binary=str(r.OPT / "attempt11" / v / "dramhit")))
+       for v in ("dvs_p3", "dvs_p3s", "dvs_p3x") for f in range(10, 100, 10)},
     "a10_q16_q64_b16": lambda: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
         fill=10, find_queue=64, batch_len=16, binary=str(r.OPT / "attempt10" / "q16" / "dramhit")),
     # attempt9: 16 B find-queue entries / 4-entry block push+pop; all with the best key prefetch (64 ahead, t2)

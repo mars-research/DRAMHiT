@@ -109,6 +109,8 @@ CORE_SETS = {
     "td": ["uops_issued.any", "topdown.backend_bound_slots", "topdown.memory_bound_slots", "topdown.bad_spec_slots"],
     # store forwarding: loads blocked by an earlier store they could not forward from, etc.
     "fwd": ["ld_blocks.store_forward", "ld_blocks.no_sr", "resource_stalls.sb", "cycle_activity.stalls_total"],
+    # branch mispredictions and the cycles spent recovering from them (E34)
+    "br": ["br_misp_retired.all_branches", "br_inst_retired.all_branches", "int_misc.recovery_cycles", "uops_retired.slots"],
     "l2": ["l2_rqsts.swpf_miss", "l2_rqsts.swpf_hit", "l2_lines_in.all", "l1d.replacement"],
 }
 ENERGY = "power/energy-pkg/"

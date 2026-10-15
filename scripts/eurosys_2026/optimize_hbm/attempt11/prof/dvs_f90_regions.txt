@@ -1,0 +1,21 @@
+samples: 1938500; find_batch: 443001 (22.9 %)
+   67.4 %  pop, hit path (4 completions: probe + compare + result lane)
+   17.3 %  result store + deep push + loop
+   13.9 %  miss: empty check + reprobe push-back
+    1.4 %  setup / leftover / slow path
+top 15 instructions (% of find_batch; PEBS cycles land on the instruction after the one waiting):
+    8.4 %  4691e9  prefetcht0 BYTE PTR [rsi+r9*1]
+    8.1 %  469076  prefetcht0 BYTE PTR [rsi+r11*1]
+    7.7 %  468ffa  prefetcht0 BYTE PTR [rsi+r10*1]
+    7.7 %  468f7f  prefetcht0 BYTE PTR [rsi+r9*1]
+    1.6 %  46914a  prefetcht2 BYTE PTR [rsi+r11*1]
+    1.6 %  4690fb  prefetcht2 BYTE PTR [rsi+rbx*1]
+    1.5 %  469120  prefetcht2 BYTE PTR [rsi+r11*1]
+    1.2 %  469103  prefetcht2 BYTE PTR [rsi+r9*1]
+    1.2 %  468f46  mov    r10d,DWORD PTR [rbx+0x8]
+    1.1 %  468f67  vpbroadcastq zmm2,QWORD PTR [rbx]
+    1.1 %  4695c5  prefetcht2 BYTE PTR [rsi+r11*1]
+    1.1 %  468f56  mov    r9d,r15d
+    1.1 %  469235  prefetcht2 BYTE PTR [rsi+r9*1]
+    1.1 %  468f7c  and    rax,rdi
+    1.1 %  46961d  prefetcht2 BYTE PTR [rsi+r11*1]

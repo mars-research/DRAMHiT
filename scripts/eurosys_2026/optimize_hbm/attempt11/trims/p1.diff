@@ -1,0 +1,40 @@
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -830,20 +830,25 @@
+           hh[j] &= bmask;  // linear probing keeps the bucket index itself
+ #endif
+         }
++        __m512i blk;
++        if constexpr (sizeof(Arg) == 16)  // 4 x {key, -, id}: already the block layout
++          blk = _mm512_loadu_si512(dp);
++        else
++          blk = _mm512_permutex2var_epi32(
++              _mm512_loadu_si512(dp), push_perm,
++              _mm512_loadu_si512(reinterpret_cast<const char *>(dp) + 32));
++        blk = _mm512_mask_expand_epi32(
++            blk, HASH_LANES, _mm512_castsi128_si512(_mm_set_epi32(hh[3], hh[2], hh[1], hh[0])));
+         if (head + 4 * E <= fq_mask + 1) [[likely]] {
+-          __m512i blk;
+-          if constexpr (sizeof(Arg) == 16)  // 4 x {key, -, id}: already the block layout
+-            blk = _mm512_loadu_si512(dp);
+-          else
+-            blk = _mm512_permutex2var_epi32(
+-                _mm512_loadu_si512(dp), push_perm,
+-                _mm512_loadu_si512(reinterpret_cast<const char *>(dp) + 32));
+-          blk = _mm512_mask_expand_epi32(
+-              blk, HASH_LANES, _mm512_castsi128_si512(_mm_set_epi32(hh[3], hh[2], hh[1], hh[0])));
+           _mm512_storeu_si512(&FQ(head), blk);
+-        } else {  // the block would wrap the ring
+-#pragma GCC unroll 4
+-          for (int j = 0; j < 4; j++) fq_put(&FQ((head + j * E) & fq_mask), dp[j].key, hh[j], dp[j].id);
++        } else {  // the block would wrap the ring: the n entries that fit go at head, the rest at the ring start.
++          // Both are stores of blk itself, so the keys/ids need not stay live in GPRs for this rare path.
++          // The second store's address lies before fq_base by the n entries; those lanes are masked off
++          // (AVX-512 masked stores do not fault on masked lanes).
++          const uint64_t room = fq_mask + 1 - head;  // 16, 32 or 48 bytes
++          const __mmask16 lo = (__mmask16)((1u << (room / 4)) - 1);
++          _mm512_mask_storeu_epi32(&FQ(head), lo, blk);
++          _mm512_mask_storeu_epi32(fq_base - room, (__mmask16)~lo, blk);
+         }
+         head = (head + 4 * E) & fq_mask;
+       }
