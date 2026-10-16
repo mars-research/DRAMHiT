@@ -1,0 +1,15 @@
+    74.64%  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::insert_batch(std::span<kmercounter::InsertArgument, 18446744073709551615ul> const&, kmercounter::LatencyCollector<2048ul>*) [clone .constprop.0]
+    22.42%  [.] kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]
+     1.73%  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::FindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*) [clone .constprop.0]
+     0.64%  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::get_fill() const
+     0.33%  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::ins_claim(kmercounter::Item*, unsigned int, long long __vector(8))
+     0.07%  [.] kmercounter::Application::process(int, char**) [clone .isra.0]
+     0.07%  [.] std::mersenne_twister_engine<unsigned long, 64ul, 312ul, 156ul, 31ul, 13043109905998158313ul, 29ul, 6148914691236517205ul, 17ul, 8202884508482404352ul, 37ul, 18444473444759240704ul, 43ul, 6364136223846793005ul>::operator()()
+     0.05%  [.] __memset_avx512_unaligned_erms
+     0.02%  [.] _sub_I_65535_0.0
+     0.01%  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::flush_insert_queue(kmercounter::LatencyCollector<2048ul>*)
+     0.01%  [.] kmercounter::Application::shard_thread(int, std::barrier<std::function<void ()> >*)
+     0.00%  [.] _int_free
+     0.00%  [k] 0xffffffff9180128c
+     0.00%  [.] _int_malloc
+     0.00%  [.] cfree@GLIBC_2.2.5

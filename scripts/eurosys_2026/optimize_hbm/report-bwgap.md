@@ -1083,3 +1083,284 @@ Best settings from E26: deep pop/push at queue 64 / batch 64 (fill 10) and 256 /
 - **North star:** 328 GB/s is now exceeded at fills 10–40 (332–336 GB/s). Fill 90 is at 304 GB/s, −7 %, against −10 % before.
 - **Not comparable to the earlier p1–p6 smoke check** (`attempt11/smoke_p6.txt`: 2 short reps, finds/s only, no change seen). That check measured a different set: it included p3 and p5. I have not separately measured whether p3/p5 cancel the gain or whether the smoke check was too noisy.
 - **The high-fill shape is unchanged:** cycles per line still rise 25.4 → 27.4 from fill 10 to 90. The branch-free deep pop (§34.3) is still the fix for that.
+
+## 36. E40 — hyperthreading (`attempt11/run_e40.sh`, `bwgap/analyze_e40.py`, `tables/E40.md`)
+
+**Question:** does running 2 threads per core (HT) buy HBM bandwidth through some per-core structure, or is it neutral?
+
+**Setup:**
+- Node 0 has 32 cores; the HT siblings are cpu n and n+64. Both programs fill node 0's cpu list in order, so 32 threads land on cpus 0–62 even, one per core (checked in dramhit's shard log).
+- Three configurations:
+  - **HT:** 64 threads, 2 per core (the default).
+  - **sibling polling:** 32 threads; the idle siblings spin in the kernel `POLL` loop, because C-states are disabled.
+  - **sibling offline:** 32 threads; cpus 64–126 even taken offline, i.e. true one thread per core.
+- Workloads: `bw_t1`, and dramblast (`attempt11/dvs_p3`, queue 128 / batch 64, key prefetch 64 t2) at fills 10 and 90.
+- At 32 threads, also a doubled per-thread depth: `bw_t1` lookahead 128, dramblast queue 256. One thread then has as many misses queued as two threads did.
+- Counter sets base / fb / td, 2 reps each, 200 ms intervals. Core events in user mode only, so the poll loop is not counted. Per-core values divide socket sums by core cycles (thread cycles / threads per core).
+- Every run is at the package limit (345–350 W).
+- After the run all cpus were brought back online at 2.7 GHz, prefetchers off. The sweep was interrupted once; its 3 missing runs were redone under the same offline state.
+
+**Results** (medians; full table with FB, issue and top-down columns in `tables/E40.md`):
+
+| workload | config | HBM GB/s | core GHz | core-cycles / HBM line | L2-miss reads in flight / core | ns per L2-miss read | uops issued / core cycle |
+|---|---|---|---|---|---|---|---|
+| bw_t1 | HT (64 thr) | **386.0** | 2.504 | 13.3 | 52.1 | 274 | 0.99 |
+| bw_t1 | 1/core, sibling offline | 358.1 | 2.508 | 14.4 | 30.9 | 174 | 0.89 |
+| bw_t1 | 1/core, offline, lookahead 128 | 356.5 | 2.565 | 14.7 | 30.5 | 173 | 0.86 |
+| bw_t1 | 1/core, sibling polling | 340.9 | 2.535 | 15.1 | 31.3 | 185 | 0.97 |
+| dramblast f10 | HT (64 thr) | **333.8** | 2.088 | 12.7 | 55.2 | 324 | 3.44 |
+| dramblast f10 | 1/core, sibling offline | 332.1 | 2.195 | 13.4 | 29.1 | 172 | 3.05 |
+| dramblast f10 | 1/core, offline, queue 256 | **335.8** | 2.206 | 13.4 | 29.0 | 169 | 3.05 |
+| dramblast f10 | 1/core, sibling polling | 274.9 | 2.394 | 17.7 | 24.2 | 173 | 2.43 |
+| dramblast f90 | HT (64 thr) | **303.2** | 2.012 | 13.4 | 54.6 | 361 | 4.17 |
+| dramblast f90 | 1/core, sibling offline | 274.4 | 2.227 | 16.5 | 22.8 | 167 | 4.26 |
+| dramblast f90 | 1/core, offline, queue 256 | 269.1 | 2.165 | 16.4 | 22.6 | 168 | 4.27 |
+| dramblast f90 | 1/core, sibling polling | 233.4 | 2.300 | 20.0 | 21.6 | 186 | 3.07 |
+
+**Reading:**
+- **A polling sibling is not idle.** With C-states off, the sibling's kernel poll loop takes the core's issue slots. Against true one-thread-per-core it costs dramblast 15–17 % (332 → 275 GB/s at fill 10, 274 → 233 at fill 90) and `bw_t1` 5 %. Any "HT off" comparison on this machine has to offline the siblings, or enable a C-state.
+- **Against true one-thread-per-core, HT is neutral for dramblast at fill 10, and worth +7 % for `bw_t1` and +10 % for dramblast at fill 90.**
+- **Fill 10: equal bandwidth, by two cancelling effects.**
+  - HT needs 5 % fewer core cycles per line (12.7 vs 13.4).
+  - But it runs 5 % slower (2.09 vs 2.20 GHz) at the same 349 W: two busy threads per core burn more power per core cycle.
+  - So 32 × GHz ÷ core-cycles-per-line is the same: 5.26 vs 5.24 G lines/s.
+  - The doubled queue does not change the single-thread result (335.8 vs 332.1, within reps).
+- **Memory parallelism follows Little's law.** HT holds twice the L2-miss reads in flight per core (55 vs 29), and each takes twice as long (324 vs 172 ns). Lines per ns per core are the same (0.170 vs 0.169).
+  - The extra in-flight requests under HT just queue: xq full is 55 % vs 41 %, and the mesh clock drops (1.62 vs 1.69 GHz).
+  - At fill 10 the core is not starved of MLP, so the extra in-flight capacity buys nothing.
+- **`bw_t1`: one thread per core is capped at ~31 L2-miss reads in flight.** Doubling its lookahead to 128 does not raise that (30.5) or the bandwidth (356.5). The thread is memory-bound (71 % of slots), so the cap binds.
+  - Two threads reach 52 in flight, at a higher latency (274 vs 174 ns), for +7 % bandwidth (0.190 vs 0.178 lines/ns per core).
+  - So **some per-thread limit on outstanding L2 misses exists**, and HT lets a core exceed it. This is the micro-architectural effect suspected. It is worth 7 % to a pure-miss kernel and nothing to dramblast at fill 10, which needs only ~29 in flight per core.
+- **Fill 90: HT +10 %, from core efficiency rather than MLP.**
+  - The single thread has only 22.8 misses in flight (below the ~31 cap), at 4.26 issued uops per core cycle, about the same issue rate as HT (4.17).
+  - It needs 16.5 core cycles per line vs 13.4 with HT, at the same retired instructions per line (34.3 vs 35.0).
+  - So it *issues* 26 % more uops per line (4.26 × 16.5 = 70 vs 4.17 × 13.4 = 56). The extra are squashed wrong-path uops: fill 90 is the misprediction-bound case (§34.3).
+  - **Inference, not measured here (no branch counters in E40):** under HT the ROB and other queues are split between the threads. A mispredicted, late-resolving hit/miss branch can therefore send only half as many wrong-path uops down the pipe before it resolves, and the other thread uses the slots meanwhile. A single thread fills the whole ROB with wrong-path work. Checking it needs the `br` set (mispredicts, recovery cycles) on the HT vs offline runs.
+- **For the north star:**
+  - HT is not a hidden source of HBM bandwidth for dramblast at low fill. At fill 10 the limit is the power-bound clock (§12.3).
+  - At high fill HT is worth ~10 %, by hiding mispredict cost. So the branch-free deep pop (§34.3) should help most on a single-thread-per-core configuration.
+  - `bw_t1`'s 386–397 GB/s ceiling does depend on HT; one thread per core tops out at ~358 GB/s.
+
+## 37. E41 — insert phase vs the 1-read-1-write bound (`bwgap/col_e41.py`, `tables/E41.md`, `logs/E41_ins`)
+
+**Question.** Before optimizing `insert_batch`: what is the practical HBM limit for insert-shaped traffic, and how far is dramblast's insert phase from it, in the §12.3 terms (clock × cycles per HBM line)?
+
+**Bound.** `bw_t1_w` = bw_t1 with `-mode w`: `prefetcht1` 64 lines ahead, then an 8 B store into the current line (`bin/bandwidth_rand_it100 -m 256mb -pattern n0a2t64 -freq 2.7 -inst t1 -pad 0 -near 8 -lookahead 64 -mode w`). Each line is read once (the prefetch) and written back once (dirty eviction): 1.010 + 1.010 HBM lines per program line, measured. This is the insert's own access pattern: it prefetches the bucket (`prefetcht1` at enqueue, `prefetchw` 8 entries before dequeue, `CAS_PREFETCH_INSERTION=DOUBLE`), compares the line, and stores into it. With `--insert-factor 400`, 99.75 % of inserts are updates of an existing key (`bucket[offset + 1] = value`).
+
+**Run.** §12 protocol (100 ms perf intervals, 5 reps, rep-major interleaved, `runlib.cooldown`, prefetchers off 0x2f, cpufreq 2.7 GHz). The dramblast window is the **insert** phase, lengthened to ~6.4 s with `--insert-factor 400 --read-factor 10`; steady = ≥ 1.0 s into the phase, boundary intervals dropped.
+```
+cd bwgap
+python3 run_stream.py --reps 5 --interval-ms 100 --workloads bw_t1 bw_t1_w a21_dvs_p3_ins_f10 a21_keyshbm_ins_f10 --out E41_ins
+python3 col_e41.py E41_ins     # -> tables/E41.md
+```
+- `a21_dvs_p3_ins_f10`: current best build `attempt11/dvs_p3`, `--find_queue 128 --batch-len 64` (the insert queue has the same length), `KEY_PF_DIST=64 KEY_PF_HINT=t2`, fill 10, keys in HBM.
+- `a21_keyshbm_ins_f10`: the §12.3 "keys in HBM" binary (`attempt6/ddrhbm`, queue 64 / batch 16), as reference.
+- All runs: 21 474 836 400 inserts, and every find found.
+
+Median of all steady intervals [median of per-rep medians; min–max of per-rep medians]:
+
+| metric | bw_t1 (read only) | **bw_t1_w (1r1w bound)** | **dramblast insert, best now (`dvs_p3`)** | dramblast insert, keys in HBM (attempt6) |
+|---|---|---|---|---|
+| HBM GB/s (rd + wr) | 401.6 [401.5; 400.8–402.3] | **629.5** [630.8; 616.4–645.4] | **445.7** [445.4; 443.3–446.9] | 445.1 [445.1; 444.6–446.4] |
+| HBM read / write GB/s | 401.4 / 0.1 | 315.4 / 315.4 | 236.3 / 209.1 | 236.1 / 209.0 |
+| core GHz | 2.572 | 2.312 [2.317; 2.306–2.321] | 2.152 [2.150; 2.139–2.170] | 2.104 |
+| mesh GHz | 1.869 | 1.725 | 1.653 | 1.612 |
+| IPC | 0.54 | 0.47 | 1.61 | 1.87 |
+| instr rate per thread (G/s) | 1.37 | 1.09 | 3.46 | 3.93 |
+| package W | 348.9 | 348.6 | 349.2 | 348.9 |
+| xq full % / fb_full % | 67.3 / 67.6 | **85.3** / 86.9 | **5.8** / 51.9 | 3.9 / 53.4 |
+| program lines (inserts) per s (G) | 6.209 | 4.809 | 3.346 | 3.354 |
+| energy per program line (nJ) | 56.2 | 72.3 | 104.4 | 103.9 |
+| energy per HBM line (nJ) | 55.7 | 35.3 | 50.1 | 50.1 |
+| HBM lines per program line (rd + wr) | 1.010 | 2.021 (1.010 + 1.010) | 2.085 (1.106 + 0.979) | 2.073 (1.100 + 0.974) |
+| instr per HBM line | 14.1 | 7.0 | 31.8 | 36.2 |
+| **cycles per HBM line** | 26.3 | **15.0** | **19.8** | 19.4 |
+| cycles per program line (insert) | 26.5 | 30.8 | 41.4 | 40.1 |
+
+**Prediction check** (§12.6 method, per-rep ratios against the same-round `bw_t1_w`, reps 2–5):
+
+| step | HBM GB/s ratio | clock ratio | active-cpu ratio | cycles-per-line effect | model | residual |
+|---|---|---|---|---|---|---|
+| bw_t1_w → bw_t1 (read only) | 0.634 | 1.111 | 1.001 | 0.565 | 0.630 | +0.9 % |
+| bw_t1_w → **dramblast insert, best now** | **0.704** | **0.933** | 1.001 | **0.747** | 0.698 | +0.5 % |
+| bw_t1_w → dramblast insert, attempt6 | 0.703 | 0.911 | 1.001 | 0.766 | 0.699 | +0.4 % |
+
+Reading:
+- **The 1r1w bound is 630 GB/s**, 57 % above the read-only bound (402). A write-back costs the core almost nothing: 15.0 core cycles per HBM line vs 26.3 read-only, with the memory pipe saturated (xq full 85 %). Its clock is lower (2.31 vs 2.57 GHz): more HBM traffic per instruction at the same ~349 W.
+- **dramblast's insert reaches 446 GB/s, 70 % of the bound.** Unlike find (§12.3, where the gap is now all clock), **the insert gap is mostly cycles per HBM line**: 0.704 = clock 0.933 × cycles 0.747. In log terms that is clock ~20 % and cycles ~83 %. The model closes within 0.5 %.
+- **The insert loop is not memory-bound.** xq is full only 5.8 % of the time (bound: 85 %). Instructions per HBM line are 31.8 vs 7.0, about 66 per insert. The loop doesn't issue misses fast enough to fill the pipe, the same picture as the old find loop (§12.5, s3–s4).
+- **The best build's insert is no better than attempt6's** (445.7 vs 445.1 GB/s, 3.35 G inserts/s each). All work since §13 went into `find_batch`; the insert path is still the scalar one-key-per-iteration loop. It now retires 12 % fewer instructions per line (31.8 vs 36.2) yet runs only 2 % faster per line, at a 2 % higher clock.
+- **Target.** To reach the bound at the same clock, an insert would cost 2.085 lines × 15.0 ≈ 31 cycles, down from 41.4. At bw_t1_w's clock, 630 GB/s needs ~15 cycles per HBM line. A more realistic aim is the find path's ratio to its bound: find reached 0.855 of bw_t1 with cycles ~4 % better than bw_t1's. The equivalent for insert is ~540 GB/s at ~16 cycles per HBM line.
+- **The insert's read lines (1.106 per insert)** are 1 table line plus 0.106 key-stream lines (8 B keys, 0.125 lines raw), so the key stream already hits L2/LLC somewhat. Writes are 0.979 per insert: nearly every insert dirties its bucket line. Why it is 2 % below 1 is not measured; a plausible cause is two updates to one line merging before its eviction.
+
+## 38. E42/E43 — deep insert: split insert queue, 4-entry block pop/push (`-DDEEP_VEC_INSERT`; `attempt11/deep_insert.diff`, `bwgap/analyze_e42.py`, `tables/E42_*.md`, `tables/E43_ins.md`)
+
+**Design** (`include/hashtables/cas_kht.hpp`, CMake `DEEP_VEC_INSERT`, needs `DEEP_VECTORIZATION`). Inserts take only {key, value} and return nothing, so the insert queue becomes two rings of the same length (the queue size):
+- `ins_kv[i]`: {key, value}, 16 B, the layout of `InsertArgument` and of a bucket slot.
+- `ins_h[i]`: the 32-bit crc hash, or the bucket index with linear probing, as `FindQ16::hash`.
+- Tail and head are byte offsets `o` into `ins_h`. The same slot of `ins_kv` is at `4 o`, a scaled index, so neither ring address needs a shift.
+
+Each step of the fast path inserts 4 arguments:
+- **Deep pop.** One 64 B load gets 4 {key, value} entries and one 16 B load gets their 4 hashes (wrapping blocks use two masked loads). For each lane k:
+  - `vshufi64x2` broadcasts pair k to all four 128-bit lanes;
+  - the key compare (`vpcmpequq`, KEYMSK) runs directly against that register, since keys are the even qwords of both;
+  - an update is `vmovdqu64 [bucket]{kshift(hit, 1)}`, a masked store of the value lane;
+  - an empty slot is claimed in an out-of-line `ins_claim`, with `__insert_branched`'s CAS walk;
+  - a reprobe stores the entry back at head with its next hash.
+  - Blocks are popped until there is room for 4 pushes. With no reprobe that is exactly one block, so one deep pop matches one deep push and the queue stays at `insert_queue_sz − 1` entries.
+  - The dequeue-time `prefetchw` covers the 4 buckets `INS_PF_DIST` slots ahead (default 8).
+- **Deep push.** The 4 arguments as one 64 B block (24 B `InsertFindArgument`s via one `vpermt2d`), 4 dword hash stores (as p3, §35), and 4 `prefetcht1`.
+- The slow path, the 1–3 leftover arguments and `flush_insert_queue` use split-queue versions of `pop_insert_queue` and `add_to_insert_queue_t` (empty-key handling kept). `find_batch` is unchanged; its asm matches `dvs_p3` except member offsets.
+- **A/B knobs:**
+  - `-DDEEP_INS_HASH_SCALAR=1`: each lane's hash is read from `ins_h` by the bucket-offset `andn` (memory operand), instead of the 16 B load plus `vmovd`/`vpextrd`.
+  - `-DINS_PF_DIST=N`: the dequeue-time `prefetchw` distance.
+
+**Bugs found while bringing it up.** Block loads and stores must be unaligned: head and tail also move by single entries (slow path, reprobes), and the first build faulted on `vmovdqa64`. Computing per-entry wrapped hash addresses on the wrap path made gcc precompute them in front of the branch and park them in mask registers. The wrap path now uses two masked 16 B stores.
+
+**Correctness.** Every find is found in every run: fills 10/50/90; queue 16–256; batch 16–128, plus 20 and 36, which exercise the 1–3 leftover path; and all sweep runs. The harness inserts value = key, so a value written to the wrong lane would not show up. That part rests on review (`kshift` by 1 = the value qword after the key).
+
+**E42 sweep** (insert phase, fill 10, `--insert-factor 400`, 2–3 reps; `tables/E42_qb.md`, `E42_var.md`, `E42_combo.md`):
+- **Queue × batch, dvs_p3 vs `dvi`.** `dvi` is faster at every point: +1.6 to +14.8 % inserts/s.
+  - Instructions per insert fall from 66–68 to 41–47, and the xq-full share rises from 2–8 % to 15–34 %.
+  - **Batch 16 is best for both builds.** Batch 32 is the worst for both (higher clock, lower bandwidth); unexplained.
+  - Queue 64–256 are within noise; queue 32 is worse.
+- **Variants at q128 / b16:** `dvi` 3.655, `dvi_hs` 3.768, `dvi_pf16` 3.749, `dvi_pf24` 3.765 G inserts/s. Batch 8 is worse than 16 for every build.
+- **Combinations, 3 reps:** `dvi_hs24` (scalar hash loads + prefetchw 24) 3.817 / 502.8 GB/s at q128; `dvi_hs16` 3.800 at q64; `dvi_pf24` 3.791 at q128.
+  - The top three are within run-to-run noise (2–4 %; `dvi_hs` at q128 measured 3.768 and 3.578 in two sweeps).
+  - `dvi_hs24` is taken as best.
+
+**E43: §12 protocol** (5 reps, 100 ms, interleaved, `runlib.cooldown`, fill 10, insert phase; `python3 run_stream.py --reps 5 --interval-ms 100 --workloads bw_t1_w a22_dvs_p3_q128_b64_f10 a22_dvi_hs24_q128_b16_f10 a22_dvi_hs24_q128_b64_f10 --out E43_ins`; `python3 col_e41.py E43_ins <workloads>`). Median of all steady intervals [median of per-rep medians; min–max]:
+
+| metric | **bw_t1_w (1r1w bound)** | dvs_p3 insert, q128 / b64 | **deep insert `dvi_hs24`, q128 / b16** | deep insert `dvi_hs24`, q128 / b64 |
+|---|---|---|---|---|
+| HBM GB/s (rd + wr) | 616.0 [617.1; 601.8–646.6] | 444.4 [443.8; 442.0–446.4] | **499.6** [501.0; 496.6–501.5] | 489.4 [489.8; 486.5–491.4] |
+| HBM read / write GB/s | 308.5 / 308.5 | 235.5 / 208.4 | 265.8 / 235.2 | 259.9 / 229.9 |
+| core GHz | 2.311 | 2.141 | 2.031 | 2.130 |
+| mesh GHz | 1.718 | 1.644 | 1.596 | 1.641 |
+| IPC | 0.46 | 1.61 | 1.40 | 1.20 |
+| instr rate per thread (G/s) | 1.06 | 3.44 | 2.85 | 2.55 |
+| package W | 348.6 | 349.0 | 349.2 | 349.1 |
+| xq full % / fb_full % | 86.5 / 87.4 | 5.7 / 51.8 | 34.9 / 66.0 | 30.4 / 60.3 |
+| inserts (program lines) per s (G) | 4.821 | 3.323 | **3.783** | 3.695 |
+| energy per insert (nJ) | 72.2 | 105.0 | 92.0 | 94.5 |
+| energy per HBM line (nJ) | 36.1 | 50.1 | 44.7 | 45.7 |
+| HBM lines per insert (rd + wr) | 2.014 | 2.085 (1.106 + 0.979) | 2.055 (1.090 + 0.965) | 2.063 |
+| instr per HBM line (per insert) | 7.0 | 31.8 (66.3) | 23.3 (47.9) | 21.4 (44.1) |
+| **cycles per HBM line** | 15.4 | 19.8 | **16.7** | 17.9 |
+| cycles per insert | 30.8 | 41.3 | 34.2 | 36.9 |
+
+Prediction check (§12.6 method, per-rep ratios against the same-round `bw_t1_w`, reps 2–5):
+
+| step | HBM GB/s ratio | clock ratio | active-cpu ratio | cycles-per-line effect | model | residual |
+|---|---|---|---|---|---|---|
+| bw_t1_w → dvs_p3 insert, q128 / b64 | 0.726 | 0.923 | 1.000 | 0.785 | 0.724 | +0.3 % |
+| bw_t1_w → **deep insert, q128 / b16** | **0.816** | **0.873** | 1.000 | **0.935** | 0.813 | +0.7 % |
+| bw_t1_w → deep insert, q128 / b64 | 0.800 | 0.924 | 1.000 | 0.868 | 0.797 | +0.4 % |
+
+Reading:
+- **Deep insert raises insert-phase HBM bandwidth 12.4 % (444 → 500 GB/s) and inserts/s 13.8 % (3.32 → 3.78 G)**, at the same ~349 W. That is 81 % of the 1r1w bound, up from 73 %. Instructions per insert fall 28 % (66 → 48), and cycles per HBM line 19.8 → 16.7.
+- **The gap is now mostly clock**, the find path's picture (§12.3). 0.816 = clock 0.873 × cycles 0.935: in log terms clock ~67 %, cycles ~33 % (it was clock 20 % / cycles 83 % for the old insert, §37). Cycles per HBM line are 16.7 vs 15.4, within 8 % of the bound's.
+- **The clock fell** (2.14 → 2.03 GHz at b16), although the instruction rate fell too (3.44 → 2.85 G/s per thread). More HBM traffic per second at the same package power means less power is left for the cores; bw_t1_w itself runs at only 2.31 GHz.
+- **Batch 64 (find's best) costs the insert 2 %** (3.695 vs 3.783 G/s), with a higher clock but more cycles per line. Queue and batch length are shared by insert and find, so a combined workload has to choose: find prefers b64 (§21), insert prefers b16.
+- **What is left per insert (48 instructions)** includes the harness: its per-batch loop writes each `InsertArgument` (key, value) and prefetches the key stream. The table-side deep step of the first `dvi` build is ~130 instructions per 4 inserts by static count of the all-hit path. This split between harness and table, and how much of the saving each part of the design contributes, has not been measured (no perf record of the new build yet).
+
+## 39. E44–E46 — static and dynamic pass over the deep insert; 16 B hash store; harness key prefetch (`attempt11/dvk*`, `run_e44.sh`, `bwgap/analyze_e44.py`, `analyze_e45.py`, `tables/E44.md`, `E45_*.md`, `E46_ins.md`)
+
+**Static pass** (`attempt11/dvi_hs24/insert_batch.s`, all-hit fall-through path of one step = deep pop of 4 + deep push of 4: 138 instructions):
+1. Each lane re-masked its hash index for the ring wrap (`lea`, `and` per lane), although the block load had already branched on the wrap. The 4 look-ahead `prefetchw` did the same, 5 instructions each.
+2. GCC computed the wrap path's `&IKV(head)` and `&IH(head)` ahead of the branch and parked them in mask registers: 4 `kmovq` per step, port-5 uops.
+3. `pop_until` was reloaded from the stack every step; `dp` and `in_end` were spilled and reloaded.
+4. `kshiftlb` (port 5) builds the value-lane store mask in each lane.
+
+**Dynamic pass** (E44, insert phase, q128 / b16, one core counter set per run, 2 reps; `tables/E44.md`; perf record `prof/dvi_hs24.data`):
+- Bad speculation is negligible: 0.009 mispredicted branches per insert, 0.4 % of slots. The find path's high-fill problem (§34) is absent.
+- No port is saturated: p5+p11 0.61, p0 0.28, loads 0.61 per core cycle; 2.8 of 6 uops issued per core cycle.
+- Stalls take 53 % of cycles (dvs_p3: 38 %) and the L1 fill buffers are full 66 % of cycles.
+- Samples: `insert_batch` 75 %, harness `ZipfianTest::run` 22 %.
+  - The 4 look-ahead `prefetchw` hold **34 % of all samples**. Precise cycle samples sit on the instruction retirement waits for, so retirement waits on these prefetches. The likely cause is waiting for a free fill buffer.
+  - The harness's key load (`vpbroadcastq` from `workload[idx]`) holds 9.5 %. The insert loop still prefetched the key stream only 16 keys ahead with `prefetcht0`, about 2 lines, which is too short for HBM, and each prefetch holds an L1 fill buffer for the whole trip. The find loop was moved to 64 ahead / t2 in §17; the insert loop never was.
+
+**Changes** (all in `cas_kht.hpp` / `zipfian_test.cpp`):
+- Lane hashes are read through a pointer: the ring itself, or a 16 B stack copy when the block wraps. No per-lane mask.
+- The look-ahead has one wrap branch: 4 unmasked reads, or per-entry masks when the 4 wrap.
+- The pop condition is "free slots < 5" against an immediate.
+- The push wrap path is a `noinline, cold` helper (`ins_push_wrap`).
+- `kaddb` replaces `kshiftlb`, by inline asm, because GCC folds `_kadd_mask8(hit, hit)` back into `kshiftlb`.
+- `-DDEEP_INS_PUSH_H128=1`: the 4 hashes as one 16 B store (`vmovd`, 2 × `vpinsrd`, `vpunpcklqdq`) instead of 4 dword stores.
+- Harness: `INS_KEY_PF_DIST` / `INS_KEY_PF_HINT` for the insert loop. The defaults (16, t0) keep the original behaviour.
+- **Result:** the hot step goes 138 → 120 instructions; `kmov` 4 → 0; stack accesses stay at 7 (`dp` store and reload, `in_end`, and GCC re-storing `&hw` every step).
+
+**A first version was 3–8 % slower** (`attempt11/dvj`, E45). It read the look-ahead hashes unmasked, with zeroed slack after the ring. Near the ring end, every thread's look-ahead then read hash 0, so all 64 threads issued `prefetchw` on bucket 0, one shared line. xq full rose from 35 % to 62 %, and cycles per HBM line from 17.2 to 19.0, while HBM lines per insert rose only 0.7 %. The exact look-ahead (`dvk`) removed this. The slack variant is kept as `-DDEEP_INS_AHEAD_SLACK` for reference.
+
+**E45** (3 reps, q128 / b16, fill 10; `tables/E45_clean.md`, `E45b.md`, `E45c.md`; `dvi_hs24` predates the harness knob, so its two runs are one binary twice and show the noise, +2.6 %):
+
+| build | key prefetch | inserts/s (G) | HBM GB/s | cycles / HBM line |
+|---|---|---|---|---|
+| dvi_hs24 | 16 t0 | 3.775 | 500.1 | 16.9 |
+| dvj (slack look-ahead) | 16 t0 | 3.484 | 469.0 | 18.9 |
+| dvk | 16 t0 | 3.806 | 502.6 | 16.3 |
+| dvk | 64 t2 | 3.929 / 3.962 | 522.3 / 525.0 | 15.2 / 15.3 |
+| dvk | 128 t2 / 32 t2 / 64 t1 | 3.984 / 3.910 / 3.889 | 522.8 / 512.4 / 520.1 | 15.1 / 15.4 / 15.2 |
+| dvk128 (16 B hash store) | 64 t2 | 3.963 | 524.4 | 15.2 |
+
+- The asm cleanup is within noise on its own (+0.8 %). The harness key prefetch adds ~3–4 %. The distance (32–128) and hint (t1 / t2) barely matter: what mattered was getting the key stream out of `prefetcht0` 16 ahead.
+- **The 16 B hash store is neutral** (3.963 vs 3.962 G/s). It trades 3 store uops for 5 shuffle uops, and neither stores nor port 5 are the limit here.
+
+**E46: §12 protocol** (5 reps, 100 ms, interleaved, fill 10, insert phase; `python3 run_stream.py --reps 5 --interval-ms 100 --workloads bw_t1_w a22_dvs_p3_q128_b16_f10 a22_dvi_hs24_q128_b16_f10 a23_dvk_k64t2_f10 a23_dvk128_k64t2_f10 --out E46_ins`; `col_e41.py E46_ins <workloads>`; all queue 128 / batch 16):
+
+| metric | **bw_t1_w (1r1w bound)** | dvs_p3 insert | deep insert `dvi_hs24` | **deep insert `dvk`, key pf 64 t2** | `dvk128`, key pf 64 t2 |
+|---|---|---|---|---|---|
+| HBM GB/s (rd + wr) | 627.7 [646.9; 600.4–647.7] | 452.8 [455.8; 437.2–459.5] | 498.7 [497.8; 487.2–505.9] | **526.2** [525.3; 518.8–530.4] | 525.7 [525.9; 511.0–529.7] |
+| core GHz | 2.284 | 2.085 | 2.040 | 1.954 | 1.957 |
+| mesh GHz | 1.713 | 1.614 | 1.594 | 1.544 | 1.546 |
+| IPC | 0.48 | 1.71 | 1.38 | 1.46 | 1.47 |
+| package W | 347.9 | 349.0 | 349.9 | 348.8 | 348.1 |
+| xq full % / fb_full % | 84.5 / 86.4 | 7.3 / 57.2 | 34.8 / 66.0 | 60.3 / 67.6 | 60.5 / 66.9 |
+| inserts per s (G) | 5.011 | 3.440 | 3.788 | **3.965** | 3.962 |
+| energy per insert (nJ) | 69.4 | 101.5 | 92.1 | 87.9 | 88.0 |
+| HBM lines per insert (rd + wr) | 2.015 | 2.076 | 2.055 | 2.073 (1.100 + 0.973) | 2.072 |
+| instr per insert | 14.3 | 67.7 | 47.9 | 45.8 | 46.2 |
+| **cycles per HBM line** | 14.6 | 19.0 | 16.9 | **15.2** | 15.3 |
+| cycles per insert | 29.4 | 39.5 | 34.7 | 31.6 | 31.6 |
+
+| step (per-rep ratios vs bw_t1_w, reps 2–5) | HBM GB/s ratio | clock ratio | cycles-per-line effect | model | residual |
+|---|---|---|---|---|---|
+| bw_t1_w → dvs_p3 insert | 0.709 | 0.919 | 0.762 | 0.703 | +1.1 % |
+| bw_t1_w → dvi_hs24 | 0.782 | 0.898 | 0.860 | 0.772 | +0.5 % |
+| bw_t1_w → **dvk, key pf 64 t2** | **0.819** | **0.859** | **0.943** | 0.809 | +1.3 % |
+| bw_t1_w → dvk128 | 0.818 | 0.861 | 0.940 | 0.810 | +1.0 % |
+
+Reading:
+- **`dvk` + harness key prefetch: 526 GB/s, 3.97 G inserts/s.** That is +5.5 % / +4.7 % over `dvi_hs24`, and +16.2 % / +15.3 % over the old insert at the same queue / batch. It reaches 82–84 % of the 1r1w bound (628 GB/s here; this run's bound has a wide rep spread, 600–648).
+- **Cycles per HBM line are within 4 % of the bound** (15.2 vs 14.6). The remaining gap is now ~75 % clock (1.95 vs 2.28 GHz at the same ~349 W) and ~25 % cycles. This is the find path's situation (§12.3).
+- **What still costs:**
+  - The look-ahead `prefetchw` still hold ~34 % of samples (`prof/dvk_k64t2.data`), with fill buffers full 68 % of cycles.
+  - The harness takes 21 % of samples. Its key load still waits (6.6 %; the t2 prefetch leaves an L2 → L1 miss), and a per-item hint `switch` sits in the loop every 8 keys.
+  - Further cycles would have to come from fewer L1 fill-buffer holds per insert, for example the dequeue `prefetchw` into L1 versus storing into an L2-resident line, or from the harness. The power-limited clock is not addressed by any of this.
+
+## 40. E47 — deep find pop: one 16 B result store per hit, `kaddb` value mask (`-DDEEP_FIND_RES128`, `-DDEEP_FIND_KADD`; `bwgap/analyze_e47.py`, `tables/E47.md`)
+
+**Why not a block load of 4 find-queue entries.** E22 (§21) measured it 3–4 % slower: the hash extracts add port-5 uops, and port 5 is the find loop's busiest port (§34). The insert path gains from its block register because one `vshufi64x2` supplies both the key compare and the value that is stored (update, push-back). A find has no value to carry. Its key compare already uses `vpbroadcastq m64`, a load-port uop with no port-5 work, which a register shuffle would replace with a port-5 uop. The insert path also measured scalar hash loads faster than extracts (`dvi_hs`, §38).
+
+**Variants** (on the `dvk` build, `attempt11/dvk_r`, `dvk_ka`, `dvk_rka`):
+- `DEEP_FIND_RES128`: each hit's {key_id, value} goes to `vp` with one 16 B store. This drops the masked `vshufi32x4` lane insert (port 5), the found mask, and the per-step 64 B or compress store. `find_batch`: 653 → 618 instructions. E36's p5 used two scalar stores per result and was slower; this is one store.
+- `DEEP_FIND_KADD`: the compress mask `hit << 1` by `kaddb` (port 0) instead of `kshiftlb` (port 5), in inline asm (as in the insert path).
+
+**Result** (find phase, queue 128 / batch 64, 3 interleaved reps; all finds found):
+
+| fill | build | finds/s (M) | Δ | HBM GB/s | instr / find | thread-cycles / HBM line |
+|---|---|---|---|---|---|---|
+| 10 | dvk | 4789 [4351–4812] | | 338.5 | 45.9 | 25.2 |
+| 10 | +RES128 | 4846 | +1.2 % | 342.8 | 43.3 | 24.8 |
+| 10 | +KADD | 4794 | +0.1 % | 339.0 | 45.9 | 25.2 |
+| 10 | **+RES128 +KADD** | **4877** [4872–4891] | **+1.8 %** | **345.6** | 43.1 | 24.9 |
+| 50 | dvk | 4473 | | 333.0 | 46.9 | 25.2 |
+| 50 | +RES128 +KADD | 4498 | +0.6 % | 340.1 | 45.0 | 24.9 |
+| 90 | dvk | 2800 | | 306.0 | 60.2 | 26.9 |
+| 90 | +RES128 | 2883 | +3.0 % | 307.8 | 56.7 | 26.7 |
+| 90 | +KADD | 2860 | +2.1 % | 308.5 | 59.2 | 27.0 |
+| 90 | **+RES128 +KADD** | **2904** | **+3.7 %** | 311.3 | 56.8 | 26.6 |
+
+- RES128 saves ~2.6 instructions per find at low fill and ~3.5 at fill 90. At fill 90 the old not-found compress-store path was taken more often.
+- KADD alone is neutral at fill 10 and 50 and +2 % at fill 90.
+- Together: **+1.8 % finds/s and 346 GB/s at fill 10** (+7 GB/s), +3.7 % at fill 90. Gains are small and partly within the rep spread at fill 50; the fill-10 combined result has the tightest spread of the four (4872–4891).

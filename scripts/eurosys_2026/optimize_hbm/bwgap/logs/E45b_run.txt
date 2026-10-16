@@ -1,0 +1,13 @@
+[E45b] rep 1/3  a23_dvi_hs24_def_f10
+[E45b] rep 1/3  a23_dvj_def_f10
+[E45b] rep 1/3  a23_dvk_def_f10
+[E45b] rep 1/3  a23_dvk_k64t2_f10
+[E45b] rep 2/3  a23_dvi_hs24_def_f10
+[E45b] rep 2/3  a23_dvj_def_f10
+[E45b] rep 2/3  a23_dvk_def_f10
+[E45b] rep 2/3  a23_dvk_k64t2_f10
+[E45b] rep 3/3  a23_dvi_hs24_def_f10
+[E45b] rep 3/3  a23_dvj_def_f10
+[E45b] rep 3/3  a23_dvk_def_f10
+[E45b] rep 3/3  a23_dvk_k64t2_f10
+[OK]

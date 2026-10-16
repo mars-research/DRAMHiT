@@ -1,0 +1,16 @@
+[E45c] rep 1/3  a23_dvk_k64t2_f10
+[E45c] rep 1/3  a23_dvk128_k64t2_f10
+[E45c] rep 1/3  a23_dvk_k128t2_f10
+[E45c] rep 1/3  a23_dvk_k32t2_f10
+[E45c] rep 1/3  a23_dvk_k64t1_f10
+[E45c] rep 2/3  a23_dvk_k64t2_f10
+[E45c] rep 2/3  a23_dvk128_k64t2_f10
+[E45c] rep 2/3  a23_dvk_k128t2_f10
+[E45c] rep 2/3  a23_dvk_k32t2_f10
+[E45c] rep 2/3  a23_dvk_k64t1_f10
+[E45c] rep 3/3  a23_dvk_k64t2_f10
+[E45c] rep 3/3  a23_dvk128_k64t2_f10
+[E45c] rep 3/3  a23_dvk_k128t2_f10
+[E45c] rep 3/3  a23_dvk_k32t2_f10
+[E45c] rep 3/3  a23_dvk_k64t1_f10
+[OK]

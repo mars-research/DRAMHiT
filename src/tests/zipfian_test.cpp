@@ -64,6 +64,39 @@ extern std::vector<key_type> *g_zipf_values;
 using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
 using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
 
+// Key-stream prefetch of the find loop, configurable from the environment (research knobs; with none
+// set the behaviour is the original one: in the per-key loop, every 8 keys, 16 keys ahead, prefetcht0).
+//   KEY_PF_DIST  keys ahead (0 = no key prefetch)
+//   KEY_PF_HINT  t0 | t1 | t2 | nta
+//   KEY_PF_MODE  inline: in the per-key loop, one prefetch per 8-key line
+//                batch:  at the start of each batch, every key line of the batch KEY_PF_DIST keys ahead
+struct KeyPrefetchConfig {
+  uint64_t dist = 16;
+  int hint = 3;  // __builtin_prefetch locality: 3 = t0, 2 = t1, 1 = t2, 0 = nta
+  bool batch = false;
+};
+
+// The insert loop has its own pair, INS_KEY_PF_DIST / INS_KEY_PF_HINT (inline mode only; same defaults).
+static KeyPrefetchConfig key_prefetch_config(const char *dist_env = "KEY_PF_DIST", const char *hint_env = "KEY_PF_HINT") {
+  KeyPrefetchConfig c;
+  if (const char *d = getenv(dist_env)) c.dist = strtoull(d, nullptr, 10);
+  if (const char *h = getenv(hint_env)) {
+    std::string hs(h);
+    c.hint = hs == "t1" ? 2 : hs == "t2" ? 1 : hs == "nta" ? 0 : 3;
+  }
+  if (const char *m = getenv("KEY_PF_MODE")) c.batch = std::string(m) == "batch";
+  return c;
+}
+
+static inline void key_prefetch(const void *p, int hint) {
+  switch (hint) {
+    case 3: __builtin_prefetch(p, false, 3); break;
+    case 2: __builtin_prefetch(p, false, 2); break;
+    case 1: __builtin_prefetch(p, false, 1); break;
+    default: __builtin_prefetch(p, false, 0); break;
+  }
+}
+
 uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
 #if defined(CAS_NO_ABSTRACT) || defined(SPLIT_ARGS)
   CASHashTable<KVType, ItemQueue> *cas_ht =
@@ -90,10 +123,13 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
   InsArg *items = (InsArg *)aligned_alloc(64, sizeof(InsArg) * config.batch_len);
   key_type value;
   uint64_t idx = 0;
+  const KeyPrefetchConfig kpf = key_prefetch_config("INS_KEY_PF_DIST", "INS_KEY_PF_HINT");
+  static std::atomic<bool> kpf_logged{false};
+  if (!kpf_logged.exchange(true)) PLOGI.printf("insert key prefetch: %lu keys ahead, hint %d", kpf.dist, kpf.hint);
   for (uint64_t n = 0; n < batch_num; ++n) {
     for (uint32_t i = 0; i < batch_len; i++) {
-      if (!(idx & 7) && idx + 16 < request_num) {
-        __builtin_prefetch(&workload[idx + 16], false, 3);
+      if (kpf.dist && !(idx & 7) && idx + kpf.dist < request_num) {
+        key_prefetch(&workload[idx + kpf.dist], kpf.hint);
       }
 
       value = workload[idx];
@@ -149,38 +185,6 @@ struct ht_do_batch_find_ret {
   uint32_t idx;
   uint32_t found;
 };
-
-// Key-stream prefetch of the find loop, configurable from the environment (research knobs; with none
-// set the behaviour is the original one: in the per-key loop, every 8 keys, 16 keys ahead, prefetcht0).
-//   KEY_PF_DIST  keys ahead (0 = no key prefetch)
-//   KEY_PF_HINT  t0 | t1 | t2 | nta
-//   KEY_PF_MODE  inline: in the per-key loop, one prefetch per 8-key line
-//                batch:  at the start of each batch, every key line of the batch KEY_PF_DIST keys ahead
-struct KeyPrefetchConfig {
-  uint64_t dist = 16;
-  int hint = 3;  // __builtin_prefetch locality: 3 = t0, 2 = t1, 1 = t2, 0 = nta
-  bool batch = false;
-};
-
-static KeyPrefetchConfig key_prefetch_config() {
-  KeyPrefetchConfig c;
-  if (const char *d = getenv("KEY_PF_DIST")) c.dist = strtoull(d, nullptr, 10);
-  if (const char *h = getenv("KEY_PF_HINT")) {
-    std::string hs(h);
-    c.hint = hs == "t1" ? 2 : hs == "t2" ? 1 : hs == "nta" ? 0 : 3;
-  }
-  if (const char *m = getenv("KEY_PF_MODE")) c.batch = std::string(m) == "batch";
-  return c;
-}
-
-static inline void key_prefetch(const void *p, int hint) {
-  switch (hint) {
-    case 3: __builtin_prefetch(p, false, 3); break;
-    case 2: __builtin_prefetch(p, false, 2); break;
-    case 1: __builtin_prefetch(p, false, 1); break;
-    default: __builtin_prefetch(p, false, 0); break;
-  }
-}
 
 uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
                        uint64_t *found_res) {

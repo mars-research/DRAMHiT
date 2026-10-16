@@ -66,18 +66,18 @@ def reserve_pool():
 
 
 # ---------------------------------------------------------------- commands
-def dramhit_cmd(fill=10, read_factor=100, find_queue=64, batch_len=16, binary=DRAMHIT):
+def dramhit_cmd(fill=10, read_factor=100, find_queue=64, batch_len=16, binary=DRAMHIT, insert_factor=100):
     return (f"{binary} --mode 11 --ht-type 3 --ht-size 536870912 --ht-fill {fill} --num-threads 64 "
             f"--numa-split 10 --np_cpu_node_msk 1 --np_mem_node_msk 4 --np_mem_local 0 "
             f"--batch-len {batch_len} --find_queue {find_queue} --no-prefetch 0 --hw-pref 0 "
-            f"--insert-factor 100 --read-factor {read_factor} --skew 0.01 --seed {SEED}")
+            f"--insert-factor {insert_factor} --read-factor {read_factor} --skew 0.01 --seed {SEED}")
 
 
-def bw_cmd(inst, iters=100, threads=64, mem="256mb", pad=0, near=8, lookahead=64, stage=None):
+def bw_cmd(inst, iters=100, threads=64, mem="256mb", pad=0, near=8, lookahead=64, stage=None, mode="r"):
     exe = BWM[iters] if stage else BW[iters]      # mimic mode needs the build with -stage
     extra = f" -stage {stage}" if stage else ""
     return (f"{exe} -m {mem} -pattern n0a2t{threads} -freq {REF_GHZ} -inst {inst} "
-            f"-pad {pad} -near {near} -lookahead {lookahead}{extra} -mode r")
+            f"-pad {pad} -near {near} -lookahead {lookahead}{extra} -mode {mode}")
 
 
 def hbm_events():

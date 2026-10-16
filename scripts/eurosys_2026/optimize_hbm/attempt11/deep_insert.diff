@@ -1,0 +1,590 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5db80373..647e7974 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -72,6 +72,41 @@ if(DEEP_VECTORIZATION)
+     add_definitions(-DDEEP_VECTORIZATION)
+ endif()
+ 
++# insert_batch fast path with a split insert queue: {key, value} ring + 32-bit hash ring, 4-entry
++# block pop (one 64 B + one 16 B load) and block push per step (needs DEEP_VECTORIZATION)
++option(DEEP_VEC_INSERT "insert_batch: split {key,value}/hash insert queue, deep pop/push of 4 entries" OFF)
++if(DEEP_VEC_INSERT)
++    add_definitions(-DDEEP_VEC_INSERT)
++endif()
++# insert: dequeue-time prefetchw distance in queue slots (empty = 8, as before)
++set(INS_PF_DIST "" CACHE STRING "insert_batch: prefetchw the bucket this many queue slots ahead (empty = 8)")
++if(NOT INS_PF_DIST STREQUAL "")
++    add_definitions(-DINS_PF_DIST=${INS_PF_DIST})
++endif()
++# 0 = the 4 hashes come from one 16 B load and are extracted from the register; 1 = each hash is read
++# from the hash ring by the andn that computes its bucket offset (A/B of the deep insert pop)
++set(DEEP_INS_HASH_SCALAR "" CACHE STRING "deep insert pop: 1 = per-entry hash loads instead of one 16 B load")
++if(DEEP_INS_HASH_SCALAR STREQUAL "1")
++    add_definitions(-DDEEP_INS_HASH_SCALAR)
++endif()
++
++# deep find pop: RES128 = each hit's 16 B result stored on its own (instead of 4 assembled into one 64 B store);
++# KADD = the value-lane compress mask (hit << 1) by kaddb instead of kshiftlb
++option(DEEP_FIND_RES128 "deep find pop: one 16 B result store per hit" OFF)
++if(DEEP_FIND_RES128)
++    add_definitions(-DDEEP_FIND_RES128)
++endif()
++option(DEEP_FIND_KADD "deep find pop: value-lane mask by kaddb" OFF)
++if(DEEP_FIND_KADD)
++    add_definitions(-DDEEP_FIND_KADD)
++endif()
++
++# deep insert push: 1 = the 4 hashes as one 16 B store (built with vmovd/vpinsrd) instead of 4 dword stores
++set(DEEP_INS_PUSH_H128 "" CACHE STRING "deep insert push: 1 = one 16 B store of the 4 hashes")
++if(DEEP_INS_PUSH_H128 STREQUAL "1")
++    add_definitions(-DDEEP_INS_PUSH_H128)
++endif()
++
+ # 16 B find {key, id} and insert {key, value} arguments between the zipfian harness and
+ # the CAS table (ht-type 3 only), instead of the shared 24 B InsertFindArgument
+ option(SPLIT_ARGS "zipfian harness + CAS table: 16 B find / insert arguments" OFF)
+diff --git a/include/hashtables/cas_kht.hpp b/include/hashtables/cas_kht.hpp
+index 79a164cf..40a4863f 100644
+--- a/include/hashtables/cas_kht.hpp
++++ b/include/hashtables/cas_kht.hpp
+@@ -39,6 +39,20 @@
+ #define CAS_FIND_QUEUE16
+ #endif
+ 
++// DEEP_VEC_INSERT: the insert queue is two rings of the same length, {key, value} (16 B) and the
++// entry's 32-bit hash (4 B), so 4 entries are one 64 B load plus one 16 B load.
++#ifdef DEEP_VEC_INSERT
++#if !defined(DEEP_VECTORIZATION) || !defined(CAS_FIND_QUEUE16) || !defined(BUCKETIZATION) || \
++    !defined(CAS_INSERT_PREFETCH_DOUBLE)
++#error "DEEP_VEC_INSERT needs DEEP_VECTORIZATION (16 B find queue), BUCKETIZATION and CAS_PREFETCH_INSERTION=DOUBLE"
++#endif
++#endif
++#ifdef INS_PF_DIST
++#define PREFETCH_INSERT_DEEP_DISTANCE INS_PF_DIST
++#else
++#define PREFETCH_INSERT_DEEP_DISTANCE 8
++#endif
++
+ namespace kmercounter {
+ 
+ 
+@@ -141,8 +155,23 @@ class CASHashTable : public BaseHashTable {
+     this->data_length = empty_item.data_length();
+ 
+     PLOGV << "Empty item: " << this->empty_item;
++#ifdef DEEP_VEC_INSERT
++    this->insert_queue = nullptr;
++    this->ins_kv = (InsKV *)(aligned_alloc(64, insert_queue_sz * sizeof(InsKV)));
++    // the deep pop takes 4 entries and needs room for 4 pushes behind a full queue; >= 16 entries also
++    // makes the hash ring a multiple of 64 B, as aligned_alloc requires
++    if (insert_queue_sz < 16) {
++      PLOGE.printf("DEEP_VEC_INSERT needs an insert queue of >= 16 entries (got %u)", insert_queue_sz);
++      abort();
++    }
++    // + 64 B: the deep pop's look-ahead prefetch reads up to 3 hashes past the ring end unmasked (zeroed:
++    // they only steer a prefetch)
++    this->ins_h = (uint32_t *)(aligned_alloc(64, insert_queue_sz * sizeof(uint32_t) + 64));
++    memset(this->ins_h + insert_queue_sz, 0, 64);
++#else
+     this->insert_queue =
+         (KVQ *)(aligned_alloc(64, insert_queue_sz * sizeof(KVQ)));
++#endif
+     this->find_queue = (FQE *)(aligned_alloc(64, find_queue_sz * sizeof(FQE)));
+     this->FIND_QUEUE_SZ_MASK = this->find_queue_sz - 1;
+     this->INSERT_QUEUE_SZ_MASK = this->insert_queue_sz - 1;
+@@ -162,6 +191,10 @@ class CASHashTable : public BaseHashTable {
+   ~CASHashTable() {
+     free(find_queue);
+     free(insert_queue);
++#ifdef DEEP_VEC_INSERT
++    free(ins_kv);
++    free(ins_h);
++#endif
+ 
+     // Deallocate the global hashtable if ref_cnt goes down to zero.
+     {
+@@ -245,6 +278,99 @@ class CASHashTable : public BaseHashTable {
+     return;
+   }
+ 
++#ifdef DEEP_VEC_INSERT
++  // the next probe's hash: crc32 of the current one (uniform probing), or the next bucket (linear)
++  static inline uint32_t ins_next_hash(uint32_t h, uint32_t bmask) {
++#ifdef UNIFORM_HT_SUPPORT
++    (void)bmask;
++    return (uint32_t)_mm_crc32_u64(0xffffffff, (uint64_t)h);
++#else
++    return ((h & bmask) + KV_IN_CACHELINE) & bmask;
++#endif
++  }
++
++  // One insert into its bucket, from registers: kv holds the entry's {key, value} in every 128-bit lane,
++  // so the key compare runs against kv directly (keys are the even qwords of both) and an update is a
++  // masked store of kv's value lane. Same semantics as __insert_branched: update a matching key, else
++  // claim the first empty slot by CAS (walking on if it was taken meanwhile). Returns false when the
++  // bucket has neither (the caller pushes the entry back with the next hash).
++  static inline __attribute__((always_inline)) bool ins_entry(KV *bkt, const __m512i kv) {
++    const __m512i line = _mm512_load_si512(bkt);
++    const __mmask8 hit = _mm512_mask_cmpeq_epu64_mask(KEYMSK, line, kv);
++    if (hit) [[likely]] {
++      if constexpr (std::is_same_v<KV, Aggr_KV>) {
++        // shared table: the count bump has to be atomic (see __insert_branched)
++        __sync_fetch_and_add(&reinterpret_cast<uint64_t *>(bkt)[_bit_scan_forward(hit) + 1], 1);
++      } else {
++        // the value lane after the key: hit << 1 as hit + hit (kaddb, port 0; kshiftlb is a port-5 uop).
++        // In asm: gcc folds _kadd_mask8(hit, hit) back into kshiftlb.
++        __mmask8 val;
++        __asm__("kaddb %1, %1, %0" : "=k"(val) : "k"(hit));
++        _mm512_mask_storeu_epi64(bkt, val, kv);
++      }
++      return true;
++    }
++    const __mmask8 ept = _mm512_mask_cmpeq_epu64_mask(KEYMSK, line, _mm512_setzero_si512());
++    if (!ept) return false;
++    return ins_claim(bkt, _bit_scan_forward(ept) >> 1, kv);
++  }
++
++  // rare: a deep push whose 4 entries wrap the ring end (head = byte offset into the hash ring, room = bytes
++  // left before its end). Out of line, so the hot path keeps no wrap addresses live.
++  static __attribute__((noinline, cold)) void ins_push_wrap(char *kvb, char *hb, uint64_t head, uint64_t room,
++                                                            __m512i nb, __m128i hv) {
++    const __mmask8 lo = (__mmask8)((1u << (room / 2)) - 1);  // 2 qwords per entry
++    _mm512_mask_storeu_epi64(kvb + 4 * head, lo, nb);
++    _mm512_mask_storeu_epi64(kvb - 4 * room, (__mmask8)~lo, nb);  // masked-off lanes before the ring: not accessed
++    const __mmask8 lo4 = (__mmask8)((1u << (room / 4)) - 1);
++    _mm_mask_storeu_epi32(hb + head, lo4, hv);
++    _mm_mask_storeu_epi32(hb - room, (__mmask8)~lo4, hv);
++  }
++
++  // rare: claim an empty slot (s = the first one seen empty) by CAS, as __insert_branched's try_insert
++  static __attribute__((noinline)) bool ins_claim(KV *bkt, uint32_t s, const __m512i kv) {
++    KVQ q;
++    _mm_storeu_si128(reinterpret_cast<__m128i *>(&q), _mm512_castsi512_si128(kv));  // {key, value}
++    for (; s < KV_IN_CACHELINE; s++) {
++      KV *const curr = bkt + s;
++#ifdef READ_BEFORE_CAS
++      if (curr->is_empty())
++#endif
++        if (__sync_bool_compare_and_swap((__int128 *)curr, 0, empty_slot_payload(&q))) return true;
++      if (curr->compare_key(&q)) {
++        curr->update_cas(&q);
++        return true;
++      }
++    }
++    return false;
++  }
++
++  // split queue: complete one insert (popping through its reprobes), as the KVQ pop_insert_queue
++  inline void pop_insert_queue(collector_type *collector) {
++    const uint32_t bmask = (uint32_t)HT_BUCKET_MASK;
++    for (;;) {
++      const uint32_t t = this->ins_tail;
++      __builtin_prefetch(&this->hashtable[this->ins_h[(t + PREFETCH_INSERT_DEEP_DISTANCE) & INSERT_QUEUE_SZ_MASK] & bmask],
++                         true, 3);
++      this->ins_tail = (t + 1) & INSERT_QUEUE_SZ_MASK;
++      const uint32_t h = this->ins_h[t];
++      const __m512i kv = _mm512_broadcast_i32x4(_mm_load_si128(reinterpret_cast<const __m128i *>(&this->ins_kv[t])));
++      if (this->ins_kv[t].key == this->empty_item.get_key()) [[unlikely]] {
++        KVQ q;
++        q.key = this->ins_kv[t].key;
++        q.value = this->ins_kv[t].value;
++        __insert_empty(&q);
++        return;
++      }
++      if (ins_entry(&this->hashtable[h & bmask], kv)) return;
++      const uint32_t nh = ins_next_hash(h, bmask);
++      prefetch_insert(nh & bmask);
++      _mm_store_si128(reinterpret_cast<__m128i *>(&this->ins_kv[this->ins_head]), _mm512_castsi512_si128(kv));
++      this->ins_h[this->ins_head] = nh;
++      this->ins_head = (this->ins_head + 1) & INSERT_QUEUE_SZ_MASK;
++    }
++  }
++#else
+   inline void pop_insert_queue(collector_type *collector) {
+     uint64_t retry = 0;
+ #ifdef CAS_INSERT_PREFETCH_DOUBLE
+@@ -264,6 +390,7 @@ class CASHashTable : public BaseHashTable {
+ 
+     } while ((retry));
+   }
++#endif  // DEEP_VEC_INSERT
+ 
+ #if defined(DRAMHiT_2023)
+ 
+@@ -329,6 +456,169 @@ class CASHashTable : public BaseHashTable {
+     bool fast_path = (((ins_head - ins_tail) & INSERT_QUEUE_SZ_MASK) >=
+                       (insert_queue_sz - 1));
+     if (fast_path) {
++#ifdef DEEP_VEC_INSERT
++      // ===== deep vectorization: the batch in steps of 4 =====
++      // The split queue: slot i = {ins_kv[i] (16 B {key, value}), ins_h[i] (32-bit hash)}. tail/head are
++      // byte offsets into ins_h (o = 4 i); the same slot of ins_kv is at 4 o, a scaled index, so neither
++      // ring address needs a shift.
++      //  - deep pop: 4 entries as one 64 B load of {key, value} and one 16 B load of their hashes. Lane k's
++      //    pair is broadcast to every 128-bit lane (one vshufi64x2); the key compare and the value update
++      //    (a masked store) run on that register. A reprobe pushes the entry back with its next hash.
++      //    Blocks are popped until there is room for 4 pushes behind the queue (one block when no entry
++      //    reprobes), so the queue stays at insert_queue_sz - 1 entries.
++      //  - deep push: the next 4 arguments as one 64 B block of {key, value} and 4 dword hash stores.
++      char *const kvb = reinterpret_cast<char *>(this->ins_kv);
++      char *const hb = reinterpret_cast<char *>(this->ins_h);
++      const uint64_t qmask = (uint64_t)this->insert_queue_sz * sizeof(uint32_t) - 1;  // ring of hashes, bytes
++      uint64_t tail = (uint64_t)this->ins_tail * sizeof(uint32_t);
++      uint64_t head = (uint64_t)this->ins_head * sizeof(uint32_t);
++#define IKV(o) (*reinterpret_cast<InsKV *>(kvb + 4 * (o)))
++#define IH(o) (*reinterpret_cast<uint32_t *>(hb + (o)))
++      const uint32_t bmask = (uint32_t)HT_BUCKET_MASK;
++      const uint32_t nbmask = ~bmask;
++      static_assert(sizeof(KV) == 16, "bucket byte offset = index << 4");
++      // byte offset of a hash's bucket: andn then << 4, as the deep find path's hoff
++      const auto hoff = [nbmask](uint32_t h) -> uint64_t {
++        uint64_t r;
++        __asm__("andnl %2, %1, %k0\n\tshlq $4, %0" : "=&r"(r) : "r"(nbmask), "rm"(h));
++        return r;
++      };
++      char *const htb = reinterpret_cast<char *>(this->hashtable);
++      constexpr uint64_t E = sizeof(uint32_t);  // one slot in tail/head units
++      // room for 4 pushes: at most insert_queue_sz - 5 entries queued after the pops, i.e. >= 5 free slots.
++      // free bytes = (tail - head) & qmask (the queue is never empty here), compared with an immediate
++      // 24 B InsertFindArguments {key, value, id, part_id}: entry j = dwords 6j..6j+3 of the 96 B, loaded as
++      // dwords 0..15 (a) and 8..23 (b). 16 B InsertArguments are already the block layout.
++      const __m512i push_perm =
++          _mm512_set_epi32(29, 28, 27, 26, 15, 14, 13, 12, 9, 8, 7, 6, 3, 2, 1, 0);
++      static_assert(sizeof(Arg) == 16 || sizeof(Arg) == 24, "insert argument: 16 B {key, value} or 24 B");
++      Arg *dp = kp.data();
++      Arg *const in_end = dp + (kp.size() & ~(size_t)3);
++      for (; dp != in_end; dp += 4) {
++        // ---- deep pop: blocks of 4 until there is room for the push ----
++        do {
++          __m512i blk;
++#ifndef DEEP_INS_HASH_SCALAR
++          __m128i hv;
++#else
++          const uint32_t *hp;  // the block's 4 hashes: the ring itself, or hw[] if the block wraps
++          uint32_t hw[4];
++#endif
++          if (tail + 4 * E <= qmask + 1) [[likely]] {
++            blk = _mm512_loadu_si512(&IKV(tail));  // head/tail move by single entries too: not 64 B aligned
++#ifndef DEEP_INS_HASH_SCALAR
++            hv = _mm_loadu_si128(reinterpret_cast<const __m128i *>(&IH(tail)));
++#else
++            hp = &IH(tail);
++#endif
++          } else {  // the block wraps: the n entries before the ring end, the rest from the start
++            const uint64_t room = qmask + 1 - tail;  // 4, 8 or 12 bytes of hashes = n entries
++            const __mmask8 lo = (__mmask8)((1u << (room / 2)) - 1);  // 2 qwords per entry
++            // masked-off lanes of the second load lie before the ring: not accessed (fault-suppressed)
++            blk = _mm512_mask_loadu_epi64(_mm512_maskz_loadu_epi64(lo, &IKV(tail)), (__mmask8)~lo, kvb - 4 * room);
++#ifndef DEEP_INS_HASH_SCALAR
++            const __mmask8 lo4 = (__mmask8)((1u << (room / 4)) - 1);
++            hv = _mm_mask_loadu_epi32(_mm_maskz_loadu_epi32(lo4, &IH(tail)), (__mmask8)~lo4, hb - room);
++#else
++            for (uint64_t j = 0; j < 4; j++) hw[j] = IH((tail + j * E) & qmask);
++            hp = hw;
++#endif
++          }
++          // dequeue-time prefetchw of the buckets PREFETCH_INSERT_DEEP_DISTANCE slots behind this block
++          {
++            const uint64_t a = (tail + PREFETCH_INSERT_DEEP_DISTANCE * E) & qmask;
++#ifdef DEEP_INS_AHEAD_SLACK
++            // one wrap mask for the 4: near the ring end they read up to 3 hashes from the zeroed slack after it.
++            // Measured slower (E45): every thread then prefetchw's bucket 0, one shared line.
++            const uint32_t *const ahead = &IH(a);
++#pragma GCC unroll 4
++            for (uint64_t j = 0; j < 4; j++) __builtin_prefetch(htb + hoff(ahead[j]), true, 3);
++#else
++            // the 4 hashes unmasked unless they wrap (one predictable branch, ~1 in insert_queue_sz / 4 blocks)
++            if (a + 4 * E <= qmask + 1) [[likely]] {
++              const uint32_t *const ahead = &IH(a);
++#pragma GCC unroll 4
++              for (uint64_t j = 0; j < 4; j++) __builtin_prefetch(htb + hoff(ahead[j]), true, 3);
++            } else {
++#pragma GCC unroll 4
++              for (uint64_t j = 0; j < 4; j++) __builtin_prefetch(htb + hoff(IH((a + j * E) & qmask)), true, 3);
++            }
++#endif
++          }
++          tail = (tail + 4 * E) & qmask;
++          // lane k of the block: one insert from registers; a reprobe goes back on the queue
++          const auto lane = [&](auto kc) __attribute__((always_inline)) {
++            constexpr int k = decltype(kc)::value;
++            const __m512i kv = _mm512_shuffle_i64x2(blk, blk, 0x55 * k);  // pair k in every 128-bit lane
++#ifdef DEEP_INS_HASH_SCALAR
++            const uint32_t h = hp[k];
++#else
++            const uint32_t h = (uint32_t)_mm_extract_epi32(hv, k);
++#endif
++            if (!ins_entry(reinterpret_cast<KV *>(htb + hoff(h)), kv)) [[unlikely]] {
++              const uint32_t nh = ins_next_hash(h, bmask);
++              __builtin_prefetch(htb + hoff(nh), false, 2);  // = prefetch_insert
++              _mm_storeu_si128(reinterpret_cast<__m128i *>(&IKV(head)), _mm512_castsi512_si128(kv));
++              IH(head) = nh;
++              head = (head + E) & qmask;
++#ifdef CALC_STATS
++              this->num_reprobes++;
++#endif
++            }
++          };
++          lane(std::integral_constant<int, 0>{});
++          lane(std::integral_constant<int, 1>{});
++          lane(std::integral_constant<int, 2>{});
++          lane(std::integral_constant<int, 3>{});
++        } while (((tail - head) & qmask) < 5 * E);
++
++        // ---- deep push: the next 4 arguments ----
++        uint32_t hh[4];
++#pragma GCC unroll 4
++        for (int j = 0; j < 4; j++) {
++          hh[j] = (uint32_t)_mm_crc32_u64(0xffffffff, dp[j].key);
++          __builtin_prefetch(htb + hoff(hh[j]), false, 2);  // = prefetch_insert (prefetcht1)
++#ifndef UNIFORM_HT_SUPPORT
++          hh[j] &= bmask;  // linear probing keeps the bucket index itself
++#endif
++        }
++        __m512i nb;
++        if constexpr (sizeof(Arg) == 16)
++          nb = _mm512_loadu_si512(dp);
++        else
++          nb = _mm512_permutex2var_epi32(_mm512_loadu_si512(dp), push_perm,
++                                         _mm512_loadu_si512(reinterpret_cast<const char *>(dp) + 32));
++#ifdef DEEP_INS_PUSH_H128
++        // the 4 hashes as one 16 B store (vmovd + 3 vpinsrd build it)
++        const __m128i hv4 = _mm_set_epi32(hh[3], hh[2], hh[1], hh[0]);
++#endif
++        if (head + 4 * E <= qmask + 1) [[likely]] {
++          _mm512_storeu_si512(&IKV(head), nb);
++#ifdef DEEP_INS_PUSH_H128
++          _mm_storeu_si128(reinterpret_cast<__m128i *>(&IH(head)), hv4);
++#else
++#pragma GCC unroll 4
++          for (int j = 0; j < 4; j++) IH(head + j * E) = hh[j];
++#endif
++        } else {  // the block would wrap: the n entries that fit at head, the rest at the ring start
++#ifdef DEEP_INS_PUSH_H128
++          ins_push_wrap(kvb, hb, head, qmask + 1 - head, nb, hv4);
++#else
++          ins_push_wrap(kvb, hb, head, qmask + 1 - head, nb, _mm_set_epi32(hh[3], hh[2], hh[1], hh[0]));
++#endif
++        }
++        head = (head + 4 * E) & qmask;
++      }
++      this->ins_tail = tail / E;
++      this->ins_head = head / E;
++#undef IKV
++#undef IH
++      // 1-3 leftover arguments (a short final batch): the per-item path
++      for (Arg *const end = kp.data() + kp.size(); dp != end; ++dp) {
++        pop_insert_queue(collector);
++        add_to_insert_queue_t(dp, collector);
++      }
++#else
+       // TODo lift head and tail out to local var
+ 
+       uint32_t head = this->ins_head;
+@@ -487,6 +777,7 @@ class CASHashTable : public BaseHashTable {
+ 
+       this->ins_head = head;
+       this->ins_tail = tail;
++#endif  // DEEP_VEC_INSERT
+ 
+     } else {
+       for (auto &data : kp) {
+@@ -791,12 +1082,29 @@ class CASHashTable : public BaseHashTable {
+             const __m512i line = _mm512_load_si512(bkt);
+             const __mmask8 hit = _mm512_mask_cmpeq_epu64_mask(KEYMSK, line, bcast_key(e));
+             if (hit) [[likely]] {
+-              // {key_id, value} -> lane k: the value is the lane after the key
++              // {key_id, value}: the value is the lane after the key
++#ifdef DEEP_FIND_KADD
++              // hit << 1 as hit + hit: kaddb (port 0) instead of kshiftlb (port 5); asm, as gcc folds
++              // _kadd_mask8(hit, hit) back into kshiftlb
++              __mmask8 vlane;
++              __asm__("kaddb %1, %1, %0" : "=k"(vlane) : "k"(hit));
++#else
++              const __mmask8 vlane = _kshiftli_mask8(hit, 1);
++#endif
+               const __m128i r = _mm_unpacklo_epi64(
+                   _mm_cvtsi32_si128((int)e->key_id),
+-                  _mm512_castsi512_si128(_mm512_maskz_compress_epi64(_kshiftli_mask8(hit, 1), line)));
++                  _mm512_castsi512_si128(_mm512_maskz_compress_epi64(vlane, line)));
++#ifdef DEEP_FIND_RES128
++              // one 16 B store per hit, straight into the results (no lane insert, no found mask)
++              _mm_storeu_si128(reinterpret_cast<__m128i *>(vp_result), r);
++              vp_result++;
++              (void)res;
++              (void)found;
++#else
++              // -> lane k of res
+               res = _mm512_mask_broadcast_i32x4(res, (__mmask16)(0xFu << (4 * k)), r);
+               found |= 1u << k;
++#endif
+               break;
+             }
+             if (_mm512_mask_cmpeq_epu64_mask(KEYMSK, line, zero_vector)) {  // empty slot: not found
+@@ -820,6 +1128,7 @@ class CASHashTable : public BaseHashTable {
+ #endif
+           }
+         }
++#ifndef DEEP_FIND_RES128
+         if (found == 0xF) [[likely]] {
+           _mm512_storeu_si512(vp_result, res);  // one 64 B store of 4 results
+           vp_result += 4;
+@@ -827,6 +1136,7 @@ class CASHashTable : public BaseHashTable {
+           _mm512_mask_compressstoreu_epi64(vp_result, (__mmask8)(_pdep_u32(found, 0x55) * 3), res);
+           vp_result += _mm_popcnt_u32(found);
+         }
++#endif
+ 
+         // ---- deep push: the next 4 arguments ----
+         uint32_t hh[4];
+@@ -1214,6 +1524,19 @@ class CASHashTable : public BaseHashTable {
+   KV empty_item;
+   FQE *find_queue;
+   KVQ *insert_queue;
++#ifdef DEEP_VEC_INSERT
++  // split insert queue: slot i is {ins_kv[i], ins_h[i]}. ins_h holds the crc hash (uniform probing) or
++  // the bucket index (linear probing), as FindQ16::hash does.
++  struct InsKV {
++    key_type key;
++    value_type value;
++  };
++  static_assert(sizeof(InsKV) == 16 && sizeof(InsertArgument) == 16 && offsetof(InsertArgument, value) == 8 &&
++                    offsetof(InsertFindArgument, value) == 8 && sizeof(KV) == 16,
++                "{key, value} entries are copied as 16 B between arguments, queue and buckets");
++  InsKV *ins_kv;
++  uint32_t *ins_h;
++#endif
+ 
+   // bucket index of a find-queue entry
+   inline uint32_t fq_idx(const FQE *e) const { return fq_idx(e, (uint32_t)HT_BUCKET_MASK); }
+@@ -1711,6 +2034,22 @@ class CASHashTable : public BaseHashTable {
+     add_to_insert_queue_t(reinterpret_cast<InsertFindArgument *>(data), collector);
+   }
+ 
++#ifdef DEEP_VEC_INSERT
++  template <typename Arg>
++  inline void add_to_insert_queue_t(const Arg *key_data, collector_type *collector) {
++    uint64_t hash = this->hash((const char *)&key_data->key);
++    size_t idx = (hash & (this->capacity - 1)) & ~(size_t)KEYS_IN_CACHELINE_MASK;
++    prefetch_insert(idx);
++    this->ins_kv[this->ins_head].key = key_data->key;
++    this->ins_kv[this->ins_head].value = key_data->value;
++#ifdef UNIFORM_HT_SUPPORT
++    this->ins_h[this->ins_head] = (uint32_t)hash;
++#else
++    this->ins_h[this->ins_head] = (uint32_t)idx;
++#endif
++    this->ins_head = (this->ins_head + 1) & INSERT_QUEUE_SZ_MASK;
++  }
++#else
+   template <typename Arg>
+   inline void add_to_insert_queue_t(const Arg *key_data, collector_type *collector) {
+ 
+@@ -1741,6 +2080,7 @@ class CASHashTable : public BaseHashTable {
+     this->ins_head++;
+     this->ins_head &= INSERT_QUEUE_SZ_MASK;
+   }
++#endif  // DEEP_VEC_INSERT
+ };
+ 
+ /// Static variables
+diff --git a/src/tests/zipfian_test.cpp b/src/tests/zipfian_test.cpp
+index 6c5e6310..96db8650 100644
+--- a/src/tests/zipfian_test.cpp
++++ b/src/tests/zipfian_test.cpp
+@@ -64,6 +64,39 @@ extern std::vector<key_type> *g_zipf_values;
+ using HashTableTestHugepageAlloc = huge_page_allocator<key_type>;
+ using HashTableTestVec = std::vector<key_type, HashTableTestHugepageAlloc>;
+ 
++// Key-stream prefetch of the find loop, configurable from the environment (research knobs; with none
++// set the behaviour is the original one: in the per-key loop, every 8 keys, 16 keys ahead, prefetcht0).
++//   KEY_PF_DIST  keys ahead (0 = no key prefetch)
++//   KEY_PF_HINT  t0 | t1 | t2 | nta
++//   KEY_PF_MODE  inline: in the per-key loop, one prefetch per 8-key line
++//                batch:  at the start of each batch, every key line of the batch KEY_PF_DIST keys ahead
++struct KeyPrefetchConfig {
++  uint64_t dist = 16;
++  int hint = 3;  // __builtin_prefetch locality: 3 = t0, 2 = t1, 1 = t2, 0 = nta
++  bool batch = false;
++};
++
++// The insert loop has its own pair, INS_KEY_PF_DIST / INS_KEY_PF_HINT (inline mode only; same defaults).
++static KeyPrefetchConfig key_prefetch_config(const char *dist_env = "KEY_PF_DIST", const char *hint_env = "KEY_PF_HINT") {
++  KeyPrefetchConfig c;
++  if (const char *d = getenv(dist_env)) c.dist = strtoull(d, nullptr, 10);
++  if (const char *h = getenv(hint_env)) {
++    std::string hs(h);
++    c.hint = hs == "t1" ? 2 : hs == "t2" ? 1 : hs == "nta" ? 0 : 3;
++  }
++  if (const char *m = getenv("KEY_PF_MODE")) c.batch = std::string(m) == "batch";
++  return c;
++}
++
++static inline void key_prefetch(const void *p, int hint) {
++  switch (hint) {
++    case 3: __builtin_prefetch(p, false, 3); break;
++    case 2: __builtin_prefetch(p, false, 2); break;
++    case 1: __builtin_prefetch(p, false, 1); break;
++    default: __builtin_prefetch(p, false, 0); break;
++  }
++}
++
+ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
+ #if defined(CAS_NO_ABSTRACT) || defined(SPLIT_ARGS)
+   CASHashTable<KVType, ItemQueue> *cas_ht =
+@@ -90,10 +123,13 @@ uint64_t do_batch_insertion(BaseHashTable *ht, HashTableTestVec &workload) {
+   InsArg *items = (InsArg *)aligned_alloc(64, sizeof(InsArg) * config.batch_len);
+   key_type value;
+   uint64_t idx = 0;
++  const KeyPrefetchConfig kpf = key_prefetch_config("INS_KEY_PF_DIST", "INS_KEY_PF_HINT");
++  static std::atomic<bool> kpf_logged{false};
++  if (!kpf_logged.exchange(true)) PLOGI.printf("insert key prefetch: %lu keys ahead, hint %d", kpf.dist, kpf.hint);
+   for (uint64_t n = 0; n < batch_num; ++n) {
+     for (uint32_t i = 0; i < batch_len; i++) {
+-      if (!(idx & 7) && idx + 16 < request_num) {
+-        __builtin_prefetch(&workload[idx + 16], false, 3);
++      if (kpf.dist && !(idx & 7) && idx + kpf.dist < request_num) {
++        key_prefetch(&workload[idx + kpf.dist], kpf.hint);
+       }
+ 
+       value = workload[idx];
+@@ -150,38 +186,6 @@ struct ht_do_batch_find_ret {
+   uint32_t found;
+ };
+ 
+-// Key-stream prefetch of the find loop, configurable from the environment (research knobs; with none
+-// set the behaviour is the original one: in the per-key loop, every 8 keys, 16 keys ahead, prefetcht0).
+-//   KEY_PF_DIST  keys ahead (0 = no key prefetch)
+-//   KEY_PF_HINT  t0 | t1 | t2 | nta
+-//   KEY_PF_MODE  inline: in the per-key loop, one prefetch per 8-key line
+-//                batch:  at the start of each batch, every key line of the batch KEY_PF_DIST keys ahead
+-struct KeyPrefetchConfig {
+-  uint64_t dist = 16;
+-  int hint = 3;  // __builtin_prefetch locality: 3 = t0, 2 = t1, 1 = t2, 0 = nta
+-  bool batch = false;
+-};
+-
+-static KeyPrefetchConfig key_prefetch_config() {
+-  KeyPrefetchConfig c;
+-  if (const char *d = getenv("KEY_PF_DIST")) c.dist = strtoull(d, nullptr, 10);
+-  if (const char *h = getenv("KEY_PF_HINT")) {
+-    std::string hs(h);
+-    c.hint = hs == "t1" ? 2 : hs == "t2" ? 1 : hs == "nta" ? 0 : 3;
+-  }
+-  if (const char *m = getenv("KEY_PF_MODE")) c.batch = std::string(m) == "batch";
+-  return c;
+-}
+-
+-static inline void key_prefetch(const void *p, int hint) {
+-  switch (hint) {
+-    case 3: __builtin_prefetch(p, false, 3); break;
+-    case 2: __builtin_prefetch(p, false, 2); break;
+-    case 1: __builtin_prefetch(p, false, 1); break;
+-    default: __builtin_prefetch(p, false, 0); break;
+-  }
+-}
+-
+ uint64_t do_batch_find(BaseHashTable *ht, HashTableTestVec &workload,
+                        uint64_t *found_res) {
+ #if defined(CAS_NO_ABSTRACT) || defined(SPLIT_ARGS)

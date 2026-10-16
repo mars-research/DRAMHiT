@@ -34,6 +34,7 @@ WORKLOADS = {
     "mimic_s4_t32":  lambda: r.bw_cmd("mimic", pad=0, stage=4, threads=32),
     # 16-thread versions (low system load): is the per-miss time difference core-local?
     "bw_t1_t16":     lambda: r.bw_cmd("t1", pad=0, threads=16),
+    "bw_t1_t32_la128": lambda: r.bw_cmd("t1", pad=0, threads=32, lookahead=128),   # E40: same misses in flight per core as t64
     "mimic_s2_t16":  lambda: r.bw_cmd("mimic", pad=0, stage=2, threads=16),
     "mimic_s4_t16":  lambda: r.bw_cmd("mimic", pad=0, stage=4, threads=16),
     # bw_t1 with a shorter prefetch lookahead (fewer misses in flight): its latency-vs-bandwidth curve
@@ -92,6 +93,43 @@ WORKLOADS = {
         fill=f, read_factor=(4000 + f // 2) // f, find_queue=128, batch_len=64,
         binary=str(r.OPT / "attempt11" / v / "dramhit")))
        for v in ("dvs_p3", "dvs_p3s", "dvs_p3x") for f in range(10, 100, 10)},
+    # E40: hyperthreading. 64 threads = 2 per core (current); 32 threads = 1 per core (cpus 0..62 even, siblings
+    # 64..126 idle or offline). Current best build (attempt11/dvs_p3), batch 64; queue 128, or 256 at 32 threads
+    **{f"a20_t{t}_q{q}_f{f}": (lambda t=t, q=q, f=f: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=f, read_factor=(4000 + f // 2) // f, find_queue=q, batch_len=64,
+        binary=str(r.OPT / "attempt11" / "dvs_p3" / "dramhit")).replace("--num-threads 64", f"--num-threads {t}"))
+       for t, q in ((64, 128), (32, 128), (32, 256)) for f in (10, 90)},
+    # E41: insert phase vs a 1-read-1-write bandwidth bound. bw_t1_w = bw_t1 with a store instead of the load
+    # (prefetcht1 64 lines ahead, then an 8 B store: one HBM read + one write-back per line). dramblast insert phase
+    # lengthened to ~6.5 s (--insert-factor 400; every pass after the first updates existing keys), short find phase
+    "bw_t1_w": lambda: r.bw_cmd("t1", pad=0, mode="w"),
+    "a21_dvs_p3_ins_f10": lambda: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=10, insert_factor=400, read_factor=10, find_queue=128, batch_len=64,
+        binary=str(r.OPT / "attempt11" / "dvs_p3" / "dramhit")),
+    "a21_keyshbm_ins_f10": lambda: r.dramhit_cmd(fill=10, insert_factor=400, read_factor=10,
+                                                 binary=str(r.OPT / "attempt6" / "ddrhbm" / "dramhit")),
+    # E42: deep insert (split {key,value}/hash insert queue, attempt11/dvi*) vs dvs_p3, insert queue x batch length;
+    # insert phase ~6.4 s at any fill (insert factor 4000 / fill), short find phase
+    **{f"a22_{v}_q{q}_b{b}_f{f}": (lambda v=v, q=q, b=b, f=f: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=f, insert_factor=4000 // f, read_factor=10, find_queue=q, batch_len=b,
+        binary=str(r.OPT / "attempt11" / v / "dramhit")))
+       for v in ("dvs_p3", "dvi", "dvi_hs", "dvi_pf16", "dvi_pf24", "dvi_hs16", "dvi_hs24") for q in (32, 64, 128, 256) for b in (8, 16, 32, 64, 128)
+       for f in (10, 50, 90)},
+    # E45: cleaned-up deep insert (attempt11/dvj: dword hash stores, dvj128: one 16 B hash store) vs dvi_hs24, and the
+    # insert harness's key-stream prefetch (INS_KEY_PF_DIST / _HINT; "def" = the original 16 ahead, t0), q128 / b16
+    **{f"a23_{v}_{k}_f{f}": (lambda v=v, e=e, f=f: f"env KEY_PF_DIST=64 KEY_PF_HINT=t2 {e}" + r.dramhit_cmd(
+        fill=f, insert_factor=4000 // f, read_factor=10, find_queue=128, batch_len=16,
+        binary=str(r.OPT / "attempt11" / v / "dramhit")))
+       for v in ("dvs_p3", "dvi_hs24", "dvj", "dvj128", "dvk", "dvk128", "dvk_ks")
+       for k, e in (("def", ""), ("k64t2", "INS_KEY_PF_DIST=64 INS_KEY_PF_HINT=t2 "), ("k128t2", "INS_KEY_PF_DIST=128 INS_KEY_PF_HINT=t2 "),
+                    ("k64t1", "INS_KEY_PF_DIST=64 INS_KEY_PF_HINT=t1 "), ("k32t2", "INS_KEY_PF_DIST=32 INS_KEY_PF_HINT=t2 "))
+       for f in (10, 50, 90)},
+    # E47: deep find pop, one 16 B result store per hit (DEEP_FIND_RES128) and kaddb value mask (DEEP_FIND_KADD), on the
+    # dvk build; find phase, queue 128 / batch 64, fill 10/50/90 (as a19)
+    **{f"a24_{v}_f{f}": (lambda v=v, f=f: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
+        fill=f, read_factor=(4000 + f // 2) // f, find_queue=128, batch_len=64,
+        binary=str(r.OPT / "attempt11" / v / "dramhit")))
+       for v in ("dvk", "dvk_r", "dvk_ka", "dvk_rka") for f in (10, 50, 90)},
     "a10_q16_q64_b16": lambda: "env KEY_PF_DIST=64 KEY_PF_HINT=t2 " + r.dramhit_cmd(
         fill=10, find_queue=64, batch_len=16, binary=str(r.OPT / "attempt10" / "q16" / "dramhit")),
     # attempt9: 16 B find-queue entries / 4-entry block push+pop; all with the best key prefetch (64 ahead, t2)

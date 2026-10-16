@@ -1,0 +1,31 @@
+[E44_ctr/td] rep 1/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/td] rep 1/2  a22_dvi_hs24_q128_b16_f10
+[E44_ctr/td] rep 2/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/td] rep 2/2  a22_dvi_hs24_q128_b16_f10
+[OK]
+[E44_ctr/ports_a] rep 1/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/ports_a] rep 1/2  a22_dvi_hs24_q128_b16_f10
+[E44_ctr/ports_a] rep 2/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/ports_a] rep 2/2  a22_dvi_hs24_q128_b16_f10
+[OK]
+[E44_ctr/ports_b] rep 1/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/ports_b] rep 1/2  a22_dvi_hs24_q128_b16_f10
+[E44_ctr/ports_b] rep 2/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/ports_b] rep 2/2  a22_dvi_hs24_q128_b16_f10
+[OK]
+[E44_ctr/stall] rep 1/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/stall] rep 1/2  a22_dvi_hs24_q128_b16_f10
+[E44_ctr/stall] rep 2/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/stall] rep 2/2  a22_dvi_hs24_q128_b16_f10
+[OK]
+[E44_ctr/fb] rep 1/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/fb] rep 1/2  a22_dvi_hs24_q128_b16_f10
+[E44_ctr/fb] rep 2/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/fb] rep 2/2  a22_dvi_hs24_q128_b16_f10
+[OK]
+[E44_ctr/br] rep 1/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/br] rep 1/2  a22_dvi_hs24_q128_b16_f10
+[E44_ctr/br] rep 2/2  a22_dvs_p3_q128_b16_f10
+[E44_ctr/br] rep 2/2  a22_dvi_hs24_q128_b16_f10
+[OK]
+E44_DONE

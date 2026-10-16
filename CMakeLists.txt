@@ -72,6 +72,41 @@ if(DEEP_VECTORIZATION)
     add_definitions(-DDEEP_VECTORIZATION)
 endif()
 
+# insert_batch fast path with a split insert queue: {key, value} ring + 32-bit hash ring, 4-entry
+# block pop (one 64 B + one 16 B load) and block push per step (needs DEEP_VECTORIZATION)
+option(DEEP_VEC_INSERT "insert_batch: split {key,value}/hash insert queue, deep pop/push of 4 entries" OFF)
+if(DEEP_VEC_INSERT)
+    add_definitions(-DDEEP_VEC_INSERT)
+endif()
+# insert: dequeue-time prefetchw distance in queue slots (empty = 8, as before)
+set(INS_PF_DIST "" CACHE STRING "insert_batch: prefetchw the bucket this many queue slots ahead (empty = 8)")
+if(NOT INS_PF_DIST STREQUAL "")
+    add_definitions(-DINS_PF_DIST=${INS_PF_DIST})
+endif()
+# 0 = the 4 hashes come from one 16 B load and are extracted from the register; 1 = each hash is read
+# from the hash ring by the andn that computes its bucket offset (A/B of the deep insert pop)
+set(DEEP_INS_HASH_SCALAR "" CACHE STRING "deep insert pop: 1 = per-entry hash loads instead of one 16 B load")
+if(DEEP_INS_HASH_SCALAR STREQUAL "1")
+    add_definitions(-DDEEP_INS_HASH_SCALAR)
+endif()
+
+# deep find pop: RES128 = each hit's 16 B result stored on its own (instead of 4 assembled into one 64 B store);
+# KADD = the value-lane compress mask (hit << 1) by kaddb instead of kshiftlb
+option(DEEP_FIND_RES128 "deep find pop: one 16 B result store per hit" OFF)
+if(DEEP_FIND_RES128)
+    add_definitions(-DDEEP_FIND_RES128)
+endif()
+option(DEEP_FIND_KADD "deep find pop: value-lane mask by kaddb" OFF)
+if(DEEP_FIND_KADD)
+    add_definitions(-DDEEP_FIND_KADD)
+endif()
+
+# deep insert push: 1 = the 4 hashes as one 16 B store (built with vmovd/vpinsrd) instead of 4 dword stores
+set(DEEP_INS_PUSH_H128 "" CACHE STRING "deep insert push: 1 = one 16 B store of the 4 hashes")
+if(DEEP_INS_PUSH_H128 STREQUAL "1")
+    add_definitions(-DDEEP_INS_PUSH_H128)
+endif()
+
 # 16 B find {key, id} and insert {key, value} arguments between the zipfian harness and
 # the CAS table (ht-type 3 only), instead of the shared 24 B InsertFindArgument
 option(SPLIT_ARGS "zipfian harness + CAS table: 16 B find / insert arguments" OFF)

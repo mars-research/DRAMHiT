@@ -1,0 +1,11 @@
+{
+ "label": "a20_t32_q256_f10",
+ "kind": "stream",
+ "cmd": "env KEY_PF_DIST=64 KEY_PF_HINT=t2 /opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/attempt11/dvs_p3/dramhit --mode 11 --ht-type 3 --ht-size 536870912 --ht-fill 10 --num-threads 32 --numa-split 10 --np_cpu_node_msk 1 --np_mem_node_msk 4 --np_mem_local 0 --batch-len 64 --find_queue 256 --no-prefetch 0 --hw-pref 0 --insert-factor 100 --read-factor 400 --skew 0.01 --seed 1775762440565610239",
+ "margin_before_c": 15,
+ "cha_set": null,
+ "core_set": "fb",
+ "cpus": "user",
+ "wall_s": 10.1,
+ "started": "2026-10-15T19:45:20"
+}
