@@ -1,11 +1,10 @@
 
 # TODO
 
-Verify for current configruation. 
+- insertion algorithm is slightly different than find, 
+let us explore a bit more, without using a simd load on the queue entry
+similar to find batch. 
 
-bandwidth = freq drop * cycle per line drop. 
-
-Hyperthreading, XQ counter, etc ...
 
 # findings
 
