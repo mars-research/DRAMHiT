@@ -1,0 +1,93 @@
+# Keeps the tools/uiCA submodule on the newest commit of mars-research/cpu_simulator's main branch.
+#
+# A submodule always pins one commit; this workflow moves the pin and commits it, so DRAMHiT follows
+# cpu_simulator/main. Each bump is a normal commit, so every DRAMHiT revision still records exactly
+# which simulator version it used.
+#
+# Runs:
+#   - when cpu_simulator pushes to main (its .github/workflows/notify-dramhit.yml sends a
+#     repository_dispatch "cpu-simulator-updated")
+#   - every 6 hours, as a fallback
+#   - by hand: Actions tab -> "Bump cpu_simulator submodule" -> Run workflow
+#
+# Secrets (repository settings -> Secrets and variables -> Actions):
+#   CPU_SIMULATOR_TOKEN   only needed while cpu_simulator is private: a token that can read it
+#                         (fine-grained PAT, Contents: read on mars-research/cpu_simulator).
+#                         For a public cpu_simulator nothing is needed.
+# The push back to DRAMHiT uses the built-in GITHUB_TOKEN (permissions: contents: write below). If the
+# default branch is protected against direct pushes, allow github-actions to bypass, or change the last
+# step to open a pull request instead.
+name: Bump cpu_simulator submodule
+
+on:
+  repository_dispatch:
+    types: [cpu-simulator-updated]
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bump-cpu-simulator
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out DRAMHiT (without submodules)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+          submodules: false
+
+      - name: Move tools/uiCA to cpu_simulator main
+        id: update
+        env:
+          SIM_TOKEN: ${{ secrets.CPU_SIMULATOR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${SIM_TOKEN}" ]; then
+            # authenticate only the cpu_simulator URL (the push to DRAMHiT keeps using GITHUB_TOKEN)
+            git config --global \
+              url."https://x-access-token:${SIM_TOKEN}@github.com/mars-research/cpu_simulator".insteadOf \
+              "https://github.com/mars-research/cpu_simulator"
+          fi
+          old=$(git ls-tree HEAD tools/uiCA | awk '{print $3}')
+          # only this submodule, not recursively; --remote = tip of the branch in .gitmodules (main)
+          git submodule update --init --remote --depth 1 tools/uiCA
+          new=$(git -C tools/uiCA rev-parse HEAD)
+          echo "old=${old}" >> "$GITHUB_OUTPUT"
+          echo "new=${new}" >> "$GITHUB_OUTPUT"
+          if [ "${old}" = "${new}" ]; then
+            echo "tools/uiCA already at cpu_simulator main (${new})"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tools/uiCA: ${old} -> ${new}"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push the new pin
+        if: steps.update.outputs.changed == 'true'
+        env:
+          OLD: ${{ steps.update.outputs.old }}
+          NEW: ${{ steps.update.outputs.new }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          subject=$(git -C tools/uiCA log -1 --format=%s "${NEW}")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/uiCA
+          git commit -m "Bump tools/uiCA (cpu_simulator) to ${NEW:0:8}" \
+                     -m "cpu_simulator main: ${OLD:0:8} -> ${NEW:0:8} (${subject})"
+          # someone may have pushed to DRAMHiT meanwhile: rebase the one-line pin change onto it
+          for i in 1 2 3; do
+            git pull --rebase --no-recurse-submodules origin "${BRANCH}" && git push origin "HEAD:${BRANCH}" && exit 0
+            sleep 5
+          done
+          echo "push failed" >&2
+          exit 1
