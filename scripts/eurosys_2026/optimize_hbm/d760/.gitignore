@@ -1,0 +1,6 @@
+# re-creatable: CMake build dir, perf profiles, python cache, dramhit run log
+dvk_rka/build/
+prof/*.data
+prof/*.data.old
+__pycache__/
+dramhit.log

@@ -1,0 +1,55 @@
+[1/46] fill 10 plain r0: 47 cyc/find, 3384 Mops
+[2/46] fill 70 plain r0: 55 cyc/find, 2900 Mops
+[3/46] fill 10 plain r1: 47 cyc/find, 3381 Mops
+[4/46] fill 70 plain r1: 55 cyc/find, 2892 Mops
+[5/46] fill 10 plain r2: 47 cyc/find, 3374 Mops
+[6/46] fill 70 plain r2: 55 cyc/find, 2891 Mops
+[7/46] fill 10 base r0: 47 cyc/find, 3365 Mops, core cyc/find 47.2, instr/find 43.1, DRAM rd lines/find 1.12 (24 intervals)
+[8/46] fill 70 base r0: 55 cyc/find, 2873 Mops, core cyc/find 55.5, instr/find 47.8, DRAM rd lines/find 1.28 (25 intervals)
+[9/46] fill 10 fb r0: 47 cyc/find, 3363 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (24 intervals)
+[10/46] fill 70 fb r0: 55 cyc/find, 2877 Mops, core cyc/find 55.3, instr/find 47.6, DRAM rd lines/find 1.28 (25 intervals)
+[11/46] fill 10 swpf r0: 47 cyc/find, 3365 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (24 intervals)
+[12/46] fill 70 swpf r0: 55 cyc/find, 2877 Mops, core cyc/find 55.3, instr/find 47.7, DRAM rd lines/find 1.28 (25 intervals)
+[13/46] fill 10 mem r0: 47 cyc/find, 3366 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (24 intervals)
+Traceback (most recent call last):
+  File "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/d760/run_ground_truth.py", line 178, in <module>
+    main()
+  File "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/d760/run_ground_truth.py", line 161, in main
+    cnt, secs, n = parse_intervals(out)
+  File "/opt/DRAMHiT/scripts/eurosys_2026/optimize_hbm/d760/run_ground_truth.py", line 114, in parse_intervals
+    pct = float(p[7]) if p[7] else 100.0
+ValueError: could not convert string to float: '100.002026-11-04 13:10:41.461 INFO  [27026] [kmercounter::Application::spawn_shard_threads@497] shard 48 assigned to 96 at numa node 0'
+[14/46] fill 70 mem r0: 55 cyc/find, 2880 Mops, core cyc/find 55.3, instr/find 47.7, DRAM rd lines/find 1.28 (25 intervals)
+[15/46] fill 10 l2 r0: 47 cyc/find, 3365 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (23 intervals)
+[16/46] fill 70 l2 r0: 55 cyc/find, 2879 Mops, core cyc/find 55.8, instr/find 48.0, DRAM rd lines/find 1.28 (26 intervals)
+[17/46] fill 10 stall r0: 47 cyc/find, 3365 Mops, core cyc/find 47.9, instr/find 43.7, DRAM rd lines/find 1.11 (24 intervals)
+[18/46] fill 70 stall r0: 55 cyc/find, 2878 Mops, core cyc/find 55.1, instr/find 47.4, DRAM rd lines/find 1.28 (25 intervals)
+[19/46] fill 10 td r0: 47 cyc/find, 3365 Mops, core cyc/find 47.3, instr/find 43.2, DRAM rd lines/find 1.12 (23 intervals)
+[20/46] fill 70 td r0: 55 cyc/find, 2881 Mops, core cyc/find 55.4, instr/find 47.7, DRAM rd lines/find 1.28 (25 intervals)
+[21/46] fill 10 ports_a r0: 47 cyc/find, 3365 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (24 intervals)
+[22/46] fill 70 ports_a r0: 55 cyc/find, 2878 Mops, core cyc/find 55.1, instr/find 47.4, DRAM rd lines/find 1.28 (26 intervals)
+[23/46] fill 10 ports_b r0: 47 cyc/find, 3361 Mops, core cyc/find 47.3, instr/find 43.1, DRAM rd lines/find 1.12 (24 intervals)
+[24/46] fill 70 ports_b r0: 55 cyc/find, 2877 Mops, core cyc/find 55.2, instr/find 47.6, DRAM rd lines/find 1.28 (25 intervals)
+[25/46] fill 10 br r0: 47 cyc/find, 3366 Mops, core cyc/find 47.3, instr/find 43.1, DRAM rd lines/find 1.12 (24 intervals)
+[26/46] fill 70 br r0: 55 cyc/find, 2880 Mops, core cyc/find 55.3, instr/find 47.7, DRAM rd lines/find 1.28 (25 intervals)
+[27/46] fill 10 base r1: 47 cyc/find, 3362 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (24 intervals)
+[28/46] fill 70 base r1: 55 cyc/find, 2875 Mops, core cyc/find 55.5, instr/find 47.8, DRAM rd lines/find 1.28 (25 intervals)
+[29/46] fill 10 fb r1: 47 cyc/find, 3361 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (24 intervals)
+[30/46] fill 70 fb r1: 55 cyc/find, 2878 Mops, core cyc/find 55.1, instr/find 47.5, DRAM rd lines/find 1.28 (25 intervals)
+[31/46] fill 10 swpf r1: 47 cyc/find, 3365 Mops, core cyc/find 47.3, instr/find 43.1, DRAM rd lines/find 1.12 (23 intervals)
+[32/46] fill 70 swpf r1: 55 cyc/find, 2878 Mops, core cyc/find 55.4, instr/find 47.7, DRAM rd lines/find 1.28 (25 intervals)
+[33/46] fill 10 mem r1: 47 cyc/find, 3365 Mops, core cyc/find 47.3, instr/find 43.2, DRAM rd lines/find 1.12 (24 intervals)
+[34/46] fill 70 mem r1: 55 cyc/find, 2882 Mops, core cyc/find 55.1, instr/find 47.6, DRAM rd lines/find 1.28 (25 intervals)
+[35/46] fill 10 l2 r1: 47 cyc/find, 3366 Mops, core cyc/find 47.3, instr/find 43.1, DRAM rd lines/find 1.12 (24 intervals)
+[36/46] fill 70 l2 r1: 55 cyc/find, 2878 Mops, core cyc/find 55.0, instr/find 47.4, DRAM rd lines/find 1.28 (25 intervals)
+[37/46] fill 10 stall r1: 47 cyc/find, 3365 Mops, core cyc/find 47.3, instr/find 43.2, DRAM rd lines/find 1.12 (23 intervals)
+[38/46] fill 70 stall r1: 55 cyc/find, 2875 Mops, core cyc/find 55.2, instr/find 47.5, DRAM rd lines/find 1.28 (25 intervals)
+[39/46] fill 10 td r1: 47 cyc/find, 3363 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (23 intervals)
+[40/46] fill 70 td r1: 55 cyc/find, 2881 Mops, core cyc/find 55.1, instr/find 47.5, DRAM rd lines/find 1.28 (25 intervals)
+[41/46] fill 10 ports_a r1: 47 cyc/find, 3365 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (25 intervals)
+[42/46] fill 70 ports_a r1: 55 cyc/find, 2880 Mops, core cyc/find 55.1, instr/find 47.5, DRAM rd lines/find 1.28 (25 intervals)
+[43/46] fill 10 ports_b r1: 47 cyc/find, 3364 Mops, core cyc/find 47.4, instr/find 43.2, DRAM rd lines/find 1.12 (23 intervals)
+[44/46] fill 70 ports_b r1: 55 cyc/find, 2880 Mops, core cyc/find 55.4, instr/find 47.7, DRAM rd lines/find 1.28 (25 intervals)
+[45/46] fill 10 br r1: 47 cyc/find, 3367 Mops, core cyc/find 47.3, instr/find 43.1, DRAM rd lines/find 1.12 (23 intervals)
+[46/46] fill 70 br r1: 55 cyc/find, 2879 Mops, core cyc/find 55.4, instr/find 47.8, DRAM rd lines/find 1.28 (25 intervals)
+DONE

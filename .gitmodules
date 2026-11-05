@@ -34,3 +34,7 @@
 [submodule "CLHT"]
 	path = CLHT
 	url = https://github.com/mars-research/CLHT.git
+[submodule "tools/uiCA"]
+	path = tools/uiCA
+	url = https://github.com/mars-research/cpu_simulator.git
+	branch = main

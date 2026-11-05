@@ -1,0 +1,15 @@
+    79.79%  [.] kmercounter::CASHashTable<kmercounter::Item, kmercounter::ItemQueue>::find_batch(std::span<kmercounter::FindArgument, 18446744073709551615ul> const&, std::pair<unsigned int, kmercounter::FindResult*>&, kmercounter::LatencyCollector<2048ul>*) [clone .constprop.0]
+    18.58%  [.] kmercounter::ZipfianTest::run(kmercounter::Shard*, kmercounter::BaseHashTable*, std::barrier<std::function<void ()> >*) [clone .constprop.0]
+     0.62%  [k] 0xffffffff9b3a7564
+     0.30%  [k] 0xffffffff9b3a7554
+     0.07%  [k] 0xffffffff9b213bf2
+     0.05%  [k] 0xffffffff9c400f30
+     0.03%  [k] 0xffffffff9b211e7d
+     0.03%  [k] 0xffffffff9b16803c
+     0.03%  [k] 0xffffffff9b213beb
+     0.02%  [k] 0xffffffff9b0ad7d4
+     0.01%  [k] 0xffffffff9b0c8c76
+     0.01%  [k] 0xffffffff9b3a115a
+     0.01%  [k] 0xffffffff9b175ca4
+     0.01%  [k] 0xffffffff9c271057
+     0.01%  [k] 0xffffffff9c1d09d3

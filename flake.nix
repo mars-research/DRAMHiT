@@ -33,7 +33,6 @@
         buildInputs = with pkgs; [
           msr-tools
         ];
-        NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
       };
       devShells.build = mkShell {
@@ -51,7 +50,6 @@
           cmake
           ninja
         ];
-        NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
       };
       devShell = mkShell {
@@ -75,7 +73,6 @@
           # tex ?
           texlive.combined.scheme-full
         ];
-        NIX_CFLAGS_COMPILE = "-march=native";
         NIX_ENFORCE_NO_NATIVE=0;
       };
     }

@@ -256,10 +256,14 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Export compile commands for clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# -march target. "native" on a cpu the compiler does not know (gcc 11 on Emerald
+# Rapids) falls back to an older arch with generic tuning; set e.g.
+# -DMARCH=sapphirerapids to get the same code as on the Xeon Max.
+set(MARCH "native" CACHE STRING "value passed to -march=")
 add_compile_options(
     -O3
     -Wall
-    -march=native
+    -march=${MARCH}
     -fcf-protection=none
     -fno-stack-protector
     -funroll-all-loops
